@@ -43,9 +43,19 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>OutputMid\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>OutputMid\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -53,6 +63,8 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -61,7 +73,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -71,6 +83,8 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -79,6 +93,48 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="KashipanEngine\Core\Engine.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Renderer.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\Components\IComponent.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\3D\Camera3D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\3D\Lights\DirectionalLight.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\CameraBase.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\Collider.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\CollisionAlgorithms2D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\CollisionAlgorithms3D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Ellipse.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Line2D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Rect.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Sprite.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Triangle.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Box.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Line3D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Model.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Sphere.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\Common\GameObjectBase.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\GameObject2DBase.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\GameObject3DBase.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Circle.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Point2D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Rect.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\AABB.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\Point3D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\Sphere.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\Object2d.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\Object3d.h" />
+    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\2D\Camera2D.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\Screen2D.h" />
+    <ClInclude Include="KashipanEngine\Scene\Screen3D.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />
+    <ClInclude Include="KashipanEngine\Utilities\FileIO\DirectorySearch.h" />
+    <ClInclude Include="KashipanEngine\Utilities\FileIO\Json.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils.h" />
+    <ClInclude Include="KashipanEngine\Utilities\RandomValue.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

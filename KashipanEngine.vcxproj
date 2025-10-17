@@ -57,14 +57,15 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG_BUILD;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -77,14 +78,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RELEASE_BUILD;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -92,49 +94,88 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ExitSizeMoveEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\Window.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
+    <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="KashipanEngine\Core\Engine.h" />
-    <ClInclude Include="KashipanEngine\Graphics\Renderer.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\Components\IComponent.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\3D\Camera3D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\3D\Lights\DirectionalLight.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\CameraBase.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ExitSizeMoveEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.h" />
+    <ClInclude Include="KashipanEngine\Assets\DataStructs\SoundData.h" />
+    <ClInclude Include="KashipanEngine\Assets\DataStructs\TextureData.h" />
+    <ClInclude Include="KashipanEngine\Assets\AudioManager.h" />
+    <ClInclude Include="KashipanEngine\Assets\TextureManager.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectXCommon.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandList.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandAllocator.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12SwapChain.h" />
+    <ClInclude Include="KashipanEngine\Core\GameEngine.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\Window.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowDescriptor.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowSize.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\IComponent.h" />
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Capsule3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Mesh.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\3D\Camera3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\3D\Lights\DirectionalLight.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\CameraBase.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\Collider.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\CollisionAlgorithms2D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\CollisionAlgorithms3D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Ellipse.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Line2D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Rect.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Sprite.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Triangle.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Box.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Line3D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Model.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Sphere.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\Common\GameObjectBase.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\GameObject2DBase.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\GameObject3DBase.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Circle.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Point2D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Rect.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\AABB.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\Point3D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\Sphere.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\Object2d.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\Object3d.h" />
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\2D\Camera2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Sprite.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Triangle.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Box.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Line3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Model.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Sphere.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObjectBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Rect.h" />
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\AABB.h" />
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Point3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Sphere.h" />
+    <ClInclude Include="KashipanEngine\Objects\Object2d.h" />
+    <ClInclude Include="KashipanEngine\Objects\Object3d.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\2D\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
-    <ClInclude Include="KashipanEngine\Scene\Screen2D.h" />
-    <ClInclude Include="KashipanEngine\Scene\Screen3D.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneScreen2D.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />
-    <ClInclude Include="KashipanEngine\Utilities\FileIO\DirectorySearch.h" />
-    <ClInclude Include="KashipanEngine\Utilities\FileIO\Json.h" />
-    <ClInclude Include="KashipanEngine\Utilities\MathUtils.h" />
-    <ClInclude Include="KashipanEngine\Utilities\RandomValue.h" />
+    <ClInclude Include="MyStd\AnyUnorderedMap.h" />
+    <ClInclude Include="MyStd\AnyVector.h" />
+    <ClInclude Include="KashipanEngine\KashipanEngine.h" />
+    <ClInclude Include="MyStd\OnlyPointer.h" />
+    <ClInclude Include="MyStd\VectorMap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

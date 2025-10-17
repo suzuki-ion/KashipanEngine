@@ -18,99 +18,126 @@
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\Window.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\GameEngine.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ExitSizeMoveEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="KashipanEngine\Utilities\MathUtils.h">
+    <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Utilities\RandomValue.h">
+    <ClInclude Include="KashipanEngine\Objects\Object2d.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\Collider.h">
+    <ClInclude Include="KashipanEngine\Objects\Object3d.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\Object2d.h">
+    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\Object3d.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\CollisionAlgorithms2D.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\GameObject2DBase.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\GameObject3DBase.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Triangle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Ellipse.h">
+    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Triangle.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\Collision\CollisionAlgorithms3D.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObjectBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Line2D.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Sprite.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\Common\GameObjectBase.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Sprite.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Box.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\2D\Rect.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Sphere.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Box.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Line3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Sphere.h">
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Model.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Line3D.h">
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\AABB.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\GameObjects\3D\Model.h">
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Sphere.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Utilities\FileIO\Json.h">
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Utilities\FileIO\DirectorySearch.h">
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Point3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\AABB.h">
+    <ClInclude Include="KashipanEngine\Core\GameEngine.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\Sphere.h">
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Point2D.h">
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Rect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\3D\Point3D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\Engine.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Circle.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\MathObjects\2D\Rect.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\2D\Camera2D.h">
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\2D\Camera2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h">
@@ -119,25 +146,115 @@
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\Components\IComponent.h">
+    <ClInclude Include="KashipanEngine\Objects\Components\IComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\Renderer.h">
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\CameraBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\CameraBase.h">
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\3D\Camera3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\3D\Camera3D.h">
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\3D\Lights\DirectionalLight.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Objects\SystemObjects\3D\Lights\DirectionalLight.h">
+    <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Screen3D.h">
+    <ClInclude Include="KashipanEngine\Scene\SceneScreen2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Screen2D.h">
+    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Capsule3D.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\Window.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\DataStructs\TextureData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\DataStructs\SoundData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\TextureManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\AudioManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12SwapChain.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandAllocator.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandList.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="MyStd\AnyUnorderedMap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="MyStd\AnyVector.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="MyStd\OnlyPointer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="MyStd\VectorMap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\KashipanEngine.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Mesh.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowDescriptor.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowSize.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectXCommon.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ExitSizeMoveEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

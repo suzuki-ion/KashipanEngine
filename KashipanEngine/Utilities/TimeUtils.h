@@ -9,8 +9,8 @@ struct TimeRecord {
     int day;
     int hour;
     int minute;
-    int second;
-    int millisecond;
+    long long second;
+    long long millisecond;
 };
 
 /// @brief 現在の年を取得する
@@ -24,9 +24,9 @@ int GetNowTimeHour();
 /// @brief 現在の分を取得する
 int GetNowTimeMinute();
 /// @brief 現在の秒を取得する
-int GetNowTimeSecond();
+long long GetNowTimeSecond();
 /// @brief 現在のミリ秒を取得する
-int GetNowTimeMillisecond();
+long long GetNowTimeMillisecond();
 
 /// @brief 現在の時間を取得する
 TimeRecord GetNowTime();

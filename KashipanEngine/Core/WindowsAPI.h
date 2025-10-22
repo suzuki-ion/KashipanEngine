@@ -1,6 +1,9 @@
 #pragma once
 #include <Windows.h>
 #include <string>
+#include <memory>
+#include <vector>
+#include "Utilities/Passkeys.h"
 #include "Core/WindowsAPI/Window.h"
 
 namespace KashipanEngine {
@@ -9,7 +12,6 @@ class GameEngine;
 
 /// @brief WindowsAPI用クラス
 class WindowsAPI final {
-public:
     /// @brief ウィンドウプロシージャ
     /// @param hwnd イベントの発生したウィンドウのハンドル
     /// @param msg メッセージ
@@ -18,16 +20,27 @@ public:
     /// @return メッセージ処理結果
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
-    class Factory {
-        friend class GameEngine;
-        static std::unique_ptr<WindowsAPI> Create(
-            const std::string &defaultTitle = "GameWindow",
-            int32_t defaultWidth = 1280,
-            int32_t defaultHeight = 720,
-            DWORD defaultWindowStyle = WS_OVERLAPPEDWINDOW,
-            const std::string &defaultIconPath = "");
-    };
+public:
+    /// @brief コンストラクタ（GameEngine専用）
+    /// @param defaultTitle デフォルトのウィンドウタイトル
+    /// @param defaultWidth デフォルトのウィンドウ幅
+    /// @param defaultHeight デフォルトのウィンドウ高さ
+    /// @param defaultWindowStyle デフォルトのウィンドウスタイル
+    /// @param defaultIconPath デフォルトのアイコンパス
+    WindowsAPI(Passkey<GameEngine>,
+        const std::string &defaultTitle = "GameWindow",
+        int32_t defaultWidth = 1280,
+        int32_t defaultHeight = 720,
+        DWORD defaultWindowStyle = WS_OVERLAPPEDWINDOW,
+        const std::string &defaultIconPath = "");
     ~WindowsAPI();
+    WindowsAPI(const WindowsAPI &) = delete;
+    WindowsAPI &operator=(const WindowsAPI &) = delete;
+    WindowsAPI(WindowsAPI &&) = delete;
+    WindowsAPI &operator=(WindowsAPI &&) = delete;
+
+    /// @brief WindowsAPI更新処理
+    void Update(Passkey<GameEngine>);
 
     /// @brief ウィンドウの作成
     /// @param title ウィンドウタイトル
@@ -49,18 +62,6 @@ public:
     bool DestroyWindowInstance(Window *window);
 
 private:
-    friend class Factory;
-    /// @brief コンストラクタ
-    /// @param defaultTitle ウィンドウのデフォルトタイトル
-    /// @param defaultWidth ウィンドウのデフォルト幅
-    /// @param defaultHeight ウィンドウのデフォルト高さ
-    /// @param defaultWindowStyle ウィンドウのデフォルトスタイル
-    WindowsAPI(const std::string &defaultTitle = "GameWindow",
-        int32_t defaultWidth = 1280,
-        int32_t defaultHeight = 720,
-        DWORD defaultWindowStyle = WS_OVERLAPPEDWINDOW,
-        const std::string &defaultIconPath = "");
-
     // デフォルトウィンドウパラメータ
     std::string defaultTitle_;
     int32_t defaultWidth_;

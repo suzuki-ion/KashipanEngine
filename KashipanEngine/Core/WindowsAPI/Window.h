@@ -5,9 +5,13 @@
 #include <unordered_map>
 #include <memory>
 #include <optional>
+
 #include "Core/WindowsAPI/WindowDescriptor.h"
+#include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
+
 #include "Core/WindowsAPI/WindowEvents/IWindowEvent.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
@@ -31,24 +35,33 @@ enum class WindowMode {
 class Window final {
     friend class IWindowEvent;
 public:
-    class Factory {
-        friend class WindowsAPI;
-        static std::unique_ptr<Window> Create(
-            const std::wstring &title = L"GameWindow",
-            int32_t width = 1280,
-            int32_t height = 720,
-            DWORD windowStyle = WS_OVERLAPPEDWINDOW,
-            const std::wstring &iconPath = L"");
-    };
-    class ProcedureHandler {
-        friend class WindowsAPI;
-        static std::optional<LRESULT> HandleWindowEvent(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
-    };
+    /// @brief コンストラクタ（WindowsAPI専用）
+    /// @param windowProc ウィンドウプロシージャ
+    /// @param title ウィンドウタイトル
+    /// @param width ウィンドウ幅
+    /// @param height ウィンドウ高さ
+    /// @param windowStyle ウィンドウスタイル
+    /// @param iconPath アイコンパス
+    Window(Passkey<WindowsAPI>,
+        WNDPROC windowProc,
+        const std::wstring &title = L"GameWindow",
+        int32_t width = 1280,
+        int32_t height = 720,
+        DWORD windowStyle = WS_OVERLAPPEDWINDOW,
+        const std::wstring &iconPath = L"");
     ~Window();
+    Window(const Window &) = delete;
+    Window &operator=(const Window &) = delete;
+    Window(Window &&) = delete;
+    Window &operator=(Window &&) = delete;
 
-    /// @brief メッセージ処理
-    /// @return メッセージ処理結果。falseの場合は終了
-    bool ProcessMessage();
+    /// @brief ウィンドウ更新処理
+    void Update(Passkey<WindowsAPI>);
+
+    /// @brief ウィンドウプロシージャから呼び出されるイベント処理
+    std::optional<LRESULT> HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam);
+    /// @brief ウィンドウのメッセージクリア
+    void ClearMessages(Passkey<WindowsAPI>) { messages_.clear(); }
     
     /// @brief サイズ変更モードを設定する
     /// @param sizeChangeMode サイズ変更モード
@@ -67,6 +80,7 @@ public:
     /// @param x ウィンドウ左上のX座標
     /// @param y ウィンドウ左上のY座標
     void SetWindowPosition(int32_t x, int32_t y);
+
     /// @brief ウィンドウイベントを登録する
     /// @param eventHandler イベントハンドラ
     void RegisterWindowEvent(const std::unique_ptr<IWindowEvent> &eventHandler);
@@ -89,34 +103,47 @@ public:
     /// @brief アスペクト比を取得する
     float GetAspectRatio() const noexcept { return size_.aspectRatio; }
 
-private:
-    friend class Factory;
-    friend class ProcedureHandler;
+    /// @brief 指定のメッセージが来ているかどうかをチェック
+    bool HasMessage(UINT msg) const { return messages_.find(msg) != messages_.end(); }
+    /// @brief 指定のメッセージの情報を取得
+    const WindowMessage &GetWindowMessage(UINT msg) const;
 
-    /// @brief コンストラクタ
-    /// @param title ウィンドウタイトル
-    /// @param width ウィンドウ幅
-    /// @param height ウィンドウ高さ
-    /// @param windowStyle ウィンドウスタイル
-    /// @param windowsAPI WindowsAPIクラスへのポインタ
-    Window(const std::wstring &title = L"GameWindow",
-        int32_t width = 1280,
-        int32_t height = 720,
-        DWORD windowStyle = WS_OVERLAPPEDWINDOW,
-        const std::wstring &iconPath = L"");
+    /// @brief ウィンドウがアクティブかどうかを取得する
+    bool IsActive() const noexcept { return HasMessage(WM_ACTIVATE); }
+    /// @brief ウィンドウがサイズ変更中かどうかを取得する
+    bool IsResizing() const noexcept { return HasMessage(WM_ENTERSIZEMOVE) && !HasMessage(WM_EXITSIZEMOVE); }
+    /// @brief ウィンドウが閉じられたかどうかを取得する
+    bool IsClosed() const noexcept { return HasMessage(WM_CLOSE); }
+    /// @brief ウィンドウが破棄されたかどうかを取得する
+    bool IsDestroyed() const noexcept { return HasMessage(WM_DESTROY); }
+    /// @brief ウィンドウがサイズ変更されたかどうかを取得する
+    bool IsResized() const noexcept { return HasMessage(WM_SIZE); }
+    /// @brief ウィンドウが最小化されたかどうかを取得する
+    bool IsMinimized() const noexcept { return HasMessage(WM_SIZE) && (messages_.at(WM_SIZE).wparam == SIZE_MINIMIZED); }
+    /// @brief ウィンドウが最大化されたかどうかを取得する
+    bool IsMaximized() const noexcept { return HasMessage(WM_SIZE) && (messages_.at(WM_SIZE).wparam == SIZE_MAXIMIZED); }
+
+private:
+    static constexpr size_t kMaxMessages = 512;
 
     /// @brief ウィンドウの初期化
+    /// @param windowProc ウィンドウプロシージャ
     /// @param title ウィンドウタイトル
     /// @param width ウィンドウ幅
     /// @param height ウィンドウ高さ
     /// @param windowStyle ウィンドウスタイル
     /// @param iconPath アイコンのパス
     /// @return 初期化成功かどうか
-    bool InitializeWindow(const std::wstring &title,
+    bool InitializeWindow(
+        WNDPROC windowProc,
+        const std::wstring &title,
         int32_t width,
         int32_t height,
         DWORD windowStyle,
         const std::wstring &iconPath);
+
+    /// @brief メッセージ処理
+    void ProcessMessage();
 
     /// @brief ウィンドウのクリーンアップ
     void Cleanup();
@@ -125,13 +152,12 @@ private:
     /// @brief ウィンドウサイズの調整
     void AdjustWindowSize();
 
-    /// @brief ウィンドウプロシージャから呼び出されるイベント処理
-    std::optional<LRESULT> HandleEvent(UINT msg, WPARAM wparam, LPARAM lparam);
-
     // ウィンドウ関連
     WindowDescriptor descriptor_{};
     // サイズ関連
     WindowSize size_{};
+    // メッセージ関連
+    std::unordered_map<UINT, WindowMessage> messages_;
     
     // 状態管理
     SizeChangeMode sizeChangeMode_ = SizeChangeMode::Normal;
@@ -144,4 +170,4 @@ private:
     std::unordered_map<UINT, std::unique_ptr<IWindowEvent>> eventHandlers_;
 };
 
-} // namespace KashipanEngine
+} // namespace KashipanEngine} // namespace KashipanEngine

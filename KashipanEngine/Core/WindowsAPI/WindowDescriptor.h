@@ -11,10 +11,6 @@ struct WindowDescriptor {
     HWND hwnd{};                // ウィンドウハンドル
     HINSTANCE hInstance{};      // インスタンスハンドル
     DWORD windowStyle{};        // ウィンドウスタイル
-    bool isVisible = false;     // ウィンドウが表示されているか
-    bool isActive = false;      // ウィンドウがアクティブか
-    bool isMinimized = false;   // ウィンドウが最小化されているか
-    bool isMaximized = false;   // ウィンドウが最大化されているか
 };
 
 } // namespace KashipanEngine

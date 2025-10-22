@@ -15,3 +15,7 @@
 
 // コアシステム
 #include "Core/GameEngine.h"
+
+namespace KashipanEngine {
+int Execute(PasskeyForWinMain, const std::string &engineSettingsPath);
+} // namespace KashipanEngine

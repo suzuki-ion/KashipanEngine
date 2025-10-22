@@ -1,5 +1,6 @@
 #include "IResource.h"
 #include <cassert>
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
@@ -8,6 +9,7 @@ DirectXDevice *IResource::dxDevice_ = nullptr;
 bool IResource::isCommonInitialized_ = false;
 
 void IResource::TransitionTo(D3D12_RESOURCE_STATES newState) {
+    LogScope scope;
     if (currentState_ != newState && resource_) {
         SetResourceBarrier(currentState_, newState);
         currentState_ = newState;
@@ -15,6 +17,7 @@ void IResource::TransitionTo(D3D12_RESOURCE_STATES newState) {
 }
 
 void IResource::SetResourceBarrier(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {
+    LogScope scope;
     assert(isCommonInitialized_);
     assert(resource_);
 
@@ -39,6 +42,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> IResource::CreateCommittedResource(
     D3D12_RESOURCE_STATES initialState,
     const D3D12_CLEAR_VALUE *clearValue) {
 
+    LogScope scope;
     assert(isCommonInitialized_);
 
     Microsoft::WRL::ComPtr<ID3D12Resource> resource;
@@ -60,6 +64,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> IResource::CreateCommittedResource(
 }
 
 UINT IResource::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE heapType) const {
+    LogScope scope;
     assert(isCommonInitialized_);
     auto *device = dxDevice_->GetDevice();
     assert(device);

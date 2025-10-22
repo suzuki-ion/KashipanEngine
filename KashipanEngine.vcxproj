@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -106,9 +106,15 @@
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\Window.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
+    <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
+    <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
     <ClCompile Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\Json.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\TimeUtils.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -134,7 +140,12 @@
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\Window.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowDescriptor.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowMessage.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowSize.h" />
+    <ClInclude Include="KashipanEngine\Debug\Logger.h" />
+    <ClInclude Include="KashipanEngine\Debug\Logger\LogSettings.h" />
+    <ClInclude Include="KashipanEngine\Debug\Logger\LogType.h" />
+    <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\IComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Capsule3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Mesh.h" />
@@ -171,6 +182,13 @@
     <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />
+    <ClInclude Include="KashipanEngine\Utilities\FileIO\CSV.h" />
+    <ClInclude Include="KashipanEngine\Utilities\FileIO\Directory.h" />
+    <ClInclude Include="KashipanEngine\Utilities\FileIO\File.h" />
+    <ClInclude Include="KashipanEngine\Utilities\FileIO\Json.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Passkeys.h" />
+    <ClInclude Include="KashipanEngine\Utilities\TimeUtils.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Translation.h" />
     <ClInclude Include="MyStd\AnyUnorderedMap.h" />
     <ClInclude Include="MyStd\AnyVector.h" />
     <ClInclude Include="KashipanEngine\KashipanEngine.h" />

@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include "Utilities/Conversion/ConvertString.h"
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
@@ -11,18 +12,52 @@ namespace {
 std::unordered_map<HWND, std::unique_ptr<Window>> sWindowMap;
 } // namespace
 
-std::unique_ptr<WindowsAPI> WindowsAPI::Factory::Create(const std::string &defaultTitle, int32_t defaultWidth, int32_t defaultHeight, DWORD defaultWindowStyle, const std::string &defaultIconPath) {
-    return std::unique_ptr<WindowsAPI>(new WindowsAPI(defaultTitle, defaultWidth, defaultHeight, defaultWindowStyle, defaultIconPath));
+LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+    LogScope scope;
+    // ウィンドウインスタンスを取得
+    auto it = sWindowMap.find(hwnd);
+    if (it == sWindowMap.end()) {
+        return DefWindowProc(hwnd, msg, wparam, lparam);
+    }
+    Window *window = it->second.get();
+    assert(window && "Window instance is null");
+    // ウィンドウインスタンスにイベントを処理させる
+    auto result = window->HandleEvent(Passkey<WindowsAPI>{}, msg, wparam, lparam);
+    if (result.has_value()) {
+        return result.value();
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+WindowsAPI::WindowsAPI(Passkey<GameEngine>, const std::string &defaultTitle,
+    int32_t defaultWidth, int32_t defaultHeight, DWORD defaultWindowStyle,
+    const std::string &defaultIconPath) {
+    LogScope scope;
+    defaultTitle_ = defaultTitle;
+    defaultWidth_ = defaultWidth;
+    defaultHeight_ = defaultHeight;
+    defaultWindowStyle_ = defaultWindowStyle;
+    defaultIconPath_ = defaultIconPath;
 }
 
 WindowsAPI::~WindowsAPI() {
+    LogScope scope;
     // すべてのウィンドウを破棄
     sWindowMap.clear();
+}
+
+void WindowsAPI::Update(Passkey<GameEngine>) {
+    LogScope scope;
+    for (auto &pair : sWindowMap) {
+        pair.second->ClearMessages({});
+        pair.second->Update({});
+    }
 }
 
 Window *WindowsAPI::CreateWindowInstance(const std::string &title,
     int32_t width, int32_t height, DWORD style,
     const std::string &iconPath) {
+    LogScope scope;
     // パラメータの設定
     std::string windowTitle = title.empty() ? defaultTitle_ : title;
     int32_t windowWidth = (width <= 0) ? defaultWidth_ : width;
@@ -31,7 +66,9 @@ Window *WindowsAPI::CreateWindowInstance(const std::string &title,
     std::string windowIconPath = iconPath.empty() ? defaultIconPath_ : iconPath;
 
     // ウィンドウインスタンスの作成
-    std::unique_ptr<Window> window = Window::Factory().Create(
+    std::unique_ptr<Window> window = std::make_unique<Window>(
+        Passkey<WindowsAPI>{},
+        WindowProc,
         ConvertString(windowTitle),
         windowWidth,
         windowHeight,
@@ -49,6 +86,7 @@ Window *WindowsAPI::CreateWindowInstance(const std::string &title,
 }
 
 bool WindowsAPI::DestroyWindowInstance(Window *window) {
+    LogScope scope;
     if (!window) {
         return false;
     }
@@ -58,42 +96,6 @@ bool WindowsAPI::DestroyWindowInstance(Window *window) {
         return true;
     }
     return false;
-}
-
-LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-    // hwndからWindowインスタンスを取得（WM_NCCREATE前はGWLP_USERDATA未設定のためCREATESTRUCT経由）
-    Window *window = nullptr;
-
-    if (msg == WM_NCCREATE) {
-        auto *createStruct = reinterpret_cast<CREATESTRUCT *>(lparam);
-        window = reinterpret_cast<Window *>(createStruct->lpCreateParams);
-        if (window) {
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
-        }
-    } else {
-        window = reinterpret_cast<Window *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-    }
-
-    if (!window) {
-        return DefWindowProc(hwnd, msg, wparam, lparam);
-    }
-
-    // Windowにディスパッチ
-    if (auto handled = Window::ProcedureHandler::HandleWindowEvent(hwnd, msg, wparam, lparam); handled.has_value()) {
-        return *handled;
-    }
-
-    return DefWindowProc(hwnd, msg, wparam, lparam);
-}
-
-WindowsAPI::WindowsAPI(const std::string &defaultTitle,
-    int32_t defaultWidth, int32_t defaultHeight, DWORD defaultWindowStyle,
-    const std::string &defaultIconPath) {
-    defaultTitle_ = defaultTitle;
-    defaultWidth_ = defaultWidth;
-    defaultHeight_ = defaultHeight;
-    defaultWindowStyle_ = defaultWindowStyle;
-    defaultIconPath_ = defaultIconPath;
 }
 
 } // namespace KashipanEngine

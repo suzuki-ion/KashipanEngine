@@ -2,14 +2,32 @@
 #include <memory>
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
 /// @brief ゲームエンジンクラス
 class GameEngine final {
 public:
-    GameEngine(const std::string &title, int32_t width, int32_t height);
+    /// @brief コンストラクタ
+    /// @param engineSettingsPath エンジン設定ファイルパス
+    GameEngine(const std::string &engineSettingsPath = "EngineSettings.json");
     ~GameEngine();
+    GameEngine(const GameEngine &) = delete;
+    GameEngine &operator=(const GameEngine &) = delete;
+    GameEngine(GameEngine &&) = delete;
+    GameEngine &operator=(GameEngine &&) = delete;
+
+    /// @brief ゲームエンジン実行用関数
+    /// @return 実行結果コード
+    int Execute();
+
+    /// @brief ゲームループ実行関数
+    void GameLoopRun();
+    /// @brief ゲームループ終了関数
+    void GameLoopEnd();
+    /// @brief ゲームループ一時停止関数
+    void GameLoopPause();
 
     /// @brief WindowsAPIクラスの取得
     WindowsAPI *GetWindowsAPI() const noexcept { return windowsAPI_.get(); }
@@ -19,6 +37,13 @@ public:
     Window *GetMainWindow() const noexcept { return mainWindow_; }
 
 private:
+    void ParseEngineSettings(const std::string &engineSettingsPath);
+
+    /// @brief ゲームループ更新処理
+    void GameLoopUpdate();
+    /// @brief ゲームループ描画処理
+    void GameLoopDraw();
+
     /// @brief WindowsAPIクラス
     std::unique_ptr<WindowsAPI> windowsAPI_;
     /// @brief DirectX共通クラス
@@ -26,6 +51,11 @@ private:
 
     /// @brief メインウィンドウ
     Window *mainWindow_;
+
+    /// @brief ゲームループ実行フラグ
+    bool isGameLoopRunning_ = false;
+    /// @brief ゲームループ一時停止フラグ
+    bool isGameLoopPaused_ = false;
 };
 
 } // namespace KashipanEngine

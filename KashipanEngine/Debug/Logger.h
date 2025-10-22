@@ -3,27 +3,35 @@
 #include <string>
 #include <source_location>
 #include "Debug/Logger/LogSettings.h"
-#include "Debug/Logger/LogType.h"
 
-namespace KashipanEngine::Log {
+namespace KashipanEngine {
 
 /// @brief ログ出力
-/// @param settings 出力するログの設定
-void OutputMessage(const LogSettings &settings);
-
-/// @brief 時間ログ出力
-void OutputTime();
-
-/// pbrief 呼び出し元ログ出力
-void OutputCaller(const std::source_location location = std::source_location::current());
+/// @param logText 出力するログテキスト
+/// @param severity ログのレベル。指定が無い場合は Info になる。
+void Log(const std::string &logText, LogSeverity severity = LogSeverity::Info);
 
 /// @brief 分離線ログ出力
-void OutputSeparator();
+void LogSeparator();
 
-/// @brief ログにタブを挿入
-void AddTab();
+/// @brief ログスコープクラス
+class LogScope {
+public:
+    /// @brief コンストラクタ
+    LogScope(const std::source_location &location = std::source_location::current()) {
+        PushPrefix(location);
+        Log("Entering scope.", LogSeverity::Debug);
+    }
+    /// @brief デストラクタ
+    ~LogScope() {
+        Log("Exiting scope.", LogSeverity::Debug);
+        PopPrefix();
+    }
+private:
+    /// @brief ログにプレフィックスを挿入
+    void PushPrefix(const std::source_location &location = std::source_location::current());
+    /// @brief ログからプレフィックスを削除
+    void PopPrefix();
+};
 
-/// @brief ログからタブを削除
-void RemoveTab();
-
-} // namespace KashipanEngine::Log
+} // namespace KashipanEngine

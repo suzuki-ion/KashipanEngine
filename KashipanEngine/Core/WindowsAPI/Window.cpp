@@ -2,6 +2,7 @@
 #include "Core/WindowsAPI.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include <cassert>
+#include "Debug/Logger.h"
 
 // 個別イベントハンドラ（デフォルト）
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/DestroyEvent.h"
@@ -15,15 +16,19 @@
 
 namespace KashipanEngine {
 
-Window::Window(const std::wstring& title,
+Window::Window(Passkey<WindowsAPI>,
+    WNDPROC windowProc,
+    const std::wstring& title,
     int32_t width,
     int32_t height,
     DWORD windowStyle,
     const std::wstring &iconPath) {
-    
+    LogScope scope;
     // ウィンドウの初期化を実行
-    bool result = InitializeWindow(title, width, height, windowStyle, iconPath);
+    bool result = InitializeWindow(windowProc, title, width, height, windowStyle, iconPath);
     assert(result && "Window initialization failed");
+    messages_.reserve(kMaxMessages);
+    eventHandlers_.reserve(kMaxMessages);
 
     using namespace WindowEventDefault;
     // 標準イベントを登録
@@ -37,18 +42,147 @@ Window::Window(const std::wstring& title,
     RegisterWindowEvent(std::make_unique<SizingEvent>());
 }
 
-std::unique_ptr<Window> Window::Factory::Create(const std::wstring &title, int32_t width, int32_t height, DWORD windowStyle, const std::wstring &iconPath) {
-    return std::unique_ptr<Window>(new Window(title, width, height, windowStyle, iconPath));
+void Window::Update(Passkey<WindowsAPI>) {
+    LogScope scope;
+    ProcessMessage();
+}
+
+std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam) {
+    LogScope scope;
+    messages_[msg] = { msg, wparam, lparam };
+    auto it = eventHandlers_.find(msg);
+    if (it != eventHandlers_.end()) {
+        return it->second->OnEvent(msg, wparam, lparam);
+    }
+    return std::nullopt;
 }
 
 Window::~Window() {
+    LogScope scope;
 }
 
-bool Window::InitializeWindow(const std::wstring& title,
+void Window::SetSizeChangeMode(SizeChangeMode sizeChangeMode) {
+    LogScope scope;
+    sizeChangeMode_ = sizeChangeMode;
+    
+    // ウィンドウスタイルの更新（必要に応じて）
+    if (descriptor_.hwnd) {
+        LONG style = GetWindowLong(descriptor_.hwnd, GWL_STYLE);
+        
+        switch (sizeChangeMode) {
+        case SizeChangeMode::None:
+            // サイズ変更不可
+            style &= ~(WS_SIZEBOX | WS_MAXIMIZEBOX);
+            break;
+        case SizeChangeMode::Normal:
+            // 自由変更
+            style |= (WS_SIZEBOX | WS_MAXIMIZEBOX);
+            break;
+        case SizeChangeMode::FixedAspect:
+            // アスペクト比固定（サイズ変更は可能）
+            style |= (WS_SIZEBOX | WS_MAXIMIZEBOX);
+            break;
+        }
+        
+        SetWindowLong(descriptor_.hwnd, GWL_STYLE, style);
+        SetWindowPos(descriptor_.hwnd, nullptr, 0, 0, 0, 0, 
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    }
+}
+
+void Window::SetWindowMode(WindowMode windowMode) {
+    LogScope scope;
+    if (windowMode_ == windowMode || !descriptor_.hwnd) {
+        return;
+    }
+    
+    windowMode_ = windowMode;
+    
+    switch (windowMode) {
+    case WindowMode::Window:
+        // ウィンドウモード
+        SetWindowLong(descriptor_.hwnd, GWL_STYLE, descriptor_.windowStyle);
+        ShowWindow(descriptor_.hwnd, SW_NORMAL);
+        AdjustWindowSize();
+        break;
+        
+    case WindowMode::FullScreen:
+        // フルスクリーンモード
+        SetWindowLong(descriptor_.hwnd, GWL_STYLE, WS_POPUP);
+        
+        // モニターサイズを取得
+        MONITORINFO monitorInfo = {};
+        monitorInfo.cbSize = sizeof(MONITORINFO);
+        GetMonitorInfo(MonitorFromWindow(descriptor_.hwnd, MONITOR_DEFAULTTOPRIMARY), &monitorInfo);
+        
+        SetWindowPos(descriptor_.hwnd, HWND_TOP,
+                     monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
+                     monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+                     monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                     SWP_FRAMECHANGED);
+        break;
+    }
+}
+
+void Window::SetWindowTitle(const std::wstring &title) {
+    LogScope scope;
+    titleW_ = title;
+    descriptor_.title = ConvertString(title);
+    
+    if (descriptor_.hwnd) {
+        SetWindowText(descriptor_.hwnd, titleW_.c_str());
+    }
+}
+
+void Window::SetWindowSize(int32_t width, int32_t height) {
+    LogScope scope;
+    size_.clientWidth = width;
+    size_.clientHeight = height;
+    
+    // アスペクト比の再計算
+    CalculateAspectRatio();
+    
+    // ウィンドウサイズの調整
+    AdjustWindowSize();
+}
+
+void Window::SetWindowPosition(int32_t x, int32_t y) {
+    LogScope scope;
+    if (descriptor_.hwnd) {
+        SetWindowPos(descriptor_.hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    }
+}
+
+void Window::RegisterWindowEvent(const std::unique_ptr<IWindowEvent> &eventHandler) {
+    LogScope scope;
+    UINT msg = eventHandler->kTargetMessage_;
+    eventHandlers_[msg] = eventHandler->Clone();
+    eventHandlers_[msg]->SetWindow(this);
+}
+
+void Window::UnregisterWindowEvent(UINT msg) {
+    LogScope scope;
+    eventHandlers_[msg] = nullptr;
+}
+
+const WindowMessage &Window::GetWindowMessage(UINT msg) const {
+    // const メンバはスコープログ生成しない
+    static const WindowMessage kEmptyMessage{ WM_NULL, 0, 0 };
+    auto it = messages_.find(msg);
+    if (it != messages_.end()) {
+        return it->second;
+    }
+    return kEmptyMessage;
+}
+
+bool Window::InitializeWindow(
+    WNDPROC windowProc,
+    const std::wstring &title,
     int32_t width,
     int32_t height,
     DWORD windowStyle,
     const std::wstring &iconPath) {
+    LogScope scope;
     // パラメータの保存
     titleW_ = title;
     descriptor_.title = ConvertString(title);
@@ -62,7 +196,7 @@ bool Window::InitializeWindow(const std::wstring& title,
 
     // ウィンドウクラスの設定
     descriptor_.wc = {};
-    descriptor_.wc.lpfnWndProc = WindowsAPI::WindowProc;       // ウィンドウプロシージャ
+    descriptor_.wc.lpfnWndProc = windowProc;                   // ウィンドウプロシージャ
     descriptor_.wc.lpszClassName = titleW_.c_str();            // ウィンドウクラス名
     descriptor_.wc.hInstance = descriptor_.hInstance;          // インスタンスハンドル
     descriptor_.wc.hCursor = LoadCursor(nullptr, IDC_ARROW);   // カーソル
@@ -98,7 +232,7 @@ bool Window::InitializeWindow(const std::wstring& title,
     // クライアント領域のサイズからウィンドウサイズを計算
     size_.clientRect = { 0, 0, size_.clientWidth, size_.clientHeight };
     size_.windowRect = size_.clientRect;
-    
+
     // ウィンドウスタイルに応じてサイズを調整
     AdjustWindowRect(&size_.windowRect, descriptor_.windowStyle, FALSE);
 
@@ -129,127 +263,22 @@ bool Window::InitializeWindow(const std::wstring& title,
     ShowWindow(descriptor_.hwnd, SW_SHOW);
     UpdateWindow(descriptor_.hwnd);
 
-    // 状態の更新
-    descriptor_.isVisible = true;
-    descriptor_.isActive = true;
-
     return true;
 }
 
-bool Window::ProcessMessage() {
+void Window::ProcessMessage() {
+    LogScope scope;
     MSG msg{};
-    
-    // メッセージがある場合は処理
+
+    // メッセージをウィンドウプロシージャに送信
     while (PeekMessage(&msg, descriptor_.hwnd, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) {
-            return false;
-        }
-        
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    
-    return true;
-}
-
-void Window::SetSizeChangeMode(SizeChangeMode sizeChangeMode) {
-    sizeChangeMode_ = sizeChangeMode;
-    
-    // ウィンドウスタイルの更新（必要に応じて）
-    if (descriptor_.hwnd) {
-        LONG style = GetWindowLong(descriptor_.hwnd, GWL_STYLE);
-        
-        switch (sizeChangeMode) {
-        case SizeChangeMode::None:
-            // サイズ変更不可
-            style &= ~(WS_SIZEBOX | WS_MAXIMIZEBOX);
-            break;
-        case SizeChangeMode::Normal:
-            // 自由変更
-            style |= (WS_SIZEBOX | WS_MAXIMIZEBOX);
-            break;
-        case SizeChangeMode::FixedAspect:
-            // アスペクト比固定（サイズ変更は可能）
-            style |= (WS_SIZEBOX | WS_MAXIMIZEBOX);
-            break;
-        }
-        
-        SetWindowLong(descriptor_.hwnd, GWL_STYLE, style);
-        SetWindowPos(descriptor_.hwnd, nullptr, 0, 0, 0, 0, 
-                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-    }
-}
-
-void Window::SetWindowMode(WindowMode windowMode) {
-    if (windowMode_ == windowMode || !descriptor_.hwnd) {
-        return;
-    }
-    
-    windowMode_ = windowMode;
-    
-    switch (windowMode) {
-    case WindowMode::Window:
-        // ウィンドウモード
-        SetWindowLong(descriptor_.hwnd, GWL_STYLE, descriptor_.windowStyle);
-        ShowWindow(descriptor_.hwnd, SW_NORMAL);
-        AdjustWindowSize();
-        break;
-        
-    case WindowMode::FullScreen:
-        // フルスクリーンモード
-        SetWindowLong(descriptor_.hwnd, GWL_STYLE, WS_POPUP);
-        
-        // モニターサイズを取得
-        MONITORINFO monitorInfo = {};
-        monitorInfo.cbSize = sizeof(MONITORINFO);
-        GetMonitorInfo(MonitorFromWindow(descriptor_.hwnd, MONITOR_DEFAULTTOPRIMARY), &monitorInfo);
-        
-        SetWindowPos(descriptor_.hwnd, HWND_TOP,
-                     monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
-                     monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-                     monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
-                     SWP_FRAMECHANGED);
-        break;
-    }
-}
-
-void Window::SetWindowTitle(const std::wstring &title) {
-    titleW_ = title;
-    descriptor_.title = ConvertString(title);
-    
-    if (descriptor_.hwnd) {
-        SetWindowText(descriptor_.hwnd, titleW_.c_str());
-    }
-}
-
-void Window::SetWindowSize(int32_t width, int32_t height) {
-    size_.clientWidth = width;
-    size_.clientHeight = height;
-    
-    // アスペクト比の再計算
-    CalculateAspectRatio();
-    
-    // ウィンドウサイズの調整
-    AdjustWindowSize();
-}
-
-void Window::SetWindowPosition(int32_t x, int32_t y) {
-    if (descriptor_.hwnd) {
-        SetWindowPos(descriptor_.hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    }
-}
-
-void Window::RegisterWindowEvent(const std::unique_ptr<IWindowEvent> &eventHandler) {
-    UINT msg = eventHandler->kTargetMessage_;
-    eventHandlers_[msg] = eventHandler->Clone();
-    eventHandlers_[msg]->SetWindow(this);
-}
-
-void Window::UnregisterWindowEvent(UINT msg) {
-    eventHandlers_[msg] = nullptr;
 }
 
 void Window::Cleanup() {
+    LogScope scope;
     if (descriptor_.hwnd) {
         DestroyWindow(descriptor_.hwnd);
         descriptor_.hwnd = nullptr;
@@ -258,12 +287,10 @@ void Window::Cleanup() {
     if (descriptor_.hInstance) {
         UnregisterClass(descriptor_.wc.lpszClassName, descriptor_.hInstance);
     }
-    
-    descriptor_.isVisible = false;
-    descriptor_.isActive = false;
 }
 
 void Window::CalculateAspectRatio() {
+    LogScope scope;
     if (size_.clientHeight > 0) {
         size_.aspectRatio = static_cast<float>(size_.clientWidth) / static_cast<float>(size_.clientHeight);
     } else {
@@ -272,6 +299,7 @@ void Window::CalculateAspectRatio() {
 }
 
 void Window::AdjustWindowSize() {
+    LogScope scope;
     if (!descriptor_.hwnd) {
         return;
     }
@@ -284,23 +312,6 @@ void Window::AdjustWindowSize() {
     SetWindowPos(descriptor_.hwnd, nullptr, 0, 0, 
                  rect.right - rect.left, rect.bottom - rect.top,
                  SWP_NOMOVE | SWP_NOZORDER);
-}
-
-std::optional<LRESULT> Window::HandleEvent(UINT msg, WPARAM wparam, LPARAM lparam) {
-    auto it = eventHandlers_.find(msg);
-    if (it != eventHandlers_.end() && it->second) {
-        return it->second->OnEvent(msg, wparam, lparam);
-    }
-    return std::nullopt;
-}
-
-std::optional<LRESULT> Window::ProcedureHandler::HandleWindowEvent(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-    // ウィンドウハンドルからWindowインスタンスを取得
-    Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-    if (window) {
-        return window->HandleEvent(msg, wparam, lparam);
-    }
-    return std::nullopt;
 }
 
 } // namespace KashipanEngine

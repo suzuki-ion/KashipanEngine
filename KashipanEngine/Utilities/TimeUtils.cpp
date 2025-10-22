@@ -55,14 +55,14 @@ int GetNowTimeMinute() {
     return timeOfDay.minutes().count();
 }
 
-int GetNowTimeSecond() {
+long long GetNowTimeSecond() {
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto timeOfDay = std::chrono::hh_mm_ss{ std::chrono::duration_cast<std::chrono::seconds>(localTime - std::chrono::floor<std::chrono::days>(localTime)) };
     return timeOfDay.seconds().count();
 }
 
-int GetNowTimeMillisecond() {
+long long GetNowTimeMillisecond() {
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto timeOfDay = std::chrono::hh_mm_ss{ std::chrono::duration_cast<std::chrono::milliseconds>(localTime - std::chrono::floor<std::chrono::days>(localTime)) };

@@ -5,11 +5,19 @@
 namespace KashipanEngine {
 namespace WindowEventDefault {
 
-std::optional<LRESULT> CloseEvent::OnEvent(UINT msg, WPARAM /*wparam*/, LPARAM /*lparam*/) {
-    if (msg != kTargetMessage_) return std::nullopt;
+std::optional<LRESULT> CloseEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM /*lparam*/) {
     auto &desc = GetWindowDescriptorRef();
-    desc.isVisible = false;
-    ::DestroyWindow(desc.hwnd);
+    // ウィンドウ終了確認ダイアログを表示
+    int result = MessageBoxA(
+        desc.hwnd,
+        "終了しますか？",
+        "確認",
+        MB_YESNO | MB_ICONQUESTION
+    );
+    if (result == IDYES) {
+        DestroyWindow(desc.hwnd);
+    }
+
     return 0;
 }
 

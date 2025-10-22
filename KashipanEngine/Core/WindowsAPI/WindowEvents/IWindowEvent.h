@@ -12,21 +12,10 @@ struct WindowSize;
 
 /// @brief ウィンドウイベント用のインターフェース
 class IWindowEvent {
-    friend class Window;
-    Window *window_ = nullptr;
-
 public:
-    IWindowEvent(UINT targetMessage) : kTargetMessage_(targetMessage) {}
     virtual ~IWindowEvent() = default;
-
-    /// @brief イベントを検知したときの処理
-    /// @return ハンドル済みの場合は結果を返す。未処理の場合はstd::nulloptを返す。
-    virtual std::optional<LRESULT> OnEvent(UINT msg, WPARAM wparam, LPARAM lparam) = 0;
-
-    /// @brief 自身のクローンを生成
-    virtual std::unique_ptr<IWindowEvent> Clone() = 0;
-
 protected:
+    IWindowEvent(UINT targetMessage) : kTargetMessage_(targetMessage) {}
     const UINT kTargetMessage_ = 0;
 
     /// @brief ウィンドウ取得
@@ -43,7 +32,16 @@ protected:
     void RecalculateAspectRatio();
 
 private:
+    friend class Window;
+    Window *window_ = nullptr;
     void SetWindow(Window *window) { window_ = window; }
+
+    /// @brief イベントを検知したときの処理
+    /// @return ハンドル済みの場合は結果を返す。未処理の場合はstd::nulloptを返す。
+    virtual std::optional<LRESULT> OnEvent(UINT msg, WPARAM wparam, LPARAM lparam) = 0;
+
+    /// @brief 自身のクローンを生成
+    virtual std::unique_ptr<IWindowEvent> Clone() = 0;
 };
 
 } // namespace KashipanEngine

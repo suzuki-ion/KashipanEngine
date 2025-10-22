@@ -5,10 +5,9 @@
 namespace KashipanEngine {
 namespace WindowEventDefault {
 
-std::optional<LRESULT> ActivateEvent::OnEvent(UINT msg, WPARAM wparam, LPARAM /*lparam*/) {
-    if (msg != kTargetMessage_) return std::nullopt;
-    auto &desc = GetWindowDescriptorRef();
-    desc.isActive = (LOWORD(wparam) != WA_INACTIVE);
+std::optional<LRESULT> ActivateEvent::OnEvent(UINT msg, WPARAM /*wparam*/, LPARAM lparam) {
+    static_cast<void>(msg);
+    static_cast<void>(lparam);
     return std::nullopt;
 }
 

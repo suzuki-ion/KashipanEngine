@@ -1,0 +1,8 @@
+﻿{
+	"engine.name": "Kashipan Engine",
+	"engine.window.title": "Kashipan Engine",
+	"engine.window.dialog.title.close": "終了確認",
+	"engine.window.dialog.message.close": "本当に終了しますか？",
+	"engine.window.dialog.button.yes": "はい",
+	"engine.window.dialog.button.no": "いいえ"
+}

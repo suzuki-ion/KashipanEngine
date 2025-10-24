@@ -1,4 +1,5 @@
 ﻿{
+	"LogSettingsPath": "Assets/KashipanEngine/LogSettings.json",
 	"version": "1.0.0",
 	"window": {
 		"initialWindowTitle": "Kashipan Engine",
@@ -17,5 +18,8 @@
 		"defaultClearColor": [ 0.0, 0.0, 0.0, 1.0 ],
 		"enableVSync": true,
 		"maxFPS": 60
+	},
+	"translations": {
+		"ja-JP": "Assets/KashipanEngine/Locales/ja-JP.json"
 	}
 }

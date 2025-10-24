@@ -2,9 +2,15 @@
 #include <vector>
 #include <string>
 #include <source_location>
-#include "Debug/Logger/LogSettings.h"
+#include "Debug/Logger/LogType.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
+
+/// @brief ロガー初期化
+void InitializeLogger(PasskeyForGameEngineMain);
+/// @brief ロガー終了
+void ShutdownLogger(PasskeyForGameEngineMain);
 
 /// @brief ログ出力
 /// @param logText 出力するログテキスト
@@ -20,11 +26,9 @@ public:
     /// @brief コンストラクタ
     LogScope(const std::source_location &location = std::source_location::current()) {
         PushPrefix(location);
-        Log("Entering scope.", LogSeverity::Debug);
     }
     /// @brief デストラクタ
     ~LogScope() {
-        Log("Exiting scope.", LogSeverity::Debug);
         PopPrefix();
     }
 private:

@@ -1,0 +1,38 @@
+﻿{
+	"localeCode": "ja-JP",
+	"localeName": "日本語",
+	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansJP-Regular.ttf",
+	"translations": {
+		"engine.name": "Kashipan Engine",
+		"engine.window.title": "Kashipan Engine",
+		"engine.window.dialog.title.close": "終了確認",
+		"engine.window.dialog.message.close": "本当に終了しますか？",
+		"engine.window.dialog.button.yes": "はい",
+		"engine.window.dialog.button.no": "いいえ",
+
+		"engine.log.translations.loaded": "翻訳ファイルが正常に読み込まれました。言語：",
+		
+		"engine.log.initialize.start": "エンジン初期化開始",
+		"engine.log.initialize.end": "エンジン初期化完了",
+		"engine.log.shutdown.start": "エンジン終了開始",
+		"engine.log.shutdown.end": "エンジン終了完了",
+		
+		"engine.log.instance.creating": "インスタンス作成中：",
+		"engine.log.instance.created": "インスタンス作成：",
+		"engine.log.instance.destroying": "インスタンス破棄中：",
+		"engine.log.instance.destroyed": "インスタンス破棄：",
+		"engine.log.component.added": "コンポーネント追加：",
+		"engine.log.component.removed": "コンポーネント削除：",
+
+		"engine.settings.load.success": "エンジンの設定が正常に読み込まれました。ファイルパス：",
+		"engine.settings.load.failed": "エンジンの設定の読み込みに失敗しました。デフォルトの設定を使用します。ファイルパス：",
+		"engine.settings.save.success": "エンジンの設定が正常に保存されました。ファイルパス：",
+		"engine.settings.save.failed": "エンジンの設定の保存に失敗しました。ファイルパス：",
+		"engine.settings.invalid.format": "エンジンの設定の形式が無効です。デフォルトの設定を使用します。ファイルパス：",
+
+		"engine.resource.load.texture.failed": "テクスチャの読み込みに失敗しました。ファイルパス：",
+		"engine.resource.load.sound.failed": "サウンドの読み込みに失敗しました。ファイルパス：",
+		"engine.resource.load.model.failed": "モデルの読み込みに失敗しました。ファイルパス：",
+		"engine.resource.limit.exceeded": "リソースの上限に達しました。タイプ："
+	}
+}

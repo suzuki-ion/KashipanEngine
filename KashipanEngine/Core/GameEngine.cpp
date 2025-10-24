@@ -1,5 +1,6 @@
 #include "GameEngine.h"
 #include "Utilities/FileIO/Json.h"
+#include "Utilities/Translation.h"
 #include "Debug/Logger.h"
 
 namespace KashipanEngine {
@@ -16,11 +17,9 @@ int32_t sInitialWindowHeight = 720;
 std::string sInitialWindowIconPath = "";
 } // namespace
 
-GameEngine::~GameEngine() {}
-
 GameEngine::GameEngine(const std::string &engineSettingsPath) {
-    LogScope scope; // 正しい関数名を出すためローカルで生成
-    Log("Creating GameEngine instance.");
+    LogScope scope;
+    Log(GetTranslationText("engine.log.instance.creating") + "GameEngine");
     if (sIsEngineInitialized) {
         throw std::runtime_error("GameEngine instance already exists.");
     }
@@ -41,7 +40,20 @@ GameEngine::GameEngine(const std::string &engineSettingsPath) {
         sInitialWindowWidth,
         sInitialWindowHeight);
 
-    Log("Created GameEngine instance.");
+    Log(GetTranslationText("engine.log.instance.created") + "GameEngine");
+}
+
+GameEngine::~GameEngine() {
+    LogScope scope;
+    Log(GetTranslationText("engine.log.instance.destroying") + "GameEngine");
+    if (mainWindow_) {
+        windowsAPI_->DestroyWindowInstance(mainWindow_);
+        mainWindow_ = nullptr;
+    }
+    directXCommon_.reset();
+    windowsAPI_.reset();
+    sIsEngineInitialized = false;
+    Log(GetTranslationText("engine.log.instance.destroyed") + "GameEngine");
 }
 
 void GameEngine::ParseEngineSettings(const std::string &engineSettingsPath) {

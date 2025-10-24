@@ -1,5 +1,7 @@
 #include "EngineSettings.h"
+#include "Debug/Logger.h"
 #include "Utilities/FileIO/Json.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace {
@@ -7,10 +9,20 @@ EngineSettings sEngineSettings;
 } // namespace
 
 const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::string &engineSettingsPath) {
+    LogScope scope;
     Json json = LoadJson(engineSettingsPath);
     if (json.empty()) {
+        Log("Failed engine settings file: " + engineSettingsPath, LogSeverity::Warning);
+        Log("Using default engine settings.", LogSeverity::Info);
         return sEngineSettings;
     }
+    //--------- エンジンの翻訳ファイル設定 ---------//
+    Json translationsJson = json.value("translations", Json::object());
+    for (auto &[lang, pathJson] : translationsJson.items()) {
+        sEngineSettings.translations.languageFilePaths[lang] = pathJson.get<std::string>();
+        LoadTranslationFile(pathJson.get<std::string>());
+    }
+
     //--------- ウィンドウのデフォルト設定 ---------//
     Json windowJson = json.value("window", Json::object());
     sEngineSettings.window.initialWindowTitle = windowJson.value("initialWindowTitle", sEngineSettings.window.initialWindowTitle);
@@ -42,10 +54,12 @@ const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::st
     sEngineSettings.rendering.enableVSync = renderingJson.value("enableVSync", sEngineSettings.rendering.enableVSync);
     sEngineSettings.rendering.maxFPS = renderingJson.value("maxFPS", sEngineSettings.rendering.maxFPS);
 
+    Log(GetTranslationText("engine.settings.load.success") + ": " + engineSettingsPath, LogSeverity::Info);
     return sEngineSettings;
 }
 
 const EngineSettings &GetEngineSettings() {
+    LogScope scope;
     return sEngineSettings;
 }
 

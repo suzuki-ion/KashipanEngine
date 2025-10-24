@@ -1,0 +1,15 @@
+﻿{
+	"enableFileLogging": true,
+	"enableConsoleLogging": true,
+	"nestedTabs": "    ",
+	"outputDirectory": "Logs",
+	"logFileFormat": "${BuildType} ${Year}-${Month}-${Day}_${Hour}-${Minute}-${Second}",
+	"logMessageFormat": "[${Year}/${Month}/${Day} ${Hour}:${Minute}:${Second}] ${NestedTabs}└${#if namespace || class || function}[ ${namespace}${#if namespace && class}::${/if}${class}${#if class && function}::${/if}${function} ]${/if}: [${Severity}] ${Message}",
+	"logLevelsEnabled": {
+		"Debug": true,
+		"Info": true,
+		"Warning": true,
+		"Error": true,
+		"Critical": true
+	}
+}

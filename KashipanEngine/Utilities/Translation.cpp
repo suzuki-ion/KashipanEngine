@@ -1,6 +1,7 @@
 #include "Translation.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Json.h"
+#include "Debug/Logger.h"
 #include <Windows.h>
 #include <unordered_map>
 
@@ -47,6 +48,7 @@ private:
 bool LoadTranslationFile(const std::string &filePath) {
     Json json = LoadJson(filePath);
     if (json.empty()) {
+        Log("Failed to load translation file: " + filePath, LogSeverity::Error);
         return false;
     }
     // 必要な情報が存在するか確認
@@ -54,21 +56,37 @@ bool LoadTranslationFile(const std::string &filePath) {
         !json.contains("localeName") ||
         !json.contains("fontPath") ||
         !json.contains("translations")) {
+        Log("Translation file is missing required fields: " + filePath, LogSeverity::Error);
         return false;
     }
+    LanguageData langData;
+    langData.langCode = json["localeCode"].get<std::string>();
+    langData.langName = json["localeName"].get<std::string>();
+    langData.fontPath = json["fontPath"].get<std::string>();
+    // 翻訳データの読み込み
+    for (auto& [key, value] : json["translations"].items()) {
+        langData.translations[key] = value.get<std::string>();
+    }
+
+    Log(GetTranslationText("engine.log.translations.loaded") + langData.langName, LogSeverity::Info);
+    sLanguageDatas[langData.langCode] = std::move(langData);
     return true;
 }
 
 const std::string &GetTranslationText(const std::string &lang, const std::string &key) {
-    static const std::string emptyString = "";
+    std::string useLang = lang;
     auto langIt = sLanguageDatas.find(lang);
     if (langIt == sLanguageDatas.end()) {
-        return emptyString;
+        useLang = "en-US";
+        langIt = sLanguageDatas.find(useLang);
+        if (langIt == sLanguageDatas.end()) {
+            return key;
+        }
     }
     const auto &translations = langIt->second.translations;
     auto transIt = translations.find(key);
     if (transIt == translations.end()) {
-        return emptyString;
+        return key;
     }
     return transIt->second;
 }

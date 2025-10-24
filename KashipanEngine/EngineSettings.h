@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -26,12 +27,15 @@ struct EngineSettings {
         bool enableVSync = true;
         int32_t maxFPS = 60;
     };
+    //--------- エンジンの翻訳ファイル設定 ---------//
+    struct Translations {
+        std::unordered_map<std::string, std::string> languageFilePaths;
+    };
 
-    /// @brief コンストラクタ
-    /// @param json エンジン設定JSONデータ
     Window window;
     Limits limits;
     Rendering rendering;
+    Translations translations;
 };
 
 const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::string &engineSettingsPath = "EngineSettings.json");

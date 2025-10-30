@@ -2,16 +2,16 @@
 #include <cctype>
 
 namespace KashipanEngine {
-namespace detail {
+namespace {
 
-static std::string Trim(std::string_view sv) {
+std::string Trim(std::string_view sv) {
     size_t b = 0, e = sv.size();
     while (b < e && std::isspace(static_cast<unsigned char>(sv[b]))) ++b;
     while (e > b && std::isspace(static_cast<unsigned char>(sv[e - 1]))) --e;
     return std::string(sv.substr(b, e - b));
 }
 
-static void CollapseSpaces(std::string &s) {
+void CollapseSpaces(std::string &s) {
     std::string out;
     out.reserve(s.size());
     bool inSpace = false;
@@ -29,7 +29,7 @@ static void CollapseSpaces(std::string &s) {
     s = Trim(out);
 }
 
-static void ReplaceAll(std::string &s, std::string_view from, std::string_view to) {
+void ReplaceAll(std::string &s, std::string_view from, std::string_view to) {
     if (from.empty()) return;
     size_t pos = 0;
     while ((pos = s.find(from, pos)) != std::string::npos) {
@@ -38,11 +38,11 @@ static void ReplaceAll(std::string &s, std::string_view from, std::string_view t
     }
 }
 
-static void EraseToken(std::string &s, std::string_view token) {
+void EraseToken(std::string &s, std::string_view token) {
     ReplaceAll(s, token, "");
 }
 
-static std::vector<std::string> SplitByCommaKeepingTemplates(std::string_view sv) {
+std::vector<std::string> SplitByCommaKeepingTemplates(std::string_view sv) {
     std::vector<std::string> result;
     int angle = 0;
     int paren = 0;
@@ -71,7 +71,7 @@ static std::vector<std::string> SplitByCommaKeepingTemplates(std::string_view sv
     return result;
 }
 
-static std::vector<std::string> SplitScopeKeepingTemplates(std::string_view sv) {
+std::vector<std::string> SplitScopeKeepingTemplates(std::string_view sv) {
     std::vector<std::string> parts;
     int angle = 0;
     size_t tokenBegin = 0;
@@ -97,7 +97,7 @@ static std::vector<std::string> SplitScopeKeepingTemplates(std::string_view sv) 
     return filtered;
 }
 
-static bool LooksLikeClassToken(std::string_view tok) {
+bool LooksLikeClassToken(std::string_view tok) {
     if (tok.find('<') != std::string::npos) return true;
     if (!tok.empty() && std::isalpha(static_cast<unsigned char>(tok.front()))) {
         if (std::isupper(static_cast<unsigned char>(tok.front()))) return true;
@@ -106,18 +106,16 @@ static bool LooksLikeClassToken(std::string_view tok) {
     return false;
 }
 
-static void StripTypeKeyPrefixes(std::string &s) {
+void StripTypeKeyPrefixes(std::string &s) {
     ReplaceAll(s, "class ", "");
     ReplaceAll(s, "struct ", "");
     ReplaceAll(s, "enum ", "");
     ReplaceAll(s, "union ", "");
 }
 
-} // namespace detail
+} // namespace
 
 FunctionSignatureInfo ParseFunctionSignature(std::string sig) {
-    using namespace detail;
-
     FunctionSignatureInfo out{};
     out.rawSignature = sig;
 

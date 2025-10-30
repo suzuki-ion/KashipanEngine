@@ -1,8 +1,14 @@
 #pragma once
+#include "Utilities/Passkeys.h"
 #include <string>
 
 namespace KashipanEngine {
 
+class GameEngine;
+/// @brief デルタタイムの更新（GameEngine専用）
+void UpdateDeltaTime(Passkey<GameEngine>);
+
+/// @brief 時間記録構造体
 struct TimeRecord {
     int year;
     int month;
@@ -42,9 +48,9 @@ int GetGameRuntimeHour();
 /// @brief ゲームの実行開始からの経過時間（分）を取得する
 int GetGameRuntimeMinute();
 /// @brief ゲームの実行開始からの経過時間（秒）を取得する
-int GetGameRuntimeSecond();
+long long GetGameRuntimeSecond();
 /// @brief ゲームの実行開始からの経過時間（ミリ秒）を取得する
-int GetGameRuntimeMillisecond();
+long long GetGameRuntimeMillisecond();
 
 /// @brief ゲームの実行開始からの経過時間を取得する
 TimeRecord GetGameRuntime();

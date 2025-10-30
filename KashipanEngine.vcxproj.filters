@@ -371,10 +371,17 @@
     <ClInclude Include="KashipanEngine\Utilities\SourceLocation.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
-    <None Include="Assets\KashipanEngine\LogSettings.json" />
-    <None Include="Assets\KashipanEngine\EngineSettings.json" />
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -5,7 +5,10 @@
 		"initialWindowTitle": "Kashipan Engine",
 		"initialWindowWidth": 1280,
 		"initialWindowHeight": 720,
-		"initialWindowIconPath": ""
+		"initialWindowIconPath": "",
+		"initialWindowStyle": [
+			"WS_OVERLAPPEDWINDOW"
+		]
 	},
 	"limits": {
 		"maxTextures": 2048,

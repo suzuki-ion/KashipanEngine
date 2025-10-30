@@ -11,6 +11,7 @@ struct EngineSettings {
         std::string initialWindowTitle = "KashipanEngine";
         int32_t initialWindowWidth = 1280;
         int32_t initialWindowHeight = 720;
+        DWORD initialWindowStyle = 0;
         std::string initialWindowIconPath = "";
     };
     //--------- エンジンリソースの制限設定 ---------//

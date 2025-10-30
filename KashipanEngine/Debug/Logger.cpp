@@ -15,7 +15,6 @@
 #include <cctype>
 
 namespace KashipanEngine {
-
 namespace {
 bool sLoggerInitialized = false;
 std::ofstream sLogFile;

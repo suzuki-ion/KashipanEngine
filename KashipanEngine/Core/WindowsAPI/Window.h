@@ -15,8 +15,9 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
 class WindowsAPI;
-class DirectX;
+class DirectXCommon;
 
 /// @brief サイズ変更モード
 enum class SizeChangeMode {
@@ -34,26 +35,41 @@ enum class WindowMode {
 /// @brief ウィンドウ用クラス
 class Window final {
     friend class IWindowEvent;
+    static inline WindowsAPI *sWindowsAPI = nullptr;
+    static inline DirectXCommon *sDirectXCommon = nullptr;
+
 public:
-    /// @brief コンストラクタ（WindowsAPI専用）
-    /// @param windowProc ウィンドウプロシージャ
+    static void SetWindowsAPI(Passkey<GameEngine>, WindowsAPI *windowsAPI) { sWindowsAPI = windowsAPI; }
+    static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *directXCommon) { sDirectXCommon = directXCommon; }
+    static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
+
+    /// @brief コンストラクタ（Window限定）
     /// @param title ウィンドウタイトル
     /// @param width ウィンドウ幅
     /// @param height ウィンドウ高さ
     /// @param windowStyle ウィンドウスタイル
     /// @param iconPath アイコンパス
-    Window(Passkey<WindowsAPI>,
-        WNDPROC windowProc,
+    Window(Passkey<Window>,
         const std::wstring &title = L"GameWindow",
         int32_t width = 1280,
         int32_t height = 720,
         DWORD windowStyle = WS_OVERLAPPEDWINDOW,
         const std::wstring &iconPath = L"");
     ~Window();
-    Window(const Window &) = delete;
-    Window &operator=(const Window &) = delete;
-    Window(Window &&) = delete;
-    Window &operator=(Window &&) = delete;
+    
+    /// @brief ウィンドウ作成
+    /// @param title ウィンドウタイトル
+    /// @param width ウィンドウ幅
+    /// @param height ウィンドウ高さ
+    /// @param style ウィンドウスタイル
+    /// @param iconPath アイコンパス
+    /// @return 作成されたウィンドウへのポインタ。失敗した場合はnullptr
+    static Window *Create(const std::string &title = "",
+        int32_t width = 0,
+        int32_t height = 0,
+        DWORD style = 0,
+        const std::string &iconPath = "");
+    void Destroy();
 
     /// @brief ウィンドウ更新処理
     void Update(Passkey<WindowsAPI>);
@@ -103,6 +119,8 @@ public:
     /// @brief アスペクト比を取得する
     float GetAspectRatio() const noexcept { return size_.aspectRatio; }
 
+    /// @brief 指定のウィンドウスタイルを持っているかどうかをチェック
+    bool HasWindowStyle(DWORD style) const noexcept { return (descriptor_.windowStyle & style) != 0; }
     /// @brief 指定のメッセージが来ているかどうかをチェック
     bool HasMessage(UINT msg) const { return messages_.find(msg) != messages_.end(); }
     /// @brief 指定のメッセージの情報を取得
@@ -125,6 +143,16 @@ public:
 
 private:
     static constexpr size_t kMaxMessages = 512;
+    static inline std::string windowDefaultTitle = "KashipanEngine";
+    static inline int32_t windowDefaultWidth = 1280;
+    static inline int32_t windowDefaultHeight = 720;
+    static inline DWORD windowDefaultStyle = WS_OVERLAPPEDWINDOW;
+    static inline std::string windowDefaultIconPath = "";
+
+    Window(const Window &) = delete;
+    Window &operator=(const Window &) = delete;
+    Window(Window &&) = delete;
+    Window &operator=(Window &&) = delete;
 
     /// @brief ウィンドウの初期化
     /// @param windowProc ウィンドウプロシージャ

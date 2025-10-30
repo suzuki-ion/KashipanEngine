@@ -31,6 +31,9 @@ public:
     /// @brief 指定キーの現在値を取得（未設定時は空文字）
     const std::string &Get(std::string_view key) const;
 
+    /// @brief 指定のプレースホルダーがテンプレート内に存在するか
+    bool HasPlaceholder(std::string_view key) const noexcept;
+
     /// @brief 値の設定（基本型や ostream へ出力可能な型をサポート）
     template <class T>
     void Set(std::string_view key, T &&value) {

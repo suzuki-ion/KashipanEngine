@@ -164,6 +164,10 @@
     <ClInclude Include="KashipanEngine\Debug\Logger\UserType.h" />
     <ClInclude Include="KashipanEngine\Debug\Logger\WriteLog.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h" />
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h" />
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\IComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Capsule3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Mesh.h" />
@@ -214,11 +218,6 @@
     <ClInclude Include="KashipanEngine\KashipanEngine.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\KashipanEngine\EngineSettings.json" />
-    <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
-    <None Include="Assets\KashipanEngine\LogSettings.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

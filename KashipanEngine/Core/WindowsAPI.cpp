@@ -9,7 +9,7 @@ namespace KashipanEngine {
 
 namespace {
 // ウィンドウインスタンスのマップ
-std::unordered_map<HWND, std::unique_ptr<Window>> sWindowMap;
+std::unordered_map<HWND, Window*> sWindowMap;
 } // namespace
 
 LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -19,7 +19,7 @@ LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     if (it == sWindowMap.end()) {
         return DefWindowProc(hwnd, msg, wparam, lparam);
     }
-    Window *window = it->second.get();
+    Window *window = it->second;
     assert(window && "Window instance is null");
     // ウィンドウインスタンスにイベントを処理させる
     auto result = window->HandleEvent(Passkey<WindowsAPI>{}, msg, wparam, lparam);
@@ -29,21 +29,10 @@ LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-WindowsAPI::WindowsAPI(Passkey<GameEngine>, const std::string &defaultTitle,
-    int32_t defaultWidth, int32_t defaultHeight, DWORD defaultWindowStyle,
-    const std::string &defaultIconPath) {
-    LogScope scope;
-    defaultTitle_ = defaultTitle;
-    defaultWidth_ = defaultWidth;
-    defaultHeight_ = defaultHeight;
-    defaultWindowStyle_ = defaultWindowStyle;
-    defaultIconPath_ = defaultIconPath;
-}
+WindowsAPI::WindowsAPI(Passkey<GameEngine>) {}
 
 WindowsAPI::~WindowsAPI() {
     LogScope scope;
-    // すべてのウィンドウを破棄
-    sWindowMap.clear();
 }
 
 void WindowsAPI::Update(Passkey<GameEngine>) {
@@ -54,48 +43,29 @@ void WindowsAPI::Update(Passkey<GameEngine>) {
     }
 }
 
-Window *WindowsAPI::CreateWindowInstance(const std::string &title,
-    int32_t width, int32_t height, DWORD style,
-    const std::string &iconPath) {
+bool WindowsAPI::RegisterWindow(Passkey<Window>, Window *window) {
     LogScope scope;
-    // パラメータの設定
-    std::string windowTitle = title.empty() ? defaultTitle_ : title;
-    int32_t windowWidth = (width <= 0) ? defaultWidth_ : width;
-    int32_t windowHeight = (height <= 0) ? defaultHeight_ : height;
-    DWORD windowStyle = (style == 0) ? defaultWindowStyle_ : style;
-    std::string windowIconPath = iconPath.empty() ? defaultIconPath_ : iconPath;
-
-    // ウィンドウインスタンスの作成
-    std::unique_ptr<Window> window = std::make_unique<Window>(
-        Passkey<WindowsAPI>{},
-        WindowProc,
-        ConvertString(windowTitle),
-        windowWidth,
-        windowHeight,
-        windowStyle,
-        ConvertString(windowIconPath)
-    );
-    if (!window->GetWindowHandle()) {
-        return nullptr;
-    }
-
-    // ウィンドウマップに登録
-    HWND hwnd = window->GetWindowHandle();
-    sWindowMap[hwnd] = std::move(window);
-    return sWindowMap[hwnd].get();
-}
-
-bool WindowsAPI::DestroyWindowInstance(Window *window) {
-    LogScope scope;
-    if (!window) {
-        return false;
-    }
+    assert(window && "Window instance is null");
     HWND hwnd = window->GetWindowHandle();
     if (sWindowMap.find(hwnd) != sWindowMap.end()) {
-        sWindowMap.erase(hwnd);
-        return true;
+        Log("Window is already registered.", LogSeverity::Warning);
+        return false;
     }
-    return false;
+    sWindowMap[hwnd] = window;
+    return true;
+}
+
+bool WindowsAPI::UnregisterWindow(Passkey<Window>, Window *window) {
+    LogScope scope;
+    assert(window && "Window instance is null");
+    HWND hwnd = window->GetWindowHandle();
+    auto it = sWindowMap.find(hwnd);
+    if (it == sWindowMap.end()) {
+        Log("Window is not registered.", LogSeverity::Warning);
+        return false;
+    }
+    sWindowMap.erase(it);
+    return true;
 }
 
 } // namespace KashipanEngine

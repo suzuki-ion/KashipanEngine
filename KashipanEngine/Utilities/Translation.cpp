@@ -68,7 +68,8 @@ bool LoadTranslationFile(const std::string &filePath) {
         langData.translations[key] = value.get<std::string>();
     }
 
-    Log(GetTranslationText("engine.log.translations.loaded") + langData.langName, LogSeverity::Info);
+    // 安全版でログに出力（未ロード時の参照寿命問題を回避）
+    Log(Translation("engine.log.translations.loaded") + langData.langName, LogSeverity::Info);
     sLanguageDatas[langData.langCode] = std::move(langData);
     return true;
 }

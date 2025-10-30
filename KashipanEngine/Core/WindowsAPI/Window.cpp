@@ -16,16 +16,33 @@
 
 namespace KashipanEngine {
 
-Window::Window(Passkey<WindowsAPI>,
-    WNDPROC windowProc,
-    const std::wstring& title,
+namespace {
+/// @brief ウィンドウ管理用マップ
+std::unordered_map<HWND, std::unique_ptr<Window>> sWindowMap;
+} // namespace
+
+Window::~Window() {
+    LogScope scope;
+}
+
+void Window::SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath) {
+    LogScope scope;
+    windowDefaultTitle = title;
+    windowDefaultWidth = width;
+    windowDefaultHeight = height;
+    windowDefaultStyle = style;
+    windowDefaultIconPath = iconPath;
+}
+
+Window::Window(Passkey<Window>,
+    const std::wstring &title,
     int32_t width,
     int32_t height,
     DWORD windowStyle,
     const std::wstring &iconPath) {
     LogScope scope;
     // ウィンドウの初期化を実行
-    bool result = InitializeWindow(windowProc, title, width, height, windowStyle, iconPath);
+    bool result = InitializeWindow(sWindowsAPI->WindowProc, title, width, height, windowStyle, iconPath);
     assert(result && "Window initialization failed");
     messages_.reserve(kMaxMessages);
     eventHandlers_.reserve(kMaxMessages);
@@ -42,6 +59,33 @@ Window::Window(Passkey<WindowsAPI>,
     RegisterWindowEvent(std::make_unique<SizingEvent>());
 }
 
+Window *Window::Create(const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath) {
+    LogScope scope;
+
+    std::wstring windowTitle = title.empty() ? ConvertString(windowDefaultTitle) : ConvertString(title);
+    int32_t windowWidth = (width <= 0) ? windowDefaultWidth : width;
+    int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
+    DWORD windowStyle = (style == 0) ? WS_OVERLAPPEDWINDOW : style;
+    std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
+    
+    auto window = std::make_unique<Window>(Passkey<Window>{}, windowTitle, windowWidth, windowHeight, windowStyle, windowIconPath);
+    HWND hwnd = window->GetWindowHandle();
+
+    sWindowMap[hwnd] = std::move(window);
+    sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
+    return sWindowMap[hwnd].get();
+}
+
+void Window::Destroy() {
+    LogScope scope;
+    sWindowsAPI->UnregisterWindow({}, this);
+    HWND hwnd = descriptor_.hwnd;
+    auto it = sWindowMap.find(hwnd);
+    if (it != sWindowMap.end()) {
+        sWindowMap.erase(it);
+    }
+}
+
 void Window::Update(Passkey<WindowsAPI>) {
     LogScope scope;
     ProcessMessage();
@@ -55,10 +99,6 @@ std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM
         return it->second->OnEvent(msg, wparam, lparam);
     }
     return std::nullopt;
-}
-
-Window::~Window() {
-    LogScope scope;
 }
 
 void Window::SetSizeChangeMode(SizeChangeMode sizeChangeMode) {

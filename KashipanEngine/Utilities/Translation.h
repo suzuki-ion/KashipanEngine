@@ -9,13 +9,24 @@ bool LoadTranslationFile(const std::string &filePath);
 /// @brief キーに対応する翻訳テキストを取得する
 /// @param lang 言語コード
 /// @param key 翻訳キー
-/// @return 翻訳テキスト
+/// @return 翻訳テキスト。見つからなかった場合はキーをそのまま返す
 const std::string &GetTranslationText(const std::string &lang, const std::string &key);
 
 /// @brief キーに対応する翻訳テキストを取得する（現在の言語設定を使用）
 /// @param key 翻訳キー
-/// @return 翻訳テキスト
+/// @return 翻訳テキスト。見つからなかった場合はキーをそのまま返す
 const std::string &GetTranslationText(const std::string &key);
+
+/// @brief キーに対応する翻訳テキストを取得する
+/// @param lang 言語コード
+/// @param key 翻訳キー
+/// @return 翻訳テキスト。見つからなかった場合はキーをそのまま返す
+inline const std::string &Translation(const std::string &lang, const std::string &key) { return GetTranslationText(lang, key); }
+
+/// @brief キーに対応する翻訳テキストを取得する（現在の言語設定を使用）
+/// @param key 翻訳キー
+/// @return 翻訳テキスト。見つからなかった場合はキーをそのまま返す
+inline const std::string &Translation(const std::string &key) { return GetTranslationText(key); }
 
 /// @brief 現在の言語コードを取得する
 /// @return 言語コード

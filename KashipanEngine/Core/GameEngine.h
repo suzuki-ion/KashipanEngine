@@ -11,7 +11,7 @@ class GameEngine final {
 public:
     /// @brief コンストラクタ
     /// @param engineSettingsPath エンジン設定ファイルパス
-    GameEngine(const std::string &engineSettingsPath = "EngineSettings.json");
+    GameEngine(PasskeyForGameEngineMain);
     ~GameEngine();
     GameEngine(const GameEngine &) = delete;
     GameEngine &operator=(const GameEngine &) = delete;
@@ -28,6 +28,8 @@ public:
     void GameLoopEnd();
     /// @brief ゲームループ一時停止関数
     void GameLoopPause();
+    /// @brief ゲームループ再開関数
+    void GameLoopResume();
 
     /// @brief WindowsAPIクラスの取得
     WindowsAPI *GetWindowsAPI() const noexcept { return windowsAPI_.get(); }
@@ -37,8 +39,6 @@ public:
     Window *GetMainWindow() const noexcept { return mainWindow_; }
 
 private:
-    void ParseEngineSettings(const std::string &engineSettingsPath);
-
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();
     /// @brief ゲームループ描画処理

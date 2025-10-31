@@ -31,13 +31,6 @@ public:
     /// @brief ゲームループ再開関数
     void GameLoopResume();
 
-    /// @brief WindowsAPIクラスの取得
-    WindowsAPI *GetWindowsAPI() const noexcept { return windowsAPI_.get(); }
-    /// @brief DirectX共通クラスの取得
-    DirectXCommon *GetDirectXCommon() const noexcept { return directXCommon_.get(); }
-    /// @brief メインウィンドウの取得
-    Window *GetMainWindow() const noexcept { return mainWindow_; }
-
 private:
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();
@@ -49,8 +42,8 @@ private:
     /// @brief DirectX共通クラス
     std::unique_ptr<DirectXCommon> directXCommon_;
 
-    /// @brief メインウィンドウ
-    Window *mainWindow_;
+    /// @brief メインウィンドウのHWND
+    HWND mainWindowHandle_ = nullptr;
 
     /// @brief ゲームループ実行フラグ
     bool isGameLoopRunning_ = false;

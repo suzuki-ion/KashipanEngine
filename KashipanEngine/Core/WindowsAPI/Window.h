@@ -42,6 +42,27 @@ public:
     static void SetWindowsAPI(Passkey<GameEngine>, WindowsAPI *windowsAPI) { sWindowsAPI = windowsAPI; }
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *directXCommon) { sDirectXCommon = directXCommon; }
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
+    
+    /// @brief 全ウィンドウ破棄
+    static void AllDestroy(Passkey<GameEngine>);
+    /// @brief HWNDからウィンドウインスタンスを取得
+    /// @param hwnd ウィンドウハンドル
+    /// @return ウィンドウインスタンスへのポインタ。存在しない場合はnullptr
+    static Window *GetWindow(HWND hwnd);
+    /// @brief ウィンドウタイトルからウィンドウインスタンスを取得
+    /// @param title ウィンドウタイトル
+    /// @return ウィンドウインスタンスへのポインタ。存在しない場合はnullptr
+    static Window *GetWindow(const std::string &title);
+
+    /// @brief 指定のHWNDのウィンドウが存在するか
+    /// @param hwnd ウィンドウハンドル
+    static bool IsExist(HWND hwnd);
+    /// @brief 指定のウィンドウタイトルのウィンドウが存在するか
+    /// @param title ウィンドウタイトル
+    static bool IsExist(const std::string &title);
+
+    /// @brief ウィンドウ更新処理
+    static void Update(Passkey<GameEngine>);
 
     /// @brief コンストラクタ（Window限定）
     /// @param title ウィンドウタイトル
@@ -71,13 +92,9 @@ public:
         const std::string &iconPath = "");
     void Destroy();
 
-    /// @brief ウィンドウ更新処理
-    void Update(Passkey<WindowsAPI>);
 
     /// @brief ウィンドウプロシージャから呼び出されるイベント処理
     std::optional<LRESULT> HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam);
-    /// @brief ウィンドウのメッセージクリア
-    void ClearMessages(Passkey<WindowsAPI>) { messages_.clear(); }
     
     /// @brief サイズ変更モードを設定する
     /// @param sizeChangeMode サイズ変更モード
@@ -170,6 +187,8 @@ private:
         DWORD windowStyle,
         const std::wstring &iconPath);
 
+    /// @brief ウィンドウのメッセージクリア
+    void ClearMessages() { messages_.clear(); }
     /// @brief メッセージ処理
     void ProcessMessage();
 

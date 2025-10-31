@@ -3,6 +3,7 @@
 #include <string>
 #include <source_location>
 #include "Debug/Logger/LogType.h"
+#include "Utilities/Translation.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -11,6 +12,8 @@ namespace KashipanEngine {
 void InitializeLogger(PasskeyForGameEngineMain);
 /// @brief ロガー終了
 void ShutdownLogger(PasskeyForGameEngineMain);
+/// @brief ロガー強制終了（クラッシュハンドラ用）
+void ForceShutdownLogger(PasskeyForCrashHandler);
 
 /// @brief ログ出力
 /// @param logText 出力するログテキスト

@@ -1,7 +1,6 @@
 #include "Translation.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Json.h"
-#include "Debug/Logger.h"
 #include <Windows.h>
 #include <unordered_map>
 
@@ -69,7 +68,7 @@ bool LoadTranslationFile(const std::string &filePath) {
     }
 
     // 安全版でログに出力（未ロード時の参照寿命問題を回避）
-    Log(Translation("engine.log.translations.loaded") + langData.langName, LogSeverity::Info);
+    Log(Translation("engine.translations.loaded") + langData.langName, LogSeverity::Info);
     sLanguageDatas[langData.langCode] = std::move(langData);
     return true;
 }

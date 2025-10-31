@@ -1,7 +1,5 @@
 #include "EngineSettings.h"
-#include "Debug/Logger.h"
 #include "Utilities/FileIO/Json.h"
-#include "Utilities/Translation.h"
 
 #include "EngineSettings/LoadTranslations.h"
 #include "EngineSettings/LoadWindow.h"

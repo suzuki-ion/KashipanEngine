@@ -57,6 +57,9 @@ public:
     /// @brief 指定のHWNDのウィンドウが存在するか
     /// @param hwnd ウィンドウハンドル
     static bool IsExist(HWND hwnd);
+    /// @brief 指定のウィンドウインスタンスが存在するか
+    /// @param window ウィンドウインスタンスへのポインタ
+    static bool IsExist(Window *window);
     /// @brief 指定のウィンドウタイトルのウィンドウが存在するか
     /// @param title ウィンドウタイトル
     static bool IsExist(const std::string &title);
@@ -84,14 +87,13 @@ public:
     /// @param height ウィンドウ高さ
     /// @param style ウィンドウスタイル
     /// @param iconPath アイコンパス
-    /// @return 作成されたウィンドウへのポインタ。失敗した場合はnullptr
+    /// @return ウィンドウインスタンスへのポインタ
     static Window *Create(const std::string &title = "",
         int32_t width = 0,
         int32_t height = 0,
         DWORD style = 0,
         const std::string &iconPath = "");
     void Destroy();
-
 
     /// @brief ウィンドウプロシージャから呼び出されるイベント処理
     std::optional<LRESULT> HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam);

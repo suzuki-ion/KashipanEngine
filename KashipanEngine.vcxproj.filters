@@ -18,9 +18,6 @@
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\Window.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -93,81 +90,21 @@
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12DXGIs.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Device.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Debug\CrashHandler.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportDump.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Object2d.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Object3d.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Triangle.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObjectBase.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Sprite.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Box.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Sphere.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Line3D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Model.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\AABB.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Sphere.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Point3D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Rect.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\2D\Camera2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h">
@@ -176,25 +113,10 @@
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Components\IComponent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\CameraBase.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\3D\Camera3D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\3D\Lights\DirectionalLight.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneScreen2D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Capsule3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\Window.h">
@@ -212,18 +134,6 @@
     <ClInclude Include="KashipanEngine\Assets\AudioManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DX12SwapChain.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandAllocator.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandList.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="MyStd\AnyUnorderedMap.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -237,9 +147,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\KashipanEngine.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Mesh.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\WindowsAPI.h">
@@ -384,6 +291,21 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12DXGIs.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Debug\CrashHandler.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Debug\CrashHandler\ExportDump.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

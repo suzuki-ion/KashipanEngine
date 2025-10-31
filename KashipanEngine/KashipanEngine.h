@@ -1,5 +1,4 @@
 #pragma once
-
 // 既存のMath構造体
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"

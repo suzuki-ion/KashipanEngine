@@ -3,7 +3,6 @@
 #include <memory>
 #include <unordered_map>
 #include "Utilities/Conversion/ConvertString.h"
-#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
@@ -29,10 +28,16 @@ LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-WindowsAPI::WindowsAPI(Passkey<GameEngine>) {}
+WindowsAPI::WindowsAPI(Passkey<GameEngine>) {
+    LogScope scope;
+    Log(Translation("engine.windowsapi.initialize.start"), LogSeverity::Debug);
+    Log(Translation("engine.windowsapi.initialize.end"), LogSeverity::Debug);
+}
 
 WindowsAPI::~WindowsAPI() {
     LogScope scope;
+    Log(Translation("engine.windowsapi.finalize.start"), LogSeverity::Debug);
+    Log(Translation("engine.windowsapi.finalize.end"), LogSeverity::Debug);
 }
 
 bool WindowsAPI::RegisterWindow(Passkey<Window>, Window *window) {

@@ -2,9 +2,7 @@
 #include "Core/WindowsAPI.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include <cassert>
-#include "Debug/Logger.h"
 
-// 個別イベントハンドラ（デフォルト）
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/DestroyEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/CloseEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/SizeEvent.h"
@@ -63,6 +61,15 @@ bool Window::IsExist(HWND hwnd) {
     auto it = sWindowMap.find(hwnd);
     if (it != sWindowMap.end()) {
         return true;
+    }
+    return false;
+}
+
+bool Window::IsExist(Window *window) {
+    for (auto &pair : sWindowMap) {
+        if (pair.second.get() == window) {
+            return true;
+        }
     }
     return false;
 }

@@ -2,7 +2,7 @@
 #include "EngineSettings.h"
 #include "Utilities/FileIO/Json.h"
 #include "Utilities/Translation.h"
-#include "Debug/Logger.h"
+#include "Utilities/TimeUtils.h"
 
 namespace KashipanEngine {
 namespace {
@@ -12,7 +12,7 @@ bool sIsEngineInitialized = false;
 
 GameEngine::GameEngine(PasskeyForGameEngineMain) {
     LogScope scope;
-    Log(Translation("engine.log.instance.creating") + "GameEngine");
+    Log(Translation("engine.initialize.start"));
     if (sIsEngineInitialized) {
         throw std::runtime_error("GameEngine instance already exists.");
     }
@@ -36,24 +36,25 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
     
-    mainWindowHandle_ = Window::Create("Main Window")->GetWindowHandle();
+    mainWindow_ = Window::Create("Main Window");
     Window::Create("Sub Window");
 
-    Log(Translation("engine.log.instance.created") + "GameEngine");
+    Log(Translation("engine.initialize.end"));
 }
 
 GameEngine::~GameEngine() {
     LogScope scope;
-    Log(Translation("engine.log.instance.destroying") + "GameEngine");
+    Log(Translation("engine.finalize.start"));
     Window::AllDestroy({});
     directXCommon_.reset();
     windowsAPI_.reset();
     sIsEngineInitialized = false;
-    Log(Translation("engine.log.instance.destroyed") + "GameEngine");
+    Log(Translation("engine.finalize.end"));
 }
 
 void GameEngine::GameLoopUpdate() {
     Window::Update({});
+    UpdateDeltaTime({});
     if (!isGameLoopRunning_ || isGameLoopPaused_) {
         return;
     }
@@ -64,7 +65,7 @@ void GameEngine::GameLoopDraw() {
 
 int GameEngine::Execute() {
     // メインウィンドウが終了するまでループ
-    while (Window::IsExist(mainWindowHandle_)) {
+    while (Window::IsExist(mainWindow_)) {
         GameLoopUpdate();
         GameLoopDraw();
     }

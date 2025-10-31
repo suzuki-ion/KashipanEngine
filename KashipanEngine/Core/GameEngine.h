@@ -13,10 +13,6 @@ public:
     /// @param engineSettingsPath エンジン設定ファイルパス
     GameEngine(PasskeyForGameEngineMain);
     ~GameEngine();
-    GameEngine(const GameEngine &) = delete;
-    GameEngine &operator=(const GameEngine &) = delete;
-    GameEngine(GameEngine &&) = delete;
-    GameEngine &operator=(GameEngine &&) = delete;
 
     /// @brief ゲームエンジン実行用関数
     /// @return 実行結果コード
@@ -32,6 +28,11 @@ public:
     void GameLoopResume();
 
 private:
+    GameEngine(const GameEngine &) = delete;
+    GameEngine &operator=(const GameEngine &) = delete;
+    GameEngine(GameEngine &&) = delete;
+    GameEngine &operator=(GameEngine &&) = delete;
+
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();
     /// @brief ゲームループ描画処理
@@ -42,8 +43,8 @@ private:
     /// @brief DirectX共通クラス
     std::unique_ptr<DirectXCommon> directXCommon_;
 
-    /// @brief メインウィンドウのHWND
-    HWND mainWindowHandle_ = nullptr;
+    /// @brief メインウィンドウ
+    Window *mainWindow_ = nullptr;
 
     /// @brief ゲームループ実行フラグ
     bool isGameLoopRunning_ = false;

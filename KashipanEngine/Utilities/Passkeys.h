@@ -24,4 +24,10 @@ class PasskeyForGameEngineMain final {
     PasskeyForGameEngineMain() = default;
 };
 
+/// @brief CrashHandler用パスキー
+class PasskeyForCrashHandler final {
+    friend LONG WINAPI CrashHandler(EXCEPTION_POINTERS *exceptionInfo);
+    PasskeyForCrashHandler() = default;
+};
+
 } // namespace KashipanEngine

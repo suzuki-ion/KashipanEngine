@@ -113,6 +113,14 @@ void ShutdownLogger(PasskeyForGameEngineMain) {
     sLoggerInitialized = false;
 }
 
+void ForceShutdownLogger(PasskeyForCrashHandler) {
+    if (!sLoggerInitialized) return;
+    if (sLogFile.is_open()) {
+        sLogFile.close();
+    }
+    sLoggerInitialized = false;
+}
+
 void Log(const std::string &logText, LogSeverity severity) {
     // レベルが無効なら何もしない
     if (!ShouldLog(severity)) return;

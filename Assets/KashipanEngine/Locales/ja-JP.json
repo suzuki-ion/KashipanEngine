@@ -3,36 +3,153 @@
 	"localeName": "日本語",
 	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansJP-Regular.ttf",
 	"translations": {
+		//==================================================
+		// エンジン固有翻訳
+		//==================================================
+
+		//--------- エンジン情報 ---------//
 		"engine.name": "Kashipan Engine",
-		"engine.window.title": "Kashipan Engine",
-		"engine.window.dialog.title.close": "終了確認",
-		"engine.window.dialog.message.close": "本当に終了しますか？",
-		"engine.window.dialog.button.yes": "はい",
-		"engine.window.dialog.button.no": "いいえ",
+		"engine.initialize.start": "エンジン初期化開始",
+		"engine.initialize.end": "エンジン初期化完了",
+		"engine.finalize.start": "エンジン終了開始",
+		"engine.shutdown.end": "エンジン終了完了",
 
-		"engine.log.translations.loaded": "翻訳ファイルが正常に読み込まれました。言語：",
-		
-		"engine.log.initialize.start": "エンジン初期化開始",
-		"engine.log.initialize.end": "エンジン初期化完了",
-		"engine.log.shutdown.start": "エンジン終了開始",
-		"engine.log.shutdown.end": "エンジン終了完了",
-		
-		"engine.log.instance.creating": "インスタンス作成中：",
-		"engine.log.instance.created": "インスタンス作成：",
-		"engine.log.instance.destroying": "インスタンス破棄中：",
-		"engine.log.instance.destroyed": "インスタンス破棄：",
-		"engine.log.component.added": "コンポーネント追加：",
-		"engine.log.component.removed": "コンポーネント削除：",
+		//--------- 翻訳 ---------//
+		"engine.translations.loaded": "翻訳ファイルが正常に読み込まれました。言語：",
 
+		//--------- ウィンドウ ---------//
+		"engine.window.create.start": "ウィンドウ作成開始",
+		"engine.window.create.end": "ウィンドウ作成完了",
+		"engine.window.create.failed": "ウィンドウの作成に失敗しました。",
+		"engine.window.destroy.start": "ウィンドウ破棄開始",
+		"engine.window.destroy.end": "ウィンドウ破棄完了",
+		"engine.window.destroy.failed": "ウィンドウの破棄に失敗しました。",
+		"engine.window.dialog.close.title": "終了確認",
+		"engine.window.dialog.close.message": "本当に終了しますか？",
+
+		//--------- WindowsAPI ---------//
+		"engine.windowsapi.initialize.start": "Windows API初期化開始",
+		"engine.windowsapi.initialize.end": "Windows API初期化完了",
+		"engine.windowsapi.initialize.failed": "Windows APIの初期化に失敗しました。",
+		"engine.windowsapi.finalize.start": "Windows API終了開始",
+		"engine.windowsapi.finalize.end": "Windows API終了完了",
+		"engine.windowsapi.finalize.failed": "Windows APIの終了に失敗しました。",
+
+		//--------- DirectX ---------//
+		"engine.directx.initialize.start": "DirectX初期化開始",
+		"engine.directx.initialize.end": "DirectX初期化完了",
+		"engine.directx.initialize.failed": "DirectXの初期化に失敗しました。",
+		"engine.directx.debuglayer.enabled": "DirectXデバッグレイヤーが有効になっています。パフォーマンスに影響を与える可能性があります。",
+		"engine.directx.debuglayer.disabled": "DirectXデバッグレイヤーが無効になっています。",
+		"engine.directx.debuglayer.disabled.release": "DirectXデバッグレイヤーはリリースビルドではサポートされていません。",
+		"engine.directx.dxgi.initialize.start": "DXGI初期化開始",
+		"engine.directx.dxgi.initialize.end": "DXGI初期化完了",
+		"engine.directx.dxgi.initialize.failed": "DXGIの初期化に失敗しました。",
+		"engine.directx.dxgi.factory.initialize.start": "DXGIファクトリ初期化開始",
+		"engine.directx.dxgi.factory.initialize.end": "DXGIファクトリ初期化完了",
+		"engine.directx.dxgi.factory.initialize.failed": "DXGIファクトリの初期化に失敗しました。",
+		"engine.directx.dxgi.adapter.initialize.start": "DXGIアダプタ初期化開始",
+		"engine.directx.dxgi.adapter.initialize.end": "DXGIアダプタ初期化完了",
+		"engine.directx.dxgi.adapter.initialize.failed": "DXGIアダプタの初期化に失敗しました。",
+		"engine.directx.dxgi.adapter.getdesc.failed": "DXGIアダプタの説明の取得に失敗しました。",
+		"engine.directx.dxgi.adapter.selected": "選択されたDXGIアダプタ：",
+		"engine.directx.device.initialize.start": "Direct3Dデバイス初期化開始",
+		"engine.directx.device.initialize.end": "Direct3Dデバイス初期化完了",
+		"engine.directx.device.initialize.failed": "Direct3Dデバイスの初期化に失敗しました。",
+		"engine.directx.device.created.featurelevel": "Direct3Dデバイスが作成されました。機能レベル：",
+		"engine.directx.commandqueue.initialize.start": "コマンドキュー初期化開始",
+		"engine.directx.commandqueue.initialize.end": "コマンドキュー初期化完了",
+		"engine.directx.commandqueue.initialize.failed": "コマンドキューの初期化に失敗しました。",
+		"engine.directx.commandallocator.initialize.start": "コマンドアロケータ初期化開始",
+		"engine.directx.commandallocator.initialize.end": "コマンドアロケータ初期化完了",
+		"engine.directx.commandallocator.initialize.failed": "コマンドアロケータの初期化に失敗しました。",
+		"engine.directx.commandlist.initialize.start": "コマンドリスト初期化開始",
+		"engine.directx.commandlist.initialize.end": "コマンドリスト初期化完了",
+		"engine.directx.commandlist.initialize.failed": "コマンドリストの初期化に失敗しました。",
+		"engine.directx.swapchain.initialize.start": "スワップチェーン初期化開始",
+		"engine.directx.swapchain.initialize.end": "スワップチェーン初期化完了",
+		"engine.directx.swapchain.initialize.failed": "スワップチェーンの初期化に失敗しました。",
+
+		//--------- 設定 ---------//
 		"engine.settings.load.success": "エンジンの設定が正常に読み込まれました。ファイルパス：",
 		"engine.settings.load.failed": "エンジンの設定の読み込みに失敗しました。デフォルトの設定を使用します。ファイルパス：",
 		"engine.settings.save.success": "エンジンの設定が正常に保存されました。ファイルパス：",
 		"engine.settings.save.failed": "エンジンの設定の保存に失敗しました。ファイルパス：",
 		"engine.settings.invalid.format": "エンジンの設定の形式が無効です。デフォルトの設定を使用します。ファイルパス：",
 
+		//--------- リソース管理 ---------//
 		"engine.resource.load.texture.failed": "テクスチャの読み込みに失敗しました。ファイルパス：",
 		"engine.resource.load.sound.failed": "サウンドの読み込みに失敗しました。ファイルパス：",
 		"engine.resource.load.model.failed": "モデルの読み込みに失敗しました。ファイルパス：",
-		"engine.resource.limit.exceeded": "リソースの上限に達しました。タイプ："
+		"engine.resource.limit.exceeded": "リソースの上限に達しました。タイプ：",
+
+		//--------- CrashHandler ---------//
+		"engine.crashhandler.enabled": "クラッシュハンドラが有効になっています。",
+		"engine.crashhandler.disabled": "クラッシュハンドラが無効になっています。",
+		"engine.crashhandler.crash.detected": "クラッシュが検出されました。",
+		"engine.crashhandler.crash.export.dump.start": "クラッシュダンプのエクスポート開始。",
+		"engine.crashhandler.crash.export.dump.end": "クラッシュダンプのエクスポート完了。ファイルパス：",
+		"engine.crashhandler.crash.export.dump.failed": "クラッシュダンプのエクスポートに失敗しました。ファイルパス：",
+
+		//==================================================
+		// 共通翻訳
+		//==================================================
+
+		"yes": "はい",
+		"no": "いいえ",
+		"ok": "OK",
+		"cancel": "キャンセル",
+		"close": "閉じる",
+		"confirm": "確認",
+		"error": "エラー",
+		"warning": "警告",
+		"info": "情報",
+		"debug": "デバッグ",
+		"success": "成功",
+		"failed": "失敗",
+		"loading": "読み込み中",
+		"loaded": "読み込み完了",
+		"saving": "保存中",
+		"saved": "保存完了",
+		"updating": "更新中",
+		"updated": "更新完了",
+		"deleting": "削除中",
+		"deleted": "削除完了",
+		"creating": "作成中",
+		"created": "作成完了",
+		"destroying": "破棄中",
+		"destroyed": "破棄完了",
+		"initializing": "初期化中",
+		"initialized": "初期化完了",
+		"shuttingdown": "終了中",
+		"shutdown": "終了完了",
+		"starting": "開始中",
+		"started": "開始完了",
+		"stopping": "停止中",
+		"stopped": "停止完了",
+		"pausing": "一時停止中",
+		"paused": "一時停止完了",
+		"resuming": "再開中",
+		"resumed": "再開完了",
+		"resetting": "リセット中",
+		"reseted": "リセット完了",
+
+		"game.start": "ゲーム開始",
+		"game.stop": "ゲーム終了",
+		"game.pause": "ゲーム一時停止",
+		"game.resume": "ゲーム再開",
+		"game.reset": "ゲームリセット",
+
+		"scene.loading": "シーン読み込み中：",
+		"scene.loaded": "シーン読み込み：",
+		"scene.unloading": "シーンアンロード中：",
+		"scene.unloaded": "シーンアンロード：",
+
+		"instance.creating": "インスタンス作成中：",
+		"instance.created": "インスタンス作成：",
+		"instance.destroying": "インスタンス破棄中：",
+		"instance.destroyed": "インスタンス破棄：",
+		"component.added": "コンポーネント追加：",
+		"component.removed": "コンポーネント削除："
 	}
 }

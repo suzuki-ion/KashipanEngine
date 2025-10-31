@@ -1,11 +1,15 @@
 #include "KashipanEngine.h"
 #include "EngineSettings.h"
 #include "Debug/LogSettings.h"
-#include "Debug/Logger.h"
+#include "Debug/CrashHandler.h"
 #include "Utilities/FileIO/Json.h"
+#include "Core/DirectX/ResourceLeakChecker.h"
 
 namespace KashipanEngine {
 int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
+    SetUnhandledExceptionFilter(CrashHandler);
+    //D3DResourceLeakChecker resourceLeakChecker;
+
     //--------- 設定ファイル読み込み ---------//
 
     Json engineSettingsJson = LoadJson(engineSettingsPath);

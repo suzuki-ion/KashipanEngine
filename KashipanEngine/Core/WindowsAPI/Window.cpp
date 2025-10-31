@@ -34,6 +34,63 @@ void Window::SetDefaultParams(Passkey<GameEngine>, const std::string &title, int
     windowDefaultIconPath = iconPath;
 }
 
+void Window::AllDestroy(Passkey<GameEngine>) {
+    LogScope scope;
+    for (auto &pair : sWindowMap) {
+        pair.second->Cleanup();
+    }
+    sWindowMap.clear();
+}
+
+Window *Window::GetWindow(HWND hwnd) {
+    auto it = sWindowMap.find(hwnd);
+    if (it != sWindowMap.end()) {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+Window *Window::GetWindow(const std::string &title) {
+    for (auto &pair : sWindowMap) {
+        if (pair.second->descriptor_.title == title) {
+            return pair.second.get();
+        }
+    }
+    return nullptr;
+}
+
+bool Window::IsExist(HWND hwnd) {
+    auto it = sWindowMap.find(hwnd);
+    if (it != sWindowMap.end()) {
+        return true;
+    }
+    return false;
+}
+
+bool Window::IsExist(const std::string &title) {
+    for (auto &pair : sWindowMap) {
+        if (pair.second->descriptor_.title == title) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Window::Update(Passkey<GameEngine>) {
+    LogScope scope;
+    for (auto it = sWindowMap.begin(); it != sWindowMap.end();) {
+        Window *window = it->second.get();
+        window->ClearMessages();
+        window->ProcessMessage();
+        if (window->IsDestroyed()) {
+            sWindowsAPI->UnregisterWindow({}, window->GetWindowHandle());
+            it = sWindowMap.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 Window::Window(Passkey<Window>,
     const std::wstring &title,
     int32_t width,
@@ -78,17 +135,9 @@ Window *Window::Create(const std::string &title, int32_t width, int32_t height, 
 
 void Window::Destroy() {
     LogScope scope;
-    sWindowsAPI->UnregisterWindow({}, this);
-    HWND hwnd = descriptor_.hwnd;
-    auto it = sWindowMap.find(hwnd);
-    if (it != sWindowMap.end()) {
-        sWindowMap.erase(it);
+    if (descriptor_.hwnd) {
+        Cleanup();
     }
-}
-
-void Window::Update(Passkey<WindowsAPI>) {
-    LogScope scope;
-    ProcessMessage();
 }
 
 std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -321,7 +370,6 @@ void Window::Cleanup() {
     LogScope scope;
     if (descriptor_.hwnd) {
         DestroyWindow(descriptor_.hwnd);
-        descriptor_.hwnd = nullptr;
     }
     
     if (descriptor_.hInstance) {

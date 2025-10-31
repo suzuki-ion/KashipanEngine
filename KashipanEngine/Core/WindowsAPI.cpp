@@ -35,14 +35,6 @@ WindowsAPI::~WindowsAPI() {
     LogScope scope;
 }
 
-void WindowsAPI::Update(Passkey<GameEngine>) {
-    LogScope scope;
-    for (auto &pair : sWindowMap) {
-        pair.second->ClearMessages({});
-        pair.second->Update({});
-    }
-}
-
 bool WindowsAPI::RegisterWindow(Passkey<Window>, Window *window) {
     LogScope scope;
     assert(window && "Window instance is null");
@@ -55,13 +47,11 @@ bool WindowsAPI::RegisterWindow(Passkey<Window>, Window *window) {
     return true;
 }
 
-bool WindowsAPI::UnregisterWindow(Passkey<Window>, Window *window) {
+bool WindowsAPI::UnregisterWindow(Passkey<Window>, HWND hwnd) {
     LogScope scope;
-    assert(window && "Window instance is null");
-    HWND hwnd = window->GetWindowHandle();
     auto it = sWindowMap.find(hwnd);
     if (it == sWindowMap.end()) {
-        Log("Window is not registered.", LogSeverity::Warning);
+        Log("Window not found for unregistration.", LogSeverity::Warning);
         return false;
     }
     sWindowMap.erase(it);

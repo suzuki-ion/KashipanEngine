@@ -29,18 +29,15 @@ public:
     WindowsAPI(WindowsAPI &&) = delete;
     WindowsAPI &operator=(WindowsAPI &&) = delete;
 
-    /// @brief WindowsAPI更新処理
-    void Update(Passkey<GameEngine>);
-
     /// @brief ウィンドウの登録（Window限定）
     /// @param window ウィンドウへのポインタ
     /// @return 成功したらtrue、失敗したらfalse
     bool RegisterWindow(Passkey<Window>, Window *window);
 
     /// @brief ウィンドウの登録解除（Window限定）
-    /// @param window ウィンドウへのポインタ
+    /// @param hwnd ウィンドウハンドル
     /// @return 成功したらtrue、失敗したらfalse
-    bool UnregisterWindow(Passkey<Window>, Window *window);
+    bool UnregisterWindow(Passkey<Window>, HWND hwnd);
 };
 
 } // namespace KashipanEngine

@@ -34,7 +34,7 @@ const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::st
     //--------- レンダリングのデフォルト設定 ---------//
     LoadRenderingSettings(json, sEngineSettings);
 
-    Log(GetTranslationText("engine.settings.load.success") + ": " + engineSettingsPath, LogSeverity::Info);
+    Log(Translation("engine.settings.load.success") + engineSettingsPath, LogSeverity::Info);
     return sEngineSettings;
 }
 

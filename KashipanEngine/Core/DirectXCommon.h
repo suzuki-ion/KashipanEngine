@@ -17,18 +17,16 @@ class GameEngine;
 /// @brief DirectX共通クラス
 class DirectXCommon final {
 public:
-    DirectXCommon(Passkey<GameEngine>) {}
+    DirectXCommon(Passkey<GameEngine>);
     ~DirectXCommon() = default;
+
+    //DX12SwapChain *CreateSwapChain(HWND hwnd, int32_t width, int32_t height, int32_t bufferCount = 2);
+
+private:
     DirectXCommon(const DirectXCommon &) = delete;
     DirectXCommon &operator=(const DirectXCommon &) = delete;
     DirectXCommon(DirectXCommon &&) = delete;
     DirectXCommon &operator=(DirectXCommon &&) = delete;
-
-private:
-    // 描画開始
-    void BeginDraw();
-    // 描画終了
-    void EndDraw();
 };
 
 } // namespace KashipanEngine

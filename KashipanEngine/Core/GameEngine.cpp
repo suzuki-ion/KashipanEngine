@@ -22,6 +22,9 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
+
+    //--------- ウィンドウ作成 ---------//
+    
     const auto &windowSettings = GetEngineSettings().window;
     Window::SetDefaultParams({},
         windowSettings.initialWindowTitle,
@@ -32,26 +35,25 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     );
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
-    mainWindow_ = Window::Create();
+    
+    mainWindowHandle_ = Window::Create("Main Window")->GetWindowHandle();
+    Window::Create("Sub Window");
 
-    Log(GetTranslationText("engine.log.instance.created") + "GameEngine");
+    Log(Translation("engine.log.instance.created") + "GameEngine");
 }
 
 GameEngine::~GameEngine() {
     LogScope scope;
-    Log(GetTranslationText("engine.log.instance.destroying") + "GameEngine");
-    if (mainWindow_) {
-        mainWindow_->Destroy();
-        mainWindow_ = nullptr;
-    }
+    Log(Translation("engine.log.instance.destroying") + "GameEngine");
+    Window::AllDestroy({});
     directXCommon_.reset();
     windowsAPI_.reset();
     sIsEngineInitialized = false;
-    Log(GetTranslationText("engine.log.instance.destroyed") + "GameEngine");
+    Log(Translation("engine.log.instance.destroyed") + "GameEngine");
 }
 
 void GameEngine::GameLoopUpdate() {
-    windowsAPI_->Update({});
+    Window::Update({});
     if (!isGameLoopRunning_ || isGameLoopPaused_) {
         return;
     }
@@ -62,7 +64,7 @@ void GameEngine::GameLoopDraw() {
 
 int GameEngine::Execute() {
     // メインウィンドウが終了するまでループ
-    while (!mainWindow_->IsDestroyed()) {
+    while (Window::IsExist(mainWindowHandle_)) {
         GameLoopUpdate();
         GameLoopDraw();
     }

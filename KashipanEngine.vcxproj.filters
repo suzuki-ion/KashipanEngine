@@ -90,6 +90,9 @@
     <ClCompile Include="KashipanEngine\Utilities\SourceLocation.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h">

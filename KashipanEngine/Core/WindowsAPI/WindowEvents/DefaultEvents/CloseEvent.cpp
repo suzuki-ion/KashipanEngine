@@ -1,5 +1,6 @@
 #include "CloseEvent.h"
 #include <Windows.h>
+#include "Core/WindowsAPI/Window.h"
 #include "Core/WindowsAPI/WindowDescriptor.h"
 
 namespace KashipanEngine {
@@ -15,7 +16,7 @@ std::optional<LRESULT> CloseEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPAR
         MB_YESNO | MB_ICONQUESTION
     );
     if (result == IDYES) {
-        DestroyWindow(desc.hwnd);
+        GetWindow()->Destroy();
     }
 
     return 0;

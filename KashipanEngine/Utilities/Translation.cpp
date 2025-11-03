@@ -1,6 +1,6 @@
 #include "Translation.h"
 #include "Utilities/Conversion/ConvertString.h"
-#include "Utilities/FileIO/Json.h"
+#include "Utilities/FileIO/JSON.h"
 #include <Windows.h>
 #include <unordered_map>
 
@@ -45,7 +45,7 @@ private:
 } // namespace
 
 bool LoadTranslationFile(const std::string &filePath) {
-    Json json = LoadJson(filePath);
+    JSON json = LoadJSON(filePath);
     if (json.empty()) {
         Log("Failed to load translation file: " + filePath, LogSeverity::Error);
         return false;
@@ -66,10 +66,10 @@ bool LoadTranslationFile(const std::string &filePath) {
     for (auto& [key, value] : json["translations"].items()) {
         langData.translations[key] = value.get<std::string>();
     }
-
-    // 安全版でログに出力（未ロード時の参照寿命問題を回避）
-    Log(Translation("engine.translations.loaded") + langData.langName, LogSeverity::Info);
+    std::string langName = langData.langName;
     sLanguageDatas[langData.langCode] = std::move(langData);
+
+    Log(Translation("engine.translations.loaded") + langName, LogSeverity::Info);
     return true;
 }
 

@@ -1,10 +1,29 @@
 ﻿{
+	// ファイルにログを出力するかどうか
 	"enableFileLogging": true,
+	// コンソールにログを出力するかどうか
 	"enableConsoleLogging": true,
+
+	// ネストされたログメッセージのインデントに使用する文字列
 	"nestedTabs": "    ",
+	// ログファイルの出力先ディレクトリ名
 	"outputDirectory": "Logs",
+	// ログファイル名のフォーマット
 	"logFileFormat": "${BuildType} ${Year}-${Month}-${Day}_${Hour}-${Minute}-${Second}",
-	"logMessageFormat": "[${Year}/${Month}/${Day} ${Hour}:${Minute}:${Second}] ${NestedTabs}└${#if namespace || class || function}[ ${namespace}${#if namespace && class}::${/if}${class}${#if class && function}::${/if}${function} ]${/if}: [${Severity}] ${Message}",
+
+	// クラスと名前空間の自動検出が不可能なため手動で名前空間を設定
+	"namespaces": [
+		"KashipanEngine"
+	],
+	// 名前空間をログに出力するかどうか
+	"enableOutputNamespace": false,
+	// クラス名をログに出力するかどうか
+	"enableOutputClass": true,
+
+	// ログメッセージのフォーマット
+	// デフォルト："[${Year}/${Month}/${Day} ${Hour}:${Minute}:${Second}] ${NestedTabs}└${#if scopes || function}[ ${#if scopes}${join(scopes, '::')}${/if}${#if scopes && function}::${/if}${#if function}${function}${/if} ]${/if}: [${Severity}] ${Message}"
+	"logMessageFormat": "[${Year}/${Month}/${Day} ${Hour}:${Minute}:${Second}] ${NestedTabs}└${#if scopes || function}[ ${#if scopes}${join(scopes, '::')}${/if}${#if scopes && function}::${/if}${#if function}${function}${/if} ]${/if}: [${Severity}] ${Message}",
+	// 有効にするログレベル
 	"logLevelsEnabled": {
 		"Debug": true,
 		"Info": true,

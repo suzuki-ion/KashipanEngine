@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <Windows.h>
 #include "EngineSettings.h"
-#include "Utilities/FileIO/Json.h"
+#include "Utilities/FileIO/JSON.h"
 
 namespace KashipanEngine {
 namespace {
@@ -41,15 +41,15 @@ const std::unordered_map<std::string, DWORD> kWindowStyleMap = {
 } // namespace KashipanEngine
 
 // window セクションの読込
-inline void LoadWindowSettings(const Json &rootJson, EngineSettings &settings) {
-    Json windowJson = rootJson.value("window", Json::object());
-    settings.window.initialWindowTitle = windowJson.value("initialWindowTitle", settings.window.initialWindowTitle);
-    settings.window.initialWindowWidth = windowJson.value("initialWindowWidth", settings.window.initialWindowWidth);
-    settings.window.initialWindowHeight = windowJson.value("initialWindowHeight", settings.window.initialWindowHeight);
-    settings.window.initialWindowIconPath = windowJson.value("initialWindowIconPath", settings.window.initialWindowIconPath);
+inline void LoadWindowSettings(const JSON &rootJSON, EngineSettings &settings) {
+    JSON windowJSON = rootJSON.value("window", JSON::object());
+    settings.window.initialWindowTitle = windowJSON.value("initialWindowTitle", settings.window.initialWindowTitle);
+    settings.window.initialWindowWidth = windowJSON.value("initialWindowWidth", settings.window.initialWindowWidth);
+    settings.window.initialWindowHeight = windowJSON.value("initialWindowHeight", settings.window.initialWindowHeight);
+    settings.window.initialWindowIconPath = windowJSON.value("initialWindowIconPath", settings.window.initialWindowIconPath);
     // ウィンドウスタイルの読み込み
     settings.window.initialWindowStyle = 0;
-    for (const auto &styleName : windowJson.value("initialWindowStyle", std::vector<std::string>{})) {
+    for (const auto &styleName : windowJSON.value("initialWindowStyle", std::vector<std::string>{})) {
         auto it = kWindowStyleMap.find(styleName);
         if (it != kWindowStyleMap.end()) {
             settings.window.initialWindowStyle |= it->second;

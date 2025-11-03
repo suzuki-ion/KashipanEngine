@@ -2,7 +2,6 @@
 #include "Math/Vector2.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
-#include "Math/MathObjects/Lines.h"
 #include "Utilities/MathUtils.h"
 #include <cassert>
 #include <algorithm>
@@ -123,7 +122,7 @@ bool Vector3::operator!=(const Vector3 &vector) const noexcept {
     return x != vector.x || y != vector.y || z != vector.z;
 }
 
-constexpr float Vector3::Dot(const Vector3 &vector) const noexcept {
+float Vector3::Dot(const Vector3 &vector) const noexcept {
     return MathUtils::Dot(*this, vector);
 }
 
@@ -145,10 +144,6 @@ Vector3 Vector3::Normalize() const {
 
 Vector3 Vector3::Projection(const Vector3 &vector) const noexcept {
     return MathUtils::Projection(*this, vector);
-}
-
-Vector3 Vector3::ClosestPoint(const Math::Segment &segment) const noexcept {
-    return MathUtils::ClosestPoint(*this, segment);
 }
 
 Vector3 Vector3::Perpendicular() const noexcept {

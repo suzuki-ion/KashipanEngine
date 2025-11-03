@@ -1,7 +1,6 @@
 #include "Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Matrix3x3.h"
-#include "Math/MathObjects/Lines.h"
 #include "Utilities/MathUtils.h"
 #include <cassert>
 #include <algorithm>
@@ -127,10 +126,6 @@ Vector2 Vector2::Refrection(const Vector2 &normal) const noexcept {
 
 float Vector2::Distance(const Vector2 &vector) const noexcept {
     return MathUtils::Distance(*this, vector);
-}
-
-Vector2 Vector2::ClosestPoint(const Math::Segment &segment) const noexcept {
-    return MathUtils::ClosestPoint(*this, segment);
 }
 
 inline constexpr Vector2 operator*(const Matrix3x3 &matrix, const Vector2 &vector) noexcept {

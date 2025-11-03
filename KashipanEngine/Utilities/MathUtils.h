@@ -4,6 +4,3 @@
 #include "MathUtils/Vector4.h"
 #include "MathUtils/Matrix3x3.h"
 #include "MathUtils/Matrix4x4.h"
-
-// テンプレート版のMath構造体
-#include "TMathUtils.h"

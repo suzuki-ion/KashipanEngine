@@ -8,10 +8,6 @@ namespace KashipanEngine {
 struct Vector3;
 struct Matrix3x3;
 
-namespace Math {
-struct Segment;
-} // namespace Math
-
 struct Vector2 final {
     static Vector2 Lerp(const Vector2 &start, const Vector2 &end, float t) noexcept;
     static Vector2 Slerp(const Vector2 &start, const Vector2 &end, float t) noexcept;
@@ -41,7 +37,6 @@ struct Vector2 final {
     [[nodiscard]] constexpr float LengthSquared() const noexcept;
     [[nodiscard]] Vector2 Normalize() const;
     [[nodiscard]] Vector2 Projection(const Vector2 &vector) const noexcept;
-    [[nodiscard]] Vector2 ClosestPoint(const Math::Segment &segment) const noexcept;
     [[nodiscard]] Vector2 Perpendicular() const noexcept;
     [[nodiscard]] Vector2 Rejection(const Vector2 &vector) const noexcept;
     [[nodiscard]] Vector2 Refrection(const Vector2 &normal) const noexcept;

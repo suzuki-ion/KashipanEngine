@@ -9,8 +9,8 @@ namespace KashipanEngine {
 
 // 関数シグネチャ情報
 struct FunctionSignatureInfo {
-    std::string namespaceName;          // 名前空間（クラスを除くスコープ部）
-    std::string className;              // クラス/構造体名（最も内側）なければ空
+    // 名前空間やクラス/構造体などのスコープトークン（外側→内側の順）
+    std::vector<std::string> scopes;
     std::string functionName;           // 関数名（operator/コンストラクタ/デストラクタ含む）
     std::vector<std::string> arguments; // 関数引数（各要素は1引数のテキスト）
     std::string returnType;             // 返り値型（コンストラクタ/デストラクタは空）

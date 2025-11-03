@@ -10,7 +10,10 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     Log(Translation("engine.directx.initialize.start"), LogSeverity::Debug);
 
 #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
-    Log(enableDebugLayer ? Translation("engine.directx.debuglayer.enabled") : Translation("engine.directx.debuglayer.disabled"), LogSeverity::Debug);
+    Log(enableDebugLayer ?
+        Translation("engine.directx.debuglayer.enabled") :
+        Translation("engine.directx.debuglayer.disabled"),
+        LogSeverity::Debug);
     Microsoft::WRL::ComPtr<ID3D12Debug1> debugController;
     if (enableDebugLayer) {
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {

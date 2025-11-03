@@ -7,7 +7,7 @@ namespace KashipanEngine {
 
 class DirectXCommon;
 
-/// @brief DirectX12のDXGiクラス
+/// @brief DirectX12のDXGIクラス
 class DX12DXGIs final {
 public:
     /// @brief コンストラクタ（DirectXCommon専用）

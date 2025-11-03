@@ -30,7 +30,7 @@ struct Matrix4x4 final {
         }
         /// @brief 行列式を計算する
         /// @return 行列式
-        [[nodiscard]] constexpr float Determinant() const noexcept;
+        [[nodiscard]] float Determinant() const noexcept;
     private:
         float m[2][2];
     };
@@ -49,7 +49,7 @@ struct Matrix4x4 final {
         }
         /// @brief 行列式を計算する
         /// @return 行列式
-        [[nodiscard]] constexpr float Determinant() const noexcept;
+        [[nodiscard]] float Determinant() const noexcept;
     private:
         float m[3][3];
     };

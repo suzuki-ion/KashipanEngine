@@ -1,5 +1,5 @@
 #include "EngineSettings.h"
-#include "Utilities/FileIO/Json.h"
+#include "Utilities/FileIO/JSON.h"
 
 #include "EngineSettings/LoadTranslations.h"
 #include "EngineSettings/LoadWindow.h"
@@ -13,7 +13,7 @@ EngineSettings sEngineSettings;
 
 const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::string &engineSettingsPath) {
     LogScope scope;
-    Json json = LoadJson(engineSettingsPath);
+    JSON json = LoadJSON(engineSettingsPath);
     if (json.empty()) {
         Log("Failed engine settings file: " + engineSettingsPath, LogSeverity::Warning);
         Log("Using default engine settings.", LogSeverity::Info);

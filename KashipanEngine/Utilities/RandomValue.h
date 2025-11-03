@@ -2,9 +2,6 @@
 
 namespace KashipanEngine {
 
-/// @brief ランダム値生成の初期化
-void InitializeRandom();
-
 /// @brief min以上max以下のランダムな整数を取得する
 /// @param min 最低値
 /// @param max 最高値

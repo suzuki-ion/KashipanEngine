@@ -2,7 +2,7 @@
 #include "EngineSettings.h"
 #include "Debug/LogSettings.h"
 #include "Debug/CrashHandler.h"
-#include "Utilities/FileIO/Json.h"
+#include "Utilities/FileIO/JSON.h"
 #include "Core/DirectX/ResourceLeakChecker.h"
 
 namespace KashipanEngine {
@@ -12,12 +12,12 @@ int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
 
     //--------- 設定ファイル読み込み ---------//
 
-    Json engineSettingsJson = LoadJson(engineSettingsPath);
-    if (engineSettingsJson.is_null()) {
+    JSON engineSettingsJSON = LoadJSON(engineSettingsPath);
+    if (engineSettingsJSON.is_null()) {
         assert(false && "Failed to load engine settings JSON.");
         return -1;
     }
-    std::string logSettingsPath = engineSettingsJson.value("LogSettingsPath", "LogSettings.json");
+    std::string logSettingsPath = engineSettingsJSON.value("LogSettingsPath", "LogSettings.json");
     LoadLogSettings({}, logSettingsPath);
     InitializeLogger({});
     LoadEngineSettings({}, engineSettingsPath);

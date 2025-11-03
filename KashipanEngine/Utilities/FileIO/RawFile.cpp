@@ -213,4 +213,18 @@ void SaveFile(const RawFileData &fileData) {
     }
 }
 
+FileType DetectFileTypeFromFile(const std::string &filePath, size_t detectBytes) {
+    std::ifstream file(filePath, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("Failed to open file: " + filePath);
+    }
+    std::vector<uint8_t> buffer(clampDetectSize(static_cast<size_t>(file.seekg(0, std::ios::end).tellg()), detectBytes));
+    file.seekg(0, std::ios::beg);
+    if (!file.read(reinterpret_cast<char *>(buffer.data()), static_cast<std::streamsize>(buffer.size()))) {
+        throw std::runtime_error("Failed to read file: " + filePath);
+    }
+    return DetectFileTypeFromBytes(buffer.data(), buffer.size());
+}
+
+
 } // namespace KashipanEngine

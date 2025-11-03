@@ -1,6 +1,4 @@
 #pragma once
-#include <vector>
-#include <string>
 #include <source_location>
 #include "Debug/Logger/LogType.h"
 #include "Utilities/Translation.h"

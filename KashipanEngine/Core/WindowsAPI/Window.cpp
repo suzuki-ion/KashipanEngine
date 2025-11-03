@@ -48,13 +48,14 @@ Window *Window::GetWindow(HWND hwnd) {
     return nullptr;
 }
 
-Window *Window::GetWindow(const std::string &title) {
+std::vector<Window *> Window::GetWindows(const std::string &title) {
+    std::vector<Window *> windows;
     for (auto &pair : sWindowMap) {
         if (pair.second->descriptor_.title == title) {
-            return pair.second.get();
+            windows.push_back(pair.second.get());
         }
     }
-    return nullptr;
+    return windows;
 }
 
 bool Window::IsExist(HWND hwnd) {

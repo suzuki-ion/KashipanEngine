@@ -99,8 +99,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Commands.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Device.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12DXGIs.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Fence.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12SwapChain.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.cpp" />
@@ -127,6 +130,7 @@
     <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Dialogs\MessageDialog.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\CSV.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\Directory.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\INI.cpp" />
@@ -149,6 +153,8 @@
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12DXGIs.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Fence.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12SwapChain.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.h" />
@@ -214,6 +220,11 @@
     <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Dialogs\ConfirmDialog.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Dialogs\DialogBase.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Dialogs\FileDialog.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Dialogs\FolderDialog.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Dialogs\MessageDialog.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\CSV.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\Directory.h" />

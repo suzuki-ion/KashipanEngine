@@ -12,14 +12,11 @@ class DX12Commands final {
 public:
     DX12Commands(Passkey<DirectXCommon>, ID3D12Device *device, D3D12_COMMAND_LIST_TYPE type);
     ~DX12Commands();
+
     /// @brief コマンドリスト取得
     ID3D12GraphicsCommandList *GetCommandList() const { return commandList_.Get(); }
-    /// @brief コマンドアロケーターリセット
-    void ResetCommandAllocator();
-    /// @brief コマンドリストリセット
-    void ResetCommandList();
-    /// @brief コマンドリストクローズ
-    void CloseCommandList();
+    /// @brief コマンドリスト実行
+    void ExecuteCommandList(Passkey<DirectXCommon>);
 
 private:
     DX12Commands(const DX12Commands &) = delete;

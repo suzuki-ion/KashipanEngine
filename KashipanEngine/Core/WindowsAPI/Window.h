@@ -51,8 +51,8 @@ public:
     static Window *GetWindow(HWND hwnd);
     /// @brief ウィンドウタイトルからウィンドウインスタンスを取得
     /// @param title ウィンドウタイトル
-    /// @return ウィンドウインスタンスへのポインタ。存在しない場合はnullptr
-    static Window *GetWindow(const std::string &title);
+    /// @return 一致するウィンドウインスタンスへのポインタのリスト。存在しない場合は空のリスト
+    static std::vector<Window *> GetWindows(const std::string &title);
 
     /// @brief 指定のHWNDのウィンドウが存在するか
     /// @param hwnd ウィンドウハンドル

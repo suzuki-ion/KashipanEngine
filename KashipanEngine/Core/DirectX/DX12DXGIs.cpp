@@ -51,4 +51,12 @@ DX12DXGIs::DX12DXGIs(Passkey<DirectXCommon>) {
     Log(Translation("engine.directx.dxgi.initialize.end"), LogSeverity::Debug);
 }
 
+DX12DXGIs::~DX12DXGIs() {
+    LogScope scope;
+    Log(Translation("instance.destroying"), LogSeverity::Debug);
+    dxgiAdapter_.Reset();
+    dxgiFactory_.Reset();
+    Log(Translation("instance.destroyed"), LogSeverity::Debug);
+}
+
 } // namespace KashipanEngine

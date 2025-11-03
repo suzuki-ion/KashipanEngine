@@ -28,6 +28,8 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
 
     dx12DXGIs_ = std::make_unique<DX12DXGIs>(Passkey<DirectXCommon>{});
     dx12Device_ = std::make_unique<DX12Device>(Passkey<DirectXCommon>{}, dx12DXGIs_->GetDXGIAdapter());
+    dx12Commands_ = std::make_unique<DX12Commands>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+    dx12Fence_ = std::make_unique<DX12Fence>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice());
 
     Log(Translation("engine.directx.initialize.end"), LogSeverity::Debug);
 }
@@ -35,6 +37,8 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
 DirectXCommon::~DirectXCommon() {
     LogScope scope;
     Log(Translation("engine.directx.finalize.start"), LogSeverity::Debug);
+    dx12Fence_.reset();
+    dx12Commands_.reset();
     dx12Device_.reset();
     dx12DXGIs_.reset();
     Log(Translation("engine.directx.finalize.end"), LogSeverity::Debug);

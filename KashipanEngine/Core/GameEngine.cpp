@@ -12,7 +12,10 @@ bool sIsEngineInitialized = false;
 
 GameEngine::GameEngine(PasskeyForGameEngineMain) {
     LogScope scope;
+    LogSeparator();
     Log(Translation("engine.initialize.start"));
+    LogSeparator();
+
     if (sIsEngineInitialized) {
         throw std::runtime_error("GameEngine instance already exists.");
     }
@@ -39,17 +42,25 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     mainWindow_ = Window::Create("Main Window");
     Window::Create("Sub Window");
 
+    LogSeparator();
     Log(Translation("engine.initialize.end"));
+    LogSeparator();
 }
 
 GameEngine::~GameEngine() {
     LogScope scope;
+    LogSeparator();
     Log(Translation("engine.finalize.start"));
+    LogSeparator();
+
     Window::AllDestroy({});
     directXCommon_.reset();
     windowsAPI_.reset();
     sIsEngineInitialized = false;
+
+    LogSeparator();
     Log(Translation("engine.finalize.end"));
+    LogSeparator();
 }
 
 void GameEngine::GameLoopUpdate() {

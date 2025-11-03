@@ -7,12 +7,14 @@
 #include <memory>
 #include "Core/DirectX/DX12DXGIs.h"
 #include "Core/DirectX/DX12Device.h"
-//#include "Core/DirectX/DX12Commands.h"
+#include "Core/DirectX/DX12Commands.h"
+#include "Core/DirectX/DX12Fence.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
 class GameEngine;
+class Window;
 
 /// @brief DirectX共通クラス
 class DirectXCommon final {
@@ -30,7 +32,8 @@ private:
 
     std::unique_ptr<DX12DXGIs> dx12DXGIs_;
     std::unique_ptr<DX12Device> dx12Device_;
-    //std::unique_ptr<DX12Commands> dx12Commands_;
+    std::unique_ptr<DX12Commands> dx12Commands_;
+    std::unique_ptr<DX12Fence> dx12Fence_;
 };
 
 } // namespace KashipanEngine

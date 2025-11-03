@@ -7,12 +7,11 @@ namespace KashipanEngine {
 
 class DirectXCommon;
 
-/// @brief DirectX12のDXGIクラス
+/// @brief DirectX12 DXGIクラス
 class DX12DXGIs final {
 public:
-    /// @brief コンストラクタ（DirectXCommon専用）
     DX12DXGIs(Passkey<DirectXCommon>);
-    ~DX12DXGIs() = default;
+    ~DX12DXGIs();
 
     /// @brief DXGIファクトリー取得
     IDXGIFactory7 *GetDXGIFactory() const { return dxgiFactory_.Get(); }

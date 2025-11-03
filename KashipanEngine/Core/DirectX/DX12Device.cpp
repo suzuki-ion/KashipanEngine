@@ -24,7 +24,7 @@ DX12Device::DX12Device(Passkey<DirectXCommon>, IDXGIAdapter4 *adapter) {
         hr = D3D12CreateDevice(
             adapter,
             featureLevels[i],
-            IID_PPV_ARGS(&d3d12Device_)
+            IID_PPV_ARGS(&device_)
         );
         if (SUCCEEDED(hr)) {
             Log(Translation("engine.directx.device.created.featurelevel") + " D3D_FEATURE_LEVEL_" + std::string(featureLevelStr[i]), LogSeverity::Debug);
@@ -36,6 +36,13 @@ DX12Device::DX12Device(Passkey<DirectXCommon>, IDXGIAdapter4 *adapter) {
         throw std::runtime_error("Failed to create D3D12 Device.");
     }
     Log(Translation("engine.directx.device.initialize.end"), LogSeverity::Debug);
+}
+
+DX12Device::~DX12Device() {
+    LogScope scope;
+    Log(Translation("instance.destroying"), LogSeverity::Debug);
+    device_.Reset();
+    Log(Translation("instance.destroyed"), LogSeverity::Debug);
 }
 
 } // namespace KashipanEngine

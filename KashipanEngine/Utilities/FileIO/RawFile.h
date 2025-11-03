@@ -59,4 +59,9 @@ RawFileData LoadFile(const std::string &filePath, size_t detectBytes = 64 * 1024
 /// @param fileData 書き込むファイルの生データ
 void SaveFile(const RawFileData &fileData);
 
+/// @brief 指定のファイルが何の種類かをバイト列から推測する
+/// @param filePath ファイルパス
+/// @param detectBytes 先頭からこのバイト数以内でファイル種別の判定を行う（小さすぎると判定できない場合があります）
+FileType DetectFileTypeFromFile(const std::string &filePath, size_t detectBytes = 64 * 1024);
+
 } // namespace KashipanEngine

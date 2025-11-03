@@ -5,7 +5,7 @@
 	"enableConsoleLogging": true,
 
 	// ネストされたログメッセージのインデントに使用する文字列
-	"nestedTabs": "    ",
+	"nestedTabs": "|   ",
 	// ログファイルの出力先ディレクトリ名
 	"outputDirectory": "Logs",
 	// ログファイル名のフォーマット

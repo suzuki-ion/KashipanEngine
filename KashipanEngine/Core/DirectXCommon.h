@@ -9,6 +9,9 @@
 #include "Core/DirectX/DX12Device.h"
 #include "Core/DirectX/DX12Commands.h"
 #include "Core/DirectX/DX12Fence.h"
+#include "Core/DirectX/DescriptorHeaps/RTVHeap.h"
+#include "Core/DirectX/DescriptorHeaps/DSVHeap.h"
+#include "Core/DirectX/DescriptorHeaps/SRVHeap.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -34,6 +37,10 @@ private:
     std::unique_ptr<DX12Device> dx12Device_;
     std::unique_ptr<DX12Commands> dx12Commands_;
     std::unique_ptr<DX12Fence> dx12Fence_;
+
+    std::unique_ptr<RTVHeap> rtvHeap_;
+    std::unique_ptr<DSVHeap> dsvHeap_;
+    std::unique_ptr<SRVHeap> srvHeap_;
 };
 
 } // namespace KashipanEngine

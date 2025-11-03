@@ -19,7 +19,7 @@ DX12Commands::DX12Commands(Passkey<DirectXCommon>, ID3D12Device *device, D3D12_C
     queueDesc.NodeMask = 0;
     HRESULT hr = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue_));
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.commands.commandqueue.initialize.failed"), LogSeverity::Error);
+        Log(Translation("engine.directx.commands.commandqueue.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to create command queue.");
     }
     Log(Translation("engine.directx.commands.commandqueue.initialize.end"), LogSeverity::Debug);
@@ -31,7 +31,7 @@ DX12Commands::DX12Commands(Passkey<DirectXCommon>, ID3D12Device *device, D3D12_C
     Log(Translation("engine.directx.commands.commandallocator.initialize.start"), LogSeverity::Debug);
     hr = device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator_));
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.commands.commandallocator.initialize.failed"), LogSeverity::Error);
+        Log(Translation("engine.directx.commands.commandallocator.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to create command allocator.");
     }
     Log(Translation("engine.directx.commands.commandallocator.initialize.end"), LogSeverity::Debug);
@@ -43,7 +43,7 @@ DX12Commands::DX12Commands(Passkey<DirectXCommon>, ID3D12Device *device, D3D12_C
     Log(Translation("engine.directx.commands.commandlist.initialize.start"), LogSeverity::Debug);
     hr = device->CreateCommandList(0, type, commandAllocator_.Get(), nullptr, IID_PPV_ARGS(&commandList_));
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.commands.commandlist.initialize.failed"), LogSeverity::Error);
+        Log(Translation("engine.directx.commands.commandlist.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to create command list.");
     }
     Log(Translation("engine.directx.commands.commandlist.initialize.end"), LogSeverity::Debug);

@@ -58,7 +58,7 @@ void DX12SwapChain::CreateSwapChain(IDXGIFactory7 *dxgiFactory, ID3D12CommandQue
         reinterpret_cast<IDXGISwapChain1 **>(swapChain_.GetAddressOf())
     );
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.swapchain.initialize.failed"), LogSeverity::Error);
+        Log(Translation("engine.directx.swapchain.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to create DX12 swap chain.");
     }
 }

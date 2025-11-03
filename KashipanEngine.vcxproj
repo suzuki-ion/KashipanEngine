@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Commands.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Device.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12DXGIs.cpp" />
@@ -150,6 +151,10 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DSVHeap.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\RTVHeap.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\SRVHeap.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12DXGIs.h" />

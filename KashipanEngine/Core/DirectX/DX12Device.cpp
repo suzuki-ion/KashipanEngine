@@ -32,7 +32,7 @@ DX12Device::DX12Device(Passkey<DirectXCommon>, IDXGIAdapter4 *adapter) {
         }
     }
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.device.initialize.failed"), LogSeverity::Error);
+        Log(Translation("engine.directx.device.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to create D3D12 Device.");
     }
     Log(Translation("engine.directx.device.initialize.end"), LogSeverity::Debug);

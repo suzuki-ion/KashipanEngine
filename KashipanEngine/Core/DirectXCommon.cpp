@@ -31,12 +31,19 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     dx12Commands_ = std::make_unique<DX12Commands>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
     dx12Fence_ = std::make_unique<DX12Fence>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice());
 
+    rtvHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 32);
+    dsvHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 32);
+    srvHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 256);
+
     Log(Translation("engine.directx.initialize.end"), LogSeverity::Debug);
 }
 
 DirectXCommon::~DirectXCommon() {
     LogScope scope;
     Log(Translation("engine.directx.finalize.start"), LogSeverity::Debug);
+    srvHeap_.reset();
+    dsvHeap_.reset();
+    rtvHeap_.reset();
     dx12Fence_.reset();
     dx12Commands_.reset();
     dx12Device_.reset();

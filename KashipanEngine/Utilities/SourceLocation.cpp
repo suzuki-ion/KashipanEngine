@@ -106,13 +106,6 @@ bool LooksLikeClassToken(std::string_view tok) {
     return false;
 }
 
-void StripTypeKeyPrefixes(std::string &s) {
-    ReplaceAll(s, "class ", "");
-    ReplaceAll(s, "struct ", "");
-    ReplaceAll(s, "enum ", "");
-    ReplaceAll(s, "union ", "");
-}
-
 } // namespace
 
 FunctionSignatureInfo ParseFunctionSignature(std::string sig) {
@@ -126,6 +119,7 @@ FunctionSignatureInfo ParseFunctionSignature(std::string sig) {
         }
     }
 
+    // 呼出規約などを除去
     EraseToken(sig, "__cdecl");
     EraseToken(sig, "__thiscall");
     EraseToken(sig, "__stdcall");
@@ -146,6 +140,14 @@ FunctionSignatureInfo ParseFunctionSignature(std::string sig) {
 
     out.arguments = SplitByCommaKeepingTemplates(args);
 
+    // 戻り値型を取り出すために先頭の型キーワードを落とす
+    auto StripTypeKeyPrefixes = [](std::string &s) {
+        ReplaceAll(s, "class ", "");
+        ReplaceAll(s, "struct ", "");
+        ReplaceAll(s, "enum ", "");
+        ReplaceAll(s, "union ", "");
+    };
+
     StripTypeKeyPrefixes(pre);
 
     size_t lastScope = pre.rfind("::");
@@ -160,6 +162,7 @@ FunctionSignatureInfo ParseFunctionSignature(std::string sig) {
     std::string funcToken = pre.substr(funcStart);
     out.functionName = Trim(funcToken);
 
+    // 戻り値型
     if (lastScope != std::string::npos) {
         size_t lastSpaceBeforeScope = pre.rfind(' ', lastScope);
         if (lastSpaceBeforeScope == std::string::npos) {
@@ -178,6 +181,7 @@ FunctionSignatureInfo ParseFunctionSignature(std::string sig) {
         }
     }
 
+    // スコープ部分（namespace / class を区別せずにそのまま格納）
     std::string scopePart;
     if (lastScope != std::string::npos) {
         size_t lastSpaceBeforeScope = pre.rfind(' ', lastScope);
@@ -186,53 +190,15 @@ FunctionSignatureInfo ParseFunctionSignature(std::string sig) {
         StripTypeKeyPrefixes(scopePart);
     }
 
-    auto scopes = SplitScopeKeepingTemplates(scopePart);
+    out.scopes = SplitScopeKeepingTemplates(scopePart);
 
-    auto isCtor = !scopes.empty() && (out.functionName == scopes.back());
-    auto isDtor = !scopes.empty() && (out.functionName.size() >= 1 && out.functionName[0] == '~' && out.functionName.substr(1) == scopes.back());
-    if (isCtor || isDtor) {
-        out.returnType.clear();
-        out.className = scopes.back();
-        scopes.pop_back();
-        std::string ns;
-        for (size_t i = 0; i < scopes.size(); ++i) {
-            if (i) ns += "::";
-            ns += scopes[i];
-        }
-        out.namespaceName = std::move(ns);
-        return out;
-    }
-
-    if (!scopes.empty()) {
-        if (scopes.size() >= 2) {
-            std::string maybeClass = scopes.back();
-            scopes.pop_back();
-
-            bool treatAsClass = true;
-            if (out.functionName.rfind("operator", 0) == 0) {
-                treatAsClass = LooksLikeClassToken(maybeClass);
-            }
-            if (maybeClass == "std") treatAsClass = false;
-
-            if (treatAsClass) {
-                out.className = std::move(maybeClass);
-            } else {
-                scopes.push_back(std::move(maybeClass));
-            }
-
-            std::string ns;
-            for (size_t i = 0; i < scopes.size(); ++i) {
-                if (i) ns += "::";
-                ns += scopes[i];
-            }
-            out.namespaceName = std::move(ns);
-        } else {
-            const std::string &only = scopes[0];
-            if (only != "std" && LooksLikeClassToken(only)) {
-                out.className = only;
-            } else {
-                out.namespaceName = only;
-            }
+    // コンストラクタ/デストラクタっぽいものは戻り値型を空にする（慣習的に）
+    if (!out.scopes.empty()) {
+        const std::string &lastScopeToken = out.scopes.back();
+        bool isCtor = (out.functionName == lastScopeToken);
+        bool isDtor = (!out.functionName.empty() && out.functionName[0] == '~' && out.functionName.substr(1) == lastScopeToken);
+        if (isCtor || isDtor) {
+            out.returnType.clear();
         }
     }
 

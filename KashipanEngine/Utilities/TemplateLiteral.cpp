@@ -26,7 +26,7 @@ std::vector<std::pair<size_t, size_t>> FindTokenRanges(const std::string &s) {
     return ranges;
 }
 
-enum class TokenKind { Placeholder, IfOpen, IfClose, Unknown };
+enum class TokenKind { Placeholder, IfOpen, IfClose, Function, Unknown };
 
 struct TokenInfo {
     TokenKind kind = TokenKind::Unknown;
@@ -36,9 +36,47 @@ struct TokenInfo {
     bool hasFormat = false; // `?` が含まれていたか（Placeholder）
     bool negate = false;    // 旧: IfOpen 用（互換維持・未使用）
     std::string condExpr;   // IfOpen: 条件式全文（例: "value1 || !value2 && value3"）
+
+    // Function
+    std::string funcName;                 // 例: "join"
+    std::vector<std::string> funcArgs;    // 例: {"vec", ", "}
 };
 
-// `${key?pre:suf}` / `${#if ...}` / `${/if}` を解析
+static inline std::string TrimCopy(std::string_view sv) {
+    auto l = sv.find_first_not_of(" \t\n\r");
+    auto r = sv.find_last_not_of(" \t\n\r");
+    if (l == std::string_view::npos) return std::string();
+    return std::string(sv.substr(l, r - l + 1));
+}
+
+// 文字列リテラルのパース（'\'' または '"' をサポート、エスケープ最小限）
+static inline bool ParseQuoted(std::string_view sv, std::string &out) {
+    if (sv.size() < 2) return false;
+    char q = sv.front();
+    if (q != '\'' && q != '"') return false;
+    if (sv.back() != q) return false;
+    out.clear();
+    for (size_t i = 1; i + 1 < sv.size(); ++i) {
+        char c = sv[i];
+        if (c == '\\' && i + 1 < sv.size() - 1) {
+            char n = sv[++i];
+            switch (n) {
+            case 'n': out.push_back('\n'); break;
+            case 'r': out.push_back('\r'); break;
+            case 't': out.push_back('\t'); break;
+            case '\\': out.push_back('\\'); break;
+            case '\'': out.push_back('\''); break;
+            case '"': out.push_back('"'); break;
+            default: out.push_back(n); break;
+            }
+        } else {
+            out.push_back(c);
+        }
+    }
+    return true;
+}
+
+// `${key?pre:suf}` / `${#if ...}` / `${/if}` / `${join(name, sep)}` を解析
 TokenInfo ParseToken(std::string_view token) {
     TokenInfo info;
     // token: ${...}
@@ -66,6 +104,40 @@ TokenInfo ParseToken(std::string_view token) {
             if (kl != std::string_view::npos) rest = rest.substr(kl, kr - kl + 1);
             info.kind = TokenKind::IfOpen;
             info.condExpr.assign(rest.begin(), rest.end());
+            return info;
+        }
+
+        // 関数呼び出し: name(arg1, arg2, ...)
+        size_t paren = core.find('(');
+        if (paren != std::string_view::npos && core.back() == ')') {
+            std::string_view fname = core.substr(0, paren);
+            auto fl = fname.find_first_not_of(" \t\n\r");
+            auto fr = fname.find_last_not_of(" \t\n\r");
+            if (fl != std::string_view::npos) fname = fname.substr(fl, fr - fl + 1);
+            std::string fn(fname.begin(), fname.end());
+            // args
+            std::string_view argsView = core.substr(paren + 1, core.size() - paren - 2);
+            // 単純なカンマ区切りを分割（カッコやクォートの簡易対応）
+            std::vector<std::string> args;
+            size_t i = 0; int depth = 0; size_t start = 0; bool inQuote = false; char quote = 0;
+            while (i < argsView.size()) {
+                char c = argsView[i];
+                if (!inQuote && (c == '\'' || c == '"')) { inQuote = true; quote = c; }
+                else if (inQuote && c == quote) { inQuote = false; }
+                else if (!inQuote && c == '(') { ++depth; }
+                else if (!inQuote && c == ')') { if (depth>0) --depth; }
+                else if (!inQuote && depth==0 && c == ',') {
+                    args.emplace_back(TrimCopy(argsView.substr(start, i - start)));
+                    start = i + 1;
+                }
+                ++i;
+            }
+            if (start <= argsView.size()) {
+                args.emplace_back(TrimCopy(argsView.substr(start)));
+            }
+            info.kind = TokenKind::Function;
+            info.funcName = std::move(fn);
+            info.funcArgs = std::move(args);
             return info;
         }
 
@@ -274,12 +346,14 @@ void TemplateLiteral::ParsePlaceholders() {
             placeholders_.push_back(t.key);
             seen.insert(t.key);
         }
+        // 関数引数にもプレースホルダ名が来ることがあるが、一覧としては保持しない（従来互換）
     }
 }
 
 // 範囲 [start, end) をレンダリング（if ブロック対応、ネスト可）
 static void RenderRange(const std::string &templ,
                         const std::unordered_map<std::string, std::string> &values,
+                        const std::unordered_map<std::string, std::vector<std::string>> &listValues,
                         size_t start, size_t end,
                         std::string &out) {
     size_t i = start;
@@ -321,6 +395,41 @@ static void RenderRange(const std::string &templ,
             i = tokEnd + 1;
             break;
         }
+        case TokenKind::Function: {
+            // 現時点では join(name, sep) のみ対応
+            if (t.funcName == "join" && (t.funcArgs.size() == 2 || t.funcArgs.size() == 1)) {
+                const std::string &name = t.funcArgs[0];
+                std::string sep;
+                if (t.funcArgs.size() >= 2) {
+                    // 2番目の引数はクォートで囲まれたリテラル、もしくはキー
+                    std::string quoted;
+                    if (ParseQuoted(t.funcArgs[1], quoted)) sep = quoted; else {
+                        auto itSep = values.find(t.funcArgs[1]);
+                        if (itSep != values.end()) sep = itSep->second; else sep = t.funcArgs[1];
+                    }
+                } else {
+                    sep = ", ";
+                }
+                auto itL = listValues.find(name);
+                if (itL != listValues.end()) {
+                    const auto &arr = itL->second;
+                    for (size_t k = 0; k < arr.size(); ++k) {
+                        if (k) out.append(sep);
+                        out.append(arr[k]);
+                    }
+                } else {
+                    // コンテナでなければ通常の値出力にフォールバック
+                    auto it = values.find(name);
+                    if (it != values.end()) out.append(it->second);
+                    else out.append(tokenView.begin(), tokenView.end());
+                }
+            } else {
+                // 未知の関数はそのまま
+                out.append(tokenView.begin(), tokenView.end());
+            }
+            i = tokEnd + 1;
+            break;
+        }
         case TokenKind::IfOpen: {
             // 対応する /if を探す（ネスト対応）
             auto [ifCloseBegin, ifCloseEnd] = FindMatchingIfClose(templ, tokEnd + 1);
@@ -334,7 +443,7 @@ static void RenderRange(const std::string &templ,
             bool cond = EvaluateCondition(t.condExpr, values);
             if (cond) {
                 // ブロック内容を再帰レンダリング
-                RenderRange(templ, values, tokEnd + 1, ifCloseBegin, out);
+                RenderRange(templ, values, listValues, tokEnd + 1, ifCloseBegin, out);
             }
             // ブロックの終わりの直後へ
             i = ifCloseEnd;
@@ -360,7 +469,7 @@ std::string TemplateLiteral::Render() const {
     if (template_.empty()) return {};
     std::string out;
     out.reserve(template_.size() + 32);
-    RenderRange(template_, values_, 0, template_.size(), out);
+    RenderRange(template_, values_, listValues_, 0, template_.size(), out);
     return out;
 }
 

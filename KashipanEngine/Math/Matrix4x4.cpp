@@ -4,11 +4,11 @@
 
 namespace KashipanEngine {
 
-constexpr float Matrix4x4::Matrix2x2::Determinant() const noexcept {
+float Matrix4x4::Matrix2x2::Determinant() const noexcept {
     return m[0][0] * m[1][1] - m[0][1] * m[1][0];
 }
 
-constexpr float Matrix4x4::Matrix3x3::Determinant() const noexcept {
+float Matrix4x4::Matrix3x3::Determinant() const noexcept {
     float c00 = Matrix2x2(m[1][1], m[1][2], m[2][1], m[2][2]).Determinant();
     float c01 = -(Matrix2x2(m[1][0], m[1][2], m[2][0], m[2][2]).Determinant());
     float c02 = Matrix2x2(m[1][0], m[1][1], m[2][0], m[2][1]).Determinant();

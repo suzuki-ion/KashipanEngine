@@ -1,18 +1,18 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include "Json.h"
+#include "JSON.h"
 
 namespace KashipanEngine {
 
-Json LoadJson(const std::string &filename) {
-    Json jsonData;
+JSON LoadJSON(const std::string &filename) {
+    JSON jsonData;
     std::fstream jsonFile(filename);
-    jsonData = Json::parse(jsonFile, nullptr, false, true);
+    jsonData = JSON::parse(jsonFile, nullptr, false, true);
     return jsonData;
 }
 
-bool SaveJson(const Json &jsonData, const std::string &filepath, int indent) {
+bool SaveJSON(const JSON &jsonData, const std::string &filepath, int indent) {
     try {
         std::ofstream file(filepath);
         if (!file.is_open()) {
@@ -27,7 +27,7 @@ bool SaveJson(const Json &jsonData, const std::string &filepath, int indent) {
 }
 
 template<typename T>
-std::optional<T> GetJsonValue(const Json &json, const std::string &key) {
+std::optional<T> GetJSONValue(const JSON &json, const std::string &key) {
     try {
         if (json.contains(key) && !json[key].is_null()) {
             return json[key].get<T>();
@@ -39,14 +39,14 @@ std::optional<T> GetJsonValue(const Json &json, const std::string &key) {
 }
 
 template<typename T>
-T GetJsonValueOrDefault(const Json &json, const std::string &key, const T &defaultValue) {
-    auto value = GetJsonValue<T>(json, key);
+T GetJSONValueOrDefault(const JSON &json, const std::string &key, const T &defaultValue) {
+    auto value = GetJSONValue<T>(json, key);
     return value.has_value() ? value.value() : defaultValue;
 }
 
-std::optional<Json> GetNestedJsonValue(const Json &json, const std::string &path) {
+std::optional<JSON> GetNestedJSONValue(const JSON &json, const std::string &path) {
     try {
-        Json current = json;
+        JSON current = json;
         std::stringstream ss(path);
         std::string segment;
 
@@ -81,7 +81,7 @@ std::optional<Json> GetNestedJsonValue(const Json &json, const std::string &path
     }
 }
 
-bool ValidateJsonStructure(const Json &json, const std::vector<std::string> &requiredKeys) {
+bool ValidateJSONStructure(const JSON &json, const std::vector<std::string> &requiredKeys) {
     for (const auto &key : requiredKeys) {
         if (!json.contains(key)) {
             return false;
@@ -90,30 +90,30 @@ bool ValidateJsonStructure(const Json &json, const std::vector<std::string> &req
     return true;
 }
 
-bool IsJsonFileValid(const std::string &filepath) {
+bool IsJSONFileValid(const std::string &filepath) {
     try {
         std::ifstream file(filepath);
         if (!file.is_open()) {
             return false;
         }
-        Json parsedJson = Json::parse(file);
+        JSON parsedJSON = JSON::parse(file);
         return true;
     } catch (const std::exception &) {
         return false;
     }
 }
 
-Json MergeJson(const Json &base, const Json &overlay, bool deepMerge) {
+JSON MergeJSON(const JSON &base, const JSON &overlay, bool deepMerge) {
     if (!deepMerge) {
-        Json result = base;
+        JSON result = base;
         result.update(overlay);
         return result;
     }
 
-    Json result = base;
+    JSON result = base;
     for (auto it = overlay.begin(); it != overlay.end(); ++it) {
         if (result.contains(it.key()) && result[it.key()].is_object() && it.value().is_object()) {
-            result[it.key()] = MergeJson(result[it.key()], it.value(), true);
+            result[it.key()] = MergeJSON(result[it.key()], it.value(), true);
         } else {
             result[it.key()] = it.value();
         }
@@ -121,10 +121,10 @@ Json MergeJson(const Json &base, const Json &overlay, bool deepMerge) {
     return result;
 }
 
-bool AppendToJsonArray(Json &json, const std::string &arrayKey, const Json &value) {
+bool AppendToJSONArray(JSON &json, const std::string &arrayKey, const JSON &value) {
     try {
         if (!json.contains(arrayKey)) {
-            json[arrayKey] = Json::array();
+            json[arrayKey] = JSON::array();
         } else if (!json[arrayKey].is_array()) {
             return false;
         }
@@ -135,7 +135,7 @@ bool AppendToJsonArray(Json &json, const std::string &arrayKey, const Json &valu
     }
 }
 
-bool RemoveFromJsonArray(Json &json, const std::string &arrayKey, size_t index) {
+bool RemoveFromJSONArray(JSON &json, const std::string &arrayKey, size_t index) {
     try {
         if (!json.contains(arrayKey) || !json[arrayKey].is_array()) {
             return false;
@@ -153,7 +153,7 @@ bool RemoveFromJsonArray(Json &json, const std::string &arrayKey, size_t index) 
     }
 }
 
-std::string JsonToFormattedString(const Json &json, int indent) {
+std::string JSONToFormattedString(const JSON &json, int indent) {
     try {
         return json.dump(indent);
     } catch (const std::exception &) {
@@ -161,23 +161,23 @@ std::string JsonToFormattedString(const Json &json, int indent) {
     }
 }
 
-void PrintJson(const Json &json, const std::string &title) {
+void PrintJSON(const JSON &json, const std::string &title) {
     std::cout << "=== " << title << " ===" << std::endl;
-    std::cout << JsonToFormattedString(json, 2) << std::endl;
+    std::cout << JSONToFormattedString(json, 2) << std::endl;
     std::cout << "===================" << std::endl;
 }
 
 // テンプレートの明示的なインスタンス化
-template std::optional<int> GetJsonValue<int>(const Json &json, const std::string &key);
-template std::optional<float> GetJsonValue<float>(const Json &json, const std::string &key);
-template std::optional<double> GetJsonValue<double>(const Json &json, const std::string &key);
-template std::optional<bool> GetJsonValue<bool>(const Json &json, const std::string &key);
-template std::optional<std::string> GetJsonValue<std::string>(const Json &json, const std::string &key);
+template std::optional<int> GetJSONValue<int>(const JSON &json, const std::string &key);
+template std::optional<float> GetJSONValue<float>(const JSON &json, const std::string &key);
+template std::optional<double> GetJSONValue<double>(const JSON &json, const std::string &key);
+template std::optional<bool> GetJSONValue<bool>(const JSON &json, const std::string &key);
+template std::optional<std::string> GetJSONValue<std::string>(const JSON &json, const std::string &key);
 
-template int GetJsonValueOrDefault<int>(const Json &json, const std::string &key, const int &defaultValue);
-template float GetJsonValueOrDefault<float>(const Json &json, const std::string &key, const float &defaultValue);
-template double GetJsonValueOrDefault<double>(const Json &json, const std::string &key, const double &defaultValue);
-template bool GetJsonValueOrDefault<bool>(const Json &json, const std::string &key, const bool &defaultValue);
-template std::string GetJsonValueOrDefault<std::string>(const Json &json, const std::string &key, const std::string &defaultValue);
+template int GetJSONValueOrDefault<int>(const JSON &json, const std::string &key, const int &defaultValue);
+template float GetJSONValueOrDefault<float>(const JSON &json, const std::string &key, const float &defaultValue);
+template double GetJSONValueOrDefault<double>(const JSON &json, const std::string &key, const double &defaultValue);
+template bool GetJSONValueOrDefault<bool>(const JSON &json, const std::string &key, const bool &defaultValue);
+template std::string GetJSONValueOrDefault<std::string>(const JSON &json, const std::string &key, const std::string &defaultValue);
 
 } // namespace KashipanEngine

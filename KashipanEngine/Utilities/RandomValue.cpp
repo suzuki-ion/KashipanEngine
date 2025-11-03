@@ -5,12 +5,15 @@ namespace KashipanEngine {
 
 namespace {
 std::mt19937 mtEngine; // メルセンヌ・ツイスタの乱数エンジン
+/// @brief 乱数エンジンの初期化
+class RandomEngineInitializer {
+public:
+    RandomEngineInitializer() {
+        std::random_device rd;
+        mtEngine.seed(rd());
+    }
+} randomEngineInitializer;
 } // namespace
-
-void InitializeRandom() {
-    std::random_device rd;
-    mtEngine.seed(rd());
-}
 
 int GetRandomInt(int min, int max) {
     std::uniform_int_distribution<int> dist(min, max);

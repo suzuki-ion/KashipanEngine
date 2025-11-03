@@ -4,10 +4,9 @@
 
 namespace KashipanEngine {
 
-constexpr float Matrix3x3::Matrix2x2::Determinant() const noexcept {
+float Matrix3x3::Matrix2x2::Determinant() const noexcept {
     return m[0][0] * m[1][1] - m[0][1] * m[1][0];
 }
-
 
 Matrix3x3 &Matrix3x3::operator+=(const Matrix3x3 &matrix) noexcept {
     m[0][0] += matrix.m[0][0];

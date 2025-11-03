@@ -6,9 +6,6 @@
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 
-// テンプレート版のMath構造体
-#include "Math/TemplateMath.h"
-
 // ユーティリティ
 #include "Utilities/MathUtils.h"
 

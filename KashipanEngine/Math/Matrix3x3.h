@@ -27,7 +27,7 @@ struct Matrix3x3 final {
         }
         /// @brief 行列式を計算する
         /// @return 行列式
-        [[nodiscard]] constexpr float Determinant() const noexcept;
+        [[nodiscard]] float Determinant() const noexcept;
     private:
         float m[2][2];
     };

@@ -1,6 +1,6 @@
 #include "GameEngine.h"
 #include "EngineSettings.h"
-#include "Utilities/FileIO/Json.h"
+#include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
 

@@ -9,10 +9,6 @@ struct Vector2;
 struct Vector4;
 struct Matrix4x4;
 
-namespace Math {
-struct Segment;
-} // namespace Math
-
 struct Vector3 final {
     static Vector3 Lerp(const Vector3 &start, const Vector3 &end, float t) noexcept;
     static Vector3 Slerp(const Vector3 &start, const Vector3 &end, float t) noexcept;
@@ -37,13 +33,12 @@ struct Vector3 final {
     bool operator==(const Vector3 &vector) const noexcept;
     bool operator!=(const Vector3 &vector) const noexcept;
 
-    [[nodiscard]] constexpr float Dot(const Vector3 &vector) const noexcept;
+    [[nodiscard]] float Dot(const Vector3 &vector) const noexcept;
     [[nodiscard]] Vector3 Cross(const Vector3 &vector) const noexcept;
     [[nodiscard]] float Length() const noexcept;
     [[nodiscard]] constexpr float LengthSquared() const noexcept;
     [[nodiscard]] Vector3 Normalize() const;
     [[nodiscard]] Vector3 Projection(const Vector3 &vector) const noexcept;
-    [[nodiscard]] Vector3 ClosestPoint(const Math::Segment &segment) const noexcept;
     [[nodiscard]] Vector3 Perpendicular() const noexcept;
     [[nodiscard]] Vector3 Rejection(const Vector3 &vector) const noexcept;
     [[nodiscard]] Vector3 Refrection(const Vector3 &normal) const noexcept;

@@ -32,8 +32,7 @@ int sTabCount = -1;
 
 // スコープフレーム
 struct ScopeFrame {
-    std::string namespaceName;
-    std::string className;
+    std::vector<std::string> scopes; // 外側→内側（namespace / class を区別しない）
     std::string functionName;
     int depth = -1;
     bool enteredFlushed = false;
@@ -144,9 +143,8 @@ void LogScope::PushPrefix(const std::source_location &location) {
     SourceLocationInfo info = MakeSourceLocationInfo(location);
 
     ScopeFrame frame{};
-    frame.namespaceName = info.signature.namespaceName;
-    frame.className     = info.signature.className;
-    frame.functionName  = info.signature.functionName;
+    frame.scopes       = info.signature.scopes;
+    frame.functionName = info.signature.functionName;
     frame.depth = sTabCount;
     sScopeFrames.push_back(std::move(frame));
 }

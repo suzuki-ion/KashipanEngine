@@ -12,7 +12,7 @@
 		"engine.initialize.start": "エンジン初期化開始",
 		"engine.initialize.end": "エンジン初期化完了",
 		"engine.finalize.start": "エンジン終了開始",
-		"engine.shutdown.end": "エンジン終了完了",
+		"engine.finalize.end": "エンジン終了完了",
 
 		//--------- 翻訳 ---------//
 		"engine.translations.loaded": "翻訳ファイルが正常に読み込まれました。言語：",
@@ -39,6 +39,9 @@
 		"engine.directx.initialize.start": "DirectX初期化開始",
 		"engine.directx.initialize.end": "DirectX初期化完了",
 		"engine.directx.initialize.failed": "DirectXの初期化に失敗しました。",
+		"engine.directx.finalize.start": "DirectX終了開始",
+		"engine.directx.finalize.end": "DirectX終了完了",
+		"engine.directx.finalize.failed": "DirectXの終了に失敗しました。",
 		"engine.directx.debuglayer.enabled": "DirectXデバッグレイヤーが有効になっています。パフォーマンスに影響を与える可能性があります。",
 		"engine.directx.debuglayer.disabled": "DirectXデバッグレイヤーが無効になっています。",
 		"engine.directx.debuglayer.disabled.release": "DirectXデバッグレイヤーはリリースビルドではサポートされていません。",

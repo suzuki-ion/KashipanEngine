@@ -35,6 +35,29 @@ DX12Device::DX12Device(Passkey<DirectXCommon>, IDXGIAdapter4 *adapter) {
         Log(Translation("engine.directx.device.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to create D3D12 Device.");
     }
+
+#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+    // デバッグ情報の設定
+    Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue;
+    if (SUCCEEDED(device_->QueryInterface(IID_PPV_ARGS(&infoQueue)))) {
+        infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+        infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+        infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        D3D12_MESSAGE_ID hideMessages[] = {
+            D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE,
+        };
+        D3D12_MESSAGE_SEVERITY severitiesToHide[] = {
+            D3D12_MESSAGE_SEVERITY_INFO,
+        };
+        D3D12_INFO_QUEUE_FILTER filter = {};
+        filter.DenyList.NumIDs = _countof(hideMessages);
+        filter.DenyList.pIDList = hideMessages;
+        filter.DenyList.NumSeverities = _countof(severitiesToHide);
+        filter.DenyList.pSeverityList = severitiesToHide;
+        infoQueue->AddStorageFilterEntries(&filter);
+    }
+#endif
+
     Log(Translation("engine.directx.device.initialize.end"), LogSeverity::Debug);
 }
 

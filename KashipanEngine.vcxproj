@@ -105,6 +105,7 @@
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12DXGIs.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Fence.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12SwapChain.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.cpp" />
@@ -115,13 +116,21 @@
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\Window.cpp" />
+    <ClCompile Include="KashipanEngine\Core\Window.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI.cpp" />
     <ClCompile Include="KashipanEngine\Debug\CrashHandler.cpp" />
     <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportDump.cpp" />
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\DepthStencilResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\IndexBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\RenderTargetResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\VertexBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
@@ -152,14 +161,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h" />
-    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DSVHeap.h" />
-    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\RTVHeap.h" />
-    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\SRVHeap.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapDSV.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapRTV.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSRV.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12DXGIs.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Fence.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12SwapChain.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.h" />
@@ -175,7 +185,7 @@
     <ClInclude Include="KashipanEngine\Assets\TextureManager.h" />
     <ClInclude Include="KashipanEngine\Core\DirectXCommon.h" />
     <ClInclude Include="KashipanEngine\Core\GameEngine.h" />
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\Window.h" />
+    <ClInclude Include="KashipanEngine\Core\Window.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowDescriptor.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowMessage.h" />
@@ -205,6 +215,15 @@
     <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\IGraphicsResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\DepthStencilResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\IndexBufferResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\RenderTargetResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />
     <ClInclude Include="KashipanEngine\Math\SRTMatrix4x4.h" />

@@ -1,50 +1,40 @@
 #pragma once
-#include "Graphics/IResource.h"
+#include <d3d12.h>
+#include <memory>
+#include "Graphics/Resources/IGraphicsResource.h"
 
 namespace KashipanEngine {
 
-/// @brief インデックスバッファ用のGPUリソース
-class IndexBufferResource : public IResource {
+class IndexBufferResource final : public IGraphicsResource {
 public:
-    IndexBufferResource(const std::string &name, UINT indexCount, DXGI_FORMAT indexFormat = DXGI_FORMAT_R32_UINT);
-    ~IndexBufferResource() override = default;
+    /// @brief コンストラクタ
+    /// @param byteSize バッファサイズ（バイト単位）
+    /// @param indexFormat インデックスフォーマット
+    /// @param initialData 初期データ（nullptrの場合は未初期化）
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    IndexBufferResource(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData = nullptr, ID3D12Resource *existingResource = nullptr);
 
-    // IGPUResource インターフェースの実装
-    void Create() override;
-    void Release() override;
+    /// @brief リソース再生成
+    /// @param byteSize バッファサイズ（バイト単位）
+    /// @param indexFormat インデックスフォーマット
+    /// @param initialData 初期データ（nullptrの場合は未初期化）
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    bool Recreate(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData = nullptr, ID3D12Resource *existingResource = nullptr);
 
-    // インデックスバッファ固有の機能
-    void Map();
+    /// @brief インデックスバッファビュー取得
+    D3D12_INDEX_BUFFER_VIEW GetView() const;
+
+    /// @brief バッファマッピング 
+    void *Map();
+    /// @brief バッファアンマッピング
     void Unmap();
-    void UpdateIndices16(const uint16_t *indices, UINT count);
-    void UpdateIndices32(const uint32_t *indices, UINT count);
-    void *GetMappedIndices() { return mappedIndices_; }
-    void SetAsIndexBuffer();
-    
-    // インデックスバッファビュー取得
-    D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const;
-    UINT GetIndexCount() const { return indexCount_; }
-    DXGI_FORMAT GetIndexFormat() const { return indexFormat_; }
-
-protected:
-    void RecreateResource() override;
 
 private:
-    // インデックス数
-    UINT indexCount_;
-    
-    // インデックスフォーマット
-    DXGI_FORMAT indexFormat_;
-    
-    // マップされたインデックスデータへのポインタ
-    void *mappedIndices_ = nullptr;
-    
-    // インデックスバッファビュー
-    D3D12_INDEX_BUFFER_VIEW indexBufferView_ = {};
-    
-    // インデックスバッファのサイズ
-    size_t GetBufferSize() const;
-    size_t GetIndexSize() const;
+    bool Initialize(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData, ID3D12Resource *existingResource);
+
+    size_t bufferSize_ = 0;
+    DXGI_FORMAT indexFormat_ = DXGI_FORMAT_R16_UINT;
 };
 
 } // namespace KashipanEngine

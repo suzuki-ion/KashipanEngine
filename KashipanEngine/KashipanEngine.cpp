@@ -8,7 +8,7 @@
 namespace KashipanEngine {
 int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
     SetUnhandledExceptionFilter(CrashHandler);
-    //D3DResourceLeakChecker resourceLeakChecker;
+    D3DResourceLeakChecker resourceLeakChecker;
 
     //--------- 設定ファイル読み込み ---------//
 
@@ -17,7 +17,7 @@ int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
         assert(false && "Failed to load engine settings JSON.");
         return -1;
     }
-    std::string logSettingsPath = engineSettingsJSON.value("LogSettingsPath", "LogSettings.json");
+    std::string logSettingsPath = engineSettingsJSON.value("logSettingsPath", "LogSettings.json");
     LoadLogSettings({}, logSettingsPath);
     InitializeLogger({});
     LoadEngineSettings({}, engineSettingsPath);

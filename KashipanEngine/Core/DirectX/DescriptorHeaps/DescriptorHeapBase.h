@@ -3,7 +3,6 @@
 #include <memory>
 #include <d3d12.h>
 #include <wrl.h>
-#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
@@ -31,13 +30,20 @@ private:
 /// @brief デスクリプタヒープ基底クラス
 class DescriptorHeapBase {
 public:
-    DescriptorHeapBase(Passkey<DirectXCommon>, ID3D12Device *device, D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags);
     virtual ~DescriptorHeapBase();
 
     /// @brief デスクリプタハンドルを取得
     [[nodiscard]] std::unique_ptr<DescriptorHandleInfo> AllocateDescriptorHandle();
     /// @brief デスクリプタハンドルを解放
     void FreeDescriptorHandle(Passkey<DescriptorHandleInfo>, UINT index);
+
+protected:
+    /// @brief 派生クラス限定コンストラクタ
+    /// @param device D3D12デバイス
+    /// @param type デスクリプタヒープタイプ
+    /// @param numDescriptors デスクリプタ数
+    /// @param flags デスクリプタヒープフラグ
+    DescriptorHeapBase(ID3D12Device *device, D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags);
 
 private:
     DescriptorHeapBase(const DescriptorHeapBase &) = delete;

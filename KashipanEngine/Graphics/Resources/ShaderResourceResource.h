@@ -1,40 +1,43 @@
 #pragma once
-#include "Graphics/IResource.h"
-#include "Graphics/DescriptorHeaps/SRVHeap.h"
+#include <d3d12.h>
+#include <memory>
+#include "Graphics/Resources/IGraphicsResource.h"
+#include "Core/DirectX/DescriptorHeaps/HeapSRV.h"
 
 namespace KashipanEngine {
 
-/// @brief シェーダーリソース用のGPUリソース
-class ShaderResourceResource : public IResource {
+class ShaderResourceResource final : public IGraphicsResource {
 public:
-    ShaderResourceResource(const std::string &name, UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
-    ShaderResourceResource(const std::string &name, Microsoft::WRL::ComPtr<ID3D12Resource> existingResource);
-    ~ShaderResourceResource() override = default;
+    /// @brief コンストラクタ
+    /// @param width 横幅
+    /// @param height 高さ
+    /// @param format フォーマット
+    /// @param srvHeap SRVヒープ
+    /// @param flags リソースフラグ
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, SRVHeap *srvHeap, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, ID3D12Resource *existingResource = nullptr);
 
-    // IGPUResource インターフェースの実装
-    void Create() override;
-    void Release() override;
+    /// @brief リソース再生成
+    /// @param width 横幅
+    /// @param height 高さ
+    /// @param format フォーマット
+    /// @param flags リソースフラグ
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    bool Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, ID3D12Resource *existingResource = nullptr);
 
-    // シェーダーリソース固有の機能
-    void SetAsShaderResource(UINT rootParameterIndex);
-    
-    // ディスクリプタハンドル取得
-    D3D12_CPU_DESCRIPTOR_HANDLE GetSRVHandleCPU() const { return srvHandleCPU_; }
-    D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHandleGPU() const { return srvHandleGPU_; }
-
-protected:
-    void RecreateResource() override;
+    /// @brief SRVヒープの設定
+    /// @param srvHeap SRVヒープ
+    void SetHeap(SRVHeap *srvHeap) { srvHeap_ = srvHeap; }
 
 private:
-    // ビュー作成
-    void CreateShaderResourceView();
-    
-    // ディスクリプタハンドル
-    D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCPU_ = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGPU_ = {};
-    
-    // 既存リソースを使用するかどうか
-    bool useExistingResource_ = false;
+    bool Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, ID3D12Resource *existingResource = nullptr);
+
+    UINT width_ = 0;
+    UINT height_ = 0;
+    DXGI_FORMAT format_ = DXGI_FORMAT_R8G8B8A8_UNORM;
+    D3D12_RESOURCE_FLAGS flags_ = D3D12_RESOURCE_FLAG_NONE;
+    SRVHeap *srvHeap_ = nullptr;
 };
 
 } // namespace KashipanEngine

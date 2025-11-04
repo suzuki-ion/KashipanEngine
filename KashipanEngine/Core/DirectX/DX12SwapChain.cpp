@@ -1,21 +1,22 @@
 #include "DX12SwapChain.h"
+#include "Core/DirectXCommon.h"
 #include <stdexcept>
 
 namespace KashipanEngine {
 
-DX12SwapChain::DX12SwapChain(Passkey<DirectXCommon>, ID3D12Device *device, IDXGIFactory7 *dxgiFactory, ID3D12CommandQueue *commandQueue,
-    HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
+DX12SwapChain::DX12SwapChain(Passkey<DirectXCommon>, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
     LogScope scope;
     Log(Translation("engine.directx.swapchain.initialize.start"), LogSeverity::Debug);
-    
-    static_cast<void>(device);
-    bufferCount_ = bufferCount;
-    currentBufferIndex_ = 0;
+
+    hwnd_ = hwnd;
     width_ = width;
     height_ = height;
+    bufferCount_ = bufferCount;
 
-    CreateSwapChain(dxgiFactory, commandQueue, hwnd);
+    CreateSwapChain();
     SetViewportAndScissorRect();
+    CreateBackBuffers();
+    CreateDepthStencilBuffer();
 
     Log(Translation("engine.directx.swapchain.initialize.end"), LogSeverity::Debug);
 }
@@ -23,14 +24,72 @@ DX12SwapChain::DX12SwapChain(Passkey<DirectXCommon>, ID3D12Device *device, IDXGI
 DX12SwapChain::~DX12SwapChain() {
     LogScope scope;
     Log(Translation("engine.directx.swapchain.finalize.start"), LogSeverity::Debug);
-    depthStencilBuffer_.Reset();
-    rtvHandles_.clear();
+    depthStencilBuffer_.reset();
     backBuffers_.clear();
     swapChain_.Reset();
     Log(Translation("engine.directx.swapchain.finalize.end"), LogSeverity::Debug);
 }
 
-void DX12SwapChain::CreateSwapChain(IDXGIFactory7 *dxgiFactory, ID3D12CommandQueue *commandQueue, HWND hwnd) {
+void DX12SwapChain::BeginDraw(Passkey<Window>) {
+    currentBufferIndex_ = swapChain_->GetCurrentBackBufferIndex();
+    backBuffers_[currentBufferIndex_]->TransitionToNext();
+
+    // レンダーターゲットと深度ステンシルビューの設定
+    sCommandList->OMSetRenderTargets(1, &rtvHandles_[currentBufferIndex_], FALSE, &dsvHandle_);
+    backBuffers_[currentBufferIndex_]->ClearRenderTargetView();
+    depthStencilBuffer_->ClearDepthStencilView();
+
+    // ビューポートとシザー矩形の設定
+    sCommandList->RSSetViewports(1, &viewport_);
+    sCommandList->RSSetScissorRects(1, &scissorRect_);
+}
+
+void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
+    backBuffers_[currentBufferIndex_]->TransitionToNext();
+}
+
+void DX12SwapChain::Present(Passkey<DirectXCommon>) {
+    UINT syncInterval = enableVSync_ ? 1 : 0;
+    UINT presentFlags = enableVSync_ ? 0 : DXGI_PRESENT_ALLOW_TEARING;
+    HRESULT hr = swapChain_->Present(syncInterval, presentFlags);
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.swapchain.present.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to present DX12 swap chain.");
+    }
+}
+
+void DX12SwapChain::Resize(Passkey<Window>, int32_t width, int32_t height) {
+    LogScope scope;
+    Log(Translation("engine.directx.swapchain.resize.start"), LogSeverity::Debug);
+    width_ = width;
+    height_ = height;
+
+    // GPU 完了待ち
+    sDirectXCommon->WaitForFence({});
+
+    backBuffers_.clear();
+    depthStencilBuffer_.reset();
+
+    HRESULT hr = swapChain_->ResizeBuffers(
+        static_cast<UINT>(bufferCount_),
+        static_cast<UINT>(width_),
+        static_cast<UINT>(height_),
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+    );
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.swapchain.resize.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to resize DX12 swap chain buffers.");
+    }
+    
+    SetViewportAndScissorRect();
+    CreateBackBuffers();
+    CreateDepthStencilBuffer();
+    
+    Log(Translation("engine.directx.swapchain.resize.end"), LogSeverity::Debug);
+}
+
+void DX12SwapChain::CreateSwapChain() {
     //==================================================
     // スワップチェーンの生成
     //==================================================
@@ -39,19 +98,19 @@ void DX12SwapChain::CreateSwapChain(IDXGIFactory7 *dxgiFactory, ID3D12CommandQue
     swapChainDesc.Width = static_cast<UINT>(width_);
     swapChainDesc.Height = static_cast<UINT>(height_);
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.Stereo = FALSE;
+    //swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc.Count = 1;
-    swapChainDesc.SampleDesc.Quality = 0;
+    //swapChainDesc.SampleDesc.Quality = 0;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.BufferCount = static_cast<UINT>(bufferCount_);
-    swapChainDesc.Scaling = DXGI_SCALING_ASPECT_RATIO_STRETCH;
+    //swapChainDesc.Scaling = DXGI_SCALING_ASPECT_RATIO_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+    //swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-    HRESULT hr = dxgiFactory->CreateSwapChainForHwnd(
-        commandQueue,
-        hwnd,
+    HRESULT hr = sDXGIFactory->CreateSwapChainForHwnd(
+        sCommandQueue,
+        hwnd_,
         &swapChainDesc,
         nullptr,
         nullptr,
@@ -77,8 +136,33 @@ void DX12SwapChain::SetViewportAndScissorRect() {
     scissorRect_.bottom = height_;
 }
 
-void DX12SwapChain::CreateBackBuffers() {}
+void DX12SwapChain::CreateBackBuffers() {
+    backBuffers_.resize(bufferCount_);
+    rtvHandles_.resize(bufferCount_);
+    for (int32_t i = 0; i < bufferCount_; ++i) {
+        Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
+        HRESULT hr = swapChain_->GetBuffer(i, IID_PPV_ARGS(backBuffer.ReleaseAndGetAddressOf()));
+        if (FAILED(hr)) {
+            Log(Translation("engine.directx.swapchain.backbuffer.get.failed") + std::to_string(i), LogSeverity::Critical);
+            throw std::runtime_error("Failed to get back buffer from DX12 swap chain.");
+        }
 
-void DX12SwapChain::CreateDepthStencilBuffer() {}
+        // RenderTargetResourceの作成（スワップチェーン専用）：参照は SetExistingResource 側で AddRef される
+        backBuffers_[i] = std::make_unique<RenderTargetResource>(
+            static_cast<UINT>(width_), static_cast<UINT>(height_),
+            DXGI_FORMAT_R8G8B8A8_UNORM, sRTVHeap, backBuffer.Get());
+        rtvHandles_[i] = backBuffers_[i]->GetCPUDescriptorHandle();
+        backBuffers_[i]->ClearTransitionStates();
+        backBuffers_[i]->AddTransitionState(D3D12_RESOURCE_STATE_PRESENT);
+        backBuffers_[i]->AddTransitionState(D3D12_RESOURCE_STATE_RENDER_TARGET);
+    }
+}
+
+void DX12SwapChain::CreateDepthStencilBuffer() {
+    depthStencilBuffer_ = std::make_unique<DepthStencilResource>(
+        static_cast<UINT>(width_), static_cast<UINT>(height_),
+        DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0), sDSVHeap);
+    dsvHandle_ = depthStencilBuffer_->GetCPUDescriptorHandle();
+}
 
 } // namespace KashipanEngine

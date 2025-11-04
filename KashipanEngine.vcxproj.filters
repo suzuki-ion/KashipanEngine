@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\Window.cpp">
+    <ClCompile Include="KashipanEngine\Core\Window.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp">
@@ -168,6 +168,33 @@
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\RenderTargetResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\DepthStencilResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\VertexBufferResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\IndexBufferResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -185,7 +212,7 @@
     <ClInclude Include="KashipanEngine\Scene\SceneScreen2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\Window.h">
+    <ClInclude Include="KashipanEngine\Core\Window.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\DataStructs\TextureData.h">
@@ -470,13 +497,43 @@
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\RTVHeap.h">
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapRTV.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DSVHeap.h">
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapDSV.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\SRVHeap.h">
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSRV.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\IGraphicsResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\RenderTargetResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\DepthStencilResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\IndexBufferResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

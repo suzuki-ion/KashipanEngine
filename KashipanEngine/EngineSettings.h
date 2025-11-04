@@ -1,7 +1,5 @@
 #pragma once
-#include <string>
 #include <unordered_map>
-#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
@@ -24,9 +22,9 @@ struct EngineSettings {
     };
     //--------- レンダリングのデフォルト設定 ---------//
     struct Rendering {
-        float defaultClearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-        bool enableVSync = true;
-        int32_t maxFPS = 60;
+        float defaultClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        bool defaultEnableVSync = true;
+        int32_t defaultMaxFPS = 60;
     };
     //--------- エンジンの翻訳ファイル設定 ---------//
     struct Translations {

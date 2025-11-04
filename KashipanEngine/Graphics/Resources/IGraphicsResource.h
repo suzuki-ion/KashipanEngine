@@ -1,0 +1,95 @@
+#pragma once
+#include "Core/DirectX/DescriptorHeaps/DescriptorHeapBase.h"
+
+namespace KashipanEngine {
+
+class DirectXCommon;
+
+enum class ResourceViewType {
+    None,   // 未使用
+    RTV,    // レンダーターゲットビュー
+    DSV,    // 深度ステンシルビュー
+    SRV,    // シェーダーリソースビュー
+    UAV,    // アンオーダードアクセスビュー
+    CBV,    // 定数バッファビュー
+    VBV,    // 頂点バッファビュー
+    IBV,    // インデックスバッファビュー
+    SOV,    // ストリーム出力ビュー
+};
+
+/// @brief グラフィックのリソースインターフェース
+class IGraphicsResource {
+    static inline ID3D12Device *device_ = nullptr;
+    static inline ID3D12GraphicsCommandList *commandList_ = nullptr;
+
+    IGraphicsResource(const IGraphicsResource &) = delete;
+    IGraphicsResource &operator=(const IGraphicsResource &) = delete;
+    IGraphicsResource(IGraphicsResource &&) = delete;
+    IGraphicsResource &operator=(IGraphicsResource &&) = delete;
+
+public:
+    static void SetDevice(Passkey<DirectXCommon>, ID3D12Device *device) { device_ = device; }
+    static void SetCommandList(Passkey<DirectXCommon>, ID3D12GraphicsCommandList *commandList) { commandList_ = commandList; }
+    static void ClearAllResources(Passkey<DirectXCommon>);
+    virtual ~IGraphicsResource();
+
+    /// @brief バリアの状態を追加
+    void AddTransitionState(D3D12_RESOURCE_STATES state) { transitionStates_.push_back(state); }
+    /// @brief バリアの状態リストをクリア
+    void ClearTransitionStates() { transitionStates_.clear(); }
+    /// @brief バリアを次の状態に遷移
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    bool TransitionToNext();
+
+    /// @brief リソース取得
+    ID3D12Resource *GetResource() const { return resource_; }
+    /// @brief リソースビューの種類を取得
+    ResourceViewType GetResourceViewType() const { return resourceViewType_; }
+
+    /// @brief 現在のバリア状態取得
+    D3D12_RESOURCE_STATES GetCurrentState() const { return transitionStates_.empty() ? D3D12_RESOURCE_STATE_COMMON : transitionStates_[currentStateIndex_]; }
+
+    /// @brief デスクリプタCPUハンドル取得（未割り当ての場合は空）
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle() const { return descriptorHandleInfo_ ? descriptorHandleInfo_->cpuHandle : D3D12_CPU_DESCRIPTOR_HANDLE{}; }
+    /// @brief デスクリプタグラフィックスハンドル取得（未割り当ての場合は空）
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle() const { return descriptorHandleInfo_ ? descriptorHandleInfo_->gpuHandle : D3D12_GPU_DESCRIPTOR_HANDLE{}; }
+
+protected:
+    /// @brief リソース作成
+    void CreateResource(
+        const wchar_t *resourceName,
+        const D3D12_HEAP_PROPERTIES *heapProperties,
+        D3D12_HEAP_FLAGS heapFlags,
+        const D3D12_RESOURCE_DESC *resourceDesc,
+        const D3D12_CLEAR_VALUE *optimizedClearValue = nullptr
+    );
+    /// @brief 既存のリソースを設定
+    void SetExistingResource(ID3D12Resource *existingResource);
+
+    /// @brief 派生クラス限定のコンストラクタ
+    /// @param viewType リソースビューの種類
+    IGraphicsResource(ResourceViewType viewType) : resourceViewType_(viewType) {}
+
+    /// @brief デバイス取得（派生クラス用）
+    ID3D12Device *GetDevice() const { return device_; }
+    /// @brief コマンドリスト取得（派生クラス用）
+    ID3D12GraphicsCommandList *GetCommandList() const { return commandList_; }
+    /// @brief デスクリプタハンドル情報設定（派生クラス用）
+    void SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info) { descriptorHandleInfo_ = std::move(info); }
+    /// @brief デスクリプタハンドル情報取得（派生クラス用）
+    DescriptorHandleInfo *GetDescriptorHandleInfo() const { return descriptorHandleInfo_.get(); }
+    /// @brief 再生成前に現在のリソースを解放（派生クラス用）
+    void ResetResourceForRecreate();
+
+    const ResourceViewType resourceViewType_ = ResourceViewType::None;
+
+private:
+    uint32_t resourceID_ = 0;
+    ID3D12Resource *resource_ = nullptr;
+    std::unique_ptr<DescriptorHandleInfo> descriptorHandleInfo_ = nullptr;
+
+    uint32_t currentStateIndex_ = 0;
+    std::vector<D3D12_RESOURCE_STATES> transitionStates_;
+};
+
+} // namespace KashipanEngine

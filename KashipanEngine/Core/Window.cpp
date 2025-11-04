@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Core/WindowsAPI.h"
+#include "Core/DirectXCommon.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include <cassert>
 
@@ -92,10 +93,19 @@ void Window::Update(Passkey<GameEngine>) {
         window->ProcessMessage();
         if (window->IsDestroyed()) {
             sWindowsAPI->UnregisterWindow({}, window->GetWindowHandle());
+            sDirectXCommon->DestroySwapChain({}, window->GetWindowHandle());
             it = sWindowMap.erase(it);
-        } else {
-            ++it;
+            continue;
         }
+        ++it;
+    }
+}
+
+void Window::Draw(Passkey<GameEngine>) {
+    LogScope scope;
+    for (auto &pair : sWindowMap) {
+        Window *window = pair.second.get();
+        window->dx12SwapChain_->BeginDraw({});
     }
 }
 
@@ -359,6 +369,9 @@ bool Window::InitializeWindow(
     // ウィンドウを表示
     ShowWindow(descriptor_.hwnd, SW_SHOW);
     UpdateWindow(descriptor_.hwnd);
+
+    // SwapChainの初期化
+    dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, descriptor_.hwnd, size_.clientWidth, size_.clientHeight);
 
     return true;
 }

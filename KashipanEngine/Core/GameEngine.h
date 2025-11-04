@@ -2,7 +2,6 @@
 #include <memory>
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
-#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 

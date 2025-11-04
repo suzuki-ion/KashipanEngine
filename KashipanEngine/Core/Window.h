@@ -9,15 +9,14 @@
 #include "Core/WindowsAPI/WindowDescriptor.h"
 #include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
-
 #include "Core/WindowsAPI/WindowEvents/IWindowEvent.h"
-#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
 class GameEngine;
 class WindowsAPI;
 class DirectXCommon;
+class DX12SwapChain;
 
 /// @brief サイズ変更モード
 enum class SizeChangeMode {
@@ -66,6 +65,8 @@ public:
 
     /// @brief ウィンドウ更新処理
     static void Update(Passkey<GameEngine>);
+    /// @brief ウィンドウ描画処理
+    static void Draw(Passkey<GameEngine>);
 
     /// @brief コンストラクタ（Window限定）
     /// @param title ウィンドウタイトル
@@ -208,6 +209,9 @@ private:
     // メッセージ関連
     std::unordered_map<UINT, WindowMessage> messages_;
     
+    // DX12スワップチェーン
+    DX12SwapChain *dx12SwapChain_;
+
     // 状態管理
     SizeChangeMode sizeChangeMode_ = SizeChangeMode::Normal;
     WindowMode windowMode_ = WindowMode::Window;

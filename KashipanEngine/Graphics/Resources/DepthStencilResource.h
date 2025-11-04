@@ -1,40 +1,57 @@
 #pragma once
-#include "Graphics/IResource.h"
-#include "Graphics/DescriptorHeaps/DSVHeap.h"
+#include <d3d12.h>
+#include "Graphics/Resources/IGraphicsResource.h"
+#include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
 
 namespace KashipanEngine {
 
-/// @brief 深度ステンシル用のGPUリソース
-class DepthStencilResource : public IResource {
+class DepthStencilResource final : public IGraphicsResource {
+    static inline ID3D12GraphicsCommandList *sCommandList_ = nullptr;
+
 public:
-    DepthStencilResource(const std::string &name, UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT);
-    ~DepthStencilResource() override = default;
+    /// @brief コマンドリスト設定
+    static void SetCommandList(Passkey<DirectXCommon>, ID3D12GraphicsCommandList *commandList) {
+        sCommandList_ = commandList;
+    }
 
-    // IGPUResource インターフェースの実装
-    void Create() override;
-    void Release() override;
+    /// @brief コンストラクタ
+    /// @param width 横幅
+    /// @param height 高さ
+    /// @param format フォーマット
+    /// @param clearDepth デプスクリア値
+    /// @param clearStencil ステンシルクリア値
+    /// @param dsvHeap DSVヒープ
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    DepthStencilResource(UINT width, UINT height, DXGI_FORMAT format,
+        FLOAT clearDepth, UINT8 clearStencil, DSVHeap *dsvHeap, ID3D12Resource *existingResource = nullptr);
 
-    // 深度ステンシル固有の機能
-    void Clear(float depth = 1.0f, UINT8 stencil = 0);
-    void SetAsDepthStencil();
-    
-    // ディスクリプタハンドル取得
-    D3D12_CPU_DESCRIPTOR_HANDLE GetDSVHandleCPU() const { return dsvHandleCPU_; }
-    D3D12_GPU_DESCRIPTOR_HANDLE GetDSVHandleGPU() const { return dsvHandleGPU_; }
+    /// @brief リソース再生成
+    /// @param width 横幅
+    /// @param height 高さ
+    /// @param format フォーマット
+    /// @param clearDepth デプスクリア値
+    /// @param clearStencil ステンシルクリア値
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    bool Recreate(UINT width, UINT height, DXGI_FORMAT format,
+        FLOAT clearDepth, UINT8 clearStencil, ID3D12Resource *existingResource = nullptr);
 
-protected:
-    void RecreateResource() override;
+    /// @brief 深度ステンシルビューのクリア
+    void ClearDepthStencilView() const;
+
+    /// @brief DSVヒープの設定
+    /// @param dsvHeap ヒープ
+    void SetHeap(DSVHeap *dsvHeap) { dsvHeap_ = dsvHeap; }
 
 private:
-    // ビュー作成
-    void CreateDepthStencilView();
-    
-    // ディスクリプタハンドル
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandleCPU_ = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE dsvHandleGPU_ = {};
-    
-    // クリア値
-    D3D12_CLEAR_VALUE clearValue_ = {};
+    bool Initialize(UINT width, UINT height, DXGI_FORMAT format, FLOAT clearDepth, UINT8 clearStencil, ID3D12Resource *existingResource);
+
+    UINT width_ = 0;
+    UINT height_ = 0;
+    DXGI_FORMAT format_ = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    FLOAT clearDepth_ = 1.0f;
+    UINT8 clearStencil_ = 0;
+    DSVHeap *dsvHeap_ = nullptr;
 };
 
 } // namespace KashipanEngine

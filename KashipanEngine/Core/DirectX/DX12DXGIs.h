@@ -1,7 +1,6 @@
 #pragma once
 #include <dxgi1_6.h>
 #include <wrl.h>
-#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 

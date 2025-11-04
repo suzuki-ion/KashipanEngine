@@ -1,5 +1,5 @@
 #include "IWindowEvent.h"
-#include "Core/WindowsAPI/Window.h"
+#include "Core/Window.h"
 #include "Debug/Logger.h"
 
 namespace KashipanEngine {

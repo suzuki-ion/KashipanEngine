@@ -2,6 +2,7 @@
 #include <cassert>
 #include <memory>
 #include <unordered_map>
+#include "Core/Window.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {

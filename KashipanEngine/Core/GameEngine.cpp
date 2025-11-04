@@ -1,5 +1,6 @@
 #include "GameEngine.h"
 #include "EngineSettings.h"
+#include "Core/Window.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
@@ -72,6 +73,8 @@ void GameEngine::GameLoopUpdate() {
 }
 
 void GameEngine::GameLoopDraw() {
+    Window::Draw({});
+    directXCommon_->ExecuteCommandAndWait({});
 }
 
 int GameEngine::Execute() {

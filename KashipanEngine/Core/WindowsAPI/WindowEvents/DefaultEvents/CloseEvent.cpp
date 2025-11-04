@@ -1,6 +1,6 @@
 #include "CloseEvent.h"
 #include <Windows.h>
-#include "Core/WindowsAPI/Window.h"
+#include "Core/Window.h"
 #include "Core/WindowsAPI/WindowDescriptor.h"
 
 namespace KashipanEngine {

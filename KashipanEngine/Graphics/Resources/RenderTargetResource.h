@@ -1,40 +1,69 @@
 #pragma once
-#include "Graphics/IResource.h"
-#include "Graphics/DescriptorHeaps/RTVHeap.h"
+#include <d3d12.h>
+#include <memory>
+#include "Graphics/Resources/IGraphicsResource.h"
+#include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 
 namespace KashipanEngine {
 
-/// @brief レンダーターゲット用のGPUリソース
-class RenderTargetResource : public IResource {
+class DX12SwapChain;
+
+class RenderTargetResource final : public IGraphicsResource {
+    static inline ID3D12GraphicsCommandList *sCommandList_ = nullptr;
+    static inline FLOAT sDefaultClearColor_[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 public:
-    RenderTargetResource(const std::string &name, UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
-    ~RenderTargetResource() override = default;
+    /// @brief コマンドリスト設定
+    static void SetCommandList(Passkey<DirectXCommon>, ID3D12GraphicsCommandList *commandList) {
+        sCommandList_ = commandList;
+    }
+    /// @brief デフォルトのクリアカラー設定
+    /// @param clearColor クリアカラー配列（RGBA）
+    static void SetDefaultClearColor(Passkey<DirectXCommon>, const FLOAT clearColor[4]) {
+        sDefaultClearColor_[0] = clearColor[0];
+        sDefaultClearColor_[1] = clearColor[1];
+        sDefaultClearColor_[2] = clearColor[2];
+        sDefaultClearColor_[3] = clearColor[3];
+    }
+    /// @brief コンストラクタ
+    /// @param width 横幅
+    /// @param height 高さ
+    /// @param format フォーマット
+    /// @param rtvHeap RTVヒープ
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    /// @param clearColor クリアカラー配列（RGBA）
+    RenderTargetResource(UINT width, UINT height, DXGI_FORMAT format, RTVHeap *rtvHeap,
+        ID3D12Resource *existingResource = nullptr, const FLOAT clearColor[4] = sDefaultClearColor_);
 
-    // IGPUResource インターフェースの実装
-    void Create() override;
-    void Release() override;
+    /// @brief リソース再生成
+    /// @param width 横幅
+    /// @param height 高さ
+    /// @param format フォーマット
+    /// @param existingResource 既存リソース（nullptrの場合は新規作成）
+    /// @param clearColor クリアカラー配列（RGBA）
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    bool Recreate(UINT width, UINT height, DXGI_FORMAT format,
+        ID3D12Resource *existingResource = nullptr, const FLOAT clearColor[4] = sDefaultClearColor_);
 
-    // レンダーターゲット固有の機能
-    void Clear(const float clearColor[4]);
-    void SetAsRenderTarget();
-    
-    // ディスクリプタハンドル取得
-    D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandleCPU() const { return rtvHandleCPU_; }
-    D3D12_GPU_DESCRIPTOR_HANDLE GetRTVHandleGPU() const { return rtvHandleGPU_; }
+    /// @brief レンダーターゲットビューのクリア
+    void ClearRenderTargetView() const;
 
-protected:
-    void RecreateResource() override;
+    /// @brief RTVヒープの設定
+    /// @param rtvHeap ヒープ
+    void SetHeap(RTVHeap *rtvHeap) { rtvHeap_ = rtvHeap; }
+
+    UINT GetWidth() const { return width_; }
+    UINT GetHeight() const { return height_; }
+    DXGI_FORMAT GetFormat() const { return format_; }
 
 private:
-    // リソース作成
-    void CreateRenderTargetView();
-    
-    // ディスクリプタハンドル
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandleCPU_ = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE rtvHandleGPU_ = {};
-    
-    // クリア値
-    D3D12_CLEAR_VALUE clearValue_ = {};
+    bool Initialize(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource, const FLOAT clearColor[4]);
+
+    UINT width_ = 0;
+    UINT height_ = 0;
+    DXGI_FORMAT format_ = DXGI_FORMAT_R8G8B8A8_UNORM;
+    FLOAT clearColor_[4] { 0.f, 0.f, 0.f, 0.f };
+    RTVHeap *rtvHeap_ = nullptr;
 };
 
 } // namespace KashipanEngine

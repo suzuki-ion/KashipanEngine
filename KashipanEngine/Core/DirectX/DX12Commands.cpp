@@ -48,9 +48,6 @@ DX12Commands::DX12Commands(Passkey<DirectXCommon>, ID3D12Device *device, D3D12_C
     }
     Log(Translation("engine.directx.commands.commandlist.initialize.end"), LogSeverity::Debug);
 
-    // コマンドリストは初期状態でオープンされているため、クローズする
-    commandList_->Close();
-
     Log(Translation("engine.directx.commands.initialize.end"), LogSeverity::Debug);
 }
 
@@ -64,6 +61,32 @@ DX12Commands::~DX12Commands() {
 }
 
 void DX12Commands::ExecuteCommandList(Passkey<DirectXCommon>) {
+    LogScope scope;
+    // コマンドリストをクローズ
+    HRESULT hr = commandList_->Close();
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.commands.execute.close.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to close command list before execution.");
+    }
+    // コマンドリストを実行
+    ID3D12CommandList *const commandLists[] = { commandList_.Get() };
+    commandQueue_->ExecuteCommandLists(1, commandLists);
+}
+
+void DX12Commands::ResetCommandAllocatorAndList(Passkey<DirectXCommon>) {
+    LogScope scope;
+    // コマンドアロケータをリセット
+    HRESULT hr = commandAllocator_->Reset();
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.commands.reset.commandallocator.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to reset command allocator.");
+    }
+    // コマンドリストをリセット
+    hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.commands.reset.commandlist.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to reset command list.");
+    }
 }
 
 } // namespace KashipanEngine

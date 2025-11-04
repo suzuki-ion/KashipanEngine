@@ -3,12 +3,11 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "Utilities/Passkeys.h"
-#include "Core/WindowsAPI/Window.h"
 
 namespace KashipanEngine {
 
 class GameEngine;
+class Window;
 
 /// @brief WindowsAPI用クラス
 class WindowsAPI final {

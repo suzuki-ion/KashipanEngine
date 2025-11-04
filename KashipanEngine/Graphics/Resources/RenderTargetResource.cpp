@@ -1,27 +1,53 @@
 #include "RenderTargetResource.h"
-#include "Core/DirectX/DirectXCommon.h"
-#include <cassert>
 
 namespace KashipanEngine {
 
-RenderTargetResource::RenderTargetResource(const std::string &name, UINT width, UINT height, DXGI_FORMAT format)
-    : IResource(name, ResourceViewType::RTV) {
+RenderTargetResource::RenderTargetResource(UINT width, UINT height, DXGI_FORMAT format, RTVHeap *rtvHeap, ID3D12Resource *existingResource, const FLOAT clearColor[4])
+    : IGraphicsResource(ResourceViewType::RTV) {
+    rtvHeap_ = rtvHeap;
+    Initialize(width, height, format, existingResource, clearColor);
+}
+
+bool RenderTargetResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource, const FLOAT clearColor[4]) {
+    ResetResourceForRecreate();
+    return Initialize(width, height, format, existingResource, clearColor);
+}
+
+void RenderTargetResource::ClearRenderTargetView() const {
+    if (!sCommandList_ || !GetDescriptorHandleInfo()) {
+        return;
+    }
+    sCommandList_->ClearRenderTargetView(
+        GetDescriptorHandleInfo()->cpuHandle,
+        clearColor_,
+        0,
+        nullptr
+    );
+}
+
+bool RenderTargetResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource, const FLOAT clearColor[4]) {
+    LogScope scope;
+    if (!GetDevice() || !rtvHeap_) {
+        Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
+        return false;
+    }
+
     width_ = width;
     height_ = height;
     format_ = format;
-    
-    // クリア値を設定
-    clearValue_.Format = format_;
-    clearValue_.Color[0] = 0.0f;
-    clearValue_.Color[1] = 0.0f;
-    clearValue_.Color[2] = 0.0f;
-    clearValue_.Color[3] = 1.0f;
-}
+    if (clearColor) {
+        memcpy(clearColor_, clearColor, sizeof(clearColor_));
+    }
 
-void RenderTargetResource::Create() {
-    assert(isCommonInitialized_);
-    
-    // リソース作成
+    // クリア値
+    D3D12_CLEAR_VALUE clearValue = {};
+    clearValue.Format = format_;
+    clearValue.Color[0] = clearColor_[0];
+    clearValue.Color[1] = clearColor_[1];
+    clearValue.Color[2] = clearColor_[2];
+    clearValue.Color[3] = clearColor_[3];
+
+    // リソース記述
     D3D12_RESOURCE_DESC resourceDesc = {};
     resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
     resourceDesc.Alignment = 0;
@@ -30,84 +56,40 @@ void RenderTargetResource::Create() {
     resourceDesc.DepthOrArraySize = 1;
     resourceDesc.MipLevels = 1;
     resourceDesc.Format = format_;
-    resourceDesc.SampleDesc.Count = 1;
-    resourceDesc.SampleDesc.Quality = 0;
+    resourceDesc.SampleDesc = {1, 0};
     resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
+    // ヒーププロパティ
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
-    resource_ = CreateCommittedResource(
-        heapProps,
-        D3D12_HEAP_FLAG_NONE,
-        resourceDesc,
-        D3D12_RESOURCE_STATE_RENDER_TARGET,
-        &clearValue_
-    );
-    
-    currentState_ = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    
+    // 状態遷移設定
+    ClearTransitionStates();
+    AddTransitionState(D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    // 既存リソース設定
+    if (existingResource) {
+        SetExistingResource(existingResource);
+    } else {
+        CreateResource(L"Render Target Resource", &heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, &clearValue);
+        if (!GetResource()) {
+            return false;
+        }
+    }
+
     // RTV作成
-    CreateRenderTargetView();
-}
+    auto handle = rtvHeap_->AllocateDescriptorHandle();
 
-void RenderTargetResource::Release() {
-    resource_.Reset();
-    rtvHandleCPU_ = {};
-    rtvHandleGPU_ = {};
-}
-
-void RenderTargetResource::RecreateResource() {
-    Release();
-    Create();
-}
-
-void RenderTargetResource::CreateRenderTargetView() {
-    assert(resource_);
-    
-    // ディスクリプタハンドル取得
-    rtvHandleCPU_ = RTV::GetCPUDescriptorHandle();
-    rtvHandleGPU_ = RTV::GetGPUDescriptorHandle();
-    
-    // RTV作成
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
     rtvDesc.Format = format_;
     rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
     rtvDesc.Texture2D.MipSlice = 0;
-    rtvDesc.Texture2D.PlaneSlice = 0;
-    
-    dxCommon_->GetDevice()->CreateRenderTargetView(
-        resource_.Get(),
-        &rtvDesc,
-        rtvHandleCPU_
-    );
-}
 
-void RenderTargetResource::Clear(const float clearColor[4]) {
-    assert(resource_);
-    
-    dxCommon_->GetCommandList()->ClearRenderTargetView(
-        rtvHandleCPU_,
-        clearColor,
-        0,
-        nullptr
-    );
-}
+    GetDevice()->CreateRenderTargetView(GetResource(), &rtvDesc, handle->cpuHandle);
 
-void RenderTargetResource::SetAsRenderTarget() {
-    assert(resource_);
-    
-    // レンダーターゲット状態に遷移
-    TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
-    
-    // レンダーターゲットを設定
-    dxCommon_->GetCommandList()->OMSetRenderTargets(
-        1,
-        &rtvHandleCPU_,
-        FALSE,
-        nullptr
-    );
+    SetDescriptorHandleInfo(std::move(handle));
+    return true;
 }
 
 } // namespace KashipanEngine

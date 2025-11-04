@@ -2,8 +2,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "Debug/Logger/LogType.h"
-#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 

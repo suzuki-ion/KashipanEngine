@@ -1,18 +1,18 @@
-#include "IndexBufferResource.h"
+#include "VertexBufferResource.h"
 
 namespace KashipanEngine {
 
-IndexBufferResource::IndexBufferResource(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData, ID3D12Resource *existingResource)
-    : IGraphicsResource(ResourceViewType::IBV) {
-    Initialize(byteSize, indexFormat, initialData, existingResource);
+VertexBufferResource::VertexBufferResource(size_t byteSize, const void *initialData, ID3D12Resource *existingResource)
+    : IGraphicsResource(ResourceViewType::VBV) {
+    Initialize(byteSize, initialData, existingResource);
 }
 
-bool IndexBufferResource::Recreate(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData, ID3D12Resource *existingResource) {
+bool VertexBufferResource::Recreate(size_t byteSize, const void *initialData, ID3D12Resource *existingResource) {
     ResetResourceForRecreate();
-    return Initialize(byteSize, indexFormat, initialData, existingResource);
+    return Initialize(byteSize, initialData, existingResource);
 }
 
-bool IndexBufferResource::Initialize(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData, ID3D12Resource *existingResource) {
+bool VertexBufferResource::Initialize(size_t byteSize, const void *initialData, ID3D12Resource *existingResource) {
     LogScope scope;
     if (!GetDevice()) {
         Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
@@ -20,7 +20,6 @@ bool IndexBufferResource::Initialize(size_t byteSize, DXGI_FORMAT indexFormat, c
     }
 
     bufferSize_ = byteSize;
-    indexFormat_ = indexFormat;
 
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -40,7 +39,7 @@ bool IndexBufferResource::Initialize(size_t byteSize, DXGI_FORMAT indexFormat, c
     if (existingResource) {
         SetExistingResource(existingResource);
     } else {
-        CreateResource(L"Index Buffer Resource", &heapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, nullptr);
+        CreateResource(L"Vertex Buffer Resource", &heapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, nullptr);
         if (!GetResource()) {
             return false;
         }
@@ -55,17 +54,17 @@ bool IndexBufferResource::Initialize(size_t byteSize, DXGI_FORMAT indexFormat, c
     return true;
 }
 
-D3D12_INDEX_BUFFER_VIEW IndexBufferResource::GetView() const {
-    D3D12_INDEX_BUFFER_VIEW view{};
+D3D12_VERTEX_BUFFER_VIEW VertexBufferResource::GetView(UINT stride) const {
+    D3D12_VERTEX_BUFFER_VIEW view{};
     if (GetResource()) {
         view.BufferLocation = GetResource()->GetGPUVirtualAddress();
-        view.Format = indexFormat_;
+        view.StrideInBytes = stride;
         view.SizeInBytes = static_cast<UINT>(bufferSize_);
     }
     return view;
 }
 
-void *IndexBufferResource::Map() {
+void *VertexBufferResource::Map() {
     void *ptr = nullptr;
     if (GetResource()) {
         GetResource()->Map(0, nullptr, &ptr);
@@ -73,7 +72,7 @@ void *IndexBufferResource::Map() {
     return ptr;
 }
 
-void IndexBufferResource::Unmap() {
+void VertexBufferResource::Unmap() {
     if (GetResource()) {
         GetResource()->Unmap(0, nullptr);
     }

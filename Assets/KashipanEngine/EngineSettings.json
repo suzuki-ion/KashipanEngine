@@ -1,5 +1,5 @@
 ﻿{
-	"LogSettingsPath": "Assets/KashipanEngine/LogSettings.json",
+	"logSettingsPath": "Assets/KashipanEngine/LogSettings.json",
 	"version": "1.0.0",
 	"window": {
 		"initialWindowTitle": "Kashipan Engine",
@@ -18,9 +18,9 @@
 		"maxComponentsPerGameObject": 32
 	},
 	"rendering": {
-		"defaultClearColor": [ 0.0, 0.0, 0.0, 1.0 ],
-		"enableVSync": true,
-		"maxFPS": 60
+		"defaultClearColor": [ 0.25, 0.5, 1.0, 1.0 ],
+		"defaultEnableVSync": true,
+		"defaultMaxFPS": 60
 	},
 	"translations": {
 		"ja-JP": "Assets/KashipanEngine/Locales/ja-JP.json"

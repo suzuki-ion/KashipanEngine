@@ -10,6 +10,8 @@ namespace KashipanEngine {
 namespace {
 /// @brief SwapChain管理用マップ
 std::unordered_map<HWND, std::unique_ptr<DX12SwapChain>> sSwapChains;
+/// @brief 削除予定のSwapChainのウィンドウハンドルリスト
+std::vector<HWND> sPendingDestroySwapChains;
 } // namespace
 
 DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
@@ -84,6 +86,14 @@ DirectXCommon::~DirectXCommon() {
     Log(Translation("engine.directx.finalize.end"), LogSeverity::Debug);
 }
 
+void DirectXCommon::BeginDraw(Passkey<GameEngine>) {
+    DestroyPendingSwapChains();
+}
+
+void DirectXCommon::EndDraw(Passkey<GameEngine>) {
+    ExecuteCommand();
+}
+
 DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
     LogScope scope;
     if (sSwapChains.find(hwnd) != sSwapChains.end()) {
@@ -97,19 +107,34 @@ DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, HWND hwnd, int32_
     return swapChainPtr;
 }
 
-void DirectXCommon::DestroySwapChain(Passkey<Window>, HWND hwnd) {
+void DirectXCommon::DestroySwapChainSignal(Passkey<Window>, HWND hwnd) {
     LogScope scope;
-    auto it = sSwapChains.find(hwnd);
-    if (it != sSwapChains.end()) {
-        WaitForFence();
-        sSwapChains.erase(it);
-        Log(Translation("engine.directx.swapchain.destroyed"), LogSeverity::Debug);
-    } else {
+    if (sSwapChains.find(hwnd) == sSwapChains.end()) {
         Log(Translation("engine.directx.swapchain.notfound"), LogSeverity::Warning);
+        return;
     }
+    sPendingDestroySwapChains.push_back(hwnd);
 }
 
-void DirectXCommon::ExecuteCommandAndWait(Passkey<GameEngine>) {
+void DirectXCommon::DestroyPendingSwapChains() {
+    for (auto hwnd : sPendingDestroySwapChains) {
+        auto it = sSwapChains.find(hwnd);
+        if (it != sSwapChains.end()) {
+            sSwapChains.erase(it);
+            Log(Translation("engine.directx.swapchain.destroyed"), LogSeverity::Debug);
+        } else {
+            Log(Translation("engine.directx.swapchain.notfound"), LogSeverity::Warning);
+        }
+    }
+    sPendingDestroySwapChains.clear();
+}
+
+bool DirectXCommon::WaitForFence() {
+    dx12Fence_->Signal({}, dx12Commands_->GetCommandQueue());
+    return dx12Fence_->Wait({});
+}
+
+void DirectXCommon::ExecuteCommand() {
     for (auto &swapChain : sSwapChains) {
         swapChain.second->EndDraw({});
     }
@@ -117,19 +142,13 @@ void DirectXCommon::ExecuteCommandAndWait(Passkey<GameEngine>) {
     for (auto &swapChain : sSwapChains) {
         swapChain.second->Present({});
     }
-    dx12Fence_->Signal({}, dx12Commands_->GetCommandQueue());
-    dx12Fence_->Wait({});
+    WaitForFence();
     dx12Commands_->ResetCommandAllocatorAndList({});
 
     // スワップチェーンのサイズ変更処理
     for (auto &swapChain : sSwapChains) {
         swapChain.second->Resize({});
     }
-}
-
-bool DirectXCommon::WaitForFence() {
-    dx12Fence_->Signal({}, dx12Commands_->GetCommandQueue());
-    return dx12Fence_->Wait({});
 }
 
 } // namespace KashipanEngine

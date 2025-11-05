@@ -94,7 +94,7 @@ void Window::Update(Passkey<GameEngine>) {
         if (window->IsDestroyed()) {
             Log(Translation("engine.window.destroy.start") + window->descriptor_.title, LogSeverity::Debug);
             sWindowsAPI->UnregisterWindow({}, window->GetWindowHandle());
-            sDirectXCommon->DestroySwapChain({}, window->GetWindowHandle());
+            sDirectXCommon->DestroySwapChainSignal({}, window->GetWindowHandle());
             Log(Translation("engine.window.destroy.end") + window->descriptor_.title, LogSeverity::Debug);
             it = sWindowMap.erase(it);
             continue;
@@ -424,7 +424,7 @@ void Window::AdjustWindowSize() {
                  rect.right - rect.left, rect.bottom - rect.top,
                  SWP_NOMOVE | SWP_NOZORDER);
 
-    // SwapChainのリサイズ
+    // SwapChainのリサイズ指示
     if (dx12SwapChain_) {
         dx12SwapChain_->ResizeSignal({}, size_.clientWidth, size_.clientHeight);
     }

@@ -4,18 +4,28 @@
 #include <algorithm>
 #include <stdexcept>
 
+#pragma comment(lib, "dcomp.lib")
+
 namespace KashipanEngine {
 
-DX12SwapChain::DX12SwapChain(Passkey<DirectXCommon>, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
+DX12SwapChain::DX12SwapChain(Passkey<DirectXCommon>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
     LogScope scope;
     Log(Translation("engine.directx.swapchain.initialize.start"), LogSeverity::Debug);
 
+    swapChainType_ = swapChainType;
     hwnd_ = hwnd;
     width_ = width;
     height_ = height;
     bufferCount_ = bufferCount;
 
-    CreateSwapChain();
+    if (swapChainType_ == SwapChainType::ForHwnd) {
+        CreateSwapChainForHWND();
+    } else if (swapChainType_ == SwapChainType::ForComposition) {
+        CreateSwapChainForComposition();
+    } else {
+        Log(Translation("engine.directx.swapchain.create.invalid.type"), LogSeverity::Critical);
+        throw std::runtime_error("Invalid swap chain type.");
+    }
     SetViewportAndScissorRect();
     CreateBackBuffers();
     CreateDepthStencilBuffer();
@@ -66,14 +76,14 @@ void DX12SwapChain::SetLetterboxViewportAndScissor(float targetAspectRatio) {
     } else if (windowAspectRatio < targetAspectRatio_) {
         // ウィンドウが縦長の場合、上下にレターボックスを追加
         viewportHeight = width / targetAspectRatio_;
-        viewportY = (height - viewportHeight) + 0.5f;
+        viewportY = (height - viewportHeight) * 0.5f;
     }
     SetViewport(viewportX, viewportY, viewportWidth, viewportHeight, 0.0f, 1.0f);
 
     int32_t left = static_cast<int32_t>(std::floor(viewportX));
     int32_t top = static_cast<int32_t>(std::floor(viewportY));
-    int32_t right = static_cast<int32_t>(std::ceil(viewportWidth));
-    int32_t bottom = static_cast<int32_t>(std::ceil(viewportHeight));
+    int32_t right = left + static_cast<int32_t>(std::ceil(viewportWidth));
+    int32_t bottom = top + static_cast<int32_t>(std::ceil(viewportHeight));
     SetScissor(left, top, right, bottom);
 }
 
@@ -102,8 +112,18 @@ void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
 }
 
 void DX12SwapChain::Present(Passkey<DirectXCommon>) {
-    UINT syncInterval = enableVSync_ ? 1 : 0;
-    UINT presentFlags = enableVSync_ ? 0 : DXGI_PRESENT_ALLOW_TEARING;
+    UINT syncInterval = 1;
+    UINT presentFlags = 0;
+
+    if (swapChainType_ == SwapChainType::ForHwnd) {
+        syncInterval = enableVSync_ ? 1 : 0;
+        presentFlags = enableVSync_ ? 0 : DXGI_PRESENT_ALLOW_TEARING;
+    } else {
+        // Composition は DWM によりタイミング管理されるためフラグなし
+        syncInterval = 1;
+        presentFlags = 0;
+    }
+
     HRESULT hr = swapChain_->Present(syncInterval, presentFlags);
     if (FAILED(hr)) {
         Log(Translation("engine.directx.swapchain.present.failed"), LogSeverity::Critical);
@@ -130,12 +150,18 @@ void DX12SwapChain::Resize(Passkey<DirectXCommon>) {
     backBuffers_.clear();
     depthStencilBuffer_.reset();
 
+    UINT flags = 0;
+    if (swapChainType_ == SwapChainType::ForHwnd) {
+        flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+    }
+
     HRESULT hr = swapChain_->ResizeBuffers(
         static_cast<UINT>(bufferCount_),
         static_cast<UINT>(width_),
         static_cast<UINT>(height_),
-        DXGI_FORMAT_R8G8B8A8_UNORM,
-        DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+        // フォーマットは既存のスワップチェーンに合わせる（R8G8B8A8 または B8G8R8A8）
+        DXGI_FORMAT_UNKNOWN,
+        flags
     );
     if (FAILED(hr)) {
         Log(Translation("engine.directx.swapchain.resize.failed"), LogSeverity::Critical);
@@ -155,7 +181,7 @@ void DX12SwapChain::Resize(Passkey<DirectXCommon>) {
     isResizeRequested_ = false;
 }
 
-void DX12SwapChain::CreateSwapChain() {
+void DX12SwapChain::CreateSwapChainForHWND() {
     //==================================================
     // スワップチェーンの生成
     //==================================================
@@ -184,6 +210,59 @@ void DX12SwapChain::CreateSwapChain() {
     }
 }
 
+void DX12SwapChain::CreateSwapChainForComposition() {
+    //==================================================
+    // DirectComposition 用スワップチェーンの生成とバインド
+    //==================================================
+
+    // DComp の初期化（この HWND の上に合成）
+    dcompHost_ = std::make_unique<DCompHost>(Passkey<DX12SwapChain>{});
+    if (!dcompHost_->InitializeForHwnd(hwnd_, TRUE)) {
+        Log(Translation("engine.directx.dcomp.initialize.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to initialize DirectComposition host.");
+    }
+
+    DXGI_SWAP_CHAIN_DESC1 desc{};
+    desc.Width = static_cast<UINT>(width_);
+    desc.Height = static_cast<UINT>(height_);
+    // コンポジションでは BGRA + Premultiplied に設定
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    desc.BufferCount = static_cast<UINT>(bufferCount_);
+    desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    desc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+    desc.Flags = 0; // Composition では tearing フラグは使わない
+
+    Microsoft::WRL::ComPtr<IDXGISwapChain1> sc1;
+    HRESULT hr = sDXGIFactory->CreateSwapChainForComposition(
+        sCommandQueue,
+        &desc,
+        nullptr,
+        sc1.ReleaseAndGetAddressOf());
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.swapchain.initialize.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to create DX12 composition swap chain.");
+    }
+
+    // IDXGISwapChain4 へ昇格
+    hr = sc1.As(&swapChain_);
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.swapchain.initialize.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to query IDXGISwapChain4 for composition.");
+    }
+
+    // DComp ルートにスワップチェーンを設定し、コミット
+    if (!dcompHost_->SetContentSwapChain(sc1.Get())) {
+        Log(Translation("engine.directx.dcomp.setcontent.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to set composition swap chain as content.");
+    }
+    if (!dcompHost_->Commit()) {
+        Log(Translation("engine.directx.dcomp.commit.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to commit DirectComposition changes.");
+    }
+}
+
 void DX12SwapChain::SetViewportAndScissorRect() {
     viewport_.TopLeftX = 0.0f;
     viewport_.TopLeftY = 0.0f;
@@ -209,10 +288,13 @@ void DX12SwapChain::CreateBackBuffers() {
             throw std::runtime_error("Failed to get back buffer from DX12 swap chain.");
         }
 
+        // バックバッファのフォーマットに合わせる
+        auto desc = backBuffer->GetDesc();
+
         // RenderTargetResourceの作成（スワップチェーン専用）：参照は SetExistingResource 側で AddRef される
         backBuffers_[i] = std::make_unique<RenderTargetResource>(
             static_cast<UINT>(width_), static_cast<UINT>(height_),
-            DXGI_FORMAT_R8G8B8A8_UNORM, sRTVHeap, backBuffer.Get());
+            desc.Format, sRTVHeap, backBuffer.Get());
         rtvHandles_[i] = backBuffers_[i]->GetCPUDescriptorHandle();
         backBuffers_[i]->ClearTransitionStates();
         backBuffers_[i]->AddTransitionState(D3D12_RESOURCE_STATE_PRESENT);

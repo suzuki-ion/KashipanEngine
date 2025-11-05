@@ -1,11 +1,20 @@
 #pragma once
 #include <dxgi1_6.h>
+#include <dcomp.h>
 #include "Graphics/Resources.h"
+#include "Core/DirectX/DCompHost.h"
 
 namespace KashipanEngine {
 
 class DirectXCommon;
 class Window;
+
+/// @brief スワップチェーンの種類
+enum class SwapChainType {
+    Unknown = 0,
+    ForHwnd,
+    ForComposition,
+};
 
 /// @brief DirectX12スワップチェーンクラス
 class DX12SwapChain final {
@@ -30,11 +39,12 @@ public:
         sDSVHeap = dsvHeap;
     }
     /// @brief コンストラクタ
+    /// @param swapChainType スワップチェーンの種類
     /// @param hwnd ウィンドウハンドル
     /// @param width 横幅
     /// @param height 高さ
     /// @param bufferCount バッファ数
-    DX12SwapChain(Passkey<DirectXCommon>, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount = 2);
+    DX12SwapChain(Passkey<DirectXCommon>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount = 2);
     ~DX12SwapChain();
 
     /// @brief VSync有効化設定
@@ -69,8 +79,10 @@ private:
     DX12SwapChain(DX12SwapChain &&) = delete;
     DX12SwapChain &operator=(DX12SwapChain &&) = delete;
 
-    /// @brief スワップチェーンの作成
-    void CreateSwapChain();
+    /// @brief スワップチェーンの作成（HWND用）
+    void CreateSwapChainForHWND();
+    /// @brief スワップチェーンの作成（Composition用）
+    void CreateSwapChainForComposition();
     /// @brief ビューポートとシザー矩形の設定
     void SetViewportAndScissorRect();
     /// @brief バックバッファの作成
@@ -79,6 +91,8 @@ private:
     void CreateDepthStencilBuffer();
 
     //--------- スワップチェーンの情報 ---------//
+
+    SwapChainType swapChainType_ = SwapChainType::Unknown;
 
     HWND hwnd_;
     int32_t width_;
@@ -98,6 +112,9 @@ private:
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle_;
 
     bool enableVSync_ = true;
+
+    // Composition 用ホスト（HWND の上に合成したいときに使用）
+    std::unique_ptr<DCompHost> dcompHost_;
 
     //--------- 指示情報 ---------//
 

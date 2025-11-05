@@ -114,12 +114,17 @@ void DirectXCommon::ExecuteCommandAndWait(Passkey<GameEngine>) {
         swapChain.second->EndDraw({});
     }
     dx12Commands_->ExecuteCommandList({});
-    dx12Fence_->Signal({}, dx12Commands_->GetCommandQueue());
-    dx12Fence_->Wait({});
     for (auto &swapChain : sSwapChains) {
         swapChain.second->Present({});
     }
+    dx12Fence_->Signal({}, dx12Commands_->GetCommandQueue());
+    dx12Fence_->Wait({});
     dx12Commands_->ResetCommandAllocatorAndList({});
+
+    // スワップチェーンのサイズ変更処理
+    for (auto &swapChain : sSwapChains) {
+        swapChain.second->Resize({});
+    }
 }
 
 bool DirectXCommon::WaitForFence() {

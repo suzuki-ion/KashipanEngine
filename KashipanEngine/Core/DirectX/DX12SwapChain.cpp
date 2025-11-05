@@ -1,5 +1,7 @@
 #include "DX12SwapChain.h"
 #include "Core/DirectXCommon.h"
+#include <cmath>
+#include <algorithm>
 #include <stdexcept>
 
 namespace KashipanEngine {
@@ -30,6 +32,57 @@ DX12SwapChain::~DX12SwapChain() {
     Log(Translation("engine.directx.swapchain.finalize.end"), LogSeverity::Debug);
 }
 
+void DX12SwapChain::SetViewport(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth) {
+    viewport_.TopLeftX = topLeftX;
+    viewport_.TopLeftY = topLeftY;
+    viewport_.Width = width;
+    viewport_.Height = height;
+    viewport_.MinDepth = minDepth;
+    viewport_.MaxDepth = maxDepth;
+}
+
+void DX12SwapChain::SetScissor(int32_t left, int32_t top, int32_t right, int32_t bottom) {
+    scissorRect_.left = std::max(0, left);
+    scissorRect_.top = std::max(0, top);
+    scissorRect_.right = std::min(width_, right);
+    scissorRect_.bottom = std::min(height_, bottom);
+}
+
+void DX12SwapChain::SetLetterboxViewportAndScissor(float targetAspectRatio) {
+    targetAspectRatio_ = targetAspectRatio;
+    float width = static_cast<float>(width_);
+    float height = static_cast<float>(height_);
+    float windowAspectRatio = width / height;
+
+    float viewportX = 0.0f;
+    float viewportY = 0.0f;
+    float viewportWidth = width;
+    float viewportHeight = height;
+
+    if (windowAspectRatio > targetAspectRatio_) {
+        // ウィンドウが横長の場合、左右にレターボックスを追加
+        viewportWidth = height * targetAspectRatio_;
+        viewportX = (width - viewportWidth) * 0.5f;
+    } else if (windowAspectRatio < targetAspectRatio_) {
+        // ウィンドウが縦長の場合、上下にレターボックスを追加
+        viewportHeight = width / targetAspectRatio_;
+        viewportY = (height - viewportHeight) + 0.5f;
+    }
+    SetViewport(viewportX, viewportY, viewportWidth, viewportHeight, 0.0f, 1.0f);
+
+    int32_t left = static_cast<int32_t>(std::floor(viewportX));
+    int32_t top = static_cast<int32_t>(std::floor(viewportY));
+    int32_t right = static_cast<int32_t>(std::ceil(viewportWidth));
+    int32_t bottom = static_cast<int32_t>(std::ceil(viewportHeight));
+    SetScissor(left, top, right, bottom);
+}
+
+void DX12SwapChain::ResetViewportAndScissor() {
+    targetAspectRatio_ = 0.0f;
+    SetViewport(0.0f, 0.0f, static_cast<float>(width_), static_cast<float>(height_), 0.0f, 1.0f);
+    SetScissor(0, 0, width_, height_);
+}
+
 void DX12SwapChain::BeginDraw(Passkey<Window>) {
     currentBufferIndex_ = swapChain_->GetCurrentBackBufferIndex();
     backBuffers_[currentBufferIndex_]->TransitionToNext();
@@ -58,14 +111,21 @@ void DX12SwapChain::Present(Passkey<DirectXCommon>) {
     }
 }
 
-void DX12SwapChain::Resize(Passkey<Window>, int32_t width, int32_t height) {
+void DX12SwapChain::ResizeSignal(Passkey<Window>, int32_t width, int32_t height) {
+    LogScope scope;
+    requestedWidth_ = width;
+    requestedHeight_ = height;
+    isResizeRequested_ = true;
+}
+
+void DX12SwapChain::Resize(Passkey<DirectXCommon>) {
+    if (!isResizeRequested_) {
+        return;
+    }
     LogScope scope;
     Log(Translation("engine.directx.swapchain.resize.start"), LogSeverity::Debug);
-    width_ = width;
-    height_ = height;
-
-    // GPU 完了待ち
-    sDirectXCommon->WaitForFence({});
+    width_ = requestedWidth_;
+    height_ = requestedHeight_;
 
     backBuffers_.clear();
     depthStencilBuffer_.reset();
@@ -85,8 +145,14 @@ void DX12SwapChain::Resize(Passkey<Window>, int32_t width, int32_t height) {
     SetViewportAndScissorRect();
     CreateBackBuffers();
     CreateDepthStencilBuffer();
+
+    // 目標のアスペクト比が設定されている場合、再計算して適用
+    if (targetAspectRatio_ > 0.0f) {
+        SetLetterboxViewportAndScissor(targetAspectRatio_);
+    }
     
     Log(Translation("engine.directx.swapchain.resize.end"), LogSeverity::Debug);
+    isResizeRequested_ = false;
 }
 
 void DX12SwapChain::CreateSwapChain() {
@@ -98,14 +164,10 @@ void DX12SwapChain::CreateSwapChain() {
     swapChainDesc.Width = static_cast<UINT>(width_);
     swapChainDesc.Height = static_cast<UINT>(height_);
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    //swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc.Count = 1;
-    //swapChainDesc.SampleDesc.Quality = 0;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.BufferCount = static_cast<UINT>(bufferCount_);
-    //swapChainDesc.Scaling = DXGI_SCALING_ASPECT_RATIO_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    //swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
     HRESULT hr = sDXGIFactory->CreateSwapChainForHwnd(

@@ -39,6 +39,14 @@ public:
 
     /// @brief VSync有効化設定
     void SetVSyncEnabled(bool enabled) { enableVSync_ = enabled; }
+    /// @brief ビューポートの設定
+    void SetViewport(float topLeftX, float topLeftY, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
+    /// @brief シザー矩形の設定
+    void SetScissor(int32_t left, int32_t top, int32_t right, int32_t bottom);
+    /// @brief 目標のアスペクト比でレターボックスを計算してビューポートとシザー矩形を設定
+    void SetLetterboxViewportAndScissor(float targetAspectRatio);
+    /// @brief ビューポートとシザー矩形をデフォルト値にリセット
+    void ResetViewportAndScissor();
 
     /// @brief 描画前処理
     void BeginDraw(Passkey<Window>);
@@ -48,10 +56,13 @@ public:
     /// @param enableVSync VSync有効フラグ
     void Present(Passkey<DirectXCommon>);
 
-    /// @brief SwapChainのサイズ変更
+    /// @brief SwapChainのサイズ変更指示
     /// @param width 横幅
     /// @param height 高さ
-    void Resize(Passkey<Window>, int32_t width, int32_t height);
+    void ResizeSignal(Passkey<Window>, int32_t width, int32_t height);
+
+    /// @brief サイズ変更処理
+    void Resize(Passkey<DirectXCommon>);
 
 private:
     DX12SwapChain(const DX12SwapChain &) = delete;
@@ -68,6 +79,8 @@ private:
     /// @brief 深度ステンシルバッファの作成
     void CreateDepthStencilBuffer();
 
+    //--------- スワップチェーンの情報 ---------//
+
     HWND hwnd_;
     int32_t width_;
     int32_t height_;
@@ -76,6 +89,7 @@ private:
 
     D3D12_VIEWPORT viewport_;
     D3D12_RECT scissorRect_;
+    float targetAspectRatio_ = 0.0f;
 
     Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain_;
     std::vector<std::unique_ptr<RenderTargetResource>> backBuffers_;
@@ -85,6 +99,12 @@ private:
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle_;
 
     bool enableVSync_ = true;
+
+    //--------- サイズ変更指示情報 ---------//
+
+    bool isResizeRequested_ = false;
+    int32_t requestedWidth_ = 0;
+    int32_t requestedHeight_ = 0;
 };
 
 } // namespace KashipanEngine

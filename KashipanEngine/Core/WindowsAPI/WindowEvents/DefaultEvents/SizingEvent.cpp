@@ -5,9 +5,7 @@
 namespace KashipanEngine {
 namespace WindowEventDefault {
 
-std::optional<LRESULT> SizingEvent::OnEvent(UINT msg, WPARAM wparam, LPARAM lparam) {
-    if (msg != kTargetMessage_) return std::nullopt;
-
+std::optional<LRESULT> SizingEvent::OnEvent(UINT /*msg*/, WPARAM wparam, LPARAM lparam) {
     auto *window = GetWindow();
     if (!window || window->GetSizeChangeMode() != SizeChangeMode::FixedAspect) return std::nullopt;
 

@@ -18,11 +18,11 @@
 		"engine.translations.loaded": "翻訳ファイルが正常に読み込まれました。言語：",
 
 		//--------- ウィンドウ ---------//
-		"engine.window.create.start": "ウィンドウ作成開始",
-		"engine.window.create.end": "ウィンドウ作成完了",
+		"engine.window.create.start": "ウィンドウ作成開始。ウィンドウタイトル：",
+		"engine.window.create.end": "ウィンドウ作成完了。ウィンドウタイトル：",
 		"engine.window.create.failed": "ウィンドウの作成に失敗しました。",
-		"engine.window.destroy.start": "ウィンドウ破棄開始",
-		"engine.window.destroy.end": "ウィンドウ破棄完了",
+		"engine.window.destroy.start": "ウィンドウ破棄開始。ウィンドウタイトル：",
+		"engine.window.destroy.end": "ウィンドウ破棄完了。ウィンドウタイトル：",
 		"engine.window.destroy.failed": "ウィンドウの破棄に失敗しました。",
 		"engine.window.dialog.close.title": "終了確認",
 		"engine.window.dialog.close.message": "本当に終了しますか？",

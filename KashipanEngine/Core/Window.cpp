@@ -92,8 +92,10 @@ void Window::Update(Passkey<GameEngine>) {
         window->ClearMessages();
         window->ProcessMessage();
         if (window->IsDestroyed()) {
+            Log(Translation("engine.window.destroy.start") + window->descriptor_.title, LogSeverity::Debug);
             sWindowsAPI->UnregisterWindow({}, window->GetWindowHandle());
             sDirectXCommon->DestroySwapChain({}, window->GetWindowHandle());
+            Log(Translation("engine.window.destroy.end") + window->descriptor_.title, LogSeverity::Debug);
             it = sWindowMap.erase(it);
             continue;
         }
@@ -136,6 +138,7 @@ Window::Window(Passkey<Window>,
 
 Window *Window::Create(const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath) {
     LogScope scope;
+    Log(Translation("engine.window.create.start") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
 
     std::wstring windowTitle = title.empty() ? ConvertString(windowDefaultTitle) : ConvertString(title);
     int32_t windowWidth = (width <= 0) ? windowDefaultWidth : width;
@@ -148,6 +151,9 @@ Window *Window::Create(const std::string &title, int32_t width, int32_t height, 
 
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
+    sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, hwnd, windowWidth, windowHeight);
+
+    Log(Translation("engine.window.create.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
 }
 
@@ -248,7 +254,6 @@ void Window::SetWindowSize(int32_t width, int32_t height) {
     
     // アスペクト比の再計算
     CalculateAspectRatio();
-    
     // ウィンドウサイズの調整
     AdjustWindowSize();
 }
@@ -370,9 +375,6 @@ bool Window::InitializeWindow(
     ShowWindow(descriptor_.hwnd, SW_SHOW);
     UpdateWindow(descriptor_.hwnd);
 
-    // SwapChainの初期化
-    dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, descriptor_.hwnd, size_.clientWidth, size_.clientHeight);
-
     return true;
 }
 
@@ -421,6 +423,11 @@ void Window::AdjustWindowSize() {
     SetWindowPos(descriptor_.hwnd, nullptr, 0, 0, 
                  rect.right - rect.left, rect.bottom - rect.top,
                  SWP_NOMOVE | SWP_NOZORDER);
+
+    // SwapChainのリサイズ
+    if (dx12SwapChain_) {
+        dx12SwapChain_->ResizeSignal({}, size_.clientWidth, size_.clientHeight);
+    }
 }
 
 } // namespace KashipanEngine

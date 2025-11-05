@@ -1,7 +1,6 @@
 #include "SizeEvent.h"
 #include <Windows.h>
-#include "Core/WindowsAPI/WindowDescriptor.h"
-#include "Core/WindowsAPI/WindowSize.h"
+#include "Core/Window.h"
 
 namespace KashipanEngine {
 namespace WindowEventDefault {
@@ -9,12 +8,15 @@ namespace WindowEventDefault {
 std::optional<LRESULT> SizeEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM lparam) {
     UINT width = LOWORD(lparam);
     UINT height = HIWORD(lparam);
-    WindowSize &size = GetWindowSizeRef();
-    size.clientWidth = static_cast<int32_t>(width);
-    size.clientHeight = static_cast<int32_t>(height);
-    RecalculateAspectRatio();
-
-    return std::nullopt;
+    auto *window = GetWindow();
+    if (!window) {
+        return std::nullopt;
+    }
+    window->SetWindowSize(
+        static_cast<int32_t>(width),
+        static_cast<int32_t>(height)
+    );
+    return 0;
 }
 
 } // namespace WindowEventDefault

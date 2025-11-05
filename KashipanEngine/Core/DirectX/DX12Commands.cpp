@@ -78,13 +78,13 @@ void DX12Commands::ResetCommandAllocatorAndList(Passkey<DirectXCommon>) {
     // コマンドアロケータをリセット
     HRESULT hr = commandAllocator_->Reset();
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.commands.reset.commandallocator.failed"), LogSeverity::Critical);
+        Log(Translation("engine.directx.commands.commandallocator.reset.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to reset command allocator.");
     }
     // コマンドリストをリセット
     hr = commandList_->Reset(commandAllocator_.Get(), nullptr);
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.commands.reset.commandlist.failed"), LogSeverity::Critical);
+        Log(Translation("engine.directx.commands.commandlist.reset.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to reset command list.");
     }
 }

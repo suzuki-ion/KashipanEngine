@@ -100,7 +100,7 @@ DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, HWND hwnd, int32_
         Log(Translation("engine.directx.swapchain.already.exists"), LogSeverity::Warning);
         return sSwapChains[hwnd].get();
     }
-    auto swapChain = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, hwnd, width, height, bufferCount);
+    auto swapChain = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, SwapChainType::ForHwnd, hwnd, width, height, bufferCount);
     swapChain->SetVSyncEnabled(GetEngineSettings().rendering.defaultEnableVSync);
     DX12SwapChain *swapChainPtr = swapChain.get();
     sSwapChains[hwnd] = std::move(swapChain);

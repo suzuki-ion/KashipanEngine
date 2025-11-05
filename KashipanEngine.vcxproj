@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Commands.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Device.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DCompHost.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapDSV.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapRTV.h" />

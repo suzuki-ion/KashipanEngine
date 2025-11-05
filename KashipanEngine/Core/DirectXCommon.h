@@ -36,8 +36,8 @@ public:
     /// @param height 高さ
     /// @param bufferCount バッファ数
     /// @return 作成したスワップチェーンのポインタ
-    DX12SwapChain *CreateSwapChain(Passkey<Window>, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount = 2);
-    
+    DX12SwapChain *CreateSwapChain(Passkey<Window>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount = 2);
+
     /// @brief スワップチェーン破棄指示
     /// @param hwnd ウィンドウハンドル
     void DestroySwapChainSignal(Passkey<Window>, HWND hwnd);

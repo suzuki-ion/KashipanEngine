@@ -73,8 +73,9 @@ void GameEngine::GameLoopUpdate() {
 }
 
 void GameEngine::GameLoopDraw() {
+    directXCommon_->BeginDraw({});
     Window::Draw({});
-    directXCommon_->ExecuteCommandAndWait({});
+    directXCommon_->EndDraw({});
 }
 
 int GameEngine::Execute() {

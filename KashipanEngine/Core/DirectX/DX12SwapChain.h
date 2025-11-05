@@ -60,7 +60,6 @@ public:
     /// @param width 横幅
     /// @param height 高さ
     void ResizeSignal(Passkey<Window>, int32_t width, int32_t height);
-
     /// @brief サイズ変更処理
     void Resize(Passkey<DirectXCommon>);
 
@@ -100,8 +99,9 @@ private:
 
     bool enableVSync_ = true;
 
-    //--------- サイズ変更指示情報 ---------//
+    //--------- 指示情報 ---------//
 
+    // Resize指示フラグとサイズ
     bool isResizeRequested_ = false;
     int32_t requestedWidth_ = 0;
     int32_t requestedHeight_ = 0;

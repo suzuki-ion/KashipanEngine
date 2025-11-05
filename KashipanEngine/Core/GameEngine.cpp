@@ -40,8 +40,9 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
     
-    mainWindow_ = Window::Create("Main Window");
-    Window::Create("Sub Window");
+    mainWindow_ = Window::CreateNormal("Main Window");
+    Window::CreateNormal("Sub Window");
+    Window::CreateCompositionOverlay("Overlay Window", 800, 600, true);
 
     LogSeparator();
     Log(Translation("engine.initialize.end"));

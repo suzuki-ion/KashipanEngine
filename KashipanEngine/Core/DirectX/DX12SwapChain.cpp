@@ -215,17 +215,25 @@ void DX12SwapChain::CreateSwapChainForComposition() {
     // DirectComposition 用スワップチェーンの生成とバインド
     //==================================================
 
-    // DComp の初期化（この HWND の上に合成）
+    // 1) このウィンドウは DirectComposition で自前コンテンツを合成するため、
+    //    リダイレクションビットマップを無効化（推奨）
+    LONG exStyle = GetWindowLong(hwnd_, GWL_EXSTYLE);
+    exStyle |= WS_EX_NOREDIRECTIONBITMAP; // DWM のリダイレクションを作らない
+    SetWindowLong(hwnd_, GWL_EXSTYLE, exStyle);
+    // 枠変更の反映
+    SetWindowPos(hwnd_, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+    // 2) DComp の初期化（この HWND の上に合成）
     dcompHost_ = std::make_unique<DCompHost>(Passkey<DX12SwapChain>{});
     if (!dcompHost_->InitializeForHwnd(hwnd_, TRUE)) {
         Log(Translation("engine.directx.dcomp.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to initialize DirectComposition host.");
     }
 
+    // 3) Composition 用スワップチェーンを作成（BGRA + Premultiplied）
     DXGI_SWAP_CHAIN_DESC1 desc{};
     desc.Width = static_cast<UINT>(width_);
     desc.Height = static_cast<UINT>(height_);
-    // コンポジションでは BGRA + Premultiplied に設定
     desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     desc.SampleDesc.Count = 1;
     desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -245,14 +253,14 @@ void DX12SwapChain::CreateSwapChainForComposition() {
         throw std::runtime_error("Failed to create DX12 composition swap chain.");
     }
 
-    // IDXGISwapChain4 へ昇格
+    // 4) IDXGISwapChain4 へ昇格
     hr = sc1.As(&swapChain_);
     if (FAILED(hr)) {
         Log(Translation("engine.directx.swapchain.initialize.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to query IDXGISwapChain4 for composition.");
     }
 
-    // DComp ルートにスワップチェーンを設定し、コミット
+    // 5) DComp ルートにスワップチェーンを設定し、コミット
     if (!dcompHost_->SetContentSwapChain(sc1.Get())) {
         Log(Translation("engine.directx.dcomp.setcontent.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to set composition swap chain as content.");
@@ -290,11 +298,21 @@ void DX12SwapChain::CreateBackBuffers() {
 
         // バックバッファのフォーマットに合わせる
         auto desc = backBuffer->GetDesc();
-
-        // RenderTargetResourceの作成（スワップチェーン専用）：参照は SetExistingResource 側で AddRef される
-        backBuffers_[i] = std::make_unique<RenderTargetResource>(
-            static_cast<UINT>(width_), static_cast<UINT>(height_),
-            desc.Format, sRTVHeap, backBuffer.Get());
+        
+        // RenderTargetResourceの作成
+        if (swapChainType_ == SwapChainType::ForHwnd) {
+            backBuffers_[i] = std::make_unique<RenderTargetResource>(
+                static_cast<UINT>(width_), static_cast<UINT>(height_),
+                desc.Format, sRTVHeap, backBuffer.Get());
+        } else if (swapChainType_ == SwapChainType::ForComposition) {
+            float clearColor[4] = { 0.f, 0.f, 0.f, 0.5f };
+            backBuffers_[i] = std::make_unique<RenderTargetResource>(
+                static_cast<UINT>(width_), static_cast<UINT>(height_),
+                desc.Format, sRTVHeap, backBuffer.Get(), clearColor);
+        } else {
+            Log(Translation("engine.directx.swapchain.create.invalid.type"), LogSeverity::Critical);
+            throw std::runtime_error("Invalid swap chain type.");
+        }
         rtvHandles_[i] = backBuffers_[i]->GetCPUDescriptorHandle();
         backBuffers_[i]->ClearTransitionStates();
         backBuffers_[i]->AddTransitionState(D3D12_RESOURCE_STATE_PRESENT);

@@ -18,17 +18,23 @@ class WindowsAPI;
 class DirectXCommon;
 class DX12SwapChain;
 
-/// @brief サイズ変更モード
-enum class SizeChangeMode {
-    None,           // サイズ変更不可
-    Normal,         // 自由変更
-    FixedAspect,    // アスペクト比固定
+/// @brief ウィンドウの種類
+enum class WindowType {
+    Normal,         // 通常ウィンドウ
+    Layered,        // レイヤードウィンドウ
 };
 
 /// @brief ウィンドウモード
 enum class WindowMode {
     Window,         // ウィンドウ
     FullScreen,     // フルスクリーン
+};
+
+/// @brief サイズ変更モード
+enum class SizeChangeMode {
+    None,           // サイズ変更不可
+    Normal,         // 自由変更
+    FixedAspect,    // アスペクト比固定
 };
 
 /// @brief ウィンドウ用クラス
@@ -69,12 +75,14 @@ public:
     static void Draw(Passkey<GameEngine>);
 
     /// @brief コンストラクタ（Window限定）
+    /// @param windowType ウィンドウの種類
     /// @param title ウィンドウタイトル
     /// @param width ウィンドウ幅
     /// @param height ウィンドウ高さ
     /// @param windowStyle ウィンドウスタイル
     /// @param iconPath アイコンパス
     Window(Passkey<Window>,
+        WindowType windowType,
         const std::wstring &title = L"GameWindow",
         int32_t width = 1280,
         int32_t height = 720,
@@ -82,18 +90,33 @@ public:
         const std::wstring &iconPath = L"");
     ~Window();
     
-    /// @brief ウィンドウ作成
+    /// @brief 通常ウィンドウの作成
     /// @param title ウィンドウタイトル
     /// @param width ウィンドウ幅
     /// @param height ウィンドウ高さ
     /// @param style ウィンドウスタイル
     /// @param iconPath アイコンパス
     /// @return ウィンドウインスタンスへのポインタ
-    static Window *Create(const std::string &title = "",
+    static Window *CreateNormal(
+        const std::string &title = "",
         int32_t width = 0,
         int32_t height = 0,
         DWORD style = 0,
         const std::string &iconPath = "");
+
+    /// @brief DirectComposition のコンテンツを合成するためのオーバーレイウィンドウを作成
+    /// @param title ウィンドウタイトル
+    /// @param width ウィンドウ幅
+    /// @param height ウィンドウ高さ
+    /// @param clickThrough クリック透過フラグ。true にするとウィンドウがクリックを受け付けなくなる
+    /// @param iconPath アイコンパス
+    static Window *CreateCompositionOverlay(
+        const std::string &title = "",
+        int32_t width = 0,
+        int32_t height = 0,
+        bool clickThrough = false,
+        const std::string &iconPath = "");
+
     void Destroy();
 
     /// @brief ウィンドウプロシージャから呼び出されるイベント処理
@@ -124,10 +147,12 @@ public:
     /// @param msg メッセージ
     void UnregisterWindowEvent(UINT msg);
 
-    /// @brief サイズ変更モードを取得する
-    SizeChangeMode GetSizeChangeMode() const noexcept { return sizeChangeMode_; }
+    /// @brief ウィンドウの種類を取得する
+    WindowType GetWindowType() const noexcept { return windowType_; }
     /// @brief ウィンドウモードを取得する
     WindowMode GetWindowMode() const noexcept { return windowMode_; }
+    /// @brief サイズ変更モードを取得する
+    SizeChangeMode GetSizeChangeMode() const noexcept { return sizeChangeMode_; }
     /// @brief ウィンドウハンドルを取得する
     HWND GetWindowHandle() const noexcept { return descriptor_.hwnd; }
     /// @brief ウィンドウクラスを取得する
@@ -176,6 +201,7 @@ private:
 
     /// @brief ウィンドウの初期化
     /// @param windowProc ウィンドウプロシージャ
+    /// @param windowType ウィンドウの種類
     /// @param title ウィンドウタイトル
     /// @param width ウィンドウ幅
     /// @param height ウィンドウ高さ
@@ -184,6 +210,7 @@ private:
     /// @return 初期化成功かどうか
     bool InitializeWindow(
         WNDPROC windowProc,
+        WindowType windowType,
         const std::wstring &title,
         int32_t width,
         int32_t height,
@@ -213,8 +240,9 @@ private:
     DX12SwapChain *dx12SwapChain_;
 
     // 状態管理
-    SizeChangeMode sizeChangeMode_ = SizeChangeMode::Normal;
+    WindowType windowType_ = WindowType::Normal;
     WindowMode windowMode_ = WindowMode::Window;
+    SizeChangeMode sizeChangeMode_ = SizeChangeMode::Normal;
 
     // 内部で保持するワイド文字列（WinAPIのクラス名/タイトル用）
     std::wstring titleW_ = L"";

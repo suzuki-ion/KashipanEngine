@@ -20,6 +20,26 @@ namespace {
 std::unordered_map<HWND, std::unique_ptr<Window>> sWindowMap;
 } // namespace
 
+Window::Window(Passkey<Window>, WindowType windowType, const std::wstring &title, int32_t width, int32_t height, DWORD windowStyle, const std::wstring &iconPath) {
+    LogScope scope;
+    // ウィンドウの初期化を実行
+    bool result = InitializeWindow(sWindowsAPI->WindowProc, windowType, title, width, height, windowStyle, iconPath);
+    assert(result && "Window initialization failed");
+    messages_.reserve(kMaxMessages);
+    eventHandlers_.reserve(kMaxMessages);
+
+    using namespace WindowEventDefault;
+    // 標準イベントを登録
+    RegisterWindowEvent(std::make_unique<DestroyEvent>());
+    RegisterWindowEvent(std::make_unique<CloseEvent>());
+    RegisterWindowEvent(std::make_unique<SizeEvent>());
+    RegisterWindowEvent(std::make_unique<EnterSizeMoveEvent>());
+    RegisterWindowEvent(std::make_unique<ExitSizeMoveEvent>());
+    RegisterWindowEvent(std::make_unique<ActivateEvent>());
+    RegisterWindowEvent(std::make_unique<GetMinMaxInfoEvent>());
+    RegisterWindowEvent(std::make_unique<SizingEvent>());
+}
+
 Window::~Window() {
     LogScope scope;
 }
@@ -110,33 +130,7 @@ void Window::Draw(Passkey<GameEngine>) {
         window->dx12SwapChain_->BeginDraw({});
     }
 }
-
-Window::Window(Passkey<Window>,
-    const std::wstring &title,
-    int32_t width,
-    int32_t height,
-    DWORD windowStyle,
-    const std::wstring &iconPath) {
-    LogScope scope;
-    // ウィンドウの初期化を実行
-    bool result = InitializeWindow(sWindowsAPI->WindowProc, title, width, height, windowStyle, iconPath);
-    assert(result && "Window initialization failed");
-    messages_.reserve(kMaxMessages);
-    eventHandlers_.reserve(kMaxMessages);
-
-    using namespace WindowEventDefault;
-    // 標準イベントを登録
-    RegisterWindowEvent(std::make_unique<DestroyEvent>());
-    RegisterWindowEvent(std::make_unique<CloseEvent>());
-    RegisterWindowEvent(std::make_unique<SizeEvent>());
-    RegisterWindowEvent(std::make_unique<EnterSizeMoveEvent>());
-    RegisterWindowEvent(std::make_unique<ExitSizeMoveEvent>());
-    RegisterWindowEvent(std::make_unique<ActivateEvent>());
-    RegisterWindowEvent(std::make_unique<GetMinMaxInfoEvent>());
-    RegisterWindowEvent(std::make_unique<SizingEvent>());
-}
-
-Window *Window::Create(const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath) {
+Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath) {
     LogScope scope;
     Log(Translation("engine.window.create.start") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
 
@@ -145,15 +139,50 @@ Window *Window::Create(const std::string &title, int32_t width, int32_t height, 
     int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
     DWORD windowStyle = (style == 0) ? WS_OVERLAPPEDWINDOW : style;
     std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
-    
-    auto window = std::make_unique<Window>(Passkey<Window>{}, windowTitle, windowWidth, windowHeight, windowStyle, windowIconPath);
+
+    auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Normal, windowTitle, windowWidth, windowHeight, windowStyle, windowIconPath);
     HWND hwnd = window->GetWindowHandle();
 
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
-    sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, hwnd, windowWidth, windowHeight);
+    sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForHwnd, hwnd, windowWidth, windowHeight);
 
     Log(Translation("engine.window.create.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
+    return sWindowMap[hwnd].get();
+}
+
+Window *Window::CreateCompositionOverlay(const std::string &title, int32_t width, int32_t height, bool clickThrough, const std::string &iconPath) {
+    LogScope scope;
+    Log(Translation("engine.window.create.overlay.start") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
+
+    std::wstring windowTitle = title.empty() ? ConvertString(windowDefaultTitle) : ConvertString(title);
+    int32_t windowWidth = (width <= 0) ? windowDefaultWidth : width;
+    int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
+    std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
+
+    // 枠無しポップアップ + トップモスト。DWM のリダイレクション無効化で DComp 合成用に最適化
+    DWORD style = WS_POPUP;
+    DWORD exStyle = WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP;
+    if (clickThrough) {
+        exStyle |= WS_EX_TRANSPARENT | WS_EX_LAYERED; // クリック透過（可視はDCompで制御）
+    }
+
+    // 枠調整なし（クライアント=ウィンドウ全体）で作成するため、
+    // 一時的に内部既定を上書きして生成
+    auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Layered, windowTitle, windowWidth, windowHeight, style, windowIconPath);
+    HWND hwnd = window->GetWindowHandle();
+
+    // 拡張スタイルの付与と反映
+    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | exStyle);
+    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+
+    // 登録＆SwapChain作成（DirectComposition）
+    sWindowMap[hwnd] = std::move(window);
+    sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
+    sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
+
+    Log(Translation("engine.window.create.overlay.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
 }
 
@@ -287,15 +316,10 @@ const WindowMessage &Window::GetWindowMessage(UINT msg) const {
     return kEmptyMessage;
 }
 
-bool Window::InitializeWindow(
-    WNDPROC windowProc,
-    const std::wstring &title,
-    int32_t width,
-    int32_t height,
-    DWORD windowStyle,
-    const std::wstring &iconPath) {
+bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const std::wstring &title, int32_t width, int32_t height, DWORD windowStyle, const std::wstring &iconPath) {
     LogScope scope;
     // パラメータの保存
+    windowType_ = windowType;
     titleW_ = title;
     descriptor_.title = ConvertString(title);
     size_.clientWidth = width;
@@ -426,8 +450,15 @@ void Window::AdjustWindowSize() {
 
     // SwapChainのリサイズ指示
     if (dx12SwapChain_) {
+        // ウィンドウのサイズが無効な場合は1x1に設定
+        if (size_.clientWidth <= 0) {
+            size_.clientWidth = 1;
+        }
+        if (size_.clientHeight <= 0) {
+            size_.clientHeight = 1;
+        }
         dx12SwapChain_->ResizeSignal({}, size_.clientWidth, size_.clientHeight);
     }
 }
 
-} // namespace KashipanEngine
+} // namespace KashipanEngine} // namespace KashipanEngine

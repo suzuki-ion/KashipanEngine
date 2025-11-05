@@ -94,14 +94,17 @@ void DirectXCommon::EndDraw(Passkey<GameEngine>) {
     ExecuteCommand();
 }
 
-DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
+DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
     LogScope scope;
     if (sSwapChains.find(hwnd) != sSwapChains.end()) {
         Log(Translation("engine.directx.swapchain.already.exists"), LogSeverity::Warning);
         return sSwapChains[hwnd].get();
     }
-    auto swapChain = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, SwapChainType::ForHwnd, hwnd, width, height, bufferCount);
-    swapChain->SetVSyncEnabled(GetEngineSettings().rendering.defaultEnableVSync);
+    auto swapChain = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, swapChainType, hwnd, width, height, bufferCount);
+    bool enableVSync = (swapChainType == SwapChainType::ForComposition) ?
+        true :
+        GetEngineSettings().rendering.defaultEnableVSync;
+    swapChain->SetVSyncEnabled(enableVSync);
     DX12SwapChain *swapChainPtr = swapChain.get();
     sSwapChains[hwnd] = std::move(swapChain);
     return swapChainPtr;

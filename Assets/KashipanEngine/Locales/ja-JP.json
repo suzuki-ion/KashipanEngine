@@ -124,12 +124,40 @@
 		"engine.directx.dcomp.commit.failed": "DirectCompositionのコミットに失敗しました。",
 
 		//--------- Graphics ---------//
+		// リソース
 		"engine.graphics.resource.transition.empty": "リソースの状態遷移配列が空です。",
 		"engine.graphics.resource.transition.invalid": "リソースの状態遷移が無効です。リソース：",
 		"engine.graphics.resource.transition.commandlist.null": "リソースの状態遷移に失敗しました。コマンドリストがnullです。",
 		"engine.graphics.resource.create.device.null": "グラフィックスリソースの作成に失敗しました。Direct3Dデバイスがnullです。",
 		"engine.graphics.resource.create.failed": "グラフィックスリソースの作成に失敗しました。タイプ：",
 		"engine.graphics.resource.allclear.showcount": "グラフィックスリソースの全解放。リソース数：",
+		// シェーダーコンパイラ
+		"engine.graphics.shadercompiler.initialize.start": "シェーダーコンパイラ初期化開始",
+		"engine.graphics.shadercompiler.initialize.end": "シェーダーコンパイラ初期化完了",
+		"engine.graphics.shadercompiler.initialize.failed": "シェーダーコンパイラの初期化に失敗しました。",
+		"engine.graphics.shadercompiler.finalize.start": "シェーダーコンパイラ終了開始",
+		"engine.graphics.shadercompiler.finalize.end": "シェーダーコンパイラ終了完了",
+		"engine.graphics.shadercompiler.finalize.failed": "シェーダーコンパイラの終了に失敗しました。",
+		"engine.graphics.shadercompiler.dxccompiler.create.failed": "DXCコンパイラの作成に失敗しました。",
+		"engine.graphics.shadercompiler.dxclibrary.create.failed": "DXCライブラリの作成に失敗しました。",
+		"engine.graphics.shadercompiler.compile.start": "シェーダーコンパイル開始。ファイルパス：",
+		"engine.graphics.shadercompiler.compile.end": "シェーダーコンパイル完了。シェーダー名：",
+		"engine.graphics.shadercompiler.compile.failed": "シェーダーのコンパイルに失敗しました。ファイルパス：",
+		"engine.graphics.shadercompiler.compile.error": "シェーダーのコンパイルエラー：",
+		"engine.graphics.shadercompiler.compile.invalidargs": "シェーダーのコンパイルに失敗しました。引数が無効です。",
+		"engine.graphics.shadercompiler.compile.hlslnotfound": "シェーダーのコンパイルに失敗しました。HLSLファイルが見つかりません。ファイルパス：",
+		"engine.graphics.shadercompiler.compile.includehandler.failed": "シェーダーのコンパイルに失敗しました。インクルードハンドラの作成に失敗しました。",
+		"engine.graphics.shadercompiler.compile.getobject.failed": "シェーダーのコンパイルに失敗しました。コンパイルオブジェクトの取得に失敗しました。",
+		"engine.graphics.shadercompiler.reflection.container.failed": "シェーダーリフレクションコンテナの作成に失敗しました。",
+		"engine.graphics.shadercompiler.reflection.load.failed": "シェーダーリフレクションの読み込みに失敗しました。",
+		"engine.graphics.shadercompiler.reflection.get.failed": "シェーダーリフレクションオブジェクトの取得に失敗しました。",
+		"engine.graphics.shadercompiler.destroy.start": "シェーダー破棄開始。シェーダー名：",
+		"engine.graphics.shadercompiler.destroy.end": "シェーダーが破棄されました。シェーダー名：",
+		"engine.graphics.shadercompiler.destroy.nullptr": "シェーダーの破棄に失敗しました。シェーダーがnullです。",
+		"engine.graphics.shadercompiler.destroy.invalid": "シェーダーの破棄に失敗しました。無効なシェーダーです。",
+		"engine.graphics.shadercompiler.destroy.success": "シェーダーが正常に破棄されました。シェーダー名：",
+		"engine.graphics.shadercompiler.allclear,showcount": "シェーダーの全解放。シェーダー数：",
+
 
 		//--------- 設定 ---------//
 		"engine.settings.load.success": "エンジンの設定が正常に読み込まれました。ファイルパス：",

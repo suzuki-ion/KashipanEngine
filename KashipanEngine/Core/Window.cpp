@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/DestroyEvent.h"
+#include "Core/WindowsAPI/WindowEvents/DefaultEvents/ClickThroughEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/CloseEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/SizeEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/EnterSizeMoveEvent.h"
@@ -12,6 +13,7 @@
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/ActivateEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/GetMinMaxInfoEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents/SizingEvent.h"
+#include "Core/WindowsAPI/WindowEvents/DefaultEvents/SysCommandCloseEvent.h"
 
 namespace KashipanEngine {
 
@@ -38,6 +40,7 @@ Window::Window(Passkey<Window>, WindowType windowType, const std::wstring &title
     RegisterWindowEvent(std::make_unique<ActivateEvent>());
     RegisterWindowEvent(std::make_unique<GetMinMaxInfoEvent>());
     RegisterWindowEvent(std::make_unique<SizingEvent>());
+    RegisterWindowEvent(std::make_unique<SysCommandCloseEvent>());
 }
 
 Window::~Window() {
@@ -121,6 +124,10 @@ void Window::Update(Passkey<GameEngine>) {
         }
         ++it;
     }
+    // 全ウィンドウ破棄後に WM_QUIT をポスト
+    if (sWindowMap.empty()) {
+        PostQuitMessage(0);
+    }
 }
 
 void Window::Draw(Passkey<GameEngine>) {
@@ -181,6 +188,7 @@ Window *Window::CreateCompositionOverlay(const std::string &title, int32_t width
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
+    sWindowMap[hwnd]->RegisterWindowEvent(std::make_unique<WindowEventDefault::ClickThroughEvent>(clickThrough));
 
     Log(Translation("engine.window.create.overlay.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();

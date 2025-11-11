@@ -73,6 +73,12 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"</Command>
+    </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -96,6 +102,12 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"</Command>
+    </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
@@ -108,6 +120,7 @@
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12SwapChain.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ClickThroughEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.cpp" />
@@ -115,6 +128,8 @@
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEventSimple.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.cpp" />
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
     <ClCompile Include="KashipanEngine\Core\Window.cpp" />
@@ -124,6 +139,7 @@
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\PipelineSystem\ShaderCompiler.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\DepthStencilResource.cpp" />
@@ -173,6 +189,7 @@
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12SwapChain.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ClickThroughEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.h" />
@@ -180,6 +197,8 @@
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEvent.h" />
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEventSimple.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.h" />
     <ClInclude Include="KashipanEngine\Assets\DataStructs\SoundData.h" />
     <ClInclude Include="KashipanEngine\Assets\DataStructs\TextureData.h" />
@@ -217,6 +236,9 @@
     <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\DefineMaps.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\EnumMaps.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\ShaderCompiler.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\IGraphicsResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.h" />

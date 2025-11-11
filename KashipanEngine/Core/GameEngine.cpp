@@ -4,6 +4,7 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
+#include "Core/WindowsAPI/WindowEvents/DefaultEvents/SysCommandCloseEventSimple.h"
 
 namespace KashipanEngine {
 namespace {
@@ -41,8 +42,12 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Window::SetDirectXCommon({}, directXCommon_.get());
     
     mainWindow_ = Window::CreateNormal("Main Window");
-    Window::CreateNormal("Sub Window");
-    Window::CreateCompositionOverlay("Overlay Window", 800, 600, true);
+    
+    Window::CreateNormal("Sub Window")
+        ->RegisterWindowEvent(std::make_unique<WindowEventDefault::SysCommandCloseEventSimple>());
+    auto monitorInfo = windowsAPI_->QueryMonitorInfo();
+    Window::CreateCompositionOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true)
+        ->RegisterWindowEvent(std::make_unique<WindowEventDefault::SysCommandCloseEventSimple>());
 
     LogSeparator();
     Log(Translation("engine.initialize.end"));

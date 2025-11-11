@@ -5,7 +5,7 @@
 namespace KashipanEngine {
 
 // パイプラインセット
-struct PipeLineSet {
+struct PipelineSet {
     // ルートシグネチャ
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
     // パイプラインステート

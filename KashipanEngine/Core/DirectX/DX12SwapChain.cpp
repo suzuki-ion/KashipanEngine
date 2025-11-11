@@ -305,7 +305,12 @@ void DX12SwapChain::CreateBackBuffers() {
                 static_cast<UINT>(width_), static_cast<UINT>(height_),
                 desc.Format, sRTVHeap, backBuffer.Get());
         } else if (swapChainType_ == SwapChainType::ForComposition) {
-            float clearColor[4] = { 0.f, 0.f, 0.f, 0.5f };
+            // デバッグ時は分かり易くするために半透明黒でクリア
+#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+            float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.5f };
+#else
+            float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+#endif
             backBuffers_[i] = std::make_unique<RenderTargetResource>(
                 static_cast<UINT>(width_), static_cast<UINT>(height_),
                 desc.Format, sRTVHeap, backBuffer.Get(), clearColor);

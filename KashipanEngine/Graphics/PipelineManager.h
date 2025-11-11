@@ -16,57 +16,57 @@ struct PipelineInfo {
     /// @brief コマンドリストに設定する際のトポロジータイプ
     D3D12_PRIMITIVE_TOPOLOGY topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     /// @brief パイプラインセット
-    PipeLineSet pipeLineSet;
+    PipelineSet pipelineSet;
 };
 
-class PipeLineManager {
+class PipelineManager {
 public:
-    PipeLineManager() = delete;
+    PipelineManager() = delete;
     /// @brief コンストラクタ
     /// @param dxCommon DirectXCommonクラスへのポインタ
     /// @param pipeLineSettingsPath パイプライン設定ファイルのパス
-    PipeLineManager(
+    PipelineManager(
         DirectXCommon *dxCommon,
-        const std::string &pipeLineSettingsPath = "Resources/PipeLineSetting.json");
-    ~PipeLineManager() = default;
+        const std::string &pipeLineSettingsPath = "Resources/PipelineSetting.json");
+    ~PipelineManager() = default;
 
     /// @brief パイプラインの再読み込み
-    void ReloadPipeLines();
+    void ReloadPipelines();
 
     /// @brief パイプライン情報の取得
     /// @param pipeLineName パイプラインの名前
-    /// @return PipeLineInfoの参照
-    [[nodiscard]] PipelineInfo &GetPipeLine(const std::string &pipeLineName) {
+    /// @return PipelineInfoの参照
+    [[nodiscard]] PipelineInfo &GetPipeline(const std::string &pipeLineName) {
         return pipeLineInfos_.at(pipeLineName);
     }
 
     /// @brief パイプラインの存在確認
     /// @param pipeLineName パイプラインの名前
     /// @return 存在する場合はtrue、存在しない場合はfalse
-    [[nodiscard]] bool HasPipeLine(const std::string &pipeLineName) const {
+    [[nodiscard]] bool HasPipeline(const std::string &pipeLineName) const {
         return pipeLineInfos_.find(pipeLineName) != pipeLineInfos_.end();
     }
 
     /// @brief コマンドリストにパイプラインを設定
     /// @param pipeLineName 設定するパイプラインの名前
-    void SetCommandListPipeLine(const std::string &pipeLineName);
+    void SetCommandListPipeline(const std::string &pipeLineName);
     /// @brief 現在設定してるパイプラインをリセット
-    void ResetCurrentPipeLine() {
-        currentPipeLineName_.clear();
+    void ResetCurrentPipeline() {
+        currentPipelineName_.clear();
     }
 
 private:
     /// @brief プリセットの読み込み
     void LoadPreset();
     /// @brief パイプラインの読み込み
-    void LoadPipeLines();
+    void LoadPipelines();
 
     /// @brief レンダリングパイプラインの読み込み
     /// @param json JSONデータ
-    void LoadRenderPipeLine(const Json &json);
+    void LoadRenderPipeline(const Json &json);
     /// @brief コンピュートパイプラインの読み込み
     /// @param json JSONデータ
-    void LoadComputePipeLine(const Json &json);
+    void LoadComputePipeline(const Json &json);
 
     /// @brief ルートシグネチャの読み込み
     /// @param json JSONデータ
@@ -116,7 +116,7 @@ private:
     DirectXCommon *dxCommon_;
 
     /// @brief パイプラインの設定データ
-    PipeLines pipeLines_;
+    Pipelines pipeLines_;
     /// @brief パイプライン情報のマップ
     std::unordered_map<std::string, PipelineInfo> pipeLineInfos_;
     /// @brief シェーダーリフレクション用クラス
@@ -129,7 +129,7 @@ private:
     /// @brief プリセットのフォルダ名のマップ
     std::unordered_map<std::string, std::string> presetFolderNames_;
     /// @brief 現在設定しているパイプラインの名前
-    std::string currentPipeLineName_;
+    std::string currentPipelineName_;
 
     /// @brief 各読み込み関数のマップ
     const std::unordered_map<std::string, std::function<void(const Json &)>> kLoadFunctions_ = {

@@ -6,7 +6,10 @@
 namespace KashipanEngine {
 namespace WindowEventDefault {
 
-std::optional<LRESULT> SysCommandCloseEventSimple::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM /*lparam*/) {
+std::optional<LRESULT> SysCommandCloseEventSimple::OnEvent(UINT /*msg*/, WPARAM wparam, LPARAM /*lparam*/) {
+    if (wparam != SC_CLOSE) {
+        return std::nullopt;
+    }
     GetWindow()->Destroy();
     return 0;
 }

@@ -89,6 +89,9 @@ public:
     struct ShaderCompiledInfo {
         ShaderCompiledInfo(Passkey<ShaderCompiler>, uint32_t shaderID) : id(shaderID) {}
         const ShaderReflectionInfo &GetReflectionInfo() const { return reflectionInfo; }
+        // PSO 設定用のバイトコードアクセス
+        const void *GetBytecodePtr() const { return bytecode ? bytecode->GetBufferPointer() : nullptr; }
+        size_t GetBytecodeSize() const { return bytecode ? bytecode->GetBufferSize() : 0; }
     private:
         friend class ShaderCompiler;
         const uint32_t id;                          ///< シェーダーID
@@ -115,7 +118,6 @@ public:
     /// @param compileInfo コンパイル情報
     /// @return シェーダーコンパイル情報
     ShaderCompiledInfo *CompileShader(const CompileInfo &compileInfo);
-
     /// @brief シェーダーコンパイル情報の破棄
     void DestroyShader(ShaderCompiledInfo *shaderCompiledInfo);
 

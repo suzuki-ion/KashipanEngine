@@ -7,6 +7,8 @@
 namespace KashipanEngine {
 
 using JSON = nlohmann::json;
+using Json = nlohmann::json;
+using json = nlohmann::json;
 
 // 基本的な読み込み・保存機能
 JSON LoadJSON(const std::string &filepath);

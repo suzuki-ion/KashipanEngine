@@ -139,7 +139,8 @@
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
-    <ClCompile Include="KashipanEngine\Graphics\PipelineSystem\ShaderCompiler.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\DepthStencilResource.cpp" />
@@ -236,9 +237,24 @@
     <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
-    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\DefineMaps.h" />
-    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\EnumMaps.h" />
-    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\ShaderCompiler.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PipelineManager.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\DefineMaps.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\EnumMaps.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\BlendState.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\ComputePipelineState.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\DepthStencilState.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\DescriptorRange.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\GraphicsPipelineState.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\InputLayout.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RasterizerState.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootConstants.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootDescriptor.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootParameter.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootSignature.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\SamplerState.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\Shader.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ComponentsPresetContainer.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\IGraphicsResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.h" />
@@ -297,6 +313,11 @@
     <ClInclude Include="KashipanEngine\KashipanEngine.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\EngineSettings.json" />
+    <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
+    <None Include="Assets\KashipanEngine\LogSettings.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -305,7 +305,7 @@ void DX12SwapChain::CreateBackBuffers() {
                 static_cast<UINT>(width_), static_cast<UINT>(height_),
                 desc.Format, sRTVHeap, backBuffer.Get());
         } else if (swapChainType_ == SwapChainType::ForComposition) {
-            // デバッグ時は分かり易くするために半透明黒でクリア
+            // デバッグ時は分かり易くするために半透明でクリア
 #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
             float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.5f };
 #else

@@ -198,7 +198,7 @@
     <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Graphics\PipelineSystem\ShaderCompiler.cpp">
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ClickThroughEvent.cpp">
@@ -208,6 +208,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEventSimple.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -554,13 +557,7 @@
     <ClInclude Include="KashipanEngine\Core\DirectX\DCompHost.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\DefineMaps.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\EnumMaps.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\PipelineSystem\ShaderCompiler.h">
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ClickThroughEvent.h">
@@ -572,5 +569,61 @@
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEventSimple.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ComponentsPresetContainer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\DefineMaps.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\EnumMaps.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\PipelineManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\BlendState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RasterizerState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\InputLayout.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\DepthStencilState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootConstants.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootDescriptor.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\DescriptorRange.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootParameter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\SamplerState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\GraphicsPipelineState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\ComputePipelineState.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootSignature.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\Shader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
+    <None Include="Assets\KashipanEngine\LogSettings.json" />
+    <None Include="Assets\KashipanEngine\EngineSettings.json" />
   </ItemGroup>
 </Project>

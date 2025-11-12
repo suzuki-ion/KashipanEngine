@@ -6,7 +6,7 @@
 
 namespace KashipanEngine::Pipeline::DefineMaps {
 
-std::unordered_map<std::string, std::variant<int, unsigned int, float>> kDefineMap = {
+const std::unordered_map<std::string, std::variant<int, unsigned int, float>> kDefineMap = {
     { "D3D12_16BIT_INDEX_STRIP_CUT_VALUE", static_cast<unsigned int>(D3D12_16BIT_INDEX_STRIP_CUT_VALUE) },
     { "D3D12_32BIT_INDEX_STRIP_CUT_VALUE", static_cast<unsigned int>(D3D12_32BIT_INDEX_STRIP_CUT_VALUE) },
     { "D3D12_8BIT_INDEX_STRIP_CUT_VALUE", D3D12_8BIT_INDEX_STRIP_CUT_VALUE },

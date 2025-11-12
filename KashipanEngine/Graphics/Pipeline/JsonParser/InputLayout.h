@@ -8,13 +8,27 @@
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
-inline std::vector<D3D12_INPUT_ELEMENT_DESC> ParseInputLayout(const Json &json) {
+struct InputLayoutParsedInfo {
+    std::vector<D3D12_INPUT_ELEMENT_DESC> elements;
+    bool isAutoFromShader = false;  // VertexShaderから自動生成するかどうか
+    bool hasElements = false;       // JSONでElementsが指定されているかどうか
+};
+
+inline InputLayoutParsedInfo ParseInputLayout(const Json &json) {
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
-    std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
-    if (!json.contains("Elements")) return inputLayout;
+    InputLayoutParsedInfo info{};
 
+    if (json.contains("AutoFromShader")) {
+        info.isAutoFromShader = json["AutoFromShader"].get<bool>();
+    } else if (json.contains("AutoFromVS")) { // alias
+        info.isAutoFromShader = json["AutoFromVS"].get<bool>();
+    }
+
+    if (!json.contains("Elements")) return info;
+
+    info.hasElements = true;
     for (const auto &element : json["Elements"]) {
         D3D12_INPUT_ELEMENT_DESC inputElement{};
         if (element.contains("SemanticName")) {
@@ -44,17 +58,17 @@ inline std::vector<D3D12_INPUT_ELEMENT_DESC> ParseInputLayout(const Json &json) 
         if (element.contains("InstanceDataStepRate")) {
             inputElement.InstanceDataStepRate = element["InstanceDataStepRate"].get<UINT>();
         }
-        inputLayout.push_back(inputElement);
+        info.elements.push_back(inputElement);
     }
 
-    return inputLayout;
+    return info;
 }
 
-inline D3D12_INPUT_LAYOUT_DESC AsInputLayoutDesc(const std::vector<D3D12_INPUT_ELEMENT_DESC> &elements) {
+inline D3D12_INPUT_LAYOUT_DESC AsInputLayoutDesc(const InputLayoutParsedInfo &info) {
     D3D12_INPUT_LAYOUT_DESC desc{};
-    if (!elements.empty()) {
-        desc.NumElements = static_cast<UINT>(elements.size());
-        desc.pInputElementDescs = elements.data();
+    if (!info.elements.empty()) {
+        desc.NumElements = static_cast<UINT>(info.elements.size());
+        desc.pInputElementDescs = info.elements.data();
     }
     return desc;
 }

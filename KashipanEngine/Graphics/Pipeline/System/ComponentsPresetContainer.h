@@ -3,6 +3,8 @@
 #include <string>
 #include <VectorMap.h>
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
+#include "Graphics/Pipeline/JsonParser/InputLayout.h"
+#include "Graphics/Pipeline/JsonParser/GraphicsPipelineState.h"
 
 namespace KashipanEngine {
 
@@ -17,18 +19,18 @@ public:
         Log(Translation("instance.created"), LogSeverity::Debug);
     }
 
-    // 型エイリアス
+    // 型エイリアス（構成要素のパース情報を保持）
     using RootSignaturePresets         = MyStd::VectorMap<std::string, D3D12_ROOT_SIGNATURE_DESC>;
     using RootParameterPresets         = MyStd::VectorMap<std::string, std::vector<D3D12_ROOT_PARAMETER>>;
     using DescriptorRangePresets       = MyStd::VectorMap<std::string, std::vector<D3D12_DESCRIPTOR_RANGE>>;
     using RootConstantsPresets         = MyStd::VectorMap<std::string, D3D12_ROOT_CONSTANTS>;
     using RootDescriptorPresets        = MyStd::VectorMap<std::string, D3D12_ROOT_DESCRIPTOR>;
     using SamplerPresets               = MyStd::VectorMap<std::string, std::vector<D3D12_STATIC_SAMPLER_DESC>>;
-    using InputLayoutPresets           = MyStd::VectorMap<std::string, std::vector<D3D12_INPUT_ELEMENT_DESC>>;
+    using InputLayoutPresets           = MyStd::VectorMap<std::string, Pipeline::JsonParser::InputLayoutParsedInfo>;
     using RasterizerStatePresets       = MyStd::VectorMap<std::string, D3D12_RASTERIZER_DESC>;
     using BlendStatePresets            = MyStd::VectorMap<std::string, D3D12_BLEND_DESC>;
     using DepthStencilStatePresets     = MyStd::VectorMap<std::string, D3D12_DEPTH_STENCIL_DESC>;
-    using GraphicsPipelineStatePresets = MyStd::VectorMap<std::string, D3D12_GRAPHICS_PIPELINE_STATE_DESC>;
+    using GraphicsPipelineStatePresets = MyStd::VectorMap<std::string, Pipeline::JsonParser::GraphicsPipelineStateParsedInfo>;
     using ComputePipelineStatePresets  = MyStd::VectorMap<std::string, D3D12_COMPUTE_PIPELINE_STATE_DESC>;
     using CompiledShaderPresets        = MyStd::VectorMap<std::string, ShaderCompiler::ShaderCompiledInfo*>;
 
@@ -75,10 +77,10 @@ public:
     [[nodiscard]] const SamplerPresets &Samplers() const { return samplers_; }
 
     //--------- InputLayout ---------//
-    void RegisterInputLayout(const std::string &name, const std::vector<D3D12_INPUT_ELEMENT_DESC> &e) { inputLayouts_.push_back(name, e); }
+    void RegisterInputLayout(const std::string &name, const Pipeline::JsonParser::InputLayoutParsedInfo &e) { inputLayouts_.push_back(name, e); }
     bool RemoveInputLayout(const std::string &name) { return RemoveByKey(inputLayouts_, name); }
     [[nodiscard]] bool HasInputLayout(const std::string &name) const { return HasKey(inputLayouts_, name); }
-    [[nodiscard]] const std::vector<D3D12_INPUT_ELEMENT_DESC> &GetInputLayout(const std::string &name) const { return inputLayouts_.at(name).value; }
+    [[nodiscard]] const Pipeline::JsonParser::InputLayoutParsedInfo &GetInputLayout(const std::string &name) const { return inputLayouts_.at(name).value; }
     [[nodiscard]] const InputLayoutPresets &InputLayouts() const { return inputLayouts_; }
 
     //--------- RasterizerState ---------//
@@ -103,10 +105,10 @@ public:
     [[nodiscard]] const DepthStencilStatePresets &DepthStencilStates() const { return depthStencilStates_; }
 
     //--------- GraphicsPipelineState ---------//
-    void RegisterGraphicsPipelineState(const std::string &name, const D3D12_GRAPHICS_PIPELINE_STATE_DESC &d) { graphicsPipelineStates_.push_back(name, d); }
+    void RegisterGraphicsPipelineState(const std::string &name, const Pipeline::JsonParser::GraphicsPipelineStateParsedInfo &d) { graphicsPipelineStates_.push_back(name, d); }
     bool RemoveGraphicsPipelineState(const std::string &name) { return RemoveByKey(graphicsPipelineStates_, name); }
     [[nodiscard]] bool HasGraphicsPipelineState(const std::string &name) const { return HasKey(graphicsPipelineStates_, name); }
-    [[nodiscard]] const D3D12_GRAPHICS_PIPELINE_STATE_DESC &GetGraphicsPipelineState(const std::string &name) const { return graphicsPipelineStates_.at(name).value; }
+    [[nodiscard]] const Pipeline::JsonParser::GraphicsPipelineStateParsedInfo &GetGraphicsPipelineState(const std::string &name) const { return graphicsPipelineStates_.at(name).value; }
     [[nodiscard]] const GraphicsPipelineStatePresets &GraphicsPipelineStates() const { return graphicsPipelineStates_; }
 
     //--------- ComputePipelineState ---------//
@@ -141,8 +143,6 @@ public:
     }
 
 private:
-    // VectorMap は const メソッド内でも find を使用するため mutable 化
-    // メモ：mutable...constメンバ関数内でもメンバ変数の変更を許可する装飾子
     mutable RootSignaturePresets         rootSignatures_;
     mutable RootParameterPresets         rootParameters_;
     mutable DescriptorRangePresets       descriptorRanges_;

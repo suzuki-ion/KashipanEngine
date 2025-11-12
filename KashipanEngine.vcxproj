@@ -140,6 +140,7 @@
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp" />
@@ -253,7 +254,9 @@
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\RootSignature.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\SamplerState.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\JsonParser\Shader.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\PipelineInfo.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ComponentsPresetContainer.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\IGraphicsResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources.h" />

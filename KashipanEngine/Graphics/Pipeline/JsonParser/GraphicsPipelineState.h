@@ -8,11 +8,22 @@
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
-inline D3D12_GRAPHICS_PIPELINE_STATE_DESC ParseGraphicsPipelineState(const Json &json) {
+struct GraphicsPipelineStateParsedInfo {
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
+    bool isAutoRTCountFromPS = false; // PixelShaderからNumRenderTargetsを導出するフラグ
+    bool hasNumRenderTargetsSpecified = false; // JSONで明示的にNumRenderTargetsが指定されたかどうか
+};
+
+inline GraphicsPipelineStateParsedInfo ParseGraphicsPipelineState(const Json &json) {
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
+    GraphicsPipelineStateParsedInfo info{};
+    auto &desc = info.desc;
+
+    if (json.contains("AutoRTCountFromPS")) {
+        info.isAutoRTCountFromPS = json["AutoRTCountFromPS"].get<bool>();
+    }
 
     if (json.contains("SampleMask")) {
         if (json["SampleMask"].is_string()) {
@@ -31,15 +42,14 @@ inline D3D12_GRAPHICS_PIPELINE_STATE_DESC ParseGraphicsPipelineState(const Json 
     }
     if (json.contains("NumRenderTargets")) {
         desc.NumRenderTargets = json["NumRenderTargets"].get<UINT>();
+        info.hasNumRenderTargetsSpecified = true;
     } else {
-        desc.NumRenderTargets = 1;
+        desc.NumRenderTargets = 1; // default prior to auto override
     }
     if (json.contains("RTVFormats")) {
         const auto &rtvFormats = json["RTVFormats"];
-        for (UINT i = 0; i < desc.NumRenderTargets; ++i) {
-            if (i < rtvFormats.size()) {
-                desc.RTVFormats[i] = kDxgiFormatMap.at(rtvFormats[i].get<std::string>());
-            }
+        for (UINT i = 0; i < desc.NumRenderTargets && i < rtvFormats.size(); ++i) {
+            desc.RTVFormats[i] = kDxgiFormatMap.at(rtvFormats[i].get<std::string>());
         }
     }
     if (json.contains("DSVFormat")) {
@@ -66,7 +76,7 @@ inline D3D12_GRAPHICS_PIPELINE_STATE_DESC ParseGraphicsPipelineState(const Json 
         desc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
     }
 
-    return desc;
+    return info;
 }
 
 } // namespace Pipeline::JsonParser

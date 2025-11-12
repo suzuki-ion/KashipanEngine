@@ -5,34 +5,39 @@
 #include <unordered_map>
 #include <memory>
 #include "Utilities/FileIO/JSON.h"
+#include "Graphics/Pipeline/PipelineInfo.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/System/ComponentsPresetContainer.h"
+#include "Graphics/Pipeline/System/PipelineCreator.h"
 
 namespace KashipanEngine {
 
-struct PipelineSet {
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
-};
+class DirectXCommon;
 
-struct PipelineInfo {
-    std::string name;
-    std::string type; // "Render" or "Compute"
-    D3D12_PRIMITIVE_TOPOLOGY topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
-    PipelineSet pipelineSet;
-};
-
+/// @brief パイプライン管理用クラス
 class PipelineManager {
 public:
-    PipelineManager() = delete;
-    PipelineManager(ID3D12Device *device, const std::string &pipelineSettingsPath = "Resources/PipelineSetting.json");
+    /// @brief コンストラクタ
+    /// @param device D3D12 デバイス
+    /// @param pipelineSettingsPath パイプライン設定ファイルパス
+    PipelineManager(Passkey<DirectXCommon>, ID3D12Device *device, const std::string &pipelineSettingsPath = "Resources/PipelineSetting.json");
     ~PipelineManager() = default;
 
+    /// @brief パイプラインの再読み込み
     void ReloadPipelines();
 
-    [[nodiscard]] PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }
+    /// @brief パイプライン情報の取得
+    /// @param pipelineName パイプライン名
+    /// @return パイプライン情報構造体への参照
+    [[nodiscard]] const PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }
+    /// @brief パイプラインの存在確認
+    /// @param pipelineName パイプライン名
+    /// @return 存在する場合は true を返す
     [[nodiscard]] bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
 
+    /// @brief コマンドリストにパイプラインを設定する
+    /// @param commandList コマンドリスト
+    /// @param pipelineName 
     void SetCommandListPipeline(ID3D12GraphicsCommandList *commandList, const std::string &pipelineName);
     void ResetCurrentPipeline() { currentPipelineName_.clear(); }
 
@@ -43,8 +48,11 @@ private:
     void LoadComputePipeline(const Json &json);
 
     ID3D12Device *device_ = nullptr;
+    ID3D12GraphicsCommandList *commandList_ = nullptr;
+
     std::unique_ptr<ShaderCompiler> shaderCompiler_;
     ComponentsPresetContainer components_{ Passkey<PipelineManager>{} };
+    std::unique_ptr<PipelineCreator> pipelineCreator_;
 
     std::string pipelineSettingsPath_;
     std::string pipelineFolderPath_;

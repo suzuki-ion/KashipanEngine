@@ -22,19 +22,17 @@ class DX12SwapChain final {
     static inline ID3D12Device *sDevice = nullptr;
     static inline IDXGIFactory7 *sDXGIFactory = nullptr;
     static inline ID3D12CommandQueue *sCommandQueue = nullptr;
-    static inline ID3D12GraphicsCommandList *sCommandList = nullptr;
     static inline RTVHeap *sRTVHeap = nullptr;
     static inline DSVHeap *sDSVHeap = nullptr;
 
 public:
     static void Initialize(Passkey<DirectXCommon>, DirectXCommon *directXCommon,
         ID3D12Device *device, IDXGIFactory7 *dxgiFactory, ID3D12CommandQueue *commandQueue,
-        ID3D12GraphicsCommandList *commandList, RTVHeap *rtvHeap, DSVHeap *dsvHeap) {
+        RTVHeap *rtvHeap, DSVHeap *dsvHeap) {
         sDirectXCommon = directXCommon;
         sDevice = device;
         sDXGIFactory = dxgiFactory;
         sCommandQueue = commandQueue;
-        sCommandList = commandList;
         sRTVHeap = rtvHeap;
         sDSVHeap = dsvHeap;
     }
@@ -73,6 +71,9 @@ public:
     /// @brief サイズ変更処理
     void Resize(Passkey<DirectXCommon>);
 
+    /// @brief 現在記録中のコマンドリストを取得
+    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<DirectXCommon>) const noexcept { return commandList_.Get(); }
+
 private:
     DX12SwapChain(const DX12SwapChain &) = delete;
     DX12SwapChain &operator=(const DX12SwapChain &) = delete;
@@ -89,6 +90,8 @@ private:
     void CreateBackBuffers();
     /// @brief 深度ステンシルバッファの作成
     void CreateDepthStencilBuffer();
+    /// @brief コマンド関連オブジェクトの初期化
+    void InitializeCommandObjects();
 
     //--------- スワップチェーンの情報 ---------//
 
@@ -122,6 +125,11 @@ private:
     bool isResizeRequested_ = false;
     int32_t requestedWidth_ = 0;
     int32_t requestedHeight_ = 0;
+
+    //--------- コマンド関連 ---------//
+
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
+    std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> commandAllocators_;
 };
 
 } // namespace KashipanEngine

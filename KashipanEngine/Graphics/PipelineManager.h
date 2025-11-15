@@ -7,39 +7,56 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Graphics/Pipeline/PipelineInfo.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
-#include "Graphics/Pipeline/System/ComponentsPresetContainer.h"
+#include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/System/PipelineCreator.h"
+#include "Graphics/Pipeline/System/ShaderVariableMapCreator.h" // 追加: NameMap / CreateShaderVariableMap
 
 namespace KashipanEngine {
 
-class DirectXCommon;
+class GraphicsEngine; // 生成元クラス（Renderer から GraphicsEngine へ変更）
 
 /// @brief パイプライン管理用クラス
 class PipelineManager {
 public:
-    /// @brief コンストラクタ
+    /// @brief コンストラクタ（GraphicsEngine からのみ生成可能）
     /// @param device D3D12 デバイス
     /// @param pipelineSettingsPath パイプライン設定ファイルパス
-    PipelineManager(Passkey<DirectXCommon>, ID3D12Device *device, const std::string &pipelineSettingsPath = "Resources/PipelineSetting.json");
+    PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const std::string &pipelineSettingsPath = "Resources/PipelineSetting.json");
     ~PipelineManager() = default;
 
     /// @brief パイプラインの再読み込み
     void ReloadPipelines();
 
     /// @brief パイプライン情報の取得
-    /// @param pipelineName パイプライン名
-    /// @return パイプライン情報構造体への参照
     [[nodiscard]] const PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }
     /// @brief パイプラインの存在確認
-    /// @param pipelineName パイプライン名
-    /// @return 存在する場合は true を返す
     [[nodiscard]] bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
 
-    /// @brief コマンドリストにパイプラインを設定する
-    /// @param commandList コマンドリスト
-    /// @param pipelineName 
-    void SetCommandListPipeline(ID3D12GraphicsCommandList *commandList, const std::string &pipelineName);
+    /// @brief 指定のコマンドリストにパイプラインをセット
+    void ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName);
     void ResetCurrentPipeline() { currentPipelineName_.clear(); }
+
+    /// @brief 指定パイプラインのシェーダーから NameMap を構築して返す
+    /// @param pipelineName パイプライン名
+    /// @param appendSpace Space をキーへ付与するか ("name#s0")
+    /// @return NameMap<ShaderVariableBinding> （コピー）
+    [[nodiscard]] MyStd::NameMap<ShaderVariableBinding> BuildPipelineShaderVariableMap(const std::string &pipelineName, bool appendSpace = true) const {
+        auto it = pipelineInfos_.find(pipelineName);
+        if (it == pipelineInfos_.end()) return {};
+        MyStd::NameMap<ShaderVariableBinding> combined;
+        for (auto *shader : it->second.Shaders()) {
+            if (!shader) continue;
+            auto single = CreateShaderVariableMap(*shader, appendSpace);
+            // マージ（既存キーは上書きしない）
+            for (auto e = single.begin(); e != single.end(); ++e) {
+                const auto &k = e->key;
+                if (!combined.Contains(k)) {
+                    combined.Set(k, e->value);
+                }
+            }
+        }
+        return combined;
+    }
 
 private:
     void LoadPreset();
@@ -48,7 +65,6 @@ private:
     void LoadComputePipeline(const Json &json);
 
     ID3D12Device *device_ = nullptr;
-    ID3D12GraphicsCommandList *commandList_ = nullptr;
 
     std::unique_ptr<ShaderCompiler> shaderCompiler_;
     ComponentsPresetContainer components_{ Passkey<PipelineManager>{} };

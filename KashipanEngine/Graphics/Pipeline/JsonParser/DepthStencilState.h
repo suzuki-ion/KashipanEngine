@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -9,6 +10,10 @@ namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
 inline D3D12_DEPTH_STENCIL_DESC ParseDepthStencilState(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.depthstencilstate.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
@@ -73,6 +78,7 @@ inline D3D12_DEPTH_STENCIL_DESC ParseDepthStencilState(const Json &json) {
         }
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.depthstencilstate.parse.end") + presetName, LogSeverity::Debug);
     return desc;
 }
 

@@ -1,0 +1,180 @@
+﻿{
+	//==============================================================
+	// PipelineCreator 用 パイプライン設定サンプル
+	// Render/Compute 両パイプラインを同一ファイルに記述した例
+	// 必須キー(Render): Name, RootSignature, Shader, RasterizerState, BlendState, DepthStencilState, PipelineState
+	// 必須キー(Compute): Name, RootSignature, Shader(Compute), PipelineState
+	//==============================================================
+
+	//===========================
+	// レンダーパイプライン例
+	//===========================
+	"RenderPipeline_Object3D": {
+		// パイプライン識別名 (重複不可)
+		"Name": "Object3D",
+
+		// ルートシグネチャ (プリセット利用例)
+		"RootSignature": {
+			"UsePreset": "RootSignature_WithConstantsAndTable"
+		},
+
+		// シェーダ群
+		"Shader": {
+			// VS の入力反射から InputLayout 自動生成
+			"AutoInputLayoutFromVS": true,
+			// PS の出力数から RT 数自動導出 (GraphicsPipelineState 側とも連携)
+			"AutoRTCountFromPS": true,
+			// テッセレーション有り → HS/DS で自動トポロジ補完
+			"AutoTopologyFromShaders": true,
+
+			"Vertex": {
+				"Path": "Shaders/Object3D/Object3D_VS.hlsl",
+				"EntryPoint": "VSMain",
+				"TargetProfile": "vs_6_6",
+				"Macros": [
+					{
+						"Name": "USE_SKINNING",
+						"Value": "1"
+					}
+				]
+			},
+			"Pixel": {
+				"Path": "Shaders/Object3D/Object3D_PS.hlsl",
+				"EntryPoint": "PSMain",
+				"TargetProfile": "ps_6_6",
+				"Macros": [
+					{
+						"Name": "ENABLE_FOG",
+						"Value": "1"
+					}
+				]
+			},
+			"Hull": {
+				"Path": "Shaders/Tess/Tessellation_HS.hlsl",
+				"EntryPoint": "HSMain",
+				"TargetProfile": "hs_6_6"
+			},
+			"Domain": {
+				"Path": "Shaders/Tess/Tessellation_DS.hlsl",
+				"EntryPoint": "DSMain",
+				"TargetProfile": "ds_6_6"
+			}
+		},
+
+		// 入力レイアウト (自動生成を使うので最低限空オブジェクト、または省略可)
+		"InputLayout": {
+			"AutoFromVS": true
+		},
+
+		// ラスタライザ
+		"RasterizerState": {
+			"UsePreset": "RasterizerState_MSAA4x"
+		},
+
+		// ブレンド
+		"BlendState": {
+			// プリセット未使用 → フィールド直書き
+			"AlphaToCoverageEnable": false,
+			"IndependentBlendEnable": false,
+			"RenderTargets": [
+				{
+					"BlendEnable": true,
+					"LogicOpEnable": false,
+					"SrcBlend": "D3D12_BLEND_SRC_ALPHA",
+					"DestBlend": "D3D12_BLEND_INV_SRC_ALPHA",
+					"BlendOp": "D3D12_BLEND_OP_ADD",
+					"SrcBlendAlpha": "D3D12_BLEND_ONE",
+					"DestBlendAlpha": "D3D12_BLEND_INV_SRC_ALPHA",
+					"BlendOpAlpha": "D3D12_BLEND_OP_ADD",
+					"LogicOp": "D3D12_LOGIC_OP_NOOP",
+					"RenderTargetWriteMask": "D3D12_COLOR_WRITE_ENABLE_ALL"
+				}
+			]
+		},
+
+		// 深度/ステンシル
+		"DepthStencilState": {
+			"DepthEnable": true,
+			"DepthWriteMask": "D3D12_DEPTH_WRITE_MASK_ALL",
+			"DepthFunc": "D3D12_COMPARISON_FUNC_LESS_EQUAL",
+			"StencilEnable": false,
+			"StencilReadMask": "D3D12_DEFAULT_STENCIL_READ_MASK",
+			"StencilWriteMask": "D3D12_DEFAULT_STENCIL_WRITE_MASK"
+		},
+
+		// グラフィックス PSO 固定部
+		"PipelineState": {
+			// PS の出力から自動決定したいので NumRenderTargets は省略可 (AutoRTCountFromPS=true 前提)
+			"AutoRTCountFromPS": true,
+			"PrimitiveTopologyType": "D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH",
+			"SampleMask": "D3D12_DEFAULT_SAMPLE_MASK",
+			"NumRenderTargets": 1,
+			"RTVFormats": [ "DXGI_FORMAT_R8G8B8A8_UNORM" ],
+			"DSVFormat": "DXGI_FORMAT_D24_UNORM_S8_UINT",
+			"SampleDesc": {
+				"Count": 4,
+				"Quality": 0
+			},
+			"NodeMask": 0,
+			"Flags": "D3D12_PIPELINE_STATE_FLAG_NONE"
+		}
+	},
+
+	//===========================
+	// コンピュートパイプライン例
+	//===========================
+	"ComputePipeline_Blur": {
+		"Name": "BlurCS",
+
+		"RootSignature": {
+			"UsePreset": "RootSignature_ComputeTypical"
+		},
+
+		"Shader": {
+			"Compute": {
+				"Path": "Shaders/Compute/Blur_CS.hlsl",
+				"EntryPoint": "CSMain",
+				"TargetProfile": "cs_6_6",
+				"Macros": [
+					{
+						"Name": "KERNEL_RADIUS",
+						"Value": "5"
+					}
+				]
+			}
+		},
+
+		"PipelineState": {
+			// Compute 用は NodeMask / Flags のみ使用
+			"NodeMask": 0,
+			"Flags": "D3D12_PIPELINE_STATE_FLAG_NONE"
+		}
+	},
+
+	//==============================================================
+	// プリセット参照例 (UsePreset のみで構成)
+	//==============================================================
+	"RenderPipeline_PresetOnly": {
+		"Name": "PresetOnlyPipeline",
+		"RootSignature": { "UsePreset": "RootSignature_Minimal" },
+		"Shader": {
+			"Vertex": { "UsePreset": "BasicVertexShader" },
+			"Pixel": { "UsePreset": "BasicPixelShader" },
+			"AutoInputLayoutFromVS": true
+		},
+		"InputLayout": { "AutoFromVS": true },
+		"RasterizerState": { "UsePreset": "RasterizerState_WireframeDebug" },
+		"BlendState": { "UsePreset": "AlphaBlend_Common" },
+		"DepthStencilState": { "UsePreset": "DepthStencilState" },
+		"PipelineState": { "UsePreset": "GraphicsPipelineState_Minimal" }
+	},
+
+	//==============================================================
+	// 注意事項:
+	// - Render パイプラインは必須セクションが欠けると CreateRender() は false を返す。
+	// - AutoInputLayoutFromVS/AutoRTCountFromPS は Shader セクション直下、GraphicsPipelineState 側の AutoRTCountFromPS と両方存在し得る。
+	// - UsePreset 指定時はそのセクション内の他キーは無視される。
+	// - Compute パイプラインは Shader.Compute のみ必要 (他ステージ無視)。
+	//==============================================================
+	"_Info": "PipelineCreator 用複合 JSON サンプル。外部ローダは各トップレベルオブジェクトを順に解析する前提。"
+}

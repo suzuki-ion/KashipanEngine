@@ -8,9 +8,7 @@
 namespace KashipanEngine {
 
 namespace {
-/// @brief SwapChain管理用マップ
 std::unordered_map<HWND, std::unique_ptr<DX12SwapChain>> sSwapChains;
-/// @brief 削除予定のSwapChainのウィンドウハンドルリスト
 std::vector<HWND> sPendingDestroySwapChains;
 } // namespace
 
@@ -37,17 +35,14 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
 
     dx12DXGIs_ = std::make_unique<DX12DXGIs>(Passkey<DirectXCommon>{});
     dx12Device_ = std::make_unique<DX12Device>(Passkey<DirectXCommon>{}, dx12DXGIs_->GetDXGIAdapter());
-    dx12Commands_ = std::make_unique<DX12Commands>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+    dx12CommandQueue_ = std::make_unique<DX12CommandQueue>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
     dx12Fence_ = std::make_unique<DX12Fence>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice());
 
     IGraphicsResource::SetDevice({}, dx12Device_->GetDevice());
-    IGraphicsResource::SetCommandList({}, dx12Commands_->GetCommandList());
-    RenderTargetResource::SetCommandList({}, dx12Commands_->GetCommandList());
-    DepthStencilResource::SetCommandList({}, dx12Commands_->GetCommandList());
 
-    RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 32);
-    DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 32);
-    SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 256);
+    RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 128);
+    DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 128);
+    SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 1024);
 
     auto settings = GetEngineSettings().rendering;
     RenderTargetResource::SetDefaultClearColor(Passkey<DirectXCommon>{}, settings.defaultClearColor);
@@ -55,8 +50,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     DX12SwapChain::Initialize(Passkey<DirectXCommon>{}, this,
         dx12Device_->GetDevice(),
         dx12DXGIs_->GetDXGIFactory(),
-        dx12Commands_->GetCommandQueue(),
-        dx12Commands_->GetCommandList(),
+        dx12CommandQueue_->GetCommandQueue(),
         RTVHeap_.get(),
         DSVHeap_.get()
     );
@@ -68,9 +62,8 @@ DirectXCommon::~DirectXCommon() {
     LogScope scope;
     Log(Translation("engine.directx.finalize.start"), LogSeverity::Debug);
 
-    // GPU 完了待ち（Live Objects を減らすため）
-    if (dx12Fence_ && dx12Commands_) {
-        dx12Fence_->Signal(Passkey<DirectXCommon>{}, dx12Commands_->GetCommandQueue());
+    if (dx12Fence_ && dx12CommandQueue_) {
+        dx12Fence_->Signal(Passkey<DirectXCommon>{}, dx12CommandQueue_->GetCommandQueue());
         dx12Fence_->Wait(Passkey<DirectXCommon>{});
     }
 
@@ -80,7 +73,7 @@ DirectXCommon::~DirectXCommon() {
     DSVHeap_.reset();
     RTVHeap_.reset();
     dx12Fence_.reset();
-    dx12Commands_.reset();
+    dx12CommandQueue_.reset();
     dx12Device_.reset();
     dx12DXGIs_.reset();
     Log(Translation("engine.directx.finalize.end"), LogSeverity::Debug);
@@ -133,24 +126,32 @@ void DirectXCommon::DestroyPendingSwapChains() {
 }
 
 bool DirectXCommon::WaitForFence() {
-    dx12Fence_->Signal({}, dx12Commands_->GetCommandQueue());
+    dx12Fence_->Signal({}, dx12CommandQueue_->GetCommandQueue());
     return dx12Fence_->Wait({});
 }
 
 void DirectXCommon::ExecuteCommand() {
-    for (auto &swapChain : sSwapChains) {
-        swapChain.second->EndDraw({});
+    for (auto &swapPair : sSwapChains) {
+        swapPair.second->EndDraw({});
     }
-    dx12Commands_->ExecuteCommandList({});
-    for (auto &swapChain : sSwapChains) {
-        swapChain.second->Present({});
-    }
-    WaitForFence();
-    dx12Commands_->ResetCommandAllocatorAndList({});
 
-    // スワップチェーンのサイズ変更処理
-    for (auto &swapChain : sSwapChains) {
-        swapChain.second->Resize({});
+    std::vector<ID3D12CommandList*> lists;
+    lists.reserve(sSwapChains.size());
+    for (auto &swapPair : sSwapChains) {
+        if (auto *cl = swapPair.second->GetRecordedCommandList(Passkey<DirectXCommon>{})) {
+            lists.push_back(cl);
+        }
+    }
+    dx12CommandQueue_->ExecuteCommandLists({}, lists);
+
+    for (auto &swapPair : sSwapChains) {
+        swapPair.second->Present({});
+    }
+
+    WaitForFence();
+
+    for (auto &swapPair : sSwapChains) {
+        swapPair.second->Resize({});
     }
 }
 

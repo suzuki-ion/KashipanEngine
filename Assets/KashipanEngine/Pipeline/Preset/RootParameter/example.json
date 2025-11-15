@@ -1,0 +1,146 @@
+﻿{
+	// プリセット名
+	"Name": "Example RootParameter",
+
+	//==============================================================
+	// RootParameter 設定サンプル
+	// ParseRootParameters(Json) が読み取るトップレベル:
+	//   "RootParameter": { "Parameters": [ ... ] }
+	// 各 Parameters 要素:
+	//   ParameterType        : 必須 (DESCRIPTOR_TABLE / 32BIT_CONSTANTS / CBV / SRV / UAV)
+	//   ShaderVisibility     : 必須 (ALL / VERTEX / PIXEL 等)
+	//   DescriptorTable      : ParameterType=DESCRIPTOR_TABLE のとき
+	//      └ "Ranges": [] (ParseDescriptorRanges と同形式)
+	//   Constants            : ParameterType=32BIT_CONSTANTS のとき
+	//      └ ShaderRegister / RegisterSpace / Num32BitValues
+	//   Descriptor           : ParameterType=CBV/SRV/UAV のとき
+	//      └ ShaderRegister / RegisterSpace
+	// 未指定フィールドはゼロ初期化されるため必要項目は明示推奨。
+	//==============================================================
+	"RootParameter": {
+		"Parameters": [
+			{
+				// (0) ディスクリプタテーブル: SRV(t0~t3) + CBV(b0) + UAV(u0)
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+				"DescriptorTable": {
+					"Ranges": [
+						{
+							// t0～t3 の SRV 4個
+							"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SRV",
+							"NumDescriptors": 4,
+							"BaseShaderRegister": 0,
+							"RegisterSpace": 0,
+							"OffsetInDescriptorsFromTableStart": 0
+						},
+						{
+							// b0 の CBV
+							"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_CBV",
+							"NumDescriptors": 1,
+							"BaseShaderRegister": 0,
+							"RegisterSpace": 0,
+							"OffsetInDescriptorsFromTableStart": "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND"
+						},
+						{
+							// u0 の UAV
+							"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_UAV",
+							"NumDescriptors": 1,
+							"BaseShaderRegister": 0,
+							"RegisterSpace": 0,
+							"OffsetInDescriptorsFromTableStart": "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND"
+						}
+					]
+				}
+			},
+			{
+				// (1) 32bit 定数: VS 用ワールド行列 float4x4 -> 16 スロット
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+				"Constants": {
+					"ShaderRegister": 0, // b0
+					"RegisterSpace": 0,
+					"Num32BitValues": 16
+				}
+			},
+			{
+				// (2) ピクセルシェーダ用定数: 色(float4=4) + 時間(float1=1) = 5
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+				"Constants": {
+					"ShaderRegister": 1, // b1
+					"RegisterSpace": 0,
+					"Num32BitValues": 5
+				}
+			},
+			{
+				// (3) CBV を直接ルートに配置 (頻繁更新小サイズ用)
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+				"Descriptor": {
+					"ShaderRegister": 2, // b2
+					"RegisterSpace": 0
+				}
+			},
+			{
+				// (4) SRV を直接ルートに配置 (単一テクスチャ等)
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_SRV",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+				"Descriptor": {
+					"ShaderRegister": 0, // t0
+					"RegisterSpace": 1 // 別用途分離例 (Space1)
+				}
+			},
+			{
+				// (5) UAV を直接配置 (書き込みバッファ1個)
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+				"Descriptor": {
+					"ShaderRegister": 0, // u0
+					"RegisterSpace": 0
+				}
+			}
+		]
+	},
+
+	//==============================================================
+	// 最小構成例: 定数 + テーブル
+	//==============================================================
+	"RootParameter_Minimal": {
+		"Parameters": [
+			{
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+				"Constants": {
+					"ShaderRegister": 0,
+					"RegisterSpace": 0,
+					"Num32BitValues": 16
+				}
+			},
+			{
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+				"DescriptorTable": {
+					"Ranges": [
+						{
+							"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SRV",
+							"NumDescriptors": 1,
+							"BaseShaderRegister": 0,
+							"RegisterSpace": 0,
+							"OffsetInDescriptorsFromTableStart": 0
+						}
+					]
+				}
+			}
+		]
+	},
+
+	//==============================================================
+	// 注意:
+	// - ParameterType と ShaderVisibility は必須。欠けるとその要素はスキップされる。
+	// - DescriptorTable の Ranges 配列が空だと NumDescriptorRanges=0 になる (無意味)。
+	// - 大容量頻繁更新は CBV にまとめ、32BIT_CONSTANTS は小容量高速更新用途に限定。
+	// - RegisterSpace は衝突回避が必要な特別な状況のみ使用。
+	// - ルートサイズ肥大化回避のため DescriptorTable でまとめられるものはまとめる。
+	//==============================================================
+	"_Info": "RootParameter セクションサンプル。RootSignature.json 内で \"RootParameter\" を埋め込む。"
+}

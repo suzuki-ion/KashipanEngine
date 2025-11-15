@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -18,10 +19,17 @@ struct RootParametersParsed {
 };
 
 inline RootParametersParsed ParseRootParameters(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.rootparameters.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
 
     RootParametersParsed result{};
-    if (!json.contains("Parameters")) return result;
+    if (!json.contains("Parameters")) {
+        Log(Translation("engine.graphics.pipeline.jsonparser.rootparameters.parse.end") + presetName, LogSeverity::Debug);
+        return result;
+    }
 
     UINT i = 0;
     for (const auto &param : json["Parameters"]) {
@@ -53,6 +61,7 @@ inline RootParametersParsed ParseRootParameters(const Json &json) {
         ++i;
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.rootparameters.parse.end") + presetName, LogSeverity::Debug);
     return result;
 }
 

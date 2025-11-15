@@ -30,30 +30,6 @@
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ExitSizeMoveEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -153,9 +129,6 @@
     <ClCompile Include="KashipanEngine\Utilities\FileIO\INI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Commands.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\Dialogs\MessageDialog.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -201,19 +174,19 @@
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ClickThroughEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEvent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEventSimple.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\GraphicsEngine.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12CommandQueue.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -276,30 +249,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\DestroyEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\CloseEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizeEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\EnterSizeMoveEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ExitSizeMoveEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ActivateEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\GetMinMaxInfoEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SizingEvent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h">
@@ -411,9 +360,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Debug\CrashHandler.h">
@@ -563,16 +509,7 @@
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\ClickThroughEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEvent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents\SysCommandCloseEventSimple.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ComponentsPresetContainer.h">
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\ComponentsPresetContainer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\DefineMaps.h">
@@ -629,10 +566,85 @@
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Renderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\GraphicsEngine.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandQueue.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableMapCreator.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Line.Normal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Line.Thickness.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.DoubleSidedCulling.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendAdd.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendExclusion.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendMultiply.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendNone.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendScreen.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendSubtract.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendAdd.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendExclusion.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendMultiply.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendNone.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendScreen.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendSubtract.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Exclusion.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Multiply.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\None.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Normal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Screen.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Subtract.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\ComputePipelineState\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthDisable.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnable.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\DescriptorRange\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Default.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Line.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\InputLayout\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\DoubleSidedCulling.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\Solid.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\Wireframe.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootConstants\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootDescriptor\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootParameter\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Object3d.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Sampler\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example\Pixel.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example\Vertex.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Line.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\TransformationMatrix.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Geometry.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Pixel.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Vertex.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\Object3d.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\TransformationMatrix.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\Pixel.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\Vertex.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d.json" />
+    <None Include="Assets\KashipanEngine\PipelineSettings.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
   </ItemGroup>
 </Project>

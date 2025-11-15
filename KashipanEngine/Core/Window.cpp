@@ -4,16 +4,7 @@
 #include "Utilities/Conversion/ConvertString.h"
 #include <cassert>
 
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/DestroyEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/ClickThroughEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/CloseEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/SizeEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/EnterSizeMoveEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/ExitSizeMoveEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/ActivateEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/GetMinMaxInfoEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/SizingEvent.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/SysCommandCloseEvent.h"
+#include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
 
 namespace KashipanEngine {
 
@@ -30,17 +21,16 @@ Window::Window(Passkey<Window>, WindowType windowType, const std::wstring &title
     messages_.reserve(kMaxMessages);
     eventHandlers_.reserve(kMaxMessages);
 
-    using namespace WindowEventDefault;
-    // 標準イベントを登録
-    RegisterWindowEvent(std::make_unique<DestroyEvent>());
-    RegisterWindowEvent(std::make_unique<CloseEvent>());
-    RegisterWindowEvent(std::make_unique<SizeEvent>());
-    RegisterWindowEvent(std::make_unique<EnterSizeMoveEvent>());
-    RegisterWindowEvent(std::make_unique<ExitSizeMoveEvent>());
-    RegisterWindowEvent(std::make_unique<ActivateEvent>());
-    RegisterWindowEvent(std::make_unique<GetMinMaxInfoEvent>());
-    RegisterWindowEvent(std::make_unique<SizingEvent>());
-    RegisterWindowEvent(std::make_unique<SysCommandCloseEvent>());
+    using namespace WindowDefaultEvent;
+    RegisterWindowEvent<DestroyEvent>();
+    RegisterWindowEvent<CloseEvent>();
+    RegisterWindowEvent<SizeEvent>();
+    RegisterWindowEvent<EnterSizeMoveEvent>();
+    RegisterWindowEvent<ExitSizeMoveEvent>();
+    RegisterWindowEvent<ActivateEvent>();
+    RegisterWindowEvent<GetMinMaxInfoEvent>();
+    RegisterWindowEvent<SizingEvent>();
+    RegisterWindowEvent<SysCommandCloseEvent>();
 }
 
 Window::~Window() {
@@ -167,28 +157,45 @@ Window *Window::CreateCompositionOverlay(const std::string &title, int32_t width
     int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
     std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
 
-    // 枠無しポップアップ + トップモスト。DWM のリダイレクション無効化で DComp 合成用に最適化
     DWORD style = WS_POPUP;
-    DWORD exStyle = WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP;
+    DWORD exStyle = WS_EX_NOREDIRECTIONBITMAP; // DComp 用
+    exStyle |= WS_EX_CONTEXTHELP;
+    // Debug 中は TOPMOST を避ける / Release では付与
+#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+    bool isDebugging = ::IsDebuggerPresent() != 0;
+    if (!isDebugging) {
+        exStyle |= WS_EX_TOPMOST;
+    }
+#else
+    exStyle |= WS_EX_TOPMOST;
+#endif
     if (clickThrough) {
-        exStyle |= WS_EX_TRANSPARENT | WS_EX_LAYERED; // クリック透過（可視はDCompで制御）
+        exStyle |= WS_EX_TRANSPARENT | WS_EX_LAYERED;
     }
 
-    // 枠調整なし（クライアント=ウィンドウ全体）で作成するため、
-    // 一時的に内部既定を上書きして生成
     auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Layered, windowTitle, windowWidth, windowHeight, style, windowIconPath);
     HWND hwnd = window->GetWindowHandle();
 
-    // 拡張スタイルの付与と反映
-    SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | exStyle);
-    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    // 拡張スタイル反映
+    ::SetWindowLong(hwnd, GWL_EXSTYLE, ::GetWindowLong(hwnd, GWL_EXSTYLE) | exStyle);
+    ::SetWindowPos(hwnd,
+#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+        (exStyle & WS_EX_TOPMOST) ? HWND_TOPMOST : HWND_NOTOPMOST,
+#else
+        HWND_TOPMOST,
+#endif
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 
-    // 登録＆SwapChain作成（DirectComposition）
+#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+    // 緊急退避ホットキー (Ctrl+Alt+F12) 登録
+    ::RegisterHotKey(hwnd, 0xDEAD, MOD_CONTROL | MOD_ALT, VK_F12);
+#endif
+
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
-    sWindowMap[hwnd]->RegisterWindowEvent(std::make_unique<WindowEventDefault::ClickThroughEvent>(clickThrough));
+    sWindowMap[hwnd]->RegisterWindowEvent<WindowDefaultEvent::ClickThroughEvent>(clickThrough);
 
     Log(Translation("engine.window.create.overlay.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -205,10 +212,18 @@ std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM
     LogScope scope;
     messages_[msg] = { msg, wparam, lparam };
     auto it = eventHandlers_.find(msg);
-    if (it != eventHandlers_.end()) {
-        return it->second->OnEvent(msg, wparam, lparam);
+    if (it == eventHandlers_.end()) {
+        return std::nullopt;
     }
-    return std::nullopt;
+    return std::visit([&](auto &stored) -> std::optional<LRESULT> {
+        using T = std::decay_t<decltype(stored)>;
+        if constexpr (std::is_same_v<T, std::unique_ptr<IWindowEvent>>) {
+            if (stored) return stored->OnEvent(msg, wparam, lparam);
+            return std::nullopt;
+        } else {
+            return stored.OnEvent(msg, wparam, lparam);
+        }
+    }, it->second);
 }
 
 void Window::SetSizeChangeMode(SizeChangeMode sizeChangeMode) {
@@ -302,16 +317,9 @@ void Window::SetWindowPosition(int32_t x, int32_t y) {
     }
 }
 
-void Window::RegisterWindowEvent(const std::unique_ptr<IWindowEvent> &eventHandler) {
-    LogScope scope;
-    UINT msg = eventHandler->kTargetMessage_;
-    eventHandlers_[msg] = eventHandler->Clone();
-    eventHandlers_[msg]->SetWindow(this);
-}
-
 void Window::UnregisterWindowEvent(UINT msg) {
     LogScope scope;
-    eventHandlers_[msg] = nullptr;
+    eventHandlers_.erase(msg);
 }
 
 const WindowMessage &Window::GetWindowMessage(UINT msg) const {
@@ -469,4 +477,4 @@ void Window::AdjustWindowSize() {
     }
 }
 
-} // namespace KashipanEngine} // namespace KashipanEngine
+} // namespace KashipanEngine

@@ -7,17 +7,19 @@
 #include <memory>
 #include "Core/DirectX/DX12DXGIs.h"
 #include "Core/DirectX/DX12Device.h"
-#include "Core/DirectX/DX12Commands.h"
+#include "Core/DirectX/DX12CommandQueue.h"
 #include "Core/DirectX/DX12Fence.h"
 #include "Core/DirectX/DX12SwapChain.h"
 #include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapSRV.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
 class GameEngine;
 class Window;
+class GraphicsEngine;
 
 /// @brief DirectX共通クラス
 class DirectXCommon final {
@@ -42,6 +44,9 @@ public:
     /// @param hwnd ウィンドウハンドル
     void DestroySwapChainSignal(Passkey<Window>, HWND hwnd);
 
+    /// @brief D3D12デバイス取得
+    ID3D12Device* GetDevice(Passkey<GraphicsEngine>) const { return dx12Device_->GetDevice(); }
+
 private:
     DirectXCommon(const DirectXCommon &) = delete;
     DirectXCommon &operator=(const DirectXCommon &) = delete;
@@ -59,7 +64,7 @@ private:
 
     std::unique_ptr<DX12DXGIs> dx12DXGIs_;
     std::unique_ptr<DX12Device> dx12Device_;
-    std::unique_ptr<DX12Commands> dx12Commands_;
+    std::unique_ptr<DX12CommandQueue> dx12CommandQueue_;
     std::unique_ptr<DX12Fence> dx12Fence_;
 
     std::unique_ptr<RTVHeap> RTVHeap_;

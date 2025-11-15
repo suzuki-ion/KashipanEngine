@@ -1,0 +1,166 @@
+﻿{
+	// プリセット名
+	"Name": "Example InputLayout",
+
+	//==============================================================
+	// InputLayout 設定サンプル
+	// ParseInputLayout(Json) が読み取るキー:
+	//   AutoFromShader / AutoFromVS : VS のリフレクションから自動生成
+	//   Elements : 手動指定の配列
+	// 各要素フィールド:
+	//   SemanticName (必須) 例: POSITION / NORMAL / TEXCOORD / COLOR / TANGENT / INSTANCE_TRANSFORM
+	//   SemanticIndex (省略可。複数同種セマンティクス使用時に 0,1,...)
+	//   Format (必須) 例: DXGI_FORMAT_R32G32B32_FLOAT など
+	//   InputSlot (必須) VBバッファスロット番号
+	//   AlignedByteOffset (省略可) 数値 or "D3D12_APPEND_ALIGNED_ELEMENT"
+	//   InputSlotClass (省略可) PER_VERTEX_DATA / PER_INSTANCE_DATA
+	//   InstanceDataStepRate (インスタンス毎進行。PER_INSTANCE_DATA のとき 1 以上)
+	//==============================================================
+	"InputLayout": {
+		// VS から自動抽出しない (手動指定する例)
+		"AutoFromShader": false,
+		"Elements": [
+			{
+				// 位置 (頂点バッファ0)
+				"SemanticName": "POSITION",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32B32_FLOAT", // float3
+				"InputSlot": 0,
+				"AlignedByteOffset": 0, // 先頭
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			},
+			{
+				// 法線 (頂点バッファ0)
+				"SemanticName": "NORMAL",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32B32_FLOAT",
+				"InputSlot": 0,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT", // 前要素サイズから自動
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			},
+			{
+				// UV座標 (頂点バッファ0)
+				"SemanticName": "TEXCOORD",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32_FLOAT", // float2
+				"InputSlot": 0,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			},
+			{
+				// 頂点カラー (頂点バッファ0) UNSORM 8bit x4
+				"SemanticName": "COLOR",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R8G8B8A8_UNORM",
+				"InputSlot": 0,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			},
+			{
+				// 接線 (頂点バッファ0)
+				"SemanticName": "TANGENT",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32B32_FLOAT",
+				"InputSlot": 0,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			},
+			{
+				// ビット接線 (頂点バッファ0)
+				"SemanticName": "BINORMAL",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32B32_FLOAT",
+				"InputSlot": 0,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			},
+			{
+				// インスタンス用 行列 (4行を別々のセマンティクス/インデックスで渡す例) 頂点バッファ1
+				"SemanticName": "INSTANCE_TRANSFORM",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32B32A32_FLOAT", // row0
+				"InputSlot": 1,
+				"AlignedByteOffset": 0,
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA",
+				"InstanceDataStepRate": 1
+			},
+			{
+				"SemanticName": "INSTANCE_TRANSFORM",
+				"SemanticIndex": 1,
+				"Format": "DXGI_FORMAT_R32G32B32A32_FLOAT", // row1
+				"InputSlot": 1,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA",
+				"InstanceDataStepRate": 1
+			},
+			{
+				"SemanticName": "INSTANCE_TRANSFORM",
+				"SemanticIndex": 2,
+				"Format": "DXGI_FORMAT_R32G32B32A32_FLOAT", // row2
+				"InputSlot": 1,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA",
+				"InstanceDataStepRate": 1
+			},
+			{
+				"SemanticName": "INSTANCE_TRANSFORM",
+				"SemanticIndex": 3,
+				"Format": "DXGI_FORMAT_R32G32B32A32_FLOAT", // row3
+				"InputSlot": 1,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA",
+				"InstanceDataStepRate": 1
+			}
+		]
+	},
+
+	//==============================================================
+	// 自動生成使用例: VS 反射から頂点入力を取得したい場合
+	//==============================================================
+	"InputLayout_AutoFromVS": {
+		"AutoFromVS": true
+		// Elements を省略し VS の InputParameters をそのまま使用
+	},
+
+	//==============================================================
+	// 軽量版 (位置 + UV のみ)
+	//==============================================================
+	"InputLayout_Minimal": {
+		"AutoFromShader": false,
+		"Elements": [
+			{
+				"SemanticName": "POSITION",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32B32_FLOAT",
+				"InputSlot": 0,
+				"AlignedByteOffset": 0,
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			},
+			{
+				"SemanticName": "TEXCOORD",
+				"SemanticIndex": 0,
+				"Format": "DXGI_FORMAT_R32G32_FLOAT",
+				"InputSlot": 0,
+				"AlignedByteOffset": "D3D12_APPEND_ALIGNED_ELEMENT",
+				"InputSlotClass": "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA",
+				"InstanceDataStepRate": 0
+			}
+		]
+	},
+
+	//==============================================================
+	// 注意:
+	// - AlignedByteOffset 未指定時は D3D12_APPEND_ALIGNED_ELEMENT になる。
+	// - メモリは _strdup により確保されるためライフタイム管理に注意。
+	// - AutoFromShader=true の場合 Elements は無視される (空でもよい)。
+	// - InstanceDataStepRate は PER_INSTANCE_DATA の入力でインスタンス毎増加。通常 1。
+	//==============================================================
+	"_Info": "このファイルは InputLayout JSON のサンプル。必要に応じてセクション名を使用。"
+}

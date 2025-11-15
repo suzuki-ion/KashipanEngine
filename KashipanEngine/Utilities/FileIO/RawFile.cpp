@@ -180,6 +180,11 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
 
 } // namespace
 
+bool IsFileExist(const std::string &filePath) {
+    std::ifstream file(filePath);
+    return file.good();
+}
+
 RawFileData LoadFile(const std::string &filePath, size_t detectBytes) {
     RawFileData fileData{};
     fileData.filePath = filePath;

@@ -1,0 +1,158 @@
+﻿{
+	// プリセット名
+	"Name": "Example SamplerState",
+
+	//==============================================================
+	// SamplerState 設定サンプル
+	// ParseSamplerState(Json) は "Sampler": { "Samplers": [ ... ] } ではなく
+	// RootSignature 内では "Sampler": { "Samplers": [...] } を渡す構造。
+	// ここでは単独プリセットとして "SamplerState" ルートを用意。
+	// 各 Samplers 要素フィールド:
+	//  Filter            : D3D12_FILTER_* (EnumMaps.kFilterMap)
+	//  AddressU/V/W      : D3D12_TEXTURE_ADDRESS_MODE_*
+	//  MipLODBias        : 数値 or DefineMaps の文字列
+	//  MaxAnisotropy     : 数値 or DefineMaps の文字列 (ANISOTROPIC時に意味)
+	//  ComparisonFunc    : D3D12_COMPARISON_FUNC_* (シャドウ/比較サンプラ用)
+	//  BorderColor       : D3D12_STATIC_BORDER_COLOR_* (Address=Border時のみ)
+	//  MinLOD / MaxLOD   : 数値 or DefineMaps の文字列
+	//  ShaderRegister    : s# の番号
+	//  RegisterSpace     : 通常 0
+	//  ShaderVisibility  : D3D12_SHADER_VISIBILITY_*
+	//==============================================================
+	"SamplerState": {
+		"Samplers": [
+			{
+				// 0: もっとも一般的な線形 Wrap サンプラ
+				"Filter": "D3D12_FILTER_MIN_MAG_MIP_LINEAR",
+				"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"MipLODBias": 0.0,
+				"MaxAnisotropy": 1,
+				"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+				"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+				"MinLOD": 0.0,
+				"MaxLOD": "D3D12_FLOAT32_MAX",
+				"ShaderRegister": 0,
+				"RegisterSpace": 0,
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+			},
+			{
+				// 1: 異方性フィルタ (最大 16) 高品質テクスチャ
+				"Filter": "D3D12_FILTER_ANISOTROPIC",
+				"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"MipLODBias": 0.0,
+				"MaxAnisotropy": 16,
+				"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+				"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+				"MinLOD": 0.0,
+				"MaxLOD": "D3D12_FLOAT32_MAX",
+				"ShaderRegister": 1,
+				"RegisterSpace": 0,
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+			},
+			{
+				// 2: 最近傍 Clamp (UI, LUT, 1px境界ブラー防止)
+				"Filter": "D3D12_FILTER_MIN_MAG_MIP_POINT",
+				"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"MipLODBias": 0.0,
+				"MaxAnisotropy": 1,
+				"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+				"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+				"MinLOD": 0.0,
+				"MaxLOD": 0.0, // Mip無しテクスチャ想定
+				"ShaderRegister": 2,
+				"RegisterSpace": 0,
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL"
+			},
+			{
+				// 3: シャドウマップ用比較サンプラ (PCF用)
+				"Filter": "D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT",
+				"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"MipLODBias": 0.0,
+				"MaxAnisotropy": 1,
+				"ComparisonFunc": "D3D12_COMPARISON_FUNC_LESS_EQUAL",
+				"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE",
+				"MinLOD": 0.0,
+				"MaxLOD": "D3D12_FLOAT32_MAX",
+				"ShaderRegister": 3,
+				"RegisterSpace": 0,
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+			},
+			{
+				// 4: ボーダー色採用 (外側常に黒) Address=Border
+				"Filter": "D3D12_FILTER_MIN_MAG_MIP_LINEAR",
+				"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_BORDER",
+				"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_BORDER",
+				"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_BORDER",
+				"MipLODBias": 0.0,
+				"MaxAnisotropy": 1,
+				"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+				"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+				"MinLOD": 0.0,
+				"MaxLOD": "D3D12_FLOAT32_MAX",
+				"ShaderRegister": 4,
+				"RegisterSpace": 0,
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+			},
+			{
+				// 5: ミップ利用制限 (0～4 のみ使用)
+				"Filter": "D3D12_FILTER_MIN_MAG_MIP_LINEAR",
+				"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+				"MipLODBias": 0.0,
+				"MaxAnisotropy": 1,
+				"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+				"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+				"MinLOD": 0.0,
+				"MaxLOD": 4.0,
+				"ShaderRegister": 5,
+				"RegisterSpace": 0,
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+			}
+		]
+	},
+
+	//==============================================================
+	// RootSignature 内での利用例 (参考。パーサは "Sampler": { "Samplers": [...] } を読む)
+	//==============================================================
+	"RootSignature_Example": {
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT",
+		"Sampler": {
+			"Samplers": [
+				{
+					"Filter": "D3D12_FILTER_MIN_MAG_MIP_LINEAR",
+					"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+					"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+					"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+					"MipLODBias": 0.0,
+					"MaxAnisotropy": 1,
+					"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+					"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+					"MinLOD": 0.0,
+					"MaxLOD": "D3D12_FLOAT32_MAX",
+					"ShaderRegister": 0,
+					"RegisterSpace": 0,
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+				}
+			]
+		}
+	},
+
+	//==============================================================
+	// 注意:
+	// - ComparisonFunc は比較フィルタ使用時のみ意味を持つ (Filter に COMPARISON_* が含まれる)。
+	// - BorderColor は Address=Border のときだけ適用。それ以外は無視される。
+	// - MaxAnisotropy は異方性フィルタ指定時以外は 1 を推奨。
+	// - MinLOD/MaxLOD はミップ範囲制限。0, FLOAT32_MAX がほぼフルレンジ。
+	// - 静的サンプラは PSO 固定。動的差し替えが必要なら通常の DescriptorHeap を使用。
+	//==============================================================
+	"_Info": "SamplerState 単体および RootSignature 統合例。"
+}

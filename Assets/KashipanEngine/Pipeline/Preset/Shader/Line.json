@@ -1,0 +1,21 @@
+﻿{
+	"BaseName": "Line",
+	"Vertex": {
+		"Name": "VS",
+		"Path": "Line/Vertex.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Name": "PS",
+		"Path": "Line/Pixel.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	},
+	"Geometry": {
+		"Name": "GS",
+		"Path": "Line/Geometry.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "gs_6_0"
+	}
+}

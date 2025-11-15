@@ -19,12 +19,14 @@ struct EngineSettings {
         size_t maxModels = 1024;
         size_t maxGameObjects = 1024;
         size_t maxComponentsPerGameObject = 32;
+        size_t maxWindows = 32;
     };
     //--------- レンダリングのデフォルト設定 ---------//
     struct Rendering {
         float defaultClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
         bool defaultEnableVSync = true;
         int32_t defaultMaxFPS = 60;
+        std::string pipelineSettingsPath = "";
     };
     //--------- エンジンの翻訳ファイル設定 ---------//
     struct Translations {

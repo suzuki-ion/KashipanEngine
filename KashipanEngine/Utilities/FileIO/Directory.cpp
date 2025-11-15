@@ -45,24 +45,33 @@ DirectoryData BuildDirectoryData(const std::filesystem::path &directoryPath, boo
 
 } // namespace
 
+bool IsDirectoryExist(const std::string &directoryPath) {
+    std::filesystem::path dirPath(directoryPath);
+    return std::filesystem::exists(dirPath) && std::filesystem::is_directory(dirPath);
+}
+
 DirectoryData GetDirectoryData(const std::string &directoryPath, bool isRecursive, bool isFullPath) {
     std::filesystem::path dirPath(directoryPath);
     return BuildDirectoryData(dirPath, isRecursive, isFullPath);
 }
 
-DirectoryData GetDirectoryDataByExtension(const DirectoryData &directoryData, const std::string &extension) {
+DirectoryData GetDirectoryDataByExtension(const DirectoryData &directoryData, const std::vector<std::string> &extensions) {
     DirectoryData filteredData;
     filteredData.directoryName = directoryData.directoryName;
     // ファイルをフィルタリング
     for (const auto &file : directoryData.files) {
         std::filesystem::path filePath(file);
-        if (filePath.extension() == extension) {
-            filteredData.files.push_back(file);
+        std::string fileExt = filePath.extension().string();
+        for (const auto &ext : extensions) {
+            if (fileExt == ext) {
+                filteredData.files.push_back(file);
+                break;
+            }
         }
     }
     // サブディレクトリを再帰的にフィルタリング
     for (const auto &subdir : directoryData.subdirectories) {
-        DirectoryData filteredSubdir = GetDirectoryDataByExtension(subdir, extension);
+        DirectoryData filteredSubdir = GetDirectoryDataByExtension(subdir, extensions);
         if (!filteredSubdir.files.empty() || !filteredSubdir.subdirectories.empty()) {
             filteredData.subdirectories.push_back(filteredSubdir);
         }
@@ -70,19 +79,9 @@ DirectoryData GetDirectoryDataByExtension(const DirectoryData &directoryData, co
     return filteredData;
 }
 
-std::vector<std::string> FilterFilesByExtension(const std::vector<std::string> &filePaths, const std::vector<std::string> &extensions) {
-    std::vector<std::string> filteredFiles;
-    for (const auto &filePath : filePaths) {
-        std::filesystem::path pathObj(filePath);
-        std::string fileExt = pathObj.extension().string();
-        for (const auto &ext : extensions) {
-            if (fileExt == ext) {
-                filteredFiles.push_back(filePath);
-                break;
-            }
-        }
-    }
-    return filteredFiles;
+DirectoryData GetDirectoryDataByExtension(const std::string &directoryPath, const std::vector<std::string> &extensions, bool isRecursive, bool isFullPath) {
+    DirectoryData dirData = GetDirectoryData(directoryPath, isRecursive, isFullPath);
+    return GetDirectoryDataByExtension(dirData, extensions);
 }
 
 } // namespace KashipanEngine

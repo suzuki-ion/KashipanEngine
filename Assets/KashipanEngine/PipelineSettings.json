@@ -1,0 +1,18 @@
+﻿{
+	"PipelineFolder": "Assets/KashipanEngine/Pipeline/Pipelines",
+	"PresetFolders": {
+		"BlendState": "Assets/KashipanEngine/Pipeline/Preset/BlendState",
+		"ComputePipelineState": "Assets/KashipanEngine/Pipeline/Preset/ComputePipelineState",
+		"DepthStencilState": "Assets/KashipanEngine/Pipeline/Preset/DepthStencilState",
+		"DescriptorRange": "Assets/KashipanEngine/Pipeline/Preset/DescriptorRange",
+		"GraphicsPipelineState": "Assets/KashipanEngine/Pipeline/Preset/GraphicsPipelineState",
+		"InputLayout": "Assets/KashipanEngine/Pipeline/Preset/InputLayout",
+		"RasterizerState": "Assets/KashipanEngine/Pipeline/Preset/RasterizerState",
+		"RootConstants": "Assets/KashipanEngine/Pipeline/Preset/RootConstants",
+		"RootDescriptor": "Assets/KashipanEngine/Pipeline/Preset/RootDescriptor",
+		"RootParameter": "Assets/KashipanEngine/Pipeline/Preset/RootParameter",
+		"RootSignature": "Assets/KashipanEngine/Pipeline/Preset/RootSignature",
+		"Sampler": "Assets/KashipanEngine/Pipeline/Preset/Sampler",
+		"Shader": "Assets/KashipanEngine/Pipeline/Preset/Shader"
+	}
+}

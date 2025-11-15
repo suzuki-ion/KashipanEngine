@@ -14,10 +14,11 @@ bool RenderTargetResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
 }
 
 void RenderTargetResource::ClearRenderTargetView() const {
-    if (!sCommandList_ || !GetDescriptorHandleInfo()) {
+    auto *cl = GetCommandList();
+    if (!cl || !GetDescriptorHandleInfo()) {
         return;
     }
-    sCommandList_->ClearRenderTargetView(
+    cl->ClearRenderTargetView(
         GetDescriptorHandleInfo()->cpuHandle,
         clearColor_,
         0,

@@ -4,7 +4,7 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents/SysCommandCloseEventSimple.h"
+#include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
 
 namespace KashipanEngine {
 namespace {
@@ -27,6 +27,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
+    graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
     //--------- ウィンドウ作成 ---------//
     
@@ -42,12 +43,13 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Window::SetDirectXCommon({}, directXCommon_.get());
     
     mainWindow_ = Window::CreateNormal("Main Window");
-    
-    Window::CreateNormal("Sub Window")
-        ->RegisterWindowEvent(std::make_unique<WindowEventDefault::SysCommandCloseEventSimple>());
     auto monitorInfo = windowsAPI_->QueryMonitorInfo();
     Window::CreateCompositionOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true)
-        ->RegisterWindowEvent(std::make_unique<WindowEventDefault::SysCommandCloseEventSimple>());
+        ->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
+    for (int i = 0; i < 10; ++i) {
+        Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128)
+            ->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
+    }
 
     LogSeparator();
     Log(Translation("engine.initialize.end"));

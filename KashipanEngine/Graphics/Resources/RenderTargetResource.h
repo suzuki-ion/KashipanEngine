@@ -9,14 +9,9 @@ namespace KashipanEngine {
 class DX12SwapChain;
 
 class RenderTargetResource final : public IGraphicsResource {
-    static inline ID3D12GraphicsCommandList *sCommandList_ = nullptr;
     static inline FLOAT sDefaultClearColor_[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 public:
-    /// @brief コマンドリスト設定
-    static void SetCommandList(Passkey<DirectXCommon>, ID3D12GraphicsCommandList *commandList) {
-        sCommandList_ = commandList;
-    }
     /// @brief デフォルトのクリアカラー設定
     /// @param clearColor クリアカラー配列（RGBA）
     static void SetDefaultClearColor(Passkey<DirectXCommon>, const FLOAT clearColor[4]) {

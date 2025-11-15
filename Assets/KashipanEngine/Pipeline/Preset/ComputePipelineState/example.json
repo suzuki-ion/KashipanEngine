@@ -1,0 +1,80 @@
+﻿{
+	// プリセット名
+	"Name": "Example ComputePipelineState",
+
+	//==============================================================
+	// Compute パイプライン設定サンプル
+	// PipelineCreator::CreateCompute で使用される JSON 構造
+	// 必須: "Name", "RootSignature", "Shader", "PipelineState"
+	//==============================================================
+
+	// ルートシグネチャ定義（例）
+	"RootSignature": {
+		// ルートパラメータ一覧
+		"Parameters": [
+			{
+				// 定数バッファビュー (b0)
+				"Type": "CBV",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+				"Descriptor": {
+					"ShaderRegister": 0,
+					"RegisterSpace": 0
+				}
+			},
+			{
+				// UAV (u0)
+				"Type": "UAV",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+				"Descriptor": {
+					"ShaderRegister": 0,
+					"RegisterSpace": 0
+				}
+			}
+		],
+		// 静的サンプラー例（不要なら削除可）
+		"StaticSamplers": [
+			{
+				"Filter": "D3D12_FILTER_MIN_MAG_MIP_LINEAR",
+				"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+				"ShaderRegister": 0,
+				"RegisterSpace": 0
+			}
+		],
+		// ルートシグネチャフラグ
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_NONE"
+	},
+
+	// コンピュートシェーダ指定
+	"Shader": {
+		// 個別指定形式。プリセット使用時は "UsePreset": "<PresetName>"
+		"File": "Shaders/Compute/ExampleCS.hlsl",
+		"EntryPoint": "main",
+		"Target": "cs_6_6" // コンパイルターゲット
+	},
+
+	//==============================================================
+	// ComputePipelineState セクション
+	// ParseComputePipelineState が読むのは NodeMask / Flags のみ
+	//==============================================================
+	"PipelineState": {
+		// ノードマスク (マルチアダプタ用。単一アダプタなら 0 か 1)
+		"NodeMask": 0,
+
+		// PSO フラグ
+		// 利用可能: D3D12_PIPELINE_STATE_FLAG_NONE / D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG /
+		//            D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS / D3D12_PIPELINE_STATE_FLAG_DYNAMIC_INDEX_BUFFER_STRIP_CUT
+		"Flags": "D3D12_PIPELINE_STATE_FLAG_NONE"
+	},
+
+	//==============================================================
+	// 参考: プリセット利用例 (上記と排他で使う想定)
+	//==============================================================
+	"PipelineState_PresetExample": {
+		// 既存プリセットを使う場合は UsePreset を指定しその他キーは不要
+		// "UsePreset": "MyComputePipelinePreset"
+		// （このオブジェクトは読み込まれません。説明用）
+	}
+}

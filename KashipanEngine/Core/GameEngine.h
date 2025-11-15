@@ -2,6 +2,7 @@
 #include <memory>
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
+#include "Graphics/GraphicsEngine.h"
 
 namespace KashipanEngine {
 
@@ -41,6 +42,8 @@ private:
     std::unique_ptr<WindowsAPI> windowsAPI_;
     /// @brief DirectX共通クラス
     std::unique_ptr<DirectXCommon> directXCommon_;
+    /// @brief グラフィックスエンジンクラス
+    std::unique_ptr<GraphicsEngine> graphicsEngine_;
 
     /// @brief メインウィンドウ
     Window *mainWindow_ = nullptr;

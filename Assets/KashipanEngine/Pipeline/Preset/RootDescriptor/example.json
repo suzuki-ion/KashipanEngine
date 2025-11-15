@@ -1,0 +1,72 @@
+﻿{
+	// プリセット名
+	"Name": "Example RootDescriptor",
+
+	//==============================================================
+	// RootDescriptor サンプル
+	// ParseRootDescriptor(Json) が読むキー:
+	//   ShaderRegister : SRV/UAV/CBV のレジスタ番号 (t0/u0/b0 などの数字部分)
+	//   RegisterSpace  : 通常 0。名前衝突回避用に空間分離したい場合のみ増加
+	//==============================================================
+	"RootDescriptor": {
+		// 例: SRV t0 を直接ルートに置く (DescriptorTable を使わない)
+		"ShaderRegister": 0,
+		"RegisterSpace": 0
+	},
+
+	//==============================================================
+	// RootSignature 統合例:
+	// ParameterType に CBV/SRV/UAV のいずれかを指定し、
+	// Descriptor フィールドに RootDescriptor を記述
+	//==============================================================
+	"RootSignature_Example": {
+		"RootParameter": {
+			"Parameters": [
+				{
+					// CBV (b0) を直接ルートに配置
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					// SRV (t0) をピクセルシェーダ専用で直接ルートに配置
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_SRV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					// UAV (u0) を全シェーダ可視で配置
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				}
+			]
+		}
+	},
+
+	//==============================================================
+	// 別レジスタ空間使用例 (特殊ケース: 同番号別用途)
+	//==============================================================
+	"RootDescriptor_Spaced": {
+		"ShaderRegister": 0,
+		"RegisterSpace": 2
+	},
+
+	//==============================================================
+	// 注意:
+	// - RootDescriptor は単一ビューを直接ルートに置くため低オーバーヘッドだが、
+	//   頻繁更新や多数配置でルートサイズが肥大化しやすい。
+	// - 多数のリソースを束ねる場合は DescriptorTable を使用する。
+	// - RegisterSpace を増やす例はまれ。異なるシェーダセット間で衝突回避が必要な時のみ。
+	//==============================================================
+	"_Info": "RootDescriptor 単体および RootSignature 内統合例。"
+}

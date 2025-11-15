@@ -13,6 +13,11 @@
 #include <sstream>
 #include <iomanip>
 #include <cctype>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <deque>
+#include <atomic>
 
 namespace KashipanEngine {
 namespace {
@@ -28,7 +33,8 @@ const std::string kBuildTypeString =
 #else
 "[Unknown]";
 #endif
-int sTabCount = -1;
+// スレッドごとのインデントとスコープフレーム
+thread_local int sTabCount = -1;
 
 // スコープフレーム
 struct ScopeFrame {
@@ -38,7 +44,7 @@ struct ScopeFrame {
     bool enteredFlushed = false;
     bool hadOutput = false;
 };
-std::vector<ScopeFrame> sScopeFrames;
+thread_local std::vector<ScopeFrame> sScopeFrames;
 
 // ラベル
 const std::unordered_map<LogSeverity, std::string> kLogSeverityLabel = {
@@ -51,6 +57,40 @@ const std::unordered_map<LogSeverity, std::string> kLogSeverityLabel = {
 
 // 先に宣言（後のヘッダで参照するため)
 const ScopeFrame* GetTopScopeFrame();
+
+//---------------- 非同期ロギング基盤 ----------------//
+std::mutex sLogMutex;
+std::condition_variable sLogCv;
+std::deque<std::string> sLogQueue;
+std::thread sLogThread;
+std::atomic<bool> sStopRequested{false};
+std::atomic<bool> sThreadRunning{false};
+
+// 直接シンクへ書き込む（ワーカースレッドのみが使用）
+void WriteToSinks(const std::string &formattedLine) {
+    const auto &cfg = GetLogSettings();
+    if (cfg.enableConsoleLogging) {
+        OutputDebugStringA(formattedLine.c_str());
+    }
+    if (cfg.enableFileLogging && sLogFile.is_open()) {
+        sLogFile << formattedLine;
+    }
+}
+
+void LoggerWorker() {
+    std::unique_lock<std::mutex> lock(sLogMutex);
+    while (true) {
+        sLogCv.wait(lock, [] { return !sLogQueue.empty() || sStopRequested.load(); });
+        if (sStopRequested.load() && sLogQueue.empty()) {
+            break;
+        }
+        auto line = std::move(sLogQueue.front());
+        sLogQueue.pop_front();
+        lock.unlock();
+        WriteToSinks(line);
+        lock.lock();
+    }
+}
 
 //--------- 関数別ヘッダの取り込み（Logger/*）---------//
 #include "Logger/Trim.h"
@@ -94,6 +134,12 @@ void InitializeLogger(PasskeyForGameEngineMain) {
             WriteLog(BuildLogLine(nullptr, LogSeverity::Info, std::string("Log File: ") + logFilePath));
         }
     }
+
+    // ログスレッド起動
+    sStopRequested.store(false);
+    sThreadRunning.store(true);
+    sLogThread = std::thread(LoggerWorker);
+
     if (ShouldLog(LogSeverity::Info)) {
         WriteLog(BuildLogLine(nullptr, LogSeverity::Info, "----- Log Start -----"));
     }
@@ -106,6 +152,18 @@ void ShutdownLogger(PasskeyForGameEngineMain) {
     if (ShouldLog(LogSeverity::Info)) {
         WriteLog(BuildLogLine(nullptr, LogSeverity::Info, "----- Log End -----"));
     }
+
+    // スレッド終了要求し、キューを空にしてから終了
+    {
+        std::lock_guard<std::mutex> lock(sLogMutex);
+        sStopRequested.store(true);
+    }
+    sLogCv.notify_all();
+    if (sLogThread.joinable()) {
+        sLogThread.join();
+    }
+    sThreadRunning.store(false);
+
     if (sLogFile.is_open()) {
         sLogFile.close();
     }
@@ -114,6 +172,20 @@ void ShutdownLogger(PasskeyForGameEngineMain) {
 
 void ForceShutdownLogger(PasskeyForCrashHandler) {
     if (!sLoggerInitialized) return;
+
+    // 可能ならワーカースレッドを止める
+    {
+        std::lock_guard<std::mutex> lock(sLogMutex);
+        sStopRequested.store(true);
+        sLogQueue.clear(); // 即時終了を優先
+    }
+    sLogCv.notify_all();
+    if (sLogThread.joinable()) {
+        // ここでの join は最善努力
+        sLogThread.join();
+    }
+    sThreadRunning.store(false);
+
     if (sLogFile.is_open()) {
         sLogFile.close();
     }

@@ -1,0 +1,30 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "Object3d.Solid.BlendScreen",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"Vertex": {
+			"UsePreset": "Object3d.VS"
+		},
+		"Pixel": {
+			"UsePreset": "Object3d.PS"
+		}
+	},
+	"RootSignature": {
+		"UsePreset": "Object3d"
+	},
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "Screen"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthEnable"
+	},
+	"PipelineState": {
+		"UsePreset": "Default"
+	}
+}

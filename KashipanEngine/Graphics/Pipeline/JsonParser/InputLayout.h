@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -15,6 +16,10 @@ struct InputLayoutParsedInfo {
 };
 
 inline InputLayoutParsedInfo ParseInputLayout(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.inputlayout.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
@@ -26,7 +31,10 @@ inline InputLayoutParsedInfo ParseInputLayout(const Json &json) {
         info.isAutoFromShader = json["AutoFromVS"].get<bool>();
     }
 
-    if (!json.contains("Elements")) return info;
+    if (!json.contains("Elements")) {
+        Log(Translation("engine.graphics.pipeline.jsonparser.inputlayout.parse.end") + presetName, LogSeverity::Debug);
+        return info;
+    }
 
     info.hasElements = true;
     for (const auto &element : json["Elements"]) {
@@ -61,6 +69,7 @@ inline InputLayoutParsedInfo ParseInputLayout(const Json &json) {
         info.elements.push_back(inputElement);
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.inputlayout.parse.end") + presetName, LogSeverity::Debug);
     return info;
 }
 

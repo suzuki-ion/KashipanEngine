@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -15,6 +16,10 @@ struct GraphicsPipelineStateParsedInfo {
 };
 
 inline GraphicsPipelineStateParsedInfo ParseGraphicsPipelineState(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.gps.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
@@ -76,6 +81,7 @@ inline GraphicsPipelineStateParsedInfo ParseGraphicsPipelineState(const Json &js
         desc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.gps.parse.end") + presetName, LogSeverity::Debug);
     return info;
 }
 

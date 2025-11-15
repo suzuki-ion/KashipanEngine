@@ -9,11 +9,18 @@ namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
 inline std::vector<D3D12_STATIC_SAMPLER_DESC> ParseSamplerState(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.sampler.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
     std::vector<D3D12_STATIC_SAMPLER_DESC> samplers;
-    if (!json.contains("Samplers")) return samplers;
+    if (!json.contains("Samplers")) {
+        Log(Translation("engine.graphics.pipeline.jsonparser.sampler.parse.end") + presetName, LogSeverity::Debug);
+        return samplers;
+    }
 
     for (const auto &sampler : json["Samplers"]) {
         D3D12_STATIC_SAMPLER_DESC samplerDesc{};
@@ -75,6 +82,7 @@ inline std::vector<D3D12_STATIC_SAMPLER_DESC> ParseSamplerState(const Json &json
         samplers.push_back(samplerDesc);
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.sampler.parse.end") + presetName, LogSeverity::Debug);
     return samplers;
 }
 

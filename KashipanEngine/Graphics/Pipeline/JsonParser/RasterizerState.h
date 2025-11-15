@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -8,6 +9,10 @@ namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
 inline D3D12_RASTERIZER_DESC ParseRasterizerState(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.rasterizerstate.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
     D3D12_RASTERIZER_DESC desc{};
 
@@ -42,6 +47,7 @@ inline D3D12_RASTERIZER_DESC ParseRasterizerState(const Json &json) {
         desc.ForcedSampleCount = json["ForcedSampleCount"].get<UINT>();
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.rasterizerstate.parse.end") + presetName, LogSeverity::Debug);
     return desc;
 }
 

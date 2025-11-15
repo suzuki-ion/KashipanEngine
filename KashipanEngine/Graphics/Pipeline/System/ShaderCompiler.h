@@ -19,13 +19,17 @@ class ShaderCompiler final {
         UINT BindPoint() const { return bindPoint; }
         UINT BindCount() const { return bindCount; }
         UINT NumSamples() const { return numSamples; }
+        UINT Space() const { return space; }
+        UINT Flags() const { return flags; }
     private:
         friend class ShaderCompiler;
-        std::string name;           ///< リソース名
-        D3D_SHADER_INPUT_TYPE type; ///< リソースタイプ
-        UINT bindPoint = 0;         ///< バインドポイント
-        UINT bindCount = 0;         ///< バインド数
-        UINT numSamples = 0;        ///< サンプル数
+        std::string name;
+        D3D_SHADER_INPUT_TYPE type = D3D_SIT_CBUFFER;
+        UINT bindPoint = 0;
+        UINT bindCount = 0;
+        UINT numSamples = 0;
+        UINT space = 0; // register space
+        UINT flags = 0; // D3D12_SHADER_INPUT_BIND_DESC::uFlags
     };
 
     /// @brief リフレクションのインプットパラメーター情報構造体

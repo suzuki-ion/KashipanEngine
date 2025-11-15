@@ -13,6 +13,7 @@ inline void LoadLimitsSettings(const JSON &rootJSON, EngineSettings &settings) {
     settings.limits.maxModels = limitsJSON.value("maxModels", settings.limits.maxModels);
     settings.limits.maxGameObjects = limitsJSON.value("maxGameObjects", settings.limits.maxGameObjects);
     settings.limits.maxComponentsPerGameObject = limitsJSON.value("maxComponentsPerGameObject", settings.limits.maxComponentsPerGameObject);
+    settings.limits.maxWindows = limitsJSON.value("maxWindows", settings.limits.maxWindows);
 }
 
 } // namespace KashipanEngine

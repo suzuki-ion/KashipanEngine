@@ -17,13 +17,12 @@ inline void LoadRenderingSettings(const JSON &rootJSON, EngineSettings &settings
             settings.rendering.defaultClearColor[3]
         })
     );
-
     for (int i = 0; i < 4 && i < static_cast<int>(clearColorJSON.size()); ++i) {
         settings.rendering.defaultClearColor[i] = clearColorJSON[i];
     }
-
     settings.rendering.defaultEnableVSync = renderingJSON.value("defaultEnableVSync", settings.rendering.defaultEnableVSync);
     settings.rendering.defaultMaxFPS = renderingJSON.value("defaultMaxFPS", settings.rendering.defaultMaxFPS);
+    settings.rendering.pipelineSettingsPath = renderingJSON.value("pipelineSettingsPath", settings.rendering.pipelineSettingsPath);
 }
 
 } // namespace KashipanEngine

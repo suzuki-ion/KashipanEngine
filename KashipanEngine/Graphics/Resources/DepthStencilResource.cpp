@@ -14,10 +14,11 @@ bool DepthStencilResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
 }
 
 void DepthStencilResource::ClearDepthStencilView() const {
-    if (!sCommandList_ || !GetDescriptorHandleInfo()) {
+    auto *cl = GetCommandList();
+    if (!cl || !GetDescriptorHandleInfo()) {
         return;
     }
-    sCommandList_->ClearDepthStencilView(
+    cl->ClearDepthStencilView(
         GetDescriptorHandleInfo()->cpuHandle,
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
         clearDepth_,

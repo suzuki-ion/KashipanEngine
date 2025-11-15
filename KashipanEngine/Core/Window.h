@@ -5,11 +5,14 @@
 #include <unordered_map>
 #include <memory>
 #include <optional>
+#include <variant>
+#include <type_traits>
 
 #include "Core/WindowsAPI/WindowDescriptor.h"
 #include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
 #include "Core/WindowsAPI/WindowEvents/IWindowEvent.h"
+#include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
 
 namespace KashipanEngine {
 
@@ -42,6 +45,38 @@ class Window final {
     friend class IWindowEvent;
     static inline WindowsAPI *sWindowsAPI = nullptr;
     static inline DirectXCommon *sDirectXCommon = nullptr;
+    
+    // 値保持する既定イベント + 拡張イベント(unique_ptr) をまとめた variant
+    using Events = std::variant<
+        WindowDefaultEvent::ActivateEvent,
+        WindowDefaultEvent::ClickThroughEvent,
+        WindowDefaultEvent::CloseEvent,
+        WindowDefaultEvent::DestroyEvent,
+        WindowDefaultEvent::EnterSizeMoveEvent,
+        WindowDefaultEvent::ExitSizeMoveEvent,
+        WindowDefaultEvent::GetMinMaxInfoEvent,
+        WindowDefaultEvent::SizeEvent,
+        WindowDefaultEvent::SizingEvent,
+        WindowDefaultEvent::SysCommandCloseEvent,
+        WindowDefaultEvent::SysCommandCloseEventSimple,
+        std::unique_ptr<IWindowEvent>
+    >;
+
+    // Variant に型が含まれるかの簡易メタ関数
+    template<class Q, class V>
+    struct VariantContains : std::false_type {};
+    template<class Q, class... Ts>
+    struct VariantContains<Q, std::variant<Ts...>> : std::bool_constant<(std::is_same_v<std::remove_cv_t<std::remove_reference_t<Q>>, Ts> || ...)> {};
+
+    template<class T>
+    static constexpr bool IsDefaultEventV =
+        VariantContains<std::remove_cv_t<std::remove_reference_t<T>>, Events>::value &&
+        std::is_base_of_v<IWindowEvent, std::remove_cv_t<std::remove_reference_t<T>>> &&
+        !std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::unique_ptr<IWindowEvent>>;
+
+    template<class T>
+    static constexpr bool IsUserEventV =
+        std::is_base_of_v<IWindowEvent, std::remove_cv_t<std::remove_reference_t<T>>> && !IsDefaultEventV<T>;
 
 public:
     static void SetWindowsAPI(Passkey<GameEngine>, WindowsAPI *windowsAPI) { sWindowsAPI = windowsAPI; }
@@ -139,10 +174,58 @@ public:
     /// @param x ウィンドウ左上のX座標
     /// @param y ウィンドウ左上のY座標
     void SetWindowPosition(int32_t x, int32_t y);
+    
+    /// @brief ウィンドウイベントを登録する（既定イベント型は値で、拡張イベントはunique_ptrで保持）
+    /// @tparam TEvent 登録するイベントの型
+    /// @tparam ...Args コンストラクタ引数の型
+    /// @param ...args コンストラクタ引数
+    template<class TEvent, class... Args>
+    requires (IsDefaultEventV<TEvent>)
+    void RegisterWindowEvent(Args&&... args) {
+        // 一度だけ仮生成してメッセージ値を取得
+        TEvent temp(std::forward<Args>(args)...);
+        const UINT msg = temp.kTargetMessage_;
+        // variant を in-place 構築（コピー/ムーブ不要）
+        auto &slot = eventHandlers_[msg];
+        slot.template emplace<TEvent>(std::move(temp));
+        // Window を紐付け
+        std::get<TEvent>(slot).SetWindow(this);
+    }
 
-    /// @brief ウィンドウイベントを登録する
-    /// @param eventHandler イベントハンドラ
-    void RegisterWindowEvent(const std::unique_ptr<IWindowEvent> &eventHandler);
+    /// @brief ウィンドウ既定イベントを登録する（unique_ptr版、値にムーブして保持）
+    template<class TEvent>
+    requires (IsDefaultEventV<TEvent>)
+    void RegisterWindowEvent(std::unique_ptr<TEvent> handler) {
+        if (!handler) return;
+        const UINT msg = handler->kTargetMessage_;
+        auto &slot = eventHandlers_[msg];
+        slot.template emplace<TEvent>(std::move(*handler));
+        std::get<TEvent>(slot).SetWindow(this);
+    }
+
+    /// @brief ウィンドウ拡張イベントを登録する（unique_ptr保持）
+    template<class TEvent> requires (IsUserEventV<TEvent>)
+    void RegisterWindowEvent(std::unique_ptr<TEvent> handler) {
+        if (!handler) return;
+        handler->SetWindow(this);
+        const UINT msg = handler->kTargetMessage_;
+        // 基底型のunique_ptrに変換して格納（releaseで安全に移管）
+        std::unique_ptr<IWindowEvent> basePtr(handler.release());
+        auto &slot = eventHandlers_[msg];
+        slot.template emplace<std::unique_ptr<IWindowEvent>>(std::move(basePtr));
+    }
+
+    /// @brief ウィンドウ拡張イベントを登録する（値指定でも内部でunique_ptr化）
+    template<class TEvent, class... Args> requires (IsUserEventV<TEvent>)
+    void RegisterWindowEvent(Args&&... args) {
+        auto ptr = std::make_unique<TEvent>(std::forward<Args>(args)...);
+        ptr->SetWindow(this);
+        const UINT msg = ptr->kTargetMessage_;
+        std::unique_ptr<IWindowEvent> basePtr(ptr.release());
+        auto &slot = eventHandlers_[msg];
+        slot.template emplace<std::unique_ptr<IWindowEvent>>(std::move(basePtr));
+    }
+
     /// @brief ウィンドウイベントの登録解除
     /// @param msg メッセージ
     void UnregisterWindowEvent(UINT msg);
@@ -247,8 +330,8 @@ private:
     // 内部で保持するワイド文字列（WinAPIのクラス名/タイトル用）
     std::wstring titleW_ = L"";
 
-    // イベントハンドラマップ
-    std::unordered_map<UINT, std::unique_ptr<IWindowEvent>> eventHandlers_;
+    // イベントハンドラマップ（既定イベント or ユーザーイベント）
+    std::unordered_map<UINT, Events> eventHandlers_;
 };
 
-} // namespace KashipanEngine} // namespace KashipanEngine
+} // namespace KashipanEngine

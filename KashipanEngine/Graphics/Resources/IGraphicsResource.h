@@ -20,7 +20,6 @@ enum class ResourceViewType {
 /// @brief グラフィックのリソースインターフェース
 class IGraphicsResource {
     static inline ID3D12Device *device_ = nullptr;
-    static inline ID3D12GraphicsCommandList *commandList_ = nullptr;
 
     IGraphicsResource(const IGraphicsResource &) = delete;
     IGraphicsResource &operator=(const IGraphicsResource &) = delete;
@@ -29,9 +28,12 @@ class IGraphicsResource {
 
 public:
     static void SetDevice(Passkey<DirectXCommon>, ID3D12Device *device) { device_ = device; }
-    static void SetCommandList(Passkey<DirectXCommon>, ID3D12GraphicsCommandList *commandList) { commandList_ = commandList; }
     static void ClearAllResources(Passkey<DirectXCommon>);
     virtual ~IGraphicsResource();
+
+    // コマンドリスト設定（インスタンス単位）
+    void SetCommandList(ID3D12GraphicsCommandList *commandList) { commandList_ = commandList; }
+    ID3D12GraphicsCommandList *GetCommandList() const { return commandList_; }
 
     /// @brief バリアの状態を追加
     void AddTransitionState(D3D12_RESOURCE_STATES state) { transitionStates_.push_back(state); }
@@ -72,8 +74,6 @@ protected:
 
     /// @brief デバイス取得（派生クラス用）
     ID3D12Device *GetDevice() const { return device_; }
-    /// @brief コマンドリスト取得（派生クラス用）
-    ID3D12GraphicsCommandList *GetCommandList() const { return commandList_; }
     /// @brief デスクリプタハンドル情報設定（派生クラス用）
     void SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info) { descriptorHandleInfo_ = std::move(info); }
     /// @brief デスクリプタハンドル情報取得（派生クラス用）
@@ -87,7 +87,7 @@ private:
     uint32_t resourceID_ = 0;
     ID3D12Resource *resource_ = nullptr;
     std::unique_ptr<DescriptorHandleInfo> descriptorHandleInfo_ = nullptr;
-
+    ID3D12GraphicsCommandList *commandList_ = nullptr; // インスタンスごとのコマンドリスト
     uint32_t currentStateIndex_ = 0;
     std::vector<D3D12_RESOURCE_STATES> transitionStates_;
 };

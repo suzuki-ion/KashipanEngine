@@ -49,6 +49,9 @@ struct RawFileData final {
     FileType fileType;          ///< ファイルタイプ（バッファからの推測）
 };
 
+/// @brief ファイルが存在するかどうか確認
+bool IsFileExist(const std::string &filePath);
+
 /// @brief ファイルの読み込み
 /// @param filePath ファイルパス
 /// @param detectBytes 先頭からこのバイト数以内でファイル種別の判定を行う（小さすぎると判定できない場合があります）

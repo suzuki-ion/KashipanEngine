@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <format>
+#include <filesystem>
 #include <d3d12shader.h>
 #include "Utilities/Conversion/ConvertString.h"
 
@@ -149,7 +150,7 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
     std::wstring wTarget = ConvertString(compileInfo.targetProfile);
 
     std::vector<std::wstring> wstrArgs;
-    wstrArgs.reserve(8 + compileInfo.macros.size());
+    wstrArgs.reserve(12 + compileInfo.macros.size());
     wstrArgs.emplace_back(wFilePath);   // ソース名
     wstrArgs.emplace_back(L"-E");
     wstrArgs.emplace_back(wEntry);      // エントリーポイント
@@ -160,6 +161,15 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
     wstrArgs.emplace_back(L"-Qembed_debug");
     wstrArgs.emplace_back(L"-Zpr");
     wstrArgs.emplace_back(L"-Od");
+
+    // 参照元ファイルのディレクトリをインクルードパスに追加（相対 #include 対応）
+    {
+        std::filesystem::path incDir = std::filesystem::path(compileInfo.filePath).parent_path();
+        if (!incDir.empty()) {
+            wstrArgs.emplace_back(L"-I");
+            wstrArgs.emplace_back(incDir.wstring());
+        }
+    }
 
     // マクロ定義
     for (const auto &m : compileInfo.macros) {
@@ -187,11 +197,20 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
         return nullptr;
     }
 
-    // コンパイルエラーの確認
+    // ステータス取得（これで成功/失敗を判定）
+    HRESULT status = S_OK;
+    result->GetStatus(&status);
+
+    // 診断出力（警告は許容、失敗時はエラー）
     Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
     result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
     if (errors && errors->GetStringLength() > 0) {
-        Log(Translation("engine.graphics.shadercompiler.compile.error") + std::string(errors->GetStringPointer()), LogSeverity::Error);
+        std::string msg = std::string(errors->GetStringPointer());
+        Log(Translation("engine.graphics.shadercompiler.compile.error") + msg,
+            FAILED(status) ? LogSeverity::Error : LogSeverity::Warning);
+    }
+
+    if (FAILED(status)) {
         return nullptr;
     }
 
@@ -264,12 +283,19 @@ void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo
     for (UINT i = 0; i < desc.BoundResources; ++i) {
         D3D12_SHADER_INPUT_BIND_DESC bind{};
         if (FAILED(shaderRefl->GetResourceBindingDesc(i, &bind))) continue;
+
         ResourceBindingInfo info{};
         info.name = bind.Name ? bind.Name : "";
         info.type = static_cast<D3D_SHADER_INPUT_TYPE>(bind.Type);
         info.bindPoint = bind.BindPoint;
         info.bindCount = bind.BindCount;
         info.numSamples = bind.NumSamples;
+        info.space = bind.Space;
+        info.flags = bind.uFlags;
+
+        // key を name + space にする場合のコード
+        // std::string key = info.name + "#s" + std::to_string(info.space);
+        // outReflectionInfo.resourceBindings[key] = std::move(info);
         outReflectionInfo.resourceBindings[info.name] = std::move(info);
     }
 

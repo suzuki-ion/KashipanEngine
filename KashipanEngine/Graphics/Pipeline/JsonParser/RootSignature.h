@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -17,6 +18,10 @@ struct RootSignatureParsed {
 };
 
 inline RootSignatureParsed ParseRootSignature(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.rootsignature.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
 
     RootSignatureParsed result{};
@@ -38,6 +43,7 @@ inline RootSignatureParsed ParseRootSignature(const Json &json) {
         desc.pStaticSamplers = result.samplers.empty() ? nullptr : result.samplers.data();
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.rootsignature.parse.end") + presetName, LogSeverity::Debug);
     return result;
 }
 

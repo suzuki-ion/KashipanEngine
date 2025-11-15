@@ -1,0 +1,15 @@
+﻿{
+	"BaseName": "Object3d",
+	"Vertex": {
+		"Name": "VS",
+		"Path": "Object3d/Vertex.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Name": "PS",
+		"Path": "Object3d/Pixel.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

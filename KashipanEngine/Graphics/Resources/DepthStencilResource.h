@@ -6,14 +6,7 @@
 namespace KashipanEngine {
 
 class DepthStencilResource final : public IGraphicsResource {
-    static inline ID3D12GraphicsCommandList *sCommandList_ = nullptr;
-
 public:
-    /// @brief コマンドリスト設定
-    static void SetCommandList(Passkey<DirectXCommon>, ID3D12GraphicsCommandList *commandList) {
-        sCommandList_ = commandList;
-    }
-
     /// @brief コンストラクタ
     /// @param width 横幅
     /// @param height 高さ

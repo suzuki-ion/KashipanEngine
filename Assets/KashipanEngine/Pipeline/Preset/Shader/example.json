@@ -1,0 +1,145 @@
+﻿{
+	// プリセット名
+	"BaseName": "Example Shader",
+
+	//==============================================================
+	// Shader セクション サンプル
+	// ParseShaderGroupInfo(baseName, shadersJson) / ParseShaderEntry が理解するキー:
+	//   <StageName> : { Path, EntryPoint, TargetProfile, Macros[], UsePreset }
+	//     StageName = Vertex | Pixel | Geometry | Hull | Domain | Compute
+	//   UsePreset   : 上記ステージオブジェクト内にある場合、そのステージはプリセット参照
+	//   Macros      : [{ "Name": "...", "Value": "..." 省略可 }]
+	// 追加フラグ (Shader グループ直下):
+	//   AutoTopologyFromShaders : HS/DS がある場合トポロジをパッチに自動設定
+	//   AutoInputLayoutFromVS   : VS の反射から InputLayout を自動生成 (既存機能と協調)
+	//   AutoRTCountFromPS       : PS の出力ターミナル数から NumRenderTargets を自動導出
+	//==============================================================
+	"Shader": {
+		// 自動フラグ例
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+
+		// 頂点シェーダ
+		"Vertex": {
+			// HLSL ファイルパス
+			"Path": "Shaders/Object3D/Object3D_VS.hlsl",
+			// エントリポイント (既定: main)
+			"EntryPoint": "VSMain",
+			// ターゲットプロファイル (例: vs_6_6 / vs_5_0)
+			"TargetProfile": "vs_6_6",
+			// マクロ定義 (Value 省略時は空文字列扱い)
+			"Macros": [
+				{
+					"Name": "USE_SKINNING",
+					"Value": "1"
+				},
+				{ "Name": "DEBUG_NORMAL" }
+			]
+		},
+
+		// ピクセルシェーダ
+		"Pixel": {
+			"Path": "Shaders/Object3D/Object3D_PS.hlsl",
+			"EntryPoint": "PSMain",
+			"TargetProfile": "ps_6_6",
+			"Macros": [
+				{
+					"Name": "ENABLE_FOG",
+					"Value": "1"
+				}
+			]
+		},
+
+		// ジオメトリシェーダ (使用しない場合は省略可)
+		"Geometry": {
+			"Path": "Shaders/Common/ExpandPoints_GS.hlsl",
+			"EntryPoint": "GSMain",
+			"TargetProfile": "gs_6_6"
+		},
+
+		// テッセレーション (Hull / Domain)
+		"Hull": {
+			"Path": "Shaders/Tess/Tessellation_HS.hlsl",
+			"EntryPoint": "HSMain",
+			"TargetProfile": "hs_6_6",
+			"Macros": [
+				{
+					"Name": "TESSELLATION_FACTOR",
+					"Value": "8"
+				}
+			]
+		},
+		"Domain": {
+			"Path": "Shaders/Tess/Tessellation_DS.hlsl",
+			"EntryPoint": "DSMain",
+			"TargetProfile": "ds_6_6"
+		}
+	},
+
+	//==============================================================
+	// プリセット使用例: 特定ステージのみ UsePreset
+	//==============================================================
+	"Shader_UsePresetExample": {
+		"AutoInputLayoutFromVS": true,
+		"Vertex": {
+			"UsePreset": "BasicVertexShader" // 事前登録済みコンパイル済みシェーダ名
+		},
+		"Pixel": {
+			"Path": "Shaders/Lighting/PBR_PS.hlsl",
+			"EntryPoint": "main",
+			"TargetProfile": "ps_6_6",
+			"Macros": [
+				{
+					"Name": "USE_IBL",
+					"Value": "1"
+				},
+				{
+					"Name": "USE_CLEARCOAT",
+					"Value": "0"
+				}
+			]
+		}
+	},
+
+	//==============================================================
+	// Compute 専用例 (Render ではなく Compute パイプラインで使用)
+	//==============================================================
+	"Shader_ComputeOnly": {
+		"Compute": {
+			"Path": "Shaders/Compute/Blur_CS.hlsl",
+			"EntryPoint": "CSMain",
+			"TargetProfile": "cs_6_6",
+			"Macros": [
+				{
+					"Name": "KERNEL_RADIUS",
+					"Value": "5"
+				}
+			]
+		}
+	},
+
+	//==============================================================
+	// 最小構成例: VS + PS (マクロ無し)
+	//==============================================================
+	"Shader_Minimal": {
+		"Vertex": {
+			"Path": "Shaders/Basic/Basic_VS.hlsl",
+			"TargetProfile": "vs_6_6"
+		},
+		"Pixel": {
+			"Path": "Shaders/Basic/Basic_PS.hlsl",
+			"TargetProfile": "ps_6_6"
+		}
+	},
+
+	//==============================================================
+	// 注意:
+	// - UsePreset が存在するステージは Path / EntryPoint / TargetProfile / Macros を無視。
+	// - baseName は外側のパイプライン JSON の "Name"。内部では name + "_" + StageKey が compileInfo.name に設定。
+	// - Macros 配列は空でも可。Value 未指定時は "" として登録。
+	// - AutoTopologyFromShaders=true で HS/DS が存在し PrimitiveTopologyType 未指定の場合 Patch に設定される可能性あり。
+	// - Compute パイプラインでは Vertex/Pixel 等は無視され Compute のみ利用。
+	//==============================================================
+	"_Info": "Shader セクション各種サンプル。パイプライン設定 JSON 内で \"Shader\" キーとして使用。"
+}

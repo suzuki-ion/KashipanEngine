@@ -1,0 +1,51 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "Line.Thickness",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"Vertex": {
+			"UsePreset": "Line.VS"
+		},
+		"Geometry": {
+			"UsePreset": "Line.GS"
+		},
+		"Pixel": {
+			"UsePreset": "Line.PS"
+		}
+	},
+	"RootSignature": {
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT",
+		"RootParameter": {
+			"Parameters": [
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+					"Descriptor": {
+						"ShaderRegister": 0
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+					"Descriptor": {
+						"ShaderRegister": 1
+					}
+				}
+			]
+		}
+	},
+	"RasterizerState": {
+		"UsePreset": "DoubleSidedCulling"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthEnable"
+	},
+	"PipelineState": {
+		"UsePreset": "Line"
+	}
+}

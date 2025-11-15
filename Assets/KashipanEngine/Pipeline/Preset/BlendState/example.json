@@ -1,0 +1,102 @@
+﻿{
+	// プリセット名
+	"Name": "Example BlendState",
+
+	//==============================================================
+	// BlendState 設定サンプル
+	// ParseBlendState(const Json&) が読み取ることのできる全項目例
+	//==============================================================
+	"BlendState": {
+		// MSAA使用時、アルファ値をカバレッジに利用してアンチエイリアス向上させるか
+		// 既定: false
+		"AlphaToCoverageEnable": false,
+
+		// true: 各 RenderTargets[i] の設定を個別適用
+		// false: RenderTargets[0] の設定が全RTに複製される (D3D12 既定)
+		"IndependentBlendEnable": true,
+
+		// 最大 8 要素 (D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT)
+		"RenderTargets": [
+			{
+				//======================================================
+				// 0番目のレンダーターゲット (典型的なアルファブレンド)
+				// BlendEnable を true にした場合は以下の係数・演算を必ず明示推奨
+				// （ゼロ初期化による不正/意図しない既定値化を防ぐ）
+				//======================================================
+
+				// カラー/アルファのブレンド有効化
+				"BlendEnable": true,
+
+				// 論理演算有効化 (通常はカラー合成ブレンドと併用しない)
+				"LogicOpEnable": false,
+
+				// RGB ソース係数
+				// 利用可能: D3D12_BLEND_ZERO / ONE / SRC_COLOR / INV_SRC_COLOR / SRC_ALPHA / INV_SRC_ALPHA /
+				//            DEST_ALPHA / INV_DEST_ALPHA / DEST_COLOR / INV_DEST_COLOR / SRC_ALPHA_SAT /
+				//            BLEND_FACTOR / INV_BLEND_FACTOR / SRC1_COLOR / INV_SRC1_COLOR /
+				//            SRC1_ALPHA / INV_SRC1_ALPHA / ALPHA_FACTOR / INV_ALPHA_FACTOR
+				"SrcBlend": "D3D12_BLEND_SRC_ALPHA",
+
+				// RGB デスティネーション係数
+				"DestBlend": "D3D12_BLEND_INV_SRC_ALPHA",
+
+				// RGB ブレンド演算
+				// 利用可能: D3D12_BLEND_OP_ADD / SUBTRACT / REV_SUBTRACT / MIN / MAX
+				"BlendOp": "D3D12_BLEND_OP_ADD",
+
+				// アルファ ソース係数
+				"SrcBlendAlpha": "D3D12_BLEND_ONE",
+
+				// アルファ デスティネーション係数
+				"DestBlendAlpha": "D3D12_BLEND_INV_SRC_ALPHA",
+
+				// アルファ ブレンド演算 (RGB と分離可能)
+				"BlendOpAlpha": "D3D12_BLEND_OP_ADD",
+
+				// 論理演算種別 (LogicOpEnable = true のときのみ意味)
+				// 利用可能: CLEAR / SET / COPY / COPY_INVERTED / NOOP / INVERT / AND / NAND /
+				//            OR / NOR / XOR / EQUIV / AND_REVERSE / AND_INVERTED / OR_REVERSE / OR_INVERTED
+				"LogicOp": "D3D12_LOGIC_OP_NOOP",
+
+				// 書き込みマスク
+				// 利用可能: D3D12_COLOR_WRITE_ENABLE_RED / GREEN / BLUE / ALPHA / RGB / ALL
+				"RenderTargetWriteMask": "D3D12_COLOR_WRITE_ENABLE_ALL"
+			},
+			{
+				//======================================================
+				// 1番目のレンダーターゲット (不透明・ブレンド無し)
+				//======================================================
+				"BlendEnable": false, // 不透明描画
+				"LogicOpEnable": false,
+				// 以下は BlendEnable=false の場合省略可能だが、意図を明確にするため記載
+				"SrcBlend": "D3D12_BLEND_ONE",
+				"DestBlend": "D3D12_BLEND_ZERO",
+				"BlendOp": "D3D12_BLEND_OP_ADD",
+				"SrcBlendAlpha": "D3D12_BLEND_ONE",
+				"DestBlendAlpha": "D3D12_BLEND_ZERO",
+				"BlendOpAlpha": "D3D12_BLEND_OP_ADD",
+				"LogicOp": "D3D12_LOGIC_OP_NOOP",
+				"RenderTargetWriteMask": "D3D12_COLOR_WRITE_ENABLE_ALL"
+			}
+			// 追加の RenderTargets 要素 (最大8) を同形式で記述可能
+		]
+	}
+
+	//==============================================================
+	// 参考: 一般的プリセット
+	//==============================================================
+	// 不透明:
+	//   BlendEnable=false
+	//   SrcBlend=ONE, DestBlend=ZERO, BlendOp=ADD
+	//   SrcBlendAlpha=ONE, DestBlendAlpha=ZERO, BlendOpAlpha=ADD
+	// 透過 (アルファブレンド):
+	//   BlendEnable=true
+	//   SrcBlend=SRC_ALPHA, DestBlend=INV_SRC_ALPHA, BlendOp=ADD
+	//   SrcBlendAlpha=ONE, DestBlendAlpha=INV_SRC_ALPHA, BlendOpAlpha=ADD
+	// 加算:
+	//   BlendEnable=true
+	//   SrcBlend=SRC_ALPHA, DestBlend=ONE, BlendOp=ADD
+	// 乗算(乗算的暗化):
+	//   BlendEnable=true
+	//   SrcBlend=DEST_COLOR, DestBlend=ZERO, BlendOp=ADD
+}

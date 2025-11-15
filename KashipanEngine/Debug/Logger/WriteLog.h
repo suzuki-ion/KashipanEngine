@@ -1,12 +1,11 @@
 #pragma once
 
-// ログ出力
+// ログ出力（非同期キューへ積む）
 void WriteLog(const std::string &formattedLine) {
-    const auto &cfg = GetLogSettings();
-    if (cfg.enableConsoleLogging) {
-        OutputDebugStringA(formattedLine.c_str());
+    // ここでは IO を行わず、ワーカースレッドに委譲
+    {
+        std::lock_guard<std::mutex> lock(sLogMutex);
+        sLogQueue.emplace_back(formattedLine);
     }
-    if (cfg.enableFileLogging && sLogFile.is_open()) {
-        sLogFile << formattedLine;
-    }
+    sLogCv.notify_one();
 }

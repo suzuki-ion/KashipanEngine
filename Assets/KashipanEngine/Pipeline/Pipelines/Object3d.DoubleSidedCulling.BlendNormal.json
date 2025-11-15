@@ -1,0 +1,30 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "Object3d.DoubleSidedCulling.BlendNormal",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"Vertex": {
+			"UsePreset": "Object3d.VS"
+		},
+		"Pixel": {
+			"UsePreset": "Object3d.PS"
+		}
+	},
+	"RootSignature": {
+		"UsePreset": "Object3d"
+	},
+	"RasterizerState": {
+		"UsePreset": "DoubleSidedCulling"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthEnable"
+	},
+	"PipelineState": {
+		"UsePreset": "Default"
+	}
+}

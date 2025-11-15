@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <string>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -9,11 +10,18 @@ namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
 inline std::vector<D3D12_DESCRIPTOR_RANGE> ParseDescriptorRanges(const Json &json) {
+    LogScope scope;
+    const std::string presetName = json.contains("Name") ? json["Name"].get<std::string>() : std::string{};
+    Log(Translation("engine.graphics.pipeline.jsonparser.descriptorrange.parse.start") + presetName, LogSeverity::Debug);
+
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
     std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
-    if (!json.contains("Ranges")) return ranges;
+    if (!json.contains("Ranges")) {
+        Log(Translation("engine.graphics.pipeline.jsonparser.descriptorrange.parse.end") + presetName, LogSeverity::Debug);
+        return ranges;
+    }
 
     for (const auto &range : json["Ranges"]) {
         D3D12_DESCRIPTOR_RANGE r{};
@@ -41,6 +49,7 @@ inline std::vector<D3D12_DESCRIPTOR_RANGE> ParseDescriptorRanges(const Json &jso
         ranges.push_back(r);
     }
 
+    Log(Translation("engine.graphics.pipeline.jsonparser.descriptorrange.parse.end") + presetName, LogSeverity::Debug);
     return ranges;
 }
 

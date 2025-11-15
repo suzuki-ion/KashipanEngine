@@ -82,7 +82,7 @@ void IGraphicsResource::SetExistingResource(ID3D12Resource *existingResource) {
 
 bool IGraphicsResource::TransitionToNext() {
     LogScope scope;
-    if (commandList_ == nullptr) {
+    if (!commandList_) {
         Log(Translation("engine.graphics.resource.transition.commandlist.null"), LogSeverity::Warning);
         return false;
     }

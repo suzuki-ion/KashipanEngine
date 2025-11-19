@@ -8,15 +8,18 @@
 
 namespace KashipanEngine {
 
-DX12SwapChain::DX12SwapChain(Passkey<DirectXCommon>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
+void DX12SwapChain::AttachWindowAndCreate(Passkey<DirectXCommon>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height) {
     LogScope scope;
+    if (isCreated_) {
+        Log(Translation("engine.directx.swapchain.already.exists"), LogSeverity::Warning);
+        return;
+    }
     Log(Translation("engine.directx.swapchain.initialize.start"), LogSeverity::Debug);
 
     swapChainType_ = swapChainType;
     hwnd_ = hwnd;
     width_ = width;
     height_ = height;
-    bufferCount_ = bufferCount;
 
     if (swapChainType_ == SwapChainType::ForHwnd) {
         CreateSwapChainForHWND();
@@ -26,30 +29,38 @@ DX12SwapChain::DX12SwapChain(Passkey<DirectXCommon>, SwapChainType swapChainType
         Log(Translation("engine.directx.swapchain.create.invalid.type"), LogSeverity::Critical);
         throw std::runtime_error("Invalid swap chain type.");
     }
+
     SetViewportAndScissorRect();
     CreateBackBuffers();
     CreateDepthStencilBuffer();
     InitializeCommandObjects();
 
+    isCreated_ = true;
     Log(Translation("engine.directx.swapchain.initialize.end"), LogSeverity::Debug);
 }
 
-DX12SwapChain::~DX12SwapChain() {
+void DX12SwapChain::Destroy(Passkey<DirectXCommon>) {
     LogScope scope;
+    if (!isCreated_) return;
     Log(Translation("engine.directx.swapchain.finalize.start"), LogSeverity::Debug);
+    DestroyInternal();
+    swapChainType_ = SwapChainType::Unknown;
+    hwnd_ = nullptr;
+    width_ = height_ = 0;
+    isCreated_ = false;
+    Log(Translation("engine.directx.swapchain.finalize.end"), LogSeverity::Debug);
+}
+
+void DX12SwapChain::DestroyInternal() {
     depthStencilBuffer_.reset();
     backBuffers_.clear();
     swapChain_.Reset();
     commandList_.Reset();
     commandAllocators_.clear();
-    Log(Translation("engine.directx.swapchain.finalize.end"), LogSeverity::Debug);
+    dcompHost_.reset();
 }
 
 void DX12SwapChain::InitializeCommandObjects() {
-    //==================================================
-    // コマンドアロケーター作成
-    //==================================================
-
     Log(Translation("engine.directx.swapchain.commandallocator.initialize.start"), LogSeverity::Debug);
     commandAllocators_.resize(static_cast<size_t>(bufferCount_));
     for (int i = 0; i < bufferCount_; ++i) {
@@ -60,10 +71,6 @@ void DX12SwapChain::InitializeCommandObjects() {
         }
     }
     Log(Translation("engine.directx.swapchain.commandallocator.initialize.end"), LogSeverity::Debug);
-    
-    //==================================================
-    // コマンドリスト作成
-    //==================================================
 
     Log(Translation("engine.directx.swapchain.commandlist.initialize.start"), LogSeverity::Debug);
     HRESULT hr = sDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocators_[0].Get(), nullptr, IID_PPV_ARGS(commandList_.ReleaseAndGetAddressOf()));
@@ -103,11 +110,9 @@ void DX12SwapChain::SetLetterboxViewportAndScissor(float targetAspectRatio) {
     float viewportHeight = height;
 
     if (windowAspectRatio > targetAspectRatio_) {
-        // ウィンドウが横長の場合、左右にレターボックスを追加
         viewportWidth = height * targetAspectRatio_;
         viewportX = (width - viewportWidth) * 0.5f;
     } else if (windowAspectRatio < targetAspectRatio_) {
-        // ウィンドウが縦長の場合、上下にレターボックスを追加
         viewportHeight = width / targetAspectRatio_;
         viewportY = (height - viewportHeight) * 0.5f;
     }
@@ -127,6 +132,7 @@ void DX12SwapChain::ResetViewportAndScissor() {
 }
 
 void DX12SwapChain::BeginDraw(Passkey<Window>) {
+    if (!isCreated_) return;
     currentBufferIndex_ = swapChain_->GetCurrentBackBufferIndex();
     auto &allocator = commandAllocators_[currentBufferIndex_];
     HRESULT hr = allocator->Reset();
@@ -154,24 +160,23 @@ void DX12SwapChain::BeginDraw(Passkey<Window>) {
 }
 
 void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
+    if (!isCreated_) return;
     backBuffers_[currentBufferIndex_]->TransitionToNext();
-   HRESULT hr = commandList_->Close();
-   if (FAILED(hr)) {
-       Log(Translation("engine.directx.commandlist.close.failed"), LogSeverity::Critical);
-       throw std::runtime_error("Failed to close command list in DX12 swap chain.");
-   }
+    HRESULT hr = commandList_->Close();
+    if (FAILED(hr)) {
+        Log(Translation("engine.directx.commandlist.close.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Failed to close command list in DX12 swap chain.");
+    }
 }
 
 void DX12SwapChain::Present(Passkey<DirectXCommon>) {
+    if (!isCreated_) return;
     UINT syncInterval = 1;
     UINT presentFlags = 0;
 
     if (swapChainType_ == SwapChainType::ForHwnd) {
         syncInterval = enableVSync_ ? 1 : 0;
         presentFlags = enableVSync_ ? 0 : DXGI_PRESENT_ALLOW_TEARING;
-    } else {
-        syncInterval = 1;
-        presentFlags = 0;
     }
 
     HRESULT hr = swapChain_->Present(syncInterval, presentFlags);
@@ -182,6 +187,7 @@ void DX12SwapChain::Present(Passkey<DirectXCommon>) {
 }
 
 void DX12SwapChain::ResizeSignal(Passkey<Window>, int32_t width, int32_t height) {
+    if (!isCreated_) return;
     LogScope scope;
     requestedWidth_ = width;
     requestedHeight_ = height;
@@ -189,9 +195,7 @@ void DX12SwapChain::ResizeSignal(Passkey<Window>, int32_t width, int32_t height)
 }
 
 void DX12SwapChain::Resize(Passkey<DirectXCommon>) {
-    if (!isResizeRequested_) {
-        return;
-    }
+    if (!isCreated_ || !isResizeRequested_) return;
     LogScope scope;
     Log(Translation("engine.directx.swapchain.resize.start"), LogSeverity::Debug);
     width_ = requestedWidth_;
@@ -332,15 +336,12 @@ void DX12SwapChain::CreateBackBuffers() {
         auto desc = backBuffer->GetDesc();
 
         if (swapChainType_ == SwapChainType::ForHwnd) {
-            // HWND用スワップチェーンのバックバッファはデフォルトのクリアカラーで初期化
             backBuffers_[i] = std::make_unique<RenderTargetResource>(
                 static_cast<UINT>(width_), static_cast<UINT>(height_),
                 desc.Format, sRTVHeap, backBuffer.Get());
-
-        } else if (swapChainType_ == SwapChainType::ForComposition) {
-            // Composition用スワップチェーンのバックバッファはデバッグ時なら半透明で初期化
+        } else { // Composition
 #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
-            float clearColor[4] = { 0.0f, 0.0f, 0.0f, (swapChainType_ == SwapChainType::ForComposition) ? 0.5f : 0.0f };
+            float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.5f };
 #else
             float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 #endif

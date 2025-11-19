@@ -27,6 +27,9 @@ struct EngineSettings {
         bool defaultEnableVSync = true;
         int32_t defaultMaxFPS = 60;
         std::string pipelineSettingsPath = "";
+        UINT rtvDescriptorHeapSize = 64;
+        UINT dsvDescriptorHeapSize = 64;
+        UINT srvDescriptorHeapSize = 512;
     };
     //--------- エンジンの翻訳ファイル設定 ---------//
     struct Translations {

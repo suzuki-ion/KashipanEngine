@@ -7,12 +7,14 @@
 #include <optional>
 #include <variant>
 #include <type_traits>
+#include <d3d12.h>
 
 #include "Core/WindowsAPI/WindowDescriptor.h"
 #include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
 #include "Core/WindowsAPI/WindowEvents/IWindowEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
+#include "Graphics/PipelineBinder.h" // 追加: パイプラインバインダー
 
 namespace KashipanEngine {
 
@@ -20,6 +22,8 @@ class GameEngine;
 class WindowsAPI;
 class DirectXCommon;
 class DX12SwapChain;
+class GraphicsEngine; // 追加: Passkey 用
+class PipelineManager; // 追加: 静的保持用
 
 /// @brief ウィンドウの種類
 enum class WindowType {
@@ -45,6 +49,7 @@ class Window final {
     friend class IWindowEvent;
     static inline WindowsAPI *sWindowsAPI = nullptr;
     static inline DirectXCommon *sDirectXCommon = nullptr;
+    static inline PipelineManager *sPipelineManager = nullptr;
     
     // 値保持する既定イベント + 拡張イベント(unique_ptr) をまとめた variant
     using Events = std::variant<
@@ -82,6 +87,7 @@ public:
     static void SetWindowsAPI(Passkey<GameEngine>, WindowsAPI *windowsAPI) { sWindowsAPI = windowsAPI; }
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *directXCommon) { sDirectXCommon = directXCommon; }
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
+    static void SetPipelineManager(Passkey<GraphicsEngine>, PipelineManager *pm) { sPipelineManager = pm; }
     
     /// @brief 全ウィンドウ破棄
     static void AllDestroy(Passkey<GameEngine>);
@@ -158,7 +164,6 @@ public:
     std::optional<LRESULT> HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam);
     
     /// @brief サイズ変更モードを設定する
-    /// @param sizeChangeMode サイズ変更モード
     void SetSizeChangeMode(SizeChangeMode sizeChangeMode);
     /// @brief ウィンドウモードを設定する
     /// @param windowMode ウィンドウモード
@@ -175,10 +180,18 @@ public:
     /// @param y ウィンドウ左上のY座標
     void SetWindowPosition(int32_t x, int32_t y);
     
+    //--------- パイプライン関連 ---------//
+    /// @brief パイプラインバインダー初期化（コマンドリスト設定後に呼ぶ）
+    void InitializePipelineBinder(ID3D12GraphicsCommandList *commandList) {
+        pipelineBinder_.SetManager(sPipelineManager);
+        pipelineBinder_.SetCommandList(commandList);
+        pipelineBinder_.Invalidate(); // 初回は必ず再バインド
+    }
+    /// @brief パイプラインバインダー取得
+    PipelineBinder *GetPipelineBinder() { return &pipelineBinder_; }
+    const PipelineBinder *GetPipelineBinder() const { return &pipelineBinder_; }
+
     /// @brief ウィンドウイベントを登録する（既定イベント型は値で、拡張イベントはunique_ptrで保持）
-    /// @tparam TEvent 登録するイベントの型
-    /// @tparam ...Args コンストラクタ引数の型
-    /// @param ...args コンストラクタ引数
     template<class TEvent, class... Args>
     requires (IsDefaultEventV<TEvent>)
     void RegisterWindowEvent(Args&&... args) {
@@ -227,7 +240,6 @@ public:
     }
 
     /// @brief ウィンドウイベントの登録解除
-    /// @param msg メッセージ
     void UnregisterWindowEvent(UINT msg);
 
     /// @brief ウィンドウの種類を取得する
@@ -332,6 +344,9 @@ private:
 
     // イベントハンドラマップ（既定イベント or ユーザーイベント）
     std::unordered_map<UINT, Events> eventHandlers_;
+
+    // パイプラインバインダー（ウィンドウ単位）
+    PipelineBinder pipelineBinder_{};
 };
 
 } // namespace KashipanEngine

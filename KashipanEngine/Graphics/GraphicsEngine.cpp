@@ -1,5 +1,6 @@
 #include "GraphicsEngine.h"
 #include "Core/DirectXCommon.h"
+#include "Core/Window.h"
 #include "Graphics/PipelineManager.h"
 #include "EngineSettings.h"
 
@@ -11,6 +12,7 @@ GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon
     auto &settings = GetEngineSettings().rendering;
     pipelineManager_ = std::make_unique<PipelineManager>(Passkey<GraphicsEngine>{},
         device, settings.pipelineSettingsPath);
+    Window::SetPipelineManager(Passkey<GraphicsEngine>{}, pipelineManager_.get());
 }
 
 GraphicsEngine::~GraphicsEngine() = default;

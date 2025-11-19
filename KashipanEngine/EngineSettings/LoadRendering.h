@@ -23,6 +23,9 @@ inline void LoadRenderingSettings(const JSON &rootJSON, EngineSettings &settings
     settings.rendering.defaultEnableVSync = renderingJSON.value("defaultEnableVSync", settings.rendering.defaultEnableVSync);
     settings.rendering.defaultMaxFPS = renderingJSON.value("defaultMaxFPS", settings.rendering.defaultMaxFPS);
     settings.rendering.pipelineSettingsPath = renderingJSON.value("pipelineSettingsPath", settings.rendering.pipelineSettingsPath);
+    settings.rendering.rtvDescriptorHeapSize = renderingJSON.value("rtvDescriptorHeapSize", settings.rendering.rtvDescriptorHeapSize);
+    settings.rendering.dsvDescriptorHeapSize = renderingJSON.value("dsvDescriptorHeapSize", settings.rendering.dsvDescriptorHeapSize);
+    settings.rendering.srvDescriptorHeapSize = renderingJSON.value("srvDescriptorHeapSize", settings.rendering.srvDescriptorHeapSize);
 }
 
 } // namespace KashipanEngine

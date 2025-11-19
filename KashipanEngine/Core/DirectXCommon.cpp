@@ -1,6 +1,8 @@
 #include "DirectXCommon.h"
 #include "EngineSettings.h"
 #include "Graphics/Resources.h"
+#include <vector>
+#include <unordered_map>
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -8,8 +10,11 @@
 namespace KashipanEngine {
 
 namespace {
-std::unordered_map<HWND, std::unique_ptr<DX12SwapChain>> sSwapChains;
-std::vector<HWND> sPendingDestroySwapChains;
+// 遅延初期化スワップチェーンスロット管理
+std::vector<std::unique_ptr<DX12SwapChain>> sSwapChains;               // インデックスアクセス用
+std::unordered_map<HWND, size_t> sHwndToSwapChainIndex;                // HWND -> インデックス
+std::vector<size_t> sFreeSwapChains;                                   // 空きスワップチェーンインデックス
+std::vector<HWND> sPendingDestroySwapChains;                           // 破棄指示された HWND
 } // namespace
 
 DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
@@ -39,14 +44,14 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     dx12Fence_ = std::make_unique<DX12Fence>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice());
 
     IGraphicsResource::SetDevice({}, dx12Device_->GetDevice());
-
-    RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 128);
-    DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 128);
-    SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 1024);
-
+    
     auto settings = GetEngineSettings().rendering;
     RenderTargetResource::SetDefaultClearColor(Passkey<DirectXCommon>{}, settings.defaultClearColor);
 
+    RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.rtvDescriptorHeapSize);
+    DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.dsvDescriptorHeapSize);
+    SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.srvDescriptorHeapSize);
+    
     DX12SwapChain::Initialize(Passkey<DirectXCommon>{}, this,
         dx12Device_->GetDevice(),
         dx12DXGIs_->GetDXGIFactory(),
@@ -54,6 +59,15 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
         RTVHeap_.get(),
         DSVHeap_.get()
     );
+
+    // スワップチェーンスロット事前確保 (遅延初期化用空インスタンス生成)
+    size_t maxWindows = GetEngineSettings().limits.maxWindows;
+    sSwapChains.resize(maxWindows);
+    sFreeSwapChains.reserve(maxWindows);
+    for (size_t i = 0; i < maxWindows; ++i) {
+        sSwapChains[i] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{});
+        sFreeSwapChains.push_back(i);
+    }
 
     Log(Translation("engine.directx.initialize.end"), LogSeverity::Debug);
 }
@@ -67,7 +81,14 @@ DirectXCommon::~DirectXCommon() {
         dx12Fence_->Wait(Passkey<DirectXCommon>{});
     }
 
+    for (auto &sc : sSwapChains) {
+        sc.reset();
+    }
     sSwapChains.clear();
+    sHwndToSwapChainIndex.clear();
+    sFreeSwapChains.clear();
+    sPendingDestroySwapChains.clear();
+
     IGraphicsResource::ClearAllResources({});
     SRVHeap_.reset();
     DSVHeap_.reset();
@@ -89,23 +110,34 @@ void DirectXCommon::EndDraw(Passkey<GameEngine>) {
 
 DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
     LogScope scope;
-    if (sSwapChains.find(hwnd) != sSwapChains.end()) {
+    auto it = sHwndToSwapChainIndex.find(hwnd);
+    if (it != sHwndToSwapChainIndex.end()) {
         Log(Translation("engine.directx.swapchain.already.exists"), LogSeverity::Warning);
-        return sSwapChains[hwnd].get();
+        return sSwapChains[it->second].get();
     }
-    auto swapChain = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, swapChainType, hwnd, width, height, bufferCount);
-    bool enableVSync = (swapChainType == SwapChainType::ForComposition) ?
-        true :
-        GetEngineSettings().rendering.defaultEnableVSync;
-    swapChain->SetVSyncEnabled(enableVSync);
-    DX12SwapChain *swapChainPtr = swapChain.get();
-    sSwapChains[hwnd] = std::move(swapChain);
-    return swapChainPtr;
+    if (sFreeSwapChains.empty()) {
+        Log(Translation("engine.directx.swapchain.no.free.slot"), LogSeverity::Error);
+        return nullptr;
+    }
+
+    size_t index = sFreeSwapChains.back();
+    sFreeSwapChains.pop_back();
+
+    // bufferCount を反映した新しい空スロットへ差し替え
+    sSwapChains[index] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, bufferCount);
+    DX12SwapChain *sc = sSwapChains[index].get();
+    sc->AttachWindowAndCreate(Passkey<DirectXCommon>{}, swapChainType, hwnd, width, height);
+
+    bool enableVSync = (swapChainType == SwapChainType::ForComposition) ? true : GetEngineSettings().rendering.defaultEnableVSync;
+    sc->SetVSyncEnabled(enableVSync);
+
+    sHwndToSwapChainIndex[hwnd] = index;
+    return sc;
 }
 
 void DirectXCommon::DestroySwapChainSignal(Passkey<Window>, HWND hwnd) {
     LogScope scope;
-    if (sSwapChains.find(hwnd) == sSwapChains.end()) {
+    if (sHwndToSwapChainIndex.find(hwnd) == sHwndToSwapChainIndex.end()) {
         Log(Translation("engine.directx.swapchain.notfound"), LogSeverity::Warning);
         return;
     }
@@ -114,9 +146,14 @@ void DirectXCommon::DestroySwapChainSignal(Passkey<Window>, HWND hwnd) {
 
 void DirectXCommon::DestroyPendingSwapChains() {
     for (auto hwnd : sPendingDestroySwapChains) {
-        auto it = sSwapChains.find(hwnd);
-        if (it != sSwapChains.end()) {
-            sSwapChains.erase(it);
+        auto it = sHwndToSwapChainIndex.find(hwnd);
+        if (it != sHwndToSwapChainIndex.end()) {
+            size_t index = it->second;
+            if (sSwapChains[index]) {
+                sSwapChains[index]->Destroy(Passkey<DirectXCommon>{});
+            }
+            sFreeSwapChains.push_back(index);
+            sHwndToSwapChainIndex.erase(it);
             Log(Translation("engine.directx.swapchain.destroyed"), LogSeverity::Debug);
         } else {
             Log(Translation("engine.directx.swapchain.notfound"), LogSeverity::Warning);
@@ -131,27 +168,32 @@ bool DirectXCommon::WaitForFence() {
 }
 
 void DirectXCommon::ExecuteCommand() {
-    for (auto &swapPair : sSwapChains) {
-        swapPair.second->EndDraw({});
+    for (auto &sc : sSwapChains) {
+        if (sc && sc->IsCreated()) sc->EndDraw({});
     }
 
     std::vector<ID3D12CommandList*> lists;
-    lists.reserve(sSwapChains.size());
-    for (auto &swapPair : sSwapChains) {
-        if (auto *cl = swapPair.second->GetRecordedCommandList(Passkey<DirectXCommon>{})) {
-            lists.push_back(cl);
+    for (auto &sc : sSwapChains) {
+        if (sc && sc->IsCreated()) {
+            if (auto *cl = sc->GetRecordedCommandList(Passkey<DirectXCommon>{})) {
+                lists.push_back(cl);
+            }
         }
     }
-    dx12CommandQueue_->ExecuteCommandLists({}, lists);
-
-    for (auto &swapPair : sSwapChains) {
-        swapPair.second->Present({});
+    if (!lists.empty()) {
+        dx12CommandQueue_->ExecuteCommandLists({}, lists);
     }
 
-    WaitForFence();
+    for (auto &sc : sSwapChains) {
+        if (sc && sc->IsCreated()) sc->Present({});
+    }
 
-    for (auto &swapPair : sSwapChains) {
-        swapPair.second->Resize({});
+    if (!lists.empty()) {
+        WaitForFence();
+    }
+
+    for (auto &sc : sSwapChains) {
+        if (sc && sc->IsCreated()) sc->Resize({});
     }
 }
 

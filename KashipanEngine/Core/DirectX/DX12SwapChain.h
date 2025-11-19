@@ -36,14 +36,22 @@ public:
         sRTVHeap = rtvHeap;
         sDSVHeap = dsvHeap;
     }
-    /// @brief コンストラクタ
-    /// @param swapChainType スワップチェーンの種類
-    /// @param hwnd ウィンドウハンドル
-    /// @param width 横幅
-    /// @param height 高さ
-    /// @param bufferCount バッファ数
-    DX12SwapChain(Passkey<DirectXCommon>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount = 2);
-    ~DX12SwapChain();
+
+    /// @brief 遅延初期化用コンストラクタ (HWND 未決定)
+    DX12SwapChain(Passkey<DirectXCommon>, int32_t bufferCount = 2) : bufferCount_(bufferCount) {}
+    ~DX12SwapChain() { DestroyInternal(); }
+
+    DX12SwapChain(const DX12SwapChain &) = delete;
+    DX12SwapChain &operator=(const DX12SwapChain &) = delete;
+    DX12SwapChain(DX12SwapChain &&) = delete;
+    DX12SwapChain &operator=(DX12SwapChain &&) = delete;
+
+    /// @brief 実体生成 (HWND 取得後に呼ぶ)
+    void AttachWindowAndCreate(Passkey<DirectXCommon>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height);
+    /// @brief 利用終了 (内部リソース解放、スロット再利用)
+    void Destroy(Passkey<DirectXCommon>);
+    /// @brief 生成済みか
+    bool IsCreated() const noexcept { return isCreated_; }
 
     /// @brief VSync有効化設定
     void SetVSyncEnabled(bool enabled) { enableVSync_ = enabled; }
@@ -60,51 +68,45 @@ public:
     void BeginDraw(Passkey<Window>);
     /// @brief 描画後処理
     void EndDraw(Passkey<DirectXCommon>);
-    /// @brief SwapChainのPresent
-    /// @param enableVSync VSync有効フラグ
+    /// @brief Present
     void Present(Passkey<DirectXCommon>);
 
-    /// @brief SwapChainのサイズ変更指示
-    /// @param width 横幅
-    /// @param height 高さ
+    /// @brief サイズ変更指示
     void ResizeSignal(Passkey<Window>, int32_t width, int32_t height);
-    /// @brief サイズ変更処理
+    /// @brief サイズ変更反映
     void Resize(Passkey<DirectXCommon>);
 
-    /// @brief 現在記録中のコマンドリストを取得
+    /// @brief 記録済みコマンドリスト取得 (DirectXCommon 用)
     ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<DirectXCommon>) const noexcept { return commandList_.Get(); }
+    /// @brief 記録済みコマンドリスト取得 (Window 用)
+    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Window>) const noexcept { return commandList_.Get(); }
 
 private:
-    DX12SwapChain(const DX12SwapChain &) = delete;
-    DX12SwapChain &operator=(const DX12SwapChain &) = delete;
-    DX12SwapChain(DX12SwapChain &&) = delete;
-    DX12SwapChain &operator=(DX12SwapChain &&) = delete;
-
-    /// @brief スワップチェーンの作成（HWND用）
+    /// @brief スワップチェーン作成 (HWND 用)
     void CreateSwapChainForHWND();
-    /// @brief スワップチェーンの作成（Composition用）
+    /// @brief スワップチェーン作成 (Composition 用)
     void CreateSwapChainForComposition();
-    /// @brief ビューポートとシザー矩形の設定
+    /// @brief ビューポート / シザー設定
     void SetViewportAndScissorRect();
-    /// @brief バックバッファの作成
+    /// @brief バックバッファ生成
     void CreateBackBuffers();
-    /// @brief 深度ステンシルバッファの作成
+    /// @brief 深度ステンシル生成
     void CreateDepthStencilBuffer();
-    /// @brief コマンド関連オブジェクトの初期化
+    /// @brief コマンド関連オブジェクト生成
     void InitializeCommandObjects();
+    /// @brief 内部リソース破棄
+    void DestroyInternal();
 
-    //--------- スワップチェーンの情報 ---------//
-
+    //--------- スワップチェーン状態 ---------//
     SwapChainType swapChainType_ = SwapChainType::Unknown;
-
-    HWND hwnd_;
-    int32_t width_;
-    int32_t height_;
-    int32_t bufferCount_;
+    HWND hwnd_ = nullptr;
+    int32_t width_ = 0;
+    int32_t height_ = 0;
+    int32_t bufferCount_ = 2;
     int32_t currentBufferIndex_ = 0;
 
-    D3D12_VIEWPORT viewport_;
-    D3D12_RECT scissorRect_;
+    D3D12_VIEWPORT viewport_{};
+    D3D12_RECT scissorRect_{};
     float targetAspectRatio_ = 0.0f;
 
     Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain_;
@@ -112,24 +114,21 @@ private:
     std::unique_ptr<DepthStencilResource> depthStencilBuffer_;
 
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvHandles_;
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle_;
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle_{};
 
     bool enableVSync_ = true;
-
-    // Composition 用ホスト（HWND の上に合成したいときに使用）
     std::unique_ptr<DCompHost> dcompHost_;
 
-    //--------- 指示情報 ---------//
-
-    // Resize指示フラグとサイズ
+    // Resize 指示
     bool isResizeRequested_ = false;
     int32_t requestedWidth_ = 0;
     int32_t requestedHeight_ = 0;
 
-    //--------- コマンド関連 ---------//
-
+    // コマンド関連
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
     std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> commandAllocators_;
+
+    bool isCreated_ = false;
 };
 
 } // namespace KashipanEngine

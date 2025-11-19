@@ -74,10 +74,7 @@ std::vector<Window *> Window::GetWindows(const std::string &title) {
 
 bool Window::IsExist(HWND hwnd) {
     auto it = sWindowMap.find(hwnd);
-    if (it != sWindowMap.end()) {
-        return true;
-    }
-    return false;
+    return it != sWindowMap.end();
 }
 
 bool Window::IsExist(Window *window) {
@@ -124,7 +121,9 @@ void Window::Draw(Passkey<GameEngine>) {
     LogScope scope;
     for (auto &pair : sWindowMap) {
         Window *window = pair.second.get();
-        window->dx12SwapChain_->BeginDraw({});
+        if (window->dx12SwapChain_) { // 遅延初期化対応: 生成済みのみ描画開始
+            window->dx12SwapChain_->BeginDraw(Passkey<Window>{});
+        }
     }
 }
 Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath) {
@@ -473,7 +472,7 @@ void Window::AdjustWindowSize() {
         if (size_.clientHeight <= 0) {
             size_.clientHeight = 1;
         }
-        dx12SwapChain_->ResizeSignal({}, size_.clientWidth, size_.clientHeight);
+        dx12SwapChain_->ResizeSignal(Passkey<Window>{}, size_.clientWidth, size_.clientHeight);
     }
 }
 

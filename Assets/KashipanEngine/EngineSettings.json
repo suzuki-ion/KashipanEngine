@@ -15,13 +15,18 @@
 		"maxSounds": 512,
 		"maxModels": 1024,
 		"maxGameObjects": 1024,
-		"maxComponentsPerGameObject": 32
+		"maxComponentsPerGameObject": 32,
+		"maxLights": 64,
+		"maxWindows": 64
 	},
 	"rendering": {
 		"defaultClearColor": [ 0.25, 0.5, 1.0, 0.0 ],
 		"defaultEnableVSync": true,
 		"defaultMaxFPS": 60,
-		"pipelineSettingsPath": "Assets/KashipanEngine/PipelineSettings.json"
+		"pipelineSettingsPath": "Assets/KashipanEngine/PipelineSettings.json",
+		"rtvDescriptorHeapSize": 256,
+		"dsvDescriptorHeapSize": 256,
+		"srvDescriptorHeapSize": 1024
 	},
 	"translations": {
 		"ja-JP": "Assets/KashipanEngine/Locales/ja-JP.json"

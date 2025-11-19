@@ -66,14 +66,12 @@ void PipelineManager::ReloadPipelines() {
 void PipelineManager::ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName) {
     LogScope scope;
     assert(commandList != nullptr);
-    if (currentPipelineName_ == pipelineName) return;
     auto it = pipelineInfos_.find(pipelineName);
     if (it == pipelineInfos_.end()) {
         Log(Translation("engine.graphics.pipeline.notfound") + pipelineName, LogSeverity::Error);
         assert(false);
         return;
     }
-    currentPipelineName_ = pipelineName;
     auto topology = it->second.TopologyType();
     const auto &set = it->second.GetPipelineSet();
     commandList->IASetPrimitiveTopology(topology);

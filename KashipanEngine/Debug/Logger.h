@@ -1,10 +1,24 @@
 #pragma once
 #include <source_location>
-#include "Debug/Logger/LogType.h"
 #include "Utilities/Translation.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
+
+/// @brief ログの大分類
+enum class LogDomain {
+    GameEngine, // エンジン関連
+    Application // ゲーム関連
+};
+
+/// @brief ログの情報の種類
+enum class LogSeverity {
+    Debug,      // デバッグ
+    Info,       // 情報
+    Warning,    // 警告
+    Error,      // エラー
+    Critical    // 致命的エラー
+};
 
 /// @brief ロガー初期化
 void InitializeLogger(PasskeyForGameEngineMain);

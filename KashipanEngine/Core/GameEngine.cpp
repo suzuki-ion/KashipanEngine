@@ -46,7 +46,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     auto monitorInfo = windowsAPI_->QueryMonitorInfo();
     Window::CreateCompositionOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true)
         ->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 64; ++i) {
         Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128)
             ->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
     }

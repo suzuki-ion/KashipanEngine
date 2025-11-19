@@ -107,6 +107,7 @@
 		"engine.directx.swapchain.initialize.start": "スワップチェーン初期化開始",
 		"engine.directx.swapchain.initialize.end": "スワップチェーン初期化完了",
 		"engine.directx.swapchain.initialize.failed": "スワップチェーンの初期化に失敗しました。",
+		"engine.directx.swapchain.no.free.slot": "スワップチェーンの作成に失敗しました。利用可能なスロットがありません。",
 		"engine.directx.swapchain.finalize.start": "スワップチェーン終了開始",
 		"engine.directx.swapchain.finalize.end": "スワップチェーン終了完了",
 		"engine.directx.swapchain.finalize.failed": "スワップチェーンの終了に失敗しました。",

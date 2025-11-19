@@ -9,11 +9,11 @@
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/System/PipelineCreator.h"
-#include "Graphics/Pipeline/System/ShaderVariableMapCreator.h" // 追加: NameMap / CreateShaderVariableMap
+#include "Graphics/Pipeline/System/ShaderVariableMapCreator.h"
 
 namespace KashipanEngine {
 
-class GraphicsEngine; // 生成元クラス（Renderer から GraphicsEngine へ変更）
+class GraphicsEngine;
 
 /// @brief パイプライン管理用クラス
 class PipelineManager {
@@ -32,9 +32,8 @@ public:
     /// @brief パイプラインの存在確認
     [[nodiscard]] bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
 
-    /// @brief 指定のコマンドリストにパイプラインをセット
+    /// @brief 指定のコマンドリストにパイプラインをセット（差分管理は PipelineBinder 側で行う想定）
     void ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName);
-    void ResetCurrentPipeline() { currentPipelineName_.clear(); }
 
     /// @brief 指定パイプラインのシェーダーから NameMap を構築して返す
     /// @param pipelineName パイプライン名
@@ -61,8 +60,6 @@ public:
 private:
     void LoadPreset();
     void LoadPipelines();
-    void LoadRenderPipeline(const Json &json);
-    void LoadComputePipeline(const Json &json);
 
     ID3D12Device *device_ = nullptr;
 
@@ -74,7 +71,6 @@ private:
     std::string pipelineFolderPath_;
     std::unordered_map<std::string, std::string> presetFolderNames_;
 
-    std::string currentPipelineName_;
     std::unordered_map<std::string, PipelineInfo> pipelineInfos_;
 };
 

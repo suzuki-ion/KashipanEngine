@@ -41,15 +41,25 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     );
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
-    
-    mainWindow_ = Window::CreateNormal("Main Window");
+
     auto monitorInfo = windowsAPI_->QueryMonitorInfo();
-    Window::CreateCompositionOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true)
-        ->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
-    for (int i = 0; i < 64; ++i) {
-        Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128)
-            ->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
+    Window *parentWindow = Window::CreateOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true);
+    parentWindow->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
+    Window *mainWindow = nullptr;
+    mainWindow = Window::CreateNormal();
+    mainWindow->SetWindowParent(parentWindow, false);
+    Window *window = nullptr;
+    for (int i = 0; i < 8; ++i) {
+        window = Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128);
+        window->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
+        window->SetWindowParent(parentWindow, false);
     }
+
+    //--------- ゲームループ終了条件 ---------//
+
+    gameLoopEndConditionFunction_ = []() {
+        return Window::GetWindowCount() == 0;
+    };
 
     LogSeparator();
     Log(Translation("engine.initialize.end"));
@@ -83,14 +93,15 @@ void GameEngine::GameLoopUpdate() {
 void GameEngine::GameLoopDraw() {
     directXCommon_->BeginDraw({});
     Window::Draw({});
+    graphicsEngine_->RenderFrame({});
     directXCommon_->EndDraw({});
 }
 
-int GameEngine::Execute() {
-    // メインウィンドウが終了するまでループ
-    while (Window::IsExist(mainWindow_)) {
+int GameEngine::Execute(PasskeyForGameEngineMain) {
+    while (!gameLoopEndConditionFunction_()) {
         GameLoopUpdate();
         GameLoopDraw();
+        Window::CommitDestroy({});
     }
     return 0;
 }

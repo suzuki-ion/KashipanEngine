@@ -135,6 +135,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\DepthStencilResource.cpp" />
@@ -292,6 +293,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Line.Normal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Line.Thickness.json" />
@@ -318,6 +320,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Normal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Screen.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Subtract.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\ComputePipelineState\Default.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\ComputePipelineState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthDisable.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnable.json" />
@@ -334,9 +337,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootConstants\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootDescriptor\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootParameter\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Compute.Empty.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Object3d.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Sampler\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Line.hlsli" />
@@ -370,6 +375,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <FileType>Document</FileType>
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\Vertex.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest\Compute.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

@@ -7,14 +7,14 @@
 #include <optional>
 #include <variant>
 #include <type_traits>
+#include <vector>
 #include <d3d12.h>
 
 #include "Core/WindowsAPI/WindowDescriptor.h"
 #include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
-#include "Core/WindowsAPI/WindowEvents/IWindowEvent.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
-#include "Graphics/PipelineBinder.h" // 追加: パイプラインバインダー
+#include "Graphics/PipelineBinder.h"
 
 namespace KashipanEngine {
 
@@ -22,13 +22,13 @@ class GameEngine;
 class WindowsAPI;
 class DirectXCommon;
 class DX12SwapChain;
-class GraphicsEngine; // 追加: Passkey 用
-class PipelineManager; // 追加: 静的保持用
+class GraphicsEngine;
+class PipelineManager;
 
 /// @brief ウィンドウの種類
 enum class WindowType {
     Normal,         // 通常ウィンドウ
-    Layered,        // レイヤードウィンドウ
+    Overlay,        // オーバーレイウィンドウ
 };
 
 /// @brief ウィンドウモード
@@ -50,7 +50,7 @@ class Window final {
     static inline WindowsAPI *sWindowsAPI = nullptr;
     static inline DirectXCommon *sDirectXCommon = nullptr;
     static inline PipelineManager *sPipelineManager = nullptr;
-    
+
     // 値保持する既定イベント + 拡張イベント(unique_ptr) をまとめた variant
     using Events = std::variant<
         WindowDefaultEvent::ActivateEvent,
@@ -88,7 +88,7 @@ public:
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *directXCommon) { sDirectXCommon = directXCommon; }
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
     static void SetPipelineManager(Passkey<GraphicsEngine>, PipelineManager *pm) { sPipelineManager = pm; }
-    
+
     /// @brief 全ウィンドウ破棄
     static void AllDestroy(Passkey<GameEngine>);
     /// @brief HWNDからウィンドウインスタンスを取得
@@ -99,6 +99,8 @@ public:
     /// @param title ウィンドウタイトル
     /// @return 一致するウィンドウインスタンスへのポインタのリスト。存在しない場合は空のリスト
     static std::vector<Window *> GetWindows(const std::string &title);
+    /// @brief 現在のウィンドウ数を取得
+    static size_t GetWindowCount();
 
     /// @brief 指定のHWNDのウィンドウが存在するか
     /// @param hwnd ウィンドウハンドル
@@ -114,6 +116,25 @@ public:
     static void Update(Passkey<GameEngine>);
     /// @brief ウィンドウ描画処理
     static void Draw(Passkey<GameEngine>);
+    /// @brief 破棄反映処理
+    static void CommitDestroy(Passkey<GameEngine>);
+
+    /// @brief 通常ウィンドウ生成
+    /// @param title ウィンドウタイトル
+    /// @param width ウィンドウ幅
+    /// @param height ウィンドウ高さ
+    /// @param style ウィンドウスタイル
+    /// @param iconPath アイコンパス
+    /// @return 生成されたウィンドウインスタンスへのポインタ
+    static Window *CreateNormal(const std::string &title = "", int32_t width = 0, int32_t height = 0, DWORD style = 0, const std::string &iconPath = "");
+    /// @brief オーバーレイウィンドウ生成
+    /// @param title ウィンドウタイトル
+    /// @param width ウィンドウ幅
+    /// @param height ウィンドウ高さ
+    /// @param clickThrough 通常クリック透過設定
+    /// @param iconPath アイコンパス
+    /// @return 生成されたウィンドウインスタンスへのポインタ
+    static Window *CreateOverlay(const std::string &title = "", int32_t width = 0, int32_t height = 0, bool clickThrough = false, const std::string &iconPath = "");
 
     /// @brief コンストラクタ（Window限定）
     /// @param windowType ウィンドウの種類
@@ -130,39 +151,15 @@ public:
         DWORD windowStyle = WS_OVERLAPPEDWINDOW,
         const std::wstring &iconPath = L"");
     ~Window();
-    
-    /// @brief 通常ウィンドウの作成
-    /// @param title ウィンドウタイトル
-    /// @param width ウィンドウ幅
-    /// @param height ウィンドウ高さ
-    /// @param style ウィンドウスタイル
-    /// @param iconPath アイコンパス
-    /// @return ウィンドウインスタンスへのポインタ
-    static Window *CreateNormal(
-        const std::string &title = "",
-        int32_t width = 0,
-        int32_t height = 0,
-        DWORD style = 0,
-        const std::string &iconPath = "");
 
-    /// @brief DirectComposition のコンテンツを合成するためのオーバーレイウィンドウを作成
-    /// @param title ウィンドウタイトル
-    /// @param width ウィンドウ幅
-    /// @param height ウィンドウ高さ
-    /// @param clickThrough クリック透過フラグ。true にするとウィンドウがクリックを受け付けなくなる
-    /// @param iconPath アイコンパス
-    static Window *CreateCompositionOverlay(
-        const std::string &title = "",
-        int32_t width = 0,
-        int32_t height = 0,
-        bool clickThrough = false,
-        const std::string &iconPath = "");
+    // ウィンドウの破棄通知
+    void DestroyNotify();
+    /// @brief 破棄予定かどうか
+    bool IsPendingDestroy() const noexcept { return isPendingDestroy_; }
 
-    void Destroy();
-
-    /// @brief ウィンドウプロシージャから呼び出されるイベント処理
+    /// @brief WindowsAPIから呼ばれるイベントハンドラ
     std::optional<LRESULT> HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam);
-    
+
     /// @brief サイズ変更モードを設定する
     void SetSizeChangeMode(SizeChangeMode sizeChangeMode);
     /// @brief ウィンドウモードを設定する
@@ -179,14 +176,25 @@ public:
     /// @param x ウィンドウ左上のX座標
     /// @param y ウィンドウ左上のY座標
     void SetWindowPosition(int32_t x, int32_t y);
-    
-    //--------- パイプライン関連 ---------//
-    /// @brief パイプラインバインダー初期化（コマンドリスト設定後に呼ぶ）
-    void InitializePipelineBinder(ID3D12GraphicsCommandList *commandList) {
-        pipelineBinder_.SetManager(sPipelineManager);
-        pipelineBinder_.SetCommandList(commandList);
-        pipelineBinder_.Invalidate(); // 初回は必ず再バインド
-    }
+    /// @brief ウィンドウの表示/非表示を切り替える
+    void SetWindowVisible(bool visible);
+	/// @brief 親ウィンドウを設定する
+	/// @param parentHwnd 親ウィンドウのHWND
+	void SetWindowParent(HWND parentHwnd, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
+    /// @brief 親ウィンドウを設定する
+    /// @param parentWindow 親ウィンドウのポインタ
+    void SetWindowParent(Window *parentWindow, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
+    /// @brief 子ウィンドウを設定する
+    /// @param childHwnd 子ウィンドウのHWND
+    void SetWindowChild(HWND childHwnd, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
+    /// @brief 子ウィンドウを設定する
+    /// @param childWindow 子ウィンドウのポインタ
+    void SetWindowChild(Window *childWindow, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
+    /// @brief 親ウィンドウを解除する
+    void ClearWindowParent(bool applyNative = true); // 親解除
+    /// @brief 子ウィンドウを解除する
+    void ClearWindowChild(bool applyNative = true);  // 全子解除
+
     /// @brief パイプラインバインダー取得
     PipelineBinder *GetPipelineBinder() { return &pipelineBinder_; }
     const PipelineBinder *GetPipelineBinder() const { return &pipelineBinder_; }
@@ -280,6 +288,12 @@ public:
     bool IsMinimized() const noexcept { return HasMessage(WM_SIZE) && (messages_.at(WM_SIZE).wparam == SIZE_MINIMIZED); }
     /// @brief ウィンドウが最大化されたかどうかを取得する
     bool IsMaximized() const noexcept { return HasMessage(WM_SIZE) && (messages_.at(WM_SIZE).wparam == SIZE_MAXIMIZED); }
+    /// @brief ウィンドウが表示されているかどうかを取得する
+    bool IsVisible() const noexcept { return IsWindowVisible(descriptor_.hwnd) != FALSE; }
+
+    // 親子取得
+    Window *GetParentWindow() const noexcept { return parentWindow_; }
+    const std::vector<Window*> &GetChildWindows() const noexcept { return childWindows_; }
 
 private:
     static constexpr size_t kMaxMessages = 512;
@@ -311,6 +325,8 @@ private:
         int32_t height,
         DWORD windowStyle,
         const std::wstring &iconPath);
+    /// @brief パイプラインバインダー初期化（コマンドリスト設定後に呼ぶ）
+    void InitializePipelineBinder();
 
     /// @brief ウィンドウのメッセージクリア
     void ClearMessages() { messages_.clear(); }
@@ -324,6 +340,11 @@ private:
     /// @brief ウィンドウサイズの調整
     void AdjustWindowSize();
 
+    // 親子関係管理ヘルパー
+    void DetachFromParentUnsafe(bool applyNative = true);
+    void DetachAllChildrenUnsafe(bool applyNative = true);
+    void RemoveChildPointerUnsafe(Window *child);
+
     // ウィンドウ関連
     WindowDescriptor descriptor_{};
     // サイズ関連
@@ -332,7 +353,7 @@ private:
     std::unordered_map<UINT, WindowMessage> messages_;
     
     // DX12スワップチェーン
-    DX12SwapChain *dx12SwapChain_;
+    DX12SwapChain *dx12SwapChain_ = nullptr;
 
     // 状態管理
     WindowType windowType_ = WindowType::Normal;
@@ -347,6 +368,13 @@ private:
 
     // パイプラインバインダー（ウィンドウ単位）
     PipelineBinder pipelineBinder_{};
+
+    // 親子管理データ
+    Window *parentWindow_ = nullptr;
+    std::vector<Window*> childWindows_{};
+
+    // 破棄通知フラグ
+    bool isPendingDestroy_ = false;
 };
 
 } // namespace KashipanEngine

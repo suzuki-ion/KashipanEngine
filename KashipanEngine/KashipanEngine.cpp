@@ -25,7 +25,7 @@ int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
     //--------- エンジン実行 ---------//
 
     std::unique_ptr<GameEngine> engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
-    int code = engine->Execute();
+    int code = engine->Execute({});
 
     //--------- エンジン終了 ---------//
 

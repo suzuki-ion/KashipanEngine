@@ -49,12 +49,30 @@ inline void LoadWindowSettings(const JSON &rootJSON, EngineSettings &settings) {
     settings.window.initialWindowIconPath = windowJSON.value("initialWindowIconPath", settings.window.initialWindowIconPath);
     // ウィンドウスタイルの読み込み
     settings.window.initialWindowStyle = 0;
+    // ログ用
+    std::string styleNames;
     for (const auto &styleName : windowJSON.value("initialWindowStyle", std::vector<std::string>{})) {
         auto it = kWindowStyleMap.find(styleName);
         if (it != kWindowStyleMap.end()) {
             settings.window.initialWindowStyle |= it->second;
+            if (!styleNames.empty()) {
+                styleNames += " | ";
+            }
+            styleNames += styleName;
         }
     }
+    if (styleNames.empty()) {
+        styleNames = "WS_NONE";
+    }
+
+    LogSeparator();
+    Log("Window", LogSeverity::Info);
+    LogSeparator();
+    Log("Initial Window Title: " + settings.window.initialWindowTitle, LogSeverity::Info);
+    Log("Initial Window Width: " + std::to_string(settings.window.initialWindowWidth), LogSeverity::Info);
+    Log("Initial Window Height: " + std::to_string(settings.window.initialWindowHeight), LogSeverity::Info);
+    Log("Initial Window Style: " + styleNames, LogSeverity::Info);
+    Log("Initial Window Icon Path: " + settings.window.initialWindowIconPath, LogSeverity::Info);
 }
 
 } // namespace KashipanEngine

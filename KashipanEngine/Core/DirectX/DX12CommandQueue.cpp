@@ -34,9 +34,6 @@ void DX12CommandQueue::ExecuteCommandLists(Passkey<DirectXCommon>, const std::ve
         return;
     }
 
-    // D3D12 ERROR #906 回避:
-    // 1回の ExecuteCommandLists で SwapChain に書き込めるのは最大8個まで。
-    // 安全側に 8 個ずつに分割して順次送る。
     size_t i = 0;
     while (i < lists.size()) {
         size_t remaining = lists.size() - i;

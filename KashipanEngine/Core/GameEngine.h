@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <functional>
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
 #include "Graphics/GraphicsEngine.h"
@@ -14,9 +15,14 @@ public:
     GameEngine(PasskeyForGameEngineMain);
     ~GameEngine();
 
+    GameEngine(const GameEngine &) = delete;
+    GameEngine &operator=(const GameEngine &) = delete;
+    GameEngine(GameEngine &&) = delete;
+    GameEngine &operator=(GameEngine &&) = delete;
+
     /// @brief ゲームエンジン実行用関数
     /// @return 実行結果コード
-    int Execute();
+    int Execute(PasskeyForGameEngineMain);
 
     /// @brief ゲームループ実行関数
     void GameLoopRun();
@@ -27,12 +33,12 @@ public:
     /// @brief ゲームループ再開関数
     void GameLoopResume();
 
-private:
-    GameEngine(const GameEngine &) = delete;
-    GameEngine &operator=(const GameEngine &) = delete;
-    GameEngine(GameEngine &&) = delete;
-    GameEngine &operator=(GameEngine &&) = delete;
+    /// @brief ゲームループ終了条件設定
+    void SetGameLoopEndCondition(const std::function<bool()> &func) {
+        gameLoopEndConditionFunction_ = func;
+    }
 
+private:
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();
     /// @brief ゲームループ描画処理
@@ -45,13 +51,13 @@ private:
     /// @brief グラフィックスエンジンクラス
     std::unique_ptr<GraphicsEngine> graphicsEngine_;
 
-    /// @brief メインウィンドウ
-    Window *mainWindow_ = nullptr;
-
     /// @brief ゲームループ実行フラグ
     bool isGameLoopRunning_ = false;
     /// @brief ゲームループ一時停止フラグ
     bool isGameLoopPaused_ = false;
+
+    /// @brief ゲームループ終了条件関数
+    std::function<bool()> gameLoopEndConditionFunction_;
 };
 
 } // namespace KashipanEngine

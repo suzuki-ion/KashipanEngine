@@ -189,6 +189,9 @@
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12SwapChain.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Renderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -601,5 +604,10 @@
     <None Include="Assets\KashipanEngine\PipelineSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Compute.Empty.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\ComputePipelineState\Default.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest\Compute.hlsl" />
   </ItemGroup>
 </Project>

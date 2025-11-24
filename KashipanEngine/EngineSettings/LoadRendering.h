@@ -26,6 +26,22 @@ inline void LoadRenderingSettings(const JSON &rootJSON, EngineSettings &settings
     settings.rendering.rtvDescriptorHeapSize = renderingJSON.value("rtvDescriptorHeapSize", settings.rendering.rtvDescriptorHeapSize);
     settings.rendering.dsvDescriptorHeapSize = renderingJSON.value("dsvDescriptorHeapSize", settings.rendering.dsvDescriptorHeapSize);
     settings.rendering.srvDescriptorHeapSize = renderingJSON.value("srvDescriptorHeapSize", settings.rendering.srvDescriptorHeapSize);
+
+    LogSeparator();
+    Log("Rendering", LogSeverity::Info);
+    LogSeparator();
+    Log("Default Clear Color: (" +
+        std::to_string(settings.rendering.defaultClearColor[0]) + ", " +
+        std::to_string(settings.rendering.defaultClearColor[1]) + ", " +
+        std::to_string(settings.rendering.defaultClearColor[2]) + ", " +
+        std::to_string(settings.rendering.defaultClearColor[3]) + ")",
+        LogSeverity::Info);
+    Log("Default Enable VSync: " + std::string(settings.rendering.defaultEnableVSync ? "true" : "false"), LogSeverity::Info);
+    Log("Default Max FPS: " + std::to_string(settings.rendering.defaultMaxFPS), LogSeverity::Info);
+    Log("Pipeline Settings Path: " + settings.rendering.pipelineSettingsPath, LogSeverity::Info);
+    Log("RTV Descriptor Heap Size: " + std::to_string(settings.rendering.rtvDescriptorHeapSize), LogSeverity::Info);
+    Log("DSV Descriptor Heap Size: " + std::to_string(settings.rendering.dsvDescriptorHeapSize), LogSeverity::Info);
+    Log("SRV Descriptor Heap Size: " + std::to_string(settings.rendering.srvDescriptorHeapSize), LogSeverity::Info);
 }
 
 } // namespace KashipanEngine

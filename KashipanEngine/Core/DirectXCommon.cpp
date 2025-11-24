@@ -45,7 +45,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
 
     IGraphicsResource::SetDevice({}, dx12Device_->GetDevice());
     
-    auto settings = GetEngineSettings().rendering;
+    auto &settings = GetEngineSettings().rendering;
     RenderTargetResource::SetDefaultClearColor(Passkey<DirectXCommon>{}, settings.defaultClearColor);
 
     RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.rtvDescriptorHeapSize);
@@ -101,10 +101,10 @@ DirectXCommon::~DirectXCommon() {
 }
 
 void DirectXCommon::BeginDraw(Passkey<GameEngine>) {
-    DestroyPendingSwapChains();
 }
 
 void DirectXCommon::EndDraw(Passkey<GameEngine>) {
+    DestroyPendingSwapChains();
     ExecuteCommand();
 }
 
@@ -145,6 +145,10 @@ void DirectXCommon::DestroySwapChainSignal(Passkey<Window>, HWND hwnd) {
 }
 
 void DirectXCommon::DestroyPendingSwapChains() {
+    // 破棄対象がある場合は必ずGPUの処理完了を待つ
+    if (sPendingDestroySwapChains.empty()) return;
+    WaitForFence();
+
     for (auto hwnd : sPendingDestroySwapChains) {
         auto it = sHwndToSwapChainIndex.find(hwnd);
         if (it != sHwndToSwapChainIndex.end()) {
@@ -174,7 +178,7 @@ void DirectXCommon::ExecuteCommand() {
 
     std::vector<ID3D12CommandList*> lists;
     for (auto &sc : sSwapChains) {
-        if (sc && sc->IsCreated()) {
+        if (sc && sc->IsCreated() && !sc->IsDrawing()) {
             if (auto *cl = sc->GetRecordedCommandList(Passkey<DirectXCommon>{})) {
                 lists.push_back(cl);
             }

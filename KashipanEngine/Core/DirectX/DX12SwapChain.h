@@ -38,7 +38,9 @@ public:
     }
 
     /// @brief 遅延初期化用コンストラクタ (HWND 未決定)
-    DX12SwapChain(Passkey<DirectXCommon>, int32_t bufferCount = 2) : bufferCount_(bufferCount) {}
+    DX12SwapChain(Passkey<DirectXCommon>, int32_t bufferCount = 2) : bufferCount_(bufferCount) {
+        InitializeCommandObjects();
+    }
     ~DX12SwapChain() { DestroyInternal(); }
 
     DX12SwapChain(const DX12SwapChain &) = delete;
@@ -52,6 +54,8 @@ public:
     void Destroy(Passkey<DirectXCommon>);
     /// @brief 生成済みか
     bool IsCreated() const noexcept { return isCreated_; }
+    /// @brief 描画中か
+    bool IsDrawing() const noexcept { return isDrawing_; }
 
     /// @brief VSync有効化設定
     void SetVSyncEnabled(bool enabled) { enableVSync_ = enabled; }
@@ -129,6 +133,7 @@ private:
     std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> commandAllocators_;
 
     bool isCreated_ = false;
+    bool isDrawing_ = false;
 };
 
 } // namespace KashipanEngine

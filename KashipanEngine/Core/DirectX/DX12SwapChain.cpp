@@ -33,7 +33,6 @@ void DX12SwapChain::AttachWindowAndCreate(Passkey<DirectXCommon>, SwapChainType 
     SetViewportAndScissorRect();
     CreateBackBuffers();
     CreateDepthStencilBuffer();
-    InitializeCommandObjects();
 
     isCreated_ = true;
     Log(Translation("engine.directx.swapchain.initialize.end"), LogSeverity::Debug);
@@ -55,12 +54,11 @@ void DX12SwapChain::DestroyInternal() {
     depthStencilBuffer_.reset();
     backBuffers_.clear();
     swapChain_.Reset();
-    commandList_.Reset();
-    commandAllocators_.clear();
     dcompHost_.reset();
 }
 
 void DX12SwapChain::InitializeCommandObjects() {
+    LogScope scope;
     Log(Translation("engine.directx.swapchain.commandallocator.initialize.start"), LogSeverity::Debug);
     commandAllocators_.resize(static_cast<size_t>(bufferCount_));
     for (int i = 0; i < bufferCount_; ++i) {
@@ -132,7 +130,7 @@ void DX12SwapChain::ResetViewportAndScissor() {
 }
 
 void DX12SwapChain::BeginDraw(Passkey<Window>) {
-    if (!isCreated_) return;
+    if (!isCreated_ || isDrawing_) return;
     currentBufferIndex_ = swapChain_->GetCurrentBackBufferIndex();
     auto &allocator = commandAllocators_[currentBufferIndex_];
     HRESULT hr = allocator->Reset();
@@ -157,16 +155,19 @@ void DX12SwapChain::BeginDraw(Passkey<Window>) {
 
     commandList_->RSSetViewports(1, &viewport_);
     commandList_->RSSetScissorRects(1, &scissorRect_);
+
+    isDrawing_ = true;
 }
 
 void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
-    if (!isCreated_) return;
+    if (!isCreated_ || !isDrawing_) return;
     backBuffers_[currentBufferIndex_]->TransitionToNext();
     HRESULT hr = commandList_->Close();
     if (FAILED(hr)) {
         Log(Translation("engine.directx.commandlist.close.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to close command list in DX12 swap chain.");
     }
+    isDrawing_ = false;
 }
 
 void DX12SwapChain::Present(Passkey<DirectXCommon>) {

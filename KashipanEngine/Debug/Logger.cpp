@@ -463,7 +463,7 @@ void FlushPendingScopeEnters() {
     while (first < sScopeFrames.size() && sScopeFrames[first].enteredFlushed) ++first;
     for (size_t i = first; i < sScopeFrames.size(); ++i) {
         auto &frame = sScopeFrames[i];
-        WriteLog(BuildLogLine(&frame, LogSeverity::Debug, "Entering scope."));
+        WriteLog(BuildLogLine(&frame, LogSeverity::Info, "Entering scope."));
         frame.enteredFlushed = true;
     }
 }

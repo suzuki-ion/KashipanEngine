@@ -20,7 +20,7 @@ std::optional<LRESULT> ClickThroughEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*
 }
 
 std::optional<LRESULT> CloseEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM /*lparam*/) {
-    GetWindow()->Destroy();
+    GetWindow()->DestroyNotify();
     return 0;
 }
 
@@ -127,7 +127,7 @@ std::optional<LRESULT> SysCommandCloseEvent::OnEvent(UINT /*msg*/, WPARAM wparam
         MB_YESNO | MB_ICONQUESTION
     );
     if (result == IDYES) {
-        GetWindow()->Destroy();
+        GetWindow()->DestroyNotify();
     }
     return 0;
 }
@@ -136,7 +136,7 @@ std::optional<LRESULT> SysCommandCloseEventSimple::OnEvent(UINT /*msg*/, WPARAM 
     if (wparam != SC_CLOSE) {
         return std::nullopt;
     }
-    GetWindow()->Destroy();
+    GetWindow()->DestroyNotify();
     return 0;
 }
 

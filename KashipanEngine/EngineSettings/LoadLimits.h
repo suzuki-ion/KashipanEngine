@@ -14,6 +14,16 @@ inline void LoadLimitsSettings(const JSON &rootJSON, EngineSettings &settings) {
     settings.limits.maxGameObjects = limitsJSON.value("maxGameObjects", settings.limits.maxGameObjects);
     settings.limits.maxComponentsPerGameObject = limitsJSON.value("maxComponentsPerGameObject", settings.limits.maxComponentsPerGameObject);
     settings.limits.maxWindows = limitsJSON.value("maxWindows", settings.limits.maxWindows);
+
+    LogSeparator();
+    Log("Limits", LogSeverity::Info);
+    LogSeparator();
+    Log("Max Textures: " + std::to_string(settings.limits.maxTextures), LogSeverity::Info);
+    Log("Max Sounds: " + std::to_string(settings.limits.maxSounds), LogSeverity::Info);
+    Log("Max Models: " + std::to_string(settings.limits.maxModels), LogSeverity::Info);
+    Log("Max Game Objects: " + std::to_string(settings.limits.maxGameObjects), LogSeverity::Info);
+    Log("Max Components Per Game Object: " + std::to_string(settings.limits.maxComponentsPerGameObject), LogSeverity::Info);
+    Log("Max Windows: " + std::to_string(settings.limits.maxWindows), LogSeverity::Info);
 }
 
 } // namespace KashipanEngine

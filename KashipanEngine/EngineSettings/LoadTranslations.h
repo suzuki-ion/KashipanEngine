@@ -14,6 +14,13 @@ inline void LoadTranslationsSettings(const JSON &rootJSON, EngineSettings &setti
         settings.translations.languageFilePaths[lang] = path;
         LoadTranslationFile(path);
     }
+
+    LogSeparator();
+    Log("Translations", LogSeverity::Info);
+    LogSeparator();
+    for (const auto &[lang, path] : settings.translations.languageFilePaths) {
+        Log("Language: " + lang + ", File Path: " + path, LogSeverity::Info);
+    }
 }
 
 } // namespace KashipanEngine

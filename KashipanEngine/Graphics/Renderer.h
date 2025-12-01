@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <windows.h>
+#include <optional>
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 
@@ -29,21 +30,21 @@ struct RenderCommand final {
 
 /// @brief 2D描画用レンダーパス情報構造体
 struct RenderPassInfo2D final {
-    //RenderPassInfo2D(Passkey<GameObject2D>) {}
+    RenderPassInfo2D(Passkey<GameObject2D>) {}
     Window *window = nullptr;   //< 描画先ウィンドウ
     std::string pipelineName;   //< 使用するパイプライン名
     std::string passName;       //< パス名（デバッグ用）
-    std::function<RenderCommand(ShaderVariableBinder &, PipelineBinder &)> renderFunction; //< 描画関数
+    std::function<std::optional<RenderCommand>(ShaderVariableBinder &, PipelineBinder &)> renderFunction; //< 描画関数
     std::function<bool()> renderConditionFunction; //< 描画条件関数（任意。指定しない場合は常に描画）
 };
 
 /// @brief 3D描画用レンダーパス情報構造体
 struct RenderPassInfo3D final {
-    //RenderPassInfo3D(Passkey<GameObject3D>) {}
+    RenderPassInfo3D(Passkey<GameObject3D>) {}
     Window *window = nullptr;   //< 描画先ウィンドウ
     std::string pipelineName;   //< 使用するパイプライン名
     std::string passName;       //< パス名（デバッグ用）
-    std::function<RenderCommand(ShaderVariableBinder &, PipelineBinder &)> renderFunction; //< 描画関数
+    std::function<std::optional<RenderCommand>(ShaderVariableBinder &, PipelineBinder &)> renderFunction; //< 描画関数
     std::function<bool()> renderConditionFunction; //< 描画条件関数（任意。指定しない場合は常に描画）
 };
 

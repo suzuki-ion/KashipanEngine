@@ -20,7 +20,7 @@ std::vector<HWND> sPendingDestroy;
 Window::Window(Passkey<Window>, WindowType windowType, const std::wstring &title, int32_t width, int32_t height, DWORD windowStyle, const std::wstring &iconPath) {
     LogScope scope;
     bool result = InitializeWindow(sWindowsAPI->WindowProc, windowType, title, width, height, windowStyle, iconPath);
-    assert(result && "Window initialization failed");
+    if (!result) assert("Window initialization failed");
     messages_.reserve(kMaxMessages);
     eventHandlers_.reserve(kMaxMessages);
 

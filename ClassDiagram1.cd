@@ -1,0 +1,767 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="KashipanEngine::`anonymous-namespace'::RandomEngineInitializer" Collapsed="true">
+    <Position X="31.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\RandomValue.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::`anonymous-namespace'::Language" Collapsed="true">
+    <Position X="36.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACAAAAAhAAgAAAAAAAAAAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\Translation.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DX12SwapChain" Collapsed="true">
+    <Position X="29.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>wDIPQKAAiDIAU5AgRAwbCAQAGIBACAAECJAgAAsAAGk=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DX12SwapChain.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DCompHost" Collapsed="true">
+    <Position X="31.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAEAAAAAAAAAAAAQAAEAAAAAAABAAAAAgFABABIA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DCompHost.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DirectXCommon" Collapsed="true">
+    <Position X="33.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>oIAAAAAAAAAIAgAAAAADBECAAAAQACgJAAAggAIAAgA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectXCommon.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DescriptorHeapBase" Collapsed="true">
+    <Position X="2.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQCAAAACAAAAAAAAAAAAAAAIAAAAQAAAKgJCAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::HeapDSV" Collapsed="true">
+    <Position X="0.5" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAggAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DescriptorHeaps\HeapDSV.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::HeapRTV" Collapsed="true">
+    <Position X="2.75" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DescriptorHeaps\HeapRTV.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::HeapSRV" Collapsed="true">
+    <Position X="5" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAQAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSRV.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DX12CommandQueue" Collapsed="true">
+    <Position X="35" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAgAEAQAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DX12CommandQueue.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DX12Device" Collapsed="true">
+    <Position X="36.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAEAAAAAAAAAAAAAAAgAABAgBAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DX12Device.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DX12DXGIs" Collapsed="true">
+    <Position X="26.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAQAAAACAAAAAAAAAAAAAAAIAAgAAQABAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DX12DXGIs.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DX12Fence" Collapsed="true">
+    <Position X="28" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAgAAAACAgAAAAAAACYAACAAAAAgAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DX12Fence.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::Window" Collapsed="true">
+    <Position X="31.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ISVIRQ0GAQxCVwAQGRoSCDHA2SB9UElBcZIqSEGAIYA=</HashCode>
+      <FileName>KashipanEngine\Core\Window.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::IWindowEvent" Collapsed="true">
+    <Position X="12.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAIAIAAEAAAAAAACAAQAAAAAEAAAqAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::GameEngine" Collapsed="true">
+    <Position X="31.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAKAEAAABAAAIAQhAAAAAAAiASAAgAAAAAAgBACIAAA=</HashCode>
+      <FileName>KashipanEngine\Core\GameEngine.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::GraphicsEngine" Collapsed="true">
+    <Position X="33.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAgAAAagAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\GraphicsEngine.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::Renderer" Collapsed="true">
+    <Position X="33.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>MCAgAAgEAAAAAAAAMEAAAAAAAAABAABAIACgAAAoAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Renderer.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowsAPI" Collapsed="true">
+    <Position X="33.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAJAEAAAAAAAAAAAAAEBAAAAAAAAAAAAwAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::PipelineManager" Collapsed="true">
+    <Position X="29.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAFBAAAgQAAAAAAQgAAAAAQAASAAIAQBAAAIQA=</HashCode>
+      <FileName>KashipanEngine\Graphics\PipelineManager.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::LogScope" Collapsed="true">
+    <Position X="26.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAAAAAAAEAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ=</HashCode>
+      <FileName>KashipanEngine\Debug\Logger.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::PipelineBinder" Collapsed="true">
+    <Position X="26.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAgAAAAAMgAAAIABAAgAIAAAAAAAAg=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::PipelineCreator" Collapsed="true">
+    <Position X="28" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAgAAAAAAAAAAAAAAAAAAAAQAAAAAAAABABQAQA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::ComponentsPresetContainer" Collapsed="true">
+    <Position X="29.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAIFCLkUejApckREiSASGEkiCj4GUgCAAAFHggBANCQ=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\ComponentsPresetContainer.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::ShaderCompiler" Collapsed="true">
+    <Position X="35" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAKAAAAAAAAAAQAAQAAAABAAAAAAAQAAABBAARAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::ShaderVariableBinder" Collapsed="true">
+    <Position X="36.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAgAABAIAAAAAgAACAAAAAAABAAAAABAAEAAAIAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::IGraphicsResource" Collapsed="true">
+    <Position X="7.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIoAAAEIAAAAACAgAAKgAAQgAAKAAkgEAABgjkACBAg=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\IGraphicsResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::ConstantBufferResource" Collapsed="true">
+    <Position X="0.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAQAAACAAAQAAAAAAgAACAAACBIAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\ConstantBufferResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::DepthStencilResource" Collapsed="true">
+    <Position X="3" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQACAAAAAAQAgQAQEAQAIAAAAAAAAAAACAIAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\DepthStencilResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::IndexBufferResource" Collapsed="true">
+    <Position X="5.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAQAAAAAAAQAAAAAAAEEAAAADBAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\IndexBufferResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::RenderTargetResource" Collapsed="true">
+    <Position X="7.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAQAAAJAAQAgQAAAQQBAAgAAAAAAAAACAMAAAEA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\RenderTargetResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::ShaderResourceResource" Collapsed="true">
+    <Position X="9.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgQAoQAAAAQAAAAAAAAAAAAACAIAAAAQ=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\ShaderResourceResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::UnorderedAccessResource" Collapsed="true">
+    <Position X="12" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAAAAAQAgQAAAAQAAAAAAAABAAAACAIAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\UnorderedAccessResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::VertexBufferResource" Collapsed="true">
+    <Position X="14.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAQAAAAAAIQAAAAAAAAAAAAADBAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\VertexBufferResource.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::SRTMatrix4x4" Collapsed="true">
+    <Position X="26.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAkAAAAgAAAAAAgQEAACIAAEAAAUAgAgAAOAI=</HashCode>
+      <FileName>KashipanEngine\Math\SRTMatrix4x4.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::ISceneComponents" Collapsed="true">
+    <Position X="35" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAEAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Scene\Components\ISceneComponents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::Passkey&lt;T&gt;" Collapsed="true">
+    <Position X="31.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\Passkeys.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::PasskeyForWinMain" Collapsed="true">
+    <Position X="36.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\Passkeys.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::PasskeyForGameEngineMain" Collapsed="true">
+    <Position X="35" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\Passkeys.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::PasskeyForCrashHandler" Collapsed="true">
+    <Position X="33.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\Passkeys.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::TemplateLiteral" Collapsed="true">
+    <Position X="28" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAEBABAAEAAIAAAAAEEAAAAABAABAAQGAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\TemplateLiteral.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::ActivateEvent" Collapsed="true">
+    <Position X="21.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAEAAAAAAAAAACAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::ClickThroughEvent" Collapsed="true">
+    <Position X="23.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAAEAAAAAABAAAAAEAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::CloseEvent" Collapsed="true">
+    <Position X="1.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAEAAEAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::DestroyEvent" Collapsed="true">
+    <Position X="3.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAQAAAAAAEAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::EnterSizeMoveEvent" Collapsed="true">
+    <Position X="5.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAEEAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::ExitSizeMoveEvent" Collapsed="true">
+    <Position X="8" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAgAAAAAAEAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::GetMinMaxInfoEvent" Collapsed="true">
+    <Position X="10.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAEAAAAAEAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::SizeEvent" Collapsed="true">
+    <Position X="12.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAACAEAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::SizingEvent" Collapsed="true">
+    <Position X="14.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAEAAAAAAAAAAABAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::SysCommandCloseEvent" Collapsed="true">
+    <Position X="17" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAEAAAAAAAAAAAQAAAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KashipanEngine::WindowDefaultEvent::SysCommandCloseEventSimple" Collapsed="true">
+    <Position X="19.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAIAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyStd::AnyUnorderedMap" Collapsed="true">
+    <Position X="26.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEEAAAACAAAAAAAAAIAIgAASAIEAACAAgAEgAAAAoAA=</HashCode>
+      <FileName>MyStd\AnyUnorderedMap.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyStd::AnyVector" Collapsed="true">
+    <Position X="28" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEEAAAECABAACAAAAIEAgAASAIEAACAAgAEiAAAAgAA=</HashCode>
+      <FileName>MyStd\AnyVector.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyStd::NameMap&lt;T&gt;" Collapsed="true">
+    <Position X="28" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEBAAAACAAAAhBBAAAIAAAAQCAGAAAAAAAABAABQAAA=</HashCode>
+      <FileName>MyStd\NameMap.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyStd::OnlyPointer&lt;T&gt;" Collapsed="true">
+    <Position X="29.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAAAAABABAAgAAAgAAAAAAAAAIAAAgAAAAAAA=</HashCode>
+      <FileName>MyStd\OnlyPointer.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyStd::VectorMap&lt;Key, Value&gt;" Collapsed="true">
+    <Position X="29.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAECABAAEAAAAIEIAAASAAEAAAAAiAERAAAIAAA=</HashCode>
+      <FileName>MyStd\VectorMap.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="KashipanEngine::`anonymous-namespace'::TaskbarWindow" Collapsed="true">
+    <Position X="33.25" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAAgAAAAAAAAAQAAAgAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::`anonymous-namespace'::ScopeFrame" Collapsed="true">
+    <Position X="33.25" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAAAAAAAAgAgAAAgAAAAAAAAAAIAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Debug\Logger.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::`anonymous-namespace'::ScopeInfo" Collapsed="true">
+    <Position X="35" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAIAAAAAAACAABAAAAAAAAgAAAAAAAAACAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Debug\Logger.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::`anonymous-namespace'::TokenInfo" Collapsed="true">
+    <Position X="26.25" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAQAAEAAAQAAAAAgYAAAEAAAAgACA=</HashCode>
+      <FileName>KashipanEngine\Utilities\TemplateLiteral.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::`anonymous-namespace'::BoolExprParser" Collapsed="true">
+    <Position X="26.25" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAChAIAAAAABAgIAAAAAAIAAAKAAACAAAIAAAAAAAQA=</HashCode>
+      <FileName>KashipanEngine\Utilities\TemplateLiteral.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::`anonymous-namespace'::LanguageData" Collapsed="true">
+    <Position X="33.25" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAIAAAAAAAAQAAAAAAAAQAAgAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\Translation.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::DescriptorHandleInfo" Collapsed="true">
+    <Position X="31.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEQAgAAAAAAAAAAAAAAAAAAAAAAgAAABhAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::D3DResourceLeakChecker" Collapsed="true">
+    <Position X="29.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\ResourceLeakChecker.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::WindowDescriptor" Collapsed="true">
+    <Position X="33.25" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAQAAAAAAAAAAAAAAAAAAIAAAAAAIAAAgAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowDescriptor.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::WindowSize" Collapsed="true">
+    <Position X="36.75" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABABAAAAAAAAAAAAAQAAgAAAAAAAgA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowSize.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::MonitorInfo" Collapsed="true">
+    <Position X="28" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAgIAAAABAAAAAQgTiAAAGAQAAEBAGABAAAAAAAIDAE=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::WindowMessage" Collapsed="true">
+    <Position X="35" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAQAAAAAAAAgAAAAAAAAAAAAAQAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\WindowsAPI\WindowMessage.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::LogSettings" Collapsed="true">
+    <Position X="35" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAAAAIAAAABAACAAIAAAgAAAAAAAEAAARAAA=</HashCode>
+      <FileName>KashipanEngine\Debug\LogSettings.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::EngineSettings" Collapsed="true">
+    <Position X="35" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAIAAAIAAAAAAAAAAAEAAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\EngineSettings.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::PipelineSet" Collapsed="true">
+    <Position X="35" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAAAgAgAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\PipelineInfo.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::PipelineInfo" Collapsed="true">
+    <Position X="33.25" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAAAAEAACAAAQAgQAFACAAAQAgAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\PipelineInfo.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::ShaderVariableBinding" Collapsed="true">
+    <Position X="29.75" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAABCAAAAAgAAAAAAAAAAQAAAAlEAAAMQAAABAAAAQ=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::ShaderBindLocation" Collapsed="true">
+    <Position X="36.75" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAAAACAAAAAAAACgAAEAAAAAAAAEAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::ShaderResourceKey" Collapsed="true">
+    <Position X="26.25" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAAAAAAAQAAAAABAAAAEAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::ShaderResourceKeyHasher" Collapsed="true">
+    <Position X="28" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::RenderPassInfo2D" Collapsed="true">
+    <Position X="26.25" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAQAAAAAAAAAAAAAAAIAAAAAAMAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Renderer.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::RenderPassInfo3D" Collapsed="true">
+    <Position X="28" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAQAAAAAAAAAAAAAAAIAAAAAAMAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Renderer.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Vector2" Collapsed="true">
+    <Position X="28" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAIAgAABAAAAEAAAAQBACAgAAABEgADgAAQQAAA=</HashCode>
+      <FileName>KashipanEngine\Math\Vector2.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Matrix3x3" Collapsed="true">
+    <Position X="36.75" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAABAAAAAAIYAQAAAAAAQGYAAkAgAAgAgAA=</HashCode>
+      <FileName>KashipanEngine\Math\Matrix3x3.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Vector3" Collapsed="true">
+    <Position X="29.75" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAIAgIAAAAAAEAAAAQRACAgAAABEgADgAQQQAAA=</HashCode>
+      <FileName>KashipanEngine\Math\Vector3.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Matrix4x4" Collapsed="true">
+    <Position X="26.25" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACAIBAAAABAIYAQAAAIAAAmYAAkAoAAgAiCA=</HashCode>
+      <FileName>KashipanEngine\Math\Matrix4x4.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Vector4" Collapsed="true">
+    <Position X="31.5" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAAAAAAAAAAAQAAAAAAAAAAgAhgAQAAAAA=</HashCode>
+      <FileName>KashipanEngine\Math\Vector4.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::CSVData" Collapsed="true">
+    <Position X="28" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAABIAAAAAAAAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\FileIO\CSV.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::DirectoryData" Collapsed="true">
+    <Position X="33.25" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAQgAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\FileIO\Directory.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::INIData" Collapsed="true">
+    <Position X="29.75" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAQEAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\FileIO\INI.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::RawFileData" Collapsed="true">
+    <Position X="36.75" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAIAAAAAAIAAAAAAAAAAAEAAAAAQAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\FileIO\RawFile.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::TextFileData" Collapsed="true">
+    <Position X="35" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAIAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\FileIO\TextFile.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::FunctionSignatureInfo" Collapsed="true">
+    <Position X="26.25" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABCAAAAAgAAAAAgAgAAAAAAAAEAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\SourceLocation.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::SourceLocationInfo" Collapsed="true">
+    <Position X="31.5" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAAQAIAAAAAAAAAAAAAAAAQAAAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\SourceLocation.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::TimeRecord" Collapsed="true">
+    <Position X="36.75" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAkAIAAAAAAAAAAAgAAAAAAAAQAAAAAAAAiAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Utilities\TimeUtils.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Pipeline::JsonParser::GraphicsPipelineStateParsedInfo" Collapsed="true">
+    <Position X="28" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEAAAAAAAAAAABAAAAABAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\JsonParser\GraphicsPipelineState.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Pipeline::JsonParser::InputLayoutParsedInfo" Collapsed="true">
+    <Position X="31.5" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAABAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAIAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\JsonParser\InputLayout.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Pipeline::JsonParser::RootParametersParsed" Collapsed="true">
+    <Position X="29.75" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQCAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\JsonParser\RootParameter.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Pipeline::JsonParser::RootSignatureParsed" Collapsed="true">
+    <Position X="31.5" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAAAAAAAAAAAAAAAABAAAAAAAAAgAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\JsonParser\RootSignature.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Pipeline::JsonParser::ParsedShaderStage" Collapsed="true">
+    <Position X="31.5" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEAAAAEAAAAAAAAAAAAQAAAAIAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\JsonParser\Shader.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KashipanEngine::Pipeline::JsonParser::ParsedShadersInfo" Collapsed="true">
+    <Position X="29.75" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAgAAAAAAAAAEAAAAAAAAAAAAAAACAAABAgAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\JsonParser\Shader.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="MyStd::Entry&lt;Key, Value&gt;" Collapsed="true">
+    <Position X="36.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAAAACAAAAQAEEAQAAAAAAACAABAAgAAABAAA=</HashCode>
+      <FileName>MyStd\VectorMap.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Enum Name="KashipanEngine::`anonymous-namespace'::TokenKind" Collapsed="true">
+    <Position X="26.25" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAAAAgAAAAIAAAAAAAAEAAAAAAAAABA=</HashCode>
+      <FileName>KashipanEngine\Utilities\TemplateLiteral.cpp</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::SwapChainType" Collapsed="true">
+    <Position X="36.75" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAABQ=</HashCode>
+      <FileName>KashipanEngine\Core\DirectX\DX12SwapChain.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::WindowType" Collapsed="true">
+    <Position X="29.75" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\Window.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::WindowMode" Collapsed="true">
+    <Position X="28" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAACAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\Window.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::SizeChangeMode" Collapsed="true">
+    <Position X="35" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAIAAQAAAAAAAEAAAA=</HashCode>
+      <FileName>KashipanEngine\Core\Window.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::LogDomain" Collapsed="true">
+    <Position X="28" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Debug\Logger.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::LogSeverity" Collapsed="true">
+    <Position X="29.75" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAYAAAAAAABAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>KashipanEngine\Debug\Logger.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::PipelineType" Collapsed="true">
+    <Position X="31.5" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Pipeline\PipelineInfo.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::ResourceViewType" Collapsed="true">
+    <Position X="33.25" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAAAAAAAAQAAAAAAAAAAgAAAAAAAAAAAAAGEkgA=</HashCode>
+      <FileName>KashipanEngine\Graphics\Resources\IGraphicsResource.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="KashipanEngine::FileType" Collapsed="true">
+    <Position X="26.25" Y="12" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BABYEEAIAEgIABIIgCAIAAAEAAAAAAAAAAACQQAABCQ=</HashCode>
+      <FileName>KashipanEngine\Utilities\FileIO\RawFile.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Yu Gothic UI" Size="9" />
+</ClassDiagram>

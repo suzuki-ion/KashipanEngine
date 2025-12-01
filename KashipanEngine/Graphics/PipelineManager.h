@@ -9,11 +9,12 @@
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/System/PipelineCreator.h"
-#include "Graphics/Pipeline/System/ShaderVariableMapCreator.h"
+#include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 
 namespace KashipanEngine {
 
 class GraphicsEngine;
+class Renderer;
 
 /// @brief パイプライン管理用クラス
 class PipelineManager {
@@ -28,33 +29,15 @@ public:
     void ReloadPipelines();
 
     /// @brief パイプライン情報の取得
-    [[nodiscard]] const PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }
+    const PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }
     /// @brief パイプラインの存在確認
-    [[nodiscard]] bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
+    bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
 
     /// @brief 指定のコマンドリストにパイプラインをセット（差分管理は PipelineBinder 側で行う想定）
     void ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName);
-
-    /// @brief 指定パイプラインのシェーダーから NameMap を構築して返す
-    /// @param pipelineName パイプライン名
-    /// @param appendSpace Space をキーへ付与するか ("name#s0")
-    /// @return NameMap<ShaderVariableBinding> （コピー）
-    [[nodiscard]] MyStd::NameMap<ShaderVariableBinding> BuildPipelineShaderVariableMap(const std::string &pipelineName, bool appendSpace = true) const {
-        auto it = pipelineInfos_.find(pipelineName);
-        if (it == pipelineInfos_.end()) return {};
-        MyStd::NameMap<ShaderVariableBinding> combined;
-        for (auto *shader : it->second.Shaders()) {
-            if (!shader) continue;
-            auto single = CreateShaderVariableMap(*shader, appendSpace);
-            // マージ（既存キーは上書きしない）
-            for (auto e = single.begin(); e != single.end(); ++e) {
-                const auto &k = e->key;
-                if (!combined.Contains(k)) {
-                    combined.Set(k, e->value);
-                }
-            }
-        }
-        return combined;
+    /// @brief シェーダーの変数バインダーを取得（Rendererから呼ばれる想定）
+    ShaderVariableBinder &GetShaderVariableBinder(Passkey<Renderer>, const std::string &pipelineName) {
+        return pipelineInfos_.at(pipelineName).GetVariableBinder();
     }
 
 private:

@@ -92,10 +92,14 @@ public:
     /// @brief シェーダーコンパイル結果情報構造体
     struct ShaderCompiledInfo {
         ShaderCompiledInfo(Passkey<ShaderCompiler>, uint32_t shaderID) : id(shaderID) {}
-        const ShaderReflectionInfo &GetReflectionInfo() const { return reflectionInfo; }
-        // PSO 設定用のバイトコードアクセス
+        /// @brief シェーダー名取得
+        const std::string &Name() const { return name; }
+        /// @brief バイトコード取得
         const void *GetBytecodePtr() const { return bytecode ? bytecode->GetBufferPointer() : nullptr; }
+        /// @brief バイトコードサイズ取得
         size_t GetBytecodeSize() const { return bytecode ? bytecode->GetBufferSize() : 0; }
+        /// @brief リフレクション情報
+        const ShaderReflectionInfo &GetReflectionInfo() const { return reflectionInfo; }
     private:
         friend class ShaderCompiler;
         const uint32_t id;                          ///< シェーダーID

@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
+#include "Graphics/Renderer.h"
 
 namespace KashipanEngine {
 
@@ -198,7 +199,8 @@ Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t he
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForHwnd, hwnd, windowWidth, windowHeight);
-    sWindowMap[hwnd]->InitializePipelineBinder();
+    auto cmdList = sWindowMap[hwnd]->dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{});
+    sRenderer->RegisterWindow(Passkey<Window>{}, hwnd, cmdList);
 
     Log(Translation("engine.window.create.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -245,7 +247,8 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
     sWindowMap[hwnd]->RegisterWindowEvent<WindowDefaultEvent::ClickThroughEvent>(clickThrough);
-    sWindowMap[hwnd]->InitializePipelineBinder();
+    auto cmdList = sWindowMap[hwnd]->dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{});
+    sRenderer->RegisterWindow(Passkey<Window>{}, hwnd, cmdList);
 
     Log(Translation("engine.window.create.overlay.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -330,6 +333,13 @@ void Window::SetWindowTitle(const std::wstring &title) {
     LogScope scope;
     titleW_ = title;
     descriptor_.title = ConvertString(title);
+    if (descriptor_.hwnd) SetWindowText(descriptor_.hwnd, titleW_.c_str());
+}
+
+void Window::SetWindowTitle(const std::string &title) {
+    LogScope scope;
+    titleW_ = ConvertString(title);
+    descriptor_.title = title;
     if (descriptor_.hwnd) SetWindowText(descriptor_.hwnd, titleW_.c_str());
 }
 
@@ -502,12 +512,6 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
     UpdateWindow(descriptor_.hwnd);
 
     return true;
-}
-
-void Window::InitializePipelineBinder() {
-    pipelineBinder_.SetManager(sPipelineManager);
-    pipelineBinder_.SetCommandList(dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{}));
-    pipelineBinder_.Invalidate();
 }
 
 void Window::ProcessMessage() {

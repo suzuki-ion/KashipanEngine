@@ -1,10 +1,11 @@
 #include "GameEngine.h"
 #include "EngineSettings.h"
 #include "Core/Window.h"
+#include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
+#include "Graphics/Renderer.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
 
 namespace KashipanEngine {
 namespace {
@@ -43,16 +44,14 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Window::SetDirectXCommon({}, directXCommon_.get());
 
     auto monitorInfo = windowsAPI_->QueryMonitorInfo();
-    Window *parentWindow = Window::CreateOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true);
-    parentWindow->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
-    Window *mainWindow = nullptr;
-    mainWindow = Window::CreateNormal();
-    mainWindow->SetWindowParent(parentWindow, false);
-    Window *window = nullptr;
-    for (int i = 0; i < 8; ++i) {
-        window = Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128);
-        window->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
-        window->SetWindowParent(parentWindow, false);
+    windows_.emplace_back(Window::CreateOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true));
+    windows_.front()->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
+    windows_.emplace_back(Window::CreateNormal("Main Window"));
+    windows_.back()->SetWindowParent(windows_.front(), false);
+    for (int i = 0; i < 4; ++i) {
+        windows_.emplace_back(Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128));
+        windows_.back()->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
+        windows_.back()->SetWindowParent(windows_.front(), false);
     }
 
     //--------- ゲームループ終了条件 ---------//
@@ -85,6 +84,16 @@ GameEngine::~GameEngine() {
 void GameEngine::GameLoopUpdate() {
     Window::Update({});
     UpdateDeltaTime({});
+
+    // テスト用更新処理
+    // ウィンドウタイトルにFPS表示
+    for (auto *window : windows_) {
+        if (window && window->IsExist(window) && window->GetWindowTitle() != "Main Window" && window->GetWindowTitle() != "Overlay Window") {
+            const float fps = 1.0f / GetDeltaTime();
+            window->SetWindowTitle(std::string("KashipanEngine - FPS: ") + std::to_string(static_cast<int>(fps)));
+        }
+    }
+
     if (!isGameLoopRunning_ || isGameLoopPaused_) {
         return;
     }

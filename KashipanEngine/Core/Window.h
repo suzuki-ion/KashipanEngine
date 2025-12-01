@@ -14,7 +14,6 @@
 #include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
-#include "Graphics/PipelineBinder.h"
 
 namespace KashipanEngine {
 
@@ -24,6 +23,7 @@ class DirectXCommon;
 class DX12SwapChain;
 class GraphicsEngine;
 class PipelineManager;
+class Renderer;
 
 /// @brief ウィンドウの種類
 enum class WindowType {
@@ -50,6 +50,7 @@ class Window final {
     static inline WindowsAPI *sWindowsAPI = nullptr;
     static inline DirectXCommon *sDirectXCommon = nullptr;
     static inline PipelineManager *sPipelineManager = nullptr;
+    static inline Renderer *sRenderer = nullptr;
 
     // 値保持する既定イベント + 拡張イベント(unique_ptr) をまとめた variant
     using Events = std::variant<
@@ -88,6 +89,7 @@ public:
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *directXCommon) { sDirectXCommon = directXCommon; }
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
     static void SetPipelineManager(Passkey<GraphicsEngine>, PipelineManager *pm) { sPipelineManager = pm; }
+    static void SetRenderer(Passkey<GraphicsEngine>, Renderer *renderer) { sRenderer = renderer; }
 
     /// @brief 全ウィンドウ破棄
     static void AllDestroy(Passkey<GameEngine>);
@@ -168,6 +170,9 @@ public:
     /// @brief ウィンドウタイトルを設定する
     /// @param title ウィンドウタイトル
     void SetWindowTitle(const std::wstring &title);
+    /// @brief ウィンドウタイトルを設定する
+    /// @param title ウィンドウタイトル
+    void SetWindowTitle(const std::string &title);
     /// @brief ウィンドウサイズを設定する
     /// @param width クライアント幅
     /// @param height クライアント高さ
@@ -194,10 +199,6 @@ public:
     void ClearWindowParent(bool applyNative = true); // 親解除
     /// @brief 子ウィンドウを解除する
     void ClearWindowChild(bool applyNative = true);  // 全子解除
-
-    /// @brief パイプラインバインダー取得
-    PipelineBinder *GetPipelineBinder() { return &pipelineBinder_; }
-    const PipelineBinder *GetPipelineBinder() const { return &pipelineBinder_; }
 
     /// @brief ウィンドウイベントを登録する（既定イベント型は値で、拡張イベントはunique_ptrで保持）
     template<class TEvent, class... Args>
@@ -256,6 +257,8 @@ public:
     WindowMode GetWindowMode() const noexcept { return windowMode_; }
     /// @brief サイズ変更モードを取得する
     SizeChangeMode GetSizeChangeMode() const noexcept { return sizeChangeMode_; }
+    /// @brief ウィンドウタイトルを取得する
+    const std::string &GetWindowTitle() const noexcept { return descriptor_.title; }
     /// @brief ウィンドウハンドルを取得する
     HWND GetWindowHandle() const noexcept { return descriptor_.hwnd; }
     /// @brief ウィンドウクラスを取得する
@@ -266,6 +269,8 @@ public:
     int32_t GetClientHeight() const noexcept { return size_.clientHeight; }
     /// @brief アスペクト比を取得する
     float GetAspectRatio() const noexcept { return size_.aspectRatio; }
+    /// @brief コマンドリストを取得する
+    ID3D12GraphicsCommandList *GetCommandList() const;
 
     /// @brief 指定のウィンドウスタイルを持っているかどうかをチェック
     bool HasWindowStyle(DWORD style) const noexcept { return (descriptor_.windowStyle & style) != 0; }
@@ -273,6 +278,10 @@ public:
     bool HasMessage(UINT msg) const { return messages_.find(msg) != messages_.end(); }
     /// @brief 指定のメッセージの情報を取得
     const WindowMessage &GetWindowMessage(UINT msg) const;
+
+    // 親子取得
+    Window *GetParentWindow() const noexcept { return parentWindow_; }
+    const std::vector<Window *> &GetChildWindows() const noexcept { return childWindows_; }
 
     /// @brief ウィンドウがアクティブかどうかを取得する
     bool IsActive() const noexcept { return HasMessage(WM_ACTIVATE); }
@@ -290,10 +299,6 @@ public:
     bool IsMaximized() const noexcept { return HasMessage(WM_SIZE) && (messages_.at(WM_SIZE).wparam == SIZE_MAXIMIZED); }
     /// @brief ウィンドウが表示されているかどうかを取得する
     bool IsVisible() const noexcept { return IsWindowVisible(descriptor_.hwnd) != FALSE; }
-
-    // 親子取得
-    Window *GetParentWindow() const noexcept { return parentWindow_; }
-    const std::vector<Window*> &GetChildWindows() const noexcept { return childWindows_; }
 
 private:
     static constexpr size_t kMaxMessages = 512;
@@ -325,8 +330,6 @@ private:
         int32_t height,
         DWORD windowStyle,
         const std::wstring &iconPath);
-    /// @brief パイプラインバインダー初期化（コマンドリスト設定後に呼ぶ）
-    void InitializePipelineBinder();
 
     /// @brief ウィンドウのメッセージクリア
     void ClearMessages() { messages_.clear(); }
@@ -365,9 +368,6 @@ private:
 
     // イベントハンドラマップ（既定イベント or ユーザーイベント）
     std::unordered_map<UINT, Events> eventHandlers_;
-
-    // パイプラインバインダー（ウィンドウ単位）
-    PipelineBinder pipelineBinder_{};
 
     // 親子管理データ
     Window *parentWindow_ = nullptr;

@@ -20,16 +20,15 @@ enum class ResourceViewType {
 /// @brief グラフィックのリソースインターフェース
 class IGraphicsResource {
     static inline ID3D12Device *device_ = nullptr;
+public:
+    static void SetDevice(Passkey<DirectXCommon>, ID3D12Device *device) { device_ = device; }
+    static void ClearAllResources(Passkey<DirectXCommon>);
+    virtual ~IGraphicsResource();
 
     IGraphicsResource(const IGraphicsResource &) = delete;
     IGraphicsResource &operator=(const IGraphicsResource &) = delete;
     IGraphicsResource(IGraphicsResource &&) = delete;
     IGraphicsResource &operator=(IGraphicsResource &&) = delete;
-
-public:
-    static void SetDevice(Passkey<DirectXCommon>, ID3D12Device *device) { device_ = device; }
-    static void ClearAllResources(Passkey<DirectXCommon>);
-    virtual ~IGraphicsResource();
 
     // コマンドリスト設定（インスタンス単位）
     void SetCommandList(ID3D12GraphicsCommandList *commandList) { commandList_ = commandList; }

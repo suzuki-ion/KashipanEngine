@@ -7,7 +7,8 @@
 #include "Graphics/Pipeline/JsonParser/GraphicsPipelineState.h"
 #include "Graphics/Pipeline/JsonParser/ComputePipelineState.h"
 #include "Graphics/Pipeline/JsonParser/Shader.h"
-#include <optional> // 追加: RootSignatureParsed の寿命保持用
+#include "Graphics/PipelineManager.h"
+#include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include <sstream>
 
 namespace KashipanEngine {
@@ -100,6 +101,8 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         return false;
     }
     ParsedShadersInfo parsedShaders = ParseShader(json["Shader"]);
+    std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo*, std::string>> shadersWithStages;
+
     for (auto &stageInfo : parsedShaders.stages) {
         ShaderCompiler::ShaderCompiledInfo *compiled = nullptr;
         if (stageInfo.isUsePreset) {
@@ -111,6 +114,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
             else Log(Translation("engine.graphics.pipeline.shader.compile.failed") + stageInfo.compileInfo.filePath + " " + Translation("engine.graphics.pipeline.stage.label") + stageInfo.stageName + " " + Translation("engine.graphics.pipeline.name.label") + name, LogSeverity::Error);
         }
         const std::string &stage = stageInfo.stageName;
+        shadersWithStages.emplace_back(compiled, stage);
         if (stage == "Vertex") vs = compiled;
         else if (stage == "Pixel") ps = compiled;
         else if (stage == "Geometry") gs = compiled;
@@ -203,6 +207,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
     if (gs) outInfo.shaders.push_back(gs);
     if (hs) outInfo.shaders.push_back(hs);
     if (ds) outInfo.shaders.push_back(ds);
+    BuildShaderVariableBinder(outInfo, shadersWithStages, ownedRootSigParsed);
     return true;
 }
 
@@ -256,6 +261,7 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
     ShaderCompiler::ShaderCompiledInfo *cs = nullptr;
     if (json.contains("Shader")) {
         ParsedShadersInfo parsedShaders = ParseShader(json["Shader"]);
+        std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo*, std::string>> shadersWithStages;
         for (auto &stageInfo : parsedShaders.stages) {
             if (stageInfo.stageName != "Compute" && parsedShaders.isGroup) continue;
             ShaderCompiler::ShaderCompiledInfo *compiled = nullptr;
@@ -268,7 +274,11 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
                 else Log(Translation("engine.graphics.pipeline.shader.compile.failed") + stageInfo.compileInfo.filePath + " " + Translation("engine.graphics.pipeline.name.label") + name, LogSeverity::Error);
             }
             if (compiled) cs = compiled;
+            shadersWithStages.emplace_back(compiled, stageInfo.stageName);
         }
+        outInfo.shaders.clear();
+        for (const auto &p : shadersWithStages) if (p.first) outInfo.shaders.push_back(p.first);
+        BuildShaderVariableBinder(outInfo, shadersWithStages, ownedRootSigParsed);
     } else {
         Log(Translation("engine.graphics.pipeline.load.shader.missing") + name, LogSeverity::Error);
         return false;
@@ -304,9 +314,57 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
     outInfo.topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     outInfo.pipelineSet.rootSignature = rootSignature;
     outInfo.pipelineSet.pipelineState = pso;
-    outInfo.shaders.clear();
-    if (cs) outInfo.shaders.push_back(cs);
     return true;
+}
+
+void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo*, std::string>> &shadersWithStages, std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig) {
+    MyStd::NameMap<ShaderVariableBinding> nameMap;
+    for (const auto &entry : shadersWithStages) {
+        ShaderCompiler::ShaderCompiledInfo *shader = entry.first;
+        const std::string &stageName = entry.second;
+        if (!shader) continue;
+        auto single = CreateShaderVariableMap(*shader, true);
+        std::string prefix = stageName;
+        if (!prefix.empty()) prefix += ":";
+        for (auto it = single.begin(); it != single.end(); ++it) {
+            std::string namespacedName = prefix + it->key;
+            if (!nameMap.Contains(namespacedName)) {
+                nameMap.Set(namespacedName, it->value);
+            }
+        }
+    }
+    outInfo.variableBinder.SetNameMap(nameMap);
+    const auto &rootSigParsed = customRootSig ? *customRootSig : Pipeline::JsonParser::RootSignatureParsed{};
+    for (size_t i = 0; i < rootSigParsed.rootParams.parameters.size(); ++i) {
+        const auto &param = rootSigParsed.rootParams.parameters[i];
+        if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE) {
+            for (const auto &range : rootSigParsed.rootParams.rangesStorage[i]) {
+                D3D_SHADER_INPUT_TYPE type =
+                    range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV ? D3D_SIT_CBUFFER :
+                    range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV ? D3D_SIT_TEXTURE :
+                    range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_UAV ? D3D_SIT_UAV_RWTYPED :
+                    D3D_SIT_SAMPLER;
+                outInfo.variableBinder.RegisterDescriptorTableRange({},
+                    type,
+                    range.BaseShaderRegister,
+                    range.RegisterSpace,
+                    range.NumDescriptors,
+                    static_cast<UINT>(i)
+                );
+            }
+        } else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ||
+            param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV ||
+            param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_UAV) {
+            outInfo.variableBinder.RegisterRootDescriptor({},
+                param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ? D3D_SIT_CBUFFER :
+                param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV ? D3D_SIT_TEXTURE :
+                D3D_SIT_UAV_RWTYPED,
+                param.Descriptor.ShaderRegister,
+                param.Descriptor.RegisterSpace,
+                static_cast<UINT>(i)
+            );
+        }
+    }
 }
 
 } // namespace KashipanEngine

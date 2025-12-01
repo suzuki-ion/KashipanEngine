@@ -1,11 +1,13 @@
 #pragma once
 #include <d3d12.h>
 #include <wrl.h>
+#include <optional>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/PipelineInfo.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
+#include "Graphics/Pipeline/JsonParser/RootSignature.h"
 
 namespace KashipanEngine {
 
@@ -26,6 +28,11 @@ public:
     bool CreateCompute(const Json &json, PipelineInfo &outInfo);
 
 private:
+    /// @brief ShaderVariableBinder を構築
+    void BuildShaderVariableBinder(PipelineInfo &outInfo,
+        const std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo*, std::string>> &shadersWithStages,
+        std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig = std::nullopt);
+
     ID3D12Device *device_ = nullptr;
     ComponentsPresetContainer *components_ = nullptr;
     ShaderCompiler *shaderCompiler_ = nullptr;

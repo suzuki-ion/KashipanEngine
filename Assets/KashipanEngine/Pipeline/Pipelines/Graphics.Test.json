@@ -1,0 +1,16 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "Graphics.Test",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"Vertex": { "UsePreset": "Test.Vertex" },
+		"Pixel": { "UsePreset": "Test.Pixel" }
+	},
+	"RootSignature": { "UsePreset": "Compute.Empty" },
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "None" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Test" }
+}

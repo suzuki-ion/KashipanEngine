@@ -20,6 +20,7 @@ namespace KashipanEngine {
 class GameEngine;
 class Window;
 class GraphicsEngine;
+class Renderer;
 
 /// @brief DirectX共通クラス
 class DirectXCommon final {
@@ -46,6 +47,10 @@ public:
 
     /// @brief D3D12デバイス取得
     ID3D12Device* GetDevice(Passkey<GraphicsEngine>) const { return dx12Device_->GetDevice(); }
+    /// @brief 指定のウィンドウのスワップチェーン取得
+    DX12SwapChain *GetSwapChain(Passkey<Renderer>, HWND hwnd) const;
+    /// @brief 指定のウィンドウのコマンドリスト取得
+    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>, HWND hwnd) const;
 
 private:
     DirectXCommon(const DirectXCommon &) = delete;

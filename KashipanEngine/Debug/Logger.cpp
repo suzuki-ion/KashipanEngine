@@ -59,6 +59,16 @@ const std::unordered_map<LogSeverity, std::string> kLogSeverityLabel = {
 // 先に宣言（後のヘッダで参照するため)
 const ScopeFrame* GetTopScopeFrame();
 
+// UTF-8 -> UTF-16 変換ユーティリティ
+std::wstring Utf8ToWide(const std::string &utf8) {
+    if (utf8.empty()) return std::wstring();
+    int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), static_cast<int>(utf8.size()), nullptr, 0);
+    if (len <= 0) return std::wstring();
+    std::wstring wide(static_cast<size_t>(len), L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), static_cast<int>(utf8.size()), wide.data(), len);
+    return wide;
+}
+
 //---------------- 非同期ロギング基盤 ----------------//
 std::mutex sLogMutex;
 std::condition_variable sLogCv;
@@ -71,7 +81,9 @@ std::atomic<bool> sThreadRunning{false};
 void WriteToSinks(const std::string &formattedLine) {
     const auto &cfg = GetLogSettings();
     if (cfg.enableConsoleLogging) {
-        OutputDebugStringA(formattedLine.c_str());
+        // Wide APIに切替（UTF-8をUTF-16へ変換）
+        std::wstring w = Utf8ToWide(formattedLine);
+        OutputDebugStringW(w.c_str());
     }
     if (cfg.enableFileLogging && sLogFile.is_open()) {
         sLogFile << formattedLine;
@@ -516,10 +528,13 @@ void InitializeLogger(PasskeyForGameEngineMain) {
         const std::string logDir = currentDir + "/" + cfg.outputDirectory;
         std::filesystem::create_directories(logDir);
         const std::string logFilePath = logDir + "/" + BuildLogFileName();
-        sLogFile.open(logFilePath, std::ios::out);
+        sLogFile.open(logFilePath, std::ios::out | std::ios::binary);
         if (!sLogFile) {
             assert(false && "ログファイルのオープンに失敗しました。");
         }
+        // UTF-8 BOM を明示出力
+        static const unsigned char kUtf8Bom[3] = {0xEF, 0xBB, 0xBF};
+        sLogFile.write(reinterpret_cast<const char*>(kUtf8Bom), 3);
         if (ShouldLog(LogSeverity::Info)) {
             WriteLog(BuildLogLine(nullptr, LogSeverity::Info, std::string("Log File: ") + logFilePath));
         }
@@ -599,6 +614,7 @@ void LogSeparator() {
 }
 
 void LogScope::PushPrefix(const std::source_location &location) {
+    if (!sLoggerInitialized || !sThreadRunning) return;
     ++sTabCount;
 
     // Utilities の SourceLocation を使用してスコープ情報を構築
@@ -612,6 +628,7 @@ void LogScope::PushPrefix(const std::source_location &location) {
 }
 
 void LogScope::PopPrefix() {
+    if (!sLoggerInitialized || !sThreadRunning) return;
     ScopeFrame frame = sScopeFrames.back();
     if (frame.hadOutput && frame.enteredFlushed) {
         if (ShouldLog(LogSeverity::Debug)) {

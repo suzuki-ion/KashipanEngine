@@ -284,6 +284,10 @@
 		"engine.graphics.pipeline.stage.label": "ステージ：",
 		"engine.graphics.pipeline.name.label": "パイプライン：",
 
+		//--------- Game Object ---------//
+		"engine.gameobject2d.invalid.vertex.index.count": "2Dゲームオブジェクトの頂点数及びインデックス数が無効です。",
+		"engine.gameobject3d.invalid.vertex.index.count": "3Dゲームオブジェクトの頂点数及びインデックス数が無効です。",
+
 		//--------- 設定 ---------//
 		"engine.settings.load.success": "エンジンの設定が正常に読み込まれました。ファイルパス：",
 		"engine.settings.load.failed": "エンジンの設定の読み込みに失敗しました。デフォルトの設定を使用します。ファイルパス：",

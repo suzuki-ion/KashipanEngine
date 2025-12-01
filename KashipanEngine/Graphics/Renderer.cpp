@@ -42,8 +42,9 @@ void Renderer::RenderPasses2D() {
         auto &pipelineBinder = it->second;
         auto *commandList = directXCommon_->GetRecordedCommandList(Passkey<Renderer>{}, passInfo.window->GetWindowHandle());
         shaderVariableBinder.SetCommandList(commandList);
-        auto renderCommand = passInfo.renderFunction(shaderVariableBinder, pipelineBinder);
-        IssueRenderCommand(commandList, renderCommand);
+        auto renderCommandOpt = passInfo.renderFunction(shaderVariableBinder, pipelineBinder);
+        if (!renderCommandOpt) continue;
+        IssueRenderCommand(commandList, *renderCommandOpt);
     }
     renderPasses2D_.clear();
 }
@@ -65,8 +66,9 @@ void Renderer::RenderPasses3D() {
         auto &pipelineBinder = it->second;
         auto *commandList = directXCommon_->GetRecordedCommandList(Passkey<Renderer>{}, passInfo.window->GetWindowHandle());
         shaderVariableBinder.SetCommandList(commandList);
-        auto renderCommand = passInfo.renderFunction(shaderVariableBinder, pipelineBinder);
-        IssueRenderCommand(commandList, renderCommand);
+        auto renderCommandOpt = passInfo.renderFunction(shaderVariableBinder, pipelineBinder);
+        if (!renderCommandOpt) continue;
+        IssueRenderCommand(commandList, *renderCommandOpt);
     }
     renderPasses3D_.clear();
 }

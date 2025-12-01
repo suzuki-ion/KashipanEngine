@@ -58,6 +58,9 @@ private:
 
     /// @brief ゲームループ終了条件関数
     std::function<bool()> gameLoopEndConditionFunction_;
+
+    /// @brief ウィンドウ配列
+    std::vector<Window *> windows_;
 };
 
 } // namespace KashipanEngine

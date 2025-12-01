@@ -1,0 +1,14 @@
+﻿{
+	"Name": "Test",
+	"NumRenderTargets": 1,
+	"RTVFormats": [
+		"DXGI_FORMAT_B8G8R8A8_UNORM"
+	],
+	"PrimitiveTopologyType": "D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE",
+	"SampleDesc": {
+		"Count": 1,
+		"Quality": 0
+	},
+	"SampleMask": "D3D12_DEFAULT_SAMPLE_MASK",
+	"DSVFormat": "DXGI_FORMAT_D24_UNORM_S8_UINT"
+}

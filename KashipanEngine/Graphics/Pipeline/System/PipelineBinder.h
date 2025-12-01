@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <string>
 #include "Graphics/PipelineManager.h"
+#include "Graphics/Resources.h"
 
 namespace KashipanEngine {
 
@@ -39,6 +40,38 @@ public:
 
     /// @brief 現在使用中のパイプライン名
     const std::string &CurrentPipelineName() const { return currentName_; }
+
+    /// @brief 単一の頂点バッファを設定する
+    /// @param vb VB リソース
+    /// @param stride 頂点ストライド（バイト）
+    /// @param slot スロット番号（デフォルト 0）
+    void SetVertexBuffer(VertexBufferResource *vb, UINT stride, UINT slot = 0) {
+        if (!commandList_ || !vb) return;
+        vb->SetCommandList(commandList_);
+        D3D12_VERTEX_BUFFER_VIEW view = vb->GetView(stride);
+        commandList_->IASetVertexBuffers(slot, 1, &view);
+    }
+
+    /// @brief 単一のインデックスバッファを設定する
+    /// @param ib IB リソース
+    void SetIndexBuffer(IndexBufferResource *ib) {
+        if (!commandList_ || !ib) return;
+        ib->SetCommandList(commandList_);
+        D3D12_INDEX_BUFFER_VIEW view = ib->GetView();
+        commandList_->IASetIndexBuffer(&view);
+    }
+
+    /// @brief 既に作成済みのビューで頂点バッファを設定する
+    void SetVertexBufferView(UINT startSlot, UINT viewCount, const D3D12_VERTEX_BUFFER_VIEW *views) {
+        if (!commandList_ || !views || viewCount == 0) return;
+        commandList_->IASetVertexBuffers(startSlot, viewCount, views);
+    }
+
+    /// @brief 既に作成済みのインデックスバッファビューで設定する
+    void SetIndexBufferView(const D3D12_INDEX_BUFFER_VIEW *view) {
+        if (!commandList_ || !view) return;
+        commandList_->IASetIndexBuffer(view);
+    }
 
 private:
     ID3D12GraphicsCommandList* commandList_ = nullptr;

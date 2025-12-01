@@ -14,7 +14,7 @@ std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> 
 /// @brief デルタタイム計測用前回時間
 std::chrono::high_resolution_clock::time_point sPreviousTime = std::chrono::high_resolution_clock::now();
 /// @brief デルタタイム
-float DeltaTime = 0.0f;
+float sDeltaTime = 0.0f;
 /// @brief デルタタイム計測用初回フラグ
 bool sIsFirstDeltaTimeCall = true;
 
@@ -30,10 +30,10 @@ auto GetZonedTime() {
 void UpdateDeltaTime(Passkey<GameEngine>) {
     auto currentTime = std::chrono::high_resolution_clock::now();
     if (sIsFirstDeltaTimeCall) {
-        DeltaTime = 0.0f;
+        sDeltaTime = 0.0f;
         sIsFirstDeltaTimeCall = false;
     } else {
-        DeltaTime = std::chrono::duration<float>(currentTime - sPreviousTime).count();
+        sDeltaTime = std::chrono::duration<float>(currentTime - sPreviousTime).count();
     }
     sPreviousTime = currentTime;
 }
@@ -201,7 +201,7 @@ TimeRecord EndTimeMeasurement(const std::string &label) {
 }
 
 float GetDeltaTime() {
-    return 0.0f;
+    return sDeltaTime;
 }
 
 std::string GetNowTimeString(const std::string &format) {

@@ -192,6 +192,9 @@
     <ClCompile Include="KashipanEngine\Graphics\Renderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -200,7 +203,7 @@
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\SceneBase.h">
+    <ClInclude Include="KashipanEngine\Scene\Scene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h">
@@ -533,10 +536,16 @@
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableMapCreator.h">
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\PipelineBinder.h">
+    <ClInclude Include="MyStd\NameMap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponents.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -609,5 +618,12 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\ComputePipelineState\Default.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest\Compute.hlsl" />
+    <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Graphics.Test.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Test.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\PS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\VS.hlsl" />
   </ItemGroup>
 </Project>

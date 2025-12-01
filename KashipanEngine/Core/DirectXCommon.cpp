@@ -144,6 +144,26 @@ void DirectXCommon::DestroySwapChainSignal(Passkey<Window>, HWND hwnd) {
     sPendingDestroySwapChains.push_back(hwnd);
 }
 
+DX12SwapChain *DirectXCommon::GetSwapChain(Passkey<Renderer>, HWND hwnd) const {
+    auto it = sHwndToSwapChainIndex.find(hwnd);
+    if (it != sHwndToSwapChainIndex.end()) {
+        size_t index = it->second;
+        return sSwapChains[index].get();
+    }
+    return nullptr;
+}
+
+ID3D12GraphicsCommandList *DirectXCommon::GetRecordedCommandList(Passkey<Renderer>, HWND hwnd) const {
+    auto it = sHwndToSwapChainIndex.find(hwnd);
+    if (it != sHwndToSwapChainIndex.end()) {
+        size_t index = it->second;
+        if (sSwapChains[index]) {
+            return sSwapChains[index]->GetRecordedCommandList(Passkey<DirectXCommon>{});
+        }
+    }
+    return nullptr;
+}
+
 void DirectXCommon::DestroyPendingSwapChains() {
     // 破棄対象がある場合は必ずGPUの処理完了を待つ
     if (sPendingDestroySwapChains.empty()) return;
@@ -189,7 +209,7 @@ void DirectXCommon::ExecuteCommand() {
     }
 
     for (auto &sc : sSwapChains) {
-        if (sc && sc->IsCreated()) sc->Present({});
+        if (sc && sc->IsCreated() && !sc->IsDrawing()) sc->Present({});
     }
 
     if (!lists.empty()) {

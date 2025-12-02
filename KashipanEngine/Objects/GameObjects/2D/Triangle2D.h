@@ -4,12 +4,10 @@
 
 namespace KashipanEngine {
 
-class Line2D : public GameObject2DBase {
+class Triangle2D : public GameObject2DBase {
 public:
-    /// @brief コンストラクタ
-    /// @param lineCount ラインの数
-    Line2D(size_t lineCount = 1) : GameObject2DBase(sizeof(Vertex), sizeof(Index), lineCount + 1, lineCount + 1) {}
-    ~Line2D() override = default;
+    Triangle2D() : GameObject2DBase(sizeof(Vertex), sizeof(Index), 3, 3) {}
+    ~Triangle2D() override = default;
 
 protected:
     bool Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) override;

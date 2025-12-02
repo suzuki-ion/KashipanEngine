@@ -263,6 +263,8 @@ public:
     HWND GetWindowHandle() const noexcept { return descriptor_.hwnd; }
     /// @brief ウィンドウクラスを取得する
     const WNDCLASS& GetWindowClass() const noexcept { return descriptor_.wc; }
+    /// @brief ウィンドウ位置（左上座標）を取得する
+    POINT GetWindowPosition() const noexcept { return { size_.windowRect.left, size_.windowRect.top }; }
     /// @brief クライアント幅を取得する
     int32_t GetClientWidth() const noexcept { return size_.clientWidth; }
     /// @brief クライアント高さを取得する

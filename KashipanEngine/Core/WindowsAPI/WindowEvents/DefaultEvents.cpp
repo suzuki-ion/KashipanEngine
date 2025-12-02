@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include "Core/Window.h"
 #include "Core/WindowsAPI/WindowDescriptor.h"
+#include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 namespace WindowDefaultEvent {
@@ -120,10 +121,10 @@ std::optional<LRESULT> SysCommandCloseEvent::OnEvent(UINT /*msg*/, WPARAM wparam
     if (wparam != SC_CLOSE) {
         return std::nullopt;
     }
-    int result = MessageBoxA(
+    int result = MessageBoxW(
         GetWindowDescriptor().hwnd,
-        "終了しますか？",
-        "確認",
+        ConvertString(Translation("engine.window.dialog.close.message")).c_str(),
+        ConvertString(Translation("engine.window.dialog.close.title")).c_str(),
         MB_YESNO | MB_ICONQUESTION
     );
     if (result == IDYES) {

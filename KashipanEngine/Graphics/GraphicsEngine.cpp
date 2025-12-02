@@ -6,7 +6,7 @@
 #include "EngineSettings.h"
 #include "Graphics/Resources.h"
 #include "Math/Vector4.h"
-#include "Objects/GameObjects/GameObject2D.h"
+#include "Objects/GameObjects/2D/Triangle2D.h"
 
 namespace KashipanEngine {
 
@@ -24,12 +24,11 @@ GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon
 GraphicsEngine::~GraphicsEngine() = default;
 
 void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
-    // テスト用 GameObject2D を使用して描画
-    static std::unique_ptr<GameObject2D> testObject2D;
+    // テスト用の三角形オブジェクトを一つだけ生成
+    static std::unique_ptr<Triangle2D> testObject2D;
     static bool initialized = false;
     if (!initialized) {
-        // 三角形を描画するための頂点数3・インデックス数0
-        testObject2D = std::make_unique<GameObject2D>(3, 0);
+        testObject2D = std::make_unique<Triangle2D>();
         initialized = true;
     }
     auto mainWindows = Window::GetWindows("Main Window");

@@ -31,7 +31,7 @@ void Renderer::RenderPasses2D() {
         if (!passInfo.window ||
             passInfo.window->IsPendingDestroy() || passInfo.window->IsMinimized() ||
             !passInfo.renderFunction ||
-            (passInfo.renderConditionFunction && !passInfo.renderConditionFunction())) {
+            !passInfo.renderCommandFunction) {
             continue;
         }
         HWND hwnd = passInfo.window->GetWindowHandle();
@@ -42,7 +42,9 @@ void Renderer::RenderPasses2D() {
         auto &pipelineBinder = it->second;
         auto *commandList = directXCommon_->GetRecordedCommandList(Passkey<Renderer>{}, passInfo.window->GetWindowHandle());
         shaderVariableBinder.SetCommandList(commandList);
-        auto renderCommandOpt = passInfo.renderFunction(shaderVariableBinder, pipelineBinder);
+        bool isRendered = passInfo.renderFunction(shaderVariableBinder);
+        if (!isRendered) continue;
+        auto renderCommandOpt = passInfo.renderCommandFunction(pipelineBinder);
         if (!renderCommandOpt) continue;
         IssueRenderCommand(commandList, *renderCommandOpt);
     }
@@ -53,9 +55,9 @@ void Renderer::RenderPasses3D() {
     if (renderPasses3D_.empty()) return;
     for (const auto &passInfo : renderPasses3D_) {
         if (!passInfo.window ||
-            passInfo.window->IsPendingDestroy() || passInfo.window->IsMinimized() || !passInfo.window->IsActive() ||
+            passInfo.window->IsPendingDestroy() || passInfo.window->IsMinimized() ||
             !passInfo.renderFunction ||
-            (passInfo.renderConditionFunction && !passInfo.renderConditionFunction())) {
+            !passInfo.renderCommandFunction) {
             continue;
         }
         HWND hwnd = passInfo.window->GetWindowHandle();
@@ -66,7 +68,9 @@ void Renderer::RenderPasses3D() {
         auto &pipelineBinder = it->second;
         auto *commandList = directXCommon_->GetRecordedCommandList(Passkey<Renderer>{}, passInfo.window->GetWindowHandle());
         shaderVariableBinder.SetCommandList(commandList);
-        auto renderCommandOpt = passInfo.renderFunction(shaderVariableBinder, pipelineBinder);
+        bool isRendered = passInfo.renderFunction(shaderVariableBinder);
+        if (!isRendered) continue;
+        auto renderCommandOpt = passInfo.renderCommandFunction(pipelineBinder);
         if (!renderCommandOpt) continue;
         IssueRenderCommand(commandList, *renderCommandOpt);
     }

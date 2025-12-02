@@ -14,11 +14,20 @@ class Window;
 class DirectXCommon;
 class GraphicsEngine;
 class PipelineManager;
-class GameObject2D;
-class GameObject3D;
+class GameObject2DBase;
+class GameObject3DBase;
 
 /// @brief 描画指示用構造体
 struct RenderCommand final {
+    RenderCommand(const RenderCommand &) = default;
+    RenderCommand &operator=(const RenderCommand &) = default;
+    RenderCommand(RenderCommand &&) = default;
+    RenderCommand &operator=(RenderCommand &&) = default;
+private:
+    friend class Renderer;
+    friend class GameObject2DBase;
+    friend class GameObject3DBase;
+    RenderCommand() = default;
     UINT vertexCount = 0;           //< 頂点数
     UINT indexCount = 0;            //< インデックス数
     UINT instanceCount = 1;         //< インスタンス数
@@ -30,22 +39,36 @@ struct RenderCommand final {
 
 /// @brief 2D描画用レンダーパス情報構造体
 struct RenderPassInfo2D final {
-    RenderPassInfo2D(Passkey<GameObject2D>) {}
+    RenderPassInfo2D(const RenderPassInfo2D &) = default;
+    RenderPassInfo2D &operator=(const RenderPassInfo2D &) = default;
+    RenderPassInfo2D(RenderPassInfo2D &&) = default;
+    RenderPassInfo2D &operator=(RenderPassInfo2D &&) = default;
+private:
+    friend class Renderer;
+    friend class GameObject2DBase;
+    RenderPassInfo2D() = default;
     Window *window = nullptr;   //< 描画先ウィンドウ
     std::string pipelineName;   //< 使用するパイプライン名
     std::string passName;       //< パス名（デバッグ用）
-    std::function<std::optional<RenderCommand>(ShaderVariableBinder &, PipelineBinder &)> renderFunction; //< 描画関数
-    std::function<bool()> renderConditionFunction; //< 描画条件関数（任意。指定しない場合は常に描画）
+    std::function<bool(ShaderVariableBinder &)> renderFunction; //< 描画関数
+    std::function<std::optional<RenderCommand>(PipelineBinder &)> renderCommandFunction; //< 描画コマンド取得関数
 };
 
 /// @brief 3D描画用レンダーパス情報構造体
 struct RenderPassInfo3D final {
-    RenderPassInfo3D(Passkey<GameObject3D>) {}
+    RenderPassInfo3D(const RenderPassInfo3D &) = default;
+    RenderPassInfo3D &operator=(const RenderPassInfo3D &) = default;
+    RenderPassInfo3D(RenderPassInfo3D &&) = default;
+    RenderPassInfo3D &operator=(RenderPassInfo3D &&) = default;
+private:
+    friend class Renderer;
+    friend class GameObject3DBase;
+    RenderPassInfo3D() = default;
     Window *window = nullptr;   //< 描画先ウィンドウ
     std::string pipelineName;   //< 使用するパイプライン名
     std::string passName;       //< パス名（デバッグ用）
-    std::function<std::optional<RenderCommand>(ShaderVariableBinder &, PipelineBinder &)> renderFunction; //< 描画関数
-    std::function<bool()> renderConditionFunction; //< 描画条件関数（任意。指定しない場合は常に描画）
+    std::function<bool(ShaderVariableBinder &)> renderFunction; //< 描画関数
+    std::function<std::optional<RenderCommand>(PipelineBinder &)> renderCommandFunction; //< 描画コマンド取得関数
 };
 
 /// @brief 描画用のレンダラークラス

@@ -93,6 +93,16 @@ void GameEngine::GameLoopUpdate() {
             window->SetWindowTitle(std::string("KashipanEngine - FPS: ") + std::to_string(static_cast<int>(fps)));
         }
     }
+    // Main Window をsinを使って上下に移動させる
+    static float t = 0.0f;
+    t += GetDeltaTime();
+    if (auto *mainWindow = Window::GetWindows("Main Window").front()) {
+        auto monitorInfo = windowsAPI_->QueryMonitorInfo();
+        const int32_t centerY = (monitorInfo->WorkArea().bottom - monitorInfo->WorkArea().top) / 2;
+        const int32_t amplitude = (monitorInfo->WorkArea().bottom - monitorInfo->WorkArea().top) / 4;
+        const int32_t newY = centerY + static_cast<int32_t>(amplitude * std::sin(t));
+        mainWindow->SetWindowPosition(mainWindow->GetWindowPosition().x, newY);
+    }
 
     if (!isGameLoopRunning_ || isGameLoopPaused_) {
         return;

@@ -1,11 +1,14 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <vector>
+#include <unordered_map>
 #include "Core/Window.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Graphics/Resources.h"
+#include "Objects/GameObjects/IGameObjectComponent.h"
 
 namespace KashipanEngine {
 
@@ -41,6 +44,52 @@ public:
     RenderPassInfo3D CreateRenderPass(Window *targetWindow,
         const std::string &pipelineName,
         const std::string &passName = "GameObject3D Render Pass");
+
+    /// @brief コンポーネント登録（生成）
+    template<typename T, typename... Args>
+    bool RegisterComponent(Args&&... args) {
+        static_assert(std::is_base_of_v<IGameObjectComponent3D, T>, "T must derive from IGameObjectComponent3D");
+        try {
+            auto comp = std::make_unique<T>(std::forward<Args>(args)...);
+            const std::string key = comp->GetComponentType();
+            components_.push_back(std::move(comp));
+            const size_t idx = components_.size() - 1;
+            componentsIndexByName_.emplace(key, idx);
+            return true;
+        } catch (...) { return false; }
+    }
+    /// @brief コンポーネント登録（既存）
+    bool RegisterComponent(std::unique_ptr<IGameObjectComponent> comp) {
+        if (!comp) return false;
+        if (dynamic_cast<IGameObjectComponent3D*>(comp.get()) == nullptr) return false;
+        const std::string key = comp->GetComponentType();
+        components_.push_back(std::move(comp));
+        const size_t idx = components_.size() - 1;
+        componentsIndexByName_.emplace(key, idx);
+        return true;
+    }
+    /// @brief 名前でコンポーネント取得（3D）
+    std::vector<IGameObjectComponent3D*> GetComponents3D(const std::string &componentName) const {
+        std::vector<IGameObjectComponent3D*> result;
+        auto range = componentsIndexByName_.equal_range(componentName);
+        for (auto it = range.first; it != range.second; ++it) {
+            size_t idx = it->second;
+            if (idx < components_.size()) {
+                if (auto *p = dynamic_cast<IGameObjectComponent3D*>(components_[idx].get())) result.push_back(p);
+            }
+        }
+        return result;
+    }
+    /// @brief 名前で個数チェック（3D）
+    size_t HasComponents3D(const std::string &componentName) const {
+        auto range = componentsIndexByName_.equal_range(componentName);
+        size_t count = 0;
+        for (auto it = range.first; it != range.second; ++it) {
+            size_t idx = it->second;
+            if (idx < components_.size() && dynamic_cast<IGameObjectComponent3D*>(components_[idx].get())) ++count;
+        }
+        return count;
+    }
 
 protected:
     /// @brief コンストラクタ
@@ -103,6 +152,8 @@ protected:
     RenderCommand CreateDefaultRenderCommand() const;
 
 private:
+    friend class GameObject3DContext;
+
     std::string name_ = "GameObject3D";
     UINT vertexCount_ = 0;
     UINT indexCount_ = 0;
@@ -112,6 +163,8 @@ private:
     D3D12_INDEX_BUFFER_VIEW indexBufferView_{};
     void *vertexData_ = nullptr;
     void *indexData_ = nullptr;
+    std::vector<std::unique_ptr<IGameObjectComponent>> components_;
+    std::unordered_multimap<std::string, size_t> componentsIndexByName_;
 };
 
 } // namespace KashipanEngine

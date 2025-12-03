@@ -166,6 +166,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObjectContext.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Dialogs\MessageDialog.cpp" />
@@ -260,8 +261,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Math\Vector2.h" />
     <ClInclude Include="KashipanEngine\Math\Vector3.h" />
     <ClInclude Include="KashipanEngine\Math\Vector4.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\IObjectComponent.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\IObjectComponent2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\IGameObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h" />
@@ -274,6 +274,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObjectContext.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h" />

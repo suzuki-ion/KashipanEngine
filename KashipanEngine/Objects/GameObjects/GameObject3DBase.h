@@ -20,6 +20,23 @@ public:
     GameObject3DBase &operator=(GameObject3DBase &&) = delete;
     virtual ~GameObject3DBase() = default;
 
+    /// @brief 頂点の値の設定
+    template<typename T>
+    void SetVertexData(const std::span<T> &data) {
+        if (!vertexData_ || data.size() > vertexCount_) return;
+        std::memcpy(vertexData_, data.data(), sizeof(T) * data.size());
+    }
+    /// @brief 頂点の値の取得
+    template<typename T>
+    std::span<T> GetVertexData() const {
+        return GetVertexSpan<T>();
+    }
+
+    /// @brief オブジェクト名の設定
+    void SetName(const std::string &name) { name_ = name; }
+    /// @brief オブジェクト名の取得
+    const std::string &GetName() const { return name_; }
+
     /// @brief レンダーパスの作成
     RenderPassInfo3D CreateRenderPass(Window *targetWindow,
         const std::string &pipelineName,
@@ -27,13 +44,15 @@ public:
 
 protected:
     /// @brief コンストラクタ
+    /// @param name オブジェクト名
     /// @param vertexByteSize 1頂点あたりのサイズ（バイト単位）
     /// @param indexByteSize 1インデックスあたりのサイズ（バイト単位）
     /// @param vertexCount 頂点数
     /// @param indexCount インデックス数
     /// @param initialVertexData 初期頂点データ（nullptrの場合は未初期化）
     /// @param initialIndexData 初期インデックスデータ（nullptrの場合は未初期化）
-    GameObject3DBase(size_t vertexByteSize, size_t indexByteSize,
+    GameObject3DBase(const std::string &name,
+        size_t vertexByteSize, size_t indexByteSize,
         size_t vertexCount, size_t indexCount,
         void *initialVertexData = nullptr,
         void *initialIndexData = nullptr);
@@ -84,6 +103,7 @@ protected:
     RenderCommand CreateDefaultRenderCommand() const;
 
 private:
+    std::string name_ = "GameObject3D";
     UINT vertexCount_ = 0;
     UINT indexCount_ = 0;
     std::unique_ptr<VertexBufferResource> vertexBuffer_;

@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class Box : public GameObject3DBase {
 public:
-    Box() : GameObject3DBase(sizeof(Vertex), sizeof(Index), 24, 36) {}
+    Box(const std::string &name = "Box") : GameObject3DBase(name, sizeof(Vertex), sizeof(Index), 24, 36) {}
     ~Box() override = default;
 
 protected:

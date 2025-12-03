@@ -16,9 +16,14 @@ RenderPassInfo3D GameObject3DBase::CreateRenderPass(Window *targetWindow, const 
     return passInfo;
 }
 
-GameObject3DBase::GameObject3DBase(size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
+GameObject3DBase::GameObject3DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
+    LogScope scope;
+    if (!name.empty()) name_ = name;
     if (vertexCount == 0 && indexCount == 0) {
-        Log(Translation("engine.gameobject3d.invalid.vertex.index.count") + "VertexCount: " + std::to_string(vertexCount) + ", IndexCount: " + std::to_string(indexCount), LogSeverity::Critical);
+        Log(Translation("engine.gameobject3d.invalid.vertex.index.count")
+            + "Name: " + name
+            + ", VertexCount: " + std::to_string(vertexCount)
+            + ", IndexCount: " + std::to_string(indexCount), LogSeverity::Critical);
         throw std::invalid_argument("GameObject3DBase requires vertex or index count");
     }
     vertexCount_ = static_cast<UINT>(vertexCount);

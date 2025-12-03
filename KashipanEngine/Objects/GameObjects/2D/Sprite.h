@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class Sprite : public GameObject2DBase {
 public:
-    Sprite() : GameObject2DBase(sizeof(Vertex), sizeof(Index), 4, 6) {}
+    Sprite(const std::string &name = "Sprite") : GameObject2DBase(name, sizeof(Vertex), sizeof(Index), 4, 6) {}
     ~Sprite() override = default;
 
 protected:

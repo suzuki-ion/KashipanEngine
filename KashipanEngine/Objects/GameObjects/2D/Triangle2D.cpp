@@ -2,7 +2,7 @@
 
 namespace KashipanEngine {
 
-Triangle2D::Triangle2D() : GameObject2DBase(sizeof(Vertex), sizeof(Index), 3, 3) {
+Triangle2D::Triangle2D(const std::string &name) : GameObject2DBase(name, sizeof(Vertex), sizeof(Index), 3, 3) {
     LogScope scope;
     colorBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(ColorBuffer));
     ColorBuffer *mappedColor = static_cast<ColorBuffer *>(colorBuffer_->Map());

@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class Rect : public GameObject2DBase {
 public:
-    Rect() : GameObject2DBase(sizeof(Vertex), sizeof(Index), 4, 6) {}
+    Rect(const std::string &name = "Rect") : GameObject2DBase(name, sizeof(Vertex), sizeof(Index), 4, 6) {}
     ~Rect() override = default;
 
 protected:

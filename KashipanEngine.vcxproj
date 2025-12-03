@@ -154,12 +154,16 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Math\Vector2.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Line2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Rect.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Sprite.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Box.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Line3D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Model.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
@@ -256,6 +260,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Math\Vector2.h" />
     <ClInclude Include="KashipanEngine\Math\Vector3.h" />
     <ClInclude Include="KashipanEngine\Math\Vector4.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\IObjectComponent.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\IObjectComponent2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h" />

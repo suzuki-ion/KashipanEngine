@@ -1,5 +1,6 @@
 #include "DX12CommandQueue.h"
 #include <stdexcept>
+#include <cassert>
 
 namespace KashipanEngine {
 
@@ -30,14 +31,27 @@ DX12CommandQueue::~DX12CommandQueue() {
 
 void DX12CommandQueue::ExecuteCommandLists(Passkey<DirectXCommon>, const std::vector<ID3D12CommandList*>& lists) {
     LogScope scope;
-    if (lists.empty()) {
-        return;
+    if (lists.empty()) return;
+
+    // 送信前バリデーション（デバッグビルドのみ）
+#ifdef _DEBUG
+    D3D12_COMMAND_QUEUE_DESC qdesc = commandQueue_->GetDesc();
+    for (size_t idx = 0; idx < lists.size(); ++idx) {
+        auto *cl = lists[idx];
+        assert(cl && "Command list is null");
+
+        // 型一致チェック
+        auto type = cl->GetType(); // ID3D12CommandList::GetType はノーサイドエフェクト
+        assert(type == qdesc.Type && "Queue/List type mismatch");
+
+        // 可能なら自前で Close 状態を管理して検証（フラグを持つ/ラッパで状態遷移を記録）
+        // assert(IsClosed(cl) && "Command list not closed");
     }
+#endif
 
     size_t i = 0;
     while (i < lists.size()) {
-        size_t remaining = lists.size() - i;
-        UINT batchCount = (remaining > 8) ? 8u : static_cast<UINT>(remaining);
+        const UINT batchCount = static_cast<UINT>(std::min<size_t>(8, lists.size() - i));
         commandQueue_->ExecuteCommandLists(batchCount, lists.data() + i);
         i += batchCount;
     }

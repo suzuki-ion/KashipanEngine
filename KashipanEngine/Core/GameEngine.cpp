@@ -72,6 +72,7 @@ GameEngine::~GameEngine() {
     LogSeparator();
 
     Window::AllDestroy({});
+    graphicsEngine_.reset();
     directXCommon_.reset();
     windowsAPI_.reset();
     sIsEngineInitialized = false;

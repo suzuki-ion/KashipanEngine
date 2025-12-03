@@ -24,10 +24,9 @@ public:
     /// @param width 横幅
     /// @param height 高さ
     /// @param format フォーマット
-    /// @param rtvHeap RTVヒープ
     /// @param existingResource 既存リソース（nullptrの場合は新規作成）
     /// @param clearColor クリアカラー配列（RGBA）
-    RenderTargetResource(UINT width, UINT height, DXGI_FORMAT format, RTVHeap *rtvHeap,
+    RenderTargetResource(UINT width, UINT height, DXGI_FORMAT format,
         ID3D12Resource *existingResource = nullptr, const FLOAT clearColor[4] = sDefaultClearColor_);
 
     /// @brief リソース再生成
@@ -43,10 +42,6 @@ public:
     /// @brief レンダーターゲットビューのクリア
     void ClearRenderTargetView() const;
 
-    /// @brief RTVヒープの設定
-    /// @param rtvHeap ヒープ
-    void SetHeap(RTVHeap *rtvHeap) { rtvHeap_ = rtvHeap; }
-
     UINT GetWidth() const { return width_; }
     UINT GetHeight() const { return height_; }
     DXGI_FORMAT GetFormat() const { return format_; }
@@ -58,7 +53,6 @@ private:
     UINT height_ = 0;
     DXGI_FORMAT format_ = DXGI_FORMAT_R8G8B8A8_UNORM;
     FLOAT clearColor_[4] { 0.f, 0.f, 0.f, 0.f };
-    RTVHeap *rtvHeap_ = nullptr;
 };
 
 } // namespace KashipanEngine

@@ -5,10 +5,10 @@
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
 		"Vertex": { "UsePreset": "Test.Vertex" },
 		"Pixel": { "UsePreset": "Test.Pixel" }
 	},
-	"RootSignature": { "UsePreset": "Compute.Empty" },
 	"RasterizerState": { "UsePreset": "Solid" },
 	"BlendState": { "UsePreset": "None" },
 	"DepthStencilState": { "UsePreset": "DepthDisable" },

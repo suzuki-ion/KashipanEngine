@@ -2,6 +2,13 @@
 
 namespace KashipanEngine {
 
+Triangle2D::Triangle2D() : GameObject2DBase(sizeof(Vertex), sizeof(Index), 3, 3) {
+    LogScope scope;
+    colorBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(ColorBuffer));
+    ColorBuffer *mappedColor = static_cast<ColorBuffer *>(colorBuffer_->Map());
+    *mappedColor = ColorBuffer(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
 bool Triangle2D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
     auto v = GetVertexSpan<Vertex>();
     if (v.size() < 3) return false;
@@ -13,6 +20,9 @@ bool Triangle2D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
     i[0] = 0;
     i[1] = 1;
     i[2] = 2;
+    ColorBuffer *mappedColor = static_cast<ColorBuffer *>(colorBuffer_->Map());
+    *mappedColor = ColorBuffer(1.0f, 1.0f, 0.0f, 1.0f);
+    shaderBinder.Bind("Pixel:gMaterial", colorBuffer_.get());
     return true;
 }
 

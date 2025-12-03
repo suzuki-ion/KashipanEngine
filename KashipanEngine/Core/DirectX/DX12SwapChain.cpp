@@ -340,7 +340,7 @@ void DX12SwapChain::CreateBackBuffers() {
         if (swapChainType_ == SwapChainType::ForHwnd) {
             backBuffers_[i] = std::make_unique<RenderTargetResource>(
                 static_cast<UINT>(width_), static_cast<UINT>(height_),
-                desc.Format, sRTVHeap, backBuffer.Get());
+                desc.Format, backBuffer.Get());
         } else { // Composition
 #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
             float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.5f };
@@ -349,7 +349,7 @@ void DX12SwapChain::CreateBackBuffers() {
 #endif
             backBuffers_[i] = std::make_unique<RenderTargetResource>(
                 static_cast<UINT>(width_), static_cast<UINT>(height_),
-                desc.Format, sRTVHeap, backBuffer.Get(), clearColor);
+                desc.Format, backBuffer.Get(), clearColor);
         }
 
         rtvHandles_[i] = backBuffers_[i]->GetCPUDescriptorHandle();
@@ -362,7 +362,7 @@ void DX12SwapChain::CreateBackBuffers() {
 void DX12SwapChain::CreateDepthStencilBuffer() {
     depthStencilBuffer_ = std::make_unique<DepthStencilResource>(
         static_cast<UINT>(width_), static_cast<UINT>(height_),
-        DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0), sDSVHeap);
+        DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0));
     dsvHandle_ = depthStencilBuffer_->GetCPUDescriptorHandle();
 }
 

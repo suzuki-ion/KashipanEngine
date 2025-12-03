@@ -2,9 +2,8 @@
 
 namespace KashipanEngine {
 
-RenderTargetResource::RenderTargetResource(UINT width, UINT height, DXGI_FORMAT format, RTVHeap *rtvHeap, ID3D12Resource *existingResource, const FLOAT clearColor[4])
+RenderTargetResource::RenderTargetResource(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource, const FLOAT clearColor[4])
     : IGraphicsResource(ResourceViewType::RTV) {
-    rtvHeap_ = rtvHeap;
     Initialize(width, height, format, existingResource, clearColor);
 }
 
@@ -28,7 +27,8 @@ void RenderTargetResource::ClearRenderTargetView() const {
 
 bool RenderTargetResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource, const FLOAT clearColor[4]) {
     LogScope scope;
-    if (!GetDevice() || !rtvHeap_) {
+    auto *rtvHeap = GetRTVHeap();
+    if (!GetDevice() || !rtvHeap) {
         Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
         return false;
     }
@@ -80,7 +80,7 @@ bool RenderTargetResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
     }
 
     // RTV作成
-    auto handle = rtvHeap_->AllocateDescriptorHandle();
+    auto handle = rtvHeap->AllocateDescriptorHandle();
 
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
     rtvDesc.Format = format_;

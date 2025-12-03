@@ -4,9 +4,8 @@ namespace KashipanEngine {
 
 static inline size_t Align256(size_t size) { return (size + 255) & ~static_cast<size_t>(255); }
 
-ConstantBufferResource::ConstantBufferResource(size_t byteSize, CBVHeap *cbvHeap, ID3D12Resource *existingResource)
+ConstantBufferResource::ConstantBufferResource(size_t byteSize, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::CBV) {
-    cbvHeap_ = cbvHeap;
     Initialize(byteSize, existingResource);
 }
 
@@ -17,7 +16,8 @@ bool ConstantBufferResource::Recreate(size_t byteSize, ID3D12Resource *existingR
 
 bool ConstantBufferResource::Initialize(size_t byteSize, ID3D12Resource *existingResource) {
     LogScope scope;
-    if (!GetDevice() || !cbvHeap_) {
+    auto *cbvHeap = GetSRVHeap();
+    if (!GetDevice() || !cbvHeap) {
         Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
         return false;
     }
@@ -41,8 +41,7 @@ bool ConstantBufferResource::Initialize(size_t byteSize, ID3D12Resource *existin
 
     if (existingResource) {
         SetExistingResource(existingResource);
-        // Derive size from provided resource if possible
-        bufferSize_ = alignedSize; // fallback
+        bufferSize_ = alignedSize;
         D3D12_RESOURCE_DESC desc = existingResource->GetDesc();
         if (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER) {
             bufferSize_ = static_cast<size_t>(desc.Width);
@@ -55,7 +54,7 @@ bool ConstantBufferResource::Initialize(size_t byteSize, ID3D12Resource *existin
         }
     }
 
-    auto handle = cbvHeap_->AllocateDescriptorHandle();
+    auto handle = cbvHeap->AllocateDescriptorHandle();
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
     cbvDesc.BufferLocation = GetResource()->GetGPUVirtualAddress();

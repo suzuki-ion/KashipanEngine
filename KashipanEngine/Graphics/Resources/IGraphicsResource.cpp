@@ -5,6 +5,8 @@ namespace {
 std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> sResources_;
 /// @brief コンテナの空きインデックス
 std::vector<size_t> sFreeResourceIndices_;
+/// @brief リソースIDに紐づくデスクリプタハンドル情報
+std::vector<std::unique_ptr<KashipanEngine::DescriptorHandleInfo>> sDescriptorInfos_;
 } // namespace
 
 namespace KashipanEngine {
@@ -14,6 +16,7 @@ void IGraphicsResource::ClearAllResources(Passkey<DirectXCommon>) {
     size_t resourceCount = sResources_.size() - sFreeResourceIndices_.size();
     Log(Translation("engine.graphics.resource.allclear.showcount") + std::to_string(resourceCount), LogSeverity::Debug);
     sResources_.clear();
+    sDescriptorInfos_.clear();
     sFreeResourceIndices_.clear();
 }
 
@@ -21,6 +24,9 @@ IGraphicsResource::~IGraphicsResource() {
     LogScope scope;
     if (resourceID_ < sResources_.size()) {
         sResources_[resourceID_].Reset();
+        if (resourceID_ < sDescriptorInfos_.size()) {
+            sDescriptorInfos_[resourceID_].reset();
+        }
         sFreeResourceIndices_.push_back(resourceID_);
     }
 }
@@ -58,10 +64,18 @@ void IGraphicsResource::CreateResource(const wchar_t *resourceName, const D3D12_
     if (sFreeResourceIndices_.empty()) {
         resourceID_ = static_cast<uint32_t>(sResources_.size());
         sResources_.push_back(resource);
+        // sDescriptorInfos_ のサイズをリソースに合わせて拡張
+        if (sDescriptorInfos_.size() < sResources_.size()) {
+            sDescriptorInfos_.resize(sResources_.size());
+        }
     } else {
         resourceID_ = static_cast<uint32_t>(sFreeResourceIndices_.back());
         sFreeResourceIndices_.pop_back();
         sResources_[resourceID_] = resource;
+        // 再利用スロットのデスクリプタ情報は再生成前にクリアされている前提だが安全のためクリア
+        if (resourceID_ < sDescriptorInfos_.size()) {
+            sDescriptorInfos_[resourceID_].reset();
+        }
     }
     resource_ = sResources_[resourceID_].Get();
 }
@@ -72,10 +86,16 @@ void IGraphicsResource::SetExistingResource(ID3D12Resource *existingResource) {
     if (sFreeResourceIndices_.empty()) {
         resourceID_ = static_cast<uint32_t>(sResources_.size());
         sResources_.push_back(existingResource);
+        if (sDescriptorInfos_.size() < sResources_.size()) {
+            sDescriptorInfos_.resize(sResources_.size());
+        }
     } else {
         resourceID_ = static_cast<uint32_t>(sFreeResourceIndices_.back());
         sFreeResourceIndices_.pop_back();
         sResources_[resourceID_] = existingResource;
+        if (resourceID_ < sDescriptorInfos_.size()) {
+            sDescriptorInfos_[resourceID_].reset();
+        }
     }
     resource_ = sResources_[resourceID_].Get();
 }
@@ -112,7 +132,9 @@ bool IGraphicsResource::TransitionToNext() {
 void IGraphicsResource::ResetResourceForRecreate() {
     LogScope scope;
     // デスクリプタハンドルを解放
-    descriptorHandleInfo_.reset();
+    if (resourceID_ < sDescriptorInfos_.size()) {
+        sDescriptorInfos_[resourceID_].reset();
+    }
 
     // リソースを解放し、空きインデックスに戻す
     if (resourceID_ < sResources_.size()) {
@@ -122,6 +144,30 @@ void IGraphicsResource::ResetResourceForRecreate() {
 
     resource_ = nullptr;
     currentStateIndex_ = 0;
+}
+
+void IGraphicsResource::SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info) {
+    if (resourceID_ >= sDescriptorInfos_.size()) {
+        sDescriptorInfos_.resize(static_cast<size_t>(resourceID_) + 1);
+    }
+    sDescriptorInfos_[resourceID_] = std::move(info);
+}
+
+DescriptorHandleInfo *IGraphicsResource::GetDescriptorHandleInfo() const {
+    if (resourceID_ < sDescriptorInfos_.size()) {
+        return sDescriptorInfos_[resourceID_].get();
+    }
+    return nullptr;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE IGraphicsResource::GetCPUDescriptorHandle() const {
+    auto *info = GetDescriptorHandleInfo();
+    return info ? info->cpuHandle : D3D12_CPU_DESCRIPTOR_HANDLE{};
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE IGraphicsResource::GetGPUDescriptorHandle() const {
+    auto *info = GetDescriptorHandleInfo();
+    return info ? info->gpuHandle : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
 } // namespace KashipanEngine

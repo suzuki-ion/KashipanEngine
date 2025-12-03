@@ -116,7 +116,7 @@ public:
     );
 
     /// @brief SRV/UAV/CBVをバインド
-    /// @param nameKey バインド名キー
+    /// @param nameKey バインド名キー（例："Vertex:MyTexture#s0"）
     /// @param resource バインドするリソース
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool Bind(const std::string& nameKey, IGraphicsResource* resource);

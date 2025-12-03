@@ -53,10 +53,17 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         return false;
     }
 
-    // ルートシグネチャ: ポインタ寿命を保証するため optional で保持
+    ParsedShadersInfo parsedShaders; // 先に Shader を読む必要がある場合がある
+    if (json.contains("Shader")) {
+        parsedShaders = ParseShader(json["Shader"]);
+    } else {
+        Log(Translation("engine.graphics.pipeline.load.shader.missing") + name, LogSeverity::Error);
+        return false;
+    }
+
     const D3D12_ROOT_SIGNATURE_DESC* pRootSigDesc = nullptr;
-    std::optional<RootSignatureParsed> ownedRootSigParsed; // インライン用
-    D3D12_ROOT_SIGNATURE_DESC presetCopy{};                // プリセットコピー用
+    std::optional<RootSignatureParsed> ownedRootSigParsed;
+    D3D12_ROOT_SIGNATURE_DESC presetCopy{};
 
     if (json.contains("RootSignature")) {
         auto rootJson = json["RootSignature"];
@@ -66,13 +73,132 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
                 Log(Translation("engine.graphics.pipeline.rootsignature.preset.notfound") + presetName + " " + Translation("engine.graphics.pipeline.name.label") + name, LogSeverity::Error);
                 return false;
             }
-            // プリセットは中で寿命問題を抱える可能性があるためその都度コピー
             presetCopy = components_->GetRootSignature(presetName);
             pRootSigDesc = &presetCopy;
         } else {
             ownedRootSigParsed = ParseRootSignature(rootJson);
             pRootSigDesc = &ownedRootSigParsed->desc;
         }
+    } else if (parsedShaders.isAutoRootDescriptorFromShader) {
+        // リフレクション情報から自動ルートシグネチャ生成（簡易版）
+        ownedRootSigParsed.emplace();
+        ownedRootSigParsed->desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+        // 収集用
+        struct RangeBuildKey { D3D12_DESCRIPTOR_RANGE_TYPE type; UINT space; };
+        std::vector<RangeBuildKey> keys;
+        std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> tempRanges; // SRV/UAV/Sampler用
+        // CBVのRootDescriptor格納用（root parametersへの直接登録）
+        struct CbvRootDesc { UINT shaderRegister; UINT space; };
+        std::vector<CbvRootDesc> cbvRootDescriptors;
+
+        auto getRangeType = [](D3D_SHADER_INPUT_TYPE t)->D3D12_DESCRIPTOR_RANGE_TYPE {
+            switch (t) {
+                case D3D_SIT_TEXTURE:
+                case D3D_SIT_STRUCTURED:
+                case D3D_SIT_BYTEADDRESS:
+                case D3D_SIT_RTACCELERATIONSTRUCTURE:
+                    return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+                case D3D_SIT_SAMPLER: return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+                case D3D_SIT_UAV_RWTYPED:
+                case D3D_SIT_UAV_RWSTRUCTURED:
+                case D3D_SIT_UAV_RWBYTEADDRESS:
+                case D3D_SIT_UAV_APPEND_STRUCTURED:
+                case D3D_SIT_UAV_CONSUME_STRUCTURED:
+                case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+                    return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+                default: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+            }
+            };
+
+        // リソース収集
+        for (auto &stage : parsedShaders.stages) {
+            ShaderCompiler::ShaderCompiledInfo *compiled = nullptr;
+            if (stage.isUsePreset) {
+                if (components_->HasCompiledShader(stage.presetName)) compiled = components_->GetCompiledShader(stage.presetName); else continue;
+            } else {
+                compiled = shaderCompiler_->CompileShader(stage.compileInfo);
+                if (compiled) components_->RegisterCompiledShader(stage.compileInfo.name, compiled);
+            }
+            if (!compiled) continue;
+
+            for (const auto &kv : compiled->GetReflectionInfo().ResourceBindings()) {
+                const auto &rb = kv.second;
+                if (rb.Type() == D3D_SIT_CBUFFER) {
+                    // CBV は RootDescriptor として追加
+                    cbvRootDescriptors.push_back({ rb.BindPoint(), rb.Space() });
+                    continue;
+                }
+                // SRV/UAV/Sampler は DescriptorTable にまとめる
+                D3D12_DESCRIPTOR_RANGE_TYPE rtype = getRangeType(rb.Type());
+                RangeBuildKey key{ rtype, rb.Space() };
+                size_t idx = 0; bool found = false;
+                for (; idx < keys.size(); ++idx) {
+                    if (keys[idx].type == key.type && keys[idx].space == key.space) { found = true; break; }
+                }
+                if (!found) { keys.push_back(key); tempRanges.emplace_back(); idx = keys.size() - 1; }
+
+                D3D12_DESCRIPTOR_RANGE range{};
+                range.RangeType = key.type;
+                range.NumDescriptors = rb.BindCount() == 0 ? 1u : rb.BindCount();
+                range.BaseShaderRegister = rb.BindPoint();
+                range.RegisterSpace = rb.Space();
+                range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+                tempRanges[idx].push_back(range);
+            }
+        }
+
+        // SRV/UAV の連番統合
+        for (auto &ranges : tempRanges) {
+            std::sort(ranges.begin(), ranges.end(), [](auto &a, auto &b) { return a.BaseShaderRegister < b.BaseShaderRegister; });
+            std::vector<D3D12_DESCRIPTOR_RANGE> merged;
+            for (size_t i = 0; i < ranges.size();) {
+                D3D12_DESCRIPTOR_RANGE cur = ranges[i];
+                ++i;
+                while (i < ranges.size()) {
+                    auto &n = ranges[i];
+                    if (n.BaseShaderRegister == cur.BaseShaderRegister + cur.NumDescriptors &&
+                        n.RegisterSpace == cur.RegisterSpace && n.RangeType == cur.RangeType) {
+                        cur.NumDescriptors += n.NumDescriptors;
+                        ++i;
+                    } else break;
+                }
+                merged.push_back(cur);
+            }
+            ranges = std::move(merged);
+        }
+
+        // RootParameter 構築: まず CBV RootDescriptor
+        for (const auto &cbv : cbvRootDescriptors) {
+            D3D12_ROOT_PARAMETER param{};
+            param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+            param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+            param.Descriptor.ShaderRegister = cbv.shaderRegister;
+            param.Descriptor.RegisterSpace = cbv.space;
+            ownedRootSigParsed->rootParams.parameters.push_back(param);
+        }
+
+        // 次に SRV/UAV/Sampler の DescriptorTable
+        for (size_t i = 0; i < keys.size(); ++i) {
+            if (tempRanges[i].empty()) continue;
+            D3D12_ROOT_PARAMETER param{};
+            param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+            param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+            ownedRootSigParsed->rootParams.rangesStorage.push_back(tempRanges[i]);
+            auto &storageRef = ownedRootSigParsed->rootParams.rangesStorage.back();
+            param.DescriptorTable.NumDescriptorRanges = static_cast<UINT>(storageRef.size());
+            param.DescriptorTable.pDescriptorRanges = storageRef.data();
+            ownedRootSigParsed->rootParams.parameters.push_back(param);
+        }
+
+        // desc の最終設定
+        ownedRootSigParsed->desc.NumParameters = static_cast<UINT>(ownedRootSigParsed->rootParams.parameters.size());
+        ownedRootSigParsed->desc.pParameters = ownedRootSigParsed->rootParams.parameters.empty() ? nullptr : ownedRootSigParsed->rootParams.parameters.data();
+        ownedRootSigParsed->desc.NumStaticSamplers = 0;
+        ownedRootSigParsed->desc.pStaticSamplers = nullptr;
+
+        pRootSigDesc = &ownedRootSigParsed->desc;
+        outInfo.autoRootDescriptorGenerated = true;
     } else {
         Log(Translation("engine.graphics.pipeline.load.render.rootsignature.missing") + name, LogSeverity::Error);
         return false;
@@ -94,32 +220,27 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         }
     }
 
-    // Shaders
+    // Shaders コンパイルは parsedShaders から再利用（上で一部コンパイル済)
     ShaderCompiler::ShaderCompiledInfo *vs = nullptr, *ps = nullptr, *gs = nullptr, *hs = nullptr, *ds = nullptr;
-    if (!json.contains("Shader")) {
-        Log(Translation("engine.graphics.pipeline.load.shader.missing") + name, LogSeverity::Error);
-        return false;
-    }
-    ParsedShadersInfo parsedShaders = ParseShader(json["Shader"]);
     std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo*, std::string>> shadersWithStages;
-
     for (auto &stageInfo : parsedShaders.stages) {
         ShaderCompiler::ShaderCompiledInfo *compiled = nullptr;
         if (stageInfo.isUsePreset) {
             if (components_->HasCompiledShader(stageInfo.presetName)) compiled = components_->GetCompiledShader(stageInfo.presetName);
             else Log(Translation("engine.graphics.pipeline.shader.preset.notfound") + stageInfo.presetName + " " + Translation("engine.graphics.pipeline.stage.label") + stageInfo.stageName + " " + Translation("engine.graphics.pipeline.name.label") + name, LogSeverity::Error);
         } else {
-            compiled = shaderCompiler_->CompileShader(stageInfo.compileInfo);
-            if (compiled) components_->RegisterCompiledShader(stageInfo.compileInfo.name, compiled);
-            else Log(Translation("engine.graphics.pipeline.shader.compile.failed") + stageInfo.compileInfo.filePath + " " + Translation("engine.graphics.pipeline.stage.label") + stageInfo.stageName + " " + Translation("engine.graphics.pipeline.name.label") + name, LogSeverity::Error);
+            if (components_->HasCompiledShader(stageInfo.compileInfo.name)) compiled = components_->GetCompiledShader(stageInfo.compileInfo.name); else {
+                compiled = shaderCompiler_->CompileShader(stageInfo.compileInfo);
+                if (compiled) components_->RegisterCompiledShader(stageInfo.compileInfo.name, compiled);
+                else Log(Translation("engine.graphics.pipeline.shader.compile.failed") + stageInfo.compileInfo.filePath + " " + Translation("engine.graphics.pipeline.stage.label") + stageInfo.stageName + " " + Translation("engine.graphics.pipeline.name.label") + name, LogSeverity::Error);
+            }
         }
-        const std::string &stage = stageInfo.stageName;
-        shadersWithStages.emplace_back(compiled, stage);
-        if (stage == "Vertex") vs = compiled;
-        else if (stage == "Pixel") ps = compiled;
-        else if (stage == "Geometry") gs = compiled;
-        else if (stage == "Hull") hs = compiled;
-        else if (stage == "Domain") ds = compiled;
+        shadersWithStages.emplace_back(compiled, stageInfo.stageName);
+        if (stageInfo.stageName == "Vertex") vs = compiled;
+        else if (stageInfo.stageName == "Pixel") ps = compiled;
+        else if (stageInfo.stageName == "Geometry") gs = compiled;
+        else if (stageInfo.stageName == "Hull") hs = compiled;
+        else if (stageInfo.stageName == "Domain") ds = compiled;
     }
     if (!vs) {
         Log(Translation("engine.graphics.pipeline.load.render.vertex.missing") + name, LogSeverity::Error);
@@ -171,7 +292,10 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
     GraphicsPipelineStateParsedInfo gpsInfo = json["PipelineState"].contains("UsePreset") ? components_->GetGraphicsPipelineState(json["PipelineState"]["UsePreset"].get<std::string>()) : ParseGraphicsPipelineState(json["PipelineState"]);
 
     if (gpsInfo.desc.PrimitiveTopologyType == D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED && parsedShaders.isAutoTopologyFromShaders) {
-        if (hs && ds) gpsInfo.desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+        if (std::any_of(parsedShaders.stages.begin(), parsedShaders.stages.end(), [](auto &s){ return s.stageName == "Hull"; }) &&
+            std::any_of(parsedShaders.stages.begin(), parsedShaders.stages.end(), [](auto &s){ return s.stageName == "Domain"; })) {
+            gpsInfo.desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+        }
     }
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = gpsInfo.desc;
@@ -200,7 +324,6 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
     outInfo.topologyType = ToD3DTopology(psoDesc.PrimitiveTopologyType);
     outInfo.pipelineSet.rootSignature = rootSignature;
     outInfo.pipelineSet.pipelineState = pso;
-    // 利用シェーダー登録
     outInfo.shaders.clear();
     if (vs) outInfo.shaders.push_back(vs);
     if (ps) outInfo.shaders.push_back(ps);
@@ -218,11 +341,9 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
         Log(Translation("engine.graphics.pipeline.load.compute.missingname"), LogSeverity::Error);
         return false;
     }
-
     const D3D12_ROOT_SIGNATURE_DESC* pRootSigDesc = nullptr;
     std::optional<RootSignatureParsed> ownedRootSigParsed;
     D3D12_ROOT_SIGNATURE_DESC presetCopy{};
-
     if (json.contains("RootSignature")) {
         auto rootJson = json["RootSignature"];
         if (rootJson.contains("UsePreset")) {
@@ -241,7 +362,6 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
         Log(Translation("engine.graphics.pipeline.load.compute.rootsignature.missing") + name, LogSeverity::Error);
         return false;
     }
-
     Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
     Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
     if (FAILED(D3D12SerializeRootSignature(pRootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, signatureBlob.GetAddressOf(), errorBlob.GetAddressOf()))) {
@@ -257,7 +377,6 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
             return false;
         }
     }
-
     ShaderCompiler::ShaderCompiledInfo *cs = nullptr;
     if (json.contains("Shader")) {
         ParsedShadersInfo parsedShaders = ParseShader(json["Shader"]);
@@ -287,7 +406,6 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
         Log(Translation("engine.graphics.pipeline.load.compute.shader.missing") + name, LogSeverity::Error);
         return false;
     }
-
     D3D12_COMPUTE_PIPELINE_STATE_DESC computeDesc{};
     if (json.contains("PipelineState")) {
         const auto &pj = json["PipelineState"];
@@ -296,10 +414,8 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
         Log(Translation("engine.graphics.pipeline.load.compute.pso.missing") + name, LogSeverity::Error);
         return false;
     }
-
     computeDesc.pRootSignature = rootSignature.Get();
     computeDesc.CS = { cs->GetBytecodePtr(), cs->GetBytecodeSize() };
-
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pso;
     {
         HRESULT hr = device_->CreateComputePipelineState(&computeDesc, IID_PPV_ARGS(&pso));
@@ -308,7 +424,6 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
             return false;
         }
     }
-
     outInfo.name = name;
     outInfo.type = PipelineType::Compute;
     outInfo.topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
@@ -323,7 +438,7 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
         ShaderCompiler::ShaderCompiledInfo *shader = entry.first;
         const std::string &stageName = entry.second;
         if (!shader) continue;
-        auto single = CreateShaderVariableMap(*shader, true);
+        auto single = CreateShaderVariableMap(*shader, false);
         std::string prefix = stageName;
         if (!prefix.empty()) prefix += ":";
         for (auto it = single.begin(); it != single.end(); ++it) {

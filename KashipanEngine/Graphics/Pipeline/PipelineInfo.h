@@ -32,6 +32,7 @@ struct PipelineInfo {
     const PipelineSet &GetPipelineSet() const { return pipelineSet; }
     const std::vector<ShaderCompiler::ShaderCompiledInfo *> &Shaders() const { return shaders; }
     ShaderVariableBinder &GetVariableBinder() { return variableBinder; }
+    bool IsAutoRootDescriptorGenerated() const { return autoRootDescriptorGenerated; }
 private:
     friend class PipelineCreator;
     std::string name;
@@ -40,6 +41,7 @@ private:
     PipelineSet pipelineSet;
     std::vector<ShaderCompiler::ShaderCompiledInfo *> shaders;
     ShaderVariableBinder variableBinder{ Passkey<PipelineInfo>{} };
+    bool autoRootDescriptorGenerated = false; // リフレクションから自動生成されたか
 };
 
 } // namespace KashipanEngine

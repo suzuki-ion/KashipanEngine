@@ -2,9 +2,8 @@
 
 namespace KashipanEngine {
 
-ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, SRVHeap *srvHeap, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource)
+ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::SRV) {
-    srvHeap_ = srvHeap;
     Initialize(width, height, format, flags, existingResource);
 }
 
@@ -15,7 +14,8 @@ bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT forma
 
 bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource) {
     LogScope scope;
-    if (!GetDevice() || !srvHeap_) {
+    auto *srvHeap = GetSRVHeap();
+    if (!GetDevice() || !srvHeap) {
         Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
         return false;
     }
@@ -52,7 +52,7 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
         }
     }
 
-    auto handle = srvHeap_->AllocateDescriptorHandle();
+    auto handle = srvHeap->AllocateDescriptorHandle();
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = format_;

@@ -2,9 +2,8 @@
 
 namespace KashipanEngine {
 
-DepthStencilResource::DepthStencilResource(UINT width, UINT height, DXGI_FORMAT format, FLOAT clearDepth, UINT8 clearStencil, DSVHeap *dsvHeap, ID3D12Resource *existingResource)
+DepthStencilResource::DepthStencilResource(UINT width, UINT height, DXGI_FORMAT format, FLOAT clearDepth, UINT8 clearStencil, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::DSV) {
-    dsvHeap_ = dsvHeap;
     Initialize(width, height, format, clearDepth, clearStencil, existingResource);
 }
 
@@ -30,7 +29,8 @@ void DepthStencilResource::ClearDepthStencilView() const {
 
 bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, FLOAT clearDepth, UINT8 clearStencil, ID3D12Resource *existingResource) {
     LogScope scope;
-    if (!GetDevice() || !dsvHeap_) {
+    auto *dsvHeap = GetDSVHeap();
+    if (!GetDevice() || !dsvHeap) {
         Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
         return false;
     }
@@ -73,7 +73,7 @@ bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
         }
     }
 
-    auto handle = dsvHeap_->AllocateDescriptorHandle();
+    auto handle = dsvHeap->AllocateDescriptorHandle();
 
     D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     dsvDesc.Format = format_;

@@ -1,9 +1,15 @@
+struct Material {
+	float4 color;
+};
+
+ConstantBuffer<Material> gMaterial : register(b0);
+
 struct PSOutput {
 	float4 color : SV_TARGET0;
 };
 
 PSOutput main() {
 	PSOutput output;
-	output.color = float4(1.0, 0.0, 0.0, 1.0);
+	output.color = gMaterial.color;
 	return output;
 }

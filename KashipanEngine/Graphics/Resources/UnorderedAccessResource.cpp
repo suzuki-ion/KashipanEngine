@@ -2,9 +2,8 @@
 
 namespace KashipanEngine {
 
-UnorderedAccessResource::UnorderedAccessResource(UINT width, UINT height, DXGI_FORMAT format, UAVHeap *uavHeap, ID3D12Resource *existingResource)
+UnorderedAccessResource::UnorderedAccessResource(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::UAV) {
-    uavHeap_ = uavHeap;
     Initialize(width, height, format, existingResource);
 }
 
@@ -15,7 +14,8 @@ bool UnorderedAccessResource::Recreate(UINT width, UINT height, DXGI_FORMAT form
 
 bool UnorderedAccessResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource) {
     LogScope scope;
-    if (!GetDevice() || !uavHeap_) {
+    auto *uavHeap = GetSRVHeap();
+    if (!GetDevice() || !uavHeap) {
         Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
         return false;
     }
@@ -51,7 +51,7 @@ bool UnorderedAccessResource::Initialize(UINT width, UINT height, DXGI_FORMAT fo
         }
     }
 
-    auto handle = uavHeap_->AllocateDescriptorHandle();
+    auto handle = uavHeap->AllocateDescriptorHandle();
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
     uavDesc.Format = format_;

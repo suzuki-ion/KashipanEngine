@@ -363,6 +363,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\Wireframe.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootConstants\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootDescriptor\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootParameter\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Compute.Empty.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\example.json" />

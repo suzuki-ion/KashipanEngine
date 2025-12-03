@@ -1,27 +1,33 @@
 #pragma once
 #include "Core/DirectX/DescriptorHeaps/DescriptorHeapBase.h"
+#include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
+#include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
+#include "Core/DirectX/DescriptorHeaps/HeapSRV.h"
 
 namespace KashipanEngine {
 
 class DirectXCommon;
 
 enum class ResourceViewType {
-    None,   // 未使用
-    RTV,    // レンダーターゲットビュー
-    DSV,    // 深度ステンシルビュー
-    SRV,    // シェーダーリソースビュー
-    UAV,    // アンオーダードアクセスビュー
-    CBV,    // 定数バッファビュー
-    VBV,    // 頂点バッファビュー
-    IBV,    // インデックスバッファビュー
-    SOV,    // ストリーム出力ビュー
+    None,
+    RTV,
+    DSV,
+    SRV,
+    UAV,
+    CBV,
+    VBV,
+    IBV,
 };
 
 /// @brief グラフィックのリソースインターフェース
 class IGraphicsResource {
     static inline ID3D12Device *device_ = nullptr;
+    static inline RTVHeap *rtvHeap_ = nullptr;
+    static inline DSVHeap *dsvHeap_ = nullptr;
+    static inline SRVHeap *srvHeap_ = nullptr;
 public:
     static void SetDevice(Passkey<DirectXCommon>, ID3D12Device *device) { device_ = device; }
+    static void SetDescriptorHeaps(Passkey<DirectXCommon>, RTVHeap *rtv, DSVHeap *dsv, SRVHeap *srv) { rtvHeap_ = rtv; dsvHeap_ = dsv; srvHeap_ = srv; }
     static void ClearAllResources(Passkey<DirectXCommon>);
     virtual ~IGraphicsResource();
 
@@ -51,9 +57,9 @@ public:
     D3D12_RESOURCE_STATES GetCurrentState() const { return transitionStates_.empty() ? D3D12_RESOURCE_STATE_COMMON : transitionStates_[currentStateIndex_]; }
 
     /// @brief デスクリプタCPUハンドル取得（未割り当ての場合は空）
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle() const { return descriptorHandleInfo_ ? descriptorHandleInfo_->cpuHandle : D3D12_CPU_DESCRIPTOR_HANDLE{}; }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle() const;
     /// @brief デスクリプタグラフィックスハンドル取得（未割り当ての場合は空）
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle() const { return descriptorHandleInfo_ ? descriptorHandleInfo_->gpuHandle : D3D12_GPU_DESCRIPTOR_HANDLE{}; }
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle() const;
 
 protected:
     /// @brief リソース作成
@@ -73,10 +79,16 @@ protected:
 
     /// @brief デバイス取得（派生クラス用）
     ID3D12Device *GetDevice() const { return device_; }
+    /// @brief RTVヒープ取得（派生クラス用）
+    RTVHeap *GetRTVHeap() const { return rtvHeap_; }
+    /// @brief DSVヒープ取得（派生クラス用）
+    DSVHeap *GetDSVHeap() const { return dsvHeap_; }
+    /// @brief SRVヒープ取得（派生クラス用）
+    SRVHeap *GetSRVHeap() const { return srvHeap_; }
     /// @brief デスクリプタハンドル情報設定（派生クラス用）
-    void SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info) { descriptorHandleInfo_ = std::move(info); }
+    void SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info);
     /// @brief デスクリプタハンドル情報取得（派生クラス用）
-    DescriptorHandleInfo *GetDescriptorHandleInfo() const { return descriptorHandleInfo_.get(); }
+    DescriptorHandleInfo *GetDescriptorHandleInfo() const;
     /// @brief 再生成前に現在のリソースを解放（派生クラス用）
     void ResetResourceForRecreate();
 
@@ -85,8 +97,7 @@ protected:
 private:
     uint32_t resourceID_ = 0;
     ID3D12Resource *resource_ = nullptr;
-    std::unique_ptr<DescriptorHandleInfo> descriptorHandleInfo_ = nullptr;
-    ID3D12GraphicsCommandList *commandList_ = nullptr; // インスタンスごとのコマンドリスト
+    ID3D12GraphicsCommandList *commandList_ = nullptr;
     uint32_t currentStateIndex_ = 0;
     std::vector<D3D12_RESOURCE_STATES> transitionStates_;
 };

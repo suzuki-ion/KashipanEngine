@@ -10,19 +10,14 @@ class ConstantBufferResource final : public IGraphicsResource {
 public:
     /// @brief コンストラクタ
     /// @param byteSize バッファサイズ（バイト単位）
-    /// @param cbvHeap CBVヒープ
     /// @param existingResource 既存リソース（nullptrの場合は新規作成）
-    ConstantBufferResource(size_t byteSize, CBVHeap *cbvHeap, ID3D12Resource *existingResource = nullptr);
+    ConstantBufferResource(size_t byteSize, ID3D12Resource *existingResource = nullptr);
 
     /// @brief リソース再生成
     /// @param byteSize バッファサイズ（バイト単位）
     /// @param existingResource 既存リソース（nullptrの場合は新規作成）
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool Recreate(size_t byteSize, ID3D12Resource *existingResource = nullptr);
-
-    /// @brief CBVヒープの設定
-    /// @param cbvHeap CBVヒープ
-    void SetHeap(CBVHeap *cbvHeap) { cbvHeap_ = cbvHeap; }
 
     /// @brief バッファマッピング
     void *Map();
@@ -35,7 +30,6 @@ private:
     bool Initialize(size_t byteSize, ID3D12Resource *existingResource);
 
     size_t bufferSize_ = 0;
-    CBVHeap *cbvHeap_ = nullptr;
 };
 
 } // namespace KashipanEngine

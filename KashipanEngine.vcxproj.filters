@@ -685,5 +685,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\PS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\VS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Test.json" />
   </ItemGroup>
 </Project>

@@ -51,6 +51,10 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.rtvDescriptorHeapSize);
     DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.dsvDescriptorHeapSize);
     SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.srvDescriptorHeapSize);
+
+    // グローバルヒープポインタ設定
+    IGraphicsResource::SetDescriptorHeaps({},
+        RTVHeap_.get(), DSVHeap_.get(), SRVHeap_.get());
     
     DX12SwapChain::Initialize(Passkey<DirectXCommon>{}, this,
         dx12Device_->GetDevice(),

@@ -22,6 +22,7 @@ struct ParsedShadersInfo {
     bool isAutoInputLayoutFromVS = false;       // グループJSONで VS から入力レイアウト自動生成
     bool isAutoRTCountFromPS = false;           // グループJSONで PS からRT数自動取得
     bool isGroup = false;                       // グループ形式か（true: Shader{ "Vertex":{...}, ... }）
+    bool isAutoRootDescriptorFromShader = false; // リフレクションからルートディスクリプタ自動生成
 };
 
 // 1関数=1パーサ: グループ形式/単体形式の両方を扱う
@@ -53,6 +54,7 @@ inline ParsedShadersInfo ParseShader(const Json &json, const std::filesystem::pa
         if (json.contains("AutoTopologyFromShaders")) info.isAutoTopologyFromShaders = json["AutoTopologyFromShaders"].get<bool>();
         if (json.contains("AutoInputLayoutFromVS")) info.isAutoInputLayoutFromVS = json["AutoInputLayoutFromVS"].get<bool>();
         if (json.contains("AutoRTCountFromPS")) info.isAutoRTCountFromPS = json["AutoRTCountFromPS"].get<bool>();
+        if (json.contains("AutoRootDescriptorFromShader")) info.isAutoRootDescriptorFromShader = json["AutoRootDescriptorFromShader"].get<bool>();
 
         for (auto *stage : kStages) {
             if (!json.contains(stage)) continue;
@@ -113,6 +115,7 @@ inline ParsedShadersInfo ParseShader(const Json &json, const std::filesystem::pa
                 }
             }
         }
+        if (json.contains("AutoRootDescriptorFromShader")) info.isAutoRootDescriptorFromShader = json["AutoRootDescriptorFromShader"].get<bool>();
         info.stages.emplace_back(std::move(parsed));
     }
 

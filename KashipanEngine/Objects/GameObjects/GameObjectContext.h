@@ -49,6 +49,7 @@ public:
     /// @brief 他コンポーネントの取得
     std::vector<IGameObjectComponent2D *> GetComponents(const std::string &componentName) const;
     /// @brief コンポーネントの存在チェック
+    /// @return コンポーネントの個数
     size_t HasComponents(const std::string &componentName) const;
 
 private:
@@ -77,6 +78,7 @@ public:
     /// @brief 他コンポーネントの取得
     std::vector<IGameObjectComponent3D *> GetComponents(const std::string &componentName) const;
     /// @brief コンポーネントの存在チェック
+    /// @return コンポーネントの個数
     size_t HasComponents(const std::string &componentName) const;
 
 private:

@@ -1,3 +1,9 @@
+struct TransformationMatrix {
+	float4x4 wvp;
+};
+
+ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
+
 struct VSInput {
     float4 position : POSITION0;
 };
@@ -8,6 +14,6 @@ struct VSOutput {
 
 VSOutput main(VSInput input) {
     VSOutput output;
-    output.position = input.position;
+	output.position = input.position;
     return output;
 }

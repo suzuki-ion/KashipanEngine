@@ -5,8 +5,10 @@
 #include "Graphics/Renderer.h"
 #include "EngineSettings.h"
 #include "Graphics/Resources.h"
+
 #include "Math/Vector4.h"
 #include "Objects/GameObjects/2D/Triangle2D.h"
+#include "Objects/GameObjects/Components/2D/Material2D.h"
 
 namespace KashipanEngine {
 
@@ -29,6 +31,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     static bool initialized = false;
     if (!initialized) {
         testObject2D = std::make_unique<Triangle2D>();
+        testObject2D->RegisterComponent<Material2D<Vector4>>(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
         initialized = true;
     }
     auto mainWindows = Window::GetWindows("Main Window");

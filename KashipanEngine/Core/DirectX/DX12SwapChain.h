@@ -24,17 +24,19 @@ class DX12SwapChain final {
     static inline ID3D12CommandQueue *sCommandQueue = nullptr;
     static inline RTVHeap *sRTVHeap = nullptr;
     static inline DSVHeap *sDSVHeap = nullptr;
+    static inline SRVHeap *sSRVHeap = nullptr;
 
 public:
     static void Initialize(Passkey<DirectXCommon>, DirectXCommon *directXCommon,
         ID3D12Device *device, IDXGIFactory7 *dxgiFactory, ID3D12CommandQueue *commandQueue,
-        RTVHeap *rtvHeap, DSVHeap *dsvHeap) {
+        RTVHeap *rtvHeap, DSVHeap *dsvHeap, SRVHeap *srvHeap) {
         sDirectXCommon = directXCommon;
         sDevice = device;
         sDXGIFactory = dxgiFactory;
         sCommandQueue = commandQueue;
         sRTVHeap = rtvHeap;
         sDSVHeap = dsvHeap;
+        sSRVHeap = srvHeap;
     }
 
     /// @brief 遅延初期化用コンストラクタ (HWND 未決定)

@@ -37,7 +37,11 @@ public:
     void ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName);
     /// @brief シェーダーの変数バインダーを取得（Rendererから呼ばれる想定）
     ShaderVariableBinder &GetShaderVariableBinder(Passkey<Renderer>, const std::string &pipelineName) {
-        return pipelineInfos_.at(pipelineName).GetVariableBinder();
+        auto it = pipelineInfos_.find(pipelineName);
+        if (it == pipelineInfos_.end()) {
+            throw std::runtime_error("PipelineManager::GetShaderVariableBinder: Pipeline not found: " + pipelineName);
+        }
+        return it->second.GetVariableBinder();
     }
 
 private:

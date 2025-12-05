@@ -1,4 +1,5 @@
 #include "GameObject2DBase.h"
+#include "GameObjectContext.h"
 
 namespace KashipanEngine {
 
@@ -63,6 +64,24 @@ RenderCommand GameObject2DBase::CreateDefaultRenderCommand() const {
     cmd.baseVertexLocation = 0;
     cmd.startInstanceLocation = 0;
     return cmd;
+}
+
+void GameObject2DBase::Update() {
+    GameObject2DContext ctx({}, this);
+    for (auto &c : components_) {
+        c->PreUpdate(ctx);
+    }
+    OnUpdate();
+    for (auto &c : components_) {
+        c->PostUpdate(ctx);
+    }
+}
+
+void GameObject2DBase::PreRender() {
+    GameObject2DContext ctx({}, this);
+    for (auto &c : components_) {
+        c->PreRender(ctx);
+    }
 }
 
 } // namespace KashipanEngine

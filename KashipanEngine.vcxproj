@@ -261,6 +261,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Math\Vector2.h" />
     <ClInclude Include="KashipanEngine\Math\Vector3.h" />
     <ClInclude Include="KashipanEngine\Math\Vector4.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\2D\Material2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\2D\Transform2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\3D\Material3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\3D\Transform3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\IGameObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />

@@ -3,6 +3,7 @@
 #include <optional>
 #include <vector>
 #include <unordered_map>
+#include <span>
 #include "Core/Window.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
@@ -22,6 +23,11 @@ public:
     GameObject3DBase(GameObject3DBase &&) = delete;
     GameObject3DBase &operator=(GameObject3DBase &&) = delete;
     virtual ~GameObject3DBase() = default;
+
+    /// @brief 更新処理（登録済みコンポーネントを更新）
+    void Update();
+    /// @brief 描画前処理（登録済みコンポーネントの前処理）
+    void PreRender();
 
     /// @brief 頂点の値の設定
     template<typename T>
@@ -45,12 +51,21 @@ public:
         const std::string &pipelineName,
         const std::string &passName = "GameObject3D Render Pass");
 
-    /// @brief コンポーネント登録（生成）
+    /// @brief コンポーネントの登録（生成）
+    /// @tparam T コンポーネントの型（IGameObjectComponent2Dを継承している必要あり）
+    /// @tparam Args コンポーネントのコンストラクタ引数の型
+    /// @param args コンポーネントのコンストラクタ引数
+    /// @return 登録に成功した場合は true
     template<typename T, typename... Args>
     bool RegisterComponent(Args&&... args) {
         static_assert(std::is_base_of_v<IGameObjectComponent3D, T>, "T must derive from IGameObjectComponent3D");
         try {
             auto comp = std::make_unique<T>(std::forward<Args>(args)...);
+            // 登録上限を超えていないか確認
+            size_t maxCount = comp->GetMaxComponentCountPerObject();
+            size_t existingCount = HasComponents3D(comp->GetComponentType());
+            if (existingCount >= maxCount) return false;
+            // 登録処理
             const std::string key = comp->GetComponentType();
             components_.push_back(std::move(comp));
             const size_t idx = components_.size() - 1;
@@ -58,17 +73,26 @@ public:
             return true;
         } catch (...) { return false; }
     }
-    /// @brief コンポーネント登録（既存）
+    /// @brief 既存コンポーネントの登録
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 登録に成功した場合は true
     bool RegisterComponent(std::unique_ptr<IGameObjectComponent> comp) {
         if (!comp) return false;
         if (dynamic_cast<IGameObjectComponent3D*>(comp.get()) == nullptr) return false;
+        // 登録上限を超えていないか確認
+        size_t maxCount = comp->GetMaxComponentCountPerObject();
+        size_t existingCount = HasComponents3D(comp->GetComponentType());
+        if (existingCount >= maxCount) return false;
+        // 登録処理
         const std::string key = comp->GetComponentType();
         components_.push_back(std::move(comp));
         const size_t idx = components_.size() - 1;
         componentsIndexByName_.emplace(key, idx);
         return true;
     }
-    /// @brief 名前でコンポーネント取得（3D）
+    /// @brief 名前から一致するコンポーネントを取得
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネントのリスト
     std::vector<IGameObjectComponent3D*> GetComponents3D(const std::string &componentName) const {
         std::vector<IGameObjectComponent3D*> result;
         auto range = componentsIndexByName_.equal_range(componentName);
@@ -80,7 +104,9 @@ public:
         }
         return result;
     }
-    /// @brief 名前で個数チェック（3D）
+    /// @brief 名前からコンポーネントの存在を確認
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネントの個数
     size_t HasComponents3D(const std::string &componentName) const {
         auto range = componentsIndexByName_.equal_range(componentName);
         size_t count = 0;
@@ -105,6 +131,9 @@ protected:
         size_t vertexCount, size_t indexCount,
         void *initialVertexData = nullptr,
         void *initialIndexData = nullptr);
+
+    /// @brief 更新処理（派生クラスでの独自処理用）
+    virtual void OnUpdate() {}
 
     /// @brief シェーダ変数設定処理 (true を返した場合のみ描画コマンド生成へ進む)
     /// @param shaderBinder シェーダ変数バインダー

@@ -16,9 +16,6 @@ protected:
 private:
     using Vertex = Vector4;
     using Index = uint32_t;
-
-    using ColorBuffer = Vector4;
-    std::unique_ptr<ConstantBufferResource> colorBuffer_;
 };
 
 } // namespace KashipanEngine

@@ -1,15 +1,21 @@
 #include "Triangle2D.h"
+#include "Objects/GameObjects/Components/2D/Material2D.h"
 
 namespace KashipanEngine {
 
 Triangle2D::Triangle2D(const std::string &name) : GameObject2DBase(name, sizeof(Vertex), sizeof(Index), 3, 3) {
     LogScope scope;
-    colorBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(ColorBuffer));
-    ColorBuffer *mappedColor = static_cast<ColorBuffer *>(colorBuffer_->Map());
-    *mappedColor = ColorBuffer(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 bool Triangle2D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
+    if (HasComponents2D("Material2D") == 0 /*||
+        HasComponents2D("Transform2D") == 0*/) {
+        return false;
+    }
+    if (!static_cast<Material2D<>*>(GetComponents2D("Material2D")[0])
+        ->Bind(shaderBinder, "Pixel:gMaterial")) {
+        return false;
+    }
     auto v = GetVertexSpan<Vertex>();
     if (v.size() < 3) return false;
     v[0] = Vertex(-0.5f, -0.5f, 0.0f, 1.0f);
@@ -20,9 +26,6 @@ bool Triangle2D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
     i[0] = 0;
     i[1] = 1;
     i[2] = 2;
-    ColorBuffer *mappedColor = static_cast<ColorBuffer *>(colorBuffer_->Map());
-    *mappedColor = ColorBuffer(1.0f, 1.0f, 0.0f, 1.0f);
-    shaderBinder.Bind("Pixel:gMaterial", colorBuffer_.get());
     return true;
 }
 

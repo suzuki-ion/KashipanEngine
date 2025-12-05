@@ -61,7 +61,8 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
         dx12DXGIs_->GetDXGIFactory(),
         dx12CommandQueue_->GetCommandQueue(),
         RTVHeap_.get(),
-        DSVHeap_.get()
+        DSVHeap_.get(),
+        SRVHeap_.get()
     );
 
     // スワップチェーンスロット事前確保 (遅延初期化用空インスタンス生成)

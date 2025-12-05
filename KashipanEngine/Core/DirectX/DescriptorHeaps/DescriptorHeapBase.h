@@ -32,6 +32,15 @@ class DescriptorHeapBase {
 public:
     virtual ~DescriptorHeapBase();
 
+    /// @brief ヒープの種類を取得
+    [[nodiscard]] D3D12_DESCRIPTOR_HEAP_TYPE GetType() const noexcept { return type_; }
+    /// @brief デスクリプタ数を取得
+    [[nodiscard]] UINT GetNumDescriptors() const noexcept { return numDescriptors_; }
+    /// @brief シェーダー可視かどうかを取得
+    [[nodiscard]] bool IsShaderVisible() const noexcept { return isShaderVisible_; }
+    /// @brief デスクリプタヒープを取得
+    [[nodiscard]] ID3D12DescriptorHeap *GetDescriptorHeap() const noexcept { return descriptorHeap_.Get(); }
+
     /// @brief デスクリプタハンドルを取得
     [[nodiscard]] std::unique_ptr<DescriptorHandleInfo> AllocateDescriptorHandle();
     /// @brief デスクリプタハンドルを解放

@@ -13,6 +13,8 @@
 
 namespace KashipanEngine {
 
+class GameObject2DContext;
+
 /// @brief 2Dゲームオブジェクト基底クラス
 class GameObject2DBase {
 public:
@@ -21,7 +23,7 @@ public:
     GameObject2DBase &operator=(const GameObject2DBase &) = delete;
     GameObject2DBase(GameObject2DBase &&) = delete;
     GameObject2DBase &operator=(GameObject2DBase &&) = delete;
-    virtual ~GameObject2DBase() = default;
+    virtual ~GameObject2DBase();
 
     /// @brief 更新処理（登録済みコンポーネントを更新）
     void Update();
@@ -45,6 +47,11 @@ public:
     /// @brief オブジェクト名の取得
     const std::string &GetName() const { return name_; }
 
+    /// @brief 頂点数取得
+    UINT GetVertexCount() const { return vertexCount_; }
+    /// @brief インデックス数取得
+    UINT GetIndexCount() const { return indexCount_; }
+
     /// @brief レンダーパスの作成
     RenderPassInfo2D CreateRenderPass(Window *targetWindow,
         const std::string &pipelineName,
@@ -60,35 +67,13 @@ public:
         static_assert(std::is_base_of_v<IGameObjectComponent2D, T>, "T must derive from IGameObjectComponent2D");
         try {
             auto comp = std::make_unique<T>(std::forward<Args>(args)...);
-            // 登録上限を超えていないか確認
-            size_t maxCount = comp->GetMaxComponentCountPerObject();
-            size_t existingCount = HasComponents2D(comp->GetComponentType());
-            if (existingCount >= maxCount) return false;
-            // 登録処理
-            const std::string key = comp->GetComponentType();
-            components_.push_back(std::move(comp));
-            const size_t idx = components_.size() - 1;
-            componentsIndexByName_.emplace(key, idx);
-            return true;
+            return RegisterComponent(std::move(comp));
         } catch (...) { return false; }
     }
     /// @brief 既存コンポーネントの登録
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 登録に成功した場合は true
-    bool RegisterComponent(std::unique_ptr<IGameObjectComponent> comp) {
-        if (!comp) return false;
-        if (dynamic_cast<IGameObjectComponent2D*>(comp.get()) == nullptr) return false;
-        // 登録上限を超えていないか確認
-        size_t maxCount = comp->GetMaxComponentCountPerObject();
-        size_t existingCount = HasComponents2D(comp->GetComponentType());
-        if (existingCount >= maxCount) return false;
-        // 登録処理
-        const std::string key = comp->GetComponentType();
-        components_.push_back(std::move(comp));
-        const size_t idx = components_.size() - 1;
-        componentsIndexByName_.emplace(key, idx);
-        return true;
-    }
+    bool RegisterComponent(std::unique_ptr<IGameObjectComponent> comp);
     /// @brief 名前から一致するコンポーネントを取得
     /// @param componentName コンポーネント名
     /// @return 一致するコンポーネントのリスト
@@ -137,17 +122,13 @@ protected:
     /// @brief シェーダ変数設定処理 (true を返した場合のみ描画コマンド生成へ進む)
     /// @param shaderBinder シェーダ変数バインダー
     /// @return 描画する場合は true
-    virtual bool Render(ShaderVariableBinder &shaderBinder) { (void)shaderBinder; return true; }
+    virtual bool Render(ShaderVariableBinder &shaderBinder) { (void)shaderBinder; return false; }
 
     /// @brief 描画コマンド生成処理
     /// @param pipelineBinder パイプラインバインダー
     /// @return 描画コマンド (生成しない場合は std::nullopt)
     virtual std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder);
 
-    /// @brief 頂点数取得
-    UINT GetVertexCount() const { return vertexCount_; }
-    /// @brief インデックス数取得
-    UINT GetIndexCount() const { return indexCount_; }
     /// @brief 頂点マップデータ取得
     template<typename T>
     std::span<T> GetVertexSpan() const {
@@ -182,6 +163,16 @@ protected:
 private:
     friend class GameObject2DContext;
 
+    struct ShaderBindingFailureInfo {
+        size_t componentIndex;
+        std::string componentType;
+    };
+
+    /// @brief コンポーネントのシェーダー変数バインド処理
+    /// @param shaderBinder シェーダ変数バインダー
+    /// @return バインドに失敗したコンポーネントの情報リスト
+    std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
+
     std::string name_ = "GameObject2D";
     UINT vertexCount_ = 0;
     UINT indexCount_ = 0;
@@ -193,6 +184,8 @@ private:
     void *indexData_ = nullptr;
     std::vector<std::unique_ptr<IGameObjectComponent>> components_;
     std::unordered_multimap<std::string, size_t> componentsIndexByName_;
+    std::unique_ptr<GameObject2DContext> context_;
+    std::vector<size_t> shaderBindingComponentIndices_;
 };
 
 } // namespace KashipanEngine

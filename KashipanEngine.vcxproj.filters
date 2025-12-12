@@ -234,6 +234,9 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObjectContext.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\IGameObjectComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">

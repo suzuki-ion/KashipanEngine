@@ -3,6 +3,7 @@
 #include <span>
 #include "Objects/GameObjects/GameObject2DBase.h"
 #include "Objects/GameObjects/GameObject3DBase.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
@@ -10,21 +11,7 @@ namespace KashipanEngine {
 class IGameObjectContext {
 public:
     virtual ~IGameObjectContext() = default;
-
     virtual const std::string &GetName() const = 0;
-
-    template<typename T>
-    std::span<T> GetVertexData() const { return GetVertexDataImpl<T>(); }
-
-    template<typename T>
-    void SetVertexData(const std::span<T> &data) { SetVertexDataImpl<T>(data); }
-
-protected:
-    template<typename T>
-    std::span<T> GetVertexDataImpl() const;
-
-    template<typename T>
-    void SetVertexDataImpl(const std::span<T> &data);
 };
 
 /// @brief 2Dゲームオブジェクトコンテキストクラス
@@ -42,10 +29,10 @@ public:
     const std::string &GetName() const override;
     /// @brief 頂点データの取得
     template<typename T>
-    std::span<T> GetVertexData() const { return owner_->GetVertexData<T>(); }
+    std::span<T> GetVertexData() const { return owner_->template GetVertexData<T>(); }
     /// @brief 頂点データの設定
     template<typename T>
-    void SetVertexData(const std::span<T> &data) { owner_->SetVertexData<T>(data); }
+    void SetVertexData(const std::span<T> &data) { owner_->template SetVertexData<T>(data); }
     /// @brief 他コンポーネントの取得
     std::vector<IGameObjectComponent2D *> GetComponents(const std::string &componentName) const;
     /// @brief コンポーネントの存在チェック

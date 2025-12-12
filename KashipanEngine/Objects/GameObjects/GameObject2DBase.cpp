@@ -3,18 +3,63 @@
 
 namespace KashipanEngine {
 
+GameObject2DBase::~GameObject2DBase() {
+    // コンポーネントの終了処理
+    for (auto &c : components_) {
+        c->Finalize();
+    }
+    // コンポーネントの破棄
+    components_.clear();
+}
+
 RenderPassInfo2D GameObject2DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
     RenderPassInfo2D passInfo;
     passInfo.window = targetWindow;
     passInfo.pipelineName = pipelineName;
     passInfo.passName = passName;
     passInfo.renderFunction = [this](ShaderVariableBinder &shaderBinder) -> bool {
+        auto failures = BindShaderVariablesToComponents(shaderBinder);
+        if (!failures.empty()) {
+            for (const auto &f : failures) {
+                Log(Translation("engine.gameobject2d.shader.binding.failed")
+                    + " ComponentType: " + f.componentType
+                    + ", ComponentIndex: " + std::to_string(f.componentIndex)
+                    , LogSeverity::Warning);
+            }
+            return false;
+        }
         return Render(shaderBinder);
     };
     passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
         return CreateRenderCommand(pipelineBinder);
     };
     return passInfo;
+}
+
+bool GameObject2DBase::RegisterComponent(std::unique_ptr<IGameObjectComponent> comp) {
+    if (!comp) return false;
+    if (dynamic_cast<IGameObjectComponent2D *>(comp.get()) == nullptr) return false;
+    
+    // 登録上限を超えていないか確認
+    size_t maxCount = comp->GetMaxComponentCountPerObject();
+    size_t existingCount = HasComponents2D(comp->GetComponentType());
+    if (existingCount >= maxCount) return false;
+    if (context_) comp->SetOwnerContext(context_.get());
+
+    // 登録処理
+    const std::string key = comp->GetComponentType();
+    components_.push_back(std::move(comp));
+    const size_t idx = components_.size() - 1;
+    componentsIndexByName_.emplace(key, idx);
+
+    // シェーダーバインド予定のコンポーネントかを記録
+    if (components_.back()->BindShaderVariables(nullptr) != std::nullopt) {
+        shaderBindingComponentIndices_.push_back(idx);
+    }
+
+    // 初期化処理の呼び出し
+    components_.back()->Initialize();
+    return true;
 }
 
 GameObject2DBase::GameObject2DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
@@ -43,6 +88,8 @@ GameObject2DBase::GameObject2DBase(const std::string &name, size_t vertexByteSiz
         indexBufferView_ = indexBuffer_->GetView();
         indexData_ = indexBuffer_->Map();
     }
+    // 永続コンテキストの生成（2D）
+    context_ = std::make_unique<GameObject2DContext>(Passkey<GameObject2DBase>{}, this);
 }
 
 std::optional<RenderCommand> GameObject2DBase::CreateRenderCommand(PipelineBinder &pipelineBinder) {
@@ -67,21 +114,35 @@ RenderCommand GameObject2DBase::CreateDefaultRenderCommand() const {
 }
 
 void GameObject2DBase::Update() {
-    GameObject2DContext ctx({}, this);
     for (auto &c : components_) {
-        c->PreUpdate(ctx);
+        c->PreUpdate();
     }
     OnUpdate();
     for (auto &c : components_) {
-        c->PostUpdate(ctx);
+        c->PostUpdate();
     }
 }
 
 void GameObject2DBase::PreRender() {
-    GameObject2DContext ctx({}, this);
     for (auto &c : components_) {
-        c->PreRender(ctx);
+        c->PreRender();
     }
+}
+
+std::vector<GameObject2DBase::ShaderBindingFailureInfo> GameObject2DBase::BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder) {
+    std::vector<ShaderBindingFailureInfo> failures;
+    for (size_t idx : shaderBindingComponentIndices_) {
+        if (idx >= components_.size()) continue;
+        auto &comp = components_[idx];
+        auto result = comp->BindShaderVariables(&shaderBinder);
+        if (result != std::nullopt && result.value() == false) {
+            ShaderBindingFailureInfo info;
+            info.componentIndex = idx;
+            info.componentType = comp->GetComponentType();
+            failures.push_back(info);
+        }
+    }
+    return failures;
 }
 
 } // namespace KashipanEngine

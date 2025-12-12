@@ -6,7 +6,7 @@
 
 namespace KashipanEngine {
 
-/// @brief 2Dマテリアルコンポーネントクラス
+/// @brief 2Dマテリアルコンポーネント
 template<typename T = Vector4>
 class Material2D : public IGameObjectComponent2D {
 public:
@@ -18,8 +18,7 @@ public:
 
     /// @brief コンポーネントのクローンを作成
     std::unique_ptr<IGameObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Material2D>();
-        ptr->material_ = material_; // 状態を手動コピー（バッファは複製しない）
+        auto ptr = std::make_unique<Material2D>(material_);
         return ptr;
     }
 
@@ -43,9 +42,7 @@ public:
         }
     }
     /// @brief マテリアルの取得
-    T GetMaterial() const {
-        return material_;
-    }
+    const T &GetMaterial() const { return material_; }
 
 private:
     T material_{};

@@ -39,13 +39,35 @@ DXGI_FORMAT InferFormatFromMaskAndType(BYTE mask, D3D_REGISTER_COMPONENT_TYPE co
         switch (compCount) { case 1: return DXGI_FORMAT_R32_FLOAT; case 2: return DXGI_FORMAT_R32G32_FLOAT; case 3: return DXGI_FORMAT_R32G32B32_FLOAT; default: return DXGI_FORMAT_R32G32B32A32_FLOAT; }
     }
 }
-static std::string HrToHex(HRESULT hr) {
+std::string HrToHex(HRESULT hr) {
     std::stringstream ss; ss << "0x" << std::hex << std::uppercase << static_cast<unsigned int>(hr);
     return ss.str();
 }
+
+ShaderStage StageFromName(const std::string& stageName) {
+    if (stageName == "Vertex") return ShaderStage::Vertex;
+    if (stageName == "Pixel") return ShaderStage::Pixel;
+    if (stageName == "Geometry") return ShaderStage::Geometry;
+    if (stageName == "Hull") return ShaderStage::Hull;
+    if (stageName == "Domain") return ShaderStage::Domain;
+    return ShaderStage::Unknown;
+}
+
+D3D12_SHADER_VISIBILITY VisibilityFromStage(ShaderStage stage) {
+    switch (stage) {
+    case ShaderStage::Vertex: return D3D12_SHADER_VISIBILITY_VERTEX;
+    case ShaderStage::Pixel: return D3D12_SHADER_VISIBILITY_PIXEL;
+    case ShaderStage::Geometry: return D3D12_SHADER_VISIBILITY_GEOMETRY;
+    case ShaderStage::Hull: return D3D12_SHADER_VISIBILITY_HULL;
+    case ShaderStage::Domain: return D3D12_SHADER_VISIBILITY_DOMAIN;
+    default: return D3D12_SHADER_VISIBILITY_ALL;
+    }
+}
+
 } // namespace
 
 bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
+    LogScope scope;
     using namespace Pipeline::JsonParser;
     std::string name = json.value("Name", std::string{});
     if (name.empty()) {
@@ -85,11 +107,11 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         ownedRootSigParsed->desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
         // 収集用
-        struct RangeBuildKey { D3D12_DESCRIPTOR_RANGE_TYPE type; UINT space; };
+        struct RangeBuildKey { D3D12_DESCRIPTOR_RANGE_TYPE type; UINT space; ShaderStage stage; };
         std::vector<RangeBuildKey> keys;
         std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> tempRanges; // SRV/UAV/Sampler用
         // CBVのRootDescriptor格納用（root parametersへの直接登録）
-        struct CbvRootDesc { UINT shaderRegister; UINT space; };
+        struct CbvRootDesc { UINT shaderRegister; UINT space; ShaderStage stage; };
         std::vector<CbvRootDesc> cbvRootDescriptors;
 
         auto getRangeType = [](D3D_SHADER_INPUT_TYPE t)->D3D12_DESCRIPTOR_RANGE_TYPE {
@@ -121,20 +143,21 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
                 if (compiled) components_->RegisterCompiledShader(stage.compileInfo.name, compiled);
             }
             if (!compiled) continue;
+            ShaderStage s = StageFromName(stage.stageName);
 
             for (const auto &kv : compiled->GetReflectionInfo().ResourceBindings()) {
                 const auto &rb = kv.second;
                 if (rb.Type() == D3D_SIT_CBUFFER) {
-                    // CBV は RootDescriptor として追加
-                    cbvRootDescriptors.push_back({ rb.BindPoint(), rb.Space() });
+                    // CBV は RootDescriptor としてステージ別に追加
+                    cbvRootDescriptors.push_back({ rb.BindPoint(), rb.Space() , s});
                     continue;
                 }
-                // SRV/UAV/Sampler は DescriptorTable にまとめる
+                // SRV/UAV/Sampler は DescriptorTable にまとめる（ステージ別）
                 D3D12_DESCRIPTOR_RANGE_TYPE rtype = getRangeType(rb.Type());
-                RangeBuildKey key{ rtype, rb.Space() };
+                RangeBuildKey key{ rtype, rb.Space(), s };
                 size_t idx = 0; bool found = false;
                 for (; idx < keys.size(); ++idx) {
-                    if (keys[idx].type == key.type && keys[idx].space == key.space) { found = true; break; }
+                    if (keys[idx].type == key.type && keys[idx].space == key.space && keys[idx].stage == key.stage) { found = true; break; }
                 }
                 if (!found) { keys.push_back(key); tempRanges.emplace_back(); idx = keys.size() - 1; }
 
@@ -148,7 +171,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
             }
         }
 
-        // SRV/UAV の連番統合
+        // SRV/UAV の連番統合（ステージ別キーごと）
         for (auto &ranges : tempRanges) {
             std::sort(ranges.begin(), ranges.end(), [](auto &a, auto &b) { return a.BaseShaderRegister < b.BaseShaderRegister; });
             std::vector<D3D12_DESCRIPTOR_RANGE> merged;
@@ -168,22 +191,38 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
             ranges = std::move(merged);
         }
 
-        // RootParameter 構築: まず CBV RootDescriptor
+        // RootParameter 構築: CBV RootDescriptor（ステージ別、Visibility 対応）
+        {
+            std::sort(cbvRootDescriptors.begin(), cbvRootDescriptors.end(),
+                [](const CbvRootDesc& a, const CbvRootDesc& b) {
+                    if (a.space != b.space) return a.space < b.space;
+                    if (a.shaderRegister != b.shaderRegister) return a.shaderRegister < b.shaderRegister;
+                    return static_cast<UINT>(a.stage) < static_cast<UINT>(b.stage);
+                });
+            cbvRootDescriptors.erase(
+                std::unique(cbvRootDescriptors.begin(), cbvRootDescriptors.end(),
+                    [](const CbvRootDesc& a, const CbvRootDesc& b) {
+                        return a.space == b.space && a.shaderRegister == b.shaderRegister && a.stage == b.stage;
+                }),
+                cbvRootDescriptors.end()
+            );
+        }
+
         for (const auto &cbv : cbvRootDescriptors) {
             D3D12_ROOT_PARAMETER param{};
             param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-            param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+            param.ShaderVisibility = VisibilityFromStage(cbv.stage);
             param.Descriptor.ShaderRegister = cbv.shaderRegister;
             param.Descriptor.RegisterSpace = cbv.space;
             ownedRootSigParsed->rootParams.parameters.push_back(param);
         }
 
-        // 次に SRV/UAV/Sampler の DescriptorTable
+        // 次に SRV/UAV/Sampler の DescriptorTable（ステージ別 Visibility）
         for (size_t i = 0; i < keys.size(); ++i) {
             if (tempRanges[i].empty()) continue;
             D3D12_ROOT_PARAMETER param{};
             param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+            param.ShaderVisibility = VisibilityFromStage(keys[i].stage);
             ownedRootSigParsed->rootParams.rangesStorage.push_back(tempRanges[i]);
             auto &storageRef = ownedRootSigParsed->rootParams.rangesStorage.back();
             param.DescriptorTable.NumDescriptorRanges = static_cast<UINT>(storageRef.size());
@@ -335,6 +374,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
 }
 
 bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
+    LogScope scope;
     using namespace Pipeline::JsonParser;
     std::string name = json.value("Name", std::string{});
     if (name.empty()) {
@@ -452,7 +492,17 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
     const auto &rootSigParsed = customRootSig ? *customRootSig : Pipeline::JsonParser::RootSignatureParsed{};
     for (size_t i = 0; i < rootSigParsed.rootParams.parameters.size(); ++i) {
         const auto &param = rootSigParsed.rootParams.parameters[i];
+        ShaderStage stage = ShaderStage::Unknown;
+        switch (param.ShaderVisibility) {
+            case D3D12_SHADER_VISIBILITY_VERTEX: stage = ShaderStage::Vertex; break;
+            case D3D12_SHADER_VISIBILITY_PIXEL: stage = ShaderStage::Pixel; break;
+            case D3D12_SHADER_VISIBILITY_GEOMETRY: stage = ShaderStage::Geometry; break;
+            case D3D12_SHADER_VISIBILITY_HULL: stage = ShaderStage::Hull; break;
+            case D3D12_SHADER_VISIBILITY_DOMAIN: stage = ShaderStage::Domain; break;
+            case D3D12_SHADER_VISIBILITY_ALL: default: stage = ShaderStage::Unknown; break;
+        }
         if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE) {
+            // rangesStorage は DescriptorTable のみ順次対応
             for (const auto &range : rootSigParsed.rootParams.rangesStorage[i]) {
                 D3D_SHADER_INPUT_TYPE type =
                     range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV ? D3D_SIT_CBUFFER :
@@ -464,7 +514,9 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
                     range.BaseShaderRegister,
                     range.RegisterSpace,
                     range.NumDescriptors,
-                    static_cast<UINT>(i)
+                    static_cast<UINT>(i),
+                    0,
+                    stage
                 );
             }
         } else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ||
@@ -476,7 +528,8 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
                 D3D_SIT_UAV_RWTYPED,
                 param.Descriptor.ShaderRegister,
                 param.Descriptor.RegisterSpace,
-                static_cast<UINT>(i)
+                static_cast<UINT>(i),
+                stage
             );
         }
     }

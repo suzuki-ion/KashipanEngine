@@ -10,6 +10,27 @@ void ShaderVariableBinder::SetNameMap(const MyStd::NameMap<ShaderVariableBinding
 
 const MyStd::NameMap<ShaderVariableBinding>& ShaderVariableBinder::GetNameMap() const { return nameMap_; }
 
+static ShaderStage VisibilityToStage(D3D12_SHADER_VISIBILITY vis) {
+    switch (vis) {
+    case D3D12_SHADER_VISIBILITY_VERTEX: return ShaderStage::Vertex;
+    case D3D12_SHADER_VISIBILITY_PIXEL: return ShaderStage::Pixel;
+    case D3D12_SHADER_VISIBILITY_GEOMETRY: return ShaderStage::Geometry;
+    case D3D12_SHADER_VISIBILITY_HULL: return ShaderStage::Hull;
+    case D3D12_SHADER_VISIBILITY_DOMAIN: return ShaderStage::Domain;
+    default: return ShaderStage::Unknown;
+    }
+}
+
+ShaderStage ShaderVariableBinder::StageFromNameKey(const std::string& nameKey) {
+    // expects prefix like "Vertex:" or "Pixel:"; Unknown if not present
+    if (nameKey.rfind("Vertex:", 0) == 0) return ShaderStage::Vertex;
+    if (nameKey.rfind("Pixel:", 0) == 0) return ShaderStage::Pixel;
+    if (nameKey.rfind("Geometry:", 0) == 0) return ShaderStage::Geometry;
+    if (nameKey.rfind("Hull:", 0) == 0) return ShaderStage::Hull;
+    if (nameKey.rfind("Domain:", 0) == 0) return ShaderStage::Domain;
+    return ShaderStage::Unknown;
+}
+
 void ShaderVariableBinder::RegisterDescriptorTableRange(
     Passkey<PipelineCreator>,
     D3D_SHADER_INPUT_TYPE type,
@@ -17,14 +38,16 @@ void ShaderVariableBinder::RegisterDescriptorTableRange(
     UINT space,
     UINT count,
     UINT rootParameterIndex,
-    UINT startingOffsetInTable
+    UINT startingOffsetInTable,
+    ShaderStage stage
 ) {
     for (UINT i = 0; i < count; ++i) {
-        ShaderResourceKey key{ type, baseRegister + i, space };
+        ShaderResourceKey key{ type, baseRegister + i, space, stage };
         ShaderBindLocation loc{};
         loc.rootParameterIndex = rootParameterIndex;
         loc.descriptorOffset   = startingOffsetInTable + i;
         loc.isDescriptorTable  = true;
+        loc.stage = stage;
         locations_[key] = loc;
     }
 }
@@ -34,12 +57,14 @@ void ShaderVariableBinder::RegisterRootDescriptor(
     D3D_SHADER_INPUT_TYPE type,
     UINT registerIndex,
     UINT space,
-    UINT rootParameterIndex
+    UINT rootParameterIndex,
+    ShaderStage stage
 ) {
-    ShaderResourceKey key{ type, registerIndex, space };
+    ShaderResourceKey key{ type, registerIndex, space, stage };
     ShaderBindLocation loc{};
     loc.rootParameterIndex = rootParameterIndex;
     loc.isDescriptorTable  = false;
+    loc.stage = stage;
     if (type == D3D_SIT_CBUFFER) loc.isRootCBV = true;
     else if (type == D3D_SIT_STRUCTURED || type == D3D_SIT_BYTEADDRESS || type == D3D_SIT_TBUFFER || type == D3D_SIT_TEXTURE) loc.isRootSRV = true;
     else if (type == D3D_SIT_UAV_RWTYPED || type == D3D_SIT_UAV_RWSTRUCTURED || type == D3D_SIT_UAV_RWBYTEADDRESS) loc.isRootUAV = true;
@@ -49,7 +74,8 @@ void ShaderVariableBinder::RegisterRootDescriptor(
 bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* resource) {
     auto* binding = nameMap_.TryGet(nameKey);
     if (!binding || !cmd_ || !resource || !resource->GetResource()) return false;
-    ShaderResourceKey key{ binding->Type(), binding->BindPoint(), binding->Space() };
+    ShaderStage stage = StageFromNameKey(nameKey);
+    ShaderResourceKey key{ binding->Type(), binding->BindPoint(), binding->Space(), stage };
     auto it = locations_.find(key);
     if (it == locations_.end()) return false;
     const ShaderBindLocation& loc = it->second;
@@ -72,7 +98,8 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* r
 bool ShaderVariableBinder::Bind(const std::string& nameKey, D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle) {
     auto* binding = nameMap_.TryGet(nameKey);
     if (!binding || !cmd_) return false;
-    ShaderResourceKey key{ binding->Type(), binding->BindPoint(), binding->Space() };
+    ShaderStage stage = StageFromNameKey(nameKey);
+    ShaderResourceKey key{ binding->Type(), binding->BindPoint(), binding->Space(), stage };
     auto it = locations_.find(key);
     if (it == locations_.end()) return false;
     const ShaderBindLocation& loc = it->second;

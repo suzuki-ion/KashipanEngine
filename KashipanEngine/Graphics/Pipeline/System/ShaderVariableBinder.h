@@ -14,6 +14,16 @@ namespace KashipanEngine {
 struct PipelineInfo;
 class PipelineCreator;
 
+/// @brief シェーダーステージ種類
+enum class ShaderStage : UINT {
+    Unknown = 0,
+    Vertex,
+    Pixel,
+    Geometry,
+    Hull,
+    Domain
+};
+
 /// @brief シェーダー変数バインディング情報構造体
 struct ShaderVariableBinding {
     const std::string &Name() const { return name; }
@@ -60,20 +70,22 @@ struct ShaderBindLocation {
     bool isRootCBV           = false;
     bool isRootSRV           = false;
     bool isRootUAV           = false;
+    ShaderStage stage        = ShaderStage::Unknown;
 };
 
 struct ShaderResourceKey {
     D3D_SHADER_INPUT_TYPE type{};
     UINT bindPoint = 0;
     UINT space = 0;
+    ShaderStage stage = ShaderStage::Unknown;
     bool operator==(const ShaderResourceKey &o) const {
-        return type == o.type && bindPoint == o.bindPoint && space == o.space;
+        return type == o.type && bindPoint == o.bindPoint && space == o.space && stage == o.stage;
     }
 };
 
 struct ShaderResourceKeyHasher {
     size_t operator()(const ShaderResourceKey &k) const noexcept {
-        return (static_cast<size_t>(k.type) << 24) ^ (static_cast<size_t>(k.space) << 12) ^ k.bindPoint;
+        return (static_cast<size_t>(k.type) << 28) ^ (static_cast<size_t>(k.space) << 20) ^ (static_cast<size_t>(k.stage) << 12) ^ k.bindPoint;
     }
 };
 
@@ -92,6 +104,7 @@ public:
     /// @param count 範囲の数
     /// @param rootParameterIndex ルートパラメーターインデックス
     /// @param startingOffsetInTable テーブル内の開始オフセット
+    /// @param stage 対象シェーダーステージ
     void RegisterDescriptorTableRange(
         Passkey<PipelineCreator>,
         D3D_SHADER_INPUT_TYPE type,
@@ -99,7 +112,8 @@ public:
         UINT space,
         UINT count,
         UINT rootParameterIndex,
-        UINT startingOffsetInTable = 0
+        UINT startingOffsetInTable = 0,
+        ShaderStage stage = ShaderStage::Unknown
     );
 
     /// @brief ルートデスクリプタを登録（PipelineCreator専用）
@@ -107,16 +121,18 @@ public:
     /// @param registerIndex レジスターインデックス
     /// @param space レジスタースペース
     /// @param rootParameterIndex ルートパラメーターインデックス
+    /// @param stage 対象シェーダーステージ
     void RegisterRootDescriptor(
         Passkey<PipelineCreator>,
         D3D_SHADER_INPUT_TYPE type,
         UINT registerIndex,
         UINT space,
-        UINT rootParameterIndex
+        UINT rootParameterIndex,
+        ShaderStage stage = ShaderStage::Unknown
     );
 
     /// @brief SRV/UAV/CBVをバインド
-    /// @param nameKey バインド名キー（例："Vertex:MyTexture#s0"）
+    /// @param nameKey バインド名キー（例:"Vertex:MyTexture#s0"）
     /// @param resource バインドするリソース
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool Bind(const std::string& nameKey, IGraphicsResource* resource);
@@ -131,6 +147,8 @@ private:
     ID3D12GraphicsCommandList* cmd_ = nullptr;
     MyStd::NameMap<ShaderVariableBinding> nameMap_;
     std::unordered_map<ShaderResourceKey, ShaderBindLocation, ShaderResourceKeyHasher> locations_;
+
+    static ShaderStage StageFromNameKey(const std::string& nameKey);
 };
 
 } // namespace KashipanEngine

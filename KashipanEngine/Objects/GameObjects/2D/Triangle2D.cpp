@@ -8,8 +8,8 @@ Triangle2D::Triangle2D(const std::string &name) : GameObject2DBase(name, sizeof(
 }
 
 bool Triangle2D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
-    if (HasComponents2D("Material2D") == 0 /*||
-        HasComponents2D("Transform2D") == 0*/) {
+    if (HasComponents2D("Material2D") == 0 ||
+        HasComponents2D("Transform2D") == 0) {
         return false;
     }
     auto v = GetVertexSpan<Vertex>();

@@ -12,10 +12,6 @@ bool Triangle2D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
         HasComponents2D("Transform2D") == 0*/) {
         return false;
     }
-    if (!static_cast<Material2D<>*>(GetComponents2D("Material2D")[0])
-        ->Bind(shaderBinder, "Pixel:gMaterial")) {
-        return false;
-    }
     auto v = GetVertexSpan<Vertex>();
     if (v.size() < 3) return false;
     v[0] = Vertex(-0.5f, -0.5f, 0.0f, 1.0f);

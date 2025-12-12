@@ -10,7 +10,10 @@ namespace KashipanEngine {
 template<typename T = Vector4>
 class Material3D : public IGameObjectComponent3D {
 public:
-    Material3D() : IGameObjectComponent3D("Material3D", 1) {}
+    Material3D(const T &material = T()) : IGameObjectComponent3D("Material3D", 1), material_(material) {
+        materialBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(T));
+        SetMaterial(material_);
+    }
     ~Material3D() override = default;
 
     /// @brief コンポーネントのクローンを作成
@@ -20,19 +23,12 @@ public:
         return ptr;
     }
 
-    void Initialize(IGameObjectContext &context) override {
-        materialBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(T));
-        SetMaterial(material_);
-    }
-    void Finalize(IGameObjectContext &context) override {
-        materialBuffer_.reset();
-    }
-
-    bool Bind(ShaderVariableBinder &shaderBinder, const std::string &variableName) {
-        if (materialBuffer_) {
-            return shaderBinder.Bind(variableName, materialBuffer_.get());
-        }
-        return false;
+    /// @brief マテリアルのバインド
+    /// @param shaderBinder シェーダー変数バインダー
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
+        if (!materialBuffer_) return false;
+        return shaderBinder && shaderBinder->Bind("Pixel:gMaterial", materialBuffer_.get());
     }
 
     /// @brief マテリアルの設定

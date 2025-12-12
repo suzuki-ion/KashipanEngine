@@ -31,7 +31,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     static bool initialized = false;
     if (!initialized) {
         testObject2D = std::make_unique<Triangle2D>();
-        testObject2D->RegisterComponent<Material2D<Vector4>>(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        testObject2D->RegisterComponent<Material2D<Vector4>>(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
         initialized = true;
     }
     auto mainWindows = Window::GetWindows("Main Window");

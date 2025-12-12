@@ -1,7 +1,6 @@
 #pragma once
 #include "Objects/GameObjects/IGameObjectComponent.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
-#include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Math/Vector4.h"
 #include <memory>
 
@@ -26,13 +25,10 @@ public:
 
     /// @brief マテリアルのバインド
     /// @param shaderBinder シェーダー変数バインダー
-    /// @param variableName 変数名
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
-    bool Bind(ShaderVariableBinder &shaderBinder, const std::string &variableName) {
-        if (materialBuffer_) {
-            return shaderBinder.Bind(variableName, materialBuffer_.get());
-        }
-        return false;
+    std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
+        if (!materialBuffer_) return false;
+        return shaderBinder && shaderBinder->Bind("Pixel:gMaterial", materialBuffer_.get());
     }
 
     /// @brief マテリアルの設定

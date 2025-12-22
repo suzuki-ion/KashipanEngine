@@ -13,6 +13,7 @@ Object2DBase::~Object2DBase() {
     // コンポーネントの破棄
     components2D_.clear();
     components2DIndexByName_.clear();
+    components2DIndexByType_.clear();
     components_.clear();
 }
 
@@ -62,6 +63,7 @@ bool Object2DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
     components2D_.push_back(comp2D);
     const size_t idx2D = components2D_.size() - 1;
     components2DIndexByName_.emplace(key, idx2D);
+    components2DIndexByType_.emplace(std::type_index(typeid(*comp2D)), idx2D);
 
     // シェーダーバインド予定のコンポーネントかを記録
     if (components_.back()->BindShaderVariables(nullptr) != std::nullopt) {
@@ -222,8 +224,10 @@ bool Object2DBase::RemoveComponent2D(const std::string &componentName, size_t in
     }
 
     components2DIndexByName_.clear();
+    components2DIndexByType_.clear();
     for (size_t i = 0; i < components2D_.size(); ++i) {
         components2DIndexByName_.emplace(components2D_[i]->GetComponentType(), i);
+        components2DIndexByType_.emplace(std::type_index(typeid(*components2D_[i])), i);
     }
 
     return true;

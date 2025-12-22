@@ -13,6 +13,7 @@ Object3DBase::~Object3DBase() {
     // コンポーネントの破棄
     components3D_.clear();
     components3DIndexByName_.clear();
+    components3DIndexByType_.clear();
     components_.clear();
 }
 
@@ -62,6 +63,7 @@ bool Object3DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
     components3D_.push_back(comp3D);
     const size_t idx3D = components3D_.size() - 1;
     components3DIndexByName_.emplace(key, idx3D);
+    components3DIndexByType_.emplace(std::type_index(typeid(*comp3D)), idx3D);
 
     // シェーダーバインド予定のコンポーネントかを記録
     if (components_.back()->BindShaderVariables(nullptr) != std::nullopt) {
@@ -221,8 +223,10 @@ bool Object3DBase::RemoveComponent3D(const std::string &componentName, size_t in
     }
 
     components3DIndexByName_.clear();
+    components3DIndexByType_.clear();
     for (size_t i = 0; i < components3D_.size(); ++i) {
         components3DIndexByName_.emplace(components3D_[i]->GetComponentType(), i);
+        components3DIndexByType_.emplace(std::type_index(typeid(*components3D_[i])), i);
     }
 
     return true;

@@ -242,6 +242,7 @@ void DX12SwapChain::CreateSwapChainForHWND() {
     swapChainDesc.Height = static_cast<UINT>(height_);
     //swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    backBufferFormat_ = swapChainDesc.Format;
     swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.BufferCount = static_cast<UINT>(bufferCount_);
@@ -278,6 +279,7 @@ void DX12SwapChain::CreateSwapChainForComposition() {
     desc.Width = static_cast<UINT>(width_);
     desc.Height = static_cast<UINT>(height_);
     desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    backBufferFormat_ = desc.Format;
     desc.SampleDesc.Count = 1;
     desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     desc.BufferCount = static_cast<UINT>(bufferCount_);

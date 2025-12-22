@@ -47,6 +47,19 @@ public:
 
     /// @brief D3D12デバイス取得
     ID3D12Device* GetDevice(Passkey<GraphicsEngine>) const { return dx12Device_->GetDevice(); }
+
+#if defined(USE_IMGUI)
+    /// @brief D3D12デバイス取得（ImGui 用）
+    ID3D12Device* GetDeviceForImGui() const { return dx12Device_->GetDevice(); }
+    /// @brief コマンドキュー取得（ImGui 用）
+    ID3D12CommandQueue* GetCommandQueueForImGui() const { return dx12CommandQueue_->GetCommandQueue(); }
+    /// @brief SRV ヒープ取得（ImGui 用）
+    SRVHeap* GetSRVHeapForImGui() const { return SRVHeap_.get(); }
+
+    /// @brief 指定のウィンドウのコマンドリスト取得（ImGui 用）
+    ID3D12GraphicsCommandList* GetRecordedCommandListForImGui(HWND hwnd) const;
+#endif
+
     /// @brief 指定のウィンドウのスワップチェーン取得
     DX12SwapChain *GetSwapChain(Passkey<Renderer>, HWND hwnd) const;
     /// @brief 指定のウィンドウのコマンドリスト取得

@@ -169,6 +169,16 @@ ID3D12GraphicsCommandList *DirectXCommon::GetRecordedCommandList(Passkey<Rendere
     return nullptr;
 }
 
+#if defined(USE_IMGUI)
+ID3D12GraphicsCommandList* DirectXCommon::GetRecordedCommandListForImGui(HWND hwnd) const {
+    auto it = sHwndToSwapChainIndex.find(hwnd);
+    if (it == sHwndToSwapChainIndex.end()) return nullptr;
+    auto* sc = sSwapChains[it->second].get();
+    if (!sc) return nullptr;
+    return sc->GetRecordedCommandList(Passkey<DirectXCommon>{});
+}
+#endif
+
 void DirectXCommon::DestroyPendingSwapChains() {
     // 破棄対象がある場合は必ずGPUの処理完了を待つ
     if (sPendingDestroySwapChains.empty()) return;

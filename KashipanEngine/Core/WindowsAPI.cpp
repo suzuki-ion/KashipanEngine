@@ -8,16 +8,26 @@
 #include "Core/Window.h"
 #include "Utilities/Conversion/ConvertString.h"
 
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#include <imgui_impl_win32.h>
+#endif
+
 #pragma comment(lib, "Shcore.lib")
+
+#if defined(USE_IMGUI)
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
 
 namespace KashipanEngine {
 
 namespace {
+
 // ウィンドウインスタンスのマップ
 std::unordered_map<HWND, Window*> sWindowMap;
 
 // タスクバーの辺を判定
-static UINT DetermineTaskbarEdge(const RECT &tb, const RECT &mon) {
+UINT DetermineTaskbarEdge(const RECT &tb, const RECT &mon) {
     int monW = mon.right - mon.left;
     int monH = mon.bottom - mon.top;
     int tbW = tb.right - tb.left;
@@ -41,7 +51,7 @@ static UINT DetermineTaskbarEdge(const RECT &tb, const RECT &mon) {
 }
 
 // DPI取得（失敗時は 96 を返す）
-static void FetchMonitorDpi(HMONITOR mon, UINT &dpiX, UINT &dpiY) {
+void FetchMonitorDpi(HMONITOR mon, UINT &dpiX, UINT &dpiY) {
     dpiX = dpiY = 96;
     if (!mon) return;
     UINT x = 0, y = 0;
@@ -57,7 +67,7 @@ static void FetchMonitorDpi(HMONITOR mon, UINT &dpiX, UINT &dpiY) {
 }
 
 // リフレッシュレート取得（Hz）
-static float FetchMonitorRefreshRate(const MONITORINFOEXW &mi) {
+float FetchMonitorRefreshRate(const MONITORINFOEXW &mi) {
     DEVMODEW dm{}; dm.dmSize = sizeof(dm);
     if (EnumDisplaySettingsExW(mi.szDevice, ENUM_CURRENT_SETTINGS, &dm, 0)) {
         if (dm.dmDisplayFrequency > 1) return static_cast<float>(dm.dmDisplayFrequency);
@@ -67,7 +77,7 @@ static float FetchMonitorRefreshRate(const MONITORINFOEXW &mi) {
 
 // タスクバー候補を列挙
 struct TaskbarWindow { HWND hwnd; RECT rect; HMONITOR monitor; UINT edge; };
-static std::vector<TaskbarWindow> EnumerateTaskbars() {
+std::vector<TaskbarWindow> EnumerateTaskbars() {
     std::vector<TaskbarWindow> result;
     // プライマリ
     if (HWND primary = FindWindowW(L"Shell_TrayWnd", nullptr)) {
@@ -88,10 +98,19 @@ static std::vector<TaskbarWindow> EnumerateTaskbars() {
     }
     return result;
 }
+
 } // namespace
 
 LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
     LogScope scope;
+
+#if defined(USE_IMGUI)
+    // ImGui 用イベント処理
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
+        return true;
+    }
+#endif
+
     // ウィンドウインスタンスを取得
     auto it = sWindowMap.find(hwnd);
     if (it == sWindowMap.end()) {

@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <span>
+#include <typeindex>
 #include "Core/Window.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
@@ -80,6 +81,10 @@ public:
     /// @return 登録に成功した場合は true
     bool RegisterComponent(std::unique_ptr<IObjectComponent> comp);
 
+    //==================================================
+    // コンポーネント取得系メソッド
+    //==================================================
+
     /// @brief 名前から一致するコンポーネントを取得
     /// @param componentName コンポーネント名
     /// @return 一致するコンポーネントのリスト
@@ -111,13 +116,21 @@ public:
         return result;
     }
 
-    /// @brief 型名から一致するコンポーネントを取得（型のみ指定）
-    /// @tparam T 取得したいコンポーネント型（例: Transform3D）
+    /// @brief 型から一致するコンポーネントを取得
+    /// @tparam T コンポーネントの型（例: Transform3D）
     /// @return 一致するコンポーネントのリスト
     template<typename T>
-    std::vector<T*> GetComponents3D() const {
+    std::vector<T *> GetComponents3D() const {
         static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
-        return GetComponents3D<T>(T::GetStaticComponentType());
+        std::vector<T *> result;
+        const auto range = components3DIndexByType_.equal_range(std::type_index(typeid(T)));
+        for (auto it = range.first; it != range.second; ++it) {
+            const size_t idx = it->second;
+            if (idx < components3D_.size()) {
+                result.push_back(static_cast<T *>(components3D_[idx]));
+            }
+        }
+        return result;
     }
 
     /// @brief 名前から一致する最初のコンポーネントを取得
@@ -145,13 +158,20 @@ public:
         return base ? static_cast<T*>(base) : nullptr;
     }
 
-    /// @brief 型名から一致する最初のコンポーネントを取得（型のみ指定）
+    /// @brief 型から一致する最初のコンポーネントを取得
     /// @tparam T 取得したいコンポーネント型（例: Transform3D）
     /// @return 一致するコンポーネント（存在しない場合は nullptr）
     template<typename T>
-    T* GetComponent3D() const {
+    T *GetComponent3D() const {
         static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
-        return GetComponent3D<T>(T::GetStaticComponentType());
+        const auto range = components3DIndexByType_.equal_range(std::type_index(typeid(T)));
+        for (auto it = range.first; it != range.second; ++it) {
+            const size_t idx = it->second;
+            if (idx < components3D_.size()) {
+                return static_cast<T *>(components3D_[idx]);
+            }
+        }
+        return nullptr;
     }
 
     /// @brief 名前からコンポーネントの存在を確認
@@ -165,6 +185,14 @@ public:
             if (idx < components3D_.size()) ++count;
         }
         return count;
+    }
+    /// @brief 型からコンポーネントの存在を確認
+    /// @tparam T コンポーネントの型
+    /// @return 一致するコンポーネントの個数
+    template<typename T>
+    size_t HasComponents3D() const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        return static_cast<size_t>(components3DIndexByType_.count(std::type_index(typeid(T))));
     }
 
     /// @brief 名前から一致する指定インデックスのコンポーネントを削除
@@ -263,6 +291,7 @@ private:
 
     std::vector<IObjectComponent3D*> components3D_;
     std::unordered_multimap<std::string, size_t> components3DIndexByName_;
+    std::unordered_multimap<std::type_index, size_t> components3DIndexByType_;
 
     std::unique_ptr<Object3DContext> context_;
     std::vector<size_t> shaderBindingComponentIndices_;

@@ -30,6 +30,10 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
+#if defined(USE_IMGUI)
+    imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
+#endif
+
     //--------- ウィンドウ作成 ---------//
     
     const auto &windowSettings = GetEngineSettings().window;
@@ -72,6 +76,11 @@ GameEngine::~GameEngine() {
     LogSeparator();
 
     Window::AllDestroy({});
+
+#if defined(USE_IMGUI)
+    imguiManager_.reset();
+#endif
+
     graphicsEngine_.reset();
     directXCommon_.reset();
     windowsAPI_.reset();
@@ -85,6 +94,9 @@ GameEngine::~GameEngine() {
 void GameEngine::GameLoopUpdate() {
     Window::Update({});
     UpdateDeltaTime({});
+#if defined(USE_IMGUI)
+    imguiManager_->BeginFrame({});
+#endif
 
     // テスト用更新処理
     // ウィンドウタイトルにFPS表示
@@ -113,7 +125,15 @@ void GameEngine::GameLoopUpdate() {
 void GameEngine::GameLoopDraw() {
     directXCommon_->BeginDraw({});
     Window::Draw({});
+
     graphicsEngine_->RenderFrame({});
+
+#if defined(USE_IMGUI)
+    if (imguiManager_) {
+        imguiManager_->Render({});
+    }
+#endif
+
     directXCommon_->EndDraw({});
 }
 

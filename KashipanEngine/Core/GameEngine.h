@@ -5,6 +5,10 @@
 #include "Core/DirectXCommon.h"
 #include "Graphics/GraphicsEngine.h"
 
+#if defined(USE_IMGUI)
+#include "Debug/ImGuiManager.h"
+#endif
+
 namespace KashipanEngine {
 
 /// @brief ゲームエンジンクラス
@@ -50,6 +54,11 @@ private:
     std::unique_ptr<DirectXCommon> directXCommon_;
     /// @brief グラフィックスエンジンクラス
     std::unique_ptr<GraphicsEngine> graphicsEngine_;
+
+#if defined(USE_IMGUI)
+    /// @brief ImGui 管理クラス
+    std::unique_ptr<ImGuiManager> imguiManager_;
+#endif
 
     /// @brief ゲームループ実行フラグ
     bool isGameLoopRunning_ = false;

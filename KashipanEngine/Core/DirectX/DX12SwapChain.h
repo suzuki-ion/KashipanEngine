@@ -6,6 +6,7 @@
 
 namespace KashipanEngine {
 
+class GameEnginel;
 class DirectXCommon;
 class Window;
 
@@ -87,6 +88,9 @@ public:
     /// @brief 記録済みコマンドリスト取得 (Window 用)
     ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Window>) const noexcept { return commandList_.Get(); }
 
+    int32_t GetBufferCount() const noexcept { return bufferCount_; }
+    DXGI_FORMAT GetBackBufferFormat() const noexcept { return backBufferFormat_; }
+
 private:
     /// @brief スワップチェーン作成 (HWND 用)
     void CreateSwapChainForHWND();
@@ -136,6 +140,8 @@ private:
 
     bool isCreated_ = false;
     bool isDrawing_ = false;
+
+    DXGI_FORMAT backBufferFormat_ = DXGI_FORMAT_UNKNOWN;
 };
 
 } // namespace KashipanEngine

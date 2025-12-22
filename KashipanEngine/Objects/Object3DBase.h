@@ -9,26 +9,27 @@
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Graphics/Resources.h"
-#include "Objects/GameObjects/IGameObjectComponent.h"
+#include "Objects/IObjectComponent.h"
+#include "../../MyStd/AnyUnorderedMap.h"
 
 namespace KashipanEngine {
 
-class GameObject3DContext;
+class Object3DContext;
 
-/// @brief 3Dゲームオブジェクト基底クラス
-class GameObject3DBase {
+/// @brief 3Dオブジェクト基底クラス
+class Object3DBase {
 public:
-    GameObject3DBase() = delete;
-    GameObject3DBase(const GameObject3DBase &) = delete;
-    GameObject3DBase &operator=(const GameObject3DBase &) = delete;
-    GameObject3DBase(GameObject3DBase &&) = delete;
-    GameObject3DBase &operator=(GameObject3DBase &&) = delete;
-    virtual ~GameObject3DBase();
+    Object3DBase() = delete;
+    Object3DBase(const Object3DBase &) = delete;
+    Object3DBase &operator=(const Object3DBase &) = delete;
+    Object3DBase(Object3DBase &&) = delete;
+    Object3DBase &operator=(Object3DBase &&) = delete;
+    virtual ~Object3DBase();
 
     /// @brief 更新処理（登録済みコンポーネントを更新）
     void Update();
-    /// @brief 描画前処理（登録済みコンポーネントの前処理）
-    void PreRender();
+    /// @brief 描画処理（登録済みコンポーネントの描画処理）
+    void Render();
 
     /// @brief 頂点の値の設定
     template<typename T>
@@ -47,6 +48,10 @@ public:
     /// @brief オブジェクト名の取得
     const std::string &GetName() const { return name_; }
 
+    /// @brief 任意データ領域（アプリ側の動的変数管理用）
+    MyStd::AnyUnorderedMap &UserData() { return userData_; }
+    const MyStd::AnyUnorderedMap &UserData() const { return userData_; }
+
     /// @brief 頂点数取得
     UINT GetVertexCount() const { return vertexCount_; }
     /// @brief インデックス数取得
@@ -64,7 +69,7 @@ public:
     /// @return 登録に成功した場合は true
     template<typename T, typename... Args>
     bool RegisterComponent(Args&&... args) {
-        static_assert(std::is_base_of_v<IGameObjectComponent3D, T>, "T must derive from IGameObjectComponent3D");
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
         try {
             auto comp = std::make_unique<T>(std::forward<Args>(args)...);
             return RegisterComponent(std::move(comp));
@@ -73,35 +78,106 @@ public:
     /// @brief 既存コンポーネントの登録
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 登録に成功した場合は true
-    bool RegisterComponent(std::unique_ptr<IGameObjectComponent> comp);
+    bool RegisterComponent(std::unique_ptr<IObjectComponent> comp);
+
     /// @brief 名前から一致するコンポーネントを取得
     /// @param componentName コンポーネント名
     /// @return 一致するコンポーネントのリスト
-    std::vector<IGameObjectComponent3D*> GetComponents3D(const std::string &componentName) const {
-        std::vector<IGameObjectComponent3D*> result;
-        auto range = componentsIndexByName_.equal_range(componentName);
+    std::vector<IObjectComponent3D*> GetComponents3D(const std::string &componentName) const {
+        std::vector<IObjectComponent3D*> result;
+        auto range = components3DIndexByName_.equal_range(componentName);
         for (auto it = range.first; it != range.second; ++it) {
             size_t idx = it->second;
-            if (idx < components_.size()) {
-                if (auto *p = dynamic_cast<IGameObjectComponent3D*>(components_[idx].get())) result.push_back(p);
+            if (idx < components3D_.size()) {
+                result.push_back(components3D_[idx]);
             }
         }
         return result;
     }
+
+    /// @brief 名前から一致するコンポーネントを取得（型付き）
+    /// @tparam T 取得したいコンポーネント型（例: Transform3D）
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネントのリスト
+    template<typename T>
+    std::vector<T*> GetComponents3D(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        auto baseList = GetComponents3D(componentName);
+        std::vector<T*> result;
+        result.reserve(baseList.size());
+        for (auto *c : baseList) {
+            result.push_back(static_cast<T*>(c));
+        }
+        return result;
+    }
+
+    /// @brief 型名から一致するコンポーネントを取得（型のみ指定）
+    /// @tparam T 取得したいコンポーネント型（例: Transform3D）
+    /// @return 一致するコンポーネントのリスト
+    template<typename T>
+    std::vector<T*> GetComponents3D() const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        return GetComponents3D<T>(T::GetStaticComponentType());
+    }
+
+    /// @brief 名前から一致する最初のコンポーネントを取得
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
+    IObjectComponent3D* GetComponent3D(const std::string &componentName) const {
+        auto range = components3DIndexByName_.equal_range(componentName);
+        for (auto it = range.first; it != range.second; ++it) {
+            size_t idx = it->second;
+            if (idx < components3D_.size()) {
+                return components3D_[idx];
+            }
+        }
+        return nullptr;
+    }
+
+    /// @brief 名前から一致する最初のコンポーネントを取得（型付き）
+    /// @tparam T 取得したいコンポーネント型（例: Transform3D）
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
+    template<typename T>
+    T* GetComponent3D(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        auto *base = GetComponent3D(componentName);
+        return base ? static_cast<T*>(base) : nullptr;
+    }
+
+    /// @brief 型名から一致する最初のコンポーネントを取得（型のみ指定）
+    /// @tparam T 取得したいコンポーネント型（例: Transform3D）
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
+    template<typename T>
+    T* GetComponent3D() const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        return GetComponent3D<T>(T::GetStaticComponentType());
+    }
+
     /// @brief 名前からコンポーネントの存在を確認
     /// @param componentName コンポーネント名
     /// @return 一致するコンポーネントの個数
     size_t HasComponents3D(const std::string &componentName) const {
-        auto range = componentsIndexByName_.equal_range(componentName);
+        auto range = components3DIndexByName_.equal_range(componentName);
         size_t count = 0;
         for (auto it = range.first; it != range.second; ++it) {
             size_t idx = it->second;
-            if (idx < components_.size() && dynamic_cast<IGameObjectComponent3D*>(components_[idx].get())) ++count;
+            if (idx < components3D_.size()) ++count;
         }
         return count;
     }
 
+    /// @brief 名前から一致する指定インデックスのコンポーネントを削除
+    /// @param componentName コンポーネント名
+    /// @param index 同名コンポーネントの何番目を削除するか (0: 最初)
+    /// @return 削除に成功した場合は true
+    bool RemoveComponent3D(const std::string &componentName, size_t index = 0);
+
 protected:
+    /// @brief コンストラクタ
+    /// @param name オブジェクト名
+    Object3DBase(const std::string &name);
+
     /// @brief コンストラクタ
     /// @param name オブジェクト名
     /// @param vertexByteSize 1頂点あたりのサイズ（バイト単位）
@@ -110,7 +186,7 @@ protected:
     /// @param indexCount インデックス数
     /// @param initialVertexData 初期頂点データ（nullptrの場合は未初期化）
     /// @param initialIndexData 初期インデックスデータ（nullptrの場合は未初期化）
-    GameObject3DBase(const std::string &name,
+    Object3DBase(const std::string &name,
         size_t vertexByteSize, size_t indexByteSize,
         size_t vertexCount, size_t indexCount,
         void *initialVertexData = nullptr,
@@ -161,7 +237,7 @@ protected:
     RenderCommand CreateDefaultRenderCommand() const;
 
 private:
-    friend class GameObject3DContext;
+    friend class Object3DContext;
 
     struct ShaderBindingFailureInfo {
         size_t componentIndex;
@@ -182,10 +258,16 @@ private:
     D3D12_INDEX_BUFFER_VIEW indexBufferView_{};
     void *vertexData_ = nullptr;
     void *indexData_ = nullptr;
-    std::vector<std::unique_ptr<IGameObjectComponent>> components_;
+    std::vector<std::unique_ptr<IObjectComponent>> components_;
     std::unordered_multimap<std::string, size_t> componentsIndexByName_;
-    std::unique_ptr<GameObject3DContext> context_;
+
+    std::vector<IObjectComponent3D*> components3D_;
+    std::unordered_multimap<std::string, size_t> components3DIndexByName_;
+
+    std::unique_ptr<Object3DContext> context_;
     std::vector<size_t> shaderBindingComponentIndices_;
+
+    MyStd::AnyUnorderedMap userData_;
 };
 
 } // namespace KashipanEngine

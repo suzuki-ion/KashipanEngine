@@ -195,10 +195,10 @@
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.cpp">
+    <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.cpp">
+    <ClCompile Include="KashipanEngine\Objects\Object3DBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Line2D.cpp">
@@ -231,10 +231,13 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObjectContext.cpp">
+    <ClCompile Include="KashipanEngine\Objects\ObjectContext.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\IGameObjectComponent.cpp">
+    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -590,7 +593,7 @@
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.h">
+    <ClInclude Include="KashipanEngine\Objects\Object2DBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h">
@@ -620,28 +623,34 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Line3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.h">
+    <ClInclude Include="KashipanEngine\Objects\Object3DBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\IGameObjectComponent.h">
+    <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObjectContext.h">
+    <ClInclude Include="KashipanEngine\Objects\ObjectContext.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\2D\Material2D.h">
+    <ClInclude Include="KashipanEngine\Objects\Components\2D\Material2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\3D\Material3D.h">
+    <ClInclude Include="KashipanEngine\Objects\Components\3D\Material3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\2D\Transform2D.h">
+    <ClInclude Include="KashipanEngine\Objects\Components\2D\Transform2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\3D\Transform3D.h">
+    <ClInclude Include="KashipanEngine\Objects\Components\3D\Transform3D.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera3D.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera2D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -722,5 +731,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\PS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\VS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Test.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
   </ItemGroup>
 </Project>

@@ -103,8 +103,8 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         }
 
         // DX12 backend
-        auto* device = directXCommon_->GetDeviceForImGui();
-        auto* srvHeap = directXCommon_->GetSRVHeapForImGui();
+        auto* device = directXCommon_->GetDeviceForImGui({});
+        auto* srvHeap = directXCommon_->GetSRVHeapForImGui({});
         if (!device || !srvHeap) {
             return;
         }
@@ -116,7 +116,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
 
         ImGui_ImplDX12_InitInfo info{};
         info.Device = device;
-        info.CommandQueue = directXCommon_->GetCommandQueueForImGui();
+        info.CommandQueue = directXCommon_->GetCommandQueueForImGui({});
         info.NumFramesInFlight = 2;
         info.RTVFormat = ToDxgiFormat_WindowsSwapChain();
         info.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -156,7 +156,7 @@ void ImGuiManager::Render(Passkey<GameEngine>) {
     // メインウィンドウのコマンドリストへ描画
     auto hwnd = ResolveMainHwnd();
     if (hwnd) {
-        if (auto* cmd = directXCommon_->GetRecordedCommandListForImGui(hwnd)) {
+        if (auto* cmd = directXCommon_->GetRecordedCommandListForImGui({}, hwnd)) {
             ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd);
         }
     }

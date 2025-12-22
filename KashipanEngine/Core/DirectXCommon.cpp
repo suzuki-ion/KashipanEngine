@@ -170,7 +170,7 @@ ID3D12GraphicsCommandList *DirectXCommon::GetRecordedCommandList(Passkey<Rendere
 }
 
 #if defined(USE_IMGUI)
-ID3D12GraphicsCommandList* DirectXCommon::GetRecordedCommandListForImGui(HWND hwnd) const {
+ID3D12GraphicsCommandList* DirectXCommon::GetRecordedCommandListForImGui(Passkey<ImGuiManager>, HWND hwnd) const {
     auto it = sHwndToSwapChainIndex.find(hwnd);
     if (it == sHwndToSwapChainIndex.end()) return nullptr;
     auto* sc = sSwapChains[it->second].get();

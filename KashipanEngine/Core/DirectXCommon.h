@@ -21,6 +21,9 @@ class GameEngine;
 class Window;
 class GraphicsEngine;
 class Renderer;
+#if defined(USE_IMGUI)
+class ImGuiManager;
+#endif
 
 /// @brief DirectX共通クラス
 class DirectXCommon final {
@@ -50,14 +53,14 @@ public:
 
 #if defined(USE_IMGUI)
     /// @brief D3D12デバイス取得（ImGui 用）
-    ID3D12Device* GetDeviceForImGui() const { return dx12Device_->GetDevice(); }
+    ID3D12Device* GetDeviceForImGui(Passkey<ImGuiManager>) const { return dx12Device_->GetDevice(); }
     /// @brief コマンドキュー取得（ImGui 用）
-    ID3D12CommandQueue* GetCommandQueueForImGui() const { return dx12CommandQueue_->GetCommandQueue(); }
+    ID3D12CommandQueue* GetCommandQueueForImGui(Passkey<ImGuiManager>) const { return dx12CommandQueue_->GetCommandQueue(); }
     /// @brief SRV ヒープ取得（ImGui 用）
-    SRVHeap* GetSRVHeapForImGui() const { return SRVHeap_.get(); }
+    SRVHeap* GetSRVHeapForImGui(Passkey<ImGuiManager>) const { return SRVHeap_.get(); }
 
     /// @brief 指定のウィンドウのコマンドリスト取得（ImGui 用）
-    ID3D12GraphicsCommandList* GetRecordedCommandListForImGui(HWND hwnd) const;
+    ID3D12GraphicsCommandList* GetRecordedCommandListForImGui(Passkey<ImGuiManager>, HWND hwnd) const;
 #endif
 
     /// @brief 指定のウィンドウのスワップチェーン取得

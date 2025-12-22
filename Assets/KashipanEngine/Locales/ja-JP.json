@@ -284,11 +284,11 @@
 		"engine.graphics.pipeline.stage.label": "ステージ：",
 		"engine.graphics.pipeline.name.label": "パイプライン：",
 
-		//--------- Game Object ---------//
-		"engine.gameobject2d.invalid.vertex.index.count": "2Dゲームオブジェクトの頂点数及びインデックス数が無効です。",
-		"engine.gameobject3d.invalid.vertex.index.count": "3Dゲームオブジェクトの頂点数及びインデックス数が無効です。",
-		"engine.gameobject2d.shader.binding.failed": "2Dゲームオブジェクトのシェーダーのバインディングに失敗しました。",
-		"engine.gameobject3d.shader.binding.failed": "3Dゲームオブジェクトのシェーダーのバインディングに失敗しました。",
+		//--------- オブジェクト ---------//
+		"engine.object2d.invalid.vertex.index.count": "2Dオブジェクトの頂点数及びインデックス数が無効です。",
+		"engine.object3d.invalid.vertex.index.count": "3Dオブジェクトの頂点数及びインデックス数が無効です。",
+		"engine.object2d.shader.binding.failed": "2Dオブジェクトのシェーダーのバインディングに失敗しました。",
+		"engine.object3d.shader.binding.failed": "3Dオブジェクトのシェーダーのバインディングに失敗しました。",
 
 		//--------- 設定 ---------//
 		"engine.settings.load.success": "エンジンの設定が正常に読み込まれました。ファイルパス：",

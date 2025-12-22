@@ -1,9 +1,8 @@
 #include "Triangle2D.h"
-#include "Objects/GameObjects/Components/2D/Material2D.h"
 
 namespace KashipanEngine {
 
-Triangle2D::Triangle2D(const std::string &name) : GameObject2DBase(name, sizeof(Vertex), sizeof(Index), 3, 3) {
+Triangle2D::Triangle2D(const std::string &name) : Object2DBase(name, sizeof(Vertex), sizeof(Index), 3, 3) {
     LogScope scope;
 }
 

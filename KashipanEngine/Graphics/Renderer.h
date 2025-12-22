@@ -14,8 +14,8 @@ class Window;
 class DirectXCommon;
 class GraphicsEngine;
 class PipelineManager;
-class GameObject2DBase;
-class GameObject3DBase;
+class Object2DBase;
+class Object3DBase;
 
 /// @brief 描画指示用構造体
 struct RenderCommand final {
@@ -25,8 +25,8 @@ struct RenderCommand final {
     RenderCommand &operator=(RenderCommand &&) = default;
 private:
     friend class Renderer;
-    friend class GameObject2DBase;
-    friend class GameObject3DBase;
+    friend class Object2DBase;
+    friend class Object3DBase;
     RenderCommand() = default;
     UINT vertexCount = 0;           //< 頂点数
     UINT indexCount = 0;            //< インデックス数
@@ -45,7 +45,7 @@ struct RenderPassInfo2D final {
     RenderPassInfo2D &operator=(RenderPassInfo2D &&) = default;
 private:
     friend class Renderer;
-    friend class GameObject2DBase;
+    friend class Object2DBase;
     RenderPassInfo2D() = default;
     Window *window = nullptr;   //< 描画先ウィンドウ
     std::string pipelineName;   //< 使用するパイプライン名
@@ -62,7 +62,7 @@ struct RenderPassInfo3D final {
     RenderPassInfo3D &operator=(RenderPassInfo3D &&) = default;
 private:
     friend class Renderer;
-    friend class GameObject3DBase;
+    friend class Object3DBase;
     RenderPassInfo3D() = default;
     Window *window = nullptr;   //< 描画先ウィンドウ
     std::string pipelineName;   //< 使用するパイプライン名

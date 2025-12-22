@@ -9,26 +9,27 @@
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Graphics/Resources.h"
-#include "Objects/GameObjects/IGameObjectComponent.h"
+#include "Objects/IObjectComponent.h"
+#include "../../MyStd/AnyUnorderedMap.h"
 
 namespace KashipanEngine {
 
-class GameObject2DContext;
+class Object2DContext;
 
-/// @brief 2Dゲームオブジェクト基底クラス
-class GameObject2DBase {
+/// @brief 2Dオブジェクト基底クラス
+class Object2DBase {
 public:
-    GameObject2DBase() = delete;
-    GameObject2DBase(const GameObject2DBase &) = delete;
-    GameObject2DBase &operator=(const GameObject2DBase &) = delete;
-    GameObject2DBase(GameObject2DBase &&) = delete;
-    GameObject2DBase &operator=(GameObject2DBase &&) = delete;
-    virtual ~GameObject2DBase();
+    Object2DBase() = delete;
+    Object2DBase(const Object2DBase &) = delete;
+    Object2DBase &operator=(const Object2DBase &) = delete;
+    Object2DBase(Object2DBase &&) = delete;
+    Object2DBase &operator=(Object2DBase &&) = delete;
+    virtual ~Object2DBase();
 
     /// @brief 更新処理（登録済みコンポーネントを更新）
     void Update();
-    /// @brief 描画前処理（登録済みコンポーネントの前処理）
-    void PreRender();
+    /// @brief 描画処理（登録済みコンポーネントの描画処理）
+    void Render();
 
     /// @brief 頂点の値の設定
     template<typename T>
@@ -47,6 +48,10 @@ public:
     /// @brief オブジェクト名の取得
     const std::string &GetName() const { return name_; }
 
+    /// @brief 任意データ領域（アプリ側の動的変数管理用）
+    MyStd::AnyUnorderedMap &UserData() { return userData_; }
+    const MyStd::AnyUnorderedMap &UserData() const { return userData_; }
+
     /// @brief 頂点数取得
     UINT GetVertexCount() const { return vertexCount_; }
     /// @brief インデックス数取得
@@ -64,7 +69,7 @@ public:
     /// @return 登録に成功した場合は true
     template<typename T, typename... Args>
     bool RegisterComponent(Args&&... args) {
-        static_assert(std::is_base_of_v<IGameObjectComponent2D, T>, "T must derive from IGameObjectComponent2D");
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
         try {
             auto comp = std::make_unique<T>(std::forward<Args>(args)...);
             return RegisterComponent(std::move(comp));
@@ -73,35 +78,106 @@ public:
     /// @brief 既存コンポーネントの登録
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 登録に成功した場合は true
-    bool RegisterComponent(std::unique_ptr<IGameObjectComponent> comp);
+    bool RegisterComponent(std::unique_ptr<IObjectComponent> comp);
+
     /// @brief 名前から一致するコンポーネントを取得
     /// @param componentName コンポーネント名
     /// @return 一致するコンポーネントのリスト
-    std::vector<IGameObjectComponent2D*> GetComponents2D(const std::string &componentName) const {
-        std::vector<IGameObjectComponent2D*> result;
-        auto range = componentsIndexByName_.equal_range(componentName);
+    std::vector<IObjectComponent2D*> GetComponents2D(const std::string &componentName) const {
+        std::vector<IObjectComponent2D*> result;
+        auto range = components2DIndexByName_.equal_range(componentName);
         for (auto it = range.first; it != range.second; ++it) {
             size_t idx = it->second;
-            if (idx < components_.size()) {
-                if (auto *p = dynamic_cast<IGameObjectComponent2D*>(components_[idx].get())) result.push_back(p);
+            if (idx < components2D_.size()) {
+                result.push_back(components2D_[idx]);
             }
         }
         return result;
     }
+
+    /// @brief 名前から一致するコンポーネントを取得（型付き）
+    /// @tparam T 取得したいコンポーネント型（例: Transform2D）
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネントのリスト
+    template<typename T>
+    std::vector<T*> GetComponents2D(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        auto baseList = GetComponents2D(componentName);
+        std::vector<T*> result;
+        result.reserve(baseList.size());
+        for (auto *c : baseList) {
+            result.push_back(static_cast<T*>(c));
+        }
+        return result;
+    }
+
+    /// @brief 型名から一致するコンポーネントを取得（型のみ指定）
+    /// @tparam T 取得したいコンポーネント型（例: Transform2D）
+    /// @return 一致するコンポーネントのリスト
+    template<typename T>
+    std::vector<T*> GetComponents2D() const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        return GetComponents2D<T>(T::GetStaticComponentType());
+    }
+
+    /// @brief 名前から一致する最初のコンポーネントを取得
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
+    IObjectComponent2D *GetComponent2D(const std::string &componentName) const {
+        auto range = components2DIndexByName_.equal_range(componentName);
+        for (auto it = range.first; it != range.second; ++it) {
+            size_t idx = it->second;
+            if (idx < components2D_.size()) {
+                return components2D_[idx];
+            }
+        }
+        return nullptr;
+    }
+
+    /// @brief 名前から一致する最初のコンポーネントを取得（型付き）
+    /// @tparam T 取得したいコンポーネント型（例: Transform2D）
+    /// @param componentName コンポーネント名
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
+    template<typename T>
+    T* GetComponent2D(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        auto *base = GetComponent2D(componentName);
+        return base ? static_cast<T*>(base) : nullptr;
+    }
+
+    /// @brief 型名から一致する最初のコンポーネントを取得（型のみ指定）
+    /// @tparam T 取得したいコンポーネント型（例: Transform2D）
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
+    template<typename T>
+    T* GetComponent2D() const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        return GetComponent2D<T>(T::GetStaticComponentType());
+    }
+
     /// @brief 名前からコンポーネントの存在を確認
     /// @param componentName コンポーネント名
     /// @return 一致するコンポーネントの個数
     size_t HasComponents2D(const std::string &componentName) const {
-        auto range = componentsIndexByName_.equal_range(componentName);
+        auto range = components2DIndexByName_.equal_range(componentName);
         size_t count = 0;
         for (auto it = range.first; it != range.second; ++it) {
             size_t idx = it->second;
-            if (idx < components_.size() && dynamic_cast<IGameObjectComponent2D*>(components_[idx].get())) ++count;
+            if (idx < components2D_.size()) ++count;
         }
         return count;
     }
 
+    /// @brief 名前から一致する指定インデックスのコンポーネントを削除
+    /// @param componentName コンポーネント名
+    /// @param index 同名コンポーネントの何番目を削除するか (0: 最初)
+    /// @return 削除に成功した場合は true
+    bool RemoveComponent2D(const std::string &componentName, size_t index = 0);
+
 protected:
+    /// @brief コンストラクタ
+    /// @param name オブジェクト名
+    Object2DBase(const std::string &name);
+
     /// @brief コンストラクタ
     /// @param name オブジェクト名
     /// @param vertexByteSize 1頂点あたりのサイズ（バイト単位）
@@ -110,7 +186,7 @@ protected:
     /// @param indexCount インデックス数
     /// @param initialVertexData 初期頂点データ（nullptrの場合は未初期化）
     /// @param initialIndexData 初期インデックスデータ（nullptrの場合は未初期化）
-    GameObject2DBase(const std::string &name,
+    Object2DBase(const std::string &name,
         size_t vertexByteSize, size_t indexByteSize,
         size_t vertexCount, size_t indexCount,
         void *initialVertexData = nullptr,
@@ -161,7 +237,7 @@ protected:
     RenderCommand CreateDefaultRenderCommand() const;
 
 private:
-    friend class GameObject2DContext;
+    friend class Object2DContext;
 
     struct ShaderBindingFailureInfo {
         size_t componentIndex;
@@ -182,10 +258,16 @@ private:
     D3D12_INDEX_BUFFER_VIEW indexBufferView_{};
     void *vertexData_ = nullptr;
     void *indexData_ = nullptr;
-    std::vector<std::unique_ptr<IGameObjectComponent>> components_;
+    std::vector<std::unique_ptr<IObjectComponent>> components_;
     std::unordered_multimap<std::string, size_t> componentsIndexByName_;
-    std::unique_ptr<GameObject2DContext> context_;
+
+    std::vector<IObjectComponent2D*> components2D_;
+    std::unordered_multimap<std::string, size_t> components2DIndexByName_;
+
+    std::unique_ptr<Object2DContext> context_;
     std::vector<size_t> shaderBindingComponentIndices_;
+
+    MyStd::AnyUnorderedMap userData_;
 };
 
 } // namespace KashipanEngine

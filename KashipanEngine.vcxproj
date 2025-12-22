@@ -164,10 +164,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Model.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\GameObjectContext.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\IGameObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Object3DBase.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\ObjectContext.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Dialogs\MessageDialog.cpp" />
@@ -262,11 +263,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Math\Vector2.h" />
     <ClInclude Include="KashipanEngine\Math\Vector3.h" />
     <ClInclude Include="KashipanEngine\Math\Vector4.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\2D\Material2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\2D\Transform2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\3D\Material3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\Components\3D\Transform3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\IGameObjectComponent.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\2D\Material2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\2D\Transform2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\3D\Material3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\3D\Transform3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h" />
@@ -277,9 +278,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Model.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Sphere.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject2DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObject3DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\GameObjectContext.h" />
+    <ClInclude Include="KashipanEngine\Objects\Object2DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\Object3DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h" />
@@ -288,6 +289,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Capsule3D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Point3D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Sphere.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponents.h" />
     <ClInclude Include="KashipanEngine\Scene\Scene.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
@@ -393,6 +396,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test.json" />
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example\Pixel.hlsl">

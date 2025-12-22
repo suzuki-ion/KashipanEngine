@@ -8,9 +8,10 @@
 
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
-#include "Objects/GameObjects/2D/Triangle2D.h"
-#include "Objects/GameObjects/Components/2D/Material2D.h"
-#include "Objects/GameObjects/Components/2D/Transform2D.h"
+#include "Objects/GameObjects/3D/Triangle3D.h"
+#include "Objects/SystemObjects/Camera3D.h"
+#include "Objects/Components/3D/Material3D.h"
+#include "Objects/Components/3D/Transform3D.h"
 
 namespace KashipanEngine {
 
@@ -28,27 +29,39 @@ GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon
 GraphicsEngine::~GraphicsEngine() = default;
 
 void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
-    // テスト用の三角形オブジェクトを一つだけ生成
-    static std::unique_ptr<Triangle2D> testObject2D;
-    static Vector3 position(0.0f, 0.0f, 0.0f);
+    // テスト用の三角形オブジェクト
+    static std::unique_ptr<Triangle3D> testObject3D;
+    static Vector3 rotate(0.0f, 0.0f, 0.0f);
+    // テスト用のカメラ
+    static std::unique_ptr<Camera3D> testCamera3D;
     static bool initialized = false;
+    
+    //--------- 初期化 ---------//
     if (!initialized) {
-        testObject2D = std::make_unique<Triangle2D>();
-        testObject2D->RegisterComponent<Material2D<Vector4>>(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-        Matrix4x4 transform;
-        transform.MakeTranslate(position);
-        testObject2D->RegisterComponent<Transform2D<Matrix4x4>>(transform);
+        testObject3D = std::make_unique<Triangle3D>();
+        testObject3D->RegisterComponent<Material3D>();
+        Material3D::Data matData;
+        matData.color = Vector4(0.0f, 1.0f, 0.0f, 1.0f);
+        auto *materialComp = testObject3D->GetComponent3D<Material3D>();
+        if (materialComp) {
+            materialComp->SetData(matData);
+        }
+        testCamera3D = std::make_unique<Camera3D>();
         initialized = true;
     }
-    // sin派でX軸方向に移動
-    position.x = std::sin(static_cast<float>(GetTickCount64()) / 1000.0f) * 0.5f;
-    Matrix4x4 transform;
-    transform.MakeTranslate(position);
-    auto *transformComp = testObject2D->GetComponents2D("Transform2D").front();
-    if (transformComp) {
-        auto *t2d = static_cast<Transform2D<Matrix4x4>*>(transformComp);
-        if (t2d) {
-            t2d->SetTransform(transform);
+    
+    //--------- テスト用の更新処理 ---------//
+    {
+        auto transformComp = testCamera3D->GetComponent3D<Transform3D>();
+        if (transformComp) {
+            transformComp->SetTranslate(Vector3(0.0f, 0.0f, -5.0f));
+        }
+    }
+    rotate.y += 0.01f;
+    {
+        auto *transformComp = testObject3D->GetComponent3D<Transform3D>();
+        if (transformComp) {
+            transformComp->SetRotate(rotate);
         }
     }
 
@@ -56,13 +69,25 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     auto overlayWindows = Window::GetWindows("Overlay Window");
     if (!mainWindows.empty()) {
         auto *targetWindow = mainWindows.front();
-        auto passInfo = testObject2D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
-        renderer_->RegisterRenderPass(passInfo);
+        {
+            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Camera3D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testObject3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
     }
     if (!overlayWindows.empty()) {
         auto* targetWindow = overlayWindows.front();
-        auto passInfo = testObject2D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
-        renderer_->RegisterRenderPass(passInfo);
+        {
+            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Camera3D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testObject3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
     }
     renderer_->RenderFrame({});
 }

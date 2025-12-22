@@ -1,12 +1,12 @@
 #pragma once
-#include "Objects/GameObjects/GameObject2DBase.h"
+#include "Objects/Object2DBase.h"
 #include "Math/Vector4.h"
 
 namespace KashipanEngine {
 
-class Rect : public GameObject2DBase {
+class Rect : public Object2DBase {
 public:
-    Rect(const std::string &name = "Rect") : GameObject2DBase(name, sizeof(Vertex), sizeof(Index), 4, 6) {}
+    Rect(const std::string &name = "Rect") : Object2DBase(name, sizeof(Vertex), sizeof(Index), 4, 6) {}
     ~Rect() override = default;
 
 protected:

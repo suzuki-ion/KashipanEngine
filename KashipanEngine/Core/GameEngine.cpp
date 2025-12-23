@@ -36,6 +36,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
+    samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
 
 #if defined(USE_IMGUI)
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
@@ -87,7 +88,8 @@ GameEngine::~GameEngine() {
 #if defined(USE_IMGUI)
     imguiManager_.reset();
 #endif
-
+    
+    samplerManager_.reset();
     textureManager_.reset();
 
     graphicsEngine_.reset();

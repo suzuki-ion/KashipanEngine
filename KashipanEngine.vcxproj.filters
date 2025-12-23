@@ -267,6 +267,9 @@
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -701,6 +704,18 @@
     <ClInclude Include="Externals\imgui\imgui_impl_win32.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexData3D.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\VertexData2D.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSampler.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\SamplerManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
@@ -779,5 +794,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\Object3D.hlsli" />
   </ItemGroup>
 </Project>

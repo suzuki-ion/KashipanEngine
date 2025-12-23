@@ -490,6 +490,8 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
     }
     outInfo.variableBinder.SetNameMap(nameMap);
     const auto &rootSigParsed = customRootSig ? *customRootSig : Pipeline::JsonParser::RootSignatureParsed{};
+
+    size_t descriptorTableIndex = 0;
     for (size_t i = 0; i < rootSigParsed.rootParams.parameters.size(); ++i) {
         const auto &param = rootSigParsed.rootParams.parameters[i];
         ShaderStage stage = ShaderStage::Unknown;
@@ -502,8 +504,12 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
             case D3D12_SHADER_VISIBILITY_ALL: default: stage = ShaderStage::Unknown; break;
         }
         if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE) {
-            // rangesStorage は DescriptorTable のみ順次対応
-            for (const auto &range : rootSigParsed.rootParams.rangesStorage[i]) {
+            // rangesStorage は "DescriptorTable を持つパラメータ順" に格納される（root-parameter index とは一致しない）
+            if (descriptorTableIndex >= rootSigParsed.rootParams.rangesStorage.size()) {
+                ++descriptorTableIndex;
+                continue;
+            }
+            for (const auto &range : rootSigParsed.rootParams.rangesStorage[descriptorTableIndex]) {
                 D3D_SHADER_INPUT_TYPE type =
                     range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV ? D3D_SIT_CBUFFER :
                     range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV ? D3D_SIT_TEXTURE :
@@ -519,6 +525,7 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
                     stage
                 );
             }
+            ++descriptorTableIndex;
         } else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ||
             param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV ||
             param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_UAV) {

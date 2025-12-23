@@ -13,9 +13,12 @@ bool Triangle3D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
     }
     auto v = GetVertexSpan<Vertex>();
     if (v.size() < 3) return false;
-    v[0] = Vertex(-0.5f, -0.5f, 0.0f, 1.0f);
-    v[1] = Vertex(0.0f, 0.5f, 0.0f, 1.0f);
-    v[2] = Vertex(0.5f, -0.5f, 0.0f, 1.0f);
+    v[0].position = Vector4(-0.5f, -0.5f, 0.0f, 1.0f);
+    v[1].position = Vector4(0.0f, 0.5f, 0.0f, 1.0f);
+    v[2].position = Vector4(0.5f, -0.5f, 0.0f, 1.0f);
+    v[0].texcoord = Vector2(0.0f, 1.0f);
+    v[1].texcoord = Vector2(0.5f, 0.0f);
+    v[2].texcoord = Vector2(1.0f, 1.0f);
 
     auto i = GetIndexSpan<Index>();
     if (i.size() < 3) return false;

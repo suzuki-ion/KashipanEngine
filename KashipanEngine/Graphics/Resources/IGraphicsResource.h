@@ -3,10 +3,12 @@
 #include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapSRV.h"
+#include "Core/DirectX/DescriptorHeaps/HeapSampler.h"
 
 namespace KashipanEngine {
 
 class DirectXCommon;
+class ShaderVariableBinder;
 
 enum class ResourceViewType {
     None,
@@ -25,9 +27,13 @@ class IGraphicsResource {
     static inline RTVHeap *rtvHeap_ = nullptr;
     static inline DSVHeap *dsvHeap_ = nullptr;
     static inline SRVHeap *srvHeap_ = nullptr;
+    static inline SamplerHeap *samplerHeap_ = nullptr;
 public:
     static void SetDevice(Passkey<DirectXCommon>, ID3D12Device *device) { device_ = device; }
-    static void SetDescriptorHeaps(Passkey<DirectXCommon>, RTVHeap *rtv, DSVHeap *dsv, SRVHeap *srv) { rtvHeap_ = rtv; dsvHeap_ = dsv; srvHeap_ = srv; }
+    static void SetDescriptorHeaps(Passkey<DirectXCommon>, RTVHeap *rtv, DSVHeap *dsv, SRVHeap *srv, SamplerHeap *sampler) {
+        rtvHeap_ = rtv; dsvHeap_ = dsv; srvHeap_ = srv; samplerHeap_ = sampler;
+    }
+    static ID3D12Device *GetDevice(Passkey<ShaderVariableBinder>) { return device_; }
     static void ClearAllResources(Passkey<DirectXCommon>);
     virtual ~IGraphicsResource();
 
@@ -85,6 +91,8 @@ protected:
     DSVHeap *GetDSVHeap() const { return dsvHeap_; }
     /// @brief SRVヒープ取得（派生クラス用）
     SRVHeap *GetSRVHeap() const { return srvHeap_; }
+    /// @brief Samplerヒープ取得（派生クラス用）
+    SamplerHeap *GetSamplerHeap() const { return samplerHeap_; }
     /// @brief デスクリプタハンドル情報設定（派生クラス用）
     void SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info);
     /// @brief デスクリプタハンドル情報取得（派生クラス用）

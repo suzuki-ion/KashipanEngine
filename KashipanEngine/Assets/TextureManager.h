@@ -10,6 +10,7 @@ namespace KashipanEngine {
 
 class GameEngine;
 class DirectXCommon;
+class ShaderVariableBinder;
 
 /// @brief テクスチャ管理クラス
 class TextureManager final {
@@ -47,6 +48,9 @@ public:
     static TextureHandle GetTextureFromFileName(const std::string& fileName);
     /// @brief Assetsルートからの相対パスからテクスチャを取得
     static TextureHandle GetTextureFromAssetPath(const std::string& assetPath);
+
+    /// @brief シェーダーへテクスチャをバインドする（D3D12 のハンドルは外部へ出さない）
+    static bool BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, TextureHandle handle);
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 用に利用可能なテクスチャ（SRV index）をすべて取得

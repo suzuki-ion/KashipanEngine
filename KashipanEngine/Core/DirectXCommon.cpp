@@ -52,18 +52,20 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.rtvDescriptorHeapSize);
     DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.dsvDescriptorHeapSize);
     SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.srvDescriptorHeapSize);
+    SamplerHeap_ = std::make_unique<SamplerHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.srvDescriptorHeapSize);
 
     // グローバルヒープポインタ設定
     IGraphicsResource::SetDescriptorHeaps({},
-        RTVHeap_.get(), DSVHeap_.get(), SRVHeap_.get());
-    
+        RTVHeap_.get(), DSVHeap_.get(), SRVHeap_.get(), SamplerHeap_.get());
+
     DX12SwapChain::Initialize(Passkey<DirectXCommon>{}, this,
         dx12Device_->GetDevice(),
         dx12DXGIs_->GetDXGIFactory(),
         dx12CommandQueue_->GetCommandQueue(),
         RTVHeap_.get(),
         DSVHeap_.get(),
-        SRVHeap_.get()
+        SRVHeap_.get(),
+        SamplerHeap_.get()
     );
 
     // スワップチェーンスロット事前確保 (遅延初期化用空インスタンス生成)
@@ -96,6 +98,7 @@ DirectXCommon::~DirectXCommon() {
     sPendingDestroySwapChains.clear();
 
     IGraphicsResource::ClearAllResources({});
+    SamplerHeap_.reset();
     SRVHeap_.reset();
     DSVHeap_.reset();
     RTVHeap_.reset();

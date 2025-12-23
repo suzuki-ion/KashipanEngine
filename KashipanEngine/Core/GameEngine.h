@@ -5,6 +5,7 @@
 #include "Core/DirectXCommon.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Assets/TextureManager.h"
+#include "Assets/SamplerManager.h"
 
 #if defined(USE_IMGUI)
 #include "Debug/ImGuiManager.h"
@@ -58,6 +59,8 @@ private:
 
     /// @brief テクスチャ管理クラス
     std::unique_ptr<TextureManager> textureManager_;
+    /// @brief サンプラ管理クラス
+    std::unique_ptr<SamplerManager> samplerManager_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス

@@ -5,6 +5,7 @@
 #include "Graphics/Resources/ShaderResourceResource.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 
 #include <DirectXTex.h>
 
@@ -89,6 +90,20 @@ Handle RegisterEntry(TextureEntry&& entry) {
 UINT Align256(UINT v) { return (v + 255u) & ~255u; }
 
 } // namespace
+
+bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, TextureHandle handle) {
+    if (!shaderBinder) return false;
+    if (handle == kInvalidHandle) return false;
+
+    auto it = sTextures.find(handle);
+    if (it == sTextures.end()) return false;
+
+    D3D12_GPU_DESCRIPTOR_HANDLE h{};
+    h.ptr = it->second.srvGpuPtr;
+    if (h.ptr == 0) return false;
+
+    return shaderBinder->Bind(nameKey, h);
+}
 
 TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, const std::string& assetsRootPath)
     : directXCommon_(directXCommon), assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {

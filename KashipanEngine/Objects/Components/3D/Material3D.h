@@ -2,6 +2,8 @@
 #include "Objects/IObjectComponent.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Vector4.h"
+#include "Assets/TextureManager.h"
+#include "Assets/SamplerManager.h"
 #include <memory>
 
 namespace KashipanEngine {
@@ -18,7 +20,10 @@ public:
         return type;
     }
 
-    Material3D(const Data &data = Data{}) : IObjectComponent3D("Material3D", 1) {
+    Material3D(const Data &data = Data{},
+        TextureManager::TextureHandle texture = TextureManager::kInvalidHandle,
+        SamplerManager::SamplerHandle sampler = SamplerManager::kInvalidHandle)
+        : IObjectComponent3D("Material3D", 1), textureHandle_(texture), samplerHandle_(sampler) {
         materialBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Data));
         SetData(data);
     }
@@ -26,7 +31,7 @@ public:
 
     /// @brief コンポーネントのクローンを作成
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Material3D>(data_);
+        auto ptr = std::make_unique<Material3D>(data_, textureHandle_, samplerHandle_);
         return ptr;
     }
 
@@ -35,8 +40,23 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
         if (!materialBuffer_) return false;
-        return shaderBinder && shaderBinder->Bind("Pixel:gMaterial", materialBuffer_.get());
+        if (!shaderBinder) return false;
+
+        bool ok = shaderBinder->Bind("Pixel:gMaterial", materialBuffer_.get());
+        if (textureHandle_ != TextureManager::kInvalidHandle) {
+            ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
+        }
+        if (samplerHandle_ != SamplerManager::kInvalidHandle) {
+            ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
+        }
+        return ok;
     }
+
+    void SetTexture(TextureManager::TextureHandle texture) { textureHandle_ = texture; }
+    TextureManager::TextureHandle GetTexture() const { return textureHandle_; }
+
+    void SetSampler(SamplerManager::SamplerHandle sampler) { samplerHandle_ = sampler; }
+    SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
 
     /// @brief カラーの設定
     void SetColor(const Vector4 &color) {
@@ -69,6 +89,8 @@ public:
 
 private:
     Data data_{};
+    TextureManager::TextureHandle textureHandle_ = TextureManager::kInvalidHandle;
+    SamplerManager::SamplerHandle samplerHandle_ = SamplerManager::kInvalidHandle;
     std::unique_ptr<ConstantBufferResource> materialBuffer_;
 };
 

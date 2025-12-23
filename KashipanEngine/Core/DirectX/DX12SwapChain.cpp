@@ -155,8 +155,8 @@ void DX12SwapChain::BeginDrawInternal() {
 
     commandList_->RSSetViewports(1, &viewport_);
     commandList_->RSSetScissorRects(1, &scissorRect_);
-    ID3D12DescriptorHeap *ppHeaps[] = { sSRVHeap->GetDescriptorHeap() };
-    commandList_->SetDescriptorHeaps(1, ppHeaps);
+    ID3D12DescriptorHeap *ppHeaps[] = { sSRVHeap->GetDescriptorHeap(), sSamplerHeap->GetDescriptorHeap() };
+    commandList_->SetDescriptorHeaps(2, ppHeaps);
 
     isDrawing_ = true;
 }

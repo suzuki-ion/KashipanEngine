@@ -15,6 +15,7 @@
 #include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapSRV.h"
+#include "Core/DirectX/DescriptorHeaps/HeapSampler.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -24,6 +25,7 @@ class Window;
 class GraphicsEngine;
 class Renderer;
 class TextureManager;
+class SamplerManager;
 #if defined(USE_IMGUI)
 class ImGuiManager;
 #endif
@@ -60,6 +62,13 @@ public:
     ID3D12CommandQueue* GetCommandQueueForTextureManager(Passkey<TextureManager>) const { return dx12CommandQueue_->GetCommandQueue(); }
     /// @brief SRV ヒープ取得（TextureManager 用）
     SRVHeap* GetSRVHeapForTextureManager(Passkey<TextureManager>) const { return SRVHeap_.get(); }
+    /// @brief Sampler ヒープ取得（TextureManager 用）
+    SamplerHeap* GetSamplerHeapForTextureManager(Passkey<TextureManager>) const { return SamplerHeap_.get(); }
+
+    /// @brief D3D12デバイス取得（SamplerManager 用）
+    ID3D12Device *GetDeviceForSamplerManager(Passkey<SamplerManager>) const { return dx12Device_->GetDevice(); }
+    /// @brief Sampler ヒープ取得（SamplerManager 用）
+    SamplerHeap *GetSamplerHeapForSamplerManager(Passkey<SamplerManager>) const { return SamplerHeap_.get(); }
 
     /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（TextureManager 用）
     /// @param record コマンド記録関数（Close は内部で行う）
@@ -110,6 +119,7 @@ private:
     std::unique_ptr<RTVHeap> RTVHeap_;
     std::unique_ptr<DSVHeap> DSVHeap_;
     std::unique_ptr<SRVHeap> SRVHeap_;
+    std::unique_ptr<SamplerHeap> SamplerHeap_;
 };
 
 } // namespace KashipanEngine

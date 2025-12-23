@@ -137,6 +137,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\imgui\imgui_widgets.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
@@ -239,10 +240,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_truetype.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DCompHost.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapDSV.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapRTV.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSampler.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSRV.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12CommandQueue.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Device.h" />
@@ -314,6 +317,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\Components\2D\Transform2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\3D\Material3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\3D\Transform3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\VertexData2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexData3D.h" />
     <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
@@ -442,6 +447,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\PipelineSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\Object3D.hlsli" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
   </ItemGroup>
   <ItemGroup>

@@ -39,13 +39,6 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     //--------- 初期化 ---------//
     if (!initialized) {
         testObject3D = std::make_unique<Triangle3D>();
-        testObject3D->RegisterComponent<Material3D>();
-        Material3D::Data matData;
-        matData.color = Vector4(0.0f, 1.0f, 0.0f, 1.0f);
-        auto *materialComp = testObject3D->GetComponent3D<Material3D>();
-        if (materialComp) {
-            materialComp->SetData(matData);
-        }
         testCamera3D = std::make_unique<Camera3D>();
         initialized = true;
     }

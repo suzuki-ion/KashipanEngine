@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/3D/Transform3D.h"
+#include "Objects/Components/3D/Material3D.h"
 
 namespace KashipanEngine {
 
@@ -110,7 +111,24 @@ Object3DBase::Object3DBase(const std::string &name, size_t vertexByteSize, size_
     }
     // 永続コンテキストの生成（3D）
     context_ = std::make_unique<Object3DContext>(Passkey<Object3DBase>{}, this);
+
+    // 基本コンポーネントの登録
     RegisterComponent<Transform3D>();
+
+    Material3D::Data defaultMaterialData{ Vector4{1.0f, 1.0f, 1.0f, 1.0f} };
+    TextureManager::TextureHandle defaultTexture
+        = TextureManager::GetTextureFromFileName("uvChecker.png");
+    D3D12_SAMPLER_DESC defaultSamplerDesc{};
+    defaultSamplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    defaultSamplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    defaultSamplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    defaultSamplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    defaultSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    defaultSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+    defaultSamplerDesc.MaxAnisotropy = 1;
+    SamplerManager::SamplerHandle defaultSampler
+        = SamplerManager::CreateSampler(defaultSamplerDesc);
+    RegisterComponent<Material3D>(defaultMaterialData, defaultTexture, defaultSampler);
 }
 
 std::optional<RenderCommand> Object3DBase::CreateRenderCommand(PipelineBinder &pipelineBinder) {

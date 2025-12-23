@@ -90,23 +90,12 @@ void ImGuiManager::ShutdownInternal() {
     isInitialized_ = false;
 }
 
-static HWND ResolveMainHwnd() {
-    const auto& title = GetEngineSettings().window.initialWindowTitle;
-    auto windows = Window::GetWindows(title);
-    if (!windows.empty() && windows.front()) return windows.front()->GetWindowHandle();
-
-    windows = Window::GetWindows("Main Window");
-    if (!windows.empty() && windows.front()) return windows.front()->GetWindowHandle();
-
-    return nullptr;
-}
-
 void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     if (!isInitialized_) return;
 
     // バックエンド初期化はウィンドウ生成後に行う
     if (!isBackendInitialized_) {
-        mainHwnd_ = ResolveMainHwnd();
+        mainHwnd_ = Window::GetFirstWindowHwndForImGui({});
         if (!mainHwnd_) return;
 
         if (!ImGui_ImplWin32_Init(mainHwnd_)) {

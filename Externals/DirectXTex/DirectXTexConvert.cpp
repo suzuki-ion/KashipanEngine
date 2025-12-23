@@ -2100,11 +2100,11 @@ bool DirectX::Internal::StoreScanline(
             {
                 if (sPtr >= ePtr) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
+            #if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
                 v = XMVectorMultiplyAdd(v, s_Scale, g_XMOneHalf);
-#else
+            #else
                 v = XMVectorMultiply(v, s_Scale);
-#endif
+            #endif
                 XMStoreU565(dPtr++, v);
             }
             return true;
@@ -2115,19 +2115,19 @@ bool DirectX::Internal::StoreScanline(
         if (size >= sizeof(XMU555))
         {
             static const XMVECTORF32 s_Scale = { { { 31.f, 31.f, 31.f, 1.f } } };
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
+        #if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
             static const XMVECTORF32 s_OneHalfXYZ = { { { 0.5f, 0.5f, 0.5f, 0.f } } };
-#endif
+        #endif
             XMU555 * __restrict dPtr = static_cast<XMU555*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(XMU555) + 1); icount += sizeof(XMU555))
             {
                 if (sPtr >= ePtr) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
+            #if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
                 v = XMVectorMultiplyAdd(v, s_Scale, s_OneHalfXYZ);
-#else
+            #else
                 v = XMVectorMultiply(v, s_Scale);
-#endif
+            #endif
                 XMStoreU555(dPtr, v);
                 dPtr->w = (XMVectorGetW(v) > threshold) ? 1u : 0u;
                 ++dPtr;
@@ -2403,11 +2403,11 @@ bool DirectX::Internal::StoreScanline(
             {
                 if (sPtr >= ePtr) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
+            #if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
                 v = XMVectorMultiplyAdd(v, s_Scale, g_XMOneHalf);
-#else
+            #else
                 v = XMVectorMultiply(v, s_Scale);
-#endif
+            #endif
                 XMStoreUNibble4(dPtr++, v);
             }
             return true;
@@ -2423,11 +2423,11 @@ bool DirectX::Internal::StoreScanline(
             {
                 if (sPtr >= ePtr) break;
                 XMVECTOR v = XMVectorSwizzle<3, 2, 1, 0>(*sPtr++);
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
+            #if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
                 v = XMVectorMultiplyAdd(v, s_Scale, g_XMOneHalf);
-#else
+            #else
                 v = XMVectorMultiply(v, s_Scale);
-#endif
+            #endif
                 XMStoreUNibble4(dPtr++, v);
             }
             return true;
@@ -2503,11 +2503,11 @@ bool DirectX::Internal::StoreScanline(
             for (size_t icount = 0; icount < (size - sizeof(uint8_t) + 1); icount += sizeof(uint8_t))
             {
                 if (sPtr >= ePtr) break;
-#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
+            #if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
                 const XMVECTOR v = XMVectorMultiplyAdd(*sPtr++, s_Scale, g_XMOneHalf);
-#else
+            #else
                 const XMVECTOR v = XMVectorMultiply(*sPtr++, s_Scale);
-#endif
+            #endif
                 XMUNIBBLE4 nibble;
                 XMStoreUNibble4(&nibble, v);
                 *dPtr = static_cast<uint8_t>(nibble.v);
@@ -4833,7 +4833,7 @@ namespace
                 {
                     if (!statusCallback(h, srcImage.height))
                     {
-                       return E_ABORT;
+                        return E_ABORT;
                     }
                 }
 
@@ -5108,7 +5108,9 @@ HRESULT DirectX::ConvertEx(
     ScratchImage& image,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
-    if ((srcImage.format == format) || !IsValid(format))
+    if ((srcImage.format == format)
+        || !IsValid(format)
+        || !IsValid(srcImage.format))
         return E_INVALIDARG;
 
     if (!srcImage.pixels)
@@ -5202,7 +5204,10 @@ HRESULT DirectX::ConvertEx(
     ScratchImage& result,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
-    if (!srcImages || !nimages || (metadata.format == format) || !IsValid(format))
+    if (!srcImages || !nimages
+        || (metadata.format == format)
+        || !IsValid(format)
+        || !IsValid(metadata.format))
         return E_INVALIDARG;
 
     if (IsCompressed(metadata.format) || IsCompressed(format)
@@ -5448,7 +5453,7 @@ HRESULT DirectX::ConvertToSinglePlane(
     const TexMetadata& metadata,
     ScratchImage& result) noexcept
 {
-    if (!srcImages || !nimages)
+    if (!srcImages || !nimages || !IsPlanar(metadata.format))
         return E_INVALIDARG;
 
     if (metadata.IsVolumemap())

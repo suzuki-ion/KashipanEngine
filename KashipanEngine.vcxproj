@@ -115,15 +115,28 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Externals\imgui\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Externals\imgui\imgui_demo.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_draw.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_tables.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Externals\imgui\imgui_demo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_draw.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_tables.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_widgets.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
@@ -202,16 +215,29 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Externals\imgui\imgui_impl_dx12.h" />
-    <ClInclude Include="Externals\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imgui_impl_win32.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Externals\imgui\imconfig.h" />
     <ClInclude Include="Externals\imgui\imgui.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Externals\imgui\imgui_internal.h" />
-    <ClInclude Include="Externals\imgui\imstb_rectpack.h" />
-    <ClInclude Include="Externals\imgui\imstb_textedit.h" />
-    <ClInclude Include="Externals\imgui\imstb_truetype.h" />
+    <ClInclude Include="Externals\imgui\imgui_internal.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imstb_rectpack.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imstb_textedit.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imstb_truetype.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Core\DirectX\DCompHost.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapDSV.h" />
@@ -416,8 +442,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\TransformationMatrix.hlsli" />
     <None Include="Assets\KashipanEngine\PipelineSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test.json" />
-    <None Include="ClassDiagram.cd" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
   </ItemGroup>
   <ItemGroup>

@@ -2,17 +2,17 @@
 
 namespace KashipanEngine {
 
-ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource)
+ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState)
     : IGraphicsResource(ResourceViewType::SRV) {
-    Initialize(width, height, format, flags, existingResource);
+    Initialize(width, height, format, flags, existingResource, initialState);
 }
 
-bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource) {
+bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState) {
     ResetResourceForRecreate();
-    return Initialize(width, height, format, flags, existingResource);
+    return Initialize(width, height, format, flags, existingResource, initialState);
 }
 
-bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource) {
+bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState) {
     LogScope scope;
     auto *srvHeap = GetSRVHeap();
     if (!GetDevice() || !srvHeap) {
@@ -41,7 +41,7 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
     heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
     ClearTransitionStates();
-    AddTransitionState(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    AddTransitionState(initialState);
 
     if (existingResource) {
         SetExistingResource(existingResource);

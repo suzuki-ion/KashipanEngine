@@ -1,6 +1,8 @@
 #include "TextureManager.h"
 
 #include "Core/DirectXCommon.h"
+#include "Debug/Logger.h"
+#include "Graphics/Resources/ShaderResourceResource.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 
@@ -26,13 +28,14 @@ struct TextureEntry final {
     std::string assetPath;
     std::string fileName;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> resource;
+    std::unique_ptr<ShaderResourceResource> texture;
     Microsoft::WRL::ComPtr<ID3D12Resource> upload;
-    std::unique_ptr<DescriptorHandleInfo> srv;
+
     UINT width = 0;
     UINT height = 0;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     UINT64 srvGpuPtr = 0;
+    UINT srvIndex = 0;
 };
 
 std::unordered_map<Handle, TextureEntry> sTextures;
@@ -71,10 +74,8 @@ std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::stri
 }
 
 Handle RegisterEntry(TextureEntry&& entry) {
-    if (!entry.srv) return TextureManager::kInvalidHandle;
-
     // TextureHandle は 0 を無効値とするため、SRV index に +1 した値をハンドルとして返す
-    const Handle handle = static_cast<Handle>(entry.srv->index + 1u);
+    const Handle handle = static_cast<Handle>(entry.srvIndex + 1u);
 
     if (handle == TextureManager::kInvalidHandle) return TextureManager::kInvalidHandle;
     if (sTextures.find(handle) != sTextures.end()) return TextureManager::kInvalidHandle;
@@ -203,34 +204,23 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     entry.height = static_cast<UINT>(img0->height);
     entry.format = dstFormat;
 
-    entry.srv = sSrvHeap->AllocateDescriptorHandle();
-
-    // テクスチャリソース作成
-    D3D12_RESOURCE_DESC texDesc{};
-    texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    texDesc.Alignment = 0;
-    texDesc.Width = static_cast<UINT64>(entry.width);
-    texDesc.Height = entry.height;
-    texDesc.DepthOrArraySize = 1;
-    texDesc.MipLevels = 1;
-    texDesc.Format = entry.format;
-    texDesc.SampleDesc = { 1, 0 };
-    texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-    D3D12_HEAP_PROPERTIES defaultHeap{};
-    defaultHeap.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-    hr = sDevice->CreateCommittedResource(
-        &defaultHeap,
-        D3D12_HEAP_FLAG_NONE,
-        &texDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST,
+    // GPU側テクスチャ + SRV を Resources 経由で作成（COPY_DEST から開始してこの後のコピーに備える）
+    entry.texture = std::make_unique<ShaderResourceResource>(
+        entry.width,
+        entry.height,
+        entry.format,
+        D3D12_RESOURCE_FLAG_NONE,
         nullptr,
-        IID_PPV_ARGS(entry.resource.GetAddressOf()));
-    if (FAILED(hr)) {
-        Log(Translation("engine.texture.loading.failed.createresource") + p.string(), LogSeverity::Error);
-        return kInvalidHandle;
+        D3D12_RESOURCE_STATE_COPY_DEST);
+
+    {
+        auto *desc = entry.texture->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});
+        if (!desc) {
+            Log(Translation("engine.texture.loading.failed.createresource") + p.string(), LogSeverity::Error);
+            return kInvalidHandle;
+        }
+        entry.srvGpuPtr = desc->gpuHandle.ptr;
+        entry.srvIndex = desc->index;
     }
 
     // アップロード用バッファ作成
@@ -285,7 +275,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     directXCommon_->ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>{},
         [&](ID3D12GraphicsCommandList* cl) {
             D3D12_TEXTURE_COPY_LOCATION dstLoc{};
-            dstLoc.pResource = entry.resource.Get();
+            dstLoc.pResource = entry.texture->GetResource();
             dstLoc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
             dstLoc.SubresourceIndex = 0;
 
@@ -304,24 +294,12 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             D3D12_RESOURCE_BARRIER barrier{};
             barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
             barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-            barrier.Transition.pResource = entry.resource.Get();
+            barrier.Transition.pResource = entry.texture->GetResource();
             barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
             barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
             barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
             cl->ResourceBarrier(1, &barrier);
         });
-
-    // SRV 作成
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Format = entry.format;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Texture2D.MipLevels = 1;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-    sDevice->CreateShaderResourceView(entry.resource.Get(), &srvDesc, entry.srv->cpuHandle);
-    entry.srvGpuPtr = entry.srv->gpuHandle.ptr;
 
     // アップロード用リソースはもう不要なので解放
     entry.upload.Reset();

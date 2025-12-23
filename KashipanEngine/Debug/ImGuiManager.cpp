@@ -18,13 +18,16 @@ namespace KashipanEngine {
 
 namespace {
 DXGI_FORMAT ToDxgiFormat_WindowsSwapChain() {
-    // DX12SwapChain 側の既定が DXGI_FORMAT_B8G8R8A8_UNORM のため合わせる
     return DXGI_FORMAT_B8G8R8A8_UNORM;
 }
 
-// ImGui DX12 backend (docking版) が要求する Legacy single SRV descriptor を確保
-// (ImGui_ImplDX12_InitInfo::LegacySingleSrvCpuDescriptor/GpuDescriptor)
 std::unique_ptr<DescriptorHandleInfo> sImGuiLegacySrv;
+
+static HWND PlatformHwndFromViewport(ImGuiViewport* vp) {
+    if (!vp) return nullptr;
+    return (HWND)vp->PlatformHandleRaw;
+}
+
 } // namespace
 
 ImGuiManager::ImGuiManager(Passkey<GameEngine>, WindowsAPI* windowsAPI, DirectXCommon* directXCommon)
@@ -55,23 +58,19 @@ void ImGuiManager::InitializeInternal() {
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
-    // メインウィンドウを取得（EngineSettings の initialWindowTitle で解決）
-    // GameEngine の生成順では ImGuiManager が Window 作成より先なので、ここではまだ得られない場合がある。
-    // BeginFrame 側で遅延初期化（バックエンド初期化）を行う。
-
     isInitialized_ = true;
 }
 
 void ImGuiManager::ShutdownInternal() {
     if (!isInitialized_) return;
 
-    // バックエンドが初期化されている場合のみ shutdown
-    ImGui_ImplDX12_Shutdown();
-    ImGui_ImplWin32_Shutdown();
+    if (isBackendInitialized_) {
+        ImGui_ImplDX12_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+        isBackendInitialized_ = false;
+    }
 
     ImGui::DestroyContext();
-
-    // ImGui 用に確保した legacy SRV を開放
     sImGuiLegacySrv.reset();
 
     isInitialized_ = false;
@@ -82,7 +81,6 @@ static HWND ResolveMainHwnd() {
     auto windows = Window::GetWindows(title);
     if (!windows.empty() && windows.front()) return windows.front()->GetWindowHandle();
 
-    // エンジン側でタイトルを変えている可能性に備え、既知の "Main Window" も見る
     windows = Window::GetWindows("Main Window");
     if (!windows.empty() && windows.front()) return windows.front()->GetWindowHandle();
 
@@ -97,19 +95,16 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         mainHwnd_ = ResolveMainHwnd();
         if (!mainHwnd_) return;
 
-        // Win32 backend
         if (!ImGui_ImplWin32_Init(mainHwnd_)) {
             return;
         }
 
-        // DX12 backend
         auto* device = directXCommon_->GetDeviceForImGui({});
         auto* srvHeap = directXCommon_->GetSRVHeapForImGui({});
         if (!device || !srvHeap) {
             return;
         }
 
-        // Docking 版 imgui_impl_dx12 は legacy single SRV デスクリプタを要求する
         if (!sImGuiLegacySrv) {
             sImGuiLegacySrv = srvHeap->AllocateDescriptorHandle();
         }
@@ -139,12 +134,13 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // デモ: docking + viewport 前提のウィンドウ
     ImGui::Begin("KashipanEngine Debug");
     ImGui::Text("ImGui is running.");
     ImGui::Text("Docking: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) ? "ON" : "OFF");
     ImGui::Text("Viewports: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) ? "ON" : "OFF");
     ImGui::End();
+
+    ImGui::ShowDemoWindow();
 }
 
 void ImGuiManager::Render(Passkey<GameEngine>) {
@@ -153,15 +149,23 @@ void ImGuiManager::Render(Passkey<GameEngine>) {
 
     ImGui::Render();
 
-    // メインウィンドウのコマンドリストへ描画
-    auto hwnd = ResolveMainHwnd();
-    if (hwnd) {
-        if (auto* cmd = directXCommon_->GetRecordedCommandListForImGui({}, hwnd)) {
-            ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd);
+    // メイン viewport（= 現在のエンジンの描画ターゲット）に対してのみ描画する
+    {
+        ImGuiViewport* mainVp = ImGui::GetMainViewport();
+        if (mainVp) {
+            HWND hwnd = PlatformHwndFromViewport(mainVp);
+            if (hwnd) {
+                // mainHwnd_ が未解決の場合は補完
+                if (!mainHwnd_) mainHwnd_ = hwnd;
+
+                if (auto* cmd = directXCommon_->GetRecordedCommandListForImGui({}, hwnd)) {
+                    ImGui_ImplDX12_RenderDrawData(mainVp->DrawData, cmd);
+                }
+            }
         }
     }
 
-    // マルチビューポート: プラットフォームウィンドウを更新・描画
+    // マルチビューポートは ImGui backend に任せる
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         ImGui::UpdatePlatformWindows();

@@ -517,7 +517,7 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
 void Window::ProcessMessage() {
     LogScope scope;
     MSG msg{};
-    while (PeekMessage(&msg, descriptor_.hwnd, 0, 0, PM_REMOVE)) {
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }

@@ -61,6 +61,11 @@ public:
 
     /// @brief 指定のウィンドウのコマンドリスト取得（ImGui 用）
     ID3D12GraphicsCommandList* GetRecordedCommandListForImGui(Passkey<ImGuiManager>, HWND hwnd) const;
+
+    // ImGui viewport 用のスワップチェーンを必要に応じて生成する
+    DX12SwapChain* GetOrCreateSwapChainForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd, int32_t width, int32_t height);
+    // ImGui viewport 用スワップチェーンの破棄指示（遅延破棄）
+    void DestroySwapChainSignalForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd);
 #endif
 
     /// @brief 指定のウィンドウのスワップチェーン取得

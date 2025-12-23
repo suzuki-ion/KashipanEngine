@@ -11,6 +11,6 @@
 	},
 	"RasterizerState": { "UsePreset": "Solid" },
 	"BlendState": { "UsePreset": "None" },
-	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"DepthStencilState": { "UsePreset": "DepthEnable" },
 	"PipelineState": { "UsePreset": "Test" }
 }

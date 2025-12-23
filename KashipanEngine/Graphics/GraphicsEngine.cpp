@@ -30,15 +30,23 @@ GraphicsEngine::~GraphicsEngine() = default;
 
 void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     // テスト用の三角形オブジェクト
-    static std::unique_ptr<Triangle3D> testObject3D;
-    static Vector3 rotate(0.0f, 0.0f, 0.0f);
+    static std::unique_ptr<Triangle3D> testObject3D1;
+    static std::unique_ptr<Triangle3D> testObject3D2;
     // テスト用のカメラ
     static std::unique_ptr<Camera3D> testCamera3D;
     static bool initialized = false;
     
     //--------- 初期化 ---------//
     if (!initialized) {
-        testObject3D = std::make_unique<Triangle3D>();
+        testObject3D1 = std::make_unique<Triangle3D>();
+        testObject3D2 = std::make_unique<Triangle3D>();
+        // testObject3D2のY軸回転を少しずらす
+        {
+            auto *transformComp = testObject3D2->GetComponent3D<Transform3D>();
+            if (transformComp) {
+                transformComp->SetRotate(Vector3(0.0f, 0.5f, 0.0f));
+            }
+        }
         testCamera3D = std::make_unique<Camera3D>();
         initialized = true;
     }
@@ -50,10 +58,19 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             transformComp->SetTranslate(Vector3(0.0f, 0.0f, -5.0f));
         }
     }
-    rotate.y += 0.01f;
     {
-        auto *transformComp = testObject3D->GetComponent3D<Transform3D>();
+        auto *transformComp = testObject3D1->GetComponent3D<Transform3D>();
         if (transformComp) {
+            Vector3 rotate = transformComp->GetRotate();
+            rotate.y += 0.01f;
+            transformComp->SetRotate(rotate);
+        }
+    }
+    {
+        auto *transformComp = testObject3D2->GetComponent3D<Transform3D>();
+        if (transformComp) {
+            Vector3 rotate = transformComp->GetRotate();
+            rotate.y += 0.01f;
             transformComp->SetRotate(rotate);
         }
     }
@@ -67,7 +84,11 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass 2");
             renderer_->RegisterRenderPass(passInfo);
         }
     }
@@ -78,7 +99,11 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass 2");
             renderer_->RegisterRenderPass(passInfo);
         }
     }

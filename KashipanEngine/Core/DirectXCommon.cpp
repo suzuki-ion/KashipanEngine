@@ -177,6 +177,45 @@ ID3D12GraphicsCommandList* DirectXCommon::GetRecordedCommandListForImGui(Passkey
     if (!sc) return nullptr;
     return sc->GetRecordedCommandList(Passkey<DirectXCommon>{});
 }
+
+DX12SwapChain* DirectXCommon::GetOrCreateSwapChainForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd, int32_t width, int32_t height) {
+    LogScope scope;
+    if (!hwnd) return nullptr;
+
+    // 破棄保留が溜まっている場合、ここで先に消化して HWND 再利用時の DXGI エラーを避ける
+    DestroyPendingSwapChains();
+
+    auto it = sHwndToSwapChainIndex.find(hwnd);
+    if (it != sHwndToSwapChainIndex.end()) {
+        return sSwapChains[it->second].get();
+    }
+    if (sFreeSwapChains.empty()) {
+        Log(Translation("engine.directx.swapchain.no.free.slot"), LogSeverity::Error);
+        return nullptr;
+    }
+
+    const size_t index = sFreeSwapChains.back();
+    sFreeSwapChains.pop_back();
+
+    sSwapChains[index] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, 2);
+    DX12SwapChain* sc = sSwapChains[index].get();
+    sc->AttachWindowAndCreate(Passkey<DirectXCommon>{}, SwapChainType::ForHwnd, hwnd, width, height);
+
+    // viewport ウィンドウは通常 HWND 用として VSync 設定に従う
+    sc->SetVSyncEnabled(GetEngineSettings().rendering.defaultEnableVSync);
+
+    sHwndToSwapChainIndex[hwnd] = index;
+    return sc;
+}
+
+void DirectXCommon::DestroySwapChainSignalForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd) {
+    LogScope scope;
+    if (sHwndToSwapChainIndex.find(hwnd) == sHwndToSwapChainIndex.end()) {
+        Log(Translation("engine.directx.swapchain.notfound"), LogSeverity::Warning);
+        return;
+    }
+    sPendingDestroySwapChains.push_back(hwnd);
+}
 #endif
 
 void DirectXCommon::DestroyPendingSwapChains() {

@@ -109,7 +109,9 @@ void GameEngine::GameLoopUpdate() {
     // Main Window をsinを使って上下に移動させる
     static float t = 0.0f;
     t += GetDeltaTime();
-    if (auto *mainWindow = Window::GetWindows("Main Window").front()) {
+    auto mainWindows = Window::GetWindows("Main Window");
+    if (!mainWindows.empty()) {
+        auto *mainWindow = mainWindows.front();
         auto monitorInfo = windowsAPI_->QueryMonitorInfo();
         const int32_t centerY = (monitorInfo->WorkArea().bottom - monitorInfo->WorkArea().top) / 2;
         const int32_t amplitude = (monitorInfo->WorkArea().bottom - monitorInfo->WorkArea().top) / 4;

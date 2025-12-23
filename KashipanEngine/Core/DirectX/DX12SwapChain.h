@@ -3,12 +3,16 @@
 #include <dcomp.h>
 #include "Graphics/Resources.h"
 #include "Core/DirectX/DCompHost.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
 class GameEnginel;
 class DirectXCommon;
 class Window;
+#if defined(USE_IMGUI)
+class ImGuiManager;
+#endif
 
 /// @brief スワップチェーンの種類
 enum class SwapChainType {
@@ -73,6 +77,11 @@ public:
 
     /// @brief 描画前処理
     void BeginDraw(Passkey<Window>);
+#if defined(USE_IMGUI)
+    /// @brief 描画前処理（ImGui ビューポート用）
+    void BeginDraw(Passkey<ImGuiManager>);
+#endif
+
     /// @brief 描画後処理
     void EndDraw(Passkey<DirectXCommon>);
     /// @brief Present
@@ -80,6 +89,10 @@ public:
 
     /// @brief サイズ変更指示
     void ResizeSignal(Passkey<Window>, int32_t width, int32_t height);
+#if defined(USE_IMGUI)
+    /// @brief サイズ変更指示（ImGui ビューポート用）
+    void ResizeSignal(Passkey<ImGuiManager>, int32_t width, int32_t height);
+#endif
     /// @brief サイズ変更反映
     void Resize(Passkey<DirectXCommon>);
 
@@ -106,6 +119,11 @@ private:
     void InitializeCommandObjects();
     /// @brief 内部リソース破棄
     void DestroyInternal();
+
+    /// @brief 描画前処理
+    void BeginDrawInternal();
+    /// @brief サイズ変更指示
+    void ResizeSignalInternal(int32_t width, int32_t height);
 
     //--------- スワップチェーン状態 ---------//
     SwapChainType swapChainType_ = SwapChainType::Unknown;

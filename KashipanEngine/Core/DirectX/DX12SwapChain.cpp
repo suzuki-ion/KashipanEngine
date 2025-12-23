@@ -129,7 +129,7 @@ void DX12SwapChain::ResetViewportAndScissor() {
     SetScissor(0, 0, width_, height_);
 }
 
-void DX12SwapChain::BeginDraw(Passkey<Window>) {
+void DX12SwapChain::BeginDrawInternal() {
     if (!isCreated_ || isDrawing_) return;
     currentBufferIndex_ = swapChain_->GetCurrentBackBufferIndex();
     auto &allocator = commandAllocators_[currentBufferIndex_];
@@ -161,6 +161,16 @@ void DX12SwapChain::BeginDraw(Passkey<Window>) {
     isDrawing_ = true;
 }
 
+void DX12SwapChain::BeginDraw(Passkey<Window>) {
+    BeginDrawInternal();
+}
+
+#if defined(USE_IMGUI)
+void DX12SwapChain::BeginDraw(Passkey<ImGuiManager>) {
+    BeginDrawInternal();
+}
+#endif
+
 void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
     if (!isCreated_ || !isDrawing_) return;
     backBuffers_[currentBufferIndex_]->TransitionToNext();
@@ -189,13 +199,23 @@ void DX12SwapChain::Present(Passkey<DirectXCommon>) {
     }
 }
 
-void DX12SwapChain::ResizeSignal(Passkey<Window>, int32_t width, int32_t height) {
+void DX12SwapChain::ResizeSignalInternal(int32_t width, int32_t height) {
     if (!isCreated_) return;
     LogScope scope;
     requestedWidth_ = width;
     requestedHeight_ = height;
     isResizeRequested_ = true;
 }
+
+void DX12SwapChain::ResizeSignal(Passkey<Window>, int32_t width, int32_t height) {
+    ResizeSignalInternal(width, height);
+}
+
+#if defined(USE_IMGUI)
+void DX12SwapChain::ResizeSignal(Passkey<ImGuiManager>, int32_t width, int32_t height) {
+    ResizeSignalInternal(width, height);
+}
+#endif
 
 void DX12SwapChain::Resize(Passkey<DirectXCommon>) {
     if (!isCreated_ || !isResizeRequested_) return;
@@ -237,6 +257,9 @@ void DX12SwapChain::Resize(Passkey<DirectXCommon>) {
 }
 
 void DX12SwapChain::CreateSwapChainForHWND() {
+    LogScope scope;
+    Log(Translation("engine.directx.swapchain.initialize.target.hwnd") + std::to_string(reinterpret_cast<uintptr_t>(hwnd_)), LogSeverity::Debug);
+
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
     swapChainDesc.Width = static_cast<UINT>(width_);
     swapChainDesc.Height = static_cast<UINT>(height_);

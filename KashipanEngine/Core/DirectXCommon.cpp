@@ -3,6 +3,7 @@
 #include "Graphics/Resources.h"
 #include <vector>
 #include <unordered_map>
+#include <functional>
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -273,6 +274,35 @@ void DirectXCommon::ExecuteCommand() {
     for (auto &sc : sSwapChains) {
         if (sc && sc->IsCreated()) sc->Resize({});
     }
+}
+
+void DirectXCommon::ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
+    auto* device = dx12Device_->GetDevice();
+    auto* queue = dx12CommandQueue_->GetCommandQueue();
+    if (!device || !queue) return;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> allocator;
+    HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.GetAddressOf()));
+    if (FAILED(hr)) return;
+
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> list;
+    hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(list.GetAddressOf()));
+    if (FAILED(hr)) return;
+
+    if (record) {
+        record(list.Get());
+    }
+
+    hr = list->Close();
+    if (FAILED(hr)) return;
+
+    std::vector<ID3D12CommandList*> lists;
+    lists.push_back(list.Get());
+    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, lists);
+
+    dx12Fence_->Signal(Passkey<DirectXCommon>{}, queue);
+    dx12Fence_->Wait(Passkey<DirectXCommon>{});
 }
 
 } // namespace KashipanEngine

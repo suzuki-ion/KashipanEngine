@@ -24,11 +24,18 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     }
     sIsEngineInitialized = true;
 
+    HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Failed to initialize COM library.");
+    }
+
     //--------- インスタンス生成 ---------//
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
+
+    textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
 
 #if defined(USE_IMGUI)
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
@@ -81,10 +88,14 @@ GameEngine::~GameEngine() {
     imguiManager_.reset();
 #endif
 
+    textureManager_.reset();
+
     graphicsEngine_.reset();
     directXCommon_.reset();
     windowsAPI_.reset();
     sIsEngineInitialized = false;
+
+    CoUninitialize();
 
     LogSeparator();
     Log(Translation("engine.finalize.end"));

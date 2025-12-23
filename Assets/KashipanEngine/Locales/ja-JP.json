@@ -311,6 +311,19 @@
 		"engine.crashhandler.crash.export.dump.end": "クラッシュダンプのエクスポート完了。ファイルパス：",
 		"engine.crashhandler.crash.export.dump.failed": "クラッシュダンプのエクスポートに失敗しました。ファイルパス：",
 
+		//--------- Texture ---------//
+		"engine.texture.loading.start": "テクスチャ読み込み開始。ファイルパス：",
+		"engine.texture.loading.succeeded": "テクスチャ読み込み成功。ファイルパス：",
+		"engine.texture.loading.alreadyloaded": "テクスチャは既に読み込み済みです。ファイルパス：",
+		"engine.texture.loading.failed.notfound": "テクスチャ読み込み失敗。ファイルが見つかりません。ファイルパス：",
+		"engine.texture.loading.failed.unsupported": "テクスチャ読み込み失敗。未対応の拡張子です。ファイルパス：",
+		"engine.texture.loading.failed.notinitialized": "テクスチャ読み込み失敗。TextureManager が初期化されていません。ファイルパス：",
+		"engine.texture.loading.failed.decode": "テクスチャ読み込み失敗。画像のデコードに失敗しました。ファイルパス：",
+		"engine.texture.loading.failed.createresource": "テクスチャ読み込み失敗。GPUリソースの作成に失敗しました。ファイルパス：",
+		"engine.texture.loading.failed.createupload": "テクスチャ読み込み失敗。アップロードバッファの作成に失敗しました。ファイルパス：",
+		"engine.texture.loading.failed.map": "テクスチャ読み込み失敗。アップロードバッファのMapに失敗しました。ファイルパス：",
+		"engine.texture.loading.failed.register": "テクスチャ読み込み失敗。登録に失敗しました。ファイルパス：",
+
 		//==================================================
 		// 共通翻訳
 		//==================================================

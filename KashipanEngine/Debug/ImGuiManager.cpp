@@ -58,6 +58,20 @@ void ImGuiManager::InitializeInternal() {
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
+    // 現在の言語環境に合わせてフォントを設定
+    {
+        // フォントの大きさをDPIに基づいて設定
+        auto dpi = GetDpiForSystem();
+        float fontSizeDefault = 16.0f;
+        float fontSize = fontSizeDefault * (static_cast<float>(dpi) / 96.0f);
+        std::string fontPath = GetCurrentLanguageFontPath();
+        if (!fontPath.empty()) {
+            io.Fonts->AddFontFromFileTTF(fontPath.c_str(), fontSize, nullptr, io.Fonts->GetGlyphRangesJapanese());
+        } else {
+            io.Fonts->AddFontDefault();
+        }
+    }
+
     isInitialized_ = true;
 }
 
@@ -134,10 +148,10 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("KashipanEngine Debug");
-    ImGui::Text("ImGui is running.");
-    ImGui::Text("Docking: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) ? "ON" : "OFF");
-    ImGui::Text("Viewports: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) ? "ON" : "OFF");
+    ImGui::Begin("KashipanEngine デバッグ用ウィンドウ");
+    ImGui::Text("ImGui 実行中。");
+    ImGui::Text("ImGuiドッキング: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) ? "有効化中" : "無効化中");
+    ImGui::Text("ImGuiマルチビューポート: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) ? "有効化中" : "無効化中");
     ImGui::End();
 
     ImGui::ShowDemoWindow();

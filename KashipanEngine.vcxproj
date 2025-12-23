@@ -137,6 +137,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\imgui\imgui_widgets.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
@@ -251,8 +252,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.h" />
-    <ClInclude Include="KashipanEngine\Assets\DataStructs\SoundData.h" />
-    <ClInclude Include="KashipanEngine\Assets\DataStructs\TextureData.h" />
     <ClInclude Include="KashipanEngine\Assets\AudioManager.h" />
     <ClInclude Include="KashipanEngine\Assets\TextureManager.h" />
     <ClInclude Include="KashipanEngine\Core\DirectXCommon.h" />

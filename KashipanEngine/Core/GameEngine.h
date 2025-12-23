@@ -4,6 +4,7 @@
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
 #include "Graphics/GraphicsEngine.h"
+#include "Assets/TextureManager.h"
 
 #if defined(USE_IMGUI)
 #include "Debug/ImGuiManager.h"
@@ -54,6 +55,9 @@ private:
     std::unique_ptr<DirectXCommon> directXCommon_;
     /// @brief グラフィックスエンジンクラス
     std::unique_ptr<GraphicsEngine> graphicsEngine_;
+
+    /// @brief テクスチャ管理クラス
+    std::unique_ptr<TextureManager> textureManager_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス

@@ -2,6 +2,7 @@
 
 #include "ImGuiManager.h"
 
+#include "Assets/TextureManager.h"
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
 #include "Core/Window.h"
@@ -23,9 +24,13 @@ DXGI_FORMAT ToDxgiFormat_WindowsSwapChain() {
 
 std::unique_ptr<DescriptorHandleInfo> sImGuiLegacySrv;
 
-static HWND PlatformHwndFromViewport(ImGuiViewport* vp) {
+HWND PlatformHwndFromViewport(ImGuiViewport* vp) {
     if (!vp) return nullptr;
     return (HWND)vp->PlatformHandleRaw;
+}
+
+ImTextureID ToImGuiTextureIdFromGpuPtr(UINT64 gpuPtr) {
+    return (ImTextureID)(uintptr_t)gpuPtr;
 }
 
 } // namespace
@@ -142,6 +147,61 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ImGui::Text("ImGuiドッキング: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) ? "有効化中" : "無効化中");
     ImGui::Text("ImGuiマルチビューポート: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) ? "有効化中" : "無効化中");
     ImGui::End();
+
+    // TextureManager 読み込みテスト用ウィンドウ
+    {
+        ImGui::Begin("TextureManager - Loaded Textures");
+
+        const auto entries = TextureManager::GetImGuiTextureListEntries();
+        ImGui::Text("Loaded Textures: %d", static_cast<int>(entries.size()));
+
+        static ImGuiTextFilter filter;
+        filter.Draw("Filter");
+
+        ImGui::Separator();
+
+        if (ImGui::BeginTable("##TextureList", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 300))) {
+            ImGui::TableSetupColumn("Handle", ImGuiTableColumnFlags_WidthFixed, 80);
+            ImGui::TableSetupColumn("FileName");
+            ImGui::TableSetupColumn("AssetPath");
+            ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed, 90);
+            ImGui::TableSetupColumn("Preview", ImGuiTableColumnFlags_WidthFixed, 80);
+            ImGui::TableHeadersRow();
+
+            for (const auto& e : entries) {
+                if (filter.IsActive()) {
+                    if (!filter.PassFilter(e.fileName.c_str()) && !filter.PassFilter(e.assetPath.c_str())) {
+                        continue;
+                    }
+                }
+
+                ImGui::TableNextRow();
+
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("%u", e.handle);
+
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextUnformatted(e.fileName.c_str());
+
+                ImGui::TableSetColumnIndex(2);
+                ImGui::TextUnformatted(e.assetPath.c_str());
+
+                ImGui::TableSetColumnIndex(3);
+                ImGui::Text("%ux%u", e.width, e.height);
+
+                ImGui::TableSetColumnIndex(4);
+                if (e.srvGpuPtr != 0) {
+                    ImGui::Image(ToImGuiTextureIdFromGpuPtr(e.srvGpuPtr), ImVec2(64, 64));
+                } else {
+                    ImGui::TextUnformatted("-");
+                }
+            }
+
+            ImGui::EndTable();
+        }
+
+        ImGui::End();
+    }
 
     ImGui::ShowDemoWindow();
 }

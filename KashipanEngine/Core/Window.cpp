@@ -74,8 +74,9 @@ std::vector<Window *> Window::GetWindows(const std::string &title) {
 }
 
 HWND Window::GetFirstWindowHwndForImGui(Passkey<ImGuiManager>) {
-    if (!sWindowMap.empty()) {
-        return sWindowMap.begin()->first;
+    for (auto &pair : sWindowMap) {
+        if (pair.second->GetWindowType() == WindowType::Overlay) continue;
+        return pair.first;
     }
     return nullptr;
 }

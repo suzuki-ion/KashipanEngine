@@ -5,6 +5,8 @@
 #include <wrl.h>
 #include <cstdint>
 #include <memory>
+#include <vector>
+#include <functional>
 #include "Core/DirectX/DX12DXGIs.h"
 #include "Core/DirectX/DX12Device.h"
 #include "Core/DirectX/DX12CommandQueue.h"
@@ -21,6 +23,7 @@ class GameEngine;
 class Window;
 class GraphicsEngine;
 class Renderer;
+class TextureManager;
 #if defined(USE_IMGUI)
 class ImGuiManager;
 #endif
@@ -50,6 +53,17 @@ public:
 
     /// @brief D3D12デバイス取得
     ID3D12Device* GetDevice(Passkey<GraphicsEngine>) const { return dx12Device_->GetDevice(); }
+
+    /// @brief D3D12デバイス取得（TextureManager 用）
+    ID3D12Device* GetDeviceForTextureManager(Passkey<TextureManager>) const { return dx12Device_->GetDevice(); }
+    /// @brief コマンドキュー取得（TextureManager 用）
+    ID3D12CommandQueue* GetCommandQueueForTextureManager(Passkey<TextureManager>) const { return dx12CommandQueue_->GetCommandQueue(); }
+    /// @brief SRV ヒープ取得（TextureManager 用）
+    SRVHeap* GetSRVHeapForTextureManager(Passkey<TextureManager>) const { return SRVHeap_.get(); }
+
+    /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（TextureManager 用）
+    /// @param record コマンド記録関数（Close は内部で行う）
+    void ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
 
 #if defined(USE_IMGUI)
     /// @brief D3D12デバイス取得（ImGui 用）

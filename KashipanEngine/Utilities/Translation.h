@@ -32,4 +32,10 @@ inline const std::string &Translation(const std::string &key) { return GetTransl
 /// @return 言語コード
 const std::string &GetCurrentLanguage();
 
+/// @brief 現在の言語コードを設定する
+void SetCurrentLanguage(const std::string &lang);
+
+/// @brief 現在の言語設定で使用するフォントパスを取得する
+const std::string &GetCurrentLanguageFontPath();
+
 } // namespace KashipanEngine

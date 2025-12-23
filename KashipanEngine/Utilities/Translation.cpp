@@ -13,7 +13,7 @@ struct LanguageData {
     std::string fontPath;
     std::unordered_map<std::string, std::string> translations;
 };
-std::unordered_map<std::string, LanguageData> sLanguageDatas;
+std::unordered_map<std::string, LanguageData> sLanguageData;
 
 class Language {
 public:
@@ -35,6 +35,9 @@ public:
     Language(Language &&) = delete;
     Language &operator=(Language &&) = delete;
 
+    static void Set(const std::string &lang) {
+        language = lang;
+    }
     static inline const std::string &Get() {
         return language;
     }
@@ -67,7 +70,7 @@ bool LoadTranslationFile(const std::string &filePath) {
         langData.translations[key] = value.get<std::string>();
     }
     std::string langName = langData.langName;
-    sLanguageDatas[langData.langCode] = std::move(langData);
+    sLanguageData[langData.langCode] = std::move(langData);
 
     Log(Translation("engine.translations.loaded") + langName, LogSeverity::Info);
     return true;
@@ -75,11 +78,11 @@ bool LoadTranslationFile(const std::string &filePath) {
 
 const std::string &GetTranslationText(const std::string &lang, const std::string &key) {
     std::string useLang = lang;
-    auto langIt = sLanguageDatas.find(lang);
-    if (langIt == sLanguageDatas.end()) {
+    auto langIt = sLanguageData.find(lang);
+    if (langIt == sLanguageData.end()) {
         useLang = "en-US";
-        langIt = sLanguageDatas.find(useLang);
-        if (langIt == sLanguageDatas.end()) {
+        langIt = sLanguageData.find(useLang);
+        if (langIt == sLanguageData.end()) {
             return key;
         }
     }
@@ -97,6 +100,25 @@ const std::string &GetTranslationText(const std::string &key) {
 
 const std::string &GetCurrentLanguage() {
     return sLanguage.Get();
+}
+
+void SetCurrentLanguage(const std::string &lang) {
+    sLanguage.Set(lang);
+}
+
+const std::string &GetCurrentLanguageFontPath() {
+    const std::string &lang = sLanguage.Get();
+    auto langIt = sLanguageData.find(lang);
+    if (langIt == sLanguageData.end()) {
+        auto enIt = sLanguageData.find("en-US");
+        if (enIt != sLanguageData.end()) {
+            return enIt->second.fontPath;
+        } else {
+            static const std::string emptyStr = "";
+            return emptyStr;
+        }
+    }
+    return langIt->second.fontPath;
 }
 
 } // namespace KashipanEngine

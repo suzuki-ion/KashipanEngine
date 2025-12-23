@@ -47,12 +47,20 @@ struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
 #endif
 
-#define DIRECTX_TEX_VERSION 207
+#define DIRECTX_TEX_VERSION 209
 
-#ifdef DIRECTX_TEX_EXPORT
+#if defined(_WIN32) && defined(DIRECTX_TEX_EXPORT)
+#ifdef __GNUC__
+#define DIRECTX_TEX_API __attribute__ ((dllexport))
+#else
 #define DIRECTX_TEX_API __declspec(dllexport)
-#elif defined(DIRECTX_TEX_IMPORT)
+#endif
+#elif defined(_WIN32) && defined(DIRECTX_TEX_IMPORT)
+#ifdef __GNUC__
+#define DIRECTX_TEX_API __attribute__ ((dllimport))
+#else
 #define DIRECTX_TEX_API __declspec(dllimport)
+#endif
 #else
 #define DIRECTX_TEX_API
 #endif
@@ -260,6 +268,9 @@ namespace DirectX
         DDS_FLAGS_FORCE_DXT5_RXGB = 0x80000,
         // Force use of 'RXGB' instead of 'DXT5' for DDS write of BC3_UNORM data
 
+        DDS_FLAGS_FORCE_24BPP_RGB = 0x100000,
+        // Force use of 'RGB' 24bpp legacy Direct3D 9 format for DDS write of B8G8R8X8_UNORM data
+
         DDS_FLAGS_ALLOW_LARGE_FILES = 0x1000000,
         // Enables the loader to read large dimension .dds files (i.e. greater than known hardware requirements)
     };
@@ -433,9 +444,13 @@ namespace DirectX
     {
     public:
         ScratchImage() noexcept
-            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) {}
+            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr)
+        {}
         ScratchImage(ScratchImage&& moveFrom) noexcept
-            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) { *this = std::move(moveFrom); }
+            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr)
+        {
+            *this = std::move(moveFrom);
+        }
         ~ScratchImage() { Release(); }
 
         ScratchImage& __cdecl operator= (ScratchImage&& moveFrom) noexcept;
@@ -529,8 +544,7 @@ namespace DirectX
             width(tile.WidthInTexels),
             height(tile.HeightInTexels),
             depth(tile.DepthInTexels)
-        {
-        }
+        {}
 
         void GetTileShape11(D3D11_TILE_SHAPE& tile) const
         {
@@ -545,8 +559,7 @@ namespace DirectX
             width(tile.WidthInTexels),
             height(tile.HeightInTexels),
             depth(tile.DepthInTexels)
-        {
-        }
+        {}
 
         void GetTileShape12(D3D12_TILE_SHAPE& tile) const
         {

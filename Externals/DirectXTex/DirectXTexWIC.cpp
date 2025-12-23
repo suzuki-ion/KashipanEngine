@@ -29,7 +29,8 @@ namespace
         constexpr WICConvert(const GUID& src, const GUID& tgt, TEX_ALPHA_MODE mode) noexcept :
             source(src),
             target(tgt),
-            alphaMode(mode) {}
+            alphaMode(mode)
+        {}
     };
 
     constexpr WICConvert g_WICConvert[] =
@@ -976,10 +977,7 @@ namespace
         _In_opt_ IPropertyBag2* props,
         _In_opt_ const GUID* targetFormat)
     {
-        if (!frame)
-            return E_INVALIDARG;
-
-        if (!image.pixels)
+        if (!frame || !image.pixels)
             return E_POINTER;
 
         WICPixelFormatGUID pfGuid;
@@ -1081,7 +1079,7 @@ namespace
         _In_ std::function<void(IPropertyBag2*)> setCustomProps)
     {
         if (!stream)
-            return E_INVALIDARG;
+            return E_POINTER;
 
         // Initialize WIC
         bool iswic2 = false;
@@ -1145,10 +1143,8 @@ namespace
         _In_opt_ const GUID* targetFormat,
         _In_ std::function<void(IPropertyBag2*)> setCustomProps)
     {
-        if (!stream || nimages < 2)
-            return E_INVALIDARG;
-
-        if (!images)
+        assert(nimages > 1);
+        if (!images || !stream)
             return E_POINTER;
 
         // Initialize WIC

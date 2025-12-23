@@ -15,6 +15,7 @@ class DirectXCommon;
 
 /// @brief ImGui 管理クラス
 class ImGuiManager final {
+    friend class Passkey<ImGuiManager>;
 public:
     ImGuiManager(Passkey<GameEngine>, WindowsAPI* windowsAPI, DirectXCommon* directXCommon);
     ~ImGuiManager();

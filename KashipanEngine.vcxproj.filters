@@ -781,5 +781,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\VS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
+    <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
   </ItemGroup>
 </Project>

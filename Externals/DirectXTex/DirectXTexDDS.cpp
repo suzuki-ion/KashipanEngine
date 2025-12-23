@@ -60,111 +60,109 @@ namespace
 
     const LegacyDDS g_LegacyDDSMap[] =
     {
-        { DXGI_FORMAT_BC1_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT1 }, // D3DFMT_DXT1
-        { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT3 }, // D3DFMT_DXT3
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT5 }, // D3DFMT_DXT5
+        { DXGI_FORMAT_BC1_UNORM,          CONV_FLAGS_NONE,      DDSPF_DXT1 }, // D3DFMT_DXT1
+        { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_NONE,      DDSPF_DXT3 }, // D3DFMT_DXT3
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      DDSPF_DXT5 }, // D3DFMT_DXT5
 
-        { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_PMALPHA,     DDSPF_DXT2 }, // D3DFMT_DXT2
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_PMALPHA,     DDSPF_DXT4 }, // D3DFMT_DXT4
+        { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_PMALPHA,   DDSPF_DXT2 }, // D3DFMT_DXT2
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_PMALPHA,   DDSPF_DXT4 }, // D3DFMT_DXT4
 
         // These DXT5 variants have various swizzled channels. They are returned 'as is' to the client as BC3.
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', '2', 'D', '5'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('x', 'G', 'B', 'R'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'x', 'B', 'G'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'B', 'x', 'G'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('x', 'R', 'B', 'G'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'G', 'x', 'B'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('x', 'G', 'x', 'R'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G', 'X', 'R', 'B'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G', 'R', 'X', 'B'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'X', 'G', 'B'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'R', 'G', 'X'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', '2', 'D', '5'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('x', 'G', 'B', 'R'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'x', 'B', 'G'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'B', 'x', 'G'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('x', 'R', 'B', 'G'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'G', 'x', 'B'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('x', 'G', 'x', 'R'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G', 'X', 'R', 'B'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G', 'R', 'X', 'B'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'X', 'G', 'B'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'R', 'G', 'X'), 0, 0, 0, 0, 0 } },
 
-        { DXGI_FORMAT_BC4_UNORM,          CONV_FLAGS_NONE,        DDSPF_BC4_UNORM },
-        { DXGI_FORMAT_BC4_SNORM,          CONV_FLAGS_NONE,        DDSPF_BC4_SNORM },
-        { DXGI_FORMAT_BC5_UNORM,          CONV_FLAGS_NONE,        DDSPF_BC5_UNORM },
-        { DXGI_FORMAT_BC5_SNORM,          CONV_FLAGS_NONE,        DDSPF_BC5_SNORM },
+        { DXGI_FORMAT_BC4_UNORM,          CONV_FLAGS_NONE,      DDSPF_BC4_UNORM },
+        { DXGI_FORMAT_BC4_SNORM,          CONV_FLAGS_NONE,      DDSPF_BC4_SNORM },
+        { DXGI_FORMAT_BC5_UNORM,          CONV_FLAGS_NONE,      DDSPF_BC5_UNORM },
+        { DXGI_FORMAT_BC5_SNORM,          CONV_FLAGS_NONE,      DDSPF_BC5_SNORM },
 
-        { DXGI_FORMAT_BC4_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', 'T', 'I', '1'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC5_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', 'T', 'I', '2'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC5_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', '2', 'X', 'Y'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC4_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', 'T', 'I', '1'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC5_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', 'T', 'I', '2'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC5_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('A', '2', 'X', 'Y'), 0, 0, 0, 0, 0 } },
 
-        { DXGI_FORMAT_BC6H_UF16,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'C', '6', 'H'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC7_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'C', '7', 'L'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC7_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'C', '7', '\0'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC6H_UF16,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'C', '6', 'H'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC7_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'C', '7', 'L'), 0, 0, 0, 0, 0 } },
+        { DXGI_FORMAT_BC7_UNORM,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'C', '7', '\0'), 0, 0, 0, 0, 0 } },
 
-        { DXGI_FORMAT_R8G8_B8G8_UNORM,    CONV_FLAGS_NONE,        DDSPF_R8G8_B8G8 }, // D3DFMT_R8G8_B8G8
-        { DXGI_FORMAT_G8R8_G8B8_UNORM,    CONV_FLAGS_NONE,        DDSPF_G8R8_G8B8 }, // D3DFMT_G8R8_G8B8
+        { DXGI_FORMAT_R8G8_B8G8_UNORM,    CONV_FLAGS_NONE,      DDSPF_R8G8_B8G8 }, // D3DFMT_R8G8_B8G8
+        { DXGI_FORMAT_G8R8_G8B8_UNORM,    CONV_FLAGS_NONE,      DDSPF_G8R8_G8B8 }, // D3DFMT_G8R8_G8B8
 
-        { DXGI_FORMAT_B8G8R8A8_UNORM,     CONV_FLAGS_NONE,        DDSPF_A8R8G8B8 }, // D3DFMT_A8R8G8B8 (uses DXGI 1.1 format)
-        { DXGI_FORMAT_B8G8R8X8_UNORM,     CONV_FLAGS_NONE,        DDSPF_X8R8G8B8 }, // D3DFMT_X8R8G8B8 (uses DXGI 1.1 format)
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_NONE,        DDSPF_A8B8G8R8 }, // D3DFMT_A8B8G8R8
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_NOALPHA,     DDSPF_X8B8G8R8 }, // D3DFMT_X8B8G8R8
-        { DXGI_FORMAT_R16G16_UNORM,       CONV_FLAGS_NONE,        DDSPF_G16R16   }, // D3DFMT_G16R16
+        { DXGI_FORMAT_B8G8R8A8_UNORM,     CONV_FLAGS_NONE,      DDSPF_A8R8G8B8 }, // D3DFMT_A8R8G8B8 (uses DXGI 1.1 format)
+        { DXGI_FORMAT_B8G8R8X8_UNORM,     CONV_FLAGS_NONE,      DDSPF_X8R8G8B8 }, // D3DFMT_X8R8G8B8 (uses DXGI 1.1 format)
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_NONE,      DDSPF_A8B8G8R8 }, // D3DFMT_A8B8G8R8
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_NOALPHA,   DDSPF_X8B8G8R8 }, // D3DFMT_X8B8G8R8
+        { DXGI_FORMAT_R16G16_UNORM,       CONV_FLAGS_NONE,      DDSPF_G16R16   }, // D3DFMT_G16R16
 
-        { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_SWIZZLE,     DDSPF_A2R10G10B10 }, // D3DFMT_A2R10G10B10 (D3DX reversal issue)
-        { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_NONE,        DDSPF_A2B10G10R10 }, // D3DFMT_A2B10G10R10 (D3DX reversal issue)
+        { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_SWIZZLE,   DDSPF_A2R10G10B10 }, // D3DFMT_A2R10G10B10 (D3DX reversal issue)
+        { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_NONE,      DDSPF_A2B10G10R10 }, // D3DFMT_A2B10G10R10 (D3DX reversal issue)
 
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
-                                          | CONV_FLAGS_NOALPHA
-                                          | CONV_FLAGS_888,       DDSPF_R8G8B8 }, // D3DFMT_R8G8B8
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND | CONV_FLAGS_NOALPHA | CONV_FLAGS_888,
+                                                                DDSPF_R8G8B8 }, // D3DFMT_R8G8B8
 
-        { DXGI_FORMAT_B5G6R5_UNORM,       CONV_FLAGS_565,         DDSPF_R5G6B5 }, // D3DFMT_R5G6B5
-        { DXGI_FORMAT_B5G5R5A1_UNORM,     CONV_FLAGS_5551,        DDSPF_A1R5G5B5 }, // D3DFMT_A1R5G5B5
-        { DXGI_FORMAT_B5G5R5A1_UNORM,     CONV_FLAGS_5551
-                                          | CONV_FLAGS_NOALPHA,   DDSPF_X1R5G5B5 }, // D3DFMT_X1R5G5B5
+        { DXGI_FORMAT_B5G6R5_UNORM,       CONV_FLAGS_565,       DDSPF_R5G6B5 }, // D3DFMT_R5G6B5
+        { DXGI_FORMAT_B5G5R5A1_UNORM,     CONV_FLAGS_5551,      DDSPF_A1R5G5B5 }, // D3DFMT_A1R5G5B5
+        { DXGI_FORMAT_B5G5R5A1_UNORM,     CONV_FLAGS_5551 | CONV_FLAGS_NOALPHA,
+                                                                DDSPF_X1R5G5B5 }, // D3DFMT_X1R5G5B5
 
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
-                                          | CONV_FLAGS_8332,      DDSPF_A8R3G3B2 }, // D3DFMT_A8R3G3B2
-        { DXGI_FORMAT_B5G6R5_UNORM,       CONV_FLAGS_EXPAND
-                                          | CONV_FLAGS_332,       DDSPF_R3G3B2 }, // D3DFMT_R3G3B2
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND | CONV_FLAGS_8332,
+                                                                DDSPF_A8R3G3B2 }, // D3DFMT_A8R3G3B2
+        { DXGI_FORMAT_B5G6R5_UNORM,       CONV_FLAGS_EXPAND | CONV_FLAGS_332,
+                                                                DDSPF_R3G3B2 }, // D3DFMT_R3G3B2
 
-        { DXGI_FORMAT_R8_UNORM,           CONV_FLAGS_NONE,        DDSPF_L8 }, // D3DFMT_L8
-        { DXGI_FORMAT_R16_UNORM,          CONV_FLAGS_NONE,        DDSPF_L16 }, // D3DFMT_L16
-        { DXGI_FORMAT_R8G8_UNORM,         CONV_FLAGS_NONE,        DDSPF_A8L8 }, // D3DFMT_A8L8
-        { DXGI_FORMAT_R8G8_UNORM,         CONV_FLAGS_NONE,        DDSPF_A8L8_ALT }, // D3DFMT_A8L8 (alternative bitcount)
+        { DXGI_FORMAT_R8_UNORM,           CONV_FLAGS_NONE,      DDSPF_L8 }, // D3DFMT_L8
+        { DXGI_FORMAT_R16_UNORM,          CONV_FLAGS_NONE,      DDSPF_L16 }, // D3DFMT_L16
+        { DXGI_FORMAT_R8G8_UNORM,         CONV_FLAGS_NONE,      DDSPF_A8L8 }, // D3DFMT_A8L8
+        { DXGI_FORMAT_R8G8_UNORM,         CONV_FLAGS_NONE,      DDSPF_A8L8_ALT }, // D3DFMT_A8L8 (alternative bitcount)
 
         // NVTT v1 wrote these with RGB instead of LUMINANCE
-        { DXGI_FORMAT_R8_UNORM,           CONV_FLAGS_NONE,        DDSPF_L8_NVTT1 }, // D3DFMT_L8
-        { DXGI_FORMAT_R16_UNORM,          CONV_FLAGS_NONE,        DDSPF_L16_NVTT1  }, // D3DFMT_L16
-        { DXGI_FORMAT_R8G8_UNORM,         CONV_FLAGS_NONE,        DDSPF_A8L8_NVTT1 }, // D3DFMT_A8L8
+        { DXGI_FORMAT_R8_UNORM,           CONV_FLAGS_NONE,      DDSPF_L8_NVTT1 }, // D3DFMT_L8
+        { DXGI_FORMAT_R16_UNORM,          CONV_FLAGS_NONE,      DDSPF_L16_NVTT1  }, // D3DFMT_L16
+        { DXGI_FORMAT_R8G8_UNORM,         CONV_FLAGS_NONE,      DDSPF_A8L8_NVTT1 }, // D3DFMT_A8L8
 
-        { DXGI_FORMAT_A8_UNORM,           CONV_FLAGS_NONE,        DDSPF_A8   }, // D3DFMT_A8
+        { DXGI_FORMAT_A8_UNORM,           CONV_FLAGS_NONE,      DDSPF_A8   }, // D3DFMT_A8
 
-        { DXGI_FORMAT_R16G16B16A16_UNORM, CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,   36,  0, 0, 0, 0, 0 } }, // D3DFMT_A16B16G16R16
-        { DXGI_FORMAT_R16G16B16A16_SNORM, CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  110,  0, 0, 0, 0, 0 } }, // D3DFMT_Q16W16V16U16
-        { DXGI_FORMAT_R16_FLOAT,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  111,  0, 0, 0, 0, 0 } }, // D3DFMT_R16F
-        { DXGI_FORMAT_R16G16_FLOAT,       CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  112,  0, 0, 0, 0, 0 } }, // D3DFMT_G16R16F
-        { DXGI_FORMAT_R16G16B16A16_FLOAT, CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  113,  0, 0, 0, 0, 0 } }, // D3DFMT_A16B16G16R16F
-        { DXGI_FORMAT_R32_FLOAT,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  114,  0, 0, 0, 0, 0 } }, // D3DFMT_R32F
-        { DXGI_FORMAT_R32G32_FLOAT,       CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  115,  0, 0, 0, 0, 0 } }, // D3DFMT_G32R32F
-        { DXGI_FORMAT_R32G32B32A32_FLOAT, CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  116,  0, 0, 0, 0, 0 } }, // D3DFMT_A32B32G32R32F
+        { DXGI_FORMAT_R16G16B16A16_UNORM, CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,   36,  0, 0, 0, 0, 0 } }, // D3DFMT_A16B16G16R16
+        { DXGI_FORMAT_R16G16B16A16_SNORM, CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  110,  0, 0, 0, 0, 0 } }, // D3DFMT_Q16W16V16U16
+        { DXGI_FORMAT_R16_FLOAT,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  111,  0, 0, 0, 0, 0 } }, // D3DFMT_R16F
+        { DXGI_FORMAT_R16G16_FLOAT,       CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  112,  0, 0, 0, 0, 0 } }, // D3DFMT_G16R16F
+        { DXGI_FORMAT_R16G16B16A16_FLOAT, CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  113,  0, 0, 0, 0, 0 } }, // D3DFMT_A16B16G16R16F
+        { DXGI_FORMAT_R32_FLOAT,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  114,  0, 0, 0, 0, 0 } }, // D3DFMT_R32F
+        { DXGI_FORMAT_R32G32_FLOAT,       CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  115,  0, 0, 0, 0, 0 } }, // D3DFMT_G32R32F
+        { DXGI_FORMAT_R32G32B32A32_FLOAT, CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,  116,  0, 0, 0, 0, 0 } }, // D3DFMT_A32B32G32R32F
 
-        { DXGI_FORMAT_R32_FLOAT,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_RGB,       0, 32, 0xffffffff, 0, 0, 0 } }, // D3DFMT_R32F (D3DX uses FourCC 114 instead)
+        { DXGI_FORMAT_R32_FLOAT,          CONV_FLAGS_NONE,      { sizeof(DDS_PIXELFORMAT), DDS_RGB,       0, 32, 0xffffffff, 0, 0, 0 } }, // D3DFMT_R32F (D3DX uses FourCC 114 instead)
 
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
-                                          | CONV_FLAGS_PAL8
-                                          | CONV_FLAGS_A8P8,      { sizeof(DDS_PIXELFORMAT), DDS_PAL8A,     0, 16, 0, 0, 0, 0xff00 } }, // D3DFMT_A8P8
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
-                                          | CONV_FLAGS_PAL8,      { sizeof(DDS_PIXELFORMAT), DDS_PAL8,      0,  8, 0, 0, 0, 0 } }, // D3DFMT_P8
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND | CONV_FLAGS_PAL8 | CONV_FLAGS_A8P8,
+                                                                { sizeof(DDS_PIXELFORMAT), DDS_PAL8A,     0, 16, 0, 0, 0, 0xff00 } }, // D3DFMT_A8P8
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND | CONV_FLAGS_PAL8,
+                                                                { sizeof(DDS_PIXELFORMAT), DDS_PAL8,      0,  8, 0, 0, 0, 0 } }, // D3DFMT_P8
 
-        { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_4444,        DDSPF_A4R4G4B4 }, // D3DFMT_A4R4G4B4 (uses DXGI 1.2 format)
-        { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_NOALPHA
-                                          | CONV_FLAGS_4444,      DDSPF_X4R4G4B4 }, // D3DFMT_X4R4G4B4 (uses DXGI 1.2 format)
-        { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_EXPAND
-                                          | CONV_FLAGS_44,        DDSPF_A4L4 }, // D3DFMT_A4L4 (uses DXGI 1.2 format)
+        { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_4444,      DDSPF_A4R4G4B4 }, // D3DFMT_A4R4G4B4 (uses DXGI 1.2 format)
+        { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_NOALPHA | CONV_FLAGS_4444,
+                                                                DDSPF_X4R4G4B4 }, // D3DFMT_X4R4G4B4 (uses DXGI 1.2 format)
+        { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_EXPAND | CONV_FLAGS_44,
+                                                                DDSPF_A4L4 }, // D3DFMT_A4L4 (uses DXGI 1.2 format)
 
-        { DXGI_FORMAT_YUY2,               CONV_FLAGS_NONE,        DDSPF_YUY2 }, // D3DFMT_YUY2 (uses DXGI 1.2 format)
-        { DXGI_FORMAT_YUY2,               CONV_FLAGS_SWIZZLE,     DDSPF_UYVY }, // D3DFMT_UYVY (uses DXGI 1.2 format)
+        { DXGI_FORMAT_YUY2,               CONV_FLAGS_NONE,      DDSPF_YUY2 }, // D3DFMT_YUY2 (uses DXGI 1.2 format)
+        { DXGI_FORMAT_YUY2,               CONV_FLAGS_SWIZZLE,   DDSPF_UYVY }, // D3DFMT_UYVY (uses DXGI 1.2 format)
 
-        { DXGI_FORMAT_R8G8_SNORM,         CONV_FLAGS_NONE,        DDSPF_V8U8 },     // D3DFMT_V8U8
-        { DXGI_FORMAT_R8G8B8A8_SNORM,     CONV_FLAGS_NONE,        DDSPF_Q8W8V8U8 }, // D3DFMT_Q8W8V8U8
-        { DXGI_FORMAT_R16G16_SNORM,       CONV_FLAGS_NONE,        DDSPF_V16U16 },   // D3DFMT_V16U16
+        { DXGI_FORMAT_R8G8_SNORM,         CONV_FLAGS_NONE,      DDSPF_V8U8 },     // D3DFMT_V8U8
+        { DXGI_FORMAT_R8G8B8A8_SNORM,     CONV_FLAGS_NONE,      DDSPF_Q8W8V8U8 }, // D3DFMT_Q8W8V8U8
+        { DXGI_FORMAT_R16G16_SNORM,       CONV_FLAGS_NONE,      DDSPF_V16U16 },   // D3DFMT_V16U16
 
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_L6V5U5
-                                          | CONV_FLAGS_EXPAND,    DDSPF_L6V5U5 },      // D3DFMT_L6V5U5
-        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_L8U8V8,      DDSPF_X8L8V8U8 },    // D3DFMT_X8L8V8U8
-        { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_WUV10,       DDSPF_A2W10V10U10 }, // D3DFMT_A2W10V10U10
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_L6V5U5 | CONV_FLAGS_EXPAND,
+                                                                DDSPF_L6V5U5 },      // D3DFMT_L6V5U5
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_L8U8V8,    DDSPF_X8L8V8U8 },    // D3DFMT_X8L8V8U8
+        { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_WUV10,     DDSPF_A2W10V10U10 }, // D3DFMT_A2W10V10U10
     };
 
     // Note that many common DDS reader/writers (including D3DX) swap the
@@ -327,7 +325,7 @@ namespace
         _Inout_ uint32_t& convFlags) noexcept
     {
         if (!pSource)
-            return E_INVALIDARG;
+            return E_POINTER;
 
         metadata = {};
         if (ddPixelFormat)
@@ -671,6 +669,22 @@ namespace
 
         return S_OK;
     }
+
+    inline void CopyScanline24bpp(
+        _Out_writes_bytes_(width * 3) uint8_t* pDestination,
+        _In_reads_bytes_(width * 4) const uint8_t* pSource,
+        size_t width) noexcept
+    {
+        for (size_t x = 0; x < width; ++x)
+        {
+            pDestination[0] = pSource[0]; // B
+            pDestination[1] = pSource[1]; // G
+            pDestination[2] = pSource[2]; // R
+
+            pSource += 4;
+            pDestination += 3;
+        }
+    }
 }
 
 
@@ -708,6 +722,7 @@ HRESULT DirectX::EncodeDDSHeader(
         flags |= DDS_FLAGS_FORCE_DX10_EXT;
     }
 
+    CP_FLAGS pitchFlags = CP_FLAGS_NONE;
     DDS_PIXELFORMAT ddpf = {};
     if (!(flags & DDS_FLAGS_FORCE_DX10_EXT))
     {
@@ -731,7 +746,18 @@ HRESULT DirectX::EncodeDDSHeader(
         case DXGI_FORMAT_R8G8B8A8_SNORM:        memcpy(&ddpf, &DDSPF_Q8W8V8U8, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_R16G16_SNORM:          memcpy(&ddpf, &DDSPF_V16U16, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy(&ddpf, &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
-        case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy(&ddpf, &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
+        case DXGI_FORMAT_B8G8R8X8_UNORM:
+            if (flags & DDS_FLAGS_FORCE_24BPP_RGB)
+            {
+
+                memcpy(&ddpf, &DDSPF_R8G8B8, sizeof(DDS_PIXELFORMAT)); // No DXGI equivalent
+                pitchFlags |= CP_FLAGS_24BPP;
+            }
+            else
+            {
+                memcpy(&ddpf, &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT)); // DXGI 1.1
+            }
+            break;
         case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy(&ddpf, &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
         case DXGI_FORMAT_YUY2:                  memcpy(&ddpf, &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
 
@@ -924,7 +950,9 @@ HRESULT DirectX::EncodeDDSHeader(
     }
 
     size_t rowPitch, slicePitch;
-    HRESULT hr = ComputePitch(metadata.format, metadata.width, metadata.height, rowPitch, slicePitch, CP_FLAGS_NONE);
+    HRESULT hr = ComputePitch(metadata.format,
+        metadata.width, metadata.height,
+        rowPitch, slicePitch, pitchFlags);
     if (FAILED(hr))
         return hr;
 
@@ -964,7 +992,8 @@ HRESULT DirectX::EncodeDDSHeader(
         if (metadata.miscFlags & TEX_MISC_TEXTURECUBE)
         {
             ext->miscFlag |= TEX_MISC_TEXTURECUBE;
-            assert((metadata.arraySize % 6) == 0);
+            if ((metadata.arraySize % 6) != 0)
+                return E_INVALIDARG;
             ext->arraySize = static_cast<UINT>(metadata.arraySize / 6);
         }
         else
@@ -2372,6 +2401,9 @@ HRESULT DirectX::SaveToDDSMemory(
         return hr;
 
     bool fastpath = true;
+    const bool use24bpp = ((metadata.format == DXGI_FORMAT_B8G8R8X8_UNORM)
+        && (flags & DDS_FLAGS_FORCE_24BPP_RGB)
+        && !(flags & (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2))) != 0;
 
     for (size_t i = 0; i < nimages; ++i)
     {
@@ -2382,7 +2414,10 @@ HRESULT DirectX::SaveToDDSMemory(
             return E_FAIL;
 
         size_t ddsRowPitch, ddsSlicePitch;
-        hr = ComputePitch(metadata.format, images[i].width, images[i].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE);
+        hr = ComputePitch(metadata.format,
+            images[i].width, images[i].height,
+            ddsRowPitch, ddsSlicePitch,
+            (use24bpp) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
         if (FAILED(hr))
             return hr;
 
@@ -2447,6 +2482,40 @@ HRESULT DirectX::SaveToDDSMemory(
 
                         pDestination += pixsize;
                         remaining -= pixsize;
+                    }
+                    else if (use24bpp)
+                    {
+                        size_t ddsRowPitch, ddsSlicePitch;
+                        hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_24BPP);
+                        if (FAILED(hr))
+                        {
+                            blob.Release();
+                            return hr;
+                        }
+
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+                        uint8_t * __restrict dPtr = pDestination;
+
+                        const size_t csize = std::min<size_t>(metadata.width * 3, ddsRowPitch);
+                        size_t tremaining = remaining;
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            if (tremaining < csize)
+                            {
+                                blob.Release();
+                                return E_FAIL;
+                            }
+
+                            CopyScanline24bpp(dPtr, sPtr, images[index].width);
+
+                            sPtr += rowPitch;
+                            dPtr += ddsRowPitch;
+                            tremaining -= ddsRowPitch;
+                        }
+
+                        pDestination += ddsSlicePitch;
+                        remaining -= ddsSlicePitch;
                     }
                     else
                     {
@@ -2519,6 +2588,40 @@ HRESULT DirectX::SaveToDDSMemory(
 
                         pDestination += pixsize;
                         remaining -= pixsize;
+                    }
+                    else if (use24bpp)
+                    {
+                        size_t ddsRowPitch, ddsSlicePitch;
+                        hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_24BPP);
+                        if (FAILED(hr))
+                        {
+                            blob.Release();
+                            return hr;
+                        }
+
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+                        uint8_t * __restrict dPtr = pDestination;
+
+                        const size_t csize = std::min<size_t>(metadata.width * 3, ddsRowPitch);
+                        size_t tremaining = remaining;
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            if (tremaining < csize)
+                            {
+                                blob.Release();
+                                return E_FAIL;
+                            }
+
+                            CopyScanline24bpp(dPtr, sPtr, images[index].width);
+
+                            sPtr += rowPitch;
+                            dPtr += ddsRowPitch;
+                            tremaining -= ddsRowPitch;
+                        }
+
+                        pDestination += ddsSlicePitch;
+                        remaining -= ddsSlicePitch;
                     }
                     else
                     {
@@ -2628,6 +2731,26 @@ HRESULT DirectX::SaveToDDSFile(
         return E_FAIL;
 #endif
 
+    const bool use24bpp = ((metadata.format == DXGI_FORMAT_B8G8R8X8_UNORM)
+        && (flags & DDS_FLAGS_FORCE_24BPP_RGB)
+        && !(flags & (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2))) != 0;
+
+    std::unique_ptr<uint8_t[]> tempRow;
+    if (use24bpp)
+    {
+        uint64_t lineSize = uint64_t(metadata.width) * 3;
+        if (lineSize > UINT32_MAX)
+        {
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        }
+
+        tempRow.reset(new (std::nothrow) uint8_t[static_cast<size_t>(lineSize)]);
+        if (!tempRow)
+        {
+            return E_OUTOFMEMORY;
+        }
+    }
+
     // Write images
     switch (static_cast<DDS_RESOURCE_DIMENSION>(metadata.dimension))
     {
@@ -2649,7 +2772,10 @@ HRESULT DirectX::SaveToDDSFile(
                     assert(images[index].slicePitch > 0);
 
                     size_t ddsRowPitch, ddsSlicePitch;
-                    hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE);
+                    hr = ComputePitch(metadata.format,
+                        images[index].width, images[index].height,
+                        ddsRowPitch, ddsSlicePitch,
+                        (use24bpp) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
                     if (FAILED(hr))
                         return hr;
 
@@ -2670,6 +2796,35 @@ HRESULT DirectX::SaveToDDSFile(
                         if (!outFile)
                             return E_FAIL;
                     #endif
+                    }
+                    else if (use24bpp)
+                    {
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+
+                        assert(ddsRowPitch <= metadata.width * 3u);
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            CopyScanline24bpp(tempRow.get(), sPtr, images[index].width);
+
+                        #ifdef _WIN32
+                            if (!WriteFile(hFile.get(), tempRow.get(), static_cast<DWORD>(ddsRowPitch), &bytesWritten, nullptr))
+                            {
+                                return HRESULT_FROM_WIN32(GetLastError());
+                            }
+
+                            if (bytesWritten != ddsRowPitch)
+                            {
+                                return E_FAIL;
+                            }
+                        #else
+                            outFile.write(reinterpret_cast<const char*>(tempRow.get()), static_cast<std::streamsize>(ddsRowPitch));
+                            if (!outFile)
+                                return E_FAIL;
+                        #endif
+
+                            sPtr += rowPitch;
+                        }
                     }
                     else
                     {
@@ -2734,7 +2889,10 @@ HRESULT DirectX::SaveToDDSFile(
                     assert(images[index].slicePitch > 0);
 
                     size_t ddsRowPitch, ddsSlicePitch;
-                    hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE);
+                    hr = ComputePitch(metadata.format,
+                        images[index].width, images[index].height,
+                        ddsRowPitch, ddsSlicePitch,
+                        (use24bpp) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
                     if (FAILED(hr))
                         return hr;
 
@@ -2755,6 +2913,34 @@ HRESULT DirectX::SaveToDDSFile(
                         if (!outFile)
                             return E_FAIL;
                     #endif
+                    }
+                    else if (use24bpp)
+                    {
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+
+                        assert(ddsRowPitch <= metadata.width * 3u);
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            CopyScanline24bpp(tempRow.get(), sPtr, images[index].width);
+
+                        #ifdef _WIN32
+                            if (!WriteFile(hFile.get(), tempRow.get(), static_cast<DWORD>(ddsRowPitch), &bytesWritten, nullptr))
+                            {
+                                return HRESULT_FROM_WIN32(GetLastError());
+                            }
+
+                            if (bytesWritten != ddsRowPitch)
+                            {
+                                return E_FAIL;
+                            }
+                        #else
+                            outFile.write(reinterpret_cast<const char*>(tempRow.get()), static_cast<std::streamsize>(ddsRowPitch));
+                            if (!outFile)
+                                return E_FAIL;
+                        #endif
+                            sPtr += rowPitch;
+                        }
                     }
                     else
                     {

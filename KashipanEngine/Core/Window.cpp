@@ -73,6 +73,18 @@ std::vector<Window *> Window::GetWindows(const std::string &title) {
     return windows;
 }
 
+HWND Window::GetFirstWindowHwndForImGui(Passkey<ImGuiManager>) {
+    if (!sWindowMap.empty()) {
+        return sWindowMap.begin()->first;
+    }
+    return nullptr;
+}
+
+Window *Window::GetWindow(const std::string &title) {
+    for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) return pair.second.get();
+    return nullptr;
+}
+
 size_t Window::GetWindowCount() { return sWindowMap.size(); }
 
 bool Window::IsExist(HWND hwnd) { return sWindowMap.find(hwnd) != sWindowMap.end(); }
@@ -156,6 +168,7 @@ void Window::Draw(Passkey<GameEngine>) {
     for (auto &pair : sWindowMap) {
         Window *w = pair.second.get();
         if (w->IsPendingDestroy()) continue; // 破棄予定はスキップ
+        if (!w->IsVisible()) continue;       // 非表示はスキップ
         drawInfos.push_back({ w, calcDepth(w) });
     }
 

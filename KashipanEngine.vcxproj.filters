@@ -774,8 +774,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\ComputePipelineState\Default.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest\Compute.hlsl" />
-    <None Include="ClassDiagram.cd" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Graphics.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Test.json" />

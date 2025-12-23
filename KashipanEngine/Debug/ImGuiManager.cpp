@@ -158,6 +158,10 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         static ImGuiTextFilter filter;
         filter.Draw("Filter");
 
+        // 選択中テクスチャ（拡大表示用）
+        static TextureManager::TextureListEntry sSelectedTexture{};
+        static bool sShowTextureViewer = false;
+
         ImGui::Separator();
 
         if (ImGui::BeginTable("##TextureList", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 300))) {
@@ -191,7 +195,13 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
 
                 ImGui::TableSetColumnIndex(4);
                 if (e.srvGpuPtr != 0) {
-                    ImGui::Image(ToImGuiTextureIdFromGpuPtr(e.srvGpuPtr), ImVec2(64, 64));
+                    ImGui::PushID(static_cast<int>(e.handle));
+                    const auto texId = ToImGuiTextureIdFromGpuPtr(e.srvGpuPtr);
+                    if (ImGui::ImageButton("##Preview", texId, ImVec2(64, 64))) {
+                        sSelectedTexture = e;
+                        sShowTextureViewer = true;
+                    }
+                    ImGui::PopID();
                 } else {
                     ImGui::TextUnformatted("-");
                 }
@@ -201,6 +211,34 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         }
 
         ImGui::End();
+
+        // 選択中テクスチャの拡大表示ウィンドウ
+        if (sShowTextureViewer) {
+            if (ImGui::Begin("Texture Viewer", &sShowTextureViewer)) {
+                if (sSelectedTexture.srvGpuPtr != 0) {
+                    ImGui::Text("Handle: %u", sSelectedTexture.handle);
+                    ImGui::TextUnformatted(sSelectedTexture.assetPath.c_str());
+                    ImGui::Separator();
+
+                    // ウィンドウ内で収まるようにスケーリング
+                    ImVec2 avail = ImGui::GetContentRegionAvail();
+                    const float w = static_cast<float>(sSelectedTexture.width);
+                    const float h = static_cast<float>(sSelectedTexture.height);
+                    ImVec2 drawSize = avail;
+                    if (w > 0.0f && h > 0.0f) {
+                        const float sx = avail.x / w;
+                        const float sy = avail.y / h;
+                        const float s = (sx < sy) ? sx : sy;
+                        drawSize = ImVec2(w * s, h * s);
+                    }
+
+                    ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+                } else {
+                    ImGui::TextUnformatted("No texture selected.");
+                }
+            }
+            ImGui::End();
+        }
     }
 
     ImGui::ShowDemoWindow();

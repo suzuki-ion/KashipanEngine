@@ -115,7 +115,7 @@ Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_
     // 基本コンポーネントの登録
     RegisterComponent<Transform2D>();
 
-    Material2D::Data defaultMaterialData{ Vector4{1.0f, 1.0f, 1.0f, 1.0f} };
+    Vector4 defaultMaterialColor{1.0f, 1.0f, 1.0f, 1.0f};
     TextureManager::TextureHandle defaultTexture
         = TextureManager::GetTextureFromFileName("uvChecker.png");
     D3D12_SAMPLER_DESC defaultSamplerDesc{};
@@ -128,7 +128,7 @@ Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_
     defaultSamplerDesc.MaxAnisotropy = 1;
     SamplerManager::SamplerHandle defaultSampler
         = SamplerManager::CreateSampler(defaultSamplerDesc);
-    RegisterComponent<Material2D>(defaultMaterialData, defaultTexture, defaultSampler);
+    RegisterComponent<Material2D>(defaultMaterialColor, defaultTexture, defaultSampler);
 }
 
 std::optional<RenderCommand> Object2DBase::CreateRenderCommand(PipelineBinder &pipelineBinder) {
@@ -250,5 +250,27 @@ bool Object2DBase::RemoveComponent2D(const std::string &componentName, size_t in
 
     return true;
 }
+
+#if defined(USE_IMGUI)
+void Object2DBase::ShowImGui() {
+    ImGui::TextUnformatted(Translation("engine.imgui.object2d.name").c_str());
+    ImGui::SameLine();
+    ImGui::TextUnformatted(name_.c_str());
+
+    if (ImGui::CollapsingHeader(Translation("engine.imgui.object2d.components").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (auto &c : components_) {
+            if (!c) continue;
+            if (ImGui::TreeNode(c->GetComponentType().c_str())) {
+                c->ShowImGui();
+                ImGui::TreePop();
+            }
+        }
+    }
+
+    if (ImGui::CollapsingHeader(Translation("engine.imgui.object2d.derived").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+        ShowImGuiDerived();
+    }
+}
+#endif
 
 } // namespace KashipanEngine

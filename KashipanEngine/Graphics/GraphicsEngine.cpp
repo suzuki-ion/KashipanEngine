@@ -21,7 +21,11 @@
 #include "Objects/SystemObjects/DirectionalLight.h"
 #include "Objects/Components/3D/Material3D.h"
 #include "Objects/Components/3D/Transform3D.h"
+
+#if defined(USE_IMGUI)
 #include <imgui.h>
+#include "Utilities/Translation.h"
+#endif
 
 namespace KashipanEngine {
 
@@ -159,41 +163,33 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
         }
     }
 
-    // カメラをImGuiで操作可能にする
-    for (auto &obj : testObjects3D) {
-        if (!obj) continue;
-        if (obj->GetName() != "Camera3D") continue;
-        auto *transformComp = obj->GetComponent3D<Transform3D>();
-        ImGui::Begin("Test Camera3D Control");
-        Vector3 translate = transformComp->GetTranslate();
-        Vector3 rotate = transformComp->GetRotate();
-        ImGui::DragFloat3("Camera Translate", &translate.x, 0.05f);
-        ImGui::DragFloat3("Camera Rotate", &rotate.x, 0.02f, -3.14f, 3.14f);
-        transformComp->SetTranslate(translate);
-        transformComp->SetRotate(rotate);
-        ImGui::End();
-        break;
-    }
-    // 平行光源もImGuiで操作可能にする
-    {
-        for (auto &obj : testObjects3D) {
-            if (!obj) continue;
-            if (obj->GetName() != "DirectionalLight") continue;
-            auto *light = static_cast<DirectionalLight *>(obj.get());
-            ImGui::Begin("Test DirectionalLight Control");
-            Vector3 direction = light->GetDirection();
-            Vector4 color = light->GetColor();
-            float intensity = light->GetIntensity();
-            ImGui::DragFloat3("Light Direction", &direction.x, 0.05f);
-            ImGui::ColorEdit4("Light Color", &color.x);
-            ImGui::DragFloat("Light Intensity", &intensity, 0.1f, 0.0f, 10.0f);
-            light->SetDirection(direction);
-            light->SetColor(color);
-            light->SetIntensity(intensity);
-            ImGui::End();
-            break;
+#if defined(USE_IMGUI)
+    // テスト用：オブジェクト/コンポーネントのパラメータ調整ウィンドウ
+    if (ImGui::Begin(Translation("engine.imgui.testObjectInspector.title").c_str())) {
+        if (ImGui::CollapsingHeader(Translation("engine.imgui.testObjectInspector.objects3d").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+            int i = 0;
+            for (auto &obj : testObjects3D) {
+                if (!obj) continue;
+                if (ImGui::TreeNode((std::to_string(i++) + ' ' + obj->GetName()).c_str())) {
+                    obj->ShowImGui();
+                    ImGui::TreePop();
+                }
+            }
+        }
+
+        if (ImGui::CollapsingHeader(Translation("engine.imgui.testObjectInspector.objects2d").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+            int i = 0;
+            for (auto &obj : testObjects2D) {
+                if (!obj) continue;
+                if (ImGui::TreeNode((std::to_string(i++) + ' ' + obj->GetName()).c_str())) {
+                    obj->ShowImGui();
+                    ImGui::TreePop();
+                }
+            }
         }
     }
+    ImGui::End();
+#endif
 
     auto mainWindow = Window::GetWindow("Main Window");
     auto overlayWindow = Window::GetWindow("Overlay Window");

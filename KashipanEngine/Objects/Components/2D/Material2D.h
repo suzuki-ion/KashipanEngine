@@ -2,17 +2,22 @@
 #include "Objects/IObjectComponent.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Vector4.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
 #include "Assets/TextureManager.h"
 #include "Assets/SamplerManager.h"
 #include <memory>
+#include <cstring>
 
 namespace KashipanEngine {
 
 /// @brief 2Dマテリアルコンポーネント
 class Material2D : public IObjectComponent2D {
 public:
-    struct Data {
-        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    struct UVTransform {
+        Vector3 translate{ 0.0f, 0.0f, 0.0f };
+        Vector3 rotate{ 0.0f, 0.0f, 0.0f };
+        Vector3 scale{ 1.0f, 1.0f, 1.0f };
     };
 
     static const std::string &GetStaticComponentType() {
@@ -20,27 +25,30 @@ public:
         return type;
     }
 
-    Material2D(const Data &data = Data{},
+    Material2D(const Vector4 &color = Vector4{ 1.0f, 1.0f, 1.0f, 1.0f },
         TextureManager::TextureHandle texture = TextureManager::kInvalidHandle,
         SamplerManager::SamplerHandle sampler = SamplerManager::kInvalidHandle)
         : IObjectComponent2D("Material2D", 1), textureHandle_(texture), samplerHandle_(sampler) {
-        materialBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Data));
-        SetData(data);
+        materialBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(MaterialBuffer));
+        SetColor(color);
+        UpdateMaterialBuffer();
     }
     ~Material2D() override = default;
 
     /// @brief コンポーネントのクローンを作成
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Material2D>(data_, textureHandle_, samplerHandle_);
+        auto ptr = std::make_unique<Material2D>(color_, textureHandle_, samplerHandle_);
+        ptr->uvTransform_ = uvTransform_;
+        ptr->UpdateMaterialBuffer();
         return ptr;
     }
 
     /// @brief マテリアルのバインド
-    /// @param shaderBinder シェーダー変数バインダー
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
         if (!materialBuffer_) return false;
         if (!shaderBinder) return false;
+
+        UpdateMaterialBuffer();
 
         bool ok = shaderBinder->Bind("Pixel:gMaterial", materialBuffer_.get());
         if (textureHandle_ != TextureManager::kInvalidHandle) {
@@ -53,43 +61,75 @@ public:
     }
 
     void SetTexture(TextureManager::TextureHandle texture) { textureHandle_ = texture; }
-    TextureManager::TextureHandle GetTexture() const { return textureHandle_; }
-
     void SetSampler(SamplerManager::SamplerHandle sampler) { samplerHandle_ = sampler; }
-    SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
-
-    /// @brief カラーの設定
     void SetColor(const Vector4 &color) {
-        data_.color = color;
-        if (materialBuffer_) {
-            void *mappedData = materialBuffer_->Map();
-            if (mappedData) {
-                std::memcpy(mappedData, &data_, sizeof(Data));
-                materialBuffer_->Unmap();
-            }
-        }
+        color_ = color;
+        isBufferDirty_ = true;
     }
-    /// @brief カラーの取得
-    const Vector4 &GetColor() const { return data_.color; }
+    void SetUVTransform(const UVTransform &uvTransform) {
+        uvTransform_ = uvTransform;
+        isBufferDirty_ = true;
+    }
+    TextureManager::TextureHandle GetTexture() const { return textureHandle_; }
+    SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
+    const Vector4 &GetColor() const { return color_; }
+    const UVTransform &GetUVTransform() const { return uvTransform_; }
 
-    /// @brief データの設定
-    void SetData(const Data &d) {
-        data_ = d;
-        if (materialBuffer_) {
-            void *mappedData = materialBuffer_->Map();
-            if (mappedData) {
-                std::memcpy(mappedData, &data_, sizeof(Data));
-                materialBuffer_->Unmap();
-            }
+#if defined(USE_IMGUI)
+    void ShowImGui() override {
+        ImGui::TextUnformatted(Translation("engine.imgui.component.material2d").c_str());
+
+        Vector4 c = color_;
+        if (ImGui::ColorEdit4(Translation("engine.imgui.material.color").c_str(), &c.x)) {
+            SetColor(c);
         }
+
+        UVTransform uv = uvTransform_;
+        ImGui::DragFloat3(Translation("engine.imgui.material.uv.translate").c_str(), &uv.translate.x, 0.01f);
+        ImGui::DragFloat3(Translation("engine.imgui.material.uv.rotate").c_str(), &uv.rotate.x, 0.01f, -3.14f, 3.14f);
+        ImGui::DragFloat3(Translation("engine.imgui.material.uv.scale").c_str(), &uv.scale.x, 0.01f);
+        SetUVTransform(uv);
+
+        ImGui::TextUnformatted(Translation("engine.imgui.material.texture_handle").c_str());
+        ImGui::SameLine();
+        ImGui::Text("%u", static_cast<unsigned>(textureHandle_));
+
+        ImGui::TextUnformatted(Translation("engine.imgui.material.sampler_handle").c_str());
+        ImGui::SameLine();
+        ImGui::Text("%u", static_cast<unsigned>(samplerHandle_));
     }
-    /// @brief データの取得
-    const Data &GetData() const { return data_; }
+#endif
 
 private:
-    Data data_{};
+    struct MaterialBuffer {
+        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        Matrix4x4 uvTransform = Matrix4x4::Identity();
+    };
+
+    void UpdateMaterialBuffer() {
+        if (!materialBuffer_ || !isBufferDirty_) return;
+
+        MaterialBuffer buf{};
+        buf.color = color_;
+        buf.uvTransform = Matrix4x4::Identity();
+        buf.uvTransform.MakeAffine(uvTransform_.scale, uvTransform_.rotate, uvTransform_.translate);
+
+        void *mappedData = materialBuffer_->Map();
+        if (mappedData) {
+            std::memcpy(mappedData, &buf, sizeof(MaterialBuffer));
+            materialBuffer_->Unmap();
+            isBufferDirty_ = false;
+        }
+    }
+
+private:
+    Vector4 color_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    UVTransform uvTransform_{};
+
     TextureManager::TextureHandle textureHandle_ = TextureManager::kInvalidHandle;
     SamplerManager::SamplerHandle samplerHandle_ = SamplerManager::kInvalidHandle;
+
+    bool isBufferDirty_ = true;
     std::unique_ptr<ConstantBufferResource> materialBuffer_;
 };
 

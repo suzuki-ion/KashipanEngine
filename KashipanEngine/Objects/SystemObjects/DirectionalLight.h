@@ -28,6 +28,30 @@ public:
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
 
+#if defined(USE_IMGUI)
+    void ShowImGuiDerived() override {
+        ImGui::TextUnformatted(Translation("engine.imgui.directionalLight.params").c_str());
+
+        bool enabled = enabled_;
+        if (ImGui::Checkbox(Translation("engine.imgui.directionalLight.enabled").c_str(), &enabled)) {
+            SetEnabled(enabled);
+        }
+
+        Vector4 c = color_;
+        if (ImGui::ColorEdit4(Translation("engine.imgui.directionalLight.color").c_str(), &c.x)) {
+            SetColor(c);
+        }
+
+        Vector3 d = direction_;
+        ImGui::DragFloat3(Translation("engine.imgui.directionalLight.direction").c_str(), &d.x, 0.05f);
+        SetDirection(d);
+
+        float intensity = intensity_;
+        ImGui::DragFloat(Translation("engine.imgui.directionalLight.intensity").c_str(), &intensity, 0.1f, 0.0f, 10.0f);
+        SetIntensity(intensity);
+    }
+#endif
+
 private:
     struct LightBuffer {
         unsigned int enabled = 0u;

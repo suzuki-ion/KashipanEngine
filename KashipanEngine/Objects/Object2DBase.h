@@ -13,6 +13,11 @@
 #include "Objects/IObjectComponent.h"
 #include "../../MyStd/AnyUnorderedMap.h"
 
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#include "Utilities/Translation.h"
+#endif
+
 namespace KashipanEngine {
 
 class Object2DContext;
@@ -31,6 +36,11 @@ public:
     void Update();
     /// @brief 描画処理（登録済みコンポーネントの描画処理）
     void Render();
+
+#if defined(USE_IMGUI)
+    /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
+    void ShowImGui();
+#endif
 
     /// @brief 頂点の値の設定
     template<typename T>
@@ -224,8 +234,13 @@ protected:
     /// @brief 更新処理（派生クラスでの独自処理用）
     virtual void OnUpdate() {}
 
+#if defined(USE_IMGUI)
+    /// @brief ImGui 拡張表示（派生クラスで任意実装。Begin/End は呼ばない）
+    virtual void ShowImGuiDerived() {}
+#endif
+
     /// @brief シェーダ変数設定処理 (true を返した場合のみ描画コマンド生成へ進む)
-    /// @param shaderBinder シェーダ変数バインダー
+    /// @param shaderBinder シェーダー変数バインダー
     /// @return 描画する場合は true
     virtual bool Render(ShaderVariableBinder &shaderBinder) { (void)shaderBinder; return false; }
 

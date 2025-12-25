@@ -2,6 +2,7 @@
 #include "Object2D.hlsli"
 struct Material {
 	float4 color;
+	float4x4 uvTransform;
 };
 #endif
 
@@ -10,6 +11,7 @@ struct Material {
 #include "Object3D.hlsli"
 struct Material {
 	float4 color;
+	float4x4 uvTransform;
 };
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
 #endif
@@ -35,7 +37,8 @@ float HalfLambert(float3 normal, float3 lightDir) {
 
 PSOutput main(VSOutput input) {
 	PSOutput output;
-	float4 textureColor = gTexture.Sample(gSampler, input.texcoord);
+	float4 transformedUV = mul(float4(input.texcoord, 0.0f, 1.0f), gMaterial.uvTransform);
+	float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 #ifdef Object2D
 	output.color = gMaterial.color * textureColor;
 #endif

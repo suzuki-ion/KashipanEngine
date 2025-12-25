@@ -52,6 +52,47 @@ public:
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
 
+#if defined(USE_IMGUI)
+    void ShowImGuiDerived() override {
+        ImGui::TextUnformatted(Translation("engine.imgui.camera2d.params").c_str());
+
+        float left = left_;
+        float top = top_;
+        float right = right_;
+        float bottom = bottom_;
+        float nearC = nearClip_;
+        float farC = farClip_;
+
+        ImGui::DragFloat(Translation("engine.imgui.camera2d.left").c_str(), &left, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera2d.top").c_str(), &top, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera2d.right").c_str(), &right, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera2d.bottom").c_str(), &bottom, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera2d.near").c_str(), &nearC, 0.01f);
+        ImGui::DragFloat(Translation("engine.imgui.camera2d.far").c_str(), &farC, 0.01f);
+
+        SetOrthographicParams(left, top, right, bottom, nearC, farC);
+
+        ImGui::Separator();
+        ImGui::TextUnformatted(Translation("engine.imgui.camera2d.viewport").c_str());
+
+        float vl = viewportLeft_;
+        float vt = viewportTop_;
+        float vw = viewportWidth_;
+        float vh = viewportHeight_;
+        float vmin = viewportMinDepth_;
+        float vmax = viewportMaxDepth_;
+
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.left").c_str(), &vl, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.top").c_str(), &vt, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.width").c_str(), &vw, 1.0f, 1.0f, 100000.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.height").c_str(), &vh, 1.0f, 1.0f, 100000.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.minDepth").c_str(), &vmin, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.maxDepth").c_str(), &vmax, 0.01f, 0.0f, 1.0f);
+
+        SetViewportParams(vl, vt, vw, vh, vmin, vmax);
+    }
+#endif
+
 private:
     struct CameraBuffer {
         Matrix4x4 view{};

@@ -5,6 +5,11 @@
 #include <optional>
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#include "Utilities/Translation.h"
+#endif
+
 namespace KashipanEngine {
 
 class IObjectContext;
@@ -43,6 +48,11 @@ public:
     /// @brief フレーム終了時の更新（全体のEndFrameで呼ばれる想定）
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
     virtual std::optional<bool> EndFrameUpdate() { return std::nullopt; }
+
+#if defined(USE_IMGUI)
+    /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
+    virtual void ShowImGui() = 0;
+#endif
 
     /// @brief Updateの処理優先順位（小さいほど先に処理される）
     int GetUpdatePriority() const { return updatePriority_; }

@@ -115,7 +115,7 @@ Object3DBase::Object3DBase(const std::string &name, size_t vertexByteSize, size_
     // 基本コンポーネントの登録
     RegisterComponent<Transform3D>();
 
-    Material3D::Data defaultMaterialData{ Vector4{1.0f, 1.0f, 1.0f, 1.0f} };
+    Vector4 defaultMaterialColor{1.0f, 1.0f, 1.0f, 1.0f};
     TextureManager::TextureHandle defaultTexture
         = TextureManager::GetTextureFromFileName("uvChecker.png");
     D3D12_SAMPLER_DESC defaultSamplerDesc{};
@@ -128,7 +128,7 @@ Object3DBase::Object3DBase(const std::string &name, size_t vertexByteSize, size_
     defaultSamplerDesc.MaxAnisotropy = 1;
     SamplerManager::SamplerHandle defaultSampler
         = SamplerManager::CreateSampler(defaultSamplerDesc);
-    RegisterComponent<Material3D>(defaultMaterialData, defaultTexture, defaultSampler);
+    RegisterComponent<Material3D>(defaultMaterialColor, defaultTexture, defaultSampler);
 }
 
 std::optional<RenderCommand> Object3DBase::CreateRenderCommand(PipelineBinder &pipelineBinder) {
@@ -249,5 +249,27 @@ bool Object3DBase::RemoveComponent3D(const std::string &componentName, size_t in
 
     return true;
 }
+
+#if defined(USE_IMGUI)
+void Object3DBase::ShowImGui() {
+    ImGui::TextUnformatted(Translation("engine.imgui.object3d.name").c_str());
+    ImGui::SameLine();
+    ImGui::TextUnformatted(name_.c_str());
+
+    if (ImGui::CollapsingHeader(Translation("engine.imgui.object3d.components").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (auto &c : components_) {
+            if (!c) continue;
+            if (ImGui::TreeNode(c->GetComponentType().c_str())) {
+                c->ShowImGui();
+                ImGui::TreePop();
+            }
+        }
+    }
+
+    if (ImGui::CollapsingHeader(Translation("engine.imgui.object3d.derived").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+        ShowImGuiDerived();
+    }
+}
+#endif
 
 } // namespace KashipanEngine

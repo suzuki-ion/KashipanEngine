@@ -290,6 +290,64 @@
 		"engine.object2d.shader.binding.failed": "2Dオブジェクトのシェーダーのバインディングに失敗しました。",
 		"engine.object3d.shader.binding.failed": "3Dオブジェクトのシェーダーのバインディングに失敗しました。",
 
+		//--------- ImGui ---------//
+		"engine.imgui.testObjectInspector.title": "オブジェクトインスペクタ（テスト）",
+		"engine.imgui.testObjectInspector.objects3d": "3Dオブジェクト",
+		"engine.imgui.testObjectInspector.objects2d": "2Dオブジェクト",
+
+		"engine.imgui.object2d.name": "オブジェクト名：",
+		"engine.imgui.object2d.components": "コンポーネント",
+		"engine.imgui.object2d.derived": "派生クラス",
+
+		"engine.imgui.object3d.name": "オブジェクト名：",
+		"engine.imgui.object3d.components": "コンポーネント",
+		"engine.imgui.object3d.derived": "派生クラス",
+
+		"engine.imgui.component.transform2d": "Transform2D",
+		"engine.imgui.component.transform3d": "Transform3D",
+		"engine.imgui.component.material2d": "Material2D",
+		"engine.imgui.component.material3d": "Material3D",
+
+		"engine.imgui.transform.translate": "移動",
+		"engine.imgui.transform.rotate": "回転",
+		"engine.imgui.transform.scale": "拡大縮小",
+
+		"engine.imgui.material.color": "色",
+		"engine.imgui.material.uv.translate": "UV移動",
+		"engine.imgui.material.uv.rotate": "UV回転",
+		"engine.imgui.material.uv.scale": "UV拡大縮小",
+		"engine.imgui.material.texture_handle": "テクスチャハンドル：",
+		"engine.imgui.material.sampler_handle": "サンプラーハンドル：",
+
+		"engine.imgui.camera2d.params": "Camera2D パラメータ",
+		"engine.imgui.camera2d.left": "Left",
+		"engine.imgui.camera2d.top": "Top",
+		"engine.imgui.camera2d.right": "Right",
+		"engine.imgui.camera2d.bottom": "Bottom",
+		"engine.imgui.camera2d.near": "Near",
+		"engine.imgui.camera2d.far": "Far",
+		"engine.imgui.camera2d.viewport": "ビューポート",
+
+		"engine.imgui.camera3d.params": "Camera3D パラメータ",
+		"engine.imgui.camera3d.fovY": "FovY",
+		"engine.imgui.camera3d.aspect": "Aspect",
+		"engine.imgui.camera3d.near": "Near",
+		"engine.imgui.camera3d.far": "Far",
+		"engine.imgui.camera3d.viewport": "ビューポート",
+
+		"engine.imgui.camera.viewport.left": "Left",
+		"engine.imgui.camera.viewport.top": "Top",
+		"engine.imgui.camera.viewport.width": "Width",
+		"engine.imgui.camera.viewport.height": "Height",
+		"engine.imgui.camera.viewport.minDepth": "MinDepth",
+		"engine.imgui.camera.viewport.maxDepth": "MaxDepth",
+
+		"engine.imgui.directionalLight.params": "DirectionalLight パラメータ",
+		"engine.imgui.directionalLight.enabled": "有効",
+		"engine.imgui.directionalLight.color": "色",
+		"engine.imgui.directionalLight.direction": "方向",
+		"engine.imgui.directionalLight.intensity": "強度",
+
 		//--------- 設定 ---------//
 		"engine.settings.load.success": "エンジンの設定が正常に読み込まれました。ファイルパス：",
 		"engine.settings.load.failed": "エンジンの設定の読み込みに失敗しました。デフォルトの設定を使用します。ファイルパス：",

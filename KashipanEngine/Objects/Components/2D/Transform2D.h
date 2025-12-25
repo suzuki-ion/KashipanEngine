@@ -117,6 +117,24 @@ public:
     bool IsWorldMatrixCalculated() const { return isWorldMatrixCalculated_; }
     bool IsWorldMatrixDirty() const { return !isWorldMatrixCalculated_; }
 
+#if defined(USE_IMGUI)
+    void ShowImGui() override {
+        ImGui::TextUnformatted(Translation("engine.imgui.component.transform2d").c_str());
+
+        Vector3 t = translate_;
+        Vector3 r = rotate_;
+        Vector3 s = scale_;
+
+        ImGui::DragFloat3(Translation("engine.imgui.transform.translate").c_str(), &t.x, 0.05f);
+        ImGui::DragFloat3(Translation("engine.imgui.transform.rotate").c_str(), &r.x, 0.02f, -3.14f, 3.14f);
+        ImGui::DragFloat3(Translation("engine.imgui.transform.scale").c_str(), &s.x, 0.05f);
+
+        SetTranslate(t);
+        SetRotate(r);
+        SetScale(s);
+    }
+#endif
+
 private:
     /// @brief ワールド行列バッファの更新
     void UpdateWorldMatrixBuffer() {

@@ -47,6 +47,41 @@ public:
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
 
+#if defined(USE_IMGUI)
+    void ShowImGuiDerived() override {
+        ImGui::TextUnformatted(Translation("engine.imgui.camera3d.params").c_str());
+
+        float fov = fovY_;
+        float aspect = aspectRatio_;
+        float nearC = nearClip_;
+        float farC = farClip_;
+
+        ImGui::DragFloat(Translation("engine.imgui.camera3d.fovY").c_str(), &fov, 0.01f, 0.01f, 6.28f);
+        ImGui::DragFloat(Translation("engine.imgui.camera3d.aspect").c_str(), &aspect, 0.01f, 0.01f, 10.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera3d.near").c_str(), &nearC, 0.01f, 0.001f, 1000.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera3d.far").c_str(), &farC, 1.0f, 0.01f, 100000.0f);
+        SetPerspectiveParams(fov, aspect, nearC, farC);
+
+        ImGui::Separator();
+        ImGui::TextUnformatted(Translation("engine.imgui.camera3d.viewport").c_str());
+
+        float l = viewportLeft_;
+        float t = viewportTop_;
+        float w = viewportWidth_;
+        float h = viewportHeight_;
+        float minD = viewportMinDepth_;
+        float maxD = viewportMaxDepth_;
+
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.left").c_str(), &l, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.top").c_str(), &t, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.width").c_str(), &w, 1.0f, 1.0f, 100000.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.height").c_str(), &h, 1.0f, 1.0f, 100000.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.minDepth").c_str(), &minD, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat(Translation("engine.imgui.camera.viewport.maxDepth").c_str(), &maxD, 0.01f, 0.0f, 1.0f);
+        SetViewportParams(l, t, w, h, minD, maxD);
+    }
+#endif
+
 private:
     struct CameraBuffer {
         Matrix4x4 view{};

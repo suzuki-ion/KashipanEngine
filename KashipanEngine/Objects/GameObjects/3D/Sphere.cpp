@@ -1,11 +1,12 @@
 #include "Sphere.h"
 #include <numbers>
 #include <cmath>
+#include "FaceNormal3D.h"
 
 namespace KashipanEngine {
 
 Sphere::Sphere(size_t latSegments, size_t lonSegments, const std::string &name)
-    : Object3DBase(name, sizeof(Vertex), sizeof(Index), (latSegments + 1) * (lonSegments + 1), latSegments * lonSegments * 6) {
+    : Object3DBase(name, sizeof(Vertex), sizeof(Index), latSegments * lonSegments * 6, latSegments * lonSegments * 6) {
     LogScope scope;
 
     const UINT vc = GetVertexCount();
@@ -16,48 +17,77 @@ Sphere::Sphere(size_t latSegments, size_t lonSegments, const std::string &name)
     auto i = GetIndexSpan<Index>();
     if (v.size() < vc || i.size() < ic) return;
 
-    const UINT latPlus1 = static_cast<UINT>(latSegments + 1);
-    const UINT lonPlus1 = static_cast<UINT>(lonSegments + 1);
-    const UINT latSeg = static_cast<UINT>(latSegments);
-    const UINT lonSeg = static_cast<UINT>(lonSegments);
-
-    if (latPlus1 < 2 || lonPlus1 < 2) return;
+    if (latSegments == 0 || lonSegments == 0) return;
 
     const float pi = std::numbers::pi_v<float>;
     const float twoPi = 2.0f * pi;
 
-    for (UINT lat = 0; lat < latPlus1; ++lat) {
-        const float vT = latSeg > 0 ? static_cast<float>(lat) / static_cast<float>(latSeg) : 0.0f;
-        const float theta = vT * pi; // 0..pi
+    auto makeVertex = [&](float theta, float phi, float uT, float vT) -> Vertex {
         const float y = std::cos(theta) * 0.5f;
         const float r = std::sin(theta) * 0.5f;
-
-        for (UINT lon = 0; lon < lonPlus1; ++lon) {
-            const float uT = lonSeg > 0 ? static_cast<float>(lon) / static_cast<float>(lonSeg) : 0.0f;
-            const float phi = uT * twoPi; // 0..2pi
-            const float x = std::cos(phi) * r;
-            const float z = std::sin(phi) * r;
-
-            const UINT idx = lat * lonPlus1 + lon;
-            v[idx].position = Vector4(x, y, z, 1.0f);
-            v[idx].texcoord = Vector2(uT, vT);
-        }
-    }
+        const float x = std::cos(phi) * r;
+        const float z = std::sin(phi) * r;
+        Vertex out;
+        out.position = Vector4(x, y, z, 1.0f);
+        out.texcoord = Vector2(uT, vT);
+        out.normal = Vector3(0.0f);
+        return out;
+    };
 
     size_t w = 0;
-    for (UINT lat = 0; lat < latSeg; ++lat) {
-        for (UINT lon = 0; lon < lonSeg; ++lon) {
-            const Index i0 = static_cast<Index>(lat * lonPlus1 + lon);
-            const Index i1 = static_cast<Index>((lat + 1) * lonPlus1 + lon);
-            const Index i2 = static_cast<Index>((lat + 1) * lonPlus1 + (lon + 1));
-            const Index i3 = static_cast<Index>(lat * lonPlus1 + (lon + 1));
+    for (UINT lat = 0; lat < static_cast<UINT>(latSegments); ++lat) {
+        const float vT0 = static_cast<float>(lat) / static_cast<float>(latSegments);
+        const float vT1 = static_cast<float>(lat + 1) / static_cast<float>(latSegments);
+        const float theta0 = vT0 * pi;
+        const float theta1 = vT1 * pi;
 
-            i[w++] = i0;
-            i[w++] = i2;
-            i[w++] = i1;
-            i[w++] = i0;
-            i[w++] = i3;
-            i[w++] = i2;
+        for (UINT lon = 0; lon < static_cast<UINT>(lonSegments); ++lon) {
+            const float uT0 = static_cast<float>(lon) / static_cast<float>(lonSegments);
+            const float uT1 = static_cast<float>(lon + 1) / static_cast<float>(lonSegments);
+            const float phi0 = uT0 * twoPi;
+            const float phi1 = uT1 * twoPi;
+
+            Vertex v00 = makeVertex(theta0, phi0, uT0, vT0);
+            Vertex v10 = makeVertex(theta1, phi0, uT0, vT1);
+            Vertex v11 = makeVertex(theta1, phi1, uT1, vT1);
+            Vertex v01 = makeVertex(theta0, phi1, uT1, vT0);
+
+            {
+                const Vector3 n = ComputeFaceNormal(v00.position, v11.position, v10.position);
+                v00.normal = n;
+                v11.normal = n;
+                v10.normal = n;
+
+                v[w] = v00;
+                i[w] = static_cast<Index>(w);
+                ++w;
+
+                v[w] = v11;
+                i[w] = static_cast<Index>(w);
+                ++w;
+
+                v[w] = v10;
+                i[w] = static_cast<Index>(w);
+                ++w;
+            }
+            {
+                const Vector3 n = ComputeFaceNormal(v00.position, v01.position, v11.position);
+                v00.normal = n;
+                v01.normal = n;
+                v11.normal = n;
+
+                v[w] = v00;
+                i[w] = static_cast<Index>(w);
+                ++w;
+
+                v[w] = v01;
+                i[w] = static_cast<Index>(w);
+                ++w;
+
+                v[w] = v11;
+                i[w] = static_cast<Index>(w);
+                ++w;
+            }
         }
     }
 }

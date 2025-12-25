@@ -1,4 +1,5 @@
 #include "Triangle3D.h"
+#include "FaceNormal3D.h"
 
 namespace KashipanEngine {
 
@@ -15,6 +16,11 @@ Triangle3D::Triangle3D(const std::string &name)
         v[0].texcoord = Vector2(0.0f, 1.0f);
         v[1].texcoord = Vector2(0.5f, 0.0f);
         v[2].texcoord = Vector2(1.0f, 1.0f);
+
+        const Vector3 n = ComputeFaceNormal(v[0].position, v[1].position, v[2].position);
+        v[0].normal = n;
+        v[1].normal = n;
+        v[2].normal = n;
     }
 
     auto i = GetIndexSpan<Index>();

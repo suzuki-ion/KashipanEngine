@@ -1,4 +1,5 @@
 #include "Box.h"
+#include "FaceNormal3D.h"
 
 namespace KashipanEngine {
 
@@ -34,6 +35,12 @@ Box::Box(const std::string &name) : Object3DBase(name, sizeof(Vertex), sizeof(In
         v[base + 1] = Vertex{ p[b], uv[1] };
         v[base + 2] = Vertex{ p[c], uv[2] };
         v[base + 3] = Vertex{ p[d], uv[3] };
+
+        const Vector3 n = ComputeFaceNormal(v[base + 0].position, v[base + 1].position, v[base + 2].position);
+        v[base + 0].normal = n;
+        v[base + 1].normal = n;
+        v[base + 2].normal = n;
+        v[base + 3].normal = n;
     };
 
     // -Z, +Z, -X, +X, +Y, -Y

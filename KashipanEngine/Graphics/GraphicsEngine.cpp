@@ -18,6 +18,7 @@
 #include "Objects/GameObjects/3D/Sphere.h"
 #include "Objects/GameObjects/3D/Box.h"
 #include "Objects/SystemObjects/Camera3D.h"
+#include "Objects/SystemObjects/DirectionalLight.h"
 #include "Objects/Components/3D/Material3D.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include <imgui.h>
@@ -49,7 +50,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
         // 3Dオブジェクトの初期化
         //==================================================
         testObjects3D.clear();
-        testObjects3D.reserve(5);
+        testObjects3D.reserve(6);
 
         // Camera3D
         testObjects3D.emplace_back(std::make_unique<Camera3D>());
@@ -57,6 +58,15 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             if (auto *transformComp = camera->GetComponent3D<Transform3D>()) {
                 transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
             }
+        }
+
+        // DirectionalLight
+        testObjects3D.emplace_back(std::make_unique<DirectionalLight>());
+        if (auto *light = static_cast<DirectionalLight *>(testObjects3D.back().get())) {
+            light->SetEnabled(true);
+            light->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            light->SetDirection(Vector3(0.3f, -1.0f, 0.2f));
+            light->SetIntensity(1.0f);
         }
 
         // Triangle3D 1
@@ -136,10 +146,11 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
 
     //--------- テスト用の更新処理 ---------//
 
-    // 3D: Camera 以外は回転
+    // 3D: Camera / Light 以外は回転
     for (auto &obj : testObjects3D) {
         if (!obj) continue;
         if (obj->GetName() == "Camera3D") continue;
+        if (obj->GetName() == "DirectionalLight") continue;
 
         if (auto *transformComp = obj->GetComponent3D<Transform3D>()) {
             Vector3 rotate = transformComp->GetRotate();
@@ -152,19 +163,36 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     for (auto &obj : testObjects3D) {
         if (!obj) continue;
         if (obj->GetName() != "Camera3D") continue;
-        auto *camera = static_cast<Camera3D *>(obj.get());
-
-        if (auto *transformComp = camera->GetComponent3D<Transform3D>()) {
-            ImGui::Begin("Test Camera3D Control");
-            Vector3 translate = transformComp->GetTranslate();
-            Vector3 rotate = transformComp->GetRotate();
-            ImGui::DragFloat3("Camera Translate", &translate.x, 0.05f);
-            ImGui::DragFloat3("Camera Rotate", &rotate.x, 0.02f, -3.14f, 3.14f);
-            transformComp->SetTranslate(translate);
-            transformComp->SetRotate(rotate);
-            ImGui::End();
-        }
+        auto *transformComp = obj->GetComponent3D<Transform3D>();
+        ImGui::Begin("Test Camera3D Control");
+        Vector3 translate = transformComp->GetTranslate();
+        Vector3 rotate = transformComp->GetRotate();
+        ImGui::DragFloat3("Camera Translate", &translate.x, 0.05f);
+        ImGui::DragFloat3("Camera Rotate", &rotate.x, 0.02f, -3.14f, 3.14f);
+        transformComp->SetTranslate(translate);
+        transformComp->SetRotate(rotate);
+        ImGui::End();
         break;
+    }
+    // 平行光源もImGuiで操作可能にする
+    {
+        for (auto &obj : testObjects3D) {
+            if (!obj) continue;
+            if (obj->GetName() != "DirectionalLight") continue;
+            auto *light = static_cast<DirectionalLight *>(obj.get());
+            ImGui::Begin("Test DirectionalLight Control");
+            Vector3 direction = light->GetDirection();
+            Vector4 color = light->GetColor();
+            float intensity = light->GetIntensity();
+            ImGui::DragFloat3("Light Direction", &direction.x, 0.05f);
+            ImGui::ColorEdit4("Light Color", &color.x);
+            ImGui::DragFloat("Light Intensity", &intensity, 0.1f, 0.0f, 10.0f);
+            light->SetDirection(direction);
+            light->SetColor(color);
+            light->SetIntensity(intensity);
+            ImGui::End();
+            break;
+        }
     }
 
     auto mainWindow = Window::GetWindow("Main Window");

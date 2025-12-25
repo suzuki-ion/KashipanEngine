@@ -103,7 +103,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             ImGui::Begin("Test Camera3D Control");
             Vector3 translate = transformComp->GetTranslate();
             Vector3 rotate = transformComp->GetRotate();
-            ImGui::DragFloat3("Camera Translate", &translate.x, 0.05f, -10.0f, 10.0f);
+            ImGui::DragFloat3("Camera Translate", &translate.x, 0.05f);
             ImGui::DragFloat3("Camera Rotate", &rotate.x, 0.02f, -3.14f, 3.14f);
             transformComp->SetTranslate(translate);
             transformComp->SetRotate(rotate);
@@ -116,46 +116,46 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     if (!mainWindows.empty()) {
         auto *targetWindow = mainWindows.front();
         {
-            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Camera3D Pass");
+            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Camera3D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass 2");
+            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Graphics.Test", "Test Sphere Pass");
+            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Sphere Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testBox->CreateRenderPass(targetWindow, "Graphics.Test", "Test Box Pass");
+            auto passInfo = testBox->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Box Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
     }
     if (!overlayWindows.empty()) {
         auto* targetWindow = overlayWindows.front();
         {
-            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Graphics.Test", "Test Camera3D Pass");
+            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Camera3D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass");
+            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass 2");
+            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Graphics.Test", "Test Sphere Pass");
+            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Sphere Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testBox->CreateRenderPass(targetWindow, "Graphics.Test", "Test Box Pass");
+            auto passInfo = testBox->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Box Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
     }

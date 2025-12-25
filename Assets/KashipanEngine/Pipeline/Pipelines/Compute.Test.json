@@ -1,16 +1,16 @@
 ﻿{
-  "PipelineType": "Compute",
-  "Name": "Compute.Test",
-  "RootSignature": {
-    "UsePreset": "Compute.Empty"
-  },
-  "Shader": {
-    "BaseName": "ComputeTest",
-    "Compute": {
-      "UsePreset": "ComputeTest.CS"
-    }
-  },
-  "PipelineState": {
-    "UsePreset": "Default"
-  }
+	"PipelineType": "Compute",
+	"Name": "Compute.Test",
+	"RootSignature": {
+		"UsePreset": "Compute.Empty"
+	},
+	"Shader": {
+		"BaseName": "ComputeTest",
+		"Compute": {
+			"UsePreset": "ComputeTest.CS"
+		}
+	},
+	"PipelineState": {
+		"UsePreset": "Default"
+	}
 }

@@ -1,5 +1,12 @@
+#ifdef Object2D
+#include "../Common/Camera2D.hlsli"
+#include "Object2D.hlsli"
+#endif
+
+#ifdef Object3D
 #include "../Common/Camera3D.hlsli"
 #include "Object3D.hlsli"
+#endif
 
 struct TransformationMatrix {
 	float4x4 world;

@@ -1,16 +1,16 @@
 ﻿{
 	"PipelineType": "Render",
-	"Name": "Object3D.Solid.BlendNormal",
+	"Name": "Object2D.DoubleSidedCulling.BlendNormal",
 	"Shader": {
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
 		"AutoRootDescriptorFromShader": true,
-		"Vertex": { "UsePreset": "Object3D.Vertex" },
-		"Pixel": { "UsePreset": "Object3D.Pixel" }
+		"Vertex": { "UsePreset": "Object2D.Vertex" },
+		"Pixel": { "UsePreset": "Object2D.Pixel" }
 	},
-	"RasterizerState": { "UsePreset": "Solid" },
+	"RasterizerState": { "UsePreset": "DoubleSidedCulling" },
 	"BlendState": { "UsePreset": "Normal" },
-	"DepthStencilState": { "UsePreset": "DepthEnable" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
 	"PipelineState": { "UsePreset": "Triangle" }
 }

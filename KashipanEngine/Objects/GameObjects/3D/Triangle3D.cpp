@@ -5,26 +5,31 @@ namespace KashipanEngine {
 Triangle3D::Triangle3D(const std::string &name)
     : Object3DBase(name, sizeof(Vertex), sizeof(Index), 3, 3) {
     LogScope scope;
+
+    auto v = GetVertexSpan<Vertex>();
+    if (v.size() >= 3) {
+        v[0].position = Vector4(-0.5f, -0.5f, 0.0f, 1.0f);
+        v[1].position = Vector4(0.0f, 0.5f, 0.0f, 1.0f);
+        v[2].position = Vector4(0.5f, -0.5f, 0.0f, 1.0f);
+
+        v[0].texcoord = Vector2(0.0f, 1.0f);
+        v[1].texcoord = Vector2(0.5f, 0.0f);
+        v[2].texcoord = Vector2(1.0f, 1.0f);
+    }
+
+    auto i = GetIndexSpan<Index>();
+    if (i.size() >= 3) {
+        i[0] = 0;
+        i[1] = 1;
+        i[2] = 2;
+    }
 }
 
 bool Triangle3D::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
-    if (HasComponents3D("Transform3D") == 0) {
+    if (HasComponents3D("Transform3D") == 0 ||
+        HasComponents3D("Material3D") == 0) {
         return false;
     }
-    auto v = GetVertexSpan<Vertex>();
-    if (v.size() < 3) return false;
-    v[0].position = Vector4(-0.5f, -0.5f, 0.0f, 1.0f);
-    v[1].position = Vector4(0.0f, 0.5f, 0.0f, 1.0f);
-    v[2].position = Vector4(0.5f, -0.5f, 0.0f, 1.0f);
-    v[0].texcoord = Vector2(0.0f, 1.0f);
-    v[1].texcoord = Vector2(0.5f, 0.0f);
-    v[2].texcoord = Vector2(1.0f, 1.0f);
-
-    auto i = GetIndexSpan<Index>();
-    if (i.size() < 3) return false;
-    i[0] = 0;
-    i[1] = 1;
-    i[2] = 2;
     return true;
 }
 

@@ -178,14 +178,31 @@ const Matrix4x4 &Camera3D::GetViewMatrix() const {
     }
 
     if (auto *t = GetComponent3D<Transform3D>()) {
-        // Transformが更新された場合、viewのキャッシュを無効化する
-        if (t->IsWorldMatrixDirty()) {
+        // Transformの変更検知は「worldMatrixがdirtyか」よりも、値のスナップショットで行う。
+        // GetWorldMatrix() を呼ぶと dirty フラグが解消されてしまうため、
+        // 呼び出し順序によっては View の更新が抑止され得る。
+        const Vector3 curTranslate = t->GetTranslate();
+        const Vector3 curRotate = t->GetRotate();
+        const Vector3 curScale = t->GetScale();
+
+        const bool transformChanged =
+            (curTranslate != lastTransformTranslate_) ||
+            (curRotate != lastTransformRotate_) ||
+            (curScale != lastTransformScale_);
+
+        if (transformChanged) {
             isViewMatrixCalculated_ = false;
         }
 
         if (!isViewMatrixCalculated_) {
             viewMatrix_ = t->GetWorldMatrix().Inverse();
             isViewMatrixCalculated_ = true;
+            isOverrideView_ = false;
+            isViewProjectionMatrixCalculated_ = false;
+
+            lastTransformTranslate_ = curTranslate;
+            lastTransformRotate_ = curRotate;
+            lastTransformScale_ = curScale;
         }
     } else {
         if (!isViewMatrixCalculated_) {

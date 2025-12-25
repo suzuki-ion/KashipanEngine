@@ -9,9 +9,12 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Objects/GameObjects/3D/Triangle3D.h"
+#include "Objects/GameObjects/3D/Sphere.h"
+#include "Objects/GameObjects/3D/Box.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/Components/3D/Material3D.h"
 #include "Objects/Components/3D/Transform3D.h"
+#include <imgui.h>
 
 namespace KashipanEngine {
 
@@ -29,9 +32,11 @@ GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon
 GraphicsEngine::~GraphicsEngine() = default;
 
 void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
-    // テスト用の三角形オブジェクト
+    // テスト用のオブジェクト
     static std::unique_ptr<Triangle3D> testObject3D1;
     static std::unique_ptr<Triangle3D> testObject3D2;
+    static std::unique_ptr<Sphere> testSphere;
+    static std::unique_ptr<Box> testBox;
     // テスト用のカメラ
     static std::unique_ptr<Camera3D> testCamera3D;
     static bool initialized = false;
@@ -47,17 +52,33 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                 transformComp->SetRotate(Vector3(0.0f, 0.5f, 0.0f));
             }
         }
+
+        testSphere = std::make_unique<Sphere>();
+        {
+            auto *transformComp = testSphere->GetComponent3D<Transform3D>();
+            if (transformComp) {
+                transformComp->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
+            }
+        }
+        testBox = std::make_unique<Box>();
+        {
+            auto *transformComp = testBox->GetComponent3D<Transform3D>();
+            if (transformComp) {
+                transformComp->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
+            }
+        }
+
         testCamera3D = std::make_unique<Camera3D>();
+        {
+            auto transformComp = testCamera3D->GetComponent3D<Transform3D>();
+            if (transformComp) {
+                transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
+            }
+        }
         initialized = true;
     }
     
     //--------- テスト用の更新処理 ---------//
-    {
-        auto transformComp = testCamera3D->GetComponent3D<Transform3D>();
-        if (transformComp) {
-            transformComp->SetTranslate(Vector3(0.0f, 0.0f, -5.0f));
-        }
-    }
     {
         auto *transformComp = testObject3D1->GetComponent3D<Transform3D>();
         if (transformComp) {
@@ -72,6 +93,21 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             Vector3 rotate = transformComp->GetRotate();
             rotate.y += 0.01f;
             transformComp->SetRotate(rotate);
+        }
+    }
+
+    // カメラをImGuiで操作可能にする
+    {
+        auto *transformComp = testCamera3D->GetComponent3D<Transform3D>();
+        if (transformComp) {
+            ImGui::Begin("Test Camera3D Control");
+            Vector3 translate = transformComp->GetTranslate();
+            Vector3 rotate = transformComp->GetRotate();
+            ImGui::DragFloat3("Camera Translate", &translate.x, 0.05f, -10.0f, 10.0f);
+            ImGui::DragFloat3("Camera Rotate", &rotate.x, 0.02f, -3.14f, 3.14f);
+            transformComp->SetTranslate(translate);
+            transformComp->SetRotate(rotate);
+            ImGui::End();
         }
     }
 
@@ -91,6 +127,14 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass 2");
             renderer_->RegisterRenderPass(passInfo);
         }
+        {
+            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Graphics.Test", "Test Sphere Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testBox->CreateRenderPass(targetWindow, "Graphics.Test", "Test Box Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
     }
     if (!overlayWindows.empty()) {
         auto* targetWindow = overlayWindows.front();
@@ -104,6 +148,14 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
         }
         {
             auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Graphics.Test", "Test Object2D Pass 2");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Graphics.Test", "Test Sphere Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testBox->CreateRenderPass(targetWindow, "Graphics.Test", "Test Box Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
     }

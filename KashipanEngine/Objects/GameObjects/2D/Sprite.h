@@ -1,12 +1,12 @@
 #pragma once
 #include "Objects/Object2DBase.h"
-#include "Math/Vector4.h"
+#include "Objects/GameObjects/2D/VertexData2D.h"
 
 namespace KashipanEngine {
 
 class Sprite : public Object2DBase {
 public:
-    Sprite(const std::string &name = "Sprite") : Object2DBase(name, sizeof(Vertex), sizeof(Index), 4, 6) {}
+    Sprite(const std::string &name = "Sprite");
     ~Sprite() override = default;
 
 protected:
@@ -14,7 +14,7 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = Vector4;
+    using Vertex = VertexData2D;
     using Index = uint32_t;
 };
 

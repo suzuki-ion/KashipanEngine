@@ -62,16 +62,19 @@ public:
     Transform3D *GetParentTransform() const { return parentTransform_; }
 
     void SetTranslate(const Vector3 &translate) {
+        if (translate_ == translate) return;
         translate_ = translate;
         isWorldMatrixCalculated_ = false;
     }
 
     void SetRotate(const Vector3 &rotate) {
+        if (rotate_ == rotate) return;
         rotate_ = rotate;
         isWorldMatrixCalculated_ = false;
     }
 
     void SetScale(const Vector3 &scale) {
+        if (scale_ == scale) return;
         scale_ = scale;
         isWorldMatrixCalculated_ = false;
     }

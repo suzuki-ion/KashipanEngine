@@ -66,6 +66,7 @@ public:
     /// @brief 平行移動の設定
     /// @param translate 平行移動ベクトル
     void SetTranslate(const Vector3 &translate) {
+        if (translate_ == translate) return;
         translate_ = translate;
         isWorldMatrixCalculated_ = false;
     }
@@ -73,6 +74,7 @@ public:
     /// @brief 回転の設定
     /// @param rotate 回転ベクトル
     void SetRotate(const Vector3 &rotate) {
+        if (rotate_ == rotate) return;
         rotate_ = rotate;
         isWorldMatrixCalculated_ = false;
     }
@@ -80,6 +82,7 @@ public:
     /// @brief スケーリングの設定
     /// @param scale スケーリングベクトル
     void SetScale(const Vector3 &scale) {
+        if (scale_ == scale) return;
         scale_ = scale;
         isWorldMatrixCalculated_ = false;
     }

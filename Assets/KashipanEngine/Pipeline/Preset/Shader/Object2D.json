@@ -1,11 +1,11 @@
 ﻿{
-	"BaseName": "Object3D",
+	"BaseName": "Object2D",
 	"Vertex": {
 		"Path": "Object/ObjectVS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "vs_6_0",
 		"Macros": [
-			{ "Name": "Object3D" }
+			{ "Name": "Object2D" }
 		]
 	},
 	"Pixel": {
@@ -13,7 +13,7 @@
 		"EntryPoint": "main",
 		"TargetProfile": "ps_6_0",
 		"Macros": [
-			{ "Name": "Object3D" }
+			{ "Name": "Object2D" }
 		]
 	}
 }

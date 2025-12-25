@@ -1,10 +1,18 @@
+#ifdef Object2D
+#include "../Common/Camera2D.hlsli"
+#include "Object2D.hlsli"
+#endif
+
+#ifdef Object3D
+#include "../Common/Camera3D.hlsli"
 #include "Object3D.hlsli"
+#endif
 
 struct Material {
 	float4 color;
 };
 
-ConstantBuffer<Material> gMaterial : register(b0);
+ConstantBuffer<Material> gMaterial : register(b1);
 Texture2D gTexture : register(t0);
 SamplerState gSampler : register(s0);
 

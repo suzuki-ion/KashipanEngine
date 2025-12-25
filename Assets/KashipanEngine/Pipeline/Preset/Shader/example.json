@@ -19,6 +19,7 @@
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
 
 		// 頂点シェーダ
 		"Vertex": {

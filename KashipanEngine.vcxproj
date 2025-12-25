@@ -385,26 +385,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Graphics.Test.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Solid.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Line.Normal.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Line.Thickness.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.DoubleSidedCulling.BlendNormal.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendAdd.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendExclusion.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendMultiply.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendNone.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendNormal.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendScreen.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Solid.BlendSubtract.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendAdd.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendExclusion.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendMultiply.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendNone.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendNormal.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendScreen.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3d.Wireframe.BlendSubtract.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Exclusion.json" />
@@ -419,11 +403,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnable.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DescriptorRange\example.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Default.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Triangle.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Line.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\InputLayout\example.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\DoubleSidedCulling.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RasterizerState\Solid.json" />
@@ -436,18 +419,20 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Object3d.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Sampler\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Line.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\TransformationMatrix.hlsli" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\Object3d.hlsli" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\TransformationMatrix.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Object3d.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\TransformationMatrix.hlsli" />
     <None Include="Assets\KashipanEngine\PipelineSettings.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\Object3D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object2D.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
   </ItemGroup>
   <ItemGroup>
@@ -470,10 +455,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\Pixel.hlsl">
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Pixel.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3d\Vertex.hlsl">
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Vertex.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -483,10 +468,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\PS.hlsl">
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectPS.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Test\VS.hlsl">
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

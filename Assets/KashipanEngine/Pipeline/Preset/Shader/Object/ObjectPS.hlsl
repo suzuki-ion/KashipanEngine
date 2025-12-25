@@ -22,6 +22,17 @@ struct PSOutput {
 	float4 color : SV_TARGET0;
 };
 
+float Lambert(float3 normal, float3 lightDir) {
+	float cos = saturate(dot(normalize(normal), -lightDir));
+	return cos;
+}
+
+float HalfLambert(float3 normal, float3 lightDir) {
+	float NdotL = dot(normalize(normal), -normalize(lightDir));
+	float halfLambert = pow(NdotL * 0.5f + 0.5f, 2.0f);
+	return halfLambert;
+}
+
 PSOutput main(VSOutput input) {
 	PSOutput output;
 	float4 textureColor = gTexture.Sample(gSampler, input.texcoord);
@@ -31,8 +42,8 @@ PSOutput main(VSOutput input) {
 
 #ifdef Object3D
 	if (gDirectionalLight.enabled) {
-		float cos = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
-		float4 lightColor = gDirectionalLight.color * gDirectionalLight.intensity * cos;
+		float halfLambert = HalfLambert(input.normal, gDirectionalLight.direction);
+		float4 lightColor = gDirectionalLight.color * gDirectionalLight.intensity * halfLambert;
 		output.color = (gMaterial.color * textureColor) * lightColor;
 	} else {
 		output.color = gMaterial.color * textureColor;

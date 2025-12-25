@@ -1,6 +1,6 @@
 #pragma once
 #include "Objects/Object3DBase.h"
-#include "Math/Vector4.h"
+#include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
@@ -10,7 +10,7 @@ public:
     /// @brief コンストラクタ
     /// @param lineCount ラインの数
     /// @param name オブジェクト名
-    Line3D(size_t lineCount = 1, const std::string &name = "Line3D") : Object3DBase(name, sizeof(Vertex), sizeof(Index), lineCount + 1, lineCount + 1) {}
+    Line3D(size_t lineCount = 1, const std::string &name = "Line3D");
     ~Line3D() override = default;
 
 protected:
@@ -18,7 +18,7 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = Vector4;
+    using Vertex = VertexData3D;
     using Index = uint32_t;
 };
 

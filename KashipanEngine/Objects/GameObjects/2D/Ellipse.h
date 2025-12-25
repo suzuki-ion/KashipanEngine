@@ -1,6 +1,6 @@
 #pragma once
 #include "Objects/Object2DBase.h"
-#include "Math/Vector4.h"
+#include "Objects/GameObjects/2D/VertexData2D.h"
 
 namespace KashipanEngine {
 
@@ -9,8 +9,7 @@ public:
     /// @brief コンストラクタ
     /// @param segmentCount 楕円の分割数（頂点数に影響）
     /// @param name オブジェクト名
-    Ellipse(size_t segmentCount = 32, const std::string &name = "Ellipse")
-        : Object2DBase(name, sizeof(Vertex), sizeof(Index), segmentCount, segmentCount * 3) {}
+    Ellipse(size_t segmentCount = 32, const std::string &name = "Ellipse");
     ~Ellipse() override = default;
 
 protected:
@@ -18,7 +17,7 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = Vector4;
+    using Vertex = VertexData2D;
     using Index = uint32_t;
 };
 

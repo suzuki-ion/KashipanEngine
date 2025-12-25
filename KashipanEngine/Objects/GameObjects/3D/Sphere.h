@@ -1,6 +1,6 @@
 #pragma once
 #include "Objects/Object3DBase.h"
-#include "Math/Vector4.h"
+#include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
@@ -10,8 +10,7 @@ public:
     /// @param latSegments 緯度分割数
     /// @param lonSegments 経度分割数
     /// @param name オブジェクト名
-    Sphere(size_t latSegments = 8, size_t lonSegments = 16, const std::string &name = "Sphere")
-        : Object3DBase(name, sizeof(Vertex), sizeof(Index), (latSegments + 1) * (lonSegments + 1), latSegments * lonSegments * 6) {}
+    Sphere(size_t latSegments = 8, size_t lonSegments = 16, const std::string &name = "Sphere");
     ~Sphere() override = default;
 
 protected:
@@ -19,7 +18,7 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = Vector4;
+    using Vertex = VertexData3D;
     using Index = uint32_t;
 };
 

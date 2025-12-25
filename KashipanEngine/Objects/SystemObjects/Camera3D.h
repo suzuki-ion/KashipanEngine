@@ -4,6 +4,7 @@
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
+#include "Math/Vector3.h"
 
 namespace KashipanEngine {
 
@@ -98,6 +99,11 @@ private:
 
     mutable CameraBuffer cameraBufferCPU_{};
     std::unique_ptr<ConstantBufferResource> cameraBufferGPU_;
+
+    // Transformキャッシュ（カメラの view 再計算のため）
+    mutable Vector3 lastTransformTranslate_{0.0f, 0.0f, 0.0f};
+    mutable Vector3 lastTransformRotate_{0.0f, 0.0f, 0.0f};
+    mutable Vector3 lastTransformScale_{1.0f, 1.0f, 1.0f};
 };
 
 } // namespace KashipanEngine

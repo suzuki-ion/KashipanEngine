@@ -1,6 +1,6 @@
 #pragma once
 #include "Objects/Object2DBase.h"
-#include "Math/Vector4.h"
+#include "Objects/GameObjects/2D/VertexData2D.h"
 
 namespace KashipanEngine {
 
@@ -9,7 +9,7 @@ public:
     /// @brief コンストラクタ
     /// @param lineCount ラインの数
     /// @param name オブジェクト名
-    Line2D(size_t lineCount = 1, const std::string &name = "Line2D") : Object2DBase(name, sizeof(Vertex), sizeof(Index), lineCount + 1, lineCount + 1) {}
+    Line2D(size_t lineCount = 1, const std::string &name = "Line2D");
     ~Line2D() override = default;
 
 protected:
@@ -17,7 +17,7 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = Vector4;
+    using Vertex = VertexData2D;
     using Index = uint32_t;
 };
 

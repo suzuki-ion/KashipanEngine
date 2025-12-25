@@ -1,12 +1,12 @@
 #pragma once
 #include "Objects/Object3DBase.h"
-#include "Math/Vector4.h"
+#include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
 class Box : public Object3DBase {
 public:
-    Box(const std::string &name = "Box") : Object3DBase(name, sizeof(Vertex), sizeof(Index), 24, 36) {}
+    Box(const std::string &name = "Box");
     ~Box() override = default;
 
 protected:
@@ -14,7 +14,7 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = Vector4;
+    using Vertex = VertexData3D;
     using Index = uint32_t;
 };
 

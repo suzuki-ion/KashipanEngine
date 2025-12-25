@@ -8,6 +8,7 @@ namespace KashipanEngine {
 struct VertexData3D {
     Vector4 position;
     Vector2 texcoord;
+    Vector3 normal;
 };
 
 } // namespace KashipanEngine

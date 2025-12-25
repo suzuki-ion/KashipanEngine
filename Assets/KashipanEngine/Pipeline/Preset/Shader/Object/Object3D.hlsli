@@ -1,12 +1,12 @@
 struct VSOutput {
 	float4 position : SV_POSITION;
 	float2 texcoord : TEXCOORD;
+	float3 normal : NORMAL;
 };
 
 struct DirectionalLight {
-	bool enabled;
+	uint enabled;
 	float4 color;
 	float3 direction;
 	float intensity;
-	float4x4 viewProjectionMatrix;
 };

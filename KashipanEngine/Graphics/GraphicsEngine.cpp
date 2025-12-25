@@ -38,112 +38,110 @@ GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon
 GraphicsEngine::~GraphicsEngine() = default;
 
 void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
-    // テスト用の3Dオブジェクト
-    static std::unique_ptr<Triangle3D> testTriangle3D1;
-    static std::unique_ptr<Triangle3D> testTriangle3D2;
-    static std::unique_ptr<Sphere> testSphere;
-    static std::unique_ptr<Box> testBox;
-    // テスト用の2Dオブジェクト
-    static std::unique_ptr<Triangle2D> testTriangle2D;
-    static std::unique_ptr<Ellipse> testEllipse;
-    static std::unique_ptr<Rect> testRect;
-    static std::unique_ptr<Sprite> testSprite;
-    // テスト用のカメラ
-    static std::unique_ptr<Camera3D> testCamera3D;
-    static std::unique_ptr<Camera2D> testCamera2D;
+    // テスト用（Object2DBase / Object3DBase の vector に格納できるか）
+    static std::vector<std::unique_ptr<Object3DBase>> testObjects3D;
+    static std::vector<std::unique_ptr<Object2DBase>> testObjects2D;
     static bool initialized = false;
-    
+
     //--------- 初期化 ---------//
     if (!initialized) {
         //==================================================
         // 3Dオブジェクトの初期化
         //==================================================
+        testObjects3D.clear();
+        testObjects3D.reserve(5);
 
-        testTriangle3D1 = std::make_unique<Triangle3D>();
-        testTriangle3D2 = std::make_unique<Triangle3D>();
-        // testObject3D2のY軸回転を少しずらす
-        {
-            auto *transformComp = testTriangle3D2->GetComponent3D<Transform3D>();
-            if (transformComp) {
+        // Camera3D
+        testObjects3D.emplace_back(std::make_unique<Camera3D>());
+        if (auto *camera = static_cast<Camera3D *>(testObjects3D.back().get())) {
+            if (auto *transformComp = camera->GetComponent3D<Transform3D>()) {
+                transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
+            }
+        }
+
+        // Triangle3D 1
+        testObjects3D.emplace_back(std::make_unique<Triangle3D>());
+
+        // Triangle3D 2
+        testObjects3D.emplace_back(std::make_unique<Triangle3D>());
+        if (auto *tri = static_cast<Triangle3D *>(testObjects3D.back().get())) {
+            if (auto *transformComp = tri->GetComponent3D<Transform3D>()) {
                 transformComp->SetRotate(Vector3(0.0f, 0.5f, 0.0f));
             }
         }
 
-        testSphere = std::make_unique<Sphere>();
-        {
-            auto *transformComp = testSphere->GetComponent3D<Transform3D>();
-            if (transformComp) {
+        // Sphere
+        testObjects3D.emplace_back(std::make_unique<Sphere>());
+        if (auto *sphere = static_cast<Sphere *>(testObjects3D.back().get())) {
+            if (auto *transformComp = sphere->GetComponent3D<Transform3D>()) {
                 transformComp->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
             }
         }
-        testBox = std::make_unique<Box>();
-        {
-            auto *transformComp = testBox->GetComponent3D<Transform3D>();
-            if (transformComp) {
-                transformComp->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
-            }
-        }
 
-        testCamera3D = std::make_unique<Camera3D>();
-        {
-            auto transformComp = testCamera3D->GetComponent3D<Transform3D>();
-            if (transformComp) {
-                transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
+        // Box
+        testObjects3D.emplace_back(std::make_unique<Box>());
+        if (auto *box = static_cast<Box *>(testObjects3D.back().get())) {
+            if (auto *transformComp = box->GetComponent3D<Transform3D>()) {
+                transformComp->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
             }
         }
 
         //==================================================
         // 2Dオブジェクトの初期化
         //==================================================
+        testObjects2D.clear();
+        testObjects2D.reserve(5);
 
-        testTriangle2D = std::make_unique<Triangle2D>();
-        {
-            auto *transformComp = testTriangle2D->GetComponent2D<Transform2D>();
-            if (transformComp) {
+        // Camera2D
+        testObjects2D.emplace_back(std::make_unique<Camera2D>());
+
+        // Triangle2D
+        testObjects2D.emplace_back(std::make_unique<Triangle2D>());
+        if (auto *tri = static_cast<Triangle2D *>(testObjects2D.back().get())) {
+            if (auto *transformComp = tri->GetComponent2D<Transform2D>()) {
                 transformComp->SetTranslate(Vector2(50.0f, 50.0f));
                 transformComp->SetScale(Vector2(100.0f, 100.0f));
             }
         }
-        testEllipse = std::make_unique<Ellipse>();
-        {
-            auto *transformComp = testEllipse->GetComponent2D<Transform2D>();
-            if (transformComp) {
+
+        // Ellipse
+        testObjects2D.emplace_back(std::make_unique<Ellipse>());
+        if (auto *ellipse = static_cast<Ellipse *>(testObjects2D.back().get())) {
+            if (auto *transformComp = ellipse->GetComponent2D<Transform2D>()) {
                 transformComp->SetTranslate(Vector2(150.0f, 50.0f));
                 transformComp->SetScale(Vector2(100.0f, 100.0f));
             }
         }
-        testRect = std::make_unique<Rect>();
-        {
-            auto *transformComp = testRect->GetComponent2D<Transform2D>();
-            if (transformComp) {
+
+        // Rect
+        testObjects2D.emplace_back(std::make_unique<Rect>());
+        if (auto *rect = static_cast<Rect *>(testObjects2D.back().get())) {
+            if (auto *transformComp = rect->GetComponent2D<Transform2D>()) {
                 transformComp->SetTranslate(Vector2(250.0f, 50.0f));
                 transformComp->SetScale(Vector2(100.0f, 100.0f));
             }
         }
-        testSprite = std::make_unique<Sprite>();
-        {
-            auto *transformComp = testSprite->GetComponent2D<Transform2D>();
-            if (transformComp) {
+
+        // Sprite
+        testObjects2D.emplace_back(std::make_unique<Sprite>());
+        if (auto *sprite = static_cast<Sprite *>(testObjects2D.back().get())) {
+            if (auto *transformComp = sprite->GetComponent2D<Transform2D>()) {
                 transformComp->SetTranslate(Vector2(350.0f, 50.0f));
                 transformComp->SetScale(Vector2(100.0f, 100.0f));
             }
         }
-        testCamera2D = std::make_unique<Camera2D>();
+
         initialized = true;
     }
-    
+
     //--------- テスト用の更新処理 ---------//
-    {
-        auto *transformComp = testTriangle3D1->GetComponent3D<Transform3D>();
-        if (transformComp) {
-            Vector3 rotate = transformComp->GetRotate();
-            rotate.y += 0.01f;
-            transformComp->SetRotate(rotate);
-        }
-    }
-    {
-        auto *transformComp = testTriangle3D2->GetComponent3D<Transform3D>();
-        if (transformComp) {
+
+    // 3D: Camera 以外は回転
+    for (auto &obj : testObjects3D) {
+        if (!obj) continue;
+        if (obj->GetName() == "Camera3D") continue;
+
+        if (auto *transformComp = obj->GetComponent3D<Transform3D>()) {
             Vector3 rotate = transformComp->GetRotate();
             rotate.y += 0.01f;
             transformComp->SetRotate(rotate);
@@ -151,9 +149,12 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     }
 
     // カメラをImGuiで操作可能にする
-    {
-        auto *transformComp = testCamera3D->GetComponent3D<Transform3D>();
-        if (transformComp) {
+    for (auto &obj : testObjects3D) {
+        if (!obj) continue;
+        if (obj->GetName() != "Camera3D") continue;
+        auto *camera = static_cast<Camera3D *>(obj.get());
+
+        if (auto *transformComp = camera->GetComponent3D<Transform3D>()) {
             ImGui::Begin("Test Camera3D Control");
             Vector3 translate = transformComp->GetTranslate();
             Vector3 rotate = transformComp->GetRotate();
@@ -163,100 +164,37 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             transformComp->SetRotate(rotate);
             ImGui::End();
         }
+        break;
     }
 
-    auto mainWindows = Window::GetWindows("Main Window");
-    auto overlayWindows = Window::GetWindows("Overlay Window");
-    if (!mainWindows.empty()) {
-        auto *targetWindow = mainWindows.front();
+    auto mainWindow = Window::GetWindow("Main Window");
+    auto overlayWindow = Window::GetWindow("Overlay Window");
+
+    auto registerPasses = [&](Window *targetWindow) {
+        if (!targetWindow) return;
+
         // 3Dオブジェクト描画パス登録
-        {
-            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Camera3D Pass");
+        for (auto &obj : testObjects3D) {
+            if (!obj) continue;
+            auto passInfo = obj->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object3D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
-        {
-            auto passInfo = testTriangle3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testTriangle3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Sphere Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testBox->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Box Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
+
         // 2Dオブジェクト描画パス登録
-        {
-            auto passInfo = testCamera2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Camera2D Pass");
+        for (auto &obj : testObjects2D) {
+            if (!obj) continue;
+            auto passInfo = obj->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Object2D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
-        {
-            auto passInfo = testTriangle2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Triangle2D Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testEllipse->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Ellipse Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testRect->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Rect Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testSprite->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Sprite Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
+    };
+
+    if (mainWindow) {
+        registerPasses(mainWindow);
     }
-    if (!overlayWindows.empty()) {
-        auto* targetWindow = overlayWindows.front();
-        // 3Dオブジェクト描画パス登録
-        {
-            auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Camera3D Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testTriangle3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testTriangle3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testSphere->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Sphere Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testBox->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Box Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        // 2Dオブジェクト描画パス登録
-        {
-            auto passInfo = testCamera2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Camera2D Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testTriangle2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Triangle2D Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testEllipse->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Ellipse Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testRect->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Rect Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
-        {
-            auto passInfo = testSprite->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Sprite Pass");
-            renderer_->RegisterRenderPass(passInfo);
-        }
+    if (overlayWindow) {
+        registerPasses(overlayWindow);
     }
+
     renderer_->RenderFrame({});
 }
 

@@ -10,14 +10,8 @@ namespace KashipanEngine {
 
 class Camera3D final : public Object3DBase {
 public:
-
     Camera3D();
     ~Camera3D() override = default;
-
-    void SetView(const Matrix4x4 &view);
-    void SetProjection(const Matrix4x4 &projection);
-    void SetViewProjection(const Matrix4x4 &viewProjection);
-    void SetFov(float fov);
 
     const Matrix4x4 &GetPerspectiveMatrix() const;
     const Matrix4x4 &GetViewMatrix() const;
@@ -79,7 +73,7 @@ private:
     float viewportMinDepth_ = 0.0f;
     float viewportMaxDepth_ = 1.0f;
 
-    // Matrices (lazy)
+    // Matrices
     mutable Matrix4x4 perspectiveMatrix_ = Matrix4x4::Identity();
     mutable Matrix4x4 viewMatrix_ = Matrix4x4::Identity();
     mutable Matrix4x4 projectionMatrix_ = Matrix4x4::Identity();
@@ -91,11 +85,6 @@ private:
     mutable bool isProjectionMatrixCalculated_ = false;
     mutable bool isViewProjectionMatrixCalculated_ = false;
     mutable bool isViewportMatrixCalculated_ = false;
-
-    // 互換APIから注入された場合の優先フラグ
-    mutable bool isOverrideView_ = false;
-    mutable bool isOverrideProjection_ = false;
-    mutable bool isOverrideViewProjection_ = false;
 
     mutable CameraBuffer cameraBufferCPU_{};
     std::unique_ptr<ConstantBufferResource> cameraBufferGPU_;

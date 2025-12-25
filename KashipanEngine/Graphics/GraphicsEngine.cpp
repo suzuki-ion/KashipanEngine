@@ -6,8 +6,14 @@
 #include "EngineSettings.h"
 #include "Graphics/Resources.h"
 
-#include "Math/Vector3.h"
-#include "Math/Vector4.h"
+#include "Objects/GameObjects/2D/Triangle2D.h"
+#include "Objects/GameObjects/2D/Ellipse.h"
+#include "Objects/GameObjects/2D/Rect.h"
+#include "Objects/GameObjects/2D/Sprite.h"
+#include "Objects/SystemObjects/Camera2D.h"
+#include "Objects/Components/2D/Material2D.h"
+#include "Objects/Components/2D/Transform2D.h"
+
 #include "Objects/GameObjects/3D/Triangle3D.h"
 #include "Objects/GameObjects/3D/Sphere.h"
 #include "Objects/GameObjects/3D/Box.h"
@@ -32,22 +38,32 @@ GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon
 GraphicsEngine::~GraphicsEngine() = default;
 
 void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
-    // テスト用のオブジェクト
-    static std::unique_ptr<Triangle3D> testObject3D1;
-    static std::unique_ptr<Triangle3D> testObject3D2;
+    // テスト用の3Dオブジェクト
+    static std::unique_ptr<Triangle3D> testTriangle3D1;
+    static std::unique_ptr<Triangle3D> testTriangle3D2;
     static std::unique_ptr<Sphere> testSphere;
     static std::unique_ptr<Box> testBox;
+    // テスト用の2Dオブジェクト
+    static std::unique_ptr<Triangle2D> testTriangle2D;
+    static std::unique_ptr<Ellipse> testEllipse;
+    static std::unique_ptr<Rect> testRect;
+    static std::unique_ptr<Sprite> testSprite;
     // テスト用のカメラ
     static std::unique_ptr<Camera3D> testCamera3D;
+    static std::unique_ptr<Camera2D> testCamera2D;
     static bool initialized = false;
     
     //--------- 初期化 ---------//
     if (!initialized) {
-        testObject3D1 = std::make_unique<Triangle3D>();
-        testObject3D2 = std::make_unique<Triangle3D>();
+        //==================================================
+        // 3Dオブジェクトの初期化
+        //==================================================
+
+        testTriangle3D1 = std::make_unique<Triangle3D>();
+        testTriangle3D2 = std::make_unique<Triangle3D>();
         // testObject3D2のY軸回転を少しずらす
         {
-            auto *transformComp = testObject3D2->GetComponent3D<Transform3D>();
+            auto *transformComp = testTriangle3D2->GetComponent3D<Transform3D>();
             if (transformComp) {
                 transformComp->SetRotate(Vector3(0.0f, 0.5f, 0.0f));
             }
@@ -75,12 +91,50 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                 transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
             }
         }
+
+        //==================================================
+        // 2Dオブジェクトの初期化
+        //==================================================
+
+        testTriangle2D = std::make_unique<Triangle2D>();
+        {
+            auto *transformComp = testTriangle2D->GetComponent2D<Transform2D>();
+            if (transformComp) {
+                transformComp->SetTranslate(Vector2(50.0f, 50.0f));
+                transformComp->SetScale(Vector2(100.0f, 100.0f));
+            }
+        }
+        testEllipse = std::make_unique<Ellipse>();
+        {
+            auto *transformComp = testEllipse->GetComponent2D<Transform2D>();
+            if (transformComp) {
+                transformComp->SetTranslate(Vector2(150.0f, 50.0f));
+                transformComp->SetScale(Vector2(100.0f, 100.0f));
+            }
+        }
+        testRect = std::make_unique<Rect>();
+        {
+            auto *transformComp = testRect->GetComponent2D<Transform2D>();
+            if (transformComp) {
+                transformComp->SetTranslate(Vector2(250.0f, 50.0f));
+                transformComp->SetScale(Vector2(100.0f, 100.0f));
+            }
+        }
+        testSprite = std::make_unique<Sprite>();
+        {
+            auto *transformComp = testSprite->GetComponent2D<Transform2D>();
+            if (transformComp) {
+                transformComp->SetTranslate(Vector2(350.0f, 50.0f));
+                transformComp->SetScale(Vector2(100.0f, 100.0f));
+            }
+        }
+        testCamera2D = std::make_unique<Camera2D>();
         initialized = true;
     }
     
     //--------- テスト用の更新処理 ---------//
     {
-        auto *transformComp = testObject3D1->GetComponent3D<Transform3D>();
+        auto *transformComp = testTriangle3D1->GetComponent3D<Transform3D>();
         if (transformComp) {
             Vector3 rotate = transformComp->GetRotate();
             rotate.y += 0.01f;
@@ -88,7 +142,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
         }
     }
     {
-        auto *transformComp = testObject3D2->GetComponent3D<Transform3D>();
+        auto *transformComp = testTriangle3D2->GetComponent3D<Transform3D>();
         if (transformComp) {
             Vector3 rotate = transformComp->GetRotate();
             rotate.y += 0.01f;
@@ -115,16 +169,17 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     auto overlayWindows = Window::GetWindows("Overlay Window");
     if (!mainWindows.empty()) {
         auto *targetWindow = mainWindows.front();
+        // 3Dオブジェクト描画パス登録
         {
             auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Camera3D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
+            auto passInfo = testTriangle3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
+            auto passInfo = testTriangle3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
@@ -133,21 +188,43 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
         }
         {
             auto passInfo = testBox->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Box Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        // 2Dオブジェクト描画パス登録
+        {
+            auto passInfo = testCamera2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Camera2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testTriangle2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Triangle2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testEllipse->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Ellipse Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testRect->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Rect Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testSprite->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Sprite Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
     }
     if (!overlayWindows.empty()) {
         auto* targetWindow = overlayWindows.front();
+        // 3Dオブジェクト描画パス登録
         {
             auto passInfo = testCamera3D->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Camera3D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
+            auto passInfo = testTriangle3D1->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
-            auto passInfo = testObject3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
+            auto passInfo = testTriangle3D2->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object2D Pass 2");
             renderer_->RegisterRenderPass(passInfo);
         }
         {
@@ -156,6 +233,27 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
         }
         {
             auto passInfo = testBox->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Box Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        // 2Dオブジェクト描画パス登録
+        {
+            auto passInfo = testCamera2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Camera2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testTriangle2D->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Triangle2D Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testEllipse->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Ellipse Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testRect->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Rect Pass");
+            renderer_->RegisterRenderPass(passInfo);
+        }
+        {
+            auto passInfo = testSprite->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Sprite Pass");
             renderer_->RegisterRenderPass(passInfo);
         }
     }

@@ -1,18 +1,20 @@
-#include "Objects/SystemObjects/Camera3D.h"
+#include "Objects/SystemObjects/Camera2D.h"
 #include <cstring>
-#include "Objects/Components/3D/Transform3D.h"
+#include "Objects/Components/2D/Transform2D.h"
 
 namespace KashipanEngine {
 
-Camera3D::Camera3D()
-    : Object3DBase("Camera3D") {
+Camera2D::Camera2D()
+    : Object2DBase("Camera2D") {
     cameraBufferGPU_ = std::make_unique<ConstantBufferResource>(sizeof(CameraBuffer));
 
-    // 既存シェーダ側のデフォルトに寄せた初期値
-    fovY_ = 0.45f;
-    aspectRatio_ = 16.0f / 9.0f;
-    nearClip_ = 0.1f;
-    farClip_ = 2048.0f;
+    // 既存の 2D 系初期値に寄せる（ピクセル座標ベース）
+    left_ = 0.0f;
+    top_ = 0.0f;
+    right_ = 1280.0f;
+    bottom_ = 720.0f;
+    nearClip_ = 0.0f;
+    farClip_ = 1.0f;
 
     viewportLeft_ = 0.0f;
     viewportTop_ = 0.0f;
@@ -22,80 +24,85 @@ Camera3D::Camera3D()
     viewportMaxDepth_ = 1.0f;
 }
 
-void Camera3D::SetFovY(float fovY) {
-    fovY_ = fovY;
-
-    isPerspectiveMatrixCalculated_ = false;
+void Camera2D::SetLeft(float left) {
+    left_ = left;
     isProjectionMatrixCalculated_ = false;
     isViewProjectionMatrixCalculated_ = false;
 }
 
-void Camera3D::SetAspectRatio(float aspectRatio) {
-    aspectRatio_ = aspectRatio;
-
-    isPerspectiveMatrixCalculated_ = false;
+void Camera2D::SetTop(float top) {
+    top_ = top;
     isProjectionMatrixCalculated_ = false;
     isViewProjectionMatrixCalculated_ = false;
 }
 
-void Camera3D::SetNearClip(float nearClip) {
+void Camera2D::SetRight(float right) {
+    right_ = right;
+    isProjectionMatrixCalculated_ = false;
+    isViewProjectionMatrixCalculated_ = false;
+}
+
+void Camera2D::SetBottom(float bottom) {
+    bottom_ = bottom;
+    isProjectionMatrixCalculated_ = false;
+    isViewProjectionMatrixCalculated_ = false;
+}
+
+void Camera2D::SetNearClip(float nearClip) {
     nearClip_ = nearClip;
-
-    isPerspectiveMatrixCalculated_ = false;
     isProjectionMatrixCalculated_ = false;
     isViewProjectionMatrixCalculated_ = false;
 }
 
-void Camera3D::SetFarClip(float farClip) {
+void Camera2D::SetFarClip(float farClip) {
+    farClip_ = farClip;
+    isProjectionMatrixCalculated_ = false;
+    isViewProjectionMatrixCalculated_ = false;
+}
+
+void Camera2D::SetOrthographicParams(float left, float top, float right, float bottom, float nearClip, float farClip) {
+    left_ = left;
+    top_ = top;
+    right_ = right;
+    bottom_ = bottom;
+    nearClip_ = nearClip;
     farClip_ = farClip;
 
-    isPerspectiveMatrixCalculated_ = false;
     isProjectionMatrixCalculated_ = false;
     isViewProjectionMatrixCalculated_ = false;
 }
 
-void Camera3D::SetViewportLeft(float left) {
+void Camera2D::SetViewportLeft(float left) {
     viewportLeft_ = left;
     isViewportMatrixCalculated_ = false;
 }
 
-void Camera3D::SetViewportTop(float top) {
+void Camera2D::SetViewportTop(float top) {
     viewportTop_ = top;
     isViewportMatrixCalculated_ = false;
 }
 
-void Camera3D::SetViewportWidth(float width) {
+void Camera2D::SetViewportWidth(float width) {
     viewportWidth_ = width;
     isViewportMatrixCalculated_ = false;
 }
 
-void Camera3D::SetViewportHeight(float height) {
+void Camera2D::SetViewportHeight(float height) {
     viewportHeight_ = height;
     isViewportMatrixCalculated_ = false;
 }
 
-void Camera3D::SetViewportMinDepth(float minDepth) {
+void Camera2D::SetViewportMinDepth(float minDepth) {
     viewportMinDepth_ = minDepth;
     isViewportMatrixCalculated_ = false;
 }
 
-void Camera3D::SetViewportMaxDepth(float maxDepth) {
+void Camera2D::SetViewportMaxDepth(float maxDepth) {
     viewportMaxDepth_ = maxDepth;
     isViewportMatrixCalculated_ = false;
 }
 
-void Camera3D::SetPerspectiveParams(float fovY, float aspectRatio, float nearClip, float farClip) {
-    fovY_ = fovY;
-    aspectRatio_ = aspectRatio;
-    nearClip_ = nearClip;
-    farClip_ = farClip;
-
-    isPerspectiveMatrixCalculated_ = false;
-    isProjectionMatrixCalculated_ = false;
-    isViewProjectionMatrixCalculated_ = false;
-}
-
-void Camera3D::SetViewportParams(float left, float top, float width, float height, float minDepth, float maxDepth) {
+void Camera2D::SetViewportParams(float left, float top, float width, float height, float minDepth, float maxDepth) {
     viewportLeft_ = left;
     viewportTop_ = top;
     viewportWidth_ = width;
@@ -106,20 +113,8 @@ void Camera3D::SetViewportParams(float left, float top, float width, float heigh
     isViewportMatrixCalculated_ = false;
 }
 
-const Matrix4x4 &Camera3D::GetPerspectiveMatrix() const {
-    if (!isPerspectiveMatrixCalculated_) {
-        perspectiveMatrix_ = Matrix4x4::Identity();
-        perspectiveMatrix_.MakePerspectiveFovMatrix(fovY_, aspectRatio_, nearClip_, farClip_);
-        isPerspectiveMatrixCalculated_ = true;
-    }
-    return perspectiveMatrix_;
-}
-
-const Matrix4x4 &Camera3D::GetViewMatrix() const {
-    if (auto *t = GetComponent3D<Transform3D>()) {
-        // Transformの変更検知は「worldMatrixがdirtyか」よりも、値のスナップショットで行う。
-        // GetWorldMatrix() を呼ぶと dirty フラグが解消されてしまうため、
-        // 呼び出し順序によっては View の更新が抑止され得る。
+const Matrix4x4 &Camera2D::GetViewMatrix() const {
+    if (auto *t = GetComponent2D<Transform2D>()) {
         const Vector3 curTranslate = t->GetTranslate();
         const Vector3 curRotate = t->GetRotate();
         const Vector3 curScale = t->GetScale();
@@ -152,15 +147,16 @@ const Matrix4x4 &Camera3D::GetViewMatrix() const {
     return viewMatrix_;
 }
 
-const Matrix4x4 &Camera3D::GetProjectionMatrix() const {
+const Matrix4x4 &Camera2D::GetProjectionMatrix() const {
     if (!isProjectionMatrixCalculated_) {
-        projectionMatrix_ = GetPerspectiveMatrix();
+        projectionMatrix_ = Matrix4x4::Identity();
+        projectionMatrix_.MakeOrthographicMatrix(left_, top_, right_, bottom_, nearClip_, farClip_);
         isProjectionMatrixCalculated_ = true;
     }
     return projectionMatrix_;
 }
 
-const Matrix4x4 &Camera3D::GetViewProjectionMatrix() const {
+const Matrix4x4 &Camera2D::GetViewProjectionMatrix() const {
     if (!isViewProjectionMatrixCalculated_) {
         viewProjectionMatrix_ = GetViewMatrix() * GetProjectionMatrix();
         isViewProjectionMatrixCalculated_ = true;
@@ -168,7 +164,7 @@ const Matrix4x4 &Camera3D::GetViewProjectionMatrix() const {
     return viewProjectionMatrix_;
 }
 
-const Matrix4x4 &Camera3D::GetViewportMatrix() const {
+const Matrix4x4 &Camera2D::GetViewportMatrix() const {
     if (!isViewportMatrixCalculated_) {
         viewportMatrix_ = Matrix4x4::Identity();
         viewportMatrix_.MakeViewportMatrix(viewportLeft_, viewportTop_, viewportWidth_, viewportHeight_, viewportMinDepth_, viewportMaxDepth_);
@@ -177,26 +173,13 @@ const Matrix4x4 &Camera3D::GetViewportMatrix() const {
     return viewportMatrix_;
 }
 
-void Camera3D::UpdateCameraBufferCPU() const {
+void Camera2D::UpdateCameraBufferCPU() const {
     cameraBufferCPU_.view = GetViewMatrix();
     cameraBufferCPU_.projection = GetProjectionMatrix();
     cameraBufferCPU_.viewProjection = GetViewProjectionMatrix();
-    if (auto *t = GetComponent3D<Transform3D>()) {
-        const Matrix4x4 &worldMat = t->GetWorldMatrix();
-        cameraBufferCPU_.eyePosition.x = worldMat.m[3][0];
-        cameraBufferCPU_.eyePosition.y = worldMat.m[3][1];
-        cameraBufferCPU_.eyePosition.z = worldMat.m[3][2];
-        cameraBufferCPU_.eyePosition.w = 1.0f;
-    } else {
-        cameraBufferCPU_.eyePosition.x = 0.0f;
-        cameraBufferCPU_.eyePosition.y = 0.0f;
-        cameraBufferCPU_.eyePosition.z = 0.0f;
-        cameraBufferCPU_.eyePosition.w = 1.0f;
-    }
-    cameraBufferCPU_.fov = fovY_;
 }
 
-void Camera3D::Upload() const {
+void Camera2D::Upload() const {
     if (!cameraBufferGPU_) return;
     void *mapped = cameraBufferGPU_->Map();
     if (!mapped) return;
@@ -204,10 +187,9 @@ void Camera3D::Upload() const {
     cameraBufferGPU_->Unmap();
 }
 
-bool Camera3D::Render(ShaderVariableBinder &shaderBinder) {
+bool Camera2D::Render(ShaderVariableBinder &shaderBinder) {
     if (!cameraBufferGPU_) return false;
 
-    // Render時点で最新状態をgCameraへ反映
     UpdateCameraBufferCPU();
     Upload();
 

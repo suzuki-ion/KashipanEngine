@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/2D/Transform2D.h"
+#include "Objects/Components/2D/Material2D.h"
 
 namespace KashipanEngine {
 
@@ -101,7 +102,7 @@ Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_
         vertexBufferView_ = vertexBuffer_->GetView(static_cast<UINT>(vertexByteSize));
         vertexData_ = vertexBuffer_->Map();
     }
-    // インデックスバッファの初期化 (indexByteSize は 1インデックスのサイズ)
+    // インデックスバッファの初期化 (indexByteSize は 1インデックスあたりのサイズ)
     if (indexCount_ > 0) {
         size_t totalIndexBytes = indexByteSize * indexCount_;
         indexBuffer_ = std::make_unique<IndexBufferResource>(totalIndexBytes, DXGI_FORMAT_R32_UINT, initialIndexData);
@@ -110,7 +111,24 @@ Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_
     }
     // 永続コンテキストの生成（2D）
     context_ = std::make_unique<Object2DContext>(Passkey<Object2DBase>{}, this);
+
+    // 基本コンポーネントの登録
     RegisterComponent<Transform2D>();
+
+    Material2D::Data defaultMaterialData{ Vector4{1.0f, 1.0f, 1.0f, 1.0f} };
+    TextureManager::TextureHandle defaultTexture
+        = TextureManager::GetTextureFromFileName("uvChecker.png");
+    D3D12_SAMPLER_DESC defaultSamplerDesc{};
+    defaultSamplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    defaultSamplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    defaultSamplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    defaultSamplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    defaultSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    defaultSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+    defaultSamplerDesc.MaxAnisotropy = 1;
+    SamplerManager::SamplerHandle defaultSampler
+        = SamplerManager::CreateSampler(defaultSamplerDesc);
+    RegisterComponent<Material2D>(defaultMaterialData, defaultTexture, defaultSampler);
 }
 
 std::optional<RenderCommand> Object2DBase::CreateRenderCommand(PipelineBinder &pipelineBinder) {

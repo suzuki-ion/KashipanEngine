@@ -114,6 +114,9 @@ public:
         return worldMatrix_;
     }
 
+    bool IsWorldMatrixCalculated() const { return isWorldMatrixCalculated_; }
+    bool IsWorldMatrixDirty() const { return !isWorldMatrixCalculated_; }
+
 private:
     /// @brief ワールド行列バッファの更新
     void UpdateWorldMatrixBuffer() {

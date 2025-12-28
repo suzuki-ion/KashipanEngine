@@ -16,8 +16,8 @@ struct Material {
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
 #endif
 
-ConstantBuffer<Material> gMaterial : register(b1);
 Texture2D gTexture : register(t0);
+StructuredBuffer<Material> gMaterials : register(t1);
 SamplerState gSampler : register(s0);
 
 struct PSOutput {
@@ -37,21 +37,22 @@ float HalfLambert(float3 normal, float3 lightDir) {
 
 PSOutput main(VSOutput input) {
 	PSOutput output;
-	float4 transformedUV = mul(float4(input.texcoord, 0.0f, 1.0f), gMaterial.uvTransform);
+	Material mat = gMaterials[input.instanceId];
+	float4 transformedUV = mul(float4(input.texcoord, 0.0f, 1.0f), mat.uvTransform);
 	float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 #ifdef Object2D
-	output.color = gMaterial.color * textureColor;
+	output.color = mat.color * textureColor;
 #endif
 
 #ifdef Object3D
 	if (gDirectionalLight.enabled) {
 		float halfLambert = HalfLambert(input.normal, gDirectionalLight.direction);
 		float4 lightColor = gDirectionalLight.color * gDirectionalLight.intensity * halfLambert;
-		output.color = (gMaterial.color * textureColor) * lightColor;
+		output.color = (mat.color * textureColor) * lightColor;
 	} else {
-		output.color = gMaterial.color * textureColor;
+		output.color = mat.color * textureColor;
 	}
-	output.color.a = gMaterial.color.a * textureColor.a;
+	output.color.a = mat.color.a * textureColor.a;
 #endif
 	return output;
 }

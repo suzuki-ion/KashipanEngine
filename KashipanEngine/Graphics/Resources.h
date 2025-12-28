@@ -6,3 +6,4 @@
 #include "Graphics/Resources/VertexBufferResource.h"
 #include "Graphics/Resources/IndexBufferResource.h"
 #include "Graphics/Resources/UnorderedAccessResource.h"
+#include "Graphics/Resources/StructuredBufferResource.h"

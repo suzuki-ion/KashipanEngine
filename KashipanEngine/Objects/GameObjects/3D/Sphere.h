@@ -9,8 +9,7 @@ public:
     /// @brief コンストラクタ
     /// @param latSegments 緯度分割数
     /// @param lonSegments 経度分割数
-    /// @param name オブジェクト名
-    Sphere(size_t latSegments = 8, size_t lonSegments = 16, const std::string &name = "Sphere");
+    Sphere(size_t latSegments = 8, size_t lonSegments = 16);
     ~Sphere() override = default;
 
 protected:

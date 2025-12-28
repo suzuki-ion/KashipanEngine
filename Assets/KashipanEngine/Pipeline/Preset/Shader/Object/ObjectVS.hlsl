@@ -21,15 +21,17 @@ struct TransformationMatrix {
 	float4x4 world;
 };
 
-ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b1);
+StructuredBuffer<TransformationMatrix> gTransformationMatrices : register(t0);
 
-VSOutput main(VSInput input) {
+VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
 	VSOutput output;
-	float4x4 worldViewProjection = mul(gTransformationMatrix.world, gCamera.viewProjection);
+	float4x4 world = gTransformationMatrices[instanceId].world;
+	float4x4 worldViewProjection = mul(world, gCamera.viewProjection);
 	output.position = mul(input.position, worldViewProjection);
 	output.texcoord = input.texcoord;
 #ifdef Object3D
-	output.normal = normalize(mul(input.normal, (float3x3)gTransformationMatrix.world));
+	output.normal = normalize(mul(input.normal, (float3x3)world));
 #endif
+	output.instanceId = instanceId;
 	return output;
 }

@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class Box : public Object3DBase {
 public:
-    Box(const std::string &name = "Box");
+    Box();
     ~Box() override = default;
 
 protected:

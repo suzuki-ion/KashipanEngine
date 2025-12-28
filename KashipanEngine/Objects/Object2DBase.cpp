@@ -1,8 +1,10 @@
 #include "Objects/Object2DBase.h"
 #include <algorithm>
+#include <cstring>
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/2D/Transform2D.h"
 #include "Objects/Components/2D/Material2D.h"
+#include <string>
 
 namespace KashipanEngine {
 
@@ -18,28 +20,63 @@ Object2DBase::~Object2DBase() {
     components_.clear();
 }
 
-RenderPassInfo2D Object2DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
-    RenderPassInfo2D passInfo;
+RenderPass Object2DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
+    RenderPass passInfo(Passkey<Object2DBase>{});
     passInfo.window = targetWindow;
     passInfo.pipelineName = pipelineName;
     passInfo.passName = passName;
-    passInfo.renderFunction = [this](ShaderVariableBinder &shaderBinder) -> bool {
-        auto failures = BindShaderVariablesToComponents(shaderBinder);
-        if (!failures.empty()) {
-            for (const auto &f : failures) {
-                Log(Translation("engine.object2d.shader.binding.failed")
-                    + " ComponentType: " + f.componentType
-                    + ", ComponentIndex: " + std::to_string(f.componentIndex)
-                    , LogSeverity::Warning);
-            }
-            return false;
-        }
-        return Render(shaderBinder);
+    passInfo.renderType = renderType_;
+    passInfo.constantBufferRequirements = constantBufferRequirements_;
+    passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
+
+    passInfo.batchKey = instanceBatchKey_;
+    passInfo.instanceBufferRequirements = {
+        {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
+        {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+    };
+    passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+        return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+    };
+    passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
+        return RenderBatched(shaderBinder, instanceCount);
     };
     passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
         return CreateRenderCommand(pipelineBinder);
     };
     return passInfo;
+}
+
+bool Object2DBase::RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) {
+    if (!Render(shaderBinder)) return false;
+
+    auto failures = BindShaderVariablesToComponents(shaderBinder);
+    if (!failures.empty()) return false;
+
+    if (instanceCount == 0) return false;
+
+    return true;
+}
+
+bool Object2DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) {
+    (void)shaderBinder;
+    if (!instanceMaps) return false;
+
+    auto **maps = static_cast<void **>(instanceMaps);
+    void *transformMap = maps[0];
+    void *materialMap = maps[1];
+
+    for (auto &c : components_) {
+        if (!c) continue;
+        if (dynamic_cast<Transform2D *>(c.get())) {
+            auto r = c->SubmitInstance(transformMap, instanceIndex);
+            if (r != std::nullopt && r.value() == false) return false;
+        } else if (dynamic_cast<Material2D *>(c.get())) {
+            auto r = c->SubmitInstance(materialMap, instanceIndex);
+            if (r != std::nullopt && r.value() == false) return false;
+        }
+    }
+
+    return true;
 }
 
 bool Object2DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
@@ -79,6 +116,9 @@ bool Object2DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
 Object2DBase::Object2DBase(const std::string &name) {
     LogScope scope;
     if (!name.empty()) name_ = name;
+    // 頂点やインデックスが要らないタイプのオブジェクトは描画用オブジェクトでないことが多いので、
+    // インスタンスバッチキーにはポインタ値も混ぜる
+    instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
     context_ = std::make_unique<Object2DContext>(Passkey<Object2DBase>{}, this);
     RegisterComponent<Transform2D>();
 }
@@ -86,6 +126,7 @@ Object2DBase::Object2DBase(const std::string &name) {
 Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
     LogScope scope;
     if (!name.empty()) name_ = name;
+    instanceBatchKey_ = std::hash<std::string>{}(name_);
     if (vertexCount == 0 && indexCount == 0) {
         Log(Translation("engine.object2d.invalid.vertex.index.count")
             + "Name: " + name

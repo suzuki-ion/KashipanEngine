@@ -1,6 +1,5 @@
 #pragma once
 #include "Objects/IObjectComponent.h"
-#include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
@@ -29,9 +28,7 @@ public:
         TextureManager::TextureHandle texture = TextureManager::kInvalidHandle,
         SamplerManager::SamplerHandle sampler = SamplerManager::kInvalidHandle)
         : IObjectComponent3D("Material3D", 1), textureHandle_(texture), samplerHandle_(sampler) {
-        materialBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(MaterialBuffer));
         SetColor(color);
-        UpdateMaterialBuffer();
     }
     ~Material3D() override = default;
 
@@ -39,18 +36,15 @@ public:
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<Material3D>(color_, textureHandle_, samplerHandle_);
         ptr->uvTransform_ = uvTransform_;
-        ptr->UpdateMaterialBuffer();
         return ptr;
     }
 
     /// @brief マテリアルのバインド
     std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
-        if (!materialBuffer_) return false;
         if (!shaderBinder) return false;
 
-        UpdateMaterialBuffer();
-
-        bool ok = shaderBinder->Bind("Pixel:gMaterial", materialBuffer_.get());
+        // gMaterial is now provided as StructuredBuffer by the instancing path.
+        bool ok = true;
         if (textureHandle_ != TextureManager::kInvalidHandle) {
             ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
         }
@@ -58,6 +52,26 @@ public:
             ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
         }
         return ok;
+    }
+
+    std::optional<bool> BindInstancingResources(ShaderVariableBinder* binder, std::uint32_t instanceCount) override {
+        (void)binder;
+        (void)instanceCount;
+        return std::nullopt;
+    }
+
+    std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
+        if (!instanceMap) return false;
+
+        struct InstanceMaterialLocal {
+            Vector4 color;
+            Matrix4x4 uvTransform;
+        };
+
+        auto *arr = static_cast<InstanceMaterialLocal*>(instanceMap);
+        arr[instanceIndex].color = color_;
+        arr[instanceIndex].uvTransform = GetUVTransformMatrix();
+        return true;
     }
 
     void SetTexture(TextureManager::TextureHandle texture) { textureHandle_ = texture; }
@@ -74,6 +88,11 @@ public:
     SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
     const Vector4 &GetColor() const { return color_; }
     const UVTransform &GetUVTransform() const { return uvTransform_; }
+    Matrix4x4 GetUVTransformMatrix() const {
+        Matrix4x4 m = Matrix4x4::Identity();
+        m.MakeAffine(uvTransform_.scale, uvTransform_.rotate, uvTransform_.translate);
+        return m;
+    }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
@@ -101,28 +120,11 @@ public:
 #endif
 
 private:
-    struct MaterialBuffer {
-        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-        Matrix4x4 uvTransform = Matrix4x4::Identity();
+    struct InstanceData {
+        Vector4 color;
+        Matrix4x4 uvTransform;
     };
 
-    void UpdateMaterialBuffer() {
-        if (!materialBuffer_ || !isBufferDirty_) return;
-
-        MaterialBuffer buf{};
-        buf.color = color_;
-        buf.uvTransform = Matrix4x4::Identity();
-        buf.uvTransform.MakeAffine(uvTransform_.scale, uvTransform_.rotate, uvTransform_.translate);
-
-        void *mappedData = materialBuffer_->Map();
-        if (mappedData) {
-            std::memcpy(mappedData, &buf, sizeof(MaterialBuffer));
-            materialBuffer_->Unmap();
-            isBufferDirty_ = false;
-        }
-    }
-
-private:
     Vector4 color_{1.0f, 1.0f, 1.0f, 1.0f};
     UVTransform uvTransform_{};
 
@@ -130,7 +132,6 @@ private:
     SamplerManager::SamplerHandle samplerHandle_ = SamplerManager::kInvalidHandle;
 
     bool isBufferDirty_ = true;
-    std::unique_ptr<ConstantBufferResource> materialBuffer_;
 };
 
 } // namespace KashipanEngine

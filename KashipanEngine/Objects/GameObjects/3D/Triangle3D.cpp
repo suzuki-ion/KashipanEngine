@@ -3,8 +3,9 @@
 
 namespace KashipanEngine {
 
-Triangle3D::Triangle3D(const std::string &name)
-    : Object3DBase(name, sizeof(Vertex), sizeof(Index), 3, 3) {
+Triangle3D::Triangle3D()
+    : Object3DBase("Triangle3D", sizeof(Vertex), sizeof(Index), 3, 3) {
+    SetRenderType(RenderType::Instancing);
     LogScope scope;
 
     auto v = GetVertexSpan<Vertex>();

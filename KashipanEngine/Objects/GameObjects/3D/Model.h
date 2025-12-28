@@ -6,8 +6,10 @@ namespace KashipanEngine {
 
 class Model : public Object3DBase {
 public:
-    Model(size_t vertexCount = 0, size_t indexCount = 0, const std::string &name = "Model")
-        : Object3DBase(name, sizeof(Vertex), sizeof(Index), vertexCount, indexCount) {}
+    Model(size_t vertexCount = 0, size_t indexCount = 0)
+        : Object3DBase("Model", sizeof(Vertex), sizeof(Index), vertexCount, indexCount) {
+        SetRenderType(RenderType::Instancing);
+    }
     ~Model() override = default;
 
 protected:

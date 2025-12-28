@@ -2,7 +2,6 @@
 #include <memory>
 #include <string>
 #include "Objects/Object3DBase.h"
-#include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 
@@ -10,7 +9,7 @@ namespace KashipanEngine {
 
 class DirectionalLight final : public Object3DBase {
 public:
-    explicit DirectionalLight(const std::string &name = "DirectionalLight");
+    DirectionalLight();
     ~DirectionalLight() override = default;
 
     void SetEnabled(bool enabled);
@@ -24,6 +23,17 @@ public:
 
     void SetIntensity(float intensity);
     float GetIntensity() const { return intensity_; }
+
+    struct LightBuffer {
+        unsigned int enabled = 0u;
+        float pad0[3] = { 0.0f, 0.0f, 0.0f };
+        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        Vector3 direction{ 0.0f, -1.0f, 0.0f };
+        float intensity = 1.0f;
+    };
+
+    const LightBuffer &GetLightBufferCPU() const { return lightBufferCPU_; }
+    void UpdateLightBufferCPUForRenderer() const { UpdateLightBufferCPU(); }
 
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
@@ -53,16 +63,7 @@ protected:
 #endif
 
 private:
-    struct LightBuffer {
-        unsigned int enabled = 0u;
-        float pad0[3] = { 0.0f, 0.0f, 0.0f };
-        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-        Vector3 direction{ 0.0f, -1.0f, 0.0f };
-        float intensity = 1.0f;
-    };
-
     void UpdateLightBufferCPU() const;
-    void Upload() const;
 
     bool enabled_ = true;
     Vector4 color_{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -70,7 +71,6 @@ private:
     float intensity_ = 1.0f;
 
     mutable LightBuffer lightBufferCPU_;
-    std::unique_ptr<ConstantBufferResource> lightBufferGPU_;
 };
 
 } // namespace KashipanEngine

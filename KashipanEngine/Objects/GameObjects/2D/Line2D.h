@@ -8,8 +8,7 @@ class Line2D : public Object2DBase {
 public:
     /// @brief コンストラクタ
     /// @param lineCount ラインの数
-    /// @param name オブジェクト名
-    Line2D(size_t lineCount = 1, const std::string &name = "Line2D");
+    Line2D(size_t lineCount = 1);
     ~Line2D() override = default;
 
 protected:

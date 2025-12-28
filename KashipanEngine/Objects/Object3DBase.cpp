@@ -1,8 +1,10 @@
 #include "Objects/Object3DBase.h"
 #include <algorithm>
+#include <cstring>
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Objects/Components/3D/Material3D.h"
+#include <string>
 
 namespace KashipanEngine {
 
@@ -18,28 +20,63 @@ Object3DBase::~Object3DBase() {
     components_.clear();
 }
 
-RenderPassInfo3D Object3DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
-    RenderPassInfo3D passInfo;
+RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
+    RenderPass passInfo(Passkey<Object3DBase>{});
     passInfo.window = targetWindow;
     passInfo.pipelineName = pipelineName;
     passInfo.passName = passName;
-    passInfo.renderFunction = [this](ShaderVariableBinder &shaderBinder) -> bool {
-        auto failures = BindShaderVariablesToComponents(shaderBinder);
-        if (!failures.empty()) {
-            for (const auto &f : failures) {
-                Log(Translation("engine.object3d.shader.binding.failed")
-                    + " ComponentType: " + f.componentType
-                    + ", ComponentIndex: " + std::to_string(f.componentIndex)
-                    , LogSeverity::Warning);
-            }
-            return false;
-        }
-        return Render(shaderBinder);
+    passInfo.renderType = renderType_;
+    passInfo.constantBufferRequirements = constantBufferRequirements_;
+    passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
+
+    passInfo.batchKey = instanceBatchKey_;
+    passInfo.instanceBufferRequirements = {
+        {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
+        {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+    };
+    passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+        return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+    };
+    passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
+        return RenderBatched(shaderBinder, instanceCount);
     };
     passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
         return CreateRenderCommand(pipelineBinder);
     };
     return passInfo;
+}
+
+bool Object3DBase::RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) {
+    if (!Render(shaderBinder)) return false;
+
+    auto failures = BindShaderVariablesToComponents(shaderBinder);
+    if (!failures.empty()) return false;
+
+    if (instanceCount == 0) return false;
+
+    return true;
+}
+
+bool Object3DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) {
+    (void)shaderBinder;
+    if (!instanceMaps) return false;
+
+    auto **maps = static_cast<void **>(instanceMaps);
+    void *transformMap = maps[0];
+    void *materialMap = maps[1];
+
+    for (auto &c : components_) {
+        if (!c) continue;
+        if (dynamic_cast<Transform3D *>(c.get())) {
+            auto r = c->SubmitInstance(transformMap, instanceIndex);
+            if (r != std::nullopt && r.value() == false) return false;
+        } else if (dynamic_cast<Material3D *>(c.get())) {
+            auto r = c->SubmitInstance(materialMap, instanceIndex);
+            if (r != std::nullopt && r.value() == false) return false;
+        }
+    }
+
+    return true;
 }
 
 bool Object3DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
@@ -79,6 +116,9 @@ bool Object3DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
 Object3DBase::Object3DBase(const std::string &name) {
     LogScope scope;
     if (!name.empty()) name_ = name;
+    // 頂点やインデックスが要らないタイプのオブジェクトは描画用オブジェクトでないことが多いので、
+    // インスタンスバッチキーにはポインタ値も混ぜる
+    instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
     context_ = std::make_unique<Object3DContext>(Passkey<Object3DBase>{}, this);
     RegisterComponent<Transform3D>();
 }
@@ -86,6 +126,7 @@ Object3DBase::Object3DBase(const std::string &name) {
 Object3DBase::Object3DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
     LogScope scope;
     if (!name.empty()) name_ = name;
+    instanceBatchKey_ = std::hash<std::string>{}(name_);
     if (vertexCount == 0 && indexCount == 0) {
         Log(Translation("engine.object3d.invalid.vertex.index.count")
             + "Name: " + name

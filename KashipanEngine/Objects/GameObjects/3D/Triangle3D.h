@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class Triangle3D : public Object3DBase {
 public:
-    Triangle3D(const std::string &name = "Triangle3D");
+    Triangle3D();
     ~Triangle3D() override = default;
 
 protected:

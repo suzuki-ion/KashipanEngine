@@ -1,22 +1,28 @@
 #pragma once
+
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <exception>
+#include <imgui.h>
 #include <memory>
 #include <optional>
 #include <span>
-#include <vector>
-#include <unordered_map>
+#include <string>
 #include <typeindex>
+#include <unordered_map>
+#include <vector>
+
 #include "Core/Window.h"
-#include "Graphics/Renderer.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
+#include "Graphics/Renderer.h"
 #include "Graphics/Resources.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Vector4.h"
 #include "Objects/IObjectComponent.h"
 #include "../../MyStd/AnyUnorderedMap.h"
-
-#if defined(USE_IMGUI)
-#include <imgui.h>
-#include "Utilities/Translation.h"
-#endif
 
 namespace KashipanEngine {
 
@@ -69,7 +75,7 @@ public:
     UINT GetIndexCount() const { return indexCount_; }
 
     /// @brief レンダーパスの作成
-    RenderPassInfo2D CreateRenderPass(Window *targetWindow,
+    RenderPass CreateRenderPass(Window *targetWindow,
         const std::string &pipelineName,
         const std::string &passName = "GameObject2D Render Pass");
 
@@ -212,10 +218,22 @@ public:
     /// @return 削除に成功した場合は true
     bool RemoveComponent2D(const std::string &componentName, size_t index = 0);
 
+    /// @brief インスタンシング用バッチキー（同一キー同士がまとめて描画される）
+    std::uint64_t GetInstanceBatchKey() const { return instanceBatchKey_; }
+
 protected:
     /// @brief コンストラクタ
     /// @param name オブジェクト名
     Object2DBase(const std::string &name);
+
+    // インスタンシング用データ
+    struct InstanceTransform {
+        Matrix4x4 world;
+    };
+    struct InstanceMaterial {
+        Vector4 color;
+        Matrix4x4 uvTransform;
+    };
 
     /// @brief コンストラクタ
     /// @param name オブジェクト名
@@ -280,6 +298,22 @@ protected:
     /// @brief デフォルト描画コマンド生成ヘルパー
     RenderCommand CreateDefaultRenderCommand() const;
 
+    /// @brief まとめ描画時に呼ばれる（共通リソースのバインド + instanceCount 分のバッファ確保）
+    virtual bool RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount);
+
+    /// @brief インスタンスデータを書き込む
+    virtual bool SubmitInstance(void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex);
+
+    void SetRenderType(RenderType type) { renderType_ = type; }
+
+    void SetConstantBufferRequirements(std::vector<RenderPass::ConstantBufferRequirement> reqs) {
+        constantBufferRequirements_ = std::move(reqs);
+    }
+
+    void SetUpdateConstantBuffersFunction(std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> fn) {
+        updateConstantBuffersFunction_ = std::move(fn);
+    }
+
 private:
     friend class Object2DContext;
 
@@ -313,6 +347,11 @@ private:
     std::vector<size_t> shaderBindingComponentIndices_;
 
     MyStd::AnyUnorderedMap userData_;
+
+    std::uint64_t instanceBatchKey_ = 0;
+    RenderType renderType_ = RenderType::Standard;
+    std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements_;
+    std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction_;
 };
 
 } // namespace KashipanEngine

@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include "Objects/Object3DBase.h"
-#include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
@@ -12,6 +11,12 @@ class Camera3D final : public Object3DBase {
 public:
     Camera3D();
     ~Camera3D() override = default;
+
+    void ConfigureConstantBuffers(std::vector<RenderPass::ConstantBufferRequirement> reqs,
+        std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> fn) {
+        SetConstantBufferRequirements(std::move(reqs));
+        SetUpdateConstantBuffersFunction(std::move(fn));
+    }
 
     const Matrix4x4 &GetPerspectiveMatrix() const;
     const Matrix4x4 &GetViewMatrix() const;
@@ -43,6 +48,17 @@ public:
 
     void SetPerspectiveParams(float fovY, float aspectRatio, float nearClip, float farClip);
     void SetViewportParams(float left, float top, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
+
+    struct CameraBuffer {
+        Matrix4x4 view{};
+        Matrix4x4 projection{};
+        Matrix4x4 viewProjection{};
+        Vector4 eyePosition{};
+        float fov = 0.0f;
+    };
+
+    const CameraBuffer &GetCameraBufferCPU() const { return cameraBufferCPU_; }
+    void UpdateCameraBufferCPUForRenderer() const { UpdateCameraBufferCPU(); }
 
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
@@ -83,15 +99,6 @@ protected:
 #endif
 
 private:
-    struct CameraBuffer {
-        Matrix4x4 view{};
-        Matrix4x4 projection{};
-        Matrix4x4 viewProjection{};
-        Vector4 eyePosition{};
-        float fov = 0.0f;
-    };
-
-    void Upload() const;
     void UpdateCameraBufferCPU() const;
 
     // Perspective
@@ -121,8 +128,7 @@ private:
     mutable bool isViewProjectionMatrixCalculated_ = false;
     mutable bool isViewportMatrixCalculated_ = false;
 
-    mutable CameraBuffer cameraBufferCPU_{};
-    std::unique_ptr<ConstantBufferResource> cameraBufferGPU_;
+    mutable CameraBuffer cameraBufferCPU_;
 
     // Transformキャッシュ（カメラの view 再計算のため）
     mutable Vector3 lastTransformTranslate_{0.0f, 0.0f, 0.0f};

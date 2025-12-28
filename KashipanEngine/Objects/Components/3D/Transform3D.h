@@ -1,6 +1,5 @@
 #pragma once
 #include "Objects/IObjectComponent.h"
-#include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 #include <memory>
@@ -18,8 +17,9 @@ public:
     }
 
     Transform3D() : IObjectComponent3D("Transform3D", 1) {
-        transformBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Matrix4x4));
-        UpdateWorldMatrixBuffer();
+        // Instancing uses per-draw StructuredBuffer; keep no per-object CBV.
+        isWorldMatrixCalculated_ = false;
+        worldMatrix_ = Matrix4x4::Identity();
     }
     ~Transform3D() override = default;
 
@@ -31,17 +31,26 @@ public:
         ptr->scale_ = scale_;
         ptr->isWorldMatrixCalculated_ = false;
         ptr->worldMatrix_ = Matrix4x4::Identity();
-        ptr->UpdateWorldMatrixBuffer();
         return ptr;
     }
 
-    /// @brief トランスフォームのバインド
-    /// @param shaderBinder シェーダー変数バインダー
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
-        if (!transformBuffer_) return false;
-        UpdateWorldMatrixBuffer();
-        return shaderBinder && shaderBinder->Bind("Vertex:gTransformationMatrix", transformBuffer_.get());
+        (void)shaderBinder;
+        return std::nullopt;
+    }
+
+    std::optional<bool> BindInstancingResources(ShaderVariableBinder* binder, std::uint32_t instanceCount) override {
+        (void)binder;
+        (void)instanceCount;
+        return std::nullopt;
+    }
+
+    std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
+        if (!instanceMap) return false;
+        struct InstanceTransformLocal { Matrix4x4 world; };
+        auto *arr = static_cast<InstanceTransformLocal*>(instanceMap);
+        arr[instanceIndex].world = GetWorldMatrix();
+        return true;
     }
 
     /// @brief 親トランスフォームの設定
@@ -119,17 +128,6 @@ public:
 #endif
 
 private:
-    void UpdateWorldMatrixBuffer() {
-        if (!transformBuffer_) return;
-        const auto &mat = GetWorldMatrix();
-        void *mapped = transformBuffer_->Map();
-        if (mapped) {
-            std::memcpy(mapped, &mat, sizeof(Matrix4x4));
-            transformBuffer_->Unmap();
-        }
-    }
-
-private:
     Vector3 translate_{0.0f, 0.0f, 0.0f};
     Vector3 rotate_{0.0f, 0.0f, 0.0f};
     Vector3 scale_{1.0f, 1.0f, 1.0f};
@@ -137,8 +135,6 @@ private:
     Transform3D *parentTransform_ = nullptr;
     Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
     bool isWorldMatrixCalculated_ = false;
-
-    std::unique_ptr<ConstantBufferResource> transformBuffer_;
 };
 
 } // namespace KashipanEngine

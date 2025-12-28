@@ -2,7 +2,8 @@
 
 namespace KashipanEngine {
 
-Triangle2D::Triangle2D(const std::string &name) : Object2DBase(name, sizeof(Vertex), sizeof(Index), 3, 3) {
+Triangle2D::Triangle2D() : Object2DBase("Triangle2D", sizeof(Vertex), sizeof(Index), 3, 3) {
+    SetRenderType(RenderType::Instancing);
     LogScope scope;
 
     auto v = GetVertexSpan<Vertex>();

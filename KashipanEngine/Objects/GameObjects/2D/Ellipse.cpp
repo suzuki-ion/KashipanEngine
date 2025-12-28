@@ -4,8 +4,9 @@
 
 namespace KashipanEngine {
 
-Ellipse::Ellipse(size_t segmentCount, const std::string &name)
-    : Object2DBase(name, sizeof(Vertex), sizeof(Index), segmentCount, segmentCount * 3) {
+Ellipse::Ellipse(size_t segmentCount)
+    : Object2DBase("Ellipse", sizeof(Vertex), sizeof(Index), segmentCount, segmentCount * 3) {
+    SetRenderType(RenderType::Instancing);
     LogScope scope;
 
     const auto vc = GetVertexCount();

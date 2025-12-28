@@ -8,8 +8,7 @@ class Ellipse : public Object2DBase {
 public:
     /// @brief コンストラクタ
     /// @param segmentCount 楕円の分割数（頂点数に影響）
-    /// @param name オブジェクト名
-    Ellipse(size_t segmentCount = 32, const std::string &name = "Ellipse");
+    Ellipse(size_t segmentCount = 32);
     ~Ellipse() override = default;
 
 protected:

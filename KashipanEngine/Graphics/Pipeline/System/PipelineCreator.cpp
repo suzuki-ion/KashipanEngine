@@ -107,7 +107,8 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         ownedRootSigParsed->desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
         // 収集用
-        struct RangeBuildKey { D3D12_DESCRIPTOR_RANGE_TYPE type; UINT space; ShaderStage stage; };
+        // DescriptorTable を「レジスタ単位」で分割して個別バインド可能にする
+        struct RangeBuildKey { D3D12_DESCRIPTOR_RANGE_TYPE type; UINT space; ShaderStage stage; UINT baseRegister; };
         std::vector<RangeBuildKey> keys;
         std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> tempRanges; // SRV/UAV/Sampler用
         // CBVのRootDescriptor格納用（root parametersへの直接登録）
@@ -154,10 +155,11 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
                 }
                 // SRV/UAV/Sampler は DescriptorTable にまとめる（ステージ別）
                 D3D12_DESCRIPTOR_RANGE_TYPE rtype = getRangeType(rb.Type());
-                RangeBuildKey key{ rtype, rb.Space(), s };
+                // レジスタ単位で DescriptorTable を分割する
+                RangeBuildKey key{ rtype, rb.Space(), s, rb.BindPoint() };
                 size_t idx = 0; bool found = false;
                 for (; idx < keys.size(); ++idx) {
-                    if (keys[idx].type == key.type && keys[idx].space == key.space && keys[idx].stage == key.stage) { found = true; break; }
+                    if (keys[idx].type == key.type && keys[idx].space == key.space && keys[idx].stage == key.stage && keys[idx].baseRegister == key.baseRegister) { found = true; break; }
                 }
                 if (!found) { keys.push_back(key); tempRanges.emplace_back(); idx = keys.size() - 1; }
 
@@ -166,79 +168,62 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
                 range.NumDescriptors = rb.BindCount() == 0 ? 1u : rb.BindCount();
                 range.BaseShaderRegister = rb.BindPoint();
                 range.RegisterSpace = rb.Space();
-                range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+                // 1つのテーブルに 1 つの range を入れる前提なので先頭(0)固定
+                range.OffsetInDescriptorsFromTableStart = 0;
                 tempRanges[idx].push_back(range);
             }
         }
 
-        // SRV/UAV の連番統合（ステージ別キーごと）
-        for (auto &ranges : tempRanges) {
-            std::sort(ranges.begin(), ranges.end(), [](auto &a, auto &b) { return a.BaseShaderRegister < b.BaseShaderRegister; });
-            std::vector<D3D12_DESCRIPTOR_RANGE> merged;
-            for (size_t i = 0; i < ranges.size();) {
-                D3D12_DESCRIPTOR_RANGE cur = ranges[i];
-                ++i;
-                while (i < ranges.size()) {
-                    auto &n = ranges[i];
-                    if (n.BaseShaderRegister == cur.BaseShaderRegister + cur.NumDescriptors &&
-                        n.RegisterSpace == cur.RegisterSpace && n.RangeType == cur.RangeType) {
-                        cur.NumDescriptors += n.NumDescriptors;
-                        ++i;
-                    } else break;
-                }
-                merged.push_back(cur);
-            }
-            ranges = std::move(merged);
-        }
+        // 連番統合は行わない（連続配置を前提にしないため）
 
-        // RootParameter 構築: CBV RootDescriptor（ステージ別、Visibility 対応）
-        {
-            std::sort(cbvRootDescriptors.begin(), cbvRootDescriptors.end(),
-                [](const CbvRootDesc& a, const CbvRootDesc& b) {
-                    if (a.space != b.space) return a.space < b.space;
-                    if (a.shaderRegister != b.shaderRegister) return a.shaderRegister < b.shaderRegister;
-                    return static_cast<UINT>(a.stage) < static_cast<UINT>(b.stage);
-                });
-            cbvRootDescriptors.erase(
-                std::unique(cbvRootDescriptors.begin(), cbvRootDescriptors.end(),
-                    [](const CbvRootDesc& a, const CbvRootDesc& b) {
-                        return a.space == b.space && a.shaderRegister == b.shaderRegister && a.stage == b.stage;
-                }),
-                cbvRootDescriptors.end()
-            );
-        }
+         // RootParameter 構築: CBV RootDescriptor（ステージ別、Visibility 対応）
+         {
+             std::sort(cbvRootDescriptors.begin(), cbvRootDescriptors.end(),
+                 [](const CbvRootDesc& a, const CbvRootDesc& b) {
+                     if (a.space != b.space) return a.space < b.space;
+                     if (a.shaderRegister != b.shaderRegister) return a.shaderRegister < b.shaderRegister;
+                     return static_cast<UINT>(a.stage) < static_cast<UINT>(b.stage);
+                 });
+             cbvRootDescriptors.erase(
+                 std::unique(cbvRootDescriptors.begin(), cbvRootDescriptors.end(),
+                     [](const CbvRootDesc& a, const CbvRootDesc& b) {
+                         return a.space == b.space && a.shaderRegister == b.shaderRegister && a.stage == b.stage;
+                 }),
+                 cbvRootDescriptors.end()
+             );
+         }
 
-        for (const auto &cbv : cbvRootDescriptors) {
-            D3D12_ROOT_PARAMETER param{};
-            param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-            param.ShaderVisibility = VisibilityFromStage(cbv.stage);
-            param.Descriptor.ShaderRegister = cbv.shaderRegister;
-            param.Descriptor.RegisterSpace = cbv.space;
-            ownedRootSigParsed->rootParams.parameters.push_back(param);
-        }
+         for (const auto &cbv : cbvRootDescriptors) {
+             D3D12_ROOT_PARAMETER param{};
+             param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+             param.ShaderVisibility = VisibilityFromStage(cbv.stage);
+             param.Descriptor.ShaderRegister = cbv.shaderRegister;
+             param.Descriptor.RegisterSpace = cbv.space;
+             ownedRootSigParsed->rootParams.parameters.push_back(param);
+         }
 
-        // 次に SRV/UAV/Sampler の DescriptorTable（ステージ別 Visibility）
-        for (size_t i = 0; i < keys.size(); ++i) {
-            if (tempRanges[i].empty()) continue;
-            D3D12_ROOT_PARAMETER param{};
-            param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            param.ShaderVisibility = VisibilityFromStage(keys[i].stage);
-            ownedRootSigParsed->rootParams.rangesStorage.push_back(tempRanges[i]);
-            auto &storageRef = ownedRootSigParsed->rootParams.rangesStorage.back();
-            param.DescriptorTable.NumDescriptorRanges = static_cast<UINT>(storageRef.size());
-            param.DescriptorTable.pDescriptorRanges = storageRef.data();
-            ownedRootSigParsed->rootParams.parameters.push_back(param);
-        }
+         // 次に SRV/UAV/Sampler の DescriptorTable（ステージ別 Visibility）
+         for (size_t i = 0; i < keys.size(); ++i) {
+             if (tempRanges[i].empty()) continue;
+             D3D12_ROOT_PARAMETER param{};
+             param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+             param.ShaderVisibility = VisibilityFromStage(keys[i].stage);
+             ownedRootSigParsed->rootParams.rangesStorage.push_back(tempRanges[i]);
+             auto &storageRef = ownedRootSigParsed->rootParams.rangesStorage.back();
+             param.DescriptorTable.NumDescriptorRanges = static_cast<UINT>(storageRef.size());
+             param.DescriptorTable.pDescriptorRanges = storageRef.data();
+             ownedRootSigParsed->rootParams.parameters.push_back(param);
+         }
 
-        // desc の最終設定
-        ownedRootSigParsed->desc.NumParameters = static_cast<UINT>(ownedRootSigParsed->rootParams.parameters.size());
-        ownedRootSigParsed->desc.pParameters = ownedRootSigParsed->rootParams.parameters.empty() ? nullptr : ownedRootSigParsed->rootParams.parameters.data();
-        ownedRootSigParsed->desc.NumStaticSamplers = 0;
-        ownedRootSigParsed->desc.pStaticSamplers = nullptr;
+         // desc の最終設定
+         ownedRootSigParsed->desc.NumParameters = static_cast<UINT>(ownedRootSigParsed->rootParams.parameters.size());
+         ownedRootSigParsed->desc.pParameters = ownedRootSigParsed->rootParams.parameters.empty() ? nullptr : ownedRootSigParsed->rootParams.parameters.data();
+         ownedRootSigParsed->desc.NumStaticSamplers = 0;
+         ownedRootSigParsed->desc.pStaticSamplers = nullptr;
 
-        pRootSigDesc = &ownedRootSigParsed->desc;
-        outInfo.autoRootDescriptorGenerated = true;
-    } else {
+         pRootSigDesc = &ownedRootSigParsed->desc;
+         outInfo.autoRootDescriptorGenerated = true;
+     } else {
         Log(Translation("engine.graphics.pipeline.load.render.rootsignature.missing") + name, LogSeverity::Error);
         return false;
     }
@@ -510,20 +495,93 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
                 continue;
             }
             for (const auto &range : rootSigParsed.rootParams.rangesStorage[descriptorTableIndex]) {
-                D3D_SHADER_INPUT_TYPE type =
-                    range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV ? D3D_SIT_CBUFFER :
-                    range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV ? D3D_SIT_TEXTURE :
-                    range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_UAV ? D3D_SIT_UAV_RWTYPED :
-                    D3D_SIT_SAMPLER;
-                outInfo.variableBinder.RegisterDescriptorTableRange({},
-                    type,
-                    range.BaseShaderRegister,
-                    range.RegisterSpace,
-                    range.NumDescriptors,
-                    static_cast<UINT>(i),
-                    0,
-                    stage
-                );
+                const UINT rootParamIndex = static_cast<UINT>(i);
+                if (range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV) {
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_CBUFFER,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    continue;
+                }
+                if (range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV) {
+                    // SRV descriptor table can contain both Texture2D and StructuredBuffer.
+                    // Register both so binder can resolve reflection Type() correctly.
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_TEXTURE,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_STRUCTURED,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_BYTEADDRESS,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    continue;
+                }
+                if (range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_UAV) {
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_UAV_RWSTRUCTURED,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_UAV_RWTYPED,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_UAV_RWBYTEADDRESS,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    continue;
+                }
+                if (range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER) {
+                    outInfo.variableBinder.RegisterDescriptorTableRange({},
+                        D3D_SIT_SAMPLER,
+                        range.BaseShaderRegister,
+                        range.RegisterSpace,
+                        range.NumDescriptors,
+                        rootParamIndex,
+                        0,
+                        stage
+                    );
+                    continue;
+                }
             }
             ++descriptorTableIndex;
         } else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ||

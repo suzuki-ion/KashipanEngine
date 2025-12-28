@@ -2,7 +2,8 @@
 
 namespace KashipanEngine {
 
-Sprite::Sprite(const std::string &name) : Object2DBase(name, sizeof(Vertex), sizeof(Index), 4, 6) {
+Sprite::Sprite() : Object2DBase("Sprite", sizeof(Vertex), sizeof(Index), 4, 6) {
+    SetRenderType(RenderType::Instancing);
     LogScope scope;
 
     auto v = GetVertexSpan<Vertex>();

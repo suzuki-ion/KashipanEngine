@@ -3,6 +3,7 @@
 #include <memory>
 #include <cassert>
 #include <optional>
+#include <cstdint>
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 
 #if defined(USE_IMGUI)
@@ -71,6 +72,36 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。バインドを行わない場合は std::nullopt を返す
     virtual std::optional<bool> BindShaderVariables(ShaderVariableBinder *binder) {
         (void)binder;
+        return std::nullopt;
+    }
+
+    /// @brief インスタンシング描画時のリソースバインド（バッチ単位で 1 回）
+    /// @param binder シェーダー変数バインダー
+    /// @param instanceCount インスタンス数
+    /// @return true を返した場合のみインスタンスデータ送信が呼ばれる。処理を行わない場合は std::nullopt を返す
+    virtual std::optional<bool> BindInstancingResources(ShaderVariableBinder *binder, std::uint32_t instanceCount) {
+        (void)binder;
+        (void)instanceCount;
+        return std::nullopt;
+    }
+
+    /// @brief インスタンシング描画用インスタンスマップ取得（バッチ単位で 1 回）
+    /// @details 実装したコンポーネントは、内部で保持しているインスタンシング用バッファを Map し、
+    ///          `SubmitInstance` に渡される書き込み先ポインタを返す。
+    /// @return 取得したマップポインタ（未対応の場合は nullptr）
+    virtual void *AcquireInstanceMap() { return nullptr; }
+
+    /// @brief インスタンシング描画用インスタンスマップ解放（バッチ単位で 1 回）
+    /// @param instanceMap AcquireInstanceMap が返したポインタ
+    virtual void ReleaseInstanceMap(void *instanceMap) { (void)instanceMap; }
+
+    /// @brief インスタンシング描画時のインスタンスデータ送信（インスタンス単位）
+    /// @param instanceMap 送信先のインスタンスマップ
+    /// @param instanceIndex インスタンスのインデックス
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
+    virtual std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) {
+        (void)instanceMap;
+        (void)instanceIndex;
         return std::nullopt;
     }
 

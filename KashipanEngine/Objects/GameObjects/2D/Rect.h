@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class Rect : public Object2DBase {
 public:
-    Rect(const std::string &name = "Rect");
+    Rect();
     ~Rect() override = default;
 
 protected:

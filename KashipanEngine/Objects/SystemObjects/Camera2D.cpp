@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 Camera2D::Camera2D()
     : Object2DBase("Camera2D") {
-    cameraBufferGPU_ = std::make_unique<ConstantBufferResource>(sizeof(CameraBuffer));
+    SetRenderType(RenderType::Standard);
 
     // 既存の 2D 系初期値に寄せる（ピクセル座標ベース）
     left_ = 0.0f;
@@ -179,21 +179,10 @@ void Camera2D::UpdateCameraBufferCPU() const {
     cameraBufferCPU_.viewProjection = GetViewProjectionMatrix();
 }
 
-void Camera2D::Upload() const {
-    if (!cameraBufferGPU_) return;
-    void *mapped = cameraBufferGPU_->Map();
-    if (!mapped) return;
-    std::memcpy(mapped, &cameraBufferCPU_, sizeof(CameraBuffer));
-    cameraBufferGPU_->Unmap();
-}
-
 bool Camera2D::Render(ShaderVariableBinder &shaderBinder) {
-    if (!cameraBufferGPU_) return false;
-
+    (void)shaderBinder;
     UpdateCameraBufferCPU();
-    Upload();
-
-    return shaderBinder.Bind("Vertex:gCamera", cameraBufferGPU_.get());
+    return true;
 }
 
 } // namespace KashipanEngine

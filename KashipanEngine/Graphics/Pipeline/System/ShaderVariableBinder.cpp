@@ -81,14 +81,23 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* r
     const ShaderBindLocation& loc = it->second;
     resource->SetCommandList(cmd_);
     if (loc.isRootCBV) {
+        if (resource->GetResourceViewType() != ResourceViewType::CBV) {
+            return false;
+        }
         cmd_->SetGraphicsRootConstantBufferView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     if (loc.isRootSRV) {
+        if (resource->GetResourceViewType() != ResourceViewType::SRV) {
+            return false;
+        }
         cmd_->SetGraphicsRootShaderResourceView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     if (loc.isRootUAV) {
+        if (resource->GetResourceViewType() != ResourceViewType::UAV) {
+            return false;
+        }
         cmd_->SetGraphicsRootUnorderedAccessView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
@@ -105,7 +114,7 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, D3D12_GPU_DESCRIPTOR
     const ShaderBindLocation& loc = it->second;
     if (!loc.isDescriptorTable) return false;
 
-    if (loc.descriptorOffset != 0) {
+    /*if (loc.descriptorOffset != 0) {
         auto *device = IGraphicsResource::GetDevice({});
         if (!device) return false;
 
@@ -113,7 +122,7 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, D3D12_GPU_DESCRIPTOR
         const UINT inc = device->GetDescriptorHandleIncrementSize(
             isSampler ? D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER : D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         descriptorHandle.ptr += static_cast<UINT64>(loc.descriptorOffset) * static_cast<UINT64>(inc);
-    }
+    }*/
 
     cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
     return true;

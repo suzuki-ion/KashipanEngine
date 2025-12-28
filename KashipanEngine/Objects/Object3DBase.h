@@ -5,18 +5,18 @@
 #include <unordered_map>
 #include <span>
 #include <typeindex>
+#include <cstdint>
+#include <cstring>
+#include <string>
 #include "Core/Window.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Graphics/Resources.h"
 #include "Objects/IObjectComponent.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Vector4.h"
 #include "../../MyStd/AnyUnorderedMap.h"
-
-#if defined(USE_IMGUI)
-#include <imgui.h>
-#include "Utilities/Translation.h"
-#endif
 
 namespace KashipanEngine {
 
@@ -69,7 +69,7 @@ public:
     UINT GetIndexCount() const { return indexCount_; }
 
     /// @brief レンダーパスの作成
-    RenderPassInfo3D CreateRenderPass(Window *targetWindow,
+    RenderPass CreateRenderPass(Window *targetWindow,
         const std::string &pipelineName,
         const std::string &passName = "GameObject3D Render Pass");
 
@@ -211,10 +211,22 @@ public:
     /// @return 削除に成功した場合は true
     bool RemoveComponent3D(const std::string &componentName, size_t index = 0);
 
+    /// @brief インスタンシング用バッチキー（同一キー同士がまとめて描画される）
+    std::uint64_t GetInstanceBatchKey() const { return instanceBatchKey_; }
+
 protected:
     /// @brief コンストラクタ
     /// @param name オブジェクト名
     Object3DBase(const std::string &name);
+
+    // インスタンシング用データ
+    struct InstanceTransform {
+        Matrix4x4 world;
+    };
+    struct InstanceMaterial {
+        Vector4 color;
+        Matrix4x4 uvTransform;
+    };
 
     /// @brief コンストラクタ
     /// @param name オブジェクト名
@@ -279,6 +291,18 @@ protected:
     /// @brief デフォルト描画コマンド生成ヘルパー
     RenderCommand CreateDefaultRenderCommand() const;
 
+    virtual bool RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount);
+    virtual bool SubmitInstance(void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex);
+
+    void SetRenderType(RenderType type) { renderType_ = type; }
+
+    void SetConstantBufferRequirements(std::vector<RenderPass::ConstantBufferRequirement> reqs) {
+        constantBufferRequirements_ = std::move(reqs);
+    }
+    void SetUpdateConstantBuffersFunction(std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> fn) {
+        updateConstantBuffersFunction_ = std::move(fn);
+    }
+
 private:
     friend class Object3DContext;
 
@@ -312,6 +336,11 @@ private:
     std::vector<size_t> shaderBindingComponentIndices_;
 
     MyStd::AnyUnorderedMap userData_;
+
+    std::uint64_t instanceBatchKey_ = 0;
+    RenderType renderType_ = RenderType::Standard;
+    std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements_;
+    std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction_;
 };
 
 } // namespace KashipanEngine

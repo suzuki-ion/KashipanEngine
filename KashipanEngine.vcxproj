@@ -171,6 +171,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Graphics\Resources\IndexBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\RenderTargetResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\VertexBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
@@ -307,6 +308,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Graphics\Resources\IndexBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\RenderTargetResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />

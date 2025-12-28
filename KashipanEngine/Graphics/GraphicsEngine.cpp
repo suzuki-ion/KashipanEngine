@@ -27,11 +27,26 @@
 #include "Utilities/Translation.h"
 #endif
 
+#include <unordered_map>
+
 namespace KashipanEngine {
 
-GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon)
+namespace {
+constexpr bool kEnableInstancingTest = true;
+
+// Number of objects to generate for instancing verification
+constexpr std::uint32_t kInstancingTestCount2D = 128;
+constexpr std::uint32_t kInstancingTestCount3D = 128;
+
+// Shared batch keys (must be non-zero to enable Renderer batching)
+constexpr std::uint64_t kBatchKey2D = 0x2D2D2D2D2D2D2D2Dull;
+constexpr std::uint64_t kBatchKey3D = 0x3D3D3D3D3D3D3D3Dull;
+
+} // namespace
+
+GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon *directXCommon)
     : directXCommon_(directXCommon) {
-    auto* device = directXCommon_->GetDevice(Passkey<GraphicsEngine>{});
+    auto *device = directXCommon_->GetDevice(Passkey<GraphicsEngine>{});
     auto &settings = GetEngineSettings().rendering;
     pipelineManager_ = std::make_unique<PipelineManager>(Passkey<GraphicsEngine>{},
         device, settings.pipelineSettingsPath);
@@ -46,6 +61,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     // テスト用（Object2DBase / Object3DBase の vector に格納できるか）
     static std::vector<std::unique_ptr<Object3DBase>> testObjects3D;
     static std::vector<std::unique_ptr<Object2DBase>> testObjects2D;
+
     static bool initialized = false;
 
     //--------- 初期化 ---------//
@@ -54,7 +70,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
         // 3Dオブジェクトの初期化
         //==================================================
         testObjects3D.clear();
-        testObjects3D.reserve(6);
+        testObjects3D.reserve(2 + (kEnableInstancingTest ? kInstancingTestCount3D : 0));
 
         // Camera3D
         testObjects3D.emplace_back(std::make_unique<Camera3D>());
@@ -73,77 +89,118 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             light->SetIntensity(1.0f);
         }
 
-        // Triangle3D 1
-        testObjects3D.emplace_back(std::make_unique<Triangle3D>());
+        // インスタンシング用の三角形
+        {
+            const uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount3D : 0;
+            Log(std::string("[InstancingTest] Setup started. instancing=")
+                + (kEnableInstancingTest ? "true" : "false")
+                + " 3DCount=" + std::to_string(instanceCount),
+                LogSeverity::Info);
+            for (std::uint32_t i = 0; i < kInstancingTestCount3D; ++i) {
+                auto obj = std::make_unique<Triangle3D>();
+                obj->SetName(std::string("InstancingTriangle3D_") + std::to_string(i));
 
-        // Triangle3D 2
-        testObjects3D.emplace_back(std::make_unique<Triangle3D>());
-        if (auto *tri = static_cast<Triangle3D *>(testObjects3D.back().get())) {
-            if (auto *transformComp = tri->GetComponent3D<Transform3D>()) {
-                transformComp->SetRotate(Vector3(0.0f, 0.5f, 0.0f));
+                if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                    const float x = (static_cast<float>(i % 16) - 8.0f) * 0.4f;
+                    const float y = (static_cast<float>(i / 16) - 2.0f) * 0.4f;
+                    tr->SetTranslate(Vector3(x, y, 0.0f));
+                }
+
+                testObjects3D.emplace_back(std::move(obj));
             }
         }
 
-        // Sphere
-        testObjects3D.emplace_back(std::make_unique<Sphere>());
-        if (auto *sphere = static_cast<Sphere *>(testObjects3D.back().get())) {
-            if (auto *transformComp = sphere->GetComponent3D<Transform3D>()) {
-                transformComp->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
-            }
-        }
+        //// Triangle3D 1
+        //testObjects3D.emplace_back(std::make_unique<Triangle3D>());
 
-        // Box
-        testObjects3D.emplace_back(std::make_unique<Box>());
-        if (auto *box = static_cast<Box *>(testObjects3D.back().get())) {
-            if (auto *transformComp = box->GetComponent3D<Transform3D>()) {
-                transformComp->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
-            }
-        }
+        //// Triangle3D 2
+        //testObjects3D.emplace_back(std::make_unique<Triangle3D>());
+        //if (auto *tri = static_cast<Triangle3D *>(testObjects3D.back().get())) {
+        //    if (auto *transformComp = tri->GetComponent3D<Transform3D>()) {
+        //        transformComp->SetRotate(Vector3(0.0f, 0.5f, 0.0f));
+        //    }
+        //}
+
+        //// Sphere
+        //testObjects3D.emplace_back(std::make_unique<Sphere>());
+        //if (auto *sphere = static_cast<Sphere *>(testObjects3D.back().get())) {
+        //    if (auto *transformComp = sphere->GetComponent3D<Transform3D>()) {
+        //        transformComp->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
+        //    }
+        //}
+
+        //// Box
+        //testObjects3D.emplace_back(std::make_unique<Box>());
+        //if (auto *box = static_cast<Box *>(testObjects3D.back().get())) {
+        //    if (auto *transformComp = box->GetComponent3D<Transform3D>()) {
+        //        transformComp->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
+        //    }
+        //}
 
         //==================================================
         // 2Dオブジェクトの初期化
         //==================================================
         testObjects2D.clear();
-        testObjects2D.reserve(5);
+        testObjects2D.reserve(1 + (kEnableInstancingTest ? kInstancingTestCount2D : 0));
 
         // Camera2D
         testObjects2D.emplace_back(std::make_unique<Camera2D>());
 
-        // Triangle2D
-        testObjects2D.emplace_back(std::make_unique<Triangle2D>());
-        if (auto *tri = static_cast<Triangle2D *>(testObjects2D.back().get())) {
-            if (auto *transformComp = tri->GetComponent2D<Transform2D>()) {
-                transformComp->SetTranslate(Vector2(50.0f, 50.0f));
-                transformComp->SetScale(Vector2(100.0f, 100.0f));
+        // インスタンシング用の三角形
+        {
+            const uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount2D : 0;
+            Log(std::string("[InstancingTest] Setup started. instancing=")
+                + (kEnableInstancingTest ? "true" : "false")
+                + " 2DCount=" + std::to_string(instanceCount),
+                LogSeverity::Info);
+            for (std::uint32_t i = 0; i < kInstancingTestCount2D; ++i) {
+                auto obj = std::make_unique<Triangle2D>();
+                obj->SetName(std::string("InstancingTriangle2D_") + std::to_string(i));
+                if (auto *tr = obj->GetComponent2D<Transform2D>()) {
+                    const float x = 50.0f + static_cast<float>(i % 16) * 30.0f;
+                    const float y = 200.0f + static_cast<float>(i / 16) * 30.0f;
+                    tr->SetTranslate(Vector2(x, y));
+                    tr->SetScale(Vector2(20.0f, 20.0f));
+                }
+                testObjects2D.emplace_back(std::move(obj));
             }
         }
 
-        // Ellipse
-        testObjects2D.emplace_back(std::make_unique<Ellipse>());
-        if (auto *ellipse = static_cast<Ellipse *>(testObjects2D.back().get())) {
-            if (auto *transformComp = ellipse->GetComponent2D<Transform2D>()) {
-                transformComp->SetTranslate(Vector2(150.0f, 50.0f));
-                transformComp->SetScale(Vector2(100.0f, 100.0f));
-            }
-        }
+        //// Triangle2D
+        //testObjects2D.emplace_back(std::make_unique<Triangle2D>());
+        //if (auto *tri = static_cast<Triangle2D *>(testObjects2D.back().get())) {
+        //    if (auto *transformComp = tri->GetComponent2D<Transform2D>()) {
+        //        transformComp->SetTranslate(Vector2(50.0f, 50.0f));
+        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
+        //    }
+        //}
 
-        // Rect
-        testObjects2D.emplace_back(std::make_unique<Rect>());
-        if (auto *rect = static_cast<Rect *>(testObjects2D.back().get())) {
-            if (auto *transformComp = rect->GetComponent2D<Transform2D>()) {
-                transformComp->SetTranslate(Vector2(250.0f, 50.0f));
-                transformComp->SetScale(Vector2(100.0f, 100.0f));
-            }
-        }
+        //// Ellipse
+        //testObjects2D.emplace_back(std::make_unique<Ellipse>());
+        //if (auto *ellipse = static_cast<Ellipse *>(testObjects2D.back().get())) {
+        //    if (auto *transformComp = ellipse->GetComponent2D<Transform2D>()) {
+        //        transformComp->SetTranslate(Vector2(150.0f, 50.0f));
+        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
+        //    }
+        //}
 
-        // Sprite
-        testObjects2D.emplace_back(std::make_unique<Sprite>());
-        if (auto *sprite = static_cast<Sprite *>(testObjects2D.back().get())) {
-            if (auto *transformComp = sprite->GetComponent2D<Transform2D>()) {
-                transformComp->SetTranslate(Vector2(350.0f, 50.0f));
-                transformComp->SetScale(Vector2(100.0f, 100.0f));
-            }
-        }
+        //// Rect
+        //testObjects2D.emplace_back(std::make_unique<Rect>());
+        //if (auto *rect = static_cast<Rect *>(testObjects2D.back().get())) {
+        //    if (auto *transformComp = rect->GetComponent2D<Transform2D>()) {
+        //        transformComp->SetTranslate(Vector2(250.0f, 50.0f));
+        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
+        //    }
+        //}
+
+        //// Sprite
+        //testObjects2D.emplace_back(std::make_unique<Sprite>());
+        //if (auto *sprite = static_cast<Sprite *>(testObjects2D.back().get())) {
+        //    if (auto *transformComp = sprite->GetComponent2D<Transform2D>()) {
+        //        transformComp->SetTranslate(Vector2(350.0f, 50.0f));
+        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
+        //    }
+        //}
 
         initialized = true;
     }
@@ -194,27 +251,89 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     auto mainWindow = Window::GetWindow("Main Window");
     auto overlayWindow = Window::GetWindow("Overlay Window");
 
+    // Find system objects
+    Camera3D *camera3D = nullptr;
+    DirectionalLight *dirLight = nullptr;
+    for (auto &obj : testObjects3D) {
+        if (!obj) continue;
+        if (!camera3D && obj->GetName() == "Camera3D") camera3D = static_cast<Camera3D *>(obj.get());
+        if (!dirLight && obj->GetName() == "DirectionalLight") dirLight = static_cast<DirectionalLight *>(obj.get());
+    }
+
+    Camera2D *camera2D = nullptr;
+    for (auto &obj : testObjects2D) {
+        if (!obj) continue;
+        if (!camera2D && obj->GetName() == "Camera2D") camera2D = static_cast<Camera2D *>(obj.get());
+    }
+
+    std::vector<Window *> activeWindows;
+    if (mainWindow) activeWindows.push_back(mainWindow);
+    if (overlayWindow) activeWindows.push_back(overlayWindow);
+
     auto registerPasses = [&](Window *targetWindow) {
         if (!targetWindow) return;
 
         // 3Dオブジェクト描画パス登録
-        for (auto &obj : testObjects3D) {
-            if (!obj) continue;
-            auto passInfo = obj->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", "Test Object3D Pass");
-            renderer_->RegisterRenderPass(passInfo);
+        {
+            // Camera / Light constant buffers are configured via SystemObject-derived classes (not via RenderPass)
+            if (camera3D && dirLight) {
+                camera3D->ConfigureConstantBuffers({
+                    {"Vertex:gCamera", sizeof(Camera3D::CameraBuffer)},
+                    {"Pixel:gDirectionalLight", sizeof(DirectionalLight::LightBuffer)},
+                },
+                [camera3D, dirLight](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
+                    if (!constantBufferMaps) return false;
+                    if (!camera3D || !dirLight) return false;
+
+                    camera3D->UpdateCameraBufferCPUForRenderer();
+                    dirLight->UpdateLightBufferCPUForRenderer();
+
+                    auto **maps = static_cast<void **>(constantBufferMaps);
+                    const auto &cam = camera3D->GetCameraBufferCPU();
+                    const auto &light = dirLight->GetLightBufferCPU();
+                    std::memcpy(maps[0], &cam, sizeof(Camera3D::CameraBuffer));
+                    std::memcpy(maps[1], &light, sizeof(DirectionalLight::LightBuffer));
+                    return true;
+                });
+            }
+
+            for (auto &obj : testObjects3D) {
+                if (!obj) continue;
+                auto passInfo = obj->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", obj->GetName() + " Pass");
+                renderer_->RegisterRenderPass(passInfo);
+            }
         }
 
         // 2Dオブジェクト描画パス登録
-        for (auto &obj : testObjects2D) {
-            if (!obj) continue;
-            auto passInfo = obj->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", "Test Object2D Pass");
-            renderer_->RegisterRenderPass(passInfo);
+        {
+            if (camera2D) {
+                camera2D->ConfigureConstantBuffers({
+                    {"Vertex:gCamera", sizeof(Camera2D::CameraBuffer)},
+                },
+                [camera2D](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
+                    if (!constantBufferMaps) return false;
+                    if (!camera2D) return false;
+
+                    camera2D->UpdateCameraBufferCPUForRenderer();
+
+                    auto **maps = static_cast<void **>(constantBufferMaps);
+                    const auto &cam = camera2D->GetCameraBufferCPU();
+                    std::memcpy(maps[0], &cam, sizeof(Camera2D::CameraBuffer));
+                    return true;
+                });
+            }
+
+            for (auto &obj : testObjects2D) {
+                if (!obj) continue;
+                auto passInfo = obj->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", obj->GetName() + " Pass");
+                renderer_->RegisterRenderPass(passInfo);
+            }
         }
     };
 
-    if (mainWindow) {
+    /*if (mainWindow) {
         registerPasses(mainWindow);
-    }
+    }*/
     if (overlayWindow) {
         registerPasses(overlayWindow);
     }

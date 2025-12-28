@@ -2,8 +2,9 @@
 
 namespace KashipanEngine {
 
-Line3D::Line3D(size_t lineCount, const std::string &name)
-    : Object3DBase(name, sizeof(Vertex), sizeof(Index), lineCount + 1, lineCount + 1) {
+Line3D::Line3D(size_t lineCount)
+    : Object3DBase("Line3D", sizeof(Vertex), sizeof(Index), lineCount + 1, lineCount + 1) {
+    SetRenderType(RenderType::Instancing);
     LogScope scope;
 
     const auto vc = GetVertexCount();

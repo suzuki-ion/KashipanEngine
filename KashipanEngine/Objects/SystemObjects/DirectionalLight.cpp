@@ -3,11 +3,10 @@
 
 namespace KashipanEngine {
 
-DirectionalLight::DirectionalLight(const std::string &name)
-    : Object3DBase(name) {
-    lightBufferGPU_ = std::make_unique<ConstantBufferResource>(sizeof(LightBuffer));
+DirectionalLight::DirectionalLight()
+    : Object3DBase("DirectionalLight") {
+    SetRenderType(RenderType::Standard);
     UpdateLightBufferCPU();
-    Upload();
 }
 
 void DirectionalLight::SetEnabled(bool enabled) {
@@ -33,21 +32,11 @@ void DirectionalLight::UpdateLightBufferCPU() const {
     lightBufferCPU_.intensity = intensity_;
 }
 
-void DirectionalLight::Upload() const {
-    if (!lightBufferGPU_) return;
-    void *mapped = lightBufferGPU_->Map();
-    if (!mapped) return;
-    std::memcpy(mapped, &lightBufferCPU_, sizeof(LightBuffer));
-    lightBufferGPU_->Unmap();
-}
-
 bool DirectionalLight::Render(ShaderVariableBinder &shaderBinder) {
-    if (!lightBufferGPU_) return false;
-
+    (void)shaderBinder;
+    // DirectionalLight constant buffer update/bind is handled in Renderer at batch time.
     UpdateLightBufferCPU();
-    Upload();
-
-    return shaderBinder.Bind("Pixel:gDirectionalLight", lightBufferGPU_.get());
+    return true;
 }
 
 } // namespace KashipanEngine

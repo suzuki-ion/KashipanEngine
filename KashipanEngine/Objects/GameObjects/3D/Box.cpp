@@ -3,7 +3,8 @@
 
 namespace KashipanEngine {
 
-Box::Box(const std::string &name) : Object3DBase(name, sizeof(Vertex), sizeof(Index), 24, 36) {
+Box::Box() : Object3DBase("Box", sizeof(Vertex), sizeof(Index), 24, 36) {
+    SetRenderType(RenderType::Instancing);
     LogScope scope;
 
     auto v = GetVertexSpan<Vertex>();

@@ -6,7 +6,8 @@ namespace KashipanEngine {
 
 Camera3D::Camera3D()
     : Object3DBase("Camera3D") {
-    cameraBufferGPU_ = std::make_unique<ConstantBufferResource>(sizeof(CameraBuffer));
+    SetRenderType(RenderType::Standard);
+    // GPU constant buffer is now owned by Renderer
 
     // 既存シェーダ側のデフォルトに寄せた初期値
     fovY_ = 0.45f;
@@ -196,22 +197,11 @@ void Camera3D::UpdateCameraBufferCPU() const {
     cameraBufferCPU_.fov = fovY_;
 }
 
-void Camera3D::Upload() const {
-    if (!cameraBufferGPU_) return;
-    void *mapped = cameraBufferGPU_->Map();
-    if (!mapped) return;
-    std::memcpy(mapped, &cameraBufferCPU_, sizeof(CameraBuffer));
-    cameraBufferGPU_->Unmap();
-}
-
 bool Camera3D::Render(ShaderVariableBinder &shaderBinder) {
-    if (!cameraBufferGPU_) return false;
-
-    // Render時点で最新状態をgCameraへ反映
+    (void)shaderBinder;
+    // Camera constant buffer update/bind is handled in Renderer at batch time.
     UpdateCameraBufferCPU();
-    Upload();
-
-    return shaderBinder.Bind("Vertex:gCamera", cameraBufferGPU_.get());
+    return true;
 }
 
 } // namespace KashipanEngine

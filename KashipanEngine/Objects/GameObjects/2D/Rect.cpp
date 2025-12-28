@@ -2,7 +2,8 @@
 
 namespace KashipanEngine {
 
-Rect::Rect(const std::string &name) : Object2DBase(name, sizeof(Vertex), sizeof(Index), 4, 6) {
+Rect::Rect() : Object2DBase("Rect", sizeof(Vertex), sizeof(Index), 4, 6) {
+    SetRenderType(RenderType::Instancing);
     LogScope scope;
 
     auto v = GetVertexSpan<Vertex>();

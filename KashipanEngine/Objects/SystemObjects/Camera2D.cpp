@@ -22,6 +22,16 @@ Camera2D::Camera2D()
     viewportHeight_ = 720.0f;
     viewportMinDepth_ = 0.0f;
     viewportMaxDepth_ = 1.0f;
+    
+    SetConstantBufferRequirements({ { "Vertex:gCamera", sizeof(CameraBuffer) } });
+    SetUpdateConstantBuffersFunction(
+        [this](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
+            if (!constantBufferMaps) return false;
+            UpdateCameraBufferCPU();
+            auto **maps = static_cast<void **>(constantBufferMaps);
+            std::memcpy(maps[0], &cameraBufferCPU_, sizeof(CameraBuffer));
+            return true;
+        });
 }
 
 void Camera2D::SetLeft(float left) {

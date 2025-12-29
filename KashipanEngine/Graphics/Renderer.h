@@ -97,22 +97,39 @@ private:
 /// @brief 描画用のレンダラークラス
 class Renderer final {
 public:
+    struct PersistentPassHandle {
+        std::uint64_t id = 0;
+        bool IsValid() const { return id != 0; }
+        explicit operator bool() const { return IsValid(); }
+        bool operator==(const PersistentPassHandle &o) const { return id == o.id; }
+        bool operator!=(const PersistentPassHandle &o) const { return id != o.id; }
+    };
+
     /// @brief コンストラクタ
     /// @param maxRenderPasses 最大レンダーパス数
     Renderer(Passkey<GraphicsEngine>, size_t maxRenderPasses, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
         : directXCommon_(directXCommon), pipelineManager_(pipelineManager) {
-        renderPasses2DStandard_.reserve(maxRenderPasses);
-        renderPasses3DStandard_.reserve(maxRenderPasses);
+        persistent2DStandard_.reserve(maxRenderPasses);
+        persistent3DStandard_.reserve(maxRenderPasses);
     }
     ~Renderer() = default;
-    
+
     Renderer(const Renderer&) = delete;
     Renderer& operator=(const Renderer&) = delete;
     Renderer(Renderer&&) = delete;
     Renderer& operator=(Renderer&&) = delete;
 
+    /// @brief 永続レンダーパス登録（返り値のハンドルで解除可能）
+    PersistentPassHandle RegisterPersistentRenderPass(RenderPass &&pass);
+
+    /// @brief 永続レンダーパス解除
+    bool UnregisterPersistentRenderPass(PersistentPassHandle handle);
+
     /// @brief レンダーパス登録
     void RegisterRenderPass(const RenderPass &pass);
+
+    /// @brief レンダーパス登録（ムーブ）
+    void RegisterRenderPass(RenderPass &&pass);
 
     /// @brief フレーム描画処理
     void RenderFrame(Passkey<GraphicsEngine>);
@@ -121,13 +138,10 @@ public:
     void RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandList* commandList);
 
 private:
-    void RenderPasses2D();
-    void RenderPasses3D();
-
-    void RenderPasses2DStandard();
-    void RenderPasses2DInstancing();
-    void RenderPasses3DStandard();
-    void RenderPasses3DInstancing();
+    void RenderPasses2DStandardPersistent();
+    void RenderPasses2DInstancingPersistent();
+    void RenderPasses3DStandardPersistent();
+    void RenderPasses3DInstancingPersistent();
 
     /// @brief 描画コマンド発行処理
     void IssueRenderCommand(ID3D12GraphicsCommandList *commandList, const RenderCommand &renderCommand);
@@ -136,6 +150,15 @@ private:
     DirectXCommon *directXCommon_ = nullptr;
     /// @brief パイプラインマネージャーへのポインタ
     PipelineManager *pipelineManager_ = nullptr;
+
+    std::uint64_t nextPersistentPassId_ = 1;
+
+    struct PersistentPassEntry {
+        PersistentPassHandle handle;
+        RenderPass pass;
+    };
+
+    std::unordered_map<std::uint64_t, PersistentPassEntry> persistentPassesById_;
 
     /// @brief インスタンシング時のバッチ識別用キー
     struct BatchKey {
@@ -161,15 +184,11 @@ private:
         }
     };
 
-    /// @brief 2D/Standard 用レンダーパスリスト
-    std::vector<RenderPass> renderPasses2DStandard_;
-    /// @brief 3D/Standard 用レンダーパスリスト
-    std::vector<RenderPass> renderPasses3DStandard_;
-
-    /// @brief 2D/Instancing 用レンダーパスバッチ
-    std::unordered_map<BatchKey, std::vector<RenderPass>, BatchKeyHasher> renderPasses2DInstancing_;
-    /// @brief 3D/Instancing 用レンダーパスバッチ
-    std::unordered_map<BatchKey, std::vector<RenderPass>, BatchKeyHasher> renderPasses3DInstancing_;
+    // Persistent buckets (split at registration time)
+    std::vector<const RenderPass*> persistent2DStandard_;
+    std::vector<const RenderPass*> persistent3DStandard_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistent2DInstancing_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistent3DInstancing_;
 
     /// @brief ウィンドウごとのPipelineBinder
     std::unordered_map<HWND, PipelineBinder> windowBinders_;

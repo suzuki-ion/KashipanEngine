@@ -25,6 +25,8 @@ class GraphicsEngine;
 class PipelineManager;
 class Renderer;
 class ImGuiManager;
+class Object2DBase;
+class Object3DBase;
 
 /// @brief ウィンドウの種類
 enum class WindowType {
@@ -91,6 +93,8 @@ public:
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
     static void SetPipelineManager(Passkey<GraphicsEngine>, PipelineManager *pm) { sPipelineManager = pm; }
     static void SetRenderer(Passkey<GraphicsEngine>, Renderer *renderer) { sRenderer = renderer; }
+    static Renderer *GetRenderer(Passkey<Object2DBase>) { return sRenderer; }
+    static Renderer *GetRenderer(Passkey<Object3DBase>) { return sRenderer; }
 
     /// @brief 全ウィンドウ破棄
     static void AllDestroy(Passkey<GameEngine>);

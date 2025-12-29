@@ -74,6 +74,12 @@ public:
     /// @brief インデックス数取得
     UINT GetIndexCount() const { return indexCount_; }
 
+    /// @brief 描画先/パイプラインが確定したタイミングで永続レンダーパスを登録
+    void AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
+
+    /// @brief 永続レンダーパス登録を解除
+    void DetachFromRenderer();
+
     /// @brief レンダーパスの作成
     RenderPass CreateRenderPass(Window *targetWindow,
         const std::string &pipelineName,
@@ -317,6 +323,9 @@ protected:
 private:
     friend class Object2DContext;
 
+    /// @brief 永続レンダーパスハンドル
+    Renderer::PersistentPassHandle persistentPassHandle_{};
+
     struct ShaderBindingFailureInfo {
         size_t componentIndex;
         std::string componentType;
@@ -328,6 +337,11 @@ private:
     std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
 
     std::string name_ = "GameObject2D";
+    std::string passName_ = "GameObject2D";
+
+    // RenderPass cache (static parts are initialized once, variable parts updated per call)
+    mutable std::optional<RenderPass> cachedRenderPass_;
+
     UINT vertexCount_ = 0;
     UINT indexCount_ = 0;
     std::unique_ptr<VertexBufferResource> vertexBuffer_;

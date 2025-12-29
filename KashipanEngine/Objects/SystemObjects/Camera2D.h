@@ -11,12 +11,6 @@ public:
     Camera2D();
     ~Camera2D() override = default;
 
-    void ConfigureConstantBuffers(std::vector<RenderPass::ConstantBufferRequirement> reqs,
-        std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> fn) {
-        SetConstantBufferRequirements(std::move(reqs));
-        SetUpdateConstantBuffersFunction(std::move(fn));
-    }
-
     const Matrix4x4 &GetViewMatrix() const;
     const Matrix4x4 &GetProjectionMatrix() const;
     const Matrix4x4 &GetViewProjectionMatrix() const;
@@ -61,8 +55,6 @@ public:
     };
 
     const CameraBuffer &GetCameraBufferCPU() const { return cameraBufferCPU_; }
-
-    void UpdateCameraBufferCPUForRenderer() const { UpdateCameraBufferCPU(); }
 
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;

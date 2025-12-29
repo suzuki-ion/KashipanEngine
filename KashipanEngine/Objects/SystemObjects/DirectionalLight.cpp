@@ -7,6 +7,16 @@ DirectionalLight::DirectionalLight()
     : Object3DBase("DirectionalLight") {
     SetRenderType(RenderType::Standard);
     UpdateLightBufferCPU();
+
+    SetConstantBufferRequirements({ { "Pixel:gDirectionalLight", sizeof(LightBuffer) } });
+    SetUpdateConstantBuffersFunction(
+        [this](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
+            if (!constantBufferMaps) return false;
+            UpdateLightBufferCPU();
+            auto **maps = static_cast<void **>(constantBufferMaps);
+            std::memcpy(maps[0], &lightBufferCPU_, sizeof(LightBuffer));
+            return true;
+        });
 }
 
 void DirectionalLight::SetEnabled(bool enabled) {

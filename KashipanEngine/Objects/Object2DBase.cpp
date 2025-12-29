@@ -9,6 +9,7 @@
 namespace KashipanEngine {
 
 Object2DBase::~Object2DBase() {
+    DetachFromRenderer();
     // コンポーネントの終了処理
     for (auto &c : components_) {
         c->Finalize();
@@ -20,30 +21,67 @@ Object2DBase::~Object2DBase() {
     components_.clear();
 }
 
-RenderPass Object2DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
-    RenderPass passInfo(Passkey<Object2DBase>{});
-    passInfo.window = targetWindow;
-    passInfo.pipelineName = pipelineName;
-    passInfo.passName = passName;
-    passInfo.renderType = renderType_;
-    passInfo.constantBufferRequirements = constantBufferRequirements_;
-    passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
+void Object2DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
+    if (!targetWindow) return;
+    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    if (!renderer) return;
+    
+    if (persistentPassHandle_) {
+        renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
+        persistentPassHandle_ = {};
+    }
 
-    passInfo.batchKey = instanceBatchKey_;
-    passInfo.instanceBufferRequirements = {
-        {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
-        {"Pixel:gMaterials", sizeof(InstanceMaterial)},
-    };
-    passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
-        return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
-    };
-    passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
-        return RenderBatched(shaderBinder, instanceCount);
-    };
-    passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
-        return CreateRenderCommand(pipelineBinder);
-    };
-    return passInfo;
+    auto pass = CreateRenderPass(targetWindow, pipelineName, passName_);
+    persistentPassHandle_ = renderer->RegisterPersistentRenderPass(std::move(pass));
+}
+
+void Object2DBase::DetachFromRenderer() {
+    if (!persistentPassHandle_) return;
+    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    if (renderer) {
+        renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
+    }
+    persistentPassHandle_ = {};
+}
+
+RenderPass Object2DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
+    (void)passName; // passName is fixed (constructor-provided name)
+
+    if (!cachedRenderPass_) {
+        RenderPass passInfo(Passkey<Object2DBase>{});
+
+        passInfo.passName = passName_;
+        passInfo.renderType = renderType_;
+        passInfo.constantBufferRequirements = constantBufferRequirements_;
+        passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
+
+        passInfo.batchKey = instanceBatchKey_;
+        passInfo.instanceBufferRequirements = {
+            {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
+            {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+        };
+        passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+        };
+        passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
+            return RenderBatched(shaderBinder, instanceCount);
+        };
+        passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
+            return CreateRenderCommand(pipelineBinder);
+        };
+
+        cachedRenderPass_.emplace(std::move(passInfo));
+    }
+
+    // Update only variable parts
+    cachedRenderPass_->window = targetWindow;
+    cachedRenderPass_->pipelineName = pipelineName;
+    cachedRenderPass_->renderType = renderType_;
+    cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
+    cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
+    cachedRenderPass_->batchKey = instanceBatchKey_;
+
+    return *cachedRenderPass_;
 }
 
 bool Object2DBase::RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) {
@@ -116,6 +154,7 @@ bool Object2DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
 Object2DBase::Object2DBase(const std::string &name) {
     LogScope scope;
     if (!name.empty()) name_ = name;
+    passName_ = name_;
     // 頂点やインデックスが要らないタイプのオブジェクトは描画用オブジェクトでないことが多いので、
     // インスタンスバッチキーにはポインタ値も混ぜる
     instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
@@ -126,6 +165,7 @@ Object2DBase::Object2DBase(const std::string &name) {
 Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
     LogScope scope;
     if (!name.empty()) name_ = name;
+    passName_ = name_;
     instanceBatchKey_ = std::hash<std::string>{}(name_);
     if (vertexCount == 0 && indexCount == 0) {
         Log(Translation("engine.object2d.invalid.vertex.index.count")
@@ -159,16 +199,7 @@ Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_
     Vector4 defaultMaterialColor{1.0f, 1.0f, 1.0f, 1.0f};
     TextureManager::TextureHandle defaultTexture
         = TextureManager::GetTextureFromFileName("uvChecker.png");
-    D3D12_SAMPLER_DESC defaultSamplerDesc{};
-    defaultSamplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    defaultSamplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    defaultSamplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    defaultSamplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    defaultSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    defaultSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
-    defaultSamplerDesc.MaxAnisotropy = 1;
-    SamplerManager::SamplerHandle defaultSampler
-        = SamplerManager::CreateSampler(defaultSamplerDesc);
+    SamplerManager::SamplerHandle defaultSampler = 1;
     RegisterComponent<Material2D>(defaultMaterialColor, defaultTexture, defaultSampler);
 }
 

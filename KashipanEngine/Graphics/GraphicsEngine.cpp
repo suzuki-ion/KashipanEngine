@@ -28,6 +28,10 @@
 #endif
 
 #include <unordered_map>
+#include <chrono>
+#include <vector>
+#include <cstdint>
+#include <algorithm>
 
 namespace KashipanEngine {
 
@@ -35,12 +39,54 @@ namespace {
 constexpr bool kEnableInstancingTest = true;
 
 // Number of objects to generate for instancing verification
-constexpr std::uint32_t kInstancingTestCount2D = 128;
-constexpr std::uint32_t kInstancingTestCount3D = 128;
+constexpr std::uint32_t kInstancingTestCount2D = 1024;
+constexpr std::uint32_t kInstancingTestCount3D = 1024;
 
-// Shared batch keys (must be non-zero to enable Renderer batching)
-constexpr std::uint64_t kBatchKey2D = 0x2D2D2D2D2D2D2D2Dull;
-constexpr std::uint64_t kBatchKey3D = 0x3D3D3D3D3D3D3D3Dull;
+#if defined(USE_IMGUI)
+class RollingAverage {
+public:
+    explicit RollingAverage(std::size_t capacity = 60) { SetCapacity(capacity); }
+
+    void SetCapacity(std::size_t capacity) {
+        capacity = std::max<std::size_t>(1, capacity);
+        if (capacity_ == capacity) return;
+
+        capacity_ = capacity;
+        samples_.clear();
+        samples_.reserve(capacity_);
+        writeIndex_ = 0;
+        sum_ = 0.0;
+    }
+
+    void Add(double value) {
+        if (samples_.size() < capacity_) {
+            samples_.push_back(value);
+            sum_ += value;
+            return;
+        }
+
+        sum_ -= samples_[writeIndex_];
+        samples_[writeIndex_] = value;
+        sum_ += value;
+
+        writeIndex_ = (writeIndex_ + 1) % capacity_;
+    }
+
+    double GetAverage() const {
+        if (samples_.empty()) return 0.0;
+        return sum_ / static_cast<double>(samples_.size());
+    }
+
+    std::size_t GetCapacity() const { return capacity_; }
+    std::size_t GetCount() const { return samples_.size(); }
+
+private:
+    std::vector<double> samples_{};
+    std::size_t capacity_ = 1;
+    std::size_t writeIndex_ = 0;
+    double sum_ = 0.0;
+};
+#endif
 
 } // namespace
 
@@ -64,6 +110,44 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
 
     static bool initialized = false;
 
+    auto mainWindow = Window::GetWindow("Main Window");
+    auto overlayWindow = Window::GetWindow("Overlay Window");
+    auto *targetWindow = overlayWindow ? overlayWindow : mainWindow;
+
+    auto attachIfPossible3D = [&](Object3DBase *obj) {
+        if (!obj || !targetWindow) return;
+        obj->AttachToRenderer(targetWindow, "Object3D.Solid.BlendNormal");
+    };
+    auto attachIfPossible2D = [&](Object2DBase *obj) {
+        if (!obj || !targetWindow) return;
+        obj->AttachToRenderer(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal");
+    };
+
+#if defined(USE_IMGUI)
+    static float updateMs = 0.0f;
+    static float passRegisterMs = 0.0f;
+    static float renderFrameMs = 0.0f;
+    static float totalMs = 0.0f;
+
+    static float fps = 0.0f;
+    static float frameMs = 0.0f;
+
+    static int spawn3DCount = 10;
+    static int spawn2DCount = 10;
+
+    static int profilingSampleCount = 60;
+
+    static RollingAverage avgUpdateMs(static_cast<std::size_t>(profilingSampleCount));
+    static RollingAverage avgPassRegisterMs(static_cast<std::size_t>(profilingSampleCount));
+    static RollingAverage avgRenderFrameMs(static_cast<std::size_t>(profilingSampleCount));
+    static RollingAverage avgTotalMs(static_cast<std::size_t>(profilingSampleCount));
+    static RollingAverage avgFps(static_cast<std::size_t>(profilingSampleCount));
+#endif
+
+#if defined(USE_IMGUI)
+    const auto frameBeginTp = std::chrono::high_resolution_clock::now();
+#endif
+
     //--------- 初期化 ---------//
     if (!initialized) {
         //==================================================
@@ -79,6 +163,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                 transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
             }
         }
+        attachIfPossible3D(static_cast<Object3DBase *>(testObjects3D.back().get()));
 
         // DirectionalLight
         testObjects3D.emplace_back(std::make_unique<DirectionalLight>());
@@ -88,6 +173,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
             light->SetDirection(Vector3(0.3f, -1.0f, 0.2f));
             light->SetIntensity(1.0f);
         }
+        attachIfPossible3D(static_cast<Object3DBase *>(testObjects3D.back().get()));
 
         // インスタンシング用の三角形
         {
@@ -96,7 +182,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                 + (kEnableInstancingTest ? "true" : "false")
                 + " 3DCount=" + std::to_string(instanceCount),
                 LogSeverity::Info);
-            for (std::uint32_t i = 0; i < kInstancingTestCount3D; ++i) {
+            for (std::uint32_t i = 0; i < (kEnableInstancingTest ? kInstancingTestCount3D : 0); ++i) {
                 auto obj = std::make_unique<Triangle3D>();
                 obj->SetName(std::string("InstancingTriangle3D_") + std::to_string(i));
 
@@ -105,37 +191,10 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                     const float y = (static_cast<float>(i / 16) - 2.0f) * 0.4f;
                     tr->SetTranslate(Vector3(x, y, 0.0f));
                 }
-
+                attachIfPossible3D(obj.get());
                 testObjects3D.emplace_back(std::move(obj));
             }
         }
-
-        //// Triangle3D 1
-        //testObjects3D.emplace_back(std::make_unique<Triangle3D>());
-
-        //// Triangle3D 2
-        //testObjects3D.emplace_back(std::make_unique<Triangle3D>());
-        //if (auto *tri = static_cast<Triangle3D *>(testObjects3D.back().get())) {
-        //    if (auto *transformComp = tri->GetComponent3D<Transform3D>()) {
-        //        transformComp->SetRotate(Vector3(0.0f, 0.5f, 0.0f));
-        //    }
-        //}
-
-        //// Sphere
-        //testObjects3D.emplace_back(std::make_unique<Sphere>());
-        //if (auto *sphere = static_cast<Sphere *>(testObjects3D.back().get())) {
-        //    if (auto *transformComp = sphere->GetComponent3D<Transform3D>()) {
-        //        transformComp->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
-        //    }
-        //}
-
-        //// Box
-        //testObjects3D.emplace_back(std::make_unique<Box>());
-        //if (auto *box = static_cast<Box *>(testObjects3D.back().get())) {
-        //    if (auto *transformComp = box->GetComponent3D<Transform3D>()) {
-        //        transformComp->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
-        //    }
-        //}
 
         //==================================================
         // 2Dオブジェクトの初期化
@@ -145,6 +204,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
 
         // Camera2D
         testObjects2D.emplace_back(std::make_unique<Camera2D>());
+        attachIfPossible2D(static_cast<Object2DBase *>(testObjects2D.back().get()));
 
         // インスタンシング用の三角形
         {
@@ -153,7 +213,7 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                 + (kEnableInstancingTest ? "true" : "false")
                 + " 2DCount=" + std::to_string(instanceCount),
                 LogSeverity::Info);
-            for (std::uint32_t i = 0; i < kInstancingTestCount2D; ++i) {
+            for (std::uint32_t i = 0; i < (kEnableInstancingTest ? kInstancingTestCount2D : 0); ++i) {
                 auto obj = std::make_unique<Triangle2D>();
                 obj->SetName(std::string("InstancingTriangle2D_") + std::to_string(i));
                 if (auto *tr = obj->GetComponent2D<Transform2D>()) {
@@ -162,48 +222,17 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                     tr->SetTranslate(Vector2(x, y));
                     tr->SetScale(Vector2(20.0f, 20.0f));
                 }
+                attachIfPossible2D(obj.get());
                 testObjects2D.emplace_back(std::move(obj));
             }
         }
 
-        //// Triangle2D
-        //testObjects2D.emplace_back(std::make_unique<Triangle2D>());
-        //if (auto *tri = static_cast<Triangle2D *>(testObjects2D.back().get())) {
-        //    if (auto *transformComp = tri->GetComponent2D<Transform2D>()) {
-        //        transformComp->SetTranslate(Vector2(50.0f, 50.0f));
-        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
-        //    }
-        //}
-
-        //// Ellipse
-        //testObjects2D.emplace_back(std::make_unique<Ellipse>());
-        //if (auto *ellipse = static_cast<Ellipse *>(testObjects2D.back().get())) {
-        //    if (auto *transformComp = ellipse->GetComponent2D<Transform2D>()) {
-        //        transformComp->SetTranslate(Vector2(150.0f, 50.0f));
-        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
-        //    }
-        //}
-
-        //// Rect
-        //testObjects2D.emplace_back(std::make_unique<Rect>());
-        //if (auto *rect = static_cast<Rect *>(testObjects2D.back().get())) {
-        //    if (auto *transformComp = rect->GetComponent2D<Transform2D>()) {
-        //        transformComp->SetTranslate(Vector2(250.0f, 50.0f));
-        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
-        //    }
-        //}
-
-        //// Sprite
-        //testObjects2D.emplace_back(std::make_unique<Sprite>());
-        //if (auto *sprite = static_cast<Sprite *>(testObjects2D.back().get())) {
-        //    if (auto *transformComp = sprite->GetComponent2D<Transform2D>()) {
-        //        transformComp->SetTranslate(Vector2(350.0f, 50.0f));
-        //        transformComp->SetScale(Vector2(100.0f, 100.0f));
-        //    }
-        //}
-
         initialized = true;
     }
+
+#if defined(USE_IMGUI)
+    const auto updateBeginTp = std::chrono::high_resolution_clock::now();
+#endif
 
     //--------- テスト用の更新処理 ---------//
 
@@ -221,124 +250,133 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     }
 
 #if defined(USE_IMGUI)
-    // テスト用：オブジェクト/コンポーネントのパラメータ調整ウィンドウ
-    if (ImGui::Begin(Translation("engine.imgui.testObjectInspector.title").c_str())) {
-        if (ImGui::CollapsingHeader(Translation("engine.imgui.testObjectInspector.objects3d").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
-            int i = 0;
-            for (auto &obj : testObjects3D) {
-                if (!obj) continue;
-                if (ImGui::TreeNode((std::to_string(i++) + ' ' + obj->GetName()).c_str())) {
-                    obj->ShowImGui();
-                    ImGui::TreePop();
+    const auto updateEndTp = std::chrono::high_resolution_clock::now();
+    updateMs = std::chrono::duration<float, std::milli>(updateEndTp - updateBeginTp).count();
+    const auto passBeginTp = updateEndTp;
+
+    if (ImGui::Begin("RenderPass Spawn/Despawn Test")) {
+        ImGui::Text("3D objects: %d", static_cast<int>(testObjects3D.size()));
+        ImGui::SliderInt("Spawn 3D", &spawn3DCount, 1, 500);
+        if (ImGui::Button("Add 3D Triangles")) {
+            const size_t base = testObjects3D.size();
+            for (int i = 0; i < spawn3DCount; ++i) {
+                auto obj = std::make_unique<Triangle3D>();
+                obj->SetName(std::string("SpawnedTriangle3D_") + std::to_string(base + static_cast<size_t>(i)));
+                if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                    const float x = (static_cast<float>((base + static_cast<size_t>(i)) % 16) - 8.0f) * 0.4f;
+                    const float y = (static_cast<float>((base + static_cast<size_t>(i)) / 16) - 2.0f) * 0.4f;
+                    tr->SetTranslate(Vector3(x, y, 0.0f));
                 }
+                attachIfPossible3D(obj.get());
+                testObjects3D.emplace_back(std::move(obj));
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remove 3D (last)")) {
+            // Keep camera/light
+            if (testObjects3D.size() > 2) {
+                testObjects3D.pop_back();
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remove 3D x10")) {
+            for (int i = 0; i < 10; ++i) {
+                if (testObjects3D.size() <= 2) break;
+                testObjects3D.pop_back();
             }
         }
 
-        if (ImGui::CollapsingHeader(Translation("engine.imgui.testObjectInspector.objects2d").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
-            int i = 0;
-            for (auto &obj : testObjects2D) {
-                if (!obj) continue;
-                if (ImGui::TreeNode((std::to_string(i++) + ' ' + obj->GetName()).c_str())) {
-                    obj->ShowImGui();
-                    ImGui::TreePop();
+        ImGui::Separator();
+        ImGui::Text("2D objects: %d", static_cast<int>(testObjects2D.size()));
+        ImGui::SliderInt("Spawn 2D", &spawn2DCount, 1, 500);
+        if (ImGui::Button("Add 2D Triangles")) {
+            const size_t base = testObjects2D.size();
+            for (int i = 0; i < spawn2DCount; ++i) {
+                auto obj = std::make_unique<Triangle2D>();
+                obj->SetName(std::string("SpawnedTriangle2D_") + std::to_string(base + static_cast<size_t>(i)));
+                if (auto *tr = obj->GetComponent2D<Transform2D>()) {
+                    const float x = 50.0f + static_cast<float>((base + static_cast<size_t>(i)) % 16) * 30.0f;
+                    const float y = 200.0f + static_cast<float>((base + static_cast<size_t>(i)) / 16) * 30.0f;
+                    tr->SetTranslate(Vector2(x, y));
+                    tr->SetScale(Vector2(20.0f, 20.0f));
                 }
+                attachIfPossible2D(obj.get());
+                testObjects2D.emplace_back(std::move(obj));
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remove 2D (last)")) {
+            // Keep camera
+            if (testObjects2D.size() > 1) {
+                testObjects2D.pop_back();
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remove 2D x10")) {
+            for (int i = 0; i < 10; ++i) {
+                if (testObjects2D.size() <= 1) break;
+                testObjects2D.pop_back();
             }
         }
     }
     ImGui::End();
 #endif
 
-    auto mainWindow = Window::GetWindow("Main Window");
-    auto overlayWindow = Window::GetWindow("Overlay Window");
+#if defined(USE_IMGUI)
+    const auto passEndTp = std::chrono::high_resolution_clock::now();
+    passRegisterMs = std::chrono::duration<float, std::milli>(passEndTp - passBeginTp).count();
 
-    // Find system objects
-    Camera3D *camera3D = nullptr;
-    DirectionalLight *dirLight = nullptr;
-    for (auto &obj : testObjects3D) {
-        if (!obj) continue;
-        if (!camera3D && obj->GetName() == "Camera3D") camera3D = static_cast<Camera3D *>(obj.get());
-        if (!dirLight && obj->GetName() == "DirectionalLight") dirLight = static_cast<DirectionalLight *>(obj.get());
-    }
-
-    Camera2D *camera2D = nullptr;
-    for (auto &obj : testObjects2D) {
-        if (!obj) continue;
-        if (!camera2D && obj->GetName() == "Camera2D") camera2D = static_cast<Camera2D *>(obj.get());
-    }
-
-    std::vector<Window *> activeWindows;
-    if (mainWindow) activeWindows.push_back(mainWindow);
-    if (overlayWindow) activeWindows.push_back(overlayWindow);
-
-    auto registerPasses = [&](Window *targetWindow) {
-        if (!targetWindow) return;
-
-        // 3Dオブジェクト描画パス登録
-        {
-            // Camera / Light constant buffers are configured via SystemObject-derived classes (not via RenderPass)
-            if (camera3D && dirLight) {
-                camera3D->ConfigureConstantBuffers({
-                    {"Vertex:gCamera", sizeof(Camera3D::CameraBuffer)},
-                    {"Pixel:gDirectionalLight", sizeof(DirectionalLight::LightBuffer)},
-                },
-                [camera3D, dirLight](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
-                    if (!constantBufferMaps) return false;
-                    if (!camera3D || !dirLight) return false;
-
-                    camera3D->UpdateCameraBufferCPUForRenderer();
-                    dirLight->UpdateLightBufferCPUForRenderer();
-
-                    auto **maps = static_cast<void **>(constantBufferMaps);
-                    const auto &cam = camera3D->GetCameraBufferCPU();
-                    const auto &light = dirLight->GetLightBufferCPU();
-                    std::memcpy(maps[0], &cam, sizeof(Camera3D::CameraBuffer));
-                    std::memcpy(maps[1], &light, sizeof(DirectionalLight::LightBuffer));
-                    return true;
-                });
-            }
-
-            for (auto &obj : testObjects3D) {
-                if (!obj) continue;
-                auto passInfo = obj->CreateRenderPass(targetWindow, "Object3D.Solid.BlendNormal", obj->GetName() + " Pass");
-                renderer_->RegisterRenderPass(passInfo);
-            }
-        }
-
-        // 2Dオブジェクト描画パス登録
-        {
-            if (camera2D) {
-                camera2D->ConfigureConstantBuffers({
-                    {"Vertex:gCamera", sizeof(Camera2D::CameraBuffer)},
-                },
-                [camera2D](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
-                    if (!constantBufferMaps) return false;
-                    if (!camera2D) return false;
-
-                    camera2D->UpdateCameraBufferCPUForRenderer();
-
-                    auto **maps = static_cast<void **>(constantBufferMaps);
-                    const auto &cam = camera2D->GetCameraBufferCPU();
-                    std::memcpy(maps[0], &cam, sizeof(Camera2D::CameraBuffer));
-                    return true;
-                });
-            }
-
-            for (auto &obj : testObjects2D) {
-                if (!obj) continue;
-                auto passInfo = obj->CreateRenderPass(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal", obj->GetName() + " Pass");
-                renderer_->RegisterRenderPass(passInfo);
-            }
-        }
-    };
-
-    /*if (mainWindow) {
-        registerPasses(mainWindow);
-    }*/
-    if (overlayWindow) {
-        registerPasses(overlayWindow);
-    }
+    const auto renderBeginTp = passEndTp;
+#endif
 
     renderer_->RenderFrame({});
+
+#if defined(USE_IMGUI)
+    const auto renderEndTp = std::chrono::high_resolution_clock::now();
+    renderFrameMs = std::chrono::duration<float, std::milli>(renderEndTp - renderBeginTp).count();
+    totalMs = std::chrono::duration<float, std::milli>(renderEndTp - frameBeginTp).count();
+
+    {
+        const float dtMs = totalMs;
+        frameMs = dtMs;
+        fps = (dtMs > 0.0f) ? (1000.0f / dtMs) : 0.0f;
+    }
+
+    // Apply sample count change from ImGui (deferred until end of frame to avoid mid-frame resets)
+    {
+        const std::size_t cap = static_cast<std::size_t>(std::max(1, profilingSampleCount));
+        avgUpdateMs.SetCapacity(cap);
+        avgPassRegisterMs.SetCapacity(cap);
+        avgRenderFrameMs.SetCapacity(cap);
+        avgTotalMs.SetCapacity(cap);
+        avgFps.SetCapacity(cap);
+
+        avgUpdateMs.Add(static_cast<double>(updateMs));
+        avgPassRegisterMs.Add(static_cast<double>(passRegisterMs));
+        avgRenderFrameMs.Add(static_cast<double>(renderFrameMs));
+        avgTotalMs.Add(static_cast<double>(totalMs));
+        avgFps.Add(static_cast<double>(fps));
+    }
+
+    if (ImGui::Begin("GraphicsEngine Profiling")) {
+        ImGui::Text("FPS: %.2f (%.2f ms)", fps, frameMs);
+        ImGui::Text("Update: %.3f ms", updateMs);
+        ImGui::Text("PassRegister: %.3f ms", passRegisterMs);
+        ImGui::Text("Renderer::RenderFrame: %.3f ms", renderFrameMs);
+        ImGui::Separator();
+        ImGui::Text("Total: %.3f ms", totalMs);
+
+        ImGui::Separator();
+        ImGui::SliderInt("Profiling Sample Count", &profilingSampleCount, 1, 600);
+        ImGui::Text("Averages (%zu samples)", avgTotalMs.GetCount());
+        ImGui::Text("Avg FPS: %.2f", static_cast<float>(avgFps.GetAverage()));
+        ImGui::Text("Avg Update: %.3f ms", static_cast<float>(avgUpdateMs.GetAverage()));
+        ImGui::Text("Avg PassRegister: %.3f ms", static_cast<float>(avgPassRegisterMs.GetAverage()));
+        ImGui::Text("Avg Renderer::RenderFrame: %.3f ms", static_cast<float>(avgRenderFrameMs.GetAverage()));
+        ImGui::Text("Avg Total: %.3f ms", static_cast<float>(avgTotalMs.GetAverage()));
+    }
+    ImGui::End();
+#endif
 }
 
 } // namespace KashipanEngine

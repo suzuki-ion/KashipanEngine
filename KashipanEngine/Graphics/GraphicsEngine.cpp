@@ -101,7 +101,10 @@ GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon *directXCommon
     Window::SetRenderer(Passkey<GraphicsEngine>{}, renderer_.get());
 }
 
-GraphicsEngine::~GraphicsEngine() = default;
+GraphicsEngine::~GraphicsEngine() {
+    Window::SetPipelineManager(Passkey<GraphicsEngine>{}, nullptr);
+    Window::SetRenderer(Passkey<GraphicsEngine>{}, nullptr);
+}
 
 void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     // テスト用（Object2DBase / Object3DBase の vector に格納できるか）

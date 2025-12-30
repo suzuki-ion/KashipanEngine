@@ -64,7 +64,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -74,6 +74,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/VERBOSE:UNUSEDLIBS /VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/Assimp/lib/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -96,7 +98,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -105,6 +107,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/Assimp/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -137,6 +141,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\imgui\imgui_widgets.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
@@ -243,6 +248,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_truetype.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DCompHost.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.h" />

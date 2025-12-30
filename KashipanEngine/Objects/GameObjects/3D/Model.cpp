@@ -2,9 +2,48 @@
 
 namespace KashipanEngine {
 
+Model::Model(const ModelData &modelData)
+    : Object3DBase(
+        modelData.GetAssetRelativePath(),
+        sizeof(Vertex),
+        sizeof(Index),
+        modelData.GetVertexCount(),
+        modelData.GetIndexCount()) {
+    SetRenderType(RenderType::Instancing);
+    InitializeGeometry(modelData);
+}
+
+Model::Model(const std::string &relativePath)
+    : Model(sModelManager->GetModelDataFromAssetPath(relativePath)) {
+}
+
+Model::Model(ModelManager::ModelHandle handle)
+    : Model(sModelManager->GetModelData(handle)) {
+}
+
+void Model::InitializeGeometry(const ModelData& modelData) {
+    auto dstV = GetVertexSpan<Vertex>();
+    auto dstI = GetIndexSpan<Index>();
+
+    if (dstV.size() != modelData.vertices_.size()) return;
+    if (dstI.size() != modelData.indices_.size()) return;
+
+    for (size_t i = 0; i < dstV.size(); ++i) {
+        const auto& src = modelData.vertices_[i];
+        dstV[i] = Vertex{src.px, src.py, src.pz, 1.0f};
+    }
+
+    for (size_t i = 0; i < dstI.size(); ++i) {
+        dstI[i] = static_cast<Index>(modelData.indices_[i]);
+    }
+}
+
 bool Model::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
-    // TODO: 実装
-    return false;
+    if (HasComponents3D("Transform3D") == 0 ||
+        HasComponents3D("Material3D") == 0) {
+        return false;
+    }
+    return true;
 }
 
 std::optional<RenderCommand> Model::CreateRenderCommand(PipelineBinder &pipelineBinder) {

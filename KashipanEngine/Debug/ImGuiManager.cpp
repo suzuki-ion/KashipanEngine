@@ -3,6 +3,7 @@
 #include "ImGuiManager.h"
 
 #include "Assets/TextureManager.h"
+#include "Assets/ModelManager.h"
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
 #include "Core/Window.h"
@@ -239,6 +240,57 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
             }
             ImGui::End();
         }
+    }
+
+    // ModelManager 読み込みテスト用ウィンドウ
+    {
+        ImGui::Begin("ModelManager - Loaded Models");
+
+        const auto entries = ModelManager::GetImGuiModelListEntries();
+        ImGui::Text("Loaded Models: %d", static_cast<int>(entries.size()));
+
+        static ImGuiTextFilter filter;
+        filter.Draw("Filter");
+
+        ImGui::Separator();
+
+        if (ImGui::BeginTable("##ModelList", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY, ImVec2(0, 300))) {
+            ImGui::TableSetupColumn("Handle", ImGuiTableColumnFlags_WidthFixed, 80);
+            ImGui::TableSetupColumn("FileName");
+            ImGui::TableSetupColumn("AssetPath");
+            ImGui::TableSetupColumn("Vertices", ImGuiTableColumnFlags_WidthFixed, 90);
+            ImGui::TableSetupColumn("Indices", ImGuiTableColumnFlags_WidthFixed, 90);
+            ImGui::TableHeadersRow();
+
+            for (const auto& e : entries) {
+                if (filter.IsActive()) {
+                    if (!filter.PassFilter(e.fileName.c_str()) && !filter.PassFilter(e.assetPath.c_str())) {
+                        continue;
+                    }
+                }
+
+                ImGui::TableNextRow();
+
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("%u", e.handle);
+
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextUnformatted(e.fileName.c_str());
+
+                ImGui::TableSetColumnIndex(2);
+                ImGui::TextUnformatted(e.assetPath.c_str());
+
+                ImGui::TableSetColumnIndex(3);
+                ImGui::Text("%u", e.vertexCount);
+
+                ImGui::TableSetColumnIndex(4);
+                ImGui::Text("%u", e.indexCount);
+            }
+
+            ImGui::EndTable();
+        }
+
+        ImGui::End();
     }
 
     ImGui::ShowDemoWindow();

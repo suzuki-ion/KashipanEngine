@@ -6,6 +6,7 @@
 #include "Graphics/GraphicsEngine.h"
 #include "Assets/TextureManager.h"
 #include "Assets/SamplerManager.h"
+#include "Assets/ModelManager.h"
 
 #if defined(USE_IMGUI)
 #include "Debug/ImGuiManager.h"
@@ -61,6 +62,8 @@ private:
     std::unique_ptr<TextureManager> textureManager_;
     /// @brief サンプラ管理クラス
     std::unique_ptr<SamplerManager> samplerManager_;
+    /// @brief モデル管理クラス
+    std::unique_ptr<ModelManager> modelManager_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス

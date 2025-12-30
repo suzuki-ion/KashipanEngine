@@ -6,6 +6,7 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
+#include "Objects/GameObjects/3D/Model.h"
 
 namespace KashipanEngine {
 namespace {
@@ -37,6 +38,8 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
+    modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
+    Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
 
 #if defined(USE_IMGUI)
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
@@ -88,7 +91,8 @@ GameEngine::~GameEngine() {
 #if defined(USE_IMGUI)
     imguiManager_.reset();
 #endif
-    
+
+    modelManager_.reset();
     samplerManager_.reset();
     textureManager_.reset();
 

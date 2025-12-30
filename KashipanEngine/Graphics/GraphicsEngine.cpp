@@ -17,6 +17,7 @@
 #include "Objects/GameObjects/3D/Triangle3D.h"
 #include "Objects/GameObjects/3D/Sphere.h"
 #include "Objects/GameObjects/3D/Box.h"
+#include "Objects/GameObjects/3D/Model.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
 #include "Objects/Components/3D/Material3D.h"
@@ -196,6 +197,23 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
                 }
                 attachIfPossible3D(obj.get());
                 testObjects3D.emplace_back(std::move(obj));
+            }
+        }
+        // テスト用モデルオブジェクト
+        {
+            ModelManager::ModelHandle modelHandle
+                = ModelManager::GetModelHandleFromFileName("icoSphere.obj");
+            if (modelHandle != ModelManager::kInvalidHandle) {
+                auto obj = std::make_unique<Model>(modelHandle);
+                obj->SetName("TestModel_IcoSphere");
+                if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
+                    tr->SetScale(Vector3(0.5f, 0.5f, 0.5f));
+                }
+                attachIfPossible3D(obj.get());
+                testObjects3D.emplace_back(std::move(obj));
+            } else {
+                Log("[GraphicsEngine] Test model 'icoShpere.obj' not found.", LogSeverity::Warning);
             }
         }
 

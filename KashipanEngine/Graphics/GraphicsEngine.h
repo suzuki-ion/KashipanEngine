@@ -15,6 +15,9 @@ public:
     GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon);
     ~GraphicsEngine();
 
+    /// @brief レンダラー取得
+    Renderer *GetRenderer(Passkey<GameEngine>) const { return renderer_.get(); }
+
     /// @brief フレーム描画処理
     void RenderFrame(Passkey<GameEngine>);
 

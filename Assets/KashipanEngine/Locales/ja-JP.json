@@ -382,6 +382,16 @@
 		"engine.texture.loading.failed.map": "テクスチャ読み込み失敗。アップロードバッファのMapに失敗しました。ファイルパス：",
 		"engine.texture.loading.failed.register": "テクスチャ読み込み失敗。登録に失敗しました。ファイルパス：",
 
+		//--------- Model ---------//
+		"engine.model.loading.start": "モデル読み込み開始。ファイルパス：",
+		"engine.model.loading.succeeded": "モデル読み込み成功。ファイルパス：",
+		"engine.model.loading.alreadyloaded": "モデルは既に読み込み済みです。ファイルパス：",
+		"engine.model.loading.failed.notfound": "モデル読み込み失敗。ファイルが見つかりません。ファイルパス：",
+		"engine.model.loading.failed.unsupported": "モデル読み込み失敗。未対応の拡張子です。ファイルパス：",
+		"engine.model.loading.failed.assimp": "モデル読み込み失敗。Assimp の読み込みに失敗しました。ファイルパス：",
+		"engine.model.loading.failed.nomesh": "モデル読み込み失敗。メッシュデータがありません。ファイルパス：",
+		"engine.model.loading.failed.register": "モデル読み込み失敗。登録に失敗しました。ファイルパス：",
+
 		//==================================================
 		// 共通翻訳
 		//==================================================

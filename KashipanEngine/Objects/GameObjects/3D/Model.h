@@ -1,7 +1,7 @@
 #pragma once
 #include "Objects/Object3DBase.h"
+#include "Objects/GameObjects/3D/VertexData3D.h"
 #include "Assets/ModelManager.h"
-#include "Math/Vector4.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -31,7 +31,7 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = Vector4;
+    using Vertex = VertexData3D;
     using Index = uint32_t;
 
     void InitializeGeometry(const ModelData& modelData);

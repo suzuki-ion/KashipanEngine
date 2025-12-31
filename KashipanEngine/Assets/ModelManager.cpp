@@ -135,16 +135,16 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
 
     Assimp::Importer importer;
     constexpr unsigned int flags =
+        aiProcess_MakeLeftHanded |
+        aiProcess_FlipWindingOrder |
         aiProcess_Triangulate |
-        aiProcess_GenNormals |
         aiProcess_JoinIdenticalVertices |
         aiProcess_ImproveCacheLocality |
-        aiProcess_LimitBoneWeights |
         aiProcess_RemoveRedundantMaterials |
         aiProcess_FindInvalidData |
-        aiProcess_GenUVCoords |
         aiProcess_TransformUVCoords |
-        aiProcess_SortByPType;
+        aiProcess_SortByPType |
+        aiProcess_FlipUVs;
 
     const aiScene* scene = importer.ReadFile(p.string(), flags);
     if (!scene || !scene->mRootNode) {

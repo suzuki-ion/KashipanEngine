@@ -30,7 +30,9 @@ void Model::InitializeGeometry(const ModelData& modelData) {
 
     for (size_t i = 0; i < dstV.size(); ++i) {
         const auto& src = modelData.vertices_[i];
-        dstV[i] = Vertex{src.px, src.py, src.pz, 1.0f};
+        dstV[i].position = Vector4(src.px, src.py, src.pz, 1.0f);
+        dstV[i].normal = Vector3(src.nx, src.ny, src.nz);
+        dstV[i].texcoord = Vector2(src.u, src.v);
     }
 
     for (size_t i = 0; i < dstI.size(); ++i) {

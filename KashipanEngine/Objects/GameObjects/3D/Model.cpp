@@ -1,4 +1,6 @@
 #include "Model.h"
+#include "Objects/Components/3D/Material3D.h"
+#include "Assets/TextureManager.h"
 
 namespace KashipanEngine {
 
@@ -37,6 +39,23 @@ void Model::InitializeGeometry(const ModelData& modelData) {
 
     for (size_t i = 0; i < dstI.size(); ++i) {
         dstI[i] = static_cast<Index>(modelData.indices_[i]);
+    }
+
+    Material3D *material = GetComponent3D<Material3D>();
+    if (material && modelData.GetMaterialCount() > 0) {
+        const auto* matData = modelData.GetMaterial(0);
+        if (matData) {
+            material->SetColor(Vector4(
+                matData->baseColor[0],
+                matData->baseColor[1],
+                matData->baseColor[2],
+                matData->baseColor[3]
+            ));
+            if (!matData->diffuseTexturePath.empty()) {
+                auto textureHandle = TextureManager::GetTextureFromAssetPath(matData->diffuseTexturePath);
+                material->SetTexture(textureHandle);
+            }
+        }
     }
 }
 

@@ -2,17 +2,17 @@
 
 namespace KashipanEngine {
 
-ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState)
+ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels)
     : IGraphicsResource(ResourceViewType::SRV) {
-    Initialize(width, height, format, flags, existingResource, initialState);
+    Initialize(width, height, format, flags, existingResource, initialState, mipLevels);
 }
 
-bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState) {
+bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels) {
     ResetResourceForRecreate();
-    return Initialize(width, height, format, flags, existingResource, initialState);
+    return Initialize(width, height, format, flags, existingResource, initialState, mipLevels);
 }
 
-bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState) {
+bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels) {
     LogScope scope;
     auto *srvHeap = GetSRVHeap();
     if (!GetDevice() || !srvHeap) {
@@ -24,6 +24,7 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
     height_ = height;
     format_ = format;
     flags_ = flags;
+    mipLevels_ = mipLevels;
 
     D3D12_RESOURCE_DESC resourceDesc = {};
     resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -31,7 +32,7 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
     resourceDesc.Width = width_;
     resourceDesc.Height = height_;
     resourceDesc.DepthOrArraySize = 1;
-    resourceDesc.MipLevels = 1;
+    resourceDesc.MipLevels = static_cast<UINT16>(mipLevels_);
     resourceDesc.Format = format_;
     resourceDesc.SampleDesc = {1, 0};
     resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -58,7 +59,7 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
     srvDesc.Format = format_;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MipLevels = mipLevels_;
 
     GetDevice()->CreateShaderResourceView(GetResource(), &srvDesc, handle->cpuHandle);
 

@@ -37,6 +37,7 @@ struct TextureEntry final {
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     UINT64 srvGpuPtr = 0;
     UINT srvIndex = 0;
+    UINT mipLevels = 1;
 };
 
 std::unordered_map<Handle, TextureEntry> sTextures;
@@ -159,9 +160,6 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     }
 
     std::filesystem::path p(filePath);
-    /*if (!p.is_absolute()) {
-        p = std::filesystem::path(assetsRootPath_) / p;
-    }*/
 
     if (!std::filesystem::exists(p)) {
         Log(Translation("engine.texture.loading.failed.notfound") + p.string(), LogSeverity::Warning);
@@ -199,17 +197,44 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     }
 
     DirectX::ScratchImage converted;
-    const DXGI_FORMAT dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    DXGI_FORMAT dstFormat;
+    if (ext == ".dds" || ext == ".hdr" || ext == ".tga") {
+        dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+        if (ext == ".hdr") {
+            dstFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        }
+    } else {
+        dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
+
     if (meta.format != dstFormat) {
-        hr = DirectX::Convert(*scratch.GetImage(0, 0, 0), dstFormat, DirectX::TEX_FILTER_DEFAULT, DirectX::TEX_THRESHOLD_DEFAULT, converted);
+        hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
         if (FAILED(hr)) return kInvalidHandle;
     }
-    const DirectX::ScratchImage& finalImage = (meta.format == dstFormat) ? scratch : converted;
+    const DirectX::ScratchImage &finalImage = (meta.format == dstFormat) ? scratch : converted;
 
-    const DirectX::Image* img0 = finalImage.GetImage(0, 0, 0);
+    // ミップマップ生成
+    DirectX::ScratchImage mipChain;
+    hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
+    if (FAILED(hr)) {
+        // ミップマップ生成に失敗した場合は元画像をそのまま使う
+        const DirectX::Image *baseImg = finalImage.GetImages();
+        if (!baseImg || !baseImg->pixels) {
+            return kInvalidHandle;
+        }
+        hr = mipChain.InitializeFromImage(*baseImg);
+        if (FAILED(hr)) {
+            return kInvalidHandle;
+        }
+    }
+
+    const DirectX::Image *img0 = mipChain.GetImages();
     if (!img0 || !img0->pixels) {
         return kInvalidHandle;
     }
+
+    const auto &mmeta = mipChain.GetMetadata();
+    UINT mipLevels = static_cast<UINT>(mmeta.mipLevels);
 
     TextureEntry entry{};
     entry.fullPath = NormalizePathSlashes(p.string());
@@ -217,7 +242,8 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     entry.fileName = p.filename().string();
     entry.width = static_cast<UINT>(img0->width);
     entry.height = static_cast<UINT>(img0->height);
-    entry.format = dstFormat;
+    entry.format = mmeta.format;
+    entry.mipLevels = static_cast<UINT>(mmeta.mipLevels);
 
     // GPU側テクスチャ + SRV を Resources 経由で作成（COPY_DEST から開始してこの後のコピーに備える）
     entry.texture = std::make_unique<ShaderResourceResource>(
@@ -226,7 +252,8 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         entry.format,
         D3D12_RESOURCE_FLAG_NONE,
         nullptr,
-        D3D12_RESOURCE_STATE_COPY_DEST);
+        D3D12_RESOURCE_STATE_COPY_DEST,
+        mipLevels);
 
     {
         auto *desc = entry.texture->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});
@@ -238,17 +265,24 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         entry.srvIndex = desc->index;
     }
 
-    // アップロード用バッファ作成
-    const UINT rowPitch = Align256(static_cast<UINT>(img0->rowPitch));
-    const UINT64 uploadSize = static_cast<UINT64>(rowPitch) * static_cast<UINT64>(entry.height);
+    // 各サブリソースのフットプリント情報を取得
+    D3D12_RESOURCE_DESC texDesc = entry.texture->GetResource()->GetDesc();
+    UINT subresourceCount = texDesc.MipLevels * texDesc.DepthOrArraySize;
 
+    std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts(subresourceCount);
+    std::vector<UINT> numRows(subresourceCount);
+    std::vector<UINT64> rowSizes(subresourceCount);
+    UINT64 requiredSize = 0;
+    sDevice->GetCopyableFootprints(&texDesc, 0, subresourceCount, 0, layouts.data(), numRows.data(), rowSizes.data(), &requiredSize);
+
+    // アップロード用リソースを作成
     D3D12_HEAP_PROPERTIES uploadHeap{};
     uploadHeap.Type = D3D12_HEAP_TYPE_UPLOAD;
 
     D3D12_RESOURCE_DESC uploadDesc{};
     uploadDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     uploadDesc.Alignment = 0;
-    uploadDesc.Width = uploadSize;
+    uploadDesc.Width = requiredSize;
     uploadDesc.Height = 1;
     uploadDesc.DepthOrArraySize = 1;
     uploadDesc.MipLevels = 1;
@@ -269,7 +303,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         return kInvalidHandle;
     }
 
-    // アップロード用バッファにデータ転送
+    // アップロード用リソースにデータを書き込み
     {
         void* mapped = nullptr;
         D3D12_RANGE range{ 0, 0 };
@@ -278,33 +312,35 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             Log(Translation("engine.texture.loading.failed.map") + p.string(), LogSeverity::Error);
             return kInvalidHandle;
         }
-        auto* dst = static_cast<uint8_t*>(mapped);
-        const uint8_t* src = img0->pixels;
-        for (UINT y = 0; y < entry.height; ++y) {
-            memcpy(dst + static_cast<size_t>(y) * rowPitch, src + static_cast<size_t>(y) * img0->rowPitch, img0->rowPitch);
+        uint8_t* dstAll = static_cast<uint8_t*>(mapped);
+        for (UINT i = 0; i < subresourceCount; ++i) {
+            const DirectX::Image* img = mipChain.GetImage(i, 0, 0);
+            if (!img || !img->pixels) continue;
+            auto &fp = layouts[i].Footprint;
+            uint8_t* dst = dstAll + layouts[i].Offset;
+            for (UINT y = 0; y < numRows[i]; ++y) {
+                memcpy(dst + static_cast<size_t>(y) * fp.RowPitch, img->pixels + static_cast<size_t>(y) * img->rowPitch, img->rowPitch);
+            }
         }
         entry.upload->Unmap(0, nullptr);
     }
 
-    // GPUへコピー
+    // GPUへコピー（各サブリソース）
     directXCommon_->ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>{},
         [&](ID3D12GraphicsCommandList* cl) {
-            D3D12_TEXTURE_COPY_LOCATION dstLoc{};
-            dstLoc.pResource = entry.texture->GetResource();
-            dstLoc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-            dstLoc.SubresourceIndex = 0;
+            for (UINT i = 0; i < subresourceCount; ++i) {
+                D3D12_TEXTURE_COPY_LOCATION dstLoc{};
+                dstLoc.pResource = entry.texture->GetResource();
+                dstLoc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                dstLoc.SubresourceIndex = i;
 
-            D3D12_TEXTURE_COPY_LOCATION srcLoc{};
-            srcLoc.pResource = entry.upload.Get();
-            srcLoc.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-            srcLoc.PlacedFootprint.Offset = 0;
-            srcLoc.PlacedFootprint.Footprint.Format = entry.format;
-            srcLoc.PlacedFootprint.Footprint.Width = entry.width;
-            srcLoc.PlacedFootprint.Footprint.Height = entry.height;
-            srcLoc.PlacedFootprint.Footprint.Depth = 1;
-            srcLoc.PlacedFootprint.Footprint.RowPitch = rowPitch;
+                D3D12_TEXTURE_COPY_LOCATION srcLoc{};
+                srcLoc.pResource = entry.upload.Get();
+                srcLoc.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+                srcLoc.PlacedFootprint = layouts[i];
 
-            cl->CopyTextureRegion(&dstLoc, 0, 0, 0, &srcLoc, nullptr);
+                cl->CopyTextureRegion(&dstLoc, 0, 0, 0, &srcLoc, nullptr);
+            }
 
             D3D12_RESOURCE_BARRIER barrier{};
             barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;

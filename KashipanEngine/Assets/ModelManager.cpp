@@ -157,6 +157,35 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
     entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
     entry.fileName = p.filename().string();
 
+    // Set asset relative path in ModelData
+    entry.data.assetRelativePath_ = entry.assetPath;
+
+    // Extract materials from the scene and store minimal material data
+    for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
+        const aiMaterial* mat = scene->mMaterials[mi];
+        if (!mat) continue;
+        ModelData::MaterialData md;
+        // base/diffuse color
+        aiColor4D diffColor(1.0f, 1.0f, 1.0f, 1.0f);
+        if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffColor)) {
+            md.baseColor[0] = diffColor.r;
+            md.baseColor[1] = diffColor.g;
+            md.baseColor[2] = diffColor.b;
+            md.baseColor[3] = diffColor.a;
+        }
+        // diffuse texture (first diffuse slot)
+        aiString texPath;
+        if (AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
+            std::string tp = texPath.C_Str();
+            if (!tp.empty() && tp[0] != '*') {
+                // Resolve relative to model file directory
+                std::filesystem::path texFull = std::filesystem::path(p).parent_path() / tp;
+                md.diffuseTexturePath = MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(texFull.string()));
+            }
+        }
+        entry.data.materials_.push_back(std::move(md));
+    }
+
     // ModelData は private メンバを持つため、friend である ModelManager（この関数内）でのみ構築する
     const auto appendMesh = [](const aiMesh* mesh, ModelData& dst) {
         if (!mesh) return;

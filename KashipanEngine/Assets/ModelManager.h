@@ -30,8 +30,15 @@ private:
         float v = 0.0f;
     };
 
+    struct MaterialData final {
+        float baseColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        std::string diffuseTexturePath;
+    };
+
     std::vector<Vertex> vertices_;
     std::vector<uint32_t> indices_;
+
+    std::vector<MaterialData> materials_;
 
     std::string assetRelativePath_;
 
@@ -39,6 +46,8 @@ public:
     uint32_t GetVertexCount() const noexcept { return static_cast<uint32_t>(vertices_.size()); }
     uint32_t GetIndexCount() const noexcept { return static_cast<uint32_t>(indices_.size()); }
     const std::string &GetAssetRelativePath() const noexcept { return assetRelativePath_; }
+    uint32_t GetMaterialCount() const noexcept { return static_cast<uint32_t>(materials_.size()); }
+    const MaterialData *GetMaterial(uint32_t idx) const noexcept { return idx < materials_.size() ? &materials_[idx] : nullptr; }
 };
 
 /// @brief モデル管理クラス

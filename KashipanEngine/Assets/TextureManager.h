@@ -53,15 +53,17 @@ public:
     static bool BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, TextureHandle handle);
 
 #if defined(USE_IMGUI)
-    /// @brief ImGui 用に利用可能なテクスチャ（SRV index）をすべて取得
-    static std::vector<TextureHandle> GetAllImGuiTextures();
-    /// @brief ImGui 用テクスチャの詳細情報（ハンドル、ファイル名、アセットパス、幅、高さ）を取得
-    static std::vector<TextureListEntry> GetImGuiTextureListEntries();
+    /// @brief デバッグ用: 読み込まれたテクスチャ一覧の ImGui ウィンドウを描画
+    static void ShowImGuiLoadedTexturesWindow();
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }
 
 private:
+#if defined(USE_IMGUI)
+    static std::vector<TextureHandle> GetAllImGuiTextures();
+    static std::vector<TextureListEntry> GetImGuiTextureListEntries();
+#endif
     void LoadAllFromAssetsFolder();
 
     DirectXCommon* directXCommon_ = nullptr;

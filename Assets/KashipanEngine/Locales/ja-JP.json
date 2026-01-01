@@ -382,6 +382,22 @@
 		"engine.texture.loading.failed.map": "テクスチャ読み込み失敗。アップロードバッファのMapに失敗しました。ファイルパス：",
 		"engine.texture.loading.failed.register": "テクスチャ読み込み失敗。登録に失敗しました。ファイルパス：",
 
+		//--------- Audio ---------//
+		"engine.audio.init.failed.xaudio2": "オーディオ初期化失敗。XAudio2 の作成に失敗しました。",
+		"engine.audio.init.failed.mastervoice": "オーディオ初期化失敗。MasteringVoice の作成に失敗しました。",
+		"engine.audio.init.failed.mediafoundation": "オーディオ初期化失敗。Media Foundation の初期化に失敗しました。",
+
+		"engine.audio.loading.failed.notfound": "音声読み込み失敗。ファイルが見つかりません。ファイルパス：",
+		"engine.audio.loading.failed.unsupported": "音声読み込み失敗。未対応の拡張子です。ファイルパス：",
+		"engine.audio.loading.failed.decode": "音声読み込み失敗。デコードに失敗しました。ファイルパス：",
+		"engine.audio.loading.failed.register": "音声読み込み失敗。登録に失敗しました。ファイルパス：",
+		"engine.audio.loading.succeeded": "音声読み込み成功。ファイルパス：",
+
+		"engine.audio.play.failed.toomany": "音声再生失敗。同時再生数が上限に達しました。",
+		"engine.audio.play.failed.createsourcevoice": "音声再生失敗。SourceVoice の作成に失敗しました。",
+		"engine.audio.play.failed.submit": "音声再生失敗。再生バッファの送信に失敗しました。",
+		"engine.audio.play.failed.start": "音声再生失敗。再生開始に失敗しました。",
+
 		//--------- Model ---------//
 		"engine.model.loading.start": "モデル読み込み開始。ファイルパス：",
 		"engine.model.loading.succeeded": "モデル読み込み成功。ファイルパス：",

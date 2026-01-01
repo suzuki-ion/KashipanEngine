@@ -7,6 +7,11 @@
 #include "Utilities/FileIO/Directory.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#include <imgui_internal.h>
+#endif
+
 #include <DirectXTex.h>
 
 #include <d3d12.h>
@@ -387,13 +392,110 @@ TextureManager::TextureHandle TextureManager::GetTextureFromAssetPath(const std:
 }
 
 #if defined(USE_IMGUI)
+namespace {
+ImTextureID ToImGuiTextureIdFromGpuPtr(UINT64 gpuPtr) {
+    return (ImTextureID)(uintptr_t)gpuPtr;
+}
+} // namespace
+
+void TextureManager::ShowImGuiLoadedTexturesWindow() {
+    ImGui::Begin("TextureManager - Loaded Textures");
+
+    const auto entries = GetImGuiTextureListEntries();
+    ImGui::Text("Loaded Textures: %d", static_cast<int>(entries.size()));
+
+    static ImGuiTextFilter filter;
+    filter.Draw("Filter");
+
+    static TextureManager::TextureListEntry sSelectedTexture{};
+    static bool sShowTextureViewer = false;
+
+    ImGui::Separator();
+
+    if (ImGui::BeginTable("##TextureList", 5,
+            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+            ImVec2(0, 300))) {
+        ImGui::TableSetupColumn("Handle", ImGuiTableColumnFlags_WidthFixed, 80);
+        ImGui::TableSetupColumn("FileName");
+        ImGui::TableSetupColumn("AssetPath");
+        ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed, 90);
+        ImGui::TableSetupColumn("Preview", ImGuiTableColumnFlags_WidthFixed, 80);
+        ImGui::TableHeadersRow();
+
+        for (const auto& e : entries) {
+            if (filter.IsActive()) {
+                if (!filter.PassFilter(e.fileName.c_str()) && !filter.PassFilter(e.assetPath.c_str())) {
+                    continue;
+                }
+            }
+
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%u", e.handle);
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::TextUnformatted(e.fileName.c_str());
+
+            ImGui::TableSetColumnIndex(2);
+            ImGui::TextUnformatted(e.assetPath.c_str());
+
+            ImGui::TableSetColumnIndex(3);
+            ImGui::Text("%ux%u", e.width, e.height);
+
+            ImGui::TableSetColumnIndex(4);
+            if (e.srvGpuPtr != 0) {
+                ImGui::PushID(static_cast<int>(e.handle));
+                const auto texId = ToImGuiTextureIdFromGpuPtr(e.srvGpuPtr);
+                if (ImGui::ImageButton("##Preview", texId, ImVec2(64, 64))) {
+                    sSelectedTexture = e;
+                    sShowTextureViewer = true;
+                }
+                ImGui::PopID();
+            } else {
+                ImGui::TextUnformatted("-");
+            }
+        }
+
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+
+    if (sShowTextureViewer) {
+        if (ImGui::Begin("Texture Viewer", &sShowTextureViewer)) {
+            if (sSelectedTexture.srvGpuPtr != 0) {
+                ImGui::Text("Handle: %u", sSelectedTexture.handle);
+                ImGui::TextUnformatted(sSelectedTexture.assetPath.c_str());
+                ImGui::Separator();
+
+                ImVec2 avail = ImGui::GetContentRegionAvail();
+                const float w = static_cast<float>(sSelectedTexture.width);
+                const float h = static_cast<float>(sSelectedTexture.height);
+                ImVec2 drawSize = avail;
+                if (w > 0.0f && h > 0.0f) {
+                    const float sx = avail.x / w;
+                    const float sy = avail.y / h;
+                    const float s = (sx < sy) ? sx : sy;
+                    drawSize = ImVec2(w * s, h * s);
+                }
+
+                ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+            } else {
+                ImGui::TextUnformatted("No texture selected.");
+            }
+        }
+        ImGui::End();
+    }
+}
+#endif
+
+#if defined(USE_IMGUI)
 std::vector<TextureManager::TextureHandle> TextureManager::GetAllImGuiTextures() {
     LogScope scope;
     std::vector<TextureHandle> out;
     out.reserve(sTextures.size());
-    for (const auto& kv : sTextures) {
-        out.push_back(kv.first);
-    }
+    for (const auto &kv : sTextures) out.push_back(kv.first);
     return out;
 }
 
@@ -402,8 +504,8 @@ std::vector<TextureManager::TextureListEntry> TextureManager::GetImGuiTextureLis
     std::vector<TextureListEntry> out;
     out.reserve(sTextures.size());
 
-    for (const auto& kv : sTextures) {
-        const auto& t = kv.second;
+    for (const auto &kv : sTextures) {
+        const auto &t = kv.second;
         TextureListEntry e;
         e.handle = kv.first;
         e.fileName = t.fileName;
@@ -414,10 +516,9 @@ std::vector<TextureManager::TextureListEntry> TextureManager::GetImGuiTextureLis
         out.push_back(std::move(e));
     }
 
-    std::sort(out.begin(), out.end(), [](const TextureListEntry& a, const TextureListEntry& b) {
+    std::sort(out.begin(), out.end(), [](const TextureListEntry &a, const TextureListEntry &b) {
         return a.assetPath < b.assetPath;
-    });
-
+        });
     return out;
 }
 #endif

@@ -91,13 +91,18 @@ public:
     static const ModelData &GetModelDataFromAssetPath(const std::string& assetPath);
 
 #if defined(USE_IMGUI)
-    static std::vector<ModelHandle> GetAllImGuiModels();
-    static std::vector<ModelListEntry> GetImGuiModelListEntries();
+    /// @brief デバッグ用: 読み込まれたモデル一覧の ImGui ウィンドウを描画
+    static void ShowImGuiLoadedModelsWindow();
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }
 
 private:
+#if defined(USE_IMGUI)
+    static std::vector<ModelHandle> GetAllImGuiModels();
+    static std::vector<ModelListEntry> GetImGuiModelListEntries();
+#endif
+
     void LoadAllFromAssetsFolder();
 
     std::string assetsRootPath_;

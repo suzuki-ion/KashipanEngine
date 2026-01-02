@@ -3,15 +3,18 @@
 #include <memory>
 #include <windows.h>
 
+#include "Utilities/Passkeys.h"
+
 namespace KashipanEngine {
 
+class GameEngine;
 class Keyboard;
 class Mouse;
 class Controller;
 
 class Input {
 public:
-    Input();
+    Input(Passkey<GameEngine>);
     ~Input();
 
     Input(const Input&) = delete;
@@ -19,8 +22,6 @@ public:
     Input& operator=(const Input&) = delete;
     Input& operator=(Input&&) = delete;
 
-    void Initialize();
-    void Finalize();
     void Update();
 
     /// @brief キーボード入力インスタンスを取得

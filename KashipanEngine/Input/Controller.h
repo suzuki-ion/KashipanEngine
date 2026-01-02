@@ -4,7 +4,11 @@
 #include <span>
 #include <vector>
 
+#include "Utilities/Passkeys.h"
+
 namespace KashipanEngine {
+
+class Input;
 
 class Controller {
 public:
@@ -18,7 +22,7 @@ public:
         std::int16_t rightY = 0;
     };
 
-    Controller();
+    Controller(Passkey<Input>);
     ~Controller();
 
     Controller(const Controller&) = delete;

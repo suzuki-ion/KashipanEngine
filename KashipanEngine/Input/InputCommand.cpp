@@ -50,7 +50,7 @@ static bool AxisTriggered(float v, float threshold) {
 }
 } // namespace
 
-InputCommand::InputCommand(const Input* input) : input_(input) {}
+InputCommand::InputCommand(Passkey<GameEngine>, const Input* input) : input_(input) {}
 
 void InputCommand::Clear() {
     bindings_.clear();

@@ -6,9 +6,11 @@
 #include <cstdint>
 
 #include "Input/Key.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
+class GameEngine;
 class Input;
 
 class InputCommand {
@@ -62,7 +64,7 @@ public:
     };
 
     InputCommand() = delete;
-    explicit InputCommand(const Input* input);
+    InputCommand(Passkey<GameEngine>, const Input* input);
 
     /// @brief すべてのコマンド登録をクリア
     void Clear();

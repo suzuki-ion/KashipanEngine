@@ -6,13 +6,16 @@
 
 #include <windows.h>
 
+#include "Utilities/Passkeys.h"
+
 namespace KashipanEngine {
 
+class Input;
 class Window;
 
 class Mouse {
 public:
-    Mouse();
+    Mouse(Passkey<Input>);
     ~Mouse();
 
     Mouse(const Mouse&) = delete;

@@ -72,7 +72,7 @@ void Controller::OnDeviceChanged(void* dev, std::uint32_t currentStatus) {
     }
 }
 
-Controller::Controller() = default;
+Controller::Controller(Passkey<Input>) {}
 
 Controller::~Controller() {
     Finalize();

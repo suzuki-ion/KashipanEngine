@@ -256,9 +256,8 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 #endif
 
     // Input
-    input_ = std::make_unique<Input>();
-    input_->Initialize();
-    inputCommand_ = std::make_unique<InputCommand>(input_.get());
+    input_ = std::make_unique<Input>(Passkey<GameEngine>{});
+    inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
 
     //--------- ウィンドウ作成 ---------//
     
@@ -305,9 +304,6 @@ GameEngine::~GameEngine() {
 
     Window::AllDestroy({});
 
-    if (input_) {
-        input_->Finalize();
-    }
     inputCommand_.reset();
     input_.reset();
 

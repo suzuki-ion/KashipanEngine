@@ -16,7 +16,7 @@ namespace {
 IGameInput* sGameInput = nullptr;
 } // namespace
 
-Mouse::Mouse() = default;
+Mouse::Mouse(Passkey<Input>) {}
 
 Mouse::~Mouse() {
     Finalize();

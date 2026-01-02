@@ -12,15 +12,10 @@
 
 namespace KashipanEngine {
 
-Input::Input()
-    : keyboard_(std::make_unique<Keyboard>())
-    , mouse_(std::make_unique<Mouse>())
-    , controller_(std::make_unique<Controller>()) {
-}
-
-Input::~Input() = default;
-
-void Input::Initialize() {
+Input::Input(Passkey<GameEngine>)
+    : keyboard_(std::make_unique<Keyboard>(Passkey<Input>{}))
+    , mouse_(std::make_unique<Mouse>(Passkey<Input>{}))
+    , controller_(std::make_unique<Controller>(Passkey<Input>{})) {
     if (keyboard_) {
         keyboard_->Initialize();
     }
@@ -32,7 +27,7 @@ void Input::Initialize() {
     }
 }
 
-void Input::Finalize() {
+Input::~Input() {
     if (controller_) {
         controller_->Finalize();
     }

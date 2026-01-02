@@ -56,7 +56,7 @@ Key FromVirtualKey(std::uint8_t vk) noexcept {
 }
 } // namespace
 
-Keyboard::Keyboard() = default;
+Keyboard::Keyboard(Passkey<Input>) {}
 
 Keyboard::~Keyboard() {
     Finalize();

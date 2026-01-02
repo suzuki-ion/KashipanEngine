@@ -6,12 +6,15 @@
 #include <windows.h>
 
 #include "Input/Key.h"
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
+class Input;
+
 class Keyboard {
 public:
-    Keyboard();
+    Keyboard(Passkey<Input>);
     ~Keyboard();
 
     Keyboard(const Keyboard&) = delete;

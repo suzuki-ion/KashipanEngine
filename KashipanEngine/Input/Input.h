@@ -19,7 +19,7 @@ public:
     Input& operator=(const Input&) = delete;
     Input& operator=(Input&&) = delete;
 
-    void Initialize(HINSTANCE hInstance, HWND hwnd);
+    void Initialize();
     void Finalize();
     void Update();
 

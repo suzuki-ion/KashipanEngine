@@ -257,6 +257,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     // Input
     input_ = std::make_unique<Input>();
+    input_->Initialize();
     inputCommand_ = std::make_unique<InputCommand>(input_.get());
 
     //--------- ウィンドウ作成 ---------//
@@ -281,11 +282,6 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         windows_.emplace_back(Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128));
         windows_.back()->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
         windows_.back()->SetWindowParent(windows_.front(), false);
-    }
-
-    if (!windows_.empty() && input_) {
-        HWND hwnd = windows_.front() ? windows_.front()->GetWindowHandle() : nullptr;
-        input_->Initialize(::GetModuleHandle(nullptr), hwnd);
     }
 
     InitializeTestObjects_();

@@ -101,7 +101,7 @@ public:
     int GetDeltaRightStickY(int index) const;
 
 private:
-    static std::uint16_t ButtonsToXInputMask_(std::uint32_t gameInputButtons) noexcept;
+    static std::uint16_t ButtonsToXInputMask(std::uint32_t gameInputButtons) noexcept;
 
     std::vector<PadState> current_;
     std::vector<PadState> previous_;
@@ -115,7 +115,7 @@ public: // internal (used by GameInput callback trampoline in .cpp)
         void* device = nullptr; // actually IGameInputDevice*
     };
 
-    void OnDeviceChanged_(void* device, std::uint32_t currentStatus);
+    void OnDeviceChanged(void* device, std::uint32_t currentStatus);
 
 private:
     std::vector<DeviceEntry> devices_;

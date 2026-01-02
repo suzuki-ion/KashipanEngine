@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-
 #include <windows.h>
 
 namespace KashipanEngine {
@@ -44,6 +43,11 @@ public:
     /// @brief コントローラー入力インスタンスを取得（const）。
     /// @return `Controller` への参照
     const Controller& GetController() const;
+
+#if defined(USE_IMGUI)
+    /// @brief 入力状態のデバッグ表示（ImGui ウィンドウ）
+    void ShowImGui();
+#endif
 
 private:
     std::unique_ptr<Keyboard> keyboard_;

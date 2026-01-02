@@ -38,25 +38,19 @@ float NormalizeStickInt16(int v) {
 }
 
 float NormalizeTriggerDelta255(int dv) {
-    // range: [-255, 255]
     return Clamp11(static_cast<float>(dv) / 255.0f);
 }
 
 float NormalizeStickDeltaInt16(int dv) {
-    // range: [-65535, 65535] (theoretical)
     return Clamp11(static_cast<float>(dv) / 32767.0f);
 }
 
 static bool AxisTriggered(float v, float threshold) {
     return std::abs(v) > threshold;
 }
-}
+} // namespace
 
 InputCommand::InputCommand(const Input* input) : input_(input) {}
-
-void InputCommand::SetInput(const Input* input) {
-    input_ = input;
-}
 
 void InputCommand::Clear() {
     bindings_.clear();
@@ -67,7 +61,7 @@ void InputCommand::RegisterCommand(const std::string& action, KeyboardKey key, I
     Binding b{};
     b.kind = DeviceKind::Keyboard;
     b.state = state;
-    b.code = key.value;
+    b.key = key.value;
     bindings_[action].push_back(b);
 }
 
@@ -148,9 +142,9 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
     switch (b.kind) {
     case DeviceKind::Keyboard: {
         const auto& kb = input_->GetKeyboard();
-        const bool down = kb.IsDown(b.code);
-        const bool trig = kb.IsTrigger(b.code);
-        const bool rel = kb.IsRelease(b.code);
+        const bool down = kb.IsDown(b.key);
+        const bool trig = kb.IsTrigger(b.key);
+        const bool rel = kb.IsRelease(b.key);
         const bool fired = EvaluateDigital(down, trig, rel, b.state);
         return MakeReturnInfo(fired, down ? 1.0f : 0.0f);
     }
@@ -182,10 +176,10 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
             v = static_cast<float>(ms.GetDeltaY());
             break;
         case MouseAxis::Wheel:
-            v = static_cast<float>(ms.GetWheel());
+            v = static_cast<float>(ms.GetWheelValue());
             break;
         case MouseAxis::DeltaWheel:
-            v = static_cast<float>(ms.GetWheel() - ms.GetPrevWheel());
+            v = static_cast<float>(ms.GetWheel());
             break;
         default:
             v = 0.0f;
@@ -228,7 +222,6 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
             fired = std::abs(v) > t;
             break;
         case InputState::Trigger:
-            // NOTE: 現状は「閾値を超えている」を Trigger とする（閾値跨ぎは別途必要）
             fired = std::abs(v) > t;
             break;
         case InputState::Release:

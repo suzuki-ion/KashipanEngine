@@ -13,6 +13,8 @@
 #include "Assets/AudioManager.h"
 #include "Objects/Object2DBase.h"
 #include "Objects/Object3DBase.h"
+#include "Input/Input.h"
+#include "Input/InputCommand.h"
 
 #if defined(USE_IMGUI)
 #include "Debug/ImGuiManager.h"
@@ -122,6 +124,11 @@ private:
 
     /// @brief ウィンドウ配列
     std::vector<Window *> windows_;
+
+    /// @brief 入力クラス
+    std::unique_ptr<Input> input_;
+    /// @brief 入力コマンドクラス
+    std::unique_ptr<InputCommand> inputCommand_;
 };
 
 } // namespace KashipanEngine

@@ -1,18 +1,19 @@
 #include "Input/Mouse.h"
 
-#include <Windows.h>
+#include <GameInput.h>
 
+#include <algorithm>
 #include <cassert>
-#include <cstring>
+#include <cstdint>
+#include <limits>
 
 #include "Core/Window.h"
 
-#pragma comment(lib, "dinput8.lib")
-#pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "gameinput.lib")
 
 namespace KashipanEngine {
 namespace {
-IDirectInputDevice8* sMouseDevice = nullptr;
+IGameInput* sGameInput = nullptr;
 } // namespace
 
 Mouse::Mouse() = default;
@@ -22,69 +23,107 @@ Mouse::~Mouse() {
 }
 
 void Mouse::Initialize(HINSTANCE hInstance) {
-    assert(hInstance);
+    (void)hInstance;
 
-    IDirectInput8* directInput = nullptr;
-    HRESULT hr = DirectInput8Create(
-        hInstance,
-        DIRECTINPUT_VERSION,
-        IID_IDirectInput8,
-        reinterpret_cast<void**>(&directInput),
-        nullptr);
-    assert(SUCCEEDED(hr));
+    if (!sGameInput) {
+        const HRESULT hr = GameInputCreate(&sGameInput);
+        assert(SUCCEEDED(hr));
+    }
 
-    hr = directInput->CreateDevice(GUID_SysMouse, &sMouseDevice, nullptr);
-    assert(SUCCEEDED(hr));
+    currentButtons_.fill(0);
+    previousButtons_.fill(0);
 
-    hr = sMouseDevice->SetDataFormat(&c_dfDIMouse);
-    assert(SUCCEEDED(hr));
-
-    // hwnd を要求しないため、協調レベルは全体(HWNDデスクトップ)に対して設定
-    hr = sMouseDevice->SetCooperativeLevel(
-        ::GetDesktopWindow(),
-        DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
-    assert(SUCCEEDED(hr));
-
-    directInput->Release();
-
-    std::memset(&currentState, 0, sizeof(currentState));
-    std::memset(&previousState, 0, sizeof(previousState));
+    currentDeltaX_ = 0;
+    currentDeltaY_ = 0;
+    currentWheel_ = 0;
+    currentWheelValue_ = 0;
+    previousDeltaX_ = 0;
+    previousDeltaY_ = 0;
+    previousWheel_ = 0;
+    previousWheelValue_ = 0;
 
     GetCursorPos(&currentPosScreen);
     previousPosScreen = currentPosScreen;
     prevClientPosByWindow_.clear();
+
+    initialized_ = true;
 }
 
 void Mouse::Finalize() {
-    if (sMouseDevice) {
-        sMouseDevice->Unacquire();
-        sMouseDevice->Release();
-        sMouseDevice = nullptr;
-    }
+    initialized_ = false;
+
+    currentButtons_.fill(0);
+    previousButtons_.fill(0);
+
+    currentDeltaX_ = 0;
+    currentDeltaY_ = 0;
+    currentWheel_ = 0;
+    currentWheelValue_ = 0;
+    previousDeltaX_ = 0;
+    previousDeltaY_ = 0;
+    previousWheel_ = 0;
+    previousWheelValue_ = 0;
 }
 
 void Mouse::Update() {
-    previousState = currentState;
+    previousButtons_ = currentButtons_;
+    previousDeltaX_ = currentDeltaX_;
+    previousDeltaY_ = currentDeltaY_;
+    previousWheel_ = currentWheel_;
+    previousWheelValue_ = currentWheelValue_;
 
-    if (sMouseDevice) {
-        sMouseDevice->Acquire();
-        sMouseDevice->GetDeviceState(sizeof(currentState), &currentState);
-    } else {
-        std::memset(&currentState, 0, sizeof(currentState));
-    }
+    currentButtons_.fill(0);
+    currentDeltaX_ = 0;
+    currentDeltaY_ = 0;
+    currentWheel_ = 0;
 
+    // カーソル位置から移動量（差分）を算出する
     previousPosScreen = currentPosScreen;
     GetCursorPos(&currentPosScreen);
+    currentDeltaX_ = currentPosScreen.x - previousPosScreen.x;
+    currentDeltaY_ = currentPosScreen.y - previousPosScreen.y;
+
+    if (!initialized_ || !sGameInput) {
+        return;
+    }
+
+    IGameInputReading *reading = nullptr;
+    const HRESULT hr = sGameInput->GetCurrentReading(GameInputKindMouse, nullptr, &reading);
+    if (FAILED(hr) || !reading) {
+        return;
+    }
+
+    GameInputMouseState state{};
+    if (!reading->GetMouseState(&state)) {
+        return;
+    }
+    const std::uint32_t buttons = static_cast<std::uint32_t>(state.buttons);
+    for (int i = 0; i < 8; ++i) {
+        const bool down = ((buttons & (1u << i)) != 0);
+        currentButtons_[i] = down ? 0x80 : 0;
+    }
+
+    const auto clampToInt = [](int64_t v) -> int {
+        if (v > static_cast<int64_t>(std::numeric_limits<int>::max())) return std::numeric_limits<int>::max();
+        if (v < static_cast<int64_t>(std::numeric_limits<int>::min())) return std::numeric_limits<int>::min();
+        return static_cast<int>(v);
+        };
+
+    // ホイール累積値（縦方向）
+    currentWheelValue_ = clampToInt(state.wheelY);
+    // フレーム差分
+    currentWheel_ = currentWheelValue_ - previousWheelValue_;
+    reading->Release();
 }
 
 bool Mouse::IsButtonDown(int button) const {
     if (button < 0 || button >= 8) return false;
-    return (currentState.rgbButtons[button] & 0x80) != 0;
+    return (currentButtons_[button] & 0x80) != 0;
 }
 
 bool Mouse::WasButtonDown(int button) const {
     if (button < 0 || button >= 8) return false;
-    return (previousState.rgbButtons[button] & 0x80) != 0;
+    return (previousButtons_[button] & 0x80) != 0;
 }
 
 bool Mouse::IsButtonTrigger(int button) const {
@@ -96,27 +135,35 @@ bool Mouse::IsButtonRelease(int button) const {
 }
 
 int Mouse::GetDeltaX() const {
-    return static_cast<int>(currentState.lX);
+    return currentDeltaX_;
 }
 
 int Mouse::GetDeltaY() const {
-    return static_cast<int>(currentState.lY);
+    return currentDeltaY_;
 }
 
 int Mouse::GetWheel() const {
-    return static_cast<int>(currentState.lZ);
+    return currentWheel_;
 }
 
-int Mouse::GetPrevDeltaX() const {
-    return static_cast<int>(previousState.lX);
-}
-
-int Mouse::GetPrevDeltaY() const {
-    return static_cast<int>(previousState.lY);
+int Mouse::GetWheelValue() const {
+    return currentWheelValue_;
 }
 
 int Mouse::GetPrevWheel() const {
-    return static_cast<int>(previousState.lZ);
+    return previousWheel_;
+}
+
+int Mouse::GetPrevWheelValue() const {
+    return previousWheelValue_;
+}
+
+int Mouse::GetPrevDeltaX() const {
+    return previousDeltaX_;
+}
+
+int Mouse::GetPrevDeltaY() const {
+    return previousDeltaY_;
 }
 
 POINT Mouse::GetPos(HWND hwnd) const {
@@ -138,15 +185,12 @@ POINT Mouse::GetPrevPos(HWND hwnd) const {
 
     const auto key = GetWindowKey_(hwnd);
 
-    // まず現在クライアント座標を計算
     POINT currentClient = currentPosScreen;
     ScreenToClient(hwnd, &currentClient);
 
-    // 前回値を取得（初回は現在値を返す）
     const auto it = prevClientPosByWindow_.find(key);
     POINT prevClient = (it != prevClientPosByWindow_.end()) ? it->second : currentClient;
 
-    // 次回のために更新
     prevClientPosByWindow_[key] = currentClient;
 
     return prevClient;

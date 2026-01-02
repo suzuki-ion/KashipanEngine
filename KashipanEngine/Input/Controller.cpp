@@ -1,91 +1,251 @@
 #include "Input/Controller.h"
 
-#include <Xinput.h>
-
-#include <Windows.h>
+#include <GameInput.h>
 
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <limits>
 
-#pragma comment(lib, "xinput.lib")
+#pragma comment(lib, "gameinput.lib")
 
 namespace KashipanEngine {
 namespace {
-std::array<XINPUT_STATE, 4> sState{};
-std::array<XINPUT_STATE, 4> sPreState{};
-std::array<bool, 4> sConnected{};
-std::array<bool, 4> sPreConnected{};
-std::array<XINPUT_VIBRATION, 4> sVibration{};
+IGameInput* sGameInput = nullptr;
+
+static std::int16_t ApplyDeadZone(std::int16_t v, std::int16_t dz) {
+    if (v < +dz && v > -dz) return 0;
+    return v;
+}
+
+static bool IsDeviceConnected_(IGameInputDevice* device) {
+    if (!device) return false;
+    const auto status = device->GetDeviceStatus();
+    return (status & GameInputDeviceConnected) != 0;
+}
+
+static int FindDeviceIndex_(const std::vector<Controller::DeviceEntry>& devices, IGameInputDevice* device) {
+    for (size_t i = 0; i < devices.size(); ++i) {
+        if (devices[i].device == device) return static_cast<int>(i);
+    }
+    return -1;
+}
+
 } // namespace
 
-Controller::Controller() {
-    current_ = &sState;
-    previous_ = &sPreState;
-    connected_ = &sConnected;
-    prevConnected_ = &sPreConnected;
-    vibration_ = &sVibration;
+static void CALLBACK OnGamepadDeviceChanged_(
+    GameInputCallbackToken /*callbackToken*/,
+    void* context,
+    IGameInputDevice* device,
+    uint64_t /*timestamp*/,
+    GameInputDeviceStatus currentStatus,
+    GameInputDeviceStatus /*previousStatus*/) {
+
+    if (!context || !device) return;
+    auto* self = reinterpret_cast<Controller*>(context);
+    self->OnDeviceChanged_(device, static_cast<std::uint32_t>(currentStatus));
 }
+
+void Controller::OnDeviceChanged_(void* dev, std::uint32_t currentStatus) {
+    auto* device = static_cast<IGameInputDevice*>(dev);
+    if (!device) return;
+
+    const bool connectedNow = (currentStatus & static_cast<std::uint32_t>(GameInputDeviceConnected)) != 0;
+    const int existing = FindDeviceIndex_(devices_, device);
+
+    if (connectedNow) {
+        if (existing < 0) {
+            device->AddRef();
+            devices_.push_back({ device });
+        }
+    } else {
+        if (existing >= 0) {
+            auto& entry = devices_[static_cast<size_t>(existing)];
+            auto* d = static_cast<IGameInputDevice*>(entry.device);
+            if (d) {
+                GameInputRumbleParams zero{};
+                d->SetRumbleState(&zero);
+                d->Release();
+            }
+            devices_.erase(devices_.begin() + existing);
+        }
+    }
+}
+
+Controller::Controller() = default;
 
 Controller::~Controller() {
     Finalize();
 }
 
 void Controller::Initialize() {
-    for (int i = 0; i < 4; ++i) {
-        std::memset(&(*current_)[i], 0, sizeof(XINPUT_STATE));
-        std::memset(&(*previous_)[i], 0, sizeof(XINPUT_STATE));
-        (*connected_)[i] = false;
-        (*prevConnected_)[i] = false;
-        std::memset(&(*vibration_)[i], 0, sizeof(XINPUT_VIBRATION));
+    if (!sGameInput) {
+        const HRESULT hr = GameInputCreate(&sGameInput);
+        assert(SUCCEEDED(hr));
+    }
+
+    // ストレージをリセット
+    devices_.clear();
+    current_.clear();
+    previous_.clear();
+    connected_.clear();
+    prevConnected_.clear();
+
+    if (sGameInput) {
+        // デバイスコールバックは列挙も兼ねる
+        // すべてのゲームパッドデバイスを対象に登録する
+        const HRESULT hr = sGameInput->RegisterDeviceCallback(
+            nullptr,
+            GameInputKindGamepad,
+            GameInputDeviceAnyStatus,
+            GameInputBlockingEnumeration,
+            this,
+            &OnGamepadDeviceChanged_,
+            &deviceCallbackToken_);
+        assert(SUCCEEDED(hr));
     }
 }
 
 void Controller::Finalize() {
-    for (int i = 0; i < 4; ++i) {
-        StopVibration(i);
+    // 先にコールバックを停止して、終了処理と競合しないようにする
+    if (sGameInput && deviceCallbackToken_ != 0) {
+        sGameInput->UnregisterCallback(deviceCallbackToken_, 0);
+        deviceCallbackToken_ = 0;
     }
+
+    // 振動を停止し、保持しているデバイス参照を解放する
+    for (auto& e : devices_) {
+        auto* d = static_cast<IGameInputDevice*>(e.device);
+        if (!d) continue;
+        GameInputRumbleParams zero{};
+        d->SetRumbleState(&zero);
+        d->Release();
+        e.device = nullptr;
+    }
+    devices_.clear();
+
+    current_.clear();
+    previous_.clear();
+    connected_.clear();
+    prevConnected_.clear();
+}
+
+std::uint16_t Controller::ButtonsToXInputMask_(std::uint32_t b) noexcept {
+    // XInput.h を include せず互換性を保つため、値を XInput.h から複製している
+    constexpr std::uint16_t X_DPAD_UP = 0x0001;
+    constexpr std::uint16_t X_DPAD_DOWN = 0x0002;
+    constexpr std::uint16_t X_DPAD_LEFT = 0x0004;
+    constexpr std::uint16_t X_DPAD_RIGHT = 0x0008;
+    constexpr std::uint16_t X_START = 0x0010;
+    constexpr std::uint16_t X_BACK = 0x0020;
+    constexpr std::uint16_t X_LTHUMB = 0x0040;
+    constexpr std::uint16_t X_RTHUMB = 0x0080;
+    constexpr std::uint16_t X_LSHOULDER = 0x0100;
+    constexpr std::uint16_t X_RSHOULDER = 0x0200;
+    constexpr std::uint16_t X_A = 0x1000;
+    constexpr std::uint16_t X_B = 0x2000;
+    constexpr std::uint16_t X_X = 0x4000;
+    constexpr std::uint16_t X_Y = 0x8000;
+
+    std::uint16_t mask = 0;
+
+    if (b & GameInputGamepadDPadUp) mask |= X_DPAD_UP;
+    if (b & GameInputGamepadDPadDown) mask |= X_DPAD_DOWN;
+    if (b & GameInputGamepadDPadLeft) mask |= X_DPAD_LEFT;
+    if (b & GameInputGamepadDPadRight) mask |= X_DPAD_RIGHT;
+
+    if (b & GameInputGamepadMenu) mask |= X_START;
+    if (b & GameInputGamepadView) mask |= X_BACK;
+
+    if (b & GameInputGamepadLeftThumbstick) mask |= X_LTHUMB;
+    if (b & GameInputGamepadRightThumbstick) mask |= X_RTHUMB;
+
+    if (b & GameInputGamepadLeftShoulder) mask |= X_LSHOULDER;
+    if (b & GameInputGamepadRightShoulder) mask |= X_RSHOULDER;
+
+    if (b & GameInputGamepadA) mask |= X_A;
+    if (b & GameInputGamepadB) mask |= X_B;
+    if (b & GameInputGamepadX) mask |= X_X;
+    if (b & GameInputGamepadY) mask |= X_Y;
+
+    return mask;
 }
 
 void Controller::Update() {
-    *previous_ = *current_;
-    *prevConnected_ = *connected_;
+    previous_ = current_;
+    prevConnected_ = connected_;
 
-    for (int i = 0; i < 4; ++i) {
-        std::memset(&(*current_)[i], 0, sizeof(XINPUT_STATE));
-        DWORD dw = XInputGetState(i, &(*current_)[i]);
-        (*connected_)[i] = (dw == ERROR_SUCCESS);
+    const size_t count = devices_.size();
+    current_.assign(count, PadState{});
+    connected_.assign(count, false);
 
-        if (!(*connected_)[i]) {
-            std::memset(&(*current_)[i], 0, sizeof(XINPUT_STATE));
+    if (!sGameInput) {
+        return;
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        auto* device = static_cast<IGameInputDevice*>(devices_[i].device);
+        if (!device || !IsDeviceConnected_(device)) {
+            connected_[i] = false;
             continue;
         }
 
-        auto& g = (*current_)[i].Gamepad;
+        IGameInputReading* reading = nullptr;
+        const HRESULT hr = sGameInput->GetCurrentReading(GameInputKindGamepad, device, &reading);
+        if (FAILED(hr) || !reading) {
+            connected_[i] = false;
+            continue;
+        }
 
-        if (g.sThumbLX < +stickDeadZone_ && g.sThumbLX > -stickDeadZone_) g.sThumbLX = 0;
-        if (g.sThumbLY < +stickDeadZone_ && g.sThumbLY > -stickDeadZone_) g.sThumbLY = 0;
-        if (g.sThumbRX < +stickDeadZone_ && g.sThumbRX > -stickDeadZone_) g.sThumbRX = 0;
-        if (g.sThumbRY < +stickDeadZone_ && g.sThumbRY > -stickDeadZone_) g.sThumbRY = 0;
+        GameInputGamepadState state{};
+        if (SUCCEEDED(reading->GetGamepadState(&state))) {
+            connected_[i] = true;
+
+            current_[i].buttons = ButtonsToXInputMask_(state.buttons);
+
+            current_[i].leftTrigger = static_cast<std::uint8_t>(std::clamp(state.leftTrigger * 255.0f, 0.0f, 255.0f));
+            current_[i].rightTrigger = static_cast<std::uint8_t>(std::clamp(state.rightTrigger * 255.0f, 0.0f, 255.0f));
+
+            current_[i].leftX = static_cast<std::int16_t>(std::clamp(state.leftThumbstickX * 32767.0f, -32767.0f, 32767.0f));
+            current_[i].leftY = static_cast<std::int16_t>(std::clamp(state.leftThumbstickY * 32767.0f, -32767.0f, 32767.0f));
+            current_[i].rightX = static_cast<std::int16_t>(std::clamp(state.rightThumbstickX * 32767.0f, -32767.0f, 32767.0f));
+            current_[i].rightY = static_cast<std::int16_t>(std::clamp(state.rightThumbstickY * 32767.0f, -32767.0f, 32767.0f));
+
+            current_[i].leftX = ApplyDeadZone(current_[i].leftX, stickDeadZone_);
+            current_[i].leftY = ApplyDeadZone(current_[i].leftY, stickDeadZone_);
+            current_[i].rightX = ApplyDeadZone(current_[i].rightX, stickDeadZone_);
+            current_[i].rightY = ApplyDeadZone(current_[i].rightY, stickDeadZone_);
+        } else {
+            connected_[i] = false;
+        }
+
+        reading->Release();
+    }
+
+    if (previous_.size() != current_.size()) {
+        previous_.resize(current_.size());
+    }
+    if (prevConnected_.size() != connected_.size()) {
+        prevConnected_.resize(connected_.size(), false);
     }
 }
 
 bool Controller::IsConnected(int index) const {
-    return (index >= 0 && index < 4) ? (*connected_)[index] : false;
+    return (index >= 0 && index < static_cast<int>(connected_.size())) ? connected_[static_cast<size_t>(index)] : false;
 }
 
 bool Controller::WasConnected(int index) const {
-    return (index >= 0 && index < 4) ? (*prevConnected_)[index] : false;
+    return (index >= 0 && index < static_cast<int>(prevConnected_.size())) ? prevConnected_[static_cast<size_t>(index)] : false;
 }
 
 bool Controller::IsButtonDown(int button, int index) const {
     if (!IsConnected(index)) return false;
-    return ((*current_)[index].Gamepad.wButtons & static_cast<WORD>(button)) != 0;
+    return (current_[static_cast<size_t>(index)].buttons & static_cast<std::uint16_t>(button)) != 0;
 }
 
 bool Controller::WasButtonDown(int button, int index) const {
-    if (!(index >= 0 && index < 4)) return false;
-    return (((*previous_)[index].Gamepad.wButtons & static_cast<WORD>(button)) != 0);
+    if (!(index >= 0 && index < static_cast<int>(previous_.size()))) return false;
+    return (previous_[static_cast<size_t>(index)].buttons & static_cast<std::uint16_t>(button)) != 0;
 }
 
 bool Controller::IsButtonTrigger(int button, int index) const {
@@ -97,51 +257,51 @@ bool Controller::IsButtonRelease(int button, int index) const {
 }
 
 int Controller::GetLeftTrigger(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*current_)[index].Gamepad.bLeftTrigger) : 0;
+    return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].leftTrigger) : 0;
 }
 
 int Controller::GetRightTrigger(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*current_)[index].Gamepad.bRightTrigger) : 0;
+    return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].rightTrigger) : 0;
 }
 
 int Controller::GetLeftStickX(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*current_)[index].Gamepad.sThumbLX) : 0;
+    return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].leftX) : 0;
 }
 
 int Controller::GetLeftStickY(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*current_)[index].Gamepad.sThumbLY) : 0;
+    return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].leftY) : 0;
 }
 
 int Controller::GetRightStickX(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*current_)[index].Gamepad.sThumbRX) : 0;
+    return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].rightX) : 0;
 }
 
 int Controller::GetRightStickY(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*current_)[index].Gamepad.sThumbRY) : 0;
+    return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].rightY) : 0;
 }
 
 int Controller::GetPrevLeftTrigger(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*previous_)[index].Gamepad.bLeftTrigger) : 0;
+    return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].leftTrigger) : 0;
 }
 
 int Controller::GetPrevRightTrigger(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*previous_)[index].Gamepad.bRightTrigger) : 0;
+    return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].rightTrigger) : 0;
 }
 
 int Controller::GetPrevLeftStickX(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*previous_)[index].Gamepad.sThumbLX) : 0;
+    return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].leftX) : 0;
 }
 
 int Controller::GetPrevLeftStickY(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*previous_)[index].Gamepad.sThumbLY) : 0;
+    return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].leftY) : 0;
 }
 
 int Controller::GetPrevRightStickX(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*previous_)[index].Gamepad.sThumbRX) : 0;
+    return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].rightX) : 0;
 }
 
 int Controller::GetPrevRightStickY(int index) const {
-    return (index >= 0 && index < 4) ? static_cast<int>((*previous_)[index].Gamepad.sThumbRY) : 0;
+    return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].rightY) : 0;
 }
 
 int Controller::GetDeltaLeftTrigger(int index) const {
@@ -169,23 +329,34 @@ int Controller::GetDeltaRightStickY(int index) const {
 }
 
 void Controller::SetVibration(int index, int leftMotor, int rightMotor) {
-    if (!(index >= 0 && index < 4)) return;
+    if (!(index >= 0 && index < static_cast<int>(devices_.size()))) return;
+    auto* device = static_cast<IGameInputDevice*>(devices_[static_cast<size_t>(index)].device);
+    if (!device) return;
 
-    if (leftMotor > -1) {
-        (*vibration_)[index].wLeftMotorSpeed = static_cast<WORD>(std::clamp(leftMotor, 0, 65535));
-    }
-    if (rightMotor > -1) {
-        (*vibration_)[index].wRightMotorSpeed = static_cast<WORD>(std::clamp(rightMotor, 0, 65535));
-    }
+    const auto toFloat = [](int v) {
+        if (v < 0) return -1.0f;
+        return std::clamp(static_cast<float>(v) / 65535.0f, 0.0f, 1.0f);
+    };
 
-    XInputSetState(index, &(*vibration_)[index]);
+    GameInputRumbleParams params{};
+    const float l = toFloat(leftMotor);
+    const float r = toFloat(rightMotor);
+
+    params.lowFrequency = (l >= 0.0f) ? l : 0.0f;
+    params.highFrequency = (r >= 0.0f) ? r : 0.0f;
+    params.leftTrigger = 0.0f;
+    params.rightTrigger = 0.0f;
+
+    device->SetRumbleState(&params);
 }
 
 void Controller::StopVibration(int index) {
-    if (!(index >= 0 && index < 4)) return;
-    (*vibration_)[index].wLeftMotorSpeed = 0;
-    (*vibration_)[index].wRightMotorSpeed = 0;
-    XInputSetState(index, &(*vibration_)[index]);
+    if (!(index >= 0 && index < static_cast<int>(devices_.size()))) return;
+    auto* device = static_cast<IGameInputDevice*>(devices_[static_cast<size_t>(index)].device);
+    if (!device) return;
+
+    GameInputRumbleParams zero{};
+    device->SetRumbleState(&zero);
 }
 
 } // namespace KashipanEngine

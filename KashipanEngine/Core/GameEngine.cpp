@@ -255,6 +255,10 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
 #endif
 
+    // Input
+    input_ = std::make_unique<Input>();
+    inputCommand_ = std::make_unique<InputCommand>(input_.get());
+
     //--------- ウィンドウ作成 ---------//
     
     const auto &windowSettings = GetEngineSettings().window;
@@ -279,6 +283,11 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         windows_.back()->SetWindowParent(windows_.front(), false);
     }
 
+    if (!windows_.empty() && input_) {
+        HWND hwnd = windows_.front() ? windows_.front()->GetWindowHandle() : nullptr;
+        input_->Initialize(::GetModuleHandle(nullptr), hwnd);
+    }
+
     InitializeTestObjects_();
 
     //--------- ゲームループ終了条件 ---------//
@@ -299,6 +308,12 @@ GameEngine::~GameEngine() {
     LogSeparator();
 
     Window::AllDestroy({});
+
+    if (input_) {
+        input_->Finalize();
+    }
+    inputCommand_.reset();
+    input_.reset();
 
 #if defined(USE_IMGUI)
     imguiManager_.reset();
@@ -328,7 +343,11 @@ void GameEngine::GameLoopUpdate() {
 
     Window::Update({});
     UpdateDeltaTime({});
-    
+
+    if (input_) {
+        input_->Update();
+    }
+
 #if defined(USE_IMGUI)
     {
         const float dt = GetDeltaTime();
@@ -341,23 +360,13 @@ void GameEngine::GameLoopUpdate() {
     }
 #if defined(USE_IMGUI)
     imguiManager_->BeginFrame({});
+    if (input_) {
+        input_->ShowImGui();
+    }
 #endif
 
     InitializeTestObjects_();
     UpdateTestObjects_();
-
-    // Main Window をsinを使って上下に移動させる
-    static float t = 0.0f;
-    t += GetDeltaTime();
-    auto mainWindows = Window::GetWindows("Main Window");
-    if (!mainWindows.empty()) {
-        auto *mainWindow = mainWindows.front();
-        auto monitorInfo = windowsAPI_->QueryMonitorInfo();
-        const int32_t centerY = (monitorInfo->WorkArea().bottom - monitorInfo->WorkArea().top) / 2;
-        const int32_t amplitude = (monitorInfo->WorkArea().bottom - monitorInfo->WorkArea().top) / 4;
-        const int32_t newY = centerY + static_cast<int32_t>(amplitude * std::sin(t));
-        mainWindow->SetWindowPosition(mainWindow->GetWindowPosition().x, newY);
-    }
 
     if (!isGameLoopRunning_ || isGameLoopPaused_) {
 #if defined(USE_IMGUI)

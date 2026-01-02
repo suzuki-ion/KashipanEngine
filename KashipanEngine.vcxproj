@@ -326,6 +326,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Input\Controller.h" />
     <ClInclude Include="KashipanEngine\Input\Input.h" />
     <ClInclude Include="KashipanEngine\Input\InputCommand.h" />
+    <ClInclude Include="KashipanEngine\Input\Key.h" />
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />

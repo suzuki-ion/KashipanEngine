@@ -20,7 +20,7 @@ public:
     Mouse& operator=(const Mouse&) = delete;
     Mouse& operator=(Mouse&&) = delete;
 
-    void Initialize(HINSTANCE hInstance);
+    void Initialize();
     void Finalize();
     void Update();
 

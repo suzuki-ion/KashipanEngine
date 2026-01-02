@@ -13,18 +13,18 @@ namespace KashipanEngine {
 namespace {
 IGameInput* sGameInput = nullptr;
 
-static std::int16_t ApplyDeadZone(std::int16_t v, std::int16_t dz) {
+std::int16_t ApplyDeadZone(std::int16_t v, std::int16_t dz) {
     if (v < +dz && v > -dz) return 0;
     return v;
 }
 
-static bool IsDeviceConnected_(IGameInputDevice* device) {
+bool IsDeviceConnected(IGameInputDevice* device) {
     if (!device) return false;
     const auto status = device->GetDeviceStatus();
     return (status & GameInputDeviceConnected) != 0;
 }
 
-static int FindDeviceIndex_(const std::vector<Controller::DeviceEntry>& devices, IGameInputDevice* device) {
+int FindDeviceIndex(const std::vector<Controller::DeviceEntry>& devices, IGameInputDevice* device) {
     for (size_t i = 0; i < devices.size(); ++i) {
         if (devices[i].device == device) return static_cast<int>(i);
     }
@@ -33,7 +33,7 @@ static int FindDeviceIndex_(const std::vector<Controller::DeviceEntry>& devices,
 
 } // namespace
 
-static void CALLBACK OnGamepadDeviceChanged_(
+void CALLBACK OnGamepadDeviceChanged(
     GameInputCallbackToken /*callbackToken*/,
     void* context,
     IGameInputDevice* device,
@@ -43,15 +43,15 @@ static void CALLBACK OnGamepadDeviceChanged_(
 
     if (!context || !device) return;
     auto* self = reinterpret_cast<Controller*>(context);
-    self->OnDeviceChanged_(device, static_cast<std::uint32_t>(currentStatus));
+    self->OnDeviceChanged(device, static_cast<std::uint32_t>(currentStatus));
 }
 
-void Controller::OnDeviceChanged_(void* dev, std::uint32_t currentStatus) {
+void Controller::OnDeviceChanged(void* dev, std::uint32_t currentStatus) {
     auto* device = static_cast<IGameInputDevice*>(dev);
     if (!device) return;
 
     const bool connectedNow = (currentStatus & static_cast<std::uint32_t>(GameInputDeviceConnected)) != 0;
-    const int existing = FindDeviceIndex_(devices_, device);
+    const int existing = FindDeviceIndex(devices_, device);
 
     if (connectedNow) {
         if (existing < 0) {
@@ -100,7 +100,7 @@ void Controller::Initialize() {
             GameInputDeviceAnyStatus,
             GameInputBlockingEnumeration,
             this,
-            &OnGamepadDeviceChanged_,
+            &OnGamepadDeviceChanged,
             &deviceCallbackToken_);
         assert(SUCCEEDED(hr));
     }
@@ -130,7 +130,7 @@ void Controller::Finalize() {
     prevConnected_.clear();
 }
 
-std::uint16_t Controller::ButtonsToXInputMask_(std::uint32_t b) noexcept {
+std::uint16_t Controller::ButtonsToXInputMask(std::uint32_t b) noexcept {
     // XInput.h を include せず互換性を保つため、値を XInput.h から複製している
     constexpr std::uint16_t X_DPAD_UP = 0x0001;
     constexpr std::uint16_t X_DPAD_DOWN = 0x0002;
@@ -185,7 +185,7 @@ void Controller::Update() {
 
     for (size_t i = 0; i < count; ++i) {
         auto* device = static_cast<IGameInputDevice*>(devices_[i].device);
-        if (!device || !IsDeviceConnected_(device)) {
+        if (!device || !IsDeviceConnected(device)) {
             connected_[i] = false;
             continue;
         }
@@ -201,7 +201,7 @@ void Controller::Update() {
         if (SUCCEEDED(reading->GetGamepadState(&state))) {
             connected_[i] = true;
 
-            current_[i].buttons = ButtonsToXInputMask_(state.buttons);
+            current_[i].buttons = ButtonsToXInputMask(state.buttons);
 
             current_[i].leftTrigger = static_cast<std::uint8_t>(std::clamp(state.leftTrigger * 255.0f, 0.0f, 255.0f));
             current_[i].rightTrigger = static_cast<std::uint8_t>(std::clamp(state.rightTrigger * 255.0f, 0.0f, 255.0f));

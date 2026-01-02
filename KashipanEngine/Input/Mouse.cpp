@@ -22,9 +22,7 @@ Mouse::~Mouse() {
     Finalize();
 }
 
-void Mouse::Initialize(HINSTANCE hInstance) {
-    (void)hInstance;
-
+void Mouse::Initialize() {
     if (!sGameInput) {
         const HRESULT hr = GameInputCreate(&sGameInput);
         assert(SUCCEEDED(hr));

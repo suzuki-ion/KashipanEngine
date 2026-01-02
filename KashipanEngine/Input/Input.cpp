@@ -20,12 +20,12 @@ Input::Input()
 
 Input::~Input() = default;
 
-void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
+void Input::Initialize() {
     if (keyboard_) {
-        keyboard_->Initialize(hInstance, hwnd);
+        keyboard_->Initialize();
     }
     if (mouse_) {
-        mouse_->Initialize(hInstance);
+        mouse_->Initialize();
     }
     if (controller_) {
         controller_->Initialize();

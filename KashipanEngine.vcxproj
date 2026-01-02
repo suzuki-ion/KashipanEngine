@@ -180,6 +180,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\VertexBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Controller.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Input.cpp" />
+    <ClCompile Include="KashipanEngine\Input\InputCommand.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Keyboard.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Mouse.cpp" />
     <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
@@ -318,6 +323,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h" />
+    <ClInclude Include="KashipanEngine\Input\Controller.h" />
+    <ClInclude Include="KashipanEngine\Input\Input.h" />
+    <ClInclude Include="KashipanEngine\Input\InputCommand.h" />
+    <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
+    <ClInclude Include="KashipanEngine\Input\Mouse.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />
     <ClInclude Include="KashipanEngine\Math\SRTMatrix4x4.h" />

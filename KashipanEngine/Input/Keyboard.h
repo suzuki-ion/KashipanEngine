@@ -1,9 +1,11 @@
 #pragma once
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
 #include <windows.h>
+
+#include "Input/Key.h"
 
 namespace KashipanEngine {
 
@@ -17,30 +19,26 @@ public:
     Keyboard& operator=(const Keyboard&) = delete;
     Keyboard& operator=(Keyboard&&) = delete;
 
-    void Initialize(HINSTANCE hInstance, HWND hwnd);
+    void Initialize();
     void Finalize();
     void Update();
 
     /// @brief 指定キーが押されているかを取得
-    /// @param key 仮想キーコード（VK_*）
-    /// @return 押されている場合 true
-    bool IsDown(int key) const;
+    bool IsDown(Key key) const;
     /// @brief 指定キーが押された瞬間か（トリガー）を取得
-    /// @param key 仮想キーコード（VK_*）
-    /// @return 今フレームで押された場合 true
-    bool IsTrigger(int key) const;
+    bool IsTrigger(Key key) const;
     /// @brief 指定キーが離された瞬間か（リリース）を取得
-    /// @param key 仮想キーコード（VK_*）
-    /// @return 今フレームで離された場合 true
-    bool IsRelease(int key) const;
+    bool IsRelease(Key key) const;
     /// @brief 前フレームで指定キーが押されていたかを取得
-    /// @param key 仮想キーコード（VK_*）
-    /// @return 前フレームで押されていた場合 true
-    bool WasDown(int key) const;
+    bool WasDown(Key key) const;
 
 private:
-    std::array<std::uint8_t, 256> current_{};
-    std::array<std::uint8_t, 256> previous_{};
+    static size_t ToIndex_(Key key) noexcept;
+
+    std::array<std::uint8_t, 256> current{};
+    std::array<std::uint8_t, 256> previous{};
+
+    bool initialized_ = false;
 };
 
 } // namespace KashipanEngine

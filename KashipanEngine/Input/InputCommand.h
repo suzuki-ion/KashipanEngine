@@ -5,6 +5,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "Input/Key.h"
+
 namespace KashipanEngine {
 
 class Input;
@@ -40,7 +42,7 @@ public:
         Client,
     };
 
-    struct KeyboardKey { int value = 0; };
+    struct KeyboardKey { Key value = Key::Unknown; };
     struct MouseButton { int value = 0; };
     struct ControllerButton { int value = 0; };
 
@@ -61,14 +63,13 @@ public:
 
     InputCommand() = delete;
     explicit InputCommand(const Input* input);
-    void SetInput(const Input* input);
 
     /// @brief すべてのコマンド登録をクリア
     void Clear();
 
     /// @brief コマンドを登録する
     /// @param action コマンド名
-    /// @param key キーコード（DIK_*）
+    /// @param key キー（KashipanEngine::Key）
     /// @param state 入力状態（押下、トリガー、リリース）
     void RegisterCommand(const std::string& action, KeyboardKey key, InputState state);
 
@@ -129,7 +130,8 @@ private:
     struct Binding {
         DeviceKind kind{};
         InputState state = InputState::Down; // delta/axis では意味を持たない場合あり
-        int code = 0;              // キーコード、ボタンコード、アナログコードなど
+        int code = 0;              // mouse/controller only
+        Key key = Key::Unknown;    // keyboard only
         int controllerIndex = 0;   // コントローラーインデックス（コントローラー用のみ）
         float threshold = 0.0f;    // アナログ入力の閾値（アナログ用のみ）
 

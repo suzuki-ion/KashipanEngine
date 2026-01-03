@@ -30,23 +30,48 @@ void Object3DBase::AttachToRenderer(Window *targetWindow, const std::string &pip
         renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
         persistentPassHandle_ = {};
     }
+    if (persistentOffscreenPassHandle_) {
+        renderer->UnregisterPersistentOffscreenRenderPass(persistentOffscreenPassHandle_);
+        persistentOffscreenPassHandle_ = {};
+    }
 
-    auto pass = CreateRenderPass(targetWindow, pipelineName, passName_);
+    auto pass = CreateRenderPass(targetWindow, pipelineName);
     persistentPassHandle_ = renderer->RegisterPersistentRenderPass(std::move(pass));
 }
 
-void Object3DBase::DetachFromRenderer() {
-    if (!persistentPassHandle_) return;
+void Object3DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
+    if (!targetBuffer) return;
     auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
-    if (renderer) {
+    if (!renderer) return;
+
+    if (persistentPassHandle_) {
         renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
+        persistentPassHandle_ = {};
     }
-    persistentPassHandle_ = {};
+    if (persistentOffscreenPassHandle_) {
+        renderer->UnregisterPersistentOffscreenRenderPass(persistentOffscreenPassHandle_);
+        persistentOffscreenPassHandle_ = {};
+    }
+
+    auto pass = CreateRenderPass(targetBuffer, pipelineName);
+    persistentOffscreenPassHandle_ = renderer->RegisterPersistentOffscreenRenderPass(std::move(pass));
 }
 
-RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName, const std::string &passName) {
-    (void)passName; // passName is fixed (constructor-provided name)
+void Object3DBase::DetachFromRenderer() {
+    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    if (renderer) {
+        if (persistentPassHandle_) {
+            renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
+        }
+        if (persistentOffscreenPassHandle_) {
+            renderer->UnregisterPersistentOffscreenRenderPass(persistentOffscreenPassHandle_);
+        }
+    }
+    persistentPassHandle_ = {};
+    persistentOffscreenPassHandle_ = {};
+}
 
+RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName) {
     if (!cachedRenderPass_) {
         RenderPass passInfo(Passkey<Object3DBase>{});
 
@@ -75,6 +100,45 @@ RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::strin
 
     // Update only variable parts
     cachedRenderPass_->window = targetWindow;
+    cachedRenderPass_->screenBuffer = nullptr;
+    cachedRenderPass_->pipelineName = pipelineName;
+    cachedRenderPass_->renderType = renderType_;
+    cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
+    cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
+    cachedRenderPass_->batchKey = instanceBatchKey_;
+
+    return *cachedRenderPass_;
+}
+
+RenderPass Object3DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
+    if (!cachedRenderPass_) {
+        RenderPass passInfo(Passkey<Object3DBase>{});
+
+        passInfo.passName = passName_;
+        passInfo.renderType = renderType_;
+        passInfo.constantBufferRequirements = constantBufferRequirements_;
+        passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
+
+        passInfo.batchKey = instanceBatchKey_;
+        passInfo.instanceBufferRequirements = {
+            {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
+            {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+        };
+        passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+        };
+        passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
+            return RenderBatched(shaderBinder, instanceCount);
+        };
+        passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
+            return CreateRenderCommand(pipelineBinder);
+        };
+
+        cachedRenderPass_.emplace(std::move(passInfo));
+    }
+
+    cachedRenderPass_->window = nullptr;
+    cachedRenderPass_->screenBuffer = targetBuffer;
     cachedRenderPass_->pipelineName = pipelineName;
     cachedRenderPass_->renderType = renderType_;
     cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;

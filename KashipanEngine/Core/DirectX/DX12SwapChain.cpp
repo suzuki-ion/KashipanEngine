@@ -55,29 +55,14 @@ void DX12SwapChain::DestroyInternal() {
     backBuffers_.clear();
     swapChain_.Reset();
     dcompHost_.reset();
+    currentBufferIndex_ = 0;
 }
 
-void DX12SwapChain::InitializeCommandObjects() {
-    LogScope scope;
-    Log(Translation("engine.directx.swapchain.commandallocator.initialize.start"), LogSeverity::Debug);
-    commandAllocators_.resize(static_cast<size_t>(bufferCount_));
-    for (int i = 0; i < bufferCount_; ++i) {
-        HRESULT hr = sDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocators_[i].ReleaseAndGetAddressOf()));
-        if (FAILED(hr)) {
-            Log(Translation("engine.directx.swapchain.commandallocator.initialize.failed"), LogSeverity::Critical);
-            throw std::runtime_error("Failed to create command allocator for swapchain.");
-        }
-    }
-    Log(Translation("engine.directx.swapchain.commandallocator.initialize.end"), LogSeverity::Debug);
-
-    Log(Translation("engine.directx.swapchain.commandlist.initialize.start"), LogSeverity::Debug);
-    HRESULT hr = sDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocators_[0].Get(), nullptr, IID_PPV_ARGS(commandList_.ReleaseAndGetAddressOf()));
-    if (FAILED(hr)) {
-        Log(Translation("engine.directx.swapchain.commandlist.initialize.failed"), LogSeverity::Critical);
-        throw std::runtime_error("Failed to create command list for swapchain.");
-    }
-    commandList_->Close();
-    Log(Translation("engine.directx.swapchain.commandlist.initialize.end"), LogSeverity::Debug);
+void DX12SwapChain::BindCommandObjects(Passkey<DirectXCommon>,
+    ID3D12GraphicsCommandList* commandList,
+    const std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>& commandAllocators) {
+    commandList_ = commandList;
+    commandAllocators_ = &commandAllocators;
 }
 
 void DX12SwapChain::SetViewport(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth) {
@@ -131,8 +116,14 @@ void DX12SwapChain::ResetViewportAndScissor() {
 
 void DX12SwapChain::BeginDrawInternal() {
     if (!isCreated_ || isDrawing_) return;
+    if (!commandList_ || !commandAllocators_ || commandAllocators_->empty()) {
+        Log(Translation("engine.directx.swapchain.commandlist.reset.failed"), LogSeverity::Critical);
+        throw std::runtime_error("Command objects are not bound to DX12SwapChain.");
+    }
+
     currentBufferIndex_ = swapChain_->GetCurrentBackBufferIndex();
-    auto &allocator = commandAllocators_[currentBufferIndex_];
+    auto &allocator = (*commandAllocators_)[static_cast<size_t>(currentBufferIndex_)];
+
     HRESULT hr = allocator->Reset();
     if (FAILED(hr)) {
         Log(Translation("engine.directx.swapchain.commandallocator.reset.failed"), LogSeverity::Critical);
@@ -144,8 +135,8 @@ void DX12SwapChain::BeginDrawInternal() {
         throw std::runtime_error("Failed to reset command list in DX12 swap chain.");
     }
 
-    if (depthStencilBuffer_) depthStencilBuffer_->SetCommandList(commandList_.Get());
-    for (auto &bb : backBuffers_) bb->SetCommandList(commandList_.Get());
+    if (depthStencilBuffer_) depthStencilBuffer_->SetCommandList(commandList_);
+    for (auto &bb : backBuffers_) bb->SetCommandList(commandList_);
 
     backBuffers_[currentBufferIndex_]->TransitionToNext();
 

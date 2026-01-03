@@ -27,6 +27,7 @@
 namespace KashipanEngine {
 
 class Object2DContext;
+class ScreenBuffer;
 
 /// @brief 2Dオブジェクト基底クラス
 class Object2DBase {
@@ -77,13 +78,11 @@ public:
     /// @brief 描画先/パイプラインが確定したタイミングで永続レンダーパスを登録
     void AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
 
+    /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録
+    void AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+
     /// @brief 永続レンダーパス登録を解除
     void DetachFromRenderer();
-
-    /// @brief レンダーパスの作成
-    RenderPass CreateRenderPass(Window *targetWindow,
-        const std::string &pipelineName,
-        const std::string &passName = "GameObject2D Render Pass");
 
     /// @brief コンポーネントの登録（生成）
     /// @tparam T コンポーネントの型（IGameObjectComponent2Dを継承している必要あり）
@@ -323,8 +322,17 @@ protected:
 private:
     friend class Object2DContext;
 
+    /// @brief レンダーパスの作成（Window）
+    RenderPass CreateRenderPass(Window *targetWindow, const std::string &pipelineName);
+
+    /// @brief レンダーパスの作成（ScreenBuffer）
+    RenderPass CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+
     /// @brief 永続レンダーパスハンドル
     Renderer::PersistentPassHandle persistentPassHandle_{};
+
+    /// @brief 永続オフスクリーンレンダーパスハンドル
+    Renderer::PersistentOffscreenPassHandle persistentOffscreenPassHandle_{};
 
     struct ShaderBindingFailureInfo {
         size_t componentIndex;

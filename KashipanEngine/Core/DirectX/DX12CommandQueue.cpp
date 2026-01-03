@@ -41,11 +41,8 @@ void DX12CommandQueue::ExecuteCommandLists(Passkey<DirectXCommon>, const std::ve
         assert(cl && "Command list is null");
 
         // 型一致チェック
-        auto type = cl->GetType(); // ID3D12CommandList::GetType はノーサイドエフェクト
+        auto type = cl->GetType();
         assert(type == qdesc.Type && "Queue/List type mismatch");
-
-        // 可能なら自前で Close 状態を管理して検証（フラグを持つ/ラッパで状態遷移を記録）
-        // assert(IsClosed(cl) && "Command list not closed");
     }
 #endif
 

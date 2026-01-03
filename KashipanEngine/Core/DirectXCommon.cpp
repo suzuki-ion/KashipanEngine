@@ -1,9 +1,11 @@
 #include "DirectXCommon.h"
 #include "EngineSettings.h"
 #include "Graphics/Resources.h"
+#include "Graphics/ScreenBuffer.h"
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include <stdexcept>
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -72,6 +74,10 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     size_t maxWindows = GetEngineSettings().limits.maxWindows;
     sSwapChains.resize(maxWindows);
     sFreeSwapChains.reserve(maxWindows);
+
+    swapChainCommandObjects_.clear();
+    swapChainCommandObjects_.resize(maxWindows);
+
     for (size_t i = 0; i < maxWindows; ++i) {
         sSwapChains[i] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{});
         sFreeSwapChains.push_back(i);
@@ -96,6 +102,11 @@ DirectXCommon::~DirectXCommon() {
     sHwndToSwapChainIndex.clear();
     sFreeSwapChains.clear();
     sPendingDestroySwapChains.clear();
+
+    swapChainCommandObjects_.clear();
+
+    screenBufferCommandObjects_.clear();
+    freeScreenBufferCommandObjectSlots_.clear();
 
     IGraphicsResource::ClearAllResources({});
     SamplerHeap_.reset();
@@ -135,6 +146,38 @@ DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, SwapChainType swa
     // bufferCount を反映した新しい空スロットへ差し替え
     sSwapChains[index] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, bufferCount);
     DX12SwapChain *sc = sSwapChains[index].get();
+
+    // Command objects (DirectXCommon owns)
+    auto &cmd = swapChainCommandObjects_[index];
+    cmd.commandAllocators.clear();
+    cmd.commandAllocators.resize(static_cast<size_t>(bufferCount));
+
+    for (int i = 0; i < bufferCount; ++i) {
+        HRESULT hr = dx12Device_->GetDevice()->CreateCommandAllocator(
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            IID_PPV_ARGS(cmd.commandAllocators[i].ReleaseAndGetAddressOf()));
+        if (FAILED(hr)) {
+            Log(Translation("engine.directx.swapchain.commandallocator.initialize.failed"), LogSeverity::Critical);
+            throw std::runtime_error("Failed to create command allocator for swapchain.");
+        }
+    }
+
+    if (!cmd.commandList) {
+        HRESULT hr = dx12Device_->GetDevice()->CreateCommandList(
+            0,
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            cmd.commandAllocators[0].Get(),
+            nullptr,
+            IID_PPV_ARGS(cmd.commandList.ReleaseAndGetAddressOf()));
+        if (FAILED(hr)) {
+            Log(Translation("engine.directx.swapchain.commandlist.initialize.failed"), LogSeverity::Critical);
+            throw std::runtime_error("Failed to create command list for swapchain.");
+        }
+        cmd.commandList->Close();
+    }
+
+    sc->BindCommandObjects(Passkey<DirectXCommon>{}, cmd.commandList.Get(), cmd.commandAllocators);
+
     sc->AttachWindowAndCreate(Passkey<DirectXCommon>{}, swapChainType, hwnd, width, height);
 
     bool enableVSync = (swapChainType == SwapChainType::ForComposition) ? true : GetEngineSettings().rendering.defaultEnableVSync;
@@ -201,8 +244,40 @@ DX12SwapChain* DirectXCommon::GetOrCreateSwapChainForImGuiViewport(Passkey<ImGui
     const size_t index = sFreeSwapChains.back();
     sFreeSwapChains.pop_back();
 
-    sSwapChains[index] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, 2);
+    const int32_t bufferCount = 2;
+    sSwapChains[index] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, bufferCount);
     DX12SwapChain* sc = sSwapChains[index].get();
+
+    auto &cmd = swapChainCommandObjects_[index];
+    cmd.commandAllocators.clear();
+    cmd.commandAllocators.resize(static_cast<size_t>(bufferCount));
+
+    for (int i = 0; i < bufferCount; ++i) {
+        HRESULT hr = dx12Device_->GetDevice()->CreateCommandAllocator(
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            IID_PPV_ARGS(cmd.commandAllocators[i].ReleaseAndGetAddressOf()));
+        if (FAILED(hr)) {
+            Log(Translation("engine.directx.swapchain.commandallocator.initialize.failed"), LogSeverity::Critical);
+            throw std::runtime_error("Failed to create command allocator for swapchain.");
+        }
+    }
+
+    if (!cmd.commandList) {
+        HRESULT hr = dx12Device_->GetDevice()->CreateCommandList(
+            0,
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            cmd.commandAllocators[0].Get(),
+            nullptr,
+            IID_PPV_ARGS(cmd.commandList.ReleaseAndGetAddressOf()));
+        if (FAILED(hr)) {
+            Log(Translation("engine.directx.swapchain.commandlist.initialize.failed"), LogSeverity::Critical);
+            throw std::runtime_error("Failed to create command list for swapchain.");
+        }
+        cmd.commandList->Close();
+    }
+
+    sc->BindCommandObjects(Passkey<DirectXCommon>{}, cmd.commandList.Get(), cmd.commandAllocators);
+
     sc->AttachWindowAndCreate(Passkey<DirectXCommon>{}, SwapChainType::ForHwnd, hwnd, width, height);
 
     // viewport ウィンドウは通常 HWND 用として VSync 設定に従う
@@ -210,15 +285,6 @@ DX12SwapChain* DirectXCommon::GetOrCreateSwapChainForImGuiViewport(Passkey<ImGui
 
     sHwndToSwapChainIndex[hwnd] = index;
     return sc;
-}
-
-void DirectXCommon::DestroySwapChainSignalForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd) {
-    LogScope scope;
-    if (sHwndToSwapChainIndex.find(hwnd) == sHwndToSwapChainIndex.end()) {
-        Log(Translation("engine.directx.swapchain.notfound"), LogSeverity::Warning);
-        return;
-    }
-    sPendingDestroySwapChains.push_back(hwnd);
 }
 #endif
 
@@ -234,6 +300,13 @@ void DirectXCommon::DestroyPendingSwapChains() {
             if (sSwapChains[index]) {
                 sSwapChains[index]->Destroy(Passkey<DirectXCommon>{});
             }
+
+            if (index < swapChainCommandObjects_.size()) {
+                auto &cmd = swapChainCommandObjects_[index];
+                cmd.commandList.Reset();
+                cmd.commandAllocators.clear();
+            }
+
             sFreeSwapChains.push_back(index);
             sHwndToSwapChainIndex.erase(it);
             Log(Translation("engine.directx.swapchain.destroyed"), LogSeverity::Debug);
@@ -306,6 +379,90 @@ void DirectXCommon::ExecuteOneShotCommandsForTextureManager(Passkey<TextureManag
 
     dx12Fence_->Signal(Passkey<DirectXCommon>{}, queue);
     dx12Fence_->Wait(Passkey<DirectXCommon>{});
+}
+
+void DirectXCommon::ExecuteOneShotCommandsForScreenBuffer(Passkey<ScreenBuffer>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
+    auto* device = dx12Device_->GetDevice();
+    auto* queue = dx12CommandQueue_->GetCommandQueue();
+    if (!device || !queue) return;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> allocator;
+    HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.GetAddressOf()));
+    if (FAILED(hr)) return;
+
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> list;
+    hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(list.GetAddressOf()));
+    if (FAILED(hr)) return;
+
+    if (record) {
+        record(list.Get());
+    }
+
+    hr = list->Close();
+    if (FAILED(hr)) return;
+
+    std::vector<ID3D12CommandList*> lists;
+    lists.push_back(list.Get());
+    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, lists);
+
+    dx12Fence_->Signal(Passkey<DirectXCommon>{}, queue);
+    dx12Fence_->Wait(Passkey<DirectXCommon>{});
+}
+
+void DirectXCommon::ExecuteExternalCommandLists(Passkey<Renderer>, const std::vector<ID3D12CommandList*>& lists) {
+    if (!dx12CommandQueue_ || !dx12Fence_) return;
+    if (lists.empty()) return;
+
+    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, lists);
+    WaitForFence();
+}
+
+int DirectXCommon::AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>) {
+    if (!dx12Device_) return -1;
+    auto* device = dx12Device_->GetDevice();
+    if (!device) return -1;
+
+    int index = -1;
+    if (!freeScreenBufferCommandObjectSlots_.empty()) {
+        index = freeScreenBufferCommandObjectSlots_.back();
+        freeScreenBufferCommandObjectSlots_.pop_back();
+    } else {
+        index = static_cast<int>(screenBufferCommandObjects_.size());
+        screenBufferCommandObjects_.emplace_back();
+    }
+
+    auto& entry = screenBufferCommandObjects_[static_cast<size_t>(index)];
+
+    if (!entry.commandAllocator) {
+        HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(entry.commandAllocator.ReleaseAndGetAddressOf()));
+        if (FAILED(hr)) return -1;
+    }
+
+    if (!entry.commandList) {
+        HRESULT hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, entry.commandAllocator.Get(), nullptr, IID_PPV_ARGS(entry.commandList.ReleaseAndGetAddressOf()));
+        if (FAILED(hr)) return -1;
+        entry.commandList->Close();
+    }
+
+    return index;
+}
+
+DirectXCommon::ScreenBufferCommandObjects* DirectXCommon::GetScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    if (slotIndex < 0) return nullptr;
+    const size_t idx = static_cast<size_t>(slotIndex);
+    if (idx >= screenBufferCommandObjects_.size()) return nullptr;
+    return &screenBufferCommandObjects_[idx];
+}
+
+void DirectXCommon::ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    if (slotIndex < 0) return;
+    const size_t idx = static_cast<size_t>(slotIndex);
+    if (idx >= screenBufferCommandObjects_.size()) return;
+
+    // GPU 実行中の可能性があるため、ここでフェンスを待ってから解放キューへ戻す
+    WaitForFence();
+    freeScreenBufferCommandObjectSlots_.push_back(slotIndex);
 }
 
 } // namespace KashipanEngine

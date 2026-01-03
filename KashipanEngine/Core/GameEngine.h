@@ -15,6 +15,7 @@
 #include "Objects/Object3DBase.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
+#include "Graphics/ScreenBuffer.h"
 
 #if defined(USE_IMGUI)
 #include "Debug/ImGuiManager.h"
@@ -99,6 +100,8 @@ private:
     bool testObjectsInitialized_ = false;
     std::vector<std::unique_ptr<Object3DBase>> testObjects3D_;
     std::vector<std::unique_ptr<Object2DBase>> testObjects2D_;
+
+    ScreenBuffer* testOffscreenBuffer_ = nullptr;
 
     /// @brief テクスチャ管理クラス
     std::unique_ptr<TextureManager> textureManager_;

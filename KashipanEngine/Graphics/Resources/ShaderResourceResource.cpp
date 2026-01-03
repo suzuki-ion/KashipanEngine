@@ -1,10 +1,28 @@
 #include "ShaderResourceResource.h"
+#include "Graphics/Resources/RenderTargetResource.h"
 
 namespace KashipanEngine {
 
 ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels)
     : IGraphicsResource(ResourceViewType::SRV) {
     Initialize(width, height, format, flags, existingResource, initialState, mipLevels);
+}
+
+ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarget, D3D12_RESOURCE_STATES initialState, UINT mipLevels)
+    : IGraphicsResource(ResourceViewType::SRV) {
+    if (!renderTarget) {
+        return;
+    }
+
+    Initialize(
+        renderTarget->GetWidth(),
+        renderTarget->GetHeight(),
+        renderTarget->GetFormat(),
+        D3D12_RESOURCE_FLAG_NONE,
+        renderTarget->GetResource(),
+        initialState,
+        mipLevels
+    );
 }
 
 bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels) {
@@ -43,7 +61,6 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
 
     ClearTransitionStates();
     AddTransitionState(initialState);
-
     if (existingResource) {
         SetExistingResource(existingResource);
     } else {

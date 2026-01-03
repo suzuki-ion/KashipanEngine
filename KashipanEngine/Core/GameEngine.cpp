@@ -7,6 +7,7 @@
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
 #include "Objects/GameObjects/3D/Model.h"
+#include "Graphics/ScreenBuffer.h"
 
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
@@ -108,6 +109,12 @@ void GameEngine::InitializeTestObjects_() {
     auto overlayWindow = Window::GetWindow("Overlay Window");
     auto *targetWindow = overlayWindow ? overlayWindow : mainWindow;
 
+    if (!testOffscreenBuffer_ && targetWindow) {
+        const std::uint32_t w = 512;
+        const std::uint32_t h = 512;
+        testOffscreenBuffer_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
+    }
+
     auto attachIfPossible3D = [&](Object3DBase *obj) {
         if (!obj || !targetWindow) return;
         obj->AttachToRenderer(targetWindow, "Object3D.Solid.BlendNormal");
@@ -115,6 +122,11 @@ void GameEngine::InitializeTestObjects_() {
     auto attachIfPossible2D = [&](Object2DBase *obj) {
         if (!obj || !targetWindow) return;
         obj->AttachToRenderer(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal");
+    };
+
+    auto attachOffscreenIfPossible2D = [&](Object2DBase *obj) {
+        if (!obj || !testOffscreenBuffer_) return;
+        obj->AttachToRenderer(testOffscreenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
     };
 
     // 3D
@@ -180,7 +192,9 @@ void GameEngine::InitializeTestObjects_() {
     testObjects2D_.reserve(1 + (kEnableInstancingTest ? kInstancingTestCount2D : 0));
 
     testObjects2D_.emplace_back(std::make_unique<Camera2D>());
-    attachIfPossible2D(testObjects2D_.back().get());
+    if (testOffscreenBuffer_) {
+        attachOffscreenIfPossible2D(testObjects2D_.back().get());
+    }
 
     {
         const uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount2D : 0;
@@ -197,7 +211,10 @@ void GameEngine::InitializeTestObjects_() {
                 tr->SetTranslate(Vector2(x, y));
                 tr->SetScale(Vector2(20.0f, 20.0f));
             }
-            attachIfPossible2D(obj.get());
+            // Attach some instances to offscreen for verification
+            if (testOffscreenBuffer_) {
+                attachOffscreenIfPossible2D(obj.get());
+            }
             testObjects2D_.emplace_back(std::move(obj));
         }
     }
@@ -243,6 +260,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
+    ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
@@ -277,7 +295,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     windows_.front()->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
     windows_.emplace_back(Window::CreateNormal("Main Window"));
     windows_.back()->SetWindowParent(windows_.front(), false);
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 2; ++i) {
         windows_.emplace_back(Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128));
         windows_.back()->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
         windows_.back()->SetWindowParent(windows_.front(), false);
@@ -303,6 +321,7 @@ GameEngine::~GameEngine() {
     LogSeparator();
 
     Window::AllDestroy({});
+    ScreenBuffer::AllDestroy({});
 
     inputCommand_.reset();
     input_.reset();
@@ -387,6 +406,23 @@ void GameEngine::GameLoopDraw() {
 #if defined(USE_IMGUI)
     if (imguiManager_) {
         DrawProfilingImGui_();
+
+        if (ImGui::Begin("Offscreen Verify")) {
+            if (testOffscreenBuffer_ && testOffscreenBuffer_->GetShaderResource()) {
+                const auto hdl = testOffscreenBuffer_->GetShaderResource()->GetGPUDescriptorHandle();
+                ImTextureID texId = (ImTextureID)(uintptr_t)hdl.ptr;
+                const ImVec2 size{
+                    static_cast<float>(testOffscreenBuffer_->GetWidth()),
+                    static_cast<float>(testOffscreenBuffer_->GetHeight())
+                };
+                ImGui::Text("ScreenBuffer %ux%u", testOffscreenBuffer_->GetWidth(), testOffscreenBuffer_->GetHeight());
+                ImGui::Image(texId, size);
+            } else {
+                ImGui::TextUnformatted("ScreenBuffer not ready.");
+            }
+        }
+        ImGui::End();
+
         imguiManager_->Render({});
     }
 #endif

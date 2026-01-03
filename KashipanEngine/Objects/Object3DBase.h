@@ -21,6 +21,7 @@
 namespace KashipanEngine {
 
 class Object3DContext;
+class ScreenBuffer;
 
 /// @brief 3Dオブジェクト基底クラス
 class Object3DBase {
@@ -71,13 +72,11 @@ public:
     /// @brief 描画先/パイプラインが確定したタイミングで永続レンダーパスを登録
     void AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
 
+    /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録
+    void AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+
     /// @brief 永続レンダーパス登録を解除
     void DetachFromRenderer();
-
-    /// @brief レンダーパスの作成
-    RenderPass CreateRenderPass(Window *targetWindow,
-        const std::string &pipelineName,
-        const std::string &passName = "GameObject3D Render Pass");
 
     /// @brief コンポーネントの登録（生成）
     /// @tparam T コンポーネントの型（IGameObjectComponent2Dを継承している必要あり）
@@ -312,8 +311,17 @@ protected:
 private:
     friend class Object3DContext;
 
+    /// @brief レンダーパスの作成（Window）
+    RenderPass CreateRenderPass(Window *targetWindow, const std::string &pipelineName);
+
+    /// @brief レンダーパスの作成（ScreenBuffer）
+    RenderPass CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+
     // Persistent render pass registration
     Renderer::PersistentPassHandle persistentPassHandle_{};
+
+    // Persistent offscreen render pass registration
+    Renderer::PersistentOffscreenPassHandle persistentOffscreenPassHandle_{};
 
     struct ShaderBindingFailureInfo {
         size_t componentIndex;

@@ -48,7 +48,6 @@ public:
 
     /// @brief 遅延初期化用コンストラクタ (HWND 未決定)
     DX12SwapChain(Passkey<DirectXCommon>, int32_t bufferCount = 2) : bufferCount_(bufferCount) {
-        InitializeCommandObjects();
     }
     ~DX12SwapChain() { DestroyInternal(); }
 
@@ -98,10 +97,15 @@ public:
     /// @brief サイズ変更反映
     void Resize(Passkey<DirectXCommon>);
 
+    /// @brief コマンド関連オブジェクトを外部からバインド（DirectXCommon 所有）
+    void BindCommandObjects(Passkey<DirectXCommon>,
+        ID3D12GraphicsCommandList* commandList,
+        const std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>& commandAllocators);
+
     /// @brief 記録済みコマンドリスト取得 (DirectXCommon 用)
-    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<DirectXCommon>) const noexcept { return commandList_.Get(); }
+    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<DirectXCommon>) const noexcept { return commandList_; }
     /// @brief 記録済みコマンドリスト取得 (Window 用)
-    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Window>) const noexcept { return commandList_.Get(); }
+    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<Window>) const noexcept { return commandList_; }
 
     int32_t GetBufferCount() const noexcept { return bufferCount_; }
     DXGI_FORMAT GetBackBufferFormat() const noexcept { return backBufferFormat_; }
@@ -117,8 +121,6 @@ private:
     void CreateBackBuffers();
     /// @brief 深度ステンシル生成
     void CreateDepthStencilBuffer();
-    /// @brief コマンド関連オブジェクト生成
-    void InitializeCommandObjects();
     /// @brief 内部リソース破棄
     void DestroyInternal();
 
@@ -154,9 +156,9 @@ private:
     int32_t requestedWidth_ = 0;
     int32_t requestedHeight_ = 0;
 
-    // コマンド関連
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
-    std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> commandAllocators_;
+    // コマンド関連（DirectXCommon 所有の参照）
+    ID3D12GraphicsCommandList* commandList_ = nullptr;
+    const std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>* commandAllocators_ = nullptr;
 
     bool isCreated_ = false;
     bool isDrawing_ = false;

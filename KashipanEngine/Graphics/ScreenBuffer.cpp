@@ -5,6 +5,10 @@
 #include <algorithm>
 #include <vector>
 
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#endif
+
 namespace KashipanEngine {
 
 std::unordered_map<ScreenBuffer*, std::unique_ptr<ScreenBuffer>> ScreenBuffer::sBufferMap_{};
@@ -319,5 +323,83 @@ void ScreenBuffer::MarkDiscard(Passkey<Renderer>, ScreenBuffer* buffer) {
     if (it == sRecordStates.end()) return;
     it->second.discard = true;
 }
+
+#if defined(USE_IMGUI)
+namespace {
+ImTextureID ToImGuiTextureIdFromGpuHandle(D3D12_GPU_DESCRIPTOR_HANDLE h) {
+    return (ImTextureID)(uintptr_t)h.ptr;
+}
+}
+
+void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
+    if (!ImGui::Begin("ScreenBuffer - Buffers")) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Text("ScreenBuffers: %d", static_cast<int>(ScreenBuffer::GetBufferCount()));
+
+    static ScreenBuffer* sSelected = nullptr;
+
+    if (ImGui::BeginTable("##ScreenBufferList", 4,
+            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+            ImVec2(0, 220))) {
+        ImGui::TableSetupColumn("Ptr", ImGuiTableColumnFlags_WidthFixed, 120);
+        ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed, 110);
+        ImGui::TableSetupColumn("SRV", ImGuiTableColumnFlags_WidthFixed, 120);
+        ImGui::TableSetupColumn("Select");
+        ImGui::TableHeadersRow();
+
+        for (auto& kv : sBufferMap_) {
+            ScreenBuffer* ptr = kv.first;
+            if (!ptr) continue;
+
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%p", (void*)ptr);
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%ux%u", ptr->GetWidth(), ptr->GetHeight());
+
+            ImGui::TableSetColumnIndex(2);
+            auto* srv = ptr->GetShaderResource();
+            if (srv) {
+                const auto h = srv->GetGPUDescriptorHandle();
+                ImGui::Text("0x%llX", static_cast<unsigned long long>(h.ptr));
+            } else {
+                ImGui::TextUnformatted("-");
+            }
+
+            ImGui::TableSetColumnIndex(3);
+            ImGui::PushID(ptr);
+            const bool isSel = (sSelected == ptr);
+            if (ImGui::Selectable("##select", isSel, ImGuiSelectableFlags_SpanAllColumns)) {
+                sSelected = ptr;
+            }
+            ImGui::PopID();
+        }
+
+        ImGui::EndTable();
+    }
+
+    ImGui::Separator();
+
+    if (sSelected && ScreenBuffer::IsExist(sSelected) && sSelected->GetShaderResource()) {
+        const auto hdl = sSelected->GetShaderResource()->GetGPUDescriptorHandle();
+        const ImVec2 size{
+            static_cast<float>(sSelected->GetWidth()),
+            static_cast<float>(sSelected->GetHeight())
+        };
+
+        ImGui::Text("Selected: %p", (void*)sSelected);
+        ImGui::Image(ToImGuiTextureIdFromGpuHandle(hdl), size);
+    } else {
+        ImGui::TextUnformatted("No ScreenBuffer selected or SRV not ready.");
+    }
+
+    ImGui::End();
+}
+#endif
 
 } // namespace KashipanEngine

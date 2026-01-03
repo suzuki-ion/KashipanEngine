@@ -12,9 +12,12 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
         binder.Invalidate();
     }
 
-    // オフスクリーンの記録をまとめて行い、全オブジェクト描画後に一括 Close/Execute する
+    // ScreenBuffer の記録をフレーム内でまとめて行い、最後に一括 Close/Execute する
     ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
+
     RenderOffscreenPasses();
+    RenderScreenPasses();
+
     {
         auto lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
         if (!lists.empty() && directXCommon_) {
@@ -22,7 +25,6 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
         }
     }
 
-    RenderScreenPasses();
     RenderPersistentPasses();
 }
 
@@ -126,18 +128,25 @@ void Renderer::RenderOffscreenPasses() {
 void Renderer::RenderScreenPasses() {
     if (persistentScreenPasses_.empty()) return;
 
-    std::vector<ID3D12CommandList *> lists;
-    lists.reserve(persistentScreenPasses_.size());
-
     for (const auto *passInfo : persistentScreenPasses_) {
         if (!passInfo || !passInfo->buffer) continue;
         if (!passInfo->batchedRenderFunction) continue;
 
         auto *buffer = passInfo->buffer;
-        const void *targetKey = static_cast<const void *>(buffer);
 
-        auto *commandList = buffer->BeginRecord();
-        if (!commandList) continue;
+        // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
+        if (!buffer->IsRecording(Passkey<Renderer>{})) {
+            ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+            continue;
+        }
+
+        auto *commandList = buffer->GetRecordedCommandList(Passkey<Renderer>{});
+        if (!commandList) {
+            ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+            continue;
+        }
+
+        const void *targetKey = static_cast<const void *>(buffer);
 
         PipelineBinder pipelineBinder;
         pipelineBinder.SetManager(pipelineManager_);
@@ -196,17 +205,9 @@ void Renderer::RenderScreenPasses() {
             ok = passInfo->batchedRenderFunction(shaderVariableBinder, instanceCount);
         }
 
-        if (!buffer->EndRecord(!ok)) {
-            continue;
+        if (!ok) {
+            ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
         }
-
-        if (ok) {
-            lists.push_back(commandList);
-        }
-    }
-
-    if (!lists.empty() && directXCommon_) {
-        directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
     }
 }
 
@@ -386,12 +387,21 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
 
         ID3D12GraphicsCommandList *commandList = nullptr;
         PipelineBinder pipelineBinder;
-        ScreenBuffer *sb = nullptr;
 
         if (first->screenBuffer) {
-            sb = first->screenBuffer;
-            commandList = sb->BeginRecord();
-            if (!commandList) continue;
+            ScreenBuffer *sb = first->screenBuffer;
+
+            // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
+            if (!sb->IsRecording(Passkey<Renderer>{})) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
+                continue;
+            }
+
+            commandList = sb->GetRecordedCommandList(Passkey<Renderer>{});
+            if (!commandList) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
+                continue;
+            }
 
             pipelineBinder.SetManager(pipelineManager_);
             pipelineBinder.SetCommandList(commandList);
@@ -492,7 +502,9 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
             for (auto *b : mappedBuffers) {
                 if (b) b->Unmap();
             }
-            if (sb) sb->EndRecord(true);
+            if (first->screenBuffer) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
+            }
             continue;
         }
 
@@ -511,13 +523,17 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         }
 
         if (!ok) {
-            if (sb) sb->EndRecord(true);
+            if (first->screenBuffer) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
+            }
             continue;
         }
 
         auto renderCommandOpt = first->renderCommandFunction(pipelineBinder);
         if (!renderCommandOpt) {
-            if (sb) sb->EndRecord(true);
+            if (first->screenBuffer) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
+            }
             continue;
         }
 
@@ -525,15 +541,6 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         cmd.instanceCount = instanceCount;
         cmd.startInstanceLocation = 0;
         IssueRenderCommand(commandList, cmd);
-
-        if (sb) {
-            sb->EndRecord(false);
-            std::vector<ID3D12CommandList *> lists;
-            lists.push_back(commandList);
-            if (directXCommon_) {
-                directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
-            }
-        }
     }
 }
 

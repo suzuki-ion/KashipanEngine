@@ -407,21 +407,7 @@ void GameEngine::GameLoopDraw() {
     if (imguiManager_) {
         DrawProfilingImGui_();
 
-        if (ImGui::Begin("Offscreen Verify")) {
-            if (testOffscreenBuffer_ && testOffscreenBuffer_->GetShaderResource()) {
-                const auto hdl = testOffscreenBuffer_->GetShaderResource()->GetGPUDescriptorHandle();
-                ImTextureID texId = (ImTextureID)(uintptr_t)hdl.ptr;
-                const ImVec2 size{
-                    static_cast<float>(testOffscreenBuffer_->GetWidth()),
-                    static_cast<float>(testOffscreenBuffer_->GetHeight())
-                };
-                ImGui::Text("ScreenBuffer %ux%u", testOffscreenBuffer_->GetWidth(), testOffscreenBuffer_->GetHeight());
-                ImGui::Image(texId, size);
-            } else {
-                ImGui::TextUnformatted("ScreenBuffer not ready.");
-            }
-        }
-        ImGui::End();
+        ScreenBuffer::ShowImGuiScreenBuffersWindow();
 
         imguiManager_->Render({});
     }

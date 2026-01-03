@@ -86,6 +86,11 @@ public:
     /// @brief Renderer 用: 現在フレームで記録開始されているか
     bool IsRecording(Passkey<Renderer>) const noexcept;
 
+#if defined(USE_IMGUI)
+    /// @brief デバッグ用: 生成済み ScreenBuffer の内容を表示する ImGui ウィンドウを描画
+    static void ShowImGuiScreenBuffersWindow();
+#endif
+
 private:
     friend class Renderer;
 

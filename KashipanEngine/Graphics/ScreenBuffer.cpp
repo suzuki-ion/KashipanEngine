@@ -82,9 +82,7 @@ std::vector<ID3D12CommandList*> ScreenBuffer::AllEndRecord(Passkey<Renderer>) {
         if (!ptr->EndRecord(st.discard)) {
             continue;
         }
-        if (!st.discard && st.list) {
-            lists.push_back(st.list);
-        }
+        lists.push_back(st.list);
     }
 
     sRecordStates.clear();

@@ -16,7 +16,6 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
     ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
 
     RenderOffscreenPasses();
-    RenderScreenPasses();
 
     {
         auto lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
@@ -24,6 +23,7 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
             directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
         }
     }
+    RenderScreenPasses();
 
     RenderPersistentPasses();
 }

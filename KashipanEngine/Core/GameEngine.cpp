@@ -110,8 +110,8 @@ void GameEngine::InitializeTestObjects_() {
     auto *targetWindow = overlayWindow ? overlayWindow : mainWindow;
 
     if (!testOffscreenBuffer_ && targetWindow) {
-        const std::uint32_t w = 512;
-        const std::uint32_t h = 512;
+        const std::uint32_t w = 1920;
+        const std::uint32_t h = 1080;
         testOffscreenBuffer_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
     }
 
@@ -124,6 +124,10 @@ void GameEngine::InitializeTestObjects_() {
         obj->AttachToRenderer(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal");
     };
 
+    auto attachOffscreenIfPossible3D = [&](Object3DBase *obj) {
+        if (!obj || !testOffscreenBuffer_) return;
+        obj->AttachToRenderer(testOffscreenBuffer_, "Object3D.Solid.BlendNormal");
+    };
     auto attachOffscreenIfPossible2D = [&](Object2DBase *obj) {
         if (!obj || !testOffscreenBuffer_) return;
         obj->AttachToRenderer(testOffscreenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
@@ -139,7 +143,8 @@ void GameEngine::InitializeTestObjects_() {
             transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
         }
     }
-    attachIfPossible3D(testObjects3D_.back().get());
+    //attachIfPossible3D(testObjects3D_.back().get());
+    attachOffscreenIfPossible3D(testObjects3D_.back().get());
 
     testObjects3D_.emplace_back(std::make_unique<DirectionalLight>());
     if (auto *light = static_cast<DirectionalLight *>(testObjects3D_.back().get())) {
@@ -148,7 +153,8 @@ void GameEngine::InitializeTestObjects_() {
         light->SetDirection(Vector3(0.3f, -1.0f, 0.2f));
         light->SetIntensity(1.0f);
     }
-    attachIfPossible3D(testObjects3D_.back().get());
+    //attachIfPossible3D(testObjects3D_.back().get());
+    attachOffscreenIfPossible3D(testObjects3D_.back().get());
 
     {
         const uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount3D : 0;
@@ -165,7 +171,8 @@ void GameEngine::InitializeTestObjects_() {
                 const float y = (static_cast<float>(i / 16) - 2.0f) * 0.4f;
                 tr->SetTranslate(Vector3(x, y, 0.0f));
             }
-            attachIfPossible3D(obj.get());
+            //attachIfPossible3D(obj.get());
+            attachOffscreenIfPossible3D(obj.get());
             testObjects3D_.emplace_back(std::move(obj));
         }
     }
@@ -180,7 +187,8 @@ void GameEngine::InitializeTestObjects_() {
                 tr->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
                 tr->SetScale(Vector3(0.5f, 0.5f, 0.5f));
             }
-            attachIfPossible3D(obj.get());
+            //attachIfPossible3D(obj.get());
+            attachOffscreenIfPossible3D(obj.get());
             testObjects3D_.emplace_back(std::move(obj));
         } else {
             Log("[GameEngine] Test model 'icoShpere.obj' not found.", LogSeverity::Warning);

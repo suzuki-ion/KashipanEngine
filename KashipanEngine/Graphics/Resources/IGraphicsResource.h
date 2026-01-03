@@ -9,6 +9,7 @@ namespace KashipanEngine {
 
 class DirectXCommon;
 class ShaderVariableBinder;
+class ScreenBuffer;
 
 enum class ResourceViewType {
     None,
@@ -34,6 +35,10 @@ public:
         rtvHeap_ = rtv; dsvHeap_ = dsv; srvHeap_ = srv; samplerHeap_ = sampler;
     }
     static ID3D12Device *GetDevice(Passkey<ShaderVariableBinder>) { return device_; }
+
+    static SRVHeap *GetSRVHeap(Passkey<ScreenBuffer>) { return srvHeap_; }
+    static SamplerHeap *GetSamplerHeap(Passkey<ScreenBuffer>) { return samplerHeap_; }
+
     static void ClearAllResources(Passkey<DirectXCommon>);
     virtual ~IGraphicsResource();
 
@@ -50,6 +55,12 @@ public:
     void AddTransitionState(D3D12_RESOURCE_STATES state) { transitionStates_.push_back(state); }
     /// @brief バリアの状態リストをクリア
     void ClearTransitionStates() { transitionStates_.clear(); }
+
+    /// @brief バリアを指定状態に遷移
+    /// @details 現在状態（エンジン側追跡値）から desiredState へ遷移する
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    bool TransitionTo(D3D12_RESOURCE_STATES desiredState);
+
     /// @brief バリアを次の状態に遷移
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool TransitionToNext();

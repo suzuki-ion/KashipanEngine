@@ -7,6 +7,7 @@
 namespace KashipanEngine {
 
 class TextureManager;
+class RenderTargetResource;
 
 class ShaderResourceResource final : public IGraphicsResource {
 public:
@@ -24,6 +25,15 @@ public:
         DXGI_FORMAT format,
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         ID3D12Resource *existingResource = nullptr,
+        D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+        UINT mipLevels = 1);
+
+    /// @brief RenderTargetResource の描画結果を SRV として参照するためのコンストラクタ
+    /// @param renderTarget 参照元レンダーターゲット（内部リソースを共有）
+    /// @param initialState 初期状態（デフォルトは PS で使用可能な状態）
+    /// @param mipLevels ミップレベル数
+    explicit ShaderResourceResource(
+        RenderTargetResource* renderTarget,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
         UINT mipLevels = 1);
 

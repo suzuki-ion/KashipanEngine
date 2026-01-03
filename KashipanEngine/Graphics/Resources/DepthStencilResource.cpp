@@ -63,6 +63,7 @@ bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
 
     ClearTransitionStates();
     AddTransitionState(D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    AddTransitionState(D3D12_RESOURCE_STATE_DEPTH_READ);
 
     if (existingResource) {
         SetExistingResource(existingResource);

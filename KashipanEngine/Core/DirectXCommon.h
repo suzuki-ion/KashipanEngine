@@ -26,6 +26,7 @@ class GraphicsEngine;
 class Renderer;
 class TextureManager;
 class SamplerManager;
+class ScreenBuffer;
 #if defined(USE_IMGUI)
 class ImGuiManager;
 #endif
@@ -70,9 +71,16 @@ public:
     /// @brief Sampler ヒープ取得（SamplerManager 用）
     SamplerHeap *GetSamplerHeapForSamplerManager(Passkey<SamplerManager>) const { return SamplerHeap_.get(); }
 
+    /// @brief D3D12デバイス取得（ScreenBuffer 用）
+    ID3D12Device* GetDeviceForScreenBuffer(Passkey<ScreenBuffer>) const { return dx12Device_->GetDevice(); }
+
     /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（TextureManager 用）
     /// @param record コマンド記録関数（Close は内部で行う）
     void ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
+
+    /// @brief ScreenBuffer 用にワンショットでコマンドを記録・実行し、フェンス待機まで行う
+    /// @param record コマンド記録関数（Close は内部で行う）
+    void ExecuteOneShotCommandsForScreenBuffer(Passkey<ScreenBuffer>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
 
 #if defined(USE_IMGUI)
     /// @brief D3D12デバイス取得（ImGui 用）
@@ -95,6 +103,24 @@ public:
     DX12SwapChain *GetSwapChain(Passkey<Renderer>, HWND hwnd) const;
     /// @brief 指定のウィンドウのコマンドリスト取得
     ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>, HWND hwnd) const;
+
+    /// @brief 外部で記録したコマンドリスト群を実行（Renderer 用）
+    void ExecuteExternalCommandLists(Passkey<Renderer>, const std::vector<ID3D12CommandList*>& lists);
+
+    struct ScreenBufferCommandObjects {
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+    };
+
+    /// @brief ScreenBuffer 用コマンドオブジェクトを確保（DirectXCommon が所有）
+    /// @return スロットインデックス（失敗時は -1）
+    int AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>);
+
+    /// @brief ScreenBuffer 用コマンドオブジェクトを取得
+    ScreenBufferCommandObjects* GetScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
+
+    /// @brief ScreenBuffer 用コマンドオブジェクトを解放
+    void ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
 
 private:
     DirectXCommon(const DirectXCommon &) = delete;
@@ -120,6 +146,15 @@ private:
     std::unique_ptr<DSVHeap> DSVHeap_;
     std::unique_ptr<SRVHeap> SRVHeap_;
     std::unique_ptr<SamplerHeap> SamplerHeap_;
+
+    struct SwapChainCommandObjects {
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
+        std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> commandAllocators;
+    };
+    std::vector<SwapChainCommandObjects> swapChainCommandObjects_;
+
+    std::vector<ScreenBufferCommandObjects> screenBufferCommandObjects_;
+    std::vector<int> freeScreenBufferCommandObjectSlots_;
 };
 
 } // namespace KashipanEngine

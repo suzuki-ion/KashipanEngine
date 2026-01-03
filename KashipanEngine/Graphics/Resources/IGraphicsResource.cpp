@@ -100,6 +100,43 @@ void IGraphicsResource::SetExistingResource(ID3D12Resource *existingResource) {
     resource_ = sResources_[resourceID_].Get();
 }
 
+bool IGraphicsResource::TransitionTo(D3D12_RESOURCE_STATES desiredState) {
+    LogScope scope;
+    if (!commandList_) {
+        Log(Translation("engine.graphics.resource.transition.commandlist.null"), LogSeverity::Warning);
+        return false;
+    }
+    if (!resource_) {
+        Log(Translation("engine.graphics.resource.transition.resource.null"), LogSeverity::Warning);
+        return false;
+    }
+
+    const D3D12_RESOURCE_STATES before = GetCurrentState();
+    if (before == desiredState) {
+        return true;
+    }
+
+    D3D12_RESOURCE_BARRIER barrierDesc{};
+    barrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrierDesc.Transition.pResource = resource_;
+    barrierDesc.Transition.StateBefore = before;
+    barrierDesc.Transition.StateAfter = desiredState;
+    barrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    commandList_->ResourceBarrier(1, &barrierDesc);
+
+    // 追跡配列内に desiredState がある場合はインデックスを同期
+    for (uint32_t i = 0; i < static_cast<uint32_t>(transitionStates_.size()); ++i) {
+        if (transitionStates_[i] == desiredState) {
+            currentStateIndex_ = i;
+            return true;
+        }
+    }
+
+    // 配列に無い場合は追跡は更新できないが、バリア自体は発行済み
+    return true;
+}
+
 bool IGraphicsResource::TransitionToNext() {
     LogScope scope;
     if (!commandList_) {

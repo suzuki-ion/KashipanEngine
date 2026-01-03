@@ -68,6 +68,7 @@ bool RenderTargetResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
     // 状態遷移設定
     ClearTransitionStates();
     AddTransitionState(D3D12_RESOURCE_STATE_RENDER_TARGET);
+    AddTransitionState(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     // 既存リソース設定
     if (existingResource) {

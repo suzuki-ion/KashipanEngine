@@ -9,7 +9,7 @@
 #include "Graphics/ScreenBuffer.h"
 #include "AppInitialize.h"
 
-#include "Scene/Scene.h"
+#include "Scene/SceneBase.h"
 
 #include <cstdint>
 #include <algorithm>
@@ -128,7 +128,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
 
-    Scene::SetEnginePointers(
+    SceneBase::SetEnginePointers(
         Passkey<GameEngine>{},
         audioManager_.get(),
         modelManager_.get(),

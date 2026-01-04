@@ -21,12 +21,12 @@
 namespace KashipanEngine {
 namespace {
 constexpr bool kEnableInstancingTest = true;
-constexpr std::uint32_t kInstancingTestCount2D = 64;
-constexpr std::uint32_t kInstancingTestCount3D = 64;
+constexpr std::uint32_t kInstancingTestCount2D = 2048;
+constexpr std::uint32_t kInstancingTestCount3D = 2048;
 } // namespace
 
 TestScene::TestScene()
-    : Scene("TestScene") {
+    : SceneBase("TestScene") {
 }
 
 TestScene::~TestScene() {

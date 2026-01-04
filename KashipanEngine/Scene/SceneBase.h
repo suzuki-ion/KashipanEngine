@@ -4,6 +4,13 @@
 #include <string>
 #include <vector>
 
+#include "Assets/AudioManager.h"
+#include "Assets/ModelManager.h"
+#include "Assets/SamplerManager.h"
+#include "Assets/TextureManager.h"
+#include "Input/Input.h"
+#include "Input/InputCommand.h"
+
 #include "Objects/Object2DBase.h"
 #include "Objects/Object3DBase.h"
 #include "Objects/Collision/Collider.h"
@@ -15,22 +22,15 @@ namespace KashipanEngine {
 class SceneManager;
 class GameEngine;
 
-class AudioManager;
-class ModelManager;
-class SamplerManager;
-class TextureManager;
-class Input;
-class InputCommand;
-
-class Scene {
+class SceneBase {
 public:
-    Scene() = delete;
-    virtual ~Scene();
+    SceneBase() = delete;
+    virtual ~SceneBase();
 
-    Scene(const Scene &) = delete;
-    Scene &operator=(const Scene &) = delete;
-    Scene(Scene &&) = delete;
-    Scene &operator=(Scene &&) = delete;
+    SceneBase(const SceneBase &) = delete;
+    SceneBase &operator=(const SceneBase &) = delete;
+    SceneBase(SceneBase &&) = delete;
+    SceneBase &operator=(SceneBase &&) = delete;
 
     const std::string &GetName() const { return name_; }
     const std::string &GetNextSceneName() const { return nextSceneName_; }
@@ -49,7 +49,7 @@ public:
         InputCommand *inputCommand);
 
 protected:
-    Scene(const std::string &sceneName);
+    SceneBase(const std::string &sceneName);
 
     virtual void OnUpdate() {}
 
@@ -71,8 +71,6 @@ protected:
     bool AddSceneComponent(std::unique_ptr<ISceneComponent> comp);
     bool RemoveSceneComponent(ISceneComponent *comp);
     void ClearSceneComponents();
-
-    SceneManager *GetSceneManager() const { return sceneManager_; }
 
     static AudioManager *GetAudioManager() { return sAudioManager; }
     static ModelManager *GetModelManager() { return sModelManager; }

@@ -372,6 +372,7 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
     ImGui::Text("ScreenBuffers: %d", static_cast<int>(ScreenBuffer::GetBufferCount()));
 
     static ScreenBuffer* sSelected = nullptr;
+    static bool sShowViewer = false;
 
     if (ImGui::BeginTable("##ScreenBufferList", 4,
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
@@ -407,6 +408,7 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
             const bool isSel = (sSelected == ptr);
             if (ImGui::Selectable("##select", isSel, ImGuiSelectableFlags_SpanAllColumns)) {
                 sSelected = ptr;
+                sShowViewer = true;
             }
             ImGui::PopID();
         }
@@ -417,22 +419,49 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
     ImGui::Separator();
 
     if (sSelected && ScreenBuffer::IsExist(sSelected)) {
-        const auto hdl = sSelected->GetSrvHandle();
-        if (hdl.ptr != 0) {
-            const ImVec2 size{
-                static_cast<float>(sSelected->GetWidth()),
-                static_cast<float>(sSelected->GetHeight())
-            };
-
-            ImGui::Text("Selected: %p", (void*)sSelected);
-            ImGui::Image(ToImGuiTextureIdFromGpuHandle(hdl), size);
-        } else {
-            ImGui::TextUnformatted("No ScreenBuffer selected or SRV not ready.");
+        ImGui::Text("Selected: %p", (void*)sSelected);
+        ImGui::SameLine();
+        if (ImGui::Button("Open Viewer")) {
+            sShowViewer = true;
         }
     } else {
         ImGui::TextUnformatted("No ScreenBuffer selected or SRV not ready.");
+        sShowViewer = false;
     }
 
+    ImGui::End();
+
+    if (!sShowViewer) return;
+
+    if (!sSelected || !ScreenBuffer::IsExist(sSelected)) {
+        sShowViewer = false;
+        return;
+    }
+
+    if (ImGui::Begin("ScreenBuffer Viewer", &sShowViewer)) {
+        const auto hdl = sSelected->GetSrvHandle();
+        if (hdl.ptr != 0) {
+            ImGui::Text("Ptr: %p", (void*)sSelected);
+            ImGui::Text("Size: %ux%u", sSelected->GetWidth(), sSelected->GetHeight());
+            ImGui::Separator();
+
+            ImVec2 avail = ImGui::GetContentRegionAvail();
+            const float w = static_cast<float>(sSelected->GetWidth());
+            const float h = static_cast<float>(sSelected->GetHeight());
+
+            ImVec2 drawSize = avail;
+            if (w > 0.0f && h > 0.0f && avail.x > 0.0f && avail.y > 0.0f) {
+                const float sx = avail.x / w;
+                const float sy = avail.y / h;
+                const float s = (sx < sy) ? sx : sy;
+                drawSize = ImVec2(w * s, h * s);
+            }
+
+            ImGui::Image(ToImGuiTextureIdFromGpuHandle(hdl), drawSize);
+        } else {
+            ImGui::TextUnformatted("SRV not ready.");
+        }
+    }
     ImGui::End();
 }
 #endif

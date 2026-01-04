@@ -2,12 +2,12 @@
 
 #include <memory>
 
-#include "Scene/Scene.h"
+#include "Scene/SceneBase.h"
 #include "Graphics/ScreenBuffer.h"
 
 namespace KashipanEngine {
 
-class TestScene final : public Scene {
+class TestScene final : public SceneBase {
 public:
     TestScene();
     ~TestScene() override;

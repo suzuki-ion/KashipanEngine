@@ -10,7 +10,7 @@
 
 namespace KashipanEngine {
 
-class Scene;
+class SceneBase;
 
 class SceneManager {
 public:
@@ -24,12 +24,12 @@ public:
 
     template<typename TScene, typename... Args>
     void RegisterScene(const std::string &sceneName, Args &&...args) {
-        static_assert(std::is_base_of_v<Scene, TScene>, "TScene must derive from Scene");
+        static_assert(std::is_base_of_v<SceneBase, TScene>, "TScene must derive from SceneBase");
 
         factoriesByName_[sceneName] =
-            [captured = std::make_tuple(std::forward<Args>(args)...)](SceneManager *sm) mutable -> std::unique_ptr<Scene> {
+            [captured = std::make_tuple(std::forward<Args>(args)...)](SceneManager *sm) mutable -> std::unique_ptr<SceneBase> {
                 auto scene = std::apply(
-                    [](auto &&...unpacked) -> std::unique_ptr<Scene> {
+                    [](auto &&...unpacked) -> std::unique_ptr<SceneBase> {
                         return std::make_unique<TScene>(std::forward<decltype(unpacked)>(unpacked)...);
                     },
                     std::move(captured));
@@ -41,7 +41,7 @@ public:
             };
     }
 
-    Scene *GetCurrentScene() const {
+    SceneBase *GetCurrentScene() const {
         if (currentScene_) return currentScene_.get();
         return currentSceneLegacy_;
     }
@@ -49,12 +49,12 @@ public:
     bool ChangeScene(const std::string &sceneName);
 
 private:
-    using SceneFactory = std::function<std::unique_ptr<Scene>(SceneManager *)>;
+    using SceneFactory = std::function<std::unique_ptr<SceneBase>(SceneManager *)>;
 
     std::unordered_map<std::string, SceneFactory> factoriesByName_;
 
-    std::unique_ptr<Scene> currentScene_;
-    Scene *currentSceneLegacy_ = nullptr;
+    std::unique_ptr<SceneBase> currentScene_;
+    SceneBase *currentSceneLegacy_ = nullptr;
 };
 
 } // namespace KashipanEngine

@@ -4,6 +4,22 @@
 
 namespace KashipanEngine {
 
+void Scene::SetEnginePointers(
+    Passkey<GameEngine>,
+    AudioManager *audioManager,
+    ModelManager *modelManager,
+    SamplerManager *samplerManager,
+    TextureManager *textureManager,
+    Input *input,
+    InputCommand *inputCommand) {
+    sAudioManager_ = audioManager;
+    sModelManager_ = modelManager;
+    sSamplerManager_ = samplerManager;
+    sTextureManager_ = textureManager;
+    sInput_ = input;
+    sInputCommand_ = inputCommand;
+}
+
 Scene::Scene(const std::string &sceneName)
     : name_(sceneName) {
 }

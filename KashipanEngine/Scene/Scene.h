@@ -13,6 +13,14 @@
 namespace KashipanEngine {
 
 class SceneManager;
+class GameEngine;
+
+class AudioManager;
+class ModelManager;
+class SamplerManager;
+class TextureManager;
+class Input;
+class InputCommand;
 
 class Scene {
 public:
@@ -30,6 +38,15 @@ public:
     void Update();
 
     void SetSceneManager(Passkey<SceneManager>, SceneManager *sceneManager) { sceneManager_ = sceneManager; }
+
+    static void SetEnginePointers(
+        Passkey<GameEngine>,
+        AudioManager *audioManager,
+        ModelManager *modelManager,
+        SamplerManager *samplerManager,
+        TextureManager *textureManager,
+        Input *input,
+        InputCommand *inputCommand);
 
 protected:
     Scene(const std::string &sceneName);
@@ -57,7 +74,21 @@ protected:
 
     SceneManager *GetSceneManager() const { return sceneManager_; }
 
+    static AudioManager *GetAudioManager() { return sAudioManager; }
+    static ModelManager *GetModelManager() { return sModelManager; }
+    static SamplerManager *GetSamplerManager() { return sSamplerManager; }
+    static TextureManager *GetTextureManager() { return sTextureManager; }
+    static Input *GetInput() { return sInput; }
+    static InputCommand *GetInputCommand() { return sInputCommand; }
+
 private:
+    static inline AudioManager *sAudioManager = nullptr;
+    static inline ModelManager *sModelManager = nullptr;
+    static inline SamplerManager *sSamplerManager = nullptr;
+    static inline TextureManager *sTextureManager = nullptr;
+    static inline Input *sInput = nullptr;
+    static inline InputCommand *sInputCommand = nullptr;
+
     std::string name_;
 
     std::vector<std::unique_ptr<Object2DBase>> objects2D_;

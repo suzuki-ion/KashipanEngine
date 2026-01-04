@@ -212,7 +212,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Scene.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
@@ -392,10 +392,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
-    <ClInclude Include="KashipanEngine\Scene\Scene.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
-    <ClInclude Include="KashipanEngine\Scene\SceneScreen2D.h" />
-    <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />
     <ClInclude Include="KashipanEngine\Utilities\Dialogs\ConfirmDialog.h" />

@@ -1,6 +1,5 @@
 #include "Scene/SceneManager.h"
-
-#include "Scene/Scene.h"
+#include "Scene/SceneBase.h"
 
 namespace KashipanEngine {
 

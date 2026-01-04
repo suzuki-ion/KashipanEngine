@@ -306,7 +306,7 @@
     <ClCompile Include="KashipanEngine\Objects\Collision\Collider.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Scene.cpp">
+    <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp">
@@ -323,13 +323,7 @@
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Scene.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\SceneScreen3D.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\SceneScreen2D.h">
+    <ClInclude Include="KashipanEngine\Scene\SceneBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\Window.h">

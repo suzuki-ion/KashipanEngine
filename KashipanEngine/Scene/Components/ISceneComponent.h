@@ -2,7 +2,7 @@
 
 namespace KashipanEngine {
 
-class Scene;
+class SceneBase;
 
 class ISceneComponent {
 public:
@@ -21,13 +21,13 @@ public:
 protected:
     ISceneComponent() = default;
 
-    Scene *GetOwnerScene() const { return ownerScene_; }
+    SceneBase *GetOwnerScene() const { return ownerScene_; }
 
 private:
-    friend class Scene;
-    void SetOwnerScene(Scene *owner) { ownerScene_ = owner; }
+    friend class SceneBase;
+    void SetOwnerScene(SceneBase *owner) { ownerScene_ = owner; }
 
-    Scene *ownerScene_ = nullptr;
+    SceneBase *ownerScene_ = nullptr;
 };
 
 } // namespace KashipanEngine

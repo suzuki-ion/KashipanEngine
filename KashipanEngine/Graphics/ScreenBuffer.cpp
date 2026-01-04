@@ -13,6 +13,11 @@ namespace KashipanEngine {
 
 std::unordered_map<ScreenBuffer*, std::unique_ptr<ScreenBuffer>> ScreenBuffer::sBufferMap_{};
 
+D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
+    const auto idx = GetReadIndex();
+    return shaderResources_[idx] ? shaderResources_[idx]->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
+}
+
 ScreenBuffer* ScreenBuffer::Create(Window* targetWindow, std::uint32_t width, std::uint32_t height,
     RenderDimension dimension, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
     std::unique_ptr<ScreenBuffer> buffer(new ScreenBuffer());
@@ -27,7 +32,6 @@ ScreenBuffer* ScreenBuffer::Create(Window* targetWindow, std::uint32_t width, st
 }
 
 void ScreenBuffer::AllDestroy(Passkey<GameEngine>) {
-    // Window と同様に、所有コンテナをクリアすることで一括破棄
     sBufferMap_.clear();
 }
 
@@ -62,6 +66,10 @@ void ScreenBuffer::AllBeginRecord(Passkey<Renderer>) {
 
     for (auto& [ptr, owning] : sBufferMap_) {
         if (!ptr || !owning) continue;
+
+        // ping-pong: 今フレームの write 面へ切り替え（read は前フレームを保持）
+        ptr->AdvanceFrameBufferIndex();
+
         auto* cl = ptr->BeginRecord();
         RecordState st;
         st.list = cl;
@@ -116,11 +124,30 @@ bool ScreenBuffer::Initialize(Window* targetWindow, std::uint32_t width, std::ui
     commandAllocator_ = cmd->commandAllocator.Get();
     commandList_ = cmd->commandList.Get();
 
-    renderTarget_ = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
-    depthStencil_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0));
-    shaderResource_ = std::make_unique<ShaderResourceResource>(renderTarget_.get());
+    writeIndex_ = 0;
 
-    return renderTarget_ && depthStencil_ && shaderResource_;
+    for (size_t i = 0; i < kBufferCount_; ++i) {
+        renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
+        depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0));
+        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
+    }
+
+    for (size_t i = 0; i < kBufferCount_; ++i) {
+        if (!renderTargets_[i] || !depthStencils_[i] || !shaderResources_[i]) return false;
+    }
+
+    // 初回フレームで read 面が RT レイアウトのまま SRV バインドされるのを防ぐため、
+    // 両面の RenderTarget を明示的に PixelShaderResource へ揃える。
+    sDirectXCommon_->ExecuteOneShotCommandsForScreenBuffer(Passkey<ScreenBuffer>{},
+        [this](ID3D12GraphicsCommandList* cl) {
+            for (size_t i = 0; i < kBufferCount_; ++i) {
+                if (!renderTargets_[i]) continue;
+                renderTargets_[i]->SetCommandList(cl);
+                renderTargets_[i]->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            }
+        });
+
+    return true;
 }
 
 void ScreenBuffer::Destroy() {
@@ -132,9 +159,11 @@ void ScreenBuffer::Destroy() {
     }
     postEffectComponents_.clear();
 
-    shaderResource_.reset();
-    depthStencil_.reset();
-    renderTarget_.reset();
+    for (size_t i = 0; i < kBufferCount_; ++i) {
+        shaderResources_[i].reset();
+        depthStencils_[i].reset();
+        renderTargets_[i].reset();
+    }
 
     commandList_ = nullptr;
     commandAllocator_ = nullptr;
@@ -158,25 +187,27 @@ ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord() {
     hr = commandList_->Reset(commandAllocator_, nullptr);
     if (FAILED(hr)) return nullptr;
 
-    if (!renderTarget_ || !depthStencil_) return nullptr;
+    auto* rt = renderTargets_[GetWriteIndex()].get();
+    auto* ds = depthStencils_[GetWriteIndex()].get();
+    if (!rt || !ds) return nullptr;
 
-    renderTarget_->SetCommandList(commandList_);
-    depthStencil_->SetCommandList(commandList_);
+    rt->SetCommandList(commandList_);
+    ds->SetCommandList(commandList_);
 
-    // 明示遷移
-    if (!renderTarget_->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET)) {
+    // 明示遷移（write 面のみ RT にする）
+    if (!rt->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET)) {
         return nullptr;
     }
-    if (!depthStencil_->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE)) {
+    if (!ds->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE)) {
         return nullptr;
     }
 
-    const auto rtv = renderTarget_->GetCPUDescriptorHandle();
-    const auto dsv = depthStencil_->GetCPUDescriptorHandle();
+    const auto rtv = rt->GetCPUDescriptorHandle();
+    const auto dsv = ds->GetCPUDescriptorHandle();
 
     commandList_->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-    renderTarget_->ClearRenderTargetView();
-    depthStencil_->ClearDepthStencilView();
+    rt->ClearRenderTargetView();
+    ds->ClearDepthStencilView();
 
     D3D12_VIEWPORT vp{};
     vp.TopLeftX = 0.0f;
@@ -208,12 +239,15 @@ ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord() {
 bool ScreenBuffer::EndRecord(bool discard) {
     if (!commandList_) return false;
 
-    // RenderTarget を SRV として使う想定なら、描画後に PixelShaderResource に遷移させる
-    if (renderTarget_) {
-        renderTarget_->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    auto* rt = renderTargets_[GetWriteIndex()].get();
+    auto* ds = depthStencils_[GetWriteIndex()].get();
+
+    // write 面を SRV で読める状態へ（この面が次フレーム read になる）
+    if (rt) {
+        rt->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
-    if (depthStencil_) {
-        depthStencil_->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_READ);
+    if (ds) {
+        ds->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_READ);
     }
 
     HRESULT hr = commandList_->Close();
@@ -361,9 +395,8 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
             ImGui::Text("%ux%u", ptr->GetWidth(), ptr->GetHeight());
 
             ImGui::TableSetColumnIndex(2);
-            auto* srv = ptr->GetShaderResource();
-            if (srv) {
-                const auto h = srv->GetGPUDescriptorHandle();
+            const auto h = ptr->GetSrvHandle();
+            if (h.ptr != 0) {
                 ImGui::Text("0x%llX", static_cast<unsigned long long>(h.ptr));
             } else {
                 ImGui::TextUnformatted("-");
@@ -383,15 +416,19 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
 
     ImGui::Separator();
 
-    if (sSelected && ScreenBuffer::IsExist(sSelected) && sSelected->GetShaderResource()) {
-        const auto hdl = sSelected->GetShaderResource()->GetGPUDescriptorHandle();
-        const ImVec2 size{
-            static_cast<float>(sSelected->GetWidth()),
-            static_cast<float>(sSelected->GetHeight())
-        };
+    if (sSelected && ScreenBuffer::IsExist(sSelected)) {
+        const auto hdl = sSelected->GetSrvHandle();
+        if (hdl.ptr != 0) {
+            const ImVec2 size{
+                static_cast<float>(sSelected->GetWidth()),
+                static_cast<float>(sSelected->GetHeight())
+            };
 
-        ImGui::Text("Selected: %p", (void*)sSelected);
-        ImGui::Image(ToImGuiTextureIdFromGpuHandle(hdl), size);
+            ImGui::Text("Selected: %p", (void*)sSelected);
+            ImGui::Image(ToImGuiTextureIdFromGpuHandle(hdl), size);
+        } else {
+            ImGui::TextUnformatted("No ScreenBuffer selected or SRV not ready.");
+        }
     } else {
         ImGui::TextUnformatted("No ScreenBuffer selected or SRV not ready.");
     }

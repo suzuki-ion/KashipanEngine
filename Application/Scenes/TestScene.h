@@ -24,7 +24,8 @@ private:
     std::vector<std::unique_ptr<Object3DBase>> objects3D_;
     std::vector<std::unique_ptr<Object2DBase>> objects2D_;
 
-    ScreenBuffer *offscreenBuffer_ = nullptr;
+    ScreenBuffer *offscreenBuffer1_ = nullptr;
+    ScreenBuffer *offscreenBuffer2_ = nullptr;
 };
 
 } // namespace KashipanEngine

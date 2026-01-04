@@ -60,13 +60,11 @@ public:
     std::uint32_t GetWidth() const noexcept override { return width_; }
     std::uint32_t GetHeight() const noexcept override { return height_; }
 
-    D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override {
-        return shaderResource_ ? shaderResource_->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
-    }
+    D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override;
 
-    RenderTargetResource *GetRenderTarget() const noexcept { return renderTarget_.get(); }
-    DepthStencilResource *GetDepthStencil() const noexcept { return depthStencil_.get(); }
-    ShaderResourceResource *GetShaderResource() const noexcept { return shaderResource_.get(); }
+    RenderTargetResource *GetRenderTarget() const noexcept { return renderTargets_[GetReadIndex()].get(); }
+    DepthStencilResource *GetDepthStencil() const noexcept { return depthStencils_[GetWriteIndex()].get(); }
+    ShaderResourceResource *GetShaderResource() const noexcept { return shaderResources_[GetReadIndex()].get(); }
 
     /// @brief ポストエフェクトコンポーネント登録
     bool RegisterPostEffectComponent(std::unique_ptr<IPostEffectComponent> component);
@@ -83,8 +81,6 @@ public:
     void AttachToRenderer(const std::string &pipelineName, const std::string &passName);
     void DetachFromRenderer();
 
-    std::optional<ScreenBufferPass> CreateScreenPass(const std::string &pipelineName, const std::string &passName);
-
     /// @brief Renderer 用: 記録中コマンドリスト取得（AllBeginRecord 後）
     ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>) const noexcept { return commandList_; }
 
@@ -97,11 +93,19 @@ public:
 #endif
 
 private:
+    std::optional<ScreenBufferPass> CreateScreenPass(const std::string &pipelineName, const std::string &passName);
+
     static inline DirectXCommon *sDirectXCommon_ = nullptr;
 
     static std::unordered_map<ScreenBuffer *, std::unique_ptr<ScreenBuffer>> sBufferMap_;
 
     ScreenBuffer() = default;
+
+    static constexpr size_t kBufferCount_ = 2;
+
+    size_t GetWriteIndex() const noexcept { return writeIndex_; }
+    size_t GetReadIndex() const noexcept { return (writeIndex_ + 1) % kBufferCount_; }
+    void AdvanceFrameBufferIndex() noexcept { writeIndex_ = (writeIndex_ + 1) % kBufferCount_; }
 
     /// @brief リソース初期化
     bool Initialize(Window *targetWindow, std::uint32_t width, std::uint32_t height,
@@ -127,9 +131,11 @@ private:
     DXGI_FORMAT colorFormat_ = DXGI_FORMAT_UNKNOWN;
     DXGI_FORMAT depthFormat_ = DXGI_FORMAT_UNKNOWN;
 
-    std::unique_ptr<RenderTargetResource> renderTarget_;
-    std::unique_ptr<DepthStencilResource> depthStencil_;
-    std::unique_ptr<ShaderResourceResource> shaderResource_;
+    size_t writeIndex_ = 0;
+
+    std::unique_ptr<RenderTargetResource> renderTargets_[kBufferCount_];
+    std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount_];
+    std::unique_ptr<ShaderResourceResource> shaderResources_[kBufferCount_];
 
     std::vector<std::unique_ptr<IPostEffectComponent>> postEffectComponents_;
 

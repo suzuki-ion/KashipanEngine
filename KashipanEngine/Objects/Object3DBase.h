@@ -26,6 +26,27 @@ class ScreenBuffer;
 /// @brief 3Dオブジェクト基底クラス
 class Object3DBase {
 public:
+    struct RenderPassRegistrationHandle {
+        std::uint64_t value = 0;
+        bool IsValid() const noexcept { return value != 0; }
+        explicit operator bool() const noexcept { return IsValid(); }
+        bool operator==(const RenderPassRegistrationHandle &o) const noexcept { return value == o.value; }
+        bool operator!=(const RenderPassRegistrationHandle &o) const noexcept { return value != o.value; }
+    };
+
+    enum class RenderTargetKind {
+        Window,
+        ScreenBuffer,
+    };
+
+    struct RenderPassRegistrationInfo {
+        RenderPassRegistrationHandle handle{};
+        RenderTargetKind targetKind = RenderTargetKind::Window;
+        Window *window = nullptr;
+        ScreenBuffer *screenBuffer = nullptr;
+        std::string pipelineName;
+    };
+
     Object3DBase() = delete;
     Object3DBase(const Object3DBase &) = delete;
     Object3DBase &operator=(const Object3DBase &) = delete;
@@ -70,13 +91,24 @@ public:
     UINT GetIndexCount() const { return indexCount_; }
 
     /// @brief 描画先/パイプラインが確定したタイミングで永続レンダーパスを登録
-    void AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
+    /// @return 登録したパスのハンドル（解除や情報取得に使用）
+    RenderPassRegistrationHandle AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
 
     /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録
-    void AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+    /// @return 登録したパスのハンドル（解除や情報取得に使用）
+    RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
 
-    /// @brief 永続レンダーパス登録を解除
+    /// @brief 永続レンダーパス登録を解除（全て）
     void DetachFromRenderer();
+
+    /// @brief 指定ハンドルの永続レンダーパス登録を解除
+    bool DetachFromRenderer(RenderPassRegistrationHandle handle);
+
+    /// @brief 現在保持している描画パス登録情報一覧を取得
+    std::vector<RenderPassRegistrationInfo> GetRenderPassRegistrations() const;
+
+    /// @brief 指定ハンドルの描画パス登録情報を取得
+    std::optional<RenderPassRegistrationInfo> GetRenderPassRegistration(RenderPassRegistrationHandle handle) const;
 
     /// @brief コンポーネントの登録（生成）
     /// @tparam T コンポーネントの型（IGameObjectComponent2Dを継承している必要あり）
@@ -311,22 +343,26 @@ protected:
 private:
     friend class Object3DContext;
 
+    struct ShaderBindingFailureInfo {
+        size_t componentIndex;
+        std::string componentType;
+    };
+
     /// @brief レンダーパスの作成（Window）
     RenderPass CreateRenderPass(Window *targetWindow, const std::string &pipelineName);
 
     /// @brief レンダーパスの作成（ScreenBuffer）
     RenderPass CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName);
 
-    // Persistent render pass registration
-    Renderer::PersistentPassHandle persistentPassHandle_{};
-
-    // Persistent offscreen render pass registration
-    Renderer::PersistentOffscreenPassHandle persistentOffscreenPassHandle_{};
-
-    struct ShaderBindingFailureInfo {
-        size_t componentIndex;
-        std::string componentType;
+    struct RenderPassRegistrationEntry {
+        RenderPassRegistrationInfo info;
+        Renderer::PersistentPassHandle windowHandle{};
+        Renderer::PersistentOffscreenPassHandle offscreenHandle{};
     };
+
+    RenderPassRegistrationHandle GenerateRegistrationHandle() const;
+
+    std::unordered_map<std::uint64_t, RenderPassRegistrationEntry> renderPassRegistrations_;
 
     /// @brief コンポーネントのシェーダー変数バインド処理
     /// @param shaderBinder シェーダ変数バインダー

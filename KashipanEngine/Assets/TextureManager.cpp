@@ -97,6 +97,38 @@ UINT Align256(UINT v) { return (v + 255u) & ~255u; }
 
 } // namespace
 
+D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::TextureView::GetSrvHandle() const noexcept {
+    D3D12_GPU_DESCRIPTOR_HANDLE h{};
+    if (handle_ == kInvalidHandle) return h;
+    auto it = sTextures.find(handle_);
+    if (it == sTextures.end()) return h;
+    h.ptr = it->second.srvGpuPtr;
+    return h;
+}
+
+std::uint32_t TextureManager::TextureView::GetWidth() const noexcept {
+    if (handle_ == kInvalidHandle) return 0;
+    auto it = sTextures.find(handle_);
+    if (it == sTextures.end()) return 0;
+    return static_cast<std::uint32_t>(it->second.width);
+}
+
+std::uint32_t TextureManager::TextureView::GetHeight() const noexcept {
+    if (handle_ == kInvalidHandle) return 0;
+    auto it = sTextures.find(handle_);
+    if (it == sTextures.end()) return 0;
+    return static_cast<std::uint32_t>(it->second.height);
+}
+
+bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, const IShaderTexture& texture) {
+    if (!shaderBinder) return false;
+
+    const auto h = texture.GetSrvHandle();
+    if (h.ptr == 0) return false;
+
+    return shaderBinder->Bind(nameKey, h);
+}
+
 bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, TextureHandle handle) {
     if (!shaderBinder) return false;
     if (handle == kInvalidHandle) return false;

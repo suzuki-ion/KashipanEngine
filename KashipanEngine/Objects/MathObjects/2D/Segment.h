@@ -5,9 +5,9 @@
 namespace KashipanEngine {
 namespace Math {
 
-struct Circle final {
-    Vector2 center{0.0f, 0.0f};
-    float radius = 0.0f;
+struct Segment2D final {
+    Vector2 start{0.0f, 0.0f};
+    Vector2 end{0.0f, 0.0f};
 };
 
 } // namespace Math

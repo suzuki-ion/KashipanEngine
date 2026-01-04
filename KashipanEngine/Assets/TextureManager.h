@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "Utilities/Passkeys.h"
+#include "Graphics/IShaderTexture.h"
 
 namespace KashipanEngine {
 
@@ -17,6 +18,21 @@ class TextureManager final {
 public:
     using TextureHandle = uint32_t;
     static constexpr TextureHandle kInvalidHandle = 0;
+
+    class TextureView final : public IShaderTexture {
+    public:
+        TextureView() = default;
+        explicit TextureView(TextureHandle h) : handle_(h) {}
+
+        D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override;
+        std::uint32_t GetWidth() const noexcept override;
+        std::uint32_t GetHeight() const noexcept override;
+
+        TextureHandle GetHandle() const noexcept { return handle_; }
+
+    private:
+        TextureHandle handle_ = kInvalidHandle;
+    };
 
     struct TextureListEntry final {
         TextureHandle handle = kInvalidHandle;
@@ -49,8 +65,14 @@ public:
     /// @brief Assetsルートからの相対パスからテクスチャを取得
     static TextureHandle GetTextureFromAssetPath(const std::string& assetPath);
 
+    /// @brief ハンドルからシェーダー用テクスチャビューを取得（無効ハンドルの場合は空のビュー）
+    static TextureView GetTextureView(TextureHandle handle) { return TextureView(GetTexture(handle)); }
+
     /// @brief シェーダーへテクスチャをバインドする（D3D12 のハンドルは外部へ出さない）
     static bool BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, TextureHandle handle);
+
+    /// @brief シェーダーへテクスチャをバインドする（IShaderTexture 経由）
+    static bool BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, const IShaderTexture& texture);
 
 #if defined(USE_IMGUI)
     /// @brief デバッグ用: 読み込まれたテクスチャ一覧の ImGui ウィンドウを描画

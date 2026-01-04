@@ -5,9 +5,9 @@
 namespace KashipanEngine {
 namespace Math {
 
-struct AABB final {
-    Vector3 min{0.0f, 0.0f, 0.0f};
-    Vector3 max{0.0f, 0.0f, 0.0f};
+struct Line3D final {
+    Vector3 origin{0.0f, 0.0f, 0.0f};
+    Vector3 direction{1.0f, 0.0f, 0.0f};
 };
 
 } // namespace Math

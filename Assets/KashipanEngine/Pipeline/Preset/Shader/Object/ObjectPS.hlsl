@@ -54,5 +54,9 @@ PSOutput main(VSOutput input) {
 	}
 	output.color.a = mat.color.a * textureColor.a;
 #endif
+
+	if (output.color.a < 0.01f) {
+		discard;
+	}
 	return output;
 }

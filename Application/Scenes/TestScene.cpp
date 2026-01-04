@@ -41,32 +41,64 @@ void TestScene::InitializeTestObjects() {
     auto overlayWindow = Window::GetWindow("Overlay Window");
     auto *targetWindow = overlayWindow;
 
-    if (!offscreenBuffer_ && targetWindow) {
+    if (!offscreenBuffer1_ && targetWindow) {
         const std::uint32_t w = 1920;
         const std::uint32_t h = 1080;
-        offscreenBuffer_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
+        offscreenBuffer1_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
+    }
+    if (!offscreenBuffer2_ && targetWindow) {
+        const std::uint32_t w = 512;
+        const std::uint32_t h = 512;
+        offscreenBuffer2_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
     }
 
-    auto attachOffscreenIfPossible3D = [&](Object3DBase *obj) {
-        if (!obj || !offscreenBuffer_) return;
-        obj->AttachToRenderer(offscreenBuffer_, "Object3D.Solid.BlendNormal");
+    auto attachOffscreen1IfPossible3D = [&](Object3DBase *obj) {
+        if (!obj || !offscreenBuffer1_) return;
+        obj->AttachToRenderer(offscreenBuffer1_, "Object3D.Solid.BlendNormal");
     };
-    auto attachOffscreenIfPossible2D = [&](Object2DBase *obj) {
-        if (!obj || !offscreenBuffer_) return;
-        obj->AttachToRenderer(offscreenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
+    auto attachOffscreen1IfPossible2D = [&](Object2DBase *obj) {
+        if (!obj || !offscreenBuffer1_) return;
+        obj->AttachToRenderer(offscreenBuffer1_, "Object2D.DoubleSidedCulling.BlendNormal");
+    };
+
+    auto attachOffscreen2IfPossible3D = [&](Object3DBase *obj) {
+        if (!obj || !offscreenBuffer2_) return;
+        obj->AttachToRenderer(offscreenBuffer2_, "Object3D.Solid.BlendNormal");
+    };
+    auto attachOffscreen2IfPossible2D = [&](Object2DBase *obj) {
+        if (!obj || !offscreenBuffer2_) return;
+        obj->AttachToRenderer(offscreenBuffer2_, "Object2D.DoubleSidedCulling.BlendNormal");
     };
 
     // 3D
     objects3D_.clear();
-    objects3D_.reserve(2 + (kEnableInstancingTest ? kInstancingTestCount3D : 0) + 1);
+    objects3D_.reserve(3 + (kEnableInstancingTest ? kInstancingTestCount3D : 0) + 1);
 
     objects3D_.emplace_back(std::make_unique<Camera3D>());
     if (auto *camera = static_cast<Camera3D *>(objects3D_.back().get())) {
         if (auto *transformComp = camera->GetComponent3D<Transform3D>()) {
             transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
         }
+        // ScreenBuffer1のサイズを元に比率とビューポート設定
+        if (offscreenBuffer1_) {
+            camera->SetAspectRatio(static_cast<float>(offscreenBuffer1_->GetWidth()) / static_cast<float>(offscreenBuffer1_->GetHeight()));
+            camera->SetViewportParams(0, 0, static_cast<float>(offscreenBuffer1_->GetWidth()), static_cast<float>(offscreenBuffer1_->GetHeight()));
+        }
     }
-    attachOffscreenIfPossible3D(objects3D_.back().get());
+    attachOffscreen1IfPossible3D(objects3D_.back().get());
+
+    objects3D_.emplace_back(std::make_unique<Camera3D>());
+    if (auto *camera = static_cast<Camera3D *>(objects3D_.back().get())) {
+        if (auto *transformComp = camera->GetComponent3D<Transform3D>()) {
+            transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
+        }
+        // ScreenBuffer2のサイズを元に比率とビューポート設定
+        if (offscreenBuffer2_) {
+            camera->SetAspectRatio(static_cast<float>(offscreenBuffer2_->GetWidth()) / static_cast<float>(offscreenBuffer2_->GetHeight()));
+            camera->SetViewportParams(0, 0, static_cast<float>(offscreenBuffer2_->GetWidth()), static_cast<float>(offscreenBuffer2_->GetHeight()));
+        }
+    }
+    attachOffscreen2IfPossible3D(objects3D_.back().get());
 
     objects3D_.emplace_back(std::make_unique<DirectionalLight>());
     if (auto *light = static_cast<DirectionalLight *>(objects3D_.back().get())) {
@@ -75,7 +107,8 @@ void TestScene::InitializeTestObjects() {
         light->SetDirection(Vector3(0.3f, -1.0f, 0.2f));
         light->SetIntensity(1.0f);
     }
-    attachOffscreenIfPossible3D(objects3D_.back().get());
+    attachOffscreen1IfPossible3D(objects3D_.back().get());
+    attachOffscreen2IfPossible3D(objects3D_.back().get());
 
     {
         const std::uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount3D : 0;
@@ -93,7 +126,7 @@ void TestScene::InitializeTestObjects() {
                 const float y = (static_cast<float>(i / 16) - 2.0f) * 0.4f;
                 tr->SetTranslate(Vector3(x, y, 0.0f));
             }
-            attachOffscreenIfPossible3D(obj.get());
+            attachOffscreen1IfPossible3D(obj.get());
             objects3D_.emplace_back(std::move(obj));
         }
     }
@@ -103,11 +136,7 @@ void TestScene::InitializeTestObjects() {
         if (modelHandle != ModelManager::kInvalidHandle) {
             auto obj = std::make_unique<Model>(modelHandle);
             obj->SetName("TestModel_IcoSphere");
-            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
-                tr->SetScale(Vector3(0.5f, 0.5f, 0.5f));
-            }
-            attachOffscreenIfPossible3D(obj.get());
+            attachOffscreen2IfPossible3D(obj.get());
             objects3D_.emplace_back(std::move(obj));
         } else {
             Log("[TestScene] Test model 'icoSphere.obj' not found.", LogSeverity::Warning);
@@ -120,7 +149,8 @@ void TestScene::InitializeTestObjects() {
 
     objects2D_.emplace_back(std::make_unique<Camera2D>());
     objects2D_.back()->AttachToRenderer(overlayWindow, "Object2D.DoubleSidedCulling.BlendNormal");
-    attachOffscreenIfPossible2D(objects2D_.back().get());
+    attachOffscreen1IfPossible2D(objects2D_.back().get());
+    attachOffscreen2IfPossible2D(objects2D_.back().get());
 
     {
         const std::uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount2D : 0;
@@ -138,17 +168,31 @@ void TestScene::InitializeTestObjects() {
                 tr->SetTranslate(Vector2(x, y));
                 tr->SetScale(Vector2(20.0f, 20.0f));
             }
-            attachOffscreenIfPossible2D(obj.get());
+            attachOffscreen1IfPossible2D(obj.get());
             objects2D_.emplace_back(std::move(obj));
         }
     }
+    {
+        // ScreenBuffer2をScreenBuffer1に描画する用のスプライト
+        auto spriteObj = std::make_unique<Sprite>();
+        spriteObj->SetName("OffscreenBuffer2DisplaySprite");
+        if (auto *material = spriteObj->GetComponent2D<Material2D>()) {
+            material->SetTexture(offscreenBuffer2_);
+        }
+        if (auto *transformComp = spriteObj->GetComponent2D<Transform2D>()) {
+            transformComp->SetTranslate(Vector2(100.0f, 100.0f));
+            transformComp->SetScale(Vector2(256.0f, -256.0f));
+        }
+        attachOffscreen1IfPossible2D(spriteObj.get());
+        objects2D_.emplace_back(std::move(spriteObj));
+    }
 
     // ScreenBufferをウィンドウに表示するためのスプライトを作成
-    if (offscreenBuffer_ && targetWindow) {
+    if (offscreenBuffer1_ && targetWindow) {
         auto spriteObj = std::make_unique<Sprite>();
         spriteObj->SetName("OffscreenBufferDisplaySprite");
         if (auto *material = spriteObj->GetComponent2D<Material2D>()) {
-            material->SetTexture(offscreenBuffer_);
+            material->SetTexture(offscreenBuffer1_);
         }
         spriteObj->AttachToRenderer(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal");
         objects2D_.emplace_back(std::move(spriteObj));

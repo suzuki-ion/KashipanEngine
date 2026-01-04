@@ -128,6 +128,15 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
 
+    Scene::SetEnginePointers(
+        Passkey<GameEngine>{},
+        audioManager_.get(),
+        modelManager_.get(),
+        samplerManager_.get(),
+        textureManager_.get(),
+        input_.get(),
+        inputCommand_.get());
+
     const auto &windowSettings = GetEngineSettings().window;
     Window::SetDefaultParams({},
         windowSettings.initialWindowTitle,

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "Scene/Scene.h"
 #include "Graphics/ScreenBuffer.h"
@@ -20,9 +19,6 @@ private:
     void InitializeTestObjects();
 
     bool initialized_ = false;
-
-    std::vector<std::unique_ptr<Object3DBase>> objects3D_;
-    std::vector<std::unique_ptr<Object2DBase>> objects2D_;
 
     ScreenBuffer *offscreenBuffer1_ = nullptr;
     ScreenBuffer *offscreenBuffer2_ = nullptr;

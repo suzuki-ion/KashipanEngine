@@ -73,6 +73,7 @@ std::vector<Window *> Window::GetWindows(const std::string &title) {
     return windows;
 }
 
+#if defined(USE_IMGUI)
 HWND Window::GetFirstWindowHwndForImGui(Passkey<ImGuiManager>) {
     for (auto &pair : sWindowMap) {
         if (pair.second->GetWindowType() == WindowType::Overlay) continue;
@@ -80,6 +81,7 @@ HWND Window::GetFirstWindowHwndForImGui(Passkey<ImGuiManager>) {
     }
     return nullptr;
 }
+#endif
 
 Window *Window::GetWindow(const std::string &title) {
     for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) return pair.second.get();

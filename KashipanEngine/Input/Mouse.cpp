@@ -25,7 +25,10 @@ Mouse::~Mouse() {
 void Mouse::Initialize() {
     if (!sGameInput) {
         const HRESULT hr = GameInputCreate(&sGameInput);
-        assert(SUCCEEDED(hr));
+        if (FAILED(hr)) {
+            assert(false);
+            return;
+        }
     }
 
     currentButtons_.fill(0);

@@ -140,12 +140,6 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("KashipanEngine デバッグ用ウィンドウ");
-    ImGui::Text("ImGui 実行中。");
-    ImGui::Text("ImGuiドッキング: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) ? "有効化中" : "無効化中");
-    ImGui::Text("ImGuiマルチビューポート: %s", (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) ? "有効化中" : "無効化中");
-    ImGui::End();
-
     TextureManager::ShowImGuiLoadedTexturesWindow();
     ModelManager::ShowImGuiLoadedModelsWindow();
     AudioManager::ShowImGuiLoadedSoundsWindow();

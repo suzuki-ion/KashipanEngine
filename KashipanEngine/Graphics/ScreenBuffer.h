@@ -12,6 +12,7 @@
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
+#include "Graphics/IShaderTexture.h"
 
 namespace KashipanEngine {
 
@@ -20,7 +21,7 @@ class DirectXCommon;
 class Window;
 
 /// @brief オフスクリーンレンダリング用スクリーンバッファ
-class ScreenBuffer final {
+class ScreenBuffer final : public IShaderTexture {
 public:
     /// @brief GameEngine から DirectXCommon を設定
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
@@ -56,8 +57,12 @@ public:
     ScreenBuffer(ScreenBuffer &&) = delete;
     ScreenBuffer &operator=(ScreenBuffer &&) = delete;
 
-    std::uint32_t GetWidth() const noexcept { return width_; }
-    std::uint32_t GetHeight() const noexcept { return height_; }
+    std::uint32_t GetWidth() const noexcept override { return width_; }
+    std::uint32_t GetHeight() const noexcept override { return height_; }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override {
+        return shaderResource_ ? shaderResource_->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
+    }
 
     RenderTargetResource *GetRenderTarget() const noexcept { return renderTarget_.get(); }
     DepthStencilResource *GetDepthStencil() const noexcept { return depthStencil_.get(); }

@@ -1,12 +1,24 @@
 #include "Objects/Object3DBase.h"
 #include <algorithm>
 #include <cstring>
+#include <random>
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Objects/Components/3D/Material3D.h"
 #include <string>
 
 namespace KashipanEngine {
+
+namespace {
+std::uint64_t MakeRandomNonZeroU64() {
+    static thread_local std::mt19937_64 rng{ std::random_device{}() };
+    std::uint64_t v = 0;
+    do {
+        v = rng();
+    } while (v == 0);
+    return v;
+}
+}
 
 Object3DBase::~Object3DBase() {
     DetachFromRenderer();
@@ -21,54 +33,116 @@ Object3DBase::~Object3DBase() {
     components_.clear();
 }
 
-void Object3DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
-    if (!targetWindow) return;
-    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
-    if (!renderer) return;
-
-    if (persistentPassHandle_) {
-        renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
-        persistentPassHandle_ = {};
-    }
-    if (persistentOffscreenPassHandle_) {
-        renderer->UnregisterPersistentOffscreenRenderPass(persistentOffscreenPassHandle_);
-        persistentOffscreenPassHandle_ = {};
-    }
-
-    auto pass = CreateRenderPass(targetWindow, pipelineName);
-    persistentPassHandle_ = renderer->RegisterPersistentRenderPass(std::move(pass));
+Object3DBase::RenderPassRegistrationHandle Object3DBase::GenerateRegistrationHandle() const {
+    return RenderPassRegistrationHandle{ MakeRandomNonZeroU64() };
 }
 
-void Object3DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
-    if (!targetBuffer) return;
+Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
+    if (!targetWindow) return {};
     auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
-    if (!renderer) return;
+    if (!renderer) return {};
 
-    if (persistentPassHandle_) {
-        renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
-        persistentPassHandle_ = {};
+    RenderPassRegistrationEntry entry{};
+    entry.info.targetKind = RenderTargetKind::Window;
+    entry.info.window = targetWindow;
+    entry.info.screenBuffer = nullptr;
+    entry.info.pipelineName = pipelineName;
+
+    RenderPassRegistrationHandle h{};
+    do {
+        h = GenerateRegistrationHandle();
+    } while (!h || renderPassRegistrations_.find(h.value) != renderPassRegistrations_.end());
+
+    entry.info.handle = h;
+
+    auto pass = CreateRenderPass(targetWindow, pipelineName);
+    entry.windowHandle = renderer->RegisterPersistentRenderPass(std::move(pass));
+    if (!entry.windowHandle) {
+        return {};
     }
-    if (persistentOffscreenPassHandle_) {
-        renderer->UnregisterPersistentOffscreenRenderPass(persistentOffscreenPassHandle_);
-        persistentOffscreenPassHandle_ = {};
-    }
+
+    renderPassRegistrations_.emplace(h.value, std::move(entry));
+    return h;
+}
+
+Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
+    if (!targetBuffer) return {};
+    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    if (!renderer) return {};
+
+    RenderPassRegistrationEntry entry{};
+    entry.info.targetKind = RenderTargetKind::ScreenBuffer;
+    entry.info.window = nullptr;
+    entry.info.screenBuffer = targetBuffer;
+    entry.info.pipelineName = pipelineName;
+
+    RenderPassRegistrationHandle h{};
+    do {
+        h = GenerateRegistrationHandle();
+    } while (!h || renderPassRegistrations_.find(h.value) != renderPassRegistrations_.end());
+
+    entry.info.handle = h;
 
     auto pass = CreateRenderPass(targetBuffer, pipelineName);
-    persistentOffscreenPassHandle_ = renderer->RegisterPersistentOffscreenRenderPass(std::move(pass));
+    entry.offscreenHandle = renderer->RegisterPersistentOffscreenRenderPass(std::move(pass));
+    if (!entry.offscreenHandle) {
+        return {};
+    }
+
+    renderPassRegistrations_.emplace(h.value, std::move(entry));
+    return h;
 }
 
 void Object3DBase::DetachFromRenderer() {
     auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
     if (renderer) {
-        if (persistentPassHandle_) {
-            renderer->UnregisterPersistentRenderPass(persistentPassHandle_);
-        }
-        if (persistentOffscreenPassHandle_) {
-            renderer->UnregisterPersistentOffscreenRenderPass(persistentOffscreenPassHandle_);
+        for (auto &kv : renderPassRegistrations_) {
+            auto &e = kv.second;
+            if (e.windowHandle) {
+                renderer->UnregisterPersistentRenderPass(e.windowHandle);
+            }
+            if (e.offscreenHandle) {
+                renderer->UnregisterPersistentOffscreenRenderPass(e.offscreenHandle);
+            }
         }
     }
-    persistentPassHandle_ = {};
-    persistentOffscreenPassHandle_ = {};
+    renderPassRegistrations_.clear();
+}
+
+bool Object3DBase::DetachFromRenderer(RenderPassRegistrationHandle handle) {
+    if (!handle) return false;
+
+    auto it = renderPassRegistrations_.find(handle.value);
+    if (it == renderPassRegistrations_.end()) return false;
+
+    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    if (renderer) {
+        if (it->second.windowHandle) {
+            renderer->UnregisterPersistentRenderPass(it->second.windowHandle);
+        }
+        if (it->second.offscreenHandle) {
+            renderer->UnregisterPersistentOffscreenRenderPass(it->second.offscreenHandle);
+        }
+    }
+
+    renderPassRegistrations_.erase(it);
+    return true;
+}
+
+std::vector<Object3DBase::RenderPassRegistrationInfo> Object3DBase::GetRenderPassRegistrations() const {
+    std::vector<RenderPassRegistrationInfo> out;
+    out.reserve(renderPassRegistrations_.size());
+    for (const auto &kv : renderPassRegistrations_) {
+        out.push_back(kv.second.info);
+    }
+    return out;
+}
+
+std::optional<Object3DBase::RenderPassRegistrationInfo> Object3DBase::GetRenderPassRegistration(RenderPassRegistrationHandle handle) const {
+    if (!handle) return std::nullopt;
+    auto it = renderPassRegistrations_.find(handle.value);
+    if (it == renderPassRegistrations_.end()) return std::nullopt;
+    return it->second.info;
 }
 
 RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName) {
@@ -98,7 +172,6 @@ RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::strin
         cachedRenderPass_.emplace(std::move(passInfo));
     }
 
-    // Update only variable parts
     cachedRenderPass_->window = targetWindow;
     cachedRenderPass_->screenBuffer = nullptr;
     cachedRenderPass_->pipelineName = pipelineName;

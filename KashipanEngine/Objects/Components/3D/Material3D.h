@@ -5,6 +5,7 @@
 #include "Math/Vector3.h"
 #include "Assets/TextureManager.h"
 #include "Assets/SamplerManager.h"
+#include "Graphics/IShaderTexture.h"
 #include <memory>
 #include <cstring>
 
@@ -43,11 +44,13 @@ public:
     std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
         if (!shaderBinder) return false;
 
-        // gMaterial is now provided as StructuredBuffer by the instancing path.
         bool ok = true;
-        if (textureHandle_ != TextureManager::kInvalidHandle) {
+        if (texture_ != nullptr) {
+            ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", *texture_);
+        } else if (textureHandle_ != TextureManager::kInvalidHandle) {
             ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
         }
+
         if (samplerHandle_ != SamplerManager::kInvalidHandle) {
             ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
         }
@@ -74,7 +77,16 @@ public:
         return true;
     }
 
-    void SetTexture(TextureManager::TextureHandle texture) { textureHandle_ = texture; }
+    void SetTexture(TextureManager::TextureHandle texture) {
+        texture_ = nullptr;
+        textureHandle_ = texture;
+    }
+
+    void SetTexture(IShaderTexture* texture) {
+        texture_ = texture;
+        textureHandle_ = TextureManager::kInvalidHandle;
+    }
+
     void SetSampler(SamplerManager::SamplerHandle sampler) { samplerHandle_ = sampler; }
     void SetColor(const Vector4 &color) {
         color_ = color;
@@ -85,6 +97,7 @@ public:
         isBufferDirty_ = true;
     }
     TextureManager::TextureHandle GetTexture() const { return textureHandle_; }
+    IShaderTexture* GetTexturePtr() const { return texture_; }
     SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
     const Vector4 &GetColor() const { return color_; }
     const UVTransform &GetUVTransform() const { return uvTransform_; }
@@ -129,6 +142,7 @@ private:
     UVTransform uvTransform_{};
 
     TextureManager::TextureHandle textureHandle_ = TextureManager::kInvalidHandle;
+    IShaderTexture* texture_ = nullptr;
     SamplerManager::SamplerHandle samplerHandle_ = SamplerManager::kInvalidHandle;
 
     bool isBufferDirty_ = true;

@@ -81,7 +81,10 @@ Controller::~Controller() {
 void Controller::Initialize() {
     if (!sGameInput) {
         const HRESULT hr = GameInputCreate(&sGameInput);
-        assert(SUCCEEDED(hr));
+        if (FAILED(hr)) {
+            assert(false);
+            return;
+        }
     }
 
     // ストレージをリセット
@@ -102,7 +105,10 @@ void Controller::Initialize() {
             this,
             &OnGamepadDeviceChanged,
             &deviceCallbackToken_);
-        assert(SUCCEEDED(hr));
+        if (FAILED(hr)) {
+            assert(false);
+            return;
+        }
     }
 }
 

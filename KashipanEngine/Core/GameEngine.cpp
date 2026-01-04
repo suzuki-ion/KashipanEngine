@@ -1,22 +1,15 @@
 #include "GameEngine.h"
 #include "EngineSettings.h"
 #include "Core/Window.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
 #include "Graphics/Renderer.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
 #include "Objects/GameObjects/3D/Model.h"
 #include "Graphics/ScreenBuffer.h"
+#include "AppInitialize.h"
 
-#include "Objects/SystemObjects/Camera3D.h"
-#include "Objects/SystemObjects/DirectionalLight.h"
-#include "Objects/Components/3D/Transform3D.h"
-#include "Objects/GameObjects/3D/Triangle3D.h"
-
-#include "Objects/SystemObjects/Camera2D.h"
-#include "Objects/Components/2D/Transform2D.h"
-#include "Objects/GameObjects/2D/Triangle2D.h"
+#include "Scene/Scene.h"
 
 #include <cstdint>
 #include <algorithm>
@@ -30,10 +23,6 @@ namespace KashipanEngine {
 namespace {
 /// @brief エンジン初期化フラグ
 bool sIsEngineInitialized = false;
-
-constexpr bool kEnableInstancingTest = true;
-constexpr std::uint32_t kInstancingTestCount2D = 1024;
-constexpr std::uint32_t kInstancingTestCount3D = 1024;
 } // namespace
 
 #if defined(USE_IMGUI)
@@ -100,154 +89,6 @@ void GameEngine::DrawProfilingImGui_() {
 }
 #endif
 
-void GameEngine::InitializeTestObjects_() {
-    if (testObjectsInitialized_) {
-        return;
-    }
-
-    auto mainWindow = Window::GetWindow("Main Window");
-    auto overlayWindow = Window::GetWindow("Overlay Window");
-    auto *targetWindow = overlayWindow ? overlayWindow : mainWindow;
-
-    if (!testOffscreenBuffer_ && targetWindow) {
-        const std::uint32_t w = 1920;
-        const std::uint32_t h = 1080;
-        testOffscreenBuffer_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
-    }
-
-    auto attachIfPossible3D = [&](Object3DBase *obj) {
-        if (!obj || !targetWindow) return;
-        obj->AttachToRenderer(targetWindow, "Object3D.Solid.BlendNormal");
-    };
-    auto attachIfPossible2D = [&](Object2DBase *obj) {
-        if (!obj || !targetWindow) return;
-        obj->AttachToRenderer(targetWindow, "Object2D.DoubleSidedCulling.BlendNormal");
-    };
-
-    auto attachOffscreenIfPossible3D = [&](Object3DBase *obj) {
-        if (!obj || !testOffscreenBuffer_) return;
-        obj->AttachToRenderer(testOffscreenBuffer_, "Object3D.Solid.BlendNormal");
-    };
-    auto attachOffscreenIfPossible2D = [&](Object2DBase *obj) {
-        if (!obj || !testOffscreenBuffer_) return;
-        obj->AttachToRenderer(testOffscreenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-    };
-
-    // 3D
-    testObjects3D_.clear();
-    testObjects3D_.reserve(2 + (kEnableInstancingTest ? kInstancingTestCount3D : 0));
-
-    testObjects3D_.emplace_back(std::make_unique<Camera3D>());
-    if (auto *camera = static_cast<Camera3D *>(testObjects3D_.back().get())) {
-        if (auto *transformComp = camera->GetComponent3D<Transform3D>()) {
-            transformComp->SetTranslate(Vector3(0.0f, 0.0f, -10.0f));
-        }
-    }
-    //attachIfPossible3D(testObjects3D_.back().get());
-    attachOffscreenIfPossible3D(testObjects3D_.back().get());
-
-    testObjects3D_.emplace_back(std::make_unique<DirectionalLight>());
-    if (auto *light = static_cast<DirectionalLight *>(testObjects3D_.back().get())) {
-        light->SetEnabled(true);
-        light->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        light->SetDirection(Vector3(0.3f, -1.0f, 0.2f));
-        light->SetIntensity(1.0f);
-    }
-    //attachIfPossible3D(testObjects3D_.back().get());
-    attachOffscreenIfPossible3D(testObjects3D_.back().get());
-
-    {
-        const uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount3D : 0;
-        Log(std::string("[InstancingTest] Setup started. instancing=")
-                + (kEnableInstancingTest ? "true" : "false")
-                + " 3DCount=" + std::to_string(instanceCount),
-            LogSeverity::Info);
-        for (std::uint32_t i = 0; i < instanceCount; ++i) {
-            auto obj = std::make_unique<Triangle3D>();
-            obj->SetName(std::string("InstancingTriangle3D_") + std::to_string(i));
-
-            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                const float x = (static_cast<float>(i % 16) - 8.0f) * 0.4f;
-                const float y = (static_cast<float>(i / 16) - 2.0f) * 0.4f;
-                tr->SetTranslate(Vector3(x, y, 0.0f));
-            }
-            //attachIfPossible3D(obj.get());
-            attachOffscreenIfPossible3D(obj.get());
-            testObjects3D_.emplace_back(std::move(obj));
-        }
-    }
-
-    {
-        ModelManager::ModelHandle modelHandle
-            = ModelManager::GetModelHandleFromFileName("icoSphere.obj");
-        if (modelHandle != ModelManager::kInvalidHandle) {
-            auto obj = std::make_unique<Model>(modelHandle);
-            obj->SetName("TestModel_IcoSphere");
-            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
-                tr->SetScale(Vector3(0.5f, 0.5f, 0.5f));
-            }
-            //attachIfPossible3D(obj.get());
-            attachOffscreenIfPossible3D(obj.get());
-            testObjects3D_.emplace_back(std::move(obj));
-        } else {
-            Log("[GameEngine] Test model 'icoShpere.obj' not found.", LogSeverity::Warning);
-        }
-    }
-
-    // 2D
-    testObjects2D_.clear();
-    testObjects2D_.reserve(1 + (kEnableInstancingTest ? kInstancingTestCount2D : 0));
-
-    testObjects2D_.emplace_back(std::make_unique<Camera2D>());
-    if (testOffscreenBuffer_) {
-        attachOffscreenIfPossible2D(testObjects2D_.back().get());
-    }
-
-    {
-        const uint32_t instanceCount = kEnableInstancingTest ? kInstancingTestCount2D : 0;
-        Log(std::string("[InstancingTest] Setup started. instancing=")
-                + (kEnableInstancingTest ? "true" : "false")
-                + " 2DCount=" + std::to_string(instanceCount),
-            LogSeverity::Info);
-        for (std::uint32_t i = 0; i < instanceCount; ++i) {
-            auto obj = std::make_unique<Triangle2D>();
-            obj->SetName(std::string("InstancingTriangle2D_") + std::to_string(i));
-            if (auto *tr = obj->GetComponent2D<Transform2D>()) {
-                const float x = 50.0f + static_cast<float>(i % 16) * 30.0f;
-                const float y = 200.0f + static_cast<float>(i / 16) * 30.0f;
-                tr->SetTranslate(Vector2(x, y));
-                tr->SetScale(Vector2(20.0f, 20.0f));
-            }
-            // Attach some instances to offscreen for verification
-            if (testOffscreenBuffer_) {
-                attachOffscreenIfPossible2D(obj.get());
-            }
-            testObjects2D_.emplace_back(std::move(obj));
-        }
-    }
-
-    testObjectsInitialized_ = true;
-}
-
-void GameEngine::UpdateTestObjects_() {
-    if (!testObjectsInitialized_) {
-        return;
-    }
-
-    for (auto &obj : testObjects3D_) {
-        if (!obj) continue;
-        if (obj->GetName() == "Camera3D") continue;
-        if (obj->GetName() == "DirectionalLight") continue;
-
-        if (auto *transformComp = obj->GetComponent3D<Transform3D>()) {
-            Vector3 rotate = transformComp->GetRotate();
-            rotate.y += 0.01f;
-            transformComp->SetRotate(rotate);
-        }
-    }
-}
-
 GameEngine::GameEngine(PasskeyForGameEngineMain) {
     LogScope scope;
     LogSeparator();
@@ -266,6 +107,11 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     //--------- インスタンス生成 ---------//
 
+    context_.engine = this;
+
+    sceneManager_ = std::make_unique<SceneManager>();
+    context_.sceneManager = sceneManager_.get();
+
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
@@ -276,46 +122,30 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
     Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
-
 #if defined(USE_IMGUI)
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
 #endif
-
-    // Input
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
 
-    //--------- ウィンドウ作成 ---------//
-    
     const auto &windowSettings = GetEngineSettings().window;
     Window::SetDefaultParams({},
         windowSettings.initialWindowTitle,
         windowSettings.initialWindowWidth,
         windowSettings.initialWindowHeight,
         windowSettings.initialWindowStyle,
-        windowSettings.initialWindowIconPath
-    );
+        windowSettings.initialWindowIconPath);
+
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
-
-    auto monitorInfo = windowsAPI_->QueryMonitorInfo();
-    windows_.emplace_back(Window::CreateOverlay("Overlay Window", monitorInfo->WorkArea().right, monitorInfo->WorkArea().bottom, true));
-    windows_.front()->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
-    windows_.emplace_back(Window::CreateNormal("Main Window"));
-    windows_.back()->SetWindowParent(windows_.front(), false);
-    for (int i = 0; i < 2; ++i) {
-        windows_.emplace_back(Window::CreateNormal(std::string("Sub Window ") + std::to_string(i + 1), 512, 128));
-        windows_.back()->RegisterWindowEvent(std::make_unique<WindowDefaultEvent::SysCommandCloseEventSimple>());
-        windows_.back()->SetWindowParent(windows_.front(), false);
-    }
-
-    InitializeTestObjects_();
 
     //--------- ゲームループ終了条件 ---------//
 
     gameLoopEndConditionFunction_ = []() {
         return Window::GetWindowCount() == 0;
     };
+
+    AppInitialize(context_);
 
     LogSeparator();
     Log(Translation("engine.initialize.end"));
@@ -379,13 +209,13 @@ void GameEngine::GameLoopUpdate() {
     }
 #if defined(USE_IMGUI)
     imguiManager_->BeginFrame({});
-    if (input_) {
-        input_->ShowImGui();
-    }
 #endif
 
-    InitializeTestObjects_();
-    UpdateTestObjects_();
+    if (sceneManager_) {
+        if (auto *scene = sceneManager_->GetCurrentScene()) {
+            scene->Update();
+        }
+    }
 
     if (!isGameLoopRunning_ || isGameLoopPaused_) {
 #if defined(USE_IMGUI)

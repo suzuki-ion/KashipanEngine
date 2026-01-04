@@ -16,6 +16,7 @@
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Scene/SceneManager.h"
 
 #if defined(USE_IMGUI)
 #include "Debug/ImGuiManager.h"
@@ -26,6 +27,19 @@ namespace KashipanEngine {
 /// @brief ゲームエンジンクラス
 class GameEngine final {
 public:
+    struct Context {
+        SceneManager *sceneManager = nullptr;
+
+        void SetGameLoopEndCondition(const std::function<bool()> &func) const {
+            if (!engine) return;
+            engine->SetGameLoopEndCondition(func);
+        }
+
+    private:
+        friend class GameEngine;
+        GameEngine *engine = nullptr;
+    };
+
     /// @brief コンストラクタ
     /// @param engineSettingsPath エンジン設定ファイルパス
     GameEngine(PasskeyForGameEngineMain);
@@ -35,6 +49,9 @@ public:
     GameEngine &operator=(const GameEngine &) = delete;
     GameEngine(GameEngine &&) = delete;
     GameEngine &operator=(GameEngine &&) = delete;
+
+    /// @brief ゲームエンジンクラスからコンテキストを取得
+    const Context &GetContext() const { return context_; }
 
     /// @brief ゲームエンジン実行用関数
     /// @return 実行結果コード
@@ -59,9 +76,6 @@ private:
     void GameLoopUpdate();
     /// @brief ゲームループ描画処理
     void GameLoopDraw();
-
-    void InitializeTestObjects_();
-    void UpdateTestObjects_();
 
 #if defined(USE_IMGUI)
     class RollingAverage_ {
@@ -90,18 +104,15 @@ private:
     RollingAverage_ avgFps_{60};
 #endif
 
+    Context context_;
+    std::unique_ptr<SceneManager> sceneManager_;
+
     /// @brief WindowsAPIクラス
     std::unique_ptr<WindowsAPI> windowsAPI_;
     /// @brief DirectX共通クラス
     std::unique_ptr<DirectXCommon> directXCommon_;
     /// @brief グラフィックスエンジンクラス
     std::unique_ptr<GraphicsEngine> graphicsEngine_;
-
-    bool testObjectsInitialized_ = false;
-    std::vector<std::unique_ptr<Object3DBase>> testObjects3D_;
-    std::vector<std::unique_ptr<Object2DBase>> testObjects2D_;
-
-    ScreenBuffer* testOffscreenBuffer_ = nullptr;
 
     /// @brief テクスチャ管理クラス
     std::unique_ptr<TextureManager> textureManager_;

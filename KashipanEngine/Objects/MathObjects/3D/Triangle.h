@@ -5,9 +5,10 @@
 namespace KashipanEngine {
 namespace Math {
 
-struct AABB final {
-    Vector3 min{0.0f, 0.0f, 0.0f};
-    Vector3 max{0.0f, 0.0f, 0.0f};
+struct Triangle final {
+    Vector3 v0{0.0f, 0.0f, 0.0f};
+    Vector3 v1{0.0f, 0.0f, 0.0f};
+    Vector3 v2{0.0f, 0.0f, 0.0f};
 };
 
 } // namespace Math

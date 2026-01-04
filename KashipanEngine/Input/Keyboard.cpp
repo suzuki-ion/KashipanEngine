@@ -65,7 +65,10 @@ Keyboard::~Keyboard() {
 void Keyboard::Initialize() {
     if (!sGameInput) {
         const HRESULT hr = GameInputCreate(&sGameInput);
-        assert(SUCCEEDED(hr));
+        if (FAILED(hr)) {
+            assert(false);
+            return;
+        }
     }
 
     current.fill(0);

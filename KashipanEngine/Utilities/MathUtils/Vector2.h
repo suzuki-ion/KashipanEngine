@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
 
-namespace KashipanEngine {
-
 struct Vector2;
+
+namespace KashipanEngine {
 
 namespace MathUtils {
 

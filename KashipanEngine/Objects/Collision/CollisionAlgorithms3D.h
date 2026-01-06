@@ -25,7 +25,6 @@ inline float DistanceSquared(const Vector3 &a, const Vector3 &b) {
 }
 
 inline Vector3 GetOBBAxisX(const Math::OBB &b) {
-    // 列優先の基底（Matrix3x3 の乗算実装と整合）
     return Vector3{b.orientation.m[0][0], b.orientation.m[0][1], b.orientation.m[0][2]};
 }
 inline Vector3 GetOBBAxisY(const Math::OBB &b) {
@@ -106,7 +105,7 @@ inline Math::OBB ToOBB(const Math::AABB &b) {
     Math::OBB o;
     o.center = (b.min + b.max) * 0.5f;
     o.halfSize = (b.max - b.min) * 0.5f;
-    o.orientation = Matrix3x3::Identity();
+    o.orientation = Matrix4x4::Identity();
     return o;
 }
 } // namespace

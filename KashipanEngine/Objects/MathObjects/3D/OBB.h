@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Math/Vector3.h"
-#include "Math/Matrix3x3.h"
+#include "Math/Matrix4x4.h"
 
 namespace KashipanEngine {
 namespace Math {
@@ -9,7 +9,7 @@ namespace Math {
 struct OBB final {
     Vector3 center{0.0f, 0.0f, 0.0f};
     Vector3 halfSize{0.0f, 0.0f, 0.0f};
-    Matrix3x3 orientation = Matrix3x3::Identity();
+    Matrix4x4 orientation = Matrix4x4::Identity();
 };
 
 } // namespace Math

@@ -40,33 +40,43 @@ inline bool Intersects3D(const ColliderInfo3D::ShapeVariant &a, const ColliderIn
         a, b);
 }
 
-inline HitInfo ComputeHit2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
+inline HitInfo2D ComputeHit2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
     return std::visit(
-        [](const auto &lhs, const auto &rhs) -> HitInfo {
+        [](const auto &lhs, const auto &rhs) -> HitInfo2D {
             if constexpr (requires { KashipanEngine::CollisionAlgorithms2D::ComputeHit(lhs, rhs); }) {
-                return KashipanEngine::CollisionAlgorithms2D::ComputeHit(lhs, rhs);
+                HitInfo hiBase = KashipanEngine::CollisionAlgorithms2D::ComputeHit(lhs, rhs);
+                HitInfo2D hi;
+                hi.isHit = hiBase.isHit;
+                hi.normal = hiBase.normal;
+                hi.penetration = hiBase.penetration;
+                return hi;
             } else if constexpr (requires { KashipanEngine::CollisionAlgorithms2D::Intersects(lhs, rhs); }) {
-                HitInfo hi;
+                HitInfo2D hi;
                 hi.isHit = KashipanEngine::CollisionAlgorithms2D::Intersects(lhs, rhs);
                 return hi;
             } else {
-                return HitInfo{};
+                return HitInfo2D{};
             }
         },
         a, b);
 }
 
-inline HitInfo ComputeHit3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
+inline HitInfo3D ComputeHit3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
     return std::visit(
-        [](const auto &lhs, const auto &rhs) -> HitInfo {
+        [](const auto &lhs, const auto &rhs) -> HitInfo3D {
             if constexpr (requires { KashipanEngine::CollisionAlgorithms3D::ComputeHit(lhs, rhs); }) {
-                return KashipanEngine::CollisionAlgorithms3D::ComputeHit(lhs, rhs);
+                HitInfo hiBase = KashipanEngine::CollisionAlgorithms3D::ComputeHit(lhs, rhs);
+                HitInfo3D hi;
+                hi.isHit = hiBase.isHit;
+                hi.normal = hiBase.normal;
+                hi.penetration = hiBase.penetration;
+                return hi;
             } else if constexpr (requires { KashipanEngine::CollisionAlgorithms3D::Intersects(lhs, rhs); }) {
-                HitInfo hi;
+                HitInfo3D hi;
                 hi.isHit = KashipanEngine::CollisionAlgorithms3D::Intersects(lhs, rhs);
                 return hi;
             } else {
-                return HitInfo{};
+                return HitInfo3D{};
             }
         },
         a, b);
@@ -92,6 +102,26 @@ bool Collider::Remove2D(ColliderID id) {
 
 bool Collider::Remove3D(ColliderID id) {
     return EraseById(colliders3D_, id);
+}
+
+bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
+    for (auto &e : colliders2D_) {
+        if (e.id == id) {
+            e.info = info;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Collider::UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info) {
+    for (auto &e : colliders3D_) {
+        if (e.id == id) {
+            e.info = info;
+            return true;
+        }
+    }
+    return false;
 }
 
 void Collider::Clear2D() {
@@ -183,46 +213,62 @@ std::uint64_t Collider::MakePairKey(ColliderID a, ColliderID b) {
     return (static_cast<std::uint64_t>(a) << 32) | static_cast<std::uint64_t>(b);
 }
 
-void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo &hitInfo, bool wasHit) {
+void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, bool wasHit) {
     const auto *ea = Find2D(a);
     const auto *eb = Find2D(b);
     if (!ea || !eb) return;
 
+    HitInfo2D hiA = hitInfo;
+    hiA.selfObject = ea->info.ownerObject;
+    hiA.otherObject = eb->info.ownerObject;
+
+    HitInfo2D hiB = hitInfo;
+    hiB.selfObject = eb->info.ownerObject;
+    hiB.otherObject = ea->info.ownerObject;
+
     const bool isHitNow = hitInfo.isHit;
 
     if (isHitNow) {
         if (!wasHit) {
-            if (ea->info.onCollisionEnter) ea->info.onCollisionEnter(hitInfo);
-            if (eb->info.onCollisionEnter) eb->info.onCollisionEnter(hitInfo);
+            if (ea->info.onCollisionEnter) ea->info.onCollisionEnter(hiA);
+            if (eb->info.onCollisionEnter) eb->info.onCollisionEnter(hiB);
         }
-        if (ea->info.onCollisionStay) ea->info.onCollisionStay(hitInfo);
-        if (eb->info.onCollisionStay) eb->info.onCollisionStay(hitInfo);
+        if (ea->info.onCollisionStay) ea->info.onCollisionStay(hiA);
+        if (eb->info.onCollisionStay) eb->info.onCollisionStay(hiB);
     } else {
         if (wasHit) {
-            if (ea->info.onCollisionExit) ea->info.onCollisionExit(hitInfo);
-            if (eb->info.onCollisionExit) eb->info.onCollisionExit(hitInfo);
+            if (ea->info.onCollisionExit) ea->info.onCollisionExit(hiA);
+            if (eb->info.onCollisionExit) eb->info.onCollisionExit(hiB);
         }
     }
 }
 
-void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo &hitInfo, bool wasHit) {
+void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, bool wasHit) {
     const auto *ea = Find3D(a);
     const auto *eb = Find3D(b);
     if (!ea || !eb) return;
+
+    HitInfo3D hiA = hitInfo;
+    hiA.selfObject = ea->info.ownerObject;
+    hiA.otherObject = eb->info.ownerObject;
+
+    HitInfo3D hiB = hitInfo;
+    hiB.selfObject = eb->info.ownerObject;
+    hiB.otherObject = ea->info.ownerObject;
 
     const bool isHitNow = hitInfo.isHit;
 
     if (isHitNow) {
         if (!wasHit) {
-            if (ea->info.onCollisionEnter) ea->info.onCollisionEnter(hitInfo);
-            if (eb->info.onCollisionEnter) eb->info.onCollisionEnter(hitInfo);
+            if (ea->info.onCollisionEnter) ea->info.onCollisionEnter(hiA);
+            if (eb->info.onCollisionEnter) eb->info.onCollisionEnter(hiB);
         }
-        if (ea->info.onCollisionStay) ea->info.onCollisionStay(hitInfo);
-        if (eb->info.onCollisionStay) eb->info.onCollisionStay(hitInfo);
+        if (ea->info.onCollisionStay) ea->info.onCollisionStay(hiA);
+        if (eb->info.onCollisionStay) eb->info.onCollisionStay(hiB);
     } else {
         if (wasHit) {
-            if (ea->info.onCollisionExit) ea->info.onCollisionExit(hitInfo);
-            if (eb->info.onCollisionExit) eb->info.onCollisionExit(hitInfo);
+            if (ea->info.onCollisionExit) ea->info.onCollisionExit(hiA);
+            if (eb->info.onCollisionExit) eb->info.onCollisionExit(hiB);
         }
     }
 }
@@ -245,7 +291,7 @@ void Collider::Update2D() {
                 continue;
             }
 
-            const HitInfo hi = ComputeHit2D(ai.info.shape, bi.info.shape);
+            const HitInfo2D hi = ComputeHit2D(ai.info.shape, bi.info.shape);
             const std::uint64_t key = MakePairKey(ai.id, bi.id);
 
             const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
@@ -277,7 +323,7 @@ void Collider::Update3D() {
                 continue;
             }
 
-            const HitInfo hi = ComputeHit3D(ai.info.shape, bi.info.shape);
+            const HitInfo3D hi = ComputeHit3D(ai.info.shape, bi.info.shape);
             const std::uint64_t key = MakePairKey(ai.id, bi.id);
 
             const bool wasHit = std::binary_search(prevPairs3D_.begin(), prevPairs3D_.end(), key);

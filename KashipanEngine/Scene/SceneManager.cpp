@@ -4,14 +4,31 @@
 namespace KashipanEngine {
 
 bool SceneManager::ChangeScene(const std::string &sceneName) {
-    auto itF = factoriesByName_.find(sceneName);
-    if (itF == factoriesByName_.end()) {
+    if (factoriesByName_.find(sceneName) == factoriesByName_.end()) {
         return false;
     }
 
-    currentSceneLegacy_ = nullptr;
+    pendingSceneName_ = sceneName;
+    hasPendingSceneChange_ = true;
+    return true;
+}
+
+void SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
+    if (!hasPendingSceneChange_) {
+        return;
+    }
+
+    hasPendingSceneChange_ = false;
+
+    auto itF = factoriesByName_.find(pendingSceneName_);
+    if (itF == factoriesByName_.end()) {
+        pendingSceneName_.clear();
+        return;
+    }
+
+    currentScene_.reset();
     currentScene_ = itF->second(this);
-    return (currentScene_ != nullptr);
+    pendingSceneName_.clear();
 }
 
 } // namespace KashipanEngine

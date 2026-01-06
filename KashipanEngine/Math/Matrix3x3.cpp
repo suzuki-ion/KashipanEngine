@@ -2,8 +2,6 @@
 #include "Math/Vector2.h"
 #include "Utilities/MathUtils.h"
 
-namespace KashipanEngine {
-
 float Matrix3x3::Matrix2x2::Determinant() const noexcept {
     return m[0][0] * m[1][1] - m[0][1] * m[1][0];
 }
@@ -102,47 +100,45 @@ constexpr Matrix3x3 Matrix3x3::operator*(const Matrix3x3 &matrix) const noexcept
 }
 
 const Matrix3x3 Matrix3x3::Identity() noexcept {
-    return MathUtils::Matrix3x3Identity();
+    return KashipanEngine::MathUtils::Matrix3x3Identity();
 }
 
 const Matrix3x3 Matrix3x3::Transpose() const noexcept {
-    return MathUtils::Matrix3x3Transpose(*this);
+    return KashipanEngine::MathUtils::Matrix3x3Transpose(*this);
 }
 
 const float Matrix3x3::Determinant() const noexcept {
-    return MathUtils::Matrix3x3Determinant(*this);
+    return KashipanEngine::MathUtils::Matrix3x3Determinant(*this);
 }
 
 Matrix3x3 Matrix3x3::Inverse() const {
-    return MathUtils::Matrix3x3Inverse(*this);
+    return KashipanEngine::MathUtils::Matrix3x3Inverse(*this);
 }
 
 void Matrix3x3::MakeIdentity() noexcept {
-    *this = MathUtils::Matrix3x3Identity();
+    *this = KashipanEngine::MathUtils::Matrix3x3Identity();
 }
 
 void Matrix3x3::MakeTranspose() noexcept {
-    *this = MathUtils::Matrix3x3Transpose(*this);
+    *this = KashipanEngine::MathUtils::Matrix3x3Transpose(*this);
 }
 
 void Matrix3x3::MakeInverse() noexcept {
-    *this = MathUtils::Matrix3x3Inverse(*this);
+    *this = KashipanEngine::MathUtils::Matrix3x3Inverse(*this);
 }
 
 void Matrix3x3::MakeTranslate(const Vector2 &translate) noexcept {
-    *this = MathUtils::Matrix3x3MakeTranslate(translate);
+    *this = KashipanEngine::MathUtils::Matrix3x3MakeTranslate(translate);
 }
 
 void Matrix3x3::MakeScale(const Vector2 &scale) noexcept {
-    *this = MathUtils::Matrix3x3MakeScale(scale);
+    *this = KashipanEngine::MathUtils::Matrix3x3MakeScale(scale);
 }
 
 void Matrix3x3::MakeRotate(float radian) noexcept {
-    *this = MathUtils::Matrix3x3MakeRotate(radian);
+    *this = KashipanEngine::MathUtils::Matrix3x3MakeRotate(radian);
 }
 
 void Matrix3x3::MakeAffine(const Vector2 &scale, float radian, const Vector2 &translate) noexcept {
-    *this = MathUtils::Matrix3x3MakeAffine(scale, radian, translate);
+    *this = KashipanEngine::MathUtils::Matrix3x3MakeAffine(scale, radian, translate);
 }
-
-} // namespace KashipanEngine

@@ -1,10 +1,10 @@
 #pragma once
 #include <vector>
 
-namespace KashipanEngine {
-
 struct Vector3;
 struct Matrix4x4;
+
+namespace KashipanEngine {
 
 namespace MathUtils {
 

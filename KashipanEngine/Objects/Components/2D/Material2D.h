@@ -14,16 +14,16 @@ namespace KashipanEngine {
 /// @brief 2Dマテリアルコンポーネント
 class Material2D : public IObjectComponent2D {
 public:
+    struct InstanceData {
+        Vector4 color;
+        Matrix4x4 uvTransform;
+    };
+
     struct UVTransform {
         Vector3 translate{ 0.0f, 0.0f, 0.0f };
         Vector3 rotate{ 0.0f, 0.0f, 0.0f };
         Vector3 scale{ 1.0f, 1.0f, 1.0f };
     };
-
-    static const std::string &GetStaticComponentType() {
-        static const std::string type = "Material2D";
-        return type;
-    }
 
     Material2D(const Vector4 &color = Vector4{ 1.0f, 1.0f, 1.0f, 1.0f },
         TextureManager::TextureHandle texture = TextureManager::kInvalidHandle,
@@ -66,12 +66,7 @@ public:
     std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
         if (!instanceMap) return false;
 
-        struct InstanceMaterialLocal {
-            Vector4 color;
-            Matrix4x4 uvTransform;
-        };
-
-        auto *arr = static_cast<InstanceMaterialLocal *>(instanceMap);
+        auto *arr = static_cast<InstanceData *>(instanceMap);
         arr[instanceIndex].color = color_;
         arr[instanceIndex].uvTransform = GetUVTransformMatrix();
         return true;
@@ -137,11 +132,6 @@ public:
 #endif
 
 private:
-    struct InstanceData {
-        Vector4 color;
-        Matrix4x4 uvTransform;
-    };
-
     Vector4 color_{ 1.0f, 1.0f, 1.0f, 1.0f };
     UVTransform uvTransform_{};
 

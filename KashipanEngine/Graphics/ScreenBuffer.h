@@ -27,8 +27,7 @@ public:
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
 
     /// @brief ScreenBuffer 生成
-    static ScreenBuffer *Create(Window *targetWindow, std::uint32_t width, std::uint32_t height,
-        RenderDimension dimension,
+    static ScreenBuffer *Create(std::uint32_t width, std::uint32_t height,
         DXGI_FORMAT colorFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
         DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 
@@ -108,10 +107,8 @@ private:
     void AdvanceFrameBufferIndex() noexcept { writeIndex_ = (writeIndex_ + 1) % kBufferCount_; }
 
     /// @brief リソース初期化
-    bool Initialize(Window *targetWindow, std::uint32_t width, std::uint32_t height,
-        RenderDimension dimension,
-        DXGI_FORMAT colorFormat,
-        DXGI_FORMAT depthFormat);
+    bool Initialize(std::uint32_t width, std::uint32_t height,
+        DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat);
 
     /// @brief 破棄
     void Destroy();
@@ -121,9 +118,6 @@ private:
 
     /// @brief コマンド記録終了
     bool EndRecord(bool discard = false);
-
-    Window *targetWindow_ = nullptr;
-    RenderDimension dimension_ = RenderDimension::D2;
 
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;

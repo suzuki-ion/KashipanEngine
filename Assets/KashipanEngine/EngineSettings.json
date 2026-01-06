@@ -20,7 +20,7 @@
 		"maxWindows": 64
 	},
 	"rendering": {
-		"defaultClearColor": [ 0.25, 0.5, 1.0, 0.0 ],
+		"defaultClearColor": [ 0.0, 0.0, 0.0, 0.0 ],
 		"defaultEnableVSync": true,
 		"defaultMaxFPS": 60,
 		"pipelineSettingsPath": "Assets/KashipanEngine/PipelineSettings.json",

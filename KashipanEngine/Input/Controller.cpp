@@ -244,21 +244,21 @@ bool Controller::WasConnected(int index) const {
     return (index >= 0 && index < static_cast<int>(prevConnected_.size())) ? prevConnected_[static_cast<size_t>(index)] : false;
 }
 
-bool Controller::IsButtonDown(int button, int index) const {
+bool Controller::IsButtonDown(ControllerButton button, int index) const {
     if (!IsConnected(index)) return false;
-    return (current_[static_cast<size_t>(index)].buttons & static_cast<std::uint16_t>(button)) != 0;
+    return (current_[static_cast<size_t>(index)].buttons & ToMask(button)) != 0;
 }
 
-bool Controller::WasButtonDown(int button, int index) const {
+bool Controller::WasButtonDown(ControllerButton button, int index) const {
     if (!(index >= 0 && index < static_cast<int>(previous_.size()))) return false;
-    return (previous_[static_cast<size_t>(index)].buttons & static_cast<std::uint16_t>(button)) != 0;
+    return (previous_[static_cast<size_t>(index)].buttons & ToMask(button)) != 0;
 }
 
-bool Controller::IsButtonTrigger(int button, int index) const {
+bool Controller::IsButtonTrigger(ControllerButton button, int index) const {
     return IsButtonDown(button, index) && !WasButtonDown(button, index);
 }
 
-bool Controller::IsButtonRelease(int button, int index) const {
+bool Controller::IsButtonRelease(ControllerButton button, int index) const {
     return !IsButtonDown(button, index) && WasButtonDown(button, index);
 }
 

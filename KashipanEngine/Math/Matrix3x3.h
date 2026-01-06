@@ -1,7 +1,5 @@
 #pragma once
 
-namespace KashipanEngine {
-
 struct Vector2;
 
 struct Matrix3x3 final {
@@ -57,5 +55,3 @@ struct Matrix3x3 final {
 
     float m[3][3];
 };
-
-} // namespace KashipanEngine

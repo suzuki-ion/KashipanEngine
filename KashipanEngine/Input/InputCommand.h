@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 
+#include "Input/ControllerButton.h"
 #include "Input/Key.h"
 #include "Utilities/Passkeys.h"
 
@@ -46,21 +47,20 @@ public:
 
     struct KeyboardKey { Key value = Key::Unknown; };
     struct MouseButton { int value = 0; };
-    struct ControllerButton { int value = 0; };
 
     struct ReturnInfo {
     private:
         friend class InputCommand;
 
-        bool triggered_ = false;
-        float value_ = 0.0f;
+        bool triggered = false;
+        float value = 0.0f;
 
         ReturnInfo(bool triggered, float value)
-            : triggered_(triggered), value_(value) {}
+            : triggered(triggered), value(value) {}
 
     public:
-        bool Triggered() const noexcept { return triggered_; }
-        float Value() const noexcept { return value_; }
+        bool Triggered() const noexcept { return triggered; }
+        float Value() const noexcept { return value; }
     };
 
     InputCommand() = delete;
@@ -73,13 +73,15 @@ public:
     /// @param action コマンド名
     /// @param key キー（KashipanEngine::Key）
     /// @param state 入力状態（押下、トリガー、リリース）
-    void RegisterCommand(const std::string& action, KeyboardKey key, InputState state);
+    /// @param invertValue 評価値(value)を反転させるかどうか
+    void RegisterCommand(const std::string& action, KeyboardKey key, InputState state, bool invertValue = false);
 
     /// @brief コマンドを登録する（マウスボタン）
     /// @param action コマンド名
     /// @param button マウスボタン番号（0-7）
     /// @param state 入力状態（押下、トリガー、リリース）
-    void RegisterCommand(const std::string& action, MouseButton button, InputState state);
+    /// @param invertValue 評価値(value)を反転させるかどうか
+    void RegisterCommand(const std::string& action, MouseButton button, InputState state, bool invertValue = false);
 
     /// @brief コマンドを登録する（マウス軸）
     /// @details `axis` によって座標/移動量/ホイール等を登録できる。
@@ -88,14 +90,16 @@ public:
     /// @param axis 取得するマウス軸（X/Y/DeltaX/DeltaY/Wheel/DeltaWheel）
     /// @param hwnd クライアント座標系で扱う場合の HWND（Screen 座標系の場合は nullptr）
     /// @param threshold 軸入力の閾値（絶対値が閾値を超えたら triggered=true）
-    void RegisterCommand(const std::string& action, MouseAxis axis, void* hwnd = nullptr, float threshold = 0.0f);
+    /// @param invertValue 評価値(value)を反転させるかどうか
+    void RegisterCommand(const std::string& action, MouseAxis axis, void* hwnd = nullptr, float threshold = 0.0f, bool invertValue = false);
 
     /// @brief コマンドを登録する（コントローラーボタン）
     /// @param action コマンド名
-    /// @param button ボタンビット（XINPUT_GAMEPAD_*）
+    /// @param button ボタン
     /// @param state 入力状態（押下、トリガー、リリース）
     /// @param controllerIndex コントローラーインデックス（0-3）
-    void RegisterCommand(const std::string& action, ControllerButton button, InputState state, int controllerIndex = 0);
+    /// @param invertValue 評価値(value)を反転させるかどうか
+    void RegisterCommand(const std::string& action, ControllerButton button, InputState state, int controllerIndex = 0, bool invertValue = false);
 
     /// @brief コマンドを登録する（コントローラーアナログ）
     /// @details トリガーは 0.0f～1.0f、スティックは -1.0f～1.0f に正規化して返す。
@@ -104,7 +108,8 @@ public:
     /// @param state 入力状態（Down/Trigger/Release）
     /// @param controllerIndex コントローラーインデックス（0-3）
     /// @param threshold アナログ入力の閾値（絶対値が閾値を超えたら Down/Trigger 判定を true）
-    void RegisterCommand(const std::string& action, ControllerAnalog analog, InputState state, int controllerIndex = 0, float threshold = 0.0f);
+    /// @param invertValue 評価値(value)を反転させるかどうか
+    void RegisterCommand(const std::string& action, ControllerAnalog analog, InputState state, int controllerIndex = 0, float threshold = 0.0f, bool invertValue = false);
 
     /// @brief コマンドを登録する（コントローラーアナログ差分）
     /// @details current - previous の差分を -1.0f～1.0f 相当に正規化して返す。
@@ -112,7 +117,8 @@ public:
     /// @param analog 取得するアナログ入力種別（トリガー/スティック）
     /// @param controllerIndex コントローラーインデックス（0-3）
     /// @param threshold 差分入力の閾値（絶対値が閾値を超えたら triggered=true）
-    void RegisterCommand(const std::string& action, ControllerAnalog analog, int controllerIndex = 0, float threshold = 0.0f);
+    /// @param invertValue 評価値(value)を反転させるかどうか
+    void RegisterCommand(const std::string& action, ControllerAnalog analog, int controllerIndex = 0, float threshold = 0.0f, bool invertValue = false);
 
     /// @brief コマンドを評価する
     /// @param action コマンド名
@@ -136,6 +142,8 @@ private:
         Key key = Key::Unknown;    // keyboard only
         int controllerIndex = 0;   // コントローラーインデックス（コントローラー用のみ）
         float threshold = 0.0f;    // アナログ入力の閾値（アナログ用のみ）
+        bool invertValue = false;  // 評価値(value)を反転させるかどうか
+        ControllerButton controllerButton = ControllerButton::A;
 
         // マウス軸用パラメータ
         MouseAxis mouseAxis = MouseAxis::X;

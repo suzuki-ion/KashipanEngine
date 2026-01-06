@@ -42,14 +42,6 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
     virtual std::optional<bool> Update() { return std::nullopt; }
 
-    /// @brief 描画処理（描画パス生成前に呼ばれる想定）
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
-    virtual std::optional<bool> Render() { return std::nullopt; }
-
-    /// @brief フレーム終了時の更新（全体のEndFrameで呼ばれる想定）
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
-    virtual std::optional<bool> EndFrameUpdate() { return std::nullopt; }
-
 #if defined(USE_IMGUI)
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     virtual void ShowImGui() = 0;
@@ -58,14 +50,6 @@ public:
     /// @brief Updateの処理優先順位（小さいほど先に処理される）
     int GetUpdatePriority() const { return updatePriority_; }
     void SetUpdatePriority(int priority) { updatePriority_ = priority; }
-
-    /// @brief Renderの処理優先順位（小さいほど先に処理される）
-    int GetRenderPriority() const { return renderPriority_; }
-    void SetRenderPriority(int priority) { renderPriority_ = priority; }
-
-    /// @brief EndFrameUpdateの処理優先順位（小さいほど先に処理される）
-    int GetEndFrameUpdatePriority() const { return endFrameUpdatePriority_; }
-    void SetEndFrameUpdatePriority(int priority) { endFrameUpdatePriority_ = priority; }
 
     /// @brief シェーダー変数へのバインド処理 
     /// @param binder シェーダー変数バインダー
@@ -84,16 +68,6 @@ public:
         (void)instanceCount;
         return std::nullopt;
     }
-
-    /// @brief インスタンシング描画用インスタンスマップ取得（バッチ単位で 1 回）
-    /// @details 実装したコンポーネントは、内部で保持しているインスタンシング用バッファを Map し、
-    ///          `SubmitInstance` に渡される書き込み先ポインタを返す。
-    /// @return 取得したマップポインタ（未対応の場合は nullptr）
-    virtual void *AcquireInstanceMap() { return nullptr; }
-
-    /// @brief インスタンシング描画用インスタンスマップ解放（バッチ単位で 1 回）
-    /// @param instanceMap AcquireInstanceMap が返したポインタ
-    virtual void ReleaseInstanceMap(void *instanceMap) { (void)instanceMap; }
 
     /// @brief インスタンシング描画時のインスタンスデータ送信（インスタンス単位）
     /// @param instanceMap 送信先のインスタンスマップ
@@ -126,9 +100,8 @@ private:
     /// @brief 1つのオブジェクトに登録可能な同じコンポーネントの最大数
     const size_t kMaxComponentCountPerObject_ = 0xFF;
 
+    /// @brief 更新処理の優先順位
     int updatePriority_ = 1;
-    int renderPriority_ = 1;
-    int endFrameUpdatePriority_ = 1;
 
     /// @brief オーナーオブジェクト
     IObjectContext *ownerObject_ = nullptr;

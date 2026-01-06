@@ -1,6 +1,10 @@
 #pragma once
 #include <string>
 #include <span>
+#include <vector>
+#include <typeindex>
+#include <type_traits>
+
 #include "Objects/Object2DBase.h"
 #include "Objects/Object3DBase.h"
 #include "Utilities/Passkeys.h"
@@ -25,18 +29,63 @@ public:
     Object2DContext(Object2DContext &&) = delete;
     Object2DContext &operator=(Object2DContext &&) = delete;
 
+    Object2DBase *GetOwner() const { return owner_; }
+
     /// @brief オブジェクト名の取得
     const std::string &GetName() const override;
+
     /// @brief 頂点データの取得
     template<typename T>
     std::span<T> GetVertexData() const { return owner_->template GetVertexData<T>(); }
+
     /// @brief 頂点データの設定
     template<typename T>
     void SetVertexData(const std::span<T> &data) { owner_->template SetVertexData<T>(data); }
-    /// @brief 他コンポーネントの取得
+
+    /// @brief 名前から一致するコンポーネントを取得
     std::vector<IObjectComponent2D *> GetComponents(const std::string &componentName) const;
+
+    /// @brief 名前から一致する最初のコンポーネントを取得
+    IObjectComponent2D *GetComponent(const std::string &componentName) const;
+
+    /// @brief 名前から一致する最初のコンポーネントを取得（型付き）
+    template<typename T>
+    T *GetComponent(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        auto *base = GetComponent(componentName);
+        return base ? static_cast<T *>(base) : nullptr;
+    }
+
+    /// @brief 型から一致するコンポーネントを取得
+    template<typename T>
+    std::vector<T *> GetComponents() const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        if (!owner_) return {};
+        return owner_->template GetComponents2D<T>();
+    }
+
+    /// @brief 名前から一致するコンポーネントを取得（型付き）
+    template<typename T>
+    std::vector<T *> GetComponents(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        auto baseList = GetComponents(componentName);
+        std::vector<T *> result;
+        result.reserve(baseList.size());
+        for (auto *c : baseList) {
+            result.push_back(static_cast<T *>(c));
+        }
+        return result;
+    }
+
+    /// @brief 型から一致する最初のコンポーネントを取得
+    template<typename T>
+    T *GetComponent() const {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        if (!owner_) return nullptr;
+        return owner_->template GetComponent2D<T>();
+    }
+
     /// @brief コンポーネントの存在チェック
-    /// @return コンポーネントの個数
     size_t HasComponents(const std::string &componentName) const;
 
 private:
@@ -54,18 +103,67 @@ public:
     Object3DContext(Object3DContext &&) = delete;
     Object3DContext &operator=(Object3DContext &&) = delete;
 
+    Object3DBase *GetOwner() const { return owner_; }
+
     /// @brief オブジェクト名の取得
     const std::string &GetName() const override;
+
     /// @brief 頂点データの取得
     template<typename T>
     std::span<T> GetVertexData() const { return owner_->template GetVertexData<T>(); }
+
     /// @brief 頂点データの設定
     template<typename T>
     void SetVertexDataImpl(const std::span<T> &data) { owner_->template SetVertexData<T>(data); }
-    /// @brief 他コンポーネントの取得
+
+    //==================================================
+    // Component getters (similar to Object3DBase)
+    //==================================================
+
+    /// @brief 他コンポーネントの取得（名前）
     std::vector<IObjectComponent3D *> GetComponents(const std::string &componentName) const;
+
+    /// @brief 名前から一致する最初のコンポーネントを取得
+    IObjectComponent3D *GetComponent(const std::string &componentName) const;
+
+    /// @brief 名前から一致する最初のコンポーネントを取得（型付き）
+    template<typename T>
+    T *GetComponent(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        auto *base = GetComponent(componentName);
+        return base ? static_cast<T *>(base) : nullptr;
+    }
+
+    /// @brief 型から一致するコンポーネントを取得
+    template<typename T>
+    std::vector<T *> GetComponents() const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        if (!owner_) return {};
+        return owner_->template GetComponents3D<T>();
+    }
+
+    /// @brief 名前から一致するコンポーネントを取得（型付き）
+    template<typename T>
+    std::vector<T *> GetComponents(const std::string &componentName) const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        auto baseList = GetComponents(componentName);
+        std::vector<T *> result;
+        result.reserve(baseList.size());
+        for (auto *c : baseList) {
+            result.push_back(static_cast<T *>(c));
+        }
+        return result;
+    }
+
+    /// @brief 型から一致する最初のコンポーネントを取得
+    template<typename T>
+    T *GetComponent() const {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        if (!owner_) return nullptr;
+        return owner_->template GetComponent3D<T>();
+    }
+
     /// @brief コンポーネントの存在チェック
-    /// @return コンポーネントの個数
     size_t HasComponents(const std::string &componentName) const;
 
 private:

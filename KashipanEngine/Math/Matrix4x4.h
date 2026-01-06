@@ -1,7 +1,5 @@
 #pragma once
 
-namespace KashipanEngine {
-
 struct Vector3;
 
 struct Matrix4x4 final {
@@ -142,14 +140,14 @@ struct Matrix4x4 final {
     /// @param targetPos 注視点
     /// @param upVector 上方向ベクトル
     void MakeViewMatrix(const Vector3 &eyePos, const Vector3 &targetPos, const Vector3 &upVector) noexcept;
-    
+
     /// @brief 透視投影行列を生成する
     /// @param fovY 画角 Y
     /// @param aspectRatio アスペクト比
     /// @param nearClip 近平面への距離
     /// @param farClip 遠平面への距離
     void MakePerspectiveFovMatrix(const float fovY, const float aspectRatio, const float nearClip, const float farClip) noexcept;
-    
+
     /// @brief 正射影行列を生成する
     /// @param left 左端
     /// @param top 上端
@@ -158,7 +156,7 @@ struct Matrix4x4 final {
     /// @param nearClip 近平面への距離
     /// @param farClip 遠平面への距離
     void MakeOrthographicMatrix(const float left, const float top, const float right, const float bottom, const float nearClip, const float farClip) noexcept;
-    
+
     /// @brief ビューポート行列を生成する
     /// @param left 左端
     /// @param top 上端
@@ -170,5 +168,3 @@ struct Matrix4x4 final {
 
     float m[4][4];
 };
-
-} // namespace KashipanEngine

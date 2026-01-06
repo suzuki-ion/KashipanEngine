@@ -3,10 +3,8 @@
 #include "Vector4.h"
 #include "Utilities/MathUtils.h"
 
-namespace KashipanEngine {
-
 Vector4 Vector4::Lerp(const Vector4 &start, const Vector4 &end, float t) noexcept {
-    return MathUtils::Lerp(start, end, t);
+    return KashipanEngine::MathUtils::Lerp(start, end, t);
 }
 
 Vector4::Vector4(const Vector2 &vector2) noexcept {
@@ -110,5 +108,3 @@ bool Vector4::operator==(const Vector4 &vector) const noexcept {
 bool Vector4::operator!=(const Vector4 &vector) const noexcept {
     return x != vector.x || y != vector.y || z != vector.z || w != vector.w;
 }
-
-} // namespace KashipanEngine

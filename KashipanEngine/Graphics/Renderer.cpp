@@ -288,6 +288,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
         const std::uint32_t instanceCount = 1;
         bool ok = true;
 
+        // Constant buffers (per pass)
         {
             std::vector<void *> cbMappedPtrs;
             cbMappedPtrs.reserve(passInfo->constantBufferRequirements.size());
@@ -295,7 +296,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
             cbMappedBuffers.reserve(passInfo->constantBufferRequirements.size());
 
             for (const auto &req : passInfo->constantBufferRequirements) {
-                ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, 0, req.shaderNameKey, req.byteSize };
+                ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, passInfo->batchKey, req.shaderNameKey, req.byteSize };
                 auto &entry = constantBuffers_[cbKey];
                 if (!entry.buffer || entry.byteSize != req.byteSize) {
                     entry.byteSize = req.byteSize;
@@ -317,7 +318,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
 
             if (ok) {
                 for (const auto &req : passInfo->constantBufferRequirements) {
-                    ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, 0, req.shaderNameKey, req.byteSize };
+                    ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, passInfo->batchKey, req.shaderNameKey, req.byteSize };
                     auto itCB = constantBuffers_.find(cbKey);
                     if (itCB == constantBuffers_.end() || !itCB->second.buffer) {
                         ok = false;
@@ -331,6 +332,43 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
 
         if (ok) {
             ok = passInfo->batchedRenderFunction(shaderVariableBinder, instanceCount);
+        }
+
+        // Instance buffers (per pass, instanceCount = 1)
+        std::vector<void *> mappedPtrs;
+        std::vector<StructuredBufferResource *> mappedBuffers;
+        if (ok && !passInfo->instanceBufferRequirements.empty()) {
+            if (!passInfo->submitInstanceFunction) {
+                ok = false;
+            } else {
+                mappedPtrs.reserve(passInfo->instanceBufferRequirements.size());
+                mappedBuffers.reserve(passInfo->instanceBufferRequirements.size());
+
+                for (const auto &req : passInfo->instanceBufferRequirements) {
+                    InstanceBufferKey ibKey{ targetKey, passInfo->pipelineName, passInfo->batchKey, req.shaderNameKey, req.elementStride };
+                    auto &entry = instanceBuffers_[ibKey];
+                    if (entry.capacity < instanceCount || !entry.buffer) {
+                        entry.capacity = instanceCount;
+                        entry.buffer = std::make_unique<StructuredBufferResource>(req.elementStride, entry.capacity);
+                    }
+
+                    ok = ok && shaderVariableBinder.Bind(req.shaderNameKey, entry.buffer->GetGPUDescriptorHandle());
+                    if (!ok) break;
+
+                    void *p = entry.buffer->Map();
+                    mappedPtrs.push_back(p);
+                    mappedBuffers.push_back(entry.buffer.get());
+                }
+
+                if (ok) {
+                    void *instanceMaps = mappedPtrs.empty() ? nullptr : mappedPtrs.data();
+                    ok = ok && passInfo->submitInstanceFunction(instanceMaps, shaderVariableBinder, 0);
+                }
+
+                for (auto *b : mappedBuffers) {
+                    if (b) b->Unmap();
+                }
+            }
         }
 
         if (!ok) {

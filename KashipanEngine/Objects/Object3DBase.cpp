@@ -145,6 +145,11 @@ std::optional<Object3DBase::RenderPassRegistrationInfo> Object3DBase::GetRenderP
     return it->second.info;
 }
 
+void Object3DBase::SetUniqueBatchKey() {
+    instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
+    renderType_ = RenderType::Standard;
+}
+
 RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName) {
     if (!cachedRenderPass_) {
         RenderPass passInfo(Passkey<Object3DBase>{});
@@ -156,8 +161,8 @@ RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::strin
 
         passInfo.batchKey = instanceBatchKey_;
         passInfo.instanceBufferRequirements = {
-            {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
-            {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
         };
         passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
             return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
@@ -194,8 +199,8 @@ RenderPass Object3DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
 
         passInfo.batchKey = instanceBatchKey_;
         passInfo.instanceBufferRequirements = {
-            {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
-            {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
         };
         passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
             return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
@@ -376,16 +381,12 @@ void Object3DBase::Update() {
 }
 
 void Object3DBase::Render() {
-    std::vector<IObjectComponent*> sorted;
+    /*std::vector<IObjectComponent*> sorted;
     sorted.reserve(components_.size());
     for (auto &c : components_) sorted.push_back(c.get());
     std::stable_sort(sorted.begin(), sorted.end(), [](const IObjectComponent* a, const IObjectComponent* b) {
         return a->GetRenderPriority() < b->GetRenderPriority();
-    });
-
-    for (auto *c : sorted) {
-        c->Render();
-    }
+    });*/
 }
 
 std::vector<Object3DBase::ShaderBindingFailureInfo> Object3DBase::BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder) {

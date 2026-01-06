@@ -29,6 +29,7 @@ class GameEngine final {
 public:
     struct Context {
         SceneManager *sceneManager = nullptr;
+        InputCommand *inputCommand = nullptr;
 
         void SetGameLoopEndCondition(const std::function<bool()> &func) const {
             if (!engine) return;
@@ -78,9 +79,9 @@ private:
     void GameLoopDraw();
 
 #if defined(USE_IMGUI)
-    class RollingAverage_ {
+    class RollingAverage {
     public:
-        explicit RollingAverage_(std::size_t capacity = 60);
+        explicit RollingAverage(std::size_t capacity = 60);
         void SetCapacity(std::size_t capacity);
         void Add(double value);
         double GetAverage() const;
@@ -93,15 +94,15 @@ private:
         double sum_ = 0.0;
     };
 
-    void DrawProfilingImGui_();
+    void DrawProfilingImGui();
 
     float updateMs_ = 0.0f;
     float drawMs_ = 0.0f;
     float fps_ = 0.0f;
     int profilingSampleCount_ = 60;
-    RollingAverage_ avgUpdateMs_{60};
-    RollingAverage_ avgDrawMs_{60};
-    RollingAverage_ avgFps_{60};
+    RollingAverage avgUpdateMs_{60};
+    RollingAverage avgDrawMs_{60};
+    RollingAverage avgFps_{60};
 #endif
 
     Context context_;

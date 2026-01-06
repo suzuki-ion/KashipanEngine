@@ -116,6 +116,9 @@ public:
     /// @brief 指定ハンドルの描画パス登録情報を取得
     std::optional<RenderPassRegistrationInfo> GetRenderPassRegistration(RenderPassRegistrationHandle handle) const;
 
+    /// @brief バッチキーを個別のものに設定（同じパイプラインを使う他オブジェクトとバッチングされなくなる）
+    void SetUniqueBatchKey();
+
     /// @brief コンポーネントの登録（生成）
     /// @tparam T コンポーネントの型（IGameObjectComponent2Dを継承している必要あり）
     /// @tparam Args コンポーネントのコンストラクタ引数の型
@@ -263,15 +266,6 @@ protected:
     /// @param name オブジェクト名
     Object2DBase(const std::string &name);
 
-    // インスタンシング用データ
-    struct InstanceTransform {
-        Matrix4x4 world;
-    };
-    struct InstanceMaterial {
-        Vector4 color;
-        Matrix4x4 uvTransform;
-    };
-
     /// @brief コンストラクタ
     /// @param name オブジェクト名
     /// @param vertexByteSize 1頂点あたりのサイズ（バイト単位）
@@ -383,7 +377,6 @@ private:
     std::string name_ = "GameObject2D";
     std::string passName_ = "GameObject2D";
 
-    // RenderPass cache (static parts are initialized once, variable parts updated per call)
     mutable std::optional<RenderPass> cachedRenderPass_;
 
     UINT vertexCount_ = 0;

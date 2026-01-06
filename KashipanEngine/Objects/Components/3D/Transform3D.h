@@ -5,21 +5,22 @@
 #include <memory>
 #include <optional>
 #include <cstring>
+#include <cstdint>
 
 namespace KashipanEngine {
 
 /// @brief 3Dトランスフォームコンポーネント
 class Transform3D : public IObjectComponent3D {
 public:
-    static const std::string &GetStaticComponentType() {
-        static const std::string type = "Transform3D";
-        return type;
-    }
+    struct InstanceData {
+        Matrix4x4 world;
+    };
 
     Transform3D() : IObjectComponent3D("Transform3D", 1) {
-        // Instancing uses per-draw StructuredBuffer; keep no per-object CBV.
         isWorldMatrixCalculated_ = false;
         worldMatrix_ = Matrix4x4::Identity();
+        worldMatrixVersion_ = 0;
+        cachedParentVersion_ = 0;
     }
     ~Transform3D() override = default;
 
@@ -31,6 +32,8 @@ public:
         ptr->scale_ = scale_;
         ptr->isWorldMatrixCalculated_ = false;
         ptr->worldMatrix_ = Matrix4x4::Identity();
+        ptr->worldMatrixVersion_ = 0;
+        ptr->cachedParentVersion_ = 0;
         return ptr;
     }
 
@@ -39,7 +42,7 @@ public:
         return std::nullopt;
     }
 
-    std::optional<bool> BindInstancingResources(ShaderVariableBinder* binder, std::uint32_t instanceCount) override {
+    std::optional<bool> BindInstancingResources(ShaderVariableBinder *binder, std::uint32_t instanceCount) override {
         (void)binder;
         (void)instanceCount;
         return std::nullopt;
@@ -48,7 +51,7 @@ public:
     std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
         if (!instanceMap) return false;
         struct InstanceTransformLocal { Matrix4x4 world; };
-        auto *arr = static_cast<InstanceTransformLocal*>(instanceMap);
+        auto *arr = static_cast<InstanceTransformLocal *>(instanceMap);
         arr[instanceIndex].world = GetWorldMatrix();
         return true;
     }
@@ -64,7 +67,9 @@ public:
             if (p == this) return false;
         }
         parentTransform_ = parent;
+        // 親が変わったのでキャッシュは無効
         isWorldMatrixCalculated_ = false;
+        cachedParentVersion_ = 0;
         return true;
     }
 
@@ -93,21 +98,39 @@ public:
     const Vector3 &GetScale() const { return scale_; }
 
     const Matrix4x4 &GetWorldMatrix() {
-        if (!isWorldMatrixCalculated_) {
+        if (IsWorldMatrixDirty()) {
             Matrix4x4 local = Matrix4x4::Identity();
             local.MakeAffine(scale_, rotate_, translate_);
 
             if (parentTransform_) {
-                worldMatrix_ = local * parentTransform_->GetWorldMatrix();
+                // 親のワールド行列を取得（必要なら親が再計算される）
+                const Matrix4x4 &pw = parentTransform_->GetWorldMatrix();
+                worldMatrix_ = local * pw;
+                // 親のバージョンをキャッシュ
+                cachedParentVersion_ = parentTransform_->GetWorldMatrixVersion();
             } else {
                 worldMatrix_ = local;
+                cachedParentVersion_ = 0;
             }
             isWorldMatrixCalculated_ = true;
+            // 自身のワールド行列が更新されたことを示すバージョンを進める
+            ++worldMatrixVersion_;
         }
         return worldMatrix_;
     }
-    bool IsWorldMatrixCalculated() const { return isWorldMatrixCalculated_; }
-    bool IsWorldMatrixDirty() const { return !isWorldMatrixCalculated_; }
+
+    // ワールド行列の現在バージョンを取得（外からは const にして参照可能）
+    std::uint64_t GetWorldMatrixVersion() const { return worldMatrixVersion_; }
+
+    bool IsWorldMatrixCalculated() const {
+        // 自分のキャッシュがあること、かつ親がいる場合は親が計算済みで
+        // 親のバージョンが子がキャッシュしたものと一致していることを要求する
+        if (!isWorldMatrixCalculated_) return false;
+        if (!parentTransform_) return true;
+        if (!parentTransform_->IsWorldMatrixCalculated()) return false;
+        return (cachedParentVersion_ == parentTransform_->GetWorldMatrixVersion());
+    }
+    bool IsWorldMatrixDirty() const { return !IsWorldMatrixCalculated(); }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
@@ -128,13 +151,18 @@ public:
 #endif
 
 private:
-    Vector3 translate_{0.0f, 0.0f, 0.0f};
-    Vector3 rotate_{0.0f, 0.0f, 0.0f};
-    Vector3 scale_{1.0f, 1.0f, 1.0f};
+    Vector3 translate_{ 0.0f, 0.0f, 0.0f };
+    Vector3 rotate_{ 0.0f, 0.0f, 0.0f };
+    Vector3 scale_{ 1.0f, 1.0f, 1.0f };
 
     Transform3D *parentTransform_ = nullptr;
     Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
     bool isWorldMatrixCalculated_ = false;
+
+    // ワールド行列のバージョン（再計算ごとに++）
+    std::uint64_t worldMatrixVersion_ = 0;
+    // この Transform が最後に計算したときの親のバージョン
+    std::uint64_t cachedParentVersion_ = 0;
 };
 
 } // namespace KashipanEngine

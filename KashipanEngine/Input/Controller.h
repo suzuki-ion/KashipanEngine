@@ -4,6 +4,7 @@
 #include <span>
 #include <vector>
 
+#include "Input/ControllerButton.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -50,13 +51,13 @@ public:
     bool WasConnected(int index) const;
 
     /// @brief 指定ボタンが押されているかを取得
-    bool IsButtonDown(int button, int index) const;
+    bool IsButtonDown(ControllerButton button, int index) const;
     /// @brief 指定ボタンが押された瞬間か（トリガー）を取得
-    bool IsButtonTrigger(int button, int index) const;
+    bool IsButtonTrigger(ControllerButton button, int index) const;
     /// @brief 指定ボタンが離された瞬間か（リリース）を取得
-    bool IsButtonRelease(int button, int index) const;
+    bool IsButtonRelease(ControllerButton button, int index) const;
     /// @brief 前フレームで指定ボタンが押されていたかを取得
-    bool WasButtonDown(int button, int index) const;
+    bool WasButtonDown(ControllerButton button, int index) const;
 
     /// @brief 左トリガーの押し込み量（0-255）を取得
     int GetLeftTrigger(int index) const;

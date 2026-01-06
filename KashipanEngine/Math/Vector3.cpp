@@ -6,26 +6,24 @@
 #include <cassert>
 #include <algorithm>
 
-namespace KashipanEngine {
-
 Vector3 Vector3::Lerp(const Vector3 &start, const Vector3 &end, float t) noexcept {
-    return MathUtils::Lerp(start, end, t);
+    return KashipanEngine::MathUtils::Lerp(start, end, t);
 }
 
 Vector3 Vector3::Slerp(const Vector3 &start, const Vector3 &end, float t) noexcept {
-    return MathUtils::Slerp(start, end, t);
+    return KashipanEngine::MathUtils::Slerp(start, end, t);
 }
 
 Vector3 Vector3::Bezier(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, float t) noexcept {
-    return MathUtils::Bezier(p0, p1, p2, t);
+    return KashipanEngine::MathUtils::Bezier(p0, p1, p2, t);
 }
 
 Vector3 Vector3::CatmullRomInterpolation(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float t) noexcept {
-    return MathUtils::CatmullRomInterpolation(p0, p1, p2, p3, t);
+    return KashipanEngine::MathUtils::CatmullRomInterpolation(p0, p1, p2, p3, t);
 }
 
 Vector3 Vector3::CatmullRomPosition(const std::vector<Vector3> &points, float t, bool isLoop) {
-    return MathUtils::CatmullRomPosition(points, t, isLoop);
+    return KashipanEngine::MathUtils::CatmullRomPosition(points, t, isLoop);
 }
 
 Vector3::Vector3(const Vector2 &vector) noexcept {
@@ -123,47 +121,47 @@ bool Vector3::operator!=(const Vector3 &vector) const noexcept {
 }
 
 float Vector3::Dot(const Vector3 &vector) const noexcept {
-    return MathUtils::Dot(*this, vector);
+    return KashipanEngine::MathUtils::Dot(*this, vector);
 }
 
 Vector3 Vector3::Cross(const Vector3 &vector) const noexcept {
-    return MathUtils::Cross(*this, vector);
+    return KashipanEngine::MathUtils::Cross(*this, vector);
 }
 
 float Vector3::Length() const noexcept {
-    return MathUtils::Length(*this);
+    return KashipanEngine::MathUtils::Length(*this);
 }
 
 constexpr float Vector3::LengthSquared() const noexcept {
-    return MathUtils::LengthSquared(*this);
+    return KashipanEngine::MathUtils::LengthSquared(*this);
 }
 
 Vector3 Vector3::Normalize() const {
-    return MathUtils::Normalize(*this);
+    return KashipanEngine::MathUtils::Normalize(*this);
 }
 
 Vector3 Vector3::Projection(const Vector3 &vector) const noexcept {
-    return MathUtils::Projection(*this, vector);
+    return KashipanEngine::MathUtils::Projection(*this, vector);
 }
 
 Vector3 Vector3::Perpendicular() const noexcept {
-    return MathUtils::Perpendicular(*this);
+    return KashipanEngine::MathUtils::Perpendicular(*this);
 }
 
 Vector3 Vector3::Rejection(const Vector3 &vector) const noexcept {
-    return MathUtils::Rejection(*this, vector);
+    return KashipanEngine::MathUtils::Rejection(*this, vector);
 }
 
 Vector3 Vector3::Refrection(const Vector3 &normal) const noexcept {
-    return MathUtils::Reflection(*this, normal);
+    return KashipanEngine::MathUtils::Reflection(*this, normal);
 }
 
 float Vector3::Distance(const Vector3 &vector) const {
-    return MathUtils::Distance(*this, vector);
+    return KashipanEngine::MathUtils::Distance(*this, vector);
 }
 
 Vector3 Vector3::Transform(const Matrix4x4 &mat) const noexcept {
-    return MathUtils::Transform(*this, mat);
+    return KashipanEngine::MathUtils::Transform(*this, mat);
 }
 
 const Vector3 operator*(const Matrix4x4 &mat, const Vector3 &vector) noexcept {
@@ -181,5 +179,3 @@ const Vector3 operator*(const Vector3 &vector, const Matrix4x4 &mat) noexcept {
         vector.x * mat.m[0][2] + vector.y * mat.m[1][2] + vector.z * mat.m[2][2] + mat.m[3][2]
     );
 }
-
-} // namespace KashipanEngine

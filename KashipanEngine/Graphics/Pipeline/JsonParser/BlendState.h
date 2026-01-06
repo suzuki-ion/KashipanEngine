@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <d3dx12.h>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/EnumMaps.h"
@@ -16,7 +17,7 @@ inline D3D12_BLEND_DESC ParseBlendState(const Json &json) {
     using namespace KashipanEngine::Pipeline::EnumMaps;
     using namespace KashipanEngine::Pipeline::DefineMaps;
 
-    D3D12_BLEND_DESC blendDesc{};
+    D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
     if (json.contains("AlphaToCoverageEnable")) {
         blendDesc.AlphaToCoverageEnable = json["AlphaToCoverageEnable"].get<bool>() ? TRUE : FALSE;

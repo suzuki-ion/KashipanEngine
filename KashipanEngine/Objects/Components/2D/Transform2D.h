@@ -5,21 +5,22 @@
 #include <memory>
 #include <optional>
 #include <cstring>
+#include <cstdint>
 
 namespace KashipanEngine {
 
 /// @brief 2Dトランスフォームコンポーネント
 class Transform2D : public IObjectComponent2D {
 public:
-    static const std::string &GetStaticComponentType() {
-        static const std::string type = "Transform2D";
-        return type;
-    }
+    struct InstanceData {
+        Matrix4x4 world;
+    };
 
     Transform2D() : IObjectComponent2D("Transform2D", 1) {
-        // Instancing uses per-draw StructuredBuffer; keep no per-object CBV.
         isWorldMatrixCalculated_ = false;
         worldMatrix_ = Matrix4x4::Identity();
+        worldMatrixVersion_ = 0;
+        cachedParentVersion_ = 0;
     }
     ~Transform2D() override = default;
 
@@ -31,6 +32,8 @@ public:
         ptr->scale_ = scale_;
         ptr->isWorldMatrixCalculated_ = false;
         ptr->worldMatrix_ = Matrix4x4::Identity();
+        ptr->worldMatrixVersion_ = 0;
+        ptr->cachedParentVersion_ = 0;
         return ptr;
     }
 
@@ -39,7 +42,7 @@ public:
         return std::nullopt;
     }
 
-    std::optional<bool> BindInstancingResources(ShaderVariableBinder* binder, std::uint32_t instanceCount) override {
+    std::optional<bool> BindInstancingResources(ShaderVariableBinder *binder, std::uint32_t instanceCount) override {
         (void)binder;
         (void)instanceCount;
         return std::nullopt;
@@ -48,7 +51,7 @@ public:
     std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
         if (!instanceMap) return false;
         struct InstanceTransformLocal { Matrix4x4 world; };
-        auto *arr = static_cast<InstanceTransformLocal*>(instanceMap);
+        auto *arr = static_cast<InstanceTransformLocal *>(instanceMap);
         arr[instanceIndex].world = GetWorldMatrix();
         return true;
     }
@@ -65,6 +68,7 @@ public:
         }
         parentTransform_ = parent;
         isWorldMatrixCalculated_ = false;
+        cachedParentVersion_ = 0;
         return true;
     }
 
@@ -106,25 +110,34 @@ public:
     /// @return スケーリングベクトル
     const Vector3 &GetScale() const { return scale_; }
 
-    /// @brief ワールド行列の取得
-    /// @return ワールド行列
     const Matrix4x4 &GetWorldMatrix() {
-        if (!isWorldMatrixCalculated_) {
+        if (IsWorldMatrixDirty()) {
             Matrix4x4 local = Matrix4x4::Identity();
             local.MakeAffine(scale_, rotate_, translate_);
 
             if (parentTransform_) {
-                worldMatrix_ = local * parentTransform_->GetWorldMatrix();
+                const Matrix4x4 &pw = parentTransform_->GetWorldMatrix();
+                worldMatrix_ = local * pw;
+                cachedParentVersion_ = parentTransform_->GetWorldMatrixVersion();
             } else {
                 worldMatrix_ = local;
+                cachedParentVersion_ = 0;
             }
             isWorldMatrixCalculated_ = true;
+            ++worldMatrixVersion_;
         }
         return worldMatrix_;
     }
 
-    bool IsWorldMatrixCalculated() const { return isWorldMatrixCalculated_; }
-    bool IsWorldMatrixDirty() const { return !isWorldMatrixCalculated_; }
+    std::uint64_t GetWorldMatrixVersion() const { return worldMatrixVersion_; }
+
+    bool IsWorldMatrixCalculated() const {
+        if (!isWorldMatrixCalculated_) return false;
+        if (!parentTransform_) return true;
+        if (!parentTransform_->IsWorldMatrixCalculated()) return false;
+        return (cachedParentVersion_ == parentTransform_->GetWorldMatrixVersion());
+    }
+    bool IsWorldMatrixDirty() const { return !IsWorldMatrixCalculated(); }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
@@ -145,13 +158,16 @@ public:
 #endif
 
 private:
-    Vector3 translate_{0.0f, 0.0f, 0.0f};
-    Vector3 rotate_{0.0f, 0.0f, 0.0f};
-    Vector3 scale_{1.0f, 1.0f, 1.0f};
+    Vector3 translate_{ 0.0f, 0.0f, 0.0f };
+    Vector3 rotate_{ 0.0f, 0.0f, 0.0f };
+    Vector3 scale_{ 1.0f, 1.0f, 1.0f };
 
     Transform2D *parentTransform_ = nullptr;
     Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
     bool isWorldMatrixCalculated_ = false;
+
+    std::uint64_t worldMatrixVersion_ = 0;
+    std::uint64_t cachedParentVersion_ = 0;
 };
 
 } // namespace KashipanEngine

@@ -20,7 +20,15 @@ enum class Key : std::uint16_t {
     Up,
     Down,
 
-    // Modifiers
+    // Modifiers (specific)
+    LeftShift,
+    RightShift,
+    LeftControl,
+    RightControl,
+    LeftAlt,
+    RightAlt,
+
+    // Modifiers (generic)
     Shift,
     Control,
     Alt,

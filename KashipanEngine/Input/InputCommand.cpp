@@ -56,25 +56,27 @@ void InputCommand::Clear() {
     bindings_.clear();
 }
 
-void InputCommand::RegisterCommand(const std::string& action, KeyboardKey key, InputState state) {
+void InputCommand::RegisterCommand(const std::string& action, KeyboardKey key, InputState state, bool invertValue) {
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::Keyboard;
     b.state = state;
     b.key = key.value;
+    b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
 
-void InputCommand::RegisterCommand(const std::string& action, MouseButton button, InputState state) {
+void InputCommand::RegisterCommand(const std::string& action, MouseButton button, InputState state, bool invertValue) {
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::MouseButton;
     b.state = state;
     b.code = button.value;
+    b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
 
-void InputCommand::RegisterCommand(const std::string& action, MouseAxis axis, void* hwnd, float threshold) {
+void InputCommand::RegisterCommand(const std::string& action, MouseAxis axis, void* hwnd, float threshold, bool invertValue) {
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::MouseAxis;
@@ -82,20 +84,22 @@ void InputCommand::RegisterCommand(const std::string& action, MouseAxis axis, vo
     b.mouseSpace = (hwnd != nullptr) ? MouseSpace::Client : MouseSpace::Screen;
     b.hwnd = hwnd;
     b.threshold = threshold;
+    b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
 
-void InputCommand::RegisterCommand(const std::string& action, ControllerButton button, InputState state, int controllerIndex) {
+void InputCommand::RegisterCommand(const std::string& action, ControllerButton button, InputState state, int controllerIndex, bool invertValue) {
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::ControllerButton;
     b.state = state;
-    b.code = button.value;
+    b.controllerButton = button;
     b.controllerIndex = controllerIndex;
+    b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
 
-void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog analog, InputState state, int controllerIndex, float threshold) {
+void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog analog, InputState state, int controllerIndex, float threshold, bool invertValue) {
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::ControllerAnalog;
@@ -103,16 +107,18 @@ void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog a
     b.code = static_cast<int>(analog);
     b.controllerIndex = controllerIndex;
     b.threshold = threshold;
+    b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
 
-void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog analog, int controllerIndex, float threshold) {
+void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog analog, int controllerIndex, float threshold, bool invertValue) {
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::ControllerAnalogDelta;
     b.code = static_cast<int>(analog);
     b.controllerIndex = controllerIndex;
     b.threshold = threshold;
+    b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
 
@@ -125,19 +131,26 @@ InputCommand::ReturnInfo InputCommand::Evaluate(const std::string& action) const
     }
 
     bool anyTriggered = false;
-    float maxValue = 0.0f;
+    float value = 0.0f;
 
     for (const auto& b : it->second) {
         ReturnInfo ri = EvaluateBinding(b);
         anyTriggered = anyTriggered || ri.Triggered();
-        maxValue = std::max(maxValue, ri.Value());
+        if (ri.Triggered()) {
+            value = std::clamp(value + ri.Value(), -1.0f, 1.0f);
+        }
     }
 
-    return MakeReturnInfo(anyTriggered, maxValue);
+    return MakeReturnInfo(anyTriggered, value);
 }
 
 InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
     if (!input_) return MakeReturnInfo(false, 0.0f);
+
+    const auto applyInvertIfNeeded = [&](ReturnInfo ri) {
+        if (!b.invertValue) return ri;
+        return MakeReturnInfo(ri.Triggered(), -ri.Value());
+    };
 
     switch (b.kind) {
     case DeviceKind::Keyboard: {
@@ -146,7 +159,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
         const bool trig = kb.IsTrigger(b.key);
         const bool rel = kb.IsRelease(b.key);
         const bool fired = EvaluateDigital(down, trig, rel, b.state);
-        return MakeReturnInfo(fired, down ? 1.0f : 0.0f);
+        return applyInvertIfNeeded(MakeReturnInfo(fired, down ? 1.0f : 0.0f));
     }
     case DeviceKind::MouseButton: {
         const auto& ms = input_->GetMouse();
@@ -154,7 +167,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
         const bool trig = ms.IsButtonTrigger(b.code);
         const bool rel = ms.IsButtonRelease(b.code);
         const bool fired = EvaluateDigital(down, trig, rel, b.state);
-        return MakeReturnInfo(fired, down ? 1.0f : 0.0f);
+        return applyInvertIfNeeded(MakeReturnInfo(fired, down ? 1.0f : 0.0f));
     }
     case DeviceKind::MouseAxis: {
         const auto& ms = input_->GetMouse();
@@ -187,17 +200,17 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
         }
 
         const bool fired = AxisTriggered(v, b.threshold);
-        return MakeReturnInfo(fired, v);
+        return applyInvertIfNeeded(MakeReturnInfo(fired, v));
     }
     case DeviceKind::ControllerButton: {
         const auto& ct = input_->GetController();
         const int idx = b.controllerIndex;
         if (!ct.IsConnected(idx)) return MakeReturnInfo(false, 0.0f);
-        const bool down = ct.IsButtonDown(b.code, idx);
-        const bool trig = ct.IsButtonTrigger(b.code, idx);
-        const bool rel = ct.IsButtonRelease(b.code, idx);
+        const bool down = ct.IsButtonDown(b.controllerButton, idx);
+        const bool trig = ct.IsButtonTrigger(b.controllerButton, idx);
+        const bool rel = ct.IsButtonRelease(b.controllerButton, idx);
         const bool fired = EvaluateDigital(down, trig, rel, b.state);
-        return MakeReturnInfo(fired, down ? 1.0f : 0.0f);
+        return applyInvertIfNeeded(MakeReturnInfo(fired, down ? 1.0f : 0.0f));
     }
     case DeviceKind::ControllerAnalog: {
         const auto& ct = input_->GetController();
@@ -232,7 +245,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
             break;
         }
 
-        return MakeReturnInfo(fired, v);
+        return applyInvertIfNeeded(MakeReturnInfo(fired, v));
     }
     case DeviceKind::ControllerAnalogDelta: {
         const auto& ct = input_->GetController();
@@ -251,7 +264,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
         }
 
         const bool fired = AxisTriggered(dv, b.threshold);
-        return MakeReturnInfo(fired, dv);
+        return applyInvertIfNeeded(MakeReturnInfo(fired, dv));
     }
     default:
         return MakeReturnInfo(false, 0.0f);

@@ -1,7 +1,5 @@
 #pragma once
 
-namespace KashipanEngine {
-
 struct Vector2;
 struct Vector3;
 
@@ -57,5 +55,3 @@ inline constexpr const Vector4 operator/(const Vector4 &vector, const float scal
 inline constexpr const Vector4 operator/(const Vector4 &vector1, const Vector4 &vector2) {
     return Vector4(vector1.x / vector2.x, vector1.y / vector2.y, vector1.z / vector2.z, vector1.w / vector2.w);
 }
-
-} // namespace KashipanEngine

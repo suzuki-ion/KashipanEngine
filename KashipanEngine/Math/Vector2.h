@@ -3,8 +3,6 @@
 #include <cmath>
 #include <vector>
 
-namespace KashipanEngine {
-
 struct Vector3;
 struct Matrix3x3;
 
@@ -76,5 +74,3 @@ inline constexpr Vector2 operator/(const Vector2 &a, const Vector2 &b) {
 
 inline constexpr Vector2 operator*(const Matrix3x3 &matrix, const Vector2 &vector) noexcept;
 inline constexpr Vector2 operator*(const Vector2 &vector, const Matrix3x3 &matrix) noexcept;
-
-} // namespace KashipanEngine

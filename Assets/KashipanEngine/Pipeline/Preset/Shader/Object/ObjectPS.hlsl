@@ -10,8 +10,11 @@ struct Material {
 #include "../Common/Camera3D.hlsli"
 #include "Object3D.hlsli"
 struct Material {
+	float enableLighting;
 	float4 color;
 	float4x4 uvTransform;
+	float shininess;
+	float4 specularColor;
 };
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
 #endif
@@ -24,6 +27,7 @@ struct PSOutput {
 	float4 color : SV_TARGET0;
 };
 
+#ifdef Object3D
 float Lambert(float3 normal, float3 lightDir) {
 	float cos = saturate(dot(normalize(normal), -lightDir));
 	return cos;
@@ -35,6 +39,23 @@ float HalfLambert(float3 normal, float3 lightDir) {
 	return halfLambert;
 }
 
+float PhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
+	float3 viewDir = normalize(gCamera.eyePosition.xyz - worldPos);
+	float3 reflectDir = reflect(lightDir, normal);
+	float RdotE = dot(reflectDir, viewDir);
+	float spec = pow(saturate(RdotE), shininess);
+	return spec;
+}
+
+float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
+	float3 viewDir = normalize(gCamera.eyePosition.xyz - worldPos);
+	float3 halfDir = normalize(-lightDir + viewDir);
+	float NdotH = dot(normal, halfDir);
+	float spec = pow(saturate(NdotH), shininess);
+	return spec;
+}
+#endif
+
 PSOutput main(VSOutput input) {
 	PSOutput output;
 	Material mat = gMaterials[input.instanceId];
@@ -45,18 +66,19 @@ PSOutput main(VSOutput input) {
 #endif
 
 #ifdef Object3D
-	if (gDirectionalLight.enabled) {
+	if (gDirectionalLight.enabled && mat.enableLighting) {
 		float halfLambert = HalfLambert(input.normal, gDirectionalLight.direction);
-		float4 lightColor = gDirectionalLight.color * gDirectionalLight.intensity * halfLambert;
-		output.color = (mat.color * textureColor) * lightColor;
+		float specular = BlinnPhongReflection(input.normal, gDirectionalLight.direction, input.worldPosition, mat.shininess);
+		float4 diffuse = gDirectionalLight.color * halfLambert * gDirectionalLight.intensity;
+		float4 speculer = gDirectionalLight.color * gDirectionalLight.intensity * specular * mat.specularColor;
+		output.color = (mat.color * textureColor) * diffuse + speculer;
 	} else {
 		output.color = mat.color * textureColor;
 	}
 	output.color.a = mat.color.a * textureColor.a;
-#endif
-
 	if (output.color.a < 0.01f) {
 		discard;
 	}
+#endif
 	return output;
 }

@@ -31,6 +31,7 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
 	output.texcoord = input.texcoord;
 #ifdef Object3D
 	output.normal = normalize(mul(input.normal, (float3x3)world));
+	output.worldPosition = mul(input.position, world).xyz;
 #endif
 	output.instanceId = instanceId;
 	return output;

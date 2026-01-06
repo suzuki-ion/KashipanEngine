@@ -1,6 +1,12 @@
 #include "Scene/SceneBase.h"
+#include "Scene/SceneManager.h"
+#include "Scene/SceneContext.h"
 
 #include <algorithm>
+
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#endif
 
 namespace KashipanEngine {
 
@@ -22,6 +28,7 @@ void SceneBase::SetEnginePointers(
 
 SceneBase::SceneBase(const std::string &sceneName)
     : name_(sceneName) {
+    sceneContext_ = std::make_unique<SceneContext>(Passkey<SceneBase>{}, this);
 }
 
 SceneBase::~SceneBase() {
@@ -38,12 +45,48 @@ void SceneBase::Update() {
         if (o) o->Update();
     }
 
-    for (auto &c : sceneComponents_) {
-        if (c) c->Update();
+    {
+        std::vector<ISceneComponent *> sorted;
+        sorted.reserve(sceneComponents_.size());
+        for (auto &c : sceneComponents_) if (c) sorted.push_back(c.get());
+        std::stable_sort(sorted.begin(), sorted.end(), [](const ISceneComponent *a, const ISceneComponent *b) {
+            return a->GetUpdatePriority() < b->GetUpdatePriority();
+        });
+        for (auto *c : sorted) c->Update();
     }
 
     OnUpdate();
 }
+
+#if defined(USE_IMGUI)
+void SceneBase::ShowImGui() {
+    ImGui::TextUnformatted("Scene");
+    ImGui::SameLine();
+    ImGui::TextUnformatted(name_.c_str());
+
+    if (ImGui::CollapsingHeader("Objects2D", ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (auto &o : objects2D_) {
+            if (!o) continue;
+            const std::string &objName = o->GetName();
+            if (ImGui::TreeNode(objName.c_str())) {
+                o->ShowImGui();
+                ImGui::TreePop();
+            }
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Objects3D", ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (auto &o : objects3D_) {
+            if (!o) continue;
+            const std::string &objName = o->GetName();
+            if (ImGui::TreeNode(objName.c_str())) {
+                o->ShowImGui();
+                ImGui::TreePop();
+            }
+        }
+    }
+}
+#endif
 
 bool SceneBase::AddObject2D(std::unique_ptr<Object2DBase> obj) {
     if (!obj) return false;
@@ -81,11 +124,33 @@ void SceneBase::ClearObjects3D() {
     objects3D_.clear();
 }
 
+void SceneBase::ChangeToNextScene() {
+    if (sceneManager_ && !nextSceneName_.empty()) {
+        sceneManager_->ChangeScene(nextSceneName_);
+    }
+}
+
 bool SceneBase::AddSceneComponent(std::unique_ptr<ISceneComponent> comp) {
     if (!comp) return false;
-    comp->SetOwnerScene(this);
+
+    const size_t maxCount = comp->GetMaxComponentCountPerScene();
+    const size_t existingCount = HasSceneComponents(comp->GetComponentType());
+    if (existingCount >= maxCount) return false;
+
+    if (sceneContext_) {
+        comp->SetOwnerContext(sceneContext_.get());
+    }
+
     comp->Initialize();
+
     sceneComponents_.push_back(std::move(comp));
+
+    const size_t idx = sceneComponents_.size() - 1;
+    if (sceneComponents_[idx]) {
+        sceneComponentsIndexByName_.emplace(sceneComponents_[idx]->GetComponentType(), idx);
+        sceneComponentsIndexByType_.emplace(std::type_index(typeid(*sceneComponents_[idx])), idx);
+    }
+
     return true;
 }
 
@@ -96,10 +161,18 @@ bool SceneBase::RemoveSceneComponent(ISceneComponent *comp) {
 
     if (*it) {
         (*it)->Finalize();
-        (*it)->SetOwnerScene(nullptr);
     }
 
     sceneComponents_.erase(it);
+
+    sceneComponentsIndexByName_.clear();
+    sceneComponentsIndexByType_.clear();
+    for (size_t i = 0; i < sceneComponents_.size(); ++i) {
+        if (!sceneComponents_[i]) continue;
+        sceneComponentsIndexByName_.emplace(sceneComponents_[i]->GetComponentType(), i);
+        sceneComponentsIndexByType_.emplace(std::type_index(typeid(*sceneComponents_[i])), i);
+    }
+
     return true;
 }
 
@@ -107,9 +180,10 @@ void SceneBase::ClearSceneComponents() {
     for (auto &c : sceneComponents_) {
         if (!c) continue;
         c->Finalize();
-        c->SetOwnerScene(nullptr);
     }
     sceneComponents_.clear();
+    sceneComponentsIndexByName_.clear();
+    sceneComponentsIndexByType_.clear();
 }
 
 } // namespace KashipanEngine

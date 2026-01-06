@@ -2,6 +2,9 @@
 
 #include <memory>
 #include <string>
+#include <typeindex>
+#include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 #include "Assets/AudioManager.h"
@@ -15,9 +18,12 @@
 #include "Objects/Object3DBase.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ISceneComponent.h"
+// #include "Scene/SceneContext.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
+
+class SceneContext;
 
 class SceneManager;
 class GameEngine;
@@ -37,6 +43,10 @@ public:
 
     void Update();
 
+#if defined(USE_IMGUI)
+    void ShowImGui();
+#endif
+
     void SetSceneManager(Passkey<SceneManager>, SceneManager *sceneManager) { sceneManager_ = sceneManager; }
 
     static void SetEnginePointers(
@@ -47,6 +57,8 @@ public:
         TextureManager *textureManager,
         Input *input,
         InputCommand *inputCommand);
+
+    friend class SceneContext;
 
 protected:
     SceneBase(const std::string &sceneName);
@@ -66,11 +78,54 @@ protected:
     void ClearObjects3D();
 
     void SetNextSceneName(const std::string &nextSceneName) { nextSceneName_ = nextSceneName; }
+    void ChangeToNextScene();
     void ClearNextSceneName() { nextSceneName_.clear(); }
 
     bool AddSceneComponent(std::unique_ptr<ISceneComponent> comp);
     bool RemoveSceneComponent(ISceneComponent *comp);
     void ClearSceneComponents();
+
+    std::vector<ISceneComponent *> GetSceneComponents(const std::string &componentName) const {
+        std::vector<ISceneComponent *> components;
+        auto range = sceneComponentsIndexByName_.equal_range(componentName);
+        for (auto it = range.first; it != range.second; ++it) {
+            components.push_back(sceneComponents_[it->second].get());
+        }
+        return components;
+    }
+
+    ISceneComponent *GetSceneComponent(const std::string &componentName) const {
+        auto range = sceneComponentsIndexByName_.equal_range(componentName);
+        if (range.first != range.second) {
+            return sceneComponents_[range.first->second].get();
+        }
+        return nullptr;
+    }
+
+    template<typename T>
+    std::vector<T *> GetSceneComponents() const {
+        std::vector<T *> components;
+        for (const auto &comp : sceneComponents_) {
+            if (dynamic_cast<T *>(comp.get())) {
+                components.push_back(dynamic_cast<T *>(comp.get()));
+            }
+        }
+        return components;
+    }
+
+    template<typename T>
+    T *GetSceneComponent() const {
+        for (const auto &comp : sceneComponents_) {
+            if (dynamic_cast<T *>(comp.get())) {
+                return dynamic_cast<T *>(comp.get());
+            }
+        }
+        return nullptr;
+    }
+
+    size_t HasSceneComponents(const std::string &componentName) const {
+        return sceneComponentsIndexByName_.count(componentName);
+    }
 
     static AudioManager *GetAudioManager() { return sAudioManager; }
     static ModelManager *GetModelManager() { return sModelManager; }
@@ -93,6 +148,9 @@ private:
     std::vector<std::unique_ptr<Object3DBase>> objects3D_;
 
     std::vector<std::unique_ptr<ISceneComponent>> sceneComponents_;
+    std::unordered_multimap<std::string, size_t> sceneComponentsIndexByName_;
+    std::unordered_multimap<std::type_index, size_t> sceneComponentsIndexByType_;
+    std::unique_ptr<SceneContext> sceneContext_;
 
     std::string nextSceneName_;
     SceneManager *sceneManager_ = nullptr;

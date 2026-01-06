@@ -352,11 +352,10 @@ AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPat
 AudioManager::~AudioManager() {
     LogScope scope;
 
+    FinalizeAudioDevice();
     sSounds.clear();
     sAssetPathToHandle.clear();
     sFileNameToHandle.clear();
-
-    FinalizeAudioDevice();
 }
 
 void AudioManager::InitializeAudioDevice() {

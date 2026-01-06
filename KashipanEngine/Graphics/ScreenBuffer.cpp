@@ -18,12 +18,12 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
     return shaderResources_[idx] ? shaderResources_[idx]->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
-ScreenBuffer* ScreenBuffer::Create(Window* targetWindow, std::uint32_t width, std::uint32_t height,
-    RenderDimension dimension, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
+ScreenBuffer* ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
+    DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
     std::unique_ptr<ScreenBuffer> buffer(new ScreenBuffer());
     auto* raw = buffer.get();
 
-    if (!raw->Initialize(targetWindow, width, height, dimension, colorFormat, depthFormat)) {
+    if (!raw->Initialize(width, height, colorFormat, depthFormat)) {
         return nullptr;
     }
 
@@ -101,14 +101,12 @@ ScreenBuffer::~ScreenBuffer() {
     Destroy();
 }
 
-bool ScreenBuffer::Initialize(Window* targetWindow, std::uint32_t width, std::uint32_t height,
-    RenderDimension dimension, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
+bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
+    DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
     Destroy();
 
-    targetWindow_ = targetWindow;
     width_ = width;
     height_ = height;
-    dimension_ = dimension;
     colorFormat_ = colorFormat;
     depthFormat_ = depthFormat;
 
@@ -175,7 +173,6 @@ void ScreenBuffer::Destroy() {
 
     width_ = 0;
     height_ = 0;
-    targetWindow_ = nullptr;
 }
 
 ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord() {
@@ -287,8 +284,6 @@ bool ScreenBuffer::RegisterPostEffectComponent(std::unique_ptr<IPostEffectCompon
 }
 
 void ScreenBuffer::AttachToRenderer(const std::string& pipelineName, const std::string& passName) {
-    if (!targetWindow_) return;
-
     auto* renderer = Window::GetRenderer(Passkey<ScreenBuffer>{});
     if (!renderer) return;
 

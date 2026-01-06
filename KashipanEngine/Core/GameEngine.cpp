@@ -26,11 +26,11 @@ bool sIsEngineInitialized = false;
 } // namespace
 
 #if defined(USE_IMGUI)
-GameEngine::RollingAverage_::RollingAverage_(std::size_t capacity) {
+GameEngine::RollingAverage::RollingAverage(std::size_t capacity) {
     SetCapacity(capacity);
 }
 
-void GameEngine::RollingAverage_::SetCapacity(std::size_t capacity) {
+void GameEngine::RollingAverage::SetCapacity(std::size_t capacity) {
     capacity = std::max<std::size_t>(1, capacity);
     if (capacity_ == capacity) return;
 
@@ -41,7 +41,7 @@ void GameEngine::RollingAverage_::SetCapacity(std::size_t capacity) {
     sum_ = 0.0;
 }
 
-void GameEngine::RollingAverage_::Add(double value) {
+void GameEngine::RollingAverage::Add(double value) {
     if (samples_.size() < capacity_) {
         samples_.push_back(value);
         sum_ += value;
@@ -55,16 +55,16 @@ void GameEngine::RollingAverage_::Add(double value) {
     writeIndex_ = (writeIndex_ + 1) % capacity_;
 }
 
-double GameEngine::RollingAverage_::GetAverage() const {
+double GameEngine::RollingAverage::GetAverage() const {
     if (samples_.empty()) return 0.0;
     return sum_ / static_cast<double>(samples_.size());
 }
 
-std::size_t GameEngine::RollingAverage_::GetCount() const {
+std::size_t GameEngine::RollingAverage::GetCount() const {
     return samples_.size();
 }
 
-void GameEngine::DrawProfilingImGui_() {
+void GameEngine::DrawProfilingImGui() {
     const std::size_t cap = static_cast<std::size_t>(std::max(1, profilingSampleCount_));
     avgUpdateMs_.SetCapacity(cap);
     avgDrawMs_.SetCapacity(cap);
@@ -107,10 +107,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     //--------- インスタンス生成 ---------//
 
-    context_.engine = this;
-
-    sceneManager_ = std::make_unique<SceneManager>();
-    context_.sceneManager = sceneManager_.get();
+    sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
@@ -127,6 +124,10 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 #endif
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
+
+    context_.engine = this;
+    context_.sceneManager = sceneManager_.get();
+    context_.inputCommand = inputCommand_.get();
 
     SceneBase::SetEnginePointers(
         Passkey<GameEngine>{},
@@ -202,6 +203,10 @@ void GameEngine::GameLoopUpdate() {
     Window::Update({});
     UpdateDeltaTime({});
 
+    if (sceneManager_) {
+        sceneManager_->CommitPendingSceneChange({});
+    }
+
     if (input_) {
         input_->Update();
     }
@@ -223,6 +228,9 @@ void GameEngine::GameLoopUpdate() {
     if (sceneManager_) {
         if (auto *scene = sceneManager_->GetCurrentScene()) {
             scene->Update();
+#if defined(USE_IMGUI)
+            scene->ShowImGui();
+#endif
         }
     }
 
@@ -252,7 +260,7 @@ void GameEngine::GameLoopDraw() {
 
 #if defined(USE_IMGUI)
     if (imguiManager_) {
-        DrawProfilingImGui_();
+        DrawProfilingImGui();
 
         ScreenBuffer::ShowImGuiScreenBuffersWindow();
 

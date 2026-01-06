@@ -119,7 +119,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
+    <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
+    <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
+    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
+    <ClCompile Include="Application\Scenes\GameScene.cpp" />
+    <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
+    <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -188,6 +198,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Input\Keyboard.cpp" />
     <ClCompile Include="KashipanEngine\Input\Mouse.cpp" />
     <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
     <ClCompile Include="KashipanEngine\Math\SRTMatrix4x4.cpp" />
@@ -200,9 +211,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Rect.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Sprite.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Billboard.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Box.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Line3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Model.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
@@ -212,7 +225,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
@@ -236,7 +251,33 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
+    <ClInclude Include="Application\Objects\Components\Health.h" />
+    <ClInclude Include="Application\Objects\Components\MovementController.h" />
+    <ClInclude Include="Application\Objects\Components\ParticleMovement.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
+    <ClInclude Include="Application\Objects\Components\RailMovement.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearWallForward.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearWallLeftSide.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
+    <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\CameraController.h" />
+    <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h" />
+    <ClInclude Include="Application\Scenes\Components\JustAvoidParticle.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerHealthUI.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
+    <ClInclude Include="Application\Scenes\GameOverScene.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
+    <ClInclude Include="Application\Scenes\Components\GameProgressController.h" />
+    <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
+    <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
+    <ClInclude Include="Application\Scenes\GameScene.h" />
+    <ClInclude Include="Application\Scenes\ResultScene.h" />
     <ClInclude Include="Application\Scenes\TestScene.h" />
+    <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -334,11 +375,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h" />
     <ClInclude Include="KashipanEngine\Input\Controller.h" />
+    <ClInclude Include="KashipanEngine\Input\ControllerButton.h" />
     <ClInclude Include="KashipanEngine\Input\Input.h" />
     <ClInclude Include="KashipanEngine\Input\InputCommand.h" />
     <ClInclude Include="KashipanEngine\Input\Key.h" />
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
+    <ClInclude Include="KashipanEngine\Math\Easings.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />
     <ClInclude Include="KashipanEngine\Math\SRTMatrix4x4.h" />
@@ -355,7 +398,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\Components\3D\Material3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\3D\Transform3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\VertexData2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Billboard.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\FaceNormal3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexData3D.h" />
     <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
@@ -393,6 +438,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />

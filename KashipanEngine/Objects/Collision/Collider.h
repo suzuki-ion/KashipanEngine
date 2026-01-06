@@ -23,10 +23,31 @@
 
 namespace KashipanEngine {
 
+class Object2DBase;
+class Object3DBase;
+
 struct HitInfo final {
     bool isHit = false;
     Vector3 normal{0.0f, 0.0f, 0.0f};
     float penetration = 0.0f;
+};
+
+struct HitInfo2D final {
+    bool isHit = false;
+    Vector3 normal{0.0f, 0.0f, 0.0f};
+    float penetration = 0.0f;
+
+    Object2DBase* selfObject = nullptr;
+    Object2DBase* otherObject = nullptr;
+};
+
+struct HitInfo3D final {
+    bool isHit = false;
+    Vector3 normal{0.0f, 0.0f, 0.0f};
+    float penetration = 0.0f;
+
+    Object3DBase* selfObject = nullptr;
+    Object3DBase* otherObject = nullptr;
 };
 
 struct ColliderInfo2D final {
@@ -40,13 +61,14 @@ struct ColliderInfo2D final {
         Math::Capsule2D>;
 
     ShapeVariant shape{};
+    Object2DBase* ownerObject = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};
 
-    std::function<void(const HitInfo &hitInfo)> onCollisionEnter;
-    std::function<void(const HitInfo &hitInfo)> onCollisionStay;
-    std::function<void(const HitInfo &hitInfo)> onCollisionExit;
+    std::function<void(const HitInfo2D &hitInfo)> onCollisionEnter;
+    std::function<void(const HitInfo2D &hitInfo)> onCollisionStay;
+    std::function<void(const HitInfo2D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
 };
@@ -62,13 +84,14 @@ struct ColliderInfo3D final {
         Math::Plane>;
 
     ShapeVariant shape{};
+    Object3DBase* ownerObject = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};
 
-    std::function<void(const HitInfo &hitInfo)> onCollisionEnter;
-    std::function<void(const HitInfo &hitInfo)> onCollisionStay;
-    std::function<void(const HitInfo &hitInfo)> onCollisionExit;
+    std::function<void(const HitInfo3D &hitInfo)> onCollisionEnter;
+    std::function<void(const HitInfo3D &hitInfo)> onCollisionStay;
+    std::function<void(const HitInfo3D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
 };
@@ -94,6 +117,9 @@ public:
 
     bool Remove2D(ColliderID id);
     bool Remove3D(ColliderID id);
+
+    bool UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info);
+    bool UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info);
 
     void Clear2D();
     void Clear3D();
@@ -130,8 +156,8 @@ private:
 
     static std::uint64_t MakePairKey(ColliderID a, ColliderID b);
 
-    void Dispatch2D(ColliderID a, ColliderID b, const HitInfo &hitInfo, bool wasHit);
-    void Dispatch3D(ColliderID a, ColliderID b, const HitInfo &hitInfo, bool wasHit);
+    void Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, bool wasHit);
+    void Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, bool wasHit);
 
     std::vector<std::uint64_t> prevPairs2D_;
     std::vector<std::uint64_t> prevPairs3D_;

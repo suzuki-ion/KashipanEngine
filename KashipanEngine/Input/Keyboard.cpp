@@ -28,6 +28,15 @@ Key FromVirtualKey(std::uint8_t vk) noexcept {
         case VK_UP: return Key::Up;
         case VK_DOWN: return Key::Down;
 
+        // Left/Right specific modifiers
+        case VK_LSHIFT: return Key::LeftShift;
+        case VK_RSHIFT: return Key::RightShift;
+        case VK_LCONTROL: return Key::LeftControl;
+        case VK_RCONTROL: return Key::RightControl;
+        case VK_LMENU: return Key::LeftAlt;
+        case VK_RMENU: return Key::RightAlt;
+
+        // Generic modifier fallbacks
         case VK_SHIFT: return Key::Shift;
         case VK_CONTROL: return Key::Control;
         case VK_MENU: return Key::Alt;
@@ -110,6 +119,24 @@ void Keyboard::Update() {
                 const Key key = FromVirtualKey(s.virtualKey);
                 if (key == Key::Unknown) continue;
                 current[ToIndex_(key)] = 0x80;
+
+                // Also set generic modifier flags when specific modifier detected
+                switch (key) {
+                    case Key::LeftShift:
+                    case Key::RightShift:
+                        current[ToIndex_(Key::Shift)] = 0x80;
+                        break;
+                    case Key::LeftControl:
+                    case Key::RightControl:
+                        current[ToIndex_(Key::Control)] = 0x80;
+                        break;
+                    case Key::LeftAlt:
+                    case Key::RightAlt:
+                        current[ToIndex_(Key::Alt)] = 0x80;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

@@ -43,12 +43,12 @@ void TestScene::InitializeTestObjects() {
     if (!offscreenBuffer1_ && targetWindow) {
         const std::uint32_t w = 1920;
         const std::uint32_t h = 1080;
-        offscreenBuffer1_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
+        offscreenBuffer1_ = ScreenBuffer::Create(w, h);
     }
     if (!offscreenBuffer2_ && targetWindow) {
         const std::uint32_t w = 512;
         const std::uint32_t h = 512;
-        offscreenBuffer2_ = ScreenBuffer::Create(targetWindow, w, h, RenderDimension::D2);
+        offscreenBuffer2_ = ScreenBuffer::Create(w, h);
     }
 
     auto attachOffscreen1IfPossible3D = [&](Object3DBase *obj) {

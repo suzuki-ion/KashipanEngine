@@ -1,4 +1,5 @@
 #pragma once
+#include "Scene/SceneBase.h"
 
 #include <functional>
 #include <memory>
@@ -10,11 +11,11 @@
 
 namespace KashipanEngine {
 
-class SceneBase;
+class GameEngine;
 
 class SceneManager {
 public:
-    SceneManager() = default;
+    SceneManager(Passkey<GameEngine>) {}
     ~SceneManager() = default;
 
     SceneManager(const SceneManager &) = delete;
@@ -25,7 +26,6 @@ public:
     template<typename TScene, typename... Args>
     void RegisterScene(const std::string &sceneName, Args &&...args) {
         static_assert(std::is_base_of_v<SceneBase, TScene>, "TScene must derive from SceneBase");
-
         factoriesByName_[sceneName] =
             [captured = std::make_tuple(std::forward<Args>(args)...)](SceneManager *sm) mutable -> std::unique_ptr<SceneBase> {
                 auto scene = std::apply(
@@ -43,10 +43,11 @@ public:
 
     SceneBase *GetCurrentScene() const {
         if (currentScene_) return currentScene_.get();
-        return currentSceneLegacy_;
+        return nullptr;
     }
 
     bool ChangeScene(const std::string &sceneName);
+    void CommitPendingSceneChange(Passkey<GameEngine>);
 
 private:
     using SceneFactory = std::function<std::unique_ptr<SceneBase>(SceneManager *)>;
@@ -54,7 +55,8 @@ private:
     std::unordered_map<std::string, SceneFactory> factoriesByName_;
 
     std::unique_ptr<SceneBase> currentScene_;
-    SceneBase *currentSceneLegacy_ = nullptr;
+    bool hasPendingSceneChange_ = false;
+    std::string pendingSceneName_;
 };
 
 } // namespace KashipanEngine

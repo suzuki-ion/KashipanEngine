@@ -1,8 +1,8 @@
 #pragma once
 
-namespace KashipanEngine {
-
 struct Vector4;
+
+namespace KashipanEngine {
 
 namespace MathUtils {
 

@@ -14,16 +14,19 @@ namespace KashipanEngine {
 /// @brief 3Dマテリアルコンポーネント
 class Material3D : public IObjectComponent3D {
 public:
+    struct InstanceData {
+        float enableLighting;
+        Vector4 color;
+        Matrix4x4 uvTransform;
+        float shininess;
+        Vector4 specularColor;
+    };
+
     struct UVTransform {
         Vector3 translate{0.0f, 0.0f, 0.0f};
         Vector3 rotate{0.0f, 0.0f, 0.0f};
         Vector3 scale{1.0f, 1.0f, 1.0f};
     };
-
-    static const std::string &GetStaticComponentType() {
-        static const std::string type = "Material3D";
-        return type;
-    }
 
     Material3D(const Vector4 &color = Vector4{1.0f, 1.0f, 1.0f, 1.0f},
         TextureManager::TextureHandle texture = TextureManager::kInvalidHandle,
@@ -66,12 +69,8 @@ public:
     std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
         if (!instanceMap) return false;
 
-        struct InstanceMaterialLocal {
-            Vector4 color;
-            Matrix4x4 uvTransform;
-        };
-
-        auto *arr = static_cast<InstanceMaterialLocal*>(instanceMap);
+        auto *arr = static_cast<InstanceData*>(instanceMap);
+        arr[instanceIndex].enableLighting = enableLighting_;
         arr[instanceIndex].color = color_;
         arr[instanceIndex].uvTransform = GetUVTransformMatrix();
         return true;
@@ -81,13 +80,17 @@ public:
         texture_ = nullptr;
         textureHandle_ = texture;
     }
-
     void SetTexture(IShaderTexture* texture) {
         texture_ = texture;
         textureHandle_ = TextureManager::kInvalidHandle;
     }
 
     void SetSampler(SamplerManager::SamplerHandle sampler) { samplerHandle_ = sampler; }
+    
+    void SetEnableLighting(bool enable) {
+        enableLighting_ = enable ? 1.0f : 0.0f;
+        isBufferDirty_ = true;
+    }
     void SetColor(const Vector4 &color) {
         color_ = color;
         isBufferDirty_ = true;
@@ -96,6 +99,15 @@ public:
         uvTransform_ = uvTransform;
         isBufferDirty_ = true;
     }
+    void SetShininess(float shininess) {
+        shininess_ = shininess;
+        isBufferDirty_ = true;
+    }
+    void SetSpecularColor(const Vector4 &specularColor) {
+        specularColor_ = specularColor;
+        isBufferDirty_ = true;
+    }
+
     TextureManager::TextureHandle GetTexture() const { return textureHandle_; }
     IShaderTexture* GetTexturePtr() const { return texture_; }
     SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
@@ -111,6 +123,11 @@ public:
     void ShowImGui() override {
         ImGui::TextUnformatted(Translation("engine.imgui.component.material3d").c_str());
 
+        bool lightingEnabled = (enableLighting_ != 0.0f);
+        if (ImGui::Checkbox(Translation("engine.imgui.material.enable_lighting").c_str(), &lightingEnabled)) {
+            SetEnableLighting(lightingEnabled);
+        }
+
         Vector4 c = color_;
         if (ImGui::ColorEdit4(Translation("engine.imgui.material.color").c_str(), &c.x)) {
             SetColor(c);
@@ -121,6 +138,14 @@ public:
         ImGui::DragFloat3(Translation("engine.imgui.material.uv.rotate").c_str(), &uv.rotate.x, 0.01f, -3.14f, 3.14f);
         ImGui::DragFloat3(Translation("engine.imgui.material.uv.scale").c_str(), &uv.scale.x, 0.01f);
         SetUVTransform(uv);
+
+        if (ImGui::DragFloat(Translation("engine.imgui.material.shininess").c_str(), &shininess_, 0.1f, 0.0f, 256.0f)) {
+            SetShininess(shininess_);
+        }
+        Vector4 specColor = specularColor_;
+        if (ImGui::ColorEdit4(Translation("engine.imgui.material.specular_color").c_str(), &specColor.x)) {
+            SetSpecularColor(specColor);
+        }
 
         ImGui::TextUnformatted(Translation("engine.imgui.material.texture_handle").c_str());
         ImGui::SameLine();
@@ -133,13 +158,11 @@ public:
 #endif
 
 private:
-    struct InstanceData {
-        Vector4 color;
-        Matrix4x4 uvTransform;
-    };
-
+    float enableLighting_ = 1.0f;
     Vector4 color_{1.0f, 1.0f, 1.0f, 1.0f};
     UVTransform uvTransform_{};
+    float shininess_ = 32.0f;
+    Vector4 specularColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
 
     TextureManager::TextureHandle textureHandle_ = TextureManager::kInvalidHandle;
     IShaderTexture* texture_ = nullptr;

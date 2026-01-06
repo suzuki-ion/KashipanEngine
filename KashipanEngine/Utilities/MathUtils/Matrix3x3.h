@@ -1,9 +1,9 @@
 #pragma once
 
-namespace KashipanEngine {
-
 struct Matrix3x3;
 struct Vector2;
+
+namespace KashipanEngine {
 
 namespace MathUtils {
 

@@ -54,7 +54,21 @@ Vector3 CatmullRomInterpolation(const Vector3 &p0, const Vector3 &p1, const Vect
 }
 
 Vector3 CatmullRomPosition(const std::vector<Vector3> &points, float t, bool isLoop) {
-    assert(points.size() >= 4);
+    if (points.size() < 4) {
+        // 制御点が4点未満の場合は線形補間で対応
+        if (points.empty()) {
+            return Vector3(0.0f, 0.0f, 0.0f);
+        } else if (points.size() == 1) {
+            return points[0];
+        } else {
+            size_t lastIndex = points.size() - 1;
+            float scaledT = t * static_cast<float>(lastIndex);
+            size_t index = static_cast<size_t>(scaledT);
+            index = std::min(index, lastIndex - 1);
+            float localT = scaledT - static_cast<float>(index);
+            return Lerp(points[index], points[index + 1], localT);
+        }
+    }
 
     size_t division = isLoop ? points.size() : points.size() - 1;
     float areaWidth = 1.0f / static_cast<float>(division);

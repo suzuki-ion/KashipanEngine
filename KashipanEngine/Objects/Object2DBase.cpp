@@ -146,6 +146,11 @@ std::optional<Object2DBase::RenderPassRegistrationInfo> Object2DBase::GetRenderP
     return it->second.info;
 }
 
+void Object2DBase::SetUniqueBatchKey() {
+    instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
+    renderType_ = RenderType::Standard;
+}
+
 RenderPass Object2DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName) {
     if (!cachedRenderPass_) {
         RenderPass passInfo(Passkey<Object2DBase>{});
@@ -157,8 +162,8 @@ RenderPass Object2DBase::CreateRenderPass(Window *targetWindow, const std::strin
 
         passInfo.batchKey = instanceBatchKey_;
         passInfo.instanceBufferRequirements = {
-            {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
-            {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+            {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
         };
         passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
             return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
@@ -197,8 +202,8 @@ RenderPass Object2DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
 
         passInfo.batchKey = instanceBatchKey_;
         passInfo.instanceBufferRequirements = {
-            {"Vertex:gTransformationMatrices", sizeof(InstanceTransform)},
-            {"Pixel:gMaterials", sizeof(InstanceMaterial)},
+            {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
         };
         passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
             return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
@@ -379,16 +384,12 @@ void Object2DBase::Update() {
 }
 
 void Object2DBase::Render() {
-    std::vector<IObjectComponent*> sorted;
+    /*std::vector<IObjectComponent*> sorted;
     sorted.reserve(components_.size());
     for (auto &c : components_) sorted.push_back(c.get());
     std::stable_sort(sorted.begin(), sorted.end(), [](const IObjectComponent* a, const IObjectComponent* b) {
         return a->GetRenderPriority() < b->GetRenderPriority();
-    });
-
-    for (auto *c : sorted) {
-        c->Render();
-    }
+    });*/
 }
 
 std::vector<Object2DBase::ShaderBindingFailureInfo> Object2DBase::BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder) {

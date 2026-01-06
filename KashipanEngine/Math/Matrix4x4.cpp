@@ -2,8 +2,6 @@
 #include "Math/Vector3.h"
 #include "Utilities/MathUtils.h"
 
-namespace KashipanEngine {
-
 float Matrix4x4::Matrix2x2::Determinant() const noexcept {
     return m[0][0] * m[1][1] - m[0][1] * m[1][0];
 }
@@ -148,85 +146,83 @@ constexpr const Matrix4x4 Matrix4x4::operator*(const Matrix4x4 &matrix) const no
 }
 
 const Matrix4x4 Matrix4x4::Identity() noexcept {
-    return MathUtils::Matrix4x4Identity();
+    return KashipanEngine::MathUtils::Matrix4x4Identity();
 }
 
 const Matrix4x4 Matrix4x4::Transpose() noexcept {
-    return MathUtils::Matrix4x4Transpose(*this);
+    return KashipanEngine::MathUtils::Matrix4x4Transpose(*this);
 }
 
 const float Matrix4x4::Determinant() const noexcept {
-    return MathUtils::Matrix4x4Determinant(*this);
+    return KashipanEngine::MathUtils::Matrix4x4Determinant(*this);
 }
 
 Matrix4x4 Matrix4x4::Inverse() const {
-    return MathUtils::Matrix4x4Inverse(*this);
+    return KashipanEngine::MathUtils::Matrix4x4Inverse(*this);
 }
 
 void Matrix4x4::MakeIdentity() noexcept {
-    *this = MathUtils::Matrix4x4Identity();
+    *this = KashipanEngine::MathUtils::Matrix4x4Identity();
 }
 
 void Matrix4x4::MakeTranspose() noexcept {
-    *this = MathUtils::Matrix4x4Transpose(*this);
+    *this = KashipanEngine::MathUtils::Matrix4x4Transpose(*this);
 }
 
 void Matrix4x4::MakeInverse() noexcept {
-    *this = MathUtils::Matrix4x4Inverse(*this);
+    *this = KashipanEngine::MathUtils::Matrix4x4Inverse(*this);
 }
 
 void Matrix4x4::MakeTranslate(const Vector3 &translate) noexcept {
-    *this = MathUtils::Matrix4x4MakeTranslate(translate);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeTranslate(translate);
 }
 
 void Matrix4x4::MakeScale(const Vector3 &scale) noexcept {
-    *this = MathUtils::Matrix4x4MakeScale(scale);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeScale(scale);
 }
 
 void Matrix4x4::MakeRotate(const Vector3 &rotate) noexcept {
-    *this = MathUtils::Matrix4x4MakeRotate(rotate);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeRotate(rotate);
 }
 
 void Matrix4x4::MakeRotate(
     const float radianX,
     const float radianY,
     const float radianZ) noexcept {
-    *this = MathUtils::Matrix4x4MakeRotate(radianX, radianY, radianZ);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeRotate(radianX, radianY, radianZ);
 }
 
 void Matrix4x4::MakeRotateX(const float radian) noexcept {
-    *this = MathUtils::Matrix4x4MakeRotateX(radian);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeRotateX(radian);
 }
 
 void Matrix4x4::MakeRotateY(const float radian) noexcept {
-    *this = MathUtils::Matrix4x4MakeRotateY(radian);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeRotateY(radian);
 }
 
 void Matrix4x4::MakeRotateZ(const float radian) noexcept {
-    *this = MathUtils::Matrix4x4MakeRotateZ(radian);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeRotateZ(radian);
 }
 
 void Matrix4x4::MakeAffine(
     const Vector3 &scale,
     const Vector3 &rotate,
     const Vector3 &translate) noexcept {
-    *this = MathUtils::Matrix4x4MakeAffine(scale, rotate, translate);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeAffine(scale, rotate, translate);
 }
 
 void Matrix4x4::MakeViewMatrix(const Vector3 &eyePos, const Vector3 &targetPos, const Vector3 &upVector) noexcept {
-    *this = MathUtils::Matrix4x4MakeViewMatrix(eyePos, targetPos, upVector);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeViewMatrix(eyePos, targetPos, upVector);
 }
 
 void Matrix4x4::MakePerspectiveFovMatrix(const float fovY, const float aspectRatio, const float nearClip, const float farClip) noexcept {
-    *this = MathUtils::Matrix4x4MakePerspectiveFovMatrix(fovY, aspectRatio, nearClip, farClip);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakePerspectiveFovMatrix(fovY, aspectRatio, nearClip, farClip);
 }
 
 void Matrix4x4::MakeOrthographicMatrix(const float left, const float top, const float right, const float bottom, const float nearClip, const float farClip) noexcept {
-    *this = MathUtils::Matrix4x4MakeOrthographicMatrix(left, top, right, bottom, nearClip, farClip);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeOrthographicMatrix(left, top, right, bottom, nearClip, farClip);
 }
 
 void Matrix4x4::MakeViewportMatrix(const float left, const float top, const float width, const float height, const float minDepth, const float maxDepth) noexcept {
-    *this = MathUtils::Matrix4x4MakeViewportMatrix(left, top, width, height, minDepth, maxDepth);
+    *this = KashipanEngine::MathUtils::Matrix4x4MakeViewportMatrix(left, top, width, height, minDepth, maxDepth);
 }
-
-} // namespace KashipanEngine

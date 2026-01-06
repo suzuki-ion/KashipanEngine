@@ -22,7 +22,10 @@ Camera3D::Camera3D()
     viewportMinDepth_ = 0.0f;
     viewportMaxDepth_ = 1.0f;
 
-    SetConstantBufferRequirements({ { "Vertex:gCamera", sizeof(CameraBuffer) } });
+    SetConstantBufferRequirements({
+        { "Vertex:gCamera", sizeof(CameraBuffer) },
+        { "Pixel:gCamera", sizeof(CameraBuffer) }
+    });
     SetUpdateConstantBuffersFunction(
         [this](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
             if (!constantBufferMaps) return false;

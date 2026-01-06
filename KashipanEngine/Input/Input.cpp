@@ -175,25 +175,10 @@ void Input::ShowImGui() {
         const int padCount = controller_->GetPadCount();
         ImGui::Text("Pads: %d", padCount);
 
-        constexpr int X_DPAD_UP = 0x0001;
-        constexpr int X_DPAD_DOWN = 0x0002;
-        constexpr int X_DPAD_LEFT = 0x0004;
-        constexpr int X_DPAD_RIGHT = 0x0008;
-        constexpr int X_START = 0x0010;
-        constexpr int X_BACK = 0x0020;
-        constexpr int X_LTHUMB = 0x0040;
-        constexpr int X_RTHUMB = 0x0080;
-        constexpr int X_LSHOULDER = 0x0100;
-        constexpr int X_RSHOULDER = 0x0200;
-        constexpr int X_A = 0x1000;
-        constexpr int X_B = 0x2000;
-        constexpr int X_X = 0x4000;
-        constexpr int X_Y = 0x8000;
-
-        const auto showButtonRow = [&](int idx, const char* name, int mask) {
-            const bool down = controller_->IsButtonDown(mask, idx);
-            const bool trig = controller_->IsButtonTrigger(mask, idx);
-            const bool rel = controller_->IsButtonRelease(mask, idx);
+        const auto showButtonRow = [&](int idx, const char* name, ControllerButton btn) {
+            const bool down = controller_->IsButtonDown(btn, idx);
+            const bool trig = controller_->IsButtonTrigger(btn, idx);
+            const bool rel = controller_->IsButtonRelease(btn, idx);
             ImGui::Text("%-10s Down:%s Trg:%s Rel:%s", name, down ? "1" : "0", trig ? "1" : "0", rel ? "1" : "0");
         };
 
@@ -219,20 +204,20 @@ void Input::ShowImGui() {
                 ImGui::Text("RightStick: (%.2f, %.2f)", rx, ry);
 
                 ImGui::SeparatorText("Buttons");
-                showButtonRow(i, "A", X_A);
-                showButtonRow(i, "B", X_B);
-                showButtonRow(i, "X", X_X);
-                showButtonRow(i, "Y", X_Y);
-                showButtonRow(i, "LB", X_LSHOULDER);
-                showButtonRow(i, "RB", X_RSHOULDER);
-                showButtonRow(i, "Back", X_BACK);
-                showButtonRow(i, "Start", X_START);
-                showButtonRow(i, "LThumb", X_LTHUMB);
-                showButtonRow(i, "RThumb", X_RTHUMB);
-                showButtonRow(i, "Up", X_DPAD_UP);
-                showButtonRow(i, "Down", X_DPAD_DOWN);
-                showButtonRow(i, "Left", X_DPAD_LEFT);
-                showButtonRow(i, "Right", X_DPAD_RIGHT);
+                showButtonRow(i, "A", ControllerButton::A);
+                showButtonRow(i, "B", ControllerButton::B);
+                showButtonRow(i, "X", ControllerButton::X);
+                showButtonRow(i, "Y", ControllerButton::Y);
+                showButtonRow(i, "LB", ControllerButton::LeftShoulder);
+                showButtonRow(i, "RB", ControllerButton::RightShoulder);
+                showButtonRow(i, "Back", ControllerButton::Back);
+                showButtonRow(i, "Start", ControllerButton::Start);
+                showButtonRow(i, "LThumb", ControllerButton::LeftThumb);
+                showButtonRow(i, "RThumb", ControllerButton::RightThumb);
+                showButtonRow(i, "Up", ControllerButton::DPadUp);
+                showButtonRow(i, "Down", ControllerButton::DPadDown);
+                showButtonRow(i, "Left", ControllerButton::DPadLeft);
+                showButtonRow(i, "Right", ControllerButton::DPadRight);
             }
             ImGui::Separator();
             ImGui::PopID();

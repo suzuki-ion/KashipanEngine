@@ -1,18 +1,10 @@
 #pragma once
-#include "Core/GameEngine.h"
+#include <KashipanEngine.h>
 
-#include "Core/Window.h"
-#include "Core/WindowsAPI.h"
-#include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
-#include "EngineSettings.h"
-
-#include "Scenes/TestScene.h"
-#include "Scenes/TitleScene.h"
-#include "Scenes/GameScene.h"
-#include "Scenes/GameOverScene.h"
-#include "Scenes/ResultScene.h"
-
-#include <memory>
+//#include "Scenes/TitleScene.h"
+//#include "Scenes/GameScene.h"
+//#include "Scenes/GameOverScene.h"
+//#include "Scenes/ResultScene.h"
 
 namespace KashipanEngine {
 
@@ -27,14 +19,14 @@ inline void AppInitialize(const GameEngine::Context &context) {
         overlay->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();
     }*/
 
-    if (context.sceneManager) {
+    /*if (context.sceneManager) {
         context.sceneManager->RegisterScene<TitleScene>("TitleScene");
         context.sceneManager->RegisterScene<GameScene>("GameScene");
         context.sceneManager->RegisterScene<GameOverScene>("GameOverScene");
         context.sceneManager->RegisterScene<ResultScene>("ResultScene");
 
         context.sceneManager->ChangeScene("TitleScene");
-    }
+    }*/
 
     if (context.inputCommand) {
         auto *ic = context.inputCommand;

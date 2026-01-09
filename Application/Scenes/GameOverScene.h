@@ -1,8 +1,5 @@
 #pragma once
-
-#include "Scene/SceneBase.h"
-#include "Graphics/ScreenBuffer.h"
-#include "Assets/AudioManager.h"
+#include <KashipanEngine.h>
 
 namespace KashipanEngine {
 
@@ -26,10 +23,6 @@ private:
 
     Camera3D *mainCamera3D_ = nullptr;
     Sphere *player_ = nullptr;
-
-    // プレイヤー移動範囲
-    Vector3 playerMoveMin_ = Vector3{ -5.0f, 0.0f, -2.0f };
-    Vector3 playerMoveMax_ = Vector3{ 5.0f, 0.0f, 3.0f };
 
     AudioManager::PlayHandle bgmPlay_ = AudioManager::kInvalidPlayHandle;
 };

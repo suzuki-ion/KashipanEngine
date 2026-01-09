@@ -186,4 +186,15 @@ void SceneBase::ClearSceneComponents() {
     sceneComponentsIndexByType_.clear();
 }
 
+void SceneBase::AddSceneVariable(const std::string &key, const std::any &value) {
+    if (!sceneManager_) return;
+    sceneManager_->AddSceneVariable(key, value);
+}
+
+const MyStd::AnyUnorderedMap &SceneBase::GetSceneVariables() const {
+    static MyStd::AnyUnorderedMap emptyMap;
+    if (!sceneManager_) return emptyMap;
+    return sceneManager_->GetSceneVariables();
+}
+
 } // namespace KashipanEngine

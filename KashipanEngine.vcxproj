@@ -119,17 +119,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
-    <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
-    <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
-    <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
-    <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
-    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
-    <ClCompile Include="Application\Scenes\GameScene.cpp" />
-    <ClCompile Include="Application\Scenes\ResultScene.cpp" />
-    <ClCompile Include="Application\Scenes\TestScene.cpp" />
-    <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -238,8 +227,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Utilities\FileIO\JSON.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\RawFile.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\TextFile.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\FractalNoise.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Matrix4x4.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\PerlinNoise.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector2.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector4.cpp" />
@@ -257,27 +248,15 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\ParticleMovement.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
     <ClInclude Include="Application\Objects\Components\RailMovement.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallForward.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallLeftSide.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
-    <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
-    <ClInclude Include="Application\Scenes\Components\CameraController.h" />
-    <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h" />
-    <ClInclude Include="Application\Scenes\Components\JustAvoidParticle.h" />
-    <ClInclude Include="Application\Scenes\Components\PlayerHealthUI.h" />
-    <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
-    <ClInclude Include="Application\Scenes\GameOverScene.h" />
+    <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
+    <ClInclude Include="KashipanEngine\CoreHeaders.h" />
+    <ClInclude Include="KashipanEngine\EngineSettings.h" />
+    <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
+    <ClInclude Include="KashipanEngine\InputHeaders.h" />
+    <ClInclude Include="KashipanEngine\MathHeaders.h" />
+    <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
+    <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
-    <ClInclude Include="Application\Scenes\Components\GameProgressController.h" />
-    <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
-    <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
-    <ClInclude Include="Application\Scenes\GameScene.h" />
-    <ClInclude Include="Application\Scenes\ResultScene.h" />
-    <ClInclude Include="Application\Scenes\TestScene.h" />
-    <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -332,7 +311,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Debug\ImGuiManager.h" />
     <ClInclude Include="KashipanEngine\Debug\Logger.h" />
     <ClInclude Include="KashipanEngine\Debug\LogSettings.h" />
-    <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
@@ -440,6 +418,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
+    <ClInclude Include="KashipanEngine\UtilitiesHeaders.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />
     <ClInclude Include="KashipanEngine\Utilities\Dialogs\ConfirmDialog.h" />
@@ -455,8 +434,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Utilities\FileIO\JSON.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\TextFile.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\FractalNoise.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Matrix4x4.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\PerlinNoise.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector2.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector3.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector4.h" />

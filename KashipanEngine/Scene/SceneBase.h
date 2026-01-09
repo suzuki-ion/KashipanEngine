@@ -127,6 +127,9 @@ protected:
         return sceneComponentsIndexByName_.count(componentName);
     }
 
+    void AddSceneVariable(const std::string &key, const std::any &value);
+    const MyStd::AnyUnorderedMap &GetSceneVariables() const;
+
     static AudioManager *GetAudioManager() { return sAudioManager; }
     static ModelManager *GetModelManager() { return sModelManager; }
     static SamplerManager *GetSamplerManager() { return sSamplerManager; }

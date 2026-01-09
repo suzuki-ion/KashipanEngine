@@ -1,16 +1,14 @@
 #pragma once
-// 既存のMath構造体
-#include "Math/Vector2.h"
-#include "Math/Vector3.h"
-#include "Math/Vector4.h"
-#include "Math/Matrix3x3.h"
-#include "Math/Matrix4x4.h"
 
-// ユーティリティ
-#include "Utilities/MathUtils.h"
-
-// コアシステム
-#include "Core/GameEngine.h"
+#include "AssetsHeaders.h"
+#include "CoreHeaders.h"
+#include "EngineSettings.h"
+#include "GraphicsHeaders.h"
+#include "InputHeaders.h"
+#include "MathHeaders.h"
+#include "ObjectsHeaders.h"
+#include "SceneHeaders.h"
+#include "UtilitiesHeaders.h"
 
 namespace KashipanEngine {
 int Execute(PasskeyForWinMain, const std::string &engineSettingsPath);

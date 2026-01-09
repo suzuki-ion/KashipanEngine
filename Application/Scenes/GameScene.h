@@ -1,8 +1,5 @@
 #pragma once
-
-#include "Scene/SceneBase.h"
-#include "Graphics/ScreenBuffer.h"
-#include "Assets/AudioManager.h"
+#include <KashipanEngine.h>
 
 namespace KashipanEngine {
 

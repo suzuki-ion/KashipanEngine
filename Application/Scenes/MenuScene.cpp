@@ -1,14 +1,28 @@
-#include "Scenes/TitleScene.h"
-#include "Scenes/Components/ScreenBufferKeepRatio.h"
-#include "Objects/Components/ParticleMovement.h"
+#include "Scenes/MenuScene.h"
 
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
+#include "Scenes/Components/ScreenBufferKeepRatio.h"
+#include "Objects/Components/ParticleMovement.h"
 
 namespace KashipanEngine {
 
-TitleScene::TitleScene()
-    : SceneBase("TitleScene") {
+namespace {
+SamplerManager::SamplerHandle CreateShadowSampler() {
+    D3D12_SAMPLER_DESC desc{};
+    desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    desc.MaxLOD = D3D12_FLOAT32_MAX;
+    desc.MaxAnisotropy = 1;
+    return SamplerManager::CreateSampler(desc);
+}
+} // namespace
+
+MenuScene::MenuScene()
+    : SceneBase("MenuScene") {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
 
@@ -195,15 +209,15 @@ TitleScene::TitleScene()
     }
 }
 
-TitleScene::~TitleScene() {
+MenuScene::~MenuScene() {
     ClearObjects2D();
     ClearObjects3D();
 }
 
-void TitleScene::OnUpdate() {
+void MenuScene::OnUpdate() {
     // window resize
     if (screenCamera2D_ && screenSprite_) {
-        if (auto *window = Window::GetWindow("Main Window")) {
+        if (auto* window = Window::GetWindow("Main Window")) {
             const float w = static_cast<float>(window->GetClientWidth());
             const float h = static_cast<float>(window->GetClientHeight());
             screenCamera2D_->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
@@ -213,7 +227,7 @@ void TitleScene::OnUpdate() {
 
     // simple animation
     if (sphere_) {
-        if (auto *tr = sphere_->GetComponent3D<Transform3D>()) {
+        if (auto* tr = sphere_->GetComponent3D<Transform3D>()) {
             Vector3 r = tr->GetRotate();
             r.y += 0.01f;
             tr->SetRotate(r);
@@ -224,7 +238,7 @@ void TitleScene::OnUpdate() {
     if (light_ && lightCamera3D_) {
         Vector3 lightDir = light_->GetDirection().Normalize();
         Vector3 targetPos = Vector3(0.0f, 0.0f, 0.0f) - lightDir * 10.0f;
-        if (auto *tr = lightCamera3D_->GetComponent3D<Transform3D>()) {
+        if (auto* tr = lightCamera3D_->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(targetPos);
             Vector3 rot = Vector3(0.0f, 0.0f, 0.0f);
             rot.x = std::asin(-lightDir.y);
@@ -241,7 +255,7 @@ void TitleScene::OnUpdate() {
     if (auto *ic = GetInputCommand()) {
         if (ic->Evaluate("DebugSceneChange").Triggered()) {
             if (GetNextSceneName().empty()) {
-                SetNextSceneName("MenuScene");
+                SetNextSceneName("GameScene");
             }
             if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                 out->Play();

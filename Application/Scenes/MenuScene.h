@@ -3,10 +3,10 @@
 
 namespace KashipanEngine {
 
-class ResultScene final : public SceneBase {
+class MenuScene final : public SceneBase {
 public:
-    ResultScene();
-    ~ResultScene() override;
+    MenuScene();
+    ~MenuScene() override;
 
 protected:
     void OnUpdate() override;

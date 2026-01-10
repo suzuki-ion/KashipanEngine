@@ -3,11 +3,6 @@
 
 namespace KashipanEngine {
 
-class Camera2D;
-class Sprite;
-class Camera3D;
-class Sphere;
-
 class GameOverScene final : public SceneBase {
 public:
     GameOverScene();
@@ -18,16 +13,19 @@ protected:
 
 private:
     ScreenBuffer *screenBuffer_ = nullptr;
+    ShadowMapBuffer *shadowMapBuffer_ = nullptr;
+    ShadowMapBinder *shadowMapBinder_ = nullptr;
+
     Camera2D *screenCamera2D_ = nullptr;
     Sprite *screenSprite_ = nullptr;
 
     Camera3D *mainCamera3D_ = nullptr;
-    Sphere *player_ = nullptr;
+    Camera3D *lightCamera3D_ = nullptr;
 
-    Vector3 playerMoveMin_ = Vector3{ -5.0f, 0.0f, -5.0f };
-    Vector3 playerMoveMax_ = Vector3{ 5.0f, 0.0f, 5.0f };
+    DirectionalLight *light_ = nullptr;
 
-    AudioManager::PlayHandle bgmPlay_ = AudioManager::kInvalidPlayHandle;
+    Object3DBase *floor_ = nullptr;
+    Object3DBase *sphere_ = nullptr;
 };
 
 } // namespace KashipanEngine

@@ -125,6 +125,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
     <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
+    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
+    <ClCompile Include="Application\Scenes\GameScene.cpp" />
+    <ClCompile Include="Application\Scenes\MenuScene.cpp" />
+    <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
     <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
@@ -274,6 +278,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
     <ClInclude Include="Application\Scenes\Components\ScreenBufferKeepRatio.h" />
+    <ClInclude Include="Application\Scenes\GameOverScene.h" />
+    <ClInclude Include="Application\Scenes\GameScene.h" />
+    <ClInclude Include="Application\Scenes\MenuScene.h" />
+    <ClInclude Include="Application\Scenes\ResultScene.h" />
     <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />

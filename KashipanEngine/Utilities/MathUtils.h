@@ -1,4 +1,5 @@
 #pragma once
+#include "MathUtils/Easings.h"
 #include "MathUtils/Vector2.h"
 #include "MathUtils/Vector3.h"
 #include "MathUtils/Vector4.h"

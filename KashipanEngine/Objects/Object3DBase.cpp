@@ -275,9 +275,6 @@ RenderPass Object3DBase::CreateRenderPass(ShadowMapBuffer *targetBuffer, const s
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
         passInfo.batchKey = instanceBatchKey_;
-        passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
-            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
-        };
         passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
             return RenderBatched(shaderBinder, instanceCount);
         };
@@ -289,6 +286,17 @@ RenderPass Object3DBase::CreateRenderPass(ShadowMapBuffer *targetBuffer, const s
     }
     cachedRenderPass_->instanceBufferRequirements = {
         {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)}
+    };
+    cachedRenderPass_->submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+        if (!instanceMaps) return false;
+        auto **maps = static_cast<void **>(instanceMaps);
+
+        // ShadowMapBuffer 用のパスは Transform のみを送る
+        if (transform_) {
+            void *transformMap = maps[0];
+            transform_->SubmitInstance(transformMap, instanceIndex);
+        }
+        return true;
     };
 
     cachedRenderPass_->window = nullptr;
@@ -315,22 +323,32 @@ bool Object3DBase::RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32
 }
 
 bool Object3DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) {
+    (void)shaderBinder;
     if (!instanceMaps) return false;
     auto **maps = static_cast<void **>(instanceMaps);
 
-    if (shaderBinder.GetNameMap().Contains("Vertex:gTransformationMatrices")) {
+    /*if (shaderBinder.GetNameMap().Contains("Vertex:gTransformationMatrices")) {
         void *transformMap = maps[0];
-        if (auto *transform3D = GetComponent3D<Transform3D>()) {
-            auto r = transform3D->SubmitInstance(transformMap, instanceIndex);
+        if (transform_) {
+            auto r = transform_->SubmitInstance(transformMap, instanceIndex);
             if (r != std::nullopt && r.value() == false) return false;
         }
     }
     if (shaderBinder.GetNameMap().Contains("Pixel:gMaterials")) {
         void *materialMap = maps[1];
-        if (auto *material3D = GetComponent3D<Material3D>()) {
-            auto r = material3D->SubmitInstance(materialMap, instanceIndex);
+        if (material_) {
+            auto r = material_->SubmitInstance(materialMap, instanceIndex);
             if (r != std::nullopt && r.value() == false) return false;
         }
+    }*/
+
+    if (transform_) {
+        void *transformMap = maps[0];
+        transform_->SubmitInstance(transformMap, instanceIndex);
+    }
+    if (material_ && shaderBinder.GetNameMap().Contains("Pixel:gMaterials")) {
+        void *materialMap = maps[1];
+        material_->SubmitInstance(materialMap, instanceIndex);
     }
 
     return true;
@@ -379,6 +397,7 @@ Object3DBase::Object3DBase(const std::string &name) {
     instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
     context_ = std::make_unique<Object3DContext>(Passkey<Object3DBase>{}, this);
     RegisterComponent<Transform3D>();
+    transform_ = GetComponent3D<Transform3D>();
 }
 
 Object3DBase::Object3DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
@@ -420,6 +439,9 @@ Object3DBase::Object3DBase(const std::string &name, size_t vertexByteSize, size_
         = TextureManager::GetTextureFromFileName("uvChecker.png");
     SamplerManager::SamplerHandle defaultSampler = 1;
     RegisterComponent<Material3D>(defaultMaterialColor, defaultTexture, defaultSampler);
+
+    transform_ = GetComponent3D<Transform3D>();
+    material_ = GetComponent3D<Material3D>();
 }
 
 std::optional<RenderCommand> Object3DBase::CreateRenderCommand(PipelineBinder &pipelineBinder) {
@@ -444,14 +466,7 @@ RenderCommand Object3DBase::CreateDefaultRenderCommand() const {
 }
 
 void Object3DBase::Update() {
-    std::vector<IObjectComponent*> sorted;
-    sorted.reserve(components_.size());
-    for (auto &c : components_) sorted.push_back(c.get());
-    std::stable_sort(sorted.begin(), sorted.end(), [](const IObjectComponent* a, const IObjectComponent* b) {
-        return a->GetUpdatePriority() < b->GetUpdatePriority();
-    });
-
-    for (auto *c : sorted) {
+    for (auto *c : components3D_) {
         c->Update();
     }
     OnUpdate();

@@ -28,6 +28,8 @@ namespace KashipanEngine {
 
 class Object2DContext;
 class ScreenBuffer;
+class Transform2D;
+class Material2D;
 
 /// @brief 2Dオブジェクト基底クラス
 class Object2DBase {
@@ -378,6 +380,9 @@ private:
     std::string passName_ = "GameObject2D";
 
     mutable std::optional<RenderPass> cachedRenderPass_;
+
+    Transform2D *transform_ = nullptr;
+    Material2D *material_ = nullptr;
 
     UINT vertexCount_ = 0;
     UINT indexCount_ = 0;

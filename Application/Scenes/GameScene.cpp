@@ -152,7 +152,7 @@ void GameScene::Initialize() {
         spawn.min = Vector3(-32.0f, 0.0f, -32.0f);
         spawn.max = Vector3(32.0f, 32.0f, 32.0f);
 
-        for (int i = 0; i < 1024; ++i) {
+        for (int i = 0; i < 2048; ++i) {
             auto obj = std::make_unique<Box>();
             obj->SetName("ParticleBox_" + std::to_string(i));
             obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{0.5f, 0.5f, 0.5f});

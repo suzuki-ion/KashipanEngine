@@ -5,35 +5,151 @@
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
 #include <unordered_map>
+#include <chrono>
+
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#endif
 
 namespace KashipanEngine {
 
+namespace {
+using Clock = std::chrono::high_resolution_clock;
+}
+
+class RendererCpuTimerScope final {
+public:
+    RendererCpuTimerScope(Renderer &r, Renderer::CpuTimerStats::Scope scope) noexcept
+        : r_(r), scope_(scope), begin_(Clock::now()) {}
+    ~RendererCpuTimerScope() {
+        const auto end = Clock::now();
+        const double ms = std::chrono::duration<double, std::milli>(end - begin_).count();
+        r_.AddCpuTimerSample_(scope_, ms);
+    }
+
+    RendererCpuTimerScope(const RendererCpuTimerScope &) = delete;
+    RendererCpuTimerScope &operator=(const RendererCpuTimerScope &) = delete;
+
+private:
+    Renderer &r_;
+    Renderer::CpuTimerStats::Scope scope_;
+    Clock::time_point begin_;
+};
+
+namespace {
+static const char *ToLabel(Renderer::CpuTimerStats::Scope s) {
+    using S = Renderer::CpuTimerStats::Scope;
+    switch (s) {
+    case S::RenderFrame: return "RenderFrame";
+    case S::ShadowMap_AllBeginRecord: return "ShadowMap AllBeginRecord";
+    case S::ShadowMap_Passes: return "ShadowMap Passes";
+    case S::ShadowMap_AllEndRecord: return "ShadowMap AllEndRecord";
+    case S::ShadowMap_Execute: return "ShadowMap Execute";
+    case S::Offscreen_AllBeginRecord: return "Offscreen AllBeginRecord";
+    case S::Offscreen_Passes: return "Offscreen Passes";
+    case S::Offscreen_AllEndRecord: return "Offscreen AllEndRecord";
+    case S::Offscreen_Execute: return "Offscreen Execute";
+    case S::Screen_Passes: return "Screen Passes";
+    case S::Persistent_Passes: return "Persistent Passes";
+    case S::Standard_Total: return "Standard Total";
+    case S::Standard_ConstantBuffer_Update: return "Standard CB Update(Map/Unmap + update)";
+    case S::Standard_ConstantBuffer_Bind: return "Standard CB Bind";
+    case S::Standard_InstanceBuffer_Update: return "Standard IB Update(Map/Unmap + submit)";
+    case S::Standard_RenderCommand: return "Standard RenderCommand + Draw";
+    case S::Instancing_Total: return "Instancing Total";
+    case S::Instancing_ConstantBuffer_Update: return "Instancing CB Update(Map/Unmap + update)";
+    case S::Instancing_ConstantBuffer_Bind: return "Instancing CB Bind";
+    case S::Instancing_InstanceBuffer_MapBind: return "Instancing IB Map/Bind";
+    case S::Instancing_SubmitInstances: return "Instancing SubmitInstances(loop)";
+    case S::Instancing_RenderCommand: return "Instancing RenderCommand + Draw";
+    default: return "(unknown)";
+    }
+}
+} // namespace
+
+void Renderer::SetCpuTimerAverageWindow(std::uint32_t frames) noexcept {
+    if (frames == 0) frames = 1;
+    cpuTimerStats_.avgWindow = frames;
+}
+
+void Renderer::BeginCpuTimerFrame_() noexcept {
+    // 現状はフレーム開始処理は無し（必要ならここでリセットや集計を実施）
+}
+
+void Renderer::AddCpuTimerSample_(CpuTimerStats::Scope scope, double ms) noexcept {
+    const std::size_t idx = static_cast<std::size_t>(scope);
+    if (idx >= cpuTimerStats_.samples.size()) return;
+
+    auto &s = cpuTimerStats_.samples[idx];
+    s.lastMs = ms;
+    ++s.count;
+
+    const double w = static_cast<double>(cpuTimerStats_.avgWindow == 0 ? 1u : cpuTimerStats_.avgWindow);
+    if (s.count == 1) {
+        s.avgMs = ms;
+    } else {
+        // EMA（window相当）で軽量に平均化
+        const double alpha = 2.0 / (w + 1.0);
+        s.avgMs = s.avgMs + alpha * (ms - s.avgMs);
+    }
+}
+
 void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
+    BeginCpuTimerFrame_();
+    RendererCpuTimerScope tFrame(*this, CpuTimerStats::Scope::RenderFrame);
+
     for (auto &[hwnd, binder] : windowBinders_) {
         binder.Invalidate();
     }
 
     {
         // ShadowMapBuffer の記録をフレーム内でまとめて行い、一括 Close/Execute する
-        ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>{});
-        RenderShadowMapPasses();
-        auto lists = ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{});
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllBeginRecord);
+            ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>{});
+        }
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Passes);
+            RenderShadowMapPasses();
+        }
+        decltype(ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{})) lists;
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllEndRecord);
+            lists = ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{});
+        }
         if (!lists.empty() && directXCommon_) {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Execute);
             directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
         }
     }
     {
         // ScreenBuffer の記録をフレーム内でまとめて行い、一括 Close/Execute する
-        ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
-        RenderOffscreenPasses();
-        auto lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllBeginRecord);
+            ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
+        }
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Passes);
+            RenderOffscreenPasses();
+        }
+        decltype(ScreenBuffer::AllEndRecord(Passkey<Renderer>{})) lists;
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllEndRecord);
+            lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
+        }
         if (!lists.empty() && directXCommon_) {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Execute);
             directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
         }
     }
-
-    RenderScreenPasses();
-    RenderPersistentPasses();
+    {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Screen_Passes);
+        RenderScreenPasses();
+    }
+    {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Persistent_Passes);
+        RenderPersistentPasses();
+    }
 }
 
 Renderer::PersistentShadowMapPassHandle Renderer::RegisterPersistentShadowMapRenderPass(RenderPass &&pass) {
@@ -186,6 +302,7 @@ void Renderer::RenderScreenPasses() {
         bool ok = true;
 
         {
+            RendererCpuTimerScope tCbUpdate(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Update);
             std::vector<void *> cbMappedPtrs;
             cbMappedPtrs.reserve(passInfo->constantBufferRequirements.size());
             std::vector<ConstantBufferResource *> cbMappedBuffers;
@@ -208,10 +325,14 @@ void Renderer::RenderScreenPasses() {
                 ok = ok && passInfo->updateConstantBuffersFunction(constantBufferMaps, instanceCount);
             }
 
-            for (auto *b : cbMappedBuffers) {
-                if (b) b->Unmap();
-            }
+            // 永続Mapのため Unmap は不要
 
+            if (ok) {
+                // Bind は update と分けて計測したいので、ここで update計測を閉じて Bind側を別スコープにする
+            }
+        }
+        {
+            RendererCpuTimerScope tCbBind(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Bind);
             if (ok) {
                 for (const auto &req : passInfo->constantBufferRequirements) {
                     ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, 0, req.shaderNameKey, req.byteSize };
@@ -250,7 +371,8 @@ void Renderer::RenderPersistentPasses() {
 }
 
 void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
-    std::function<void *(const RenderPass *)> getTargetKeyFunc) {
+     std::function<void *(const RenderPass *)> getTargetKeyFunc) {
+    RendererCpuTimerScope tTotal(*this, CpuTimerStats::Scope::Standard_Total);
     for (const auto *passInfo : renderPasses) {
         if (!passInfo) continue;
 
@@ -332,6 +454,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
 
         // Constant buffers (per pass)
         {
+            RendererCpuTimerScope tCbUpdate(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Update);
             std::vector<void *> cbMappedPtrs;
             cbMappedPtrs.reserve(passInfo->constantBufferRequirements.size());
             std::vector<ConstantBufferResource *> cbMappedBuffers;
@@ -354,10 +477,14 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
                 ok = ok && passInfo->updateConstantBuffersFunction(constantBufferMaps, instanceCount);
             }
 
-            for (auto *b : cbMappedBuffers) {
-                if (b) b->Unmap();
-            }
+            // 永続Mapのため Unmap は不要
 
+            if (ok) {
+                // Bind は update と分けて計測したいので、ここで update計測を閉じて Bind側を別スコープにする
+            }
+        }
+        {
+            RendererCpuTimerScope tCbBind(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Bind);
             if (ok) {
                 for (const auto &req : passInfo->constantBufferRequirements) {
                     ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, passInfo->batchKey, req.shaderNameKey, req.byteSize };
@@ -380,6 +507,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
         std::vector<void *> mappedPtrs;
         std::vector<StructuredBufferResource *> mappedBuffers;
         if (ok && !passInfo->instanceBufferRequirements.empty()) {
+            RendererCpuTimerScope tIbUpdate(*this, CpuTimerStats::Scope::Standard_InstanceBuffer_Update);
             if (!passInfo->submitInstanceFunction) {
                 ok = false;
             } else {
@@ -407,9 +535,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
                     ok = ok && passInfo->submitInstanceFunction(instanceMaps, shaderVariableBinder, 0);
                 }
 
-                for (auto *b : mappedBuffers) {
-                    if (b) b->Unmap();
-                }
+                // 永続Mapのため Unmap は不要
             }
         }
 
@@ -420,6 +546,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
             continue;
         }
 
+        RendererCpuTimerScope tCmd(*this, CpuTimerStats::Scope::Standard_RenderCommand);
         auto renderCommandOpt = passInfo->renderCommandFunction(pipelineBinder);
         if (!renderCommandOpt) {
             if (passInfo->screenBuffer) {
@@ -436,7 +563,8 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
 }
 
 void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses,
-    std::function<void *(const RenderPass *)> /*getTargetKeyFunc*/) {
+     std::function<void *(const RenderPass *)> /*getTargetKeyFunc*/) {
+    RendererCpuTimerScope tTotal(*this, CpuTimerStats::Scope::Instancing_Total);
 
     for (auto &kv : renderPasses) {
         const auto &key = kv.first;
@@ -523,6 +651,7 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
 
         // Constant buffers (shared per batch)
         {
+            RendererCpuTimerScope tCbUpdate(*this, CpuTimerStats::Scope::Instancing_ConstantBuffer_Update);
             std::vector<void *> cbMappedPtrs;
             cbMappedPtrs.reserve(first->constantBufferRequirements.size());
             std::vector<ConstantBufferResource *> cbMappedBuffers;
@@ -545,10 +674,14 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
                 ok = ok && first->updateConstantBuffersFunction(constantBufferMaps, instanceCount);
             }
 
-            for (auto *b : cbMappedBuffers) {
-                if (b) b->Unmap();
-            }
+            // 永続Mapのため Unmap は不要
 
+            if (ok) {
+                // Bind は update と分けて計測したいので、ここで update計測を閉じて Bind側を別スコープにする
+            }
+        }
+        {
+            RendererCpuTimerScope tCbBind(*this, CpuTimerStats::Scope::Instancing_ConstantBuffer_Bind);
             if (ok) {
                 for (const auto &req : first->constantBufferRequirements) {
                     ConstantBufferKey cbKey{ key.targetKey, key.pipelineName, key.key, req.shaderNameKey, req.byteSize };
@@ -571,6 +704,7 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         std::vector<void *> mappedPtrs;
         std::vector<StructuredBufferResource *> mappedBuffers;
         if (ok) {
+            RendererCpuTimerScope tIb(*this, CpuTimerStats::Scope::Instancing_InstanceBuffer_MapBind);
             mappedPtrs.reserve(first->instanceBufferRequirements.size());
             mappedBuffers.reserve(first->instanceBufferRequirements.size());
 
@@ -592,27 +726,23 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         }
 
         if (!ok) {
-            for (auto *b : mappedBuffers) {
-                if (b) b->Unmap();
-            }
             if (first->screenBuffer) {
                 ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
             }
             continue;
         }
 
-        std::vector<void *> mapsTable = mappedPtrs;
-        void *instanceMaps = mapsTable.empty() ? nullptr : mapsTable.data();
+        {
+            std::vector<void *> mapsTable = mappedPtrs;
+            void *instanceMaps = mapsTable.empty() ? nullptr : mapsTable.data();
 
-        for (std::uint32_t i = 0; i < instanceCount; ++i) {
-            if (!itemsPtrs[i]->submitInstanceFunction(instanceMaps, shaderVariableBinder, i)) {
-                ok = false;
-                break;
+            RendererCpuTimerScope tSubmit(*this, CpuTimerStats::Scope::Instancing_SubmitInstances);
+            for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                if (!itemsPtrs[i]->submitInstanceFunction(instanceMaps, shaderVariableBinder, i)) {
+                    ok = false;
+                    break;
+                }
             }
-        }
-
-        for (auto *b : mappedBuffers) {
-            if (b) b->Unmap();
         }
 
         if (!ok) {
@@ -622,6 +752,7 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
             continue;
         }
 
+        RendererCpuTimerScope tCmd(*this, CpuTimerStats::Scope::Instancing_RenderCommand);
         auto renderCommandOpt = first->renderCommandFunction(pipelineBinder);
         if (!renderCommandOpt) {
             if (first->screenBuffer) {
@@ -856,5 +987,50 @@ void Renderer::IssueRenderCommand(ID3D12GraphicsCommandList *commandList, const 
         );
     }
 }
+
+#if defined(USE_IMGUI)
+void Renderer::ShowImGuiCpuTimersWindow() {
+    if (!ImGui::Begin("Renderer CPU Timers")) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Text("Avg Window (EMA): %u", cpuTimerStats_.avgWindow);
+    if (ImGui::Button("AvgWindow 60")) SetCpuTimerAverageWindow(60);
+    ImGui::SameLine();
+    if (ImGui::Button("AvgWindow 120")) SetCpuTimerAverageWindow(120);
+    ImGui::SameLine();
+    if (ImGui::Button("AvgWindow 300")) SetCpuTimerAverageWindow(300);
+
+    ImGui::Separator();
+
+    if (ImGui::BeginTable("##RendererCpuTimers", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+        ImGui::TableSetupColumn("Scope");
+        ImGui::TableSetupColumn("Last (ms)", ImGuiTableColumnFlags_WidthFixed, 90);
+        ImGui::TableSetupColumn("Avg (ms)", ImGuiTableColumnFlags_WidthFixed, 90);
+        ImGui::TableSetupColumn("Count", ImGuiTableColumnFlags_WidthFixed, 70);
+        ImGui::TableHeadersRow();
+
+        for (std::size_t i = 0; i < cpuTimerStats_.samples.size(); ++i) {
+            auto scope = static_cast<CpuTimerStats::Scope>(i);
+            const auto &s = cpuTimerStats_.samples[i];
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::TextUnformatted(ToLabel(scope));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.3f", static_cast<float>(s.lastMs));
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text("%.3f", static_cast<float>(s.avgMs));
+            ImGui::TableSetColumnIndex(3);
+            ImGui::Text("%llu", static_cast<unsigned long long>(s.count));
+        }
+
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+#endif
 
 } // namespace KashipanEngine

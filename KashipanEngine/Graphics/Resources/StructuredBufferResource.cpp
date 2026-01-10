@@ -8,6 +8,7 @@ StructuredBufferResource::StructuredBufferResource(size_t elementStride, size_t 
 }
 
 bool StructuredBufferResource::Recreate(size_t elementStride, size_t elementCount, const void* initialData, ID3D12Resource* existingResource) {
+    ResetMappedPointer_();
     ResetResourceForRecreate();
     return Initialize(elementStride, elementCount, initialData, existingResource);
 }
@@ -51,10 +52,9 @@ bool StructuredBufferResource::Initialize(size_t elementStride, size_t elementCo
     }
 
     if (initialData) {
-        void* dst = nullptr;
-        GetResource()->Map(0, nullptr, &dst);
+        void* dst = Map();
+        if (!dst) return false;
         memcpy(dst, initialData, bufferSize_);
-        GetResource()->Unmap(0, nullptr);
     }
 
     auto handle = srvHeap->AllocateDescriptorHandle();
@@ -75,17 +75,18 @@ bool StructuredBufferResource::Initialize(size_t elementStride, size_t elementCo
 }
 
 void* StructuredBufferResource::Map() {
+    if (mappedPtr_) return mappedPtr_;
+
     void* ptr = nullptr;
     if (GetResource()) {
         GetResource()->Map(0, nullptr, &ptr);
     }
-    return ptr;
+    mappedPtr_ = ptr;
+    return mappedPtr_;
 }
 
 void StructuredBufferResource::Unmap() {
-    if (GetResource()) {
-        GetResource()->Unmap(0, nullptr);
-    }
+    // Upload heap は永続Mapしておく想定。互換のためAPIは残す。
 }
 
 } // namespace KashipanEngine

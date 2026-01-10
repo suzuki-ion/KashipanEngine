@@ -1,13 +1,5 @@
 #pragma once
-
-#include "Objects/IObjectComponent.h"
-#include "Objects/ObjectContext.h"
-
-#include "Math/Vector3.h"
-#include "Math/Easings.h"
-#include "Objects/Components/3D/Transform3D.h"
-#include "Utilities/RandomValue.h"
-#include "Utilities/TimeUtils.h"
+#include <KashipanEngine.h>
 
 #include <algorithm>
 #include <memory>
@@ -16,11 +8,6 @@ namespace KashipanEngine {
 
 class ParticleMovement final : public IObjectComponent3D {
 public:
-    static const std::string &GetStaticComponentType() {
-        static const std::string type = "ParticleMovement";
-        return type;
-    }
-
     struct SpawnBox {
         Vector3 min{ -5.0f, 0.0f, -5.0f };
         Vector3 max{ 5.0f, 5.0f, 5.0f };
@@ -31,7 +18,7 @@ public:
         float speed = 2.0f,
         float lifeTimeSec = 2.0f,
         Vector3 baseScale = Vector3{ 0.5f, 0.5f, 0.5f })
-        : IObjectComponent3D(GetStaticComponentType(), 1),
+        : IObjectComponent3D("ParticleMovement", 1),
           spawnBox_(spawnBox),
           speed_(speed),
           lifeTimeSec_(lifeTimeSec),
@@ -50,13 +37,12 @@ public:
     std::optional<bool> Initialize() override {
         Respawn_();
         elapsed_ = GetRandomFloat(0.0f, lifeTimeSec_);
+        transform_ = GetOwner3DContext()->GetComponent<Transform3D>();
         return true;
     }
 
     std::optional<bool> Update() override {
-        auto *tr = GetTransform();
-        if (!tr) return false;
-
+        if (!transform_) return true;
         const float dt = std::max(0.0f, GetDeltaTime());
         elapsed_ += dt;
 
@@ -67,8 +53,8 @@ public:
 
         // movement
         {
-            const Vector3 pos = tr->GetTranslate();
-            tr->SetTranslate(pos + velocityDir_ * (speed_ * dt));
+            const Vector3 pos = transform_->GetTranslate();
+            transform_->SetTranslate(pos + velocityDir_ * (speed_ * dt));
         }
 
         // scale animation
@@ -82,7 +68,7 @@ public:
                 const float t = (half > 0.0f) ? std::clamp((elapsed_ - half) / half, 0.0f, 1.0f) : 1.0f;
                 s = EaseInCubic(1.0f, 0.0f, t);
             }
-            tr->SetScale(baseScale_ * s);
+            transform_->SetScale(baseScale_ * s);
         }
 
         if (elapsed_ >= lifeTimeSec_) {
@@ -107,23 +93,12 @@ public:
 #endif
 
 private:
-    Transform3D *GetTransform() const {
-        Object3DContext *ctx = GetOwner3DContext();
-        if (!ctx) return nullptr;
-
-        auto comps = ctx->GetComponents("Transform3D");
-        if (comps.empty() || !comps[0]) return nullptr;
-        return static_cast<Transform3D *>(comps[0]);
-    }
-
     void Respawn_() {
-        auto *tr = GetTransform();
-        if (!tr) return;
-
+        if (!transform_) return;
         const float x = GetRandomFloat(spawnBox_.min.x, spawnBox_.max.x);
         const float y = GetRandomFloat(spawnBox_.min.y, spawnBox_.max.y);
         const float z = GetRandomFloat(spawnBox_.min.z, spawnBox_.max.z);
-        tr->SetTranslate(Vector3(x, y, z));
+        transform_->SetTranslate(Vector3(x, y, z));
 
         // Random direction (avoid near-zero)
         Vector3 dir{
@@ -136,8 +111,10 @@ private:
 
         elapsed_ = 0.0f;
 
-        tr->SetScale(Vector3(0.0f, 0.0f, 0.0f));
+        transform_->SetScale(Vector3(0.0f, 0.0f, 0.0f));
     }
+
+    Transform3D *transform_ = nullptr;
 
     SpawnBox spawnBox_{};
     float speed_ = 2.0f;

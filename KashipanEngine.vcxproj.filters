@@ -318,7 +318,7 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Billboard.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Math\Easings.cpp">
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp">
@@ -908,7 +908,7 @@
     <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Math\Easings.h">
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneContext.h">
@@ -1102,5 +1102,18 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\TriangleShadow.json" />
+    <None Include="Docs\EngineReference\01_KashipanEngine.h.md" />
+    <None Include="Docs\EngineReference\02_Objects_Types.md" />
+    <None Include="Docs\EngineReference\03_ObjectComponents.md" />
+    <None Include="Docs\EngineReference\04_Scenes.md" />
+    <None Include="Docs\EngineReference\05_SceneComponents.md" />
+    <None Include="Docs\EngineReference\06_Windows.md" />
+    <None Include="Docs\EngineReference\07_ScreenBuffer.md" />
+    <None Include="Docs\EngineReference\08_Assets_Texture_Sound_Model.md" />
+    <None Include="Docs\EngineReference\09_InputCommand.md" />
+    <None Include="Docs\EngineReference\10_DefaultObjectComponents.md" />
+    <None Include="Docs\EngineReference\11_DefaultSceneComponents.md" />
+    <None Include="Docs\EngineReference\12_Utilities.md" />
+    <None Include="Docs\EngineReference\13_Logging.md" />
   </ItemGroup>
 </Project>

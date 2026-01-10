@@ -23,6 +23,8 @@ namespace KashipanEngine {
 class Object3DContext;
 class ScreenBuffer;
 class ShadowMapBuffer;
+class Transform3D;
+class Material3D;
 
 /// @brief 3Dオブジェクト基底クラス
 class Object3DBase {
@@ -378,6 +380,9 @@ private:
     std::string passName_ = "GameObject3D";
 
     mutable std::optional<RenderPass> cachedRenderPass_;
+
+    Transform3D *transform_ = nullptr;
+    Material3D *material_ = nullptr;
 
     UINT vertexCount_ = 0;
     UINT indexCount_ = 0;

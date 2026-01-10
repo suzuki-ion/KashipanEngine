@@ -265,6 +265,12 @@ void GameEngine::GameLoopDraw() {
     if (imguiManager_) {
         DrawProfilingImGui();
 
+        if (graphicsEngine_) {
+            if (auto *renderer = graphicsEngine_->GetRenderer({})) {
+                renderer->ShowImGuiCpuTimersWindow();
+            }
+        }
+
         ScreenBuffer::ShowImGuiScreenBuffersWindow();
         ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow();
 

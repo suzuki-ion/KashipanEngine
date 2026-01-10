@@ -246,15 +246,15 @@ bool Object2DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shad
 
     if (shaderBinder.GetNameMap().Contains("Vertex:gTransformationMatrices")) {
         void *transformMap = maps[0];
-        if (auto *transform2D = GetComponent2D<Transform2D>()) {
-            auto r = transform2D->SubmitInstance(transformMap, instanceIndex);
+        if (transform_) {
+            auto r = transform_->SubmitInstance(transformMap, instanceIndex);
             if (r != std::nullopt && r.value() == false) return false;
         }
     }
     if (shaderBinder.GetNameMap().Contains("Pixel:gMaterials")) {
         void *materialMap = maps[1];
-        if (auto *material2D = GetComponent2D<Material2D>()) {
-            auto r = material2D->SubmitInstance(materialMap, instanceIndex);
+        if (material_) {
+            auto r = material_->SubmitInstance(materialMap, instanceIndex);
             if (r != std::nullopt && r.value() == false) return false;
         }
     }
@@ -305,6 +305,7 @@ Object2DBase::Object2DBase(const std::string &name) {
     instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
     context_ = std::make_unique<Object2DContext>(Passkey<Object2DBase>{}, this);
     RegisterComponent<Transform2D>();
+    transform_ = GetComponent2D<Transform2D>();
 }
 
 Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
@@ -346,6 +347,9 @@ Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_
         = TextureManager::GetTextureFromFileName("uvChecker.png");
     SamplerManager::SamplerHandle defaultSampler = 1;
     RegisterComponent<Material2D>(defaultMaterialColor, defaultTexture, defaultSampler);
+
+    transform_ = GetComponent2D<Transform2D>();
+    material_ = GetComponent2D<Material2D>();
 }
 
 std::optional<RenderCommand> Object2DBase::CreateRenderCommand(PipelineBinder &pipelineBinder) {
@@ -370,14 +374,7 @@ RenderCommand Object2DBase::CreateDefaultRenderCommand() const {
 }
 
 void Object2DBase::Update() {
-    std::vector<IObjectComponent*> sorted;
-    sorted.reserve(components_.size());
-    for (auto &c : components_) sorted.push_back(c.get());
-    std::stable_sort(sorted.begin(), sorted.end(), [](const IObjectComponent* a, const IObjectComponent* b) {
-        return a->GetUpdatePriority() < b->GetUpdatePriority();
-    });
-
-    for (auto *c : sorted) {
+    for (auto *c : components2D_) {
         c->Update();
     }
     OnUpdate();

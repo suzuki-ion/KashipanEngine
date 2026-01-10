@@ -6,6 +6,10 @@
 #include <windows.h>
 #include <optional>
 #include <cstdint>
+#include <array>
+#if defined(USE_IMGUI)
+struct ImGuiContext;
+#endif
 #include "Math/Matrix4x4.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
@@ -13,6 +17,8 @@
 #include "Graphics/Resources/ConstantBufferResource.h"
 
 namespace KashipanEngine {
+
+class RendererCpuTimerScope;
 
 class Window;
 class DirectXCommon;
@@ -135,6 +141,56 @@ private:
 /// @brief 描画用のレンダラークラス
 class Renderer final {
 public:
+    struct CpuTimerStats {
+        struct Sample {
+            double lastMs = 0.0;
+            double avgMs = 0.0;
+            std::uint64_t count = 0;
+        };
+
+        enum class Scope : std::uint32_t {
+            RenderFrame = 0,
+
+            ShadowMap_AllBeginRecord,
+            ShadowMap_Passes,
+            ShadowMap_AllEndRecord,
+            ShadowMap_Execute,
+
+            Offscreen_AllBeginRecord,
+            Offscreen_Passes,
+            Offscreen_AllEndRecord,
+            Offscreen_Execute,
+
+            Screen_Passes,
+            Persistent_Passes,
+
+            Standard_Total,
+            Standard_ConstantBuffer_Update,
+            Standard_ConstantBuffer_Bind,
+            Standard_InstanceBuffer_Update,
+            Standard_RenderCommand,
+
+            Instancing_Total,
+            Instancing_ConstantBuffer_Update,
+            Instancing_ConstantBuffer_Bind,
+            Instancing_InstanceBuffer_MapBind,
+            Instancing_SubmitInstances,
+            Instancing_RenderCommand,
+
+            Count
+        };
+
+        std::array<Sample, static_cast<std::size_t>(Scope::Count)> samples{};
+        std::uint32_t avgWindow = 60;
+    };
+
+    const CpuTimerStats &GetCpuTimerStats() const noexcept { return cpuTimerStats_; }
+    void SetCpuTimerAverageWindow(std::uint32_t frames) noexcept;
+
+#if defined(USE_IMGUI)
+    void ShowImGuiCpuTimersWindow();
+#endif
+
     struct PersistentPassHandle {
         std::uint64_t id = 0;
         bool IsValid() const { return id != 0; }
@@ -334,6 +390,13 @@ private:
     };
 
 private:
+    void BeginCpuTimerFrame_() noexcept;
+    void AddCpuTimerSample_(CpuTimerStats::Scope scope, double ms) noexcept;
+
+    CpuTimerStats cpuTimerStats_{};
+
+    friend class ::KashipanEngine::RendererCpuTimerScope;
+
     void RenderOffscreenPasses();
     void RenderScreenPasses();
     void RenderPersistentPasses();

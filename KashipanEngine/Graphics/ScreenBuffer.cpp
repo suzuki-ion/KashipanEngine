@@ -13,6 +13,11 @@ namespace KashipanEngine {
 
 std::unordered_map<ScreenBuffer*, std::unique_ptr<ScreenBuffer>> ScreenBuffer::sBufferMap_{};
 
+namespace {
+// Window と同様に「破棄要求→フレーム終端で実破棄」のための pending リスト
+static std::vector<ScreenBuffer*> sPendingDestroy;
+} // namespace
+
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
     const auto idx = GetReadIndex();
     return shaderResources_[idx] ? shaderResources_[idx]->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
@@ -44,6 +49,38 @@ bool ScreenBuffer::IsExist(ScreenBuffer* buffer) {
     return sBufferMap_.find(buffer) != sBufferMap_.end();
 }
 
+void ScreenBuffer::DestroyNotify(ScreenBuffer* buffer) {
+    if (!buffer) return;
+    if (!IsExist(buffer)) return;
+    if (IsPendingDestroy(buffer)) return;
+    sPendingDestroy.push_back(buffer);
+}
+
+bool ScreenBuffer::IsPendingDestroy(ScreenBuffer* buffer) {
+    if (!buffer) return false;
+    return std::find(sPendingDestroy.begin(), sPendingDestroy.end(), buffer) != sPendingDestroy.end();
+}
+
+void ScreenBuffer::CommitDestroy(Passkey<GameEngine>) {
+    if (sPendingDestroy.empty()) return;
+
+    // 重複があっても安全にする
+    std::stable_sort(sPendingDestroy.begin(), sPendingDestroy.end());
+    sPendingDestroy.erase(std::unique(sPendingDestroy.begin(), sPendingDestroy.end()), sPendingDestroy.end());
+
+    for (auto* ptr : sPendingDestroy) {
+        if (!ptr) continue;
+        auto it = sBufferMap_.find(ptr);
+        if (it == sBufferMap_.end()) continue;
+
+        // recording 中に消すと危険なので、commit はゲームループ終端から呼ばれる前提
+        // persistent pass 等は ScreenBuffer::Destroy() 内で DetachToRenderer される
+        sBufferMap_.erase(it);
+    }
+
+    sPendingDestroy.clear();
+}
+
 namespace {
 struct RecordState {
     ID3D12GraphicsCommandList* list = nullptr;
@@ -66,6 +103,7 @@ void ScreenBuffer::AllBeginRecord(Passkey<Renderer>) {
 
     for (auto& [ptr, owning] : sBufferMap_) {
         if (!ptr || !owning) continue;
+        if (IsPendingDestroy(ptr)) continue;
 
         // ping-pong: 今フレームの write 面へ切り替え（read は前フレームを保持）
         ptr->AdvanceFrameBufferIndex();

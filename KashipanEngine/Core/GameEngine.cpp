@@ -286,6 +286,8 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         GameLoopUpdate();
         GameLoopDraw();
         Window::CommitDestroy({});
+        ScreenBuffer::CommitDestroy({});
+        ShadowMapBuffer::CommitDestroy({});
     }
     return 0;
 }

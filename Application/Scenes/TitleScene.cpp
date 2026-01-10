@@ -9,6 +9,9 @@ namespace KashipanEngine {
 
 TitleScene::TitleScene()
     : SceneBase("TitleScene") {
+}
+
+void TitleScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
 
@@ -100,12 +103,17 @@ TitleScene::TitleScene()
         auto obj = std::make_unique<ShadowMapBinder>();
         obj->SetName("ShadowMapBinder");
         obj->SetShadowMapBuffer(shadowMapBuffer_);
-        obj->SetShadowSampler(CreateShadowSampler());
+        const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
+        obj->SetShadowSampler(sampler);
         obj->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
     }
+
+    //==================================================
+    // ↓ ここからゲームオブジェクト定義 ↓
+    //==================================================
 
     // Floor (Box scaled)
     {
@@ -176,6 +184,10 @@ TitleScene::TitleScene()
         AddObject2D(std::move(obj));
     }
 
+    //==================================================
+    // ↑ ここまでゲームオブジェクト定義 ↑
+    //==================================================
+
     // Keep ratio
     {
         auto comp = std::make_unique<ScreenBufferKeepRatio>();
@@ -198,6 +210,15 @@ TitleScene::TitleScene()
 TitleScene::~TitleScene() {
     ClearObjects2D();
     ClearObjects3D();
+
+    if (screenBuffer_) {
+        ScreenBuffer::DestroyNotify(screenBuffer_);
+        screenBuffer_ = nullptr;
+    }
+    if (shadowMapBuffer_) {
+        ShadowMapBuffer::DestroyNotify(shadowMapBuffer_);
+        shadowMapBuffer_ = nullptr;
+    }
 }
 
 void TitleScene::OnUpdate() {

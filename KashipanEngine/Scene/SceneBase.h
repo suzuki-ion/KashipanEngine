@@ -58,12 +58,32 @@ public:
         Input *input,
         InputCommand *inputCommand);
 
+    /// @brief シーン初期化（SceneManager から呼ばれる）
+    virtual void Initialize() {}
+
+    /// @brief シーン終了処理（SceneManager から呼ばれる）
+    virtual void Finalize() {}
+
     friend class SceneContext;
 
 protected:
     SceneBase(const std::string &sceneName);
 
     virtual void OnUpdate() {}
+
+    template<typename T>
+    bool TryGetSceneVariable(const std::string &key, T &out) const {
+        const auto &vars = GetSceneVariables();
+        if (!vars.contains(key)) return false;
+        return vars.at(key).TryGetValue(out);
+    }
+
+    template<typename T>
+    T GetSceneVariableOr(const std::string &key, const T &defaultValue) const {
+        T v = defaultValue;
+        (void)TryGetSceneVariable<T>(key, v);
+        return v;
+    }
 
     bool AddObject2D(std::unique_ptr<Object2DBase> obj);
     bool AddObject3D(std::unique_ptr<Object3DBase> obj);

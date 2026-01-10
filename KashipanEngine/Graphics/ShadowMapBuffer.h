@@ -58,6 +58,15 @@ public:
     /// @brief Renderer 用: 現在フレームで記録開始されているか
     bool IsRecording(Passkey<Renderer>) const noexcept;
 
+    /// @brief アプリ側から破棄要求（実体の破棄は CommitDestroy で行う）
+    static void DestroyNotify(ShadowMapBuffer* buffer);
+
+    /// @brief 破棄要求済み ShadowMapBuffer をフレーム終端で実際に破棄する
+    static void CommitDestroy(Passkey<GameEngine>);
+
+    /// @brief 指定バッファが破棄要求済みか
+    static bool IsPendingDestroy(ShadowMapBuffer* buffer);
+
 #if defined(USE_IMGUI)
     /// @brief デバッグ用: 生成済み ShadowMapBuffer の内容を表示する ImGui ウィンドウを描画
     static void ShowImGuiShadowMapBuffersWindow();

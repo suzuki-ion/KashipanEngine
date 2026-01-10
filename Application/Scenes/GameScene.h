@@ -8,6 +8,8 @@ public:
     GameScene();
     ~GameScene() override;
 
+    void Initialize() override;
+
 protected:
     void OnUpdate() override;
 

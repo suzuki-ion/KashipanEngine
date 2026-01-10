@@ -1,6 +1,8 @@
 #include "ShadowMapBuffer.h"
 #include "Core/DirectXCommon.h"
 #include "Graphics/Resources/IGraphicsResource.h"
+#include <algorithm>
+#include <vector>
 #include <imgui.h>
 
 namespace KashipanEngine {
@@ -15,7 +17,10 @@ struct RecordState {
 };
 
 static std::unordered_map<ShadowMapBuffer*, RecordState> sRecordStates;
-}
+
+// Window と同様に「破棄要求→フレーム終端で実破棄」のための pending リスト
+static std::vector<ShadowMapBuffer*> sPendingDestroy;
+} // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ShadowMapBuffer::GetSrvHandle() const noexcept {
     return depth_ ? depth_->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
@@ -44,6 +49,34 @@ size_t ShadowMapBuffer::GetBufferCount() {
 bool ShadowMapBuffer::IsExist(ShadowMapBuffer* buffer) {
     if (!buffer) return false;
     return sBufferMap_.find(buffer) != sBufferMap_.end();
+}
+
+void ShadowMapBuffer::DestroyNotify(ShadowMapBuffer* buffer) {
+    if (!buffer) return;
+    if (!IsExist(buffer)) return;
+    if (IsPendingDestroy(buffer)) return;
+    sPendingDestroy.push_back(buffer);
+}
+
+bool ShadowMapBuffer::IsPendingDestroy(ShadowMapBuffer* buffer) {
+    if (!buffer) return false;
+    return std::find(sPendingDestroy.begin(), sPendingDestroy.end(), buffer) != sPendingDestroy.end();
+}
+
+void ShadowMapBuffer::CommitDestroy(Passkey<GameEngine>) {
+    if (sPendingDestroy.empty()) return;
+
+    std::stable_sort(sPendingDestroy.begin(), sPendingDestroy.end());
+    sPendingDestroy.erase(std::unique(sPendingDestroy.begin(), sPendingDestroy.end()), sPendingDestroy.end());
+
+    for (auto* ptr : sPendingDestroy) {
+        if (!ptr) continue;
+        auto it = sBufferMap_.find(ptr);
+        if (it == sBufferMap_.end()) continue;
+        sBufferMap_.erase(it);
+    }
+
+    sPendingDestroy.clear();
 }
 
 bool ShadowMapBuffer::IsRecording(Passkey<Renderer>) const noexcept {
@@ -168,6 +201,7 @@ void ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>) {
 
     for (auto& [ptr, owning] : sBufferMap_) {
         if (!ptr || !owning) continue;
+        if (IsPendingDestroy(ptr)) continue;
 
         auto* cl = ptr->BeginRecord();
         RecordState st;

@@ -49,6 +49,15 @@ public:
     /// @brief Renderer 用: 指定バッファを discard としてマーク（AllEndRecord で反映）
     static void MarkDiscard(Passkey<Renderer>, ScreenBuffer *buffer);
 
+    /// @brief アプリ側から破棄要求（実体の破棄は CommitDestroy で行う）
+    static void DestroyNotify(ScreenBuffer *buffer);
+
+    /// @brief 破棄要求済み ScreenBuffer をフレーム終端で実際に破棄する
+    static void CommitDestroy(Passkey<GameEngine>);
+
+    /// @brief 指定バッファが破棄要求済みか
+    static bool IsPendingDestroy(ScreenBuffer *buffer);
+
     ~ScreenBuffer();
 
     ScreenBuffer(const ScreenBuffer &) = delete;

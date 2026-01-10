@@ -8,6 +8,8 @@ public:
     ResultScene();
     ~ResultScene() override;
 
+    void Initialize() override;
+
 protected:
     void OnUpdate() override;
 

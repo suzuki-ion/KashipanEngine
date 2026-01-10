@@ -7,22 +7,11 @@
 
 namespace KashipanEngine {
 
-namespace {
-SamplerManager::SamplerHandle CreateShadowSampler() {
-    D3D12_SAMPLER_DESC desc{};
-    desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    desc.MaxLOD = D3D12_FLOAT32_MAX;
-    desc.MaxAnisotropy = 1;
-    return SamplerManager::CreateSampler(desc);
-}
-} // namespace
-
 MenuScene::MenuScene()
     : SceneBase("MenuScene") {
+}
+
+void MenuScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
 
@@ -114,12 +103,17 @@ MenuScene::MenuScene()
         auto obj = std::make_unique<ShadowMapBinder>();
         obj->SetName("ShadowMapBinder");
         obj->SetShadowMapBuffer(shadowMapBuffer_);
-        obj->SetShadowSampler(CreateShadowSampler());
+        const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
+        obj->SetShadowSampler(sampler);
         obj->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
     }
+
+    //==================================================
+    // ↓ ここからゲームオブジェクト定義 ↓
+    //==================================================
 
     // Floor (Box scaled)
     {
@@ -190,6 +184,10 @@ MenuScene::MenuScene()
         AddObject2D(std::move(obj));
     }
 
+    //==================================================
+    // ↑ ここまでゲームオブジェクト定義 ↑
+    //==================================================
+
     // Keep ratio
     {
         auto comp = std::make_unique<ScreenBufferKeepRatio>();
@@ -212,6 +210,15 @@ MenuScene::MenuScene()
 MenuScene::~MenuScene() {
     ClearObjects2D();
     ClearObjects3D();
+
+    if (screenBuffer_) {
+        ScreenBuffer::DestroyNotify(screenBuffer_);
+        screenBuffer_ = nullptr;
+    }
+    if (shadowMapBuffer_) {
+        ShadowMapBuffer::DestroyNotify(shadowMapBuffer_);
+        shadowMapBuffer_ = nullptr;
+    }
 }
 
 void MenuScene::OnUpdate() {

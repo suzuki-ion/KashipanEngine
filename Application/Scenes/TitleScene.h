@@ -8,6 +8,8 @@ public:
     TitleScene();
     ~TitleScene() override;
 
+    void Initialize() override;
+
 protected:
     void OnUpdate() override;
 

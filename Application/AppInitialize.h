@@ -10,11 +10,6 @@
 
 namespace KashipanEngine {
 
-namespace {
-SamplerManager::SamplerHandle CreateShadowSampler() {
-}
-} // namespace
-
 inline void AppInitialize(const GameEngine::Context &context) {
     auto monitorInfoOpt = WindowsAPI::QueryMonitorInfo();
     const RECT area = monitorInfoOpt ? monitorInfoOpt->WorkArea() : RECT{ 0, 0, 1280, 720 };
@@ -40,6 +35,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
         sm->RegisterScene<GameOverScene>("GameOverScene");
+
         sm->RegisterScene<TestScene>("TestScene");
 
         context.sceneManager->ChangeScene("TitleScene");

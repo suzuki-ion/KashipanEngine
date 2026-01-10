@@ -48,15 +48,19 @@ public:
         if (!shaderBinder) return false;
 
         bool ok = true;
-        if (texture_ != nullptr) {
-            ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", *texture_);
-        } else if (textureHandle_ != TextureManager::kInvalidHandle) {
-            ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
+        if (shaderBinder->GetNameMap().Contains("Pixel:gTexture")) {
+            if (texture_ != nullptr) {
+                ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", *texture_);
+            } else if (textureHandle_ != TextureManager::kInvalidHandle) {
+                ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
+            }
+        }
+        if (shaderBinder->GetNameMap().Contains("Pixel:gSampler")) {
+            if (samplerHandle_ != SamplerManager::kInvalidHandle) {
+                ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
+            }
         }
 
-        if (samplerHandle_ != SamplerManager::kInvalidHandle) {
-            ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
-        }
         return ok;
     }
 

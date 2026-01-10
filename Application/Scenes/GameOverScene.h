@@ -24,6 +24,9 @@ private:
     Camera3D *mainCamera3D_ = nullptr;
     Sphere *player_ = nullptr;
 
+    Vector3 playerMoveMin_ = Vector3{ -5.0f, 0.0f, -5.0f };
+    Vector3 playerMoveMax_ = Vector3{ 5.0f, 0.0f, 5.0f };
+
     AudioManager::PlayHandle bgmPlay_ = AudioManager::kInvalidPlayHandle;
 };
 

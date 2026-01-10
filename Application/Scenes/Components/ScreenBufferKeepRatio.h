@@ -54,7 +54,7 @@ public:
 
         if (auto *tr = sprite_->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector2{ dstW * 0.5f, dstH * 0.5f });
-            tr->SetScale(Vector2{ drawW, -drawH });
+            tr->SetScale(Vector2{ drawW, drawH });
         }
     }
 

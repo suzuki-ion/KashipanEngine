@@ -8,6 +8,7 @@ struct Material {
 
 #ifdef Object3D
 #include "../Common/Camera3D.hlsli"
+#include "../Common/ShadowMap.hlsli"
 #include "Object3D.hlsli"
 struct Material {
 	float enableLighting;
@@ -66,12 +67,13 @@ PSOutput main(VSOutput input) {
 #endif
 
 #ifdef Object3D
+	const float shadow = ComputeShadowFactor(input.worldPosition);
 	if (gDirectionalLight.enabled && mat.enableLighting) {
 		float halfLambert = HalfLambert(input.normal, gDirectionalLight.direction);
 		float specular = BlinnPhongReflection(input.normal, gDirectionalLight.direction, input.worldPosition, mat.shininess);
 		float4 diffuse = gDirectionalLight.color * halfLambert * gDirectionalLight.intensity;
 		float4 speculer = gDirectionalLight.color * gDirectionalLight.intensity * specular * mat.specularColor;
-		output.color = (mat.color * textureColor) * diffuse + speculer;
+		output.color = ((mat.color * textureColor) * diffuse + speculer) * shadow;
 	} else {
 		output.color = mat.color * textureColor;
 	}

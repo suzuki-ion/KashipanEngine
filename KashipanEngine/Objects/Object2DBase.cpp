@@ -241,20 +241,20 @@ bool Object2DBase::RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32
 }
 
 bool Object2DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) {
-    (void)shaderBinder;
     if (!instanceMaps) return false;
-
     auto **maps = static_cast<void **>(instanceMaps);
-    void *transformMap = maps[0];
-    void *materialMap = maps[1];
 
-    for (auto &c : components_) {
-        if (!c) continue;
-        if (dynamic_cast<Transform2D *>(c.get())) {
-            auto r = c->SubmitInstance(transformMap, instanceIndex);
+    if (shaderBinder.GetNameMap().Contains("Vertex:gTransformationMatrices")) {
+        void *transformMap = maps[0];
+        if (auto *transform2D = GetComponent2D<Transform2D>()) {
+            auto r = transform2D->SubmitInstance(transformMap, instanceIndex);
             if (r != std::nullopt && r.value() == false) return false;
-        } else if (dynamic_cast<Material2D *>(c.get())) {
-            auto r = c->SubmitInstance(materialMap, instanceIndex);
+        }
+    }
+    if (shaderBinder.GetNameMap().Contains("Pixel:gMaterials")) {
+        void *materialMap = maps[1];
+        if (auto *material2D = GetComponent2D<Material2D>()) {
+            auto r = material2D->SubmitInstance(materialMap, instanceIndex);
             if (r != std::nullopt && r.value() == false) return false;
         }
     }

@@ -7,6 +7,7 @@
 #include "Utilities/TimeUtils.h"
 #include "Objects/GameObjects/3D/Model.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Graphics/ShadowMapBuffer.h"
 #include "AppInitialize.h"
 
 #include "Scene/SceneBase.h"
@@ -112,6 +113,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
@@ -170,6 +172,7 @@ GameEngine::~GameEngine() {
 
     Window::AllDestroy({});
     ScreenBuffer::AllDestroy({});
+    ShadowMapBuffer::AllDestroy({});
 
     inputCommand_.reset();
     input_.reset();
@@ -263,6 +266,7 @@ void GameEngine::GameLoopDraw() {
         DrawProfilingImGui();
 
         ScreenBuffer::ShowImGuiScreenBuffersWindow();
+        ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow();
 
         imguiManager_->Render({});
     }

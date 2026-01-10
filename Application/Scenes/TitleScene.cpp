@@ -20,12 +20,12 @@ TitleScene::TitleScene()
 
     // コライダーコンポーネント追加
     auto colliderComp = std::make_unique<ColliderComponent>();
-    auto *collider = colliderComp->GetCollider();
+    [[maybe_unused]] auto *collider = colliderComp->GetCollider();
     AddSceneComponent(std::move(colliderComp));
 
     auto *window = Window::GetWindow("Main Window");
 
-    const auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
+    [[maybe_unused]] const auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
     // 2D Camera (window)
     {

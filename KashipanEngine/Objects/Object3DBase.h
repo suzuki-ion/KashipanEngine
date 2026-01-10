@@ -22,6 +22,7 @@ namespace KashipanEngine {
 
 class Object3DContext;
 class ScreenBuffer;
+class ShadowMapBuffer;
 
 /// @brief 3Dオブジェクト基底クラス
 class Object3DBase {
@@ -37,6 +38,7 @@ public:
     enum class RenderTargetKind {
         Window,
         ScreenBuffer,
+        ShadowMapBuffer,
     };
 
     struct RenderPassRegistrationInfo {
@@ -44,6 +46,7 @@ public:
         RenderTargetKind targetKind = RenderTargetKind::Window;
         Window *window = nullptr;
         ScreenBuffer *screenBuffer = nullptr;
+        ShadowMapBuffer *shadowMapBuffer = nullptr;
         std::string pipelineName;
     };
 
@@ -97,6 +100,10 @@ public:
     /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
     RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+
+    /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録（ShadowMapBuffer）
+    /// @return 登録したパスのハンドル（解除や情報取得に使用）
+    RenderPassRegistrationHandle AttachToRenderer(ShadowMapBuffer *targetBuffer, const std::string &pipelineName);
 
     /// @brief 永続レンダーパス登録を解除（全て）
     void DetachFromRenderer();
@@ -348,10 +355,14 @@ private:
     /// @brief レンダーパスの作成（ScreenBuffer）
     RenderPass CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName);
 
+    /// @brief レンダーパスの作成（ShadowMapBuffer）
+    RenderPass CreateRenderPass(ShadowMapBuffer *targetBuffer, const std::string &pipelineName);
+
     struct RenderPassRegistrationEntry {
         RenderPassRegistrationInfo info;
         Renderer::PersistentPassHandle windowHandle{};
         Renderer::PersistentOffscreenPassHandle offscreenHandle{};
+        Renderer::PersistentShadowMapPassHandle shadowMapHandle{};
     };
 
     RenderPassRegistrationHandle GenerateRegistrationHandle() const;

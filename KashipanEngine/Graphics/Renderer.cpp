@@ -3,6 +3,7 @@
 #include "Core/DirectXCommon.h"
 #include "Graphics/PipelineManager.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Graphics/ShadowMapBuffer.h"
 #include <unordered_map>
 
 namespace KashipanEngine {
@@ -12,57 +13,64 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
         binder.Invalidate();
     }
 
-    // ScreenBuffer の記録をフレーム内でまとめて行い、最後に一括 Close/Execute する
-    ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
-
-    RenderOffscreenPasses();
-
     {
+        // ShadowMapBuffer の記録をフレーム内でまとめて行い、一括 Close/Execute する
+        ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>{});
+        RenderShadowMapPasses();
+        auto lists = ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{});
+        if (!lists.empty() && directXCommon_) {
+            directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
+        }
+    }
+    {
+        // ScreenBuffer の記録をフレーム内でまとめて行い、一括 Close/Execute する
+        ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
+        RenderOffscreenPasses();
         auto lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
         if (!lists.empty() && directXCommon_) {
             directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
         }
     }
-    RenderScreenPasses();
 
+    RenderScreenPasses();
     RenderPersistentPasses();
 }
 
-Renderer::PersistentOffscreenPassHandle Renderer::RegisterPersistentOffscreenRenderPass(RenderPass &&pass) {
-    if (!pass.screenBuffer) return {};
+Renderer::PersistentShadowMapPassHandle Renderer::RegisterPersistentShadowMapRenderPass(RenderPass &&pass) {
+    if (!pass.shadowMapBuffer) return {};
 
-    PersistentOffscreenPassHandle handle{ nextPersistentOffscreenPassId_++ };
-    PersistentOffscreenPassEntry entry{ handle, std::move(pass) };
-    auto [it, inserted] = persistentOffscreenPassesById_.emplace(handle.id, std::move(entry));
+    PersistentShadowMapPassHandle handle{ nextPersistentShadowMapPassId_++ };
+    PersistentShadowMapPassEntry entry{ handle, std::move(pass) };
+    auto [it, inserted] = persistentShadowMapPassesById_.emplace(handle.id, std::move(entry));
     if (!inserted) return {};
 
     const RenderPass *p = &it->second.pass;
 
-    const void *targetKey = static_cast<const void*>(p->screenBuffer);
+    const void *targetKey = static_cast<const void*>(p->shadowMapBuffer);
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            offscreen2DStandard_.push_back(p);
+            shadowMap2DStandard_.push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            offscreen2DInstancing_[key].push_back(p);
+            shadowMap2DInstancing_[key].push_back(p);
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            offscreen3DStandard_.push_back(p);
+            shadowMap3DStandard_.push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            offscreen3DInstancing_[key].push_back(p);
+            shadowMap3DInstancing_[key].push_back(p);
         }
     }
 
     return handle;
 }
 
-bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHandle handle) {
+bool Renderer::UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHandle handle) {
     if (!handle) return false;
-    auto it = persistentOffscreenPassesById_.find(handle.id);
-    if (it == persistentOffscreenPassesById_.end()) return false;
+    auto it = persistentShadowMapPassesById_.find(handle.id);
+    if (it == persistentShadowMapPassesById_.end()) return false;
 
     const RenderPass *p = &it->second.pass;
 
@@ -72,40 +80,57 @@ bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHa
         }
     };
 
-    const void *targetKey = static_cast<const void*>(p->screenBuffer);
+    const void *targetKey = static_cast<const void*>(p->shadowMapBuffer);
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(offscreen2DStandard_);
+            eraseFromVector(shadowMap2DStandard_);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            auto itB = offscreen2DInstancing_.find(key);
-            if (itB != offscreen2DInstancing_.end()) {
+            auto itB = shadowMap2DInstancing_.find(key);
+            if (itB != shadowMap2DInstancing_.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) offscreen2DInstancing_.erase(itB);
+                if (vec.empty()) shadowMap2DInstancing_.erase(itB);
             }
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(offscreen3DStandard_);
+            eraseFromVector(shadowMap3DStandard_);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            auto itB = offscreen3DInstancing_.find(key);
-            if (itB != offscreen3DInstancing_.end()) {
+            auto itB = shadowMap3DInstancing_.find(key);
+            if (itB != shadowMap3DInstancing_.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) offscreen3DInstancing_.erase(itB);
+                if (vec.empty()) shadowMap3DInstancing_.erase(itB);
             }
         }
     }
 
-    persistentOffscreenPassesById_.erase(it);
+    persistentShadowMapPassesById_.erase(it);
     return true;
+}
+
+void Renderer::RenderShadowMapPasses() {
+    if (shadowMap2DStandard_.empty() && shadowMap3DStandard_.empty() &&
+        shadowMap2DInstancing_.empty() && shadowMap3DInstancing_.empty()) {
+        return;
+    }
+
+    auto getTargetKey = [](const RenderPass *passInfo) -> void * {
+        if (!passInfo || !passInfo->shadowMapBuffer) return nullptr;
+        return const_cast<void *>(static_cast<const void *>(passInfo->shadowMapBuffer));
+    };
+
+    Render3DStandard(shadowMap3DStandard_, getTargetKey);
+    Render3DInstancing(shadowMap3DInstancing_, getTargetKey);
+    Render2DStandard(shadowMap2DStandard_, getTargetKey);
+    Render2DInstancing(shadowMap2DInstancing_, getTargetKey);
 }
 
 void Renderer::RenderOffscreenPasses() {
@@ -235,6 +260,8 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
             }
         } else if (passInfo->screenBuffer) {
             // ok
+        } else if (passInfo->shadowMapBuffer) {
+            // ok
         } else {
             continue;
         }
@@ -248,7 +275,22 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
         ID3D12GraphicsCommandList *commandList = nullptr;
         PipelineBinder pipelineBinder;
 
-        if (passInfo->screenBuffer) {
+        if (passInfo->shadowMapBuffer) {
+            ShadowMapBuffer *smb = passInfo->shadowMapBuffer;
+
+            if (!smb->IsRecording(Passkey<Renderer>{})) {
+                continue;
+            }
+
+            commandList = smb->GetRecordedCommandList(Passkey<Renderer>{});
+            if (!commandList) {
+                continue;
+            }
+
+            pipelineBinder.SetManager(pipelineManager_);
+            pipelineBinder.SetCommandList(commandList);
+            pipelineBinder.Invalidate();
+        } else if (passInfo->screenBuffer) {
             ScreenBuffer *sb = passInfo->screenBuffer;
 
             // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
@@ -393,12 +435,6 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
     }
 }
 
-void Renderer::Render3DStandard(std::vector<const RenderPass *> renderPasses,
-    std::function<void *(const RenderPass *)> getTargetKeyFunc) {
-    // 2Dと同じ実装方針（シェーダ/パイプラインが変わるだけなので処理共通）
-    Render2DStandard(std::move(renderPasses), std::move(getTargetKeyFunc));
-}
-
 void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses,
     std::function<void *(const RenderPass *)> /*getTargetKeyFunc*/) {
 
@@ -415,7 +451,11 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
             if (window->IsPendingDestroy() || window->IsMinimized() || !window->IsVisible()) {
                 continue;
             }
-        } else if (!first->screenBuffer) {
+        } else if (first->screenBuffer) {
+            // ok
+        } else if (first->shadowMapBuffer) {
+            // ok
+        } else {
             continue;
         }
 
@@ -426,7 +466,22 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         ID3D12GraphicsCommandList *commandList = nullptr;
         PipelineBinder pipelineBinder;
 
-        if (first->screenBuffer) {
+        if (first->shadowMapBuffer) {
+            ShadowMapBuffer *smb = first->shadowMapBuffer;
+
+            if (!smb->IsRecording(Passkey<Renderer>{})) {
+                continue;
+            }
+
+            commandList = smb->GetRecordedCommandList(Passkey<Renderer>{});
+            if (!commandList) {
+                continue;
+            }
+
+            pipelineBinder.SetManager(pipelineManager_);
+            pipelineBinder.SetCommandList(commandList);
+            pipelineBinder.Invalidate();
+        } else if (first->screenBuffer) {
             ScreenBuffer *sb = first->screenBuffer;
 
             // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
@@ -582,6 +637,11 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
     }
 }
 
+void Renderer::Render3DStandard(std::vector<const RenderPass *> renderPasses,
+    std::function<void *(const RenderPass *)> getTargetKeyFunc) {
+    Render2DStandard(std::move(renderPasses), std::move(getTargetKeyFunc));
+}
+
 void Renderer::Render3DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses,
     std::function<void *(const RenderPass *)> getTargetKeyFunc) {
     Render2DInstancing(renderPasses, std::move(getTargetKeyFunc));
@@ -686,6 +746,85 @@ bool Renderer::UnregisterPersistentScreenPass(PersistentScreenPassHandle handle)
     return true;
 }
 
+Renderer::PersistentOffscreenPassHandle Renderer::RegisterPersistentOffscreenRenderPass(RenderPass &&pass) {
+    if (!pass.screenBuffer) return {};
+
+    PersistentOffscreenPassHandle handle{ nextPersistentOffscreenPassId_++ };
+    PersistentOffscreenPassEntry entry{ handle, std::move(pass) };
+    auto [it, inserted] = persistentOffscreenPassesById_.emplace(handle.id, std::move(entry));
+    if (!inserted) return {};
+
+    const RenderPass *p = &it->second.pass;
+    const void *targetKey = static_cast<const void*>(p->screenBuffer);
+
+    if (p->dimension == RenderDimension::D2) {
+        if (p->renderType == RenderType::Standard) {
+            offscreen2DStandard_.push_back(p);
+        } else {
+            BatchKey key{ targetKey, p->pipelineName, p->batchKey };
+            offscreen2DInstancing_[key].push_back(p);
+        }
+    } else {
+        if (p->renderType == RenderType::Standard) {
+            offscreen3DStandard_.push_back(p);
+        } else {
+            BatchKey key{ targetKey, p->pipelineName, p->batchKey };
+            offscreen3DInstancing_[key].push_back(p);
+        }
+    }
+
+    return handle;
+}
+
+bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHandle handle) {
+    if (!handle) return false;
+    auto it = persistentOffscreenPassesById_.find(handle.id);
+    if (it == persistentOffscreenPassesById_.end()) return false;
+
+    const RenderPass *p = &it->second.pass;
+
+    auto eraseFromVector = [&](std::vector<const RenderPass*> &v) {
+        for (auto vit = v.begin(); vit != v.end(); ++vit) {
+            if (*vit == p) { v.erase(vit); break; }
+        }
+    };
+
+    const void *targetKey = static_cast<const void*>(p->screenBuffer);
+
+    if (p->dimension == RenderDimension::D2) {
+        if (p->renderType == RenderType::Standard) {
+            eraseFromVector(offscreen2DStandard_);
+        } else {
+            BatchKey key{ targetKey, p->pipelineName, p->batchKey };
+            auto itB = offscreen2DInstancing_.find(key);
+            if (itB != offscreen2DInstancing_.end()) {
+                auto &vec = itB->second;
+                for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
+                    if (*vit == p) { vec.erase(vit); break; }
+                }
+                if (vec.empty()) offscreen2DInstancing_.erase(itB);
+            }
+        }
+    } else {
+        if (p->renderType == RenderType::Standard) {
+            eraseFromVector(offscreen3DStandard_);
+        } else {
+            BatchKey key{ targetKey, p->pipelineName, p->batchKey };
+            auto itB = offscreen3DInstancing_.find(key);
+            if (itB != offscreen3DInstancing_.end()) {
+                auto &vec = itB->second;
+                for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
+                    if (*vit == p) { vec.erase(vit); break; }
+                }
+                if (vec.empty()) offscreen3DInstancing_.erase(itB);
+            }
+        }
+    }
+
+    persistentOffscreenPassesById_.erase(it);
+    return true;
+}
+
 void Renderer::RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandList *commandList) {
     if (!hwnd) return;
     auto it = windowBinders_.find(hwnd);
@@ -717,9 +856,5 @@ void Renderer::IssueRenderCommand(ID3D12GraphicsCommandList *commandList, const 
         );
     }
 }
-
-// DELETE these legacy definitions entirely (no longer declared in Renderer.h)
-// void Renderer::RenderPasses2DStandardPersistent() { ... }
-// void Renderer::RenderPasses3DStandardPersistent() { ... }
 
 } // namespace KashipanEngine

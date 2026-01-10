@@ -28,3 +28,4 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/Resources.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Graphics/ShadowMapBuffer.h"

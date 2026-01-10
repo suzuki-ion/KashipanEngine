@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <optional>
 #include <cstdint>
+#include "Math/Matrix4x4.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
@@ -20,6 +21,7 @@ class PipelineManager;
 class Object2DBase;
 class Object3DBase;
 class ScreenBuffer;
+class ShadowMapBuffer;
 
 /// @brief 描画方式
 enum class RenderType {
@@ -76,6 +78,7 @@ private:
     friend class Object2DBase;
     friend class Object3DBase;
     friend class ScreenBuffer;
+    friend class ShadowMapBuffer;
 
     RenderPass(Passkey<Object2DBase>) : dimension(RenderDimension::D2) {}
     RenderPass(Passkey<Object3DBase>) : dimension(RenderDimension::D3) {}
@@ -83,6 +86,7 @@ private:
 
     Window *window = nullptr;          //< 描画先ウィンドウ（Window 描画の場合）
     ScreenBuffer *screenBuffer = nullptr; //< 描画先スクリーンバッファ（ScreenBuffer 描画の場合）
+    ShadowMapBuffer *shadowMapBuffer = nullptr; //< 描画先シャドウマップバッファ（ShadowMapBuffer 描画の場合）
     std::string pipelineName;          //< 使用するパイプライン名
     std::string passName;              //< パス名（デバッグ用）
 
@@ -155,6 +159,14 @@ public:
         bool operator!=(const PersistentOffscreenPassHandle &o) const { return id != o.id; }
     };
 
+    struct PersistentShadowMapPassHandle {
+        std::uint64_t id = 0;
+        bool IsValid() const { return id != 0; }
+        explicit operator bool() const { return IsValid(); }
+        bool operator==(const PersistentShadowMapPassHandle &o) const { return id == o.id; }
+        bool operator!=(const PersistentShadowMapPassHandle &o) const { return id != o.id; }
+    };
+
     /// @brief コンストラクタ
     /// @param maxRenderPasses 最大レンダーパス数
     Renderer(Passkey<GraphicsEngine>, size_t maxRenderPasses, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
@@ -177,27 +189,34 @@ public:
 
     /// @brief レンダーパス登録
     void RegisterRenderPass(const RenderPass &pass);
-
     /// @brief レンダーパス登録（ムーブ）
     void RegisterRenderPass(RenderPass &&pass);
 
     /// @brief ScreenBuffer 向け永続描画パス登録
     PersistentScreenPassHandle RegisterPersistentScreenPass(ScreenBufferPass&& pass);
-
     /// @brief ScreenBuffer 向け永続描画パス解除
     bool UnregisterPersistentScreenPass(PersistentScreenPassHandle handle);
 
     /// @brief ScreenBuffer 宛ての永続 RenderPass 登録
     PersistentOffscreenPassHandle RegisterPersistentOffscreenRenderPass(RenderPass &&pass);
-
     /// @brief ScreenBuffer 宛ての永続 RenderPass 解除
     bool UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHandle handle);
+
+    /// @brief ShadowMapBuffer 宛ての永続 RenderPass 登録
+    PersistentShadowMapPassHandle RegisterPersistentShadowMapRenderPass(RenderPass &&pass);
+    /// @brief ShadowMapBuffer 宛ての永続 RenderPass 解除
+    bool UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHandle handle);
 
     /// @brief フレーム描画処理
     void RenderFrame(Passkey<GraphicsEngine>);
 
     /// @brief Windowの登録
     void RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandList* commandList);
+
+    struct ShadowMapGlobals {
+        ShadowMapBuffer* buffer = nullptr;
+        D3D12_GPU_DESCRIPTOR_HANDLE sampler{};
+    };
 
 private:
     struct PersistentPassEntry {
@@ -212,6 +231,11 @@ private:
 
     struct PersistentOffscreenPassEntry {
         PersistentOffscreenPassHandle handle;
+        RenderPass pass;
+    };
+
+    struct PersistentShadowMapPassEntry {
+        PersistentShadowMapPassHandle handle;
         RenderPass pass;
     };
 
@@ -313,6 +337,7 @@ private:
     void RenderOffscreenPasses();
     void RenderScreenPasses();
     void RenderPersistentPasses();
+    void RenderShadowMapPasses();
 
     void Render2DStandard(std::vector<const RenderPass *> renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
     void Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
@@ -330,10 +355,12 @@ private:
     std::uint64_t nextPersistentPassId_ = 1;
     std::uint64_t nextPersistentScreenPassId_ = 1;
     std::uint64_t nextPersistentOffscreenPassId_ = 1;
+    std::uint64_t nextPersistentShadowMapPassId_ = 1;
 
     std::unordered_map<std::uint64_t, PersistentPassEntry> persistentPassesById_;
     std::unordered_map<std::uint64_t, PersistentScreenPassEntry> persistentScreenPassesById_;
     std::unordered_map<std::uint64_t, PersistentOffscreenPassEntry> persistentOffscreenPassesById_;
+    std::unordered_map<std::uint64_t, PersistentShadowMapPassEntry> persistentShadowMapPassesById_;
 
     std::vector<const ScreenBufferPass*> persistentScreenPasses_;
 
@@ -346,6 +373,11 @@ private:
     std::vector<const RenderPass*> offscreen3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreen2DInstancing_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreen3DInstancing_;
+
+    std::vector<const RenderPass*> shadowMap2DStandard_;
+    std::vector<const RenderPass*> shadowMap3DStandard_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMap2DInstancing_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMap3DInstancing_;
 
     /// @brief ウィンドウごとのPipelineBinder
     std::unordered_map<HWND, PipelineBinder> windowBinders_;

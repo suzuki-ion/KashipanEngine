@@ -27,6 +27,7 @@ class Renderer;
 class TextureManager;
 class SamplerManager;
 class ScreenBuffer;
+class ShadowMapBuffer;
 #if defined(USE_IMGUI)
 class ImGuiManager;
 #endif
@@ -117,10 +118,26 @@ public:
     int AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>);
 
     /// @brief ScreenBuffer 用コマンドオブジェクトを取得
+    /// @param slotIndex 取得するスロットインデックス
+    /// @return コマンドオブジェクトへのポインタ
     ScreenBufferCommandObjects* GetScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
 
     /// @brief ScreenBuffer 用コマンドオブジェクトを解放
+    /// @param slotIndex 解放するスロットインデックス
     void ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
+
+    /// @brief ShadowMapBuffer 用コマンドオブジェクトを確保（DirectXCommon が所有）
+    /// @return スロットインデックス（失敗時は -1）
+    int AcquireShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>);
+
+    /// @brief ShadowMapBuffer 用コマンドオブジェクトを取得
+    /// @param slotIndex 取得するスロットインデックス
+    /// @return コマンドオブジェクトへのポインタ
+    ScreenBufferCommandObjects* GetShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
+
+    /// @brief ShadowMapBuffer 用コマンドオブジェクトを解放
+    /// @param slotIndex 解放するスロットインデックス
+    void ReleaseShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
 
 private:
     DirectXCommon(const DirectXCommon &) = delete;
@@ -136,6 +153,9 @@ private:
     /// @brief コマンド実行
     void ExecuteCommand();
 
+    int AcquireCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, std::vector<int>& freeSlots);
+    ScreenBufferCommandObjects* GetCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, int slotIndex);
+    void ReleaseCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, std::vector<int>& freeSlots, int slotIndex);
 
     std::unique_ptr<DX12DXGIs> dx12DXGIs_;
     std::unique_ptr<DX12Device> dx12Device_;
@@ -155,6 +175,9 @@ private:
 
     std::vector<ScreenBufferCommandObjects> screenBufferCommandObjects_;
     std::vector<int> freeScreenBufferCommandObjectSlots_;
+
+    std::vector<ScreenBufferCommandObjects> shadowMapBufferCommandObjects_;
+    std::vector<int> freeShadowMapBufferCommandObjectSlots_;
 };
 
 } // namespace KashipanEngine

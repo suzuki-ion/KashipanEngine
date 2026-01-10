@@ -31,3 +31,4 @@
 #include "Objects/SystemObjects/Camera2D.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
+#include "Objects/SystemObjects/ShadowMapBinder.h"

@@ -47,7 +47,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     dx12Fence_ = std::make_unique<DX12Fence>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice());
 
     IGraphicsResource::SetDevice({}, dx12Device_->GetDevice());
-    
+
     auto &settings = GetEngineSettings().rendering;
     RenderTargetResource::SetDefaultClearColor(Passkey<DirectXCommon>{}, settings.defaultClearColor);
 
@@ -107,6 +107,9 @@ DirectXCommon::~DirectXCommon() {
 
     screenBufferCommandObjects_.clear();
     freeScreenBufferCommandObjectSlots_.clear();
+
+    shadowMapBufferCommandObjects_.clear();
+    freeShadowMapBufferCommandObjectSlots_.clear();
 
     IGraphicsResource::ClearAllResources({});
     SamplerHeap_.reset();
@@ -418,21 +421,21 @@ void DirectXCommon::ExecuteExternalCommandLists(Passkey<Renderer>, const std::ve
     WaitForFence();
 }
 
-int DirectXCommon::AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>) {
+int DirectXCommon::AcquireCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, std::vector<int>& freeSlots) {
     if (!dx12Device_) return -1;
     auto* device = dx12Device_->GetDevice();
     if (!device) return -1;
 
     int index = -1;
-    if (!freeScreenBufferCommandObjectSlots_.empty()) {
-        index = freeScreenBufferCommandObjectSlots_.back();
-        freeScreenBufferCommandObjectSlots_.pop_back();
+    if (!freeSlots.empty()) {
+        index = freeSlots.back();
+        freeSlots.pop_back();
     } else {
-        index = static_cast<int>(screenBufferCommandObjects_.size());
-        screenBufferCommandObjects_.emplace_back();
+        index = static_cast<int>(pool.size());
+        pool.emplace_back();
     }
 
-    auto& entry = screenBufferCommandObjects_[static_cast<size_t>(index)];
+    auto& entry = pool[static_cast<size_t>(index)];
 
     if (!entry.commandAllocator) {
         HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(entry.commandAllocator.ReleaseAndGetAddressOf()));
@@ -448,21 +451,45 @@ int DirectXCommon::AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>) {
     return index;
 }
 
-DirectXCommon::ScreenBufferCommandObjects* DirectXCommon::GetScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+DirectXCommon::ScreenBufferCommandObjects* DirectXCommon::GetCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, int slotIndex) {
     if (slotIndex < 0) return nullptr;
     const size_t idx = static_cast<size_t>(slotIndex);
-    if (idx >= screenBufferCommandObjects_.size()) return nullptr;
-    return &screenBufferCommandObjects_[idx];
+    if (idx >= pool.size()) return nullptr;
+    return &pool[idx];
 }
 
-void DirectXCommon::ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+void DirectXCommon::ReleaseCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, std::vector<int>& freeSlots, int slotIndex) {
     if (slotIndex < 0) return;
     const size_t idx = static_cast<size_t>(slotIndex);
-    if (idx >= screenBufferCommandObjects_.size()) return;
+    if (idx >= pool.size()) return;
 
     // GPU 実行中の可能性があるため、ここでフェンスを待ってから解放キューへ戻す
     WaitForFence();
-    freeScreenBufferCommandObjectSlots_.push_back(slotIndex);
+    freeSlots.push_back(slotIndex);
+}
+
+int DirectXCommon::AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>) {
+    return AcquireCommandObjectsInternal(screenBufferCommandObjects_, freeScreenBufferCommandObjectSlots_);
+}
+
+DirectXCommon::ScreenBufferCommandObjects* DirectXCommon::GetScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    return GetCommandObjectsInternal(screenBufferCommandObjects_, slotIndex);
+}
+
+void DirectXCommon::ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    ReleaseCommandObjectsInternal(screenBufferCommandObjects_, freeScreenBufferCommandObjectSlots_, slotIndex);
+}
+
+int DirectXCommon::AcquireShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>) {
+    return AcquireCommandObjectsInternal(shadowMapBufferCommandObjects_, freeShadowMapBufferCommandObjectSlots_);
+}
+
+DirectXCommon::ScreenBufferCommandObjects* DirectXCommon::GetShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    return GetCommandObjectsInternal(shadowMapBufferCommandObjects_, slotIndex);
+}
+
+void DirectXCommon::ReleaseShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    ReleaseCommandObjectsInternal(shadowMapBufferCommandObjects_, freeShadowMapBufferCommandObjectSlots_, slotIndex);
 }
 
 } // namespace KashipanEngine

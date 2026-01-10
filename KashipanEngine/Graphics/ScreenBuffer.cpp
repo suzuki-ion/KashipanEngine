@@ -126,7 +126,7 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 
     for (size_t i = 0; i < kBufferCount_; ++i) {
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
-        depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0));
+        depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
         shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
     }
 
@@ -243,7 +243,9 @@ bool ScreenBuffer::EndRecord(bool discard) {
     if (rt) {
         rt->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
-    if (ds) {
+    if (ds->HasSrv()) {
+        ds->TransitionToShaderResource();
+    } else {
         ds->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_READ);
     }
 

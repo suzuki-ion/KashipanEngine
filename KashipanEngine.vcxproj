@@ -119,6 +119,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
+    <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
+    <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
+    <ClCompile Include="Application\Scenes\TestScene.cpp" />
+    <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -181,6 +189,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\VertexBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ScreenBuffer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp" />
     <ClCompile Include="KashipanEngine\Input\Controller.cpp" />
     <ClCompile Include="KashipanEngine\Input\Input.cpp" />
     <ClCompile Include="KashipanEngine\Input\InputCommand.cpp" />
@@ -214,6 +223,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp" />
@@ -248,13 +258,33 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\ParticleMovement.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
     <ClInclude Include="Application\Objects\Components\RailMovement.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearWallForward.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearWallLeftSide.h" />
+    <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
+    <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\CameraController.h" />
+    <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h" />
+    <ClInclude Include="Application\Scenes\Components\GameProgressController.h" />
+    <ClInclude Include="Application\Scenes\Components\JustAvoidParticle.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerHealthUI.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
+    <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
+    <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
+    <ClInclude Include="Application\Scenes\Components\ScreenBufferKeepRatio.h" />
+    <ClInclude Include="Application\Scenes\TestScene.h" />
+    <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
@@ -458,10 +488,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.ShadowMap.DepthOnly.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Solid.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\TriangleShadow.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Exclusion.json" />
@@ -490,22 +522,21 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootParameter\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Compute.Empty.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\example.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Object3d.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Sampler\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera2D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Line.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\TransformationMatrix.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.json" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Object3d.hlsli" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\TransformationMatrix.hlsli" />
     <None Include="Assets\KashipanEngine\PipelineSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object2D.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap3D.json" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
   </ItemGroup>
   <ItemGroup>
@@ -528,14 +559,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Pixel.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Vertex.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest\Compute.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -552,6 +575,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ProjectReference Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
       <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

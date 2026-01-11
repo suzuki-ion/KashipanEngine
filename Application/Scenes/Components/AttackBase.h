@@ -1,21 +1,10 @@
 #pragma once
-
-#include "Scene/Components/ISceneComponent.h"
-#include "Objects/Object3DBase.h"
-#include "Objects/GameObjects/3D/Plane3D.h"
-#include "Objects/Components/3D/Transform3D.h"
-#include "Objects/Components/MovementController.h"
-#include "Objects/Components/AlwaysRotate.h"
-#include "Scene/Components/ColliderComponent.h"
-#include "Objects/Components/3D/Collision3D.h"
-#include "Objects/MathObjects/3D/AABB.h"
-#include "Math/Easings.h"
-#include "Graphics/ScreenBuffer.h"
-
+#include <KashipanEngine.h>
 #include <vector>
 #include <string>
 #include <memory>
 #include <optional>
+#include "Objects/Components/MovementController.h"
 
 namespace KashipanEngine {
 

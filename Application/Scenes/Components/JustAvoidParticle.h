@@ -1,10 +1,5 @@
 #pragma once
-
-#include "Scene/Components/ISceneComponent.h"
-
-#include "Graphics/ScreenBuffer.h"
-#include "Math/Vector3.h"
-
+#include <KashipanEngine.h>
 #include <array>
 
 namespace KashipanEngine {

@@ -1,9 +1,5 @@
 #pragma once
-
-#include "Scene/Components/ISceneComponent.h"
-#include "Assets/TextureManager.h"
-#include "Graphics/ScreenBuffer.h"
-#include "Objects/GameObjects/2D/Sprite.h"
+#include <KashipanEngine.h>
 
 namespace KashipanEngine {
 

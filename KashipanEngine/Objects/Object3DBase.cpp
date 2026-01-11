@@ -197,9 +197,6 @@ RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::strin
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
         passInfo.batchKey = instanceBatchKey_;
-        passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
-            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
-        };
         passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
             return RenderBatched(shaderBinder, instanceCount);
         };
@@ -212,6 +209,20 @@ RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::strin
     cachedRenderPass_->instanceBufferRequirements = {
         {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
         {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
+    };
+    cachedRenderPass_->submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+        if (!instanceMaps) return false;
+        auto **maps = static_cast<void **>(instanceMaps);
+
+        if (transform_) {
+            void *transformMap = maps[0];
+            transform_->SubmitInstance(transformMap, instanceIndex);
+        }
+        if (material_) {
+            void *materialMap = maps[1];
+            material_->SubmitInstance(materialMap, instanceIndex);
+        }
+        return true;
     };
 
     cachedRenderPass_->window = targetWindow;
@@ -236,9 +247,6 @@ RenderPass Object3DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
         passInfo.batchKey = instanceBatchKey_;
-        passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
-            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
-        };
         passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
             return RenderBatched(shaderBinder, instanceCount);
         };
@@ -251,6 +259,20 @@ RenderPass Object3DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
     cachedRenderPass_->instanceBufferRequirements = {
         {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
         {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
+    };
+    cachedRenderPass_->submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+        if (!instanceMaps) return false;
+        auto **maps = static_cast<void **>(instanceMaps);
+
+        if (transform_) {
+            void *transformMap = maps[0];
+            transform_->SubmitInstance(transformMap, instanceIndex);
+        }
+        if (material_) {
+            void *materialMap = maps[1];
+            material_->SubmitInstance(materialMap, instanceIndex);
+        }
+        return true;
     };
 
     cachedRenderPass_->window = nullptr;

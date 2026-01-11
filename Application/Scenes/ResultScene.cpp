@@ -4,6 +4,7 @@
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/ScreenBufferKeepRatio.h"
 #include "Objects/Components/ParticleMovement.h"
+#include "Scene/Components/ShadowMapCameraSync.h"
 
 namespace KashipanEngine {
 
@@ -200,6 +201,16 @@ void ResultScene::Initialize() {
         if (screenBuffer_) {
             comp->SetSourceSize(static_cast<float>(screenBuffer_->GetWidth()), static_cast<float>(screenBuffer_->GetHeight()));
         }
+        AddSceneComponent(std::move(comp));
+    }
+
+    // Shadow map camera sync (fit main camera view)
+    {
+        auto comp = std::make_unique<ShadowMapCameraSync>();
+        comp->SetMainCamera(mainCamera3D_);
+        comp->SetLightCamera(lightCamera3D_);
+        comp->SetDirectionalLight(light_);
+        comp->SetShadowMapBinder(shadowMapBinder_);
         AddSceneComponent(std::move(comp));
     }
 

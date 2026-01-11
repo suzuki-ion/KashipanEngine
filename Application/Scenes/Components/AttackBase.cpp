@@ -1,8 +1,5 @@
 #include "Scenes/Components/AttackBase.h"
-#include "Scene/SceneContext.h"
-#include "Objects/Components/3D/Material3D.h"
-#include "Utilities/RandomValue.h"
-#include "Assets/AudioManager.h"
+#include "Objects/Components/AlwaysRotate.h"
 
 namespace KashipanEngine {
 

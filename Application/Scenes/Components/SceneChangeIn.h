@@ -1,17 +1,5 @@
 #pragma once
-
-#include "Scene/Components/ISceneComponent.h"
-#include "Scene/SceneContext.h"
-
-#include "Core/Window.h"
-#include "Utilities/TimeUtils.h"
-
-#include "Objects/GameObjects/2D/Sprite.h"
-#include "Objects/Components/2D/Material2D.h"
-#include "Objects/Components/2D/Transform2D.h"
-
-#include "Math/Easings.h"
-
+#include <KashipanEngine.h>
 #include <algorithm>
 #include <memory>
 

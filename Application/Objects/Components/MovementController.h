@@ -1,11 +1,5 @@
 #pragma once
-
-#include "Objects/IObjectComponent.h"
-#include "Objects/ObjectContext.h"
-#include "Objects/Components/3D/Transform3D.h"
-#include "Math/Vector3.h"
-#include "Math/Easings.h"
-#include "Utilities/TimeUtils.h"
+#include <KashipanEngine.h>
 #include <vector>
 #include <functional>
 

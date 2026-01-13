@@ -114,34 +114,46 @@ void TestScene::Initialize() {
     // ↓ ここからゲームオブジェクト定義 ↓
     //==================================================
 
-    // Floor (Box scaled)
+    // map (Box scaled)
     {
-        auto obj = std::make_unique<Box>();
-        obj->SetName("Floor");
-        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, -0.5f, 0.0f));
-            tr->SetScale(Vector3(20.0f, 1.0f, 20.0f));
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+
+                auto obj = std::make_unique<Box>();
+                obj->SetName("Map" ":x" + std::to_string(x) + ":z" + std::to_string(z));
+
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
+                    tr->SetScale(Vector3(mapScaleMax_));
+                }
+
+                if (auto* mat = obj->GetComponent3D<Material3D>()) {
+                    mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
+                }
+
+                if (screenBuffer_)     obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+                if (shadowMapBuffer_)  obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+
+                // ここで “AddObject3D する前” にポインタ確保
+                maps_[z][x] = obj.get();
+
+                AddObject3D(std::move(obj));
+            }
         }
-        if (auto* mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
-        }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-        if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
-        floor_ = obj.get();
-        AddObject3D(std::move(obj));
     }
 
-    // Sphere
+    // Player
     {
-        auto obj = std::make_unique<Sphere>(16, 32);
-        obj->SetName("ShadowTestSphere");
+        auto modelData = ModelManager::GetModelDataFromFileName("Player.obj");
+        auto obj = std::make_unique<Model>(modelData);
+        obj->SetName("Player");
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 1.5f, 0.0f));
-            tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
+            tr->SetTranslate(Vector3(0.0f, 2.0f, 0.0f));
+            tr->SetScale(Vector3(playerScaleMax_));
         }
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
-        sphere_ = obj.get();
+        player_ = obj.get();
         AddObject3D(std::move(obj));
     }
 
@@ -186,6 +198,13 @@ void TestScene::Initialize() {
     //==================================================
     // ↑ ここまでゲームオブジェクト定義 ↑
     //==================================================
+
+    // BPMシステムの追加
+    {
+        auto comp = std::make_unique<BPMSystem>(bpm_); // BPM で初期化
+        bpmSystem_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
 
     // Keep ratio
     {
@@ -235,12 +254,21 @@ void TestScene::OnUpdate() {
         }
     }
 
-    // simple animation
-    if (sphere_) {
-        if (auto* tr = sphere_->GetComponent3D<Transform3D>()) {
-            Vector3 r = tr->GetRotate();
-            r.y += 0.01f;
-            tr->SetRotate(r);
+    if (player_) {
+        if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+            tr->SetScale(Vector3(EaseInBack(playerScaleMin_, playerScaleMax_, bpmSystem_->GetBeatProgress())));
+        }
+    }
+
+    {
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+                if (maps_[z][x]) {
+                    if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
+                        tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+                    }
+                }
+            }
         }
     }
 }

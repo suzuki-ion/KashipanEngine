@@ -1049,6 +1049,12 @@
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />

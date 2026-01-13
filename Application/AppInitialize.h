@@ -38,7 +38,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
         sm->RegisterScene<TestScene>("TestScene");
 
-        context.sceneManager->ChangeScene("TitleScene");
+        context.sceneManager->ChangeScene("TestScene");
     }
 
     if (context.inputCommand) {
@@ -53,6 +53,15 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("MoveZ", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Down);
         ic->RegisterCommand("MoveZ", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Down, true);
         ic->RegisterCommand("MoveZ", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down);
+
+        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::Up }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::Down }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::Left }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::Right }, InputCommand::InputState::Trigger);
 
         // 攻撃
         ic->RegisterCommand("AttackCharge", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Down);

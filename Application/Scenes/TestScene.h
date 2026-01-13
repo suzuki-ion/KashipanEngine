@@ -1,6 +1,8 @@
 #pragma once
 #include <KashipanEngine.h>
 
+#include "Scenes/Components/BPM/BPMSystem.h"
+
 namespace KashipanEngine {
 
 class TestScene final : public SceneBase {
@@ -26,8 +28,17 @@ private:
 
     DirectionalLight *light_ = nullptr;
 
-    Object3DBase *floor_ = nullptr;
-    Object3DBase *sphere_ = nullptr;
+    static constexpr int kMapW = 13;
+    static constexpr int kMapH = 13;
+    std::array<std::array<Object3DBase*, kMapW>, kMapH> maps_{};
+	float mapScaleMin_ = 1.5f, mapScaleMax_ = 1.8f;
+	bool allMapAnimation_ = false;
+
+    Object3DBase* player_ = nullptr;
+    float playerScaleMin_ = 0.75f, playerScaleMax_ = 1.0f;
+
+    BPMSystem* bpmSystem_ = nullptr;
+	float bpm_ = 180.0f; // BPM値
 };
 
 } // namespace KashipanEngine

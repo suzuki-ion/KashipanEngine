@@ -3,6 +3,7 @@
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
+#include "Objects/Components/Player/PlayerMove.h"
 
 namespace KashipanEngine {
 
@@ -155,6 +156,8 @@ void TestScene::Initialize() {
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
         player_ = obj.get();
         AddObject3D(std::move(obj));
+
+		player_->RegisterComponent<PlayerMove>();
     }
 
     // Particles

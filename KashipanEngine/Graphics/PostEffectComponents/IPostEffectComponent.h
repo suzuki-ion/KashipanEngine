@@ -3,8 +3,9 @@
 #include <memory>
 #include <cassert>
 #include <optional>
+#include <vector>
 
-#include "Graphics/Pipeline/System/ShaderVariableBinder.h"
+#include "Graphics/Renderer.h"
 
 namespace KashipanEngine {
 
@@ -29,18 +30,14 @@ public:
     /// @brief 終了処理（ScreenBuffer から削除される直前に呼ばれる想定）
     virtual std::optional<bool> Finalize() { return std::nullopt; }
 
-    /// @brief ポストエフェクト適用（ScreenBuffer の描画結果に対して実行）
-    virtual std::optional<bool> Apply() { return std::nullopt; }
+    /// @brief このコンポーネントが提供するポストエフェクトパス一覧を返す
+    /// @details 返り値はフレーム毎に再構築してよい（軽量な前提）。
+    virtual std::vector<PostEffectPass> BuildPostEffectPasses() const { return {}; }
 
-    /// @brief シェーダー変数へのバインド処理
-    virtual std::optional<bool> BindShaderVariables(ShaderVariableBinder* binder) {
-        (void)binder;
-        return std::nullopt;
-    }
-
-    /// @brief Apply の処理優先順位（小さいほど先に処理される）
-    int GetApplyPriority() const { return applyPriority_; }
-    void SetApplyPriority(int priority) { applyPriority_ = priority; }
+#if defined(USE_IMGUI)
+    /// @brief ポストエフェクトのパラメータ表示/調整UI（Begin/Endは呼ばない）
+    virtual void ShowImGui() {}
+#endif
 
     /// @brief コンポーネントのクローンを作成（派生クラスで実装）
     virtual std::unique_ptr<IPostEffectComponent> Clone() const = 0;
@@ -52,6 +49,23 @@ protected:
     /// @brief 所属 ScreenBuffer の取得
     ScreenBuffer* GetOwnerBuffer() const { return ownerBuffer_; }
 
+    static RenderCommand MakeDrawCommand(UINT vertexCount, UINT startVertexLocation = 0) {
+        RenderCommand cmd;
+        cmd.vertexCount = vertexCount;
+        cmd.indexCount = 0;
+        cmd.startVertexLocation = startVertexLocation;
+        return cmd;
+    }
+
+    static RenderCommand MakeDrawIndexedCommand(UINT indexCount, UINT startIndexLocation = 0, INT baseVertexLocation = 0) {
+        RenderCommand cmd;
+        cmd.vertexCount = 0;
+        cmd.indexCount = indexCount;
+        cmd.startIndexLocation = startIndexLocation;
+        cmd.baseVertexLocation = baseVertexLocation;
+        return cmd;
+    }
+
 private:
     friend class ScreenBuffer;
 
@@ -62,8 +76,6 @@ private:
 
     const std::string kComponentType_ = "IPostEffectComponent";
     const size_t kMaxComponentCountPerBuffer_ = 0xFF;
-
-    int applyPriority_ = 1;
 
     ScreenBuffer* ownerBuffer_ = nullptr;
 };

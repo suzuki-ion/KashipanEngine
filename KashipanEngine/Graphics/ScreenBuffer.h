@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include "Utilities/Passkeys.h"
-#include "Graphics/IPostEffectComponent.h"
+#include "PostEffectComponents/IPostEffectComponent.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/DepthStencilResource.h"
@@ -70,8 +70,11 @@ public:
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override;
 
+    /// @brief Depth(読み取り面)をテクスチャ(SRV)として参照するためのハンドル（未作成なら空）
+    D3D12_GPU_DESCRIPTOR_HANDLE GetDepthSrvHandle() const noexcept;
+
     RenderTargetResource *GetRenderTarget() const noexcept { return renderTargets_[GetReadIndex()].get(); }
-    DepthStencilResource *GetDepthStencil() const noexcept { return depthStencils_[GetWriteIndex()].get(); }
+    DepthStencilResource *GetDepthStencil() const noexcept { return depthStencils_[GetReadIndex()].get(); }
     ShaderResourceResource *GetShaderResource() const noexcept { return shaderResources_[GetReadIndex()].get(); }
 
     /// @brief ポストエフェクトコンポーネント登録
@@ -80,13 +83,13 @@ public:
     /// @brief 登録済みポストエフェクトコンポーネントを全て取得
     const std::vector<std::unique_ptr<IPostEffectComponent>> &GetPostEffectComponents() const { return postEffectComponents_; }
 
-    /// @brief 描画実行（RenderPass から呼ばれる想定）
-    bool RenderBatched(ShaderVariableBinder &binder, std::uint32_t instanceCount);
+    /// @brief Renderer用: 登録済みポストエフェクトをレンダーパスとして列挙
+    std::vector<PostEffectPass> BuildPostEffectPasses(Passkey<Renderer>) const;
 
     /// @brief Renderer が定数/インスタンスバッファキャッシュ等で使う擬似キー
     HWND GetCacheKey() const noexcept { return reinterpret_cast<HWND>(const_cast<ScreenBuffer *>(this)); }
 
-    void AttachToRenderer(const std::string &pipelineName, const std::string &passName);
+    void AttachToRenderer(const std::string &passName = "");
     void DetachFromRenderer();
 
     /// @brief Renderer 用: 記録中コマンドリスト取得（AllBeginRecord 後）
@@ -101,7 +104,7 @@ public:
 #endif
 
 private:
-    std::optional<ScreenBufferPass> CreateScreenPass(const std::string &pipelineName, const std::string &passName);
+    std::optional<ScreenBufferPass> CreateScreenPass(const std::string &passName);
 
     static inline DirectXCommon *sDirectXCommon_ = nullptr;
 

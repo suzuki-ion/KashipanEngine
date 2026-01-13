@@ -11,13 +11,19 @@ ShadowMapBinder::ShadowMapBinder()
     : Object3DBase("ShadowMapBinder") {
     SetRenderType(RenderType::Standard);
     SetConstantBufferRequirements({
-        { lightViewProjectionMatrixNameKey_, sizeof(Matrix4x4) }
+        { shadowMapConstantsNameKey_, sizeof(ShadowMapConstants) },
     });
     SetUpdateConstantBuffersFunction(
         [this](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
             if (!constantBufferMaps) return false;
             auto **maps = static_cast<void **>(constantBufferMaps);
-            std::memcpy(maps[0], &lightViewProjectionMatrix_, sizeof(Matrix4x4));
+            shadowMapConstants_.lightViewProjectionMatrix = Matrix4x4::Identity();
+            if (camera3D_) {
+                shadowMapConstants_.lightViewProjectionMatrix = camera3D_->GetViewProjectionMatrix();
+                shadowMapConstants_.lightNear = camera3D_->GetNearClip();
+                shadowMapConstants_.lightFar = camera3D_->GetFarClip();
+            }
+            memcpy(maps[0], &shadowMapConstants_, sizeof(ShadowMapConstants));
             return true;
         });
 }

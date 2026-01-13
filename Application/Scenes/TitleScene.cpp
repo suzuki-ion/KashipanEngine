@@ -106,7 +106,7 @@ void TitleScene::Initialize() {
         obj->SetShadowMapBuffer(shadowMapBuffer_);
         const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
         obj->SetShadowSampler(sampler);
-        obj->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
+        obj->SetCamera3D(lightCamera3D_);
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
@@ -123,9 +123,6 @@ void TitleScene::Initialize() {
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, -0.5f, 0.0f));
             tr->SetScale(Vector3(20.0f, 1.0f, 20.0f));
-        }
-        if (auto* mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
         }
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
@@ -157,11 +154,6 @@ void TitleScene::Initialize() {
             auto obj = std::make_unique<Box>();
             obj->SetName("ParticleBox_" + std::to_string(i));
             obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{0.5f, 0.5f, 0.5f});
-
-            if (auto* mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetEnableLighting(true);
-                mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
 
             if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
             if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
@@ -207,6 +199,7 @@ void TitleScene::Initialize() {
         comp->SetLightCamera(lightCamera3D_);
         comp->SetDirectionalLight(light_);
         comp->SetShadowMapBinder(shadowMapBinder_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
         AddSceneComponent(std::move(comp));
     }
 
@@ -250,24 +243,6 @@ void TitleScene::OnUpdate() {
             r.y += 0.01f;
             tr->SetRotate(r);
         }
-    }
-
-    // ライトに合わせてライトカメラ移動
-    if (light_ && lightCamera3D_) {
-        Vector3 lightDir = light_->GetDirection().Normalize();
-        Vector3 targetPos = Vector3(0.0f, 0.0f, 0.0f) - lightDir * 10.0f;
-        if (auto *tr = lightCamera3D_->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(targetPos);
-            Vector3 rot = Vector3(0.0f, 0.0f, 0.0f);
-            rot.x = std::asin(-lightDir.y);
-            rot.y = std::atan2(lightDir.x, lightDir.z);
-            tr->SetRotate(rot);
-        }
-    }
-
-    // シャドウマッピング用ライトビュー行列更新
-    if (lightCamera3D_ && shadowMapBinder_) {
-        shadowMapBinder_->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
     }
 
     if (auto *ic = GetInputCommand()) {

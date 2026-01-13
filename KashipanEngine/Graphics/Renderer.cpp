@@ -4,6 +4,7 @@
 #include "Graphics/PipelineManager.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
+#include "Graphics/PostEffectComponents/IPostEffectComponent.h"
 #include <unordered_map>
 #include <chrono>
 
@@ -49,7 +50,10 @@ static const char *ToLabel(Renderer::CpuTimerStats::Scope s) {
     case S::Offscreen_Passes: return "Offscreen Passes";
     case S::Offscreen_AllEndRecord: return "Offscreen AllEndRecord";
     case S::Offscreen_Execute: return "Offscreen Execute";
-    case S::Screen_Passes: return "Screen Passes";
+    case S::PostEffect_AllBeginRecord: return "PostEffect AllBeginRecord";
+    case S::PostEffect_Passes: return "PostEffect Passes";
+    case S::PostEffect_AllEndRecord: return "PostEffect AllEndRecord";
+    case S::PostEffect_Execute: return "PostEffect Execute";
     case S::Persistent_Passes: return "Persistent Passes";
     case S::Standard_Total: return "Standard Total";
     case S::Standard_ConstantBuffer_Update: return "Standard CB Update(Map/Unmap + update)";
@@ -143,8 +147,24 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
         }
     }
     {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Screen_Passes);
-        RenderScreenPasses();
+        // ポストエフェクトコンポーネントの更新
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_AllBeginRecord);
+            ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
+        }
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_Passes);
+            RenderScreenPasses();
+        }
+        decltype(ScreenBuffer::AllEndRecord(Passkey<Renderer>{})) lists;
+        {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_AllEndRecord);
+            lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
+        }
+        if (!lists.empty() && directXCommon_) {
+            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_Execute);
+            directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
+        }
     }
     {
         RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Persistent_Passes);
@@ -270,10 +290,9 @@ void Renderer::RenderScreenPasses() {
     if (persistentScreenPasses_.empty()) return;
 
     for (const auto *passInfo : persistentScreenPasses_) {
-        if (!passInfo || !passInfo->buffer) continue;
-        if (!passInfo->batchedRenderFunction) continue;
+        if (!passInfo || !passInfo->screenBuffer) continue;
 
-        auto *buffer = passInfo->buffer;
+        auto *buffer = passInfo->screenBuffer;
 
         // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
         if (!buffer->IsRecording(Passkey<Renderer>{})) {
@@ -287,72 +306,123 @@ void Renderer::RenderScreenPasses() {
             continue;
         }
 
+        // PostEffect の各パスを、この ScreenBuffer の commandList 上で個別に実行
+        auto effectPasses = buffer->BuildPostEffectPasses(Passkey<Renderer>{});
+        if (effectPasses.empty()) {
+            // 何もない場合も正常。ScreenBuffer の offscreen 描画結果だけが作られる。
+            continue;
+        }
+
         const void *targetKey = static_cast<const void *>(buffer);
 
-        PipelineBinder pipelineBinder;
-        pipelineBinder.SetManager(pipelineManager_);
-        pipelineBinder.SetCommandList(commandList);
-        pipelineBinder.Invalidate();
-        pipelineBinder.UsePipeline(passInfo->pipelineName);
-
-        auto &shaderVariableBinder = pipelineManager_->GetShaderVariableBinder({}, passInfo->pipelineName);
-        shaderVariableBinder.SetCommandList(commandList);
-
-        const std::uint32_t instanceCount = 1;
-        bool ok = true;
-
-        {
-            RendererCpuTimerScope tCbUpdate(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Update);
-            std::vector<void *> cbMappedPtrs;
-            cbMappedPtrs.reserve(passInfo->constantBufferRequirements.size());
-            std::vector<ConstantBufferResource *> cbMappedBuffers;
-            cbMappedBuffers.reserve(passInfo->constantBufferRequirements.size());
-
-            for (const auto &req : passInfo->constantBufferRequirements) {
-                ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, 0, req.shaderNameKey, req.byteSize };
-                auto &entry = constantBuffers_[cbKey];
-                if (!entry.buffer || entry.byteSize != req.byteSize) {
-                    entry.byteSize = req.byteSize;
-                    entry.buffer = std::make_unique<ConstantBufferResource>(req.byteSize);
-                }
-                void *p = entry.buffer->Map();
-                cbMappedPtrs.push_back(p);
-                cbMappedBuffers.push_back(entry.buffer.get());
+        for (const auto &fx : effectPasses) {
+            if (fx.pipelineName.empty()) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+                break;
             }
 
-            void *constantBufferMaps = cbMappedPtrs.empty() ? nullptr : cbMappedPtrs.data();
-            if (passInfo->updateConstantBuffersFunction) {
-                ok = ok && passInfo->updateConstantBuffersFunction(constantBufferMaps, instanceCount);
-            }
+            PipelineBinder pipelineBinder;
+            pipelineBinder.SetManager(pipelineManager_);
+            pipelineBinder.SetCommandList(commandList);
+            pipelineBinder.Invalidate();
+            pipelineBinder.UsePipeline(fx.pipelineName);
 
-            // 永続Mapのため Unmap は不要
+            auto &shaderVariableBinder = pipelineManager_->GetShaderVariableBinder({}, fx.pipelineName);
+            shaderVariableBinder.SetCommandList(commandList);
 
-            if (ok) {
-                // Bind は update と分けて計測したいので、ここで update計測を閉じて Bind側を別スコープにする
-            }
-        }
-        {
-            RendererCpuTimerScope tCbBind(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Bind);
-            if (ok) {
-                for (const auto &req : passInfo->constantBufferRequirements) {
-                    ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, 0, req.shaderNameKey, req.byteSize };
-                    auto itCB = constantBuffers_.find(cbKey);
-                    if (itCB == constantBuffers_.end() || !itCB->second.buffer) {
-                        ok = false;
-                        break;
+            const std::uint32_t instanceCount = 1;
+            bool ok = true;
+
+            // Constant buffers
+            {
+                std::vector<void *> cbMappedPtrs;
+                cbMappedPtrs.reserve(fx.constantBufferRequirements.size());
+
+                for (const auto &req : fx.constantBufferRequirements) {
+                    ConstantBufferKey cbKey{ targetKey, fx.pipelineName, fx.batchKey, req.shaderNameKey, req.byteSize };
+                    auto &entry = constantBuffers_[cbKey];
+                    if (!entry.buffer || entry.byteSize != req.byteSize) {
+                        entry.byteSize = req.byteSize;
+                        entry.buffer = std::make_unique<ConstantBufferResource>(req.byteSize);
                     }
-                    ok = ok && shaderVariableBinder.Bind(req.shaderNameKey, itCB->second.buffer.get());
-                    if (!ok) break;
+                    void *p = entry.buffer->Map();
+                    cbMappedPtrs.push_back(p);
+                }
+
+                void *constantBufferMaps = cbMappedPtrs.empty() ? nullptr : cbMappedPtrs.data();
+                if (fx.updateConstantBuffersFunction) {
+                    ok = ok && fx.updateConstantBuffersFunction(constantBufferMaps, instanceCount);
+                }
+
+                if (ok) {
+                    for (const auto &req : fx.constantBufferRequirements) {
+                        ConstantBufferKey cbKey{ targetKey, fx.pipelineName, fx.batchKey, req.shaderNameKey, req.byteSize };
+                        auto itCB = constantBuffers_.find(cbKey);
+                        if (itCB == constantBuffers_.end() || !itCB->second.buffer) {
+                            ok = false;
+                            break;
+                        }
+                        ok = ok && shaderVariableBinder.Bind(req.shaderNameKey, itCB->second.buffer.get());
+                        if (!ok) break;
+                    }
                 }
             }
-        }
 
-        if (ok) {
-            ok = passInfo->batchedRenderFunction(shaderVariableBinder, instanceCount);
-        }
+            // Effect-specific resource binds
+            if (ok && fx.batchedRenderFunction) {
+                ok = ok && fx.batchedRenderFunction(shaderVariableBinder, instanceCount);
+            }
 
-        if (!ok) {
-            ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+            // Instance buffers (optional)
+            std::vector<void *> mappedPtrs;
+            if (ok && !fx.instanceBufferRequirements.empty()) {
+                if (!fx.submitInstanceFunction) {
+                    ok = false;
+                } else {
+                    mappedPtrs.reserve(fx.instanceBufferRequirements.size());
+
+                    for (const auto &req : fx.instanceBufferRequirements) {
+                        InstanceBufferKey ibKey{ targetKey, fx.pipelineName, fx.batchKey, req.shaderNameKey, req.elementStride };
+                        auto &entry = instanceBuffers_[ibKey];
+                        if (entry.capacity < instanceCount || !entry.buffer) {
+                            entry.capacity = instanceCount;
+                            entry.buffer = std::make_unique<StructuredBufferResource>(req.elementStride, entry.capacity);
+                        }
+
+                        ok = ok && shaderVariableBinder.Bind(req.shaderNameKey, entry.buffer->GetGPUDescriptorHandle());
+                        if (!ok) break;
+
+                        void *p = entry.buffer->Map();
+                        mappedPtrs.push_back(p);
+                    }
+
+                    if (ok) {
+                        void *instanceMaps = mappedPtrs.empty() ? nullptr : mappedPtrs.data();
+                        ok = ok && fx.submitInstanceFunction(instanceMaps, shaderVariableBinder, 0);
+                    }
+                }
+            }
+
+            if (!ok || !fx.renderCommandFunction) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+                break;
+            }
+
+            auto renderCommandOpt = fx.renderCommandFunction(pipelineBinder);
+            if (!renderCommandOpt) {
+                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+                break;
+            }
+
+            RenderCommand cmd;
+            cmd.vertexCount = renderCommandOpt->vertexCount;
+            cmd.indexCount = renderCommandOpt->indexCount;
+            cmd.instanceCount = 1;
+            cmd.startVertexLocation = renderCommandOpt->startVertexLocation;
+            cmd.startIndexLocation = renderCommandOpt->startIndexLocation;
+            cmd.baseVertexLocation = renderCommandOpt->baseVertexLocation;
+            cmd.startInstanceLocation = 0;
+            IssueRenderCommand(commandList, cmd);
         }
     }
 }
@@ -461,7 +531,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
             cbMappedBuffers.reserve(passInfo->constantBufferRequirements.size());
 
             for (const auto &req : passInfo->constantBufferRequirements) {
-                ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, passInfo->batchKey, req.shaderNameKey, req.byteSize };
+                ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, 0, req.shaderNameKey, req.byteSize };
                 auto &entry = constantBuffers_[cbKey];
                 if (!entry.buffer || entry.byteSize != req.byteSize) {
                     entry.byteSize = req.byteSize;
@@ -487,7 +557,7 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
             RendererCpuTimerScope tCbBind(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Bind);
             if (ok) {
                 for (const auto &req : passInfo->constantBufferRequirements) {
-                    ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, passInfo->batchKey, req.shaderNameKey, req.byteSize };
+                    ConstantBufferKey cbKey{ targetKey, passInfo->pipelineName, 0, req.shaderNameKey, req.byteSize };
                     auto itCB = constantBuffers_.find(cbKey);
                     if (itCB == constantBuffers_.end() || !itCB->second.buffer) {
                         ok = false;
@@ -852,7 +922,7 @@ bool Renderer::UnregisterPersistentRenderPass(PersistentPassHandle handle) {
 }
 
 Renderer::PersistentScreenPassHandle Renderer::RegisterPersistentScreenPass(ScreenBufferPass&& pass) {
-    if (!pass.buffer) return {};
+    if (!pass.screenBuffer) return {};
     PersistentScreenPassHandle handle{ nextPersistentScreenPassId_++ };
     PersistentScreenPassEntry entry{ handle, std::move(pass) };
     auto [it, inserted] = persistentScreenPassesById_.emplace(handle.id, std::move(entry));

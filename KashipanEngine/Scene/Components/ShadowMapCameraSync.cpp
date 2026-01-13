@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cfloat>
+#include <cmath>
 
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
@@ -10,12 +11,11 @@
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
 #include "Objects/SystemObjects/ShadowMapBinder.h"
+#include "Graphics/ShadowMapBuffer.h"
 
 namespace KashipanEngine {
 
 namespace {
-
-struct Float3 { float x, y, z; };
 
 static Vector3 TransformPoint(const Matrix4x4& m, const Vector3& p) {
     const float x = p.x * m.m[0][0] + p.y * m.m[1][0] + p.z * m.m[2][0] + 1.0f * m.m[3][0];
@@ -23,9 +23,7 @@ static Vector3 TransformPoint(const Matrix4x4& m, const Vector3& p) {
     const float z = p.x * m.m[0][2] + p.y * m.m[1][2] + p.z * m.m[2][2] + 1.0f * m.m[3][2];
     const float w = p.x * m.m[0][3] + p.y * m.m[1][3] + p.z * m.m[2][3] + 1.0f * m.m[3][3];
 
-    if (w != 0.0f) {
-        return Vector3(x / w, y / w, z / w);
-    }
+    if (w != 0.0f) return Vector3(x / w, y / w, z / w);
     return Vector3(x, y, z);
 }
 
@@ -58,6 +56,11 @@ static Vector3 Average(const std::array<Vector3, 8>& v) {
     return s * (1.0f / static_cast<float>(v.size()));
 }
 
+static float SnapToStep(float v, float step) {
+    if (step <= 0.0f) return v;
+    return std::floor(v / step + 0.5f) * step;
+}
+
 } // namespace
 
 ShadowMapCameraSync::ShadowMapCameraSync()
@@ -79,23 +82,18 @@ void ShadowMapCameraSync::SyncOnce() {
     const Vector3 centerWS = Average(cornersWS);
 
     const Vector3 lightDir = light_->GetDirection().Normalize();
-    const Vector3 lightPos = centerWS - lightDir * distanceFromTarget_;
-
     Vector3 rot(0.0f, 0.0f, 0.0f);
     rot.x = std::asin(-lightDir.y);
     rot.y = std::atan2(lightDir.x, lightDir.z);
 
-    lightTr->SetTranslate(lightPos);
+    const Vector3 lightPos = centerWS - lightDir * distanceFromTarget_;
     lightTr->SetRotate(rot);
+    lightTr->SetTranslate(lightPos);
 
     const Matrix4x4 lightView = lightCamera_->GetViewMatrix();
 
-    float minX = FLT_MAX;
-    float minY = FLT_MAX;
-    float minZ = FLT_MAX;
-    float maxX = -FLT_MAX;
-    float maxY = -FLT_MAX;
-    float maxZ = -FLT_MAX;
+    float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
+    float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
 
     for (const auto& pWS : cornersWS) {
         const Vector3 pLS = TransformPoint(lightView, pWS);
@@ -107,14 +105,38 @@ void ShadowMapCameraSync::SyncOnce() {
         maxZ = std::max(maxZ, pLS.z);
     }
 
-    const float nearClip = std::max(0.001f, minZ - depthMargin_);
-    const float farClip = maxZ + depthMargin_;
+    const float orthoW = maxX - minX;
+    const float orthoH = maxY - minY;
+
+    float snappedMinX = minX;
+    float snappedMaxX = maxX;
+    float snappedMinY = minY;
+    float snappedMaxY = maxY;
+
+    if (shadowMapBuffer_) {
+        const float shadowW = static_cast<float>(shadowMapBuffer_->GetWidth());
+        const float shadowH = static_cast<float>(shadowMapBuffer_->GetHeight());
+
+        const float texelX = (shadowW > 0.0f) ? (orthoW / shadowW) : 0.0f;
+        const float texelY = (shadowH > 0.0f) ? (orthoH / shadowH) : 0.0f;
+
+        snappedMinX = SnapToStep(minX, texelX);
+        snappedMaxX = snappedMinX + orthoW;
+        snappedMinY = SnapToStep(minY, texelY);
+        snappedMaxY = snappedMinY + orthoH;
+    }
+
+    float nearClip = minZ - depthMargin_;
+    float farClip = maxZ + depthMargin_;
+
+    if (nearClip < 0.001f) nearClip = 0.001f;
+    if (farClip <= nearClip + 0.001f) farClip = nearClip + 0.001f;
 
     lightCamera_->SetCameraType(Camera3D::CameraType::Orthographic);
-    lightCamera_->SetOrthographicParams(minX, maxY, maxX, minY, nearClip, farClip);
+    lightCamera_->SetOrthographicParams(snappedMinX, snappedMaxY, snappedMaxX, snappedMinY, nearClip, farClip);
 
     if (shadowMapBinder_) {
-        shadowMapBinder_->SetLightViewProjectionMatrix(lightCamera_->GetViewProjectionMatrix());
+        shadowMapBinder_->SetCamera3D(lightCamera_);
     }
 }
 

@@ -2,6 +2,7 @@
 #include <cstdint>
 #include "Assets/SamplerManager.h"
 #include "Objects/Object3DBase.h"
+#include "Objects/SystemObjects/Camera3D.h"
 
 namespace KashipanEngine {
 
@@ -9,6 +10,12 @@ class ShadowMapBuffer;
 
 class ShadowMapBinder final : public Object3DBase {
 public:
+    struct ShadowMapConstants {
+        Matrix4x4 lightViewProjectionMatrix;
+        float lightNear;
+        float lightFar;
+    };
+
     ShadowMapBinder();
     ~ShadowMapBinder() override = default;
 
@@ -18,8 +25,7 @@ public:
     void SetShadowSampler(SamplerManager::SamplerHandle handle) { shadowSampler_ = handle; }
     SamplerManager::SamplerHandle GetShadowSampler() const { return shadowSampler_; }
 
-    void SetLightViewProjectionMatrix(const Matrix4x4 &matrix) { lightViewProjectionMatrix_ = matrix; }
-    const Matrix4x4 &GetLightViewProjectionMatrix() const { return lightViewProjectionMatrix_; }
+    void SetCamera3D(Camera3D *camera) { camera3D_ = camera; }
 
     void SetShadowMapNameKey(std::string nameKey) { shadowMapNameKey_ = std::move(nameKey); }
     void SetShadowSamplerNameKey(std::string nameKey) { shadowSamplerNameKey_ = std::move(nameKey); }
@@ -30,9 +36,11 @@ protected:
 private:
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
     SamplerManager::SamplerHandle shadowSampler_ = SamplerManager::kInvalidHandle;
-    Matrix4x4 lightViewProjectionMatrix_ = Matrix4x4::Identity();
+    Camera3D *camera3D_ = nullptr;
 
-    std::string lightViewProjectionMatrixNameKey_ = "Pixel:ShadowMapConstants";
+    ShadowMapBinder::ShadowMapConstants shadowMapConstants_{};
+
+    std::string shadowMapConstantsNameKey_ = "Pixel:ShadowMapConstants";
     std::string shadowMapNameKey_ = "Pixel:gShadowMap";
     std::string shadowSamplerNameKey_ = "Pixel:gShadowSampler";
 };

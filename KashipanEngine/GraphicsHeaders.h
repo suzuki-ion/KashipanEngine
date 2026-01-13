@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Graphics/GraphicsEngine.h"
-#include "Graphics/IPostEffectComponent.h"
+#include "Graphics/PostEffectComponents/IPostEffectComponent.h"
+#include "Graphics/PostEffectComponents/CopyColorToScreenBufferEffect.h"
+#include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/DefineMaps.h"

@@ -110,7 +110,7 @@ void ResultScene::Initialize() {
         obj->SetShadowMapBuffer(shadowMapBuffer_);
         const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
         obj->SetShadowSampler(sampler);
-        obj->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
+        obj->SetCamera3D(lightCamera3D_);
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
@@ -124,12 +124,9 @@ void ResultScene::Initialize() {
     {
         auto obj = std::make_unique<Box>();
         obj->SetName("Floor");
-        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, -0.5f, 0.0f));
             tr->SetScale(Vector3(20.0f, 1.0f, 20.0f));
-        }
-        if (auto* mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
         }
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
@@ -141,7 +138,7 @@ void ResultScene::Initialize() {
     {
         auto obj = std::make_unique<Sphere>(16, 32);
         obj->SetName("ShadowTestSphere");
-        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, 1.5f, 0.0f));
             tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
         }
@@ -160,12 +157,7 @@ void ResultScene::Initialize() {
         for (int i = 0; i < 32; ++i) {
             auto obj = std::make_unique<Box>();
             obj->SetName("ParticleBox_" + std::to_string(i));
-            obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{0.5f, 0.5f, 0.5f});
-
-            if (auto* mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetEnableLighting(true);
-                mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
+            obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{ 0.5f, 0.5f, 0.5f });
 
             if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
             if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
@@ -211,6 +203,7 @@ void ResultScene::Initialize() {
         comp->SetLightCamera(lightCamera3D_);
         comp->SetDirectionalLight(light_);
         comp->SetShadowMapBinder(shadowMapBinder_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
         AddSceneComponent(std::move(comp));
     }
 

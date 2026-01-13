@@ -5,6 +5,7 @@
 #include "Scenes/Components/ScreenBufferKeepRatio.h"
 #include "Objects/Components/ParticleMovement.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
+#include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
 
 namespace KashipanEngine {
 
@@ -16,7 +17,18 @@ void GameScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
 
+    if (screenBuffer_) {
+        ChromaticAberrationEffect::Params p{};
+        p.directionX = 1.0f;
+        p.directionY = 0.0f;
+        p.strength = 0.0025f;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+        screenBuffer_->AttachToRenderer("ScreenBuffer_GameScene");
+    }
+
     auto* window = Window::GetWindow("Main Window");
+    [[maybe_unused]] const auto whiteTexture = TextureManager::GetTextureFromFileName("white1x1.png");
+    [[maybe_unused]] const auto uvCheckerTexture = TextureManager::GetTextureFromFileName("uvChecker.png");
 
     // 2D Camera (window)
     {
@@ -106,7 +118,7 @@ void GameScene::Initialize() {
         obj->SetShadowMapBuffer(shadowMapBuffer_);
         const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
         obj->SetShadowSampler(sampler);
-        obj->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
+        obj->SetCamera3D(lightCamera3D_);
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
@@ -120,12 +132,9 @@ void GameScene::Initialize() {
     {
         auto obj = std::make_unique<Box>();
         obj->SetName("Floor");
-        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, -0.5f, 0.0f));
             tr->SetScale(Vector3(64.0f, 1.0f, 64.0f));
-        }
-        if (auto* mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
         }
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
@@ -137,9 +146,12 @@ void GameScene::Initialize() {
     {
         auto obj = std::make_unique<Sphere>(16, 32);
         obj->SetName("ShadowTestSphere");
-        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, 1.5f, 0.0f));
             tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
+        }
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetTexture(uvCheckerTexture);
         }
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
@@ -153,15 +165,10 @@ void GameScene::Initialize() {
         spawn.min = Vector3(-32.0f, 0.0f, -32.0f);
         spawn.max = Vector3(32.0f, 32.0f, 32.0f);
 
-        for (int i = 0; i < 2048; ++i) {
+        for (int i = 0; i < 256; ++i) {
             auto obj = std::make_unique<Box>();
             obj->SetName("ParticleBox_" + std::to_string(i));
-            obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{0.5f, 0.5f, 0.5f});
-
-            if (auto* mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetEnableLighting(true);
-                mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
+            obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{ 1.0f, 1.0f, 1.0f });
 
             if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
             if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
@@ -207,6 +214,7 @@ void GameScene::Initialize() {
         comp->SetLightCamera(lightCamera3D_);
         comp->SetDirectionalLight(light_);
         comp->SetShadowMapBinder(shadowMapBinder_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
         AddSceneComponent(std::move(comp));
     }
 
@@ -250,24 +258,6 @@ void GameScene::OnUpdate() {
             r.y += 0.01f;
             tr->SetRotate(r);
         }
-    }
-
-    // ライトに合わせてライトカメラ移動
-    if (light_ && lightCamera3D_) {
-        Vector3 lightDir = light_->GetDirection().Normalize();
-        Vector3 targetPos = Vector3(0.0f, 0.0f, 0.0f) - lightDir * 10.0f;
-        if (auto* tr = lightCamera3D_->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(targetPos);
-            Vector3 rot = Vector3(0.0f, 0.0f, 0.0f);
-            rot.x = std::asin(-lightDir.y);
-            rot.y = std::atan2(lightDir.x, lightDir.z);
-            tr->SetRotate(rot);
-        }
-    }
-
-    // シャドウマッピング用ライトビュー行列更新
-    if (lightCamera3D_ && shadowMapBinder_) {
-        shadowMapBinder_->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
     }
 
     if (auto *ic = GetInputCommand()) {

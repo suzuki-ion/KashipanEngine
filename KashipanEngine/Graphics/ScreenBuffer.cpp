@@ -23,6 +23,28 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
     return shaderResources_[idx] ? shaderResources_[idx]->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
+D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
+    const auto idx = GetReadIndex();
+    auto* ds = depthStencils_[idx].get();
+    return (ds && ds->HasSrv()) ? ds->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
+}
+
+std::vector<PostEffectPass> ScreenBuffer::BuildPostEffectPasses(Passkey<Renderer>) const {
+    std::vector<PostEffectPass> out;
+    out.reserve(postEffectComponents_.size());
+
+    for (const auto& c : postEffectComponents_) {
+        if (!c) continue;
+        auto passes = c->BuildPostEffectPasses();
+        if (passes.empty()) continue;
+        for (auto& p : passes) {
+            out.push_back(std::move(p));
+        }
+    }
+
+    return out;
+}
+
 ScreenBuffer* ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
     DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
     std::unique_ptr<ScreenBuffer> buffer(new ScreenBuffer());
@@ -312,18 +334,10 @@ bool ScreenBuffer::RegisterPostEffectComponent(std::unique_ptr<IPostEffectCompon
     component->Initialize();
 
     postEffectComponents_.push_back(std::move(component));
-
-    std::stable_sort(postEffectComponents_.begin(), postEffectComponents_.end(),
-        [](const std::unique_ptr<IPostEffectComponent>& a, const std::unique_ptr<IPostEffectComponent>& b) {
-            if (!a) return false;
-            if (!b) return true;
-            return a->GetApplyPriority() < b->GetApplyPriority();
-        });
-
     return true;
 }
 
-void ScreenBuffer::AttachToRenderer(const std::string& pipelineName, const std::string& passName) {
+void ScreenBuffer::AttachToRenderer(const std::string& passName) {
     auto* renderer = Window::GetRenderer(Passkey<ScreenBuffer>{});
     if (!renderer) return;
 
@@ -332,7 +346,7 @@ void ScreenBuffer::AttachToRenderer(const std::string& pipelineName, const std::
         persistentScreenPassHandle_ = {};
     }
 
-    auto passOpt = CreateScreenPass(pipelineName, passName);
+    auto passOpt = CreateScreenPass(passName);
     if (!passOpt) return;
 
     persistentScreenPassHandle_ = renderer->RegisterPersistentScreenPass(std::move(*passOpt));
@@ -348,40 +362,21 @@ void ScreenBuffer::DetachFromRenderer() {
     persistentScreenPassHandle_ = {};
 }
 
-std::optional<ScreenBufferPass> ScreenBuffer::CreateScreenPass(const std::string& pipelineName, const std::string& passName) {
+std::optional<ScreenBufferPass> ScreenBuffer::CreateScreenPass(const std::string& passName) {
     ScreenBufferPass pass(Passkey<ScreenBuffer>{});
-    pass.buffer = this;
-    pass.pipelineName = pipelineName;
+    pass.screenBuffer = this;
     pass.passName = passName;
 
     pass.renderType = RenderType::Standard;
     pass.batchKey = 0;
 
-    pass.batchedRenderFunction = [this](ShaderVariableBinder& binder, std::uint32_t instanceCount) -> bool {
-        return RenderBatched(binder, instanceCount);
+    // 既存の ScreenBufferPass は「このScreenBufferに対するポストエフェクトチェーンの入口」として残す。
+    // 実際の描画は Renderer 側で各 PostEffectPass を個別実行する。
+    pass.batchedRenderFunction = [](ShaderVariableBinder&, std::uint32_t) -> bool {
+        return true;
     };
 
     return pass;
-}
-
-bool ScreenBuffer::RenderBatched(ShaderVariableBinder& binder, std::uint32_t instanceCount) {
-    (void)instanceCount;
-
-    // コンポーネントからシェーダー変数バインドを行える設計。
-    for (auto& c : postEffectComponents_) {
-        if (!c) continue;
-        auto r = c->BindShaderVariables(&binder);
-        if (r != std::nullopt && r.value() == false) return false;
-    }
-
-    // エフェクト適用
-    for (auto& c : postEffectComponents_) {
-        if (!c) continue;
-        auto r = c->Apply();
-        if (r != std::nullopt && r.value() == false) return false;
-    }
-
-    return true;
 }
 
 void ScreenBuffer::MarkDiscard(Passkey<Renderer>, ScreenBuffer* buffer) {
@@ -408,13 +403,15 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
 
     static ScreenBuffer* sSelected = nullptr;
     static bool sShowViewer = false;
+    static bool sViewDepth = false;
 
-    if (ImGui::BeginTable("##ScreenBufferList", 4,
+    if (ImGui::BeginTable("##ScreenBufferList", 5,
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
             ImVec2(0, 220))) {
         ImGui::TableSetupColumn("Ptr", ImGuiTableColumnFlags_WidthFixed, 120);
         ImGui::TableSetupColumn("Size", ImGuiTableColumnFlags_WidthFixed, 110);
-        ImGui::TableSetupColumn("SRV", ImGuiTableColumnFlags_WidthFixed, 120);
+        ImGui::TableSetupColumn("SRV(Color)", ImGuiTableColumnFlags_WidthFixed, 120);
+        ImGui::TableSetupColumn("SRV(Depth)", ImGuiTableColumnFlags_WidthFixed, 120);
         ImGui::TableSetupColumn("Select");
         ImGui::TableHeadersRow();
 
@@ -431,14 +428,26 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
             ImGui::Text("%ux%u", ptr->GetWidth(), ptr->GetHeight());
 
             ImGui::TableSetColumnIndex(2);
-            const auto h = ptr->GetSrvHandle();
-            if (h.ptr != 0) {
-                ImGui::Text("0x%llX", static_cast<unsigned long long>(h.ptr));
-            } else {
-                ImGui::TextUnformatted("-");
+            {
+                const auto h = ptr->GetSrvHandle();
+                if (h.ptr != 0) {
+                    ImGui::Text("0x%llX", static_cast<unsigned long long>(h.ptr));
+                } else {
+                    ImGui::TextUnformatted("-");
+                }
             }
 
             ImGui::TableSetColumnIndex(3);
+            {
+                const auto h = ptr->GetDepthSrvHandle();
+                if (h.ptr != 0) {
+                    ImGui::Text("0x%llX", static_cast<unsigned long long>(h.ptr));
+                } else {
+                    ImGui::TextUnformatted("-");
+                }
+            }
+
+            ImGui::TableSetColumnIndex(4);
             ImGui::PushID(ptr);
             const bool isSel = (sSelected == ptr);
             if (ImGui::Selectable("##select", isSel, ImGuiSelectableFlags_SpanAllColumns)) {
@@ -474,12 +483,58 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
     }
 
     if (ImGui::Begin("ScreenBuffer Viewer", &sShowViewer)) {
-        const auto hdl = sSelected->GetSrvHandle();
-        if (hdl.ptr != 0) {
-            ImGui::Text("Ptr: %p", (void*)sSelected);
-            ImGui::Text("Size: %ux%u", sSelected->GetWidth(), sSelected->GetHeight());
-            ImGui::Separator();
+        const auto colorHdl = sSelected->GetSrvHandle();
+        const auto depthHdl = sSelected->GetDepthSrvHandle();
 
+        ImGui::Text("Ptr: %p", (void*)sSelected);
+        ImGui::Text("Size: %ux%u", sSelected->GetWidth(), sSelected->GetHeight());
+        ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("PostEffects", ImGuiTreeNodeFlags_DefaultOpen)) {
+            const auto &effects = sSelected->GetPostEffectComponents();
+            if (effects.empty()) {
+                ImGui::TextUnformatted("(none)");
+            } else {
+                for (const auto &c : effects) {
+                    if (!c) continue;
+
+                    if (ImGui::TreeNode(c->GetComponentType().c_str())) {
+                        c->ShowImGui();
+                        ImGui::TreePop();
+                    }
+                }
+            }
+        }
+
+        ImGui::Separator();
+
+        const bool canViewColor = (colorHdl.ptr != 0);
+        const bool canViewDepth = (depthHdl.ptr != 0);
+
+        if (!canViewColor && !canViewDepth) {
+            ImGui::TextUnformatted("SRV not ready.");
+            ImGui::End();
+            return;
+        }
+
+        // 表示タイプ切り替え
+        if (canViewColor && canViewDepth) {
+            const char* modeLabel = sViewDepth ? "Mode: Depth" : "Mode: Color";
+            ImGui::TextUnformatted(modeLabel);
+            ImGui::SameLine();
+            if (ImGui::Button(sViewDepth ? "Show Color" : "Show Depth")) {
+                sViewDepth = !sViewDepth;
+            }
+        } else if (canViewDepth && !canViewColor) {
+            sViewDepth = true;
+            ImGui::TextUnformatted("Mode: Depth");
+        } else {
+            sViewDepth = false;
+            ImGui::TextUnformatted("Mode: Color");
+        }
+
+        const auto hdl = sViewDepth ? depthHdl : colorHdl;
+        if (hdl.ptr != 0) {
             ImVec2 avail = ImGui::GetContentRegionAvail();
             const float w = static_cast<float>(sSelected->GetWidth());
             const float h = static_cast<float>(sSelected->GetHeight());

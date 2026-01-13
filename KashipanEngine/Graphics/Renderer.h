@@ -28,6 +28,7 @@ class Object2DBase;
 class Object3DBase;
 class ScreenBuffer;
 class ShadowMapBuffer;
+class IPostEffectComponent;
 
 /// @brief 描画方式
 enum class RenderType {
@@ -51,6 +52,7 @@ private:
     friend class Renderer;
     friend class Object2DBase;
     friend class Object3DBase;
+    friend class IPostEffectComponent;
     RenderCommand() = default;
     UINT vertexCount = 0;           //< 頂点数
     UINT indexCount = 0;            //< インデックス数
@@ -108,6 +110,25 @@ private:
     std::function<std::optional<RenderCommand>(PipelineBinder &)> renderCommandFunction; //< 描画コマンド取得関数
 };
 
+/// @brief PostEffect 用描画パス情報構造体
+struct PostEffectPass final {
+public:
+    PostEffectPass() = default;
+
+    std::string pipelineName;
+    std::string passName;
+    std::uint64_t batchKey = 0;
+
+    std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements;
+    std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction;
+    std::vector<RenderPass::InstanceBufferRequirement> instanceBufferRequirements;
+    std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction;
+    /// @brief 描画前に必要な SRV/CBV/Sampler 等をバインド
+    std::function<bool(ShaderVariableBinder &, std::uint32_t instanceCount)> batchedRenderFunction;
+    /// @brief 描画コマンド生成（フルスクリーン三角形等）
+    std::function<std::optional<RenderCommand>(PipelineBinder &)> renderCommandFunction;
+};
+
 /// @brief ScreenBuffer 用描画パス情報構造体
 struct ScreenBufferPass final {
 public:
@@ -121,9 +142,7 @@ private:
     friend class ScreenBuffer;
 
     ScreenBufferPass(Passkey<ScreenBuffer>) {}
-
-    ScreenBuffer* buffer = nullptr;
-    std::string pipelineName;
+    ScreenBuffer *screenBuffer = nullptr;
     std::string passName;
 
     RenderType renderType = RenderType::Standard;
@@ -131,10 +150,8 @@ private:
 
     std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements;
     std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction;
-
     std::vector<RenderPass::InstanceBufferRequirement> instanceBufferRequirements;
     std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction;
-
     std::function<bool(ShaderVariableBinder &, std::uint32_t instanceCount)> batchedRenderFunction;
 };
 
@@ -161,7 +178,11 @@ public:
             Offscreen_AllEndRecord,
             Offscreen_Execute,
 
-            Screen_Passes,
+            PostEffect_AllBeginRecord,
+            PostEffect_Passes,
+            PostEffect_AllEndRecord,
+            PostEffect_Execute,
+
             Persistent_Passes,
 
             Standard_Total,
@@ -242,11 +263,6 @@ public:
 
     /// @brief 永続レンダーパス解除
     bool UnregisterPersistentRenderPass(PersistentPassHandle handle);
-
-    /// @brief レンダーパス登録
-    void RegisterRenderPass(const RenderPass &pass);
-    /// @brief レンダーパス登録（ムーブ）
-    void RegisterRenderPass(RenderPass &&pass);
 
     /// @brief ScreenBuffer 向け永続描画パス登録
     PersistentScreenPassHandle RegisterPersistentScreenPass(ScreenBufferPass&& pass);

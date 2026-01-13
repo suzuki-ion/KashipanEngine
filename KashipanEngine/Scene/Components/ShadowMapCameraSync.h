@@ -7,6 +7,7 @@ namespace KashipanEngine {
 class Camera3D;
 class DirectionalLight;
 class ShadowMapBinder;
+class ShadowMapBuffer;
 
 /// @brief メインカメラの視錐台をカバーするようにシャドウマップ用カメラ（正射影）を同期する
 class ShadowMapCameraSync final : public ISceneComponent {
@@ -24,6 +25,9 @@ public:
     /// @brief ShadowMapBinder を設定（ライト VP 行列をシェーダへ反映する）
     void SetShadowMapBinder(ShadowMapBinder* binder) { shadowMapBinder_ = binder; }
 
+    /// @brief テクセルスナップで使用するシャドウマップバッファを設定
+    void SetShadowMapBuffer(ShadowMapBuffer* buffer) { shadowMapBuffer_ = buffer; }
+
     /// @brief ライトカメラをメインカメラ中心からライト逆方向へ離す距離を設定
     void SetDistanceFromTarget(float distance) { distanceFromTarget_ = distance; }
     /// @brief ライトカメラの Near/Far に追加するマージン値を設定
@@ -39,6 +43,7 @@ private:
     Camera3D* lightCamera_ = nullptr;
     DirectionalLight* light_ = nullptr;
     ShadowMapBinder* shadowMapBinder_ = nullptr;
+    ShadowMapBuffer* shadowMapBuffer_ = nullptr;
 
     float distanceFromTarget_ = 10.0f;
     float depthMargin_ = 10.0f;

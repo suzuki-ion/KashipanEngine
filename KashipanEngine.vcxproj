@@ -289,6 +289,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\CopyColorToScreenBufferEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
@@ -355,7 +357,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
     <ClInclude Include="KashipanEngine\Graphics\GraphicsEngine.h" />
-    <ClInclude Include="KashipanEngine\Graphics\IPostEffectComponent.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\IShaderTexture.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h" />
     <ClInclude Include="KashipanEngine\Graphics\PipelineManager.h" />
@@ -503,6 +505,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ChromaticAberration.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\TriangleShadow.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
@@ -533,6 +536,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Compute.Empty.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Sampler\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ChromaticAberration.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
@@ -604,6 +608,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <FileType>Document</FileType>
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

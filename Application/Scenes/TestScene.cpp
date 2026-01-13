@@ -1,6 +1,7 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/Components/ScreenBufferKeepRatio.h"
 #include "Objects/Components/ParticleMovement.h"
+#include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 
 namespace KashipanEngine {
@@ -103,7 +104,7 @@ void TestScene::Initialize() {
         obj->SetShadowMapBuffer(shadowMapBuffer_);
         const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
         obj->SetShadowSampler(sampler);
-        obj->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
+        obj->SetCamera3D(lightCamera3D_);
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
@@ -204,6 +205,7 @@ void TestScene::Initialize() {
         comp->SetLightCamera(lightCamera3D_);
         comp->SetDirectionalLight(light_);
         comp->SetShadowMapBinder(shadowMapBinder_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
         AddSceneComponent(std::move(comp));
     }
 }
@@ -240,24 +242,6 @@ void TestScene::OnUpdate() {
             r.y += 0.01f;
             tr->SetRotate(r);
         }
-    }
-
-    // ライトに合わせてライトカメラ移動
-    if (light_ && lightCamera3D_) {
-        Vector3 lightDir = light_->GetDirection().Normalize();
-        Vector3 targetPos = Vector3(0.0f, 0.0f, 0.0f) - lightDir * 10.0f;
-        if (auto* tr = lightCamera3D_->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(targetPos);
-            Vector3 rot = Vector3(0.0f, 0.0f, 0.0f);
-            rot.x = std::asin(-lightDir.y);
-            rot.y = std::atan2(lightDir.x, lightDir.z);
-            tr->SetRotate(rot);
-        }
-    }
-
-    // シャドウマッピング用ライトビュー行列更新
-    if (lightCamera3D_ && shadowMapBinder_) {
-        shadowMapBinder_->SetLightViewProjectionMatrix(lightCamera3D_->GetViewProjectionMatrix());
     }
 }
 

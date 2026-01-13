@@ -1,0 +1,13 @@
+﻿{
+	"BaseName": "ChromaticAberration",
+	"Vertex": {
+		"Path": "PostEffect/ChromaticAberrationVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Path": "PostEffect/ChromaticAberrationPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

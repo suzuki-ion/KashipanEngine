@@ -344,7 +344,7 @@ Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_
 
     Vector4 defaultMaterialColor{1.0f, 1.0f, 1.0f, 1.0f};
     TextureManager::TextureHandle defaultTexture
-        = TextureManager::GetTextureFromFileName("uvChecker.png");
+        = TextureManager::GetTextureFromFileName("white1x1.png");
     SamplerManager::SamplerHandle defaultSampler = 1;
     RegisterComponent<Material2D>(defaultMaterialColor, defaultTexture, defaultSampler);
 

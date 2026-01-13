@@ -848,7 +848,7 @@
     <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\IPostEffectComponent.h">
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\OBB.h">
@@ -1043,6 +1043,12 @@
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\CopyColorToScreenBufferEffect.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
@@ -1121,5 +1127,9 @@
     <None Include="Docs\EngineReference\11_DefaultSceneComponents.md" />
     <None Include="Docs\EngineReference\12_Utilities.md" />
     <None Include="Docs\EngineReference\13_Logging.md" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ChromaticAberration.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ChromaticAberration.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationVS.hlsl" />
   </ItemGroup>
 </Project>

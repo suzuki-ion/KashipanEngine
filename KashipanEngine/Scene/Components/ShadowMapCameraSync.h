@@ -36,6 +36,11 @@ public:
     /// @brief 毎フレーム同期処理を実行
     void Update() override;
 
+#if defined(USE_IMGUI)
+    /// @brief ImGui ウィンドウ表示
+    void ShowImGui() override;
+#endif
+
 private:
     void SyncOnce();
 
@@ -45,8 +50,8 @@ private:
     ShadowMapBinder* shadowMapBinder_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
 
-    float distanceFromTarget_ = 10.0f;
-    float depthMargin_ = 10.0f;
+    float distanceFromTarget_ = 1024.0f;
+    float depthMargin_ = 0.0f;
 };
 
 } // namespace KashipanEngine

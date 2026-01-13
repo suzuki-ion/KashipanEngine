@@ -15,7 +15,7 @@ GameScene::GameScene()
 
 void GameScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
-    shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
+    shadowMapBuffer_ = ShadowMapBuffer::Create(16384, 16384);
 
     if (screenBuffer_) {
         ChromaticAberrationEffect::Params p{};

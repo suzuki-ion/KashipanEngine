@@ -60,6 +60,7 @@ void SceneBase::Update() {
 
 #if defined(USE_IMGUI)
 void SceneBase::ShowImGui() {
+    ImGui::Begin("Scene Objects");
     ImGui::TextUnformatted("Scene");
     ImGui::SameLine();
     ImGui::TextUnformatted(name_.c_str());
@@ -85,6 +86,20 @@ void SceneBase::ShowImGui() {
             }
         }
     }
+    ImGui::End();
+
+    ImGui::Begin("Scene Components");
+    if (ImGui::CollapsingHeader("Scene Components", ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (auto &c : sceneComponents_) {
+            if (!c) continue;
+            const std::string &compType = c->GetComponentType();
+            if (ImGui::TreeNode(compType.c_str())) {
+                c->ShowImGui();
+                ImGui::TreePop();
+            }
+        }
+    }
+    ImGui::End();
 }
 #endif
 

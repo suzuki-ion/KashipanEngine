@@ -72,6 +72,29 @@ void ShadowMapCameraSync::Update() {
     SyncOnce();
 }
 
+#if defined(USE_IMGUI)
+void ShadowMapCameraSync::ShowImGui() {
+    ImGui::TextUnformatted("ShadowMapCameraSync Parameters");
+    if (mainCamera_) {
+        ImGui::Text("Main Camera: %s", mainCamera_->GetName().c_str());
+    } else {
+        ImGui::Text("Main Camera: (not set)");
+    }
+    if (lightCamera_) {
+        ImGui::Text("Light Camera: %s", lightCamera_->GetName().c_str());
+    } else {
+        ImGui::Text("Light Camera: (not set)");
+    }
+    if (light_) {
+        ImGui::Text("Directional Light: %s", light_->GetName().c_str());
+    } else {
+        ImGui::Text("Directional Light: (not set)");
+    }
+    ImGui::DragFloat("Distance From Target", &distanceFromTarget_, 0.1f, 0.0f, 1000.0f);
+    ImGui::DragFloat("Depth Margin", &depthMargin_, 0.1f, 0.0f, 1000.0f);
+}
+#endif
+
 void ShadowMapCameraSync::SyncOnce() {
     if (!mainCamera_ || !lightCamera_ || !light_) return;
 
@@ -133,7 +156,7 @@ void ShadowMapCameraSync::SyncOnce() {
     if (farClip <= nearClip + 0.001f) farClip = nearClip + 0.001f;
 
     lightCamera_->SetCameraType(Camera3D::CameraType::Orthographic);
-    lightCamera_->SetOrthographicParams(snappedMinX, snappedMaxY, snappedMaxX, snappedMinY, nearClip, farClip);
+    lightCamera_->SetOrthographicParams(snappedMinX, snappedMinY, snappedMaxX, snappedMaxY, nearClip, farClip);
 
     if (shadowMapBinder_) {
         shadowMapBinder_->SetCamera3D(lightCamera_);

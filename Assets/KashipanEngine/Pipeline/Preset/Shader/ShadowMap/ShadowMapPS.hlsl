@@ -6,6 +6,6 @@ struct PSOutput {
 
 PSOutput main(VSOutput input) {
     PSOutput o;
-	o.color = float4(1, 1, 1, 1);
+	o.color = 0.0f;
     return o;
 }

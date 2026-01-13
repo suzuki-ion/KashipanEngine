@@ -16,8 +16,9 @@ inline float ComputeShadowFactor(float3 worldPos) {
 	uv.x = ndc.x * 0.5f + 0.5f;
 	uv.y = -ndc.y * 0.5f + 0.5f;
 
-	if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1)
+    if (uv.x < 0.0f || uv.x > 1.0f || uv.y < 0.0f || uv.y > 1.0f || ndc.z < 0.0f || ndc.z > 1.0f) {
 		return 1.0f;
+    }
 		
 	float depthFromLight = ndc.z;
 	float shadowDepth = gShadowMap.Sample(gShadowSampler, uv).r;

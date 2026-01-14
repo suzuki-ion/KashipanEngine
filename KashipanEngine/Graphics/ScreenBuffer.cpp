@@ -19,12 +19,12 @@ static std::vector<ScreenBuffer*> sPendingDestroy;
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
-    const auto idx = GetReadIndex();
+    const auto idx = GetRtvReadIndex();
     return shaderResources_[idx] ? shaderResources_[idx]->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
-    const auto idx = GetReadIndex();
+    const auto idx = GetDsvReadIndex();
     auto* ds = depthStencils_[idx].get();
     return (ds && ds->HasSrv()) ? ds->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
@@ -127,14 +127,13 @@ void ScreenBuffer::AllBeginRecord(Passkey<Renderer>) {
         if (!ptr || !owning) continue;
         if (IsPendingDestroy(ptr)) continue;
 
-        // ping-pong: 今フレームの write 面へ切り替え（read は前フレームを保持）
-        ptr->AdvanceFrameBufferIndex();
-
-        auto* cl = ptr->BeginRecord();
         RecordState st;
-        st.list = cl;
-        st.discard = (cl == nullptr);
-        st.started = (cl != nullptr);
+        st.list = ptr->dx12Commands_ ? ptr->dx12Commands_->BeginRecord() : nullptr;
+        if (!st.list) {
+            continue;
+        }
+        st.discard = false;
+        st.started = false;
         sRecordStates.emplace(ptr, st);
     }
 }
@@ -150,11 +149,22 @@ std::vector<ID3D12CommandList*> ScreenBuffer::AllEndRecord(Passkey<Renderer>) {
         if (!ptr->EndRecord(st.discard)) {
             continue;
         }
+
         lists.push_back(st.list);
     }
 
-    sRecordStates.clear();
     return lists;
+}
+
+void ScreenBuffer::AllCloseRecord(Passkey<Renderer>) {
+    for (auto& [ptr, st] : sRecordStates) {
+        if (!ptr) continue;
+        if (!st.started) continue;
+        if (!ptr->dx12Commands_ || !ptr->dx12Commands_->EndRecord()) {
+            continue;
+        }
+    }
+    sRecordStates.clear();
 }
 
 ScreenBuffer::~ScreenBuffer() {
@@ -172,17 +182,17 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 
     if (!sDirectXCommon_) return false;
 
-    commandSlotIndex_ = sDirectXCommon_->AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>{});
-    auto* cmd = sDirectXCommon_->GetScreenBufferCommandObjects(Passkey<ScreenBuffer>{}, commandSlotIndex_);
-    if (!cmd || !cmd->commandAllocator || !cmd->commandList) {
+    commandSlotIndex_ = sDirectXCommon_->AcquireCommandObjects(Passkey<ScreenBuffer>{});
+    auto* cmd = sDirectXCommon_->GetCommandObjects(Passkey<ScreenBuffer>{}, commandSlotIndex_);
+    if (!cmd || !cmd->GetCommandAllocator() || !cmd->GetCommandList()) {
         commandSlotIndex_ = -1;
         return false;
     }
+    dx12Commands_ = cmd;
 
-    commandAllocator_ = cmd->commandAllocator.Get();
-    commandList_ = cmd->commandList.Get();
-
-    writeIndex_ = 0;
+    rtvWriteIndex_ = 0;
+    dsvWriteIndex_ = 0;
+    lastBeginDisableDepthWrite_ = false;
 
     for (size_t i = 0; i < kBufferCount_; ++i) {
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
@@ -193,17 +203,6 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     for (size_t i = 0; i < kBufferCount_; ++i) {
         if (!renderTargets_[i] || !depthStencils_[i] || !shaderResources_[i]) return false;
     }
-
-    // 初回フレームで read 面が RT レイアウトのまま SRV バインドされるのを防ぐため、
-    // 両面の RenderTarget を明示的に PixelShaderResource へ揃える。
-    sDirectXCommon_->ExecuteOneShotCommandsForScreenBuffer(Passkey<ScreenBuffer>{},
-        [this](ID3D12GraphicsCommandList* cl) {
-            for (size_t i = 0; i < kBufferCount_; ++i) {
-                if (!renderTargets_[i]) continue;
-                renderTargets_[i]->SetCommandList(cl);
-                renderTargets_[i]->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-            }
-        });
 
     return true;
 }
@@ -222,12 +221,10 @@ void ScreenBuffer::Destroy() {
         depthStencils_[i].reset();
         renderTargets_[i].reset();
     }
-
-    commandList_ = nullptr;
-    commandAllocator_ = nullptr;
+    dx12Commands_ = nullptr;
 
     if (sDirectXCommon_ && commandSlotIndex_ >= 0) {
-        sDirectXCommon_->ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>{}, commandSlotIndex_);
+        sDirectXCommon_->ReleaseCommandObjects(Passkey<ScreenBuffer>{}, commandSlotIndex_);
     }
     commandSlotIndex_ = -1;
 
@@ -235,36 +232,55 @@ void ScreenBuffer::Destroy() {
     height_ = 0;
 }
 
-ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord() {
-    if (!commandAllocator_ || !commandList_) return nullptr;
+ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord(Passkey<Renderer>, bool disableDepthWrite) {
+    auto* cmd = BeginRecord(disableDepthWrite);
+    if (!cmd) return nullptr;
 
-    HRESULT hr = commandAllocator_->Reset();
-    if (FAILED(hr)) return nullptr;
+    auto &st = sRecordStates[this];
+    st.list = cmd;
+    st.started = true;
 
-    hr = commandList_->Reset(commandAllocator_, nullptr);
-    if (FAILED(hr)) return nullptr;
+    return cmd;
+}
 
-    auto* rt = renderTargets_[GetWriteIndex()].get();
-    auto* ds = depthStencils_[GetWriteIndex()].get();
-    if (!rt || !ds) return nullptr;
+ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord(bool disableDepthWrite) {
+    LogScope scope;
+    if (!dx12Commands_) return nullptr;
 
-    rt->SetCommandList(commandList_);
-    ds->SetCommandList(commandList_);
+    // BeginRecord の設定を記憶（EndRecord の動作に使用）
+    lastBeginDisableDepthWrite_ = disableDepthWrite;
 
-    // 明示遷移（write 面のみ RT にする）
+    auto *cmd = dx12Commands_->GetCommandList();
+    auto* rt = renderTargets_[GetRtvWriteIndex()].get();
+    auto* ds = depthStencils_[GetDsvWriteIndex()].get();
+    if (!rt) return nullptr;
+    if (!disableDepthWrite && !ds) return nullptr;
+
+    rt->SetCommandList(cmd);
+    if (!disableDepthWrite) {
+        ds->SetCommandList(cmd);
+    }
+
     if (!rt->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET)) {
         return nullptr;
     }
-    if (!ds->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE)) {
-        return nullptr;
+    if (!disableDepthWrite) {
+        if (!ds->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE)) {
+            return nullptr;
+        }
     }
 
     const auto rtv = rt->GetCPUDescriptorHandle();
-    const auto dsv = ds->GetCPUDescriptorHandle();
 
-    commandList_->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-    rt->ClearRenderTargetView();
-    ds->ClearDepthStencilView();
+    if (disableDepthWrite) {
+        cmd->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
+        rt->ClearRenderTargetView();
+    } else {
+        const auto dsv = ds->GetCPUDescriptorHandle();
+        cmd->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+        rt->ClearRenderTargetView();
+        ds->ClearDepthStencilView();
+    }
 
     D3D12_VIEWPORT vp{};
     vp.TopLeftX = 0.0f;
@@ -280,40 +296,49 @@ ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord() {
     sc.right = static_cast<LONG>(width_);
     sc.bottom = static_cast<LONG>(height_);
 
-    commandList_->RSSetViewports(1, &vp);
-    commandList_->RSSetScissorRects(1, &sc);
+    cmd->RSSetViewports(1, &vp);
+    cmd->RSSetScissorRects(1, &sc);
 
     auto* srvHeap = IGraphicsResource::GetSRVHeap(Passkey<ScreenBuffer>{});
     auto* samplerHeap = IGraphicsResource::GetSamplerHeap(Passkey<ScreenBuffer>{});
     if (srvHeap && samplerHeap) {
         ID3D12DescriptorHeap* ppHeaps[] = { srvHeap->GetDescriptorHeap(), samplerHeap->GetDescriptorHeap() };
-        commandList_->SetDescriptorHeaps(2, ppHeaps);
+        cmd->SetDescriptorHeaps(2, ppHeaps);
     }
 
-    return commandList_;
+    return cmd;
 }
 
 bool ScreenBuffer::EndRecord(bool discard) {
-    if (!commandList_) return false;
+    LogScope scope;
+    if (!dx12Commands_) return false;
 
-    auto* rt = renderTargets_[GetWriteIndex()].get();
-    auto* ds = depthStencils_[GetWriteIndex()].get();
+    auto* rt = renderTargets_[GetRtvWriteIndex()].get();
+    auto* ds = depthStencils_[GetDsvWriteIndex()].get();
 
-    // write 面を SRV で読める状態へ（この面が次フレーム read になる）
     if (rt) {
         rt->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
-    if (ds->HasSrv()) {
-        ds->TransitionToShaderResource();
-    } else {
-        ds->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_READ);
+
+    // BeginRecord で depth を触っていない場合は、ここでも触らない
+    if (!lastBeginDisableDepthWrite_ && ds) {
+        if (ds->HasSrv()) {
+            ds->TransitionToShaderResource();
+        } else {
+            ds->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_READ);
+        }
     }
 
-    HRESULT hr = commandList_->Close();
-    if (FAILED(hr)) return false;
-
     (void)discard;
+
+    const bool updateRtv = true;
+    const bool updateDsv = !lastBeginDisableDepthWrite_;
+    AdvanceFrameBufferIndex(updateRtv, updateDsv);
     return true;
+}
+
+bool ScreenBuffer::EndRecord(Passkey<Renderer>, bool discard) {
+    return EndRecord(discard);
 }
 
 bool ScreenBuffer::RegisterPostEffectComponent(std::unique_ptr<IPostEffectComponent> component) {

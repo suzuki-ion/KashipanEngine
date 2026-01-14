@@ -12,6 +12,7 @@
 #include "Core/DirectX/DX12CommandQueue.h"
 #include "Core/DirectX/DX12Fence.h"
 #include "Core/DirectX/DX12SwapChain.h"
+#include "Core/DirectX/DX12Commands.h"
 #include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapSRV.h"
@@ -79,9 +80,9 @@ public:
     /// @param record コマンド記録関数（Close は内部で行う）
     void ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
 
-    /// @brief ScreenBuffer 用にワンショットでコマンドを記録・実行し、フェンス待機まで行う
-    /// @param record コマンド記録関数（Close は内部で行う）
-    void ExecuteOneShotCommandsForScreenBuffer(Passkey<ScreenBuffer>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
+    /// @brief フレーム終端で実行するコマンドリストを登録
+    void AddRecordCommandList(Passkey<DX12SwapChain>, ID3D12CommandList* list);
+    void AddRecordCommandList(Passkey<Renderer>, ID3D12CommandList* list);
 
 #if defined(USE_IMGUI)
     /// @brief D3D12デバイス取得（ImGui 用）
@@ -108,36 +109,19 @@ public:
     /// @brief 外部で記録したコマンドリスト群を実行（Renderer 用）
     void ExecuteExternalCommandLists(Passkey<Renderer>, const std::vector<ID3D12CommandList*>& lists);
 
-    struct ScreenBufferCommandObjects {
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
-        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
-    };
-
-    /// @brief ScreenBuffer 用コマンドオブジェクトを確保（DirectXCommon が所有）
+    /// @brief コマンドオブジェクトを確保（DirectXCommon が所有）
     /// @return スロットインデックス（失敗時は -1）
-    int AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>);
+    int AcquireCommandObjects(Passkey<ScreenBuffer>);
+    int AcquireCommandObjects(Passkey<ShadowMapBuffer>);
 
-    /// @brief ScreenBuffer 用コマンドオブジェクトを取得
-    /// @param slotIndex 取得するスロットインデックス
-    /// @return コマンドオブジェクトへのポインタ
-    ScreenBufferCommandObjects* GetScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
+    /// @brief コマンドオブジェクトを取得
+    DX12Commands* GetCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
+    DX12Commands* GetCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
 
-    /// @brief ScreenBuffer 用コマンドオブジェクトを解放
-    /// @param slotIndex 解放するスロットインデックス
-    void ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
-
-    /// @brief ShadowMapBuffer 用コマンドオブジェクトを確保（DirectXCommon が所有）
-    /// @return スロットインデックス（失敗時は -1）
-    int AcquireShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>);
-
-    /// @brief ShadowMapBuffer 用コマンドオブジェクトを取得
-    /// @param slotIndex 取得するスロットインデックス
-    /// @return コマンドオブジェクトへのポインタ
-    ScreenBufferCommandObjects* GetShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
-
-    /// @brief ShadowMapBuffer 用コマンドオブジェクトを解放
-    /// @param slotIndex 解放するスロットインデックス
-    void ReleaseShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
+    /// @brief コマンドオブジェクトを解放
+    void ReleaseCommandObjects(Passkey<DX12SwapChain>, int slotIndex);
+    void ReleaseCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
+    void ReleaseCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
 
 private:
     DirectXCommon(const DirectXCommon &) = delete;
@@ -151,11 +135,11 @@ private:
     /// @return 待機に成功したらtrue、タイムアウトやエラーの場合はfalseを返す
     bool WaitForFence();
     /// @brief コマンド実行
-    void ExecuteCommand();
+    void ExecuteCommandLists();
 
-    int AcquireCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, std::vector<int>& freeSlots);
-    ScreenBufferCommandObjects* GetCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, int slotIndex);
-    void ReleaseCommandObjectsInternal(std::vector<ScreenBufferCommandObjects>& pool, std::vector<int>& freeSlots, int slotIndex);
+    int AcquireCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots);
+    DX12Commands* GetCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, int slotIndex);
+    void ReleaseCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots, int slotIndex);
 
     std::unique_ptr<DX12DXGIs> dx12DXGIs_;
     std::unique_ptr<DX12Device> dx12Device_;
@@ -167,17 +151,10 @@ private:
     std::unique_ptr<SRVHeap> SRVHeap_;
     std::unique_ptr<SamplerHeap> SamplerHeap_;
 
-    struct SwapChainCommandObjects {
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
-        std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> commandAllocators;
-    };
-    std::vector<SwapChainCommandObjects> swapChainCommandObjects_;
+    std::vector<std::unique_ptr<DX12Commands>> commandObjects_;
+    std::vector<int> freeCommandObjectSlots_;
 
-    std::vector<ScreenBufferCommandObjects> screenBufferCommandObjects_;
-    std::vector<int> freeScreenBufferCommandObjectSlots_;
-
-    std::vector<ScreenBufferCommandObjects> shadowMapBufferCommandObjects_;
-    std::vector<int> freeShadowMapBufferCommandObjectSlots_;
+    std::vector<ID3D12CommandList*> recordedCommandLists_;
 };
 
 } // namespace KashipanEngine

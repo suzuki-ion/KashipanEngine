@@ -107,65 +107,53 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
     }
 
     {
-        // ShadowMapBuffer の記録をフレーム内でまとめて行い、一括 Close/Execute する
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllBeginRecord);
-            ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>{});
-        }
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Passes);
-            RenderShadowMapPasses();
-        }
-        decltype(ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{})) lists;
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllEndRecord);
-            lists = ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{});
-        }
-        if (!lists.empty() && directXCommon_) {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Execute);
-            directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
-        }
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllBeginRecord);
+        ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>{});
     }
     {
-        // ScreenBuffer の記録をフレーム内でまとめて行い、一括 Close/Execute する
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllBeginRecord);
-            ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
-        }
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Passes);
-            RenderOffscreenPasses();
-        }
-        decltype(ScreenBuffer::AllEndRecord(Passkey<Renderer>{})) lists;
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllEndRecord);
-            lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
-        }
-        if (!lists.empty() && directXCommon_) {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Execute);
-            directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
-        }
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllBeginRecord);
+        ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
+    }
+
+    {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Passes);
+        RenderShadowMapPasses();
     }
     {
-        // ポストエフェクトコンポーネントの更新
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_AllBeginRecord);
-            ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
-        }
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_Passes);
-            RenderScreenPasses();
-        }
-        decltype(ScreenBuffer::AllEndRecord(Passkey<Renderer>{})) lists;
-        {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_AllEndRecord);
-            lists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
-        }
-        if (!lists.empty() && directXCommon_) {
-            RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_Execute);
-            directXCommon_->ExecuteExternalCommandLists(Passkey<Renderer>{}, lists);
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Passes);
+        RenderOffscreenPasses();
+    }
+
+    decltype(ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{})) smLists;
+    {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllEndRecord);
+        smLists = ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{});
+    }
+    if (!smLists.empty() && directXCommon_) {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Execute);
+        for (auto *cl : smLists) {
+            directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, cl);
         }
     }
+
+    decltype(ScreenBuffer::AllEndRecord(Passkey<Renderer>{})) sbLists;
+    {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllEndRecord);
+        sbLists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
+    }
+    if (!sbLists.empty() && directXCommon_) {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Execute);
+        for (auto *cl : sbLists) {
+            directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, cl);
+        }
+    }
+
+    {
+        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_Passes);
+        RenderScreenPasses();
+    }
+    ScreenBuffer::AllCloseRecord(Passkey<Renderer>{});
+
     {
         RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Persistent_Passes);
         RenderPersistentPasses();
@@ -288,28 +276,15 @@ void Renderer::RenderOffscreenPasses() {
 
 void Renderer::RenderScreenPasses() {
     if (persistentScreenPasses_.empty()) return;
+    if (!directXCommon_) return;
 
     for (const auto *passInfo : persistentScreenPasses_) {
         if (!passInfo || !passInfo->screenBuffer) continue;
 
         auto *buffer = passInfo->screenBuffer;
 
-        // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
-        if (!buffer->IsRecording(Passkey<Renderer>{})) {
-            ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
-            continue;
-        }
-
-        auto *commandList = buffer->GetRecordedCommandList(Passkey<Renderer>{});
-        if (!commandList) {
-            ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
-            continue;
-        }
-
-        // PostEffect の各パスを、この ScreenBuffer の commandList 上で個別に実行
         auto effectPasses = buffer->BuildPostEffectPasses(Passkey<Renderer>{});
         if (effectPasses.empty()) {
-            // 何もない場合も正常。ScreenBuffer の offscreen 描画結果だけが作られる。
             continue;
         }
 
@@ -317,7 +292,11 @@ void Renderer::RenderScreenPasses() {
 
         for (const auto &fx : effectPasses) {
             if (fx.pipelineName.empty()) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+                break;
+            }
+
+            ID3D12GraphicsCommandList *commandList = buffer->BeginRecord(Passkey<Renderer>{}, true);
+            if (!commandList) {
                 break;
             }
 
@@ -404,13 +383,13 @@ void Renderer::RenderScreenPasses() {
             }
 
             if (!ok || !fx.renderCommandFunction) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+                buffer->EndRecord(Passkey<Renderer>{}, true);
                 break;
             }
 
             auto renderCommandOpt = fx.renderCommandFunction(pipelineBinder);
             if (!renderCommandOpt) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, buffer);
+                buffer->EndRecord(Passkey<Renderer>{}, true);
                 break;
             }
 
@@ -419,10 +398,13 @@ void Renderer::RenderScreenPasses() {
             cmd.indexCount = renderCommandOpt->indexCount;
             cmd.instanceCount = 1;
             cmd.startVertexLocation = renderCommandOpt->startVertexLocation;
-            cmd.startIndexLocation = renderCommandOpt->startIndexLocation;
-            cmd.baseVertexLocation = renderCommandOpt->baseVertexLocation;
+            cmd.startIndexLocation = renderCommandOpt->baseVertexLocation;
             cmd.startInstanceLocation = 0;
             IssueRenderCommand(commandList, cmd);
+
+            if (!buffer->EndRecord(Passkey<Renderer>{}, false)) {
+                break;
+            }
         }
     }
 }
@@ -485,10 +467,12 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
         } else if (passInfo->screenBuffer) {
             ScreenBuffer *sb = passInfo->screenBuffer;
 
-            // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
+            // フレーム開始で RecordState は作成済み。実際の BeginRecord は初回使用時に行う。
             if (!sb->IsRecording(Passkey<Renderer>{})) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
-                continue;
+                if (!sb->BeginRecord(Passkey<Renderer>{}, false)) {
+                    ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
+                    continue;
+                }
             }
 
             commandList = sb->GetRecordedCommandList(Passkey<Renderer>{});
@@ -547,11 +531,6 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
                 ok = ok && passInfo->updateConstantBuffersFunction(constantBufferMaps, instanceCount);
             }
 
-            // 永続Mapのため Unmap は不要
-
-            if (ok) {
-                // Bind は update と分けて計測したいので、ここで update計測を閉じて Bind側を別スコープにする
-            }
         }
         {
             RendererCpuTimerScope tCbBind(*this, CpuTimerStats::Scope::Standard_ConstantBuffer_Bind);
@@ -604,8 +583,6 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
                     void *instanceMaps = mappedPtrs.empty() ? nullptr : mappedPtrs.data();
                     ok = ok && passInfo->submitInstanceFunction(instanceMaps, shaderVariableBinder, 0);
                 }
-
-                // 永続Mapのため Unmap は不要
             }
         }
 
@@ -682,10 +659,12 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         } else if (first->screenBuffer) {
             ScreenBuffer *sb = first->screenBuffer;
 
-            // ScreenBuffer は RenderFrame() の AllBeginRecord で既に Reset/RT セット済み
+            // フレーム開始で RecordState は作成済み。実際の BeginRecord は初回使用時に行う。
             if (!sb->IsRecording(Passkey<Renderer>{})) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
-                continue;
+                if (!sb->BeginRecord(Passkey<Renderer>{}, false)) {
+                    ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
+                    continue;
+                }
             }
 
             commandList = sb->GetRecordedCommandList(Passkey<Renderer>{});

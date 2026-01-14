@@ -149,15 +149,29 @@ void TestScene::Initialize() {
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Player");
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 2.0f, 0.0f));
+            tr->SetTranslate(Vector3(0.0f, 1.0f, 0.0f));
             tr->SetScale(Vector3(playerScaleMax_));
         }
+
+        obj->RegisterComponent<PlayerMove>(2.0f, playerMoveDuration_);
+        if (auto* playerArrowMove = obj->GetComponent3D<PlayerMove>()) {
+            playerArrowMove->SetInput(GetInput());
+            playerArrowMove->SetBPMToleranceRange(playerBpmToleranceRange_);
+        }
+
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
         player_ = obj.get();
         AddObject3D(std::move(obj));
+    }
 
-		player_->RegisterComponent<PlayerMove>();
+    if (playBgm_) {
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/TestBGM.mp3");
+        if (handle == AudioManager::kInvalidSoundHandle) {
+            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+            return;
+        }
+        AudioManager::Play(handle, 0.05f);
     }
 
     // Particles
@@ -260,15 +274,40 @@ void TestScene::OnUpdate() {
     if (player_) {
         if (auto* tr = player_->GetComponent3D<Transform3D>()) {
             tr->SetScale(Vector3(EaseInBack(playerScaleMin_, playerScaleMax_, bpmSystem_->GetBeatProgress())));
+			playerMapX_ = static_cast<int>(tr->GetTranslate().x / 2.0f);
+			playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
+
+            auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
+			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
         }
     }
 
     {
-        for (int z = 0; z < kMapH; z++) {
-            for (int x = 0; x < kMapW; x++) {
-                if (maps_[z][x]) {
-                    if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
-                        tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+        if (allMapAnimation_) {
+            // 全マップをアニメーション
+            for (int z = 0; z < kMapH; z++) {
+                for (int x = 0; x < kMapW; x++) {
+                    if (maps_[z][x]) {
+                        if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
+                            tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+                        }
+                    }
+                }
+            }
+        } else {
+            // 全マスを処理
+            for (int z = 0; z < kMapH; z++) {
+                for (int x = 0; x < kMapW; x++) {
+                    if (maps_[z][x]) {
+                        if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
+                            // プレイヤーのいるマスだけアニメーション、それ以外は最大値に固定
+                            auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
+                            if (x == playerMapX_ && z == playerMapZ_ && !playerArrowMove->IsMoving()) {
+                                tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+                            } else {
+                                tr->SetScale(Vector3(mapScaleMax_));
+                            }
+                        }
                     }
                 }
             }

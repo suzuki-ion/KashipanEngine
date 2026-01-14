@@ -40,6 +40,8 @@ namespace KashipanEngine {
                 if (ctx) {
                     auto* transform = ctx->GetComponent<Transform3D>();
                     if (transform) {
+						currentPos.x = std::clamp(currentPos.x, 0.0f, static_cast<float>(mapW_ * 2 - 2));
+						currentPos.z = std::clamp(currentPos.z, 0.0f, static_cast<float>(mapH_ * 2 - 2));
                         transform->SetTranslate(currentPos);
                     }
                 }
@@ -57,18 +59,20 @@ namespace KashipanEngine {
             Vector3 moveDirection{ 0.0f, 0.0f, 0.0f };
             bool triggered = false;
 
-            if (keyboard.IsTrigger(Key::Up)) {
-                moveDirection = Vector3{ 0.0f, 0.0f, moveDistance_ };
-                triggered = true;
-            } else if (keyboard.IsTrigger(Key::Down)) {
-                moveDirection = Vector3{ 0.0f, 0.0f, -moveDistance_ };
-                triggered = true;
-            } else if (keyboard.IsTrigger(Key::Left)) {
-                moveDirection = Vector3{ -moveDistance_, 0.0f, 0.0f };
-                triggered = true;
-            } else if (keyboard.IsTrigger(Key::Right)) {
-                moveDirection = Vector3{ moveDistance_, 0.0f, 0.0f };
-                triggered = true;
+            if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+                if (keyboard.IsTrigger(Key::Up)) {
+                    moveDirection = Vector3{ 0.0f, 0.0f, moveDistance_ };
+                    triggered = true;
+                } else if (keyboard.IsTrigger(Key::Down)) {
+                    moveDirection = Vector3{ 0.0f, 0.0f, -moveDistance_ };
+                    triggered = true;
+                } else if (keyboard.IsTrigger(Key::Left)) {
+                    moveDirection = Vector3{ -moveDistance_, 0.0f, 0.0f };
+                    triggered = true;
+                } else if (keyboard.IsTrigger(Key::Right)) {
+                    moveDirection = Vector3{ moveDistance_, 0.0f, 0.0f };
+                    triggered = true;
+                }
             }
 
             if (triggered) {
@@ -85,22 +89,42 @@ namespace KashipanEngine {
                 }
             }
 
+            
+
             return true;
         }
 
         /// @brief 移動距離の設定
         void SetMoveDistance(float distance) { moveDistance_ = distance; }
+
         /// @brief 移動距離の取得
         float GetMoveDistance() const { return moveDistance_; }
 
         /// @brief 移動時間の設定
         void SetMoveDuration(float duration) { moveDuration_ = duration; }
+
         /// @brief 移動時間の取得
         float GetMoveDuration() const { return moveDuration_; }
 
         /// @brief 移動中かどうかを取得
         bool IsMoving() const { return isMoving_; }
 
+		/// @brief BPM進行度の設定
+        void SetBPMProgress(float bpmProgress) {
+			bpmProgress_ = bpmProgress;
+        }
+
+		/// @brief BPMの許容範囲の設定
+        void SetBPMToleranceRange(float range) {
+            bpmToleranceRange_ = range;
+		}
+
+		/// @brief マップサイズの設定
+        void SetMapSize(int width, int height) {
+			mapW_ = width; mapH_ = height;
+		}
+
+		/// @brief 入力システムの設定
         void SetInput(const Input* input) { input_ = input; }
 #if defined(USE_IMGUI)
         void ShowImGui() override {
@@ -117,6 +141,11 @@ namespace KashipanEngine {
     private:
         float moveDistance_ = 2.0f;    // 1回の移動距離
         float moveDuration_ = 1.0f;    // 移動にかける時間（秒）
+		float bpmProgress_ = 0.0f;     // BPMに同期した進行度（0.0～1.0）
+		float bpmToleranceRange_ = 0.25f; // BPM進行度の許容範囲
+
+        int mapW_ = 13;
+        int mapH_ = 13;
 
         bool isMoving_ = false;        // 移動中フラグ
         float moveTimer_ = 0.0f;       // 移動タイマー

@@ -161,6 +161,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12CommandQueue.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Commands.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Device.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12DXGIs.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DX12Fence.cpp" />
@@ -287,6 +288,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />

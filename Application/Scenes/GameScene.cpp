@@ -17,14 +17,14 @@ void GameScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(16384, 16384);
 
-    if (screenBuffer_) {
+    /*if (screenBuffer_) {
         ChromaticAberrationEffect::Params p{};
         p.directionX = 1.0f;
         p.directionY = 0.0f;
         p.strength = 0.0025f;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
         screenBuffer_->AttachToRenderer("ScreenBuffer_GameScene");
-    }
+    }*/
 
     auto* window = Window::GetWindow("Main Window");
     [[maybe_unused]] const auto whiteTexture = TextureManager::GetTextureFromFileName("white1x1.png");

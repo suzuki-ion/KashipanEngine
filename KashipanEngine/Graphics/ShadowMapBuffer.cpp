@@ -223,6 +223,12 @@ std::vector<ID3D12CommandList*> ShadowMapBuffer::AllEndRecord(Passkey<Renderer>)
         if (!ptr->EndRecord(st.discard)) {
             continue;
         }
+
+        // Renderer の処理が終わるタイミングで Close
+        if (!ptr->dx12Commands_ || !ptr->dx12Commands_->EndRecord()) {
+            continue;
+        }
+
         lists.push_back(st.list);
     }
 
@@ -244,15 +250,13 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
 
     if (!sDirectXCommon_) return false;
 
-    commandSlotIndex_ = sDirectXCommon_->AcquireShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>{});
-    auto* cmd = sDirectXCommon_->GetShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>{}, commandSlotIndex_);
-    if (!cmd || !cmd->commandAllocator || !cmd->commandList) {
+    commandSlotIndex_ = sDirectXCommon_->AcquireCommandObjects(Passkey<ShadowMapBuffer>{});
+    auto* cmd = sDirectXCommon_->GetCommandObjects(Passkey<ShadowMapBuffer>{}, commandSlotIndex_);
+    if (!cmd || !cmd->GetCommandAllocator() || !cmd->GetCommandList()) {
         commandSlotIndex_ = -1;
         return false;
     }
-
-    commandAllocator_ = cmd->commandAllocator.Get();
-    commandList_ = cmd->commandList.Get();
+    dx12Commands_ = cmd;
 
     depth_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, srvFormat_);
     if (!depth_ || !depth_->HasSrv()) return false;
@@ -263,11 +267,10 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
 void ShadowMapBuffer::Destroy() {
     depth_.reset();
 
-    commandList_ = nullptr;
-    commandAllocator_ = nullptr;
+    dx12Commands_ = nullptr;
 
     if (sDirectXCommon_ && commandSlotIndex_ >= 0) {
-        sDirectXCommon_->ReleaseShadowMapBufferCommandObjects(Passkey<ShadowMapBuffer>{}, commandSlotIndex_);
+        sDirectXCommon_->ReleaseCommandObjects(Passkey<ShadowMapBuffer>{}, commandSlotIndex_);
     }
     commandSlotIndex_ = -1;
 
@@ -278,24 +281,20 @@ void ShadowMapBuffer::Destroy() {
 }
 
 ID3D12GraphicsCommandList* ShadowMapBuffer::BeginRecord() {
-    if (!commandAllocator_ || !commandList_) return nullptr;
-
-    HRESULT hr = commandAllocator_->Reset();
-    if (FAILED(hr)) return nullptr;
-
-    hr = commandList_->Reset(commandAllocator_, nullptr);
-    if (FAILED(hr)) return nullptr;
-
+    if (!dx12Commands_) return nullptr;
     if (!depth_) return nullptr;
 
-    depth_->SetCommandList(commandList_);
+    auto *cmd = dx12Commands_->BeginRecord();
+    if (!cmd) return nullptr;
+
+    depth_->SetCommandList(cmd);
 
     if (!depth_->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE)) {
         return nullptr;
     }
 
     const auto dsv = depth_->GetCPUDescriptorHandle();
-    commandList_->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
+    cmd->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
     depth_->ClearDepthStencilView();
 
     D3D12_VIEWPORT vp{};
@@ -312,21 +311,21 @@ ID3D12GraphicsCommandList* ShadowMapBuffer::BeginRecord() {
     sc.right = static_cast<LONG>(width_);
     sc.bottom = static_cast<LONG>(height_);
 
-    commandList_->RSSetViewports(1, &vp);
-    commandList_->RSSetScissorRects(1, &sc);
+    cmd->RSSetViewports(1, &vp);
+    cmd->RSSetScissorRects(1, &sc);
 
     auto* srvHeap = IGraphicsResource::GetSRVHeap(Passkey<ShadowMapBuffer>{});
     auto* samplerHeap = IGraphicsResource::GetSamplerHeap(Passkey<ShadowMapBuffer>{});
     if (srvHeap && samplerHeap) {
         ID3D12DescriptorHeap* ppHeaps[] = { srvHeap->GetDescriptorHeap(), samplerHeap->GetDescriptorHeap() };
-        commandList_->SetDescriptorHeaps(2, ppHeaps);
+        cmd->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
     }
 
-    return commandList_;
+    return cmd;
 }
 
 bool ShadowMapBuffer::EndRecord(bool discard) {
-    if (!commandList_) return false;
+    if (!dx12Commands_) return false;
 
     if (depth_) {
         // ImGui などで SRV として参照されるため、シェーダーからサンプル可能な状態へ遷移
@@ -337,9 +336,7 @@ bool ShadowMapBuffer::EndRecord(bool discard) {
         }
     }
 
-    HRESULT hr = commandList_->Close();
-    if (FAILED(hr)) return false;
-
+    // NOTE: Close は Renderer 側でフレーム終端にまとめて行う
     (void)discard;
     return true;
 }

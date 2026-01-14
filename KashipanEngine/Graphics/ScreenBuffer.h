@@ -6,6 +6,7 @@
 #include <optional>
 #include <unordered_map>
 
+#include "Core/DirectX/DX12Commands.h"
 #include "Utilities/Passkeys.h"
 #include "PostEffectComponents/IPostEffectComponent.h"
 #include "Graphics/Renderer.h"
@@ -46,6 +47,9 @@ public:
     /// @brief Renderer 用: 全 ScreenBuffer のコマンド記録終了
     static std::vector<ID3D12CommandList *> AllEndRecord(Passkey<Renderer>);
 
+    /// @brief Renderer 用: 全 ScreenBuffer のコマンドを Close する
+    static void AllCloseRecord(Passkey<Renderer>);
+
     /// @brief Renderer 用: 指定バッファを discard としてマーク（AllEndRecord で反映）
     static void MarkDiscard(Passkey<Renderer>, ScreenBuffer *buffer);
 
@@ -73,9 +77,9 @@ public:
     /// @brief Depth(読み取り面)をテクスチャ(SRV)として参照するためのハンドル（未作成なら空）
     D3D12_GPU_DESCRIPTOR_HANDLE GetDepthSrvHandle() const noexcept;
 
-    RenderTargetResource *GetRenderTarget() const noexcept { return renderTargets_[GetReadIndex()].get(); }
-    DepthStencilResource *GetDepthStencil() const noexcept { return depthStencils_[GetReadIndex()].get(); }
-    ShaderResourceResource *GetShaderResource() const noexcept { return shaderResources_[GetReadIndex()].get(); }
+    RenderTargetResource *GetRenderTarget() const noexcept { return renderTargets_[GetRtvReadIndex()].get(); }
+    DepthStencilResource *GetDepthStencil() const noexcept { return depthStencils_[GetDsvReadIndex()].get(); }
+    ShaderResourceResource *GetShaderResource() const noexcept { return shaderResources_[GetRtvReadIndex()].get(); }
 
     /// @brief ポストエフェクトコンポーネント登録
     bool RegisterPostEffectComponent(std::unique_ptr<IPostEffectComponent> component);
@@ -93,10 +97,17 @@ public:
     void DetachFromRenderer();
 
     /// @brief Renderer 用: 記録中コマンドリスト取得（AllBeginRecord 後）
-    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>) const noexcept { return commandList_; }
+    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>) const noexcept { return dx12Commands_->GetCommandList(); }
 
     /// @brief Renderer 用: 現在フレームで記録開始されているか
     bool IsRecording(Passkey<Renderer>) const noexcept;
+
+    /// @brief Renderer 用: この ScreenBuffer の記録を開始（深度を上書きしない用途向けに制御可能）
+    /// @param disableDepthWrite true の場合、Depth への書き込み/クリアを行わず Color のみをターゲットにする
+    ID3D12GraphicsCommandList *BeginRecord(Passkey<Renderer>, bool disableDepthWrite);
+
+    /// @brief Renderer 用: この ScreenBuffer の記録を終了
+    bool EndRecord(Passkey<Renderer>, bool discard = false);
 
 #if defined(USE_IMGUI)
     /// @brief デバッグ用: 生成済み ScreenBuffer の内容を表示する ImGui ウィンドウを描画
@@ -114,9 +125,19 @@ private:
 
     static constexpr size_t kBufferCount_ = 2;
 
-    size_t GetWriteIndex() const noexcept { return writeIndex_; }
-    size_t GetReadIndex() const noexcept { return (writeIndex_ + 1) % kBufferCount_; }
-    void AdvanceFrameBufferIndex() noexcept { writeIndex_ = (writeIndex_ + 1) % kBufferCount_; }
+    size_t GetRtvWriteIndex() const noexcept { return rtvWriteIndex_; }
+    size_t GetRtvReadIndex() const noexcept { return (rtvWriteIndex_ + 1) % kBufferCount_; }
+    size_t GetDsvWriteIndex() const noexcept { return dsvWriteIndex_; }
+    size_t GetDsvReadIndex() const noexcept { return (dsvWriteIndex_ + 1) % kBufferCount_; }
+
+    void AdvanceFrameBufferIndex(bool updateRtv, bool updateDsv) noexcept {
+        if (updateRtv) {
+            rtvWriteIndex_ = (rtvWriteIndex_ + 1) % kBufferCount_;
+        }
+        if (updateDsv) {
+            dsvWriteIndex_ = (dsvWriteIndex_ + 1) % kBufferCount_;
+        }
+    }
 
     /// @brief リソース初期化
     bool Initialize(std::uint32_t width, std::uint32_t height,
@@ -125,8 +146,8 @@ private:
     /// @brief 破棄
     void Destroy();
 
-    /// @brief コマンド記録開始（Renderer のオフスクリーン描画用）
-    ID3D12GraphicsCommandList *BeginRecord();
+    /// @brief コマンド記録開始
+    ID3D12GraphicsCommandList *BeginRecord(bool disableDepthWrite);
 
     /// @brief コマンド記録終了
     bool EndRecord(bool discard = false);
@@ -137,7 +158,10 @@ private:
     DXGI_FORMAT colorFormat_ = DXGI_FORMAT_UNKNOWN;
     DXGI_FORMAT depthFormat_ = DXGI_FORMAT_UNKNOWN;
 
-    size_t writeIndex_ = 0;
+    size_t rtvWriteIndex_ = 0;
+    size_t dsvWriteIndex_ = 0;
+
+    bool lastBeginDisableDepthWrite_ = false;
 
     std::unique_ptr<RenderTargetResource> renderTargets_[kBufferCount_];
     std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount_];
@@ -146,8 +170,7 @@ private:
     std::vector<std::unique_ptr<IPostEffectComponent>> postEffectComponents_;
 
     int commandSlotIndex_ = -1;
-    ID3D12CommandAllocator *commandAllocator_ = nullptr;
-    ID3D12GraphicsCommandList *commandList_ = nullptr;
+    DX12Commands *dx12Commands_ = nullptr;
 
     Renderer::PersistentScreenPassHandle persistentScreenPassHandle_;
 };

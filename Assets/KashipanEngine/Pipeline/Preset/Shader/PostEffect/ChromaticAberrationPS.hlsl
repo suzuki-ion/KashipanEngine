@@ -21,6 +21,5 @@ float4 main(PSIn input) : SV_Target0 {
     float g = gTexture.Sample(gSampler, uv).g;
     float b = gTexture.Sample(gSampler, uv - off).b;
 
-    //return float4(r, g, b, 1.0);
-	return float4(r, 0.0f, 0.0f, 1.0);
+    return float4(r, g, b, 1.0);
 }

@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "Core/DirectX/DX12Commands.h"
 #include "Utilities/Passkeys.h"
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/IShaderTexture.h"
@@ -53,7 +54,7 @@ public:
     DepthStencilResource* GetDepth() const noexcept { return depth_.get(); }
 
     /// @brief Renderer 用: 記録中コマンドリスト取得（AllBeginRecord 後）
-    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<Renderer>) const noexcept { return commandList_; }
+    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>) const noexcept { return dx12Commands_->GetCommandList(); }
 
     /// @brief Renderer 用: 現在フレームで記録開始されているか
     bool IsRecording(Passkey<Renderer>) const noexcept;
@@ -93,8 +94,7 @@ private:
     std::unique_ptr<DepthStencilResource> depth_;
 
     int commandSlotIndex_ = -1;
-    ID3D12CommandAllocator* commandAllocator_ = nullptr;
-    ID3D12GraphicsCommandList* commandList_ = nullptr;
+    DX12Commands *dx12Commands_ = nullptr;
 };
 
 } // namespace KashipanEngine

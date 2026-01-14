@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <chrono>
+#include <thread>
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -24,7 +25,21 @@ namespace {
 /// @brief エンジン初期化フラグ
 bool sIsEngineInitialized = false;
 
-/// @brief fps固定用
+/// @brief 目標フレームレート
+int32_t sTargetFrameRate = 60;
+
+/// @brief fps固定用の待機関数
+void WaitForNextFrame() {
+    if (sTargetFrameRate <= 0) return;
+    static auto lastFrameTime = std::chrono::steady_clock::now();
+    const auto frameDuration = std::chrono::microseconds(1'000'000 / sTargetFrameRate);
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsed = now - lastFrameTime;
+    if (elapsed < frameDuration) {
+        std::this_thread::sleep_for(frameDuration - elapsed);
+    }
+    lastFrameTime = std::chrono::steady_clock::now();
+}
 } // namespace
 
 #if defined(USE_IMGUI)
@@ -284,6 +299,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         GameLoopUpdate();
         GameLoopDraw();
         Window::CommitDestroy({});
+        WaitForNextFrame();
     }
     return 0;
 }

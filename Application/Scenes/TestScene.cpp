@@ -4,6 +4,7 @@
 #include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 #include "Objects/Components/Player/PlayerMove.h"
+#include "Objects/Components/Player/BombMaking.h"
 
 namespace KashipanEngine {
 
@@ -159,6 +160,16 @@ void TestScene::Initialize() {
             playerArrowMove->SetBPMToleranceRange(playerBpmToleranceRange_);
         }
 
+        // BombMakingコンポーネントを追加
+        obj->RegisterComponent<BombMaking>(bombMaxNumber_); // 最大3個の爆弾を設置可能
+        if (auto* bombMaking = obj->GetComponent3D<BombMaking>()) {
+            bombMaking->SetInput(GetInput());
+            bombMaking->SetBPMToleranceRange(playerBpmToleranceRange_);
+            bombMaking->SetBombOffset(2.0f); // マス目の間隔に合わせる
+            bombMaking->SetBombScale(1.0f);  // 爆弾のスケール
+            bombMaking->SetScene(this, screenBuffer_, shadowMapBuffer_); // シーンとレンダーバッファを設定
+        }
+
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
         player_ = obj.get();
@@ -279,6 +290,12 @@ void TestScene::OnUpdate() {
 
             auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
 			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            //playerArrowMove->SetMoveDuration(bpmSystem_->GetBeatDuration());
+
+            // BombMakingコンポーネントにもBPM進行度を渡す
+            if (auto* bombMaking = player_->GetComponent3D<BombMaking>()) {
+                bombMaking->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            }
         }
     }
 

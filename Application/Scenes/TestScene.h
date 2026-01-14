@@ -12,6 +12,11 @@ public:
 
     void Initialize() override;
 
+    /// @brief 3Dオブジェクトをシーンに追加（外部からアクセス可能）
+    void AddBombObject(std::unique_ptr<Object3DBase> obj) {
+        AddObject3D(std::move(obj));
+    }
+
 protected:
     void OnUpdate() override;
 
@@ -45,7 +50,10 @@ private:
 
     BPMSystem* bpmSystem_ = nullptr;
 	float bpm_ = 120.0f;   // BPM値
-	bool playBgm_ = false; // true-> BPM120のBGM再生 
+	bool playBgm_ = false; // true-> BPM120のBGM再生
+
+	std::vector<Object3DBase*> bombs_; 
+	int bombMaxNumber_ = 3; // プレイヤーが設置可能な爆弾の最大数
 };
 
 } // namespace KashipanEngine

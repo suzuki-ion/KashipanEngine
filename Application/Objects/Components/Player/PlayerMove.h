@@ -1,5 +1,6 @@
 #pragma once
 #include <KashipanEngine.h>
+#include "PlayerDrection.h"
 
 namespace KashipanEngine {
 
@@ -43,6 +44,22 @@ namespace KashipanEngine {
 						currentPos.x = std::clamp(currentPos.x, 0.0f, static_cast<float>(mapW_ * 2 - 2));
 						currentPos.z = std::clamp(currentPos.z, 0.0f, static_cast<float>(mapH_ * 2 - 2));
                         transform->SetTranslate(currentPos);
+
+                        switch (playerDirection_)
+                        {
+                        case PlayerDirection::Up:
+							transform->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
+                            break;
+                        case PlayerDirection::Down:
+							transform->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+                            break;
+                        case PlayerDirection::Left:
+							transform->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
+                            break;
+                        case PlayerDirection::Right:
+							transform->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
+                            break;
+                        }
                     }
                 }
 
@@ -62,15 +79,19 @@ namespace KashipanEngine {
             if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
                 if (keyboard.IsTrigger(Key::Up)) {
                     moveDirection = Vector3{ 0.0f, 0.0f, moveDistance_ };
+					playerDirection_ = PlayerDirection::Up;
                     triggered = true;
                 } else if (keyboard.IsTrigger(Key::Down)) {
                     moveDirection = Vector3{ 0.0f, 0.0f, -moveDistance_ };
+					playerDirection_ = PlayerDirection::Down;
                     triggered = true;
                 } else if (keyboard.IsTrigger(Key::Left)) {
                     moveDirection = Vector3{ -moveDistance_, 0.0f, 0.0f };
+					playerDirection_ = PlayerDirection::Left;
                     triggered = true;
                 } else if (keyboard.IsTrigger(Key::Right)) {
                     moveDirection = Vector3{ moveDistance_, 0.0f, 0.0f };
+					playerDirection_ = PlayerDirection::Right;
                     triggered = true;
                 }
             }
@@ -153,6 +174,8 @@ namespace KashipanEngine {
         Vector3 targetPosition_{ 0.0f, 0.0f, 0.0f };  // 移動目標位置
 
         const Input* input_ = nullptr;
+
+		PlayerDirection playerDirection_ = PlayerDirection::Down;
     };
 
 } // namespace KashipanEngine

@@ -259,6 +259,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
+    <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h" />
     <ClInclude Include="Application\Objects\Components\Health.h" />
     <ClInclude Include="Application\Objects\Components\MovementController.h" />
     <ClInclude Include="Application\Objects\Components\ParticleMovement.h" />

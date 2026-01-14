@@ -3,6 +3,7 @@
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
+#include "Objects/Components/Player/PlayerMove.h"
 
 namespace KashipanEngine {
 
@@ -114,35 +115,63 @@ void TestScene::Initialize() {
     // ↓ ここからゲームオブジェクト定義 ↓
     //==================================================
 
-    // Floor (Box scaled)
+    // map (Box scaled)
     {
-        auto obj = std::make_unique<Box>();
-        obj->SetName("Floor");
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+
+                auto obj = std::make_unique<Box>();
+                obj->SetName("Map" ":x" + std::to_string(x) + ":z" + std::to_string(z));
+
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
+                    tr->SetScale(Vector3(mapScaleMax_));
+                }
+
+                if (auto* mat = obj->GetComponent3D<Material3D>()) {
+                    mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
+                }
+
+                if (screenBuffer_)     obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+                if (shadowMapBuffer_)  obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+
+                // ここで “AddObject3D する前” にポインタ確保
+                maps_[z][x] = obj.get();
+
+                AddObject3D(std::move(obj));
+            }
+        }
+    }
+
+    // Player
+    {
+        auto modelData = ModelManager::GetModelDataFromFileName("Player.obj");
+        auto obj = std::make_unique<Model>(modelData);
+        obj->SetName("Player");
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, -0.5f, 0.0f));
-            tr->SetScale(Vector3(20.0f, 1.0f, 20.0f));
+            tr->SetTranslate(Vector3(0.0f, 1.0f, 0.0f));
+            tr->SetScale(Vector3(playerScaleMax_));
         }
-        if (auto* mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
+
+        obj->RegisterComponent<PlayerMove>(2.0f, playerMoveDuration_);
+        if (auto* playerArrowMove = obj->GetComponent3D<PlayerMove>()) {
+            playerArrowMove->SetInput(GetInput());
+            playerArrowMove->SetBPMToleranceRange(playerBpmToleranceRange_);
         }
+
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
-        floor_ = obj.get();
+        player_ = obj.get();
         AddObject3D(std::move(obj));
     }
 
-    // Sphere
-    {
-        auto obj = std::make_unique<Sphere>(16, 32);
-        obj->SetName("ShadowTestSphere");
-        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 1.5f, 0.0f));
-            tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
+    if (playBgm_) {
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/TestBGM.mp3");
+        if (handle == AudioManager::kInvalidSoundHandle) {
+            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+            return;
         }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-        if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
-        sphere_ = obj.get();
-        AddObject3D(std::move(obj));
+        AudioManager::Play(handle, 0.05f);
     }
 
     // Particles
@@ -186,6 +215,13 @@ void TestScene::Initialize() {
     //==================================================
     // ↑ ここまでゲームオブジェクト定義 ↑
     //==================================================
+
+    // BPMシステムの追加
+    {
+        auto comp = std::make_unique<BPMSystem>(bpm_); // BPM で初期化
+        bpmSystem_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
 
     // Keep ratio
     {
@@ -235,12 +271,46 @@ void TestScene::OnUpdate() {
         }
     }
 
-    // simple animation
-    if (sphere_) {
-        if (auto* tr = sphere_->GetComponent3D<Transform3D>()) {
-            Vector3 r = tr->GetRotate();
-            r.y += 0.01f;
-            tr->SetRotate(r);
+    if (player_) {
+        if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+            tr->SetScale(Vector3(EaseInBack(playerScaleMin_, playerScaleMax_, bpmSystem_->GetBeatProgress())));
+			playerMapX_ = static_cast<int>(tr->GetTranslate().x / 2.0f);
+			playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
+
+            auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
+			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
+        }
+    }
+
+    {
+        if (allMapAnimation_) {
+            // 全マップをアニメーション
+            for (int z = 0; z < kMapH; z++) {
+                for (int x = 0; x < kMapW; x++) {
+                    if (maps_[z][x]) {
+                        if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
+                            tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+                        }
+                    }
+                }
+            }
+        } else {
+            // 全マスを処理
+            for (int z = 0; z < kMapH; z++) {
+                for (int x = 0; x < kMapW; x++) {
+                    if (maps_[z][x]) {
+                        if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
+                            // プレイヤーのいるマスだけアニメーション、それ以外は最大値に固定
+                            auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
+                            if (x == playerMapX_ && z == playerMapZ_ && !playerArrowMove->IsMoving()) {
+                                tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+                            } else {
+                                tr->SetScale(Vector3(mapScaleMax_));
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

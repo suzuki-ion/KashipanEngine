@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+
 #include "Core/Window.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"

@@ -23,6 +23,8 @@ namespace KashipanEngine {
 namespace {
 /// @brief エンジン初期化フラグ
 bool sIsEngineInitialized = false;
+
+/// @brief fps固定用
 } // namespace
 
 #if defined(USE_IMGUI)

@@ -7,7 +7,7 @@ on:
 
 env:
   # リポジトリのルートディレクトリを基点としたソリューションファイルのパス
-  SOLUTION_FILE_PATH: Project/DirectXGame.sln
+  SOLUTION_FILE_PATH: Project/KashipanEngine.sln
   # Visual Studio の構成 ( Debug / Development / Release )
   CONFIGURATION: Development
 

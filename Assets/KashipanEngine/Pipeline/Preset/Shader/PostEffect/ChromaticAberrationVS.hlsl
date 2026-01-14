@@ -4,10 +4,9 @@ struct VSOut {
 };
 
 VSOut main(uint vid : SV_VertexID) {
-    // Fullscreen triangle
     float2 pos;
-    pos.x = (vid == 2) ? 3.0 : -1.0;
-    pos.y = (vid == 1) ? -3.0 : 1.0;
+    pos.x = (vid == 1) ? 3.0 : -1.0;
+    pos.y = (vid == 2) ? -3.0 : 1.0;
 
     VSOut o;
     o.pos = float4(pos, 0.0, 1.0);

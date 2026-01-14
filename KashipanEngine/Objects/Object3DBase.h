@@ -20,6 +20,8 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
+
 class Object3DContext;
 class ScreenBuffer;
 class ShadowMapBuffer;
@@ -263,6 +265,9 @@ public:
     /// @brief インスタンシング用バッチキー（同一キー同士がまとめて描画される）
     std::uint64_t GetInstanceBatchKey() const { return instanceBatchKey_; }
 
+    /// @brief GameEngine から Renderer を設定（永続パス登録用）
+    static void SetRenderer(Passkey<GameEngine>, Renderer* renderer);
+
 protected:
     /// @brief コンストラクタ
     /// @param name オブジェクト名
@@ -375,6 +380,8 @@ private:
     /// @param shaderBinder シェーダ変数バインダー
     /// @return バインドに失敗したコンポーネントの情報リスト
     std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
+
+    static inline Renderer *sRenderer = nullptr;
 
     std::string name_ = "GameObject3D";
     std::string passName_ = "GameObject3D";

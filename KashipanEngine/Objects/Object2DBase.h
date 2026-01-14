@@ -26,6 +26,7 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
 class Object2DContext;
 class ScreenBuffer;
 class Transform2D;
@@ -54,6 +55,9 @@ public:
         ScreenBuffer *screenBuffer = nullptr;
         std::string pipelineName;
     };
+
+    /// @brief GameEngine から Renderer を設定（永続パス登録用）
+    static void SetRenderer(Passkey<GameEngine>, Renderer *renderer);
 
     Object2DBase() = delete;
     Object2DBase(const Object2DBase &) = delete;
@@ -375,6 +379,8 @@ private:
     /// @param shaderBinder シェーダ変数バインダー
     /// @return バインドに失敗したコンポーネントの情報リスト
     std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
+
+    static inline Renderer* sRenderer = nullptr;
 
     std::string name_ = "GameObject2D";
     std::string passName_ = "GameObject2D";

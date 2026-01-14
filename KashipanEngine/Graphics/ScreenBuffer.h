@@ -27,6 +27,9 @@ public:
     /// @brief GameEngine から DirectXCommon を設定
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
 
+    /// @brief GameEngine から Renderer を設定（persistent pass 登録用）
+    static void SetRenderer(Passkey<GameEngine>, Renderer* renderer) { sRenderer = renderer; }
+
     /// @brief ScreenBuffer 生成
     static ScreenBuffer *Create(std::uint32_t width, std::uint32_t height,
         DXGI_FORMAT colorFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -118,12 +121,10 @@ private:
     std::optional<ScreenBufferPass> CreateScreenPass(const std::string &passName);
 
     static inline DirectXCommon *sDirectXCommon_ = nullptr;
-
-    static std::unordered_map<ScreenBuffer *, std::unique_ptr<ScreenBuffer>> sBufferMap_;
+    static inline Renderer* sRenderer = nullptr;
+    static constexpr size_t kBufferCount_ = 2;
 
     ScreenBuffer() = default;
-
-    static constexpr size_t kBufferCount_ = 2;
 
     size_t GetRtvWriteIndex() const noexcept { return rtvWriteIndex_; }
     size_t GetRtvReadIndex() const noexcept { return (rtvWriteIndex_ + 1) % kBufferCount_; }

@@ -1046,9 +1046,6 @@
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\CopyColorToScreenBufferEffect.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>

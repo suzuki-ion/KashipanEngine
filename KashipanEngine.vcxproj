@@ -294,7 +294,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
-    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\CopyColorToScreenBufferEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />

@@ -384,6 +384,10 @@ void DirectXCommon::ReleaseCommandObjectsInternal(std::vector<std::unique_ptr<DX
     if (slotIndex < 0) return;
     const size_t idx = static_cast<size_t>(slotIndex);
     if (idx >= pool.size()) return;
+    auto *dx12Cmds = pool[idx].get();
+    if (!dx12Cmds) return;
+    if (dx12Cmds->IsRecording()) dx12Cmds->EndRecord();
+    dx12Cmds->ResetFlags(Passkey<DirectXCommon>{});
 
     // GPU 実行中の可能性があるため、ここでフェンスを待ってから解放キューへ戻す
     WaitForFence();

@@ -38,9 +38,13 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::GenerateRegistrationHan
     return RenderPassRegistrationHandle{ MakeRandomNonZeroU64() };
 }
 
+void Object3DBase::SetRenderer(Passkey<GameEngine>, Renderer* renderer) {
+    sRenderer = renderer;
+}
+
 Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
     if (!targetWindow) return {};
-    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    auto *renderer = sRenderer;
     if (!renderer) return {};
 
     RenderPassRegistrationEntry entry{};
@@ -68,7 +72,7 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Window
 
 Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
     if (!targetBuffer) return {};
-    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    auto *renderer = sRenderer;
     if (!renderer) return {};
 
     RenderPassRegistrationEntry entry{};
@@ -97,7 +101,7 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Screen
 
 Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(ShadowMapBuffer *targetBuffer, const std::string &pipelineName) {
     if (!targetBuffer) return {};
-    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    auto *renderer = sRenderer;
     if (!renderer) return {};
 
     RenderPassRegistrationEntry entry{};
@@ -125,7 +129,7 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Shadow
 }
 
 void Object3DBase::DetachFromRenderer() {
-    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    auto *renderer = sRenderer;
     if (renderer) {
         for (auto &kv : renderPassRegistrations_) {
             auto &e = kv.second;
@@ -149,7 +153,7 @@ bool Object3DBase::DetachFromRenderer(RenderPassRegistrationHandle handle) {
     auto it = renderPassRegistrations_.find(handle.value);
     if (it == renderPassRegistrations_.end()) return false;
 
-    auto *renderer = Window::GetRenderer(Passkey<Object3DBase>{});
+    auto *renderer = sRenderer;
     if (renderer) {
         if (it->second.windowHandle) {
             renderer->UnregisterPersistentRenderPass(it->second.windowHandle);

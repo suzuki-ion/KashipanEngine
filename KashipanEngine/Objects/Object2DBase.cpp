@@ -37,9 +37,13 @@ Object2DBase::RenderPassRegistrationHandle Object2DBase::GenerateRegistrationHan
     return RenderPassRegistrationHandle{ MakeRandomNonZeroU64() };
 }
 
+void Object2DBase::SetRenderer(Passkey<GameEngine>, Renderer* renderer) {
+    sRenderer = renderer;
+}
+
 Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
     if (!targetWindow) return {};
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (!renderer) return {};
 
     RenderPassRegistrationEntry entry{};
@@ -68,7 +72,7 @@ Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(Window
 
 Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
     if (!targetBuffer) return {};
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (!renderer) return {};
 
     RenderPassRegistrationEntry entry{};
@@ -95,7 +99,7 @@ Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(Screen
 }
 
 void Object2DBase::DetachFromRenderer() {
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (renderer) {
         for (auto &kv : renderPassRegistrations_) {
             auto &e = kv.second;
@@ -116,7 +120,7 @@ bool Object2DBase::DetachFromRenderer(RenderPassRegistrationHandle handle) {
     auto it = renderPassRegistrations_.find(handle.value);
     if (it == renderPassRegistrations_.end()) return false;
 
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (renderer) {
         if (it->second.windowHandle) {
             renderer->UnregisterPersistentRenderPass(it->second.windowHandle);

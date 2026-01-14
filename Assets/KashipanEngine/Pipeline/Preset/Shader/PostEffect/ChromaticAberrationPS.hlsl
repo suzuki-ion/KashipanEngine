@@ -5,7 +5,6 @@ cbuffer ChromaticAberrationCB : register(b0)
 {
     float2 gDirection; // normalized-ish screen direction (e.g. (1,0))
     float  gStrength;  // UV offset magnitude
-    float  _pad;
 };
 
 struct PSIn {

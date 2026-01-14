@@ -5,6 +5,7 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
+#include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
 
 namespace KashipanEngine {
 
@@ -15,6 +16,15 @@ TitleScene::TitleScene()
 void TitleScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
+    
+    if (screenBuffer_) {
+        ChromaticAberrationEffect::Params p{};
+        p.directionX = 1.0f;
+        p.directionY = 0.0f;
+        p.strength = 0.0025f;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+        screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
+    }
 
     auto* window = Window::GetWindow("Main Window");
 

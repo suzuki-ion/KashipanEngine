@@ -1,4 +1,6 @@
-﻿# KashipanEngine  
+[![DebugBuild](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/DebugBuild.yml/badge.svg)](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/DebugBuild.yml)
+ 
+ # KashipanEngine  
 
 ## KashipanEngineとは
 KashipanEngineは、『菓子パンのように安っちいが手に取りやすく、ちょっとしたことであれば簡単に実装できる』をコンセプトにしたゲームエンジンです。  

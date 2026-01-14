@@ -562,6 +562,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\PipelineSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object2D.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCB.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap3D.json" />
@@ -629,12 +630,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationPS.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationVS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomVS.hlsl">
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangleVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -656,6 +652,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomUpsamplePS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangle.hlsli">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

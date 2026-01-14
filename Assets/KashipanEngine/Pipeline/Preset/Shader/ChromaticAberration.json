@@ -1,7 +1,7 @@
 ﻿{
 	"BaseName": "ChromaticAberration",
 	"Vertex": {
-		"Path": "PostEffect/ChromaticAberrationVS.hlsl",
+		"Path": "PostEffect/FullScreenTriangleVS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "vs_6_0"
 	},

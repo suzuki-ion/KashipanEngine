@@ -432,8 +432,7 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationPS.hlsl" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationVS.hlsl" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangleVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomBlurPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCompositePS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomPrefilterPS.hlsl" />
@@ -449,5 +448,7 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomUpsamplePS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Upsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Upsample.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangle.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCB.hlsli" />
   </ItemGroup>
 </Project>

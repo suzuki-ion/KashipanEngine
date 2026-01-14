@@ -1,7 +1,7 @@
 ﻿{
 	"BaseName": "Bloom.Blur",
 	"Vertex": {
-		"Path": "PostEffect/BloomVS.hlsl",
+		"Path": "PostEffect/FullScreenTriangleVS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "vs_6_0"
 	},

@@ -7,7 +7,6 @@
 
 namespace KashipanEngine {
 
-class GameEnginel;
 class DirectXCommon;
 class Window;
 #if defined(USE_IMGUI)

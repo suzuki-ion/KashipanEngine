@@ -21,11 +21,6 @@ inline void AppInitialize(const GameEngine::Context &context) {
     const RECT area = monitorInfoOpt ? monitorInfoOpt->WorkArea() : RECT{ 0, 0, 1280, 720 };
 
     Window::CreateNormal("Main Window", 1920, 1080);
-    /*auto *overlay = Window::CreateOverlay("Overlay Window",
-        area.right, area.bottom, true);
-    if (overlay) {
-        overlay->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();
-    }*/
 
     if (context.sceneManager) {
         context.sceneManager->RegisterScene<TitleScene>("TitleScene");

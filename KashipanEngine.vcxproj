@@ -555,6 +555,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
+    <None Include="tools\sync_filters.py" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example\Pixel.hlsl">

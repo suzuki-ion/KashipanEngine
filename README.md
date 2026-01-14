@@ -1,5 +1,6 @@
 [![DebugBuild](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/DebugBuild.yml/badge.svg)](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/DebugBuild.yml)
  [![DevelopmentBuild](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/DevelopmentBuild.yml/badge.svg)](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/DevelopmentBuild.yml)
+ [![ReleaseBuild](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/ReleaseBuild.yml/badge.svg)](https://github.com/suzuki-ion/KashipanEngine/actions/workflows/ReleaseBuild.yml)
  
  # KashipanEngine  
 

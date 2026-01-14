@@ -28,19 +28,13 @@ Logs/
 # Mono auto generated filesmono_crash.*
 
 # Build results
-#[Dd]ebug/
-[Dd]ebugPublic/
-#[Rr]elease/
-[Rr]eleases/
 x64/
 x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
 [Bb]in/
-#[Oo]bj/
+[Oo]bj/
 [Ll]og/
 [Ll]ogs/
+[Gg]enerated/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -81,11 +75,6 @@ StyleCopReport.xml
 *_h.h
 *.ilk
 *.meta
-[Dd]bug/.obj
-[Dd]ebug/.obj
-[Dd]ebugPublic/.obj
-[Rr]elease/.obj
-[Rr]eleases/.obj
 *.iobj
 *.pch
 *.pdb

@@ -15,6 +15,22 @@ void TestScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
 
+    if (screenBuffer_) {
+        ChromaticAberrationEffect::Params p{};
+        p.directionX = 1.0f;
+        p.directionY = 0.0f;
+        p.strength = 0.0025f;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+
+        BloomEffect::Params bp{};
+        bp.threshold = 1.0f;
+        bp.softKnee = 0.5f;
+        bp.intensity = 0.8f;
+        bp.blurRadius = 1.0f;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+
+        screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
+    }
     auto* window = Window::GetWindow("Main Window");
 
     // 2D Camera (window)

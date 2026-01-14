@@ -313,8 +313,8 @@ bool ScreenBuffer::EndRecord(bool discard) {
     LogScope scope;
     if (!dx12Commands_) return false;
 
-    auto* rt = renderTargets_[GetRtvWriteIndex()].get();
-    auto* ds = depthStencils_[GetDsvWriteIndex()].get();
+    auto *rt = renderTargets_[GetRtvWriteIndex()].get();
+    auto *ds = depthStencils_[GetDsvWriteIndex()].get();
 
     if (rt) {
         rt->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -330,10 +330,10 @@ bool ScreenBuffer::EndRecord(bool discard) {
     }
 
     (void)discard;
-
     const bool updateRtv = true;
     const bool updateDsv = !lastBeginDisableDepthWrite_;
     AdvanceFrameBufferIndex(updateRtv, updateDsv);
+
     return true;
 }
 

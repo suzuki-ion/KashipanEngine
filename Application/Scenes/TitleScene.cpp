@@ -5,7 +5,6 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
-#include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
 
 namespace KashipanEngine {
 
@@ -23,6 +22,13 @@ void TitleScene::Initialize() {
         p.directionY = 0.0f;
         p.strength = 0.0025f;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+
+        BloomEffect::Params bp{};
+        bp.threshold = 1.0f;
+        bp.softKnee = 0.5f;
+        bp.intensity = 0.8f;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+
         screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
     }
 

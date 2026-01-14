@@ -1,0 +1,13 @@
+﻿{
+	"BaseName": "Bloom.Prefilter",
+	"Vertex": {
+		"Path": "PostEffect/BloomVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Path": "PostEffect/BloomPrefilterPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

@@ -295,9 +295,24 @@ void Renderer::RenderScreenPasses() {
                 break;
             }
 
-            ID3D12GraphicsCommandList *commandList = buffer->BeginRecord(Passkey<Renderer>{}, true);
-            if (!commandList) {
-                break;
+            ID3D12GraphicsCommandList *commandList = nullptr;
+            bool useCustomRecord = static_cast<bool>(fx.beginRecordFunction);
+
+            if (!useCustomRecord) {
+                commandList = buffer->BeginRecord(Passkey<Renderer>{}, true);
+                if (!commandList) {
+                    break;
+                }
+            } else {
+                commandList = buffer->GetRecordedCommandList(Passkey<Renderer>{});
+                if (!commandList) {
+                    break;
+                }
+
+                // カスタムBeginRecord処理（RTV/viewport等の設定もここで行う）
+                if (!fx.beginRecordFunction(commandList)) {
+                    break;
+                }
             }
 
             PipelineBinder pipelineBinder;
@@ -383,13 +398,17 @@ void Renderer::RenderScreenPasses() {
             }
 
             if (!ok || !fx.renderCommandFunction) {
-                buffer->EndRecord(Passkey<Renderer>{}, true);
+                if (!useCustomRecord) {
+                    buffer->EndRecord(Passkey<Renderer>{}, true);
+                }
                 break;
             }
 
             auto renderCommandOpt = fx.renderCommandFunction(pipelineBinder);
             if (!renderCommandOpt) {
-                buffer->EndRecord(Passkey<Renderer>{}, true);
+                if (!useCustomRecord) {
+                    buffer->EndRecord(Passkey<Renderer>{}, true);
+                }
                 break;
             }
 
@@ -402,8 +421,12 @@ void Renderer::RenderScreenPasses() {
             cmd.startInstanceLocation = 0;
             IssueRenderCommand(commandList, cmd);
 
-            if (!buffer->EndRecord(Passkey<Renderer>{}, false)) {
-                break;
+            if (!useCustomRecord) {
+                buffer->EndRecord(Passkey<Renderer>{}, false);
+            } else {
+                if (fx.endRecordFunction) {
+                    fx.endRecordFunction(commandList);
+                }
             }
         }
     }
@@ -540,8 +563,8 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
                     auto itCB = constantBuffers_.find(cbKey);
                     if (itCB == constantBuffers_.end() || !itCB->second.buffer) {
                         ok = false;
-                        break;
-                    }
+                    break;
+                }
                     ok = ok && shaderVariableBinder.Bind(req.shaderNameKey, itCB->second.buffer.get());
                     if (!ok) break;
                 }
@@ -797,9 +820,9 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         if (!ok) {
             if (first->screenBuffer) {
                 ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
-            }
+    }
             continue;
-        }
+}
 
         RendererCpuTimerScope tCmd(*this, CpuTimerStats::Scope::Instancing_RenderCommand);
         auto renderCommandOpt = first->renderCommandFunction(pipelineBinder);

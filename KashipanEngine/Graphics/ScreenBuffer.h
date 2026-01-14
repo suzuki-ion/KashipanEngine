@@ -112,6 +112,9 @@ public:
     /// @brief Renderer 用: この ScreenBuffer の記録を終了
     bool EndRecord(Passkey<Renderer>, bool discard = false);
 
+    /// @brief Renderer 用: DX12Commands 取得（ポストエフェクト等で使用）
+    DX12Commands *GetDX12Commands(Passkey<Renderer>) const noexcept { return dx12Commands_; }
+
 #if defined(USE_IMGUI)
     /// @brief デバッグ用: 生成済み ScreenBuffer の内容を表示する ImGui ウィンドウを描画
     static void ShowImGuiScreenBuffersWindow();

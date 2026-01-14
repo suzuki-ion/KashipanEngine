@@ -63,13 +63,8 @@ public:
         pass.batchedRenderFunction = [this](ShaderVariableBinder &binder, std::uint32_t /*instanceCount*/) -> bool {
             auto *owner = GetOwnerBuffer();
             if (!owner) return false;
-
-            if (binder.GetNameMap().Contains("Pixel:gTexture")) {
-                if (!binder.Bind("Pixel:gTexture", owner->GetSrvHandle())) return false;
-            }
-            if (binder.GetNameMap().Contains("Pixel:gSampler")) {
-                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
-            }
+            if (!binder.Bind("Pixel:gTexture", owner->GetSrvHandle())) return false;
+            if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
             return true;
         };
 

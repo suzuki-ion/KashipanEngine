@@ -293,6 +293,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
@@ -508,6 +509,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Blur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Composite.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Downsample.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Prefilter.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Upsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ChromaticAberration.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\TriangleShadow.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
@@ -539,6 +545,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Compute.Empty.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Sampler\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Blur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Composite.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Downsample.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Prefilter.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Upsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ChromaticAberration.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
@@ -619,6 +630,32 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <FileType>Document</FileType>
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomBlurPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCompositePS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomPrefilterPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomDownsamplePS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomUpsamplePS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

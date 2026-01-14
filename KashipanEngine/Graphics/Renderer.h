@@ -125,6 +125,18 @@ public:
     std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction;
     /// @brief 描画前に必要な SRV/CBV/Sampler 等をバインド
     std::function<bool(ShaderVariableBinder &, std::uint32_t instanceCount)> batchedRenderFunction;
+
+    /// @brief ポストエフェクト用: BeginRecord 相当のフック
+    /// @details 設定されている場合、Renderer は ScreenBuffer::BeginRecord/EndRecord を使用せず、
+    ///          ScreenBuffer が保持する DX12Commands から直接 Begin/End を行う。
+    ///          この関数には Begin 後の commandList が渡され、RTV/viewport 等の設定もここで行う。
+    std::function<bool(ID3D12GraphicsCommandList*)> beginRecordFunction;
+
+    /// @brief ポストエフェクト用: EndRecord 相当のフック
+    /// @details beginRecordFunction が設定されている場合にのみ使用される。
+    ///          endRecordFunction が未設定の場合は既定終了処理のみ実行する。
+    std::function<bool(ID3D12GraphicsCommandList*)> endRecordFunction;
+
     /// @brief 描画コマンド生成（フルスクリーン三角形等）
     std::function<std::optional<RenderCommand>(PipelineBinder &)> renderCommandFunction;
 };

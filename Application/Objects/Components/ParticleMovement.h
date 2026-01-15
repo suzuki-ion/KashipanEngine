@@ -87,6 +87,11 @@ public:
     float GetSpeed() const { return speed_; }
     float GetLifeTimeSec() const { return lifeTimeSec_; }
     const Vector3 &GetBaseScale() const { return baseScale_; }
+    float GetElapsedSec() const { return elapsed_; }
+    float GetNormalizedLife() const {
+        if (lifeTimeSec_ <= 0.0f) return 0.0f;
+        return std::clamp(elapsed_ / lifeTimeSec_, 0.0f, 1.0f);
+    }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {}

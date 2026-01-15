@@ -169,22 +169,25 @@ Renderer::PersistentShadowMapPassHandle Renderer::RegisterPersistentShadowMapRen
     if (!inserted) return {};
 
     const RenderPass *p = &it->second.pass;
-
     const void *targetKey = static_cast<const void*>(p->shadowMapBuffer);
+
+    const bool isSystem = (p->objectType == ObjectType::SystemObject);
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            shadowMap2DStandard_.push_back(p);
+            (isSystem ? shadowMapSys2DStandard_ : shadowMap2DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            shadowMap2DInstancing_[key].push_back(p);
+            if (isSystem) shadowMapSys2DInstancing_[key].push_back(p);
+            else shadowMap2DInstancing_[key].push_back(p);
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            shadowMap3DStandard_.push_back(p);
+            (isSystem ? shadowMapSys3DStandard_ : shadowMap3DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            shadowMap3DInstancing_[key].push_back(p);
+            if (isSystem) shadowMapSys3DInstancing_[key].push_back(p);
+            else shadowMap3DInstancing_[key].push_back(p);
         }
     }
 
@@ -197,6 +200,7 @@ bool Renderer::UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHa
     if (it == persistentShadowMapPassesById_.end()) return false;
 
     const RenderPass *p = &it->second.pass;
+    const bool isSystem = (p->objectType == ObjectType::SystemObject);
 
     auto eraseFromVector = [&](std::vector<const RenderPass*> &v) {
         for (auto vit = v.begin(); vit != v.end(); ++vit) {
@@ -208,70 +212,38 @@ bool Renderer::UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHa
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(shadowMap2DStandard_);
+            eraseFromVector(isSystem ? shadowMapSys2DStandard_ : shadowMap2DStandard_);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            auto itB = shadowMap2DInstancing_.find(key);
-            if (itB != shadowMap2DInstancing_.end()) {
+            auto &map = isSystem ? shadowMapSys2DInstancing_ : shadowMap2DInstancing_;
+            auto itB = map.find(key);
+            if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) shadowMap2DInstancing_.erase(itB);
+                if (vec.empty()) map.erase(itB);
             }
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(shadowMap3DStandard_);
+            eraseFromVector(isSystem ? shadowMapSys3DStandard_ : shadowMap3DStandard_);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            auto itB = shadowMap3DInstancing_.find(key);
-            if (itB != shadowMap3DInstancing_.end()) {
+            auto &map = isSystem ? shadowMapSys3DInstancing_ : shadowMap3DInstancing_;
+            auto itB = map.find(key);
+            if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) shadowMap3DInstancing_.erase(itB);
+                if (vec.empty()) map.erase(itB);
             }
         }
     }
 
     persistentShadowMapPassesById_.erase(it);
     return true;
-}
-
-void Renderer::RenderShadowMapPasses() {
-    if (shadowMap2DStandard_.empty() && shadowMap3DStandard_.empty() &&
-        shadowMap2DInstancing_.empty() && shadowMap3DInstancing_.empty()) {
-        return;
-    }
-
-    auto getTargetKey = [](const RenderPass *passInfo) -> void * {
-        if (!passInfo || !passInfo->shadowMapBuffer) return nullptr;
-        return const_cast<void *>(static_cast<const void *>(passInfo->shadowMapBuffer));
-    };
-
-    Render3DStandard(shadowMap3DStandard_, getTargetKey);
-    Render3DInstancing(shadowMap3DInstancing_, getTargetKey);
-    Render2DStandard(shadowMap2DStandard_, getTargetKey);
-    Render2DInstancing(shadowMap2DInstancing_, getTargetKey);
-}
-
-void Renderer::RenderOffscreenPasses() {
-    if (offscreen2DStandard_.empty() && offscreen3DStandard_.empty() &&
-        offscreen2DInstancing_.empty() && offscreen3DInstancing_.empty()) {
-        return;
-    }
-
-    auto getTargetKey = [](const RenderPass *passInfo) -> void * {
-        if (!passInfo || !passInfo->screenBuffer) return nullptr;
-        return const_cast<void *>(static_cast<const void *>(passInfo->screenBuffer));
-    };
-
-    Render3DStandard(offscreen3DStandard_, getTargetKey);
-    Render3DInstancing(offscreen3DInstancing_, getTargetKey);
-    Render2DStandard(offscreen2DStandard_, getTargetKey);
-    Render2DInstancing(offscreen2DInstancing_, getTargetKey);
 }
 
 void Renderer::RenderScreenPasses() {
@@ -430,19 +402,6 @@ void Renderer::RenderScreenPasses() {
             }
         }
     }
-}
-
-void Renderer::RenderPersistentPasses() {
-    auto getTargetKey = [](const RenderPass *passInfo) -> void * {
-        if (!passInfo || !passInfo->window) return nullptr;
-        const HWND hwnd = passInfo->window->GetWindowHandle();
-        return const_cast<void *>(static_cast<const void *>(hwnd));
-    };
-
-    Render3DStandard(persistent3DStandard_, getTargetKey);
-    Render3DInstancing(persistent3DInstancing_, getTargetKey);
-    Render2DStandard(persistent2DStandard_, getTargetKey);
-    Render2DInstancing(persistent2DInstancing_, getTargetKey);
 }
 
 void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
@@ -858,19 +817,23 @@ Renderer::PersistentPassHandle Renderer::RegisterPersistentRenderPass(RenderPass
     if (!inserted) return {};
 
     const RenderPass *p = &it->second.pass;
+    const bool isSystem = (p->objectType == ObjectType::SystemObject);
+
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            persistent2DStandard_.push_back(p);
+            (isSystem ? persistentSys2DStandard_ : persistent2DStandard_).push_back(p);
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
-            persistent2DInstancing_[key].push_back(p);
+            if (isSystem) persistentSys2DInstancing_[key].push_back(p);
+            else persistent2DInstancing_[key].push_back(p);
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            persistent3DStandard_.push_back(p);
+            (isSystem ? persistentSys3DStandard_ : persistent3DStandard_).push_back(p);
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
-            persistent3DInstancing_[key].push_back(p);
+            if (isSystem) persistentSys3DInstancing_[key].push_back(p);
+            else persistent3DInstancing_[key].push_back(p);
         }
     }
     return handle;
@@ -882,6 +845,7 @@ bool Renderer::UnregisterPersistentRenderPass(PersistentPassHandle handle) {
     if (it == persistentPassesById_.end()) return false;
 
     const RenderPass *p = &it->second.pass;
+    const bool isSystem = (p->objectType == ObjectType::SystemObject);
 
     auto eraseFromVector = [&](std::vector<const RenderPass*> &v) {
         for (auto vit = v.begin(); vit != v.end(); ++vit) {
@@ -891,30 +855,32 @@ bool Renderer::UnregisterPersistentRenderPass(PersistentPassHandle handle) {
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(persistent2DStandard_);
+            eraseFromVector(isSystem ? persistentSys2DStandard_ : persistent2DStandard_);
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
-            auto itB = persistent2DInstancing_.find(key);
-            if (itB != persistent2DInstancing_.end()) {
+            auto &map = isSystem ? persistentSys2DInstancing_ : persistent2DInstancing_;
+            auto itB = map.find(key);
+            if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) persistent2DInstancing_.erase(itB);
+                if (vec.empty()) map.erase(itB);
             }
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(persistent3DStandard_);
+            eraseFromVector(isSystem ? persistentSys3DStandard_ : persistent3DStandard_);
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
-            auto itB = persistent3DInstancing_.find(key);
-            if (itB != persistent3DInstancing_.end()) {
+            auto &map = isSystem ? persistentSys3DInstancing_ : persistent3DInstancing_;
+            auto itB = map.find(key);
+            if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) persistent3DInstancing_.erase(itB);
+                if (vec.empty()) map.erase(itB);
             }
         }
     }
@@ -959,20 +925,23 @@ Renderer::PersistentOffscreenPassHandle Renderer::RegisterPersistentOffscreenRen
 
     const RenderPass *p = &it->second.pass;
     const void *targetKey = static_cast<const void*>(p->screenBuffer);
+    const bool isSystem = (p->objectType == ObjectType::SystemObject);
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            offscreen2DStandard_.push_back(p);
+            (isSystem ? offscreenSys2DStandard_ : offscreen2DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            offscreen2DInstancing_[key].push_back(p);
+            if (isSystem) offscreenSys2DInstancing_[key].push_back(p);
+            else offscreen2DInstancing_[key].push_back(p);
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            offscreen3DStandard_.push_back(p);
+            (isSystem ? offscreenSys3DStandard_ : offscreen3DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            offscreen3DInstancing_[key].push_back(p);
+            if (isSystem) offscreenSys3DInstancing_[key].push_back(p);
+            else offscreen3DInstancing_[key].push_back(p);
         }
     }
 
@@ -985,6 +954,7 @@ bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHa
     if (it == persistentOffscreenPassesById_.end()) return false;
 
     const RenderPass *p = &it->second.pass;
+    const bool isSystem = (p->objectType == ObjectType::SystemObject);
 
     auto eraseFromVector = [&](std::vector<const RenderPass*> &v) {
         for (auto vit = v.begin(); vit != v.end(); ++vit) {
@@ -996,30 +966,32 @@ bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHa
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(offscreen2DStandard_);
+            eraseFromVector(isSystem ? offscreenSys2DStandard_ : offscreen2DStandard_);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            auto itB = offscreen2DInstancing_.find(key);
-            if (itB != offscreen2DInstancing_.end()) {
+            auto &map = isSystem ? offscreenSys2DInstancing_ : offscreen2DInstancing_;
+            auto itB = map.find(key);
+            if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) offscreen2DInstancing_.erase(itB);
+                if (vec.empty()) map.erase(itB);
             }
         }
     } else {
         if (p->renderType == RenderType::Standard) {
-            eraseFromVector(offscreen3DStandard_);
+            eraseFromVector(isSystem ? offscreenSys3DStandard_ : offscreen3DStandard_);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            auto itB = offscreen3DInstancing_.find(key);
-            if (itB != offscreen3DInstancing_.end()) {
+            auto &map = isSystem ? offscreenSys3DInstancing_ : offscreen3DInstancing_;
+            auto itB = map.find(key);
+            if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) offscreen3DInstancing_.erase(itB);
+                if (vec.empty()) map.erase(itB);
             }
         }
     }
@@ -1058,6 +1030,75 @@ void Renderer::IssueRenderCommand(ID3D12GraphicsCommandList *commandList, const 
             renderCommand.startInstanceLocation
         );
     }
+}
+
+void Renderer::RenderShadowMapPasses() {
+    if (shadowMap2DStandard_.empty() && shadowMap3DStandard_.empty() &&
+        shadowMap2DInstancing_.empty() && shadowMap3DInstancing_.empty() &&
+        shadowMapSys2DStandard_.empty() && shadowMapSys3DStandard_.empty() &&
+        shadowMapSys2DInstancing_.empty() && shadowMapSys3DInstancing_.empty()) {
+        return;
+    }
+
+    auto getTargetKey = [](const RenderPass *passInfo) -> void * {
+        if (!passInfo || !passInfo->shadowMapBuffer) return nullptr;
+        return const_cast<void *>(static_cast<const void *>(passInfo->shadowMapBuffer));
+    };
+
+    // SystemObject -> GameObject (3D then 2D)
+    Render3DStandard(shadowMapSys3DStandard_, getTargetKey);
+    Render3DInstancing(shadowMapSys3DInstancing_, getTargetKey);
+    Render3DStandard(shadowMap3DStandard_, getTargetKey);
+    Render3DInstancing(shadowMap3DInstancing_, getTargetKey);
+
+    Render2DStandard(shadowMapSys2DStandard_, getTargetKey);
+    Render2DInstancing(shadowMapSys2DInstancing_, getTargetKey);
+    Render2DStandard(shadowMap2DStandard_, getTargetKey);
+    Render2DInstancing(shadowMap2DInstancing_, getTargetKey);
+}
+
+void Renderer::RenderOffscreenPasses() {
+    if (offscreen2DStandard_.empty() && offscreen3DStandard_.empty() &&
+        offscreen2DInstancing_.empty() && offscreen3DInstancing_.empty() &&
+        offscreenSys2DStandard_.empty() && offscreenSys3DStandard_.empty() &&
+        offscreenSys2DInstancing_.empty() && offscreenSys3DInstancing_.empty()) {
+        return;
+    }
+
+    auto getTargetKey = [](const RenderPass *passInfo) -> void * {
+        if (!passInfo || !passInfo->screenBuffer) return nullptr;
+        return const_cast<void *>(static_cast<const void *>(passInfo->screenBuffer));
+    };
+
+    // SystemObject -> GameObject (3D then 2D)
+    Render3DStandard(offscreenSys3DStandard_, getTargetKey);
+    Render3DInstancing(offscreenSys3DInstancing_, getTargetKey);
+    Render3DStandard(offscreen3DStandard_, getTargetKey);
+    Render3DInstancing(offscreen3DInstancing_, getTargetKey);
+
+    Render2DStandard(offscreenSys2DStandard_, getTargetKey);
+    Render2DInstancing(offscreenSys2DInstancing_, getTargetKey);
+    Render2DStandard(offscreen2DStandard_, getTargetKey);
+    Render2DInstancing(offscreen2DInstancing_, getTargetKey);
+}
+
+void Renderer::RenderPersistentPasses() {
+    auto getTargetKey = [](const RenderPass *passInfo) -> void * {
+        if (!passInfo || !passInfo->window) return nullptr;
+        const HWND hwnd = passInfo->window->GetWindowHandle();
+        return const_cast<void *>(static_cast<const void *>(hwnd));
+    };
+
+    // SystemObject -> GameObject (3D then 2D)
+    Render3DStandard(persistentSys3DStandard_, getTargetKey);
+    Render3DInstancing(persistentSys3DInstancing_, getTargetKey);
+    Render3DStandard(persistent3DStandard_, getTargetKey);
+    Render3DInstancing(persistent3DInstancing_, getTargetKey);
+
+    Render2DStandard(persistentSys2DStandard_, getTargetKey);
+    Render2DInstancing(persistentSys2DInstancing_, getTargetKey);
+    Render2DStandard(persistent2DStandard_, getTargetKey);
+    Render2DInstancing(persistent2DInstancing_, getTargetKey);
 }
 
 #if defined(USE_IMGUI)

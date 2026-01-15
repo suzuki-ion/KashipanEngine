@@ -6,16 +6,17 @@ namespace KashipanEngine {
 
 PointLight::PointLight()
     : Object3DBase("PointLight") {
-    SetRenderType(RenderType::Standard);
+    SetRenderType(RenderType::Instancing);
     UpdateLightBufferCPU();
 
-    SetConstantBufferRequirements({ { "Pixel:gPointLight", sizeof(LightBuffer) } });
-    SetUpdateConstantBuffersFunction(
-        [this](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
-            if (!constantBufferMaps) return false;
+    SetInstanceBufferRequirements({ { "Pixel:gPointLights", sizeof(LightBuffer) } });
+    SetSubmitInstanceFunction(
+        [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+            if (!instanceMaps) return false;
             UpdateLightBufferCPU();
-            auto **maps = static_cast<void **>(constantBufferMaps);
-            std::memcpy(maps[0], &lightBufferCPU_, sizeof(LightBuffer));
+            auto **buffers = static_cast<LightBuffer **>(instanceMaps);
+            LightBuffer *dst = buffers[0];
+            dst[instanceIndex] = lightBufferCPU_;
             return true;
         });
 }

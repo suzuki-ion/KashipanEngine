@@ -197,6 +197,7 @@ RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::strin
 
         passInfo.passName = passName_;
         passInfo.renderType = renderType_;
+        passInfo.objectType = objectType_;
         passInfo.constantBufferRequirements = constantBufferRequirements_;
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
@@ -210,30 +211,36 @@ RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::strin
 
         cachedRenderPass_.emplace(std::move(passInfo));
     }
-    cachedRenderPass_->instanceBufferRequirements = {
-        {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
-        {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
-    };
-    cachedRenderPass_->submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
-        if (!instanceMaps) return false;
-        auto **maps = static_cast<void **>(instanceMaps);
 
-        if (transform_) {
-            void *transformMap = maps[0];
-            transform_->SubmitInstance(transformMap, instanceIndex);
+    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
+        ? std::vector<RenderPass::InstanceBufferRequirement>{
+            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
         }
-        if (material_) {
-            void *materialMap = maps[1];
-            material_->SubmitInstance(materialMap, instanceIndex);
-        }
-        return true;
-    };
+        : instanceBufferRequirements_;
+    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
+        ? submitInstanceFunction_
+        : [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+            if (!instanceMaps) return false;
+            auto **maps = static_cast<void **>(instanceMaps);
+
+            if (transform_) {
+                void *transformMap = maps[0];
+                transform_->SubmitInstance(transformMap, instanceIndex);
+            }
+            if (material_) {
+                void *materialMap = maps[1];
+                material_->SubmitInstance(materialMap, instanceIndex);
+            }
+            return true;
+        };
 
     cachedRenderPass_->window = targetWindow;
     cachedRenderPass_->screenBuffer = nullptr;
     cachedRenderPass_->shadowMapBuffer = nullptr;
     cachedRenderPass_->pipelineName = pipelineName;
     cachedRenderPass_->renderType = renderType_;
+    cachedRenderPass_->objectType = objectType_;
     cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
     cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
     cachedRenderPass_->batchKey = instanceBatchKey_;
@@ -247,6 +254,7 @@ RenderPass Object3DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
 
         passInfo.passName = passName_;
         passInfo.renderType = renderType_;
+        passInfo.objectType = objectType_;
         passInfo.constantBufferRequirements = constantBufferRequirements_;
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
@@ -260,30 +268,36 @@ RenderPass Object3DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
 
         cachedRenderPass_.emplace(std::move(passInfo));
     }
-    cachedRenderPass_->instanceBufferRequirements = {
-        {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
-        {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
-    };
-    cachedRenderPass_->submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
-        if (!instanceMaps) return false;
-        auto **maps = static_cast<void **>(instanceMaps);
 
-        if (transform_) {
-            void *transformMap = maps[0];
-            transform_->SubmitInstance(transformMap, instanceIndex);
+    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
+        ? std::vector<RenderPass::InstanceBufferRequirement>{
+            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
         }
-        if (material_) {
-            void *materialMap = maps[1];
-            material_->SubmitInstance(materialMap, instanceIndex);
-        }
-        return true;
-    };
+        : instanceBufferRequirements_;
+    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
+        ? submitInstanceFunction_
+        : [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+            if (!instanceMaps) return false;
+            auto **maps = static_cast<void **>(instanceMaps);
+
+            if (transform_) {
+                void *transformMap = maps[0];
+                transform_->SubmitInstance(transformMap, instanceIndex);
+            }
+            if (material_) {
+                void *materialMap = maps[1];
+                material_->SubmitInstance(materialMap, instanceIndex);
+            }
+            return true;
+        };
 
     cachedRenderPass_->window = nullptr;
     cachedRenderPass_->screenBuffer = targetBuffer;
     cachedRenderPass_->shadowMapBuffer = nullptr;
     cachedRenderPass_->pipelineName = pipelineName;
     cachedRenderPass_->renderType = renderType_;
+    cachedRenderPass_->objectType = objectType_;
     cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
     cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
     cachedRenderPass_->batchKey = instanceBatchKey_;
@@ -297,6 +311,7 @@ RenderPass Object3DBase::CreateRenderPass(ShadowMapBuffer *targetBuffer, const s
 
         passInfo.passName = passName_;
         passInfo.renderType = renderType_;
+        passInfo.objectType = objectType_;
         passInfo.constantBufferRequirements = constantBufferRequirements_;
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
@@ -310,26 +325,31 @@ RenderPass Object3DBase::CreateRenderPass(ShadowMapBuffer *targetBuffer, const s
 
         cachedRenderPass_.emplace(std::move(passInfo));
     }
-    cachedRenderPass_->instanceBufferRequirements = {
-        {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)}
-    };
-    cachedRenderPass_->submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
-        if (!instanceMaps) return false;
-        auto **maps = static_cast<void **>(instanceMaps);
 
-        // ShadowMapBuffer 用のパスは Transform のみを送る
-        if (transform_) {
-            void *transformMap = maps[0];
-            transform_->SubmitInstance(transformMap, instanceIndex);
+    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
+        ? std::vector<RenderPass::InstanceBufferRequirement>{
+            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)}
         }
-        return true;
-    };
+        : instanceBufferRequirements_;
+    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
+        ? submitInstanceFunction_
+        : [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+            if (!instanceMaps) return false;
+            auto **maps = static_cast<void **>(instanceMaps);
+
+            if (transform_) {
+                void *transformMap = maps[0];
+                transform_->SubmitInstance(transformMap, instanceIndex);
+            }
+            return true;
+        };
 
     cachedRenderPass_->window = nullptr;
     cachedRenderPass_->screenBuffer = nullptr;
     cachedRenderPass_->shadowMapBuffer = targetBuffer;
     cachedRenderPass_->pipelineName = pipelineName;
     cachedRenderPass_->renderType = renderType_;
+    cachedRenderPass_->objectType = objectType_;
     cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
     cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
     cachedRenderPass_->batchKey = instanceBatchKey_;
@@ -352,21 +372,6 @@ bool Object3DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shad
     (void)shaderBinder;
     if (!instanceMaps) return false;
     auto **maps = static_cast<void **>(instanceMaps);
-
-    /*if (shaderBinder.GetNameMap().Contains("Vertex:gTransformationMatrices")) {
-        void *transformMap = maps[0];
-        if (transform_) {
-            auto r = transform_->SubmitInstance(transformMap, instanceIndex);
-            if (r != std::nullopt && r.value() == false) return false;
-        }
-    }
-    if (shaderBinder.GetNameMap().Contains("Pixel:gMaterials")) {
-        void *materialMap = maps[1];
-        if (material_) {
-            auto r = material_->SubmitInstance(materialMap, instanceIndex);
-            if (r != std::nullopt && r.value() == false) return false;
-        }
-    }*/
 
     if (transform_) {
         void *transformMap = maps[0];
@@ -416,11 +421,10 @@ bool Object3DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
 
 Object3DBase::Object3DBase(const std::string &name) {
     LogScope scope;
+    objectType_ = ObjectType::SystemObject;
     if (!name.empty()) name_ = name;
     passName_ = name_;
-    // 頂点やインデックスが要らないタイプのオブジェクトは描画用オブジェクトでないことが多いので、
-    // インスタンスバッチキーにはポインタ値も混ぜる
-    instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
+    instanceBatchKey_ = std::hash<std::string>{}(name_);
     context_ = std::make_unique<Object3DContext>(Passkey<Object3DBase>{}, this);
     RegisterComponent<Transform3D>();
     transform_ = GetComponent3D<Transform3D>();
@@ -428,6 +432,7 @@ Object3DBase::Object3DBase(const std::string &name) {
 
 Object3DBase::Object3DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
     LogScope scope;
+    objectType_ = ObjectType::GameObject;
     if (!name.empty()) name_ = name;
     passName_ = name_;
     instanceBatchKey_ = std::hash<std::string>{}(name_);

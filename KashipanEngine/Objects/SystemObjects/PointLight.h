@@ -32,13 +32,11 @@ public:
 
     struct LightBuffer {
         unsigned int enabled = 0u;
-        float pad0[3] = { 0.0f, 0.0f, 0.0f };
         Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
         Vector3 position{ 0.0f, 0.0f, 0.0f };
         float range = 1.0f;
         float intensity = 1.0f;
         float decay = 2.0f;
-        float pad1 = 0.0f;
     };
 
     const LightBuffer &GetLightBufferCPU() const { return lightBufferCPU_; }

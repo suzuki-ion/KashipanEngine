@@ -41,7 +41,6 @@ public:
 
     struct LightBuffer {
         unsigned int enabled = 0u;
-        float pad0[3] = { 0.0f, 0.0f, 0.0f };
         Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
         Vector3 position{ 0.0f, 0.0f, 0.0f };
         float range = 1.0f;

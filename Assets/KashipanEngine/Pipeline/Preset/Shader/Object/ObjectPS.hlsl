@@ -19,8 +19,14 @@ struct Material {
 	float4 specularColor;
 };
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
-ConstantBuffer<PointLight> gPointLight : register(b3);
-ConstantBuffer<SpotLight> gSpotLight : register(b4);
+
+StructuredBuffer<PointLight> gPointLights : register(t3);
+StructuredBuffer<SpotLight> gSpotLights : register(t4);
+
+cbuffer LightCounts : register(b3) {
+	uint gPointLightCount;
+	uint gSpotLightCount;
+};
 #endif
 
 Texture2D gTexture : register(t0);
@@ -82,36 +88,50 @@ PSOutput main(VSOutput input) {
 		lightingColor += diffuse + speculer;
 	}
 
-	// Point light
-	if (gPointLight.enabled && mat.enableLighting) {
-		float3 toLight = gPointLight.position - input.worldPosition;
-		float dist = length(toLight);
-		float3 lightDir = normalize(toLight);
-		float atten = pow(saturate(-dist / gPointLight.radius + 1.0f), gPointLight.decay);
-		
-		float lam = HalfLambert(input.normal, lightDir);
-		float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
-		float4 diffuse = gPointLight.color * lam * gPointLight.intensity * atten;
-		float4 speculer = gPointLight.color * gPointLight.intensity * spec * mat.specularColor * atten;
-		lightingColor += diffuse + speculer;
+	// Point lights
+	if (mat.enableLighting) {
+		for (uint i = 0; i < gPointLightCount; ++i) {
+			PointLight light = gPointLights[i];
+			if (!light.enabled) {
+				continue;
+			}
+
+			float3 toLight = light.position - input.worldPosition;
+			float dist = length(toLight);
+			float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+			float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
+			
+			float lam = HalfLambert(input.normal, lightDir);
+			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
+			float4 diffuse = light.color * lam * light.intensity * atten;
+			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+			lightingColor += diffuse + speculer;
+		}
 	}
 
-	// Spot light
-	if (gSpotLight.enabled && mat.enableLighting) {
-		float3 toLight = gSpotLight.position - input.worldPosition;
-		float dist = length(toLight);
-		float3 lightDir = normalize(toLight);
-		float theta = dot(-lightDir, normalize(gSpotLight.direction));
-		float inner = cos(gSpotLight.innerAngle);
-		float outer = cos(gSpotLight.outerAngle);
-		float spot = saturate((theta - outer) / (inner - outer));
-		float atten = pow(saturate(-dist / gSpotLight.distance + 1.0f), gSpotLight.decay) * spot;
-		
-		float lam = HalfLambert(input.normal, lightDir);
-		float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
-		float4 diffuse = gSpotLight.color * lam * gSpotLight.intensity * atten;
-		float4 speculer = gSpotLight.color * gSpotLight.intensity * spec * mat.specularColor * atten;
-		lightingColor += diffuse + speculer;
+	// Spot lights
+	if (mat.enableLighting) {
+		for (uint i = 0; i < gSpotLightCount; ++i) {
+			SpotLight light = gSpotLights[i];
+			if (!light.enabled) {
+				continue;
+			}
+
+			float3 toLight = light.position - input.worldPosition;
+			float dist = length(toLight);
+			float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+			float theta = dot(-lightDir, normalize(light.direction));
+			float inner = cos(light.innerAngle);
+			float outer = cos(light.outerAngle);
+			float spot = saturate((theta - outer) / (inner - outer));
+			float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * spot;
+			
+			float lam = HalfLambert(input.normal, lightDir);
+			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
+			float4 diffuse = light.color * lam * light.intensity * atten;
+			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+			lightingColor += diffuse + speculer;
+		}
 	}
 
 	output.color = baseColor * lightingColor;

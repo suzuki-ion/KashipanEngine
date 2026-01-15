@@ -4,6 +4,7 @@
 #include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 #include "Objects/Components/Player/PlayerMove.h"
+#include "Objects/SystemObjects/LightManager.h"
 
 namespace KashipanEngine {
 
@@ -19,15 +20,15 @@ void TestScene::Initialize() {
         ChromaticAberrationEffect::Params p{};
         p.directionX = 1.0f;
         p.directionY = 0.0f;
-        p.strength = 0.0025f;
+        p.strength = 0.001f;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
 
         BloomEffect::Params bp{};
-        bp.threshold = 0.8f;
-        bp.softKnee = 0.25f;
-        bp.intensity = 0.3f;
-        bp.blurRadius = 4.0f;
-        bp.iterations = 4;
+        bp.threshold = 0.25f;
+        bp.softKnee = 0.5f;
+        bp.intensity = 0.5f;
+        bp.blurRadius = 2.0f;
+        bp.iterations = 2;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
         screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
@@ -106,44 +107,21 @@ void TestScene::Initialize() {
         auto obj = std::make_unique<DirectionalLight>();
         obj->SetName("DirectionalLight");
         obj->SetEnabled(true);
-        obj->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        obj->SetColor(Vector4(0.6f, 0.5f, 1.0f, 1.0f));
         obj->SetDirection(Vector3(1.8f, -2.0f, 1.2f));
-        obj->SetIntensity(1.6f);
+        obj->SetIntensity(0.3f);
         light_ = obj.get();
 
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
     }
 
-    // Point Light (screenBuffer_)
+    // LightManager (screenBuffer_)
+    LightManager* lightManager = nullptr;
     {
-        auto obj = std::make_unique<PointLight>();
-        obj->SetName("PointLight");
-        obj->SetEnabled(true);
-        obj->SetColor(Vector4(1.0f, 0.8f, 0.6f, 1.0f));
-        obj->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
-        obj->SetRange(20.0f);
-        obj->SetIntensity(2.0f);
-        pointLight_ = obj.get();
-
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(obj));
-    }
-
-    // Spot Light (screenBuffer_)
-    {
-        auto obj = std::make_unique<SpotLight>();
-        obj->SetName("SpotLight");
-        obj->SetEnabled(true);
-        obj->SetColor(Vector4(0.6f, 0.8f, 1.0f, 1.0f));
-        obj->SetPosition(Vector3(6.0f, 10.0f, -6.0f));
-        obj->SetDirection(Vector3(-0.5f, -1.0f, 0.5f));
-        obj->SetRange(30.0f);
-        obj->SetInnerAngle(0.4f);
-        obj->SetOuterAngle(0.8f);
-        obj->SetIntensity(3.0f);
-        spotLight_ = obj.get();
-
+        auto obj = std::make_unique<LightManager>();
+        obj->SetName("LightManager");
+        lightManager = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
     }
@@ -230,7 +208,12 @@ void TestScene::Initialize() {
         spawn.min = Vector3(-16.0f, 0.0f, -16.0f);
         spawn.max = Vector3(16.0f, 16.0f, 16.0f);
 
-        for (int i = 0; i < 32; ++i) {
+        int instanceCount = 128;
+
+        particleLights_.clear();
+        particleLights_.reserve(instanceCount);
+
+        for (int i = 0; i < instanceCount; ++i) {
             auto obj = std::make_unique<Box>();
             obj->SetName("ParticleBox_" + std::to_string(i));
             obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{0.5f, 0.5f, 0.5f});
@@ -243,7 +226,22 @@ void TestScene::Initialize() {
             if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
             if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
 
+            auto* particlePtr = obj.get();
             AddObject3D(std::move(obj));
+
+            auto lightObj = std::make_unique<PointLight>();
+            lightObj->SetName("ParticlePointLight_" + std::to_string(i));
+            lightObj->SetEnabled(true);
+            lightObj->SetColor(particleLightColor_);
+            lightObj->SetIntensity(0.0f);
+            lightObj->SetRange(0.0f);
+
+            auto* lightPtr = lightObj.get();
+            if (screenBuffer_) lightObj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+            AddObject3D(std::move(lightObj));
+
+            particleLights_.push_back(ParticleLightPair{ particlePtr, lightPtr });
+            lightManager->AddPointLight(lightPtr);
         }
     }
 
@@ -361,6 +359,33 @@ void TestScene::OnUpdate() {
                     }
                 }
             }
+        }
+    }
+
+    // Particle -> PointLight sync (position + lifetime-driven params)
+    {
+        for (auto &pl : particleLights_) {
+            if (!pl.particle || !pl.light) continue;
+
+            auto* tr = pl.particle->GetComponent3D<Transform3D>();
+            auto* pm = pl.particle->GetComponent3D<ParticleMovement>();
+            if (!tr || !pm) continue;
+
+            const Vector3 pos = tr->GetTranslate();
+            pl.light->SetPosition(pos);
+
+            const float t = pm->GetNormalizedLife(); // 0..1
+            float life01 = 0.0f;
+            if (t < 0.5f) {
+                life01 = (t / 0.5f);
+            } else {
+                life01 = (1.0f - (t - 0.5f) / 0.5f);
+            }
+            life01 = std::clamp(life01, 0.0f, 1.0f);
+
+            const float eased = EaseOutCubic(0.0f, 1.0f, life01);
+            pl.light->SetIntensity(particleLightIntensityMin_ + (particleLightIntensityMax_ - particleLightIntensityMin_) * eased);
+            pl.light->SetRange(particleLightRangeMin_ + (particleLightRangeMax_ - particleLightRangeMin_) * eased);
         }
     }
 }

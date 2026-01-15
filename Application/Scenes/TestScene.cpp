@@ -115,6 +115,39 @@ void TestScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
+    // Point Light (screenBuffer_)
+    {
+        auto obj = std::make_unique<PointLight>();
+        obj->SetName("PointLight");
+        obj->SetEnabled(true);
+        obj->SetColor(Vector4(1.0f, 0.8f, 0.6f, 1.0f));
+        obj->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
+        obj->SetRange(20.0f);
+        obj->SetIntensity(2.0f);
+        pointLight_ = obj.get();
+
+        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(obj));
+    }
+
+    // Spot Light (screenBuffer_)
+    {
+        auto obj = std::make_unique<SpotLight>();
+        obj->SetName("SpotLight");
+        obj->SetEnabled(true);
+        obj->SetColor(Vector4(0.6f, 0.8f, 1.0f, 1.0f));
+        obj->SetPosition(Vector3(6.0f, 10.0f, -6.0f));
+        obj->SetDirection(Vector3(-0.5f, -1.0f, 0.5f));
+        obj->SetRange(30.0f);
+        obj->SetInnerAngle(0.4f);
+        obj->SetOuterAngle(0.8f);
+        obj->SetIntensity(3.0f);
+        spotLight_ = obj.get();
+
+        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(obj));
+    }
+
     // Shadow Map Binder
     {
         auto obj = std::make_unique<ShadowMapBinder>();

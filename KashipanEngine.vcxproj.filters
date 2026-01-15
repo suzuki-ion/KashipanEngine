@@ -123,6 +123,8 @@
     <ClCompile Include="KashipanEngine\Utilities\TimeUtils.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -351,6 +353,8 @@
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

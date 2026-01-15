@@ -2,6 +2,8 @@
 #include <KashipanEngine.h>
 
 #include "Scenes/Components/BPM/BPMSystem.h"
+#include "Objects/SystemObjects/PointLight.h"
+#include "Objects/SystemObjects/SpotLight.h"
 
 namespace KashipanEngine {
 
@@ -27,6 +29,8 @@ private:
     Camera3D *lightCamera3D_ = nullptr;
 
     DirectionalLight *light_ = nullptr;
+    PointLight *pointLight_ = nullptr;
+    SpotLight *spotLight_ = nullptr;
 
 	static constexpr int kMapW = 13; // マップの横幅 (オブジェクト数)
 	static constexpr int kMapH = 13; // マップの縦幅 (オブジェクト数)

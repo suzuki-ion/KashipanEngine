@@ -305,6 +305,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
+        directXCommon_->AllDestroyPendingSwapChains({});
     }
     return 0;
 }

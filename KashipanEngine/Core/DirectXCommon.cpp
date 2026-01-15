@@ -20,6 +20,10 @@ std::vector<size_t> sFreeSwapChains;                                   // 空き
 std::vector<HWND> sPendingDestroySwapChains;                           // 破棄指示された HWND
 } // namespace
 
+void DirectXCommon::AllDestroyPendingSwapChains(Passkey<GameEngine>) {
+    DestroyPendingSwapChains();
+}
+
 DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     LogScope scope;
     Log(Translation("engine.directx.initialize.start"), LogSeverity::Debug);
@@ -135,7 +139,6 @@ void DirectXCommon::BeginDraw(Passkey<GameEngine>) {
 }
 
 void DirectXCommon::EndDraw(Passkey<GameEngine>) {
-    DestroyPendingSwapChains();
     ExecuteCommandLists();
 }
 

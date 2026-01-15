@@ -36,6 +36,8 @@ class ImGuiManager;
 /// @brief DirectX共通クラス
 class DirectXCommon final {
 public:
+    void AllDestroyPendingSwapChains(Passkey<GameEngine>);
+
     DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer = true);
     ~DirectXCommon();
 
@@ -97,8 +99,6 @@ public:
 
     // ImGui viewport 用のスワップチェーンを必要に応じて生成する
     DX12SwapChain* GetOrCreateSwapChainForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd, int32_t width, int32_t height);
-    // ImGui viewport 用スワップチェーンの破棄指示（遅延破棄）
-    void DestroySwapChainSignalForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd);
 #endif
 
     /// @brief 指定のウィンドウのスワップチェーン取得

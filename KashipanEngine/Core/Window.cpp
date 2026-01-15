@@ -108,7 +108,6 @@ void Window::Update(Passkey<GameEngine>) {
             }
         }
     }
-    // Update 内では破棄実行しない
 }
 
 void Window::CommitDestroy(Passkey<GameEngine>) {
@@ -170,8 +169,6 @@ void Window::Draw(Passkey<GameEngine>) {
 
     for (auto &pair : sWindowMap) {
         Window *w = pair.second.get();
-        if (w->IsPendingDestroy()) continue; // 破棄予定はスキップ
-        if (!w->IsVisible()) continue;       // 非表示はスキップ
         drawInfos.push_back({ w, calcDepth(w) });
     }
 

@@ -388,6 +388,15 @@ void TestScene::OnUpdate() {
             pl.light->SetRange(particleLightRangeMin_ + (particleLightRangeMax_ - particleLightRangeMin_) * eased);
         }
     }
+
+    {
+        auto r = GetInputCommand()->Evaluate("DebugDestroyWindow");
+        if (r.Triggered()) {
+            if (auto *window = Window::GetWindow("Main Window")) {
+                window->DestroyNotify();
+            }
+        }
+    }
 }
 
 } // namespace KashipanEngine

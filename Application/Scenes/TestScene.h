@@ -2,6 +2,7 @@
 #include <KashipanEngine.h>
 
 #include "Scenes/Components/BPM/BPMSystem.h"
+#include "Systems/BombManager.h"
 
 namespace KashipanEngine {
 
@@ -20,6 +21,7 @@ public:
 protected:
     void OnUpdate() override;
 
+    void MakeBomb();
 private:
     ScreenBuffer *screenBuffer_ = nullptr;
     ShadowMapBuffer *shadowMapBuffer_ = nullptr;
@@ -52,6 +54,8 @@ private:
 	float bpm_ = 120.0f;   // BPM値
 	bool playBgm_ = false; // true-> BPM120のBGM再生
 
+	std::vector<Object3DBase*> bombObjects_; // 設置された爆弾オブジェクトのリスト
+    BombManager bombManager_;
 	int bombMaxNumber_ = 6; // プレイヤーが設置可能な爆弾の最大数
 };
 

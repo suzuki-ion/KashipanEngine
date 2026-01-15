@@ -168,8 +168,6 @@ void TestScene::Initialize() {
         obj->RegisterComponent<BombSpawn>(bombMaxNumber_);
         if (auto* bombSpawn = obj->GetComponent3D<BombSpawn>()) {
             bombSpawn->SetInput(GetInput());
-            bombSpawn->SetScene(this, screenBuffer_, shadowMapBuffer_);
-            bombSpawn->SetMapSize(kMapW, kMapH);
             bombSpawn->SetBPMToleranceRange(playerBpmToleranceRange_);
         }
 
@@ -177,6 +175,15 @@ void TestScene::Initialize() {
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
         player_ = obj.get();
         AddObject3D(std::move(obj));
+    }
+
+    {
+    
+    }
+
+    // bomb
+    {
+		bombObjects_.reserve(bombMaxNumber_);
     }
 
     if (playBgm_) {

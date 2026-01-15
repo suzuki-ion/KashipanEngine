@@ -1,6 +1,7 @@
 #pragma once
 #include <KashipanEngine.h>
 #include "PlayerDrection.h"
+#include "Objects/Components/Bomb/BombManager.h"
 
 namespace KashipanEngine {
 
@@ -41,23 +42,23 @@ namespace KashipanEngine {
                 if (ctx) {
                     auto* transform = ctx->GetComponent<Transform3D>();
                     if (transform) {
-						currentPos.x = std::clamp(currentPos.x, 0.0f, static_cast<float>(mapW_ * 2 - 2));
-						currentPos.z = std::clamp(currentPos.z, 0.0f, static_cast<float>(mapH_ * 2 - 2));
+                        currentPos.x = std::clamp(currentPos.x, 0.0f, static_cast<float>(mapW_ * 2 - 2));
+                        currentPos.z = std::clamp(currentPos.z, 0.0f, static_cast<float>(mapH_ * 2 - 2));
                         transform->SetTranslate(currentPos);
 
                         switch (playerDirection_)
                         {
                         case PlayerDirection::Up:
-							transform->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
+                            transform->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
                             break;
                         case PlayerDirection::Down:
-							transform->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+                            transform->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
                             break;
                         case PlayerDirection::Left:
-							transform->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
+                            transform->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
                             break;
                         case PlayerDirection::Right:
-							transform->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
+                            transform->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
                             break;
                         }
                     }
@@ -76,41 +77,72 @@ namespace KashipanEngine {
             Vector3 moveDirection{ 0.0f, 0.0f, 0.0f };
             bool triggered = false;
 
-            if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
-                if (keyboard.IsTrigger(Key::Up)) {
-                    moveDirection = Vector3{ 0.0f, 0.0f, moveDistance_ };
-					playerDirection_ = PlayerDirection::Up;
-                    triggered = true;
-                } else if (keyboard.IsTrigger(Key::Down)) {
-                    moveDirection = Vector3{ 0.0f, 0.0f, -moveDistance_ };
-					playerDirection_ = PlayerDirection::Down;
-                    triggered = true;
-                } else if (keyboard.IsTrigger(Key::Left)) {
-                    moveDirection = Vector3{ -moveDistance_, 0.0f, 0.0f };
-					playerDirection_ = PlayerDirection::Left;
-                    triggered = true;
-                } else if (keyboard.IsTrigger(Key::Right)) {
-                    moveDirection = Vector3{ moveDistance_, 0.0f, 0.0f };
-					playerDirection_ = PlayerDirection::Right;
-                    triggered = true;
+            if (input_->GetKeyboard().IsTrigger(Key::D1)) {
+                if (useToleranceRange_) {
+                    useToleranceRange_ = false;
+                } else {
+					useToleranceRange_ = true;
                 }
             }
 
+            if (useToleranceRange_) {
+                if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+                    if (keyboard.IsTrigger(Key::Up)) {
+                        moveDirection = Vector3{ 0.0f, 0.0f, moveDistance_ };
+                        playerDirection_ = PlayerDirection::Up;
+                        triggered = true;
+                    } else if (keyboard.IsTrigger(Key::Down)) {
+                        moveDirection = Vector3{ 0.0f, 0.0f, -moveDistance_ };
+                        playerDirection_ = PlayerDirection::Down;
+                        triggered = true;
+                    } else if (keyboard.IsTrigger(Key::Left)) {
+                        moveDirection = Vector3{ -moveDistance_, 0.0f, 0.0f };
+                        playerDirection_ = PlayerDirection::Left;
+                        triggered = true;
+                    } else if (keyboard.IsTrigger(Key::Right)) {
+                        moveDirection = Vector3{ moveDistance_, 0.0f, 0.0f };
+                        playerDirection_ = PlayerDirection::Right;
+                        triggered = true;
+                    }
+                }
+            } else {
+                if (keyboard.IsTrigger(Key::Up)) {
+                    moveDirection = Vector3{ 0.0f, 0.0f, moveDistance_ };
+                    playerDirection_ = PlayerDirection::Up;
+                    triggered = true;
+                } else if (keyboard.IsTrigger(Key::Down)) {
+                    moveDirection = Vector3{ 0.0f, 0.0f, -moveDistance_ };
+                    playerDirection_ = PlayerDirection::Down;
+                    triggered = true;
+                } else if (keyboard.IsTrigger(Key::Left)) {
+                    moveDirection = Vector3{ -moveDistance_, 0.0f, 0.0f };
+                    playerDirection_ = PlayerDirection::Left;
+                    triggered = true;
+                } else if (keyboard.IsTrigger(Key::Right)) {
+                    moveDirection = Vector3{ moveDistance_, 0.0f, 0.0f };
+                    playerDirection_ = PlayerDirection::Right;
+                    triggered = true;
+                }
+			}
+
             if (triggered) {
-                // 移動開始
                 auto* ctx = GetOwner3DContext();
                 if (ctx) {
                     auto* transform = ctx->GetComponent<Transform3D>();
                     if (transform) {
                         startPosition_ = transform->GetTranslate();
                         targetPosition_ = startPosition_ + moveDirection;
+
+                        // 移動先にBombがあるなら移動しない
+                        if (bombManager_ && bombManager_->IsBombAtPosition(targetPosition_)) {
+                            return true;
+                        }
+
                         isMoving_ = true;
                         moveTimer_ = 0.0f;
                     }
                 }
             }
-
-            
 
             return true;
         }
@@ -151,6 +183,8 @@ namespace KashipanEngine {
         /// @brief プレイヤーの向きを取得
         PlayerDirection GetPlayerDirection() const { return playerDirection_; }
 
+        void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
 #if defined(USE_IMGUI)
         void ShowImGui() override {
             ImGui::TextUnformatted("PlayerArrowMove");
@@ -177,7 +211,11 @@ namespace KashipanEngine {
         Vector3 startPosition_{ 0.0f, 0.0f, 0.0f };   // 移動開始位置
         Vector3 targetPosition_{ 0.0f, 0.0f, 0.0f };  // 移動目標位置
 
+        bool useToleranceRange_ = true;
+
         const Input* input_ = nullptr;
+
+        BombManager* bombManager_ = nullptr;
 
 		PlayerDirection playerDirection_ = PlayerDirection::Down;
     };

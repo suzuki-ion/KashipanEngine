@@ -12,6 +12,15 @@ class GameEngine;
 class DirectXCommon;
 class ShaderVariableBinder;
 
+enum class DefaultSampler {
+    PointClamp = 0,
+    PointWrap = 1,
+    LinearClamp = 2,
+    LinearWrap = 3,
+    AnisotropicClamp = 4,
+    AnisotropicWrap = 5,
+};
+
 /// @brief サンプラー管理クラス（SamplerHeap にサンプラーを確保し、外部へ D3D12 ハンドルを出さない）
 class SamplerManager final {
 public:
@@ -31,6 +40,7 @@ public:
 
     /// @brief ハンドルのサンプラーをシェーダーへバインドする
     static bool BindSampler(ShaderVariableBinder* shaderBinder, const std::string& nameKey, SamplerHandle handle);
+    static bool BindSampler(ShaderVariableBinder *shaderBinder, const std::string &nameKey, DefaultSampler defaultSampler);
 
 private:
     DirectXCommon* directXCommon_ = nullptr;

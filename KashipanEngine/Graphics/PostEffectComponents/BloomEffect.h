@@ -136,7 +136,7 @@ public:
                 auto *o = GetOwnerBuffer();
                 if (!o) return false;
                 if (!binder.Bind("Pixel:gTexture", o->GetSrvHandle())) return false;
-                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
+                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp)) return false;
                 return true;
             };
 
@@ -163,7 +163,7 @@ public:
             pass.batchedRenderFunction = [this](ShaderVariableBinder &binder, std::uint32_t) -> bool {
                 if (pyramid_.empty() || !pyramid_[0].srv) return false;
                 if (!binder.Bind("Pixel:gTexture", pyramid_[0].srv->GetGPUDescriptorHandle())) return false;
-                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
+                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp)) return false;
                 return true;
             };
 
@@ -191,7 +191,7 @@ public:
                     auto &src = pyramidBlur_[i - 1];
                     if (!src.srv) return false;
                     if (!binder.Bind("Pixel:gTexture", src.srv->GetGPUDescriptorHandle())) return false;
-                    if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
+                    if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp)) return false;
                     return true;
                 };
 
@@ -220,7 +220,7 @@ public:
                     auto &src = pyramid_[i];
                     if (!src.srv) return false;
                     if (!binder.Bind("Pixel:gTexture", src.srv->GetGPUDescriptorHandle())) return false;
-                    if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
+                    if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp)) return false;
                     return true;
                 };
 
@@ -249,7 +249,7 @@ public:
                 // low = blur[last], high = black (use same as low for now)
                 if (!binder.Bind("Pixel:gLowTexture", pyramidBlur_[last].srv->GetGPUDescriptorHandle())) return false;
                 if (!binder.Bind("Pixel:gHighTexture", pyramidBlur_[last].srv->GetGPUDescriptorHandle())) return false;
-                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
+                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp)) return false;
                 return true;
             };
 
@@ -276,7 +276,7 @@ public:
 
                 if (!binder.Bind("Pixel:gLowTexture", pyramidAccum_[i].srv->GetGPUDescriptorHandle())) return false;
                 if (!binder.Bind("Pixel:gHighTexture", pyramidBlur_[dst].srv->GetGPUDescriptorHandle())) return false;
-                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
+                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp)) return false;
                 return true;
             };
 
@@ -306,7 +306,7 @@ public:
 
                 if (!binder.Bind("Pixel:gSceneTexture", o->GetSrvHandle())) return false;
                 if (!binder.Bind("Pixel:gBloomTexture", pyramidAccum_[0].srv->GetGPUDescriptorHandle())) return false;
-                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", 1)) return false;
+                if (!SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp)) return false;
                 return true;
             };
 

@@ -24,11 +24,11 @@ void TestScene::Initialize() {
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
 
         BloomEffect::Params bp{};
-        bp.threshold = 0.25f;
+        bp.threshold = 1.0f;
         bp.softKnee = 0.5f;
-        bp.intensity = 0.5f;
+        bp.intensity = 1.5f;
         bp.blurRadius = 2.0f;
-        bp.iterations = 2;
+        bp.iterations = 4;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
         screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");

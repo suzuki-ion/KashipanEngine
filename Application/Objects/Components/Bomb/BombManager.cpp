@@ -1,6 +1,7 @@
 #include "Objects/Components/Bomb/BombManager.h"
 #include "Objects/Components/Bomb/ExplosionManager.h"
 #include "Objects/Components/Player/PlayerMove.h"
+#include "Objects/Components/BPMScaling.h"
 
 namespace KashipanEngine {
 
@@ -25,6 +26,12 @@ void BombManager::Update() {
     // 爆弾の状態を更新し、寿命切れの爆弾を削除
     auto* ctx = GetOwnerContext();
     for (size_t i = 0; i < activeBombs_.size();) {
+
+        auto* bpmScaling = activeBombs_.at(i).object->GetComponent3D<BPMScaling>();
+        if (bpmScaling) {
+            bpmScaling->SetBPMProgress(bpmProgress_);
+        }
+
         activeBombs_[i].elapsedTime += dt;
         
         // ビートが発生したらカウントを増加
@@ -123,8 +130,10 @@ void BombManager::SpawnBomb() {
         aabb.min = Vector3{ -0.75f, -0.75f, -0.75f };
         aabb.max = Vector3{ +0.75f, +0.75f, +0.75f };
         info.shape = aabb;
-        player_->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
+        bomb->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
     }
+
+    bomb->RegisterComponent<BPMScaling>(0.8f, 1.0f);
 
     // レンダラーにアタッチ
     if (screenBuffer_) {

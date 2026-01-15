@@ -124,6 +124,8 @@
     <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
+    <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -352,10 +354,10 @@
     <ClInclude Include="MyStd\NameMap.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
-    <ClInclude Include="Application\Objects\Components\Player\BombMaking.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
-    <ClInclude Include="Application\Objects\Components\Player\Bomb.h" />
     <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />
+    <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

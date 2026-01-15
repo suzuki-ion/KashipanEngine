@@ -66,6 +66,7 @@ namespace KashipanEngine {
 		/// @brief 1拍の時間を取得（秒）
 		float GetBeatDuration() const { return beatDuration_; }
     private:
+
         /// @brief 拍が発生したときの処理
         void OnBeat() {
             auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM.mp3");

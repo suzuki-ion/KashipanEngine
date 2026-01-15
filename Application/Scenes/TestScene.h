@@ -52,8 +52,7 @@ private:
 	float bpm_ = 120.0f;   // BPM値
 	bool playBgm_ = false; // true-> BPM120のBGM再生
 
-	std::vector<Object3DBase*> bombs_; 
-	int bombMaxNumber_ = 3; // プレイヤーが設置可能な爆弾の最大数
+	int bombMaxNumber_ = 6; // プレイヤーが設置可能な爆弾の最大数
 };
 
 } // namespace KashipanEngine

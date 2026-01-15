@@ -119,6 +119,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
@@ -260,8 +262,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
-    <ClInclude Include="Application\Objects\Components\Player\Bomb.h" />
-    <ClInclude Include="Application\Objects\Components\Player\BombMaking.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
+    <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
     <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />

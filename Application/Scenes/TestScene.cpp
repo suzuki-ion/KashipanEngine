@@ -4,7 +4,7 @@
 #include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 #include "Objects/Components/Player/PlayerMove.h"
-#include "Objects/Components/Player/BombMaking.h"
+#include "Objects/Components/Player/BpmbSpawn.h"
 
 namespace KashipanEngine {
 
@@ -124,6 +124,8 @@ void TestScene::Initialize() {
                 auto obj = std::make_unique<Box>();
                 obj->SetName("Map" ":x" + std::to_string(x) + ":z" + std::to_string(z));
 
+				obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_);
+
                 if (auto* tr = obj->GetComponent3D<Transform3D>()) {
                     tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
                     tr->SetScale(Vector3(mapScaleMax_));
@@ -160,14 +162,15 @@ void TestScene::Initialize() {
             playerArrowMove->SetBPMToleranceRange(playerBpmToleranceRange_);
         }
 
-        // BombMakingコンポーネントを追加
-        obj->RegisterComponent<BombMaking>(bombMaxNumber_); // 最大3個の爆弾を設置可能
-        if (auto* bombMaking = obj->GetComponent3D<BombMaking>()) {
-            bombMaking->SetInput(GetInput());
-            bombMaking->SetBPMToleranceRange(playerBpmToleranceRange_);
-            bombMaking->SetBombOffset(2.0f); // マス目の間隔に合わせる
-            bombMaking->SetBombScale(1.0f);  // 爆弾のスケール
-            bombMaking->SetScene(this, screenBuffer_, shadowMapBuffer_); // シーンとレンダーバッファを設定
+        obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_);
+
+        // BombSpawnコンポーネントを追加
+        obj->RegisterComponent<BombSpawn>(bombMaxNumber_);
+        if (auto* bombSpawn = obj->GetComponent3D<BombSpawn>()) {
+            bombSpawn->SetInput(GetInput());
+            bombSpawn->SetScene(this, screenBuffer_, shadowMapBuffer_);
+            bombSpawn->SetMapSize(kMapW, kMapH);
+            bombSpawn->SetBPMToleranceRange(playerBpmToleranceRange_);
         }
 
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
@@ -284,7 +287,6 @@ void TestScene::OnUpdate() {
 
     if (player_) {
         if (auto* tr = player_->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3(EaseInBack(playerScaleMin_, playerScaleMax_, bpmSystem_->GetBeatProgress())));
 			playerMapX_ = static_cast<int>(tr->GetTranslate().x / 2.0f);
 			playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
 
@@ -292,9 +294,14 @@ void TestScene::OnUpdate() {
 			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
             //playerArrowMove->SetMoveDuration(bpmSystem_->GetBeatDuration());
 
-            // BombMakingコンポーネントにもBPM進行度を渡す
-            if (auto* bombMaking = player_->GetComponent3D<BombMaking>()) {
-                bombMaking->SetBPMProgress(bpmSystem_->GetBeatProgress());
+			auto* bpmScaling = player_->GetComponent3D<BPMScaling>();
+			if (bpmScaling) {
+				bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
+			}
+
+            // BombSpawnコンポーネントにもBPM進行度を渡す
+            if (auto* bombSpawn = player_->GetComponent3D<BombSpawn>()) {
+                bombSpawn->SetBPMProgress(bpmSystem_->GetBeatProgress());
             }
         }
     }
@@ -305,8 +312,9 @@ void TestScene::OnUpdate() {
             for (int z = 0; z < kMapH; z++) {
                 for (int x = 0; x < kMapW; x++) {
                     if (maps_[z][x]) {
-                        if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
-                            tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+						auto* bpmScaling = maps_[z][x]->GetComponent3D<BPMScaling>();
+                        if (bpmScaling) {
+                            bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
                         }
                     }
                 }
@@ -319,10 +327,11 @@ void TestScene::OnUpdate() {
                         if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
                             // プレイヤーのいるマスだけアニメーション、それ以外は最大値に固定
                             auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
+                            auto* bpmScaling = maps_[z][x]->GetComponent3D<BPMScaling>();
                             if (x == playerMapX_ && z == playerMapZ_ && !playerArrowMove->IsMoving()) {
-                                tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+								bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
                             } else {
-                                tr->SetScale(Vector3(mapScaleMax_));
+                                bpmScaling->SetBPMProgress(1.0f);
                             }
                         }
                     }

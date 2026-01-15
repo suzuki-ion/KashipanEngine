@@ -147,6 +147,10 @@ namespace KashipanEngine {
 
 		/// @brief 入力システムの設定
         void SetInput(const Input* input) { input_ = input; }
+    
+        /// @brief プレイヤーの向きを取得
+        PlayerDirection GetPlayerDirection() const { return playerDirection_; }
+
 #if defined(USE_IMGUI)
         void ShowImGui() override {
             ImGui::TextUnformatted("PlayerArrowMove");

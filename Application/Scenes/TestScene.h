@@ -71,7 +71,6 @@ private:
 	EnemySpawner* enemySpawner_ = nullptr;
 
 	ColliderComponent* collider_ = nullptr;
-	bool playBgm_ = false; // true-> BPM120のBGM再生 
 
     struct ParticleLightPair {
         Object3DBase* particle = nullptr;

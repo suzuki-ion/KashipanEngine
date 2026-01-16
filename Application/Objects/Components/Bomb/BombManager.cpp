@@ -196,13 +196,13 @@ void BombManager::SpawnBomb() {
 Vector3 BombManager::GetDirectionOffset(PlayerDirection direction) const {
     switch (direction) {
     case PlayerDirection::Up:
-        return Vector3(0.0f, 0.0f, 1.0f);
+        return Vector3(0.0f, 0.0f, 2.0f);
     case PlayerDirection::Down:
-        return Vector3(0.0f, 0.0f, -1.0f);
+        return Vector3(0.0f, 0.0f, -2.0f);
     case PlayerDirection::Left:
-        return Vector3(-1.0f, 0.0f, 0.0f);
+        return Vector3(-2.0f, 0.0f, 0.0f);
     case PlayerDirection::Right:
-        return Vector3(1.0f, 0.0f, 0.0f);
+        return Vector3(2.0f, 0.0f, 0.0f);
     default:
         return Vector3(0.0f, 0.0f, -1.0f);
     }

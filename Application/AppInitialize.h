@@ -24,7 +24,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
     desc.MaxAnisotropy = 1;
     auto samplerHandle = SamplerManager::CreateSampler(desc);
 
-    Window::CreateNormal("Main Window", 1920, 1080);
+    Window::CreateNormal("Main Window", 1920, 1280);
 
     if (context.sceneManager) {
         auto *sm = context.sceneManager;

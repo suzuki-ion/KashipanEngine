@@ -119,7 +119,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
     <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
@@ -131,6 +137,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
     <ClCompile Include="Application\Scenes\TitleScene.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -262,7 +269,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyManager.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
+    <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
+    <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />
     <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h" />
     <ClInclude Include="Application\Objects\Components\Health.h" />
     <ClInclude Include="Application\Objects\Components\MovementController.h" />
@@ -291,6 +308,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\ResultScene.h" />
     <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="Application\Scenes\TitleScene.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombManager.h" />
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />

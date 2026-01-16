@@ -1,9 +1,12 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/Components/ScreenBufferKeepRatio.h"
+#include "Scenes/Components/PlayerHealthUI.h"
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 #include "Objects/Components/Player/PlayerMove.h"
+#include "Objects/Components/Player/BpmbSpawn.h"
+#include "objects/Components/Health.h"
 #include "Objects/SystemObjects/LightManager.h"
 
 namespace KashipanEngine {
@@ -34,6 +37,13 @@ void TestScene::Initialize() {
         screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
     }
     auto* window = Window::GetWindow("Main Window");
+
+    // ColliderComponentを追加（一番最初に追加）
+    {
+        auto comp = std::make_unique<ColliderComponent>();
+        collider_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
 
     // 2D Camera (window)
     {
@@ -143,6 +153,13 @@ void TestScene::Initialize() {
     // ↓ ここからゲームオブジェクト定義 ↓
     //==================================================
 
+    // BPMシステムの追加
+    {
+        auto comp = std::make_unique<BPMSystem>(bpm_); // BPM で初期化
+        bpmSystem_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
     // map (Box scaled)
     {
         for (int z = 0; z < kMapH; z++) {
@@ -150,6 +167,8 @@ void TestScene::Initialize() {
 
                 auto obj = std::make_unique<Box>();
                 obj->SetName("Map" ":x" + std::to_string(x) + ":z" + std::to_string(z));
+
+				obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_);
 
                 if (auto* tr = obj->GetComponent3D<Transform3D>()) {
                     tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
@@ -171,7 +190,7 @@ void TestScene::Initialize() {
         }
     }
 
-    // Player
+    // Player（衝突判定を修正）
     {
         auto modelData = ModelManager::GetModelDataFromFileName("Player.obj");
         auto obj = std::make_unique<Model>(modelData);
@@ -187,11 +206,102 @@ void TestScene::Initialize() {
             playerArrowMove->SetBPMToleranceRange(playerBpmToleranceRange_);
         }
 
+        obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_);
+        obj->RegisterComponent<Health>(10, 1.0f);
+
+        // 衝突判定を追加（修正版）
+        if (collider_ && collider_->GetCollider()) {
+            ColliderInfo3D info;
+            Math::AABB aabb;
+            aabb.min = Vector3{ -0.75f, -0.75f, -0.75f };
+            aabb.max = Vector3{ +0.75f, +0.75f, +0.75f };
+            info.shape = aabb;
+            info.attribute.set(0);  // Player属性を設定
+            
+            obj->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
+        }
+
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
         player_ = obj.get();
         AddObject3D(std::move(obj));
     }
+
+    {
+        auto comp = std::make_unique<ExplosionManager>();
+        comp->SetScreenBuffer(screenBuffer_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
+		comp->SetCollider(collider_);
+        comp->SetCollider2(collider_);
+        explosionManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    // BombManager の追加
+    {
+        auto comp = std::make_unique<BombManager>(bombMaxNumber_);
+        comp->SetPlayer(player_);
+        comp->SetScreenBuffer(screenBuffer_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
+        comp->SetInput(GetInput());
+        comp->SetBPMToleranceRange(playerBpmToleranceRange_);
+        comp->SetExplosionManager(explosionManager_);
+        comp->SetCollider(collider_);  // 追加
+        bombManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    if (player_ && bombManager_) {
+        if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+            playerMove->SetBombManager(bombManager_);
+        }
+    }
+
+    // EnemyManagerの初期化（修正版）
+    {
+        auto comp = std::make_unique<EnemyManager>();
+        comp->SetScreenBuffer(screenBuffer_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
+        comp->SetBPMSystem(bpmSystem_);
+        comp->SetMapSize(kMapW, kMapH);
+        comp->SetCollider(collider_);
+        comp->SetPlayer(player_);
+        comp->SetBombManager(bombManager_);  // 追加
+        enemyManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    {
+		auto comp = std::make_unique<EnemySpawner>();
+		comp->SetEnemyManager(enemyManager_);
+		comp->SetBPMSystem(bpmSystem_);
+		enemySpawner_ = comp.get();
+		AddSceneComponent(std::move(comp));
+
+        if (enemySpawner_) {
+            constexpr float kTile = 2.0f;
+            constexpr float kY = 1.0f;
+
+            for (int x = 0; x < kMapW; ++x) {
+                enemySpawner_->AddSpawnPoint(Vector3(kTile * x, kY, 0.0f));
+                enemySpawner_->AddSpawnPoint(Vector3(kTile * x, kY, kTile * (kMapH - 1)));
+            }
+
+            for (int z = 1; z < kMapH - 1; ++z) {
+                enemySpawner_->AddSpawnPoint(Vector3(0.0f, kY, kTile * z));
+                enemySpawner_->AddSpawnPoint(Vector3(kTile * (kMapW - 1), kY, kTile * z));
+            }
+        }
+    }
+
+    // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
+    if (explosionManager_ && bombManager_) {
+        explosionManager_->SetBombManager(bombManager_);
+		explosionManager_->SetEnemyManager(enemyManager_);
+    }
+
+    // ExplosionManagerにPlayerを設定
+    explosionManager_->SetPlayer(player_);
 
     if (playBgm_) {
         auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/TestBGM.mp3");
@@ -264,13 +374,6 @@ void TestScene::Initialize() {
     // ↑ ここまでゲームオブジェクト定義 ↑
     //==================================================
 
-    // BPMシステムの追加
-    {
-        auto comp = std::make_unique<BPMSystem>(bpm_); // BPM で初期化
-        bpmSystem_ = comp.get();
-        AddSceneComponent(std::move(comp));
-    }
-
     // Keep ratio
     {
         auto comp = std::make_unique<ScreenBufferKeepRatio>();
@@ -278,6 +381,18 @@ void TestScene::Initialize() {
         comp->SetTargetSize(0.0f, 0.0f);
         if (screenBuffer_) {
             comp->SetSourceSize(static_cast<float>(screenBuffer_->GetWidth()), static_cast<float>(screenBuffer_->GetHeight()));
+        }
+        AddSceneComponent(std::move(comp));
+    }
+
+    // Player Health UI (ライフ表示)
+    {
+        auto comp = std::make_unique<PlayerHealthUI>(screenBuffer_);
+        if (player_) {
+            if (auto* health = player_->GetComponent3D<Health>()) {
+                comp->SetHealth(health);
+            }
+			playerHealthUI_ = comp.get();
         }
         AddSceneComponent(std::move(comp));
     }
@@ -319,14 +434,29 @@ void TestScene::OnUpdate() {
         }
     }
 
+    // OnUpdate 内で BPM 進行度を更新
+    if (bombManager_) {
+        bombManager_->SetBPMProgress(bpmSystem_->GetBeatProgress());
+    }
+
     if (player_) {
         if (auto* tr = player_->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3(EaseInBack(playerScaleMin_, playerScaleMax_, bpmSystem_->GetBeatProgress())));
 			playerMapX_ = static_cast<int>(tr->GetTranslate().x / 2.0f);
 			playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
 
             auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
 			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            //playerArrowMove->SetMoveDuration(bpmSystem_->GetBeatDuration());
+
+			auto* bpmScaling = player_->GetComponent3D<BPMScaling>();
+			if (bpmScaling) {
+				bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
+			}
+
+            // BombSpawnコンポーネントにもBPM進行度を渡す
+            if (auto* bombSpawn = player_->GetComponent3D<BombSpawn>()) {
+                bombSpawn->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            }
         }
     }
 
@@ -336,8 +466,9 @@ void TestScene::OnUpdate() {
             for (int z = 0; z < kMapH; z++) {
                 for (int x = 0; x < kMapW; x++) {
                     if (maps_[z][x]) {
-                        if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
-                            tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+						auto* bpmScaling = maps_[z][x]->GetComponent3D<BPMScaling>();
+                        if (bpmScaling) {
+                            bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
                         }
                     }
                 }
@@ -350,10 +481,11 @@ void TestScene::OnUpdate() {
                         if (auto* tr = maps_[z][x]->GetComponent3D<Transform3D>()) {
                             // プレイヤーのいるマスだけアニメーション、それ以外は最大値に固定
                             auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
+                            auto* bpmScaling = maps_[z][x]->GetComponent3D<BPMScaling>();
                             if (x == playerMapX_ && z == playerMapZ_ && !playerArrowMove->IsMoving()) {
-                                tr->SetScale(Vector3(EaseInBack(mapScaleMin_, mapScaleMax_, bpmSystem_->GetBeatProgress())));
+								bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
                             } else {
-                                tr->SetScale(Vector3(mapScaleMax_));
+                                bpmScaling->SetBPMProgress(1.0f);
                             }
                         }
                     }

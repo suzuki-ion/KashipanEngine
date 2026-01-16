@@ -2,6 +2,12 @@
 #include <KashipanEngine.h>
 
 #include "Scenes/Components/BPM/BPMSystem.h"
+#include "objects/Components/Bomb/BombManager.h"
+#include "objects/Components/Bomb/explosionManager.h"
+#include "Scenes/Components/PlayerHealthUI.h"
+#include "Objects/Components/Enemy/EnemyManager.h"
+#include "Objects/Components/Enemy/EnemySpawner.h"
+#include "Scene/Components/ColliderComponent.h"
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
 
@@ -13,6 +19,11 @@ public:
     ~TestScene() override;
 
     void Initialize() override;
+
+    /// @brief 3Dオブジェクトをシーンに追加（外部からアクセス可能）
+    void AddBombObject(std::unique_ptr<Object3DBase> obj) {
+        AddObject3D(std::move(obj));
+    }
 
 protected:
     void OnUpdate() override;
@@ -42,11 +53,24 @@ private:
 	float playerBpmToleranceRange_ = 0.2f;                 // プレイヤーがBPMに合わせる±の許容範囲 
 	float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
 
+    PlayerHealthUI* playerHealthUI_ = nullptr;
+
 	int playerMapX_ = 0; // プレイヤーのマップ上のX座標
 	int playerMapZ_ = 0; // プレイヤーのマップ上のZ座標
 
     BPMSystem* bpmSystem_ = nullptr;
 	float bpm_ = 120.0f;   // BPM値
+	bool playBgm_ = false; // true-> BPM120のBGM再生
+
+	int bombMaxNumber_ = 6; // プレイヤーが設置可能な爆弾の最大数
+
+	BombManager* bombManager_ = nullptr;
+	ExplosionManager* explosionManager_ = nullptr;
+
+	EnemyManager* enemyManager_ = nullptr;
+	EnemySpawner* enemySpawner_ = nullptr;
+
+	ColliderComponent* collider_ = nullptr;
 	bool playBgm_ = false; // true-> BPM120のBGM再生 
 
     struct ParticleLightPair {

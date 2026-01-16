@@ -1,6 +1,8 @@
 #include "ExplosionManager.h"
 #include "BombManager.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
+#include "Scenes/Components/PlayerHealthUI.h"
+#include "objects/Components/Health.h"
 #include <algorithm>
 
 namespace KashipanEngine {
@@ -130,11 +132,20 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
 
         // ラムダで爆発オブジェクトポインタをキャプチャ
         info.onCollisionEnter = [this, explosionPtr](const HitInfo3D& hitInfo) {
-            // EnemyManagerが設定されていなければ何もしない
-            if (!enemyManager_) return;
-
             // 敵との衝突をEnemyManagerに通知
-            enemyManager_->OnExplosionHit(hitInfo.otherObject);
+            if (enemyManager_) {
+                enemyManager_->OnExplosionHit(hitInfo.otherObject);
+            }
+
+            // Playerと衝突したかチェック
+            if (hitInfo.otherObject == player_) {
+                // Playerにダメージを与える
+                if (player_) {
+                    if (auto* health = player_->GetComponent3D<Health>()) {
+                        health->Damage(1);
+                    }
+                }
+            }
         };
 
         explosion->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
@@ -150,11 +161,20 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
 
         // ラムダで爆発オブジェクトポインタをキャプチャ
         info.onCollisionEnter = [this, explosion2Ptr](const HitInfo3D& hitInfo) {
-            // EnemyManagerが設定されていなければ何もしない
-            if (!enemyManager_) return;
-
             // 敵との衝突をEnemyManagerに通知
-            enemyManager_->OnExplosionHit(hitInfo.otherObject);
+            if (enemyManager_) {
+                enemyManager_->OnExplosionHit(hitInfo.otherObject);
+            }
+
+            // Playerと衝突したかチェック
+            if (hitInfo.otherObject == player_) {
+                // Playerにダメージを与える
+                if (player_) {
+                    if (auto* health = player_->GetComponent3D<Health>()) {
+                        health->Damage(1);
+                    }
+                }
+            }
         };
 
         explosion2->RegisterComponent<Collision3D>(collider2_->GetCollider(), info);

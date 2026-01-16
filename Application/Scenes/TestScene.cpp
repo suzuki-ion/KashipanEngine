@@ -270,6 +270,9 @@ void TestScene::Initialize() {
 		explosionManager_->SetEnemyManager(enemyManager_);
     }
 
+    // ExplosionManagerにPlayerを設定
+    explosionManager_->SetPlayer(player_);
+
     if (playBgm_) {
         auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/TestBGM.mp3");
         if (handle == AudioManager::kInvalidSoundHandle) {

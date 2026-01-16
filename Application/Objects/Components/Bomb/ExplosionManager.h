@@ -32,6 +32,9 @@ public:
     /// @brief EnemyManagerを設定（敵との衝突検出用）
     void SetEnemyManager(EnemyManager* enemyManager) { enemyManager_ = enemyManager; }
 
+    /// @brief Playerを設定（プレイヤーとの衝突検出用）
+    void SetPlayer(Object3DBase* player) { player_ = player; }
+
 	/// @brief 衝突判定用ColliderComponentを設定
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
     void SetCollider2(ColliderComponent* collider) { collider2_ = collider; }
@@ -71,6 +74,7 @@ private:
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
     BombManager* bombManager_ = nullptr;
     EnemyManager* enemyManager_ = nullptr;
+    Object3DBase* player_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     ColliderComponent* collider2_ = nullptr;
 

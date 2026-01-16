@@ -36,6 +36,9 @@ public:
     /// @brief Inputを設定
     void SetInput(const Input* input) { input_ = input; }
 
+    /// @brief 衝突判定用ColliderComponentを設定
+    void SetCollider(ColliderComponent* collider) { collider_ = collider; }
+
     /// @brief BPM進行度を設定（0.0～1.0）
     void SetBPMProgress(float progress) { bpmProgress_ = progress; }
 
@@ -70,6 +73,11 @@ public:
 
     /// @brief 指定位置にボムがあるか（プレイヤー移動のブロック判定用）
     bool IsBombAtPosition(const Vector3& position) const { return HasBombAtPosition(position); }
+
+    /// @brief Enemyが爆弾に当たった時の処理
+    /// @param hitObject 当たったオブジェクト
+    void OnEnemyHit(Object3DBase* hitObject);
+
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -94,6 +102,7 @@ private:
         int elapsedBeats = 0;                 // 経過拍数
         float beatAccumulator = 0.0f;         // ビートの蓄積（0.0～1.0で1ビート）
         Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆弾の位置（重複チェック用）
+        bool shouldDetonate = false;          // 起爆フラグ
     };
 
     std::vector<BombInfo> activeBombs_;

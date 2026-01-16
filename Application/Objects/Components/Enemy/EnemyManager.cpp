@@ -109,20 +109,34 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
         // ラムダで敵オブジェクトポインタをキャプチャ
         collisionInfo.onCollisionEnter = [this, enemyPtr](const HitInfo3D& hitInfo) {
             // Playerと衝突したかチェック
-            if (hitInfo.otherObject != player_) return;
-
-            // activeEnemies_から該当する敵を検索してisDead=trueに設定
-            for (auto& e : activeEnemies_) {
-                if (e.object == enemyPtr) {
-                    e.isDead = true;
-                    break;
+            if (hitInfo.otherObject == player_) {
+                // activeEnemies_から該当する敵を検索してisDead=trueに設定
+                for (auto& e : activeEnemies_) {
+                    if (e.object == enemyPtr) {
+                        e.isDead = true;
+                        break;
+                    }
+                }
+                
+                // Playerにダメージを与える
+                if (player_) {
+                    if (auto* health = player_->GetComponent3D<Health>()) {
+                        health->Damage(1);
+                    }
                 }
             }
-            
-            // Playerにダメージを与える
-            if (player_) {
-                if (auto* health = player_->GetComponent3D<Health>()) {
-                    health->Damage(1);
+
+            // Bombと衝突したかチェック
+            if (!hitInfo.otherObject) return;
+
+            auto* otherCollision = hitInfo.otherObject->GetComponent3D<Collision3D>();
+            if (!otherCollision) return;
+
+            // Bomb属性（3）との衝突をチェック
+            if (otherCollision->GetColliderInfo().attribute.test(3)) {
+                // BombManagerに衝突を通知
+                if (bombManager_) {
+                    bombManager_->OnEnemyHit(hitInfo.otherObject);
                 }
             }
         };

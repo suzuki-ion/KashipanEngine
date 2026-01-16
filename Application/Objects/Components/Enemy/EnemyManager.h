@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include "Scenes/Components/BPM/BPMSystem.h"
+#include "Objects/Components/Bomb/BombManager.h"
 
 namespace KashipanEngine {
 
@@ -33,6 +34,8 @@ public:
 
     void SetPlayer(Object3DBase* player) { player_ = player; }
 
+    void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
     /// @brief 爆発が敵に当たった時の処理
     /// @param hitObject 当たったオブジェクト
     void OnExplosionHit(Object3DBase* hitObject);
@@ -56,6 +59,7 @@ private:
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     Object3DBase* player_ = nullptr;
+    BombManager* bombManager_ = nullptr;
 
     BPMSystem* bpmSystem_ = nullptr;
     int lastMoveBeat_ = -1;

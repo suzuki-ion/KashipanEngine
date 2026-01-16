@@ -218,6 +218,7 @@ void TestScene::Initialize() {
         comp->SetInput(GetInput());
         comp->SetBPMToleranceRange(playerBpmToleranceRange_);
         comp->SetExplosionManager(explosionManager_);
+        comp->SetCollider(collider_);  // 追加
         bombManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
@@ -237,6 +238,7 @@ void TestScene::Initialize() {
         comp->SetMapSize(kMapW, kMapH);
         comp->SetCollider(collider_);
         comp->SetPlayer(player_);
+        comp->SetBombManager(bombManager_);  // 追加
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }

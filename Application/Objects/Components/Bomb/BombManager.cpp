@@ -17,96 +17,100 @@ void BombManager::Initialize() {
 }
 
 void BombManager::Update() {
+    auto* ctx = GetOwnerContext();
+    if (!ctx) return;
+
     const float dt = GetDeltaTime();
 
-    // ビートの切り替わりを検知（進行度が1.0を超えて0に戻ったとき）
-    bool beatOccurred = (prevBpmProgress_ > 0.8f && bpmProgress_ < 0.2f);
-    prevBpmProgress_ = bpmProgress_;
+    // 爆弾のビート更新と寿命管理
+    for (auto& bomb : activeBombs_) {
+        if (!bomb.object) continue;
 
-    // 爆弾の状態を更新し、寿命切れの爆弾を削除
-    auto* ctx = GetOwnerContext();
-    for (size_t i = 0; i < activeBombs_.size();) {
+        bomb.elapsedTime += dt;
+        bomb.beatAccumulator += dt;
 
-        auto* bpmScaling = activeBombs_.at(i).object->GetComponent3D<BPMScaling>();
-        if (bpmScaling) {
+        // 1拍分の時間が経過したらビートをカウント
+        if (bomb.beatAccumulator >= beatDuration_) {
+            bomb.elapsedBeats++;
+            bomb.beatAccumulator -= beatDuration_;
+        }
+
+        // BPMScalingコンポーネントにBPM進行度を設定
+        if (auto* bpmScaling = bomb.object->GetComponent3D<BPMScaling>()) {
             bpmScaling->SetBPMProgress(bpmProgress_);
         }
+    }
 
-        activeBombs_[i].elapsedTime += dt;
-        
-        // ビートが発生したらカウントを増加
-        if (beatOccurred) {
-            activeBombs_[i].elapsedBeats++;
-        }
-        
-        // 設定した拍数経過したら削除
-        if (activeBombs_[i].elapsedBeats >= bombLifetimeBeats_) {
-            // 起爆位置を保存
-            Vector3 explosionPosition = activeBombs_[i].position;
-            
-            // 爆弾を削除
-            if (ctx && activeBombs_[i].object) {
-                ctx->RemoveObject3D(activeBombs_[i].object);
+    // 寿命切れまたは起爆フラグが立った爆弾を起爆
+    activeBombs_.erase(
+        std::remove_if(activeBombs_.begin(), activeBombs_.end(),
+            [this, ctx](BombInfo& bomb) {
+                const bool expired = bomb.elapsedBeats >= bombLifetimeBeats_;
+                const bool shouldDetonate = bomb.shouldDetonate;
+
+                if (expired || shouldDetonate) {
+                    // 爆発を生成
+                    if (explosionManager_) {
+                        explosionManager_->SpawnExplosion(bomb.position);
+                    }
+
+                    // オブジェクトを削除
+                    if (bomb.object) {
+                        ctx->RemoveObject3D(bomb.object);
+                    }
+
+                    return true;
+                }
+                return false;
+            }),
+        activeBombs_.end()
+    );
+
+    // スペースキーで爆弾設置（BPMに合わせて）
+    if (input_) {
+        const auto& keyboard = input_->GetKeyboard();
+        if (keyboard.IsTrigger(Key::Space)) {
+            // BPM進行度が許容範囲内かチェック
+            if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+                SpawnBomb();
             }
-            activeBombs_.erase(activeBombs_.begin() + static_cast<std::ptrdiff_t>(i));
-            
-            // 爆発を生成
-            if (explosionManager_) {
-                explosionManager_->SpawnExplosion(explosionPosition);
-            }
-        } else {
-            ++i;
         }
     }
 
-    // 入力チェック（タイミングが良ければ爆弾を生成）
-    if (!input_ || !player_) return;
-
-    const auto& keyboard = input_->GetKeyboard();
-    
-    // BPM進行度が許容範囲内かチェック
-    bool isGoodTiming = (bpmProgress_ <= bpmToleranceRange_) || 
-                        (bpmProgress_ >= 1.0f - bpmToleranceRange_);
-
-    // Zキーがトリガーされた場合
-    if (keyboard.IsTrigger(Key::Z) && isGoodTiming) {
-        // 最大数以下なら爆弾を生成
-        if (static_cast<int>(activeBombs_.size()) < maxBombs_) {
-            SpawnBomb();
-        }
-    }
+    prevBpmProgress_ = bpmProgress_;
 }
 
 void BombManager::SpawnBomb() {
     auto* ctx = GetOwnerContext();
-    if (!ctx || !player_) return;
+    if (!ctx || !player_ || !screenBuffer_) {
+        return;
+    }
+
+    // 最大数チェック
+    if (static_cast<int>(activeBombs_.size()) >= maxBombs_) {
+        return;
+    }
 
     // プレイヤーの位置と向きを取得
+    auto* playerMove = player_->GetComponent3D<PlayerMove>();
+    if (!playerMove) return;
+
     auto* playerTransform = player_->GetComponent3D<Transform3D>();
     if (!playerTransform) return;
 
-    Vector3 playerPos = playerTransform->GetTranslate();
-    
-    // PlayerMoveコンポーネントから向きを取得
-    auto* playerMove = player_->GetComponent3D<PlayerMove>();
-    PlayerDirection direction = PlayerDirection::Down; // デフォルト
-    if (playerMove) {
-        direction = playerMove->GetPlayerDirection();
+    const Vector3 playerPos = playerTransform->GetTranslate();
+    const PlayerDirection direction = playerMove->GetPlayerDirection();
+    const Vector3 offset = GetDirectionOffset(direction);
+    const Vector3 bombPos = playerPos + offset;
+
+    // マップ範囲チェック
+    if (!IsInsideMap(bombPos)) {
+        return;
     }
 
-    // 爆弾の生成位置を計算
-    Vector3 spawnOffset = GetDirectionOffset(direction);
-    Vector3 spawnPos = playerPos + spawnOffset * spawnDistance_;
-    spawnPos.y = 1.0f; // 地面の少し上に設置
-
-    // マップ外チェック
-    if (!IsInsideMap(spawnPos)) {
-        return; // マップ外には置けない
-    }
-
-    // 既存の爆弾位置チェック
-    if (HasBombAtPosition(spawnPos)) {
-        return; // 既に爆弾がある場所には置けない
+    // 既に爆弾がある位置には設置できない
+    if (HasBombAtPosition(bombPos)) {
+        return;
     }
 
     // 爆弾オブジェクトを生成
@@ -115,21 +119,47 @@ void BombManager::SpawnBomb() {
     bomb->SetName("Bomb_" + std::to_string(activeBombs_.size()));
 
     if (auto* tr = bomb->GetComponent3D<Transform3D>()) {
-        tr->SetTranslate(spawnPos);
-        tr->SetScale(Vector3(bombScale_, bombScale_, bombScale_));
+        tr->SetTranslate(bombPos);
+        tr->SetScale(Vector3(bombScale_));
     }
 
     if (auto* mat = bomb->GetComponent3D<Material3D>()) {
         mat->SetEnableLighting(true);
-        mat->SetColor(Vector4(0.2f, 0.2f, 0.2f, 1.0f)); // 暗い色で爆弾らしく
+        mat->SetColor(Vector4(0.2f, 0.2f, 0.2f, 1.0f));
     }
 
+    // 爆弾オブジェクトのポインタを保存（move前）
+    Object3DBase* bombPtr = bomb.get();
+
+    // 衝突判定を追加
     if (collider_ && collider_->GetCollider()) {
         ColliderInfo3D info;
         Math::AABB aabb;
         aabb.min = Vector3{ -0.75f, -0.75f, -0.75f };
         aabb.max = Vector3{ +0.75f, +0.75f, +0.75f };
         info.shape = aabb;
+        info.attribute.set(3);  // Bomb属性
+
+        // ラムダで爆弾オブジェクトポインタをキャプチャ
+        info.onCollisionEnter = [this, bombPtr](const HitInfo3D& hitInfo) {
+            // 衝突相手のオブジェクトからCollision3Dコンポーネントを取得
+            if (!hitInfo.otherObject) return;
+
+            auto* otherCollision = hitInfo.otherObject->GetComponent3D<Collision3D>();
+            if (!otherCollision) return;
+
+            // Enemyと衝突したかチェック（Enemy属性は1）
+            if (otherCollision->GetColliderInfo().attribute.test(1)) {
+                // activeBombs_から該当する爆弾を検索してshouldDetonate=trueに設定
+                for (auto& b : activeBombs_) {
+                    if (b.object == bombPtr) {
+                        b.shouldDetonate = true;
+                        break;
+                    }
+                }
+            }
+        };
+
         bomb->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
     }
 
@@ -145,20 +175,21 @@ void BombManager::SpawnBomb() {
 
     // 爆弾情報を登録
     BombInfo info;
-    info.object = bomb.get();
+    info.object = bombPtr;
     info.elapsedTime = 0.0f;
     info.elapsedBeats = 0;
     info.beatAccumulator = 0.0f;
-    info.position = spawnPos;
+    info.position = bombPos;
+    info.shouldDetonate = false;
     activeBombs_.push_back(info);
 
     // シーンに追加
     ctx->AddObject3D(std::move(bomb));
 
-    // 効果音再生（オプション）
-    auto soundHandle = AudioManager::GetSoundHandleFromFileName("bombPlace.mp3");
+    // 設置音再生（オプション）
+    auto soundHandle = AudioManager::GetSoundHandleFromFileName("bomb_place.mp3");
     if (soundHandle != AudioManager::kInvalidSoundHandle) {
-        AudioManager::Play(soundHandle, 0.5f, 0.0f, false);
+        AudioManager::Play(soundHandle, 0.1f, 0.0f, false);
     }
 }
 
@@ -244,6 +275,18 @@ void BombManager::DetonateBombsInExplosionRange(const Vector3& explosionCenter, 
             ctx->RemoveObject3D(activeBombs_[index].object);
         }
         activeBombs_.erase(activeBombs_.begin() + static_cast<std::ptrdiff_t>(index));
+    }
+}
+
+void BombManager::OnEnemyHit(Object3DBase* hitObject) {
+    if (!hitObject) return;
+
+    // activeBombs_から該当する爆弾を検索してshouldDetonate=trueに設定
+    for (auto& b : activeBombs_) {
+        if (b.object == hitObject) {
+            b.shouldDetonate = true;
+            break;
+        }
     }
 }
 

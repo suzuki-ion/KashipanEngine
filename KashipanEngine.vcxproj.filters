@@ -128,6 +128,8 @@
     <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -364,7 +366,9 @@
     <ClInclude Include="Application\Objects\Components\Bomb\BombManager.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
-    <ClInclude Include="Application\Objects\Components\Enemy\EnemyBase.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

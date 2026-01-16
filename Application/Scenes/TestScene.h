@@ -5,6 +5,9 @@
 #include "objects/Components/Bomb/BombManager.h"
 #include "objects/Components/Bomb/explosionManager.h"
 #include "Scenes/Components/PlayerHealthUI.h"
+#include "Objects/Components/Enemy/EnemyManager.h"
+#include "Objects/Components/Enemy/EnemySpawner.h"
+#include "Scene/Components/ColliderComponent.h"
 
 namespace KashipanEngine {
 
@@ -44,7 +47,6 @@ private:
 	bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション
 
     Object3DBase* player_ = nullptr;
-    ColliderComponent* playerCollider_ = nullptr;
 	float playerScaleMin_ = 0.75f, playerScaleMax_ = 1.0f; // プレイヤーのBpmに合わせた拡大縮小範囲
 	float playerBpmToleranceRange_ = 0.2f;                 // プレイヤーがBPMに合わせる±の許容範囲 
 	float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
@@ -62,6 +64,11 @@ private:
 
 	BombManager* bombManager_ = nullptr;
 	ExplosionManager* explosionManager_ = nullptr;
+
+	EnemyManager* enemyManager_ = nullptr;
+	EnemySpawner* enemySpawner_ = nullptr;
+
+	ColliderComponent* collider_ = nullptr;
 };
 
 } // namespace KashipanEngine

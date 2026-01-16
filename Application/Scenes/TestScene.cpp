@@ -20,6 +20,13 @@ void TestScene::Initialize() {
 
     auto* window = Window::GetWindow("Main Window");
 
+    // ColliderComponentを追加（一番最初に追加）
+    {
+        auto comp = std::make_unique<ColliderComponent>();
+        collider_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
     // 2D Camera (window)
     {
         auto obj = std::make_unique<Camera2D>();
@@ -118,6 +125,13 @@ void TestScene::Initialize() {
     // ↓ ここからゲームオブジェクト定義 ↓
     //==================================================
 
+    // BPMシステムの追加
+    {
+        auto comp = std::make_unique<BPMSystem>(bpm_); // BPM で初期化
+        bpmSystem_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
     // map (Box scaled)
     {
         for (int z = 0; z < kMapH; z++) {
@@ -148,7 +162,7 @@ void TestScene::Initialize() {
         }
     }
 
-    // Player
+    // Player（衝突判定を修正）
     {
         auto modelData = ModelManager::GetModelDataFromFileName("Player.obj");
         auto obj = std::make_unique<Model>(modelData);
@@ -165,16 +179,18 @@ void TestScene::Initialize() {
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_);
+        obj->RegisterComponent<Health>(10, 1.0f);
 
-        obj->RegisterComponent<Health>(3, 1.0f);
-
-        if (playerCollider_ && playerCollider_->GetCollider()) {
+        // 衝突判定を追加（修正版）
+        if (collider_ && collider_->GetCollider()) {
             ColliderInfo3D info;
             Math::AABB aabb;
             aabb.min = Vector3{ -0.75f, -0.75f, -0.75f };
             aabb.max = Vector3{ +0.75f, +0.75f, +0.75f };
             info.shape = aabb;
-            player_->RegisterComponent<Collision3D>(playerCollider_->GetCollider(), info);
+            info.attribute.set(0);  // Player属性を設定
+            
+            obj->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
         }
 
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
@@ -213,6 +229,42 @@ void TestScene::Initialize() {
     // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
     if (explosionManager_ && bombManager_) {
         explosionManager_->SetBombManager(bombManager_);
+    }
+
+    // EnemyManagerの初期化（修正版）
+    {
+        auto comp = std::make_unique<EnemyManager>();
+        comp->SetScreenBuffer(screenBuffer_);
+        comp->SetShadowMapBuffer(shadowMapBuffer_);
+        comp->SetBPMSystem(bpmSystem_);
+        comp->SetMapSize(kMapW, kMapH);
+        comp->SetCollider(collider_);
+        comp->SetPlayer(player_);
+        enemyManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    {
+		auto comp = std::make_unique<EnemySpawner>();
+		comp->SetEnemyManager(enemyManager_);
+		comp->SetBPMSystem(bpmSystem_);
+		enemySpawner_ = comp.get();
+		AddSceneComponent(std::move(comp));
+
+        if (enemySpawner_) {
+            constexpr float kTile = 2.0f;
+            constexpr float kY = 1.0f;
+
+            for (int x = 0; x < kMapW; ++x) {
+                enemySpawner_->AddSpawnPoint(Vector3(kTile * x, kY, 0.0f));
+                enemySpawner_->AddSpawnPoint(Vector3(kTile * x, kY, kTile * (kMapH - 1)));
+            }
+
+            for (int z = 1; z < kMapH - 1; ++z) {
+                enemySpawner_->AddSpawnPoint(Vector3(0.0f, kY, kTile * z));
+                enemySpawner_->AddSpawnPoint(Vector3(kTile * (kMapW - 1), kY, kTile * z));
+            }
+        }
     }
 
     if (playBgm_) {
@@ -265,13 +317,6 @@ void TestScene::Initialize() {
     //==================================================
     // ↑ ここまでゲームオブジェクト定義 ↑
     //==================================================
-
-    // BPMシステムの追加
-    {
-        auto comp = std::make_unique<BPMSystem>(bpm_); // BPM で初期化
-        bpmSystem_ = comp.get();
-        AddSceneComponent(std::move(comp));
-    }
 
     // Keep ratio
     {

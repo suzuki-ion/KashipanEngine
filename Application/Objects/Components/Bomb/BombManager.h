@@ -96,14 +96,14 @@ private:
         Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆弾の位置（重複チェック用）
     };
 
+    std::vector<BombInfo> activeBombs_;
+
     Object3DBase* player_ = nullptr;
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
     const Input* input_ = nullptr;
     ExplosionManager* explosionManager_ = nullptr;
     ColliderComponent* collider_ = nullptr;
-
-    std::vector<BombInfo> activeBombs_;
 
     int maxBombs_ = 10;
     float bpmProgress_ = 0.0f;

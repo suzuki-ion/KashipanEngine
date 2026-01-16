@@ -1,5 +1,6 @@
 #include "ExplosionManager.h"
 #include "BombManager.h"
+#include "Objects/Components/Enemy/EnemyManager.h"
 #include <algorithm>
 
 namespace KashipanEngine {
@@ -53,12 +54,6 @@ void ExplosionManager::Update() {
                 Vector3 startScale2(0.5f, 0.5f, (size_ * 2.0f) + 0.5f);
                 Vector3 endScale2(0.0f, 0.0f, 0.0f);
                 Vector3 newScale2 = Vector3::Lerp(startScale2, endScale2, t);
-
-                if (explosion.object) {
-                    if (auto* tr = explosion.object->GetComponent3D<Transform3D>()) {
-                        tr->SetScale(newScale);
-                    }
-                }
 
                 if (explosion.object2) {
                     if (auto* tr = explosion.object2->GetComponent3D<Transform3D>()) {
@@ -121,12 +116,27 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
         mat->SetColor(Vector4(1.0f, 0.5f, 0.0f, 1.0f)); // オレンジ色の爆発エフェクト
     }
 
+    // 爆発オブジェクトのポインタを保存（move前）
+    Model* explosionPtr = explosion.get();
+    Model* explosion2Ptr = explosion2.get();
+
     if (collider_ && collider_->GetCollider()) {
         ColliderInfo3D info;
         Math::AABB aabb;
         aabb.min = Vector3{ -size_ * 2.0f, -0.5f, -0.5f };
         aabb.max = Vector3{ +size_ * 2.0f, +0.5f, +0.5f };
         info.shape = aabb;
+        info.attribute.set(2);
+
+        // ラムダで爆発オブジェクトポインタをキャプチャ
+        info.onCollisionEnter = [this, explosionPtr](const HitInfo3D& hitInfo) {
+            // EnemyManagerが設定されていなければ何もしない
+            if (!enemyManager_) return;
+
+            // 敵との衝突をEnemyManagerに通知
+            enemyManager_->OnExplosionHit(hitInfo.otherObject);
+        };
+
         explosion->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
     }
 
@@ -136,7 +146,18 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
         aabb.min = Vector3{ -0.5f, -0.5f, -size_ * 2.0f };
         aabb.max = Vector3{ +0.5f, +0.5f, +size_ * 2.0f };
         info.shape = aabb;
-        explosion->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
+        info.attribute.set(2);
+
+        // ラムダで爆発オブジェクトポインタをキャプチャ
+        info.onCollisionEnter = [this, explosion2Ptr](const HitInfo3D& hitInfo) {
+            // EnemyManagerが設定されていなければ何もしない
+            if (!enemyManager_) return;
+
+            // 敵との衝突をEnemyManagerに通知
+            enemyManager_->OnExplosionHit(hitInfo.otherObject);
+        };
+
+        explosion2->RegisterComponent<Collision3D>(collider2_->GetCollider(), info);
     }
 
     // レンダラーにアタッチ
@@ -151,8 +172,8 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
 
     // 爆発情報を登録
     ExplosionInfo info;
-    info.object = explosion.get();
-	info.object2 = explosion2.get();
+    info.object = explosionPtr;
+	info.object2 = explosion2Ptr;
     info.elapsedTime = 0.0f;
     info.position = position;
     activeExplosions_.push_back(info);

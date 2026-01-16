@@ -203,6 +203,8 @@ void TestScene::Initialize() {
         auto comp = std::make_unique<ExplosionManager>();
         comp->SetScreenBuffer(screenBuffer_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
+		comp->SetCollider(collider_);
+        comp->SetCollider2(collider_);
         explosionManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
@@ -224,11 +226,6 @@ void TestScene::Initialize() {
         if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
             playerMove->SetBombManager(bombManager_);
         }
-    }
-
-    // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
-    if (explosionManager_ && bombManager_) {
-        explosionManager_->SetBombManager(bombManager_);
     }
 
     // EnemyManagerの初期化（修正版）
@@ -265,6 +262,12 @@ void TestScene::Initialize() {
                 enemySpawner_->AddSpawnPoint(Vector3(kTile * (kMapW - 1), kY, kTile * z));
             }
         }
+    }
+
+    // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
+    if (explosionManager_ && bombManager_) {
+        explosionManager_->SetBombManager(bombManager_);
+		explosionManager_->SetEnemyManager(enemyManager_);
     }
 
     if (playBgm_) {

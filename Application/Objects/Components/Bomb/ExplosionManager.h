@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 
+#include "Objects/Components/Enemy/EnemyManager.h"
+
 namespace KashipanEngine {
 
 // Forward declaration
@@ -26,6 +28,13 @@ public:
 
     /// @brief BombManagerを設定（爆発との衝突検出用）
     void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+    /// @brief EnemyManagerを設定（敵との衝突検出用）
+    void SetEnemyManager(EnemyManager* enemyManager) { enemyManager_ = enemyManager; }
+
+	/// @brief 衝突判定用ColliderComponentを設定
+    void SetCollider(ColliderComponent* collider) { collider_ = collider; }
+    void SetCollider2(ColliderComponent* collider) { collider2_ = collider; }
 
     /// @brief 指定位置に爆発を生成
     /// @param position 爆発を生成する位置
@@ -61,6 +70,7 @@ private:
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
     BombManager* bombManager_ = nullptr;
+    EnemyManager* enemyManager_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     ColliderComponent* collider2_ = nullptr;
 

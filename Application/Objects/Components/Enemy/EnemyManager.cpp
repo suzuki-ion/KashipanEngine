@@ -168,4 +168,16 @@ void EnemyManager::CleanupDeadEnemies() {
     }
 }
 
+void EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
+    if (!hitObject) return;
+
+    // activeEnemies_から該当する敵を検索してisDead=trueに設定
+    for (auto& e : activeEnemies_) {
+        if (e.object == hitObject) {
+            e.isDead = true;
+            break;
+        }
+    }
+}
+
 } // namespace KashipanEngine

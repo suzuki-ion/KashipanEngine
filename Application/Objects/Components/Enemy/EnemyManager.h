@@ -29,9 +29,13 @@ public:
 
     void SetMapSize(int width, int height) { mapW_ = width; mapH_ = height; }
 
-    void SetCollider(ColliderComponent* collider) { collider_ = collider; }  // 追加
+    void SetCollider(ColliderComponent* collider) { collider_ = collider; }
 
-    void SetPlayer(Object3DBase* player) { player_ = player; }                // 追加
+    void SetPlayer(Object3DBase* player) { player_ = player; }
+
+    /// @brief 爆発が敵に当たった時の処理
+    /// @param hitObject 当たったオブジェクト
+    void OnExplosionHit(Object3DBase* hitObject);
 
 private:
 
@@ -40,10 +44,10 @@ private:
 	/// @brief アクティブな敵情報
     struct EnemyInfo {
         Object3DBase* object = nullptr; 
-		EnemyType type;                       // 敵の種類
-		EnemyDirection direction;        // 敵の開始方向
-        Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆弾の位置（重複チェック用）
-		bool isDead = false;                  // 敵が死亡しているか
+		EnemyType type;
+		EnemyDirection direction;
+        Vector3 position{ 0.0f, 0.0f, 0.0f };
+		bool isDead = false;
     };
 
     std::vector<EnemyInfo> activeEnemies_;
@@ -51,7 +55,7 @@ private:
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
     ColliderComponent* collider_ = nullptr;
-    Object3DBase* player_ = nullptr;  // 追加
+    Object3DBase* player_ = nullptr;
 
     BPMSystem* bpmSystem_ = nullptr;
     int lastMoveBeat_ = -1;

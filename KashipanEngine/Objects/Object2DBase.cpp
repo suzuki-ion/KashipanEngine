@@ -37,9 +37,13 @@ Object2DBase::RenderPassRegistrationHandle Object2DBase::GenerateRegistrationHan
     return RenderPassRegistrationHandle{ MakeRandomNonZeroU64() };
 }
 
+void Object2DBase::SetRenderer(Passkey<GameEngine>, Renderer* renderer) {
+    sRenderer = renderer;
+}
+
 Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
     if (!targetWindow) return {};
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (!renderer) return {};
 
     RenderPassRegistrationEntry entry{};
@@ -68,7 +72,7 @@ Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(Window
 
 Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
     if (!targetBuffer) return {};
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (!renderer) return {};
 
     RenderPassRegistrationEntry entry{};
@@ -95,7 +99,7 @@ Object2DBase::RenderPassRegistrationHandle Object2DBase::AttachToRenderer(Screen
 }
 
 void Object2DBase::DetachFromRenderer() {
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (renderer) {
         for (auto &kv : renderPassRegistrations_) {
             auto &e = kv.second;
@@ -116,7 +120,7 @@ bool Object2DBase::DetachFromRenderer(RenderPassRegistrationHandle handle) {
     auto it = renderPassRegistrations_.find(handle.value);
     if (it == renderPassRegistrations_.end()) return false;
 
-    auto *renderer = Window::GetRenderer(Passkey<Object2DBase>{});
+    auto *renderer = sRenderer;
     if (renderer) {
         if (it->second.windowHandle) {
             renderer->UnregisterPersistentRenderPass(it->second.windowHandle);
@@ -157,17 +161,22 @@ RenderPass Object2DBase::CreateRenderPass(Window *targetWindow, const std::strin
 
         passInfo.passName = passName_;
         passInfo.renderType = renderType_;
+        passInfo.objectType = objectType_;
         passInfo.constantBufferRequirements = constantBufferRequirements_;
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
         passInfo.batchKey = instanceBatchKey_;
-        passInfo.instanceBufferRequirements = {
-            {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
-            {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
-        };
-        passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
-            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
-        };
+        passInfo.instanceBufferRequirements = instanceBufferRequirements_.empty()
+            ? std::vector<RenderPass::InstanceBufferRequirement>{
+                {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
+                {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
+            }
+            : instanceBufferRequirements_;
+        passInfo.submitInstanceFunction = submitInstanceFunction_
+            ? submitInstanceFunction_
+            : [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+                return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+            };
         passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
             return RenderBatched(shaderBinder, instanceCount);
         };
@@ -183,9 +192,21 @@ RenderPass Object2DBase::CreateRenderPass(Window *targetWindow, const std::strin
     cachedRenderPass_->screenBuffer = nullptr;
     cachedRenderPass_->pipelineName = pipelineName;
     cachedRenderPass_->renderType = renderType_;
+    cachedRenderPass_->objectType = objectType_;
     cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
     cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
     cachedRenderPass_->batchKey = instanceBatchKey_;
+    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
+        ? std::vector<RenderPass::InstanceBufferRequirement>{
+            {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
+        }
+        : instanceBufferRequirements_;
+    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
+        ? submitInstanceFunction_
+        : [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+        };
 
     return *cachedRenderPass_;
 }
@@ -197,17 +218,22 @@ RenderPass Object2DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
 
         passInfo.passName = passName_;
         passInfo.renderType = renderType_;
+        passInfo.objectType = objectType_;
         passInfo.constantBufferRequirements = constantBufferRequirements_;
         passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
         passInfo.batchKey = instanceBatchKey_;
-        passInfo.instanceBufferRequirements = {
-            {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
-            {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
-        };
-        passInfo.submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
-            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
-        };
+        passInfo.instanceBufferRequirements = instanceBufferRequirements_.empty()
+            ? std::vector<RenderPass::InstanceBufferRequirement>{
+                {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
+                {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
+            }
+            : instanceBufferRequirements_;
+        passInfo.submitInstanceFunction = submitInstanceFunction_
+            ? submitInstanceFunction_
+            : [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+                return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+            };
         passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
             return RenderBatched(shaderBinder, instanceCount);
         };
@@ -222,9 +248,21 @@ RenderPass Object2DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std:
     cachedRenderPass_->screenBuffer = targetBuffer;
     cachedRenderPass_->pipelineName = pipelineName;
     cachedRenderPass_->renderType = renderType_;
+    cachedRenderPass_->objectType = objectType_;
     cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
     cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
     cachedRenderPass_->batchKey = instanceBatchKey_;
+    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
+        ? std::vector<RenderPass::InstanceBufferRequirement>{
+            {"Vertex:gTransformationMatrices", sizeof(Transform2D::InstanceData)},
+            {"Pixel:gMaterials", sizeof(Material2D::InstanceData)},
+        }
+        : instanceBufferRequirements_;
+    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
+        ? submitInstanceFunction_
+        : [this](void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex) -> bool {
+            return SubmitInstance(instanceMaps, shaderBinder, instanceIndex);
+        };
 
     return *cachedRenderPass_;
 }
@@ -298,11 +336,10 @@ bool Object2DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
 
 Object2DBase::Object2DBase(const std::string &name) {
     LogScope scope;
+    objectType_ = ObjectType::SystemObject;
     if (!name.empty()) name_ = name;
     passName_ = name_;
-    // 頂点やインデックスが要らないタイプのオブジェクトは描画用オブジェクトでないことが多いので、
-    // インスタンスバッチキーにはポインタ値も混ぜる
-    instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
+    instanceBatchKey_ = std::hash<std::string>{}(name_);
     context_ = std::make_unique<Object2DContext>(Passkey<Object2DBase>{}, this);
     RegisterComponent<Transform2D>();
     transform_ = GetComponent2D<Transform2D>();
@@ -310,6 +347,7 @@ Object2DBase::Object2DBase(const std::string &name) {
 
 Object2DBase::Object2DBase(const std::string &name, size_t vertexByteSize, size_t indexByteSize, size_t vertexCount, size_t indexCount, void *initialVertexData, void *initialIndexData) {
     LogScope scope;
+    objectType_ = ObjectType::GameObject;
     if (!name.empty()) name_ = name;
     passName_ = name_;
     instanceBatchKey_ = std::hash<std::string>{}(name_);

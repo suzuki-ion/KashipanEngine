@@ -81,6 +81,8 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
         // デバッグ用シーン遷移
         ic->RegisterCommand("DebugSceneChange", InputCommand::KeyboardKey{ Key::F1 }, InputCommand::InputState::Trigger);
+        // デバッグ用ウィンドウ破棄
+        ic->RegisterCommand("DebugDestroyWindow", InputCommand::KeyboardKey{ Key::F2 }, InputCommand::InputState::Trigger);
     }
 }
 

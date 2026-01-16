@@ -116,6 +116,13 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
+    if (graphicsEngine_) {
+        auto* renderer = graphicsEngine_->GetRenderer(Passkey<GameEngine>{});
+        ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, renderer);
+        Object2DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
+        Object3DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
+    }
+
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
@@ -186,6 +193,10 @@ GameEngine::~GameEngine() {
     samplerManager_.reset();
     textureManager_.reset();
 
+    ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
+    Object2DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
+    Object3DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
+
     graphicsEngine_.reset();
     directXCommon_.reset();
     windowsAPI_.reset();
@@ -205,10 +216,6 @@ void GameEngine::GameLoopUpdate() {
 
     Window::Update({});
     UpdateDeltaTime({});
-
-    if (sceneManager_) {
-        sceneManager_->CommitPendingSceneChange({});
-    }
 
     if (input_) {
         input_->Update();
@@ -291,9 +298,14 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
     while (!gameLoopEndConditionFunction_()) {
         GameLoopUpdate();
         GameLoopDraw();
+
+        if (sceneManager_) {
+            sceneManager_->CommitPendingSceneChange({});
+        }
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
+        directXCommon_->AllDestroyPendingSwapChains({});
     }
     return 0;
 }

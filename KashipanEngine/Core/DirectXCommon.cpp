@@ -20,6 +20,10 @@ std::vector<size_t> sFreeSwapChains;                                   // 空き
 std::vector<HWND> sPendingDestroySwapChains;                           // 破棄指示された HWND
 } // namespace
 
+void DirectXCommon::AllDestroyPendingSwapChains(Passkey<GameEngine>) {
+    DestroyPendingSwapChains();
+}
+
 DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     LogScope scope;
     Log(Translation("engine.directx.initialize.start"), LogSeverity::Debug);
@@ -135,7 +139,6 @@ void DirectXCommon::BeginDraw(Passkey<GameEngine>) {
 }
 
 void DirectXCommon::EndDraw(Passkey<GameEngine>) {
-    DestroyPendingSwapChains();
     ExecuteCommandLists();
 }
 
@@ -384,6 +387,10 @@ void DirectXCommon::ReleaseCommandObjectsInternal(std::vector<std::unique_ptr<DX
     if (slotIndex < 0) return;
     const size_t idx = static_cast<size_t>(slotIndex);
     if (idx >= pool.size()) return;
+    auto *dx12Cmds = pool[idx].get();
+    if (!dx12Cmds) return;
+    if (dx12Cmds->IsRecording()) dx12Cmds->EndRecord();
+    dx12Cmds->ResetFlags(Passkey<DirectXCommon>{});
 
     // GPU 実行中の可能性があるため、ここでフェンスを待ってから解放キューへ戻す
     WaitForFence();

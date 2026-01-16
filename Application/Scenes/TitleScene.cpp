@@ -15,6 +15,24 @@ TitleScene::TitleScene()
 void TitleScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
+    
+    if (screenBuffer_) {
+        ChromaticAberrationEffect::Params p{};
+        p.directionX = 1.0f;
+        p.directionY = 0.0f;
+        p.strength = 0.0025f;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+
+        BloomEffect::Params bp{};
+        bp.threshold = 0.8f;
+        bp.softKnee = 0.25f;
+        bp.intensity = 0.3f;
+        bp.blurRadius = 4.0f;
+        bp.iterations = 4;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+
+        screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
+    }
 
     auto* window = Window::GetWindow("Main Window");
 

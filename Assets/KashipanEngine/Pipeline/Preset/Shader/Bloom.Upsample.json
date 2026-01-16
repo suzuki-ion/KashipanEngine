@@ -1,12 +1,12 @@
 ﻿{
-	"BaseName": "ChromaticAberration",
+	"BaseName": "Bloom.Upsample",
 	"Vertex": {
 		"Path": "PostEffect/FullScreenTriangleVS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "vs_6_0"
 	},
 	"Pixel": {
-		"Path": "PostEffect/ChromaticAberrationPS.hlsl",
+		"Path": "PostEffect/BloomUpsamplePS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "ps_6_0"
 	}

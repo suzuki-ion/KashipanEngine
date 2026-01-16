@@ -11,9 +11,9 @@
 
 namespace KashipanEngine {
 
-std::unordered_map<ScreenBuffer*, std::unique_ptr<ScreenBuffer>> ScreenBuffer::sBufferMap_{};
-
 namespace {
+// ScreenBuffer インスタンス管理用マップ
+std::unordered_map<ScreenBuffer *, std::unique_ptr<ScreenBuffer>> sBufferMap{};
 // Window と同様に「破棄要求→フレーム終端で実破棄」のための pending リスト
 static std::vector<ScreenBuffer*> sPendingDestroy;
 } // namespace
@@ -54,21 +54,21 @@ ScreenBuffer* ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
         return nullptr;
     }
 
-    sBufferMap_.emplace(raw, std::move(buffer));
+    sBufferMap.emplace(raw, std::move(buffer));
     return raw;
 }
 
 void ScreenBuffer::AllDestroy(Passkey<GameEngine>) {
-    sBufferMap_.clear();
+    sBufferMap.clear();
 }
 
 size_t ScreenBuffer::GetBufferCount() {
-    return sBufferMap_.size();
+    return sBufferMap.size();
 }
 
 bool ScreenBuffer::IsExist(ScreenBuffer* buffer) {
     if (!buffer) return false;
-    return sBufferMap_.find(buffer) != sBufferMap_.end();
+    return sBufferMap.find(buffer) != sBufferMap.end();
 }
 
 void ScreenBuffer::DestroyNotify(ScreenBuffer* buffer) {
@@ -92,12 +92,12 @@ void ScreenBuffer::CommitDestroy(Passkey<GameEngine>) {
 
     for (auto* ptr : sPendingDestroy) {
         if (!ptr) continue;
-        auto it = sBufferMap_.find(ptr);
-        if (it == sBufferMap_.end()) continue;
+        auto it = sBufferMap.find(ptr);
+        if (it == sBufferMap.end()) continue;
 
         // recording 中に消すと危険なので、commit はゲームループ終端から呼ばれる前提
         // persistent pass 等は ScreenBuffer::Destroy() 内で DetachToRenderer される
-        sBufferMap_.erase(it);
+        sBufferMap.erase(it);
     }
 
     sPendingDestroy.clear();
@@ -121,9 +121,9 @@ bool ScreenBuffer::IsRecording(Passkey<Renderer>) const noexcept {
 
 void ScreenBuffer::AllBeginRecord(Passkey<Renderer>) {
     sRecordStates.clear();
-    sRecordStates.reserve(sBufferMap_.size());
+    sRecordStates.reserve(sBufferMap.size());
 
-    for (auto& [ptr, owning] : sBufferMap_) {
+    for (auto& [ptr, owning] : sBufferMap) {
         if (!ptr || !owning) continue;
         if (IsPendingDestroy(ptr)) continue;
 
@@ -313,8 +313,8 @@ bool ScreenBuffer::EndRecord(bool discard) {
     LogScope scope;
     if (!dx12Commands_) return false;
 
-    auto* rt = renderTargets_[GetRtvWriteIndex()].get();
-    auto* ds = depthStencils_[GetDsvWriteIndex()].get();
+    auto *rt = renderTargets_[GetRtvWriteIndex()].get();
+    auto *ds = depthStencils_[GetDsvWriteIndex()].get();
 
     if (rt) {
         rt->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -330,10 +330,10 @@ bool ScreenBuffer::EndRecord(bool discard) {
     }
 
     (void)discard;
-
     const bool updateRtv = true;
     const bool updateDsv = !lastBeginDisableDepthWrite_;
     AdvanceFrameBufferIndex(updateRtv, updateDsv);
+
     return true;
 }
 
@@ -363,7 +363,7 @@ bool ScreenBuffer::RegisterPostEffectComponent(std::unique_ptr<IPostEffectCompon
 }
 
 void ScreenBuffer::AttachToRenderer(const std::string& passName) {
-    auto* renderer = Window::GetRenderer(Passkey<ScreenBuffer>{});
+    auto* renderer = sRenderer;
     if (!renderer) return;
 
     if (persistentScreenPassHandle_) {
@@ -380,7 +380,7 @@ void ScreenBuffer::AttachToRenderer(const std::string& passName) {
 void ScreenBuffer::DetachFromRenderer() {
     if (!persistentScreenPassHandle_) return;
 
-    auto* renderer = Window::GetRenderer(Passkey<ScreenBuffer>{});
+    auto* renderer = sRenderer;
     if (renderer) {
         renderer->UnregisterPersistentScreenPass(persistentScreenPassHandle_);
     }
@@ -440,7 +440,7 @@ void ScreenBuffer::ShowImGuiScreenBuffersWindow() {
         ImGui::TableSetupColumn("Select");
         ImGui::TableHeadersRow();
 
-        for (auto& kv : sBufferMap_) {
+        for (auto& kv : sBufferMap) {
             ScreenBuffer* ptr = kv.first;
             if (!ptr) continue;
 

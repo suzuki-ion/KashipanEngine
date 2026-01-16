@@ -26,6 +26,7 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
 class Object2DContext;
 class ScreenBuffer;
 class Transform2D;
@@ -54,6 +55,9 @@ public:
         ScreenBuffer *screenBuffer = nullptr;
         std::string pipelineName;
     };
+
+    /// @brief GameEngine から Renderer を設定（永続パス登録用）
+    static void SetRenderer(Passkey<GameEngine>, Renderer *renderer);
 
     Object2DBase() = delete;
     Object2DBase(const Object2DBase &) = delete;
@@ -263,6 +267,9 @@ public:
     /// @brief インスタンシング用バッチキー（同一キー同士がまとめて描画される）
     std::uint64_t GetInstanceBatchKey() const { return instanceBatchKey_; }
 
+    /// @brief オブジェクトの種類を取得
+    ObjectType GetObjectType() const noexcept { return objectType_; }
+
 protected:
     /// @brief コンストラクタ
     /// @param name オブジェクト名
@@ -347,6 +354,14 @@ protected:
         updateConstantBuffersFunction_ = std::move(fn);
     }
 
+    void SetInstanceBufferRequirements(std::vector<RenderPass::InstanceBufferRequirement> reqs) {
+        instanceBufferRequirements_ = std::move(reqs);
+    }
+
+    void SetSubmitInstanceFunction(std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> fn) {
+        submitInstanceFunction_ = std::move(fn);
+    }
+
 private:
     friend class Object2DContext;
 
@@ -375,6 +390,10 @@ private:
     /// @param shaderBinder シェーダ変数バインダー
     /// @return バインドに失敗したコンポーネントの情報リスト
     std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
+
+    static inline Renderer* sRenderer = nullptr;
+
+    ObjectType objectType_ = ObjectType::GameObject;
 
     std::string name_ = "GameObject2D";
     std::string passName_ = "GameObject2D";
@@ -407,7 +426,9 @@ private:
     std::uint64_t instanceBatchKey_ = 0;
     RenderType renderType_ = RenderType::Standard;
     std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements_;
+    std::vector<RenderPass::InstanceBufferRequirement> instanceBufferRequirements_;
     std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction_;
+    std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction_;
 };
 
 } // namespace KashipanEngine

@@ -272,6 +272,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
     <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyManager.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />

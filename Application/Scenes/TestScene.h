@@ -60,7 +60,7 @@ private:
 
     BPMSystem* bpmSystem_ = nullptr;
 	float bpm_ = 120.0f;   // BPM値
-	bool playBgm_ = false; // true-> BPM120のBGM再生
+	bool playBgm_ = true; // true-> BPM120のBGM再生
 
 	int bombMaxNumber_ = 6; // プレイヤーが設置可能な爆弾の最大数
 

@@ -67,11 +67,23 @@ void BombManager::Update() {
     );
 
     // スペースキーで爆弾設置（BPMに合わせて）
-    if (input_) {
-        const auto& keyboard = input_->GetKeyboard();
-        if (keyboard.IsTrigger(Key::Space)) {
-            // BPM進行度が許容範囲内かチェック
-            if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+    if (inputCommand_) {
+
+        if (inputCommand_->Evaluate("ModeChange").Triggered()) {
+            if (useToleranceRange_) {
+                useToleranceRange_ = false;
+            } else {
+                useToleranceRange_ = true;
+            }
+        }
+
+        if (inputCommand_->Evaluate("Bomb").Triggered()) {
+            if (useToleranceRange_) {
+                // BPM進行度が許容範囲内かチェック
+                if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+                    SpawnBomb();
+                }
+            } else {
                 SpawnBomb();
             }
         }

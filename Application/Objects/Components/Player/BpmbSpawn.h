@@ -37,7 +37,7 @@ public:
     std::optional<bool> Update() override;
 
     /// @brief 爆弾設置を試みる（リクエストを生成）
-    /// @return 設置リクエストが生成された場合はその情報、できない場合はnullopt
+    /// @return 設置リクエストが生成された場合はその情報、できない場合はnull
     std::optional<BombPlacementRequest> TryCreatePlacementRequest();
 
     /// @brief プレイヤーの向きから爆弾設置位置を計算
@@ -134,10 +134,8 @@ private:
     float bombScale_ = 1.0f;                ///< 爆弾のスケール
     float bpmProgress_ = 0.0f;              ///< BPMに同期した進行度（0.0～1.0）
     float bpmToleranceRange_ = 0.2f;        ///< BPM進行度の許容範囲
-    
     int mapWidth_ = 13;                     ///< マップの幅
     int mapHeight_ = 13;                    ///< マップの高さ
-    
     bool clearRequested_ = false;           ///< クリアリクエストフラグ
     
     const Input* input_ = nullptr;          ///< 入力システムへのポインタ

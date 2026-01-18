@@ -33,8 +33,8 @@ public:
     /// @brief ExplosionManagerを設定
     void SetExplosionManager(ExplosionManager* explosionManager) { explosionManager_ = explosionManager; }
 
-    /// @brief Inputを設定
-    void SetInput(const Input* input) { input_ = input; }
+	/// @brief InputCommandを設定
+	void SetInputCommand(const InputCommand* inputCommand) { inputCommand_ = inputCommand; }
 
     /// @brief 衝突判定用ColliderComponentを設定
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
@@ -110,7 +110,7 @@ private:
     Object3DBase* player_ = nullptr;
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
-    const Input* input_ = nullptr;
+    const InputCommand* inputCommand_ = nullptr;
     ExplosionManager* explosionManager_ = nullptr;
     ColliderComponent* collider_ = nullptr;
 
@@ -118,6 +118,7 @@ private:
     float bpmProgress_ = 0.0f;
     float prevBpmProgress_ = 0.0f;   // 前フレームのBPM進行度（ビートカウント用）
     float bpmToleranceRange_ = 0.2f;
+    bool useToleranceRange_ = true;
     float beatDuration_ = 0.5f;      // 1拍の時間（秒）
     float spawnDistance_ = 2.0f;
     float bombScale_ = 0.8f;

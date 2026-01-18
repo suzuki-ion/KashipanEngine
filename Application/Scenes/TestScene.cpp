@@ -227,12 +227,14 @@ void TestScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
+	// ExplosionManager の追加
     {
         auto comp = std::make_unique<ExplosionManager>();
         comp->SetScreenBuffer(screenBuffer_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
 		comp->SetCollider(collider_);
         comp->SetCollider2(collider_);
+		comp->SetExplosionLifetime(explosionLifetime_);
         explosionManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
@@ -244,6 +246,7 @@ void TestScene::Initialize() {
         comp->SetScreenBuffer(screenBuffer_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
         comp->SetBPMToleranceRange(playerBpmToleranceRange_);
+		comp->SetBombLifetimeBeats(bombLifetimeBeats_);
         comp->SetExplosionManager(explosionManager_);
         comp->SetInputCommand(GetInputCommand());
         comp->SetCollider(collider_);  // 追加
@@ -266,13 +269,13 @@ void TestScene::Initialize() {
         comp->SetMapSize(kMapW, kMapH);
         comp->SetCollider(collider_);
         comp->SetPlayer(player_);
-        comp->SetBombManager(bombManager_);  // 追加
+        comp->SetBombManager(bombManager_);
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
 
     {
-		auto comp = std::make_unique<EnemySpawner>();
+		auto comp = std::make_unique<EnemySpawner>(enemySpawnInterval_);
 		comp->SetEnemyManager(enemyManager_);
 		comp->SetBPMSystem(bpmSystem_);
 		enemySpawner_ = comp.get();

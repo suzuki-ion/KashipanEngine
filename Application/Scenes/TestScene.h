@@ -41,34 +41,43 @@ private:
 
     DirectionalLight *light_ = nullptr;
 
-	static constexpr int kMapW = 13; // マップの横幅 (オブジェクト数)
-	static constexpr int kMapH = 13; // マップの縦幅 (オブジェクト数)
+    // BPM関連
+    BPMSystem* bpmSystem_ = nullptr;
+    float bpm_ = 120.0f;   // BPM値
+    bool playBgm_ = true;  // true-> BPM120のBGM再生
 
-    std::array<std::array<Object3DBase*, kMapW>, kMapH> maps_{};
+	// マップ関連
+	static constexpr int kMapW = 13;                // マップの横幅 (オブジェクト数)
+	static constexpr int kMapH = 13;                // マップの縦幅 (オブジェクト数)
 	float mapScaleMin_ = 1.5f, mapScaleMax_ = 1.8f; // マップのBpmに合わせた拡大縮小範囲
-	bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション
 
+    bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション
+    std::array<std::array<Object3DBase*, kMapW>, kMapH> maps_{};
+    
+	// プレイヤー関連
     Object3DBase* player_ = nullptr;
 	float playerScaleMin_ = 0.75f, playerScaleMax_ = 1.0f; // プレイヤーのBpmに合わせた拡大縮小範囲
 	float playerBpmToleranceRange_ = 0.2f;                 // プレイヤーがBPMに合わせる±の許容範囲 
 	float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
 
+    int playerMapX_ = 0; // プレイヤーのマップ上のX座標
+    int playerMapZ_ = 0; // プレイヤーのマップ上のZ座標
     PlayerHealthUI* playerHealthUI_ = nullptr;
 
-	int playerMapX_ = 0; // プレイヤーのマップ上のX座標
-	int playerMapZ_ = 0; // プレイヤーのマップ上のZ座標
-
-    BPMSystem* bpmSystem_ = nullptr;
-	float bpm_ = 120.0f;   // BPM値
-	bool playBgm_ = true; // true-> BPM120のBGM再生
-
-	int bombMaxNumber_ = 6; // プレイヤーが設置可能な爆弾の最大数
-
+	// 爆弾関連
 	BombManager* bombManager_ = nullptr;
+	int bombMaxNumber_ = 3;     // プレイヤーが設置可能な爆弾の最大数
+	int bombLifetimeBeats_ = 4; // 設置してからの爆弾の寿命（拍数）
+
+	// 爆発関連
 	ExplosionManager* explosionManager_ = nullptr;
+	float explosionLifetime_ = 0.5f; // 爆発の寿命（秒）
+
+	// 敵関連
+	EnemySpawner* enemySpawner_ = nullptr;
+	int enemySpawnInterval_ = 4; // 敵のスポーン間隔（拍数）
 
 	EnemyManager* enemyManager_ = nullptr;
-	EnemySpawner* enemySpawner_ = nullptr;
 
 	ColliderComponent* collider_ = nullptr;
 

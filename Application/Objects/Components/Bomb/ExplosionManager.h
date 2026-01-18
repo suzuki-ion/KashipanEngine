@@ -69,6 +69,7 @@ private:
     void CheckExplosionBombCollisions();
 
     float size_ = 3.0f;
+    float sizeMagnification_ = 1.5f;
 
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;

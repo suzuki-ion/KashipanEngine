@@ -121,8 +121,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
     <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
@@ -273,8 +275,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
     <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
     <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyManager.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
     <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />

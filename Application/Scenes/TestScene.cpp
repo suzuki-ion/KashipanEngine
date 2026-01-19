@@ -286,6 +286,7 @@ void TestScene::Initialize() {
         comp->SetBombManager(bombManager_);
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
+		enemyManager_->InitializeParticlePool();
     }
 
     {

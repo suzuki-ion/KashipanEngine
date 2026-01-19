@@ -1,4 +1,5 @@
 #include "EnemyManager.h"
+#include "EnemyDieParticle.h"
 #include "Objects/Components/BPMScaling.h"
 #include "Objects/Components/Health.h"
 #include "Objects/Components/3D/Collision3D.h"
@@ -10,6 +11,75 @@ namespace KashipanEngine {
 void EnemyManager::Initialize() {
     ISceneComponent::Initialize();
     activeEnemies_.clear();
+}
+
+void EnemyManager::InitializeParticlePool() {
+    auto* ctx = GetOwnerContext();
+    if (!ctx) return;
+
+    particlePool_.reserve(kParticlePoolSize_);
+
+    // Boxモデルデータを取得
+    auto boxModelData = ModelManager::GetModelDataFromFileName("MapBlock.obj");
+
+    for (int i = 0; i < kParticlePoolSize_; ++i) {
+        // パーティクルオブジェクトを生成
+        auto particle = std::make_unique<Model>(boxModelData);
+        particle->SetName("EnemyDieParticle_" + std::to_string(i));
+
+        // Transform設定
+        if (auto* tr = particle->GetComponent3D<Transform3D>()) {
+            tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f }); // 初期は非表示
+        }
+
+        // Material設定 (オレンジ色)
+        if (auto* mat = particle->GetComponent3D<Material3D>()) {
+            mat->SetColor(Vector4{ 1.0f, 0.3f, 0.0f, 1.0f });
+            mat->SetEnableLighting(true);
+        }
+
+        // EnemyDieParticleコンポーネント追加
+        EnemyDieParticle::ParticleConfig config;
+        config.initialSpeed = 8.0f;
+        config.speedVariation = 3.0f;
+        config.lifeTimeSec = 0.8f;
+        config.gravity = 15.0f;
+        config.damping = 0.92f;
+        config.baseScale = Vector3{ 1.0f, 1.0f, 1.0f };
+        
+        particle->RegisterComponent<EnemyDieParticle>(config);
+
+        // ポインタを保存（move前に保存）
+        Object3DBase* particlePtr = particle.get();
+
+        // レンダラーにアタッチ
+        if (screenBuffer_) {
+            particle->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        }
+        if (shadowMapBuffer_) {
+            particle->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+        }
+
+        particlePool_.push_back(particle.get());
+        ctx->AddObject3D(std::move(particle));
+
+        // デバッグ: コンポーネント取得テスト
+        auto* testComponent = particlePtr->GetComponent3D<EnemyDieParticle>();
+        if (!testComponent) {
+            char debugMsg[256];
+            sprintf_s(debugMsg, "WARNING: EnemyDieParticle component not found for particle %d\n", i);
+            OutputDebugStringA(debugMsg);
+        } else {
+            OutputDebugStringA("  - EnemyDieParticle component registered successfully\n");
+        }
+
+        // プールに追加
+        //particlePool_.push_back(particlePtr);
+    }
+
+    char buffer[256];
+    sprintf_s(buffer, "InitializeParticlePool completed: %zu particles created\n", particlePool_.size());
+    OutputDebugStringA(buffer);
 }
 
 void EnemyManager::Update() {
@@ -166,6 +236,45 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
     ctx->AddObject3D(std::move(enemy));
 }
 
+void EnemyManager::SpawnDieParticles(const Vector3& position) {
+    // デバッグ: この関数が呼ばれているか確認
+    OutputDebugStringA("SpawnDieParticles called\n");
+    
+    // デバッグ: プールサイズを確認
+    char buffer[256];
+    sprintf_s(buffer, "Particle pool size: %zu\n", particlePool_.size());
+    OutputDebugStringA(buffer);
+
+    // プールから非アクティブなパーティクルを探して再利用
+    int particlesSpawned = 0;
+    const int particlesToSpawn = 15; // 1回の死亡で発生させるパーティクル数
+
+    for (auto* particle : particlePool_) {
+        if (particlesSpawned >= particlesToSpawn) break;
+
+        auto* dieParticle = particle->GetComponent3D<EnemyDieParticle>();
+        
+        // デバッグ: コンポーネント取得と状態確認
+        if (!dieParticle) {
+            OutputDebugStringA("  - dieParticle is nullptr\n");
+            continue;
+        }
+        
+        if (dieParticle->IsAlive()) {
+            OutputDebugStringA("  - dieParticle is alive (skipping)\n");
+            continue;
+        }
+
+        // パーティクルを発生
+        OutputDebugStringA("  - Spawning particle\n");
+        dieParticle->Spawn(position);
+        particlesSpawned++;
+    }
+    
+    sprintf_s(buffer, "Particles spawned: %d / %d\n", particlesSpawned, particlesToSpawn);
+    OutputDebugStringA(buffer);
+}
+
 void EnemyManager::CleanupDeadEnemies() {
     auto* ctx = GetOwnerContext();
     if (!ctx) return;
@@ -185,10 +294,12 @@ void EnemyManager::CleanupDeadEnemies() {
 void EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
     if (!hitObject) return;
 
-    // activeEnemies_から該当する敵を検索してisDead=trueに設定
-    for (auto& e : activeEnemies_) {
-        if (e.object == hitObject) {
-            e.isDead = true;
+    // activeEnemies_からも削除フラグを立てる
+    for (auto& enemyInfo : activeEnemies_) {
+        if (enemyInfo.object == hitObject) {
+            SpawnDieParticles(enemyInfo.position);
+            enemyInfo.isDead = true;
+
             break;
         }
     }

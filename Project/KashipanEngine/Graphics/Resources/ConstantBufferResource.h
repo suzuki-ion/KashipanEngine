@@ -19,9 +19,9 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool Recreate(size_t byteSize, ID3D12Resource *existingResource = nullptr);
 
-    /// @brief バッファマッピング
+    /// @brief バッファマッピング（永続Map）
     void *Map();
-    /// @brief バッファアンマッピング
+    /// @brief バッファアンマッピング（互換のため残すが通常は何もしない）
     void Unmap();
 
     size_t GetBufferSize() const { return bufferSize_; }
@@ -29,7 +29,10 @@ public:
 private:
     bool Initialize(size_t byteSize, ID3D12Resource *existingResource);
 
+    void ResetMappedPointer_() noexcept { mappedPtr_ = nullptr; }
+
     size_t bufferSize_ = 0;
+    void *mappedPtr_ = nullptr;
 };
 
 } // namespace KashipanEngine

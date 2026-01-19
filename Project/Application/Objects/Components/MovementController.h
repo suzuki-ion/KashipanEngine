@@ -1,11 +1,5 @@
 #pragma once
-
-#include "Objects/IObjectComponent.h"
-#include "Objects/ObjectContext.h"
-#include "Objects/Components/3D/Transform3D.h"
-#include "Math/Vector3.h"
-#include "Math/Easings.h"
-#include "Utilities/TimeUtils.h"
+#include <KashipanEngine.h>
 #include <vector>
 #include <functional>
 
@@ -22,9 +16,13 @@ public:
         EasingFunc easing{}; // 未指定の場合は Lerp を使用
     };
 
+    /// @brief 移動エントリ列を指定してコンポーネントを作成する
+    /// @param moves 移動エントリの配列
     explicit MovementController(std::vector<MoveEntry> moves = {})
         : IObjectComponent3D("MovementController", 1), moves_(std::move(moves)) {}
 
+    /// @brief コンポーネントの複製を作成して返す
+    /// @return 新しいコンポーネントの所有ポインタ
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<MovementController>(moves_);
         ptr->currentIndex_ = currentIndex_;
@@ -33,6 +31,8 @@ public:
         return ptr;
     }
 
+    /// @brief 毎フレームの更新処理。現在の移動を進める
+    /// @return 処理に成功した場合は true
     std::optional<bool> Update() override {
         if (moves_.empty()) return true;
         if (!isMoving_) return true;
@@ -76,16 +76,22 @@ public:
         return true;
     }
 
+    /// @brief 移動シーケンスを開始する
     void Start() {
         if (moves_.empty()) return;
         isMoving_ = true;
         currentIndex_ = 0;
         elapsed_ = 0.0f;
     }
+    /// @brief 移動を停止する
     void Stop() { isMoving_ = false; }
 
+    /// @brief 現在移動中かどうかを返す
+    /// @return 移動中であれば true
     bool IsMoving() const { return isMoving_; }
 
+    /// @brief 移動エントリ列を設定する
+    /// @param moves 新しい移動エントリ列
     void SetMoves(std::vector<MoveEntry> moves) {
         moves_ = std::move(moves);
         currentIndex_ = 0;
@@ -93,9 +99,17 @@ public:
         isMoving_ = false;
     }
 
+    /// @brief 登録されている移動エントリ列を取得する
+    /// @return 移動エントリ列への参照
     const std::vector<MoveEntry> &GetMoves() const { return moves_; }
+    /// @brief 現在のエントリインデックスを取得する
+    /// @return 現在のインデックス
     size_t GetCurrentIndex() const { return currentIndex_; }
+    /// @brief 直前のエントリインデックスを取得する
+    /// @return 直前のインデックス
     size_t GetPreviousIndex() const { return previousIndex_; }
+    /// @brief 現在のエントリでの経過時間を取得する
+    /// @return 経過時間（秒）
     float GetElapsedTime() const { return elapsed_; }
 
 #if defined(USE_IMGUI)

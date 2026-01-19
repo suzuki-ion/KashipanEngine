@@ -20,7 +20,7 @@ DX12Device::DX12Device(Passkey<DirectXCommon>, IDXGIAdapter4 *adapter) {
         "12_0",
     };
     HRESULT hr = E_FAIL;
-    for (size_t i = 0; i < sizeof(featureLevels); ++i) {
+    for (size_t i = 0; i < _countof(featureLevels); ++i) {
         hr = D3D12CreateDevice(
             adapter,
             featureLevels[i],

@@ -1,0 +1,16 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "PostEffect.Bloom.Blur",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Bloom.Blur.Vertex" },
+		"Pixel": { "UsePreset": "Bloom.Blur.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

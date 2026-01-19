@@ -20,6 +20,10 @@
 #include "Objects/SystemObjects/Camera2D.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
+#include "Objects/SystemObjects/LightManager.h"
+#include "Objects/SystemObjects/ShadowMapBinder.h"
+
+#include "Scene/Components/ShadowMapCameraSync.h"
 
 #include "Objects/Components/2D/Transform2D.h"
 #include "Objects/Components/2D/Material2D.h"
@@ -46,10 +50,6 @@
 
 namespace KashipanEngine {
 
-namespace {
-constexpr float kPi = 3.14159265358979323846f;
-}
-
 GameScene::GameScene()
     : SceneBase("GameScene") {
 
@@ -60,90 +60,74 @@ GameScene::GameScene()
 
     std::vector<Object3DBase *> rotatingPlanes;
 
-    screenBuffer_ = ScreenBuffer::Create(1920, 1080);
+    // SceneDefaultVariables からポインタを取得して使用
+    [[maybe_unused]] auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
+    [[maybe_unused]] auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
+    [[maybe_unused]] auto *screenBuffer2D = defaultVariables ? defaultVariables->GetScreenBuffer2D() : nullptr;
+    [[maybe_unused]] auto *mainCamera3D = defaultVariables ? defaultVariables->GetMainCamera3D() : nullptr;
+    [[maybe_unused]] auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
+    [[maybe_unused]] auto *lightManager = defaultVariables ? defaultVariables->GetLightManager() : nullptr;
+    [[maybe_unused]] auto *lightCamera3D = defaultVariables ? defaultVariables->GetLightCamera3D() : nullptr;
+    [[maybe_unused]] auto *directionalLight = defaultVariables ? defaultVariables->GetDirectionalLight() : nullptr;
+    [[maybe_unused]] auto *shadowMapBinder = defaultVariables ? defaultVariables->GetShadowMapBinder() : nullptr;
+    [[maybe_unused]] auto *shadowCameraSync = defaultVariables ? defaultVariables->GetShadowMapCameraSync() : nullptr;
+    [[maybe_unused]] auto *screen2DSprite = defaultVariables ? defaultVariables->GetScreenBuffer2DSprite() : nullptr;
+    [[maybe_unused]] auto *screen3DSprite = defaultVariables ? defaultVariables->GetScreenBuffer3DSprite() : nullptr;
 
-    // 衝突管理
-    AddSceneComponent(std::make_unique<ColliderComponent>());
+    if (screenBuffer3D) {
+        ChromaticAberrationEffect::Params p{};
+        p.directionX = 1.0f;
+        p.directionY = 0.0f;
+        p.strength = 0.001f;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
 
-    auto *window = Window::GetWindow("Main Window");
+        BloomEffect::Params bp{};
+        bp.threshold = 1.0f;
+        bp.softKnee = 0.25f;
+        bp.intensity = 0.5f;
+        bp.blurRadius = 1.0f;
+        bp.iterations = 4;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+
+        screenBuffer3D->AttachToRenderer("ScreenBuffer3D_GameScene");
+    }
+
     const auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
-    // 2D Camera (window)
-    {
-        auto obj = std::make_unique<Camera2D>();
-        if (window) {
-            obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
-            const float w = static_cast<float>(window->GetClientWidth());
-            const float h = static_cast<float>(window->GetClientHeight());
-            obj->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
-        }
-        screenCamera2D_ = obj.get();
-        AddObject2D(std::move(obj));
-    }
-
-    // 2D Camera (screenBuffer_)
-    {
-        auto obj = std::make_unique<Camera2D>();
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
-            obj->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
-        }
-        AddObject2D(std::move(obj));
-    }
-
-    // 3D Main Camera (screenBuffer_)
-    {
-        auto obj = std::make_unique<Camera3D>();
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+    // デフォルトからメインカメラを設定
+    if (mainCamera3D) {
+        if (auto *tr = mainCamera3D->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, 5.0f, -14.0f));
-            tr->SetRotate(Vector3(kPi * (15.0f / 180.0f), 0.0f, 0.0f));
+            tr->SetRotate(Vector3(M_PI * (15.0f / 180.0f), 0.0f, 0.0f));
         }
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
-            obj->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
+        if (screenBuffer3D) {
+            const float w = static_cast<float>(screenBuffer3D->GetWidth());
+            const float h = static_cast<float>(screenBuffer3D->GetHeight());
+            mainCamera3D->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
         }
-        obj->SetFovY(0.7f);
-        mainCamera3D_ = obj.get();
-        AddObject3D(std::move(obj));
+        mainCamera3D->SetFovY(0.7f);
 
-        if (mainCamera3D_) {
-            auto camCtrl = std::make_unique<CameraController>(mainCamera3D_);
-            camCtrl->SetTargetRotate(Vector3(kPi * (15.0f / 180.0f), 0.0f, 0.0f));
-            camCtrl->SetTargetFovY(1.0f);
-            camCtrl->SetLerpFactor(0.2f);
+        auto camCtrl = std::make_unique<CameraController>(mainCamera3D);
+        camCtrl->SetTargetRotate(Vector3(M_PI * (15.0f / 180.0f), 0.0f, 0.0f));
+        camCtrl->SetTargetFovY(1.0f);
+        camCtrl->SetLerpFactor(0.2f);
 
-            // プレイヤー追従はプレイヤー生成後に設定するため、一旦 SceneComponent として登録して保持する
-            cameraController_ = camCtrl.get();
-            AddSceneComponent(std::move(camCtrl));
-        }
+        cameraController_ = camCtrl.get();
+        AddSceneComponent(std::move(camCtrl));
     }
 
-    // Directional Light (screenBuffer_)
-    {
-        auto obj = std::make_unique<DirectionalLight>();
-        if (auto *light = obj.get()) {
-            light->SetEnabled(true);
-            light->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            light->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
-            light->SetIntensity(1.6f);
-        }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-        directionalLight_ = obj.get();
-        AddObject3D(std::move(obj));
+    // デフォルトから平行光源を設定
+    if (directionalLight) {
+        directionalLight->SetEnabled(true);
+        directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
+        directionalLight->SetIntensity(1.0f);
     }
 
     // Mover Sphere（移動の親となるオブジェクト、レンダラーへのアタッチはしない）
     {
         auto obj = std::make_unique<Sphere>();
         obj->SetName("MoverSphere");
-        // デフォルトは可視化不要のためレンダーレジスタは行わない
         mover_ = obj.get();
         AddObject3D(std::move(obj));
     }
@@ -155,7 +139,7 @@ GameScene::GameScene()
         obj->SetName("FloorPlane");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
-            tr->SetRotate(Vector3(kPi * 0.5f, 0.0f, 0.0f));
+            tr->SetRotate(Vector3(M_PI * 0.5f, 0.0f, 0.0f));
             tr->SetScale(Vector3(10.0f, 10.0f, 1.0f));
             if (mover_) {
                 if (auto *moverTr = mover_->GetComponent3D<Transform3D>()) {
@@ -167,7 +151,8 @@ GameScene::GameScene()
             mat->SetTexture(whiteTex);
         }
 
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         floorPlane_ = obj.get();
         AddObject3D(std::move(obj));
     }
@@ -190,14 +175,12 @@ GameScene::GameScene()
         }
         obj->RegisterComponent<PlayerMovement>(GetInputCommand());
 
-        // Health
         int health = 15;
 #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
         health = 15;
 #endif
         obj->RegisterComponent<Health>(health);
 
-        // Collision3D (sphere, about half size)
         if (auto *collComp = GetSceneComponent<ColliderComponent>()) {
             ColliderInfo3D info;
             Math::Sphere sp;
@@ -223,7 +206,6 @@ GameScene::GameScene()
                 if (!health) return;
 
                 if (auto *pm = hit.selfObject->GetComponent3D<PlayerMovement>()) {
-                    // ジャスト回避: 当たる瞬間に回避入力(=dash trigger)していたらノーダメージ + カウント
                     if (pm->IsJustDodging() && !health->WasDamagedThisCooldown()) {
                         if (!justDodgeCountedThisDash_) {
                             ++justDodgeCount_;
@@ -239,14 +221,13 @@ GameScene::GameScene()
                                     jp->Spawn(p, dashDir);
                                 }
                             }
-                            
+
                             auto soundHandle = AudioManager::GetSoundHandleFromFileName("avoidJust.mp3");
                             AudioManager::Play(soundHandle, 1.0f, 0.0f, false);
                         }
                         return;
                     }
 
-                    // 回避中は無敵
                     if (pm->IsDashing()) return;
                 }
             };
@@ -254,12 +235,12 @@ GameScene::GameScene()
             obj->RegisterComponent<Collision3D>(collComp->GetCollider(), info);
         }
 
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         player_ = obj.get();
 
         AddObject3D(std::move(obj));
 
-        // カメラ追従設定（カメラの初期座標をオフセットとして扱う）
         if (cameraController_ && player_) {
             cameraController_->SetFollowTarget(player_);
             cameraController_->RecalculateOffsetFromCurrentCamera();
@@ -268,9 +249,8 @@ GameScene::GameScene()
 
     // Rotating Planes
     {
-        // ある程度再現性があるよう、固定シードの RNG を使う
         std::mt19937 rng{12345u};
-        std::uniform_real_distribution<float> angleDist(0.0f, kPi * 2.0f);
+        std::uniform_real_distribution<float> angleDist(0.0f, M_PI * 2.0f);
         std::uniform_real_distribution<float> scaleDist(6.0f, 10.0f);
         std::uniform_real_distribution<float> radiusDist(10.0f, 32.0f);
 
@@ -282,31 +262,22 @@ GameScene::GameScene()
             const float theta = angleDist(rng);
             const float r = radiusDist(rng);
 
-            // 半径 r の円周上に配置（XY）
             float x = std::cos(theta) * r;
             float y = std::sin(theta) * r;
 
-            // 生成時の Z は現状値のまま（奥方向へ順番に配置）
             const float z = static_cast<float>(i) * 1.0f;
-
-            // Z 回転もランダムにする
             const float rz = angleDist(rng);
-
-            // スケールもランダムにする
             float scale = scaleDist(rng);
 
-            // i が64の倍数なら固定の大きさと座標にする
             if (i != 0 && (i % 64) == 0) {
                 x = 0.0f;
                 y = 0.0f;
                 scale = 64.0f;
             }
 
-            // 初期Yを下にずらしておく（Intro 演出で後から戻す）
             y += -10000.0f;
 
             if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                // XY 平面にし、X/Y を一定範囲のランダム、Z は順番に配置する
                 tr->SetTranslate(Vector3(x, y, z));
                 tr->SetRotate(Vector3(0.0f, 0.0f, rz));
                 tr->SetScale(Vector3(scale, scale, 1.0f));
@@ -321,7 +292,8 @@ GameScene::GameScene()
 
             obj->RegisterComponent<AlwaysRotate>(Vector3{0.0f, 0.0f, -1.0f});
 
-            if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+            if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
             rotatingPlanes.push_back(obj.get());
             AddObject3D(std::move(obj));
         }
@@ -334,7 +306,7 @@ GameScene::GameScene()
         for (std::uint32_t i = 0; i < kParticleCount; ++i) {
             auto obj = std::make_unique<Billboard>();
             obj->SetName(std::string("ParticleBillboard_") + std::to_string(i));
-            obj->SetCamera(mainCamera3D_);
+            obj->SetCamera(mainCamera3D);
             obj->SetFacingMode(Billboard::FacingMode::LookAtCamera);
 
             obj->RegisterComponent<ParticleMovement>(
@@ -348,7 +320,8 @@ GameScene::GameScene()
             if (auto *mat = obj->GetComponent3D<Material3D>()) {
                 mat->SetTexture(whiteTex);
             }
-            if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+            if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
             particleBillboards_.push_back(obj.get());
             AddObject3D(std::move(obj));
         }
@@ -366,26 +339,13 @@ GameScene::GameScene()
             mat->SetEnableLighting(false);
             mat->SetTexture(whiteTex);
         }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         skySphere_ = obj.get();
         AddObject3D(std::move(obj));
     }
 
-    // ScreenBuffer用スプライト（最終表示）
-    {
-        auto obj = std::make_unique<Sprite>();
-        obj->SetUniqueBatchKey();
-        obj->SetName("ScreenBufferSprite");
-        if (screenBuffer_) {
-            if (auto *mat = obj->GetComponent2D<Material2D>()) {
-                mat->SetTexture(screenBuffer_);
-            }
-        }
-        obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
-        screenSprite_ = obj.get();
-        AddObject2D(std::move(obj));
-    }
-
+    // Avoid command sprite
     {
         auto obj = std::make_unique<Sprite>();
         obj->SetUniqueBatchKey();
@@ -395,16 +355,11 @@ GameScene::GameScene()
             mat->SetTexture(TextureManager::GetTextureFromFileName("avoidCommandText.png"));
         }
         if (auto *tr = obj->GetComponent2D<Transform2D>()) {
-            // 左下 (anchor: center)
-            tr->SetTranslate(Vector2{256.0f, 1080.0f - 128.0f});
-            tr->SetScale(Vector2{512.0f, -256.0f});
+            tr->SetTranslate(Vector2{256.0f, 128.0f});
+            tr->SetScale(Vector2{512.0f, 256.0f});
         }
 
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-        }
-
-        avoidCommandSprite_ = obj.get();
+        if (screenBuffer2D) obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         AddObject2D(std::move(obj));
     }
 
@@ -412,32 +367,32 @@ GameScene::GameScene()
     AddSceneComponent(std::make_unique<SceneChangeOut>());
 
     // 攻撃ギア系コンポーネントを登録（mover を保持させる）
-    AddSceneComponent(std::make_unique<AttackGearWallForward>(mover_, screenBuffer_));
-    AddSceneComponent(std::make_unique<AttackGearWallLeftSide>(mover_, screenBuffer_));
-    AddSceneComponent(std::make_unique<AttackGearWallRightSide>(mover_, screenBuffer_));
-    AddSceneComponent(std::make_unique<AttackGearCircularOutside>(mover_, screenBuffer_));
-    AddSceneComponent(std::make_unique<AttackGearCircularInside>(mover_, screenBuffer_));
+    AddSceneComponent(std::make_unique<AttackGearWallForward>(mover_, screenBuffer3D));
+    AddSceneComponent(std::make_unique<AttackGearWallLeftSide>(mover_, screenBuffer3D));
+    AddSceneComponent(std::make_unique<AttackGearWallRightSide>(mover_, screenBuffer3D));
+    AddSceneComponent(std::make_unique<AttackGearCircularOutside>(mover_, screenBuffer3D));
+    AddSceneComponent(std::make_unique<AttackGearCircularInside>(mover_, screenBuffer3D));
 
     // ゲーム開始ロゴ
-    AddSceneComponent(std::make_unique<GameIntroLogoAnimation>(screenBuffer_));
+    AddSceneComponent(std::make_unique<GameIntroLogoAnimation>(screenBuffer2D));
 
     // ブレイクパーティクル
-    AddSceneComponent(std::make_unique<BreakParticleGenerator>(screenBuffer_, mover_));
+    AddSceneComponent(std::make_unique<BreakParticleGenerator>(screenBuffer3D, mover_));
 
     // ジャスト回避パーティクル
-    AddSceneComponent(std::make_unique<JustAvoidParticle>(screenBuffer_, mainCamera3D_, mover_));
+    AddSceneComponent(std::make_unique<JustAvoidParticle>(screenBuffer3D, mainCamera3D, mover_));
 
     // プレイヤー体力 UI
-    auto playerHealthUI = std::make_unique<PlayerHealthUI>(screenBuffer_);
+    auto playerHealthUI = std::make_unique<PlayerHealthUI>(screenBuffer2D);
     if (player_) {
         playerHealthUI->SetHealth(player_->GetComponent3D<Health>());
     }
     AddSceneComponent(std::move(playerHealthUI));
     // リザルト UI
-    AddSceneComponent(std::make_unique<ResultUI>(screenBuffer_, player_->GetComponent3D<Health>()));
+    AddSceneComponent(std::make_unique<ResultUI>(screenBuffer2D, player_->GetComponent3D<Health>()));
 
-    // ゲーム進行管理
-    AddSceneComponent(std::make_unique<GameProgressController>(mainCamera3D_, directionalLight_, mover_, screenSprite_, rotatingPlanes));
+    // ゲーム進行管理 - use default screen sprite if available
+    AddSceneComponent(std::make_unique<GameProgressController>(mainCamera3D, directionalLight, mover_, screen3DSprite, rotatingPlanes));
 
     if (auto *sceneChangeIn = GetSceneComponent<SceneChangeIn>()) {
         sceneChangeIn->Play();
@@ -449,8 +404,6 @@ GameScene::~GameScene() {
         AudioManager::Stop(bgmPlay_);
         bgmPlay_ = AudioManager::kInvalidPlayHandle;
     }
-    ClearObjects2D();
-    ClearObjects3D();
 }
 
 void GameScene::OnUpdate() {
@@ -545,7 +498,6 @@ void GameScene::OnUpdate() {
 
     if (player_) {
         if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
-            // Particle SpawnBox を Player 中心に更新
             const Matrix4x4 playerWorldMat = playerTr->GetWorldMatrix();
             const Vector3 p = Vector3(
                 playerWorldMat.m[3][0],
@@ -565,55 +517,10 @@ void GameScene::OnUpdate() {
                 }
             }
 
-            // SkySphere を Player 中心に更新
             if (skySphere_) {
                 if (auto *skyTr = skySphere_->GetComponent3D<Transform3D>()) {
                     skyTr->SetTranslate(Vector3{ p.x, p.y, p.z });
                 }
-            }
-        }
-    }
-
-    // ScreenBuffer のサイズをウィンドウサイズに合わせる（アスペクト維持）
-    if (screenCamera2D_ && screenSprite_) {
-        if (auto *window = Window::GetWindow("Main Window")) {
-            const float w = static_cast<float>(window->GetClientWidth());
-            const float h = static_cast<float>(window->GetClientHeight());
-            screenCamera2D_->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            screenCamera2D_->SetViewportParams(0.0f, 0.0f, w, h);
-
-            // screenBuffer_ 内UIの座標更新
-            if (avoidCommandSprite_ && screenBuffer_) {
-                if (auto *tr = avoidCommandSprite_->GetComponent2D<Transform2D>()) {
-                    const float sh = static_cast<float>(screenBuffer_->GetHeight());
-                    tr->SetTranslate(Vector2{256.0f, sh - 128.0f});
-                    tr->SetScale(Vector2{512.0f, -256.0f});
-                }
-            }
-
-            if (auto *tr = screenSprite_->GetComponent2D<Transform2D>()) {
-                float drawW = w;
-                float drawH = h;
-
-                if (screenBuffer_) {
-                    const float srcW = static_cast<float>(screenBuffer_->GetWidth());
-                    const float srcH = static_cast<float>(screenBuffer_->GetHeight());
-                    if (srcW > 0.0f && srcH > 0.0f && w > 0.0f && h > 0.0f) {
-                        const float srcAspect = srcW / srcH;
-                        const float dstAspect = w / h;
-
-                        if (dstAspect > srcAspect) {
-                            drawH = h;
-                            drawW = drawH * srcAspect;
-                        } else {
-                            drawW = w;
-                            drawH = drawW / srcAspect;
-                        }
-                    }
-                }
-
-                tr->SetTranslate(Vector2{w * 0.5f, h * 0.5f});
-                tr->SetScale(Vector2{drawW, -drawH});
             }
         }
     }
@@ -628,4 +535,4 @@ void GameScene::OnUpdate() {
     }
 }
 
-}  // namespace KashipanEngine}  // namespace KashipanEngine
+}  // namespace KashipanEngine

@@ -1,9 +1,9 @@
 #include "KashipanEngine.h"
 #include "EngineSettings.h"
-#include "Debug/LogSettings.h"
 #include "Debug/CrashHandler.h"
-#include "Utilities/FileIO/JSON.h"
+#include "Debug/LogSettings.h"
 #include "Core/DirectX/ResourceLeakChecker.h"
+#include "Core/GameEngine.h"
 
 namespace KashipanEngine {
 int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {

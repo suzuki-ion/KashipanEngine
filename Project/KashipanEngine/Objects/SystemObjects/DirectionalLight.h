@@ -35,6 +35,8 @@ public:
     const LightBuffer &GetLightBufferCPU() const { return lightBufferCPU_; }
     void UpdateLightBufferCPUForRenderer() const { UpdateLightBufferCPU(); }
 
+    Matrix4x4 ComputeShadowLightViewProjection(float orthoHalfSize = 50.0f, float nearClip = 0.1f, float farClip = 200.0f, Vector3 focus = { 0.0f, 0.0f, 0.0f }) const;
+
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
 

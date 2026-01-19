@@ -1,15 +1,5 @@
 #include "Scenes/Components/PlayerHealthUI.h"
-
-#include "Scene/SceneContext.h"
-
 #include "Objects/Components/Health.h"
-
-#include "Objects/GameObjects/2D/Sprite.h"
-#include "Objects/Components/2D/Transform2D.h"
-#include "Objects/Components/2D/Material2D.h"
-
-#include "Assets/TextureManager.h"
-
 #include <algorithm>
 
 namespace KashipanEngine {
@@ -36,6 +26,8 @@ void PlayerHealthUI::EnsureSprites() {
 
     const auto tex = TextureManager::GetTextureFromFileName("heart.png");
 
+    const float yOffset = screenBuffer_ ? static_cast<float>(screenBuffer_->GetHeight()) : 0.0f;
+
     for (int i = 0; i < maxHpAtBind_; ++i) {
         auto obj = std::make_unique<Sprite>();
         obj->SetUniqueBatchKey();
@@ -54,9 +46,9 @@ void PlayerHealthUI::EnsureSprites() {
             const float size = 64.0f;
             const float margin = 16.0f;
             const float x = size * 0.5f + margin + static_cast<float>(i) * (size + margin);
-            const float y = size * 0.5f + margin;
+            const float y = yOffset - (size * 0.5f + margin);
             tr->SetTranslate(Vector2{x, y});
-            tr->SetScale(Vector2{size, -size});
+            tr->SetScale(Vector2{size, size});
         }
 
         auto *raw = obj.get();

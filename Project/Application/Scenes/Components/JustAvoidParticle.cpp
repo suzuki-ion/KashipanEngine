@@ -1,16 +1,5 @@
 #include "Scenes/Components/JustAvoidParticle.h"
-
-#include "Scene/SceneContext.h"
-
-#include "Objects/GameObjects/3D/Billboard.h"
-#include "Objects/Components/3D/Transform3D.h"
-#include "Objects/Components/3D/Material3D.h"
-
-#include "Assets/TextureManager.h"
-
 #include "Objects/Components/MovementController.h"
-#include "Math/Easings.h"
-
 #include <algorithm>
 #include <cmath>
 #include <random>

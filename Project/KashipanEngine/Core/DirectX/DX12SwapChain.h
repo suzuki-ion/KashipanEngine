@@ -3,10 +3,12 @@
 #include <dcomp.h>
 #include "Graphics/Resources.h"
 #include "Core/DirectX/DCompHost.h"
+#include "Core/DirectX/DX12Commands.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
+class GameEnginel;
 class DirectXCommon;
 class Window;
 #if defined(USE_IMGUI)
@@ -97,14 +99,12 @@ public:
     void Resize(Passkey<DirectXCommon>);
 
     /// @brief コマンド関連オブジェクトを外部からバインド（DirectXCommon 所有）
-    void BindCommandObjects(Passkey<DirectXCommon>,
-        ID3D12GraphicsCommandList* commandList,
-        const std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>& commandAllocators);
+    void BindCommandObjects(Passkey<DirectXCommon>, DX12Commands* commands, int slotIndex);
 
     /// @brief 記録済みコマンドリスト取得 (DirectXCommon 用)
-    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<DirectXCommon>) const noexcept { return commandList_; }
+    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<DirectXCommon>) const noexcept { return commands_ ? commands_->GetCommandList() : nullptr; }
     /// @brief 記録済みコマンドリスト取得 (Window 用)
-    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<Window>) const noexcept { return commandList_; }
+    ID3D12GraphicsCommandList* GetRecordedCommandList(Passkey<Window>) const noexcept { return commands_ ? commands_->GetCommandList() : nullptr; }
 
     int32_t GetBufferCount() const noexcept { return bufferCount_; }
     DXGI_FORMAT GetBackBufferFormat() const noexcept { return backBufferFormat_; }
@@ -155,9 +155,9 @@ private:
     int32_t requestedWidth_ = 0;
     int32_t requestedHeight_ = 0;
 
-    // コマンド関連（DirectXCommon 所有の参照）
-    ID3D12GraphicsCommandList* commandList_ = nullptr;
-    const std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>* commandAllocators_ = nullptr;
+    // コマンド関連
+    int slotIndex_ = -1;
+    DX12Commands* commands_ = nullptr;
 
     bool isCreated_ = false;
     bool isDrawing_ = false;

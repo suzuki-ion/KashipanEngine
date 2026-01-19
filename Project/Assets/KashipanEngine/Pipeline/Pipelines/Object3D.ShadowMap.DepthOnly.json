@@ -1,0 +1,16 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "Object3D.ShadowMap.DepthOnly",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "ShadowMap3D.Vertex" },
+		"Pixel": { "UsePreset": "ShadowMap3D.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthEnable" },
+	"PipelineState": { "UsePreset": "TriangleShadow" }
+}

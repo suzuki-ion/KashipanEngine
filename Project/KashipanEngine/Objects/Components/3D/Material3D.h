@@ -15,11 +15,12 @@ namespace KashipanEngine {
 class Material3D : public IObjectComponent3D {
 public:
     struct InstanceData {
-        float enableLighting;
-        Vector4 color;
-        Matrix4x4 uvTransform;
-        float shininess;
-        Vector4 specularColor;
+        float enableLighting = 1.0f;
+        float enableShadowMapProjection = 1.0f;
+        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        Matrix4x4 uvTransform = Matrix4x4::Identity();
+        float shininess = 32.0f;
+        Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
     };
 
     struct UVTransform {
@@ -38,8 +39,8 @@ public:
 
     /// @brief コンポーネントのクローンを作成
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Material3D>(color_, textureHandle_, samplerHandle_);
-        ptr->uvTransform_ = uvTransform_;
+        auto ptr = std::make_unique<Material3D>(instanceData_.color, textureHandle_, samplerHandle_);
+        ptr->instanceData_ = instanceData_;
         return ptr;
     }
 
@@ -48,15 +49,19 @@ public:
         if (!shaderBinder) return false;
 
         bool ok = true;
-        if (texture_ != nullptr) {
-            ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", *texture_);
-        } else if (textureHandle_ != TextureManager::kInvalidHandle) {
-            ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
+        if (shaderBinder->GetNameMap().Contains("Pixel:gTexture")) {
+            if (texture_ != nullptr) {
+                ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", *texture_);
+            } else if (textureHandle_ != TextureManager::kInvalidHandle) {
+                ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
+            }
+        }
+        if (shaderBinder->GetNameMap().Contains("Pixel:gSampler")) {
+            if (samplerHandle_ != SamplerManager::kInvalidHandle) {
+                ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
+            }
         }
 
-        if (samplerHandle_ != SamplerManager::kInvalidHandle) {
-            ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
-        }
         return ok;
     }
 
@@ -70,9 +75,7 @@ public:
         if (!instanceMap) return false;
 
         auto *arr = static_cast<InstanceData*>(instanceMap);
-        arr[instanceIndex].enableLighting = enableLighting_;
-        arr[instanceIndex].color = color_;
-        arr[instanceIndex].uvTransform = GetUVTransformMatrix();
+        std::memcpy(&arr[instanceIndex], &instanceData_, sizeof(InstanceData));
         return true;
     }
 
@@ -88,47 +91,54 @@ public:
     void SetSampler(SamplerManager::SamplerHandle sampler) { samplerHandle_ = sampler; }
     
     void SetEnableLighting(bool enable) {
-        enableLighting_ = enable ? 1.0f : 0.0f;
+        instanceData_.enableLighting = enable ? 1.0f : 0.0f;
+        isBufferDirty_ = true;
+    }
+    void SetEnableShadowMapProjection(bool enable) {
+        instanceData_.enableShadowMapProjection = enable ? 1.0f : 0.0f;
         isBufferDirty_ = true;
     }
     void SetColor(const Vector4 &color) {
-        color_ = color;
+        instanceData_.color = color;
         isBufferDirty_ = true;
     }
     void SetUVTransform(const UVTransform &uvTransform) {
         uvTransform_ = uvTransform;
+        instanceData_.uvTransform.MakeAffine(uvTransform_.scale, uvTransform_.rotate, uvTransform_.translate);
         isBufferDirty_ = true;
     }
     void SetShininess(float shininess) {
-        shininess_ = shininess;
+        instanceData_.shininess = shininess;
         isBufferDirty_ = true;
     }
     void SetSpecularColor(const Vector4 &specularColor) {
-        specularColor_ = specularColor;
+        instanceData_.specularColor = specularColor;
         isBufferDirty_ = true;
     }
 
     TextureManager::TextureHandle GetTexture() const { return textureHandle_; }
     IShaderTexture* GetTexturePtr() const { return texture_; }
     SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
-    const Vector4 &GetColor() const { return color_; }
+    const Vector4 &GetColor() const { return instanceData_.color; }
     const UVTransform &GetUVTransform() const { return uvTransform_; }
     Matrix4x4 GetUVTransformMatrix() const {
-        Matrix4x4 m = Matrix4x4::Identity();
-        m.MakeAffine(uvTransform_.scale, uvTransform_.rotate, uvTransform_.translate);
-        return m;
+        return instanceData_.uvTransform;
     }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::TextUnformatted(Translation("engine.imgui.component.material3d").c_str());
 
-        bool lightingEnabled = (enableLighting_ != 0.0f);
+        bool lightingEnabled = (instanceData_.enableLighting != 0.0f);
         if (ImGui::Checkbox(Translation("engine.imgui.material.enable_lighting").c_str(), &lightingEnabled)) {
             SetEnableLighting(lightingEnabled);
         }
+        bool shadowEnabled = (instanceData_.enableShadowMapProjection != 0.0f);
+        if (ImGui::Checkbox(Translation("engine.imgui.material.enable_shadow").c_str(), &shadowEnabled)) {
+            SetEnableShadowMapProjection(shadowEnabled);
+        }
 
-        Vector4 c = color_;
+        Vector4 c = instanceData_.color;
         if (ImGui::ColorEdit4(Translation("engine.imgui.material.color").c_str(), &c.x)) {
             SetColor(c);
         }
@@ -139,10 +149,10 @@ public:
         ImGui::DragFloat3(Translation("engine.imgui.material.uv.scale").c_str(), &uv.scale.x, 0.01f);
         SetUVTransform(uv);
 
-        if (ImGui::DragFloat(Translation("engine.imgui.material.shininess").c_str(), &shininess_, 0.1f, 0.0f, 256.0f)) {
-            SetShininess(shininess_);
+        if (ImGui::DragFloat(Translation("engine.imgui.material.shininess").c_str(), &instanceData_.shininess, 0.1f, 0.0f, 256.0f)) {
+            SetShininess(instanceData_.shininess);
         }
-        Vector4 specColor = specularColor_;
+        Vector4 specColor = instanceData_.specularColor;
         if (ImGui::ColorEdit4(Translation("engine.imgui.material.specular_color").c_str(), &specColor.x)) {
             SetSpecularColor(specColor);
         }
@@ -158,11 +168,8 @@ public:
 #endif
 
 private:
-    float enableLighting_ = 1.0f;
-    Vector4 color_{1.0f, 1.0f, 1.0f, 1.0f};
-    UVTransform uvTransform_{};
-    float shininess_ = 32.0f;
-    Vector4 specularColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    UVTransform uvTransform_;
+    InstanceData instanceData_{};
 
     TextureManager::TextureHandle textureHandle_ = TextureManager::kInvalidHandle;
     IShaderTexture* texture_ = nullptr;

@@ -15,6 +15,12 @@ Camera3D::Camera3D()
     nearClip_ = 0.1f;
     farClip_ = 2048.0f;
 
+    // Orthographic defaults (world space)
+    orthoLeft_ = -10.0f;
+    orthoTop_ = 10.0f;
+    orthoRight_ = 10.0f;
+    orthoBottom_ = -10.0f;
+
     viewportLeft_ = 0.0f;
     viewportTop_ = 0.0f;
     viewportWidth_ = 1280.0f;
@@ -22,10 +28,11 @@ Camera3D::Camera3D()
     viewportMinDepth_ = 0.0f;
     viewportMaxDepth_ = 1.0f;
 
-    SetConstantBufferRequirements({
-        { "Vertex:gCamera", sizeof(CameraBuffer) },
-        { "Pixel:gCamera", sizeof(CameraBuffer) }
-    });
+    std::vector<RenderPass::ConstantBufferRequirement> reqs;
+    for (const auto &key : constantBufferRequirementKeys_) {
+        reqs.push_back({ key, sizeof(CameraBuffer) });
+    }
+    SetConstantBufferRequirements(reqs);
     SetUpdateConstantBuffersFunction(
         [this](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
             if (!constantBufferMaps) return false;
@@ -39,23 +46,24 @@ Camera3D::Camera3D()
 void Camera3D::SetFovY(float fovY) {
     fovY_ = fovY;
 
-    isPerspectiveMatrixCalculated_ = false;
-    isProjectionMatrixCalculated_ = false;
-    isViewProjectionMatrixCalculated_ = false;
+    if (cameraType_ == CameraType::Perspective) {
+        isProjectionMatrixCalculated_ = false;
+        isViewProjectionMatrixCalculated_ = false;
+    }
 }
 
 void Camera3D::SetAspectRatio(float aspectRatio) {
     aspectRatio_ = aspectRatio;
 
-    isPerspectiveMatrixCalculated_ = false;
-    isProjectionMatrixCalculated_ = false;
-    isViewProjectionMatrixCalculated_ = false;
+    if (cameraType_ == CameraType::Perspective) {
+        isProjectionMatrixCalculated_ = false;
+        isViewProjectionMatrixCalculated_ = false;
+    }
 }
 
 void Camera3D::SetNearClip(float nearClip) {
     nearClip_ = nearClip;
 
-    isPerspectiveMatrixCalculated_ = false;
     isProjectionMatrixCalculated_ = false;
     isViewProjectionMatrixCalculated_ = false;
 }
@@ -63,38 +71,43 @@ void Camera3D::SetNearClip(float nearClip) {
 void Camera3D::SetFarClip(float farClip) {
     farClip_ = farClip;
 
-    isPerspectiveMatrixCalculated_ = false;
     isProjectionMatrixCalculated_ = false;
     isViewProjectionMatrixCalculated_ = false;
 }
 
 void Camera3D::SetViewportLeft(float left) {
     viewportLeft_ = left;
+
     isViewportMatrixCalculated_ = false;
 }
 
 void Camera3D::SetViewportTop(float top) {
     viewportTop_ = top;
+
     isViewportMatrixCalculated_ = false;
 }
 
 void Camera3D::SetViewportWidth(float width) {
     viewportWidth_ = width;
+
     isViewportMatrixCalculated_ = false;
 }
 
 void Camera3D::SetViewportHeight(float height) {
     viewportHeight_ = height;
+
     isViewportMatrixCalculated_ = false;
 }
 
 void Camera3D::SetViewportMinDepth(float minDepth) {
     viewportMinDepth_ = minDepth;
+
     isViewportMatrixCalculated_ = false;
 }
 
 void Camera3D::SetViewportMaxDepth(float maxDepth) {
     viewportMaxDepth_ = maxDepth;
+
     isViewportMatrixCalculated_ = false;
 }
 
@@ -104,9 +117,24 @@ void Camera3D::SetPerspectiveParams(float fovY, float aspectRatio, float nearCli
     nearClip_ = nearClip;
     farClip_ = farClip;
 
-    isPerspectiveMatrixCalculated_ = false;
-    isProjectionMatrixCalculated_ = false;
-    isViewProjectionMatrixCalculated_ = false;
+    if (cameraType_ == CameraType::Perspective) {
+        isProjectionMatrixCalculated_ = false;
+        isViewProjectionMatrixCalculated_ = false;
+    }
+}
+
+void Camera3D::SetOrthographicParams(float left, float top, float right, float bottom, float nearClip, float farClip) {
+    orthoLeft_ = left;
+    orthoTop_ = top;
+    orthoRight_ = right;
+    orthoBottom_ = bottom;
+    nearClip_ = nearClip;
+    farClip_ = farClip;
+
+    if (cameraType_ == CameraType::Orthographic) {
+        isProjectionMatrixCalculated_ = false;
+        isViewProjectionMatrixCalculated_ = false;
+    }
 }
 
 void Camera3D::SetViewportParams(float left, float top, float width, float height, float minDepth, float maxDepth) {
@@ -118,15 +146,6 @@ void Camera3D::SetViewportParams(float left, float top, float width, float heigh
     viewportMaxDepth_ = maxDepth;
 
     isViewportMatrixCalculated_ = false;
-}
-
-const Matrix4x4 &Camera3D::GetPerspectiveMatrix() const {
-    if (!isPerspectiveMatrixCalculated_) {
-        perspectiveMatrix_ = Matrix4x4::Identity();
-        perspectiveMatrix_.MakePerspectiveFovMatrix(fovY_, aspectRatio_, nearClip_, farClip_);
-        isPerspectiveMatrixCalculated_ = true;
-    }
-    return perspectiveMatrix_;
 }
 
 const Matrix4x4 &Camera3D::GetViewMatrix() const {
@@ -168,7 +187,16 @@ const Matrix4x4 &Camera3D::GetViewMatrix() const {
 
 const Matrix4x4 &Camera3D::GetProjectionMatrix() const {
     if (!isProjectionMatrixCalculated_) {
-        projectionMatrix_ = GetPerspectiveMatrix();
+        if (cameraType_ == CameraType::Perspective) {
+            projectionMatrix_.MakePerspectiveFovMatrix(
+                fovY_, aspectRatio_, nearClip_, farClip_);
+        } else if (cameraType_ == CameraType::Orthographic) {
+            projectionMatrix_.MakeOrthographicMatrix(
+                orthoLeft_, orthoTop_, orthoRight_, orthoBottom_,
+                nearClip_, farClip_);
+        } else {
+            projectionMatrix_ = Matrix4x4::Identity();
+        }
         isProjectionMatrixCalculated_ = true;
     }
     return projectionMatrix_;
@@ -191,6 +219,13 @@ const Matrix4x4 &Camera3D::GetViewportMatrix() const {
     return viewportMatrix_;
 }
 
+void Camera3D::SetCameraType(CameraType type) {
+    if (cameraType_ == type) return;
+    cameraType_ = type;
+    isProjectionMatrixCalculated_ = false;
+    isViewProjectionMatrixCalculated_ = false;
+}
+
 void Camera3D::UpdateCameraBufferCPU() const {
     cameraBufferCPU_.view = GetViewMatrix();
     cameraBufferCPU_.projection = GetProjectionMatrix();
@@ -210,9 +245,17 @@ void Camera3D::UpdateCameraBufferCPU() const {
     cameraBufferCPU_.fov = fovY_;
 }
 
+void Camera3D::SetConstantBufferRequirementKeys(const std::vector<std::string> &keys) {
+    constantBufferRequirementKeys_ = keys;
+    std::vector<RenderPass::ConstantBufferRequirement> reqs;
+    for (const auto &key : constantBufferRequirementKeys_) {
+        reqs.push_back({ key, sizeof(CameraBuffer) });
+    }
+    SetConstantBufferRequirements(reqs);
+}
+
 bool Camera3D::Render(ShaderVariableBinder &shaderBinder) {
     (void)shaderBinder;
-    // Camera constant buffer update/bind is handled in Renderer at batch time.
     UpdateCameraBufferCPU();
     return true;
 }

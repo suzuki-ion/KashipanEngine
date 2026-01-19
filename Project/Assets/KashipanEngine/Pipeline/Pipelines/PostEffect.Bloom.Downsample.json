@@ -1,0 +1,16 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "PostEffect.Bloom.Downsample",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Bloom.Downsample.Vertex" },
+		"Pixel": { "UsePreset": "Bloom.Downsample.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

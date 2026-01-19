@@ -6,12 +6,19 @@
 #include <windows.h>
 #include <optional>
 #include <cstdint>
+#include <array>
+#if defined(USE_IMGUI)
+struct ImGuiContext;
+#endif
+#include "Math/Matrix4x4.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 
 namespace KashipanEngine {
+
+class RendererCpuTimerScope;
 
 class Window;
 class DirectXCommon;
@@ -20,6 +27,14 @@ class PipelineManager;
 class Object2DBase;
 class Object3DBase;
 class ScreenBuffer;
+class ShadowMapBuffer;
+class IPostEffectComponent;
+
+/// @brief オブジェクト種別
+enum class ObjectType {
+    GameObject,
+    SystemObject,
+};
 
 /// @brief 描画方式
 enum class RenderType {
@@ -43,6 +58,7 @@ private:
     friend class Renderer;
     friend class Object2DBase;
     friend class Object3DBase;
+    friend class IPostEffectComponent;
     RenderCommand() = default;
     UINT vertexCount = 0;           //< 頂点数
     UINT indexCount = 0;            //< インデックス数
@@ -76,6 +92,7 @@ private:
     friend class Object2DBase;
     friend class Object3DBase;
     friend class ScreenBuffer;
+    friend class ShadowMapBuffer;
 
     RenderPass(Passkey<Object2DBase>) : dimension(RenderDimension::D2) {}
     RenderPass(Passkey<Object3DBase>) : dimension(RenderDimension::D3) {}
@@ -83,10 +100,12 @@ private:
 
     Window *window = nullptr;          //< 描画先ウィンドウ（Window 描画の場合）
     ScreenBuffer *screenBuffer = nullptr; //< 描画先スクリーンバッファ（ScreenBuffer 描画の場合）
+    ShadowMapBuffer *shadowMapBuffer = nullptr; //< 描画先シャドウマップバッファ（ShadowMapBuffer 描画の場合）
     std::string pipelineName;          //< 使用するパイプライン名
     std::string passName;              //< パス名（デバッグ用）
 
     const RenderDimension dimension;
+    ObjectType objectType = ObjectType::GameObject;
     RenderType renderType = RenderType::Standard;
 
     std::uint64_t batchKey = 0;
@@ -96,6 +115,37 @@ private:
     std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction;
     std::function<bool(ShaderVariableBinder &, std::uint32_t instanceCount)> batchedRenderFunction;
     std::function<std::optional<RenderCommand>(PipelineBinder &)> renderCommandFunction; //< 描画コマンド取得関数
+};
+
+/// @brief PostEffect 用描画パス情報構造体
+struct PostEffectPass final {
+public:
+    PostEffectPass() = default;
+
+    std::string pipelineName;
+    std::string passName;
+    std::uint64_t batchKey = 0;
+
+    std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements;
+    std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction;
+    std::vector<RenderPass::InstanceBufferRequirement> instanceBufferRequirements;
+    std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction;
+    /// @brief 描画前に必要な SRV/CBV/Sampler 等をバインド
+    std::function<bool(ShaderVariableBinder &, std::uint32_t instanceCount)> batchedRenderFunction;
+
+    /// @brief ポストエフェクト用: BeginRecord 相当のフック
+    /// @details 設定されている場合、Renderer は ScreenBuffer::BeginRecord/EndRecord を使用せず、
+    ///          ScreenBuffer が保持する DX12Commands から直接 Begin/End を行う。
+    ///          この関数には Begin 後の commandList が渡され、RTV/viewport 等の設定もここで行う。
+    std::function<bool(ID3D12GraphicsCommandList*)> beginRecordFunction;
+
+    /// @brief ポストエフェクト用: EndRecord 相当のフック
+    /// @details beginRecordFunction が設定されている場合にのみ使用される。
+    ///          endRecordFunction が未設定の場合は既定終了処理のみ実行する。
+    std::function<bool(ID3D12GraphicsCommandList*)> endRecordFunction;
+
+    /// @brief 描画コマンド生成（フルスクリーン三角形等）
+    std::function<std::optional<RenderCommand>(PipelineBinder &)> renderCommandFunction;
 };
 
 /// @brief ScreenBuffer 用描画パス情報構造体
@@ -111,9 +161,7 @@ private:
     friend class ScreenBuffer;
 
     ScreenBufferPass(Passkey<ScreenBuffer>) {}
-
-    ScreenBuffer* buffer = nullptr;
-    std::string pipelineName;
+    ScreenBuffer *screenBuffer = nullptr;
     std::string passName;
 
     RenderType renderType = RenderType::Standard;
@@ -121,16 +169,68 @@ private:
 
     std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements;
     std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction;
-
     std::vector<RenderPass::InstanceBufferRequirement> instanceBufferRequirements;
     std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction;
-
     std::function<bool(ShaderVariableBinder &, std::uint32_t instanceCount)> batchedRenderFunction;
 };
 
 /// @brief 描画用のレンダラークラス
 class Renderer final {
 public:
+    struct CpuTimerStats {
+        struct Sample {
+            double lastMs = 0.0;
+            double avgMs = 0.0;
+            std::uint64_t count = 0;
+        };
+
+        enum class Scope : std::uint32_t {
+            RenderFrame = 0,
+
+            ShadowMap_AllBeginRecord,
+            ShadowMap_Passes,
+            ShadowMap_AllEndRecord,
+            ShadowMap_Execute,
+
+            Offscreen_AllBeginRecord,
+            Offscreen_Passes,
+            Offscreen_AllEndRecord,
+            Offscreen_Execute,
+
+            PostEffect_AllBeginRecord,
+            PostEffect_Passes,
+            PostEffect_AllEndRecord,
+            PostEffect_Execute,
+
+            Persistent_Passes,
+
+            Standard_Total,
+            Standard_ConstantBuffer_Update,
+            Standard_ConstantBuffer_Bind,
+            Standard_InstanceBuffer_Update,
+            Standard_RenderCommand,
+
+            Instancing_Total,
+            Instancing_ConstantBuffer_Update,
+            Instancing_ConstantBuffer_Bind,
+            Instancing_InstanceBuffer_MapBind,
+            Instancing_SubmitInstances,
+            Instancing_RenderCommand,
+
+            Count
+        };
+
+        std::array<Sample, static_cast<std::size_t>(Scope::Count)> samples{};
+        std::uint32_t avgWindow = 60;
+    };
+
+    const CpuTimerStats &GetCpuTimerStats() const noexcept { return cpuTimerStats_; }
+    void SetCpuTimerAverageWindow(std::uint32_t frames) noexcept;
+
+#if defined(USE_IMGUI)
+    void ShowImGuiCpuTimersWindow();
+#endif
+
     struct PersistentPassHandle {
         std::uint64_t id = 0;
         bool IsValid() const { return id != 0; }
@@ -155,6 +255,14 @@ public:
         bool operator!=(const PersistentOffscreenPassHandle &o) const { return id != o.id; }
     };
 
+    struct PersistentShadowMapPassHandle {
+        std::uint64_t id = 0;
+        bool IsValid() const { return id != 0; }
+        explicit operator bool() const { return IsValid(); }
+        bool operator==(const PersistentShadowMapPassHandle &o) const { return id == o.id; }
+        bool operator!=(const PersistentShadowMapPassHandle &o) const { return id != o.id; }
+    };
+
     /// @brief コンストラクタ
     /// @param maxRenderPasses 最大レンダーパス数
     Renderer(Passkey<GraphicsEngine>, size_t maxRenderPasses, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
@@ -175,29 +283,31 @@ public:
     /// @brief 永続レンダーパス解除
     bool UnregisterPersistentRenderPass(PersistentPassHandle handle);
 
-    /// @brief レンダーパス登録
-    void RegisterRenderPass(const RenderPass &pass);
-
-    /// @brief レンダーパス登録（ムーブ）
-    void RegisterRenderPass(RenderPass &&pass);
-
     /// @brief ScreenBuffer 向け永続描画パス登録
     PersistentScreenPassHandle RegisterPersistentScreenPass(ScreenBufferPass&& pass);
-
     /// @brief ScreenBuffer 向け永続描画パス解除
     bool UnregisterPersistentScreenPass(PersistentScreenPassHandle handle);
 
     /// @brief ScreenBuffer 宛ての永続 RenderPass 登録
     PersistentOffscreenPassHandle RegisterPersistentOffscreenRenderPass(RenderPass &&pass);
-
     /// @brief ScreenBuffer 宛ての永続 RenderPass 解除
     bool UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHandle handle);
+
+    /// @brief ShadowMapBuffer 宛ての永続 RenderPass 登録
+    PersistentShadowMapPassHandle RegisterPersistentShadowMapRenderPass(RenderPass &&pass);
+    /// @brief ShadowMapBuffer 宛ての永続 RenderPass 解除
+    bool UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHandle handle);
 
     /// @brief フレーム描画処理
     void RenderFrame(Passkey<GraphicsEngine>);
 
     /// @brief Windowの登録
     void RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandList* commandList);
+
+    struct ShadowMapGlobals {
+        ShadowMapBuffer* buffer = nullptr;
+        D3D12_GPU_DESCRIPTOR_HANDLE sampler{};
+    };
 
 private:
     struct PersistentPassEntry {
@@ -212,6 +322,11 @@ private:
 
     struct PersistentOffscreenPassEntry {
         PersistentOffscreenPassHandle handle;
+        RenderPass pass;
+    };
+
+    struct PersistentShadowMapPassEntry {
+        PersistentShadowMapPassHandle handle;
         RenderPass pass;
     };
 
@@ -310,9 +425,17 @@ private:
     };
 
 private:
+    void BeginCpuTimerFrame_() noexcept;
+    void AddCpuTimerSample_(CpuTimerStats::Scope scope, double ms) noexcept;
+
+    CpuTimerStats cpuTimerStats_{};
+
+    friend class ::KashipanEngine::RendererCpuTimerScope;
+
     void RenderOffscreenPasses();
     void RenderScreenPasses();
     void RenderPersistentPasses();
+    void RenderShadowMapPasses();
 
     void Render2DStandard(std::vector<const RenderPass *> renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
     void Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
@@ -330,13 +453,16 @@ private:
     std::uint64_t nextPersistentPassId_ = 1;
     std::uint64_t nextPersistentScreenPassId_ = 1;
     std::uint64_t nextPersistentOffscreenPassId_ = 1;
+    std::uint64_t nextPersistentShadowMapPassId_ = 1;
 
     std::unordered_map<std::uint64_t, PersistentPassEntry> persistentPassesById_;
     std::unordered_map<std::uint64_t, PersistentScreenPassEntry> persistentScreenPassesById_;
     std::unordered_map<std::uint64_t, PersistentOffscreenPassEntry> persistentOffscreenPassesById_;
+    std::unordered_map<std::uint64_t, PersistentShadowMapPassEntry> persistentShadowMapPassesById_;
 
     std::vector<const ScreenBufferPass*> persistentScreenPasses_;
 
+    // GameObject passes
     std::vector<const RenderPass*> persistent2DStandard_;
     std::vector<const RenderPass*> persistent3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistent2DInstancing_;
@@ -346,6 +472,27 @@ private:
     std::vector<const RenderPass*> offscreen3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreen2DInstancing_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreen3DInstancing_;
+
+    std::vector<const RenderPass*> shadowMap2DStandard_;
+    std::vector<const RenderPass*> shadowMap3DStandard_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMap2DInstancing_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMap3DInstancing_;
+
+    // SystemObject passes
+    std::vector<const RenderPass*> persistentSys2DStandard_;
+    std::vector<const RenderPass*> persistentSys3DStandard_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistentSys2DInstancing_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistentSys3DInstancing_;
+
+    std::vector<const RenderPass*> offscreenSys2DStandard_;
+    std::vector<const RenderPass*> offscreenSys3DStandard_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreenSys2DInstancing_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreenSys3DInstancing_;
+
+    std::vector<const RenderPass*> shadowMapSys2DStandard_;
+    std::vector<const RenderPass*> shadowMapSys3DStandard_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMapSys2DInstancing_;
+    std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMapSys3DInstancing_;
 
     /// @brief ウィンドウごとのPipelineBinder
     std::unordered_map<HWND, PipelineBinder> windowBinders_;

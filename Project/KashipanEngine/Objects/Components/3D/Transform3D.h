@@ -50,8 +50,7 @@ public:
 
     std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
         if (!instanceMap) return false;
-        struct InstanceTransformLocal { Matrix4x4 world; };
-        auto *arr = static_cast<InstanceTransformLocal *>(instanceMap);
+        auto *arr = static_cast<InstanceData *>(instanceMap);
         arr[instanceIndex].world = GetWorldMatrix();
         return true;
     }

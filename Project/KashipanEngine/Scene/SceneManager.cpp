@@ -26,8 +26,17 @@ void SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         return;
     }
 
+    if (currentScene_) {
+        currentScene_->Finalize();
+    }
+
     currentScene_.reset();
     currentScene_ = itF->second(this);
+
+    if (currentScene_) {
+        currentScene_->Initialize();
+    }
+
     pendingSceneName_.clear();
 }
 

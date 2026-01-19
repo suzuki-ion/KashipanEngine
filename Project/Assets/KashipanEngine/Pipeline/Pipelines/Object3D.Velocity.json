@@ -1,0 +1,16 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "Object3D.Velocity",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Object3D.Velocity.Vertex" },
+		"Pixel": { "UsePreset": "Object3D.Velocity.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "None" },
+	"DepthStencilState": { "UsePreset": "DepthEnable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

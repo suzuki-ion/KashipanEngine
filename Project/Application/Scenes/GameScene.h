@@ -1,8 +1,5 @@
 #pragma once
-
-#include "Scene/SceneBase.h"
-#include "Graphics/ScreenBuffer.h"
-#include "Assets/AudioManager.h"
+#include <KashipanEngine.h>
 
 namespace KashipanEngine {
 
@@ -25,18 +22,8 @@ protected:
     void OnUpdate() override;
 
 private:
-    ScreenBuffer *screenBuffer_ = nullptr;
-    Camera2D *screenCamera2D_ = nullptr;
-    Sprite *screenSprite_ = nullptr;
-    Sprite *avoidCommandSprite_ = nullptr;
-
-    Camera3D *mainCamera3D_ = nullptr;
-
     // MainCamera3D を制御するシーンコンポーネント
     CameraController *cameraController_ = nullptr;
-
-    // 平行光源
-    DirectionalLight *directionalLight_ = nullptr;
 
     // 移動用の親オブジェクト（RailMovement を登録する Sphere）
     Sphere *mover_ = nullptr;

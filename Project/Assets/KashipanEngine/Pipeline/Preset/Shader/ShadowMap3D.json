@@ -1,0 +1,19 @@
+﻿{
+	"BaseName": "ShadowMap3D",
+	"Vertex": {
+		"Path": "ShadowMap/ShadowMapVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0",
+		"Macros": [
+			{ "Name": "Object3D" }
+		]
+	},
+	"Pixel": {
+		"Path": "ShadowMap/ShadowMapPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0",
+		"Macros": [
+			{ "Name": "Object3D" }
+		]
+	}
+}

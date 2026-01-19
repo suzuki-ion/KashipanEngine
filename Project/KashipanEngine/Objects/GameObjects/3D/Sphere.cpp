@@ -2,6 +2,7 @@
 #include <numbers>
 #include <cmath>
 #include "FaceNormal3D.h"
+#include "Objects/Components/3D/Material3D.h"
 
 namespace KashipanEngine {
 
@@ -90,6 +91,10 @@ Sphere::Sphere(size_t latSegments, size_t lonSegments)
                 ++w;
             }
         }
+    }
+
+    if (auto *material = GetComponent3D<Material3D>()) {
+        material->SetEnableShadowMapProjection(false);
     }
 }
 

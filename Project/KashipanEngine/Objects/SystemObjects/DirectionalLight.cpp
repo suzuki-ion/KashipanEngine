@@ -44,9 +44,32 @@ void DirectionalLight::UpdateLightBufferCPU() const {
 
 bool DirectionalLight::Render(ShaderVariableBinder &shaderBinder) {
     (void)shaderBinder;
-    // DirectionalLight constant buffer update/bind is handled in Renderer at batch time.
     UpdateLightBufferCPU();
     return true;
+}
+
+Matrix4x4 DirectionalLight::ComputeShadowLightViewProjection(float orthoHalfSize, float nearClip, float farClip, Vector3 focus) const {
+    Vector3 dir = direction_;
+    if (dir.Length() <= 0.0001f) {
+        dir = Vector3{0.0f, -1.0f, 0.0f};
+    }
+    dir = dir.Normalize();
+
+    const float distance = orthoHalfSize * 2.0f;
+    const Vector3 eye = focus - dir * distance;
+
+    Vector3 up{0.0f, 1.0f, 0.0f};
+    if (std::abs(up.Dot(dir)) > 0.99f) {
+        up = Vector3{0.0f, 0.0f, 1.0f};
+    }
+
+    Matrix4x4 view = Matrix4x4::Identity();
+    view.MakeViewMatrix(eye, focus, up);
+
+    Matrix4x4 proj = Matrix4x4::Identity();
+    proj.MakeOrthographicMatrix(-orthoHalfSize, orthoHalfSize, orthoHalfSize, -orthoHalfSize, nearClip, farClip);
+
+    return view * proj;
 }
 
 } // namespace KashipanEngine

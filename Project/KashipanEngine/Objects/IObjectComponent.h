@@ -47,10 +47,6 @@ public:
     virtual void ShowImGui() = 0;
 #endif
 
-    /// @brief Updateの処理優先順位（小さいほど先に処理される）
-    int GetUpdatePriority() const { return updatePriority_; }
-    void SetUpdatePriority(int priority) { updatePriority_ = priority; }
-
     /// @brief シェーダー変数へのバインド処理 
     /// @param binder シェーダー変数バインダー
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。バインドを行わない場合は std::nullopt を返す
@@ -99,10 +95,6 @@ private:
     const std::string kComponentType_ = "IObjectComponent";
     /// @brief 1つのオブジェクトに登録可能な同じコンポーネントの最大数
     const size_t kMaxComponentCountPerObject_ = 0xFF;
-
-    /// @brief 更新処理の優先順位
-    int updatePriority_ = 1;
-
     /// @brief オーナーオブジェクト
     IObjectContext *ownerObject_ = nullptr;
 };

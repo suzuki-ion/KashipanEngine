@@ -13,6 +13,9 @@ class Health;
 
 class ResultUI final : public ISceneComponent {
 public:
+    /// @brief リザルト表示用 UI コンポーネントを作成する
+    /// @param screenBuffer 描画先のスクリーンバッファ
+    /// @param health プレイヤーの Health コンポーネント
     ResultUI(
         ScreenBuffer *screenBuffer,
         Health *health)
@@ -20,16 +23,24 @@ public:
         , screenBuffer_(screenBuffer)
         , health_(health) {}
 
+    /// @brief デストラクタ
     ~ResultUI() override = default;
 
+    /// @brief 初期化処理
     void Initialize() override;
+    /// @brief 毎フレーム更新処理
     void Update() override;
 
+    /// @brief リザルトの開始アニメーションを表示する
     void ShowStart();
 
+    /// @brief JustDodge カウントを設定する
+    /// @param c カウント値
     void SetJustDodgeCount(int c) { justDodgeCount_ = (c < 0) ? 0 : c; }
 
+    /// @brief アニメーション中かどうかを取得する
     bool IsAnimating() const { return isAnimating_; }
+    /// @brief アニメーションが終了したかを取得する
     bool IsAnimationFinished() const { return isAnimationFinished_; }
 
 private:

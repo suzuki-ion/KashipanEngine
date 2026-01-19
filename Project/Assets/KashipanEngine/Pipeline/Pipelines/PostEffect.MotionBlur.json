@@ -1,0 +1,16 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "PostEffect.MotionBlur",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "MotionBlur.Vertex" },
+		"Pixel": { "UsePreset": "MotionBlur.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

@@ -20,6 +20,10 @@ std::vector<size_t> sFreeSwapChains;                                   // 空き
 std::vector<HWND> sPendingDestroySwapChains;                           // 破棄指示された HWND
 } // namespace
 
+void DirectXCommon::AllDestroyPendingSwapChains(Passkey<GameEngine>) {
+    DestroyPendingSwapChains();
+}
+
 DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     LogScope scope;
     Log(Translation("engine.directx.initialize.start"), LogSeverity::Debug);
@@ -47,7 +51,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     dx12Fence_ = std::make_unique<DX12Fence>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice());
 
     IGraphicsResource::SetDevice({}, dx12Device_->GetDevice());
-    
+
     auto &settings = GetEngineSettings().rendering;
     RenderTargetResource::SetDefaultClearColor(Passkey<DirectXCommon>{}, settings.defaultClearColor);
 
@@ -75,13 +79,21 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     sSwapChains.resize(maxWindows);
     sFreeSwapChains.reserve(maxWindows);
 
-    swapChainCommandObjects_.clear();
-    swapChainCommandObjects_.resize(maxWindows);
-
     for (size_t i = 0; i < maxWindows; ++i) {
         sSwapChains[i] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{});
         sFreeSwapChains.push_back(i);
     }
+
+    commandObjects_.clear();
+    freeCommandObjectSlots_.clear();
+    commandObjects_.reserve(maxWindows);
+    freeCommandObjectSlots_.reserve(maxWindows);
+    for (size_t i = 0; i < maxWindows; ++i) {
+        commandObjects_.push_back(std::make_unique<DX12Commands>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice()));
+        freeCommandObjectSlots_.push_back(static_cast<int>(i));
+    }
+
+    recordedCommandLists_.clear();
 
     Log(Translation("engine.directx.initialize.end"), LogSeverity::Debug);
 }
@@ -103,10 +115,9 @@ DirectXCommon::~DirectXCommon() {
     sFreeSwapChains.clear();
     sPendingDestroySwapChains.clear();
 
-    swapChainCommandObjects_.clear();
-
-    screenBufferCommandObjects_.clear();
-    freeScreenBufferCommandObjectSlots_.clear();
+    recordedCommandLists_.clear();
+    commandObjects_.clear();
+    freeCommandObjectSlots_.clear();
 
     IGraphicsResource::ClearAllResources({});
     SamplerHeap_.reset();
@@ -121,11 +132,14 @@ DirectXCommon::~DirectXCommon() {
 }
 
 void DirectXCommon::BeginDraw(Passkey<GameEngine>) {
+    LogScope scope;
+    for (auto &cmds : commandObjects_) {
+        cmds->ResetFlags(Passkey<DirectXCommon>{});
+    }
 }
 
 void DirectXCommon::EndDraw(Passkey<GameEngine>) {
-    DestroyPendingSwapChains();
-    ExecuteCommand();
+    ExecuteCommandLists();
 }
 
 DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, SwapChainType swapChainType, HWND hwnd, int32_t width, int32_t height, int32_t bufferCount) {
@@ -147,36 +161,9 @@ DX12SwapChain *DirectXCommon::CreateSwapChain(Passkey<Window>, SwapChainType swa
     sSwapChains[index] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, bufferCount);
     DX12SwapChain *sc = sSwapChains[index].get();
 
-    // Command objects (DirectXCommon owns)
-    auto &cmd = swapChainCommandObjects_[index];
-    cmd.commandAllocators.clear();
-    cmd.commandAllocators.resize(static_cast<size_t>(bufferCount));
-
-    for (int i = 0; i < bufferCount; ++i) {
-        HRESULT hr = dx12Device_->GetDevice()->CreateCommandAllocator(
-            D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(cmd.commandAllocators[i].ReleaseAndGetAddressOf()));
-        if (FAILED(hr)) {
-            Log(Translation("engine.directx.swapchain.commandallocator.initialize.failed"), LogSeverity::Critical);
-            throw std::runtime_error("Failed to create command allocator for swapchain.");
-        }
-    }
-
-    if (!cmd.commandList) {
-        HRESULT hr = dx12Device_->GetDevice()->CreateCommandList(
-            0,
-            D3D12_COMMAND_LIST_TYPE_DIRECT,
-            cmd.commandAllocators[0].Get(),
-            nullptr,
-            IID_PPV_ARGS(cmd.commandList.ReleaseAndGetAddressOf()));
-        if (FAILED(hr)) {
-            Log(Translation("engine.directx.swapchain.commandlist.initialize.failed"), LogSeverity::Critical);
-            throw std::runtime_error("Failed to create command list for swapchain.");
-        }
-        cmd.commandList->Close();
-    }
-
-    sc->BindCommandObjects(Passkey<DirectXCommon>{}, cmd.commandList.Get(), cmd.commandAllocators);
+    int cmdIndex = AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
+    auto *cmd = GetCommandObjectsInternal(commandObjects_, cmdIndex);
+    sc->BindCommandObjects(Passkey<DirectXCommon>{}, cmd, cmdIndex);
 
     sc->AttachWindowAndCreate(Passkey<DirectXCommon>{}, swapChainType, hwnd, width, height);
 
@@ -248,35 +235,9 @@ DX12SwapChain* DirectXCommon::GetOrCreateSwapChainForImGuiViewport(Passkey<ImGui
     sSwapChains[index] = std::make_unique<DX12SwapChain>(Passkey<DirectXCommon>{}, bufferCount);
     DX12SwapChain* sc = sSwapChains[index].get();
 
-    auto &cmd = swapChainCommandObjects_[index];
-    cmd.commandAllocators.clear();
-    cmd.commandAllocators.resize(static_cast<size_t>(bufferCount));
-
-    for (int i = 0; i < bufferCount; ++i) {
-        HRESULT hr = dx12Device_->GetDevice()->CreateCommandAllocator(
-            D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(cmd.commandAllocators[i].ReleaseAndGetAddressOf()));
-        if (FAILED(hr)) {
-            Log(Translation("engine.directx.swapchain.commandallocator.initialize.failed"), LogSeverity::Critical);
-            throw std::runtime_error("Failed to create command allocator for swapchain.");
-        }
-    }
-
-    if (!cmd.commandList) {
-        HRESULT hr = dx12Device_->GetDevice()->CreateCommandList(
-            0,
-            D3D12_COMMAND_LIST_TYPE_DIRECT,
-            cmd.commandAllocators[0].Get(),
-            nullptr,
-            IID_PPV_ARGS(cmd.commandList.ReleaseAndGetAddressOf()));
-        if (FAILED(hr)) {
-            Log(Translation("engine.directx.swapchain.commandlist.initialize.failed"), LogSeverity::Critical);
-            throw std::runtime_error("Failed to create command list for swapchain.");
-        }
-        cmd.commandList->Close();
-    }
-
-    sc->BindCommandObjects(Passkey<DirectXCommon>{}, cmd.commandList.Get(), cmd.commandAllocators);
+    int cmdIndex = AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
+    auto *cmd = GetCommandObjectsInternal(commandObjects_, cmdIndex);
+    sc->BindCommandObjects(Passkey<DirectXCommon>{}, cmd, cmdIndex);
 
     sc->AttachWindowAndCreate(Passkey<DirectXCommon>{}, SwapChainType::ForHwnd, hwnd, width, height);
 
@@ -301,10 +262,8 @@ void DirectXCommon::DestroyPendingSwapChains() {
                 sSwapChains[index]->Destroy(Passkey<DirectXCommon>{});
             }
 
-            if (index < swapChainCommandObjects_.size()) {
-                auto &cmd = swapChainCommandObjects_[index];
-                cmd.commandList.Reset();
-                cmd.commandAllocators.clear();
+            if (index < commandObjects_.size() && commandObjects_[index]) {
+                commandObjects_[index]->ResetFlags(Passkey<DirectXCommon>{});
             }
 
             sFreeSwapChains.push_back(index);
@@ -322,19 +281,27 @@ bool DirectXCommon::WaitForFence() {
     return dx12Fence_->Wait({});
 }
 
-void DirectXCommon::ExecuteCommand() {
+void DirectXCommon::AddRecordCommandList(Passkey<DX12SwapChain>, ID3D12CommandList* list) {
+    if (!list) return;
+    recordedCommandLists_.push_back(list);
+}
+
+void DirectXCommon::AddRecordCommandList(Passkey<Renderer>, ID3D12CommandList* list) {
+    if (!list) return;
+    recordedCommandLists_.push_back(list);
+}
+
+void DirectXCommon::ExecuteCommandLists() {
     for (auto &sc : sSwapChains) {
         if (sc && sc->IsCreated()) sc->EndDraw({});
     }
 
     std::vector<ID3D12CommandList*> lists;
-    for (auto &sc : sSwapChains) {
-        if (sc && sc->IsCreated() && !sc->IsDrawing()) {
-            if (auto *cl = sc->GetRecordedCommandList(Passkey<DirectXCommon>{})) {
-                lists.push_back(cl);
-            }
-        }
+    lists.reserve(recordedCommandLists_.size());
+    for (auto* cl : recordedCommandLists_) {
+        if (cl) lists.push_back(cl);
     }
+
     if (!lists.empty()) {
         dx12CommandQueue_->ExecuteCommandLists({}, lists);
     }
@@ -350,6 +317,16 @@ void DirectXCommon::ExecuteCommand() {
     for (auto &sc : sSwapChains) {
         if (sc && sc->IsCreated()) sc->Resize({});
     }
+
+    recordedCommandLists_.clear();
+}
+
+void DirectXCommon::ExecuteExternalCommandLists(Passkey<Renderer>, const std::vector<ID3D12CommandList*>& lists) {
+    if (!dx12CommandQueue_ || !dx12Fence_) return;
+    if (lists.empty()) return;
+
+    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, lists);
+    WaitForFence();
 }
 
 void DirectXCommon::ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
@@ -373,96 +350,79 @@ void DirectXCommon::ExecuteOneShotCommandsForTextureManager(Passkey<TextureManag
     hr = list->Close();
     if (FAILED(hr)) return;
 
-    std::vector<ID3D12CommandList*> lists;
-    lists.push_back(list.Get());
-    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, lists);
+    std::vector<ID3D12CommandList*> submit;
+    submit.push_back(list.Get());
+    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, submit);
 
     dx12Fence_->Signal(Passkey<DirectXCommon>{}, queue);
     dx12Fence_->Wait(Passkey<DirectXCommon>{});
 }
 
-void DirectXCommon::ExecuteOneShotCommandsForScreenBuffer(Passkey<ScreenBuffer>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
-    if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
-    auto* device = dx12Device_->GetDevice();
-    auto* queue = dx12CommandQueue_->GetCommandQueue();
-    if (!device || !queue) return;
-
-    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> allocator;
-    HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.GetAddressOf()));
-    if (FAILED(hr)) return;
-
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> list;
-    hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(list.GetAddressOf()));
-    if (FAILED(hr)) return;
-
-    if (record) {
-        record(list.Get());
-    }
-
-    hr = list->Close();
-    if (FAILED(hr)) return;
-
-    std::vector<ID3D12CommandList*> lists;
-    lists.push_back(list.Get());
-    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, lists);
-
-    dx12Fence_->Signal(Passkey<DirectXCommon>{}, queue);
-    dx12Fence_->Wait(Passkey<DirectXCommon>{});
-}
-
-void DirectXCommon::ExecuteExternalCommandLists(Passkey<Renderer>, const std::vector<ID3D12CommandList*>& lists) {
-    if (!dx12CommandQueue_ || !dx12Fence_) return;
-    if (lists.empty()) return;
-
-    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, lists);
-    WaitForFence();
-}
-
-int DirectXCommon::AcquireScreenBufferCommandObjects(Passkey<ScreenBuffer>) {
+int DirectXCommon::AcquireCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots) {
     if (!dx12Device_) return -1;
-    auto* device = dx12Device_->GetDevice();
+    const auto* device = dx12Device_->GetDevice();
     if (!device) return -1;
 
     int index = -1;
-    if (!freeScreenBufferCommandObjectSlots_.empty()) {
-        index = freeScreenBufferCommandObjectSlots_.back();
-        freeScreenBufferCommandObjectSlots_.pop_back();
-    } else {
-        index = static_cast<int>(screenBufferCommandObjects_.size());
-        screenBufferCommandObjects_.emplace_back();
+    if (!freeSlots.empty()) {
+        index = freeSlots.back();
+        freeSlots.pop_back();
     }
 
-    auto& entry = screenBufferCommandObjects_[static_cast<size_t>(index)];
-
-    if (!entry.commandAllocator) {
-        HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(entry.commandAllocator.ReleaseAndGetAddressOf()));
-        if (FAILED(hr)) return -1;
-    }
-
-    if (!entry.commandList) {
-        HRESULT hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, entry.commandAllocator.Get(), nullptr, IID_PPV_ARGS(entry.commandList.ReleaseAndGetAddressOf()));
-        if (FAILED(hr)) return -1;
-        entry.commandList->Close();
-    }
-
+    if (index < 0) return -1;
+    const size_t idx = static_cast<size_t>(index);
+    if (idx >= pool.size() || !pool[idx]) return -1;
+    pool[idx]->ResetFlags(Passkey<DirectXCommon>{});
     return index;
 }
 
-DirectXCommon::ScreenBufferCommandObjects* DirectXCommon::GetScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+DX12Commands* DirectXCommon::GetCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, int slotIndex) {
     if (slotIndex < 0) return nullptr;
     const size_t idx = static_cast<size_t>(slotIndex);
-    if (idx >= screenBufferCommandObjects_.size()) return nullptr;
-    return &screenBufferCommandObjects_[idx];
+    if (idx >= pool.size()) return nullptr;
+    return pool[idx].get();
 }
 
-void DirectXCommon::ReleaseScreenBufferCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+void DirectXCommon::ReleaseCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots, int slotIndex) {
     if (slotIndex < 0) return;
     const size_t idx = static_cast<size_t>(slotIndex);
-    if (idx >= screenBufferCommandObjects_.size()) return;
+    if (idx >= pool.size()) return;
+    auto *dx12Cmds = pool[idx].get();
+    if (!dx12Cmds) return;
+    if (dx12Cmds->IsRecording()) dx12Cmds->EndRecord();
+    dx12Cmds->ResetFlags(Passkey<DirectXCommon>{});
 
     // GPU 実行中の可能性があるため、ここでフェンスを待ってから解放キューへ戻す
     WaitForFence();
-    freeScreenBufferCommandObjectSlots_.push_back(slotIndex);
+    freeSlots.push_back(slotIndex);
+}
+
+int DirectXCommon::AcquireCommandObjects(Passkey<ScreenBuffer>) {
+    return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
+}
+
+int DirectXCommon::AcquireCommandObjects(Passkey<ShadowMapBuffer>) {
+    return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
+}
+
+DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    return GetCommandObjectsInternal(commandObjects_, slotIndex);
+}
+
+DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    return GetCommandObjectsInternal(commandObjects_, slotIndex);
+}
+
+void DirectXCommon::ReleaseCommandObjects(Passkey<DX12SwapChain>, int slotIndex) {
+    ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
+}
+
+void DirectXCommon::ReleaseCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
+}
+
+void DirectXCommon::ReleaseCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
 }
 
 } // namespace KashipanEngine

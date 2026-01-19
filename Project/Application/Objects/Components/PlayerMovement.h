@@ -21,6 +21,10 @@ public:
         return type;
     }
 
+    /// @brief 入力コマンドと移動速度を指定してコンポーネントを作成する
+    /// @param inputCommand 入力評価用の InputCommand
+    /// @param moveSpeed 基本移動速度
+    /// @param conditionFunc 更新を許可する条件関数（省略可）
     explicit PlayerMovement(
         const InputCommand *inputCommand,
         float moveSpeed = 5.0f,
@@ -31,8 +35,10 @@ public:
           conditionFunc_(std::move(conditionFunc)) {
     }
 
+    /// @brief デストラクタ
     ~PlayerMovement() override = default;
 
+    /// @brief コンポーネントを複製して返す
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<PlayerMovement>(inputCommand_, moveSpeed_, conditionFunc_);
         ptr->acceleration_ = acceleration_;
@@ -51,6 +57,8 @@ public:
         return ptr;
     }
 
+    /// @brief 毎フレームの更新。入力に基づいて移動やダッシュを処理する
+    /// @return 更新成功時は true
     std::optional<bool> Update() override {
         isMoving_ = false;
         isDashing_ = false;
@@ -148,46 +156,76 @@ public:
         return true;
     }
 
+    /// @brief 更新を許可する条件関数を設定する
+    /// @param func 条件関数
     void SetConditionFunc(std::function<bool()> func) { conditionFunc_ = std::move(func); }
+    /// @brief 移動速度を設定する
+    /// @param s 移動速度
     void SetMoveSpeed(float s) { moveSpeed_ = s; }
+    /// @brief 移動速度を取得する
     float GetMoveSpeed() const { return moveSpeed_; }
 
+    /// @brief 加速度を設定する
+    /// @param a 加速度
     void SetAcceleration(float a) { acceleration_ = a; }
+    /// @brief 加速度を取得する
     float GetAcceleration() const { return acceleration_; }
 
+    /// @brief 減速度を設定する
+    /// @param d 減速度
     void SetDeceleration(float d) { deceleration_ = d; }
+    /// @brief 減速度を取得する
     float GetDeceleration() const { return deceleration_; }
 
+    /// @brief ダッシュ速度を設定する
+    /// @param s ダッシュ速度
     void SetDashSpeed(float s) { dashSpeed_ = s; }
+    /// @brief ダッシュ速度を取得する
     float GetDashSpeed() const { return dashSpeed_; }
 
+    /// @brief ダッシュのクールダウン秒数を設定する
+    /// @param s クールダウン秒数
     void SetDashCooldownSec(float s) { dashCooldownSec_ = s; }
+    /// @brief ダッシュのクールダウン秒数を取得する
     float GetDashCooldownSec() const { return dashCooldownSec_; }
 
+    /// @brief ダッシュのクールダウン残り時間を取得する
     float GetDashCooldownRemaining() const { return dashCooldownRemaining_; }
 
+    /// @brief 移動中かどうかを取得する
     bool IsMoving() const { return isMoving_; }
+    /// @brief ダッシュ中かどうかを取得する
     bool IsDashing() const { return isDashing_; }
 
+    /// @brief JustDodge ウィンドウの長さを設定する
+    /// @param s ウィンドウ長（秒）
     void SetJustDodgeWindowSec(float s) { justDodgeWindowSec_ = std::max(0.0f, s); }
+    /// @brief JustDodge ウィンドウの長さを取得する
     float GetJustDodgeWindowSec() const { return justDodgeWindowSec_; }
 
+    /// @brief 現在 JustDodge ウィンドウ内かを取得する
     bool IsJustDodging() const {
         return (sinceDashTriggeredSec_ >= 0.0f) && (sinceDashTriggeredSec_ <= justDodgeWindowSec_);
     }
 
     // 移動範囲を設定する（XZのみ使用）
+    /// @brief XZ 方向の移動制限を設定する
+    /// @param minV 最小座標
+    /// @param maxV 最大座標
     void SetBoundsXZ(const Vector3 &minV, const Vector3 &maxV) {
         minBounds_ = minV;
         maxBounds_ = maxV;
         boundsEnabled_ = true;
     }
 
-    // 移動範囲制限を解除する
+    /// @brief 移動制限を解除する
     void ClearBounds() { boundsEnabled_ = false; }
 
+    /// @brief 最小移動制限を取得する
     const Vector3 &GetMinBounds() const { return minBounds_; }
+    /// @brief 最大移動制限を取得する
     const Vector3 &GetMaxBounds() const { return maxBounds_; }
+    /// @brief 現在の速度を取得する
     const Vector3 &GetVelocity() const { return velocity_; }
 
 #if defined(USE_IMGUI)

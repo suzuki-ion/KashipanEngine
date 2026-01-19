@@ -1,9 +1,11 @@
 #pragma once
+
 #include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <imgui.h>
 #include <memory>
 #include <optional>
 #include <span>
@@ -24,8 +26,11 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
 class Object2DContext;
 class ScreenBuffer;
+class Transform2D;
+class Material2D;
 
 /// @brief 2Dオブジェクト基底クラス
 class Object2DBase {
@@ -50,6 +55,9 @@ public:
         ScreenBuffer *screenBuffer = nullptr;
         std::string pipelineName;
     };
+
+    /// @brief GameEngine から Renderer を設定（永続パス登録用）
+    static void SetRenderer(Passkey<GameEngine>, Renderer *renderer);
 
     Object2DBase() = delete;
     Object2DBase(const Object2DBase &) = delete;
@@ -96,12 +104,20 @@ public:
 
     /// @brief 描画先/パイプラインが確定したタイミングで永続レンダーパスを登録
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
-    RenderPassRegistrationHandle AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
-
+    RenderPassRegistrationHandle AttachToRenderer(Window *targetWindow, const std::string &pipelineName,
+        std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction = std::nullopt,
+        std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction = std::nullopt);
+ 
     /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
-    RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
-
+    RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName,
+        std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction = std::nullopt,
+        std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction = std::nullopt);
+ 
     /// @brief 永続レンダーパス登録を解除（全て）
     void DetachFromRenderer();
 
@@ -259,6 +275,9 @@ public:
     /// @brief インスタンシング用バッチキー（同一キー同士がまとめて描画される）
     std::uint64_t GetInstanceBatchKey() const { return instanceBatchKey_; }
 
+    /// @brief オブジェクトの種類を取得
+    ObjectType GetObjectType() const noexcept { return objectType_; }
+
 protected:
     /// @brief コンストラクタ
     /// @param name オブジェクト名
@@ -338,19 +357,21 @@ protected:
     void SetConstantBufferRequirements(std::vector<RenderPass::ConstantBufferRequirement> reqs) {
         constantBufferRequirements_ = std::move(reqs);
     }
-
     void SetUpdateConstantBuffersFunction(std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> fn) {
         updateConstantBuffersFunction_ = std::move(fn);
+    }
+    void SetInstanceBufferRequirements(std::vector<RenderPass::InstanceBufferRequirement> reqs) {
+        instanceBufferRequirements_ = std::move(reqs);
+    }
+    void SetSubmitInstanceFunction(std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> fn) {
+        submitInstanceFunction_ = std::move(fn);
     }
 
 private:
     friend class Object2DContext;
 
-    /// @brief レンダーパスの作成（Window）
-    RenderPass CreateRenderPass(Window *targetWindow, const std::string &pipelineName);
-
-    /// @brief レンダーパスの作成（ScreenBuffer）
-    RenderPass CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+    /// @brief レンダーパスの作成
+    RenderPass CreateRenderPass(const std::string &pipelineName);
 
     struct RenderPassRegistrationEntry {
         RenderPassRegistrationInfo info;
@@ -372,10 +393,17 @@ private:
     /// @return バインドに失敗したコンポーネントの情報リスト
     std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
 
+    static inline Renderer* sRenderer = nullptr;
+
+    ObjectType objectType_ = ObjectType::GameObject;
+
     std::string name_ = "GameObject2D";
     std::string passName_ = "GameObject2D";
 
     mutable std::optional<RenderPass> cachedRenderPass_;
+
+    Transform2D *transform_ = nullptr;
+    Material2D *material_ = nullptr;
 
     UINT vertexCount_ = 0;
     UINT indexCount_ = 0;
@@ -399,8 +427,10 @@ private:
 
     std::uint64_t instanceBatchKey_ = 0;
     RenderType renderType_ = RenderType::Standard;
-    std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements_;
-    std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction_;
+    std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements_;
+    std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements_;
+    std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction_;
+    std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction_;
 };
 
 } // namespace KashipanEngine

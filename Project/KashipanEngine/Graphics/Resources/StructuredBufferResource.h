@@ -33,9 +33,12 @@ public:
 private:
     bool Initialize(size_t elementStride, size_t elementCount, const void* initialData, ID3D12Resource* existingResource);
 
+    void ResetMappedPointer_() noexcept { mappedPtr_ = nullptr; }
+
     size_t bufferSize_ = 0;
     size_t elementStride_ = 0;
     size_t elementCount_ = 0;
+    void* mappedPtr_ = nullptr;
 };
 
 } // namespace KashipanEngine

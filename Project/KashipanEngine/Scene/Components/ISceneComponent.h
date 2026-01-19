@@ -34,6 +34,10 @@ public:
         ownerContext_ = context;
     }
 
+#if defined(USE_IMGUI)
+    virtual void ShowImGui() {}
+#endif
+
 protected:
     ISceneComponent(const std::string &componentType, size_t maxComponentCountPerScene = 0xFF)
         : kComponentType_(componentType), kMaxComponentCountPerScene_(maxComponentCountPerScene) {}

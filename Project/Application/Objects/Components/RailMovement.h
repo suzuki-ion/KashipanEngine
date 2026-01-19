@@ -21,20 +21,25 @@ public:
         return type;
     }
 
-    // points: CatmullRom の制御点列（4点以上必要）
-    // durationSec: 始点～終点までにかける時間（秒）
+    /// @brief 制御点列と移動時間からコンポーネントを作成する
+    /// @param points Catmull-Rom の制御点列（4点以上推奨）
+    /// @param durationSec 始点から終点までの時間（秒）
     explicit RailMovement(std::vector<Vector3> points = {}, float durationSec = 1.0f)
         : IObjectComponent3D(GetStaticComponentType(), 1), points_(std::move(points)), durationSec_(durationSec) {
     }
 
+    /// @brief デストラクタ
     ~RailMovement() override = default;
 
+    /// @brief コンポーネントを複製して返す
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<RailMovement>(points_, durationSec_);
         ptr->elapsedSec_ = elapsedSec_;
         return ptr;
     }
 
+    /// @brief 毎フレームの更新。レール上での位置を計算して設定する
+    /// @return 更新成功時は true
     std::optional<bool> Update() override {
         auto *ctx = GetOwner3DContext();
         if (!ctx) return false;
@@ -56,16 +61,22 @@ public:
         return true;
     }
 
-    // レーン点列を設定
+    /// @brief レーンの制御点を設定する
+    /// @param points 制御点列
     void SetPoints(std::vector<Vector3> points) { points_ = std::move(points); }
+    /// @brief レーンの制御点列を取得する
     const std::vector<Vector3> &GetPoints() const { return points_; }
 
-    // 移動時間（秒）を設定
+    /// @brief 移動にかかる時間（秒）を設定する
+    /// @param s 秒数
     void SetDurationSec(float s) { durationSec_ = s; }
+    /// @brief 移動にかかる時間（秒）を取得する
     float GetDurationSec() const { return durationSec_; }
 
-    // 経過時間（秒）を設定（リセット用途）
+    /// @brief 経過時間（秒）を設定する（リセット等に使用）
+    /// @param s 秒数
     void SetElapsedSec(float s) { elapsedSec_ = s; }
+    /// @brief 経過時間（秒）を取得する
     float GetElapsedSec() const { return elapsedSec_; }
 
 #if defined(USE_IMGUI)

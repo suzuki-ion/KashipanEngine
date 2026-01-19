@@ -7,6 +7,7 @@
 #include "Utilities/TimeUtils.h"
 #include "Objects/GameObjects/3D/Model.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Graphics/ShadowMapBuffer.h"
 #include "AppInitialize.h"
 
 #include "Scene/SceneBase.h"
@@ -14,7 +15,6 @@
 #include <cstdint>
 #include <algorithm>
 #include <chrono>
-#include <thread>
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -24,22 +24,6 @@ namespace KashipanEngine {
 namespace {
 /// @brief エンジン初期化フラグ
 bool sIsEngineInitialized = false;
-
-/// @brief 目標フレームレート
-int32_t sTargetFrameRate = 60;
-
-/// @brief fps固定用の待機関数
-void WaitForNextFrame() {
-    if (sTargetFrameRate <= 0) return;
-    static auto lastFrameTime = std::chrono::steady_clock::now();
-    const auto frameDuration = std::chrono::microseconds(1'000'000 / sTargetFrameRate);
-    const auto now = std::chrono::steady_clock::now();
-    const auto elapsed = now - lastFrameTime;
-    if (elapsed < frameDuration) {
-        std::this_thread::sleep_for(frameDuration - elapsed);
-    }
-    lastFrameTime = std::chrono::steady_clock::now();
-}
 } // namespace
 
 #if defined(USE_IMGUI)
@@ -129,7 +113,15 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
+
+    if (graphicsEngine_) {
+        auto* renderer = graphicsEngine_->GetRenderer(Passkey<GameEngine>{});
+        ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, renderer);
+        Object2DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
+        Object3DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
+    }
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
@@ -187,6 +179,7 @@ GameEngine::~GameEngine() {
 
     Window::AllDestroy({});
     ScreenBuffer::AllDestroy({});
+    ShadowMapBuffer::AllDestroy({});
 
     inputCommand_.reset();
     input_.reset();
@@ -199,6 +192,10 @@ GameEngine::~GameEngine() {
     modelManager_.reset();
     samplerManager_.reset();
     textureManager_.reset();
+
+    ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
+    Object2DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
+    Object3DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
 
     graphicsEngine_.reset();
     directXCommon_.reset();
@@ -219,10 +216,6 @@ void GameEngine::GameLoopUpdate() {
 
     Window::Update({});
     UpdateDeltaTime({});
-
-    if (sceneManager_) {
-        sceneManager_->CommitPendingSceneChange({});
-    }
 
     if (input_) {
         input_->Update();
@@ -279,7 +272,14 @@ void GameEngine::GameLoopDraw() {
     if (imguiManager_) {
         DrawProfilingImGui();
 
+        if (graphicsEngine_) {
+            if (auto *renderer = graphicsEngine_->GetRenderer({})) {
+                renderer->ShowImGuiCpuTimersWindow();
+            }
+        }
+
         ScreenBuffer::ShowImGuiScreenBuffersWindow();
+        ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow();
 
         imguiManager_->Render({});
     }
@@ -298,8 +298,14 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
     while (!gameLoopEndConditionFunction_()) {
         GameLoopUpdate();
         GameLoopDraw();
+
+        if (sceneManager_) {
+            sceneManager_->CommitPendingSceneChange({});
+        }
         Window::CommitDestroy({});
-        WaitForNextFrame();
+        ScreenBuffer::CommitDestroy({});
+        ShadowMapBuffer::CommitDestroy({});
+        directXCommon_->AllDestroyPendingSwapChains({});
     }
     return 0;
 }

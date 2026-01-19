@@ -30,7 +30,8 @@ protected:
     void OnUpdate() override;
 
 private:
-    ScreenBuffer *screenBuffer_ = nullptr;
+    ScreenBuffer *screenBuffer3D_ = nullptr;
+    ScreenBuffer *screenBuffer2D_ = nullptr;
     ScreenBuffer *velocityBuffer_ = nullptr;
     ShadowMapBuffer *shadowMapBuffer_ = nullptr;
     ShadowMapBinder *shadowMapBinder_ = nullptr;

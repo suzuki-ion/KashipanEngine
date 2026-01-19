@@ -17,13 +17,13 @@ void GameScene::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(16384, 16384);
 
-    /*if (screenBuffer_) {
+    /*if (screenBuffer3D_) {
         ChromaticAberrationEffect::Params p{};
         p.directionX = 1.0f;
         p.directionY = 0.0f;
         p.strength = 0.0025f;
-        screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
-        screenBuffer_->AttachToRenderer("ScreenBuffer_GameScene");
+        screenBuffer3D_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+        screenBuffer3D_->AttachToRenderer("ScreenBuffer_GameScene");
     }*/
 
     auto* window = Window::GetWindow("Main Window");
@@ -45,7 +45,7 @@ void GameScene::Initialize() {
         AddObject2D(std::move(obj));
     }
 
-    // 2D Camera (screenBuffer_)
+    // 2D Camera (screenBuffer3D_)
     {
         auto obj = std::make_unique<Camera2D>();
         obj->SetName("Camera2D_ScreenBuffer");
@@ -59,7 +59,7 @@ void GameScene::Initialize() {
         AddObject2D(std::move(obj));
     }
 
-    // 3D Main Camera (screenBuffer_)
+    // 3D Main Camera (screenBuffer3D_)
     {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("Camera3D_Main(ScreenBuffer)");
@@ -97,7 +97,7 @@ void GameScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
-    // Directional Light (screenBuffer_)
+    // Directional Light (screenBuffer3D_)
     {
         auto obj = std::make_unique<DirectionalLight>();
         obj->SetName("DirectionalLight");

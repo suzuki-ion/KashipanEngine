@@ -37,7 +37,7 @@ void ResultScene::Initialize() {
         AddObject2D(std::move(obj));
     }
 
-    // 2D Camera (screenBuffer_)
+    // 2D Camera (screenBuffer3D_)
     {
         auto obj = std::make_unique<Camera2D>();
         obj->SetName("Camera2D_ScreenBuffer");
@@ -51,7 +51,7 @@ void ResultScene::Initialize() {
         AddObject2D(std::move(obj));
     }
 
-    // 3D Main Camera (screenBuffer_)
+    // 3D Main Camera (screenBuffer3D_)
     {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("Camera3D_Main(ScreenBuffer)");
@@ -89,7 +89,7 @@ void ResultScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
-    // Directional Light (screenBuffer_)
+    // Directional Light (screenBuffer3D_)
     {
         auto obj = std::make_unique<DirectionalLight>();
         obj->SetName("DirectionalLight");

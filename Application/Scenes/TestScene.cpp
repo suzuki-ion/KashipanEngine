@@ -17,15 +17,16 @@ TestScene::TestScene()
 
 void TestScene::Initialize() {
     velocityBuffer_ = ScreenBuffer::Create(1920, 1080);
-    screenBuffer_ = ScreenBuffer::Create(1920, 1080);
+    screenBuffer3D_ = ScreenBuffer::Create(1920, 1080);
+    screenBuffer2D_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
 
-    if (screenBuffer_) {
+    if (screenBuffer3D_) {
         ChromaticAberrationEffect::Params p{};
         p.directionX = 1.0f;
         p.directionY = 0.0f;
         p.strength = 0.001f;
-        screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+        screenBuffer3D_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
 
         BloomEffect::Params bp{};
         bp.threshold = 0.0f;
@@ -33,9 +34,9 @@ void TestScene::Initialize() {
         bp.intensity = 0.0f;
         bp.blurRadius = 0.0f;
         bp.iterations = 4;
-        screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+        screenBuffer3D_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
         
-        screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
+        screenBuffer3D_->AttachToRenderer("ScreenBuffer_TitleScene");
     }
     auto* window = Window::GetWindow("Main Window");
 
@@ -61,21 +62,21 @@ void TestScene::Initialize() {
         AddObject2D(std::move(obj));
     }
 
-    // 2D Camera (screenBuffer_)
+    // 2D Camera (screenBuffer2D_)
     {
         auto obj = std::make_unique<Camera2D>();
         obj->SetName("Camera2D_ScreenBuffer");
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
+        if (screenBuffer2D_) {
+            obj->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
+            const float w = static_cast<float>(screenBuffer2D_->GetWidth());
+            const float h = static_cast<float>(screenBuffer2D_->GetHeight());
             obj->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
             obj->SetViewportParams(0.0f, 0.0f, w, h);
         }
         AddObject2D(std::move(obj));
     }
 
-    // 3D Main Camera (screenBuffer_)
+    // 3D Main Camera (screenBuffer3D_)
     {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("Camera3D_Main(ScreenBuffer)");
@@ -83,10 +84,10 @@ void TestScene::Initialize() {
             tr->SetTranslate(Vector3(0.0f, 24.0f, -36.0f));
             tr->SetRotate(Vector3(M_PI * (30.0f / 180.0f), 0.0f, 0.0f));
         }
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
+        if (screenBuffer3D_) {
+            obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
+            const float w = static_cast<float>(screenBuffer3D_->GetWidth());
+            const float h = static_cast<float>(screenBuffer3D_->GetHeight());
             obj->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
             obj->SetViewportParams(0.0f, 0.0f, w, h);
         }
@@ -113,7 +114,7 @@ void TestScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
-    // Directional Light (screenBuffer_)
+    // Directional Light (screenBuffer3D_)
     {
         auto obj = std::make_unique<DirectionalLight>();
         obj->SetName("DirectionalLight");
@@ -123,17 +124,17 @@ void TestScene::Initialize() {
         obj->SetIntensity(0.3f);
         light_ = obj.get();
 
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D_) obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
     }
 
-    // LightManager (screenBuffer_)
+    // LightManager (screenBuffer3D_)
     LightManager* lightManager = nullptr;
     {
         auto obj = std::make_unique<LightManager>();
         obj->SetName("LightManager");
         lightManager = obj.get();
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D_) obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
     }
 
@@ -146,7 +147,7 @@ void TestScene::Initialize() {
         obj->SetShadowSampler(sampler);
         obj->SetCamera3D(lightCamera3D_);
         shadowMapBinder_ = obj.get();
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D_) obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));
     }
 
@@ -190,7 +191,7 @@ void TestScene::Initialize() {
                     mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
                 }
 
-                if (screenBuffer_)     obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+                if (screenBuffer3D_)     obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
                 if (shadowMapBuffer_)  obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
                 if (velocityBuffer_)   obj->AttachToRenderer(velocityBuffer_, "Object3D.Velocity");
 
@@ -233,7 +234,7 @@ void TestScene::Initialize() {
             obj->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
         }
 
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D_) obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
         if (velocityBuffer_) obj->AttachToRenderer(velocityBuffer_, "Object3D.Velocity");
         player_ = obj.get();
@@ -243,7 +244,7 @@ void TestScene::Initialize() {
 	// ExplosionManager の追加
     {
         auto comp = std::make_unique<ExplosionManager>();
-        comp->SetScreenBuffer(screenBuffer_);
+        comp->SetScreenBuffer(screenBuffer3D_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
 		comp->SetCollider(collider_);
         comp->SetCollider2(collider_);
@@ -256,7 +257,7 @@ void TestScene::Initialize() {
     {
         auto comp = std::make_unique<BombManager>(bombMaxNumber_);
         comp->SetPlayer(player_);
-        comp->SetScreenBuffer(screenBuffer_);
+        comp->SetScreenBuffer(screenBuffer3D_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
         comp->SetBPMToleranceRange(playerBpmToleranceRange_);
 		comp->SetBombLifetimeBeats(bombLifetimeBeats_);
@@ -276,7 +277,7 @@ void TestScene::Initialize() {
     // EnemyManagerの初期化（修正版）
     {
         auto comp = std::make_unique<EnemyManager>();
-        comp->SetScreenBuffer(screenBuffer_);
+        comp->SetScreenBuffer(screenBuffer3D_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
         comp->SetBPMSystem(bpmSystem_);
         comp->SetMapSize(kMapW, kMapH);
@@ -349,7 +350,7 @@ void TestScene::Initialize() {
                 mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
             }
 
-            if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+            if (screenBuffer3D_) obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
             if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
             if (velocityBuffer_) obj->AttachToRenderer(velocityBuffer_, "Object3D.Velocity");
 
@@ -364,7 +365,7 @@ void TestScene::Initialize() {
             lightObj->SetRange(0.0f);
 
             auto* lightPtr = lightObj.get();
-            if (screenBuffer_) lightObj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+            if (screenBuffer3D_) lightObj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
             AddObject3D(std::move(lightObj));
 
             particleLights_.push_back(ParticleLightPair{ particlePtr, lightPtr });
@@ -372,14 +373,36 @@ void TestScene::Initialize() {
         }
     }
 
-    // ScreenBuffer -> Window
+    //--------- オフスクリーン描画用スプライト ---------//
+
+    // ScreenBuffer3D -> ScreenBuffer2D
     {
         auto obj = std::make_unique<Sprite>();
         obj->SetUniqueBatchKey();
-        obj->SetName("ScreenBufferSprite");
-        if (screenBuffer_) {
+        obj->SetName("ScreenBuffer2DSprite");
+        if (screenBuffer3D_) {
+            if (auto* tr = obj->GetComponent2D<Transform2D>()) {
+                const float w = static_cast<float>(screenBuffer3D_->GetWidth());
+                const float h = static_cast<float>(screenBuffer3D_->GetHeight());
+                tr->SetScale(Vector2(w, h));
+                tr->SetTranslate(Vector3(w * 0.5f, h * 0.5f, 0.0f));
+            }
             if (auto* mat = obj->GetComponent2D<Material2D>()) {
-                mat->SetTexture(screenBuffer_);
+                mat->SetTexture(screenBuffer3D_);
+            }
+        }
+        obj->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
+        AddObject2D(std::move(obj));
+    }
+
+    // ScreenBuffer2D -> Window
+    {
+        auto obj = std::make_unique<Sprite>();
+        obj->SetUniqueBatchKey();
+        obj->SetName("WindowScreenSprite");
+        if (screenBuffer2D_) {
+            if (auto* mat = obj->GetComponent2D<Material2D>()) {
+                mat->SetTexture(screenBuffer2D_);
             }
         }
         obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
@@ -396,15 +419,15 @@ void TestScene::Initialize() {
         auto comp = std::make_unique<ScreenBufferKeepRatio>();
         comp->SetSprite(screenSprite_);
         comp->SetTargetSize(0.0f, 0.0f);
-        if (screenBuffer_) {
-            comp->SetSourceSize(static_cast<float>(screenBuffer_->GetWidth()), static_cast<float>(screenBuffer_->GetHeight()));
+        if (screenBuffer2D_) {
+            comp->SetSourceSize(static_cast<float>(screenBuffer2D_->GetWidth()), static_cast<float>(screenBuffer2D_->GetHeight()));
         }
         AddSceneComponent(std::move(comp));
     }
 
     // Player Health UI (ライフ表示)
     {
-        auto comp = std::make_unique<PlayerHealthUI>(screenBuffer_);
+        auto comp = std::make_unique<PlayerHealthUI>(screenBuffer2D_);
         if (player_) {
             if (auto* health = player_->GetComponent3D<Health>()) {
                 comp->SetHealth(health);
@@ -430,9 +453,9 @@ TestScene::~TestScene() {
     ClearObjects2D();
     ClearObjects3D();
 
-    if (screenBuffer_) {
-        ScreenBuffer::DestroyNotify(screenBuffer_);
-        screenBuffer_ = nullptr;
+    if (screenBuffer3D_) {
+        ScreenBuffer::DestroyNotify(screenBuffer3D_);
+        screenBuffer3D_ = nullptr;
     }
     if (shadowMapBuffer_) {
         ShadowMapBuffer::DestroyNotify(shadowMapBuffer_);
@@ -535,20 +558,6 @@ void TestScene::OnUpdate() {
             const float eased = EaseOutCubic(0.0f, 1.0f, life01);
             pl.light->SetIntensity(particleLightIntensityMin_ + (particleLightIntensityMax_ - particleLightIntensityMin_) * eased);
             pl.light->SetRange(particleLightRangeMin_ + (particleLightRangeMax_ - particleLightRangeMin_) * eased);
-        }
-    }
-
-    // テスト用のカメラ横移動処理
-    {
-        if (mainCamera3D_) {
-            if (auto* tr = mainCamera3D_->GetComponent3D<Transform3D>()) {
-                const float speed = 5.0f;
-                static float angle = 0.0f;
-                angle += speed * GetDeltaTime();
-                Vector3 pos = tr->GetTranslate();
-                pos.x = std::sin(angle) * 20.0f;
-                tr->SetTranslate(pos);
-            }
         }
     }
 

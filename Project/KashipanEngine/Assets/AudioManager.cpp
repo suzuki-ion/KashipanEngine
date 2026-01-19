@@ -584,6 +584,34 @@ bool AudioManager::Resume(PlayHandle play) {
     return true;
 }
 
+bool AudioManager::SetVolume(PlayHandle play, float volume) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.voice) return false;
+    volume = std::clamp(volume, 0.0f, 1.0f);
+    p.voice->SetVolume(volume);
+    return true;
+}
+
+bool AudioManager::SetPitch(PlayHandle play, float pitch) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.voice) return false;
+    const float ratio = SemitonesToFrequencyRatio(pitch);
+    p.voice->SetFrequencyRatio(ratio);
+    return true;
+}
+
 bool AudioManager::IsPlaying(PlayHandle play) {
     LogScope scope;
     size_t idx = static_cast<size_t>(-1);

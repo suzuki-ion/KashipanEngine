@@ -14,6 +14,8 @@ namespace KashipanEngine {
 
 class CameraController final : public ISceneComponent {
 public:
+    /// @brief カメラを制御するコンポーネントを作成する
+    /// @param camera 制御対象の Camera3D
     explicit CameraController(Camera3D *camera)
         : ISceneComponent("CameraController", 1), camera_(camera) {
         if (camera_) {
@@ -24,8 +26,10 @@ public:
             targetFovY_ = camera_->GetFovY();
         }
     }
+    /// @brief デストラクタ
     ~CameraController() override = default;
 
+    /// @brief 毎フレームの更新。ターゲット位置/回転/FOV に向かって補間する
     void Update() override {
         if (!camera_) return;
 
@@ -65,23 +69,42 @@ public:
         camera_->SetFovY(curF + (targetFovY_ - curF) * t);
     }
 
+    /// @brief 目標の位置を設定する
+    /// @param v 目標位置
     void SetTargetTranslate(const Vector3 &v) { targetTranslate_ = v; }
+    /// @brief 目標の回転を設定する
+    /// @param v 目標回転
     void SetTargetRotate(const Vector3 &v) { targetRotate_ = v; }
+    /// @brief 目標の FOV(Y) を設定する
+    /// @param v 目標 FOV
     void SetTargetFovY(float v) { targetFovY_ = v; }
 
+    /// @brief 補間の係数を設定する
+    /// @param t 補間係数（0..1）
     void SetLerpFactor(float t) { lerpFactor_ = t; }
+    /// @brief 補間の係数を取得する
     float GetLerpFactor() const { return lerpFactor_; }
 
+    /// @brief フォロー対象を設定する
+    /// @param target フォロー対象オブジェクト
     void SetFollowTarget(Object3DBase *target) { followTarget_ = target; }
+    /// @brief フォロー対象を取得する
     Object3DBase *GetFollowTarget() const { return followTarget_; }
 
+    /// @brief フォローオフセットを設定する
+    /// @param v オフセットベクトル
     void SetFollowOffset(const Vector3 &v) { followOffset_ = v; }
+    /// @brief フォローオフセットを取得する
     const Vector3 &GetFollowOffset() const { return followOffset_; }
 
+    /// @brief 目標位置を取得する
     const Vector3 &GetTargetTranslate() const { return targetTranslate_; }
+    /// @brief 目標回転を取得する
     const Vector3 &GetTargetRotate() const { return targetRotate_; }
+    /// @brief 目標の FOV を取得する
     float GetTargetFovY() const { return targetFovY_; }
 
+    /// @brief 現在のカメラ位置からフォローオフセットを再計算する
     void RecalculateOffsetFromCurrentCamera() {
         if (!camera_ || !followTarget_) return;
 
@@ -92,6 +115,9 @@ public:
         followOffset_ = camTr->GetTranslate() - tgtTr->GetTranslate();
     }
 
+    /// @brief カメラシェイクを実行する
+    /// @param amplitude 振幅
+    /// @param durationSec 継続時間（秒）
     void Shake(float amplitude, float durationSec) {
         shakeAmplitude_ = std::max(0.0f, amplitude);
         shakeDuration_ = std::max(0.0f, durationSec);

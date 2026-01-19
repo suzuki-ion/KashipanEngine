@@ -10,6 +10,7 @@ namespace KashipanEngine {
 class DirectXCommon;
 class ShaderVariableBinder;
 class ScreenBuffer;
+class ShadowMapBuffer;
 
 enum class ResourceViewType {
     None,
@@ -38,6 +39,9 @@ public:
 
     static SRVHeap *GetSRVHeap(Passkey<ScreenBuffer>) { return srvHeap_; }
     static SamplerHeap *GetSamplerHeap(Passkey<ScreenBuffer>) { return samplerHeap_; }
+
+    static SRVHeap *GetSRVHeap(Passkey<ShadowMapBuffer>) { return srvHeap_; }
+    static SamplerHeap *GetSamplerHeap(Passkey<ShadowMapBuffer>) { return samplerHeap_; }
 
     static void ClearAllResources(Passkey<DirectXCommon>);
     virtual ~IGraphicsResource();

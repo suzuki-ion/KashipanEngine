@@ -10,6 +10,7 @@ ConstantBufferResource::ConstantBufferResource(size_t byteSize, ID3D12Resource *
 }
 
 bool ConstantBufferResource::Recreate(size_t byteSize, ID3D12Resource *existingResource) {
+    ResetMappedPointer_();
     ResetResourceForRecreate();
     return Initialize(byteSize, existingResource);
 }
@@ -67,17 +68,18 @@ bool ConstantBufferResource::Initialize(size_t byteSize, ID3D12Resource *existin
 }
 
 void *ConstantBufferResource::Map() {
+    if (mappedPtr_) return mappedPtr_;
+
     void *ptr = nullptr;
     if (GetResource()) {
         GetResource()->Map(0, nullptr, &ptr);
     }
-    return ptr;
+    mappedPtr_ = ptr;
+    return mappedPtr_;
 }
 
 void ConstantBufferResource::Unmap() {
-    if (GetResource()) {
-        GetResource()->Unmap(0, nullptr);
-    }
+    // Upload heap は永続Mapしておく想定。互換のためAPIは残す。
 }
 
 } // namespace KashipanEngine

@@ -152,21 +152,21 @@ void ResultUI::Update() {
         }
         if (auto *tr = sp->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector2{baseX + (static_cast<float>(i) - 2.0f) * digitW, baseY});
-            tr->SetScale(Vector2{digitW, -digitW});
+            tr->SetScale(Vector2{digitW, digitW});
         }
     }
 
     if (scoreTextSprite_) {
         if (auto *tr = scoreTextSprite_->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector2{960.0f, 440.0f});
-            tr->SetScale(Vector2{300.0f, -128.0f});
+            tr->SetTranslate(Vector2{ baseX, baseY + 100.0f });
+            tr->SetScale(Vector2{300.0f, 128.0f});
         }
     }
 
     if (clearLogoSprite_) {
         if (auto *tr = clearLogoSprite_->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector2{960.0f, 200.0f});
-            tr->SetScale(Vector2{1024.0f, -256.0f});
+            tr->SetTranslate(Vector2{ baseX, baseY + 340.0f });
+            tr->SetScale(Vector2{1024.0f, 256.0f});
         }
     }
 }

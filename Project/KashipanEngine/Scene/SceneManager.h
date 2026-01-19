@@ -1,5 +1,6 @@
 #pragma once
 #include "Scene/SceneBase.h"
+#include "AnyUnorderedMap.h"
 
 #include <functional>
 #include <memory>
@@ -8,6 +9,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 
 namespace KashipanEngine {
 
@@ -48,11 +50,18 @@ public:
 
     bool ChangeScene(const std::string &sceneName);
     void CommitPendingSceneChange(Passkey<GameEngine>);
+    void AddSceneVariable(const std::string &key, const std::any &value) {
+        sceneVariables_[key] = value;
+    }
+    const MyStd::AnyUnorderedMap &GetSceneVariables() {
+        return sceneVariables_;
+    }
 
 private:
     using SceneFactory = std::function<std::unique_ptr<SceneBase>(SceneManager *)>;
 
     std::unordered_map<std::string, SceneFactory> factoriesByName_;
+    MyStd::AnyUnorderedMap sceneVariables_;
 
     std::unique_ptr<SceneBase> currentScene_;
     bool hasPendingSceneChange_ = false;

@@ -1,15 +1,7 @@
 #pragma once
+#include <KashipanEngine.h>
 
-#include "Scene/Components/ISceneComponent.h"
-#include "Objects/GameObjects/2D/Sprite.h"
-#include "Objects/GameObjects/3D/Sphere.h"
-#include "Objects/SystemObjects/Camera3D.h"
-#include "Objects/SystemObjects/DirectionalLight.h"
 #include "Objects/Components/RailMovement.h"
-#include "Objects/Components/2D/Material2D.h"
-#include "Objects/Components/3D/Transform3D.h"
-
-#include "Math/Easings.h"
 
 #include "Scenes/Components/AttackGearCircularInside.h"
 #include "Scenes/Components/AttackGearCircularOutside.h"
@@ -18,8 +10,6 @@
 #include "Scenes/Components/AttackGearWallRightSide.h"
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/GameIntroLogoAnimation.h"
-
-#include "Assets/AudioManager.h"
 
 #include <string>
 #include <vector>
@@ -30,6 +20,12 @@ namespace KashipanEngine {
 
 class GameProgressController final : public ISceneComponent {
 public:
+    /// @brief コンストラクタ。各種参照オブジェクトを設定する
+    /// @param camera カメラオブジェクト
+    /// @param light ディレクショナルライト
+    /// @param mover 移動対象オブジェクト（Sphere 等）
+    /// @param screenSprite スクリーン用スプライト
+    /// @param rotatingPlanes 回転するプレーン群（イントロ演出用）
     GameProgressController(
         Camera3D *camera,
         DirectionalLight *light,
@@ -44,6 +40,7 @@ public:
         , rotatingPlanes_(rotatingPlanes) {}
     ~GameProgressController() override = default;
 
+    /// @brief 初期化処理。シーンコンポーネントの参照を取得し状態をリセットする
     void Initialize() override {
         if (auto *ctx = GetOwnerContext()) {
             attackGearCircularInside_ = ctx->GetComponent<AttackGearCircularInside>();
@@ -101,6 +98,7 @@ public:
         endFadeStartColor_ = Vector4{ 1.0f, 1.0f, 1.0f, 1.0f };
     }
 
+    /// @brief 毎フレーム更新処理。イントロ演出や攻撃スケジュールを制御する
     void Update() override {
         const float dt = std::max(0.0f, GetDeltaTime());
         elapsedSec_ += dt;

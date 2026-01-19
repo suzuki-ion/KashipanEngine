@@ -9,6 +9,12 @@
 
 namespace KashipanEngine {
 
+/**
+ * @brief 向右の攻撃ギア壁
+ *
+ * このクラスは、攻撃ギア壁の右側を表します。
+ * オブジェクトがシーンにスポーンし、指定されたパラメータに従って動くことを管理します。
+ */
 class AttackGearWallRightSide final : public AttackBase {
 public:
     explicit AttackGearWallRightSide(Object3DBase *mover = nullptr, ScreenBuffer *screenBuffer = nullptr)

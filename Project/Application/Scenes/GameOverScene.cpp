@@ -8,6 +8,7 @@
 #include "Objects/SystemObjects/Camera2D.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
+#include "Objects/SystemObjects/LightManager.h"
 
 #include "Objects/Components/2D/Transform2D.h"
 #include "Objects/Components/2D/Material2D.h"
@@ -37,72 +38,69 @@ GameOverScene::GameOverScene()
         const auto sound = AudioManager::GetSoundHandleFromFileName("gameOverBGM.mp3");
         bgmPlay_ = AudioManager::Play(sound, 1.0f, 0.0f, true);
     }
-    screenBuffer_ = ScreenBuffer::Create(1920, 1080);
 
-    auto colliderComp = std::make_unique<ColliderComponent>();
-    auto *collider = colliderComp->GetCollider();
-    AddSceneComponent(std::move(colliderComp));
+    [[maybe_unused]] auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
+    [[maybe_unused]] auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
+    [[maybe_unused]] auto *screenBuffer2D = defaultVariables ? defaultVariables->GetScreenBuffer2D() : nullptr;
+    [[maybe_unused]] auto *mainCamera3D = defaultVariables ? defaultVariables->GetMainCamera3D() : nullptr;
+    [[maybe_unused]] auto *shadowMapCameraSync = defaultVariables ? defaultVariables->GetShadowMapCameraSync() : nullptr;
+    [[maybe_unused]] auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
+    [[maybe_unused]] auto *directionalLight = defaultVariables ? defaultVariables->GetDirectionalLight() : nullptr;
+    [[maybe_unused]] auto *colliderComp = defaultVariables ? defaultVariables->GetColliderComp() : nullptr;
 
-    auto *window = Window::GetWindow("Main Window");
-    const auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
-
-    // 2D Camera (window)
-    {
-        auto obj = std::make_unique<Camera2D>();
-        if (window) {
-            obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
-            const float w = static_cast<float>(window->GetClientWidth());
-            const float h = static_cast<float>(window->GetClientHeight());
-            obj->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
-        }
-        screenCamera2D_ = obj.get();
-        AddObject2D(std::move(obj));
-    }
-
-    // 2D Camera (screenBuffer_)
-    {
-        auto obj = std::make_unique<Camera2D>();
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
-            obj->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
-        }
-        AddObject2D(std::move(obj));
-    }
-
-    // 3D Main Camera (screenBuffer_)
-    {
-        auto obj = std::make_unique<Camera3D>();
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+    // カメラの初期値設定
+    if (mainCamera3D) {
+        if (auto *tr = mainCamera3D->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, 8.0f, -10.0f));
             tr->SetRotate(Vector3(kPi * (30.0f / 180.0f), 0.0f, 0.0f));
         }
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
-            obj->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
+        if (screenBuffer3D) {
+            const float w = static_cast<float>(screenBuffer3D->GetWidth());
+            const float h = static_cast<float>(screenBuffer3D->GetHeight());
+            mainCamera3D->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
+            mainCamera3D->SetViewportParams(0.0f, 0.0f, w, h);
         }
-        obj->SetFovY(0.7f);
-        mainCamera3D_ = obj.get();
-        AddObject3D(std::move(obj));
+        mainCamera3D->SetFovY(0.7f);
     }
 
-    // Directional Light
-    {
-        auto obj = std::make_unique<DirectionalLight>();
-        if (auto *light = obj.get()) {
-            light->SetEnabled(true);
-            light->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            light->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
-            light->SetIntensity(1.6f);
-        }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(obj));
+    // シャドウマップカメラ同期コンポーネントの設定
+    if (shadowMapCameraSync) {
+        shadowMapCameraSync->SetShadowNear(0.1f);
+        shadowMapCameraSync->SetShadowFar(16.0f);
+    }
+
+    // 平行光源の初期値設定
+    if (directionalLight) {
+        directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
+        directionalLight->SetIntensity(1.6f);
+    }
+
+    if (screenBuffer3D) {
+        ChromaticAberrationEffect::Params p{};
+        p.directionX = 1.0f;
+        p.directionY = 0.0f;
+        p.strength = 0.001f;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+
+        BloomEffect::Params bp{};
+        bp.threshold = 1.0f;
+        bp.softKnee = 0.25f;
+        bp.intensity = 0.5f;
+        bp.blurRadius = 1.0f;
+        bp.iterations = 4;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+        screenBuffer3D->AttachToRenderer("ScreenBuffer3D_GameOverScene");
+    }
+
+    const auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
+
+    // Ensure directional light exists (use default)
+    if (directionalLight) {
+        directionalLight->SetEnabled(true);
+        directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
+        directionalLight->SetIntensity(1.6f);
     }
 
     // GameOver logo Plane3D
@@ -118,7 +116,8 @@ GameOverScene::GameOverScene()
             mat->SetTexture(TextureManager::GetTextureFromFileName("gameOverLogo.png"));
             mat->SetEnableLighting(false);
         }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         AddObject3D(std::move(obj));
     }
 
@@ -135,13 +134,13 @@ GameOverScene::GameOverScene()
         }
         ColliderInfo3D info{};
         info.shape = Math::Sphere{Vector3{0.0f, 0.0f, 0.0f}, 0.5f};
-        obj->RegisterComponent<Collision3D>(collider, info);
+        obj->RegisterComponent<Collision3D>(colliderComp->GetCollider(), info);
         obj->RegisterComponent<PlayerMovement>(GetInputCommand());
         player_ = obj.get();
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         AddObject3D(std::move(obj));
 
-        // プレイヤーの移動範囲を制限する
         if (player_) {
             if (auto *pm = player_->GetComponent3D<PlayerMovement>()) {
                 pm->SetBoundsXZ(playerMoveMin_, playerMoveMax_);
@@ -188,14 +187,14 @@ GameOverScene::GameOverScene()
                 mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
             }
         };
-        obj->RegisterComponent<Collision3D>(collider, info);
+        obj->RegisterComponent<Collision3D>(colliderComp->GetCollider(), info);
 
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         AddObject3D(std::move(obj));
     };
 
     makeMenuPlane("RetryPlane", Vector3(-2.5f, 0.8f, -2.0f), "retryText.png", "GameScene");
-
     makeMenuPlane("BackPlane", Vector3(2.5f, 0.8f, -2.0f), "backText.png", "TitleScene");
 
     // 天球
@@ -208,23 +207,9 @@ GameOverScene::GameOverScene()
             mat->SetTexture(whiteTex);
             mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 1.0f));
         }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         AddObject3D(std::move(obj));
-    }
-
-    // ScreenBuffer display sprite
-    {
-        auto obj = std::make_unique<Sprite>();
-        obj->SetUniqueBatchKey();
-        obj->SetName("ScreenBufferSprite");
-        if (screenBuffer_) {
-            if (auto *mat = obj->GetComponent2D<Material2D>()) {
-                mat->SetTexture(screenBuffer_);
-            }
-        }
-        obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
-        screenSprite_ = obj.get();
-        AddObject2D(std::move(obj));
     }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
@@ -240,42 +225,10 @@ GameOverScene::~GameOverScene() {
         AudioManager::Stop(bgmPlay_);
         bgmPlay_ = AudioManager::kInvalidPlayHandle;
     }
-    ClearObjects2D();
-    ClearObjects3D();
 }
 
 void GameOverScene::OnUpdate() {
-    if (screenCamera2D_ && screenSprite_) {
-        if (auto *window = Window::GetWindow("Main Window")) {
-            const float w = static_cast<float>(window->GetClientWidth());
-            const float h = static_cast<float>(window->GetClientHeight());
-            screenCamera2D_->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            screenCamera2D_->SetViewportParams(0.0f, 0.0f, w, h);
-
-            if (auto *tr = screenSprite_->GetComponent2D<Transform2D>()) {
-                float drawW = w;
-                float drawH = h;
-                if (screenBuffer_) {
-                    const float srcW = static_cast<float>(screenBuffer_->GetWidth());
-                    const float srcH = static_cast<float>(screenBuffer_->GetHeight());
-                    if (srcW > 0.0f && srcH > 0.0f && w > 0.0f && h > 0.0f) {
-                        const float srcAspect = srcW / srcH;
-                        const float dstAspect = w / h;
-                        if (dstAspect > srcAspect) {
-                            drawH = h;
-                            drawW = drawH * srcAspect;
-                        } else {
-                            drawW = w;
-                            drawH = drawW / srcAspect;
-                        }
-                    }
-                }
-                tr->SetTranslate(Vector2{w * 0.5f, h * 0.5f});
-                tr->SetScale(Vector2{drawW, -drawH});
-            }
-        }
-    }
-
+    // SceneChangeOut 完了で次シーンへ
     if (!GetNextSceneName().empty()) {
         if (auto *sceneChangeOut = GetSceneComponent<SceneChangeOut>()) {
             if (sceneChangeOut->IsFinished()) {

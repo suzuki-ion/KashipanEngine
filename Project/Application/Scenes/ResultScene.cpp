@@ -19,82 +19,23 @@ namespace KashipanEngine {
 ResultScene::ResultScene()
     : SceneBase("ResultScene") {
 
-    screenBuffer_ = ScreenBuffer::Create(1920, 1080);
+    auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
+    auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
+    
+    if (screenBuffer3D) {
+        ChromaticAberrationEffect::Params p{};
+        p.directionX = 1.0f;
+        p.directionY = 0.0f;
+        p.strength = 0.001f;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
 
-    auto *window = Window::GetWindow("Main Window");
-
-    // 2D Camera (window)
-    {
-        auto obj = std::make_unique<Camera2D>();
-        if (window) {
-            obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
-            const float w = static_cast<float>(window->GetClientWidth());
-            const float h = static_cast<float>(window->GetClientHeight());
-            obj->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
-        }
-        screenCamera2D_ = obj.get();
-        AddObject2D(std::move(obj));
-    }
-
-    // 2D Camera (screenBuffer_)
-    {
-        auto obj = std::make_unique<Camera2D>();
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
-            obj->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
-        }
-        AddObject2D(std::move(obj));
-    }
-
-    // 3D Main Camera (screenBuffer_)
-    {
-        auto obj = std::make_unique<Camera3D>();
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 8.0f, -10.0f));
-            tr->SetRotate(Vector3(3.14159265358979323846f * (30.0f / 180.0f), 0.0f, 0.0f));
-        }
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-            const float w = static_cast<float>(screenBuffer_->GetWidth());
-            const float h = static_cast<float>(screenBuffer_->GetHeight());
-            obj->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
-            obj->SetViewportParams(0.0f, 0.0f, w, h);
-        }
-        obj->SetFovY(0.7f);
-        mainCamera3D_ = obj.get();
-        AddObject3D(std::move(obj));
-    }
-
-    // Directional Light (screenBuffer_)
-    {
-        auto obj = std::make_unique<DirectionalLight>();
-        if (auto *light = obj.get()) {
-            light->SetEnabled(true);
-            light->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            light->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
-            light->SetIntensity(1.6f);
-        }
-        if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(obj));
-    }
-
-    // ScreenBuffer用スプライト（最終表示）
-    {
-        auto obj = std::make_unique<Sprite>();
-        obj->SetUniqueBatchKey();
-        obj->SetName("ScreenBufferSprite");
-        if (screenBuffer_) {
-            if (auto *mat = obj->GetComponent2D<Material2D>()) {
-                mat->SetTexture(screenBuffer_);
-            }
-        }
-        obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
-        screenSprite_ = obj.get();
-        AddObject2D(std::move(obj));
+        BloomEffect::Params bp{};
+        bp.threshold = 1.0f;
+        bp.softKnee = 0.25f;
+        bp.intensity = 0.5f;
+        bp.blurRadius = 1.0f;
+        bp.iterations = 4;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
     }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
@@ -106,46 +47,9 @@ ResultScene::ResultScene()
 }
 
 ResultScene::~ResultScene() {
-    ClearObjects2D();
-    ClearObjects3D();
 }
 
 void ResultScene::OnUpdate() {
-    // ScreenBuffer のサイズをウィンドウサイズに合わせる（アスペクト維持）
-    if (screenCamera2D_ && screenSprite_) {
-        if (auto *window = Window::GetWindow("Main Window")) {
-            const float w = static_cast<float>(window->GetClientWidth());
-            const float h = static_cast<float>(window->GetClientHeight());
-            screenCamera2D_->SetOrthographicParams(0.0f, 0.0f, w, h, 0.0f, 1.0f);
-            screenCamera2D_->SetViewportParams(0.0f, 0.0f, w, h);
-
-            if (auto *tr = screenSprite_->GetComponent2D<Transform2D>()) {
-                float drawW = w;
-                float drawH = h;
-
-                if (screenBuffer_) {
-                    const float srcW = static_cast<float>(screenBuffer_->GetWidth());
-                    const float srcH = static_cast<float>(screenBuffer_->GetHeight());
-                    if (srcW > 0.0f && srcH > 0.0f && w > 0.0f && h > 0.0f) {
-                        const float srcAspect = srcW / srcH;
-                        const float dstAspect = w / h;
-
-                        if (dstAspect > srcAspect) {
-                            drawH = h;
-                            drawW = drawH * srcAspect;
-                        } else {
-                            drawW = w;
-                            drawH = drawW / srcAspect;
-                        }
-                    }
-                }
-
-                tr->SetTranslate(Vector2{w * 0.5f, h * 0.5f});
-                tr->SetScale(Vector2{drawW, -drawH});
-            }
-        }
-    }
-
     // SceneChangeOut 完了で次シーンへ
     if (!GetNextSceneName().empty()) {
         if (auto *sceneChangeOut = GetSceneComponent<SceneChangeOut>()) {

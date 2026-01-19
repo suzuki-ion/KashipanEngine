@@ -56,13 +56,13 @@ void DX12SwapChain::DestroyInternal() {
     swapChain_.Reset();
     dcompHost_.reset();
     currentBufferIndex_ = 0;
+    sDirectXCommon->ReleaseCommandObjects(Passkey<DX12SwapChain>{}, slotIndex_);
 }
 
 void DX12SwapChain::BindCommandObjects(Passkey<DirectXCommon>,
-    ID3D12GraphicsCommandList* commandList,
-    const std::vector<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>>& commandAllocators) {
-    commandList_ = commandList;
-    commandAllocators_ = &commandAllocators;
+    DX12Commands *commands, int slotIndex) {
+    slotIndex_ = slotIndex;
+    commands_ = commands;
 }
 
 void DX12SwapChain::SetViewport(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth) {
@@ -116,38 +116,32 @@ void DX12SwapChain::ResetViewportAndScissor() {
 
 void DX12SwapChain::BeginDrawInternal() {
     if (!isCreated_ || isDrawing_) return;
-    if (!commandList_ || !commandAllocators_ || commandAllocators_->empty()) {
+    if (!commands_) {
         Log(Translation("engine.directx.swapchain.commandlist.reset.failed"), LogSeverity::Critical);
         throw std::runtime_error("Command objects are not bound to DX12SwapChain.");
     }
 
     currentBufferIndex_ = swapChain_->GetCurrentBackBufferIndex();
-    auto &allocator = (*commandAllocators_)[static_cast<size_t>(currentBufferIndex_)];
 
-    HRESULT hr = allocator->Reset();
-    if (FAILED(hr)) {
-        Log(Translation("engine.directx.swapchain.commandallocator.reset.failed"), LogSeverity::Critical);
-        throw std::runtime_error("Failed to reset command allocator in DX12 swap chain.");
-    }
-    hr = commandList_->Reset(allocator.Get(), nullptr);
-    if (FAILED(hr)) {
+    auto* cmd = commands_->BeginRecord();
+    if (!cmd) {
         Log(Translation("engine.directx.swapchain.commandlist.reset.failed"), LogSeverity::Critical);
-        throw std::runtime_error("Failed to reset command list in DX12 swap chain.");
+        throw std::runtime_error("Failed to begin record command list in DX12 swap chain.");
     }
 
-    if (depthStencilBuffer_) depthStencilBuffer_->SetCommandList(commandList_);
-    for (auto &bb : backBuffers_) bb->SetCommandList(commandList_);
+    if (depthStencilBuffer_) depthStencilBuffer_->SetCommandList(cmd);
+    for (auto &bb : backBuffers_) bb->SetCommandList(cmd);
 
     backBuffers_[currentBufferIndex_]->TransitionToNext();
 
-    commandList_->OMSetRenderTargets(1, &rtvHandles_[currentBufferIndex_], FALSE, &dsvHandle_);
+    cmd->OMSetRenderTargets(1, &rtvHandles_[currentBufferIndex_], FALSE, &dsvHandle_);
     backBuffers_[currentBufferIndex_]->ClearRenderTargetView();
     depthStencilBuffer_->ClearDepthStencilView();
 
-    commandList_->RSSetViewports(1, &viewport_);
-    commandList_->RSSetScissorRects(1, &scissorRect_);
+    cmd->RSSetViewports(1, &viewport_);
+    cmd->RSSetScissorRects(1, &scissorRect_);
     ID3D12DescriptorHeap *ppHeaps[] = { sSRVHeap->GetDescriptorHeap(), sSamplerHeap->GetDescriptorHeap() };
-    commandList_->SetDescriptorHeaps(2, ppHeaps);
+    cmd->SetDescriptorHeaps(2, ppHeaps);
 
     isDrawing_ = true;
 }
@@ -165,11 +159,13 @@ void DX12SwapChain::BeginDraw(Passkey<ImGuiManager>) {
 void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
     if (!isCreated_ || !isDrawing_) return;
     backBuffers_[currentBufferIndex_]->TransitionToNext();
-    HRESULT hr = commandList_->Close();
-    if (FAILED(hr)) {
+
+    if (!commands_->EndRecord()) {
         Log(Translation("engine.directx.commandlist.close.failed"), LogSeverity::Critical);
         throw std::runtime_error("Failed to close command list in DX12 swap chain.");
     }
+    sDirectXCommon->AddRecordCommandList(Passkey<DX12SwapChain>{}, commands_->GetCommandList());
+
     isDrawing_ = false;
 }
 
@@ -250,6 +246,11 @@ void DX12SwapChain::Resize(Passkey<DirectXCommon>) {
 void DX12SwapChain::CreateSwapChainForHWND() {
     LogScope scope;
     Log(Translation("engine.directx.swapchain.initialize.target.hwnd") + std::to_string(reinterpret_cast<uintptr_t>(hwnd_)), LogSeverity::Debug);
+
+    // Alt + Enter 無効化(ウィンドウ側との競合防止)
+    if (sDXGIFactory) {
+        sDXGIFactory->MakeWindowAssociation(hwnd_, DXGI_MWA_NO_ALT_ENTER);
+    }
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
     swapChainDesc.Width = static_cast<UINT>(width_);

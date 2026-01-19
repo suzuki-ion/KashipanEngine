@@ -1,0 +1,16 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "PostEffect.ChromaticAberration",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "ChromaticAberration.Vertex" },
+		"Pixel": { "UsePreset": "ChromaticAberration.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

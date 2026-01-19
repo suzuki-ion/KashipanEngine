@@ -1,7 +1,5 @@
 #pragma once
-
-#include "Scene/SceneBase.h"
-#include "Graphics/ScreenBuffer.h"
+#include <KashipanEngine.h>
 
 namespace KashipanEngine {
 
@@ -18,11 +16,6 @@ protected:
     void OnUpdate() override;
 
 private:
-    ScreenBuffer *screenBuffer_ = nullptr;
-    Camera2D *screenCamera2D_ = nullptr;
-    Sprite *screenSprite_ = nullptr;
-
-    Camera3D *mainCamera3D_ = nullptr;
 };
 
 } // namespace KashipanEngine

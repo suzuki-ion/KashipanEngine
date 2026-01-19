@@ -434,9 +434,6 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Billboard.cpp">
       <Filter>ソース ファイル\KashipanEngine\Objects\GameObjects\3D</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Math\Easings.cpp">
-      <Filter>ソース ファイル\KashipanEngine\Math</Filter>
-    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp">
       <Filter>ソース ファイル\KashipanEngine\Scene</Filter>
     </ClCompile>
@@ -486,6 +483,42 @@
       <Filter>Externals\imgui</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Commands.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\FractalNoise.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\PerlinNoise.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1012,9 +1045,6 @@
     <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h">
       <Filter>ソース ファイル\KashipanEngine\Scene\Components</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Math\Easings.h">
-      <Filter>ソース ファイル\KashipanEngine\Math</Filter>
-    </ClInclude>
     <ClInclude Include="Application\Objects\Components\ParticleMovement.h">
       <Filter>ソース ファイル\Application\Objects\Components</Filter>
     </ClInclude>
@@ -1108,6 +1138,31 @@
     <ClInclude Include="Externals\imgui\imstb_truetype.h">
       <Filter>Externals\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\FractalNoise.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\PerlinNoise.h" />
+    <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
+    <ClInclude Include="KashipanEngine\CoreHeaders.h" />
+    <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
+    <ClInclude Include="KashipanEngine\InputHeaders.h" />
+    <ClInclude Include="KashipanEngine\MathHeaders.h" />
+    <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
+    <ClInclude Include="KashipanEngine\SceneHeaders.h" />
+    <ClInclude Include="KashipanEngine\UtilitiesHeaders.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
@@ -1233,9 +1288,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object2D.json">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Object3d.hlsli">
-      <Filter>リソース ファイル</Filter>
-    </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
@@ -1263,9 +1315,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Pixel.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Pixel.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Screen.json">
       <Filter>リソース ファイル</Filter>
     </None>
@@ -1281,16 +1330,10 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Test.json">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\TransformationMatrix.hlsli">
-      <Filter>リソース ファイル</Filter>
-    </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\TransformationMatrix.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Triangle.json">
-      <Filter>リソース ファイル</Filter>
-    </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D\Vertex.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Vertex.hlsl">

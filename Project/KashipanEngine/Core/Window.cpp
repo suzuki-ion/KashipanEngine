@@ -108,7 +108,6 @@ void Window::Update(Passkey<GameEngine>) {
             }
         }
     }
-    // Update 内では破棄実行しない
 }
 
 void Window::CommitDestroy(Passkey<GameEngine>) {
@@ -170,8 +169,6 @@ void Window::Draw(Passkey<GameEngine>) {
 
     for (auto &pair : sWindowMap) {
         Window *w = pair.second.get();
-        if (w->IsPendingDestroy()) continue; // 破棄予定はスキップ
-        if (!w->IsVisible()) continue;       // 非表示はスキップ
         drawInfos.push_back({ w, calcDepth(w) });
     }
 
@@ -233,7 +230,6 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
 
     DWORD style = WS_POPUP;
     DWORD exStyle = WS_EX_NOREDIRECTIONBITMAP;
-    exStyle |= WS_EX_CONTEXTHELP;
     // Debug 中は TOPMOST を避ける / Release では付与
 #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
     bool isDebugging = ::IsDebuggerPresent() != 0;
@@ -295,6 +291,20 @@ void Window::DestroyNotify() {
 std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam) {
     LogScope scope;
     messages_[msg] = { msg, wparam, lparam };
+    // Intercept Alt+Enter (WM_SYSKEYDOWN + VK_RETURN) to toggle fullscreen appearance
+    if (msg == WM_SYSKEYDOWN && wparam == VK_RETURN) {
+        // lParam bit29 indicates the ALT key is down; also accept GetKeyState as fallback
+        bool altDown = (lparam & (1 << 29)) != 0 || (GetKeyState(VK_MENU) & 0x8000) != 0;
+        if (altDown) {
+            if (windowMode_ != WindowMode::FullScreen) {
+                SetWindowMode(WindowMode::FullScreen);
+            } else {
+                SetWindowMode(WindowMode::Window);
+            }
+            return std::optional<LRESULT>(0); // message handled
+        }
+    }
+
     auto it = eventHandlers_.find(msg);
     if (it == eventHandlers_.end()) return std::nullopt;
     return std::visit([&](auto &stored) -> std::optional<LRESULT> {
@@ -325,24 +335,44 @@ void Window::SetSizeChangeMode(SizeChangeMode sizeChangeMode) {
 
 void Window::SetWindowMode(WindowMode windowMode) {
     LogScope scope;
+
     if (windowMode_ == windowMode || !descriptor_.hwnd) return;
     windowMode_ = windowMode;
     switch (windowMode) {
         case WindowMode::Window:
-            SetWindowLong(descriptor_.hwnd, GWL_STYLE, descriptor_.windowStyle);
-            ShowWindow(descriptor_.hwnd, SW_NORMAL);
-            AdjustWindowSize();
+            SetWindowLong(descriptor_.hwnd, GWL_STYLE, prevWindowStyle_);
+            SetWindowLong(descriptor_.hwnd, GWL_EXSTYLE, prevWindowExStyle_);
+
+            SetWindowPos(descriptor_.hwnd, HWND_TOP,
+                prevWindowRect_.left,
+                prevWindowRect_.top,
+                prevWindowRect_.right - prevWindowRect_.left,
+                prevWindowRect_.bottom - prevWindowRect_.top,
+                SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+            
             break;
-        case WindowMode::FullScreen: {
-            SetWindowLong(descriptor_.hwnd, GWL_STYLE, WS_POPUP);
-            MONITORINFO monitorInfo{}; monitorInfo.cbSize = sizeof(MONITORINFO);
-            GetMonitorInfo(MonitorFromWindow(descriptor_.hwnd, MONITOR_DEFAULTTOPRIMARY), &monitorInfo);
-            SetWindowPos(descriptor_.hwnd, HWND_TOP, monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
-                         monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-                         monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
-                         SWP_FRAMECHANGED);
-        } break;
+
+        case WindowMode::FullScreen:
+            auto mi = WindowsAPI::QueryMonitorInfo(MonitorFromWindow(descriptor_.hwnd, MONITOR_DEFAULTTOPRIMARY));
+            if (!mi) break;
+
+            GetWindowRect(descriptor_.hwnd, &prevWindowRect_);
+            prevWindowStyle_ = GetWindowLong(descriptor_.hwnd, GWL_STYLE);
+            prevWindowExStyle_ = GetWindowLong(descriptor_.hwnd, GWL_EXSTYLE);
+
+            SetWindowLong(descriptor_.hwnd, GWL_STYLE, prevWindowStyle_ & ~(WS_CAPTION | WS_THICKFRAME));
+            SetWindowLong(descriptor_.hwnd, GWL_EXSTYLE, prevWindowExStyle_ & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE));
+
+            RECT mr = mi->MonitorRect();
+            SetWindowPos(descriptor_.hwnd, HWND_TOP,
+                mr.left, mr.top,
+                mr.right - mr.left,
+                mr.bottom - mr.top,
+                SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+            
+            break;
     }
+    AdjustWindowSize();
 }
 
 void Window::SetWindowTitle(const std::wstring &title) {
@@ -558,9 +588,6 @@ void Window::AdjustWindowSize() {
     if (!descriptor_.hwnd) return;
     RECT rect = { 0, 0, size_.clientWidth, size_.clientHeight };
     AdjustWindowRect(&rect, descriptor_.windowStyle, FALSE);
-    SetWindowPos(descriptor_.hwnd, nullptr, 0, 0,
-        rect.right - rect.left, rect.bottom - rect.top,
-        SWP_NOMOVE | SWP_NOZORDER);
     if (dx12SwapChain_) {
         if (size_.clientWidth <= 0) size_.clientWidth = 1;
         if (size_.clientHeight <= 0) size_.clientHeight = 1;

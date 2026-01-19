@@ -14,11 +14,17 @@ namespace KashipanEngine {
 
 class Health final : public IObjectComponent3D {
 public:
+    /// @brief 初期HPとダメージクールダウンを指定してコンポーネントを作成する
+    /// @param hp 初期HP
+    /// @param damageCooldownSec ダメージ後の無敵時間（秒）
     explicit Health(int hp, float damageCooldownSec = 0.5f)
         : IObjectComponent3D("Health", 1), hp_(hp), damageCooldownSec_(damageCooldownSec) {}
 
+    /// @brief デストラクタ
     ~Health() override = default;
 
+    /// @brief コンポーネントの複製を作成して返す
+    /// @return 複製されたコンポーネントの所有ポインタ
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<Health>(hp_, damageCooldownSec_);
         ptr->isAlive_ = isAlive_;
@@ -27,6 +33,8 @@ public:
         return ptr;
     }
 
+    /// @brief 毎フレームの更新処理。クールダウンの減少とマテリアル色の更新を行う
+    /// @return 更新が成功した場合は true
     std::optional<bool> Update() override {
         if (!isAlive_) return true;
 
@@ -39,6 +47,8 @@ public:
         return true;
     }
 
+    /// @brief ダメージを与える。クールダウン中は無効
+    /// @param amount 与えるダメージ量（デフォルト 1）
     void Damage(int amount = 1) {
         if (!isAlive_) return;
         if (amount <= 0) return;
@@ -56,8 +66,14 @@ public:
         UpdateMaterialTint();
     }
 
+    /// @brief 現在のHPを取得する
+    /// @return HP値
     int GetHp() const { return hp_; }
+    /// @brief 生存しているかを取得する
+    /// @return 生存していれば true
     bool IsAlive() const { return isAlive_; }
+    /// @brief 現在のクールダウン内でダメージを受けたかを取得する
+    /// @return クールダウン中にダメージがあれば true
     bool WasDamagedThisCooldown() const { return wasDamaged_ && cooldownRemaining_ > 0.0f; }
 
 #if defined(USE_IMGUI)

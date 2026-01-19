@@ -1,8 +1,5 @@
 #pragma once
-
-#include "Scene/SceneBase.h"
-#include "Graphics/ScreenBuffer.h"
-#include "Assets/AudioManager.h"
+#include <KashipanEngine.h>
 
 namespace KashipanEngine {
 
@@ -22,17 +19,6 @@ protected:
     void OnUpdate() override;
 
 private:
-    // 画面表示用
-    ScreenBuffer *screenBuffer_ = nullptr;
-    Camera2D *screenCamera2D_ = nullptr;
-    Sprite *screenSprite_ = nullptr;
-
-    // 鏡用
-    ScreenBuffer *mirrorBuffer_ = nullptr;
-    Camera3D *mainCamera3D_ = nullptr;
-    Camera3D *mirrorCamera3D_ = nullptr;
-    Plane3D *floorPlane_ = nullptr;
-
     // プレイヤー
     Sphere *player_ = nullptr;
 

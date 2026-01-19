@@ -9,13 +9,20 @@
 
 namespace KashipanEngine {
 
+/// @brief 攻撃ギアの壁（左側）クラス
 class AttackGearWallLeftSide final : public AttackBase {
 public:
+    /// @brief コンストラクタ
+    /// @param mover オブジェクト3Dのポインタ
+    /// @param screenBuffer スクリーンバッファのポインタ
     explicit AttackGearWallLeftSide(Object3DBase *mover = nullptr, ScreenBuffer *screenBuffer = nullptr)
         : AttackBase("AttackGearWallLeftSide", mover, screenBuffer) {}
+
+    /// @brief デストラクタ
     ~AttackGearWallLeftSide() override = default;
 
 protected:
+    /// @brief 攻撃開始初期化
     void AttackStartInitialize() override {
         constexpr int kCount = 10;
         constexpr float minZ = -5.0f;

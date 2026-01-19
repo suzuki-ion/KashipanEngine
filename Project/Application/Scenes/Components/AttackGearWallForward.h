@@ -9,8 +9,19 @@
 
 namespace KashipanEngine {
 
+/**
+ * @brief フォワードギアの壁攻撃クラス
+ *
+ * このクラスは、フォワードギアを使用した壁攻撃を表現します。
+ */
 class AttackGearWallForward final : public AttackBase {
 public:
+    /**
+     * @brief コンストラクタ
+     *
+     * @param mover オプションのMoverオブジェクト
+     * @param screenBuffer オプションのScreenBufferオブジェクト
+     */
     explicit AttackGearWallForward(Object3DBase *mover = nullptr, ScreenBuffer *screenBuffer = nullptr)
         : AttackBase("AttackGearWallForward", mover, screenBuffer) {}
     ~AttackGearWallForward() override = default;

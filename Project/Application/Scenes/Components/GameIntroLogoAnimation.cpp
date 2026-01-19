@@ -1,13 +1,4 @@
 #include "Scenes/Components/GameIntroLogoAnimation.h"
-
-#include "Scene/SceneContext.h"
-
-#include "Objects/Components/2D/Material2D.h"
-#include "Objects/Components/2D/Transform2D.h"
-
-#include "Math/Easings.h"
-#include "Utilities/TimeUtils.h"
-
 #include <algorithm>
 
 namespace KashipanEngine {
@@ -99,7 +90,7 @@ void GameIntroLogoAnimation::Update() {
     if (logoSprite_) {
         if (auto* tr = logoSprite_->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector2{ x, kY });
-            tr->SetScale(Vector2{ kLogoW, -kLogoH });
+            tr->SetScale(Vector2{ kLogoW, kLogoH });
         }
     }
 

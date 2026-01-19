@@ -94,9 +94,6 @@ public:
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
     static void SetPipelineManager(Passkey<GraphicsEngine>, PipelineManager *pm) { sPipelineManager = pm; }
     static void SetRenderer(Passkey<GraphicsEngine>, Renderer *renderer) { sRenderer = renderer; }
-    static Renderer *GetRenderer(Passkey<Object2DBase>) { return sRenderer; }
-    static Renderer *GetRenderer(Passkey<Object3DBase>) { return sRenderer; }
-    static Renderer *GetRenderer(Passkey<ScreenBuffer>) { return sRenderer; }
 
     /// @brief 全ウィンドウ破棄
     static void AllDestroy(Passkey<GameEngine>);
@@ -383,6 +380,11 @@ private:
 
     // 内部で保持するワイド文字列（WinAPIのクラス名/タイトル用）
     std::wstring titleW_ = L"";
+
+    // フルスクリーン前のスタイル・ウィンドウ位置・サイズ保存用
+    LONG prevWindowStyle_ = 0;
+    LONG prevWindowExStyle_ = 0;
+    RECT prevWindowRect_{};
 
     // イベントハンドラマップ（既定イベント or ユーザーイベント）
     std::unordered_map<UINT, Events> eventHandlers_;

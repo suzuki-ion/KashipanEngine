@@ -14,7 +14,10 @@ public:
         : AttackBase("AttackGearCircularOutside", mover, screenBuffer) {}
     ~AttackGearCircularOutside() override = default;
 
+    /// @brief 攻撃のターゲット位置を設定する
+    /// @param p ターゲット位置
     void SetTargetPosition(const Vector3 &p) { target_ = p; }
+    /// @brief ターゲット位置を取得する
     const Vector3 &GetTargetPosition() const { return target_; }
 
 protected:

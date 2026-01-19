@@ -214,11 +214,15 @@ Matrix4x4 Matrix4x4MakePerspectiveFovMatrix(const float fovY, const float aspect
 }
 
 Matrix4x4 Matrix4x4MakeOrthographicMatrix(const float left, const float top, const float right, const float bottom, const float nearClip, const float farClip) noexcept {
+    const float w = right - left;
+    const float h = bottom - top;
+    const float d = farClip - nearClip;
+
     return Matrix4x4(
-        2.0f / (right - left), 0.0f, 0.0f, 0.0f,
-        0.0f, 2.0f / (top - bottom), 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f / (farClip - nearClip), 0.0f,
-        (left + right) / (left - right), (top + bottom) / (bottom - top), nearClip / (nearClip - farClip), 1.0f
+        2.0f / w,            0.0f,                 0.0f,               0.0f,
+        0.0f,                2.0f / h,             0.0f,               0.0f,
+        0.0f,                0.0f,                 1.0f / d,           0.0f,
+        -(right + left) / w, -(bottom + top) / h,  -nearClip / d,      1.0f
     );
 }
 

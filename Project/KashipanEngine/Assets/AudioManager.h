@@ -58,6 +58,18 @@ public:
     /// @return 成功した場合 true
     static bool Resume(PlayHandle play);
 
+    /// @brief 再生中の音量を設定する
+    /// @param play 再生ハンドル
+    /// @param volume ボリューム (0.0f ~ 1.0f)
+    /// @return 成功した場合 true
+    static bool SetVolume(PlayHandle play, float volume);
+
+    /// @brief 再生中のピッチを設定する（半音単位）
+    /// @param play 再生ハンドル
+    /// @param pitch ピッチ（半音単位。+1.0f で半音上がる）
+    /// @return 成功した場合 true
+    static bool SetPitch(PlayHandle play, float pitch);
+
     /// @brief 再生中かどうか
     static bool IsPlaying(PlayHandle play);
 

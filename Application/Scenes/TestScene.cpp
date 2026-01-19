@@ -28,10 +28,10 @@ void TestScene::Initialize() {
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
 
         BloomEffect::Params bp{};
-        bp.threshold = 1.0f;
-        bp.softKnee = 0.5f;
-        bp.intensity = 1.5f;
-        bp.blurRadius = 2.0f;
+        bp.threshold = 0.0f;
+        bp.softKnee = 0.0f;
+        bp.intensity = 0.0f;
+        bp.blurRadius = 0.0f;
         bp.iterations = 4;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
         
@@ -214,7 +214,7 @@ void TestScene::Initialize() {
 
         obj->RegisterComponent<PlayerMove>(2.0f, playerMoveDuration_);
         if (auto* playerArrowMove = obj->GetComponent3D<PlayerMove>()) {
-            playerArrowMove->SetInput(GetInput());
+            playerArrowMove->SetInputCommand(GetInputCommand());
             playerArrowMove->SetBPMToleranceRange(playerBpmToleranceRange_);
         }
 
@@ -240,12 +240,14 @@ void TestScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
+	// ExplosionManager の追加
     {
         auto comp = std::make_unique<ExplosionManager>();
         comp->SetScreenBuffer(screenBuffer_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
 		comp->SetCollider(collider_);
         comp->SetCollider2(collider_);
+		comp->SetExplosionLifetime(explosionLifetime_);
         explosionManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
@@ -256,9 +258,10 @@ void TestScene::Initialize() {
         comp->SetPlayer(player_);
         comp->SetScreenBuffer(screenBuffer_);
         comp->SetShadowMapBuffer(shadowMapBuffer_);
-        comp->SetInput(GetInput());
         comp->SetBPMToleranceRange(playerBpmToleranceRange_);
+		comp->SetBombLifetimeBeats(bombLifetimeBeats_);
         comp->SetExplosionManager(explosionManager_);
+        comp->SetInputCommand(GetInputCommand());
         comp->SetCollider(collider_);  // 追加
         bombManager_ = comp.get();
         AddSceneComponent(std::move(comp));
@@ -279,13 +282,13 @@ void TestScene::Initialize() {
         comp->SetMapSize(kMapW, kMapH);
         comp->SetCollider(collider_);
         comp->SetPlayer(player_);
-        comp->SetBombManager(bombManager_);  // 追加
+        comp->SetBombManager(bombManager_);
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
 
     {
-		auto comp = std::make_unique<EnemySpawner>();
+		auto comp = std::make_unique<EnemySpawner>(enemySpawnInterval_);
 		comp->SetEnemyManager(enemyManager_);
 		comp->SetBPMSystem(bpmSystem_);
 		enemySpawner_ = comp.get();
@@ -317,12 +320,12 @@ void TestScene::Initialize() {
     explosionManager_->SetPlayer(player_);
 
     if (playBgm_) {
-        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/TestBGM.mp3");
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
         if (handle == AudioManager::kInvalidSoundHandle) {
             // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
             return;
         }
-        AudioManager::Play(handle, 0.05f);
+        AudioManager::Play(handle, 0.05f, 0.0f, true);
     }
 
     // Particles

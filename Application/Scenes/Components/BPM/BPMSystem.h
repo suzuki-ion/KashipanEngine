@@ -69,12 +69,12 @@ namespace KashipanEngine {
 
         /// @brief 拍が発生したときの処理
         void OnBeat() {
-            auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM.mp3");
+            auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/rhythm.wav"); // BPM.mp3
             if (handle == AudioManager::kInvalidSoundHandle) {
                 // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
                 return;
             }
-            AudioManager::Play(handle, 0.1f);
+            AudioManager::Play(handle, 0.05f);
         }
 
         float bpm_ = 120.0f;

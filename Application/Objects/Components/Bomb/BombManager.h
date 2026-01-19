@@ -33,8 +33,8 @@ public:
     /// @brief ExplosionManagerを設定
     void SetExplosionManager(ExplosionManager* explosionManager) { explosionManager_ = explosionManager; }
 
-    /// @brief Inputを設定
-    void SetInput(const Input* input) { input_ = input; }
+	/// @brief InputCommandを設定
+	void SetInputCommand(const InputCommand* inputCommand) { inputCommand_ = inputCommand; }
 
     /// @brief 衝突判定用ColliderComponentを設定
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
@@ -110,17 +110,18 @@ private:
     Object3DBase* player_ = nullptr;
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
-    const Input* input_ = nullptr;
+    const InputCommand* inputCommand_ = nullptr;
     ExplosionManager* explosionManager_ = nullptr;
     ColliderComponent* collider_ = nullptr;
 
-    int maxBombs_ = 10;
-    float bpmProgress_ = 0.0f;
+	int maxBombs_ = 10;              // 同時に設置可能な爆弾の最大数
+	float bpmProgress_ = 0.0f;       // 現在フレームのBPM進行度（0.0～1.0）
     float prevBpmProgress_ = 0.0f;   // 前フレームのBPM進行度（ビートカウント用）
-    float bpmToleranceRange_ = 0.2f;
+	float bpmToleranceRange_ = 0.2f; // BPM許容範囲（ビート付近でのみ設置可能）
+	bool useToleranceRange_ = true;  // BPM許容範囲を使用するかどうか
     float beatDuration_ = 0.5f;      // 1拍の時間（秒）
-    float spawnDistance_ = 2.0f;
-    float bombScale_ = 0.8f;
+	float spawnDistance_ = 2.0f;     // プレイヤーから見た爆弾生成距離
+	float bombScale_ = 0.8f; 		 // 爆弾のスケール
     int bombLifetimeBeats_ = 4;      // 爆弾の寿命（拍数）
 
     int mapWidth_ = 13;              // マップの横幅（グリッド数）

@@ -133,6 +133,8 @@
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -172,7 +174,6 @@
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
-    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\CopyColorToScreenBufferEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
@@ -376,6 +377,9 @@
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
   </ItemGroup>

@@ -105,217 +105,26 @@ public:
 
         // Intro 演出 (0..kIntroDurationSec)
         if (elapsedSec_ < kIntroDurationSec) {
-            const float t = elapsedSec_;
-
-            // t=3..5: ノイズを再生（時間外になったら停止）
-            {
-                const bool inNoise = (t >= 3.0f && t < 5.0f);
-                if (inNoise) {
-                    if (introNoisePlay_ == AudioManager::kInvalidPlayHandle) {
-                        const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroNoise.mp3");
-                        if (h != AudioManager::kInvalidSoundHandle) {
-                            introNoisePlay_ = AudioManager::Play(h, 1.0f, 0.0f, true);
-                        }
-                    }
-                } else {
-                    if (introNoisePlay_ != AudioManager::kInvalidPlayHandle) {
-                        AudioManager::Stop(introNoisePlay_);
-                        introNoisePlay_ = AudioManager::kInvalidPlayHandle;
-                    }
-                }
-            }
-
-            // t=5.5: "gameIntroDoom.mp3" を再生
-            if (!introDoomPlayed_ && t >= 5.5f) {
-                const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroDoom.mp3");
-                if (h != AudioManager::kInvalidSoundHandle) {
-                    AudioManager::Play(h);
-                }
-                introDoomPlayed_ = true;
-            }
-
-            // t=6.0: カメラシェイク
-            if (!introShakeTriggered_ && t >= 6.0f) {
-                if (cameraController_) {
-                    cameraController_->Shake(1.0f, 1.0f);
-                }
-                introShakeTriggered_ = true;
-            }
-
-            // t=3..5: ScreenBuffer用スプライトの点滅（点滅間隔はだんだん速くする）
-            if (screenSprite_) {
-                if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
-                    if (t >= 3.0f && t < 5.0f) {
-                        introBlinkTimer_ += dt;
-
-                        const float phase = Normalize01(t, 3.0f, 5.0f);
-                        const float interval = Lerp(0.35f, 0.05f, phase);
-
-                        if (introBlinkTimer_ >= nextIntroBlinkAt_) {
-                            // 白黒点滅
-                            static bool sWhite = false;
-                            sWhite = !sWhite;
-                            mat->SetColor(sWhite ? Vector4{ 1.0f, 1.0f, 1.0f, 1.0f } : Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
-
-                            nextIntroBlinkAt_ = introBlinkTimer_ + std::max(0.01f, interval);
-                        }
-                    } else if (t >= 5.0f && t < 6.0f) {
-                        mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
-                    }
-                }
-            }
-
-            // t=6: 回転プレーンを出現させ、ScreenBuffer用スプライトを白に戻す
-            if (t >= 6.0f && !introPlanesRaised_) {
-                for (auto *p : rotatingPlanes_) {
-                    if (!p) continue;
-                    if (auto *tr = p->GetComponent3D<Transform3D>()) {
-                        auto v = tr->GetTranslate();
-                        v.y += 10000.0f;
-                        tr->SetTranslate(v);
-                    }
-                }
-                if (screenSprite_) {
-                    if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
-                        mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
-                    }
-                }
-                introPlanesRaised_ = true;
-            }
-
-            // t=6..8: ライト強度を 3.2 -> 1.6 (Lerp)
-            if (light_ && t >= 6.0f && t < 8.0f) {
-                const float u = Normalize01(t, 6.0f, 8.0f);
-                const float intensity = Lerp(3.2f, 1.6f, u);
-                light_->SetIntensity(intensity);
-            }
-
-            // t=8: ロゴ再生
-            if (!introLogoPlayed_ && introLogoAnimation_ && t >= 8.0f) {
-                introLogoAnimation_->Play();
-                introLogoPlayed_ = true;
-            }
-
-            // t=0..1: カメラFOVを 0.1 -> 1.0 (EaseInOutCubic)
-            if (cameraController_ && t < 1.0f) {
-                const float u = Normalize01(t, 0.0f, 1.0f);
-                const float fov = EaseInOutCubic(0.1f, 1.0f, u);
-                cameraController_->SetTargetFovY(fov);
-            }
-
-            // t=6..7: カメラFOVを 1.0 -> 1.5 (EaseOutExpo)
-            if (cameraController_ && t >= 6.0f && t < 7.0f) {
-                const float u = Normalize01(t, 6.0f, 7.0f);
-                const float fov = EaseOutExpo(1.0f, 1.5f, u);
-                cameraController_->SetTargetFovY(fov);
-            }
-
-            // t=8..10: カメラFOVを 1.5 -> 0.7 (EaseInOutCubic)
-            if (cameraController_ && t >= 8.0f) {
-                const float u = Normalize01(t, 8.0f, 10.0f);
-                const float fov = EaseInOutCubic(1.5f, 0.7f, u);
-                cameraController_->SetTargetFovY(fov);
-            }
-
+            UpdateIntro(dt);
             prevElapsedSec_ = elapsedSec_;
             return;
         }
 
         // Intro 終了時にノイズが鳴りっぱなしにならないよう停止
-        if (introNoisePlay_ != AudioManager::kInvalidPlayHandle) {
-            AudioManager::Stop(introNoisePlay_);
-            introNoisePlay_ = AudioManager::kInvalidPlayHandle;
-        }
+        StopIntroNoise();
 
         attackElapsedSec_ = elapsedSec_ - kIntroDurationSec;
         if (attackElapsedSec_ < 0.0f) attackElapsedSec_ = 0.0f;
 
-        // 中間演出 (85-100s) は攻撃しない
-        if (attackElapsedSec_ >= 85.0f && attackElapsedSec_ < 100.0f) {
-            const float t = attackElapsedSec_ - 85.0f; // t=0.0 は 85 秒
-
-            // t=5..7: ノイズを再生（時間外になったら停止）
-            {
-                const bool inNoise = (t >= 5.0f && t < 7.0f);
-                if (inNoise) {
-                    if (intermissionNoisePlay_ == AudioManager::kInvalidPlayHandle) {
-                        const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroNoise.mp3");
-                        if (h != AudioManager::kInvalidSoundHandle) {
-                            intermissionNoisePlay_ = AudioManager::Play(h, 1.0f, 0.0f, true);
-                        }
-                    }
-                } else {
-                    if (intermissionNoisePlay_ != AudioManager::kInvalidPlayHandle) {
-                        AudioManager::Stop(intermissionNoisePlay_);
-                        intermissionNoisePlay_ = AudioManager::kInvalidPlayHandle;
-                    }
-                }
-            }
-
-            // t=7.5: "gameIntroDoom.mp3" を再生
-            if (!intermissionDoomPlayed_ && t >= 7.5f) {
-                const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroDoom.mp3");
-                if (h != AudioManager::kInvalidSoundHandle) {
-                    AudioManager::Play(h);
-                }
-                intermissionDoomPlayed_ = true;
-            }
-
-            // t=8.0: カメラシェイク
-            if (!intermissionShakeTriggered_ && t >= 8.0f) {
-                if (cameraController_) {
-                    cameraController_->Shake(1.0f, 1.0f);
-                }
-                intermissionShakeTriggered_ = true;
-            }
-
-            // t=5..7: スプライトを白黒点滅（開始時演出と同じ点滅）。t=7 で黒にする。
-            if (screenSprite_) {
-                if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
-                    if (t >= 5.0f && t < 7.0f) {
-                        intermissionBlinkTimer_ += dt;
-
-                        const float phase = Normalize01(t, 5.0f, 7.0f);
-                        const float interval = Lerp(0.35f, 0.05f, phase);
-
-                        if (intermissionBlinkTimer_ >= nextIntermissionBlinkAt_) {
-                            intermissionBlinkWhite_ = !intermissionBlinkWhite_;
-                            mat->SetColor(intermissionBlinkWhite_ ? Vector4{ 1.0f, 1.0f, 1.0f, 1.0f } : Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
-                            nextIntermissionBlinkAt_ = intermissionBlinkTimer_ + std::max(0.01f, interval);
-                        }
-                    } else if (t >= 7.0f && t < 8.0f) {
-                        mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
-                    } else if (t >= 8.0f && t < 9.0f) {
-                        mat->SetColor(Vector4{ 1.0f, 0.5f, 0.5f, 1.0f });
-                    }
-                }
-            }
-
-            // t=5..7: FOV 0.7 -> 1.5 (EaseOutCubic)
-            if (cameraController_ && t >= 5.0f && t < 7.0f) {
-                const float u = Normalize01(t, 5.0f, 7.0f);
-                const float fov = EaseOutCubic(0.7f, 1.5f, u);
-                cameraController_->SetTargetFovY(fov);
-            }
-
-            // t=9..10: FOV 1.5 -> 0.7 (EaseInOutCubic)
-            if (cameraController_ && t >= 9.0f && t < 10.0f) {
-                const float u = Normalize01(t, 9.0f, 10.0f);
-                const float fov = EaseInOutCubic(1.5f, 0.7f, u);
-                cameraController_->SetTargetFovY(fov);
-            }
-
-            nextAttackAtSec_ = 100.0f;
-            nextChaseInsideAtSec_ = std::max(nextChaseInsideAtSec_, 100.0f);
+        // 中間演出 (intermissionStart..intermissionEnd) は攻撃しない
+        if (attackElapsedSec_ >= intermissionStartAttackSec_ && attackElapsedSec_ < intermissionEndAttackSec_) {
+            UpdateIntermission(dt);
             prevElapsedSec_ = elapsedSec_;
             return;
         }
 
         // 中間演出終了時にノイズが鳴りっぱなしにならないよう停止
-        if (intermissionNoisePlay_ != AudioManager::kInvalidPlayHandle) {
-            AudioManager::Stop(intermissionNoisePlay_);
-            intermissionNoisePlay_ = AudioManager::kInvalidPlayHandle;
-        }
+        StopIntermissionNoise();
 
         // 攻撃時間を超えたら何もしない（必要なら ResultScene 遷移などに拡張）
         if (attackElapsedSec_ > kAttackDurationSec) {
@@ -324,132 +133,15 @@ public:
             return;
         }
 
-        // 最後 5 秒は攻撃しない
-        if (attackElapsedSec_ >= (kAttackDurationSec - 5.0f)) {
-            if (!endFadeStarted_) {
-                endFadeStarted_ = true;
-                endFadeElapsed_ = 0.0f;
-                if (screenSprite_) {
-                    if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
-                        endFadeStartColor_ = mat->GetColor();
-                    }
-                }
-            }
-
-            endFadeElapsed_ += dt;
-
-            // 最後の5秒が始まってから2秒待って、その後2秒かけて白に戻す
-            if (screenSprite_) {
-                if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
-                    const float u = Normalize01(endFadeElapsed_, 2.0f, 4.0f);
-                    if (u >= 0.0f) {
-                        mat->SetColor(Lerp(endFadeStartColor_, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f }, u));
-                    }
-                }
-            }
-
+        // 最後の時間帯は攻撃しない（endFade）
+        if (attackElapsedSec_ >= (kAttackDurationSec - endFadeTotalSec_)) {
+            UpdateEndFade(dt);
             prevElapsedSec_ = elapsedSec_;
             return;
         }
 
-        auto computeInterval = [&](float tSec) {
-            // 0-10s: ゆっくり, 10-90s: 中程度に加速, 95s+: スパイク
-            if (tSec < 10.0f) {
-                return 4.0f; // だいぶゆっくり
-            }
-            if (tSec < 90.0f) {
-                const float u = (tSec - 10.0f) / 80.0f; // 0..1
-                return 4.0f + (1.6f - 4.0f) * std::clamp(u, 0.0f, 1.0f);
-            }
-            if (tSec < 100.0f) {
-                return 1.6f; // 90-100 は据え置き（85-100 は中間演出で停止）
-            }
-            {
-                // 100s+ : 中間演出後は少し頻度を落とす（強度を弱める）
-                const float u = (tSec - 100.0f) / (kAttackDurationSec - 100.0f);
-                const float base = 1.0f + (0.55f - 1.0f) * std::clamp(u, 0.0f, 1.0f);
-                return base * 1.25f; // interval を 1/0.8 倍して頻度を下げる
-            }
-        };
-
-        while (attackElapsedSec_ >= nextAttackAtSec_) {
-            static thread_local std::mt19937 rng{ 98765u };
-
-            // ターゲットは mover の進行(0,0,0)基準で良いが、追尾攻撃用にプレイヤーを読む
-            Vector3 baseTarget{0.0f, 0.0f, 0.0f};
-
-            // 追尾系: 時々プレイヤー位置を狙う AttackGearCircularInside
-            const bool doChaseInside = (attackElapsedSec_ >= nextChaseInsideAtSec_);
-            if (doChaseInside && attackGearCircularInside_) {
-                // FollowTarget は player を想定して GameScene 側で設定されるので、ここでは mover から推定はしない。
-                // mover_ の子で動くため、target は local XZ を指定する。
-                Vector3 p{0.0f, 0.0f, 0.0f};
-                if (cameraController_ && cameraController_->GetFollowTarget()) {
-                    if (auto *tr = cameraController_->GetFollowTarget()->GetComponent3D<Transform3D>()) {
-                        p = tr->GetTranslate();
-                    }
-                }
-                attackGearCircularInside_->SetTargetPosition(p);
-                attackGearCircularInside_->Attack();
-
-                // 次の追尾は 12-20 秒後（後半は少し短く）
-                const float base = (attackElapsedSec_ < 100.0f) ? 16.0f : 12.5f;
-                const float jitter = (attackElapsedSec_ < 100.0f) ? 8.0f : 6.0f;
-                nextChaseInsideAtSec_ = attackElapsedSec_ + (base + std::uniform_real_distribution<float>(-jitter, jitter)(rng));
-            } else {
-                // 通常攻撃: 時間で重み付け
-                float wCircIn = 1.0f;
-                float wCircOut = 1.0f;
-                float wWall = 1.0f;
-
-                if (attackElapsedSec_ < 10.0f) {
-                    wWall = 0.5f;
-                } else if (attackElapsedSec_ < 90.0f) {
-                    wWall = 1.0f;
-                } else {
-                    wWall = 1.4f;
-                }
-                if (attackElapsedSec_ >= 100.0f) {
-                    // 旧 95s+ spike より少し弱める
-                    wWall = 1.44f;
-                    wCircOut = 1.0f;
-                }
-
-                const float sum = wCircIn + wCircOut + (wWall * 3.0f);
-                const float r = std::uniform_real_distribution<float>(0.0f, sum)(rng);
-
-                if (r < wCircIn) {
-                    if (attackGearCircularInside_) {
-                        attackGearCircularInside_->SetTargetPosition(baseTarget);
-                        attackGearCircularInside_->Attack();
-                    }
-                } else if (r < wCircIn + wCircOut) {
-                    if (attackGearCircularOutside_) {
-                        attackGearCircularOutside_->SetTargetPosition(baseTarget);
-                        attackGearCircularOutside_->Attack();
-                    }
-                } else {
-                    const int w = std::uniform_int_distribution<int>(0, 2)(rng);
-                    if (w == 0 && attackGearWallForward_) {
-                        attackGearWallForward_->Attack();
-                    } else if (w == 1 && attackGearWallLeftSide_) {
-                        attackGearWallLeftSide_->Attack();
-                    } else if (w == 2 && attackGearWallRightSide_) {
-                        attackGearWallRightSide_->Attack();
-                    }
-                }
-            }
-
-            // 次攻撃時刻
-            const float interval = computeInterval(attackElapsedSec_);
-            const float jitter = interval * 0.15f;
-            nextAttackAtSec_ = attackElapsedSec_ + std::max(0.15f, interval + std::uniform_real_distribution<float>(-jitter, jitter)(rng));
-
-            // 初回の追尾攻撃を 18 秒前後に設定
-            if (nextChaseInsideAtSec_ <= 0.0f) {
-                nextChaseInsideAtSec_ = 18.0f;
-            }
-        }
+        // 攻撃処理
+        ProcessAttacks();
 
         prevElapsedSec_ = elapsedSec_;
     }
@@ -461,6 +153,60 @@ public:
     static constexpr float kAttackDurationSec = 180.0f;
 
 private:
+    // --- configuration parameters (replace magic literals) ---
+    // Intro
+    float introNoiseStartSec_ = 3.0f;
+    float introNoiseEndSec_ = 5.0f;
+    float introDoomAtSec_ = 5.5f;
+    float introShakeAtSec_ = 6.0f;
+    float introBlinkStartSec_ = 3.0f;
+    float introBlinkEndSec_ = 5.0f;
+    float introBlinkIntervalStart_ = 0.35f;
+    float introBlinkIntervalEnd_ = 0.05f;
+    float introPlanesRaiseAtSec_ = 6.0f;
+    float lightFadeStartSec_ = 6.0f;
+    float lightFadeEndSec_ = 8.0f;
+    float lightIntensityStart_ = 3.2f;
+    float lightIntensityEnd_ = 1.6f;
+    float introLogoAtSec_ = 8.0f;
+    float fovIntroStartFrom_ = 0.1f;
+    float fovIntroStartTo_ = 1.0f;
+    float fov6to7From_ = 1.0f;
+    float fov6to7To_ = 1.5f;
+    float fov8to10From_ = 1.5f;
+    float fov8to10To_ = 0.7f;
+
+    // Intermission (relative to attackElapsedSec)
+    float intermissionStartAttackSec_ = 85.0f;
+    float intermissionEndAttackSec_ = 100.0f;
+    float intermissionNoiseStartSec_ = 5.0f;
+    float intermissionNoiseEndSec_ = 7.0f;
+    float intermissionDoomAtSec_ = 7.5f;
+    float intermissionShakeAtSec_ = 8.0f;
+    float intermissionBlinkStartSec_ = 5.0f;
+    float intermissionBlinkEndSec_ = 7.0f;
+    float intermissionBlinkIntervalStart_ = 0.35f;
+    float intermissionBlinkIntervalEnd_ = 0.05f;
+    float intermissionFovStartA_ = 5.0f;
+    float intermissionFovEndA_ = 7.0f;
+    float intermissionFovStartB_ = 9.0f;
+    float intermissionFovEndB_ = 10.0f;
+
+    // End fade
+    float endFadeTotalSec_ = 5.0f; // last X seconds no attacks
+    float endFadeDelaySec_ = 2.0f;
+    float endFadeFadeEndSec_ = 4.0f; // used as Normalize01 end
+
+    // Attack scheduling
+    float attackIntervalEarlyEnd_ = 10.0f;
+    float attackIntervalMidEnd_ = 90.0f;
+    float attackIntervalLateEnd_ = 100.0f;
+    float attackIntervalEarlyVal_ = 4.0f;
+    float attackIntervalMidVal_ = 1.6f;
+
+    // jitter
+    float attackJitterFrac_ = 0.15f;
+
     Camera3D *camera_ = nullptr;
     DirectionalLight *light_ = nullptr;
     Sphere *mover_ = nullptr;
@@ -505,6 +251,312 @@ private:
     AttackGearWallRightSide *attackGearWallRightSide_ = nullptr;
     CameraController *cameraController_ = nullptr;
     GameIntroLogoAnimation *introLogoAnimation_ = nullptr;
+
+    // --- helper methods to split Update() ---
+    void UpdateIntro(float dt) {
+        const float t = elapsedSec_;
+
+        // t = introNoiseStart..introNoiseEnd
+        {
+            const bool inNoise = (t >= introNoiseStartSec_ && t < introNoiseEndSec_);
+            if (inNoise) {
+                if (introNoisePlay_ == AudioManager::kInvalidPlayHandle) {
+                    const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroNoise.mp3");
+                    if (h != AudioManager::kInvalidSoundHandle) {
+                        introNoisePlay_ = AudioManager::Play(h, 1.0f, 0.0f, true);
+                    }
+                }
+            } else {
+                if (introNoisePlay_ != AudioManager::kInvalidPlayHandle) {
+                    AudioManager::Stop(introNoisePlay_);
+                    introNoisePlay_ = AudioManager::kInvalidPlayHandle;
+                }
+            }
+        }
+
+        if (!introDoomPlayed_ && t >= introDoomAtSec_) {
+            const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroDoom.mp3");
+            if (h != AudioManager::kInvalidSoundHandle) {
+                AudioManager::Play(h);
+            }
+            introDoomPlayed_ = true;
+        }
+
+        if (!introShakeTriggered_ && t >= introShakeAtSec_) {
+            if (cameraController_) {
+                cameraController_->Shake(1.0f, 1.0f);
+            }
+            introShakeTriggered_ = true;
+        }
+
+        if (screenSprite_) {
+            if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
+                if (t >= introBlinkStartSec_ && t < introBlinkEndSec_) {
+                    introBlinkTimer_ += dt;
+
+                    const float phase = Normalize01(t, introBlinkStartSec_, introBlinkEndSec_);
+                    const float interval = Lerp(introBlinkIntervalStart_, introBlinkIntervalEnd_, phase);
+
+                    if (introBlinkTimer_ >= nextIntroBlinkAt_) {
+                        static bool sWhite = false;
+                        sWhite = !sWhite;
+                        mat->SetColor(sWhite ? Vector4{ 1.0f, 1.0f, 1.0f, 1.0f } : Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
+
+                        nextIntroBlinkAt_ = introBlinkTimer_ + std::max(0.01f, interval);
+                    }
+                } else if (t >= introBlinkEndSec_ && t < introPlanesRaiseAtSec_) {
+                    mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
+                }
+            }
+        }
+
+        if (t >= introPlanesRaiseAtSec_ && !introPlanesRaised_) {
+            for (auto *p : rotatingPlanes_) {
+                if (!p) continue;
+                if (auto *tr = p->GetComponent3D<Transform3D>()) {
+                    auto v = tr->GetTranslate();
+                    v.y += 10000.0f;
+                    tr->SetTranslate(v);
+                }
+            }
+            if (screenSprite_) {
+                if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
+                    mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+                }
+            }
+            introPlanesRaised_ = true;
+        }
+
+        if (light_ && t >= lightFadeStartSec_ && t < lightFadeEndSec_) {
+            const float u = Normalize01(t, lightFadeStartSec_, lightFadeEndSec_);
+            const float intensity = Lerp(lightIntensityStart_, lightIntensityEnd_, u);
+            light_->SetIntensity(intensity);
+        }
+
+        if (!introLogoPlayed_ && introLogoAnimation_ && t >= introLogoAtSec_) {
+            introLogoAnimation_->Play();
+            introLogoPlayed_ = true;
+        }
+
+        if (cameraController_ && t < 1.0f) {
+            const float u = Normalize01(t, 0.0f, 1.0f);
+            const float fov = EaseInOutCubic(fovIntroStartFrom_, fovIntroStartTo_, u);
+            cameraController_->SetTargetFovY(fov);
+        }
+
+        if (cameraController_ && t >= 6.0f && t < 7.0f) {
+            const float u = Normalize01(t, 6.0f, 7.0f);
+            const float fov = EaseOutExpo(fov6to7From_, fov6to7To_, u);
+            cameraController_->SetTargetFovY(fov);
+        }
+
+        if (cameraController_ && t >= introLogoAtSec_) {
+            const float u = Normalize01(t, introLogoAtSec_, introLogoAtSec_ + 2.0f);
+            const float fov = EaseInOutCubic(fov8to10From_, fov8to10To_, u);
+            cameraController_->SetTargetFovY(fov);
+        }
+    }
+
+    void StopIntroNoise() {
+        if (introNoisePlay_ != AudioManager::kInvalidPlayHandle) {
+            AudioManager::Stop(introNoisePlay_);
+            introNoisePlay_ = AudioManager::kInvalidPlayHandle;
+        }
+    }
+
+    void UpdateIntermission(float dt) {
+        const float t = attackElapsedSec_ - intermissionStartAttackSec_; // 0..(intermissionEnd-intermissionStart)
+
+        // t = intermissionNoiseStart..intermissionNoiseEnd
+        {
+            const bool inNoise = (t >= intermissionNoiseStartSec_ && t < intermissionNoiseEndSec_);
+            if (inNoise) {
+                if (intermissionNoisePlay_ == AudioManager::kInvalidPlayHandle) {
+                    const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroNoise.mp3");
+                    if (h != AudioManager::kInvalidSoundHandle) {
+                        intermissionNoisePlay_ = AudioManager::Play(h, 1.0f, 0.0f, true);
+                    }
+                }
+            } else {
+                if (intermissionNoisePlay_ != AudioManager::kInvalidPlayHandle) {
+                    AudioManager::Stop(intermissionNoisePlay_);
+                    intermissionNoisePlay_ = AudioManager::kInvalidPlayHandle;
+                }
+            }
+        }
+
+        if (!intermissionDoomPlayed_ && t >= intermissionDoomAtSec_) {
+            const auto h = AudioManager::GetSoundHandleFromFileName("gameIntroDoom.mp3");
+            if (h != AudioManager::kInvalidSoundHandle) {
+                AudioManager::Play(h);
+            }
+            intermissionDoomPlayed_ = true;
+        }
+
+        if (!intermissionShakeTriggered_ && t >= intermissionShakeAtSec_) {
+            if (cameraController_) {
+                cameraController_->Shake(1.0f, 1.0f);
+            }
+            intermissionShakeTriggered_ = true;
+        }
+
+        if (screenSprite_) {
+            if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
+                if (t >= intermissionBlinkStartSec_ && t < intermissionBlinkEndSec_) {
+                    intermissionBlinkTimer_ += dt;
+
+                    const float phase = Normalize01(t, intermissionBlinkStartSec_, intermissionBlinkEndSec_);
+                    const float interval = Lerp(intermissionBlinkIntervalStart_, intermissionBlinkIntervalEnd_, phase);
+
+                    if (intermissionBlinkTimer_ >= nextIntermissionBlinkAt_) {
+                        intermissionBlinkWhite_ = !intermissionBlinkWhite_;
+                        mat->SetColor(intermissionBlinkWhite_ ? Vector4{ 1.0f, 1.0f, 1.0f, 1.0f } : Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
+                        nextIntermissionBlinkAt_ = intermissionBlinkTimer_ + std::max(0.01f, interval);
+                    }
+                } else if (t >= intermissionBlinkEndSec_ && t < intermissionShakeAtSec_) {
+                    mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
+                } else if (t >= intermissionShakeAtSec_ && t < intermissionShakeAtSec_ + 1.0f) {
+                    mat->SetColor(Vector4{ 1.0f, 0.5f, 0.5f, 1.0f });
+                }
+            }
+        }
+
+        if (cameraController_ && t >= intermissionFovStartA_ && t < intermissionFovEndA_) {
+            const float u = Normalize01(t, intermissionFovStartA_, intermissionFovEndA_);
+            const float fov = EaseOutCubic(0.7f, 1.5f, u);
+            cameraController_->SetTargetFovY(fov);
+        }
+
+        if (cameraController_ && t >= intermissionFovStartB_ && t < intermissionFovEndB_) {
+            const float u = Normalize01(t, intermissionFovStartB_, intermissionFovEndB_);
+            const float fov = EaseInOutCubic(1.5f, 0.7f, u);
+            cameraController_->SetTargetFovY(fov);
+        }
+
+        nextAttackAtSec_ = intermissionEndAttackSec_;
+        nextChaseInsideAtSec_ = std::max(nextChaseInsideAtSec_, intermissionEndAttackSec_);
+    }
+
+    void StopIntermissionNoise() {
+        if (intermissionNoisePlay_ != AudioManager::kInvalidPlayHandle) {
+            AudioManager::Stop(intermissionNoisePlay_);
+            intermissionNoisePlay_ = AudioManager::kInvalidPlayHandle;
+        }
+    }
+
+    void UpdateEndFade(float dt) {
+        if (!endFadeStarted_) {
+            endFadeStarted_ = true;
+            endFadeElapsed_ = 0.0f;
+            if (screenSprite_) {
+                if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
+                    endFadeStartColor_ = mat->GetColor();
+                }
+            }
+        }
+
+        endFadeElapsed_ += dt;
+
+        if (screenSprite_) {
+            if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
+                const float u = Normalize01(endFadeElapsed_, endFadeDelaySec_, endFadeFadeEndSec_);
+                if (u >= 0.0f) {
+                    mat->SetColor(Lerp(endFadeStartColor_, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f }, u));
+                }
+            }
+        }
+    }
+
+    float ComputeInterval(float tSec) const {
+        // 0-10s: ゆっくり, 10-90s: 中程度に加速, 95s+: スパイク
+        if (tSec < attackIntervalEarlyEnd_) {
+            return attackIntervalEarlyVal_; // だいぶゆっくり
+        }
+        if (tSec < attackIntervalMidEnd_) {
+            const float u = (tSec - attackIntervalEarlyEnd_) / (attackIntervalMidEnd_ - attackIntervalEarlyEnd_); // 0..1
+            return attackIntervalEarlyVal_ + (attackIntervalMidVal_ - attackIntervalEarlyVal_) * std::clamp(u, 0.0f, 1.0f);
+        }
+        if (tSec < attackIntervalLateEnd_) {
+            return attackIntervalMidVal_; // 90-100 は据え置き（intermission は別扱い）
+        }
+        {
+            const float u = (tSec - attackIntervalLateEnd_) / (kAttackDurationSec - attackIntervalLateEnd_);
+            const float base = 1.0f + (0.55f - 1.0f) * std::clamp(u, 0.0f, 1.0f);
+            return base * 1.25f; // interval を 1/0.8 倍して頻度を下げる
+        }
+    }
+
+    void ProcessAttacks() {
+        while (attackElapsedSec_ >= nextAttackAtSec_) {
+            static thread_local std::mt19937 rng{ 98765u };
+
+            Vector3 baseTarget{0.0f, 0.0f, 0.0f};
+
+            const bool doChaseInside = (attackElapsedSec_ >= nextChaseInsideAtSec_);
+            if (doChaseInside && attackGearCircularInside_) {
+                Vector3 p{0.0f, 0.0f, 0.0f};
+                if (cameraController_ && cameraController_->GetFollowTarget()) {
+                    if (auto *tr = cameraController_->GetFollowTarget()->GetComponent3D<Transform3D>()) {
+                        p = tr->GetTranslate();
+                    }
+                }
+                attackGearCircularInside_->SetTargetPosition(p);
+                attackGearCircularInside_->Attack();
+
+                const float base = (attackElapsedSec_ < 100.0f) ? 16.0f : 12.5f;
+                const float jitter = (attackElapsedSec_ < 100.0f) ? 8.0f : 6.0f;
+                nextChaseInsideAtSec_ = attackElapsedSec_ + (base + std::uniform_real_distribution<float>(-jitter, jitter)(rng));
+            } else {
+                float wCircIn = 1.0f;
+                float wCircOut = 1.0f;
+                float wWall = 1.0f;
+
+                if (attackElapsedSec_ < 10.0f) {
+                    wWall = 0.5f;
+                } else if (attackElapsedSec_ < 90.0f) {
+                    wWall = 1.0f;
+                } else {
+                    wWall = 1.4f;
+                }
+                if (attackElapsedSec_ >= 100.0f) {
+                    wWall = 1.44f;
+                    wCircOut = 1.0f;
+                }
+
+                const float sum = wCircIn + wCircOut + (wWall * 3.0f);
+                const float r = std::uniform_real_distribution<float>(0.0f, sum)(rng);
+
+                if (r < wCircIn) {
+                    if (attackGearCircularInside_) {
+                        attackGearCircularInside_->SetTargetPosition(baseTarget);
+                        attackGearCircularInside_->Attack();
+                    }
+                } else if (r < wCircIn + wCircOut) {
+                    if (attackGearCircularOutside_) {
+                        attackGearCircularOutside_->SetTargetPosition(baseTarget);
+                        attackGearCircularOutside_->Attack();
+                    }
+                } else {
+                    const int w = std::uniform_int_distribution<int>(0, 2)(rng);
+                    if (w == 0 && attackGearWallForward_) {
+                        attackGearWallForward_->Attack();
+                    } else if (w == 1 && attackGearWallLeftSide_) {
+                        attackGearWallLeftSide_->Attack();
+                    } else if (w == 2 && attackGearWallRightSide_) {
+                        attackGearWallRightSide_->Attack();
+                    }
+                }
+            }
+
+            const float interval = ComputeInterval(attackElapsedSec_);
+            const float jitter = interval * attackJitterFrac_;
+            nextAttackAtSec_ = attackElapsedSec_ + std::max(0.15f, interval + std::uniform_real_distribution<float>(-jitter, jitter)(rng));
+
+            if (nextChaseInsideAtSec_ <= 0.0f) {
+                nextChaseInsideAtSec_ = 18.0f;
+            }
+        }
+    }
 };
 
 } // namespace KashipanEngine

@@ -98,16 +98,46 @@ public:
     UINT GetIndexCount() const { return indexCount_; }
 
     /// @brief 描画先/パイプラインが確定したタイミングで永続レンダーパスを登録
+    /// @param targetWindow 描画先ウィンドウ
+    /// @param pipelineName 使用パイプライン名
+    /// @param constantBufferRequirements 定数バッファ要件リスト
+    /// @param updateConstantBuffersFunction 定数バッファ更新関数
+    /// @param instanceBufferRequirements インスタンスバッファ要件リスト
+    /// @param submitInstanceFunction インスタンスデータ更新関数
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
-    RenderPassRegistrationHandle AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
+    RenderPassRegistrationHandle AttachToRenderer(Window *targetWindow, const std::string &pipelineName,
+        std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction = std::nullopt,
+        std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction = std::nullopt);
 
     /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録
+    /// @param targetBuffer 描画先スクリーンバッファ
+    /// @param pipelineName 使用パイプライン名
+    /// @param constantBufferRequirements 定数バッファ要件リスト
+    /// @param updateConstantBuffersFunction 定数バッファ更新関数
+    /// @param instanceBufferRequirements インスタンスバッファ要件リスト
+    /// @param submitInstanceFunction インスタンスデータ更新関数
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
-    RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+    RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName,
+        std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction = std::nullopt,
+        std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction = std::nullopt);
 
     /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録（ShadowMapBuffer）
+    /// @param targetBuffer 描画先シャドウマップバッファ
+    /// @param pipelineName 使用パイプライン名
+    /// @param constantBufferRequirements 定数バッファ要件リスト
+    /// @param updateConstantBuffersFunction 定数バッファ更新関数
+    /// @param instanceBufferRequirements インスタンスバッファ要件リスト
+    /// @param submitInstanceFunction インスタンスデータ更新関数
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
-    RenderPassRegistrationHandle AttachToRenderer(ShadowMapBuffer *targetBuffer, const std::string &pipelineName);
+    RenderPassRegistrationHandle AttachToRenderer(ShadowMapBuffer *targetBuffer, const std::string &pipelineName,
+        std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction = std::nullopt,
+        std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction = std::nullopt);
 
     /// @brief 永続レンダーパス登録を解除（全て）
     void DetachFromRenderer();
@@ -339,20 +369,43 @@ protected:
     /// @brief デフォルト描画コマンド生成ヘルパー
     RenderCommand CreateDefaultRenderCommand() const;
 
+    /// @brief バッチ描画処理
+    /// @param shaderBinder シェーダー変数バインダー
+    /// @param instanceCount インスタンス数
+    /// @return 描画に成功した場合は true
     virtual bool RenderBatched(ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount);
+
+    /// @brief インスタンスデータ更新処理
+    /// @param instanceMaps インスタンスマップデータ
+    /// @param shaderBinder シェーダー変数バインダー
+    /// @param instanceIndex インスタンスインデックス
+    /// @return 更新に成功した場合は true
     virtual bool SubmitInstance(void *instanceMaps, ShaderVariableBinder &shaderBinder, std::uint32_t instanceIndex);
 
+    /// @brief レンダータイプの設定
+    /// @param type レンダータイプ
     void SetRenderType(RenderType type) { renderType_ = type; }
 
+    /// @brief 定数バッファ要件の設定
+    /// @param reqs 定数バッファ要件リスト
     void SetConstantBufferRequirements(std::vector<RenderPass::ConstantBufferRequirement> reqs) {
         constantBufferRequirements_ = std::move(reqs);
     }
+
+    /// @brief 定数バッファ更新関数の設定
+    /// @param fn 定数バッファ更新関数
     void SetUpdateConstantBuffersFunction(std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> fn) {
         updateConstantBuffersFunction_ = std::move(fn);
     }
+
+    /// @brief インスタンスバッファ要件の設定
+    /// @param reqs インスタンスバッファ要件リスト
     void SetInstanceBufferRequirements(std::vector<RenderPass::InstanceBufferRequirement> reqs) {
         instanceBufferRequirements_ = std::move(reqs);
     }
+
+    /// @brief インスタンスデータ更新関数の設定
+    /// @param fn インスタンスデータ更新関数
     void SetSubmitInstanceFunction(std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> fn) {
         submitInstanceFunction_ = std::move(fn);
     }
@@ -365,14 +418,8 @@ private:
         std::string componentType;
     };
 
-    /// @brief レンダーパスの作成（Window）
-    RenderPass CreateRenderPass(Window *targetWindow, const std::string &pipelineName);
-
-    /// @brief レンダーパスの作成（ScreenBuffer）
-    RenderPass CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName);
-
-    /// @brief レンダーパスの作成（ShadowMapBuffer）
-    RenderPass CreateRenderPass(ShadowMapBuffer *targetBuffer, const std::string &pipelineName);
+    /// @brief レンダーパスの作成
+    RenderPass CreateRenderPass(const std::string &pipelineName);
 
     struct RenderPassRegistrationEntry {
         RenderPassRegistrationInfo info;
@@ -381,6 +428,7 @@ private:
         Renderer::PersistentShadowMapPassHandle shadowMapHandle{};
     };
 
+    /// @brief レンダーパス登録用ハンドルの生成
     RenderPassRegistrationHandle GenerateRegistrationHandle() const;
 
     std::unordered_map<std::uint64_t, RenderPassRegistrationEntry> renderPassRegistrations_;
@@ -424,10 +472,10 @@ private:
 
     std::uint64_t instanceBatchKey_ = 0;
     RenderType renderType_ = RenderType::Standard;
-    std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements_;
-    std::vector<RenderPass::InstanceBufferRequirement> instanceBufferRequirements_;
-    std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction_;
-    std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction_;
+    std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements_;
+    std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements_;
+    std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction_;
+    std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction_;
 };
 
 } // namespace KashipanEngine

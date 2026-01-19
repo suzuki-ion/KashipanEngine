@@ -779,9 +779,9 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
         if (!ok) {
             if (first->screenBuffer) {
                 ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
-    }
+            }
             continue;
-}
+        }
 
         RendererCpuTimerScope tCmd(*this, CpuTimerStats::Scope::Instancing_RenderCommand);
         auto renderCommandOpt = first->renderCommandFunction(pipelineBinder);

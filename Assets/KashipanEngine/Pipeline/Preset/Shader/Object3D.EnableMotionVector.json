@@ -1,0 +1,21 @@
+﻿{
+	"BaseName": "Object3D.EnableMotionVector",
+	"Vertex": {
+		"Path": "Object/ObjectVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0",
+		"Macros": [
+			{ "Name": "Object3D" },
+			{ "Name": "ENABLE_MOTION_VECTOR" }
+		]
+	},
+	"Pixel": {
+		"Path": "Object/ObjectPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0",
+		"Macros": [
+			{ "Name": "Object3D" },
+			{ "Name": "ENABLE_MOTION_VECTOR" }
+		]
+	}
+}

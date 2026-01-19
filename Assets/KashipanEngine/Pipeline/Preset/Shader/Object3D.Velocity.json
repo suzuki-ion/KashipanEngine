@@ -1,0 +1,19 @@
+﻿{
+	"BaseName": "Object3D.Velocity",
+	"Vertex": {
+		"Path": "Object/ObjectVelocityVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0",
+		"Macros": [
+			{ "Name": "Object3D" }
+		]
+	},
+	"Pixel": {
+		"Path": "Object/ObjectVelocityPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0",
+		"Macros": [
+			{ "Name": "Object3D" }
+		]
+	}
+}

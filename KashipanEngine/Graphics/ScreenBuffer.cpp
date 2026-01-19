@@ -198,6 +198,9 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
         depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
         shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
+
+        renderTargets_[i]->SetCommandList(cmd->GetCommandList());
+        depthStencils_[i]->SetCommandList(cmd->GetCommandList());
     }
 
     for (size_t i = 0; i < kBufferCount_; ++i) {
@@ -255,11 +258,6 @@ ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord(bool disableDepthWrite) {
     auto* ds = depthStencils_[GetDsvWriteIndex()].get();
     if (!rt) return nullptr;
     if (!disableDepthWrite && !ds) return nullptr;
-
-    rt->SetCommandList(cmd);
-    if (!disableDepthWrite) {
-        ds->SetCommandList(cmd);
-    }
 
     if (!rt->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET)) {
         return nullptr;

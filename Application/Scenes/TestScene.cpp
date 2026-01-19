@@ -16,6 +16,7 @@ TestScene::TestScene()
 }
 
 void TestScene::Initialize() {
+    velocityBuffer_ = ScreenBuffer::Create(1920, 1080);
     screenBuffer_ = ScreenBuffer::Create(1920, 1080);
     shadowMapBuffer_ = ShadowMapBuffer::Create(2048, 2048);
 
@@ -33,7 +34,7 @@ void TestScene::Initialize() {
         bp.blurRadius = 2.0f;
         bp.iterations = 4;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
-
+        
         screenBuffer_->AttachToRenderer("ScreenBuffer_TitleScene");
     }
     auto* window = Window::GetWindow("Main Window");
@@ -149,6 +150,16 @@ void TestScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
+    // Velocity buffer camera binder
+    {
+        auto vbBinder = std::make_unique<VelocityBufferCameraBinder>();
+        vbBinder->SetName("VelocityBufferCameraBinder");
+        vbBinder->SetCamera3D(mainCamera3D_);
+        velocityBufferCameraBinder_ = vbBinder.get();
+        if (velocityBuffer_) vbBinder->AttachToRenderer(velocityBuffer_, "Object3D.Velocity");
+        AddObject3D(std::move(vbBinder));
+    }
+
     //==================================================
     // ↓ ここからゲームオブジェクト定義 ↓
     //==================================================
@@ -181,6 +192,7 @@ void TestScene::Initialize() {
 
                 if (screenBuffer_)     obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
                 if (shadowMapBuffer_)  obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+                if (velocityBuffer_)   obj->AttachToRenderer(velocityBuffer_, "Object3D.Velocity");
 
                 // ここで “AddObject3D する前” にポインタ確保
                 maps_[z][x] = obj.get();
@@ -223,6 +235,7 @@ void TestScene::Initialize() {
 
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+        if (velocityBuffer_) obj->AttachToRenderer(velocityBuffer_, "Object3D.Velocity");
         player_ = obj.get();
         AddObject3D(std::move(obj));
     }
@@ -335,6 +348,7 @@ void TestScene::Initialize() {
 
             if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
             if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+            if (velocityBuffer_) obj->AttachToRenderer(velocityBuffer_, "Object3D.Velocity");
 
             auto* particlePtr = obj.get();
             AddObject3D(std::move(obj));
@@ -518,6 +532,20 @@ void TestScene::OnUpdate() {
             const float eased = EaseOutCubic(0.0f, 1.0f, life01);
             pl.light->SetIntensity(particleLightIntensityMin_ + (particleLightIntensityMax_ - particleLightIntensityMin_) * eased);
             pl.light->SetRange(particleLightRangeMin_ + (particleLightRangeMax_ - particleLightRangeMin_) * eased);
+        }
+    }
+
+    // テスト用のカメラ横移動処理
+    {
+        if (mainCamera3D_) {
+            if (auto* tr = mainCamera3D_->GetComponent3D<Transform3D>()) {
+                const float speed = 5.0f;
+                static float angle = 0.0f;
+                angle += speed * GetDeltaTime();
+                Vector3 pos = tr->GetTranslate();
+                pos.x = std::sin(angle) * 20.0f;
+                tr->SetTranslate(pos);
+            }
         }
     }
 

@@ -381,6 +381,11 @@ private:
     // 内部で保持するワイド文字列（WinAPIのクラス名/タイトル用）
     std::wstring titleW_ = L"";
 
+    // フルスクリーン前のスタイル・ウィンドウ位置・サイズ保存用
+    LONG prevWindowStyle_ = 0;
+    LONG prevWindowExStyle_ = 0;
+    RECT prevWindowRect_{};
+
     // イベントハンドラマップ（既定イベント or ユーザーイベント）
     std::unordered_map<UINT, Events> eventHandlers_;
 

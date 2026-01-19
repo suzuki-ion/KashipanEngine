@@ -42,7 +42,11 @@ void Object3DBase::SetRenderer(Passkey<GameEngine>, Renderer* renderer) {
     sRenderer = renderer;
 }
 
-Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
+Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Window *targetWindow, const std::string &pipelineName,
+    std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements,
+    std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction,
+    std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements,
+    std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction) {
     if (!targetWindow) return {};
     auto *renderer = sRenderer;
     if (!renderer) return {};
@@ -60,7 +64,33 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Window
 
     entry.info.handle = h;
 
-    auto pass = CreateRenderPass(targetWindow, pipelineName);
+    auto pass = CreateRenderPass(pipelineName);
+    pass.window = targetWindow;
+
+    if (constantBufferRequirements.has_value()) {
+        pass.constantBufferRequirements = std::move(*constantBufferRequirements);
+    } else if (constantBufferRequirements_.has_value()) {
+        pass.constantBufferRequirements = *constantBufferRequirements_;
+    }
+
+    if (updateConstantBuffersFunction.has_value()) {
+        pass.updateConstantBuffersFunction = *updateConstantBuffersFunction;
+    } else if (updateConstantBuffersFunction_.has_value()) {
+        pass.updateConstantBuffersFunction = *updateConstantBuffersFunction_;
+    }
+
+    if (instanceBufferRequirements.has_value()) {
+        pass.instanceBufferRequirements = std::move(*instanceBufferRequirements);
+    } else if (instanceBufferRequirements_.has_value()) {
+        pass.instanceBufferRequirements = *instanceBufferRequirements_;
+    }
+
+    if (submitInstanceFunction.has_value()) {
+        pass.submitInstanceFunction = *submitInstanceFunction;
+    } else if (submitInstanceFunction_.has_value()) {
+        pass.submitInstanceFunction = *submitInstanceFunction_;
+    }
+
     entry.windowHandle = renderer->RegisterPersistentRenderPass(std::move(pass));
     if (!entry.windowHandle) {
         return {};
@@ -70,7 +100,11 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Window
     return h;
 }
 
-Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
+Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName,
+    std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements,
+    std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction,
+    std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements,
+    std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction) {
     if (!targetBuffer) return {};
     auto *renderer = sRenderer;
     if (!renderer) return {};
@@ -89,7 +123,33 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Screen
 
     entry.info.handle = h;
 
-    auto pass = CreateRenderPass(targetBuffer, pipelineName);
+    auto pass = CreateRenderPass(pipelineName);
+    pass.screenBuffer = targetBuffer;
+
+    if (constantBufferRequirements.has_value()) {
+        pass.constantBufferRequirements = std::move(*constantBufferRequirements);
+    } else if (constantBufferRequirements_.has_value()) {
+        pass.constantBufferRequirements = *constantBufferRequirements_;
+    }
+
+    if (updateConstantBuffersFunction.has_value()) {
+        pass.updateConstantBuffersFunction = *updateConstantBuffersFunction;
+    } else if (updateConstantBuffersFunction_.has_value()) {
+        pass.updateConstantBuffersFunction = *updateConstantBuffersFunction_;
+    }
+
+    if (instanceBufferRequirements.has_value()) {
+        pass.instanceBufferRequirements = std::move(*instanceBufferRequirements);
+    } else if (instanceBufferRequirements_.has_value()) {
+        pass.instanceBufferRequirements = *instanceBufferRequirements_;
+    }
+
+    if (submitInstanceFunction.has_value()) {
+        pass.submitInstanceFunction = *submitInstanceFunction;
+    } else if (submitInstanceFunction_.has_value()) {
+        pass.submitInstanceFunction = *submitInstanceFunction_;
+    }
+
     entry.offscreenHandle = renderer->RegisterPersistentOffscreenRenderPass(std::move(pass));
     if (!entry.offscreenHandle) {
         return {};
@@ -99,7 +159,11 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Screen
     return h;
 }
 
-Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(ShadowMapBuffer *targetBuffer, const std::string &pipelineName) {
+Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(ShadowMapBuffer *targetBuffer, const std::string &pipelineName,
+    std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements,
+    std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction,
+    std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements,
+    std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction) {
     if (!targetBuffer) return {};
     auto *renderer = sRenderer;
     if (!renderer) return {};
@@ -118,7 +182,33 @@ Object3DBase::RenderPassRegistrationHandle Object3DBase::AttachToRenderer(Shadow
 
     entry.info.handle = h;
 
-    auto pass = CreateRenderPass(targetBuffer, pipelineName);
+    auto pass = CreateRenderPass(pipelineName);
+    pass.shadowMapBuffer = targetBuffer;
+
+    if (constantBufferRequirements.has_value()) {
+        pass.constantBufferRequirements = std::move(*constantBufferRequirements);
+    } else if (constantBufferRequirements_.has_value()) {
+        pass.constantBufferRequirements = *constantBufferRequirements_;
+    }
+
+    if (updateConstantBuffersFunction.has_value()) {
+        pass.updateConstantBuffersFunction = *updateConstantBuffersFunction;
+    } else if (updateConstantBuffersFunction_.has_value()) {
+        pass.updateConstantBuffersFunction = *updateConstantBuffersFunction_;
+    }
+
+    if (instanceBufferRequirements.has_value()) {
+        pass.instanceBufferRequirements = std::move(*instanceBufferRequirements);
+    } else if (instanceBufferRequirements_.has_value()) {
+        pass.instanceBufferRequirements = *instanceBufferRequirements_;
+    }
+
+    if (submitInstanceFunction.has_value()) {
+        pass.submitInstanceFunction = *submitInstanceFunction;
+    } else if (submitInstanceFunction_.has_value()) {
+        pass.submitInstanceFunction = *submitInstanceFunction_;
+    }
+
     entry.shadowMapHandle = renderer->RegisterPersistentShadowMapRenderPass(std::move(pass));
     if (!entry.shadowMapHandle) {
         return {};
@@ -191,167 +281,47 @@ void Object3DBase::SetUniqueBatchKey() {
     renderType_ = RenderType::Standard;
 }
 
-RenderPass Object3DBase::CreateRenderPass(Window *targetWindow, const std::string &pipelineName) {
+RenderPass Object3DBase::CreateRenderPass(const std::string &pipelineName) {
     if (!cachedRenderPass_) {
         RenderPass passInfo(Passkey<Object3DBase>{});
 
         passInfo.passName = passName_;
         passInfo.renderType = renderType_;
         passInfo.objectType = objectType_;
-        passInfo.constantBufferRequirements = constantBufferRequirements_;
-        passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
 
         passInfo.batchKey = instanceBatchKey_;
         passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
             return RenderBatched(shaderBinder, instanceCount);
-        };
+            };
         passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
             return CreateRenderCommand(pipelineBinder);
-        };
+            };
 
         cachedRenderPass_.emplace(std::move(passInfo));
     }
 
-    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
-        ? std::vector<RenderPass::InstanceBufferRequirement>{
-            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
-            {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
+    cachedRenderPass_->instanceBufferRequirements = {
+        {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
+        {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
+    };
+    cachedRenderPass_->submitInstanceFunction = [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
+        if (!instanceMaps) return false;
+        auto **maps = static_cast<void **>(instanceMaps);
+
+        if (transform_) {
+            void *transformMap = maps[0];
+            transform_->SubmitInstance(transformMap, instanceIndex);
         }
-        : instanceBufferRequirements_;
-    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
-        ? submitInstanceFunction_
-        : [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
-            if (!instanceMaps) return false;
-            auto **maps = static_cast<void **>(instanceMaps);
+        if (material_) {
+            void *materialMap = maps[1];
+            material_->SubmitInstance(materialMap, instanceIndex);
+        }
+        return true;
+    };
 
-            if (transform_) {
-                void *transformMap = maps[0];
-                transform_->SubmitInstance(transformMap, instanceIndex);
-            }
-            if (material_) {
-                void *materialMap = maps[1];
-                material_->SubmitInstance(materialMap, instanceIndex);
-            }
-            return true;
-        };
-
-    cachedRenderPass_->window = targetWindow;
-    cachedRenderPass_->screenBuffer = nullptr;
-    cachedRenderPass_->shadowMapBuffer = nullptr;
     cachedRenderPass_->pipelineName = pipelineName;
     cachedRenderPass_->renderType = renderType_;
     cachedRenderPass_->objectType = objectType_;
-    cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
-    cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
-    cachedRenderPass_->batchKey = instanceBatchKey_;
-
-    return *cachedRenderPass_;
-}
-
-RenderPass Object3DBase::CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
-    if (!cachedRenderPass_) {
-        RenderPass passInfo(Passkey<Object3DBase>{});
-
-        passInfo.passName = passName_;
-        passInfo.renderType = renderType_;
-        passInfo.objectType = objectType_;
-        passInfo.constantBufferRequirements = constantBufferRequirements_;
-        passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
-
-        passInfo.batchKey = instanceBatchKey_;
-        passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
-            return RenderBatched(shaderBinder, instanceCount);
-        };
-        passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
-            return CreateRenderCommand(pipelineBinder);
-        };
-
-        cachedRenderPass_.emplace(std::move(passInfo));
-    }
-
-    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
-        ? std::vector<RenderPass::InstanceBufferRequirement>{
-            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)},
-            {"Pixel:gMaterials", sizeof(Material3D::InstanceData)},
-        }
-        : instanceBufferRequirements_;
-    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
-        ? submitInstanceFunction_
-        : [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
-            if (!instanceMaps) return false;
-            auto **maps = static_cast<void **>(instanceMaps);
-
-            if (transform_) {
-                void *transformMap = maps[0];
-                transform_->SubmitInstance(transformMap, instanceIndex);
-            }
-            if (material_) {
-                void *materialMap = maps[1];
-                material_->SubmitInstance(materialMap, instanceIndex);
-            }
-            return true;
-        };
-
-    cachedRenderPass_->window = nullptr;
-    cachedRenderPass_->screenBuffer = targetBuffer;
-    cachedRenderPass_->shadowMapBuffer = nullptr;
-    cachedRenderPass_->pipelineName = pipelineName;
-    cachedRenderPass_->renderType = renderType_;
-    cachedRenderPass_->objectType = objectType_;
-    cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
-    cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
-    cachedRenderPass_->batchKey = instanceBatchKey_;
-
-    return *cachedRenderPass_;
-}
-
-RenderPass Object3DBase::CreateRenderPass(ShadowMapBuffer *targetBuffer, const std::string &pipelineName) {
-    if (!cachedRenderPass_) {
-        RenderPass passInfo(Passkey<Object3DBase>{});
-
-        passInfo.passName = passName_;
-        passInfo.renderType = renderType_;
-        passInfo.objectType = objectType_;
-        passInfo.constantBufferRequirements = constantBufferRequirements_;
-        passInfo.updateConstantBuffersFunction = updateConstantBuffersFunction_;
-
-        passInfo.batchKey = instanceBatchKey_;
-        passInfo.batchedRenderFunction = [this](ShaderVariableBinder &shaderBinder, std::uint32_t instanceCount) -> bool {
-            return RenderBatched(shaderBinder, instanceCount);
-        };
-        passInfo.renderCommandFunction = [this](PipelineBinder &pipelineBinder) -> std::optional<RenderCommand> {
-            return CreateRenderCommand(pipelineBinder);
-        };
-
-        cachedRenderPass_.emplace(std::move(passInfo));
-    }
-
-    cachedRenderPass_->instanceBufferRequirements = instanceBufferRequirements_.empty()
-        ? std::vector<RenderPass::InstanceBufferRequirement>{
-            {"Vertex:gTransformationMatrices", sizeof(Transform3D::InstanceData)}
-        }
-        : instanceBufferRequirements_;
-    cachedRenderPass_->submitInstanceFunction = submitInstanceFunction_
-        ? submitInstanceFunction_
-        : [this](void *instanceMaps, ShaderVariableBinder & /*shaderBinder*/, std::uint32_t instanceIndex) -> bool {
-            if (!instanceMaps) return false;
-            auto **maps = static_cast<void **>(instanceMaps);
-
-            if (transform_) {
-                void *transformMap = maps[0];
-                transform_->SubmitInstance(transformMap, instanceIndex);
-            }
-            return true;
-        };
-
-    cachedRenderPass_->window = nullptr;
-    cachedRenderPass_->screenBuffer = nullptr;
-    cachedRenderPass_->shadowMapBuffer = targetBuffer;
-    cachedRenderPass_->pipelineName = pipelineName;
-    cachedRenderPass_->renderType = renderType_;
-    cachedRenderPass_->objectType = objectType_;
-    cachedRenderPass_->constantBufferRequirements = constantBufferRequirements_;
-    cachedRenderPass_->updateConstantBuffersFunction = updateConstantBuffersFunction_;
     cachedRenderPass_->batchKey = instanceBatchKey_;
 
     return *cachedRenderPass_;

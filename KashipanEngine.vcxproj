@@ -213,6 +213,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
@@ -321,6 +322,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
@@ -329,6 +331,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
@@ -354,7 +357,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_truetype.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="Application\AppInitialize.h" />
+    <None Include="Application\AppInitialize.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DCompHost.h" />
@@ -534,16 +537,20 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.ShadowMap.DepthOnly.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Solid.BlendNormal.EnableMotionVector.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Solid.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Velocity.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Blur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Composite.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Downsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Prefilter.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Upsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ChromaticAberration.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.HistoryCopy.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\TriangleShadow.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
@@ -587,13 +594,19 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Line.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\TransformationMatrix.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\MotionBlur.HistoryCopy.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\MotionBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.EnableMotionVector.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.json" />
     <None Include="Assets\KashipanEngine\PipelineSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera3D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object2D.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.Velocity.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocity.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCB.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurCB.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap3D.json" />
     <None Include="Docs\EngineReference\01_KashipanEngine.h.md" />
     <None Include="Docs\EngineReference\02_Objects_Types.md" />
@@ -686,6 +699,24 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangle.hlsli">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurHistoryCopyPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

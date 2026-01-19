@@ -247,6 +247,11 @@ void DX12SwapChain::CreateSwapChainForHWND() {
     LogScope scope;
     Log(Translation("engine.directx.swapchain.initialize.target.hwnd") + std::to_string(reinterpret_cast<uintptr_t>(hwnd_)), LogSeverity::Debug);
 
+    // Alt + Enter 無効化(ウィンドウ側との競合防止)
+    if (sDXGIFactory) {
+        sDXGIFactory->MakeWindowAssociation(hwnd_, DXGI_MWA_NO_ALT_ENTER);
+    }
+
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
     swapChainDesc.Width = static_cast<UINT>(width_);
     swapChainDesc.Height = static_cast<UINT>(height_);

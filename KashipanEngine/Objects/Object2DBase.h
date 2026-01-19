@@ -104,12 +104,20 @@ public:
 
     /// @brief 描画先/パイプラインが確定したタイミングで永続レンダーパスを登録
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
-    RenderPassRegistrationHandle AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
-
+    RenderPassRegistrationHandle AttachToRenderer(Window *targetWindow, const std::string &pipelineName,
+        std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction = std::nullopt,
+        std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction = std::nullopt);
+ 
     /// @brief 描画先/パイプラインが確定したタイミングで永続オフスクリーンレンダーパスを登録
     /// @return 登録したパスのハンドル（解除や情報取得に使用）
-    RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
-
+    RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName,
+        std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction = std::nullopt,
+        std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements = std::nullopt,
+        std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction = std::nullopt);
+ 
     /// @brief 永続レンダーパス登録を解除（全て）
     void DetachFromRenderer();
 
@@ -349,15 +357,12 @@ protected:
     void SetConstantBufferRequirements(std::vector<RenderPass::ConstantBufferRequirement> reqs) {
         constantBufferRequirements_ = std::move(reqs);
     }
-
     void SetUpdateConstantBuffersFunction(std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> fn) {
         updateConstantBuffersFunction_ = std::move(fn);
     }
-
     void SetInstanceBufferRequirements(std::vector<RenderPass::InstanceBufferRequirement> reqs) {
         instanceBufferRequirements_ = std::move(reqs);
     }
-
     void SetSubmitInstanceFunction(std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> fn) {
         submitInstanceFunction_ = std::move(fn);
     }
@@ -365,11 +370,8 @@ protected:
 private:
     friend class Object2DContext;
 
-    /// @brief レンダーパスの作成（Window）
-    RenderPass CreateRenderPass(Window *targetWindow, const std::string &pipelineName);
-
-    /// @brief レンダーパスの作成（ScreenBuffer）
-    RenderPass CreateRenderPass(ScreenBuffer *targetBuffer, const std::string &pipelineName);
+    /// @brief レンダーパスの作成
+    RenderPass CreateRenderPass(const std::string &pipelineName);
 
     struct RenderPassRegistrationEntry {
         RenderPassRegistrationInfo info;
@@ -425,10 +427,10 @@ private:
 
     std::uint64_t instanceBatchKey_ = 0;
     RenderType renderType_ = RenderType::Standard;
-    std::vector<RenderPass::ConstantBufferRequirement> constantBufferRequirements_;
-    std::vector<RenderPass::InstanceBufferRequirement> instanceBufferRequirements_;
-    std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)> updateConstantBuffersFunction_;
-    std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)> submitInstanceFunction_;
+    std::optional<std::vector<RenderPass::ConstantBufferRequirement>> constantBufferRequirements_;
+    std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements_;
+    std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction_;
+    std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction_;
 };
 
 } // namespace KashipanEngine

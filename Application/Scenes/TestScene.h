@@ -10,6 +10,7 @@
 #include "Scene/Components/ColliderComponent.h"
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
+#include "Objects/SystemObjects/VelocityBufferCameraBinder.h"
 
 namespace KashipanEngine {
 
@@ -30,8 +31,10 @@ protected:
 
 private:
     ScreenBuffer *screenBuffer_ = nullptr;
+    ScreenBuffer *velocityBuffer_ = nullptr;
     ShadowMapBuffer *shadowMapBuffer_ = nullptr;
     ShadowMapBinder *shadowMapBinder_ = nullptr;
+    VelocityBufferCameraBinder *velocityBufferCameraBinder_ = nullptr;
 
     Camera2D *screenCamera2D_ = nullptr;
     Sprite *screenSprite_ = nullptr;

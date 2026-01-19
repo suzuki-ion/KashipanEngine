@@ -135,6 +135,7 @@
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -188,7 +189,6 @@
     <ClInclude Include="Externals\imgui\imstb_rectpack.h" />
     <ClInclude Include="Externals\imgui\imstb_textedit.h" />
     <ClInclude Include="Externals\imgui\imstb_truetype.h" />
-    <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DCompHost.h" />
@@ -380,6 +380,8 @@
     <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
@@ -479,5 +481,20 @@
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Upsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangle.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCB.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurCB.hlsli" />
+    <None Include="Application\AppInitialize.h" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurHistoryCopyPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\MotionBlur.HistoryCopy.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\MotionBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.HistoryCopy.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Solid.BlendNormal.EnableMotionVector.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.EnableMotionVector.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.Velocity.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Velocity.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocity.hlsli" />
   </ItemGroup>
 </Project>

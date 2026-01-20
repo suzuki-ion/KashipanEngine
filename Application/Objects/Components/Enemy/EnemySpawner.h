@@ -11,7 +11,6 @@ namespace KashipanEngine {
 
     struct SpawnPoint {
         Vector3 position;
-        float weight = 1.0f; // スポーン確率の重み
     };
 
     class EnemySpawner final : public ISceneComponent {
@@ -65,10 +64,11 @@ namespace KashipanEngine {
         ShadowMapBuffer* shadowMapBuffer_ = nullptr;
 
         // スポーンパーティクル関連
-        EnemySpawnParticle::ParticleConfig particleConfig_{};
+        EnemySpawnParticle::ParticleConfig particleConfig_ = {};
         std::vector<Object3DBase*> particleObjects_;
         Vector3 nextSpawnPosition_{ 0.0f, 0.0f, 0.0f }; // 次のスポーン位置
         bool particlesSpawned_ = false; // パーティクルが既に発生したかのフラグ
+        bool isEmittingParticles_ = false;  // パーティクル放出中フラグ
     };
 
 } // namespace KashipanEngine

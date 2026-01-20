@@ -9,6 +9,7 @@ namespace KashipanEngine {
         lastSpawnBeat_ = -1;
         preSpawnBeat_ = -1;
         particlesSpawned_ = false;
+        isEmittingParticles_ = false;
     }
 
     void EnemySpawner::Update() {
@@ -16,42 +17,49 @@ namespace KashipanEngine {
 
         int currentBeat = bpmSystem_->GetCurrentBeat();
 
-        // スポーン1拍前のパーティクル発生
-        if (currentBeat != preSpawnBeat_ && (currentBeat + 1) % spawnInterval_ == 0) {
+        // スポーン3拍前の検出
+        if (currentBeat != preSpawnBeat_ && (currentBeat + 3) % spawnInterval_ == 0) {
             preSpawnBeat_ = currentBeat;
             
             // 次のスポーン位置を決定
             const auto& spawnPoint = SelectSpawnPoint();
             nextSpawnPosition_ = spawnPoint.position;
             
-            // パーティクルを発生させる
+            // パーティクル放出開始
+            isEmittingParticles_ = true;
+        }
+
+        // パーティクルを毎フレーム放出
+        if (isEmittingParticles_) {
             SpawnParticlesAtPosition(nextSpawnPosition_);
-            particlesSpawned_ = true;
         }
 
         // 実際の敵のスポーン
         if (currentBeat != lastSpawnBeat_ && currentBeat % spawnInterval_ == 0) {
             lastSpawnBeat_ = currentBeat;
             SpawnEnemy();
+            
+            // パーティクル放出停止
+            isEmittingParticles_ = false;
             particlesSpawned_ = false;
         }
 
         // 消滅したパーティクルオブジェクトを削除
-        /*particleObjects_.erase(
+        particleObjects_.erase(
             std::remove_if(particleObjects_.begin(), particleObjects_.end(),
-                [](const std::unique_ptr<Object3DBase>& obj) {
+                [](Object3DBase* obj) {
                     auto* particle = obj->GetComponent3D<EnemySpawnParticle>();
                     return particle && !particle->IsAlive();
                 }),
             particleObjects_.end()
-        );*/
+        );
     }
 
     void EnemySpawner::SpawnEnemy() {
         if (spawnPoints_.empty()) return;
 
         // 既に決定されている位置を使用（パーティクルと同じ位置）
-        Vector3 spawnPos = particlesSpawned_ ? nextSpawnPosition_ : SelectSpawnPoint().position;
+        Vector3 spawnPos = nextSpawnPosition_;
         
         EnemyType type = DetermineEnemyType();
         EnemyDirection direction = ChooseSpawnDirection_NoOutward(spawnPos);
@@ -67,12 +75,12 @@ namespace KashipanEngine {
         // Boxモデルデータを取得
         auto boxModelData = ModelManager::GetModelDataFromFileName("MapBlock.obj");
 
-		particleObjects_.reserve(kParticlePoolSize_);
+        // 毎フレーム少量のパーティクルを生成（例: 1~3個）
+        constexpr int particlesPerFrame = 1;
 
-        // パーティクル数分のオブジェクトを生成
-        for (int i = 0; i < particleConfig_.particleCount; ++i) {
+        for (int i = 0; i < particlesPerFrame; ++i) {
             auto particleObj = std::make_unique<Model>(boxModelData);
-            particleObj->SetName("EnemySpawnParticle_" + std::to_string(i));
+            particleObj->SetName("EnemySpawnParticle_" + std::to_string(particleObjects_.size()));
 
             // Transform3Dコンポーネントを追加
             auto* transform = particleObj->GetComponent3D<Transform3D>();
@@ -107,7 +115,7 @@ namespace KashipanEngine {
     }
 
     void EnemySpawner::AddSpawnPoint(const Vector3& position) {
-        spawnPoints_.push_back({ position, 1.0f });
+        spawnPoints_.push_back({ position });
     }
 
     EnemyType EnemySpawner::DetermineEnemyType() const {
@@ -158,6 +166,7 @@ namespace KashipanEngine {
             ImGui::Text("Last Spawn Beat: %d", lastSpawnBeat_);
             ImGui::Text("Pre Spawn Beat: %d", preSpawnBeat_);
             ImGui::Text("Active Particles: %zu", particleObjects_.size());
+            ImGui::Checkbox("Is Emitting Particles", &isEmittingParticles_);
             
             if (ImGui::TreeNode("Particle Config")) {
                 ImGui::DragInt("Particle Count", &particleConfig_.particleCount, 1, 1, 50);

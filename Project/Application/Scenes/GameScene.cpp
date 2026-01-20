@@ -61,18 +61,18 @@ GameScene::GameScene()
     std::vector<Object3DBase *> rotatingPlanes;
 
     // SceneDefaultVariables からポインタを取得して使用
-    [[maybe_unused]] auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
-    [[maybe_unused]] auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
-    [[maybe_unused]] auto *screenBuffer2D = defaultVariables ? defaultVariables->GetScreenBuffer2D() : nullptr;
-    [[maybe_unused]] auto *mainCamera3D = defaultVariables ? defaultVariables->GetMainCamera3D() : nullptr;
-    [[maybe_unused]] auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
-    [[maybe_unused]] auto *lightManager = defaultVariables ? defaultVariables->GetLightManager() : nullptr;
-    [[maybe_unused]] auto *lightCamera3D = defaultVariables ? defaultVariables->GetLightCamera3D() : nullptr;
-    [[maybe_unused]] auto *directionalLight = defaultVariables ? defaultVariables->GetDirectionalLight() : nullptr;
-    [[maybe_unused]] auto *shadowMapBinder = defaultVariables ? defaultVariables->GetShadowMapBinder() : nullptr;
-    [[maybe_unused]] auto *shadowCameraSync = defaultVariables ? defaultVariables->GetShadowMapCameraSync() : nullptr;
-    [[maybe_unused]] auto *screen2DSprite = defaultVariables ? defaultVariables->GetScreenBuffer2DSprite() : nullptr;
-    [[maybe_unused]] auto *screen3DSprite = defaultVariables ? defaultVariables->GetScreenBuffer3DSprite() : nullptr;
+    sceneDefault_ = GetSceneComponent<SceneDefaultVariables>();
+    [[maybe_unused]] auto *screenBuffer3D = sceneDefault_ ? sceneDefault_->GetScreenBuffer3D() : nullptr;
+    [[maybe_unused]] auto *screenBuffer2D = sceneDefault_ ? sceneDefault_->GetScreenBuffer2D() : nullptr;
+    [[maybe_unused]] auto *mainCamera3D = sceneDefault_ ? sceneDefault_->GetMainCamera3D() : nullptr;
+    [[maybe_unused]] auto *shadowMapBuffer = sceneDefault_ ? sceneDefault_->GetShadowMapBuffer() : nullptr;
+    [[maybe_unused]] auto *lightManager = sceneDefault_ ? sceneDefault_->GetLightManager() : nullptr;
+    [[maybe_unused]] auto *lightCamera3D = sceneDefault_ ? sceneDefault_->GetLightCamera3D() : nullptr;
+    [[maybe_unused]] auto *directionalLight = sceneDefault_ ? sceneDefault_->GetDirectionalLight() : nullptr;
+    [[maybe_unused]] auto *shadowMapBinder = sceneDefault_ ? sceneDefault_->GetShadowMapBinder() : nullptr;
+    [[maybe_unused]] auto *shadowCameraSync = sceneDefault_ ? sceneDefault_->GetShadowMapCameraSync() : nullptr;
+    [[maybe_unused]] auto *screen2DSprite = sceneDefault_ ? sceneDefault_->GetScreenBuffer2DSprite() : nullptr;
+    [[maybe_unused]] auto *screen3DSprite = sceneDefault_ ? sceneDefault_->GetScreenBuffer3DSprite() : nullptr;
 
     if (screenBuffer3D) {
         ChromaticAberrationEffect::Params p{};
@@ -97,8 +97,8 @@ GameScene::GameScene()
     // デフォルトからメインカメラを設定
     if (mainCamera3D) {
         if (auto *tr = mainCamera3D->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 5.0f, -14.0f));
-            tr->SetRotate(Vector3(M_PI * (15.0f / 180.0f), 0.0f, 0.0f));
+            tr->SetTranslate(Vector3(0.0f, 5.0f, -16.0f));
+            tr->SetRotate(Vector3(M_PI * (14.0f / 180.0f), 0.0f, 0.0f));
         }
         if (screenBuffer3D) {
             const float w = static_cast<float>(screenBuffer3D->GetWidth());
@@ -108,7 +108,7 @@ GameScene::GameScene()
         mainCamera3D->SetFovY(0.7f);
 
         auto camCtrl = std::make_unique<CameraController>(mainCamera3D);
-        camCtrl->SetTargetRotate(Vector3(M_PI * (15.0f / 180.0f), 0.0f, 0.0f));
+        camCtrl->SetTargetRotate(Vector3(M_PI * (14.0f / 180.0f), 0.0f, 0.0f));
         camCtrl->SetTargetFovY(1.0f);
         camCtrl->SetLerpFactor(0.2f);
 
@@ -148,7 +148,8 @@ GameScene::GameScene()
             }
         }
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(whiteTex);
+            auto floorTex = TextureManager::GetTextureFromFileName("floor.png");
+            mat->SetTexture(floorTex);
         }
 
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -336,8 +337,8 @@ GameScene::GameScene()
             tr->SetScale(Vector3(128.0f, 128.0f, 128.0f));
         }
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetEnableLighting(false);
             mat->SetTexture(whiteTex);
+            mat->SetColor(Vector4(0.2f, 0.2f, 0.2f, 1.0f));
         }
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
@@ -392,7 +393,7 @@ GameScene::GameScene()
     AddSceneComponent(std::make_unique<ResultUI>(screenBuffer2D, player_->GetComponent3D<Health>()));
 
     // ゲーム進行管理 - use default screen sprite if available
-    AddSceneComponent(std::make_unique<GameProgressController>(mainCamera3D, directionalLight, mover_, screen3DSprite, rotatingPlanes));
+    AddSceneComponent(std::make_unique<GameProgressController>(sceneDefault_, mover_, screen3DSprite, rotatingPlanes));
 
     if (auto *sceneChangeIn = GetSceneComponent<SceneChangeIn>()) {
         sceneChangeIn->Play();

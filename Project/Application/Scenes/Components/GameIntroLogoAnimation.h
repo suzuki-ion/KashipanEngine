@@ -1,15 +1,15 @@
 #pragma once
 #include <KashipanEngine.h>
+#include "Scene/Components/SceneDefaultVariables.h"
 
 namespace KashipanEngine {
 
 class GameIntroLogoAnimation final : public ISceneComponent {
 public:
     /// @brief ロゴイントロ演出コンポーネントを作成する
-    /// @param screenBuffer 表示先のスクリーンバッファ
-    explicit GameIntroLogoAnimation(ScreenBuffer* screenBuffer)
-        : ISceneComponent("GameIntroLogoAnimation", 1)
-        , screenBuffer_(screenBuffer) {}
+    /// @param screenBuffer 表示先のスクリーンバッファ (ignored)
+    explicit GameIntroLogoAnimation(ScreenBuffer* /*screenBuffer*/)
+        : ISceneComponent("GameIntroLogoAnimation", 1) {}
 
     /// @brief デストラクタ
     ~GameIntroLogoAnimation() override = default;
@@ -25,7 +25,7 @@ public:
 private:
     void SetVisible(bool visible);
 
-    ScreenBuffer* screenBuffer_ = nullptr;
+    SceneDefaultVariables* sceneDefault_ = nullptr;
 
     Sprite* logoSprite_ = nullptr;
     TextureManager::TextureHandle logoTexture_ = TextureManager::kInvalidHandle;

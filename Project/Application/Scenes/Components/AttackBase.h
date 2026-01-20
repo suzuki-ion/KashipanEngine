@@ -2,6 +2,7 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/MovementController.h"
 #include "Objects/Components/AlwaysRotate.h"
+#include "Scene/Components/SceneDefaultVariables.h"
 
 #include <vector>
 #include <string>
@@ -12,15 +13,15 @@ namespace KashipanEngine {
 
 class AttackBase : public ISceneComponent {
 public:
-    AttackBase(const std::string &type, Object3DBase *mover = nullptr, ScreenBuffer *screenBuffer = nullptr)
-        : ISceneComponent(type, 1), mover_(mover), screenBuffer_(screenBuffer) {}
+    AttackBase(const std::string &type, Object3DBase *mover = nullptr, [[maybe_unused]] ScreenBuffer *screenBuffer = nullptr)
+        : ISceneComponent(type, 1), mover_(mover) {}
     ~AttackBase() override = default;
 
     void SetMover(Object3DBase *mover) { mover_ = mover; }
     Object3DBase *GetMover() const { return mover_; }
 
-    void SetScreenBuffer(ScreenBuffer *screenBuffer) { screenBuffer_ = screenBuffer; }
-    ScreenBuffer *GetScreenBuffer() const { return screenBuffer_; }
+    void SetScreenBuffer(ScreenBuffer * /*screenBuffer*/) { /* no-op: use SceneDefaultVariables */ }
+    ScreenBuffer *GetScreenBuffer() const { return sceneDefault_ ? sceneDefault_->GetScreenBuffer3D() : nullptr; }
 
     // 攻撃開始処理（外部から呼ばれる）
     void Attack() { AttackStartInitialize(); }
@@ -28,10 +29,31 @@ public:
     void Initialize() override {
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
-        colliderComponent_ = ctx->GetComponent<ColliderComponent>("ColliderComponent");
+        sceneDefault_ = ctx->GetComponent<SceneDefaultVariables>();
+    }
+    void Finalize() override {
+        for (auto *obj : spawnedObjects_) {
+            if (obj) {
+                if (auto *ctx = GetOwnerContext()) {
+                    ctx->RemoveObject3D(obj);
+                }
+            }
+        }
+        for (auto *pl : pointLights_) {
+            if (pl) {
+                if (auto *ctx = GetOwnerContext()) {
+                    ctx->RemoveObject3D(pl);
+                }
+            }
+        }
+
+        spawnedObjects_.clear();
+        pointLights_.clear();
     }
 
     void Update() override;
+
+    void SetSpawnWithPointLight(bool v) { spawnWithPointLight_ = v; }
 
 protected:
     using MoveEntry = MovementController::MoveEntry;
@@ -64,10 +86,12 @@ protected:
 
     std::vector<Object3DBase *> spawnedObjects_;
 
+    bool spawnWithPointLight_ = false;
+    std::vector<PointLight *> pointLights_;
+
 private:
     Object3DBase *mover_ = nullptr;
-    ScreenBuffer *screenBuffer_ = nullptr;
-    ColliderComponent *colliderComponent_ = nullptr;
+    SceneDefaultVariables *sceneDefault_ = nullptr;
 };
 
 } // namespace KashipanEngine

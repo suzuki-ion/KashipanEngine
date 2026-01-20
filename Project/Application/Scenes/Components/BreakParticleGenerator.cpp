@@ -10,6 +10,12 @@
 
 namespace KashipanEngine {
 
+void BreakParticleGenerator::Initialize() {
+    auto *ctx = GetOwnerContext();
+    if (!ctx) return;
+    sceneDefault_ = ctx->GetComponent<SceneDefaultVariables>();
+}
+
 void BreakParticleGenerator::Generate(const Vector3 &pos) {
     auto *ctx = GetOwnerContext();
     if (!ctx) return;
@@ -19,6 +25,8 @@ void BreakParticleGenerator::Generate(const Vector3 &pos) {
     constexpr float kMoveDuration = 0.35f;
     constexpr float kMoveDistanceMin = 1.0f;
     constexpr float kMoveDistanceMax = 3.0f;
+
+    ScreenBuffer *sb = sceneDefault_ ? sceneDefault_->GetScreenBuffer3D() : nullptr;
 
     for (int i = 0; i < kCount; ++i) {
         auto obj = std::make_unique<Plane3D>();
@@ -70,8 +78,8 @@ void BreakParticleGenerator::Generate(const Vector3 &pos) {
             mat->SetUVTransform(uv);
         }
 
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        if (sb) {
+            obj->AttachToRenderer(sb, "Object3D.Solid.BlendNormal");
         }
 
         auto *raw = obj.get();

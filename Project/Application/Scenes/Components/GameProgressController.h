@@ -10,6 +10,7 @@
 #include "Scenes/Components/AttackGearWallRightSide.h"
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/GameIntroLogoAnimation.h"
+#include "Scene/Components/SceneDefaultVariables.h"
 
 #include <string>
 #include <vector>
@@ -21,20 +22,17 @@ namespace KashipanEngine {
 class GameProgressController final : public ISceneComponent {
 public:
     /// @brief コンストラクタ。各種参照オブジェクトを設定する
-    /// @param camera カメラオブジェクト
-    /// @param light ディレクショナルライト
+    /// @param sceneVars シーンのデフォルト変数コンポーネント（nullptr でも Initialize 内で取得する）
     /// @param mover 移動対象オブジェクト（Sphere 等）
     /// @param screenSprite スクリーン用スプライト
     /// @param rotatingPlanes 回転するプレーン群（イントロ演出用）
     GameProgressController(
-        Camera3D *camera,
-        DirectionalLight *light,
+        SceneDefaultVariables *sceneVars,
         Sphere *mover,
         Sprite *screenSprite,
         const std::vector<Object3DBase *> &rotatingPlanes = {})
         : ISceneComponent("GameProgressController", 1)
-        , camera_(camera)
-        , light_(light)
+        , sceneVars_(sceneVars)
         , mover_(mover)
         , screenSprite_(screenSprite)
         , rotatingPlanes_(rotatingPlanes) {}
@@ -43,6 +41,11 @@ public:
     /// @brief 初期化処理。シーンコンポーネントの参照を取得し状態をリセットする
     void Initialize() override {
         if (auto *ctx = GetOwnerContext()) {
+            // ensure we have SceneDefaultVariables pointer
+            if (!sceneVars_) {
+                sceneVars_ = ctx->GetComponent<SceneDefaultVariables>();
+            }
+
             attackGearCircularInside_ = ctx->GetComponent<AttackGearCircularInside>();
             attackGearCircularOutside_ = ctx->GetComponent<AttackGearCircularOutside>();
             attackGearWallForward_ = ctx->GetComponent<AttackGearWallForward>();
@@ -85,6 +88,10 @@ public:
         nextIntermissionBlinkAt_ = 0.0f;
         intermissionBlinkWhite_ = false;
 
+        intermissionActive_ = false;
+        savedDirectionalIntensity_ = 1.0f;
+        savedDirectionalColor_ = Vector4{1.0f,1.0f,1.0f,1.0f};
+
         introShakeTriggered_ = false;
         introDoomPlayed_ = false;
         introNoisePlay_ = AudioManager::kInvalidPlayHandle;
@@ -121,6 +128,10 @@ public:
             UpdateIntermission(dt);
             prevElapsedSec_ = elapsedSec_;
             return;
+        }
+
+        if (intermissionActive_ && attackElapsedSec_ >= intermissionEndAttackSec_) {
+            OnIntermissionEnd();
         }
 
         // 中間演出終了時にノイズが鳴りっぱなしにならないよう停止
@@ -207,8 +218,9 @@ private:
     // jitter
     float attackJitterFrac_ = 0.15f;
 
-    Camera3D *camera_ = nullptr;
-    DirectionalLight *light_ = nullptr;
+    // Scene defaults container
+    SceneDefaultVariables *sceneVars_ = nullptr;
+
     Sphere *mover_ = nullptr;
     Sprite *screenSprite_ = nullptr;
 
@@ -229,6 +241,10 @@ private:
     float intermissionBlinkTimer_ = 0.0f;
     float nextIntermissionBlinkAt_ = 0.0f;
     bool intermissionBlinkWhite_ = false;
+
+    bool intermissionActive_ = false;
+    float savedDirectionalIntensity_ = 1.0f;
+    Vector4 savedDirectionalColor_ = Vector4{1.0f,1.0f,1.0f,1.0f};
 
     AudioManager::PlayHandle introNoisePlay_ = AudioManager::kInvalidPlayHandle;
     bool introDoomPlayed_ = false;
@@ -327,10 +343,15 @@ private:
             introPlanesRaised_ = true;
         }
 
-        if (light_ && t >= lightFadeStartSec_ && t < lightFadeEndSec_) {
-            const float u = Normalize01(t, lightFadeStartSec_, lightFadeEndSec_);
-            const float intensity = Lerp(lightIntensityStart_, lightIntensityEnd_, u);
-            light_->SetIntensity(intensity);
+        // light from scene defaults
+        if (sceneVars_) {
+            if (auto *light = sceneVars_->GetDirectionalLight()) {
+                if (t >= lightFadeStartSec_ && t < lightFadeEndSec_) {
+                    const float u = Normalize01(t, lightFadeStartSec_, lightFadeEndSec_);
+                    const float intensity = Lerp(lightIntensityStart_, lightIntensityEnd_, u);
+                    light->SetIntensity(intensity);
+                }
+            }
         }
 
         if (!introLogoPlayed_ && introLogoAnimation_ && t >= introLogoAtSec_) {
@@ -364,7 +385,7 @@ private:
         }
     }
 
-    void UpdateIntermission(float dt) {
+    void UpdateIntermission(float /*dt*/) {
         const float t = attackElapsedSec_ - intermissionStartAttackSec_; // 0..(intermissionEnd-intermissionStart)
 
         // t = intermissionNoiseStart..intermissionNoiseEnd
@@ -397,13 +418,14 @@ private:
             if (cameraController_) {
                 cameraController_->Shake(1.0f, 1.0f);
             }
+
             intermissionShakeTriggered_ = true;
         }
 
         if (screenSprite_) {
             if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
                 if (t >= intermissionBlinkStartSec_ && t < intermissionBlinkEndSec_) {
-                    intermissionBlinkTimer_ += dt;
+                    intermissionBlinkTimer_ += GetDeltaTime();
 
                     const float phase = Normalize01(t, intermissionBlinkStartSec_, intermissionBlinkEndSec_);
                     const float interval = Lerp(intermissionBlinkIntervalStart_, intermissionBlinkIntervalEnd_, phase);
@@ -416,7 +438,16 @@ private:
                 } else if (t >= intermissionBlinkEndSec_ && t < intermissionShakeAtSec_) {
                     mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
                 } else if (t >= intermissionShakeAtSec_ && t < intermissionShakeAtSec_ + 1.0f) {
-                    mat->SetColor(Vector4{ 1.0f, 0.5f, 0.5f, 1.0f });
+                    mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+                    if (sceneVars_) {
+                        if (auto *dir = sceneVars_->GetDirectionalLight()) {
+                            savedDirectionalIntensity_ = dir->GetIntensity();
+                            savedDirectionalColor_ = dir->GetColor();
+                            dir->SetIntensity(0.3f);
+                            dir->SetColor(Vector4{ 0.7f, 0.7f, 1.0f, 1.0f });
+                        }
+                    }
+                    intermissionActive_ = true;
                 }
             }
         }
@@ -437,6 +468,25 @@ private:
         nextChaseInsideAtSec_ = std::max(nextChaseInsideAtSec_, intermissionEndAttackSec_);
     }
 
+    void OnIntermissionEnd() {
+        // restore directional light and enable gear point lights
+        if (intermissionActive_) {
+            if (sceneVars_) {
+                if (auto *dir = sceneVars_->GetDirectionalLight()) {
+                    dir->SetIntensity(savedDirectionalIntensity_);
+                    dir->SetColor(savedDirectionalColor_);
+                }
+                // enable point light spawning on gear attacks
+                if (attackGearCircularInside_) attackGearCircularInside_->SetSpawnWithPointLight(true);
+                if (attackGearCircularOutside_) attackGearCircularOutside_->SetSpawnWithPointLight(true);
+                if (attackGearWallForward_) attackGearWallForward_->SetSpawnWithPointLight(true);
+                if (attackGearWallLeftSide_) attackGearWallLeftSide_->SetSpawnWithPointLight(true);
+                if (attackGearWallRightSide_) attackGearWallRightSide_->SetSpawnWithPointLight(true);
+            }
+        }
+        intermissionActive_ = false;
+    }
+
     void StopIntermissionNoise() {
         if (intermissionNoisePlay_ != AudioManager::kInvalidPlayHandle) {
             AudioManager::Stop(intermissionNoisePlay_);
@@ -448,21 +498,21 @@ private:
         if (!endFadeStarted_) {
             endFadeStarted_ = true;
             endFadeElapsed_ = 0.0f;
-            if (screenSprite_) {
-                if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
-                    endFadeStartColor_ = mat->GetColor();
-                }
+            if (auto *light = sceneVars_ ? sceneVars_->GetDirectionalLight() : nullptr) {
+                endFadeStartColor_ = light->GetColor();
             }
         }
 
         endFadeElapsed_ += dt;
 
-        if (screenSprite_) {
-            if (auto *mat = screenSprite_->GetComponent2D<Material2D>()) {
-                const float u = Normalize01(endFadeElapsed_, endFadeDelaySec_, endFadeFadeEndSec_);
-                if (u >= 0.0f) {
-                    mat->SetColor(Lerp(endFadeStartColor_, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f }, u));
-                }
+        const float t = endFadeElapsed_;
+        if (auto *light = sceneVars_ ? sceneVars_->GetDirectionalLight() : nullptr) {
+            if (t >= endFadeDelaySec_) {
+                const float u = Normalize01(t - endFadeDelaySec_, 0.0f, endFadeFadeEndSec_ - endFadeDelaySec_);
+                const Vector4 c = Lerp(endFadeStartColor_, Vector4{ 1.0f, 1.0f, 1.0f, 1.0f }, u);
+                const float intensity = Lerp(0.3f, 1.6f, u);
+                light->SetColor(c);
+                light->SetIntensity(intensity);
             }
         }
     }
@@ -533,7 +583,17 @@ private:
                     }
                 } else if (r < wCircIn + wCircOut) {
                     if (attackGearCircularOutside_) {
-                        attackGearCircularOutside_->SetTargetPosition(baseTarget);
+                        // Spawn from one of four floor corners instead of center
+                        // Floor spans x = [-5, 5], z = [-5, 5]
+                        const int cornerIdx = std::uniform_int_distribution<int>(0, 3)(rng);
+                        Vector3 cornerTarget{0.0f, 0.0f, 0.0f};
+                        switch (cornerIdx) {
+                            case 0: cornerTarget = Vector3{ -5.0f, 0.0f, 5.0f }; break; // left-奥 (left-back)
+                            case 1: cornerTarget = Vector3{ 5.0f, 0.0f, 5.0f }; break;  // right-奥 (right-back)
+                            case 2: cornerTarget = Vector3{ -5.0f, 0.0f, -5.0f }; break; // left-前 (left-front)
+                            case 3: cornerTarget = Vector3{ 5.0f, 0.0f, -5.0f }; break;  // right-前 (right-front)
+                        }
+                        attackGearCircularOutside_->SetTargetPosition(cornerTarget);
                         attackGearCircularOutside_->Attack();
                     }
                 } else {

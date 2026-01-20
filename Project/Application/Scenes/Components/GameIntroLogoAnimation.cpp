@@ -1,4 +1,6 @@
 #include "Scenes/Components/GameIntroLogoAnimation.h"
+#include "Scene/SceneContext.h"
+
 #include <algorithm>
 
 namespace KashipanEngine {
@@ -17,10 +19,13 @@ constexpr float kXLeftOutside = -kLogoW * 0.5f;
 void GameIntroLogoAnimation::Initialize() {
     auto* ctx = GetOwnerContext();
     if (!ctx) return;
+    sceneDefault_ = ctx->GetComponent<SceneDefaultVariables>("SceneDefaultVariables");
+
+    ScreenBuffer* sb = sceneDefault_ ? sceneDefault_->GetScreenBuffer2D() : nullptr;
 
     auto attach = [&](Sprite* s) {
-        if (!s || !screenBuffer_) return;
-        s->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (!s || !sb) return;
+        s->AttachToRenderer(sb, "Object2D.DoubleSidedCulling.BlendNormal");
     };
 
     logoTexture_ = TextureManager::GetTextureFromFileName("avoidAttacksText.png");
@@ -43,7 +48,7 @@ void GameIntroLogoAnimation::Initialize() {
             tr->SetScale(Vector2{ kLogoW, -kLogoH });
         }
 
-        sp->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (sb) sp->AttachToRenderer(sb, "Object2D.DoubleSidedCulling.BlendNormal");
         logoSprite_ = sp.get();
         attach(logoSprite_);
         ctx->AddObject2D(std::move(sp));

@@ -49,9 +49,6 @@ void EnemyManager::InitializeParticlePool() {
         
         particle->RegisterComponent<EnemyDieParticle>(config);
 
-        // ポインタを保存（move前に保存）
-        Object3DBase* particlePtr = particle.get();
-
         // レンダラーにアタッチ
         if (screenBuffer_) {
             particle->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
@@ -62,24 +59,7 @@ void EnemyManager::InitializeParticlePool() {
 
         particlePool_.push_back(particle.get());
         ctx->AddObject3D(std::move(particle));
-
-        // デバッグ: コンポーネント取得テスト
-        auto* testComponent = particlePtr->GetComponent3D<EnemyDieParticle>();
-        if (!testComponent) {
-            char debugMsg[256];
-            sprintf_s(debugMsg, "WARNING: EnemyDieParticle component not found for particle %d\n", i);
-            OutputDebugStringA(debugMsg);
-        } else {
-            OutputDebugStringA("  - EnemyDieParticle component registered successfully\n");
-        }
-
-        // プールに追加
-        //particlePool_.push_back(particlePtr);
     }
-
-    char buffer[256];
-    sprintf_s(buffer, "InitializeParticlePool completed: %zu particles created\n", particlePool_.size());
-    OutputDebugStringA(buffer);
 }
 
 void EnemyManager::Update() {
@@ -238,14 +218,6 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
 }
 
 void EnemyManager::SpawnDieParticles(const Vector3& position) {
-    // デバッグ: この関数が呼ばれているか確認
-    OutputDebugStringA("SpawnDieParticles called\n");
-    
-    // デバッグ: プールサイズを確認
-    char buffer[256];
-    sprintf_s(buffer, "Particle pool size: %zu\n", particlePool_.size());
-    OutputDebugStringA(buffer);
-
     // プールから非アクティブなパーティクルを探して再利用
     int particlesSpawned = 0;
     const int particlesToSpawn = 15; // 1回の死亡で発生させるパーティクル数
@@ -254,26 +226,10 @@ void EnemyManager::SpawnDieParticles(const Vector3& position) {
         if (particlesSpawned >= particlesToSpawn) break;
 
         auto* dieParticle = particle->GetComponent3D<EnemyDieParticle>();
-        
-        // デバッグ: コンポーネント取得と状態確認
-        if (!dieParticle) {
-            OutputDebugStringA("  - dieParticle is nullptr\n");
-            continue;
-        }
-        
-        if (dieParticle->IsAlive()) {
-            OutputDebugStringA("  - dieParticle is alive (skipping)\n");
-            continue;
-        }
 
-        // パーティクルを発生
-        OutputDebugStringA("  - Spawning particle\n");
         dieParticle->Spawn(position);
         particlesSpawned++;
     }
-    
-    sprintf_s(buffer, "Particles spawned: %d / %d\n", particlesSpawned, particlesToSpawn);
-    OutputDebugStringA(buffer);
 }
 
 void EnemyManager::CleanupDeadEnemies() {

@@ -291,6 +291,8 @@ void TestScene::Initialize() {
 
     {
 		auto comp = std::make_unique<EnemySpawner>(enemySpawnInterval_);
+		comp->SetScreenBuffer(screenBuffer3D_);
+		comp->SetShadowMapBuffer(shadowMapBuffer_);
 		comp->SetEnemyManager(enemyManager_);
 		comp->SetBPMSystem(bpmSystem_);
 		enemySpawner_ = comp.get();

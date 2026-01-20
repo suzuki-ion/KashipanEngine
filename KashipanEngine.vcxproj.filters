@@ -136,6 +136,7 @@
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
+    <ClCompile Include="EnemySpawner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />

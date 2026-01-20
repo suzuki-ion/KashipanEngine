@@ -105,6 +105,12 @@ public:
     /// @brief Renderer 用: 現在フレームで記録開始されているか
     bool IsRecording(Passkey<Renderer>) const noexcept;
 
+    /// @brief Renderer 用: この ScreenBuffer に対する「カスタム記録」を開始したことをマークする
+    /// @details PostEffectPass::beginRecordFunction が設定され、その関数内で
+    ///          ScreenBuffer の DX12Commands を直接使ってコマンドを記録する場合に
+    ///          Renderer から呼び出して sRecordStates の started フラグを設定するためのメソッド。
+    void MarkRecordingStarted(Passkey<Renderer>);
+
     /// @brief Renderer 用: この ScreenBuffer の記録を開始（深度を上書きしない用途向けに制御可能）
     /// @param disableDepthWrite true の場合、Depth への書き込み/クリアを行わず Color のみをターゲットにする
     ID3D12GraphicsCommandList *BeginRecord(Passkey<Renderer>, bool disableDepthWrite);

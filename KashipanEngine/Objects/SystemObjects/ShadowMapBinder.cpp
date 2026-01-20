@@ -36,9 +36,7 @@ bool ShadowMapBinder::Render(ShaderVariableBinder& shaderBinder) {
     if (srvHandle.ptr != 0) {
         shaderBinder.Bind(shadowMapNameKey_, srvHandle);
     }
-    if (shadowSampler_ != SamplerManager::kInvalidHandle) {
-        SamplerManager::BindSampler(&shaderBinder, shadowSamplerNameKey_, shadowSampler_);
-    }
+    SamplerManager::BindSampler(&shaderBinder, shadowSamplerNameKey_, DefaultSampler::LinearClamp);
 
     return true;
 }

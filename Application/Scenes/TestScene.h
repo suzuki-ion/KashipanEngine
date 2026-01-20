@@ -30,20 +30,7 @@ protected:
     void OnUpdate() override;
 
 private:
-    ScreenBuffer *screenBuffer3D_ = nullptr;
-    ScreenBuffer *screenBuffer2D_ = nullptr;
-    ScreenBuffer *velocityBuffer_ = nullptr;
-    ShadowMapBuffer *shadowMapBuffer_ = nullptr;
-    ShadowMapBinder *shadowMapBinder_ = nullptr;
-    VelocityBufferCameraBinder *velocityBufferCameraBinder_ = nullptr;
-
-    Camera2D *screenCamera2D_ = nullptr;
-    Sprite *screenSprite_ = nullptr;
-
-    Camera3D *mainCamera3D_ = nullptr;
-    Camera3D *lightCamera3D_ = nullptr;
-
-    DirectionalLight *light_ = nullptr;
+    SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
     // BPM関連
     BPMSystem* bpmSystem_ = nullptr;
@@ -82,8 +69,6 @@ private:
 	int enemySpawnInterval_ = 4; // 敵のスポーン間隔（拍数）
 
 	EnemyManager* enemyManager_ = nullptr;
-
-	ColliderComponent* collider_ = nullptr;
 
     struct ParticleLightPair {
         Object3DBase* particle = nullptr;

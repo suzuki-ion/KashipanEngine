@@ -139,6 +139,7 @@
     <ClCompile Include="EnemySpawner.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -164,7 +165,6 @@
     <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
-    <ClInclude Include="Application\Scenes\Components\ScreenBufferKeepRatio.h" />
     <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Application\Scenes\GameScene.h" />
     <ClInclude Include="Application\Scenes\MenuScene.h" />
@@ -387,6 +387,8 @@
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

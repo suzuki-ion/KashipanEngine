@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "Scene/Components/ISceneComponent.h"
@@ -28,10 +29,17 @@ public:
     /// @brief テクセルスナップで使用するシャドウマップバッファを設定
     void SetShadowMapBuffer(ShadowMapBuffer* buffer) { shadowMapBuffer_ = buffer; }
 
-    /// @brief ライトカメラをメインカメラ中心からライト逆方向へ離す距離を設定
-    void SetDistanceFromTarget(float distance) { distanceFromTarget_ = distance; }
-    /// @brief ライトカメラの Near/Far に追加するマージン値を設定
-    void SetDepthMargin(float margin) { depthMargin_ = margin; }
+    /// @brief メインカメラのターゲットからの距離を設定
+    void SetDistanceFromTarget(float d) { distanceFromTarget_ = d; }
+
+    /// @brief シャドウカメラの Near を設定
+    void SetShadowNear(float n) { shadowNear_ = n; }
+    /// @brief シャドウカメラの Far を設定
+    void SetShadowFar(float f) { shadowFar_ = f; }
+
+    float GetDistanceFromTarget() const { return distanceFromTarget_; }
+    float GetShadowNear() const { return shadowNear_; }
+    float GetShadowFar() const { return shadowFar_; }
 
     /// @brief 毎フレーム同期処理を実行
     void Update() override;
@@ -51,7 +59,8 @@ private:
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
 
     float distanceFromTarget_ = 1024.0f;
-    float depthMargin_ = 0.0f;
+    float shadowNear_ = 0.1f;
+    float shadowFar_ = 64.0f;
 };
 
 } // namespace KashipanEngine

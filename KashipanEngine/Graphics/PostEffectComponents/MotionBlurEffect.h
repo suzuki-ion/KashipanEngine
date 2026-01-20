@@ -147,9 +147,6 @@ public:
                 auto *o = GetOwnerBuffer();
                 if (!o) return false;
 
-                //const auto vel = o->GetVelocitySrvHandle();
-                //if (vel.ptr == 0) return false;
-
                 if (!binder.Bind("Pixel:gSceneTexture", o->GetSrvHandle())) return false;
                 D3D12_GPU_DESCRIPTOR_HANDLE velHandle{};
                 if (velocityBuffer_) velHandle = velocityBuffer_->GetSrvHandle();

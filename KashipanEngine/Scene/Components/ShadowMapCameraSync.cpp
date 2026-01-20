@@ -17,7 +17,7 @@ namespace KashipanEngine {
 
 namespace {
 
-static Vector3 TransformPoint(const Matrix4x4& m, const Vector3& p) {
+Vector3 TransformPoint(const Matrix4x4& m, const Vector3& p) {
     const float x = p.x * m.m[0][0] + p.y * m.m[1][0] + p.z * m.m[2][0] + 1.0f * m.m[3][0];
     const float y = p.x * m.m[0][1] + p.y * m.m[1][1] + p.z * m.m[2][1] + 1.0f * m.m[3][1];
     const float z = p.x * m.m[0][2] + p.y * m.m[1][2] + p.z * m.m[2][2] + 1.0f * m.m[3][2];
@@ -27,19 +27,21 @@ static Vector3 TransformPoint(const Matrix4x4& m, const Vector3& p) {
     return Vector3(x, y, z);
 }
 
-static std::array<Vector3, 8> ComputeCameraFrustumCornersWorld(const Camera3D& cam) {
-    const Matrix4x4 invVP = cam.GetViewProjectionMatrix().Inverse();
-
+std::array<Vector3, 8> ComputeCameraFrustumCornersWorldForDepth(const Camera3D& cam, float nearDist, float farDist) {
     const std::array<Vector3, 8> ndc = {
         Vector3(-1.0f, -1.0f, 0.0f),
         Vector3(-1.0f,  1.0f, 0.0f),
-        Vector3( 1.0f,  1.0f, 0.0f),
-        Vector3( 1.0f, -1.0f, 0.0f),
+        Vector3(1.0f,  1.0f, 0.0f),
+        Vector3(1.0f, -1.0f, 0.0f),
         Vector3(-1.0f, -1.0f, 1.0f),
         Vector3(-1.0f,  1.0f, 1.0f),
-        Vector3( 1.0f,  1.0f, 1.0f),
-        Vector3( 1.0f, -1.0f, 1.0f),
+        Vector3(1.0f,  1.0f, 1.0f),
+        Vector3(1.0f, -1.0f, 1.0f),
     };
+    Matrix4x4 view = cam.GetViewMatrix();
+    Matrix4x4 proj{};
+    proj.MakePerspectiveFovMatrix(cam.GetFovY(), cam.GetAspectRatio(), nearDist, farDist);
+    const Matrix4x4 invVP = (view * proj).Inverse();
 
     std::array<Vector3, 8> world{};
     for (size_t i = 0; i < world.size(); ++i) {
@@ -48,7 +50,7 @@ static std::array<Vector3, 8> ComputeCameraFrustumCornersWorld(const Camera3D& c
     return world;
 }
 
-static Vector3 Average(const std::array<Vector3, 8>& v) {
+Vector3 Average(const std::array<Vector3, 8>& v) {
     Vector3 s(0.0f, 0.0f, 0.0f);
     for (const auto& p : v) {
         s += p;
@@ -56,7 +58,7 @@ static Vector3 Average(const std::array<Vector3, 8>& v) {
     return s * (1.0f / static_cast<float>(v.size()));
 }
 
-static float SnapToStep(float v, float step) {
+float SnapToStep(float v, float step) {
     if (step <= 0.0f) return v;
     return std::floor(v / step + 0.5f) * step;
 }
@@ -90,8 +92,9 @@ void ShadowMapCameraSync::ShowImGui() {
     } else {
         ImGui::Text("Directional Light: (not set)");
     }
-    ImGui::DragFloat("Distance From Target", &distanceFromTarget_, 0.1f, 0.0f, 1000.0f);
-    ImGui::DragFloat("Depth Margin", &depthMargin_, 0.1f, 0.0f, 1000.0f);
+    ImGui::DragFloat("Distance From Target", &distanceFromTarget_, 1.0f, 0.0f, 10000.0f);
+    ImGui::DragFloat("Shadow Near", &shadowNear_, 0.01f, 0.001f, 1000.0f);
+    ImGui::DragFloat("Shadow Far", &shadowFar_, 0.1f, 0.1f, 100000.0f);
 }
 #endif
 
@@ -101,7 +104,7 @@ void ShadowMapCameraSync::SyncOnce() {
     auto* lightTr = lightCamera_->GetComponent3D<Transform3D>();
     if (!lightTr) return;
 
-    const auto cornersWS = ComputeCameraFrustumCornersWorld(*mainCamera_);
+    const auto cornersWS = ComputeCameraFrustumCornersWorldForDepth(*mainCamera_, shadowNear_, shadowFar_);
     const Vector3 centerWS = Average(cornersWS);
 
     const Vector3 lightDir = light_->GetDirection().Normalize();
@@ -149,8 +152,8 @@ void ShadowMapCameraSync::SyncOnce() {
         snappedMaxY = snappedMinY + orthoH;
     }
 
-    float nearClip = minZ - depthMargin_;
-    float farClip = maxZ + depthMargin_;
+    float nearClip = minZ;
+    float farClip = maxZ;
 
     if (nearClip < 0.001f) nearClip = 0.001f;
     if (farClip <= nearClip + 0.001f) farClip = nearClip + 0.001f;

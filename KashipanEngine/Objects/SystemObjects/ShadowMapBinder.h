@@ -22,9 +22,6 @@ public:
     void SetShadowMapBuffer(ShadowMapBuffer* buffer) { shadowMapBuffer_ = buffer; }
     ShadowMapBuffer* GetShadowMapBuffer() const { return shadowMapBuffer_; }
 
-    void SetShadowSampler(SamplerManager::SamplerHandle handle) { shadowSampler_ = handle; }
-    SamplerManager::SamplerHandle GetShadowSampler() const { return shadowSampler_; }
-
     void SetCamera3D(Camera3D *camera) { camera3D_ = camera; }
 
     void SetShadowMapNameKey(std::string nameKey) { shadowMapNameKey_ = std::move(nameKey); }
@@ -35,7 +32,6 @@ protected:
 
 private:
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
-    SamplerManager::SamplerHandle shadowSampler_ = SamplerManager::kInvalidHandle;
     Camera3D *camera3D_ = nullptr;
 
     ShadowMapBinder::ShadowMapConstants shadowMapConstants_{};

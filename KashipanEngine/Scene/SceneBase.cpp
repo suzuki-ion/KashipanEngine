@@ -1,6 +1,7 @@
 #include "Scene/SceneBase.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
+#include "Scene/Components/SceneDefaultVariables.h"
 
 #include <algorithm>
 
@@ -29,12 +30,19 @@ void SceneBase::SetEnginePointers(
 SceneBase::SceneBase(const std::string &sceneName)
     : name_(sceneName) {
     sceneContext_ = std::make_unique<SceneContext>(Passkey<SceneBase>{}, this);
+    // デフォルトのシーン変数コンポーネントを追加
+    auto defaultVarsComp = std::make_unique<SceneDefaultVariables>();
+    auto *ptr = defaultVarsComp.get();
+    AddSceneComponent(std::move(defaultVarsComp));
+    ptr->SetSceneComponents([this](std::unique_ptr<ISceneComponent> comp) {
+        return AddSceneComponent(std::move(comp));
+    });
 }
 
 SceneBase::~SceneBase() {
-    ClearSceneComponents();
     ClearObjects2D();
     ClearObjects3D();
+    ClearSceneComponents();
 }
 
 void SceneBase::Update() {

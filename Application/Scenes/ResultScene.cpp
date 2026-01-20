@@ -1,10 +1,7 @@
 #include "Scenes/ResultScene.h"
-
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
-#include "Scenes/Components/ScreenBufferKeepRatio.h"
 #include "Objects/Components/ParticleMovement.h"
-#include "Scene/Components/ShadowMapCameraSync.h"
 
 namespace KashipanEngine {
 
@@ -108,8 +105,6 @@ void ResultScene::Initialize() {
         auto obj = std::make_unique<ShadowMapBinder>();
         obj->SetName("ShadowMapBinder");
         obj->SetShadowMapBuffer(shadowMapBuffer_);
-        const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
-        obj->SetShadowSampler(sampler);
         obj->SetCamera3D(lightCamera3D_);
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
@@ -184,17 +179,6 @@ void ResultScene::Initialize() {
     //==================================================
     // ↑ ここまでゲームオブジェクト定義 ↑
     //==================================================
-
-    // Keep ratio
-    {
-        auto comp = std::make_unique<ScreenBufferKeepRatio>();
-        comp->SetSprite(screenSprite_);
-        comp->SetTargetSize(0.0f, 0.0f);
-        if (screenBuffer_) {
-            comp->SetSourceSize(static_cast<float>(screenBuffer_->GetWidth()), static_cast<float>(screenBuffer_->GetHeight()));
-        }
-        AddSceneComponent(std::move(comp));
-    }
 
     // Shadow map camera sync (fit main camera view)
     {

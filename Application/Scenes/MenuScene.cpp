@@ -1,10 +1,6 @@
 #include "Scenes/MenuScene.h"
-
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
-#include "Scenes/Components/ScreenBufferKeepRatio.h"
-#include "Objects/Components/ParticleMovement.h"
-#include "Scene/Components/ShadowMapCameraSync.h"
 
 namespace KashipanEngine {
 
@@ -104,8 +100,6 @@ void MenuScene::Initialize() {
         auto obj = std::make_unique<ShadowMapBinder>();
         obj->SetName("ShadowMapBinder");
         obj->SetShadowMapBuffer(shadowMapBuffer_);
-        const auto sampler = GetSceneVariableOr("ShadowSampler", SamplerManager::kInvalidHandle);
-        obj->SetShadowSampler(sampler);
         obj->SetCamera3D(lightCamera3D_);
         shadowMapBinder_ = obj.get();
         if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
@@ -144,24 +138,6 @@ void MenuScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
-    // Particles
-    {
-        ParticleMovement::SpawnBox spawn;
-        spawn.min = Vector3(-16.0f, 0.0f, -16.0f);
-        spawn.max = Vector3(16.0f, 16.0f, 16.0f);
-
-        for (int i = 0; i < 32; ++i) {
-            auto obj = std::make_unique<Box>();
-            obj->SetName("ParticleBox_" + std::to_string(i));
-            obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{ 0.5f, 0.5f, 0.5f });
-
-            if (screenBuffer_) obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-            if (shadowMapBuffer_) obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
-
-            AddObject3D(std::move(obj));
-        }
-    }
-
     // ScreenBuffer -> Window
     {
         auto obj = std::make_unique<Sprite>();
@@ -180,17 +156,6 @@ void MenuScene::Initialize() {
     //==================================================
     // ↑ ここまでゲームオブジェクト定義 ↑
     //==================================================
-
-    // Keep ratio
-    {
-        auto comp = std::make_unique<ScreenBufferKeepRatio>();
-        comp->SetSprite(screenSprite_);
-        comp->SetTargetSize(0.0f, 0.0f);
-        if (screenBuffer_) {
-            comp->SetSourceSize(static_cast<float>(screenBuffer_->GetWidth()), static_cast<float>(screenBuffer_->GetHeight()));
-        }
-        AddSceneComponent(std::move(comp));
-    }
 
     // Shadow map camera sync (fit main camera view)
     {

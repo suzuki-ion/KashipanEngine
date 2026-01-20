@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <cstring>
 #include <exception>
-#include <imgui.h>
 #include <memory>
 #include <optional>
 #include <span>

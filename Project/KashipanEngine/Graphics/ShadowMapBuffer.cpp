@@ -3,7 +3,9 @@
 #include "Graphics/Resources/IGraphicsResource.h"
 #include <algorithm>
 #include <vector>
+#if defined(USE_IMGUI)
 #include <imgui.h>
+#endif
 
 namespace KashipanEngine {
 

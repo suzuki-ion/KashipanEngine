@@ -175,7 +175,7 @@ void BombManager::SpawnBomb() {
         bomb->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
     }
 
-    bomb->RegisterComponent<BPMScaling>(0.8f, 1.0f);
+    bomb->RegisterComponent<BPMScaling>(Vector3(0.9f, 0.9f, 0.9f), Vector3(1.1f, 1.1f, 1.1f));
 
     // レンダラーにアタッチ
     if (screenBuffer_) {

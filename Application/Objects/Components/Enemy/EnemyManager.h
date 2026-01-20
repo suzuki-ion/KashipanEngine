@@ -52,9 +52,11 @@ private:
 	/// @brief アクティブな敵情報
     struct EnemyInfo {
         Object3DBase* object = nullptr; 
-		EnemyType type;
-		EnemyDirection direction;
+		EnemyType type = EnemyType::Basic;
+		EnemyDirection direction = EnemyDirection::Down;
         Vector3 position{ 0.0f, 0.0f, 0.0f };
+		Vector3 startPosition{ 0.0f, 0.0f, 0.0f };   // 追加: 移動開始位置
+		Vector3 targetPosition{ 0.0f, 0.0f, 0.0f };  // 追加: 移動目標位置
 		bool isDead = false;
     };
 
@@ -77,6 +79,27 @@ private:
     int mapH_ = 0;
 
     float moveDistance_ = 2.0f;
+
+	float bpmProgress_ = 0.0f;
+
+    // 既存のメンバー変数に追加
+    int moveEveryNBeats_ = 2;  // 何拍ごとに移動するか（デフォルト: 1拍ごと）
+    
+public:
+    // 既存のメソッドに追加
+    /// @brief 移動間隔の設定
+    /// @param beats 何拍ごとに移動するか
+    void SetMoveInterval(int beats) { 
+        if (beats > 0) {
+            moveEveryNBeats_ = beats; 
+        }
+    }
+    
+    /// @brief 移動間隔の取得
+    /// @return 何拍ごとに移動するか
+    int GetMoveInterval() const { 
+        return moveEveryNBeats_; 
+    }
 };
 
 } // namespace KashipanEngine

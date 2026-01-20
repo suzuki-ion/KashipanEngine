@@ -45,11 +45,22 @@ namespace KashipanEngine {
         }
 
         // 消滅したパーティクルオブジェクトを削除
+        auto* ctx = GetOwnerContext();
         particleObjects_.erase(
             std::remove_if(particleObjects_.begin(), particleObjects_.end(),
-                [](Object3DBase* obj) {
+                [ctx](Object3DBase* obj) {
                     auto* particle = obj->GetComponent3D<EnemySpawnParticle>();
-                    return particle && !particle->IsAlive();
+                    if (particle && !particle->IsAlive()) {
+                        // レンダラーからデタッチ
+                        obj->DetachFromRenderer();
+                        
+                        // コンテキストから削除
+                        if (ctx) {
+                            ctx->RemoveObject3D(obj);
+                        }
+                        return true;
+                    }
+                    return false;
                 }),
             particleObjects_.end()
         );

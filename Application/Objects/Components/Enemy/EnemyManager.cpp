@@ -6,6 +6,8 @@
 #include "Scene/Components/ColliderComponent.h"
 #include <algorithm>
 
+#include "Utilities/Easing.h"
+
 namespace KashipanEngine {
 
 void EnemyManager::Initialize() {
@@ -65,46 +67,72 @@ void EnemyManager::InitializeParticlePool() {
 void EnemyManager::Update() {
     if (!bpmSystem_) return;
 
-    const int currentBeat = bpmSystem_->GetCurrentBeat();
-    if (currentBeat == lastMoveBeat_) {
-        CleanupDeadEnemies();
-        return;
-    }
-    lastMoveBeat_ = currentBeat;
+    // BPM進行度を取得して更新
+    bpmProgress_ = bpmSystem_->GetBeatProgress();
 
-    // 1拍ごとに全敵を前進
+    const int currentBeat = bpmSystem_->GetCurrentBeat();
+    
+    // 新しい拍になったかチェック
+    bool isNewBeat = (currentBeat != lastMoveBeat_);
+    
+    if (isNewBeat) {
+        lastMoveBeat_ = currentBeat;
+        
+        // 移動する拍かどうかを判定
+        bool isMoveBeat = (currentBeat % moveEveryNBeats_ == 0);
+
+        for (auto& e : activeEnemies_) {
+            if (!e.object || e.isDead) continue;
+
+            if (isMoveBeat) {
+                // 移動する拍: 目標位置を計算
+                Vector3 delta{ 0.0f, 0.0f, 0.0f };
+                switch (e.direction) {
+                case EnemyDirection::Up:    delta = Vector3{ 0.0f, 0.0f,  moveDistance_ }; break;
+                case EnemyDirection::Down:  delta = Vector3{ 0.0f, 0.0f, -moveDistance_ }; break;
+                case EnemyDirection::Left:  delta = Vector3{ -moveDistance_, 0.0f, 0.0f }; break;
+                case EnemyDirection::Right: delta = Vector3{  moveDistance_, 0.0f, 0.0f }; break;
+                }
+
+                // 開始位置を現在位置に、目標位置を計算
+                e.startPosition = e.position;
+                e.targetPosition = e.position + delta;
+            } else {
+                // 止まる拍: その場でジャンプのみ（開始と目標を同じにする）
+                e.startPosition = e.position;
+                e.targetPosition = e.position;
+            }
+        }
+    }
+
+    // 毎フレーム、イージングで位置を更新
     for (auto& e : activeEnemies_) {
         if (!e.object || e.isDead) continue;
 
-        Vector3 delta{ 0.0f, 0.0f, 0.0f };
-        switch (e.direction) {
-        case EnemyDirection::Up:    delta = Vector3{ 0.0f, 0.0f,  moveDistance_ }; break;
-        case EnemyDirection::Down:  delta = Vector3{ 0.0f, 0.0f, -moveDistance_ }; break;
-        case EnemyDirection::Left:  delta = Vector3{ -moveDistance_, 0.0f, 0.0f }; break;
-        case EnemyDirection::Right: delta = Vector3{  moveDistance_, 0.0f, 0.0f }; break;
-        }
-
-        Vector3 nextPos = e.position + delta;
+        // イージングで現在位置を計算（移動する拍では移動、止まる拍では同じ位置）
+        Vector3 nextPos = Vector3(MyEasing::Lerp(e.startPosition, e.targetPosition, bpmProgress_, EaseType::EaseOutQuint));
+        float currentPosY = float(MyEasing::Lerp_GAB(0.0f, 0.5f, bpmProgress_, EaseType::EaseOutCirc, EaseType::EaseInCirc));
 
         const float minX = -2.0f;
         const float minZ = -2.0f;
         const float maxX = static_cast<float>((mapW_) * 2.0f);
         const float maxZ = static_cast<float>((mapH_) * 2.0f);
 
+        // 目標位置が範囲外かチェック
         const bool out =
-            (nextPos.x == minX) || (nextPos.x == maxX) ||
-            (nextPos.z == minZ) || (nextPos.z == maxZ);
+            (e.targetPosition.x <= minX) || (e.targetPosition.x >= maxX) ||
+            (e.targetPosition.z <= minZ) || (e.targetPosition.z >= maxZ);
 
         e.position = nextPos;
 
         if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(nextPos);
+            tr->SetTranslate(Vector3(nextPos.x, currentPosY, nextPos.z));
         }
 
-        if (out) {
-            SpawnDieParticles(e.position);
+        // 拍の終わり（進行度が1.0に近い）で範囲外なら削除
+        if (out && bpmProgress_ > 0.95f) {
+            SpawnDieParticles(e.targetPosition);
             e.isDead = true;
-            continue;
         }
     }
 
@@ -195,7 +223,7 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
         enemy->RegisterComponent<Collision3D>(collider_->GetCollider(), collisionInfo);
     }
 
-    enemy->RegisterComponent<BPMScaling>(0.8f, 1.0f);
+    enemy->RegisterComponent<BPMScaling>(Vector3(0.9f, 0.9f, 0.9f), Vector3(1.1f, 1.1f, 1.1f));
 
     // レンダラーにアタッチ
     if (screenBuffer_) {
@@ -211,6 +239,8 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
     info.type = type;
     info.direction = direction;
     info.position = position;
+    info.startPosition = position;
+    info.targetPosition = position;
     activeEnemies_.push_back(info);
 
     // シーンに追加

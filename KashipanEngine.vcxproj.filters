@@ -137,6 +137,8 @@
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
     <ClCompile Include="EnemySpawner.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -383,6 +385,8 @@
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
+    <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

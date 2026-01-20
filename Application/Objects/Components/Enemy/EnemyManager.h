@@ -40,9 +40,14 @@ public:
     /// @param hitObject 当たったオブジェクト
     void OnExplosionHit(Object3DBase* hitObject);
 
+    // パーティクルプールを初期化
+    void InitializeParticlePool();
 private:
 
     void CleanupDeadEnemies();
+    
+    // 死亡パーティクルを発生させる
+    void SpawnDieParticles(const Vector3& position);
 
 	/// @brief アクティブな敵情報
     struct EnemyInfo {
@@ -54,6 +59,10 @@ private:
     };
 
     std::vector<EnemyInfo> activeEnemies_;
+    
+    // パーティクルプール
+    std::vector<Object3DBase*> particlePool_;
+    static constexpr int kParticlePoolSize_ = 100;
     
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;

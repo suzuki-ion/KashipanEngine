@@ -3,6 +3,8 @@
 #include "PlayerDrection.h"
 #include "Objects/Components/Bomb/BombManager.h"
 
+#include "Utilities/Easing.h"
+
 namespace KashipanEngine {
 
     /// 矢印キー4方向の入力で指定距離を移動するコンポーネント
@@ -162,6 +164,7 @@ namespace KashipanEngine {
 
             // 線形補間で現在位置を計算
             Vector3 currentPos = EaseInBack(startPosition_, targetPosition_, t);
+            float currentPosY = float(MyEasing::Lerp_GAB(1.0f, 2.0f, t, EaseType::EaseOutCirc, EaseType::EaseInCirc));
 
             // Transform3Dに反映
             auto* ctx = GetOwner3DContext();
@@ -170,6 +173,7 @@ namespace KashipanEngine {
                 if (transform) {
                     currentPos.x = std::clamp(currentPos.x, 0.0f, static_cast<float>(mapW_ * 2 - 2));
                     currentPos.z = std::clamp(currentPos.z, 0.0f, static_cast<float>(mapH_ * 2 - 2));
+					currentPos.y = currentPosY;
                     transform->SetTranslate(currentPos);
 
                     switch (playerDirection_)

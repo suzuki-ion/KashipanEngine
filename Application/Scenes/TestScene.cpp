@@ -286,10 +286,13 @@ void TestScene::Initialize() {
         comp->SetBombManager(bombManager_);
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
+		enemyManager_->InitializeParticlePool();
     }
 
     {
 		auto comp = std::make_unique<EnemySpawner>(enemySpawnInterval_);
+		comp->SetScreenBuffer(screenBuffer3D_);
+		comp->SetShadowMapBuffer(shadowMapBuffer_);
 		comp->SetEnemyManager(enemyManager_);
 		comp->SetBPMSystem(bpmSystem_);
 		enemySpawner_ = comp.get();

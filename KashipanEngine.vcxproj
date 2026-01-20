@@ -140,6 +140,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
     <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
+    <ClCompile Include="EnemySpawner.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -215,6 +216,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
@@ -437,6 +440,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
+    <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />

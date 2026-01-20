@@ -12,6 +12,7 @@ class Model;
 class Plane3D;
 class CameraController;
 class DirectionalLight;
+class SpotLight;
 
 class GameScene final : public SceneBase {
 public:
@@ -44,6 +45,8 @@ private:
     bool justDodgeCountedThisDash_ = false;
 
     bool prevDashTriggered_ = false;
+
+    std::vector<SpotLight *> rotatingSpotLights_;
 
     AudioManager::PlayHandle bgmPlay_ = AudioManager::kInvalidPlayHandle;
     AudioManager::PlayHandle avoidPlay_ = AudioManager::kInvalidPlayHandle;

@@ -300,6 +300,60 @@ GameScene::GameScene()
         }
     }
 
+    // Y >= 8.0f かつ i % 64 != 0 の回転Planeをランダムに最大64個選んでスポットライトを設置
+    rotatingSpotLights_.clear();
+    if (sceneDefault_) {
+        std::mt19937 rng{ 67890u };
+        std::vector<std::uint32_t> candidates;
+        for (std::uint32_t i = 0; i < rotatingPlanes.size(); ++i) {
+            if ((i % 64) == 0) continue;
+            auto *p = rotatingPlanes[i];
+            if (!p) continue;
+            if (auto *tr = p->GetComponent3D<Transform3D>()) {
+                if (tr->GetTranslate().y + 10000.0f >= 8.0f) {
+                    candidates.push_back(i);
+                }
+            }
+        }
+
+        std::shuffle(candidates.begin(), candidates.end(), rng);
+        size_t take = std::min<size_t>(64, candidates.size());
+        for (size_t ci = 0; ci < take; ++ci) {
+            const std::uint32_t idx = candidates[ci];
+            auto *p = rotatingPlanes[idx];
+            if (!p) continue;
+
+            auto light = std::make_unique<SpotLight>();
+            light->SetName(std::string("RotPlaneSpot_") + std::to_string(idx));
+            light->SetEnabled(false);
+            light->SetColor(Vector4{1.0f, 0.9f, 0.8f, 1.0f});
+            light->SetIntensity(2.5f);
+            light->SetRange(30.0f);
+            light->SetDecay(2.0f);
+            light->SetInnerAngle(0.6f);
+            light->SetOuterAngle(0.9f);
+
+            // position = plane world position
+            if (auto *tr = p->GetComponent3D<Transform3D>()) {
+                const Matrix4x4 wm = tr->GetWorldMatrix();
+                const Vector3 pos = Vector3{ wm.m[3][0], wm.m[3][1] + 10000.0f, wm.m[3][2] };
+                light->SetPosition(pos);
+                const Vector3 target{ 0.0f, 0.0f, pos.z };
+                Vector3 dir = (target - pos).Normalize();
+                light->SetDirection(dir);
+            }
+
+            SpotLight *lightPtr = light.get();
+            if (screenBuffer3D) light->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+            AddObject3D(std::move(light));
+            rotatingSpotLights_.push_back(lightPtr);
+            if (auto *lm = sceneDefault_->GetLightManager()) {
+                lm->AddSpotLight(lightPtr);
+            }
+        }
+        while (rotatingSpotLights_.size() < 64) rotatingSpotLights_.push_back(nullptr);
+    }
+
     // Particle Billboards
     {
         particleBillboards_.clear();
@@ -392,8 +446,8 @@ GameScene::GameScene()
     // リザルト UI
     AddSceneComponent(std::make_unique<ResultUI>(screenBuffer2D, player_->GetComponent3D<Health>()));
 
-    // ゲーム進行管理 - use default screen sprite if available
-    AddSceneComponent(std::make_unique<GameProgressController>(sceneDefault_, mover_, screen3DSprite, rotatingPlanes));
+    // ゲーム進行管理
+    AddSceneComponent(std::make_unique<GameProgressController>(sceneDefault_, mover_, screen3DSprite, rotatingPlanes, rotatingSpotLights_));
 
     if (auto *sceneChangeIn = GetSceneComponent<SceneChangeIn>()) {
         sceneChangeIn->Play();

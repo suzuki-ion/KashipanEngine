@@ -30,12 +30,14 @@ public:
         SceneDefaultVariables *sceneVars,
         Sphere *mover,
         Sprite *screenSprite,
-        const std::vector<Object3DBase *> &rotatingPlanes = {})
+        const std::vector<Object3DBase *> &rotatingPlanes = {},
+        const std::vector<SpotLight *> &rotatingSpotLights = {})
         : ISceneComponent("GameProgressController", 1)
         , sceneVars_(sceneVars)
         , mover_(mover)
         , screenSprite_(screenSprite)
-        , rotatingPlanes_(rotatingPlanes) {}
+        , rotatingPlanes_(rotatingPlanes)
+        , rotatingSpotLights_(rotatingSpotLights) {}
     ~GameProgressController() override = default;
 
     /// @brief 初期化処理。シーンコンポーネントの参照を取得し状態をリセットする
@@ -259,6 +261,7 @@ private:
     Vector4 endFadeStartColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
 
     std::vector<Object3DBase *> rotatingPlanes_;
+    std::vector<SpotLight *> rotatingSpotLights_;
 
     AttackGearCircularInside *attackGearCircularInside_ = nullptr;
     AttackGearCircularOutside *attackGearCircularOutside_ = nullptr;
@@ -447,6 +450,9 @@ private:
                             dir->SetColor(Vector4{ 0.7f, 0.7f, 1.0f, 1.0f });
                         }
                     }
+                    for (auto *spotLight : rotatingSpotLights_) {
+                        if (spotLight) spotLight->SetEnabled(true);
+                    }
                     intermissionActive_ = true;
                 }
             }
@@ -500,6 +506,10 @@ private:
             endFadeElapsed_ = 0.0f;
             if (auto *light = sceneVars_ ? sceneVars_->GetDirectionalLight() : nullptr) {
                 endFadeStartColor_ = light->GetColor();
+            }
+
+            for (auto *spotLight : rotatingSpotLights_) {
+                if (spotLight) spotLight->SetEnabled(false);
             }
         }
 

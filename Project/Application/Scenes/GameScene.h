@@ -22,6 +22,8 @@ protected:
     void OnUpdate() override;
 
 private:
+    SceneDefaultVariables *sceneDefault_ = nullptr;
+
     // MainCamera3D を制御するシーンコンポーネント
     CameraController *cameraController_ = nullptr;
 

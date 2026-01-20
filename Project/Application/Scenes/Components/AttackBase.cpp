@@ -3,6 +3,7 @@
 #include "Objects/Components/3D/Material3D.h"
 #include "Utilities/RandomValue.h"
 #include "Assets/AudioManager.h"
+#include "Objects/SystemObjects/PointLight.h"
 
 namespace KashipanEngine {
 
@@ -14,15 +15,19 @@ Plane3D *AttackBase::SpawnXZPlaneWithMoves(const std::string &name, const Vector
     plane->SetName(name);
 
     // Collision (AABB) - 0.8 倍想定
-    if (colliderComponent_ && colliderComponent_->GetCollider()) {
-        ColliderInfo3D info;
-        Math::AABB aabb;
-        // Plane3D は基本 1x1 を scale で拡大する想定。見た目より 0.8 倍。
-        // ローカル AABB を [-0.4, -0.4]..[+0.4, +0.4]（XZ）として定義し、Y は薄く。
-        aabb.min = Vector3{-0.4f, -0.05f, -0.4f};
-        aabb.max = Vector3{+0.4f, +0.05f, +0.4f};
-        info.shape = aabb;
-        plane->RegisterComponent<Collision3D>(colliderComponent_->GetCollider(), info);
+    if (sceneDefault_) {
+        if (auto *colliderComp = sceneDefault_->GetColliderComp()) {
+            if (colliderComp->GetCollider()) {
+                ColliderInfo3D info;
+                Math::AABB aabb;
+                // Plane3D は基本 1x1 を scale で拡大する想定。見た目より 0.8 倍。
+                // ローカル AABB を [-0.4, -0.4]..[+0.4, +0.4]（XZ）として定義し、Y は薄く。
+                aabb.min = Vector3{-0.4f, -0.05f, -0.4f};
+                aabb.max = Vector3{+0.4f, +0.05f, +0.4f};
+                info.shape = aabb;
+                plane->RegisterComponent<Collision3D>(colliderComp->GetCollider(), info);
+            }
+        }
     }
 
     if (auto *tr = plane->GetComponent3D<Transform3D>()) {
@@ -58,10 +63,11 @@ Plane3D *AttackBase::SpawnXZPlaneWithMoves(const std::string &name, const Vector
     plane->RegisterComponent<AlwaysRotate>(Vector3{ 0.0f, 0.0f, 8.0f });
 
     // ScreenBuffer へのアタッチ
-    if (screenBuffer_) {
-        plane->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-        auto *shadowMapBuffer = ctx->GetComponent<SceneDefaultVariables>()->GetShadowMapBuffer();
-        if (shadowMapBuffer) {
+    if (sceneDefault_) {
+        if (auto *screenBuffer = sceneDefault_->GetScreenBuffer3D()) {
+            plane->AttachToRenderer(screenBuffer, "Object3D.Solid.BlendNormal");
+        }
+        if (auto *shadowMapBuffer = sceneDefault_->GetShadowMapBuffer()) {
             plane->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         }
     }
@@ -69,6 +75,54 @@ Plane3D *AttackBase::SpawnXZPlaneWithMoves(const std::string &name, const Vector
     Plane3D *outPtr = plane.get();
     ctx->AddObject3D(std::move(plane));
     if (outPtr) spawnedObjects_.push_back(outPtr);
+
+    if (spawnWithPointLight_ && sceneDefault_) {
+        const size_t objCount = spawnedObjects_.size();
+        if (pointLights_.size() < objCount) {
+            size_t toCreate = objCount - pointLights_.size();
+            for (size_t i = 0; i < toCreate; ++i) {
+                auto pl = std::make_unique<PointLight>();
+                pl->SetName(name + "_PointLight_" + std::to_string(pointLights_.size()));
+                pl->SetEnabled(true);
+                pl->SetColor(Vector4{1.0f, 0.8f, 0.6f, 1.0f});
+                pl->SetIntensity(3.0f);
+                pl->SetRange(5.0f);
+
+                PointLight *plPtr = pl.get();
+                if (sceneDefault_) {
+                    if (auto *screenBuffer = sceneDefault_->GetScreenBuffer3D()) {
+                        pl->AttachToRenderer(screenBuffer, "Object3D.Solid.BlendNormal");
+                    }
+                }
+                ctx->AddObject3D(std::move(pl));
+                if (plPtr) {
+                    pointLights_.push_back(plPtr);
+                    if (auto *lm = sceneDefault_->GetLightManager()) {
+                        lm->AddPointLight(plPtr);
+                    }
+                }
+            }
+        }
+
+        for (size_t i = 0; i < pointLights_.size(); ++i) {
+            PointLight *pl = pointLights_[i];
+            if (!pl) continue;
+            if (i < spawnedObjects_.size()) {
+                auto *obj = spawnedObjects_[i];
+                if (obj) {
+                    if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                        Matrix4x4 mat = tr->GetWorldMatrix();
+                        Vector3 pos = { mat.m[3][0], mat.m[3][1] + 0.5f, mat.m[3][2] };
+                        pl->SetEnabled(true);
+                        pl->SetPosition(pos);
+                    }
+                }
+            } else {
+                pl->SetEnabled(false);
+                pl->SetPosition(Vector3{10000.0f, 10000.0f, 10000.0f});
+            }
+        }
+    }
 
     auto soundHandle = AudioManager::GetSoundHandleFromFileName("gearIn.mp3");
     AudioManager::Play(soundHandle, 0.5f, 0.0f, false);
@@ -86,6 +140,25 @@ void AttackBase::Update() {
         if (!obj) {
             spawnedObjects_.erase(spawnedObjects_.begin() + static_cast<std::ptrdiff_t>(i));
             continue;
+        }
+
+        for (size_t li = 0; li < pointLights_.size(); ++li) {
+            PointLight *pl = pointLights_[li];
+            if (!pl) continue;
+            if (li < spawnedObjects_.size()) {
+                auto *o = spawnedObjects_[li];
+                if (o) {
+                    if (auto *tr = o->GetComponent3D<Transform3D>()) {
+                        Matrix4x4 mat = tr->GetWorldMatrix();
+                        Vector3 pos = { mat.m[3][0], mat.m[3][1] + 0.5f, mat.m[3][2] };
+                        pl->SetEnabled(true);
+                        pl->SetPosition(pos);
+                    }
+                }
+            } else {
+                pl->SetEnabled(false);
+                pl->SetPosition(Vector3{10000.0f, 10000.0f, 10000.0f});
+            }
         }
 
         auto *mc = obj->GetComponent3D<MovementController>();

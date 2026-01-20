@@ -1,8 +1,16 @@
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Objects/Components/Health.h"
+#include "Scene/SceneContext.h"
+
 #include <algorithm>
 
 namespace KashipanEngine {
+
+void PlayerHealthUI::Initialize() {
+    auto *ctx = GetOwnerContext();
+    if (!ctx) return;
+    sceneDefault_ = ctx->GetComponent<SceneDefaultVariables>("SceneDefaultVariables");
+}
 
 void PlayerHealthUI::SetHealth(Health *health) {
     health_ = health;
@@ -26,15 +34,17 @@ void PlayerHealthUI::EnsureSprites() {
 
     const auto tex = TextureManager::GetTextureFromFileName("heart.png");
 
-    const float yOffset = screenBuffer_ ? static_cast<float>(screenBuffer_->GetHeight()) : 0.0f;
+    ScreenBuffer *sb = sceneDefault_ ? sceneDefault_->GetScreenBuffer2D() : nullptr;
+
+    const float yOffset = sb ? static_cast<float>(sb->GetHeight()) : 0.0f;
 
     for (int i = 0; i < maxHpAtBind_; ++i) {
         auto obj = std::make_unique<Sprite>();
         obj->SetUniqueBatchKey();
         obj->SetName(std::string("PlayerHealthUI_") + std::to_string(i));
 
-        if (screenBuffer_) {
-            obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (sb) {
+            obj->AttachToRenderer(sb, "Object2D.DoubleSidedCulling.BlendNormal");
         }
 
         if (auto *mat = obj->GetComponent2D<Material2D>()) {

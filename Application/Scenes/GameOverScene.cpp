@@ -1,5 +1,4 @@
 #include "Scenes/GameOverScene.h"
-
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 
@@ -7,6 +6,11 @@ namespace KashipanEngine {
 
 GameOverScene::GameOverScene()
     : SceneBase("GameOverScene") {
+}
+
+void GameOverScene::Initialize() {
+    sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
+
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
 
@@ -16,8 +20,6 @@ GameOverScene::GameOverScene()
 }
 
 GameOverScene::~GameOverScene() {
-    ClearObjects2D();
-    ClearObjects3D();
 }
 
 void GameOverScene::OnUpdate() {

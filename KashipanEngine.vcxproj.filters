@@ -389,6 +389,9 @@
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

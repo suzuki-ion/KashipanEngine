@@ -304,6 +304,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
     <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
     <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h" />
     <ClInclude Include="Application\Scenes\Components\GameProgressController.h" />
     <ClInclude Include="Application\Scenes\Components\JustAvoidParticle.h" />
@@ -311,6 +313,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
     <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Application\Scenes\GameScene.h" />
     <ClInclude Include="Application\Scenes\MenuScene.h" />

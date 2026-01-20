@@ -91,18 +91,6 @@ void TestScene::Initialize() {
     // ↓ ここからゲームオブジェクト定義 ↓
     //==================================================
 
-    // スタートテキストモデル（仮置き）
-    {
-        auto modelHandle = ModelManager::GetModelDataFromFileName("startText.obj");
-        auto obj = std::make_unique<Model>(modelHandle);
-        obj->SetName("StartText");
-        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 5.0f, 0.0f));
-        }
-        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(obj));
-    }
-
     // BPMシステムの追加
     {
         auto comp = std::make_unique<BPMSystem>(bpm_); // BPM で初期化

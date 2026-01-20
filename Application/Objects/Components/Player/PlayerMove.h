@@ -163,8 +163,8 @@ namespace KashipanEngine {
             float t = std::min(1.0f, moveTimer_ / moveDuration_);
 
             // 線形補間で現在位置を計算
-            Vector3 currentPos = EaseInBack(startPosition_, targetPosition_, t);
-            float currentPosY = float(MyEasing::Lerp_GAB(1.0f, 2.0f, t, EaseType::EaseOutCirc, EaseType::EaseInCirc));
+            Vector3 currentPos = Vector3(MyEasing::Lerp(startPosition_, targetPosition_, t, EaseType::EaseOutExpo));
+            float currentPosY = float(MyEasing::Lerp_GAB(0.0f, 0.5f, t, EaseType::EaseOutCirc, EaseType::EaseInCirc));
 
             // Transform3Dに反映
             auto* ctx = GetOwner3DContext();

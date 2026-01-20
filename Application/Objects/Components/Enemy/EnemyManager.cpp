@@ -86,25 +86,25 @@ void EnemyManager::Update() {
 
         Vector3 nextPos = e.position + delta;
 
-        const float minX = -4.0f;
-        const float minZ = -4.0f;
-        const float maxX = static_cast<float>((mapW_ + 1) * 2.0f);
-        const float maxZ = static_cast<float>((mapH_ + 1) * 2.0f);
+        const float minX = -2.0f;
+        const float minZ = -2.0f;
+        const float maxX = static_cast<float>((mapW_) * 2.0f);
+        const float maxZ = static_cast<float>((mapH_) * 2.0f);
 
         const bool out =
-            (nextPos.x < minX) || (nextPos.x > maxX) ||
-            (nextPos.z < minZ) || (nextPos.z > maxZ);
-
-        if (out) {
-            SpawnDieParticles(e.position);
-            e.isDead = true;
-            continue;
-        }
+            (nextPos.x == minX) || (nextPos.x == maxX) ||
+            (nextPos.z == minZ) || (nextPos.z == maxZ);
 
         e.position = nextPos;
 
         if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(nextPos);
+        }
+
+        if (out) {
+            SpawnDieParticles(e.position);
+            e.isDead = true;
+            continue;
         }
     }
 
@@ -116,7 +116,7 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
     if (!ctx) return;
 
     // 敵オブジェクトを生成
-    auto modelData = ModelManager::GetModelDataFromFileName("testEnemy.obj");
+    auto modelData = ModelManager::GetModelDataFromFileName("enemy.obj");
     auto enemy = std::make_unique<Model>(modelData);
     enemy->SetName("enemy_" + std::to_string(activeEnemies_.size()));
 

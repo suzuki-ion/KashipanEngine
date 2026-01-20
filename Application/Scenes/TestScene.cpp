@@ -103,7 +103,9 @@ void TestScene::Initialize() {
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
 
-                auto obj = std::make_unique<Box>();
+                auto modelData = ModelManager::GetModelDataFromFileName("block.obj");
+                auto obj = std::make_unique<Model>(modelData);
+
                 obj->SetName("Map" ":x" + std::to_string(x) + ":z" + std::to_string(z));
 
 				obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_);
@@ -113,9 +115,9 @@ void TestScene::Initialize() {
                     tr->SetScale(Vector3(mapScaleMax_));
                 }
 
-                if (auto* mat = obj->GetComponent3D<Material3D>()) {
-                    mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
-                }
+                //if (auto* mat = obj->GetComponent3D<Material3D>()) {
+                //    mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
+                //}
 
                 if (screenBuffer3D)     obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
                 if (shadowMapBuffer)  obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
@@ -131,11 +133,11 @@ void TestScene::Initialize() {
 
     // Player（衝突判定を修正）
     {
-        auto modelData = ModelManager::GetModelDataFromFileName("Player.obj");
+        auto modelData = ModelManager::GetModelDataFromFileName("player.obj");
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Player");
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 1.0f, 0.0f));
+            tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
             tr->SetScale(Vector3(playerScaleMax_));
         }
 
@@ -228,7 +230,7 @@ void TestScene::Initialize() {
 
         if (enemySpawner_) {
             constexpr float kTile = 2.0f;
-            constexpr float kY = 1.0f;
+            constexpr float kY = 0.0f;
 
             for (int x = 0; x < kMapW; ++x) {
                 enemySpawner_->AddSpawnPoint(Vector3(kTile * x, kY, 0.0f));

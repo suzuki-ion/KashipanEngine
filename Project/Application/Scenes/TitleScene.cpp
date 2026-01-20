@@ -116,7 +116,7 @@ TitleScene::TitleScene()
     // 平行光源の初期値設定
     if (directionalLight) {
         directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
+        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 3.0f));
         directionalLight->SetIntensity(1.0f);
     }
 

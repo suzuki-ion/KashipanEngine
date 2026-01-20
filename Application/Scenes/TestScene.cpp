@@ -81,8 +81,8 @@ void TestScene::Initialize() {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("Camera3D_Main(ScreenBuffer)");
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 24.0f, -36.0f));
-            tr->SetRotate(Vector3(M_PI * (30.0f / 180.0f), 0.0f, 0.0f));
+            tr->SetTranslate(Vector3(10.0f, 24.0f, -21.0f));
+            tr->SetRotate(Vector3(0.6f, 0.0f, 0.0f));
         }
         if (screenBuffer3D_) {
             obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
@@ -119,9 +119,9 @@ void TestScene::Initialize() {
         auto obj = std::make_unique<DirectionalLight>();
         obj->SetName("DirectionalLight");
         obj->SetEnabled(true);
-        obj->SetColor(Vector4(0.6f, 0.5f, 1.0f, 1.0f));
+        obj->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
         obj->SetDirection(Vector3(1.8f, -2.0f, 1.2f));
-        obj->SetIntensity(0.3f);
+        obj->SetIntensity(1.0f);
         light_ = obj.get();
 
         if (screenBuffer3D_) obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
@@ -217,6 +217,7 @@ void TestScene::Initialize() {
         if (auto* playerArrowMove = obj->GetComponent3D<PlayerMove>()) {
             playerArrowMove->SetInputCommand(GetInputCommand());
             playerArrowMove->SetBPMToleranceRange(playerBpmToleranceRange_);
+			playerArrowMove->SetMapSize(kMapW, kMapH);
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_);
@@ -262,6 +263,7 @@ void TestScene::Initialize() {
         comp->SetBPMToleranceRange(playerBpmToleranceRange_);
 		comp->SetBombLifetimeBeats(bombLifetimeBeats_);
         comp->SetExplosionManager(explosionManager_);
+		comp->SetMapSize(kMapW, kMapH);
         comp->SetInputCommand(GetInputCommand());
         comp->SetCollider(collider_);  // 追加
         bombManager_ = comp.get();
@@ -323,17 +325,17 @@ void TestScene::Initialize() {
     // ExplosionManagerにPlayerを設定
     explosionManager_->SetPlayer(player_);
 
-    if (playBgm_) {
-        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
-        if (handle == AudioManager::kInvalidSoundHandle) {
-            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
-            return;
-        }
-        AudioManager::Play(handle, 0.05f, 0.0f, true);
-    }
+    //if (playBgm_) {
+    //    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
+    //    if (handle == AudioManager::kInvalidSoundHandle) {
+    //        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+    //        return;
+    //    }
+    //    AudioManager::Play(handle, 0.05f, 0.0f, true);
+    //}
 
     // Particles
-    {
+    /*{
         ParticleMovement::SpawnBox spawn;
         spawn.min = Vector3(-16.0f, 0.0f, -16.0f);
         spawn.max = Vector3(16.0f, 16.0f, 16.0f);
@@ -374,7 +376,7 @@ void TestScene::Initialize() {
             particleLights_.push_back(ParticleLightPair{ particlePtr, lightPtr });
             lightManager->AddPointLight(lightPtr);
         }
-    }
+    }*/
 
     //--------- オフスクリーン描画用スプライト ---------//
 

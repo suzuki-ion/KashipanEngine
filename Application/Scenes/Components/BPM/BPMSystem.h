@@ -74,7 +74,7 @@ namespace KashipanEngine {
                 // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
                 return;
             }
-            AudioManager::Play(handle, 0.05f);
+            AudioManager::Play(handle, 0.2f);
         }
 
         float bpm_ = 120.0f;

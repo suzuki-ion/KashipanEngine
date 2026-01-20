@@ -54,7 +54,7 @@ void SceneDefaultVariables::Initialize() {
             if (auto* mat = obj->GetComponent2D<Material2D>()) {
                 mat->SetTexture(screenBuffer3D_);
             }
-            obj->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
+            obj->AttachToRenderer(mainWindow_, "Object2D.DoubleSidedCulling.BlendNormal");
         }
         screenBuffer3DSprite_ = obj.get();
         sceneContext->AddObject2D(std::move(obj));
@@ -157,11 +157,12 @@ void SceneDefaultVariables::SetSceneComponents(std::function<bool(std::unique_pt
     // ScreenBufferアスペクト比維持コンポーネント
     {
         auto comp = std::make_unique<ScreenBufferKeepRatio>();
-        comp->SetSprite(screenBuffer2DSprite_);
-        comp->SetTargetSize(0.0f, 0.0f);
-        if (screenBuffer2D_) {
-            comp->SetSourceSize(static_cast<float>(screenBuffer2D_->GetWidth()), static_cast<float>(screenBuffer2D_->GetHeight()));
-        }
+        comp->AddSprite(screenBuffer2DSprite_,
+            static_cast<float>(screenBuffer2D_ ? screenBuffer2D_->GetWidth() : 0),
+            static_cast<float>(screenBuffer2D_ ? screenBuffer2D_->GetHeight() : 0));
+        comp->AddSprite(screenBuffer3DSprite_,
+            static_cast<float>(screenBuffer3D_ ? screenBuffer3D_->GetWidth() : 0),
+            static_cast<float>(screenBuffer3D_ ? screenBuffer3D_->GetHeight() : 0));
         keepRatioComp_ = comp.get();
         registerFunc(std::move(comp));
     }

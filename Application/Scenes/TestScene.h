@@ -51,8 +51,8 @@ private:
     bool playBgm_ = true;  // true-> BPM120のBGM再生
 
 	// マップ関連
-	static constexpr int kMapW = 13;                // マップの横幅 (オブジェクト数)
-	static constexpr int kMapH = 13;                // マップの縦幅 (オブジェクト数)
+	static constexpr int kMapW = 11;                // マップの横幅 (オブジェクト数)
+	static constexpr int kMapH = 11;                // マップの縦幅 (オブジェクト数)
 	float mapScaleMin_ = 1.5f, mapScaleMax_ = 1.8f; // マップのBpmに合わせた拡大縮小範囲
 
     bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション

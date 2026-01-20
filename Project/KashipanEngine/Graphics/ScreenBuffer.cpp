@@ -119,6 +119,20 @@ bool ScreenBuffer::IsRecording(Passkey<Renderer>) const noexcept {
     return it->second.started;
 }
 
+void ScreenBuffer::MarkRecordingStarted(Passkey<Renderer>) {
+    auto it = sRecordStates.find(this);
+    if (it == sRecordStates.end()) {
+        RecordState st;
+        st.list = dx12Commands_ ? dx12Commands_->GetCommandList() : nullptr;
+        st.discard = false;
+        st.started = true;
+        sRecordStates.emplace(this, st);
+    } else {
+        it->second.list = dx12Commands_ ? dx12Commands_->GetCommandList() : it->second.list;
+        it->second.started = true;
+    }
+}
+
 void ScreenBuffer::AllBeginRecord(Passkey<Renderer>) {
     sRecordStates.clear();
     sRecordStates.reserve(sBufferMap.size());

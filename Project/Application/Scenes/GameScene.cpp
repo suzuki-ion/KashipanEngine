@@ -120,7 +120,7 @@ GameScene::GameScene()
     if (directionalLight) {
         directionalLight->SetEnabled(true);
         directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 1.0f));
+        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 3.0f));
         directionalLight->SetIntensity(1.0f);
     }
 

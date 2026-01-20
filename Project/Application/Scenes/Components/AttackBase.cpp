@@ -60,6 +60,10 @@ Plane3D *AttackBase::SpawnXZPlaneWithMoves(const std::string &name, const Vector
     // ScreenBuffer へのアタッチ
     if (screenBuffer_) {
         plane->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        auto *shadowMapBuffer = ctx->GetComponent<SceneDefaultVariables>()->GetShadowMapBuffer();
+        if (shadowMapBuffer) {
+            plane->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+        }
     }
 
     Plane3D *outPtr = plane.get();

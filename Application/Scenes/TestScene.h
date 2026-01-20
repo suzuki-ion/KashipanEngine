@@ -40,14 +40,14 @@ private:
 	// マップ関連
 	static constexpr int kMapW = 11;                // マップの横幅 (オブジェクト数)
 	static constexpr int kMapH = 11;                // マップの縦幅 (オブジェクト数)
-	float mapScaleMin_ = 0.8f, mapScaleMax_ = 1.0f; // マップのBpmに合わせた拡大縮小範囲
+    Vector3 mapScaleMin_ = { 0.65f ,0.95f ,0.95f }, mapScaleMax_ = { 0.95f ,0.95f ,0.95f }; // マップのBpmに合わせた拡大縮小範囲
 
     bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション
     std::array<std::array<Object3DBase*, kMapW>, kMapH> maps_{};
     
 	// プレイヤー関連
     Object3DBase* player_ = nullptr;
-	float playerScaleMin_ = 0.75f, playerScaleMax_ = 1.0f; // プレイヤーのBpmに合わせた拡大縮小範囲
+    Vector3 playerScaleMin_ = { 1.1f, 0.75f,1.1f }, playerScaleMax_ = { 1.0f ,1.0f ,1.0f };// プレイヤーのBpmに合わせた拡大縮小範囲
 	float playerBpmToleranceRange_ = 0.2f;                 // プレイヤーがBPMに合わせる±の許容範囲 
 	float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
 

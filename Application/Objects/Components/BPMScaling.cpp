@@ -14,16 +14,14 @@ namespace KashipanEngine {
             return std::nullopt;
         }
 
-        transform->SetScale(Vector3(Lerp(minScale_, maxScale_, bpmProgress_)));
+        transform->SetScale(Vector3(MyEasing::Lerp(minScale_, maxScale_, bpmProgress_, easeType_)));
 
         return std::nullopt;
     }
 
     void BPMScaling::ShowImGui() {
 #ifdef USE_IMGUI
-        if (ImGui::TreeNode("BPMScaling")) {
-            ImGui::SliderFloat("Min Scale", &minScale_, 0.5f, 1.0f);
-            ImGui::SliderFloat("Max Scale", &maxScale_, 1.0f, 2.0f);
+        if (ImGui::TreeNode("BPMScaling")) { 
             ImGui::Text("BPM Progress: %.2f", bpmProgress_);
 
             ImGui::TreePop();

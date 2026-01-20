@@ -108,7 +108,7 @@ void TestScene::Initialize() {
 
                 obj->SetName("Map" ":x" + std::to_string(x) + ":z" + std::to_string(z));
 
-				obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_);
+				obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_,EaseType::EaseOutExpo);
 
                 if (auto* tr = obj->GetComponent3D<Transform3D>()) {
                     tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
@@ -148,7 +148,7 @@ void TestScene::Initialize() {
 			playerArrowMove->SetMapSize(kMapW, kMapH);
         }
 
-        obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_);
+        obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
         obj->RegisterComponent<Health>(10, 1.0f);
 
         // 衝突判定を追加（修正版）

@@ -116,6 +116,7 @@ void EnemyManager::Update() {
             (nextPos.z < minZ) || (nextPos.z > maxZ);
 
         if (out) {
+            SpawnDieParticles(e.position);
             e.isDead = true;
             continue;
         }

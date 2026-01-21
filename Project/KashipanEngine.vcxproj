@@ -565,6 +565,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\KashipanEngine.h" />
     <ClInclude Include="MyStd\NameMap.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
+    <ClInclude Include="MyStd\UniversalIndex.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
   </ItemGroup>
   <ItemGroup>

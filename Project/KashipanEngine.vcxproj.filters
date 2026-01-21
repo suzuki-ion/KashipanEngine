@@ -1211,6 +1211,7 @@
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClInclude>
+    <ClInclude Include="MyStd\UniversalIndex.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

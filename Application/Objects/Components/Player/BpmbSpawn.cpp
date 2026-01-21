@@ -91,8 +91,8 @@ void BombSpawn::WorldToMapCoordinates(const Vector3& worldPos, int& outMapX, int
     outMapZ = static_cast<int>(worldPos.z / 2.0f);
 }
 
+#if defined(USE_IMGUI)
 void BombSpawn::ShowImGui() {
-#ifdef USE_IMGUI
     if (ImGui::TreeNode("BombSpawn")) {
         ImGui::Text("Current Bombs: %d / %d", currentBombCount_, maxBombs_);
         ImGui::SliderInt("Max Bombs", &maxBombs_, 1, 10);
@@ -102,7 +102,7 @@ void BombSpawn::ShowImGui() {
         ImGui::Text("BPM Progress: %.2f", bpmProgress_);
         ImGui::TreePop();
     }
-#endif
 }
+#endif
 
 } // namespace KashipanEngine} // namespace KashipanEngine

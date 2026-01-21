@@ -19,13 +19,13 @@ namespace KashipanEngine {
         return std::nullopt;
     }
 
-    void BPMScaling::ShowImGui() {
 #ifdef USE_IMGUI
+    void BPMScaling::ShowImGui() {
         if (ImGui::TreeNode("BPMScaling")) { 
             ImGui::Text("BPM Progress: %.2f", bpmProgress_);
 
             ImGui::TreePop();
         }
-#endif
     }
+#endif
 } // namespace KashipanEngine

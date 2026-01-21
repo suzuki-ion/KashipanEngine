@@ -125,7 +125,9 @@ public:
     /// @brief クリアリクエストを消費
     void ConsumeClearRequest() { clearRequested_ = false; }
 
+#if defined(USE_IMGUI)
     void ShowImGui() override;
+#endif
 
 private:
     int maxBombs_ = 3;                      ///< 設置可能な最大爆弾数

@@ -42,7 +42,9 @@ public:
     /// @brief 最小スケール係数の設定
     void SetMinMaxScale(Vector3 minScale, Vector3 maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
 
+#if defined(USE_IMGUI)
     void ShowImGui() override;
+#endif
 
 private:
     Vector3 minScale_ = { 0.9f,0.9f,0.9f };               // 最小スケール係数

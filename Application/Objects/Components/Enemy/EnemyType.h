@@ -5,8 +5,10 @@
 /// </summary>
 enum class EnemyType {
 
-	Basic, // 向いている方向にしか移動しない
+	Basic,  // 向いている方向2拍毎に移動
+	Speedy, // Basicより1拍速く移動する
 	
+	Count // 敵の種類数
 };
 
 /// <summary>

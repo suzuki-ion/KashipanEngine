@@ -15,19 +15,17 @@ namespace KashipanEngine {
 
         void Initialize() override {
             ISceneComponent::Initialize();
-            elapsedTime_ = 0.0f;
             currentBeat_ = 0;
+            bpmTimer_.Start(beatDuration_, true);
         }
 
         void Update() override {
             if (beatDuration_ <= 0.0f) return; // BPM未設定/無効なら無視
 
-            const float deltaTime = GetDeltaTime();
-            elapsedTime_ += deltaTime;
+            bpmTimer_.Update();
 
-            // フレーム内で複数拍またいだ場合も確実に発火させ、elapsedTime_ を小さく保つ
-            while (elapsedTime_ >= beatDuration_) {
-                elapsedTime_ -= beatDuration_;
+            // タイマーが完了した瞬間のみ拍を進める
+            if (bpmTimer_.IsFinished()) {
                 ++currentBeat_;
                 OnBeat();
             }
@@ -35,8 +33,7 @@ namespace KashipanEngine {
 
         /// @brief 現在の拍内での進行度を取得 (0.0 ~ 1.0)
         float GetBeatProgress() const {
-            if (beatDuration_ <= 0.0f) return 0.0f;
-            return std::clamp(elapsedTime_ / beatDuration_, 0.0f, 1.0f);
+			return bpmTimer_.GetProgress();
         }
 
         /// @brief 現在の拍番号を取得
@@ -48,16 +45,9 @@ namespace KashipanEngine {
                 // 無効なBPMは無視（もしくはデフォルトに戻す）
                 return;
             }
-            // elapsedTime_ は拍内経過時間として保持しているため、値の比率を保つ
-            if (beatDuration_ > 0.0f) {
-                const float progress = elapsedTime_ / beatDuration_;
-                bpm_ = bpm;
-                beatDuration_ = 60.0f / bpm_;
-                elapsedTime_ = std::clamp(progress * beatDuration_, 0.0f, beatDuration_);
-            } else {
-                bpm_ = bpm;
-                beatDuration_ = 60.0f / bpm_;
-            }
+            
+            bpm_ = bpm;
+            beatDuration_ = 60.0f / bpm_;
         }
 
         /// @brief BPMを取得
@@ -80,7 +70,6 @@ namespace KashipanEngine {
 		GameTimer bpmTimer_;
         float bpm_ = 120.0f;
         float beatDuration_ = 0.0f;
-        float elapsedTime_ = 0.0f; // 常に 0 <= elapsedTime_ < beatDuration_ を維持
         int currentBeat_ = 0;
     };
 

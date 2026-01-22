@@ -42,13 +42,15 @@ namespace KashipanEngine {
             }
 
 			// BPM進行度に応じて移動入力をチェック
-            if (useToleranceRange_) {
-                if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
-					JudgeMove();
+            if (!isMoving_) {
+                if (useToleranceRange_) {
+                    if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+                        JudgeMove();
+                    }
+                } else {
+                    JudgeMove();
                 }
-            } else {
-                JudgeMove();
-			}
+            }
 
 			// 移動処理開始
             if (triggered_) {

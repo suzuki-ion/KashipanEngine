@@ -4,11 +4,13 @@
 #include <memory>
 
 #include "Objects/Components/Enemy/EnemyManager.h"
+#include "Scenes/Components/CameraController.h"
 
 namespace KashipanEngine {
 
 // Forward declaration
 class BombManager;
+class CameraController;
 
 /// @brief 爆発エフェクトを一括管理するクラス
 class ExplosionManager final : public ISceneComponent {
@@ -35,7 +37,10 @@ public:
     /// @brief Playerを設定（プレイヤーとの衝突検出用）
     void SetPlayer(Object3DBase* player) { player_ = player; }
 
-	/// @brief 衝突判定用ColliderComponentを設定
+    /// @brief カメラコントローラーを設定
+    void SetCameraController(CameraController* cameraController) { cameraController_ = cameraController; }
+
+    /// @brief 衝突判定用ColliderComponentを設定
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
     void SetCollider2(ColliderComponent* collider) { collider2_ = collider; }
 
@@ -76,6 +81,7 @@ private:
     BombManager* bombManager_ = nullptr;
     EnemyManager* enemyManager_ = nullptr;
     Object3DBase* player_ = nullptr;
+    CameraController* cameraController_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     ColliderComponent* collider2_ = nullptr;
 

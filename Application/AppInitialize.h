@@ -24,7 +24,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
     desc.MaxAnisotropy = 1;
     auto samplerHandle = SamplerManager::CreateSampler(desc);
 
-    Window::CreateNormal("Main Window", 1920, 1280);
+    Window::CreateNormal("2301_CLUBOM", 1920, 1280);
 
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
@@ -95,6 +95,8 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("DebugSceneChange", InputCommand::KeyboardKey{ Key::F1 }, InputCommand::InputState::Trigger);
         // デバッグ用ウィンドウ破棄
         ic->RegisterCommand("DebugDestroyWindow", InputCommand::KeyboardKey{ Key::F2 }, InputCommand::InputState::Trigger);
+        // デバッグ用リセットコマンド
+        ic->RegisterCommand("DebugReset", InputCommand::KeyboardKey{ Key::R }, InputCommand::InputState::Trigger);
     }
 }
 

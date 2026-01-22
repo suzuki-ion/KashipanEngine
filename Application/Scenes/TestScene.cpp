@@ -466,7 +466,7 @@ void TestScene::OnUpdate() {
     {
         auto r = GetInputCommand()->Evaluate("DebugDestroyWindow");
         if (r.Triggered()) {
-            if (auto *window = Window::GetWindow("Main Window")) {
+            if (auto *window = Window::GetWindow("2301_CLUBOM")) {
                 window->DestroyNotify();
             }
         }

@@ -313,7 +313,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Application\Scenes\GameScene.h" />
     <ClInclude Include="Application\Scenes\MenuScene.h" />

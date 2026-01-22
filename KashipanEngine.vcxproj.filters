@@ -392,6 +392,8 @@
     <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

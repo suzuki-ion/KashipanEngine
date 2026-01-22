@@ -12,7 +12,6 @@ public:
         auto *ownerContext = GetOwnerContext();
         auto *sceneDefaultVariables = ownerContext->GetComponent<SceneDefaultVariables>();
         auto *screenBuffer3D = sceneDefaultVariables->GetScreenBuffer3D();
-        auto *shadowMapBuffer = sceneDefaultVariables->GetShadowMapBuffer();
 
         // スタートテキストモデル
         auto modelHandle = ModelManager::GetModelDataFromFileName("startText.obj");
@@ -21,10 +20,10 @@ public:
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, 4.0f, 0.0f));
             tr->SetRotate(Vector3(0.6f, 0.0f, 0.0f));
+            tr->SetScale(fromScale_);
         }
         startTextModel_ = obj.get();
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         ownerContext->AddObject3D(std::move(obj));
     }
 
@@ -49,9 +48,31 @@ public:
 
         if (t >= 1.0f) {
             t = 1.0f;
+            if (auto *mt = startTextModel_->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.0f;
+                mt->SetColor(color);
+            }
             isAnimating_ = false;
             isFinished_ = true;
         }
+    }
+
+    void Reset() {
+        if (startTextModel_) {
+            if (auto *tr = startTextModel_->GetComponent3D<Transform3D>()) {
+                tr->SetScale(fromScale_);
+            }
+            if (auto *mt = startTextModel_->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 1.0f;
+                mt->SetColor(color);
+            }
+        }
+        isAnimating_ = false;
+        isFinished_ = false;
+        isFinishedTriggered_ = false;
+        elapsedTime_ = 0.0f;
     }
 
     bool IsAnimating() const { return isAnimating_; }

@@ -133,7 +133,7 @@ void EnemyManager::Update() {
         }
 
         // 拍の終わり（進行度が1.0に近い）で範囲外なら削除
-        if (out && bpmProgress_ > 0.95f) {
+        if (out && bpmProgress_ > 0.5f) {
             SpawnDieParticles(e.targetPosition);
             e.isDead = true;
         }

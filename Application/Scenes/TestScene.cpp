@@ -358,7 +358,9 @@ TestScene::~TestScene() {
 }
 
 void TestScene::OnUpdate() {
+#if defined(USE_IMGUI)
     DrawImGui();
+#endif
 
     // OnUpdate 内で BPM 進行度を更新
     if (bombManager_) {
@@ -471,6 +473,7 @@ void TestScene::OnUpdate() {
     }
 }
 
+#if defined(USE_IMGUI)
 void TestScene::DrawImGui() {
     ImGui::Begin("ObjectStatus");
 
@@ -478,5 +481,6 @@ void TestScene::DrawImGui() {
 
     ImGui::End();
 }
+#endif
 
 } // namespace KashipanEngine

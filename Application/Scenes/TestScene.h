@@ -31,9 +31,9 @@ protected:
     void OnUpdate() override;
 
 private:
-
+#if defined(USE_IMGUI)
     void DrawImGui();
-
+#endif
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 

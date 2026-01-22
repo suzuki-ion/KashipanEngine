@@ -77,6 +77,7 @@ namespace KashipanEngine {
             AudioManager::Play(handle, 0.2f);
         }
 
+		GameTimer bpmTimer_;
         float bpm_ = 120.0f;
         float beatDuration_ = 0.0f;
         float elapsedTime_ = 0.0f; // 常に 0 <= elapsedTime_ < beatDuration_ を維持

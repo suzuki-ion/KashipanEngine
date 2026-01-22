@@ -78,10 +78,11 @@ void EnemyManager::Update() {
     if (isNewBeat) {
         lastMoveBeat_ = currentBeat;
         
-        // 移動する拍かどうかを判定
-        bool isMoveBeat = (currentBeat % moveEveryNBeats_ == 0);
-
         for (auto& e : activeEnemies_) {
+
+            // 移動する拍かどうかを判定
+            bool isMoveBeat = (currentBeat % e.moveEveryNBeats == 0);
+
             if (!e.object || e.isDead) continue;
 
             if (isMoveBeat) {
@@ -108,6 +109,8 @@ void EnemyManager::Update() {
     // 毎フレーム、イージングで位置を更新
     for (auto& e : activeEnemies_) {
         if (!e.object || e.isDead) continue;
+
+		e.object->GetComponent3D<BPMScaling>()->SetBPMProgress(bpmProgress_);
 
         // イージングで現在位置を計算（移動する拍では移動、止まる拍では同じ位置）
         Vector3 nextPos = Vector3(MyEasing::Lerp(e.startPosition, e.targetPosition, bpmProgress_, EaseType::EaseOutQuint));
@@ -170,7 +173,10 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
 
     if (auto* mat = enemy->GetComponent3D<Material3D>()) {
         mat->SetEnableLighting(true);
-        mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        switch (type) {
+        case EnemyType::Basic:  mat->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f)); break;
+        case EnemyType::Speedy: mat->SetColor(Vector4(0.0f, 0.0f, 1.0f, 1.0f)); break;
+        }
     }
 
     // 敵オブジェクトのポインタを保存（move前）
@@ -223,7 +229,7 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
         enemy->RegisterComponent<Collision3D>(collider_->GetCollider(), collisionInfo);
     }
 
-    enemy->RegisterComponent<BPMScaling>(Vector3(0.9f, 0.9f, 0.9f), Vector3(1.1f, 1.1f, 1.1f));
+    enemy->RegisterComponent<BPMScaling>(Vector3(1.2f ,0.5f ,1.2f), Vector3(1.0f ,1.0f ,1.0f),EaseType::EaseOutExpo);
 
     // レンダラーにアタッチ
     if (screenBuffer_) {
@@ -241,6 +247,12 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
     info.position = position;
     info.startPosition = position;
     info.targetPosition = position;
+
+    switch (type) {
+    case EnemyType::Basic:  info.moveEveryNBeats = 2; break; 
+    case EnemyType::Speedy: info.moveEveryNBeats = 1; break;
+    }
+
     activeEnemies_.push_back(info);
 
     // シーンに追加

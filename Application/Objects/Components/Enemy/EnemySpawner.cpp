@@ -130,11 +130,11 @@ namespace KashipanEngine {
     }
 
     EnemyType EnemySpawner::DetermineEnemyType() const {
-        //static std::random_device rd;
-        //static std::mt19937 gen(rd());
-        //std::uniform_int_distribution<size_t> dis(0, spawnPoints_.size() - 1);
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dis(0, static_cast<int>(EnemyType::Count) - 1);
 
-        return EnemyType::Basic;
+        return static_cast<EnemyType>(dis(gen));
     }
 
     EnemyDirection EnemySpawner::ChooseSpawnDirection_NoOutward(const Vector3& pos, int mapW, int mapH, float tile) const {

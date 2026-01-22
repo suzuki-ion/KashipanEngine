@@ -11,6 +11,7 @@
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
 #include "Objects/SystemObjects/VelocityBufferCameraBinder.h"
+#include "Scenes/Components/CameraController.h"
 
 namespace KashipanEngine {
 
@@ -30,11 +31,15 @@ protected:
     void OnUpdate() override;
 
 private:
+
+    void DrawImGui();
+
+private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
     // BPM関連
     BPMSystem* bpmSystem_ = nullptr;
-    float bpm_ = 120.0f;   // BPM値
+    int bpm_ = 120;   // BPM値
     bool playBgm_ = true;  // true-> BPM120のBGM再生
 
 	// マップ関連
@@ -45,6 +50,11 @@ private:
     bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション
     std::array<std::array<Object3DBase*, kMapW>, kMapH> maps_{};
     
+	CameraController* cameraController_ = nullptr;
+	float pDamageShakePower_ = 0.0f; float pDamageShakeTime_ = 0.0f; // プレイヤーダメージ時のカメラシェイク
+	float bombShakePower_    = 0.0f; float bombShakeTime_    = 0.0f; // 爆弾爆発時のカメラシェイク
+	float eDieShakePower_    = 0.0f; float eDieShakeTime_    = 0.0f; // 敵マップ外死亡時のカメラシェイク
+
 	// プレイヤー関連
     Object3DBase* player_ = nullptr;
     Vector3 playerScaleMin_ = { 1.1f, 0.75f,1.1f }, playerScaleMax_ = { 1.0f ,1.0f ,1.0f };// プレイヤーのBpmに合わせた拡大縮小範囲

@@ -99,7 +99,6 @@ namespace KashipanEngine {
 
 		/// @brief BombManagerの設定
         void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
-
 #if defined(USE_IMGUI)
         void ShowImGui() override {
             ImGui::TextUnformatted("PlayerArrowMove");
@@ -215,7 +214,7 @@ namespace KashipanEngine {
         int mapH_ = 13;
 
 		bool triggered_ = false; // 移動入力があったかどうか
-        bool isMoving_ = false;  // 移動中フラグ
+        bool isMoving_ =  false;  // 移動中フラグ
         float moveTimer_ = 0.0f; // 移動タイマー
 		Vector3 moveDirection_{ 0.0f, 0.0f, 0.0f }; // 移動方向ベクトル
 

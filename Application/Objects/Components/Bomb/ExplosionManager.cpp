@@ -88,6 +88,11 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
         return;
     }
 
+    // 爆弾が起爆した瞬間にカメラをシェイク
+    if (cameraController_) {
+        cameraController_->Shake(5.0f, 1.0f);
+    }
+
     // 爆発オブジェクトを作成（BombManagerと同じパターン）
     auto modelData = ModelManager::GetModelDataFromFileName("Explosion.obj");
     auto explosion = std::make_unique<Model>(modelData);
@@ -183,24 +188,24 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
     // レンダラーにアタッチ
     if (screenBuffer_) {
         explosion->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-		explosion2->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        explosion2->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
     }
     if (shadowMapBuffer_) {
         explosion->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
-		explosion2->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+        explosion2->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
     }
 
     // 爆発情報を登録
     ExplosionInfo info;
     info.object = explosionPtr;
-	info.object2 = explosion2Ptr;
+    info.object2 = explosion2Ptr;
     info.elapsedTime = 0.0f;
     info.position = position;
     activeExplosions_.push_back(info);
 
     // シーンに追加
     ctx->AddObject3D(std::move(explosion));
-	ctx->AddObject3D(std::move(explosion2));
+    ctx->AddObject3D(std::move(explosion2));
 
     // 爆発音再生（オプション）
     auto soundHandle = AudioManager::GetSoundHandleFromFileName("explosion.mp3");

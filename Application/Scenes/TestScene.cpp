@@ -156,7 +156,7 @@ void TestScene::Initialize() {
 
     // Player（衝突判定を修正）
     {
-        auto modelData = ModelManager::GetModelDataFromFileName("Player.obj");
+        auto modelData = ModelManager::GetModelDataFromFileName("player.obj");
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Player");
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {

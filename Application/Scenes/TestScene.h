@@ -37,6 +37,8 @@ private:
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
+    Object3DBase* stage_ = nullptr;
+
     // BPM関連
     BPMSystem* bpmSystem_ = nullptr;
     int bpm_ = 120;   // BPM値

@@ -126,9 +126,9 @@ void TestScene::Initialize() {
                 //    mat->SetTexture(TextureManager::GetTextureFromFileName("uvChecker.png"));
                 //}
 
-                if (screenBuffer3D)     obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-                if (shadowMapBuffer)  obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-                if (velocityBuffer)   obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+                if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+                if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
 
                 // ここで "AddObject3D する前" にポインタ確保
                 maps_[z][x] = obj.get();
@@ -136,6 +136,22 @@ void TestScene::Initialize() {
                 AddObject3D(std::move(obj));
             }
         }
+    }
+
+    {
+        auto modelData = ModelManager::GetModelDataFromFileName("stage.obj");
+        auto obj = std::make_unique<Model>(modelData);
+        obj->SetName("Stage");
+        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(10.0f, -1.0f, 10.0f));
+			tr->SetScale(Vector3(1.0f));
+        }
+
+        if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        //if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+        if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+        stage_ = obj.get();
+        AddObject3D(std::move(obj));
     }
 
     // Player（衝突判定を修正）

@@ -442,5 +442,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocity.hlsli" />
+    <None Include="hlsl Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
   </ItemGroup>
 </Project>

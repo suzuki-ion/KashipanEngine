@@ -477,6 +477,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="MyStd\NameMap.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
+    <None Include="hlsl Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

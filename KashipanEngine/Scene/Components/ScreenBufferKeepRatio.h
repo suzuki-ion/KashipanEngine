@@ -31,7 +31,7 @@ public:
 
             // ターゲットサイズが指定されていない場合はウィンドウサイズを使用
             if (dstW <= 0.0f || dstH <= 0.0f) {
-                if (auto *w = Window::GetWindow("2301_CLUBOM")) {
+                if (auto *w = Window::GetWindow("Main Window")) {
                     dstW = static_cast<float>(w->GetClientWidth());
                     dstH = static_cast<float>(w->GetClientHeight());
                 }

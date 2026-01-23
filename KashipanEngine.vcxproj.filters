@@ -1,18 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
-    <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
-    <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
-    <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
-    <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
-    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
-    <ClCompile Include="Application\Scenes\GameScene.cpp" />
-    <ClCompile Include="Application\Scenes\MenuScene.cpp" />
-    <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
-    <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp" />
@@ -123,18 +112,9 @@
     <ClCompile Include="KashipanEngine\Utilities\TimeUtils.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
-    <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
-    <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
-    <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
-    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
-    <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
-    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp" />
-    <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
-    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
     <ClCompile Include="EnemySpawner.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
@@ -142,35 +122,8 @@
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
-    <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
-    <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h" />
-    <ClInclude Include="Application\Objects\Components\Health.h" />
-    <ClInclude Include="Application\Objects\Components\MovementController.h" />
     <ClInclude Include="Application\Objects\Components\ParticleMovement.h" />
-    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
-    <ClInclude Include="Application\Objects\Components\RailMovement.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallForward.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallLeftSide.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
-    <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
-    <ClInclude Include="Application\Scenes\Components\CameraController.h" />
-    <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h" />
-    <ClInclude Include="Application\Scenes\Components\GameProgressController.h" />
-    <ClInclude Include="Application\Scenes\Components\JustAvoidParticle.h" />
-    <ClInclude Include="Application\Scenes\Components\PlayerHealthUI.h" />
-    <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
-    <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
-    <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
-    <ClInclude Include="Application\Scenes\GameOverScene.h" />
-    <ClInclude Include="Application\Scenes\GameScene.h" />
-    <ClInclude Include="Application\Scenes\MenuScene.h" />
-    <ClInclude Include="Application\Scenes\ResultScene.h" />
     <ClInclude Include="Application\Scenes\TestScene.h" />
-    <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
@@ -365,35 +318,16 @@
     <ClInclude Include="MyStd\NameMap.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
-    <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
-    <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />
-    <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
-    <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
-    <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
-    <ClInclude Include="Application\Objects\Components\Bomb\BombManager.h" />
-    <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
-    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
-    <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
-    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
-    <ClInclude Include="Application\Objects\Components\Enemy\EnemyManager.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
-    <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
-    <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
-    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
-    <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
-    <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
-    <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
-    <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
-    <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

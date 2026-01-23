@@ -195,6 +195,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
@@ -264,6 +265,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
@@ -370,7 +372,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h" />
-    <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h" />
+    <None Include="KashipanEngine\Graphics\ScreenBuffer.h" />
     <ClInclude Include="KashipanEngine\Input\Controller.h" />
     <ClInclude Include="KashipanEngine\Input\ControllerButton.h" />
     <ClInclude Include="KashipanEngine\Input\Input.h" />
@@ -378,6 +380,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Input\Key.h" />
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
@@ -462,6 +465,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Matrix4x4.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\PerlinNoise.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\SphericalCoordinates.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector2.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector3.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector4.h" />
@@ -477,6 +481,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="MyStd\NameMap.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.FXAA.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\FXAA.json" />
     <None Include="hlsl Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
   </ItemGroup>
   <ItemGroup>
@@ -664,6 +670,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <FileType>Document</FileType>
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FXAAPS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

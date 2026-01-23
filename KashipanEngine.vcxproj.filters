@@ -120,6 +120,7 @@
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\ParticleMovement.h" />
@@ -215,7 +216,6 @@
     <ClInclude Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h" />
-    <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h" />
     <ClInclude Include="KashipanEngine\Input\Controller.h" />
     <ClInclude Include="KashipanEngine\Input\ControllerButton.h" />
     <ClInclude Include="KashipanEngine\Input\Input.h" />
@@ -328,6 +328,9 @@
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\SphericalCoordinates.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
@@ -443,5 +446,9 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocity.hlsli" />
     <None Include="hlsl Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.FXAA.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\FXAA.json" />
+    <None Include="KashipanEngine\Graphics\ScreenBuffer.h" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FXAAPS.hlsl" />
   </ItemGroup>
 </Project>

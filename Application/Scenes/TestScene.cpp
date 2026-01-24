@@ -20,8 +20,8 @@ void TestScene::Initialize() {
     // デバッグ用カメラ操作コンポーネント
     {
         auto cmp = std::make_unique<DebugCameraMovement>(mainCamera3D, GetInput());
-        cmp->SetCenter({ 0.0f, 4.0f, 0.0f });
-        cmp->SetDistance(32.0f);
+        cmp->SetCenter({ 0.0f, 5.0f, 0.0f });
+        cmp->SetDistance(50.0f);
         cmp->SetAngles(-M_PI / 2.0f, M_PI / 2.0f);
         AddSceneComponent(std::move(cmp));
     }
@@ -164,6 +164,13 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
+        auto chromaticAberrationParams = ChromaticAberrationEffect::Params{};
+        chromaticAberrationParams.directionX = 1.0f;
+        chromaticAberrationParams.directionY = 0.0f;
+        chromaticAberrationParams.strength = 0.002f;
+        auto chromaticAberration = std::make_unique<ChromaticAberrationEffect>(chromaticAberrationParams);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(chromaticAberration));
+
         auto bloomParams = BloomEffect::Params{};
         bloomParams.threshold = 1.0f;
         bloomParams.softKnee = 0.5f;

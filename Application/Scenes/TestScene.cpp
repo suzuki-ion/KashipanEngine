@@ -352,6 +352,12 @@ void TestScene::Initialize() {
         }
         AddSceneComponent(std::move(comp));
     }
+
+    // デバッグ用カメラ操作コンポーネント
+    {
+        auto comp = std::make_unique<DebugCameraMovement>(camera3D, GetInput());
+        AddSceneComponent(std::move(comp));
+    }
 }
 
 TestScene::~TestScene() {
@@ -361,6 +367,12 @@ void TestScene::OnUpdate() {
 #if defined(USE_IMGUI)
     DrawImGui();
 #endif
+
+    if (auto *debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
+        if (GetInputCommand()->Evaluate("DebugCameraToggle").Triggered()) {
+            debugCameraMovement->SetEnable(!debugCameraMovement->IsEnable());
+        }
+    }
 
     // OnUpdate 内で BPM 進行度を更新
     if (bombManager_) {

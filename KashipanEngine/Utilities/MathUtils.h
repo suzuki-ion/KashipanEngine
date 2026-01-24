@@ -7,5 +7,6 @@
 #include "MathUtils/Matrix4x4.h"
 #include "MathUtils/PerlinNoise.h"
 #include "MathUtils/FractalNoise.h"
+#include "MathUtils/SphericalCoordinates.h"
 
 #define M_PI 3.14159265358979323846f

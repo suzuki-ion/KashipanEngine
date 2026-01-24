@@ -97,6 +97,9 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("DebugDestroyWindow", InputCommand::KeyboardKey{ Key::F2 }, InputCommand::InputState::Trigger);
         // デバッグ用リセットコマンド
         ic->RegisterCommand("DebugReset", InputCommand::KeyboardKey{ Key::R }, InputCommand::InputState::Trigger);
+
+        // デバッグ用カメラ操作有効化/無効化
+        ic->RegisterCommand("DebugCameraToggle", InputCommand::KeyboardKey{ Key::F3 }, InputCommand::InputState::Trigger);
     }
 }
 

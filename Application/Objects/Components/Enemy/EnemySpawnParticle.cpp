@@ -74,9 +74,9 @@ namespace KashipanEngine {
         float angleY = angleDist(gen) * 3.14159265f / 180.0f;
         
         // 主に上方向だが、わずかに水平方向にも広がる
-        velocity_.x = std::sin(angleY) * speed * 0.2f;
+        velocity_.x = std::sin(angleY) * speed * 0.5f;
         velocity_.y = speed;  // 上方向
-        velocity_.z = std::cos(angleY) * speed * 0.2f;
+        velocity_.z = std::cos(angleY) * speed * 0.5f;
     }
 
     bool EnemySpawnParticle::IsAlive() const {

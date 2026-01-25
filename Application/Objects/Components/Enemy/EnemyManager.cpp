@@ -268,9 +268,13 @@ void EnemyManager::SpawnDieParticles(const Vector3& position) {
         if (particlesSpawned >= particlesToSpawn) break;
 
         auto* dieParticle = particle->GetComponent3D<EnemyDieParticle>();
+        if (!dieParticle) continue;
 
-        dieParticle->Spawn(position);
-        particlesSpawned++;
+        // 非アクティブなパーティクルのみ再利用
+        if (!dieParticle->IsAlive()) {
+            dieParticle->Spawn(position);
+            particlesSpawned++;
+        }
     }
 }
 

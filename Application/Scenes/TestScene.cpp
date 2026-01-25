@@ -1,5 +1,6 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/Components/PlayerHealthUI.h"
+#include "Scenes/Components/BackMonitor.h"
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/Player/BpmbSpawn.h"
@@ -283,6 +284,9 @@ void TestScene::Initialize() {
 
     // ExplosionManagerにPlayerを設定
     explosionManager_->SetPlayer(player_);
+
+    // ステージ後ろの画面用
+    AddSceneComponent(std::make_unique<BackMonitor>());
 
     //if (playBgm_) {
     //    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");

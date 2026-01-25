@@ -206,7 +206,7 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 
     rtvWriteIndex_ = 0;
     dsvWriteIndex_ = 0;
-    lastBeginDisableDepthWrite_ = false;
+    isLastBeginDisableDepthWrite_ = false;
 
     for (size_t i = 0; i < kBufferCount_; ++i) {
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
@@ -264,14 +264,22 @@ ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord(bool disableDepthWrite) {
     LogScope scope;
     if (!dx12Commands_) return nullptr;
 
-    // BeginRecord の設定を記憶（EndRecord の動作に使用）
-    lastBeginDisableDepthWrite_ = disableDepthWrite;
+    isLastBeginDisableDepthWrite_ = disableDepthWrite;
 
     auto *cmd = dx12Commands_->GetCommandList();
     auto* rt = renderTargets_[GetRtvWriteIndex()].get();
     auto* ds = depthStencils_[GetDsvWriteIndex()].get();
     if (!rt) return nullptr;
     if (!disableDepthWrite && !ds) return nullptr;
+
+    // 初回のみRead面のバリアも設定
+    if (isFirstBeginRecord_) {
+        auto* rtRead = renderTargets_[GetRtvReadIndex()].get();
+        auto *dsRead = depthStencils_[GetDsvReadIndex()].get();
+        if (rtRead) rtRead->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        if (!disableDepthWrite && dsRead) dsRead->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_READ);
+        isFirstBeginRecord_ = false;
+    }
 
     if (!rt->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET)) {
         return nullptr;
@@ -333,7 +341,7 @@ bool ScreenBuffer::EndRecord(bool discard) {
     }
 
     // BeginRecord で depth を触っていない場合は、ここでも触らない
-    if (!lastBeginDisableDepthWrite_ && ds) {
+    if (!isLastBeginDisableDepthWrite_ && ds) {
         if (ds->HasSrv()) {
             ds->TransitionToShaderResource();
         } else {
@@ -343,7 +351,7 @@ bool ScreenBuffer::EndRecord(bool discard) {
 
     (void)discard;
     const bool updateRtv = true;
-    const bool updateDsv = !lastBeginDisableDepthWrite_;
+    const bool updateDsv = !isLastBeginDisableDepthWrite_;
     AdvanceFrameBufferIndex(updateRtv, updateDsv);
 
     return true;

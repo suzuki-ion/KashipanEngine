@@ -171,7 +171,8 @@ private:
     size_t rtvWriteIndex_ = 0;
     size_t dsvWriteIndex_ = 0;
 
-    bool lastBeginDisableDepthWrite_ = false;
+    bool isLastBeginDisableDepthWrite_ = false;
+    bool isFirstBeginRecord_ = true;
 
     std::unique_ptr<RenderTargetResource> renderTargets_[kBufferCount_];
     std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount_];

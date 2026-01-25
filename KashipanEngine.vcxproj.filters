@@ -141,6 +141,8 @@
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -393,6 +395,12 @@
     <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
+    <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

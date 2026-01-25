@@ -2,8 +2,7 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/TitleScene/StartTextUpdate.h"
-#include "Scenes/Components/TitleScene/CarMove.h"
-#include "Scenes/Components/TitleScene/CameraStartMovement.h"
+#include "Scenes/Components/TitleScene/TitleSceneAnimator.h"
 
 namespace KashipanEngine {
 
@@ -102,9 +101,26 @@ void TitleScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
-    AddSceneComponent(std::make_unique<CameraStartMovement>());
-    AddSceneComponent(std::make_unique<CarMove>());
-    AddSceneComponent(std::make_unique<StartTextUpdate>(GetInputCommand()));
+    if (sceneDefaultVariables_) {
+        auto regFunc = [this](std::unique_ptr<ISceneComponent> comp) {
+            return this->AddSceneComponent(std::move(comp));
+        };
+        AddSceneComponent(std::make_unique<TitleSceneAnimator>(regFunc, GetInputCommand()));
+    }
+
+    // タイトルロゴ
+    {
+        auto modelHandle = ModelManager::GetModelDataFromFileName("title.obj");
+        auto obj = std::make_unique<Model>(modelHandle);
+        obj->SetName("TitleLogo");
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(0.0f, 28.0f, 10.0f));
+            tr->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+            tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(obj));
+    }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -118,14 +134,6 @@ TitleScene::~TitleScene() {
 }
 
 void TitleScene::OnUpdate() {
-    if (auto *startTextUpdate = GetSceneComponent<StartTextUpdate>()) {
-        if (startTextUpdate->IsFinishedTriggered()) {
-            if (auto *carMove = GetSceneComponent<CarMove>()) {
-                carMove->StartAnimation();
-            }
-        }
-    }
-
     if (auto *ic = GetInputCommand()) {
         if (ic->Evaluate("DebugSceneChange").Triggered()) {
             if (GetNextSceneName().empty()) {

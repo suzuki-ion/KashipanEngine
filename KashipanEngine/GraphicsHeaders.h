@@ -5,6 +5,7 @@
 #include "Graphics/PostEffectComponents/BloomEffect.h"
 #include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
 #include "Graphics/PostEffectComponents/MotionBlurEffect.h"
+#include "Graphics/PostEffectComponents/FXAAEffect.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/DefineMaps.h"

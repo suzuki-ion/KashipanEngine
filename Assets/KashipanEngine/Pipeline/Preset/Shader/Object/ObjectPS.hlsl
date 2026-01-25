@@ -78,6 +78,9 @@ PSOutput main(VSOutput input) {
 #ifdef Object3D
 	float4 baseColor = mat.color * textureColor;
 	float4 lightingColor = float4(0,0,0,0);
+	if (!mat.enableLighting) {
+		lightingColor = float4(1,1,1,1);
+	}
 
 	// Directional
 	if (gDirectionalLight.enabled && mat.enableLighting) {
@@ -95,12 +98,15 @@ PSOutput main(VSOutput input) {
 			if (!light.enabled) {
 				continue;
 			}
-
+			
 			float3 toLight = light.position - input.worldPosition;
 			float dist = length(toLight);
+			if (dist > light.radius) continue;
+
 			float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
 			float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
-			
+			if (atten <= 0.0f) continue;
+
 			float lam = HalfLambert(input.normal, lightDir);
 			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity * atten;
@@ -113,19 +119,22 @@ PSOutput main(VSOutput input) {
 	if (mat.enableLighting) {
 		for (uint i = 0; i < gSpotLightCount; ++i) {
 			SpotLight light = gSpotLights[i];
-			if (!light.enabled) {
-				continue;
-			}
-
+			if (!light.enabled) continue;
+			
 			float3 toLight = light.position - input.worldPosition;
 			float dist = length(toLight);
+			if (dist > light.distance) continue;
+
 			float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
 			float theta = dot(-lightDir, normalize(light.direction));
 			float inner = cos(light.innerAngle);
 			float outer = cos(light.outerAngle);
 			float spot = saturate((theta - outer) / (inner - outer));
+			if (spot <= 0.0f) continue;
+
 			float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * spot;
-			
+			if (atten <= 0.0f) continue;
+
 			float lam = HalfLambert(input.normal, lightDir);
 			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity * atten;

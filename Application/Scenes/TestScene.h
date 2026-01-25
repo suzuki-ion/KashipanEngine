@@ -12,6 +12,7 @@
 #include "Objects/SystemObjects/SpotLight.h"
 #include "Objects/SystemObjects/VelocityBufferCameraBinder.h"
 #include "Scenes/Components/CameraController.h"
+#include "Scenes/Components/BackMonitor.h"
 
 namespace KashipanEngine {
 

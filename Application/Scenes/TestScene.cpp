@@ -1,5 +1,6 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/Components/PlayerHealthUI.h"
+#include "Scenes/Components/BackMonitor.h"
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/Player/BpmbSpawn.h"
@@ -156,7 +157,7 @@ void TestScene::Initialize() {
 
     // Player（衝突判定を修正）
     {
-        auto modelData = ModelManager::GetModelDataFromFileName("Player.obj");
+        auto modelData = ModelManager::GetModelDataFromFileName("player.obj");
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Player");
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
@@ -284,6 +285,9 @@ void TestScene::Initialize() {
     // ExplosionManagerにPlayerを設定
     explosionManager_->SetPlayer(player_);
 
+    // ステージ後ろの画面用
+    AddSceneComponent(std::make_unique<BackMonitor>());
+
     //if (playBgm_) {
     //    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
     //    if (handle == AudioManager::kInvalidSoundHandle) {
@@ -352,6 +356,12 @@ void TestScene::Initialize() {
         }
         AddSceneComponent(std::move(comp));
     }
+
+    // デバッグ用カメラ操作コンポーネント
+    {
+        auto comp = std::make_unique<DebugCameraMovement>(camera3D, GetInput());
+        AddSceneComponent(std::move(comp));
+    }
 }
 
 TestScene::~TestScene() {
@@ -361,6 +371,12 @@ void TestScene::OnUpdate() {
 #if defined(USE_IMGUI)
     DrawImGui();
 #endif
+
+    if (auto *debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
+        if (GetInputCommand()->Evaluate("DebugCameraToggle").Triggered()) {
+            debugCameraMovement->SetEnable(!debugCameraMovement->IsEnable());
+        }
+    }
 
     // OnUpdate 内で BPM 進行度を更新
     if (bombManager_) {
@@ -451,7 +467,7 @@ void TestScene::OnUpdate() {
     {
         auto r = GetInputCommand()->Evaluate("DebugDestroyWindow");
         if (r.Triggered()) {
-            if (auto *window = Window::GetWindow("Main Window")) {
+            if (auto *window = Window::GetWindow("2301_CLUBOM")) {
                 window->DestroyNotify();
             }
         }

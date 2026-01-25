@@ -119,6 +119,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
     <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />

@@ -140,6 +140,7 @@
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />

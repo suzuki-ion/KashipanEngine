@@ -373,22 +373,7 @@ void TestScene::OnUpdate() {
 			playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
 
             auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
-			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
-            
-            if (auto* mt = player_->GetComponent3D<Material3D>()) {
-                if (auto* health = player_->GetComponent3D<Health>()) {
-
-                    // 残り時間(秒)を 0.1 秒単位の整数にする（誤差対策で丸め）
-                    int tick = static_cast<int>(health->GetDamageCooldownRemaining() * 10.0f + 0.5f);
-
-                    if (health->WasDamagedThisCooldown() && (tick % 2 == 0)) {
-                        mt->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f }); // 透明
-                    } else {
-                        mt->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 不透明
-                    }
-                }
-            }
-
+			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());  
 
 			auto* bpmScaling = player_->GetComponent3D<BPMScaling>();
 			if (bpmScaling) {

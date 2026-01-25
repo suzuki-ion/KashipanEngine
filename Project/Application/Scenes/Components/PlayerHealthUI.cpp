@@ -1,7 +1,10 @@
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Objects/Components/Health.h"
+<<<<<<< HEAD:Project/Application/Scenes/Components/PlayerHealthUI.cpp
 #include "Scene/SceneContext.h"
 
+=======
+>>>>>>> TD2_3:Application/Scenes/Components/PlayerHealthUI.cpp
 #include <algorithm>
 
 namespace KashipanEngine {
@@ -34,9 +37,13 @@ void PlayerHealthUI::EnsureSprites() {
 
     const auto tex = TextureManager::GetTextureFromFileName("heart.png");
 
+<<<<<<< HEAD:Project/Application/Scenes/Components/PlayerHealthUI.cpp
     ScreenBuffer *sb = sceneDefault_ ? sceneDefault_->GetScreenBuffer2D() : nullptr;
 
     const float yOffset = sb ? static_cast<float>(sb->GetHeight()) : 0.0f;
+=======
+    const float yOffset = screenBuffer_ ? static_cast<float>(screenBuffer_->GetHeight()) : 0.0f;
+>>>>>>> TD2_3:Application/Scenes/Components/PlayerHealthUI.cpp
 
     for (int i = 0; i < maxHpAtBind_; ++i) {
         auto obj = std::make_unique<Sprite>();

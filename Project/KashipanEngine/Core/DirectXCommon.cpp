@@ -136,6 +136,12 @@ void DirectXCommon::BeginDraw(Passkey<GameEngine>) {
     for (auto &cmds : commandObjects_) {
         cmds->ResetFlags(Passkey<DirectXCommon>{});
     }
+<<<<<<< HEAD:Project/KashipanEngine/Core/DirectXCommon.cpp
+=======
+    for (auto &sc : sSwapChains) {
+        if (sc && sc->IsCreated()) sc->Resize({});
+    }
+>>>>>>> TD2_3:KashipanEngine/Core/DirectXCommon.cpp
 }
 
 void DirectXCommon::EndDraw(Passkey<GameEngine>) {
@@ -314,10 +320,13 @@ void DirectXCommon::ExecuteCommandLists() {
         WaitForFence();
     }
 
+<<<<<<< HEAD:Project/KashipanEngine/Core/DirectXCommon.cpp
     for (auto &sc : sSwapChains) {
         if (sc && sc->IsCreated()) sc->Resize({});
     }
 
+=======
+>>>>>>> TD2_3:KashipanEngine/Core/DirectXCommon.cpp
     recordedCommandLists_.clear();
 }
 

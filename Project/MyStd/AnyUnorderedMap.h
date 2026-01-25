@@ -19,9 +19,6 @@ public:
     AnyUnorderedMap &operator[](const std::string &key) {
         return variables_[key];
     }
-    AnyUnorderedMap &operator[](const char *key) {
-        return variables_[key];
-    }
     AnyUnorderedMap &operator=(const std::any &value) {
         value_ = value;
         return *this;

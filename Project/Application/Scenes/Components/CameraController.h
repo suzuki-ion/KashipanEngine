@@ -52,9 +52,9 @@ public:
             const float amp = shakeAmplitude_ * (1.0f - tShake);
 
             const float phase = shakeTimeRemaining_ * 60.0f;
-            desiredTranslate.x += std::sin(phase * 2.3f) * amp;
-            desiredTranslate.y += std::sin(phase * 3.7f) * amp;
-            desiredTranslate.z += std::sin(phase * 4.9f) * amp;
+            if (isShakeX_) desiredTranslate.x += std::sin(phase * 2.3f) * amp;
+            if (isShakeY_) desiredTranslate.y += std::sin(phase * 3.7f) * amp;
+            if (isShakeZ_) desiredTranslate.z += std::sin(phase * 4.9f) * amp;
         }
 
         if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
@@ -104,7 +104,18 @@ public:
     /// @brief 目標の FOV を取得する
     float GetTargetFovY() const { return targetFovY_; }
 
+<<<<<<< HEAD:Project/Application/Scenes/Components/CameraController.h
     /// @brief 現在のカメラ位置からフォローオフセットを再計算する
+=======
+    void SetIsShakeX(bool v) { isShakeX_ = v; }
+    void SetIsShakeY(bool v) { isShakeY_ = v; }
+    void SetIsShakeZ(bool v) { isShakeZ_ = v; }
+
+    bool IsShakeX() const { return isShakeX_; }
+    bool IsShakeY() const { return isShakeY_; }
+    bool IsShakeZ() const { return isShakeZ_; }
+
+>>>>>>> TD2_3:Application/Scenes/Components/CameraController.h
     void RecalculateOffsetFromCurrentCamera() {
         if (!camera_ || !followTarget_) return;
 
@@ -140,6 +151,9 @@ private:
     float shakeAmplitude_ = 0.0f;
     float shakeDuration_ = 0.0f;
     float shakeTimeRemaining_ = 0.0f;
+    bool isShakeX_ = true;
+    bool isShakeY_ = true;
+    bool isShakeZ_ = true;
 };
 
 }  // namespace KashipanEngine

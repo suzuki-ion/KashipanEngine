@@ -15,3 +15,8 @@
 #include "Utilities/TemplateLiteral.h"
 #include "Utilities/TimeUtils.h"
 #include "Utilities/Translation.h"
+<<<<<<< HEAD:Project/KashipanEngine/UtilitiesHeaders.h
+=======
+#include "Utilities/Easing.h"
+#include "Utilities/GameTimer.h"
+>>>>>>> TD2_3:KashipanEngine/UtilitiesHeaders.h

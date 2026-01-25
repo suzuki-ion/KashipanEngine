@@ -10,7 +10,12 @@
 #include <cstdint>
 #include <optional>
 
+#include "Scenes/Components/CameraController.h"
+
 namespace KashipanEngine {
+
+// Forward declaration
+class CameraController;
 
 class Health final : public IObjectComponent3D {
 public:
@@ -30,6 +35,7 @@ public:
         ptr->isAlive_ = isAlive_;
         ptr->wasDamaged_ = wasDamaged_;
         ptr->cooldownRemaining_ = cooldownRemaining_;
+        ptr->cameraController_ = cameraController_;
         return ptr;
     }
 
@@ -63,6 +69,11 @@ public:
             isAlive_ = false;
         }
 
+        // ダメージを受けた時にカメラをシェイク
+        if (cameraController_) {
+            cameraController_->Shake(5.0f, 1.0f);
+        }
+
         UpdateMaterialTint();
     }
 
@@ -75,6 +86,11 @@ public:
     /// @brief 現在のクールダウン内でダメージを受けたかを取得する
     /// @return クールダウン中にダメージがあれば true
     bool WasDamagedThisCooldown() const { return wasDamaged_ && cooldownRemaining_ > 0.0f; }
+
+    float GetDamageCooldownRemaining() const { return cooldownRemaining_; }
+
+    /// @brief カメラコントローラーを設定
+    void SetCameraController(CameraController* cameraController) { cameraController_ = cameraController; }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {}
@@ -102,6 +118,8 @@ private:
 
     float damageCooldownSec_ = 0.5f;
     float cooldownRemaining_ = 0.0f;
+
+    CameraController* cameraController_ = nullptr;
 };
 
 } // namespace KashipanEngine

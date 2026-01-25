@@ -1,13 +1,17 @@
 #pragma once
 #include <KashipanEngine.h>
+<<<<<<< HEAD:Project/Application/Scenes/Components/AttackBase.h
 #include "Objects/Components/MovementController.h"
 #include "Objects/Components/AlwaysRotate.h"
 #include "Scene/Components/SceneDefaultVariables.h"
 
+=======
+>>>>>>> TD2_3:Application/Scenes/Components/AttackBase.h
 #include <vector>
 #include <string>
 #include <memory>
 #include <optional>
+#include "Objects/Components/MovementController.h"
 
 namespace KashipanEngine {
 
@@ -64,8 +68,8 @@ protected:
     // 共通 Move: (x,32,z) -> (x,1,z) を 1s で EaseOutBack
     static MoveEntry MakeCommonSpawnDropMove(const Vector3 &spawnPos) {
         MoveEntry e;
-        e.from = Vector3{spawnPos.x, 32.0f, spawnPos.z};
-        e.to = Vector3{spawnPos.x, 1.0f, spawnPos.z};
+        e.from = Vector3{ spawnPos.x, 32.0f, spawnPos.z };
+        e.to = Vector3{ spawnPos.x, 1.0f, spawnPos.z };
         e.duration = 1.0f;
         e.easing = [](Vector3 a, Vector3 b, float t) { return EaseOutBack(a, b, t); };
         return e;

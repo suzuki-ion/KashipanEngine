@@ -1,6 +1,9 @@
 #include "Scenes/Components/GameIntroLogoAnimation.h"
+<<<<<<< HEAD:Project/Application/Scenes/Components/GameIntroLogoAnimation.cpp
 #include "Scene/SceneContext.h"
 
+=======
+>>>>>>> TD2_3:Application/Scenes/Components/GameIntroLogoAnimation.cpp
 #include <algorithm>
 
 namespace KashipanEngine {

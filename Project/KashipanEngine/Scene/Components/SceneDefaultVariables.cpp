@@ -8,7 +8,11 @@ namespace KashipanEngine {
 
 void SceneDefaultVariables::Initialize() {
     auto *sceneContext = GetOwnerContext();
+<<<<<<< HEAD:Project/KashipanEngine/Scene/Components/SceneDefaultVariables.cpp
     mainWindow_ = Window::GetWindow("Main Window");
+=======
+    mainWindow_ = Window::GetWindow("2301_CLUBOM");
+>>>>>>> TD2_3:KashipanEngine/Scene/Components/SceneDefaultVariables.cpp
 
     screenBuffer3D_ = ScreenBuffer::Create(1920, 1080);
     screenBuffer2D_ = ScreenBuffer::Create(1920, 1080);

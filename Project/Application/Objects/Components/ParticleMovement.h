@@ -110,9 +110,13 @@ public:
     float GetLifeTimeSec() const { return lifeTimeSec_; }
     /// @brief 基準スケールを取得する
     const Vector3 &GetBaseScale() const { return baseScale_; }
+<<<<<<< HEAD:Project/Application/Objects/Components/ParticleMovement.h
     /// @brief 経過秒数を取得する
     float GetElapsedSec() const { return elapsed_; }
     /// @brief 正規化された寿命（0..1）を取得する
+=======
+    float GetElapsedSec() const { return elapsed_; }
+>>>>>>> TD2_3:Application/Objects/Components/ParticleMovement.h
     float GetNormalizedLife() const {
         if (lifeTimeSec_ <= 0.0f) return 0.0f;
         return std::clamp(elapsed_ / lifeTimeSec_, 0.0f, 1.0f);

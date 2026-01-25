@@ -9,8 +9,11 @@
 
 namespace KashipanEngine {
 
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
 std::unordered_map<ShadowMapBuffer*, std::unique_ptr<ShadowMapBuffer>> ShadowMapBuffer::sBufferMap_{};
 
+=======
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
 namespace {
 struct RecordState {
     ID3D12GraphicsCommandList* list = nullptr;
@@ -18,10 +21,18 @@ struct RecordState {
     bool started = false;
 };
 
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
 static std::unordered_map<ShadowMapBuffer*, RecordState> sRecordStates;
 
 // Window と同様に「破棄要求→フレーム終端で実破棄」のための pending リスト
 static std::vector<ShadowMapBuffer*> sPendingDestroy;
+=======
+std::unordered_map<ShadowMapBuffer *, std::unique_ptr<ShadowMapBuffer>> sBufferMap{};
+std::unordered_map<ShadowMapBuffer*, RecordState> sRecordStates;
+
+// Window と同様に「破棄要求→フレーム終端で実破棄」のための pending リスト
+std::vector<ShadowMapBuffer*> sPendingDestroy;
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ShadowMapBuffer::GetSrvHandle() const noexcept {
@@ -36,21 +47,37 @@ ShadowMapBuffer* ShadowMapBuffer::Create(std::uint32_t width, std::uint32_t heig
         return nullptr;
     }
 
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
     sBufferMap_.emplace(raw, std::move(buffer));
+=======
+    sBufferMap.emplace(raw, std::move(buffer));
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
     return raw;
 }
 
 void ShadowMapBuffer::AllDestroy(Passkey<GameEngine>) {
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
     sBufferMap_.clear();
 }
 
 size_t ShadowMapBuffer::GetBufferCount() {
     return sBufferMap_.size();
+=======
+    sBufferMap.clear();
+}
+
+size_t ShadowMapBuffer::GetBufferCount() {
+    return sBufferMap.size();
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
 }
 
 bool ShadowMapBuffer::IsExist(ShadowMapBuffer* buffer) {
     if (!buffer) return false;
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
     return sBufferMap_.find(buffer) != sBufferMap_.end();
+=======
+    return sBufferMap.find(buffer) != sBufferMap.end();
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
 }
 
 void ShadowMapBuffer::DestroyNotify(ShadowMapBuffer* buffer) {
@@ -73,9 +100,15 @@ void ShadowMapBuffer::CommitDestroy(Passkey<GameEngine>) {
 
     for (auto* ptr : sPendingDestroy) {
         if (!ptr) continue;
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
         auto it = sBufferMap_.find(ptr);
         if (it == sBufferMap_.end()) continue;
         sBufferMap_.erase(it);
+=======
+        auto it = sBufferMap.find(ptr);
+        if (it == sBufferMap.end()) continue;
+        sBufferMap.erase(it);
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
     }
 
     sPendingDestroy.clear();
@@ -114,7 +147,11 @@ void ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow() {
         ImGui::TableSetupColumn("Select");
         ImGui::TableHeadersRow();
 
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
         for (auto &kv : sBufferMap_) {
+=======
+        for (auto &kv : sBufferMap) {
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
             ShadowMapBuffer *ptr = kv.first;
             if (!ptr) continue;
 
@@ -199,9 +236,15 @@ void ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow() {
 
 void ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>) {
     sRecordStates.clear();
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.cpp
     sRecordStates.reserve(sBufferMap_.size());
 
     for (auto& [ptr, owning] : sBufferMap_) {
+=======
+    sRecordStates.reserve(sBufferMap.size());
+
+    for (auto& [ptr, owning] : sBufferMap) {
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.cpp
         if (!ptr || !owning) continue;
         if (IsPendingDestroy(ptr)) continue;
 

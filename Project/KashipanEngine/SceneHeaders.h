@@ -1,6 +1,10 @@
 #pragma once
 
 #include "Scene/Components/ColliderComponent.h"
+<<<<<<< HEAD:Project/KashipanEngine/SceneHeaders.h
+=======
+#include "Scene/Components/DebugCameraMovement.h"
+>>>>>>> TD2_3:KashipanEngine/SceneHeaders.h
 #include "Scene/Components/SceneDefaultVariables.h"
 #include "Scene/Components/ScreenBufferKeepRatio.h"
 #include "Scene/Components/ShadowMapCameraSync.h"

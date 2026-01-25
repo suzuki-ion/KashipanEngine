@@ -1,6 +1,9 @@
 #include "Scenes/Components/JustAvoidParticle.h"
 #include "Objects/Components/MovementController.h"
+<<<<<<< HEAD:Project/Application/Scenes/Components/JustAvoidParticle.cpp
 #include "Scene/SceneContext.h"
+=======
+>>>>>>> TD2_3:Application/Scenes/Components/JustAvoidParticle.cpp
 #include <algorithm>
 #include <cmath>
 #include <random>

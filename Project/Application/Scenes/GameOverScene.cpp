@@ -1,10 +1,8 @@
 #include "Scenes/GameOverScene.h"
-
-#include "Core/Window.h"
-#include "Scene/Components/ColliderComponent.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 
+<<<<<<< HEAD:Project/Application/Scenes/GameOverScene.cpp
 #include "Objects/SystemObjects/Camera2D.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
@@ -26,14 +24,13 @@
 
 #include <memory>
 
+=======
+>>>>>>> TD2_3:Application/Scenes/GameOverScene.cpp
 namespace KashipanEngine {
-
-namespace {
-constexpr float kPi = 3.14159265358979323846f;
-}
 
 GameOverScene::GameOverScene()
     : SceneBase("GameOverScene") {
+<<<<<<< HEAD:Project/Application/Scenes/GameOverScene.cpp
     {
         const auto sound = AudioManager::GetSoundHandleFromFileName("gameOverBGM.mp3");
         bgmPlay_ = AudioManager::Play(sound, 1.0f, 0.0f, true);
@@ -211,16 +208,23 @@ GameOverScene::GameOverScene()
         if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         AddObject3D(std::move(obj));
     }
+=======
+}
+
+void GameOverScene::Initialize() {
+    sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
+>>>>>>> TD2_3:Application/Scenes/GameOverScene.cpp
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
 
-    if (auto *sceneChangeIn = GetSceneComponent<SceneChangeIn>()) {
-        sceneChangeIn->Play();
+    if (auto *in = GetSceneComponent<SceneChangeIn>()) {
+        in->Play();
     }
 }
 
 GameOverScene::~GameOverScene() {
+<<<<<<< HEAD:Project/Application/Scenes/GameOverScene.cpp
     if (bgmPlay_ != AudioManager::kInvalidPlayHandle) {
         AudioManager::Stop(bgmPlay_);
         bgmPlay_ = AudioManager::kInvalidPlayHandle;
@@ -229,9 +233,25 @@ GameOverScene::~GameOverScene() {
 
 void GameOverScene::OnUpdate() {
     // SceneChangeOut 完了で次シーンへ
+=======
+}
+
+void GameOverScene::OnUpdate() {
+    if (auto *ic = GetInputCommand()) {
+        if (ic->Evaluate("DebugSceneChange").Triggered()) {
+            if (GetNextSceneName().empty()) {
+                SetNextSceneName("MenuScene");
+            }
+            if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                out->Play();
+            }
+        }
+    }
+
+>>>>>>> TD2_3:Application/Scenes/GameOverScene.cpp
     if (!GetNextSceneName().empty()) {
-        if (auto *sceneChangeOut = GetSceneComponent<SceneChangeOut>()) {
-            if (sceneChangeOut->IsFinished()) {
+        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+            if (out->IsFinished()) {
                 ChangeToNextScene();
             }
         }

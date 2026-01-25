@@ -3,6 +3,7 @@
 
 namespace KashipanEngine {
 
+<<<<<<< HEAD:Project/Application/Scenes/GameScene.h
 class Camera2D;
 class Sprite;
 class Camera3D;
@@ -14,15 +15,20 @@ class CameraController;
 class DirectionalLight;
 class SpotLight;
 
+=======
+>>>>>>> TD2_3:Application/Scenes/GameScene.h
 class GameScene final : public SceneBase {
 public:
     GameScene();
     ~GameScene() override;
 
+    void Initialize() override;
+
 protected:
     void OnUpdate() override;
 
 private:
+<<<<<<< HEAD:Project/Application/Scenes/GameScene.h
     SceneDefaultVariables *sceneDefault_ = nullptr;
 
     // MainCamera3D を制御するシーンコンポーネント
@@ -52,6 +58,9 @@ private:
     AudioManager::PlayHandle avoidPlay_ = AudioManager::kInvalidPlayHandle;
     AudioManager::PlayHandle avoidJustPlay_ = AudioManager::kInvalidPlayHandle;
     AudioManager::PlayHandle damagePlay_ = AudioManager::kInvalidPlayHandle;
+=======
+    SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
+>>>>>>> TD2_3:Application/Scenes/GameScene.h
 };
 
 } // namespace KashipanEngine

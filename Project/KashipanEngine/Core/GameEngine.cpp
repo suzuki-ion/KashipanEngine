@@ -237,7 +237,12 @@ void GameEngine::GameLoopUpdate() {
 
     if (sceneManager_) {
         if (auto *scene = sceneManager_->GetCurrentScene()) {
-            scene->Update();
+            if (!isGameLoopPaused_ || isNextFrameRequested_) {
+                scene->Update();
+                if (isNextFrameRequested_) {
+                    isNextFrameRequested_ = false;
+                }
+            }
 #if defined(USE_IMGUI)
             scene->ShowImGui();
 #endif
@@ -280,6 +285,24 @@ void GameEngine::GameLoopDraw() {
 
         ScreenBuffer::ShowImGuiScreenBuffersWindow();
         ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow();
+<<<<<<< HEAD:Project/KashipanEngine/Core/GameEngine.cpp
+=======
+
+        ImGui::Begin("GameLoop Control");
+        if (isGameLoopPaused_) {
+            if (ImGui::Button("Resume Game Loop")) {
+                GameLoopResume();
+            }
+            if (ImGui::Button("Step Frame")) {
+                isNextFrameRequested_ = true;
+            }
+        } else {
+            if (ImGui::Button("Pause Game Loop")) {
+                GameLoopPause();
+            }
+        }
+        ImGui::End();
+>>>>>>> TD2_3:KashipanEngine/Core/GameEngine.cpp
 
         imguiManager_->Render({});
     }

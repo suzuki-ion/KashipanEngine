@@ -75,7 +75,10 @@ public:
 
 private:
     static inline DirectXCommon* sDirectXCommon_ = nullptr;
+<<<<<<< HEAD:Project/KashipanEngine/Graphics/ShadowMapBuffer.h
     static std::unordered_map<ShadowMapBuffer*, std::unique_ptr<ShadowMapBuffer>> sBufferMap_;
+=======
+>>>>>>> TD2_3:KashipanEngine/Graphics/ShadowMapBuffer.h
 
     ShadowMapBuffer() = default;
 

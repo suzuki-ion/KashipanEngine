@@ -408,6 +408,7 @@
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\Value.h" />
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonInput.h" />
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonOutput.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
@@ -522,5 +523,8 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocity.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.DotMatrix.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DotMatrix.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DotMatrixPS.hlsl" />
   </ItemGroup>
 </Project>

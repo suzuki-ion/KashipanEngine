@@ -14,22 +14,11 @@ inline void AppInitialize(const GameEngine::Context &context) {
     auto monitorInfoOpt = WindowsAPI::QueryMonitorInfo();
     const RECT area = monitorInfoOpt ? monitorInfoOpt->WorkArea() : RECT{ 0, 0, 1280, 720 };
 
-    D3D12_SAMPLER_DESC desc{};
-    desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    desc.MaxLOD = D3D12_FLOAT32_MAX;
-    desc.MaxAnisotropy = 1;
-    auto samplerHandle = SamplerManager::CreateSampler(desc);
-
     Window::CreateNormal("2301_CLUBOM", 1920, 1280);
 
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
-        sm->AddSceneVariable("ShadowSampler", samplerHandle);
-
+        
         sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<MenuScene>("MenuScene");
         sm->RegisterScene<GameScene>("GameScene");

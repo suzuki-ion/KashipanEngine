@@ -29,20 +29,27 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
     return (ds && ds->HasSrv()) ? ds->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
-std::vector<PostEffectPass> ScreenBuffer::BuildPostEffectPasses(Passkey<Renderer>) const {
-    std::vector<PostEffectPass> out;
-    out.reserve(postEffectComponents_.size());
+const std::vector<PostEffectPass> &ScreenBuffer::BuildPostEffectPasses(Passkey<Renderer>) const {
+    // キャッシュが有効ならそのまま返す
+    if (!cachedPostEffectPassesDirty_) {
+        return cachedPostEffectPasses_;
+    }
+
+    cachedPostEffectPasses_.clear();
+    // ある程度の容量を確保（コンポーネントごとに複数パスを持つ可能性があるので若干余裕）
+    cachedPostEffectPasses_.reserve(postEffectComponents_.size() * 2u);
 
     for (const auto& c : postEffectComponents_) {
         if (!c) continue;
         auto passes = c->BuildPostEffectPasses();
         if (passes.empty()) continue;
         for (auto& p : passes) {
-            out.push_back(std::move(p));
+            cachedPostEffectPasses_.push_back(std::move(p));
         }
     }
 
-    return out;
+    cachedPostEffectPassesDirty_ = false;
+    return cachedPostEffectPasses_;
 }
 
 ScreenBuffer* ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
@@ -233,6 +240,10 @@ void ScreenBuffer::Destroy() {
     }
     postEffectComponents_.clear();
 
+    // コンポーネント削除なのでキャッシュをクリア／無効化
+    cachedPostEffectPasses_.clear();
+    cachedPostEffectPassesDirty_ = true;
+
     for (size_t i = 0; i < kBufferCount_; ++i) {
         shaderResources_[i].reset();
         depthStencils_[i].reset();
@@ -379,6 +390,10 @@ bool ScreenBuffer::RegisterPostEffectComponent(std::unique_ptr<IPostEffectCompon
     component->Initialize();
 
     postEffectComponents_.push_back(std::move(component));
+
+    // 追加されたのでキャッシュ無効化
+    cachedPostEffectPassesDirty_ = true;
+
     return true;
 }
 

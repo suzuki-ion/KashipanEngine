@@ -16,6 +16,18 @@ void BackMonitor::Initialize() {
     screenBuffer_ = ScreenBuffer::Create(1280, 720);
     if (!screenBuffer_) return;
 
+    {
+        DotMatrixEffect::Params dp{};
+        dp.dotSpacing = 10.0f;
+        dp.dotRadius = 4.0f;
+        dp.threshold = 0.0f;
+        dp.intensity = 2.0f;
+        dp.monochrome = false;
+        screenBuffer_->RegisterPostEffectComponent(std::make_unique<DotMatrixEffect>(dp));
+
+        screenBuffer_->AttachToRenderer("ScreenBuffer_BackMonitor");
+    }
+
     // Camera2D生成
     {
         auto obj = std::make_unique<Camera2D>();
@@ -28,6 +40,15 @@ void BackMonitor::Initialize() {
         camera2D_ = obj.get();
         context->AddObject2D(std::move(obj));
     }
+    // Camera3D生成
+    {
+        auto obj = std::make_unique<Camera3D>();
+        obj->SetName("Camera3D_BackMonitor");
+        obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        camera3D_ = obj.get();
+        context->AddObject3D(std::move(obj));
+    }
+
     // Sprite生成
     {
         auto obj = std::make_unique<Sprite>();
@@ -46,21 +67,53 @@ void BackMonitor::Initialize() {
         sprite_ = obj.get();
         context->AddObject2D(std::move(obj));
     }
-    // Plane3D生成
+
+    // 板ポリの親オブジェクト生成
+    {
+        // 適当な3Dオブジェクトを親にする
+        auto obj = std::make_unique<Triangle3D>();
+        obj->SetUniqueBatchKey();
+        obj->SetName("BackMonitor Plane Parent");
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetScale(Vector3{ 25.6f, 14.4f, 1.0f });
+            tr->SetTranslate(Vector3{ 10.0f, 9.5f, 35.0f });
+        }
+        planeParent_ = obj.get();
+        context->AddObject3D(std::move(obj));
+    }
+
+    // 背景用Plane3D生成
+    {
+        auto obj = std::make_unique<Plane3D>();
+        obj->SetUniqueBatchKey();
+        obj->SetName("BackMonitor Background Plane");
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetParentTransform(planeParent_->GetComponent3D<Transform3D>());
+        }
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetTexture(whiteTex);
+            mat->SetEnableLighting(false);
+            mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 1.0f });
+        }
+        obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+        planeBack_ = obj.get();
+        context->AddObject3D(std::move(obj));
+    }
+
+    // モニター用Plane3D生成
     {
         auto obj = std::make_unique<Plane3D>();
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor Plane");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3{ 25.6f, 14.4f, 1.0f });
-            tr->SetTranslate(Vector3{ 10.0f, 9.5f, 35.0f });
+            tr->SetParentTransform(planeParent_->GetComponent3D<Transform3D>());
         }
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
             mat->SetTexture(whiteTex);
             mat->SetEnableLighting(false);
         }
         obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         plane3D_ = obj.get();
         context->AddObject3D(std::move(obj));
     }

@@ -42,6 +42,14 @@ void TestScene::Initialize() {
         bp.blurRadius = 0.0f;
         bp.iterations = 4;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+
+        /*DotMatrixEffect::Params dp{};
+        dp.dotRadius = 8.0f;
+        dp.dotSpacing = 4.0f;
+        dp.intensity = 1.0f;
+        dp.threshold = 0.0f;
+        dp.monochrome = false;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<DotMatrixEffect>(dp));*/
         
         screenBuffer3D->AttachToRenderer("ScreenBuffer_TitleScene");
     }

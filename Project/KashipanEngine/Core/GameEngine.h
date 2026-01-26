@@ -133,6 +133,8 @@ private:
     bool isGameLoopRunning_ = false;
     /// @brief ゲームループ一時停止フラグ
     bool isGameLoopPaused_ = false;
+    /// @brief フレーム単位で進める要求フラグ（ポーズ中のみ有効）
+    bool isNextFrameRequested_ = false;
 
     /// @brief ゲームループ終了条件関数
     std::function<bool()> gameLoopEndConditionFunction_;

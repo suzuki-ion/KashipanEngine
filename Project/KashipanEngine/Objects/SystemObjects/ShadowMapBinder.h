@@ -23,9 +23,7 @@ public:
     ShadowMapBuffer* GetShadowMapBuffer() const { return shadowMapBuffer_; }
 
     void SetCamera3D(Camera3D *camera) { camera3D_ = camera; }
-
     void SetShadowMapNameKey(std::string nameKey) { shadowMapNameKey_ = std::move(nameKey); }
-    void SetShadowSamplerNameKey(std::string nameKey) { shadowSamplerNameKey_ = std::move(nameKey); }
 
 protected:
     bool Render(ShaderVariableBinder& shaderBinder) override;
@@ -38,7 +36,7 @@ private:
 
     std::string shadowMapConstantsNameKey_ = "Pixel:ShadowMapConstants";
     std::string shadowMapNameKey_ = "Pixel:gShadowMap";
-    std::string shadowSamplerNameKey_ = "Pixel:gShadowSampler";
+    std::string shadowSamplerCmpNameKey_ = "Pixel:gShadowSamplerCmp";
 };
 
 } // namespace KashipanEngine

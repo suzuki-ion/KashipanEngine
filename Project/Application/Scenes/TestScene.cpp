@@ -12,11 +12,10 @@ TestScene::TestScene()
 }
 
 void TestScene::Initialize() {
-    [[maybe_unused]] auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
-    [[maybe_unused]] auto *screenBuffer2D = defaultVariables ? defaultVariables->GetScreenBuffer2D() : nullptr;
-    [[maybe_unused]] auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
-    [[maybe_unused]] auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
-    [[maybe_unused]] auto *lightManager = defaultVariables ? defaultVariables->GetLightManager() : nullptr;
+    auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
+    auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
+    auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
+    auto *lightManager = defaultVariables ? defaultVariables->GetLightManager() : nullptr;
 
     if (screenBuffer3D) {
         ChromaticAberrationEffect::Params p{};

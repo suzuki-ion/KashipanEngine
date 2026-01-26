@@ -61,18 +61,13 @@ TitleScene::TitleScene()
     auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
     // デフォルト変数を取得
-    [[maybe_unused]] auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
-    [[maybe_unused]] auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
-    [[maybe_unused]] auto *screenBuffer2D = defaultVariables ? defaultVariables->GetScreenBuffer2D() : nullptr;
-    [[maybe_unused]] auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
-    [[maybe_unused]] auto *lightManager = defaultVariables ? defaultVariables->GetLightManager() : nullptr;
-    [[maybe_unused]] auto *mainCamera3D = defaultVariables ? defaultVariables->GetMainCamera3D() : nullptr;
-    [[maybe_unused]] auto *lightCamera3D = defaultVariables ? defaultVariables->GetLightCamera3D() : nullptr;
-    [[maybe_unused]] auto *directionalLight = defaultVariables ? defaultVariables->GetDirectionalLight() : nullptr;
-    [[maybe_unused]] auto *shadowMapBinder = defaultVariables ? defaultVariables->GetShadowMapBinder() : nullptr;
-    [[maybe_unused]] auto *shadowMapCameraSync = defaultVariables ? defaultVariables->GetShadowMapCameraSync() : nullptr;
-    [[maybe_unused]] auto *screenSprite = defaultVariables ? defaultVariables->GetScreenBuffer2DSprite() : nullptr;
-    [[maybe_unused]] auto *colliderComp = defaultVariables ? defaultVariables->GetColliderComp() : nullptr;
+    auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
+    auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
+    auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
+    auto *mainCamera3D = defaultVariables ? defaultVariables->GetMainCamera3D() : nullptr;
+    auto *directionalLight = defaultVariables ? defaultVariables->GetDirectionalLight() : nullptr;
+    auto *shadowMapCameraSync = defaultVariables ? defaultVariables->GetShadowMapCameraSync() : nullptr;
+    auto *colliderComp = defaultVariables ? defaultVariables->GetColliderComp() : nullptr;
 
     if (screenBuffer3D) {
         ChromaticAberrationEffect::Params p{};

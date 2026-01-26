@@ -1,4 +1,5 @@
 #include "TextureManager.h"
+#include "Assets/CaseInsensitive.h"
 
 #include "Core/DirectXCommon.h"
 #include "Debug/Logger.h"
@@ -46,8 +47,8 @@ struct TextureEntry final {
 };
 
 std::unordered_map<Handle, TextureEntry> sTextures;
-std::unordered_map<std::string, Handle> sFileNameToHandle;
-std::unordered_map<std::string, Handle> sAssetPathToHandle;
+FileMap<Handle> sFileNameToHandle;
+FileMap<Handle> sAssetPathToHandle;
 
 ID3D12Device* sDevice = nullptr;
 SRVHeap* sSrvHeap = nullptr;

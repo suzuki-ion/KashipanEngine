@@ -35,12 +35,17 @@ namespace KashipanEngine {
         /// @brief BPM進行度の設定（外部から更新される）
         /// @param bpmProgress BPM進行度（0.0～1.0）
         void SetBPMProgress(float bpmProgress) { bpmProgress_ = bpmProgress; }
+		void SetBPMDuration(float duration) { bpmDuration_ = duration; }
 
         void SetEaseType(EaseType easeType) { easeType_ = easeType; }
 
         void SetElapsedBeats(int beats) { elapsedBeats = beats; }
         void SetMaxBeats(int beats) { maxBeats = beats; }
         
+        void SetNormalScaleRange(const Vector3& minScale, const Vector3& maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
+		void SetSpeedScaleRange(const Vector3& minScale, const Vector3& maxScale) { minSpeedScale_ = minScale; maxSpeedScale_ = maxScale; }
+        void SetDetonationScale(const Vector3& scale) { detonationScale_ = scale; }
+
         float GetSpeedProgress() { return speedScaleTimer_.GetProgress(); }
         float GetSpeed2Progress() { return speed2ScaleTimer_.GetProgress(); }
         float GetSpeed3Progress() { return speed3ScaleTimer_.GetProgress(); }
@@ -52,19 +57,20 @@ namespace KashipanEngine {
 #endif
 
     private:
-        Vector3 minScale_ = { 0.9f,0.9f,0.9f };          // 最小スケール係数
-        Vector3 maxScale_ = { 1.1f,1.1f,1.1f };          // 最大スケール係数
+        Vector3 minScale_ = { 0.9f,0.9f,0.9f };               // 最小スケール係数
+        Vector3 maxScale_ = { 1.1f,1.1f,1.1f };               // 最大スケール係数
 
         Vector3 minSpeedScale_ = { 0.8f,0.8f,0.8f };          // 最小スケール係数
         Vector3 maxSpeedScale_ = { 1.0f,1.0f,1.0f };          // 最大スケール係数
 
         Vector3 detonationScale_ = { 1.5f, 1.5f, 1.5f }; // 起爆時のスケール係数
 
+		float bpmDuration_ = 0.5f; // BPMに合わせた拡縮の所要時間（秒）
         float bpmProgress_ = 0.0f; // BPM進行度（0.0～1.0）
 
         int elapsedBeats = 0; // 経過拍数
         int maxBeats = 4;     // 最大拍数
-		int countBeats_ = 0;   // カウント用拍数
+		int countBeats_ = 0;  // カウント用拍数
 
 		GameTimer speedScaleTimer_; // 速度スケールタイマー
         GameTimer speed2ScaleTimer_; // 速度スケールタイマー

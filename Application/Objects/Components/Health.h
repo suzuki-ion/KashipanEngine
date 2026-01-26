@@ -55,7 +55,7 @@ public:
 
         // ダメージを受けた時にカメラをシェイク
         if (cameraController_) {
-            cameraController_->Shake(5.0f, 1.0f);
+            cameraController_->Shake(shakePower_, shakeTime_);
         }
 
         UpdateMaterialTint();
@@ -73,6 +73,10 @@ public:
     /// @brief 点滅間隔を設定（秒）
     void SetBlinkInterval(float interval) { blinkInterval_ = interval; }
 
+    void SetShake(float power, float time) {
+        shakePower_ = power;
+        shakeTime_ = time;
+	}
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::TextUnformatted("Health");
@@ -120,6 +124,9 @@ private:
     // 点滅設定
     float blinkInterval_ = 0.1f; // 0.1秒ごとに点滅
     float blinkTimer_ = 0.0f;
+
+	float shakePower_ = 5.0f;
+	float shakeTime_ = 1.0f;
 
     CameraController* cameraController_ = nullptr;
 };

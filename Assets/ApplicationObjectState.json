@@ -1,0 +1,154 @@
+{
+  "values": [
+  {
+    "name": "bpm",
+    "type": 1,
+    "value": 120
+  },
+  {
+    "name": "mapScaleMin_x",
+    "type": 2,
+    "value": 0.650000
+  },
+  {
+    "name": "mapScaleMin_y",
+    "type": 2,
+    "value": 0.950000
+  },
+  {
+    "name": "mapScaleMin_z",
+    "type": 2,
+    "value": 0.950000
+  },
+  {
+    "name": "mapScaleMax_x",
+    "type": 2,
+    "value": 0.950000
+  },
+  {
+    "name": "mapScaleMax_y",
+    "type": 2,
+    "value": 0.950000
+  },
+  {
+    "name": "mapScaleMax_z",
+    "type": 2,
+    "value": 0.950000
+  },
+  {
+    "name": "allMapAnimation",
+    "type": 3,
+    "value": false
+  },
+  {
+    "name": "pDamageShakePower",
+    "type": 2,
+    "value": 5.000000
+  },
+  {
+    "name": "pDamageShakeTime",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "bombShakePower",
+    "type": 2,
+    "value": 5.000000
+  },
+  {
+    "name": "bombShakeTime",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "playerScaleMin_x",
+    "type": 2,
+    "value": 1.100000
+  },
+  {
+    "name": "playerScaleMin_y",
+    "type": 2,
+    "value": 0.750000
+  },
+  {
+    "name": "playerScaleMin_z",
+    "type": 2,
+    "value": 1.100000
+  },
+  {
+    "name": "playerScaleMax_x",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "playerScaleMax_y",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "playerScaleMax_z",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "playerBpmToleranceRange",
+    "type": 2,
+    "value": 0.200000
+  },
+  {
+    "name": "playerMoveDuration",
+    "type": 2,
+    "value": 0.100000
+  },
+  {
+    "name": "bombMaxNumber",
+    "type": 1,
+    "value": 3
+  },
+  {
+    "name": "bombLifetimeBeats",
+    "type": 1,
+    "value": 4
+  },
+  {
+    "name": "bombNormalMinScale",
+    "type": 2,
+    "value": 0.900000
+  },
+  {
+    "name": "bombNormalMaxScale",
+    "type": 2,
+    "value": 1.100000
+  },
+  {
+    "name": "bombSpeedMinScale",
+    "type": 2,
+    "value": 0.800000
+  },
+  {
+    "name": "bombSpeedMaxScale",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "bombDetonationScale",
+    "type": 2,
+    "value": 1.500000
+  },
+  {
+    "name": "explosionLifetime",
+    "type": 2,
+    "value": 0.500000
+  },
+  {
+    "name": "explosionSize",
+    "type": 1,
+    "value": 3
+  },
+  {
+    "name": "enemySpawnInterval",
+    "type": 1,
+    "value": 4
+  }
+  ]
+}

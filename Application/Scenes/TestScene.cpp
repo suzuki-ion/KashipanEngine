@@ -296,59 +296,6 @@ void TestScene::Initialize() {
     // ステージ後ろの画面用
     AddSceneComponent(std::make_unique<BackMonitor>());
 
-    //if (playBgm_) {
-    //    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
-    //    if (handle == AudioManager::kInvalidSoundHandle) {
-    //        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
-    //        return;
-    //    }
-    //    AudioManager::Play(handle, 0.05f, 0.0f, true);
-    //}
-
-    // Particles
-    /*{
-        ParticleMovement::SpawnBox spawn;
-        spawn.min = Vector3(-16.0f, 0.0f, -16.0f);
-        spawn.max = Vector3(16.0f, 16.0f, 16.0f);
-
-        int instanceCount = 128;
-
-        particleLights_.clear();
-        particleLights_.reserve(instanceCount);
-
-        for (int i = 0; i < instanceCount; ++i) {
-            auto obj = std::make_unique<Box>();
-            obj->SetName("ParticleBox_" + std::to_string(i));
-            obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{0.5f, 0.5f, 0.5f});
-
-            if (auto* mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetEnableLighting(true);
-                mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
-
-            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-            if (velocityBuffer) obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
-
-            auto* particlePtr = obj.get();
-            AddObject3D(std::move(obj));
-
-            auto lightObj = std::make_unique<PointLight>();
-            lightObj->SetName("ParticlePointLight_" + std::to_string(i));
-            lightObj->SetEnabled(true);
-            lightObj->SetColor(particleLightColor_);
-            lightObj->SetIntensity(0.0f);
-            lightObj->SetRange(0.0f);
-
-            auto* lightPtr = lightObj.get();
-            if (screenBuffer3D) lightObj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            AddObject3D(std::move(lightObj));
-
-            particleLights_.push_back(ParticleLightPair{ particlePtr, lightPtr });
-            lightManager->AddPointLight(lightPtr);
-        }
-    }*/
-
     //==================================================
     // ↑ ここまでゲームオブジェクト定義 ↑
     //==================================================

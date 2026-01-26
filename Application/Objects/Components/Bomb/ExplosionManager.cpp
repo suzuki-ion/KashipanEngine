@@ -90,7 +90,7 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
 
     // 爆弾が起爆した瞬間にカメラをシェイク
     if (cameraController_) {
-        cameraController_->Shake(5.0f, 1.0f);
+        cameraController_->Shake(shakePower_, shakeTime_);
     }
 
     // 爆発オブジェクトを作成（BombManagerと同じパターン）

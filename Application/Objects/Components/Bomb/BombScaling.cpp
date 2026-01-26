@@ -25,6 +25,7 @@ namespace KashipanEngine {
             if (speed2ScaleTimer_.IsFinished()) {
                 countBeats_++;
             }
+
             if (countBeats_ >= 3) {
                 if (!speed3ScaleTimer_.IsActive()) {
                     speed3ScaleTimer_.Start(0.2f, true);

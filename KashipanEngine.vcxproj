@@ -222,6 +222,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\JsonManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
@@ -456,6 +459,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonInput.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonOutput.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\Value.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\JsonManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />

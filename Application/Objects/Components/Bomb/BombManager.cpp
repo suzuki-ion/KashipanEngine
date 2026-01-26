@@ -41,6 +41,11 @@ void BombManager::Update() {
             bpmScaling->SetBPMProgress(bpmProgress_);
 			bpmScaling->SetElapsedBeats(bomb.elapsedBeats);
             bpmScaling->SetMaxBeats(bombLifetimeBeats_);
+			bpmScaling->SetBPMDuration(beatDuration_);
+            bpmScaling->SetNormalScaleRange(minScale_, maxScale_);
+			bpmScaling->SetSpeedScaleRange(minSpeedScale_, maxSpeedScale_);
+			bpmScaling->SetDetonationScale(detonationScale_);
+
             if (auto* mt = bomb.object->GetComponent3D<Material3D>()) {
                 if (bpmScaling->IsSpeedScaling()) {
                     mt->SetColor(Vector4::Lerp({ 0.0f,0.0f,0.0f,1.0f }, { 1.0f,0.0f,0.0f,1.0f }, bpmScaling->GetSpeedProgress()));

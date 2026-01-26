@@ -78,6 +78,10 @@ public:
     /// @param hitObject 当たったオブジェクト
     void OnEnemyHit(Object3DBase* hitObject);
 
+	/// @brief 爆弾のスケール範囲を設定
+    void SetNormalScaleRange(const Vector3& minScale, const Vector3& maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
+    void SetSpeedScaleRange(const Vector3& minScale, const Vector3& maxScale) { minSpeedScale_ = minScale; maxSpeedScale_ = maxScale; }
+    void SetDetonationScale(const Vector3& scale) { detonationScale_ = scale; }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -126,6 +130,12 @@ private:
 
     int mapWidth_ = 13;              // マップの横幅（グリッド数）
     int mapHeight_ = 13;             // マップの縦幅（グリッド数）
+
+    Vector3 minScale_ = { 0.9f,0.9f,0.9f };               // 最小スケール係数
+    Vector3 maxScale_ = { 1.1f,1.1f,1.1f };               // 最大スケール係数
+    Vector3 minSpeedScale_ = { 0.8f,0.8f,0.8f };          // 最小スケール係数
+    Vector3 maxSpeedScale_ = { 1.0f,1.0f,1.0f };          // 最大スケール係数
+    Vector3 detonationScale_ = { 1.5f, 1.5f, 1.5f };      // 起爆時のスケール係数
 };
 
 } // namespace KashipanEngine

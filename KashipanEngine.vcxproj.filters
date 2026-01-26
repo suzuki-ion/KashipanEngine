@@ -143,6 +143,9 @@
     <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\JsonManager.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -401,6 +404,10 @@
     <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\JsonManager.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\Value.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonInput.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonOutput.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

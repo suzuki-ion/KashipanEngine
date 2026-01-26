@@ -300,6 +300,10 @@ public:
 
     /// @brief ウィンドウがアクティブかどうかを取得する
     bool IsActive() const noexcept { return HasMessage(WM_ACTIVATE); }
+    /// @brief ウィンドウが移動中かどうかを取得する
+    bool IsMoving() const noexcept { return HasMessage(WM_ENTERSIZEMOVE) && !HasMessage(WM_EXITSIZEMOVE); }
+    /// @brief ウィンドウにフォーカスがあるかどうかを取得する
+    bool IsFocused() const noexcept { return GetFocus() == descriptor_.hwnd; }
     /// @brief ウィンドウがサイズ変更中かどうかを取得する
     bool IsResizing() const noexcept { return HasMessage(WM_ENTERSIZEMOVE) && !HasMessage(WM_EXITSIZEMOVE); }
     /// @brief ウィンドウが閉じられたかどうかを取得する

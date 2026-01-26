@@ -9,8 +9,6 @@
 
 namespace KashipanEngine {
 
-std::unordered_map<ShadowMapBuffer*, std::unique_ptr<ShadowMapBuffer>> ShadowMapBuffer::sBufferMap_{};
-
 namespace {
 struct RecordState {
     ID3D12GraphicsCommandList* list = nullptr;
@@ -18,10 +16,11 @@ struct RecordState {
     bool started = false;
 };
 
-static std::unordered_map<ShadowMapBuffer*, RecordState> sRecordStates;
+std::unordered_map<ShadowMapBuffer *, std::unique_ptr<ShadowMapBuffer>> sBufferMap{};
+std::unordered_map<ShadowMapBuffer*, RecordState> sRecordStates;
 
 // Window と同様に「破棄要求→フレーム終端で実破棄」のための pending リスト
-static std::vector<ShadowMapBuffer*> sPendingDestroy;
+std::vector<ShadowMapBuffer*> sPendingDestroy;
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ShadowMapBuffer::GetSrvHandle() const noexcept {
@@ -36,21 +35,21 @@ ShadowMapBuffer* ShadowMapBuffer::Create(std::uint32_t width, std::uint32_t heig
         return nullptr;
     }
 
-    sBufferMap_.emplace(raw, std::move(buffer));
+    sBufferMap.emplace(raw, std::move(buffer));
     return raw;
 }
 
 void ShadowMapBuffer::AllDestroy(Passkey<GameEngine>) {
-    sBufferMap_.clear();
+    sBufferMap.clear();
 }
 
 size_t ShadowMapBuffer::GetBufferCount() {
-    return sBufferMap_.size();
+    return sBufferMap.size();
 }
 
 bool ShadowMapBuffer::IsExist(ShadowMapBuffer* buffer) {
     if (!buffer) return false;
-    return sBufferMap_.find(buffer) != sBufferMap_.end();
+    return sBufferMap.find(buffer) != sBufferMap.end();
 }
 
 void ShadowMapBuffer::DestroyNotify(ShadowMapBuffer* buffer) {
@@ -73,9 +72,9 @@ void ShadowMapBuffer::CommitDestroy(Passkey<GameEngine>) {
 
     for (auto* ptr : sPendingDestroy) {
         if (!ptr) continue;
-        auto it = sBufferMap_.find(ptr);
-        if (it == sBufferMap_.end()) continue;
-        sBufferMap_.erase(it);
+        auto it = sBufferMap.find(ptr);
+        if (it == sBufferMap.end()) continue;
+        sBufferMap.erase(it);
     }
 
     sPendingDestroy.clear();
@@ -114,7 +113,7 @@ void ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow() {
         ImGui::TableSetupColumn("Select");
         ImGui::TableHeadersRow();
 
-        for (auto &kv : sBufferMap_) {
+        for (auto &kv : sBufferMap) {
             ShadowMapBuffer *ptr = kv.first;
             if (!ptr) continue;
 
@@ -199,9 +198,9 @@ void ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow() {
 
 void ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>) {
     sRecordStates.clear();
-    sRecordStates.reserve(sBufferMap_.size());
+    sRecordStates.reserve(sBufferMap.size());
 
-    for (auto& [ptr, owning] : sBufferMap_) {
+    for (auto& [ptr, owning] : sBufferMap) {
         if (!ptr || !owning) continue;
         if (IsPendingDestroy(ptr)) continue;
 

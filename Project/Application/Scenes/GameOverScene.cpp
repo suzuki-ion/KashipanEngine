@@ -39,14 +39,13 @@ GameOverScene::GameOverScene()
         bgmPlay_ = AudioManager::Play(sound, 1.0f, 0.0f, true);
     }
 
-    [[maybe_unused]] auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
-    [[maybe_unused]] auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
-    [[maybe_unused]] auto *screenBuffer2D = defaultVariables ? defaultVariables->GetScreenBuffer2D() : nullptr;
-    [[maybe_unused]] auto *mainCamera3D = defaultVariables ? defaultVariables->GetMainCamera3D() : nullptr;
-    [[maybe_unused]] auto *shadowMapCameraSync = defaultVariables ? defaultVariables->GetShadowMapCameraSync() : nullptr;
-    [[maybe_unused]] auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
-    [[maybe_unused]] auto *directionalLight = defaultVariables ? defaultVariables->GetDirectionalLight() : nullptr;
-    [[maybe_unused]] auto *colliderComp = defaultVariables ? defaultVariables->GetColliderComp() : nullptr;
+    auto *defaultVariables = GetSceneComponent<SceneDefaultVariables>();
+    auto *screenBuffer3D = defaultVariables ? defaultVariables->GetScreenBuffer3D() : nullptr;
+    auto *mainCamera3D = defaultVariables ? defaultVariables->GetMainCamera3D() : nullptr;
+    auto *shadowMapCameraSync = defaultVariables ? defaultVariables->GetShadowMapCameraSync() : nullptr;
+    auto *shadowMapBuffer = defaultVariables ? defaultVariables->GetShadowMapBuffer() : nullptr;
+    auto *directionalLight = defaultVariables ? defaultVariables->GetDirectionalLight() : nullptr;
+    auto *colliderComp = defaultVariables ? defaultVariables->GetColliderComp() : nullptr;
 
     // カメラの初期値設定
     if (mainCamera3D) {

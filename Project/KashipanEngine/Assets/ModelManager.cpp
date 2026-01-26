@@ -1,4 +1,5 @@
 #include "ModelManager.h"
+#include "Assets/CaseInsensitive.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/FileIO/Directory.h"
@@ -35,8 +36,8 @@ struct ModelEntry final {
 };
 
 std::unordered_map<Handle, ModelEntry> sModels;
-std::unordered_map<std::string, Handle> sFileNameToHandle;
-std::unordered_map<std::string, Handle> sAssetPathToHandle;
+FileMap<Handle> sFileNameToHandle;
+FileMap<Handle> sAssetPathToHandle;
 
 std::string NormalizePathSlashes(std::string s) {
     std::replace(s.begin(), s.end(), '\\', '/');
@@ -263,36 +264,54 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
 ModelManager::ModelHandle ModelManager::GetModelHandleFromFileName(const std::string& fileName) {
     LogScope scope;
     auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidHandle;
+    if (it == sFileNameToHandle.end()) {
+        Log(Translation("engine.model.gethandle.failed.notfound") + fileName, LogSeverity::Warning);
+        return kInvalidHandle;
+    }
     return it->second;
 }
 
 ModelManager::ModelHandle ModelManager::GetModelHandleFromAssetPath(const std::string& assetPath) {
     LogScope scope;
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    if (it == sAssetPathToHandle.end()) return kInvalidHandle;
+    if (it == sAssetPathToHandle.end()) {
+        Log(Translation("engine.model.gethandle.failed.notfound") + assetPath, LogSeverity::Warning);
+        return kInvalidHandle;
+    }
     return it->second;
 }
 
 const ModelData &ModelManager::GetModelData(ModelHandle handle) {
     LogScope scope;
-    if (handle == kInvalidHandle) return sEmptyData;
+    if (handle == kInvalidHandle) {
+        Log(Translation("engine.model.getdata.failed.invalidhandle"), LogSeverity::Warning);
+        return sEmptyData;
+    }
     auto it = sModels.find(handle);
-    if (it == sModels.end()) return sEmptyData;
+    if (it == sModels.end()) {
+        Log(Translation("engine.model.getdata.failed.notfound") + std::to_string(handle), LogSeverity::Warning);
+        return sEmptyData;
+    }
     return it->second.data;
 }
 
 const ModelData &ModelManager::GetModelDataFromFileName(const std::string &fileName) {
     LogScope scope;
     const auto h = GetModelHandleFromFileName(fileName);
-    if (h == kInvalidHandle) return sEmptyData;
+    if (h == kInvalidHandle) {
+        Log(Translation("engine.model.getdata.failed.notfound") + fileName, LogSeverity::Warning);
+        return sEmptyData;
+    }
     return GetModelData(h);
 }
 
 const ModelData &ModelManager::GetModelDataFromAssetPath(const std::string &assetPath) {
     LogScope scope;
     const auto h = GetModelHandleFromAssetPath(assetPath);
-    if (h == kInvalidHandle) return sEmptyData;
+    if (h == kInvalidHandle) {
+        Log(Translation("engine.model.getdata.failed.notfound") + assetPath, LogSeverity::Warning);
+        return sEmptyData;
+    }
     return GetModelData(h);
 }
 

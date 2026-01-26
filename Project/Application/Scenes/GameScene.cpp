@@ -62,17 +62,12 @@ GameScene::GameScene()
 
     // SceneDefaultVariables からポインタを取得して使用
     sceneDefault_ = GetSceneComponent<SceneDefaultVariables>();
-    [[maybe_unused]] auto *screenBuffer3D = sceneDefault_ ? sceneDefault_->GetScreenBuffer3D() : nullptr;
-    [[maybe_unused]] auto *screenBuffer2D = sceneDefault_ ? sceneDefault_->GetScreenBuffer2D() : nullptr;
-    [[maybe_unused]] auto *mainCamera3D = sceneDefault_ ? sceneDefault_->GetMainCamera3D() : nullptr;
-    [[maybe_unused]] auto *shadowMapBuffer = sceneDefault_ ? sceneDefault_->GetShadowMapBuffer() : nullptr;
-    [[maybe_unused]] auto *lightManager = sceneDefault_ ? sceneDefault_->GetLightManager() : nullptr;
-    [[maybe_unused]] auto *lightCamera3D = sceneDefault_ ? sceneDefault_->GetLightCamera3D() : nullptr;
-    [[maybe_unused]] auto *directionalLight = sceneDefault_ ? sceneDefault_->GetDirectionalLight() : nullptr;
-    [[maybe_unused]] auto *shadowMapBinder = sceneDefault_ ? sceneDefault_->GetShadowMapBinder() : nullptr;
-    [[maybe_unused]] auto *shadowCameraSync = sceneDefault_ ? sceneDefault_->GetShadowMapCameraSync() : nullptr;
-    [[maybe_unused]] auto *screen2DSprite = sceneDefault_ ? sceneDefault_->GetScreenBuffer2DSprite() : nullptr;
-    [[maybe_unused]] auto *screen3DSprite = sceneDefault_ ? sceneDefault_->GetScreenBuffer3DSprite() : nullptr;
+    auto *screenBuffer3D = sceneDefault_ ? sceneDefault_->GetScreenBuffer3D() : nullptr;
+    auto *screenBuffer2D = sceneDefault_ ? sceneDefault_->GetScreenBuffer2D() : nullptr;
+    auto *mainCamera3D = sceneDefault_ ? sceneDefault_->GetMainCamera3D() : nullptr;
+    auto *shadowMapBuffer = sceneDefault_ ? sceneDefault_->GetShadowMapBuffer() : nullptr;
+    auto *directionalLight = sceneDefault_ ? sceneDefault_->GetDirectionalLight() : nullptr;
+    auto *screen3DSprite = sceneDefault_ ? sceneDefault_->GetScreenBuffer3DSprite() : nullptr;
 
     if (screenBuffer3D) {
         ChromaticAberrationEffect::Params p{};

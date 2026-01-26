@@ -75,7 +75,6 @@ public:
 
 private:
     static inline DirectXCommon* sDirectXCommon_ = nullptr;
-    static std::unordered_map<ShadowMapBuffer*, std::unique_ptr<ShadowMapBuffer>> sBufferMap_;
 
     ShadowMapBuffer() = default;
 

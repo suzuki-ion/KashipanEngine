@@ -255,7 +255,7 @@ void Renderer::RenderScreenPasses() {
 
         auto *buffer = passInfo->screenBuffer;
 
-        auto effectPasses = buffer->BuildPostEffectPasses(Passkey<Renderer>{});
+        const auto &effectPasses = buffer->BuildPostEffectPasses(Passkey<Renderer>{});
         if (effectPasses.empty()) {
             continue;
         }

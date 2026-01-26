@@ -29,20 +29,27 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
     return (ds && ds->HasSrv()) ? ds->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
-std::vector<PostEffectPass> ScreenBuffer::BuildPostEffectPasses(Passkey<Renderer>) const {
-    std::vector<PostEffectPass> out;
-    out.reserve(postEffectComponents_.size());
+const std::vector<PostEffectPass> &ScreenBuffer::BuildPostEffectPasses(Passkey<Renderer>) const {
+    // キャッシュが有効ならそのまま返す
+    if (!cachedPostEffectPassesDirty_) {
+        return cachedPostEffectPasses_;
+    }
+
+    cachedPostEffectPasses_.clear();
+    // ある程度の容量を確保（コンポーネントごとに複数パスを持つ可能性があるので若干余裕）
+    cachedPostEffectPasses_.reserve(postEffectComponents_.size() * 2u);
 
     for (const auto& c : postEffectComponents_) {
         if (!c) continue;
         auto passes = c->BuildPostEffectPasses();
         if (passes.empty()) continue;
         for (auto& p : passes) {
-            out.push_back(std::move(p));
+            cachedPostEffectPasses_.push_back(std::move(p));
         }
     }
 
-    return out;
+    cachedPostEffectPassesDirty_ = false;
+    return cachedPostEffectPasses_;
 }
 
 ScreenBuffer* ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
@@ -206,7 +213,7 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 
     rtvWriteIndex_ = 0;
     dsvWriteIndex_ = 0;
-    lastBeginDisableDepthWrite_ = false;
+    isLastBeginDisableDepthWrite_ = false;
 
     for (size_t i = 0; i < kBufferCount_; ++i) {
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
@@ -232,6 +239,10 @@ void ScreenBuffer::Destroy() {
         c->Finalize();
     }
     postEffectComponents_.clear();
+
+    // コンポーネント削除なのでキャッシュをクリア／無効化
+    cachedPostEffectPasses_.clear();
+    cachedPostEffectPassesDirty_ = true;
 
     for (size_t i = 0; i < kBufferCount_; ++i) {
         shaderResources_[i].reset();
@@ -264,14 +275,22 @@ ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord(bool disableDepthWrite) {
     LogScope scope;
     if (!dx12Commands_) return nullptr;
 
-    // BeginRecord の設定を記憶（EndRecord の動作に使用）
-    lastBeginDisableDepthWrite_ = disableDepthWrite;
+    isLastBeginDisableDepthWrite_ = disableDepthWrite;
 
     auto *cmd = dx12Commands_->GetCommandList();
     auto* rt = renderTargets_[GetRtvWriteIndex()].get();
     auto* ds = depthStencils_[GetDsvWriteIndex()].get();
     if (!rt) return nullptr;
     if (!disableDepthWrite && !ds) return nullptr;
+
+    // 初回のみRead面のバリアも設定
+    if (isFirstBeginRecord_) {
+        auto* rtRead = renderTargets_[GetRtvReadIndex()].get();
+        auto *dsRead = depthStencils_[GetDsvReadIndex()].get();
+        if (rtRead) rtRead->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        if (!disableDepthWrite && dsRead) dsRead->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_READ);
+        isFirstBeginRecord_ = false;
+    }
 
     if (!rt->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET)) {
         return nullptr;
@@ -333,7 +352,7 @@ bool ScreenBuffer::EndRecord(bool discard) {
     }
 
     // BeginRecord で depth を触っていない場合は、ここでも触らない
-    if (!lastBeginDisableDepthWrite_ && ds) {
+    if (!isLastBeginDisableDepthWrite_ && ds) {
         if (ds->HasSrv()) {
             ds->TransitionToShaderResource();
         } else {
@@ -343,7 +362,7 @@ bool ScreenBuffer::EndRecord(bool discard) {
 
     (void)discard;
     const bool updateRtv = true;
-    const bool updateDsv = !lastBeginDisableDepthWrite_;
+    const bool updateDsv = !isLastBeginDisableDepthWrite_;
     AdvanceFrameBufferIndex(updateRtv, updateDsv);
 
     return true;
@@ -371,6 +390,10 @@ bool ScreenBuffer::RegisterPostEffectComponent(std::unique_ptr<IPostEffectCompon
     component->Initialize();
 
     postEffectComponents_.push_back(std::move(component));
+
+    // 追加されたのでキャッシュ無効化
+    cachedPostEffectPassesDirty_ = true;
+
     return true;
 }
 

@@ -136,6 +136,9 @@ void DirectXCommon::BeginDraw(Passkey<GameEngine>) {
     for (auto &cmds : commandObjects_) {
         cmds->ResetFlags(Passkey<DirectXCommon>{});
     }
+    for (auto &sc : sSwapChains) {
+        if (sc && sc->IsCreated()) sc->Resize({});
+    }
 }
 
 void DirectXCommon::EndDraw(Passkey<GameEngine>) {
@@ -312,10 +315,6 @@ void DirectXCommon::ExecuteCommandLists() {
 
     if (!lists.empty()) {
         WaitForFence();
-    }
-
-    for (auto &sc : sSwapChains) {
-        if (sc && sc->IsCreated()) sc->Resize({});
     }
 
     recordedCommandLists_.clear();

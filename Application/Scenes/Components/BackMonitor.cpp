@@ -13,7 +13,7 @@ void BackMonitor::Initialize() {
     auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
     // ScreenBuffer生成
-    screenBuffer_ = ScreenBuffer::Create(1280, 720);
+    screenBuffer_ = ScreenBuffer::Create(640, 360);
     if (!screenBuffer_) return;
 
     {

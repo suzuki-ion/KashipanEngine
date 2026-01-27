@@ -13,6 +13,10 @@ public:
     void Finalize() override;
     void Update() override;
 
+    ScreenBuffer *GetScreenBuffer() const { return screenBuffer_; }
+    Camera2D *GetCamera2D() const { return camera2D_; }
+    Camera3D *GetCamera3D() const { return camera3D_; }
+
 private:
     ScreenBuffer *screenBuffer_ = nullptr;
     Camera2D *camera2D_ = nullptr;

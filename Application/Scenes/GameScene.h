@@ -11,6 +11,7 @@
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
 #include "Objects/SystemObjects/VelocityBufferCameraBinder.h"
+#include "Objects/Components/OneBeatParticle.h"
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/BackMonitor.h"
 #include "Utilities/Json/JsonManager.h"
@@ -28,8 +29,11 @@ namespace KashipanEngine {
         void OnUpdate() override;
 
     private:
-        void LoadJson();
-        void SaveJson();
+        void LoadObjectStateJson();
+        void SaveObjectStateJson();
+
+        void LoadParticleStateJson() {};
+        void SaveParticleStateJson() {};
 
 #if defined(USE_IMGUI)
         void DrawImGui();
@@ -42,6 +46,13 @@ namespace KashipanEngine {
         std::string loadToSaveName_ = "ObjectState";
 
         Object3DBase* stage_ = nullptr;
+
+        // BPMオブジェクトのBPMに合わせた拡大縮小範囲
+        static constexpr int kBpmObjectCount = 4;  // BPMオブジェクトの数
+        Object3DBase* bpmObjects_[kBpmObjectCount]{};
+		Vector3 minBpmObjectScale_[kBpmObjectCount]{}, maxBpmObjectScale_[kBpmObjectCount]{};
+
+		Object3DBase* OneBeatEmitter_ = nullptr;
 
         // BPM関連
         BPMSystem* bpmSystem_ = nullptr;

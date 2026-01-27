@@ -17,7 +17,7 @@ namespace KashipanEngine {
         jsonManager_ = std::make_unique<JsonManager>();
         jsonManager_->SetBasePath("Assets/Application");
 
-        LoadJson();
+        LoadObjectStateJson();
 
         sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
         auto* mainWindow = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainWindow() : nullptr;
@@ -155,6 +155,31 @@ namespace KashipanEngine {
             AddObject3D(std::move(obj));
         }
 
+        // 既存の bpmObject_ の初期化部分を置き換え
+        {
+            for (int i = 0; i < kBpmObjectCount; ++i) {
+                auto modelData = ModelManager::GetModelDataFromFileName("bpmObject.obj");
+                auto obj = std::make_unique<Model>(modelData);
+                obj->SetName("bpmObject_" + std::to_string(i));
+                
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    // 各オブジェクトを少しずらして配置（必要に応じて調整）
+                    //float offset = static_cast<float>(i) * 0.5f;
+                    tr->SetTranslate(Vector3(10.0f, -0.5f, 10.0f));
+                    tr->SetScale(Vector3(1.0f));
+                }
+
+                // 各オブジェクトに位相をずらしてBPMScalingを設定
+                obj->RegisterComponent<BPMScaling>(minBpmObjectScale_[i], maxBpmObjectScale_[i]);
+
+                if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+                
+                bpmObjects_[i] = obj.get();
+                AddObject3D(std::move(obj));
+            }
+        }
+
         // Player（衝突判定を修正）
         {
             auto modelData = ModelManager::GetModelDataFromFileName("player.obj");
@@ -280,6 +305,11 @@ namespace KashipanEngine {
                     enemySpawner_->AddSpawnPoint(Vector3(kTile * (kMapW - 1), kY, kTile * z));
                 }
             }
+        }
+
+		// OneBeatEmitter
+        {
+        
         }
 
         // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
@@ -425,9 +455,19 @@ namespace KashipanEngine {
                 }
             }
         }
+
+        // OnUpdate内の既存の bpmObject_ 更新部分を置き換え
+        {
+            for (int i = 0; i < kBpmObjectCount; ++i) {
+                if (bpmObjects_[i]) {
+                    auto* bpmScaling = bpmObjects_[i]->GetComponent3D<BPMScaling>();
+					bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
+                }
+            }
+        }
     }
 
-    void GameScene::LoadJson() {
+    void GameScene::LoadObjectStateJson() {
         try {
             // JSONファイルから読み込み
             auto values = jsonManager_->Read(loadToSaveName_);
@@ -492,7 +532,7 @@ namespace KashipanEngine {
         }
     }
 
-    void GameScene::SaveJson() {
+    void GameScene::SaveObjectStateJson() {
         // ディレクトリが存在しない場合は作成
         std::filesystem::path fullPath = jsonManager_->GetBasePath() + loadToSaveName_ + ".json";
         std::filesystem::path directory = fullPath.parent_path();
@@ -614,13 +654,24 @@ namespace KashipanEngine {
         if (enemySpawner_) {
             enemySpawner_->SetSpawnInterval(enemySpawnInterval_);
         }
+
+        // SetValue() 内
+        if (bpmObjects_[0]) {  // 代表として最初のオブジェクトをチェック
+            for (int i = 0; i < kBpmObjectCount; ++i) {
+                if (bpmObjects_[i]) {
+                    if (auto* bpmScaling = bpmObjects_[i]->GetComponent3D<BPMScaling>()) {
+                        bpmScaling->SetMinMaxScale(minBpmObjectScale_[i], maxBpmObjectScale_[i]);
+                    }
+                }
+            }
+        }
     }
 
     void GameScene::DrawImGui() {
         ImGui::Begin("ObjectStatus");
 
         if (ImGui::Button("Jsonに値を保存")) {
-            SaveJson();
+            SaveObjectStateJson();
         }
 
         ImGui::SameLine();
@@ -629,6 +680,14 @@ namespace KashipanEngine {
         // BPM関連
         if (ImGui::CollapsingHeader("BPM関連", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::DragInt("BPM値", &bpm_, 1.0f, 60, 240);
+            ImGui::DragFloat3("BpmObjMin0", &minBpmObjectScale_[0].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax0", &maxBpmObjectScale_[0].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMin1", &minBpmObjectScale_[1].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax1", &maxBpmObjectScale_[1].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMin2", &minBpmObjectScale_[2].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax2", &maxBpmObjectScale_[2].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMin3", &minBpmObjectScale_[3].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax3", &maxBpmObjectScale_[3].x, 0.01f);
         }
 
         // マップ関連

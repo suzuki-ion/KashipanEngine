@@ -146,6 +146,7 @@
     <ClCompile Include="KashipanEngine\Utilities\Json\JsonManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
+    <ClCompile Include="Application\Objects\Components\OneBeatParticle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -409,6 +410,7 @@
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonInput.h" />
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonOutput.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeatParticle.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

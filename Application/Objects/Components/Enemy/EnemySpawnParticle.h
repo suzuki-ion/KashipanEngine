@@ -12,7 +12,7 @@ namespace KashipanEngine {
             float lifeTimeSec = 1.0f;            // 生存時間（1拍分）
             float gravity = -5.0f;               // 上昇加速度（負の重力）
             float damping = 0.98f;               // 減衰率
-            Vector3 baseScale{ 0.8f, 0.8f, 0.8f }; // 基本スケール
+            Vector3 baseScale{ 0.25f, 0.25f, 0.25f }; // 基本スケール
         };
 
         EnemySpawnParticle(const ParticleConfig& config = {});

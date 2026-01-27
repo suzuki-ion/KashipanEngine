@@ -2,6 +2,7 @@
 #include "Objects/Components/Bomb/ExplosionManager.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/BPMScaling.h"
+#include "Objects/Components/Bomb/BombScaling.h"
 
 namespace KashipanEngine {
 
@@ -36,8 +37,26 @@ void BombManager::Update() {
         }
 
         // BPMScalingコンポーネントにBPM進行度を設定
-        if (auto* bpmScaling = bomb.object->GetComponent3D<BPMScaling>()) {
+        if (auto* bpmScaling = bomb.object->GetComponent3D<BombScaling>()) {
             bpmScaling->SetBPMProgress(bpmProgress_);
+			bpmScaling->SetElapsedBeats(bomb.elapsedBeats);
+            bpmScaling->SetMaxBeats(bombLifetimeBeats_);
+			bpmScaling->SetBPMDuration(beatDuration_);
+            bpmScaling->SetNormalScaleRange(minScale_, maxScale_);
+			bpmScaling->SetSpeedScaleRange(minSpeedScale_, maxSpeedScale_);
+			bpmScaling->SetDetonationScale(detonationScale_);
+
+            if (auto* mt = bomb.object->GetComponent3D<Material3D>()) {
+                if (bpmScaling->IsSpeedScaling()) {
+                    mt->SetColor(Vector4::Lerp({ 0.0f,0.0f,0.0f,1.0f }, { 1.0f,0.0f,0.0f,1.0f }, bpmScaling->GetSpeedProgress()));
+                } else if(bpmScaling->IsSpeed2Scaling()) {
+                    mt->SetColor(Vector4::Lerp({ 0.0f,0.0f,0.0f,1.0f }, { 1.0f,0.0f,0.0f,1.0f }, bpmScaling->GetSpeed2Progress()));
+                } else if (bpmScaling->IsSpeed3Scaling()) {
+                    mt->SetColor(Vector4{ 1.0f,0.0f,0.0f,1.0f });
+                } else {
+                    mt->SetColor(Vector4{ 0.0f,0.0f,0.0f,1.0f });
+                }
+            }
         }
     }
 
@@ -138,6 +157,8 @@ void BombManager::SpawnBomb() {
     if (auto* mat = bomb->GetComponent3D<Material3D>()) {
         mat->SetEnableLighting(true);
         mat->SetColor(Vector4(0.2f, 0.2f, 0.2f, 1.0f));
+        auto tex = TextureManager::GetTextureFromFileName("white1x1.png");
+        mat->SetTexture(tex);
     }
 
     // 爆弾オブジェクトのポインタを保存（move前）
@@ -175,7 +196,7 @@ void BombManager::SpawnBomb() {
         bomb->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
     }
 
-    bomb->RegisterComponent<BPMScaling>(Vector3(0.9f, 0.9f, 0.9f), Vector3(1.1f, 1.1f, 1.1f));
+    bomb->RegisterComponent<BombScaling>(Vector3(0.9f, 0.9f, 0.9f), Vector3(1.1f, 1.1f, 1.1f));
 
     // レンダラーにアタッチ
     if (screenBuffer_) {

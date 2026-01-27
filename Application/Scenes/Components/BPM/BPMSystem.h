@@ -48,6 +48,7 @@ namespace KashipanEngine {
             
             bpm_ = bpm;
             beatDuration_ = 60.0f / bpm_;
+			bpmTimer_.SetDuration(beatDuration_);
         }
 
         /// @brief BPMを取得

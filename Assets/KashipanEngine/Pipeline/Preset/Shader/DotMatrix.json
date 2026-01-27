@@ -1,0 +1,13 @@
+﻿{
+	"BaseName": "DotMatrix",
+	"Vertex": {
+		"Path": "PostEffect/FullScreenTriangleVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Path": "PostEffect/DotMatrixPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

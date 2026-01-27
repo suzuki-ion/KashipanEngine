@@ -140,6 +140,15 @@
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\JsonManager.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithGameScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -394,6 +403,19 @@
     <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
+    <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\JsonManager.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\Value.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonInput.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonOutput.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithMenuScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithParticle.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
@@ -508,5 +530,8 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocity.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.DotMatrix.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DotMatrix.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DotMatrixPS.hlsl" />
   </ItemGroup>
 </Project>

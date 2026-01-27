@@ -12,6 +12,7 @@
 #include "Objects/SystemObjects/SpotLight.h"
 #include "Objects/SystemObjects/VelocityBufferCameraBinder.h"
 #include "Scenes/Components/CameraController.h"
+#include "Scenes/Components/BackMonitor.h"
 
 namespace KashipanEngine {
 
@@ -22,14 +23,10 @@ public:
 
     void Initialize() override;
 
-    /// @brief 3Dオブジェクトをシーンに追加（外部からアクセス可能）
-    void AddBombObject(std::unique_ptr<Object3DBase> obj) {
-        AddObject3D(std::move(obj));
-    }
-
 protected:
     void OnUpdate() override;
 
+    void SetValue();
 private:
 #if defined(USE_IMGUI)
     void DrawImGui();

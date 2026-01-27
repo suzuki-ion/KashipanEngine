@@ -1,5 +1,6 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/Components/PlayerHealthUI.h"
+#include "Scenes/Components/BackMonitor.h"
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/Player/BpmbSpawn.h"
@@ -41,6 +42,14 @@ void TestScene::Initialize() {
         bp.blurRadius = 0.0f;
         bp.iterations = 4;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+
+        /*DotMatrixEffect::Params dp{};
+        dp.dotRadius = 8.0f;
+        dp.dotSpacing = 4.0f;
+        dp.intensity = 1.0f;
+        dp.threshold = 0.0f;
+        dp.monochrome = false;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<DotMatrixEffect>(dp));*/
         
         screenBuffer3D->AttachToRenderer("ScreenBuffer_TitleScene");
     }
@@ -284,58 +293,8 @@ void TestScene::Initialize() {
     // ExplosionManagerにPlayerを設定
     explosionManager_->SetPlayer(player_);
 
-    //if (playBgm_) {
-    //    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
-    //    if (handle == AudioManager::kInvalidSoundHandle) {
-    //        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
-    //        return;
-    //    }
-    //    AudioManager::Play(handle, 0.05f, 0.0f, true);
-    //}
-
-    // Particles
-    /*{
-        ParticleMovement::SpawnBox spawn;
-        spawn.min = Vector3(-16.0f, 0.0f, -16.0f);
-        spawn.max = Vector3(16.0f, 16.0f, 16.0f);
-
-        int instanceCount = 128;
-
-        particleLights_.clear();
-        particleLights_.reserve(instanceCount);
-
-        for (int i = 0; i < instanceCount; ++i) {
-            auto obj = std::make_unique<Box>();
-            obj->SetName("ParticleBox_" + std::to_string(i));
-            obj->RegisterComponent<ParticleMovement>(spawn, 0.5f, 10.0f, Vector3{0.5f, 0.5f, 0.5f});
-
-            if (auto* mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetEnableLighting(true);
-                mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
-
-            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-            if (velocityBuffer) obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
-
-            auto* particlePtr = obj.get();
-            AddObject3D(std::move(obj));
-
-            auto lightObj = std::make_unique<PointLight>();
-            lightObj->SetName("ParticlePointLight_" + std::to_string(i));
-            lightObj->SetEnabled(true);
-            lightObj->SetColor(particleLightColor_);
-            lightObj->SetIntensity(0.0f);
-            lightObj->SetRange(0.0f);
-
-            auto* lightPtr = lightObj.get();
-            if (screenBuffer3D) lightObj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            AddObject3D(std::move(lightObj));
-
-            particleLights_.push_back(ParticleLightPair{ particlePtr, lightPtr });
-            lightManager->AddPointLight(lightPtr);
-        }
-    }*/
+    // ステージ後ろの画面用
+    AddSceneComponent(std::make_unique<BackMonitor>());
 
     //==================================================
     // ↑ ここまでゲームオブジェクト定義 ↑
@@ -352,6 +311,12 @@ void TestScene::Initialize() {
         }
         AddSceneComponent(std::move(comp));
     }
+
+    // デバッグ用カメラ操作コンポーネント
+    {
+        auto comp = std::make_unique<DebugCameraMovement>(camera3D, GetInput());
+        AddSceneComponent(std::move(comp));
+    }
 }
 
 TestScene::~TestScene() {
@@ -361,6 +326,12 @@ void TestScene::OnUpdate() {
 #if defined(USE_IMGUI)
     DrawImGui();
 #endif
+
+    if (auto *debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
+        if (GetInputCommand()->Evaluate("DebugCameraToggle").Triggered()) {
+            debugCameraMovement->SetEnable(!debugCameraMovement->IsEnable());
+        }
+    }
 
     // OnUpdate 内で BPM 進行度を更新
     if (bombManager_) {
@@ -373,22 +344,7 @@ void TestScene::OnUpdate() {
 			playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
 
             auto* playerArrowMove = player_->GetComponent3D<PlayerMove>();
-			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
-            
-            if (auto* mt = player_->GetComponent3D<Material3D>()) {
-                if (auto* health = player_->GetComponent3D<Health>()) {
-
-                    // 残り時間(秒)を 0.1 秒単位の整数にする（誤差対策で丸め）
-                    int tick = static_cast<int>(health->GetDamageCooldownRemaining() * 10.0f + 0.5f);
-
-                    if (health->WasDamagedThisCooldown() && (tick % 2 == 0)) {
-                        mt->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f }); // 透明
-                    } else {
-                        mt->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 不透明
-                    }
-                }
-            }
-
+			playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());  
 
 			auto* bpmScaling = player_->GetComponent3D<BPMScaling>();
 			if (bpmScaling) {

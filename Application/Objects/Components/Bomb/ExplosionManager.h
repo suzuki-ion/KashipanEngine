@@ -57,6 +57,14 @@ public:
     /// @brief 現在アクティブな爆発の数を取得
     int GetActiveExplosionCount() const { return static_cast<int>(activeExplosions_.size()); }
 
+	/// @brief カメラシェイクの設定
+    void SetCameraShake(float power, float time) {
+        shakePower_ = power;
+        shakeTime_ = time;
+	}
+
+	/// @brief 爆発のXZサイズを設定
+	void SetSize(float size) { size_ = size; }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -74,7 +82,6 @@ private:
     void CheckExplosionBombCollisions();
 
     float size_ = 3.0f;
-    float sizeMagnification_ = 1.5f;
 
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;
@@ -84,6 +91,9 @@ private:
     CameraController* cameraController_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     ColliderComponent* collider2_ = nullptr;
+
+	float shakePower_ = 5.0f;    // カメラシェイクの強さ
+	float shakeTime_ = 1.0f;     // カメラシェイクの時間（秒）
 
     std::vector<ExplosionInfo> activeExplosions_;
 

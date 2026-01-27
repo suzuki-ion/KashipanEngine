@@ -1,4 +1,5 @@
 #include "AudioManager.h"
+#include "Assets/CaseInsensitive.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/Translation.h"
@@ -59,8 +60,8 @@ struct PlayEntry final {
 };
 
 std::unordered_map<SoundHandle, SoundEntry> sSounds;
-std::unordered_map<std::string, SoundHandle> sAssetPathToHandle;
-std::unordered_map<std::string, SoundHandle> sFileNameToHandle;
+FileMap<SoundHandle> sAssetPathToHandle;
+FileMap<SoundHandle> sFileNameToHandle;
 
 Microsoft::WRL::ComPtr<IXAudio2> sXaudio2;
 IXAudio2MasteringVoice* sMasterVoice = nullptr;

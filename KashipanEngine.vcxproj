@@ -119,6 +119,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
     <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
@@ -127,6 +128,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithGameScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
     <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
@@ -215,10 +220,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Json\JsonManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
@@ -289,6 +298,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithMenuScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithParticle.h" />
     <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />
     <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h" />
     <ClInclude Include="Application\Objects\Components\Health.h" />
@@ -324,12 +338,15 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombManager.h" />
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
@@ -444,11 +461,16 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Input\Key.h" />
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonInput.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonOutput.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\Data\Value.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Json\JsonManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />
@@ -561,6 +583,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Prefilter.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Upsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ChromaticAberration.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.DotMatrix.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.HistoryCopy.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\TriangleShadow.json" />
@@ -619,6 +642,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurCB.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DotMatrix.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap3D.json" />
     <None Include="Docs\EngineReference\01_KashipanEngine.h.md" />
     <None Include="Docs\EngineReference\02_Objects_Types.md" />
@@ -729,6 +753,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <FileType>Document</FileType>
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DotMatrixPS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

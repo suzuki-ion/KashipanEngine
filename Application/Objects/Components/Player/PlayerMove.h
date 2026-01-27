@@ -153,6 +153,30 @@ namespace KashipanEngine {
                 return false;
             }
 
+            // マップ外への移動かチェック
+            isOutOfBounds_ = false;
+            if (targetPosition_.x < 0.0f || targetPosition_.x > static_cast<float>(mapW_ * 2 - 2) ||
+                targetPosition_.z < 0.0f || targetPosition_.z > static_cast<float>(mapH_ * 2 - 2)) {
+                isOutOfBounds_ = true;
+                // マップ外の場合、targetPositionは元の位置に戻す
+                targetPosition_ = startPosition_;
+
+                switch (playerDirection_){
+                case PlayerDirection::Up:
+					playerDirection_ = PlayerDirection::Down;
+                    break;
+                case PlayerDirection::Down:
+					playerDirection_ = PlayerDirection::Up;
+                    break;
+                case PlayerDirection::Left:
+					playerDirection_ = PlayerDirection::Right;
+                    break;
+                case PlayerDirection::Right:
+					playerDirection_ = PlayerDirection::Left;
+                    break;
+                }
+            }
+
             isMoving_ = true;
             moveTimer_ = 0.0f;
             return true;
@@ -163,8 +187,17 @@ namespace KashipanEngine {
             moveTimer_ += GetDeltaTime();
             float t = std::min(1.0f, moveTimer_ / moveDuration_);
 
-            // 線形補間で現在位置を計算
-            Vector3 currentPos = Vector3(MyEasing::Lerp(startPosition_, targetPosition_, t, EaseType::EaseOutExpo));
+            Vector3 currentPos;
+            
+            if (isOutOfBounds_) {
+                // マップ外への移動の場合、Lerp_GABで一旦外に出てから戻る
+                Vector3 outOfBoundsTarget = startPosition_ + moveDirection_;
+                currentPos = Vector3(MyEasing::Lerp_GAB(startPosition_, outOfBoundsTarget, t));
+            } else {
+                // 通常の移動
+                currentPos = Vector3(MyEasing::Lerp(startPosition_, targetPosition_, t, EaseType::EaseOutExpo));
+            }
+
             float currentPosY = float(MyEasing::Lerp_GAB(0.0f, 0.5f, t, EaseType::EaseOutCirc, EaseType::EaseInCirc));
 
             // Transform3Dに反映
@@ -172,9 +205,7 @@ namespace KashipanEngine {
             if (ctx) {
                 auto* transform = ctx->GetComponent<Transform3D>();
                 if (transform) {
-                    currentPos.x = std::clamp(currentPos.x, 0.0f, static_cast<float>(mapW_ * 2 - 2));
-                    currentPos.z = std::clamp(currentPos.z, 0.0f, static_cast<float>(mapH_ * 2 - 2));
-					currentPos.y = currentPosY;
+                    currentPos.y = currentPosY;
                     transform->SetTranslate(currentPos);
 
                     switch (playerDirection_)
@@ -215,6 +246,7 @@ namespace KashipanEngine {
 
 		bool triggered_ = false; // 移動入力があったかどうか
         bool isMoving_ =  false;  // 移動中フラグ
+        bool isOutOfBounds_ = false; // マップ外への移動フラグ
         float moveTimer_ = 0.0f; // 移動タイマー
 		Vector3 moveDirection_{ 0.0f, 0.0f, 0.0f }; // 移動方向ベクトル
 

@@ -106,6 +106,38 @@ public:
         shakeTimeRemaining_ = shakeDuration_;
     }
 
+#if defined(USE_IMGUI)
+    void ShowImGui() {
+        if (ImGui::CollapsingHeader("CameraController")) {
+            ImGui::InputFloat3("Target Translate", &targetTranslate_.x);
+            ImGui::InputFloat3("Target Rotate", &targetRotate_.x);
+            ImGui::InputFloat("Target FovY", &targetFovY_);
+            ImGui::Separator();
+            ImGui::InputFloat("Lerp Factor", &lerpFactor_);
+            ImGui::Separator();
+            ImGui::InputFloat3("Follow Offset", &followOffset_.x);
+            ImGui::Checkbox("Shake X", &isShakeX_);
+            ImGui::Checkbox("Shake Y", &isShakeY_);
+            ImGui::Checkbox("Shake Z", &isShakeZ_);
+            if (ImGui::Button("Recalculate Offset From Current Camera")) {
+                RecalculateOffsetFromCurrentCamera();
+            }
+            ImGui::Separator();
+            float shakeAmp = shakeAmplitude_;
+            float shakeDur = shakeDuration_;
+            if (ImGui::InputFloat("Shake Amplitude", &shakeAmp) && shakeAmp >= 0.0f) {
+                shakeAmplitude_ = shakeAmp;
+            }
+            if (ImGui::InputFloat("Shake Duration", &shakeDur) && shakeDur >= 0.0f) {
+                shakeDuration_ = shakeDur;
+            }
+            if (ImGui::Button("Start Shake")) {
+                Shake(shakeAmplitude_, shakeDuration_);
+            }
+        }
+    }
+#endif
+
 private:
     Camera3D *camera_ = nullptr;
 

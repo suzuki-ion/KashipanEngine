@@ -8,12 +8,25 @@ BackMonitorWithGameScreen::BackMonitorWithGameScreen(ScreenBuffer* target)
 
 BackMonitorWithGameScreen::~BackMonitorWithGameScreen() {}
 
-void BackMonitorWithGameScreen::Initialize() {
-    // Nothing to initialize for now
-}
+void BackMonitorWithGameScreen::Initialize() {}
 
 void BackMonitorWithGameScreen::Update() {
-    if (!target_) return;
+    static Sprite *blitSprite = nullptr;
+    if (!IsActive()) {
+        if (blitSprite) {
+            if (auto *mat = blitSprite->GetComponent2D<Material2D>()) {
+                mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+            }
+        }
+        return;
+    }
+
+    auto bm = GetBackMonitor();
+    if (!bm) return;
+    if (!bm->IsReady()) return;
+
+    auto target = GetTargetScreenBuffer();
+    if (!target) return;
     auto ctx = GetOwnerContext();
     if (!ctx) return;
 
@@ -23,27 +36,26 @@ void BackMonitorWithGameScreen::Update() {
     auto main3D = sceneDefault->GetScreenBuffer3D();
     if (!main3D) return;
 
-    // Simple approach: blit main3D into target_ by setting a global texture used by a full-screen sprite
-    // Create a transient sprite if not exists
-    static Sprite* blitSprite = nullptr;
     if (!blitSprite) {
         auto obj = std::make_unique<Sprite>();
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.GameScreenSprite");
         if (auto* tr = obj->GetComponent2D<Transform2D>()) {
-            float w = static_cast<float>(target_->GetWidth());
-            float h = static_cast<float>(target_->GetHeight());
+            float w = static_cast<float>(target->GetWidth());
+            float h = static_cast<float>(target->GetHeight());
             tr->SetTranslate(Vector2{w * 0.5f, h * 0.5f});
             tr->SetScale(Vector2{w, h});
         }
         if (auto* mat = obj->GetComponent2D<Material2D>()) {
+            mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
             mat->SetTexture(main3D);
         }
-        obj->AttachToRenderer(target_, "Object2D.DoubleSidedCulling.BlendNormal");
+        obj->AttachToRenderer(target, "Object2D.DoubleSidedCulling.BlendNormal");
         blitSprite = obj.get();
         ctx->AddObject2D(std::move(obj));
     } else {
         if (auto* mat = blitSprite->GetComponent2D<Material2D>()) {
+            mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
             mat->SetTexture(main3D);
         }
     }

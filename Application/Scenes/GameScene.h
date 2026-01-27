@@ -58,7 +58,8 @@ namespace KashipanEngine {
         // BPMオブジェクトのBPMに合わせた拡大縮小範囲
         static constexpr int kBpmObjectCount = 4;  // BPMオブジェクトの数
         Object3DBase* bpmObjects_[kBpmObjectCount]{};
-		Vector3 minBpmObjectScale_[kBpmObjectCount]{}, maxBpmObjectScale_[kBpmObjectCount]{};
+		Vector3 bpmObjectStart_[kBpmObjectCount]{}, bpmObjectEnd_[kBpmObjectCount]{};
+		bool leftRightToggle_ = false; // BPMオブジェクトの左右交互アニメーション用トグル
 
         // OneBeat パーティクルエミッター関連
 		Object3DBase* oneBeatEmitterObj_ = nullptr;

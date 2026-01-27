@@ -56,6 +56,11 @@ namespace KashipanEngine {
 
 		/// @brief 1拍の時間を取得（秒）
 		float GetBeatDuration() const { return beatDuration_; }
+
+		/// @brief 現在の拍が発生したかどうかを取得
+        bool GetOnBeat() const {
+            return bpmTimer_.IsFinished();
+		}
     private:
 
         /// @brief 拍が発生したときの処理

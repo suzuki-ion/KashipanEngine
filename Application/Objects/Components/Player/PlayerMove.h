@@ -45,10 +45,12 @@ namespace KashipanEngine {
             if (!isMoving_) {
                 if (useToleranceRange_) {
                     if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
-                        JudgeMove();
+                        JudgeMove(true);
+                    } else {
+                        JudgeMove(false);
                     }
                 } else {
-                    JudgeMove();
+                    JudgeMove(true);
                 }
             }
 
@@ -112,24 +114,54 @@ namespace KashipanEngine {
 #endif
     private:
 
+        void PlayMoveSound(bool f) {
+            if (f) {
+                auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/playerJump.mp3");
+                if (handle == AudioManager::kInvalidSoundHandle) {
+                    // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+                    return;
+                }
+                AudioManager::Play(handle, moveVolume_);
+            } else {
+                auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/beatMiss.mp3");
+                if (handle == AudioManager::kInvalidSoundHandle) {
+                    // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+                    return;
+                }
+                AudioManager::Play(handle, missVolume_);
+            }
+		}
+
 		/// @brief 移動入力のチェック
-        void JudgeMove() {
+        void JudgeMove(bool f) {
             if (inputCommand_->Evaluate("MoveUp").Triggered()) {
-                moveDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
-                playerDirection_ = PlayerDirection::Up;
-                triggered_ = true;
+                if (f) {
+                    moveDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
+                    playerDirection_ = PlayerDirection::Up;
+                    triggered_ = true;
+                }
+				PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
-                moveDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
-                playerDirection_ = PlayerDirection::Down;
-                triggered_ = true;
+                if (f) {
+                    moveDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
+                    playerDirection_ = PlayerDirection::Down;
+                    triggered_ = true;
+                }
+                PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
-                moveDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
-                playerDirection_ = PlayerDirection::Left;
-                triggered_ = true;
+                if (f) {
+                    moveDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
+                    playerDirection_ = PlayerDirection::Left;
+                    triggered_ = true;
+                }
+                PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
-                moveDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
-                playerDirection_ = PlayerDirection::Right;
-                triggered_ = true;
+                if (f) {
+                    moveDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
+                    playerDirection_ = PlayerDirection::Right;
+                    triggered_ = true;
+                }
+                PlayMoveSound(f);
             }
         };
 
@@ -255,6 +287,9 @@ namespace KashipanEngine {
 
         const InputCommand* inputCommand_ = nullptr;
         BombManager* bombManager_ = nullptr;
+
+		float moveVolume_ = 0.1f;
+		float missVolume_ = 0.1f;
     };
 
 } // namespace KashipanEngine

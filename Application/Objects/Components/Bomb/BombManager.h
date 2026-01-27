@@ -136,6 +136,10 @@ private:
     Vector3 minSpeedScale_ = { 0.8f,0.8f,0.8f };          // 最小スケール係数
     Vector3 maxSpeedScale_ = { 1.0f,1.0f,1.0f };          // 最大スケール係数
     Vector3 detonationScale_ = { 1.5f, 1.5f, 1.5f };      // 起爆時のスケール係数
+
+    float missVolume_ = 0.1f;
+	float countVolume_ = 0.1f;
+	float fireVolume_ = 0.1f;
 };
 
 } // namespace KashipanEngine

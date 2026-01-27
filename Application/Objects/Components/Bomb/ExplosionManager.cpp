@@ -206,12 +206,6 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
     // シーンに追加
     ctx->AddObject3D(std::move(explosion));
     ctx->AddObject3D(std::move(explosion2));
-
-    // 爆発音再生（オプション）
-    auto soundHandle = AudioManager::GetSoundHandleFromFileName("explosion.mp3");
-    if (soundHandle != AudioManager::kInvalidSoundHandle) {
-        AudioManager::Play(soundHandle, 0.1f, 0.0f, false);
-    }
 }
 
 void ExplosionManager::CheckExplosionBombCollisions() {

@@ -21,12 +21,9 @@ void EnemyManager::InitializeParticlePool() {
 
     particlePool_.reserve(kParticlePoolSize_);
 
-    // Boxモデルデータを取得
-    auto boxModelData = ModelManager::GetModelDataFromFileName("MapBlock.obj");
-
     for (int i = 0; i < kParticlePoolSize_; ++i) {
         // パーティクルオブジェクトを生成
-        auto particle = std::make_unique<Model>(boxModelData);
+        auto particle = std::make_unique<Box>();
         particle->SetName("EnemyDieParticle_" + std::to_string(i));
 
         // Transform設定
@@ -264,6 +261,13 @@ void EnemyManager::SpawnDieParticles(const Vector3& position) {
     int particlesSpawned = 0;
     const int particlesToSpawn = 15; // 1回の死亡で発生させるパーティクル数
 
+    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/enemyDeath.mp3");
+    if (handle == AudioManager::kInvalidSoundHandle) {
+        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+        return;
+    }
+    AudioManager::Play(handle, dieVolume_);
+
     for (auto* particle : particlePool_) {
         if (particlesSpawned >= particlesToSpawn) break;
 
@@ -301,6 +305,7 @@ void EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
     // activeEnemies_からも削除フラグを立てる
     for (auto& enemyInfo : activeEnemies_) {
         if (enemyInfo.object == hitObject) {
+
             SpawnDieParticles(enemyInfo.position);
             enemyInfo.isDead = true;
 

@@ -89,6 +89,8 @@ private:
     float moveDistance_ = 2.0f;
 
 	float bpmProgress_ = 0.0f;
+
+	float dieVolume_ = 0.1f;
 };
 
 } // namespace KashipanEngine

@@ -34,6 +34,13 @@ void BombManager::Update() {
         if (bomb.beatAccumulator >= beatDuration_) {
             bomb.elapsedBeats++;
             bomb.beatAccumulator -= beatDuration_;
+
+            auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/bombCount.mp3");
+            if (handle == AudioManager::kInvalidSoundHandle) {
+                // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+                return;
+            }
+            AudioManager::Play(handle, countVolume_);
         }
 
         // BPMScalingコンポーネントにBPM進行度を設定
@@ -68,6 +75,10 @@ void BombManager::Update() {
                 const bool shouldDetonate = bomb.shouldDetonate;
 
                 if (expired || shouldDetonate) {
+                    
+                    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/bombFire.mp3");
+                    AudioManager::Play(handle, fireVolume_);
+
                     // 爆発を生成
                     if (explosionManager_) {
                         explosionManager_->SpawnExplosion(bomb.position);
@@ -136,11 +147,23 @@ void BombManager::SpawnBomb() {
 
     // マップ範囲チェック
     if (!IsInsideMap(bombPos)) {
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/beatMiss.mp3");
+        if (handle == AudioManager::kInvalidSoundHandle) {
+            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+            return;
+        }
+        AudioManager::Play(handle, missVolume_);
         return;
     }
 
     // 既に爆弾がある位置には設置できない
     if (HasBombAtPosition(bombPos)) {
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/beatMiss.mp3");
+        if (handle == AudioManager::kInvalidSoundHandle) {
+            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+            return;
+        }
+        AudioManager::Play(handle, missVolume_);
         return;
     }
 
@@ -220,10 +243,12 @@ void BombManager::SpawnBomb() {
     ctx->AddObject3D(std::move(bomb));
 
     // 設置音再生（オプション）
-    auto soundHandle = AudioManager::GetSoundHandleFromFileName("bomb_place.mp3");
-    if (soundHandle != AudioManager::kInvalidSoundHandle) {
-        AudioManager::Play(soundHandle, 0.1f, 0.0f, false);
+    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/bombCount.mp3");
+    if (handle == AudioManager::kInvalidSoundHandle) {
+        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+        return;
     }
+    AudioManager::Play(handle, countVolume_);
 }
 
 Vector3 BombManager::GetDirectionOffset(PlayerDirection direction) const {

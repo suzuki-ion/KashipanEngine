@@ -25,6 +25,8 @@ private:
     Sprite *sprite_ = nullptr;
     Plane3D *plane3D_ = nullptr;
     Plane3D *planeBack_ = nullptr;
+    DirectionalLight *directionalLight_ = nullptr;
+    LightManager *lightManager_ = nullptr;
 
     /// @brief 板ポリの親オブジェクト
     Object3DBase *planeParent_ = nullptr;

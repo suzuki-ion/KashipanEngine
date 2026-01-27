@@ -44,8 +44,31 @@ void BackMonitor::Initialize() {
     {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("Camera3D_BackMonitor");
+        float w = static_cast<float>(screenBuffer_->GetWidth());
+        float h = static_cast<float>(screenBuffer_->GetHeight());
+        obj->SetPerspectiveParams(0.7f, h != 0.0f ? (w / h) : 1.0f, 0.1f, 256.0f);
+        obj->SetViewportParams(0.0f, 0.0f, w, h);
         obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         camera3D_ = obj.get();
+        context->AddObject3D(std::move(obj));
+    }
+    // 3D用平行光源
+    {
+        auto obj = std::make_unique<DirectionalLight>();
+        obj->SetName("DirectionalLight_BackMonitor");
+        obj->SetEnabled(true);
+        obj->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+        obj->SetDirection(Vector3{ 0.0f, 0.0f, 1.0f });
+        obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        directionalLight_ = obj.get();
+        context->AddObject3D(std::move(obj));
+    }
+    // ライト管理用
+    {
+        auto obj = std::make_unique<LightManager>();
+        obj->SetName("LightManager_BackMonitor");
+        obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        lightManager_ = obj.get();
         context->AddObject3D(std::move(obj));
     }
 

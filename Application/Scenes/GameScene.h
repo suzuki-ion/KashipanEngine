@@ -11,7 +11,9 @@
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
 #include "Objects/SystemObjects/VelocityBufferCameraBinder.h"
-#include "Objects/Components/OneBeatParticle.h"
+#include "Objects/Components/OneBeat/OneBeatParticle.h"
+#include "Objects/Components/OneBeat/OneBeatEmitter.h"
+#include "Objects/Components/Enemy/EnemyDieParticle.h"
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/BackMonitor.h"
 #include "Utilities/Json/JsonManager.h"
@@ -32,18 +34,24 @@ namespace KashipanEngine {
         void LoadObjectStateJson();
         void SaveObjectStateJson();
 
-        void LoadParticleStateJson() {};
-        void SaveParticleStateJson() {};
+        void LoadParticleStateJson();
+        void SaveParticleStateJson();
 
 #if defined(USE_IMGUI)
-        void DrawImGui();
-		void SetValue();
+        void DrawObjectStateImGui();
+		void SetObjectValue();
+
+        void DrawParticleStateImGui();
+        void SetParticleValue();
 #endif
     private:
         SceneDefaultVariables* sceneDefaultVariables_ = nullptr;
 
         std::unique_ptr<JsonManager> jsonManager_;
         std::string loadToSaveName_ = "ObjectState";
+
+        std::unique_ptr<JsonManager> jsonParticleManager_;
+        std::string loadToSaveParticleName_ = "particleState";
 
         Object3DBase* stage_ = nullptr;
 
@@ -52,7 +60,10 @@ namespace KashipanEngine {
         Object3DBase* bpmObjects_[kBpmObjectCount]{};
 		Vector3 minBpmObjectScale_[kBpmObjectCount]{}, maxBpmObjectScale_[kBpmObjectCount]{};
 
-		Object3DBase* OneBeatEmitter_ = nullptr;
+        // OneBeat パーティクルエミッター関連
+		Object3DBase* oneBeatEmitterObj_ = nullptr;
+        OneBeatEmitter* oneBeatEmitter_ = nullptr;
+        int particlesPerBeat_ = 10; // 1拍ごとに発生するパーティクル数
 
         // BPM関連
         BPMSystem* bpmSystem_ = nullptr;
@@ -106,6 +117,16 @@ namespace KashipanEngine {
             Object3DBase* particle = nullptr;
             PointLight* light = nullptr;
         };
+
+    private:
+		// パーティクル機能に渡す値
+		ParticleConfig enemySpawnParticleConfig_{};
+		ParticleConfig enemyDieParticleConfig_{};
+		ParticleConfig oneBeatParticleConfig_{};
+
+        int enemySpawnParticleCount_ = 20;
+		int enemyDieParticleCount_ = 30;
+		int oneBeatParticleCount_ = 50;
 
         std::vector<ParticleLightPair> particleLights_;
 

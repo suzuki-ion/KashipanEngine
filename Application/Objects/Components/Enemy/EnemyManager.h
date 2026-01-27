@@ -5,6 +5,7 @@
 #include <vector>
 #include "Scenes/Components/BPM/BPMSystem.h"
 #include "Objects/Components/Bomb/BombManager.h"
+#include "Objects/Components/ParticleConfig.h"
 
 namespace KashipanEngine {
 
@@ -42,6 +43,10 @@ public:
 
     // パーティクルプールを初期化
     void InitializeParticlePool();
+
+    void SetDieParticleConfig(const ParticleConfig& config) {
+        dieParticleConfig_ = config;
+	}
 private:
 
     void CleanupDeadEnemies();
@@ -63,6 +68,8 @@ private:
 
     std::vector<EnemyInfo> activeEnemies_;
     
+	ParticleConfig dieParticleConfig_{};
+
     // パーティクルプール
     std::vector<Object3DBase*> particlePool_;
     static constexpr int kParticlePoolSize_ = 100;

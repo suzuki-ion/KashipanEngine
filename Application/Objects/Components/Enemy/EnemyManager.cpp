@@ -41,7 +41,7 @@ void EnemyManager::InitializeParticlePool() {
         }
 
         // EnemyDieParticleコンポーネント追加
-        EnemyDieParticle::ParticleConfig config;
+        ParticleConfig config;
         config.initialSpeed = 8.0f;
         config.speedVariation = 3.0f;
         config.lifeTimeSec = 0.8f;
@@ -272,6 +272,7 @@ void EnemyManager::SpawnDieParticles(const Vector3& position) {
 
         // 非アクティブなパーティクルのみ再利用
         if (!dieParticle->IsAlive()) {
+            dieParticle->SetConfig(dieParticleConfig_);
             dieParticle->Spawn(position);
             particlesSpawned++;
         }

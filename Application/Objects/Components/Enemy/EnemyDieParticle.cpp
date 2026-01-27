@@ -86,7 +86,7 @@ namespace KashipanEngine {
 
 #if defined(USE_IMGUI)
     void EnemyDieParticle::ShowImGui() {
-        ImGui::DragInt("Particle Count", &config_.particleCount, 1, 1, 100);
+        ImGui::DragInt("Particle Count", &particleCount_, 1, 1, 100);
         ImGui::DragFloat("Initial Speed", &config_.initialSpeed, 0.1f, 0.0f, 20.0f);
         ImGui::DragFloat("Speed Variation", &config_.speedVariation, 0.1f, 0.0f, 10.0f);
         ImGui::DragFloat("Life Time (sec)", &config_.lifeTimeSec, 0.05f, 0.1f, 5.0f);

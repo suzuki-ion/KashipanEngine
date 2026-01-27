@@ -6,6 +6,7 @@
 #include <Scenes/Components/BPM/BPMSystem.h>
 #include <vector>
 #include <random>
+#include "Objects/Components/ParticleConfig.h"
 
 namespace KashipanEngine {
 
@@ -36,10 +37,12 @@ namespace KashipanEngine {
         void SetBPMSystem(BPMSystem* bpmSystem) { bpmSystem_ = bpmSystem; }
 
         // スポーンパーティクル設定
-        void SetSpawnParticleConfig(const EnemySpawnParticle::ParticleConfig& config) { particleConfig_ = config; }
+        void SetSpawnParticleConfig(const ParticleConfig& config) { particleConfig_ = config; }
 
 		void SetScreenBuffer(ScreenBuffer* screenBuffer) { screenBuffer_ = screenBuffer; }
 		void SetShadowMapBuffer(ShadowMapBuffer* shadowMapBuffer) { shadowMapBuffer_ = shadowMapBuffer; }
+
+		void SetEnemyDieParticleConfig(const ParticleConfig& config) { particleConfig_ = config; }
 #if defined(USE_IMGUI)
         void ShowImGui() override;
 #endif
@@ -63,8 +66,10 @@ namespace KashipanEngine {
         ScreenBuffer* screenBuffer_ = nullptr;
         ShadowMapBuffer* shadowMapBuffer_ = nullptr;
 
+		int particleCount_ = 1; // スポーンパーティクル数
+
         // スポーンパーティクル関連
-        EnemySpawnParticle::ParticleConfig particleConfig_ = {};
+        ParticleConfig particleConfig_ = {};
         std::vector<Object3DBase*> particleObjects_;
         Vector3 nextSpawnPosition_{ 0.0f, 0.0f, 0.0f }; // 次のスポーン位置
         bool particlesSpawned_ = false; // パーティクルが既に発生したかのフラグ

@@ -59,11 +59,12 @@ namespace KashipanEngine {
         static constexpr int kBpmObjectCount = 4;  // BPMオブジェクトの数
         Object3DBase* bpmObjects_[kBpmObjectCount]{};
 		Vector3 bpmObjectStart_[kBpmObjectCount]{}, bpmObjectEnd_[kBpmObjectCount]{};
-		bool leftRightToggle_ = false; // BPMオブジェクトの左右交互アニメーション用トグル
-
+		
         // OneBeat パーティクルエミッター関連
-		Object3DBase* oneBeatEmitterObj_ = nullptr;
-        OneBeatEmitter* oneBeatEmitter_ = nullptr;
+		static constexpr int kOneBeatEmitterCount_ = 10; // OneBeatエミッターの数
+        Object3DBase* oneBeatEmitterObj_[kOneBeatEmitterCount_]{};
+        OneBeatEmitter* oneBeatEmitter_[kOneBeatEmitterCount_]{};
+		Vector3 emitterTranslate_[kOneBeatEmitterCount_]{};
         int particlesPerBeat_ = 10; // 1拍ごとに発生するパーティクル数
 
         // BPM関連

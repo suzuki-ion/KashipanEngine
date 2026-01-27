@@ -26,6 +26,7 @@ namespace KashipanEngine {
 
             // タイマーが完了した瞬間のみ拍を進める
             if (bpmTimer_.IsFinished()) {
+				leftRightToggle_ = !leftRightToggle_;
                 ++currentBeat_;
                 OnBeat();
             }
@@ -61,6 +62,11 @@ namespace KashipanEngine {
         bool GetOnBeat() const {
             return bpmTimer_.IsFinished();
 		}
+
+		/// @brief 左右トグル状態を取得 true: 左, false: 右
+        bool GetLeftRightToggle() const {
+            return leftRightToggle_;
+		}
     private:
 
         /// @brief 拍が発生したときの処理
@@ -77,6 +83,8 @@ namespace KashipanEngine {
         float bpm_ = 120.0f;
         float beatDuration_ = 0.0f;
         int currentBeat_ = 0;
+
+		bool leftRightToggle_ = false;
     };
 
 } // namespace KashipanEngine

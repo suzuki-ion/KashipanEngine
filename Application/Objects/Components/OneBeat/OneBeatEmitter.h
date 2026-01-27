@@ -10,7 +10,7 @@ namespace KashipanEngine {
 	class OneBeatEmitter final : public ISceneComponent {
 	public:
 		explicit OneBeatEmitter()
-			: ISceneComponent("OneBeatEmitter", 100) {}
+			: ISceneComponent("OneBeatEmitter", 10) {}
 
 		~OneBeatEmitter() override = default;
 
@@ -27,12 +27,14 @@ namespace KashipanEngine {
 		void InitializeParticlePool(int particlesPerBeat = 10);
 
 		void SetParticleConfig(const ParticleConfig& config) { config_ = config; }
+
+		void SetUseEmitter(bool useEmitter) { useEmitter_ = useEmitter; }
 	private:
 		/// @brief 一拍ごとに火花を発生させる
 		void SpawnSparks();
 
 		std::vector<Object3DBase*> particlePool_;
-		static constexpr int kParticlePoolSize_ = 100;
+		static constexpr int kParticlePoolSize_ = 10;
 
 		ScreenBuffer* screenBuffer_ = nullptr;
 		ShadowMapBuffer* shadowMapBuffer_ = nullptr;
@@ -43,6 +45,8 @@ namespace KashipanEngine {
 
 		int lastBeat_ = -1;
 		int particlesPerBeat_ = 10;
+
+		bool useEmitter_ = true;
 	};
 
 } // namespace KashipanEngine

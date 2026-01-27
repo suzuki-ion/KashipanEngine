@@ -159,6 +159,42 @@ namespace KashipanEngine {
             AddObject3D(std::move(obj));
         }
 
+        // OneBeatEmitter の追加
+        {
+			emitterTranslate_[0] = Vector3(-2.0f, 0.5f, -2.0f);
+			emitterTranslate_[1] = Vector3(-2.0f, 0.5f, 3.65f);
+            emitterTranslate_[2] = Vector3(-2.0f, 0.5f, 10.0f);
+            emitterTranslate_[3] = Vector3(-2.0f, 0.5f, 16.3f);
+            emitterTranslate_[4] = Vector3(-2.0f, 0.5f, 22.0f);
+            emitterTranslate_[5] = Vector3(22.0f, 0.5f, -2.0f);
+            emitterTranslate_[6] = Vector3(22.0f, 0.5f, 3.65f);
+            emitterTranslate_[7] = Vector3(22.0f, 0.5f, 10.0f);
+            emitterTranslate_[8] = Vector3(22.0f, 0.5f, 16.3f);
+            emitterTranslate_[9] = Vector3(22.0f, 0.5f, 22.0f);
+            for (int i = 0; i < kOneBeatEmitterCount_; ++i) { 
+                auto obj = std::make_unique<Box>();
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(emitterTranslate_[i]);
+                    tr->SetScale(Vector3(0.1f, 0.1f, 0.1f));
+				}
+                obj->SetName("A_OneBeatEmitterObj_" + std::to_string(i));
+                oneBeatEmitterObj_[i] = obj.get();
+                AddObject3D(std::move(obj));
+
+
+                auto comp = std::make_unique<OneBeatEmitter>();
+                comp->SetScreenBuffer(screenBuffer3D);
+                comp->SetShadowMapBuffer(shadowMapBuffer);
+                comp->SetBPMSystem(bpmSystem_);
+                comp->SetEmitter(oneBeatEmitterObj_[i]);
+                oneBeatEmitter_[i] = comp.get();
+                AddSceneComponent(std::move(comp));
+
+                // パーティクルプールを初期化
+                oneBeatEmitter_[i]->InitializeParticlePool(particlesPerBeat_);
+            }
+        }
+
         // 既存の bpmObject_ の初期化部分を置き換え
         {
             for (int i = 0; i < kBpmObjectCount; ++i) {
@@ -320,28 +356,6 @@ namespace KashipanEngine {
             explosionManager_->SetEnemyManager(enemyManager_);
         }
 
-        // OneBeatEmitter の追加（プレイヤーにアタッチ）
-        {
-			auto modelData = ModelManager::GetModelDataFromFileName("oneBeat.obj");
-			auto obj = std::make_unique<Model>(modelData);
-			obj->SetName("OneBeatEmitterObj");
-			if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-			oneBeatEmitterObj_ = obj.get();
-			AddObject3D(std::move(obj));
-            
-
-            auto comp = std::make_unique<OneBeatEmitter>();
-            comp->SetScreenBuffer(screenBuffer3D);
-            comp->SetShadowMapBuffer(shadowMapBuffer);
-            comp->SetBPMSystem(bpmSystem_);
-            comp->SetEmitter(oneBeatEmitterObj_);  // プレイヤーをエミッターとして設定
-            oneBeatEmitter_ = comp.get();
-            AddSceneComponent(std::move(comp));
-
-            // パーティクルプールを初期化
-            oneBeatEmitter_->InitializeParticlePool(particlesPerBeat_);
-        }
-
         // ExplosionManagerにPlayerを設定
         explosionManager_->SetPlayer(player_);
 
@@ -485,20 +499,36 @@ namespace KashipanEngine {
 
         // OnUpdate内の既存の bpmObject_ 更新部分を置き換え
         {
-            if (bpmSystem_->GetOnBeat()) {
-                if (leftRightToggle_) { leftRightToggle_ = false; } else { leftRightToggle_ = true; }
-            }
-
             if (bpmObjects_[0] && bpmObjects_[1]) {
                 auto tr = bpmObjects_[0]->GetComponent3D<Transform3D>();
                 auto tr1 = bpmObjects_[1]->GetComponent3D<Transform3D>();
 
-                if (leftRightToggle_) {
+                if (bpmSystem_->GetLeftRightToggle()) {
                     tr->SetTranslate(Vector3(MyEasing::Lerp(bpmObjectStart_[0], bpmObjectEnd_[0], bpmSystem_->GetBeatProgress())));
                     tr1->SetTranslate(bpmObjectStart_[1]);
                 } else {
                     tr1->SetTranslate(Vector3(MyEasing::Lerp(bpmObjectStart_[1], bpmObjectEnd_[1], bpmSystem_->GetBeatProgress())));
                     tr->SetTranslate(bpmObjectStart_[0]);
+                }
+            }
+        }
+
+        {
+            if (bpmSystem_->GetLeftRightToggle()) {
+                for (int i = 0; i < kOneBeatEmitterCount_ / 2; i++) {
+					oneBeatEmitter_[i]->SetUseEmitter(true);
+                }
+
+                for (int i = 5; i < kOneBeatEmitterCount_; i++) {
+                    oneBeatEmitter_[i]->SetUseEmitter(false);
+                }
+            } else {
+                for (int i = 0; i < kOneBeatEmitterCount_ / 2; i++) {
+                    oneBeatEmitter_[i]->SetUseEmitter(false);
+                }
+
+                for (int i = 5; i < kOneBeatEmitterCount_; i++) {
+                    oneBeatEmitter_[i]->SetUseEmitter(true);
                 }
             }
         }
@@ -878,8 +908,11 @@ namespace KashipanEngine {
     }
 
     void GameScene::SetParticleValue() {
-        if (oneBeatEmitter_) {
-            oneBeatEmitter_->SetParticleConfig(oneBeatParticleConfig_);
+
+        for (int i = 0; i < kOneBeatEmitterCount_; ++i) {
+            if (oneBeatEmitter_[i]) {
+                oneBeatEmitter_[i]->SetParticleConfig(oneBeatParticleConfig_);
+            }
         }
 
         if (enemySpawner_) {

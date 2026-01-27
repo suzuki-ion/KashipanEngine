@@ -74,7 +74,9 @@ void OneBeatEmitter::Update() {
 	int currentBeat = bpmSystem_->GetCurrentBeat();
 	if (currentBeat != lastBeat_) {
 		lastBeat_ = currentBeat;
-		SpawnSparks();
+		if (useEmitter_) {
+			SpawnSparks();
+		}
 	}
 }
 

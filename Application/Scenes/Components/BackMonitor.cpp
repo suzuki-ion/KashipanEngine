@@ -13,7 +13,7 @@ void BackMonitor::Initialize() {
     auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
     // ScreenBuffer生成
-    screenBuffer_ = ScreenBuffer::Create(640, 256);
+    screenBuffer_ = ScreenBuffer::Create(780, 382);
     if (!screenBuffer_) return;
 
     {
@@ -56,8 +56,8 @@ void BackMonitor::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor Plane Parent");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3{ 32.4f, 16.0f, 1.0f });
-            tr->SetTranslate(Vector3{ 10.0f, 9.5f, 35.0f });
+            tr->SetScale(Vector3{ 39.0f, 19.1f, 1.0f });
+            tr->SetTranslate(Vector3{ 10.0f, 11.8f, 35.8f });
         }
         planeParent_ = obj.get();
         context->AddObject3D(std::move(obj));

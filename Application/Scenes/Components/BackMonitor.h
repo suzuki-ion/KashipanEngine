@@ -16,6 +16,7 @@ public:
     ScreenBuffer *GetScreenBuffer() const { return screenBuffer_; }
     Camera2D *GetCamera2D() const { return camera2D_; }
     Camera3D *GetCamera3D() const { return camera3D_; }
+    bool IsReady() const { return planeMoveCount_ >= 2; }
 
 private:
     ScreenBuffer *screenBuffer_ = nullptr;

@@ -13,13 +13,13 @@ void BackMonitor::Initialize() {
     auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
     // ScreenBuffer生成
-    screenBuffer_ = ScreenBuffer::Create(640, 360);
+    screenBuffer_ = ScreenBuffer::Create(640, 256);
     if (!screenBuffer_) return;
 
     {
         DotMatrixEffect::Params dp{};
-        dp.dotSpacing = 10.0f;
-        dp.dotRadius = 4.0f;
+        dp.dotSpacing = 5.0f;
+        dp.dotRadius = 2.9f;
         dp.threshold = 0.0f;
         dp.intensity = 2.0f;
         dp.monochrome = false;
@@ -49,25 +49,6 @@ void BackMonitor::Initialize() {
         context->AddObject3D(std::move(obj));
     }
 
-    // Sprite生成
-    {
-        auto obj = std::make_unique<Sprite>();
-        obj->SetUniqueBatchKey();
-        obj->SetName("Sprite_BackMonitor");
-        if (auto *tr = obj->GetComponent2D<Transform2D>()) {
-            float w = static_cast<float>(screenBuffer_->GetWidth());
-            float h = static_cast<float>(screenBuffer_->GetHeight());
-            tr->SetScale(Vector3{ w, h, 1.0f });
-            tr->SetTranslate(Vector3{ w * 0.5f, h * 0.5f, 0.0f });
-        }
-        if (auto *mat = obj->GetComponent2D<Material2D>()) {
-            mat->SetTexture(screenBuffer3D);
-        }
-        obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-        sprite_ = obj.get();
-        context->AddObject2D(std::move(obj));
-    }
-
     // 板ポリの親オブジェクト生成
     {
         // 適当な3Dオブジェクトを親にする
@@ -75,7 +56,7 @@ void BackMonitor::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor Plane Parent");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3{ 25.6f, 14.4f, 1.0f });
+            tr->SetScale(Vector3{ 32.4f, 16.0f, 1.0f });
             tr->SetTranslate(Vector3{ 10.0f, 9.5f, 35.0f });
         }
         planeParent_ = obj.get();

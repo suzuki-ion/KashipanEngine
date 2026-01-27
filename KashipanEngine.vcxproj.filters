@@ -149,6 +149,7 @@
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithGameScreen.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />

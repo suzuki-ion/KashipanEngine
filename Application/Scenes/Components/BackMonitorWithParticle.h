@@ -15,8 +15,7 @@ private:
     void EnsureParticlePool();
     std::vector<Object2DBase*> particles_;
 
-    // Internal frame counter for simple animations
-    int frameCounter_ = 0;
+    float elapsedTime_ = 0.0f;
 };
 
 } // namespace KashipanEngine

@@ -113,17 +113,17 @@
   {
     "name": "oneBeat_baseScale_x",
     "type": 2,
-    "value": 1.500000
+    "value": 0.750000
   },
   {
     "name": "oneBeat_baseScale_y",
     "type": 2,
-    "value": 1.500000
+    "value": 0.750000
   },
   {
     "name": "oneBeat_baseScale_z",
     "type": 2,
-    "value": 1.500000
+    "value": 0.750000
   }
   ]
 }

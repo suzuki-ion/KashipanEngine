@@ -8,14 +8,67 @@ namespace KashipanEngine {
         // 初期化処理
         lastSpawnBeat_ = -1;
         preSpawnBeat_ = -1;
-        particlesSpawned_ = false;
         isEmittingParticles_ = false;
+    }
+
+    void EnemySpawner::InitializeParticlePool(int particlesPerFrame) {
+        auto* ctx = GetOwnerContext();
+        if (!ctx) return;
+
+        particlesPerFrame_ = particlesPerFrame;
+        particlePool_.reserve(kParticlePoolSize_);
+
+        for (int i = 0; i < kParticlePoolSize_; ++i) {
+            // パーティクルオブジェクトを生成
+            auto particle = std::make_unique<Box>();
+            particle->SetName("EnemySpawnParticle_" + std::to_string(i));
+
+            // Transform設定
+            if (auto* tr = particle->GetComponent3D<Transform3D>()) {
+                tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f }); // 初期は非表示
+            }
+
+            // Material設定 (赤色)
+            if (auto* mat = particle->GetComponent3D<Material3D>()) {
+                mat->SetColor(Vector4{ 0.8f, 0.8f, 0.8f, 1.0f });
+                mat->SetEnableLighting(true);
+            }
+
+            // EnemySpawnParticleコンポーネント追加
+            particleConfig_.initialSpeed = 5.0f;
+            particleConfig_.speedVariation = 2.0f;
+            particleConfig_.lifeTimeSec = 2.0f;
+            particleConfig_.gravity = -5.0f;
+            particleConfig_.damping = 0.95f;
+            particleConfig_.spreadAngle = 0.0f;
+            particleConfig_.baseScale = Vector3{ 0.3f, 0.3f, 0.3f };
+
+            particle->RegisterComponent<EnemySpawnParticle>(particleConfig_);
+
+            // レンダラーにアタッチ
+            if (screenBuffer_) {
+                particle->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+            }
+            if (shadowMapBuffer_) {
+                particle->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+            }
+
+            particlePool_.push_back(particle.get());
+            ctx->AddObject3D(std::move(particle));
+        }
     }
 
     void EnemySpawner::Update() {
         if (!bpmSystem_ || !enemyManager_) return;
 
         int currentBeat = bpmSystem_->GetCurrentBeat();
+
+        // プール内の全パーティクルにconfigを適用
+        for (auto* particle : particlePool_) {
+            if (auto* spawnParticle = particle->GetComponent3D<EnemySpawnParticle>()) {
+                spawnParticle->SetConfig(particleConfig_);
+            }
+        }
 
         // スポーン3拍前の検出
         if (currentBeat != preSpawnBeat_ && (currentBeat + 3) % spawnInterval_ == 0) {
@@ -29,7 +82,7 @@ namespace KashipanEngine {
             isEmittingParticles_ = true;
         }
 
-        // パーティクルを毎フレーム放出
+        // パーティクルを毎フレーム放出（プールから再利用）
         if (isEmittingParticles_) {
             SpawnParticlesAtPosition(nextSpawnPosition_);
         }
@@ -41,29 +94,7 @@ namespace KashipanEngine {
             
             // パーティクル放出停止
             isEmittingParticles_ = false;
-            particlesSpawned_ = false;
         }
-
-        // 消滅したパーティクルオブジェクトを削除
-        auto* ctx = GetOwnerContext();
-        particleObjects_.erase(
-            std::remove_if(particleObjects_.begin(), particleObjects_.end(),
-                [ctx](Object3DBase* obj) {
-                    auto* particle = obj->GetComponent3D<EnemySpawnParticle>();
-                    if (particle && !particle->IsAlive()) {
-                        // レンダラーからデタッチ
-                        obj->DetachFromRenderer();
-                        
-                        // コンテキストから削除
-                        if (ctx) {
-                            ctx->RemoveObject3D(obj);
-                        }
-                        return true;
-                    }
-                    return false;
-                }),
-            particleObjects_.end()
-        );
     }
 
     void EnemySpawner::SpawnEnemy() {
@@ -80,45 +111,20 @@ namespace KashipanEngine {
     }
 
     void EnemySpawner::SpawnParticlesAtPosition(const Vector3& position) {
-        auto* ctx = GetOwnerContext();
-        if (!ctx) return;
+        // プールから非アクティブなパーティクルを探して再利用
+        int particlesSpawned = 0;
 
-        // 毎フレーム少量のパーティクルを生成（例: 1~3個）
-        constexpr int particlesPerFrame = 1;
+        for (auto* particle : particlePool_) {
+            if (particlesSpawned >= particlesPerFrame_) break;
 
-        for (int i = 0; i < particlesPerFrame; ++i) {
-            auto particleObj = std::make_unique<Box>();
-            particleObj->SetName("EnemySpawnParticle_" + std::to_string(particleObjects_.size()));
+            auto* spawnParticle = particle->GetComponent3D<EnemySpawnParticle>();
+            if (!spawnParticle) continue;
 
-            // Transform3Dコンポーネントを追加
-            auto* transform = particleObj->GetComponent3D<Transform3D>();
-            if (!transform) {
-                particleObj->RegisterComponent<Transform3D>();
-                transform = particleObj->GetComponent3D<Transform3D>();
+            // 非アクティブなパーティクルのみ再利用
+            if (!spawnParticle->IsAlive()) {
+                spawnParticle->Spawn(position);
+                particlesSpawned++;
             }
-            
-            if (transform) {
-                transform->SetTranslate(position);
-                transform->SetScale(particleConfig_.baseScale);
-            }
-
-            // EnemySpawnParticleコンポーネントを追加
-            particleObj->RegisterComponent<EnemySpawnParticle>(particleConfig_);
-            auto* particle = particleObj->GetComponent3D<EnemySpawnParticle>();
-            if (particle) {
-                particle->Spawn(position);
-            }
-
-            // レンダラーにアタッチ
-            if (screenBuffer_) {
-                particleObj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
-            }
-            if (shadowMapBuffer_) {
-                particleObj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
-            }
-
-            particleObjects_.push_back(particleObj.get());
-            ctx->AddObject3D(std::move(particleObj));
         }
     }
 
@@ -173,11 +179,10 @@ namespace KashipanEngine {
             ImGui::DragInt("Spawn Interval", &spawnInterval_, 1, 1, 16);
             ImGui::Text("Last Spawn Beat: %d", lastSpawnBeat_);
             ImGui::Text("Pre Spawn Beat: %d", preSpawnBeat_);
-            ImGui::Text("Active Particles: %zu", particleObjects_.size());
+            ImGui::DragInt("Particles Per Frame", &particlesPerFrame_, 1, 1, 10);
             ImGui::Checkbox("Is Emitting Particles", &isEmittingParticles_);
             
             if (ImGui::TreeNode("Particle Config")) {
-                ImGui::DragInt("Particle Count", &particleCount_, 1, 1, 50);
                 ImGui::DragFloat("Initial Speed", &particleConfig_.initialSpeed, 0.1f, 0.0f, 20.0f);
                 ImGui::DragFloat("Speed Variation", &particleConfig_.speedVariation, 0.1f, 0.0f, 10.0f);
                 ImGui::DragFloat("Life Time (sec)", &particleConfig_.lifeTimeSec, 0.01f, 0.1f, 5.0f);

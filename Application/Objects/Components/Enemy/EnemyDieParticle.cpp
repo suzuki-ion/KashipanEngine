@@ -76,7 +76,7 @@ namespace KashipanEngine {
 
         // アクティブ化
         isActive_ = true;
-        isAlive_ = true; // 追加: パーティクルが生きていることを示す
+        isAlive_ = true;
         elapsed_ = 0.0f;
     }
 

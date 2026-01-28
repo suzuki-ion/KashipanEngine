@@ -144,7 +144,19 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
     if (!ctx) return;
 
     // 敵オブジェクトを生成
-    auto modelData = ModelManager::GetModelDataFromFileName("enemy.obj");
+
+	std::string modelPath;
+    switch (type)
+    {
+    case EnemyType::Basic:
+		modelPath = "enemy_Normal.obj";
+        break;
+    case EnemyType::Speedy:
+		modelPath = "enemy_Speed.obj";
+        break;
+    }
+
+    auto modelData = ModelManager::GetModelDataFromFileName(modelPath);
     auto enemy = std::make_unique<Model>(modelData);
     enemy->SetName("enemy_" + std::to_string(activeEnemies_.size()));
 
@@ -165,14 +177,6 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
         case EnemyDirection::Right:
             tr->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
             break;
-        }
-    }
-
-    if (auto* mat = enemy->GetComponent3D<Material3D>()) {
-        mat->SetEnableLighting(true);
-        switch (type) {
-        case EnemyType::Basic:  mat->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f)); break;
-        case EnemyType::Speedy: mat->SetColor(Vector4(0.0f, 0.0f, 1.0f, 1.0f)); break;
         }
     }
 

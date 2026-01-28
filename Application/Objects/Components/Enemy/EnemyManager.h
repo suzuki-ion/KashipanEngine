@@ -72,7 +72,7 @@ private:
 
     // パーティクルプール
     std::vector<Object3DBase*> particlePool_;
-    static constexpr int kParticlePoolSize_ = 100;
+    static constexpr int kParticlePoolSize_ = 50;
     
     ScreenBuffer* screenBuffer_ = nullptr;
     ShadowMapBuffer* shadowMapBuffer_ = nullptr;

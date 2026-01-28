@@ -12,7 +12,7 @@ namespace KashipanEngine {
 class BombManager;
 class CameraController;
 class ScoreManager;
-class ExplosionNumberDisplay;
+class ScoreDisplay;
 
 /// @brief 爆発エフェクトを一括管理するクラス
 class ExplosionManager final : public ISceneComponent {
@@ -46,7 +46,7 @@ public:
     void SetScoreManager(ScoreManager* scoreManager) { scoreManager_ = scoreManager; }
 
     /// @brief ExplosionNumberDisplayを設定
-    void SetExplosionNumberDisplay(ExplosionNumberDisplay* explosionNumberDisplay) { 
+    void SetExplosionNumberDisplay(ScoreDisplay* explosionNumberDisplay) { 
         explosionNumberDisplay_ = explosionNumberDisplay; 
     }
 
@@ -103,7 +103,7 @@ private:
     Object3DBase* player_ = nullptr;
     CameraController* cameraController_ = nullptr;
     ScoreManager* scoreManager_ = nullptr;
-    ExplosionNumberDisplay* explosionNumberDisplay_ = nullptr;
+    ScoreDisplay* explosionNumberDisplay_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     ColliderComponent* collider2_ = nullptr;
 

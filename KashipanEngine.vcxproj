@@ -121,7 +121,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
-    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\ScoreDisplay.cpp" />
     <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
@@ -130,6 +130,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatEmitter.cpp" />
     <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
@@ -293,7 +295,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
-    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ScoreDisplay.h" />
     <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
     <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
@@ -307,6 +309,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\ParticleConfig.h" />
     <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticleManager.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
     <ClInclude Include="Application\Objects\Components\Player\ScoreManager.h" />

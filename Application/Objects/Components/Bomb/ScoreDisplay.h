@@ -6,10 +6,10 @@
 namespace KashipanEngine {
 
 /// @brief 爆発時に倒した敵の数を表示するコンポーネント
-class ExplosionNumberDisplay final : public ISceneComponent {
+class ScoreDisplay final : public ISceneComponent {
 public:
-    ExplosionNumberDisplay();
-    ~ExplosionNumberDisplay() override = default;
+    ScoreDisplay();
+    ~ScoreDisplay() override = default;
 
     void Initialize() override;
     void Update() override;

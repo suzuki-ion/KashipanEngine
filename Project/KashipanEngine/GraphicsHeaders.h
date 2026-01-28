@@ -5,10 +5,7 @@
 #include "Graphics/PostEffectComponents/BloomEffect.h"
 #include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
 #include "Graphics/PostEffectComponents/MotionBlurEffect.h"
-<<<<<<< HEAD:Project/KashipanEngine/GraphicsHeaders.h
-=======
 #include "Graphics/PostEffectComponents/FXAAEffect.h"
->>>>>>> TD2_3:KashipanEngine/GraphicsHeaders.h
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/DefineMaps.h"

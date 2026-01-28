@@ -10,7 +10,7 @@ BackMonitorWithParticle::BackMonitorWithParticle(ScreenBuffer* target)
 BackMonitorWithParticle::~BackMonitorWithParticle() {}
 
 void BackMonitorWithParticle::Initialize() {
-    EnsureParticlePool();
+    //EnsureParticlePool();
 }
 
 void BackMonitorWithParticle::EnsureParticlePool() {

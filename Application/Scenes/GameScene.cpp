@@ -373,7 +373,7 @@ namespace KashipanEngine {
                 backMonitorGame_ = compG.get();
                 AddSceneComponent(std::move(compG));
 
-                auto compM = std::make_unique<BackMonitorWithMenuScreen>(bm->GetScreenBuffer());
+                auto compM = std::make_unique<BackMonitorWithMenuScreen>(bm->GetScreenBuffer(), GetInputCommand());
                 backMonitorMenu_ = compM.get();
                 AddSceneComponent(std::move(compM));
 

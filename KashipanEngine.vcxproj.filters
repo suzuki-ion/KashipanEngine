@@ -151,6 +151,7 @@
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PlayerHealthModelUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -421,6 +422,7 @@
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithMenuScreen.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithParticle.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerHealthModelUI.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

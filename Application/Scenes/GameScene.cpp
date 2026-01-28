@@ -244,7 +244,7 @@ namespace KashipanEngine {
             }
 
             obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-            obj->RegisterComponent<Health>(10, 1.0f);
+            obj->RegisterComponent<Health>(3, 1.0f);
 
             // 衝突判定を追加（修正版）
             if (colliderComp && colliderComp->GetCollider()) {
@@ -337,6 +337,9 @@ namespace KashipanEngine {
             enemySpawner_ = comp.get();
             AddSceneComponent(std::move(comp));
 
+            // パーティクルプールを初期化
+            enemySpawner_->InitializeParticlePool(1); // 毎フレーム1個放出
+
             if (enemySpawner_) {
                 constexpr float kTile = 2.0f;
                 constexpr float kY = 0.0f;
@@ -394,11 +397,14 @@ namespace KashipanEngine {
         //==================================================
 
         // Player Health UI (ライフ表示)
-        {
-            auto comp = std::make_unique<PlayerHealthUI>(screenBuffer2D);
+        { 
+            auto comp = std::make_unique<PlayerHealthModelUI>(screenBuffer3D);
             if (player_) {
                 if (auto* health = player_->GetComponent3D<Health>()) {
                     comp->SetHealth(health);
+                }
+                if (auto* tr = camera3D->GetComponent3D<Transform3D>()) {
+                    comp->SetTransform(tr);
                 }
                 playerHealthUI_ = comp.get();
             }

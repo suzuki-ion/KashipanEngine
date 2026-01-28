@@ -36,13 +36,17 @@ namespace KashipanEngine {
 
         void SetBPMSystem(BPMSystem* bpmSystem) { bpmSystem_ = bpmSystem; }
 
+        // パーティクルプールを初期化
+        void InitializeParticlePool(int particlesPerFrame = 1);
+
         // スポーンパーティクル設定
         void SetSpawnParticleConfig(const ParticleConfig& config) { particleConfig_ = config; }
 
-		void SetScreenBuffer(ScreenBuffer* screenBuffer) { screenBuffer_ = screenBuffer; }
-		void SetShadowMapBuffer(ShadowMapBuffer* shadowMapBuffer) { shadowMapBuffer_ = shadowMapBuffer; }
+        void SetScreenBuffer(ScreenBuffer* screenBuffer) { screenBuffer_ = screenBuffer; }
+        void SetShadowMapBuffer(ShadowMapBuffer* shadowMapBuffer) { shadowMapBuffer_ = shadowMapBuffer; }
 
-		void SetEnemyDieParticleConfig(const ParticleConfig& config) { particleConfig_ = config; }
+        void SetEnemyDieParticleConfig(const ParticleConfig& config) { particleConfig_ = config; }
+
 #if defined(USE_IMGUI)
         void ShowImGui() override;
 #endif
@@ -54,7 +58,7 @@ namespace KashipanEngine {
         EnemyDirection ChooseSpawnDirection_NoOutward(const Vector3& pos, int mapW = 13, int mapH = 13, float tile = 2.0f) const;
         const SpawnPoint& SelectSpawnPoint() const;
 
-        static constexpr int kParticlePoolSize_ = 100;
+        static constexpr int kParticlePoolSize_ = 50;
 
         std::vector<SpawnPoint> spawnPoints_;
         int spawnInterval_ = 4; // 何拍ごとにスポーンするか
@@ -66,13 +70,12 @@ namespace KashipanEngine {
         ScreenBuffer* screenBuffer_ = nullptr;
         ShadowMapBuffer* shadowMapBuffer_ = nullptr;
 
-		int particleCount_ = 1; // スポーンパーティクル数
+        int particlesPerFrame_ = 1; // 毎フレーム放出するパーティクル数
 
-        // スポーンパーティクル関連
+        // スポーンパーティクル関連（オブジェクトプーリング）
         ParticleConfig particleConfig_ = {};
-        std::vector<Object3DBase*> particleObjects_;
+        std::vector<Object3DBase*> particlePool_; // プールに変更
         Vector3 nextSpawnPosition_{ 0.0f, 0.0f, 0.0f }; // 次のスポーン位置
-        bool particlesSpawned_ = false; // パーティクルが既に発生したかのフラグ
         bool isEmittingParticles_ = false;  // パーティクル放出中フラグ
     };
 

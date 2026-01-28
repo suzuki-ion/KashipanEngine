@@ -139,6 +139,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
     <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PlayerHealthModelUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
     <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
@@ -324,6 +325,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
     <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerHealthModelUI.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
     <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h" />

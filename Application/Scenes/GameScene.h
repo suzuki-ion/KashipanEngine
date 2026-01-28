@@ -5,6 +5,7 @@
 #include "objects/Components/Bomb/BombManager.h"
 #include "objects/Components/Bomb/explosionManager.h"
 #include "Scenes/Components/PlayerHealthUI.h"
+#include "Scenes/Components/PlayerHealthModelUI.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
 #include "Objects/Components/Enemy/EnemySpawner.h"
 #include "Scene/Components/ColliderComponent.h"

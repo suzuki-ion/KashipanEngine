@@ -91,7 +91,7 @@ namespace KashipanEngine {
             ImGui::Text("Elapsed: %.2f / %.2f", elapsed_, config_.lifeTimeSec);
             
             if (ImGui::TreeNode("Config")) {
-                ImGui::DragInt("ParticleCount", &config_.particleCount, 1, 1, 100);
+                ImGui::DragInt("ParticleCount", &particleCount_, 1, 1, 100);
                 ImGui::DragFloat("InitialSpeed", &config_.initialSpeed, 0.1f, 0.0f, 20.0f);
                 ImGui::DragFloat("SpeedVariation", &config_.speedVariation, 0.1f, 0.0f, 10.0f);
                 ImGui::DragFloat("LifeTimeSec", &config_.lifeTimeSec, 0.01f, 0.1f, 5.0f);

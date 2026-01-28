@@ -146,6 +146,8 @@
     <ClCompile Include="KashipanEngine\Utilities\Json\JsonManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
+    <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatEmitter.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithGameScreen.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
@@ -413,6 +415,10 @@
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonInput.h" />
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\JsonOutput.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatParticle.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatEmitter.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeatParticle.h" />
+    <ClInclude Include="Application\Objects\Components\ParticleConfig.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithMenuScreen.h" />

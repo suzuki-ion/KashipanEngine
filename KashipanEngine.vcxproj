@@ -126,6 +126,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatEmitter.cpp" />
+    <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
@@ -295,6 +297,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeatParticle.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatEmitter.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatParticle.h" />
+    <ClInclude Include="Application\Objects\Components\ParticleConfig.h" />
     <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />

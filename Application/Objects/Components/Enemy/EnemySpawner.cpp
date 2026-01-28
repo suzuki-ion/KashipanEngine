@@ -83,14 +83,11 @@ namespace KashipanEngine {
         auto* ctx = GetOwnerContext();
         if (!ctx) return;
 
-        // Boxモデルデータを取得
-        auto boxModelData = ModelManager::GetModelDataFromFileName("MapBlock.obj");
-
         // 毎フレーム少量のパーティクルを生成（例: 1~3個）
         constexpr int particlesPerFrame = 1;
 
         for (int i = 0; i < particlesPerFrame; ++i) {
-            auto particleObj = std::make_unique<Model>(boxModelData);
+            auto particleObj = std::make_unique<Box>();
             particleObj->SetName("EnemySpawnParticle_" + std::to_string(particleObjects_.size()));
 
             // Transform3Dコンポーネントを追加
@@ -180,7 +177,7 @@ namespace KashipanEngine {
             ImGui::Checkbox("Is Emitting Particles", &isEmittingParticles_);
             
             if (ImGui::TreeNode("Particle Config")) {
-                ImGui::DragInt("Particle Count", &particleConfig_.particleCount, 1, 1, 50);
+                ImGui::DragInt("Particle Count", &particleCount_, 1, 1, 50);
                 ImGui::DragFloat("Initial Speed", &particleConfig_.initialSpeed, 0.1f, 0.0f, 20.0f);
                 ImGui::DragFloat("Speed Variation", &particleConfig_.speedVariation, 0.1f, 0.0f, 10.0f);
                 ImGui::DragFloat("Life Time (sec)", &particleConfig_.lifeTimeSec, 0.01f, 0.1f, 5.0f);

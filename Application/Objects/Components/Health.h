@@ -58,6 +58,13 @@ public:
             cameraController_->Shake(shakePower_, shakeTime_);
         }
 
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/playerHpDown.mp3");
+        if (handle == AudioManager::kInvalidSoundHandle) {
+            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+            return;
+        }
+        AudioManager::Play(handle, damageVolume_);
+
         UpdateMaterialTint();
     }
 
@@ -129,6 +136,8 @@ private:
 	float shakeTime_ = 1.0f;
 
     CameraController* cameraController_ = nullptr;
+
+	float damageVolume_ = 0.1f;
 };
 
 } // namespace KashipanEngine

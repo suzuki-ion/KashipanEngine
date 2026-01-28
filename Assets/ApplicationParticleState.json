@@ -1,0 +1,129 @@
+{
+  "values": [
+  {
+    "name": "enemySpawn_initialSpeed",
+    "type": 2,
+    "value": 5.000000
+  },
+  {
+    "name": "enemySpawn_speedVariation",
+    "type": 2,
+    "value": 1.500000
+  },
+  {
+    "name": "enemySpawn_lifeTimeSec",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "enemySpawn_gravity",
+    "type": 2,
+    "value": -5.000000
+  },
+  {
+    "name": "enemySpawn_damping",
+    "type": 2,
+    "value": 0.980000
+  },
+  {
+    "name": "enemySpawn_baseScale_x",
+    "type": 2,
+    "value": 0.250000
+  },
+  {
+    "name": "enemySpawn_baseScale_y",
+    "type": 2,
+    "value": 0.250000
+  },
+  {
+    "name": "enemySpawn_baseScale_z",
+    "type": 2,
+    "value": 0.250000
+  },
+  {
+    "name": "enemyDie_initialSpeed",
+    "type": 2,
+    "value": 10.000000
+  },
+  {
+    "name": "enemyDie_speedVariation",
+    "type": 2,
+    "value": 2.500000
+  },
+  {
+    "name": "enemyDie_lifeTimeSec",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "enemyDie_gravity",
+    "type": 2,
+    "value": 20.000000
+  },
+  {
+    "name": "enemyDie_damping",
+    "type": 2,
+    "value": 0.980000
+  },
+  {
+    "name": "enemyDie_baseScale_x",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "enemyDie_baseScale_y",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "enemyDie_baseScale_z",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "oneBeat_initialSpeed",
+    "type": 2,
+    "value": 20.000000
+  },
+  {
+    "name": "oneBeat_speedVariation",
+    "type": 2,
+    "value": 5.000000
+  },
+  {
+    "name": "oneBeat_lifeTimeSec",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "oneBeat_gravity",
+    "type": 2,
+    "value": 15.000000
+  },
+  {
+    "name": "oneBeat_damping",
+    "type": 2,
+    "value": 0.980000
+  },
+  {
+    "name": "oneBeat_spreadAngle",
+    "type": 2,
+    "value": 25.000000
+  },
+  {
+    "name": "oneBeat_baseScale_x",
+    "type": 2,
+    "value": 1.500000
+  },
+  {
+    "name": "oneBeat_baseScale_y",
+    "type": 2,
+    "value": 1.500000
+  },
+  {
+    "name": "oneBeat_baseScale_z",
+    "type": 2,
+    "value": 1.500000
+  }
+  ]
+}

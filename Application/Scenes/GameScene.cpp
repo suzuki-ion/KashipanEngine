@@ -20,7 +20,11 @@ namespace KashipanEngine {
         jsonManager_ = std::make_unique<JsonManager>();
         jsonManager_->SetBasePath("Assets/Application");
 
-        LoadJson();
+        jsonParticleManager_ = std::make_unique<JsonManager>();
+        jsonParticleManager_->SetBasePath("Assets/Application");
+
+        LoadObjectStateJson();
+        LoadParticleStateJson();
 
         sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
         auto* mainWindow = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainWindow() : nullptr;
@@ -156,6 +160,70 @@ namespace KashipanEngine {
             if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
             stage_ = obj.get();
             AddObject3D(std::move(obj));
+        }
+
+        // OneBeatEmitter の追加
+        {
+			emitterTranslate_[0] = Vector3(-2.0f, 0.5f, -2.0f);
+			emitterTranslate_[1] = Vector3(-2.0f, 0.5f, 3.65f);
+            emitterTranslate_[2] = Vector3(-2.0f, 0.5f, 10.0f);
+            emitterTranslate_[3] = Vector3(-2.0f, 0.5f, 16.3f);
+            emitterTranslate_[4] = Vector3(-2.0f, 0.5f, 22.0f);
+            emitterTranslate_[5] = Vector3(22.0f, 0.5f, -2.0f);
+            emitterTranslate_[6] = Vector3(22.0f, 0.5f, 3.65f);
+            emitterTranslate_[7] = Vector3(22.0f, 0.5f, 10.0f);
+            emitterTranslate_[8] = Vector3(22.0f, 0.5f, 16.3f);
+            emitterTranslate_[9] = Vector3(22.0f, 0.5f, 22.0f);
+            for (int i = 0; i < kOneBeatEmitterCount_; ++i) { 
+                auto obj = std::make_unique<Box>();
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(emitterTranslate_[i]);
+                    tr->SetScale(Vector3(0.1f, 0.1f, 0.1f));
+				}
+                obj->SetName("A_OneBeatEmitterObj_" + std::to_string(i));
+                oneBeatEmitterObj_[i] = obj.get();
+                AddObject3D(std::move(obj));
+
+
+                auto comp = std::make_unique<OneBeatEmitter>();
+                comp->SetScreenBuffer(screenBuffer3D);
+                comp->SetShadowMapBuffer(shadowMapBuffer);
+                comp->SetBPMSystem(bpmSystem_);
+                comp->SetEmitter(oneBeatEmitterObj_[i]);
+                oneBeatEmitter_[i] = comp.get();
+                AddSceneComponent(std::move(comp));
+
+                // パーティクルプールを初期化
+                oneBeatEmitter_[i]->InitializeParticlePool(particlesPerBeat_);
+            }
+        }
+
+        // 既存の bpmObject_ の初期化部分を置き換え
+        {
+            for (int i = 0; i < kBpmObjectCount; ++i) {
+                auto modelData = ModelManager::GetModelDataFromFileName("bpmObject.obj");
+                auto obj = std::make_unique<Model>(modelData);
+                obj->SetName("bpmObject_" + std::to_string(i));
+                
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    // 各オブジェクトを少しずらして配置（必要に応じて調整）
+                    //float offset = static_cast<float>(i) * 0.5f;
+                    tr->SetTranslate(Vector3(10.0f, -10.0f, 10.0f));
+                    tr->SetScale(Vector3(1.0f));
+                }
+
+                // 各オブジェクトに位相をずらしてBPMScalingを設定
+                //obj->RegisterComponent<BPMScaling>(minBpmObjectScale_[i], maxBpmObjectScale_[i]);
+
+                if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+                
+                bpmObjects_[i] = obj.get();
+                AddObject3D(std::move(obj));
+            }
+
+            bpmObjectStart_[0] = { -15.0f,0.0f,10.0f }; bpmObjectEnd_[0] = { -2.75f,0.0f,10.0f };
+            bpmObjectStart_[1] = { 35.0f,0.0f,10.0f }; bpmObjectEnd_[1] = { 22.75f,0.0f,10.0f };
         }
 
         // Player（衝突判定を修正）
@@ -348,8 +416,11 @@ namespace KashipanEngine {
 
     void GameScene::OnUpdate() {
 #if defined(USE_IMGUI)
-        DrawImGui();
-		SetValue();
+        DrawObjectStateImGui();
+		SetObjectValue();
+
+        DrawParticleStateImGui();
+        SetParticleValue();
 #endif
 
         if (auto* debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
@@ -463,9 +534,45 @@ namespace KashipanEngine {
                 }
             }
         }
+
+        // OnUpdate内の既存の bpmObject_ 更新部分を置き換え
+        {
+            if (bpmObjects_[0] && bpmObjects_[1]) {
+                auto tr = bpmObjects_[0]->GetComponent3D<Transform3D>();
+                auto tr1 = bpmObjects_[1]->GetComponent3D<Transform3D>();
+
+                if (bpmSystem_->GetLeftRightToggle()) {
+                    tr->SetTranslate(Vector3(MyEasing::Lerp(bpmObjectStart_[0], bpmObjectEnd_[0], bpmSystem_->GetBeatProgress())));
+                    tr1->SetTranslate(bpmObjectStart_[1]);
+                } else {
+                    tr1->SetTranslate(Vector3(MyEasing::Lerp(bpmObjectStart_[1], bpmObjectEnd_[1], bpmSystem_->GetBeatProgress())));
+                    tr->SetTranslate(bpmObjectStart_[0]);
+                }
+            }
+        }
+
+        {
+            if (bpmSystem_->GetLeftRightToggle()) {
+                for (int i = 0; i < kOneBeatEmitterCount_ / 2; i++) {
+					oneBeatEmitter_[i]->SetUseEmitter(true);
+                }
+
+                for (int i = 5; i < kOneBeatEmitterCount_; i++) {
+                    oneBeatEmitter_[i]->SetUseEmitter(false);
+                }
+            } else {
+                for (int i = 0; i < kOneBeatEmitterCount_ / 2; i++) {
+                    oneBeatEmitter_[i]->SetUseEmitter(false);
+                }
+
+                for (int i = 5; i < kOneBeatEmitterCount_; i++) {
+                    oneBeatEmitter_[i]->SetUseEmitter(true);
+                }
+            }
+        }
     }
 
-    void GameScene::LoadJson() {
+    void GameScene::LoadObjectStateJson() {
         try {
             // JSONファイルから読み込み
             auto values = jsonManager_->Read(loadToSaveName_);
@@ -530,7 +637,7 @@ namespace KashipanEngine {
         }
     }
 
-    void GameScene::SaveJson() {
+    void GameScene::SaveObjectStateJson() {
         // ディレクトリが存在しない場合は作成
         std::filesystem::path fullPath = jsonManager_->GetBasePath() + loadToSaveName_ + ".json";
         std::filesystem::path directory = fullPath.parent_path();
@@ -594,8 +701,109 @@ namespace KashipanEngine {
         jsonManager_->Write(loadToSaveName_);
     }
 
+    void GameScene::LoadParticleStateJson() {
+        try {
+            // JSONファイルから読み込み（jsonParticleManager_を使用）
+            auto values = jsonParticleManager_->Read(loadToSaveParticleName_);
+
+            if (values.empty()) {
+                printf("[WARNING] Failed to load ParticleState JSON file or file is empty\n");
+                printf("[INFO] Using default particle settings.\n");
+                return; // 早期リターン
+            }
+
+            size_t index = 0;
+
+            // EnemySpawnParticle関連
+            if (index < values.size()) enemySpawnParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemySpawnParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemySpawnParticleConfig_.lifeTimeSec = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemySpawnParticleConfig_.gravity = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemySpawnParticleConfig_.damping = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemySpawnParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemySpawnParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemySpawnParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
+
+            // EnemyDieParticle関連
+            if (index < values.size()) enemyDieParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemyDieParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemyDieParticleConfig_.lifeTimeSec = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemyDieParticleConfig_.gravity = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemyDieParticleConfig_.damping = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemyDieParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemyDieParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) enemyDieParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
+
+            // OneBeatParticle関連
+            if (index < values.size()) oneBeatParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.lifeTimeSec = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.gravity = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.damping = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.spreadAngle = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
+            if (index < values.size()) oneBeatParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
+
+        } catch (const std::exception& e) {
+            printf("[ERROR] Critical error in LoadParticleStateJson: %s\n", e.what());
+            printf("[INFO] Using default particle settings.\n");
+        }
+    }
+
+    void GameScene::SaveParticleStateJson() {
+        // ディレクトリが存在しない場合は作成（jsonParticleManager_を使用）
+        std::filesystem::path fullPath = jsonParticleManager_->GetBasePath() + loadToSaveParticleName_ + ".json";
+        std::filesystem::path directory = fullPath.parent_path();
+
+        if (!directory.empty() && !std::filesystem::exists(directory)) {
+            try {
+                std::filesystem::create_directories(directory);
+                printf("[INFO] Created directory: %s\n", directory.string().c_str());
+            }
+            catch (const std::filesystem::filesystem_error& e) {
+                printf("[ERROR] Failed to create directory: %s\n", e.what());
+                return;
+            }
+        }
+
+        // EnemySpawnParticle関連
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.initialSpeed, "enemySpawn_initialSpeed");
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.speedVariation, "enemySpawn_speedVariation");
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.lifeTimeSec, "enemySpawn_lifeTimeSec");
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.gravity, "enemySpawn_gravity");
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.damping, "enemySpawn_damping");
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.baseScale.x, "enemySpawn_baseScale_x");
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.baseScale.y, "enemySpawn_baseScale_y");
+        jsonParticleManager_->RegistOutput(enemySpawnParticleConfig_.baseScale.z, "enemySpawn_baseScale_z");
+
+        // EnemyDieParticle関連
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.initialSpeed, "enemyDie_initialSpeed");
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.speedVariation, "enemyDie_speedVariation");
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.lifeTimeSec, "enemyDie_lifeTimeSec");
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.gravity, "enemyDie_gravity");
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.damping, "enemyDie_damping");
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.baseScale.x, "enemyDie_baseScale_x");
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.baseScale.y, "enemyDie_baseScale_y");
+        jsonParticleManager_->RegistOutput(enemyDieParticleConfig_.baseScale.z, "enemyDie_baseScale_z");
+
+        // OneBeatParticle関連
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.initialSpeed, "oneBeat_initialSpeed");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.speedVariation, "oneBeat_speedVariation");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.lifeTimeSec, "oneBeat_lifeTimeSec");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.gravity, "oneBeat_gravity");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.damping, "oneBeat_damping");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.spreadAngle, "oneBeat_spreadAngle");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.x, "oneBeat_baseScale_x");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.y, "oneBeat_baseScale_y");
+        jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.z, "oneBeat_baseScale_z");
+
+        // JSONファイルに書き込み（jsonParticleManager_を使用）
+        jsonParticleManager_->Write(loadToSaveParticleName_);
+    }
+
 #if defined(USE_IMGUI)
-    void GameScene::SetValue() {
+    void GameScene::SetObjectValue() {
         // BPMシステムの更新
         if (bpmSystem_) {
             bpmSystem_->SetBPM(static_cast<float>(bpm_));
@@ -652,13 +860,24 @@ namespace KashipanEngine {
         if (enemySpawner_) {
             enemySpawner_->SetSpawnInterval(enemySpawnInterval_);
         }
+
+        // SetValue() 内
+        if (bpmObjects_[0]) {  // 代表として最初のオブジェクトをチェック
+            for (int i = 0; i < kBpmObjectCount; ++i) {
+                if (bpmObjects_[i]) {
+                    if (auto* bpmScaling = bpmObjects_[i]->GetComponent3D<BPMScaling>()) {
+                        bpmScaling->SetMinMaxScale(bpmObjectStart_[i], bpmObjectEnd_[i]);
+                    }
+                }
+            }
+        }
     }
 
-    void GameScene::DrawImGui() {
+    void GameScene::DrawObjectStateImGui() {
         ImGui::Begin("ObjectStatus");
 
         if (ImGui::Button("Jsonに値を保存")) {
-            SaveJson();
+            SaveObjectStateJson();
         }
 
         ImGui::SameLine();
@@ -667,6 +886,14 @@ namespace KashipanEngine {
         // BPM関連
         if (ImGui::CollapsingHeader("BPM関連", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::DragInt("BPM値", &bpm_, 1.0f, 60, 240);
+            ImGui::DragFloat3("BpmObjMin0", &bpmObjectStart_[0].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax0", &bpmObjectEnd_[0].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMin1", &bpmObjectStart_[1].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax1", &bpmObjectEnd_[1].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMin2", &bpmObjectStart_[2].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax2", &bpmObjectEnd_[2].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMin3", &bpmObjectStart_[3].x, 0.01f);
+            ImGui::DragFloat3("BpmObjMax3", &bpmObjectEnd_[3].x, 0.01f);
         }
 
         // マップ関連
@@ -713,6 +940,67 @@ namespace KashipanEngine {
         // 敵関連
         if (ImGui::CollapsingHeader("敵関連")) {
             ImGui::DragInt("スポーン間隔(拍数)", &enemySpawnInterval_, 1.0f, 1, 100);
+        }
+
+        ImGui::End();
+    }
+
+    void GameScene::SetParticleValue() {
+
+        for (int i = 0; i < kOneBeatEmitterCount_; ++i) {
+            if (oneBeatEmitter_[i]) {
+                oneBeatEmitter_[i]->SetParticleConfig(oneBeatParticleConfig_);
+            }
+        }
+
+        if (enemySpawner_) {
+            enemySpawner_->SetEnemyDieParticleConfig(enemySpawnParticleConfig_);
+        }
+
+        if (enemyManager_) {
+            enemyManager_->SetDieParticleConfig(enemyDieParticleConfig_);
+        }
+    }
+
+    void GameScene::DrawParticleStateImGui() {
+        ImGui::Begin("ParticleStatus");
+
+        if (ImGui::Button("Jsonに値を保存")) {
+            SaveParticleStateJson();
+        }
+
+        ImGui::SameLine();
+        ImGui::Separator();
+
+        // EnemySpawnParticle関連
+        if (ImGui::CollapsingHeader("EnemySpawnParticle", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::DragFloat("初速度##spawn", &enemySpawnParticleConfig_.initialSpeed, 0.1f, 0.0f, 20.0f);
+            ImGui::DragFloat("速度ランダム幅##spawn", &enemySpawnParticleConfig_.speedVariation, 0.1f, 0.0f, 10.0f);
+            ImGui::DragFloat("生存時間(秒)##spawn", &enemySpawnParticleConfig_.lifeTimeSec, 0.01f, 0.1f, 5.0f);
+            ImGui::DragFloat("重力##spawn", &enemySpawnParticleConfig_.gravity, 0.1f, -20.0f, 20.0f);
+            ImGui::DragFloat("減衰率##spawn", &enemySpawnParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat3("基本スケール##spawn", &enemySpawnParticleConfig_.baseScale.x, 0.01f, 0.0f, 5.0f);
+        }
+
+        // EnemyDieParticle関連
+        if (ImGui::CollapsingHeader("EnemyDieParticle")) {
+            ImGui::DragFloat("初速度##die", &enemyDieParticleConfig_.initialSpeed, 0.1f, 0.0f, 20.0f);
+            ImGui::DragFloat("速度ランダム幅##die", &enemyDieParticleConfig_.speedVariation, 0.1f, 0.0f, 10.0f);
+            ImGui::DragFloat("生存時間(秒)##die", &enemyDieParticleConfig_.lifeTimeSec, 0.01f, 0.1f, 5.0f);
+            ImGui::DragFloat("重力##die", &enemyDieParticleConfig_.gravity, 0.1f, -20.0f, 20.0f);
+            ImGui::DragFloat("減衰率##die", &enemyDieParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat3("基本スケール##die", &enemyDieParticleConfig_.baseScale.x, 0.01f, 0.0f, 5.0f);
+        }
+
+        // OneBeatParticle関連
+        if (ImGui::CollapsingHeader("OneBeatParticle")) {
+            ImGui::DragFloat("初速度##onebeat", &oneBeatParticleConfig_.initialSpeed, 0.1f, 0.0f, 20.0f);
+            ImGui::DragFloat("速度ランダム幅##onebeat", &oneBeatParticleConfig_.speedVariation, 0.1f, 0.0f, 10.0f);
+            ImGui::DragFloat("生存時間(秒)##onebeat", &oneBeatParticleConfig_.lifeTimeSec, 0.01f, 0.1f, 5.0f);
+            ImGui::DragFloat("重力##onebeat", &oneBeatParticleConfig_.gravity, 0.1f, -20.0f, 20.0f);
+            ImGui::DragFloat("減衰率##onebeat", &oneBeatParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("広がる角度(度)##onebeat", &oneBeatParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
+            ImGui::DragFloat3("基本スケール##onebeat", &oneBeatParticleConfig_.baseScale.x, 0.01f, 0.0f, 5.0f);
         }
 
         ImGui::End();

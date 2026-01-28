@@ -46,7 +46,7 @@ void OneBeatEmitter::InitializeParticlePool(int particlesPerBeat) {
 			particle->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
 		}
 		if (shadowMapBuffer_) {
-			particle->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+			//particle->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
 		}
 
 		particlePool_.push_back(particle.get());

@@ -1,6 +1,8 @@
 #include "ExplosionManager.h"
 #include "BombManager.h"
+#include "ExplosionNumberDisplay.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
+#include "Objects/Components/Player/ScoreManager.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "objects/Components/Health.h"
 #include <algorithm>
@@ -39,6 +41,30 @@ void ExplosionManager::Update() {
                     if (t > 1.0f) t = 1.0f;
                 } else {
                     t = 1.0f;
+                }
+
+                // 数字表示（一度だけ、爆発が始まってすぐに）
+                if (!explosion.numberDisplayed && explosion.enemiesHit > 0 && explosionNumberDisplay_) {
+                    explosionNumberDisplay_->SpawnNumber(explosion.position, explosion.enemiesHit);
+                    explosion.numberDisplayed = true;
+                }
+
+                // スコア計算（一度だけ、爆発が終わる直前に）
+                if (!explosion.scoreCalculated && t >= 0.9f && explosion.enemiesHit > 0) {
+                    if (scoreManager_) {
+                        int points = 0;
+                        if (explosion.enemiesHit == 1) {
+                            points = 100;
+                        } else if (explosion.enemiesHit == 2) {
+                            points = 300;
+						} else if (explosion.enemiesHit == 3) {
+                            points = 900;
+                        } else {
+                            points = 1500;
+                        }
+                        scoreManager_->AddScore(points);
+                    }
+                    explosion.scoreCalculated = true;
                 }
 
                 // 線形補間でスケールを縮小（初期 scale -> 0）
@@ -127,19 +153,37 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
     Model* explosionPtr = explosion.get();
     Model* explosion2Ptr = explosion2.get();
 
+    // 新しい爆発情報を登録（先に登録して、コリジョンコールバックで参照できるようにする）
+    ExplosionInfo info;
+    info.object = explosionPtr;
+    info.object2 = explosion2Ptr;
+    info.elapsedTime = 0.0f;
+    info.position = position;
+    info.enemiesHit = 0;
+    info.scoreCalculated = false;
+    info.numberDisplayed = false;
+    activeExplosions_.push_back(info);
+
+    // 現在の爆発のインデックスを取得
+    size_t currentExplosionIndex = activeExplosions_.size() - 1;
+
     if (collider_ && collider_->GetCollider()) {
-        ColliderInfo3D info;
+        ColliderInfo3D collisionInfo;
         Math::AABB aabb;
         aabb.min = Vector3{ (-size_ / 2.0f) + 0.5f, -0.5f, -0.5f };
         aabb.max = Vector3{ (+size_ / 2.0f) - 0.5f, +0.5f, +0.5f };
-        info.shape = aabb;
-        info.attribute.set(2);
+        collisionInfo.shape = aabb;
+        collisionInfo.attribute.set(2);
 
-        // ラムダで爆発オブジェクトポインタをキャプチャ
-        info.onCollisionEnter = [this, explosionPtr](const HitInfo3D& hitInfo) {
+        // ラムダで爆発インデックスをキャプチャ
+        collisionInfo.onCollisionEnter = [this, currentExplosionIndex](const HitInfo3D& hitInfo) {
             // 敵との衝突をEnemyManagerに通知
             if (enemyManager_) {
-                enemyManager_->OnExplosionHit(hitInfo.otherObject);
+                bool wasEnemy = enemyManager_->OnExplosionHit(hitInfo.otherObject);
+                // 敵を倒した場合、この爆発のカウントを増やす
+                if (wasEnemy && currentExplosionIndex < activeExplosions_.size()) {
+                    activeExplosions_[currentExplosionIndex].enemiesHit++;
+                }
             }
 
             // Playerと衝突したかチェック
@@ -153,22 +197,26 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
             }
         };
 
-        explosion->RegisterComponent<Collision3D>(collider_->GetCollider(), info);
+        explosion->RegisterComponent<Collision3D>(collider_->GetCollider(), collisionInfo);
     }
 
     if (collider2_ && collider2_->GetCollider()) {
-        ColliderInfo3D info;
+        ColliderInfo3D collisionInfo;
         Math::AABB aabb;
         aabb.min = Vector3{ -0.5f, -0.5f, (-size_ / 2.0f) + 0.5f };
         aabb.max = Vector3{ +0.5f, +0.5f, (+size_ / 2.0f) - 0.5f };
-        info.shape = aabb;
-        info.attribute.set(2);
+        collisionInfo.shape = aabb;
+        collisionInfo.attribute.set(2);
 
-        // ラムダで爆発オブジェクトポインタをキャプチャ
-        info.onCollisionEnter = [this, explosion2Ptr](const HitInfo3D& hitInfo) {
+        // ラムダで爆発インデックスをキャプチャ
+        collisionInfo.onCollisionEnter = [this, currentExplosionIndex](const HitInfo3D& hitInfo) {
             // 敵との衝突をEnemyManagerに通知
             if (enemyManager_) {
-                enemyManager_->OnExplosionHit(hitInfo.otherObject);
+                bool wasEnemy = enemyManager_->OnExplosionHit(hitInfo.otherObject);
+                // 敵を倒した場合、この爆発のカウントを増やす
+                if (wasEnemy && currentExplosionIndex < activeExplosions_.size()) {
+                    activeExplosions_[currentExplosionIndex].enemiesHit++;
+                }
             }
 
             // Playerと衝突したかチェック
@@ -182,7 +230,7 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
             }
         };
 
-        explosion2->RegisterComponent<Collision3D>(collider2_->GetCollider(), info);
+        explosion2->RegisterComponent<Collision3D>(collider2_->GetCollider(), collisionInfo);
     }
 
     // レンダラーにアタッチ
@@ -194,14 +242,6 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
         explosion->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
         explosion2->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
     }
-
-    // 爆発情報を登録
-    ExplosionInfo info;
-    info.object = explosionPtr;
-    info.object2 = explosion2Ptr;
-    info.elapsedTime = 0.0f;
-    info.position = position;
-    activeExplosions_.push_back(info);
 
     // シーンに追加
     ctx->AddObject3D(std::move(explosion));
@@ -230,10 +270,11 @@ void ExplosionManager::ShowImGui() {
     if (ImGui::TreeNode("Active Explosions List")) {
         for (size_t i = 0; i < activeExplosions_.size(); ++i) {
             const auto& explosion = activeExplosions_[i];
-            ImGui::Text("Explosion %zu: Pos(%.2f, %.2f, %.2f) Time: %.2f/%.2f",
+            ImGui::Text("Explosion %zu: Pos(%.2f, %.2f, %.2f) Time: %.2f/%.2f Enemies: %d",
                 i,
                 explosion.position.x, explosion.position.y, explosion.position.z,
-                explosion.elapsedTime, explosionLifetime_);
+                explosion.elapsedTime, explosionLifetime_,
+                explosion.enemiesHit);
         }
         ImGui::TreePop();
     }

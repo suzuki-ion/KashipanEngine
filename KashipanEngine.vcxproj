@@ -121,6 +121,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.cpp" />
     <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
@@ -142,6 +143,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\Components\PlayerHealthModelUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
     <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
@@ -291,6 +293,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.h" />
     <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
     <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
@@ -306,6 +309,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
+    <ClInclude Include="Application\Objects\Components\Player\ScoreManager.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
@@ -326,6 +330,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
     <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
+    <ClInclude Include="Application\Scenes\Components\ScoreUI.h" />
     <ClInclude Include="Application\Scenes\Components\StageLighting.h" />
     <ClInclude Include="Application\Scenes\Components\PlayerHealthModelUI.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />

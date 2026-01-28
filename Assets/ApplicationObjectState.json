@@ -146,6 +146,21 @@
     "value": 3
   },
   {
+    "name": "explosionNumberDisplayLifetime",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "explosionNumberScale",
+    "type": 2,
+    "value": 1.000000
+  },
+  {
+    "name": "explosionNumberYOffset",
+    "type": 2,
+    "value": 5.000000
+  },
+  {
     "name": "enemySpawnInterval",
     "type": 1,
     "value": 4

@@ -153,6 +153,8 @@
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
     <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
     <ClCompile Include="Application\Scenes\Components\PlayerHealthModelUI.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -425,6 +427,9 @@
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithParticle.h" />
     <ClInclude Include="Application\Scenes\Components\StageLighting.h" />
     <ClInclude Include="Application\Scenes\Components\PlayerHealthModelUI.h" />
+    <ClInclude Include="Application\Objects\Components\Player\ScoreManager.h" />
+    <ClInclude Include="Application\Scenes\Components\ScoreUI.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

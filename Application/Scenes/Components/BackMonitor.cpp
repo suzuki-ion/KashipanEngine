@@ -19,9 +19,9 @@ void BackMonitor::Initialize() {
     {
         DotMatrixEffect::Params dp{};
         dp.dotSpacing = 5.0f;
-        dp.dotRadius = 2.9f;
+        dp.dotRadius = 2.75f;
         dp.threshold = 0.0f;
-        dp.intensity = 2.0f;
+        dp.intensity = 1.0f;
         dp.monochrome = false;
         screenBuffer_->RegisterPostEffectComponent(std::make_unique<DotMatrixEffect>(dp));
 
@@ -59,7 +59,7 @@ void BackMonitor::Initialize() {
         obj->SetEnabled(true);
         obj->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
         obj->SetDirection(Vector3{ 2.0f, -1.0f, 1.0f });
-        obj->SetIntensity(0.5f);
+        obj->SetIntensity(1.0f);
         obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         directionalLight_ = obj.get();
         context->AddObject3D(std::move(obj));

@@ -303,8 +303,8 @@ void EnemyManager::CleanupDeadEnemies() {
     }
 }
 
-void EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
-    if (!hitObject) return;
+bool EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
+    if (!hitObject) return false;
 
     // activeEnemies_からも削除フラグを立てる
     for (auto& enemyInfo : activeEnemies_) {
@@ -313,9 +313,16 @@ void EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
             SpawnDieParticles(enemyInfo.position);
             enemyInfo.isDead = true;
 
-            break;
+            // 敵が倒された時のコールバックを呼ぶ（後方互換性のため）
+            if (onEnemyDestroyedCallback_) {
+                onEnemyDestroyedCallback_();
+            }
+
+            return true;  // 敵を倒した
         }
     }
+
+    return false;  // 敵ではなかった
 }
 
 } // namespace KashipanEngine

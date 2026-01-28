@@ -11,6 +11,8 @@ namespace KashipanEngine {
 // Forward declaration
 class BombManager;
 class CameraController;
+class ScoreManager;
+class ExplosionNumberDisplay;
 
 /// @brief 爆発エフェクトを一括管理するクラス
 class ExplosionManager final : public ISceneComponent {
@@ -39,6 +41,14 @@ public:
 
     /// @brief カメラコントローラーを設定
     void SetCameraController(CameraController* cameraController) { cameraController_ = cameraController; }
+
+    /// @brief ScoreManagerを設定
+    void SetScoreManager(ScoreManager* scoreManager) { scoreManager_ = scoreManager; }
+
+    /// @brief ExplosionNumberDisplayを設定
+    void SetExplosionNumberDisplay(ExplosionNumberDisplay* explosionNumberDisplay) { 
+        explosionNumberDisplay_ = explosionNumberDisplay; 
+    }
 
     /// @brief 衝突判定用ColliderComponentを設定
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
@@ -76,6 +86,9 @@ private:
         Model* object2 = nullptr;
         float elapsedTime = 0.0f;             // 経過時間（秒）
         Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆発の位置
+        int enemiesHit = 0;                   // この爆発で倒した敵の数
+        bool scoreCalculated = false;         // スコアが計算済みかどうか
+        bool numberDisplayed = false;         // 数字が表示済みかどうか
     };
 
     /// @brief 爆発とボムの衝突をチェックして起爆させる
@@ -89,6 +102,8 @@ private:
     EnemyManager* enemyManager_ = nullptr;
     Object3DBase* player_ = nullptr;
     CameraController* cameraController_ = nullptr;
+    ScoreManager* scoreManager_ = nullptr;
+    ExplosionNumberDisplay* explosionNumberDisplay_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     ColliderComponent* collider2_ = nullptr;
 

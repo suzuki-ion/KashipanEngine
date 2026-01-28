@@ -1,5 +1,7 @@
 #include "Scenes/GameScene.h"
 #include "Scenes/Components/PlayerHealthUI.h"
+#include "Scenes/Components/PlayerHealthModelUI.h"
+#include "Scenes/Components/ScoreUI.h"
 #include "Scenes/Components/BackMonitor.h"
 #include "Scenes/Components/BackMonitorWithGameScreen.h"
 #include "Scenes/Components/BackMonitorWithMenuScreen.h"
@@ -135,6 +137,10 @@ void GameScene::Initialize() {
                     tr->SetScale(Vector3(mapScaleMax_));
                 }
 
+                if (auto *mt = obj->GetComponent3D<Material3D>()) {
+                    mt->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+                }
+
                 if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
                 if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
                 if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
@@ -213,8 +219,10 @@ void GameScene::Initialize() {
                 tr->SetScale(Vector3(1.0f));
             }
 
-            // 各オブジェクトに位相をずらしてBPMScalingを設定
-            //obj->RegisterComponent<BPMScaling>(minBpmObjectScale_[i], maxBpmObjectScale_[i]);
+            if (auto *mt = obj->GetComponent3D<Material3D>()) {
+				mt->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                mt->SetEnableLighting(false);
+            }
 
             if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
             if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
@@ -283,6 +291,23 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
+    // ExplosionNumberDisplay の追加
+    {
+        auto comp = std::make_unique<ExplosionNumberDisplay>();
+        comp->SetScreenBuffer(screenBuffer3D);
+        comp->SetShadowMapBuffer(shadowMapBuffer);
+        comp->SetDisplayLifetime(explosionNumberDisplayLifetime_);
+        comp->SetNumberScale(explosionNumberScale_);
+        comp->SetYOffset(explosionNumberYOffset_);
+        explosionNumberDisplay_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    // ExplosionManagerにExplosionNumberDisplayを設定
+    if (explosionManager_ && explosionNumberDisplay_) {
+        explosionManager_->SetExplosionNumberDisplay(explosionNumberDisplay_);
+    }
+
     // BombManager の追加
     {
         auto comp = std::make_unique<BombManager>(bombMaxNumber_);
@@ -329,6 +354,25 @@ void GameScene::Initialize() {
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
         enemyManager_->InitializeParticlePool();
+    }
+
+    // ScoreManagerの初期化
+    {
+        auto comp = std::make_unique<ScoreManager>();
+        scoreManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    // ExplosionManagerにScoreManagerを設定
+    if (explosionManager_ && scoreManager_) {
+        explosionManager_->SetScoreManager(scoreManager_);
+    }
+
+    // EnemyManagerにScoreManagerのコールバックを設定（後方互換性のため保持）
+    if (enemyManager_ && scoreManager_) {
+        enemyManager_->SetOnEnemyDestroyedCallback([this]() {
+            // このコールバックは現在使用されていないが、後方互換性のため保持
+        });
     }
 
     {
@@ -416,6 +460,16 @@ void GameScene::Initialize() {
         }
         AddSceneComponent(std::move(comp));
     }
+
+    // Score UI (スコア表示)
+    {
+        auto comp = std::make_unique<ScoreUI>();
+        if (scoreManager_) {
+            comp->SetScoreManager(scoreManager_);
+        }
+        AddSceneComponent(std::move(comp));
+    }
+
     // Player Health UI (ライフ表示)
     {
         auto comp = std::make_unique<PlayerHealthModelUI>(screenBuffer3D);
@@ -653,9 +707,13 @@ void GameScene::LoadObjectStateJson() {
         if (index < values.size()) explosionLifetime_ = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) explosionSize_ = JsonManager::Reverse<int>(values[index++]);
 
+        // ExplosionNumberDisplay関連
+        if (index < values.size()) explosionNumberDisplayLifetime_ = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) explosionNumberScale_ = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) explosionNumberYOffset_ = JsonManager::Reverse<float>(values[index++]);
+
         // 敵関連
         if (index < values.size()) enemySpawnInterval_ = JsonManager::Reverse<int>(values[index++]);
-
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadFromJson: %s\n", e.what());
         printf("[INFO] Using default emitter settings.\n");
@@ -718,6 +776,11 @@ void GameScene::SaveObjectStateJson() {
     // 爆発関連
     jsonManager_->RegistOutput(explosionLifetime_, "explosionLifetime");
     jsonManager_->RegistOutput(explosionSize_, "explosionSize");
+
+    // ExplosionNumberDisplay関連
+    jsonManager_->RegistOutput(explosionNumberDisplayLifetime_, "explosionNumberDisplayLifetime");
+    jsonManager_->RegistOutput(explosionNumberScale_, "explosionNumberScale");
+    jsonManager_->RegistOutput(explosionNumberYOffset_, "explosionNumberYOffset");
 
     // 敵関連
     jsonManager_->RegistOutput(enemySpawnInterval_, "enemySpawnInterval");
@@ -880,6 +943,13 @@ void GameScene::SetObjectValue() {
         explosionManager_->SetSize(static_cast<float>(explosionSize_));
     }
 
+    // ExplosionNumberDisplay関連の設定更新
+    if (explosionNumberDisplay_) {
+        explosionNumberDisplay_->SetDisplayLifetime(explosionNumberDisplayLifetime_);
+        explosionNumberDisplay_->SetNumberScale(explosionNumberScale_);
+        explosionNumberDisplay_->SetYOffset(explosionNumberYOffset_);
+    }
+
     // 敵スポーン間隔の更新
     if (enemySpawner_) {
         enemySpawner_->SetSpawnInterval(enemySpawnInterval_);
@@ -959,6 +1029,13 @@ void GameScene::DrawObjectStateImGui() {
     if (ImGui::CollapsingHeader("爆発関連")) {
         ImGui::DragFloat("爆発寿命(秒)", &explosionLifetime_, 0.01f, 0.1f, 5.0f);
         ImGui::DragInt("爆発サイズ(XZ)", &explosionSize_, 1.0f, 1, 10);
+    }
+
+    // ExplosionNumberDisplay関連
+    if (ImGui::CollapsingHeader("ScoreModel関連")) {
+        ImGui::DragFloat("表示寿命(秒)", &explosionNumberDisplayLifetime_, 0.01f, 0.1f, 5.0f);
+        ImGui::DragFloat("スケール", &explosionNumberScale_, 0.01f, 0.1f, 5.0f);
+        ImGui::DragFloat("Y軸オフセット", &explosionNumberYOffset_, 0.01f, -10.0f, 10.0f);
     }
 
     // 敵関連

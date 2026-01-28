@@ -4,10 +4,12 @@
 #include "Scenes/Components/BPM/BPMSystem.h"
 #include "objects/Components/Bomb/BombManager.h"
 #include "objects/Components/Bomb/explosionManager.h"
+#include "objects/Components/Bomb/ExplosionNumberDisplay.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Scenes/Components/PlayerHealthModelUI.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
 #include "Objects/Components/Enemy/EnemySpawner.h"
+#include "Objects/Components/Player/ScoreManager.h"
 #include "Scene/Components/ColliderComponent.h"
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
@@ -103,8 +105,14 @@ private:
 
     // 爆発関連
     ExplosionManager *explosionManager_ = nullptr;
+    ExplosionNumberDisplay *explosionNumberDisplay_ = nullptr;
     float explosionLifetime_ = 0.5f; // 爆発の寿命（秒）
     int explosionSize_ = 3;         // 爆発のXZサイズ
+
+    // ExplosionNumberDisplay関連
+    float explosionNumberDisplayLifetime_ = 1.0f; // 数字の表示時間（秒）
+    float explosionNumberScale_ = 1.0f;           // 数字のスケール
+    float explosionNumberYOffset_ = 1.0f;         // Y方向のオフセット
 
     float bombNormalMinScale_ = 0.9f; // 最小スケール係数
     float bombNormalMaxScale_ = 1.1f;  // 最大スケール係数
@@ -117,6 +125,9 @@ private:
     int enemySpawnInterval_ = 4; // 敵のスポーン間隔（拍数）
 
     EnemyManager *enemyManager_ = nullptr;
+
+    // スコア関連
+    ScoreManager *scoreManager_ = nullptr;
 
     struct ParticleLightPair {
         Object3DBase *particle = nullptr;

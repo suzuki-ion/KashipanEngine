@@ -39,7 +39,20 @@ public:
 
     /// @brief 爆発が敵に当たった時の処理
     /// @param hitObject 当たったオブジェクト
-    void OnExplosionHit(Object3DBase* hitObject);
+    /// @return 敵を倒した場合true、それ以外false
+    bool OnExplosionHit(Object3DBase* hitObject);
+
+    /// @brief 敵が倒された時のコールバックを設定
+    /// @param callback 倒された時に呼ばれるコールバック関数
+    void SetOnEnemyDestroyedCallback(std::function<void()> callback) {
+        onEnemyDestroyedCallback_ = callback;
+    }
+
+    /// @brief 爆発開始時のコールバックを設定
+    /// @param callback 爆発開始時に呼ばれるコールバック関数
+    void SetOnExplosionStartCallback(std::function<void()> callback) {
+        onExplosionStartCallback_ = callback;
+    }
 
     // パーティクルプールを初期化
     void InitializeParticlePool();
@@ -68,7 +81,10 @@ private:
 
     std::vector<EnemyInfo> activeEnemies_;
     
-	ParticleConfig dieParticleConfig_{};
+    std::function<void()> onEnemyDestroyedCallback_;
+    std::function<void()> onExplosionStartCallback_;
+
+    ParticleConfig dieParticleConfig_{};
 
     // パーティクルプール
     std::vector<Object3DBase*> particlePool_;

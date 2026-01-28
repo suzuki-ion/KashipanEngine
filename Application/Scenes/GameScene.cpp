@@ -1,6 +1,9 @@
 #include "Scenes/GameScene.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Scenes/Components/BackMonitor.h"
+#include "Scenes/Components/BackMonitorWithGameScreen.h"
+#include "Scenes/Components/BackMonitorWithMenuScreen.h"
+#include "Scenes/Components/BackMonitorWithParticle.h"
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/Player/BpmbSpawn.h"
@@ -37,17 +40,17 @@ namespace KashipanEngine {
         ScreenBuffer* velocityBuffer = nullptr;
 
         if (screenBuffer3D) {
-            ChromaticAberrationEffect::Params p{};
+            /*ChromaticAberrationEffect::Params p{};
             p.directionX = 1.0f;
             p.directionY = 0.0f;
             p.strength = 0.001f;
-            screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
+            screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));*/
 
             BloomEffect::Params bp{};
-            bp.threshold = 0.0f;
-            bp.softKnee = 0.0f;
-            bp.intensity = 0.0f;
-            bp.blurRadius = 0.0f;
+            bp.threshold = 1.0f;
+            bp.softKnee = 0.25f;
+            bp.intensity = 2.0f;
+            bp.blurRadius = 4.0f;
             bp.iterations = 4;
             screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
@@ -362,6 +365,30 @@ namespace KashipanEngine {
         // ステージ後ろの画面用
         AddSceneComponent(std::make_unique<BackMonitor>());
 
+        // Debug: BackMonitor render components (game/menu/particle)
+        {
+            auto* bm = GetSceneComponent<BackMonitor>();
+            if (bm) {
+                auto compG = std::make_unique<BackMonitorWithGameScreen>(bm->GetScreenBuffer());
+                backMonitorGame_ = compG.get();
+                AddSceneComponent(std::move(compG));
+
+                auto compM = std::make_unique<BackMonitorWithMenuScreen>(bm->GetScreenBuffer());
+                backMonitorMenu_ = compM.get();
+                AddSceneComponent(std::move(compM));
+
+                auto compP = std::make_unique<BackMonitorWithParticle>(bm->GetScreenBuffer());
+                backMonitorParticle_ = compP.get();
+                AddSceneComponent(std::move(compP));
+
+                // set initial mode
+                backMonitorMode_ = 0;
+                if (backMonitorGame_) backMonitorGame_->SetActive(true);
+                if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+                if (backMonitorParticle_) backMonitorParticle_->SetActive(false);
+            }
+        }
+
         //==================================================
         // ↑ ここまでゲームオブジェクト定義 ↑
         //==================================================
@@ -399,6 +426,17 @@ namespace KashipanEngine {
         if (auto* debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
             if (GetInputCommand()->Evaluate("DebugCameraToggle").Triggered()) {
                 debugCameraMovement->SetEnable(!debugCameraMovement->IsEnable());
+            }
+        }
+
+        // Debug: toggle BackMonitor mode
+        {
+            auto r = GetInputCommand()->Evaluate("DebugChangeBackMonitor");
+            if (r.Triggered()) {
+                backMonitorMode_ = (backMonitorMode_ + 1) % 3;
+                if (backMonitorGame_) backMonitorGame_->SetActive(backMonitorMode_ == 0);
+                if (backMonitorMenu_) backMonitorMenu_->SetActive(backMonitorMode_ == 1);
+                if (backMonitorParticle_) backMonitorParticle_->SetActive(backMonitorMode_ == 2);
             }
         }
 

@@ -90,8 +90,13 @@ public:
     /// @brief 登録済みポストエフェクトコンポーネントを全て取得
     const std::vector<std::unique_ptr<IPostEffectComponent>> &GetPostEffectComponents() const { return postEffectComponents_; }
 
-    /// @brief Renderer用: 登録済みポストエフェクトをレンダーパスとして列挙
-    std::vector<PostEffectPass> BuildPostEffectPasses(Passkey<Renderer>) const;
+    /// @brief Renderer用: 登録済みポストエフェクトをレンダーパスとして列挙（参照で返す、キャッシュ有り）
+    const std::vector<PostEffectPass> &BuildPostEffectPasses(Passkey<Renderer>) const;
+
+    /// @brief 外部（またはコンポーネント）からキャッシュを無効化するためのメソッド
+    /// @note フレームごとにパスが変わるコンポーネントがある場合は、そのコンポーネントから
+    ///       このメソッドを呼んでキャッシュを破棄してください。
+    void InvalidatePostEffectPasses();
 
     /// @brief Renderer が定数/インスタンスバッファキャッシュ等で使う擬似キー
     HWND GetCacheKey() const noexcept { return reinterpret_cast<HWND>(const_cast<ScreenBuffer *>(this)); }
@@ -184,6 +189,10 @@ private:
     DX12Commands *dx12Commands_ = nullptr;
 
     Renderer::PersistentScreenPassHandle persistentScreenPassHandle_;
+
+    // キャッシュ：mutable にして const メソッド内から更新可能にする
+    mutable std::vector<PostEffectPass> cachedPostEffectPasses_;
+    mutable bool cachedPostEffectPassesDirty_ = true;
 };
 
 } // namespace KashipanEngine

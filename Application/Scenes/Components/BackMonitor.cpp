@@ -13,13 +13,13 @@ void BackMonitor::Initialize() {
     auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
     // ScreenBuffer生成
-    screenBuffer_ = ScreenBuffer::Create(1280, 720);
+    screenBuffer_ = ScreenBuffer::Create(780, 382);
     if (!screenBuffer_) return;
 
     {
         DotMatrixEffect::Params dp{};
-        dp.dotSpacing = 10.0f;
-        dp.dotRadius = 4.0f;
+        dp.dotSpacing = 5.0f;
+        dp.dotRadius = 2.9f;
         dp.threshold = 0.0f;
         dp.intensity = 2.0f;
         dp.monochrome = false;
@@ -44,28 +44,32 @@ void BackMonitor::Initialize() {
     {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("Camera3D_BackMonitor");
+        float w = static_cast<float>(screenBuffer_->GetWidth());
+        float h = static_cast<float>(screenBuffer_->GetHeight());
+        obj->SetPerspectiveParams(0.7f, h != 0.0f ? (w / h) : 1.0f, 0.1f, 256.0f);
+        obj->SetViewportParams(0.0f, 0.0f, w, h);
         obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         camera3D_ = obj.get();
         context->AddObject3D(std::move(obj));
     }
-
-    // Sprite生成
+    // 3D用平行光源
     {
-        auto obj = std::make_unique<Sprite>();
-        obj->SetUniqueBatchKey();
-        obj->SetName("Sprite_BackMonitor");
-        if (auto *tr = obj->GetComponent2D<Transform2D>()) {
-            float w = static_cast<float>(screenBuffer_->GetWidth());
-            float h = static_cast<float>(screenBuffer_->GetHeight());
-            tr->SetScale(Vector3{ w, h, 1.0f });
-            tr->SetTranslate(Vector3{ w * 0.5f, h * 0.5f, 0.0f });
-        }
-        if (auto *mat = obj->GetComponent2D<Material2D>()) {
-            mat->SetTexture(screenBuffer3D);
-        }
-        obj->AttachToRenderer(screenBuffer_, "Object2D.DoubleSidedCulling.BlendNormal");
-        sprite_ = obj.get();
-        context->AddObject2D(std::move(obj));
+        auto obj = std::make_unique<DirectionalLight>();
+        obj->SetName("DirectionalLight_BackMonitor");
+        obj->SetEnabled(true);
+        obj->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+        obj->SetDirection(Vector3{ 0.0f, 0.0f, 1.0f });
+        obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        directionalLight_ = obj.get();
+        context->AddObject3D(std::move(obj));
+    }
+    // ライト管理用
+    {
+        auto obj = std::make_unique<LightManager>();
+        obj->SetName("LightManager_BackMonitor");
+        obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        lightManager_ = obj.get();
+        context->AddObject3D(std::move(obj));
     }
 
     // 板ポリの親オブジェクト生成
@@ -75,8 +79,8 @@ void BackMonitor::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor Plane Parent");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3{ 25.6f, 14.4f, 1.0f });
-            tr->SetTranslate(Vector3{ 10.0f, 9.5f, 35.0f });
+            tr->SetScale(Vector3{ 39.0f, 19.1f, 1.0f });
+            tr->SetTranslate(Vector3{ 10.0f, 11.8f, 35.8f });
         }
         planeParent_ = obj.get();
         context->AddObject3D(std::move(obj));

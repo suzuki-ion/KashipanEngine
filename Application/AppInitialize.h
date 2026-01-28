@@ -80,15 +80,17 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
 
+#ifdef DEBUG_BUILD
         // デバッグ用シーン遷移
         ic->RegisterCommand("DebugSceneChange", InputCommand::KeyboardKey{ Key::F1 }, InputCommand::InputState::Trigger);
-        // デバッグ用ウィンドウ破棄
-        ic->RegisterCommand("DebugDestroyWindow", InputCommand::KeyboardKey{ Key::F2 }, InputCommand::InputState::Trigger);
+        // デバッグ用バックモニター描画切り替え
+        ic->RegisterCommand("DebugChangeBackMonitor", InputCommand::KeyboardKey{ Key::F2 }, InputCommand::InputState::Trigger);
         // デバッグ用リセットコマンド
         ic->RegisterCommand("DebugReset", InputCommand::KeyboardKey{ Key::R }, InputCommand::InputState::Trigger);
 
         // デバッグ用カメラ操作有効化/無効化
         ic->RegisterCommand("DebugCameraToggle", InputCommand::KeyboardKey{ Key::F3 }, InputCommand::InputState::Trigger);
+#endif
     }
 }
 

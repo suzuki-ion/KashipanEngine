@@ -13,6 +13,11 @@ public:
     void Finalize() override;
     void Update() override;
 
+    ScreenBuffer *GetScreenBuffer() const { return screenBuffer_; }
+    Camera2D *GetCamera2D() const { return camera2D_; }
+    Camera3D *GetCamera3D() const { return camera3D_; }
+    bool IsReady() const { return planeMoveCount_ >= 2; }
+
 private:
     ScreenBuffer *screenBuffer_ = nullptr;
     Camera2D *camera2D_ = nullptr;
@@ -20,6 +25,8 @@ private:
     Sprite *sprite_ = nullptr;
     Plane3D *plane3D_ = nullptr;
     Plane3D *planeBack_ = nullptr;
+    DirectionalLight *directionalLight_ = nullptr;
+    LightManager *lightManager_ = nullptr;
 
     /// @brief 板ポリの親オブジェクト
     Object3DBase *planeParent_ = nullptr;

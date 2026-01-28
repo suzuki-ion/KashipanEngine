@@ -131,6 +131,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithGameScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
     <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
     <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
@@ -302,6 +306,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithMenuScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithParticle.h" />
     <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />
     <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h" />
     <ClInclude Include="Application\Objects\Components\Health.h" />

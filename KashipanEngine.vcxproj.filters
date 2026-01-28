@@ -148,6 +148,10 @@
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
     <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatEmitter.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithGameScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -415,6 +419,10 @@
     <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatEmitter.h" />
     <ClInclude Include="Application\Objects\Components\OneBeatParticle.h" />
     <ClInclude Include="Application\Objects\Components\ParticleConfig.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithMenuScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithParticle.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

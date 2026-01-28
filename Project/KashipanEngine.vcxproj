@@ -274,6 +274,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\EntityComponentSystem\EntityComponentManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
@@ -507,6 +508,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\EntityComponentManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />

@@ -13,7 +13,7 @@ void BackMonitor::Initialize() {
     auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
 
     // ScreenBuffer生成
-    screenBuffer_ = ScreenBuffer::Create(780, 382);
+    screenBuffer_ = ScreenBuffer::Create(780, 350);
     if (!screenBuffer_) return;
 
     {
@@ -46,7 +46,7 @@ void BackMonitor::Initialize() {
         obj->SetName("Camera3D_BackMonitor");
         float w = static_cast<float>(screenBuffer_->GetWidth());
         float h = static_cast<float>(screenBuffer_->GetHeight());
-        obj->SetPerspectiveParams(0.7f, h != 0.0f ? (w / h) : 1.0f, 0.1f, 256.0f);
+        obj->SetPerspectiveParams(2.0f, h != 0.0f ? (w / h) : 1.0f, 0.1f, 256.0f);
         obj->SetViewportParams(0.0f, 0.0f, w, h);
         obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         camera3D_ = obj.get();
@@ -58,7 +58,8 @@ void BackMonitor::Initialize() {
         obj->SetName("DirectionalLight_BackMonitor");
         obj->SetEnabled(true);
         obj->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
-        obj->SetDirection(Vector3{ 0.0f, 0.0f, 1.0f });
+        obj->SetDirection(Vector3{ 2.0f, -1.0f, 1.0f });
+        obj->SetIntensity(0.5f);
         obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         directionalLight_ = obj.get();
         context->AddObject3D(std::move(obj));
@@ -79,8 +80,8 @@ void BackMonitor::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor Plane Parent");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3{ 39.0f, 19.1f, 1.0f });
-            tr->SetTranslate(Vector3{ 10.0f, 11.8f, 35.8f });
+            tr->SetScale(Vector3{ 39.0f, 17.5f, 1.0f });
+            tr->SetTranslate(Vector3{ 10.0f, 9.5f, 35.5f });
         }
         planeParent_ = obj.get();
         context->AddObject3D(std::move(obj));

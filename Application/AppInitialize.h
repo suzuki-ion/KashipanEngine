@@ -2,7 +2,6 @@
 #include <KashipanEngine.h>
 
 #include "Scenes/TitleScene.h"
-#include "Scenes/MenuScene.h"
 #include "Scenes/TestScene.h"
 #include "Scenes/GameScene.h"
 #include "Scenes/ResultScene.h"
@@ -20,7 +19,6 @@ inline void AppInitialize(const GameEngine::Context &context) {
         auto *sm = context.sceneManager;
         
         sm->RegisterScene<TitleScene>("TitleScene");
-        sm->RegisterScene<MenuScene>("MenuScene");
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
         sm->RegisterScene<GameOverScene>("GameOverScene");

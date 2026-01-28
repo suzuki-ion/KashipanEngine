@@ -10,7 +10,8 @@ namespace KashipanEngine {
 
 	std::optional<bool> OneBeatParticle::Initialize() {
 		transform_ = GetOwner3DContext()->GetComponent<Transform3D>();
-		if (!transform_) {
+        material_ = GetOwner3DContext()->GetComponent<Material3D>();
+        if (!transform_ || !material_) {
 			return false;
 		}
 
@@ -18,6 +19,9 @@ namespace KashipanEngine {
 		transform_->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
 		isActive_ = false;
 		elapsed_ = 0.0f;
+
+        // デフォルト設定
+        material_->SetEnableLighting(false);
 
 		config_.initialSpeed = 8.0f;               // 初速度
 		config_.speedVariation = 2.0f;             // 速度のランダム幅

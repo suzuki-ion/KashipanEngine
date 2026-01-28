@@ -33,6 +33,7 @@ namespace KashipanEngine {
 
 	private:
 		Transform3D* transform_ = nullptr;
+        Material3D *material_ = nullptr;
 
 		ParticleConfig config_{};
 		Vector3 velocity_{ 0.0f, 0.0f, 0.0f };

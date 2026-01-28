@@ -47,10 +47,10 @@ namespace KashipanEngine {
             screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));*/
 
             BloomEffect::Params bp{};
-            bp.threshold = 1.0f;
+            bp.threshold = 0.5f;
             bp.softKnee = 0.25f;
-            bp.intensity = 2.0f;
-            bp.blurRadius = 4.0f;
+            bp.intensity = 1.0f;
+            bp.blurRadius = 2.0f;
             bp.iterations = 4;
             screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
@@ -96,9 +96,9 @@ namespace KashipanEngine {
 
         // Directional Light (screenBuffer3D_)
         directionalLight->SetEnabled(true);
-        directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        directionalLight->SetDirection(Vector3(1.8f, -2.0f, 1.2f));
-        directionalLight->SetIntensity(1.0f);
+        directionalLight->SetColor(Vector4(0.8f, 0.6f, 1.0f, 1.0f));
+        directionalLight->SetDirection(Vector3(1.0f, -1.0f, 1.0f));
+        directionalLight->SetIntensity(0.5f);
 
         //==================================================
         // ↓ ここからゲームオブジェクト定義 ↓

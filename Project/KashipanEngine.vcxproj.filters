@@ -460,9 +460,6 @@
     <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp">
       <Filter>Application\Scenes\Components</Filter>
     </ClCompile>
-    <ClCompile Include="Externals\imgui\imgui.cpp">
-      <Filter>Externals\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_demo.cpp">
       <Filter>Externals\imgui</Filter>
     </ClCompile>
@@ -519,6 +516,20 @@
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClCompile>
+    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
+    <ClCompile Include="Application\Scenes\MenuScene.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\EntityComponentSystem\EntityComponentManager.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -968,9 +979,6 @@
     <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Graphics\IPostEffectComponent.h">
-      <Filter>KashipanEngine\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\OBB.h">
       <Filter>KashipanEngine\Objects\MathObjects\3D</Filter>
     </ClInclude>
@@ -1012,9 +1020,6 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\3D\Collision3D.h">
       <Filter>KashipanEngine\Objects\Components\3D</Filter>
-    </ClInclude>
-    <ClInclude Include="Application\AppInitialize.h">
-      <Filter>Application</Filter>
     </ClInclude>
     <ClInclude Include="Application\Scenes\TestScene.h">
       <Filter>Application\Scenes</Filter>
@@ -1112,12 +1117,6 @@
     <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h">
       <Filter>Application\Scenes\Components</Filter>
     </ClInclude>
-    <ClInclude Include="Externals\imgui\imconfig.h">
-      <Filter>Externals\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="Externals\imgui\imgui.h">
-      <Filter>Externals\imgui</Filter>
-    </ClInclude>
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
       <Filter>Externals\imgui</Filter>
     </ClInclude>
@@ -1212,6 +1211,34 @@
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClInclude>
     <ClInclude Include="MyStd\UniversalIndex.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyManager.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
+    <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
+    <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />
+    <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
+    <ClInclude Include="Application\Scenes\MenuScene.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombManager.h" />
+    <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\EntityComponentManager.h" />
+    <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
@@ -1340,9 +1367,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Object3d.json">
-      <Filter>リソース ファイル</Filter>
-    </None>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.json">
       <Filter>リソース ファイル</Filter>
     </None>
@@ -1391,5 +1415,60 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example\Vertex.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="Application\AppInitialize.h" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.ShadowMap.DepthOnly.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Solid.BlendNormal.EnableMotionVector.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Velocity.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Blur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Composite.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Downsample.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Prefilter.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Upsample.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ChromaticAberration.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.HistoryCopy.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\TriangleShadow.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Blur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Composite.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Downsample.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Prefilter.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Bloom.Upsample.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ChromaticAberration.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\MotionBlur.HistoryCopy.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\MotionBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.EnableMotionVector.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object3D.Velocity.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocity.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCB.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurCB.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap3D.json" />
+    <None Include="Docs\EngineReference\01_KashipanEngine.h.md" />
+    <None Include="Docs\EngineReference\02_Objects_Types.md" />
+    <None Include="Docs\EngineReference\03_ObjectComponents.md" />
+    <None Include="Docs\EngineReference\04_Scenes.md" />
+    <None Include="Docs\EngineReference\05_SceneComponents.md" />
+    <None Include="Docs\EngineReference\06_Windows.md" />
+    <None Include="Docs\EngineReference\07_ScreenBuffer.md" />
+    <None Include="Docs\EngineReference\08_Assets_Texture_Sound_Model.md" />
+    <None Include="Docs\EngineReference\09_InputCommand.md" />
+    <None Include="Docs\EngineReference\10_DefaultObjectComponents.md" />
+    <None Include="Docs\EngineReference\11_DefaultSceneComponents.md" />
+    <None Include="Docs\EngineReference\12_Utilities.md" />
+    <None Include="Docs\EngineReference\13_Logging.md" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ShadowMap\ShadowMapVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\ChromaticAberrationPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangleVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomBlurPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomCompositePS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomPrefilterPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomDownsamplePS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\BloomUpsamplePS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\FullScreenTriangle.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurHistoryCopyPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\MotionBlurPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVelocityVS.hlsl" />
   </ItemGroup>
 </Project>

@@ -196,7 +196,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
     <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
-    <ClCompile Include="EnemySpawner.cpp" />
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -204,9 +203,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_draw.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp">
@@ -305,8 +301,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
@@ -504,9 +498,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\EntityComponentManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />

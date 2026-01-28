@@ -94,7 +94,7 @@ private:
 
     int playerMapX_ = 0; // プレイヤーのマップ上のX座標
     int playerMapZ_ = 0; // プレイヤーのマップ上のZ座標
-    PlayerHealthUI *playerHealthUI_ = nullptr;
+    PlayerHealthModelUI *playerHealthUI_ = nullptr;
 
     // 爆弾関連
     BombManager *bombManager_ = nullptr;

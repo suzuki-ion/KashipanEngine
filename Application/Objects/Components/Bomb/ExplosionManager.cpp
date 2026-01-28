@@ -1,6 +1,6 @@
 #include "ExplosionManager.h"
 #include "BombManager.h"
-#include "ExplosionNumberDisplay.h"
+#include "ScoreDisplay.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
 #include "Objects/Components/Player/ScoreManager.h"
 #include "Scenes/Components/PlayerHealthUI.h"

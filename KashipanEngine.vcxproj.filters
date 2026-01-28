@@ -154,7 +154,9 @@
     <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
     <ClCompile Include="Application\Scenes\Components\PlayerHealthModelUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
-    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\ScoreDisplay.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -429,7 +431,9 @@
     <ClInclude Include="Application\Scenes\Components\PlayerHealthModelUI.h" />
     <ClInclude Include="Application\Objects\Components\Player\ScoreManager.h" />
     <ClInclude Include="Application\Scenes\Components\ScoreUI.h" />
-    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionNumberDisplay.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ScoreDisplay.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticleManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

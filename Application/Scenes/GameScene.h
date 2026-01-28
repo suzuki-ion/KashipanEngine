@@ -4,7 +4,7 @@
 #include "Scenes/Components/BPM/BPMSystem.h"
 #include "objects/Components/Bomb/BombManager.h"
 #include "objects/Components/Bomb/explosionManager.h"
-#include "objects/Components/Bomb/ExplosionNumberDisplay.h"
+#include "objects/Components/Bomb/ScoreDisplay.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Scenes/Components/PlayerHealthModelUI.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
@@ -17,6 +17,7 @@
 #include "Objects/Components/OneBeat/OneBeatParticle.h"
 #include "Objects/Components/OneBeat/OneBeatEmitter.h"
 #include "Objects/Components/Enemy/EnemyDieParticle.h"
+#include "Objects/Components/Player/PlayerDieParticleManager.h"
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/BackMonitor.h"
 #include "Utilities/Json/JsonManager.h"
@@ -105,7 +106,7 @@ private:
 
     // 爆発関連
     ExplosionManager *explosionManager_ = nullptr;
-    ExplosionNumberDisplay *explosionNumberDisplay_ = nullptr;
+    ScoreDisplay *explosionNumberDisplay_ = nullptr;
     float explosionLifetime_ = 0.5f; // 爆発の寿命（秒）
     int explosionSize_ = 3;         // 爆発のXZサイズ
 
@@ -126,6 +127,9 @@ private:
 
     EnemyManager *enemyManager_ = nullptr;
 
+    // プレイヤー死亡パーティクル関連
+    PlayerDieParticleManager *playerDieParticleManager_ = nullptr;
+
     // スコア関連
     ScoreManager *scoreManager_ = nullptr;
 
@@ -139,10 +143,12 @@ private:
     ParticleConfig enemySpawnParticleConfig_{};
     ParticleConfig enemyDieParticleConfig_{};
     ParticleConfig oneBeatParticleConfig_{};
+    ParticleConfig playerDieParticleConfig_{};
 
     int enemySpawnParticleCount_ = 20;
     int enemyDieParticleCount_ = 30;
     int oneBeatParticleCount_ = 50;
+    int playerDieParticleCount_ = 10;
 
     std::vector<ParticleLightPair> particleLights_;
 

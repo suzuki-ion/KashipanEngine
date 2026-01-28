@@ -24,7 +24,16 @@ public:
     }
 
     std::optional<bool> Update() override {
+
+        outGameTimer_.Update();
+
         if (!isAlive_) return true;
+
+        if (hp_ <= 0) {
+            if (!outGameTimer_.IsActive()) { outGameTimer_.Start(2.0f, false); }
+            hp_ = 0;
+            isAlive_ = false;
+        }
 
         const float dt = std::max(0.0f, GetDeltaTime());
         if (cooldownRemaining_ > 0.0f) {
@@ -47,11 +56,6 @@ public:
         wasDamaged_ = true;
         cooldownRemaining_ = damageCooldownSec_;
         blinkTimer_ = 0.0f; // 点滅タイマーをリセット
-
-        if (hp_ <= 0) {
-            hp_ = 0;
-            isAlive_ = false;
-        }
 
         // ダメージを受けた時にカメラをシェイク
         if (cameraController_) {
@@ -84,6 +88,10 @@ public:
         shakePower_ = power;
         shakeTime_ = time;
 	}
+
+    bool GetOutGameTimerIsFinished() const {
+        return outGameTimer_.IsFinished();
+	}
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::TextUnformatted("Health");
@@ -104,8 +112,13 @@ private:
         auto *mat = ctx->GetComponent<Material3D>();
         if (!mat) return;
 
+        if (!isAlive_) {
+            mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 0.0f });
+			return;
+        }
+
         if (cooldownRemaining_ > 0.0f) {
-                // 点滅処理：blinkInterval_ごとに色を切り替える
+            // 点滅処理：blinkInterval_ごとに色を切り替える
             float phase = std::fmod(blinkTimer_, blinkInterval_ * 2.0f);
             if (phase < blinkInterval_) {
                 // 赤色
@@ -138,6 +151,8 @@ private:
     CameraController* cameraController_ = nullptr;
 
 	float damageVolume_ = 0.1f;
+
+	GameTimer outGameTimer_;
 };
 
 } // namespace KashipanEngine

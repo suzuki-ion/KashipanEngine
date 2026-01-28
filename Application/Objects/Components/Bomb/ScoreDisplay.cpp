@@ -1,17 +1,17 @@
-#include "ExplosionNumberDisplay.h"
+#include "ScoreDisplay.h"
 #include <algorithm>
 
 namespace KashipanEngine {
 
-ExplosionNumberDisplay::ExplosionNumberDisplay()
-    : ISceneComponent("ExplosionNumberDisplay") {
+ScoreDisplay::ScoreDisplay()
+    : ISceneComponent("ScoreDisplay") {
 }
 
-void ExplosionNumberDisplay::Initialize() {
+void ScoreDisplay::Initialize() {
     activeNumbers_.clear();
 }
 
-void ExplosionNumberDisplay::Update() {
+void ScoreDisplay::Update() {
     auto* ctx = GetOwnerContext();
     if (!ctx) return;
 
@@ -63,7 +63,7 @@ void ExplosionNumberDisplay::Update() {
     );
 }
 
-void ExplosionNumberDisplay::SpawnNumber(const Vector3& position, int count) {
+void ScoreDisplay::SpawnNumber(const Vector3& position, int count) {
     auto* ctx = GetOwnerContext();
     if (!ctx || !screenBuffer_ || count <= 0) {
         return;
@@ -131,7 +131,7 @@ void ExplosionNumberDisplay::SpawnNumber(const Vector3& position, int count) {
 }
 
 #if defined(USE_IMGUI)
-void ExplosionNumberDisplay::ShowImGui() {
+void ScoreDisplay::ShowImGui() {
     ImGui::Text("Active Numbers: %d", static_cast<int>(activeNumbers_.size()));
     ImGui::DragFloat("Display Lifetime", &displayLifetime_, 0.01f, 0.1f, 5.0f);
     ImGui::DragFloat("Number Scale", &numberScale_, 0.01f, 0.1f, 5.0f);

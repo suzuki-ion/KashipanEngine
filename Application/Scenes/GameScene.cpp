@@ -10,6 +10,7 @@
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/Player/BpmbSpawn.h"
+#include "Objects/Components/Player/PlayerDieParticleManager.h"
 #include "objects/Components/Health.h"
 #include "Objects/SystemObjects/LightManager.h"
 #include <cmath>
@@ -28,7 +29,6 @@ void GameScene::Initialize() {
 
     LoadObjectStateJson();
     LoadParticleStateJson();
-
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
     auto *mainWindow = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainWindow() : nullptr;
     auto *screenBuffer2D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer2D() : nullptr;
@@ -241,7 +241,7 @@ void GameScene::Initialize() {
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Player");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+            tr->SetTranslate(Vector3(10.0f, 0.0f, 10.0f));
             tr->SetScale(Vector3(playerScaleMax_));
         }
 
@@ -252,8 +252,6 @@ void GameScene::Initialize() {
             playerArrowMove->SetMapSize(kMapW, kMapH);
         }
 
-        obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-        obj->RegisterComponent<Health>(10, 1.0f);
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
         obj->RegisterComponent<Health>(3, 1.0f);
 
@@ -293,7 +291,7 @@ void GameScene::Initialize() {
 
     // ExplosionNumberDisplay の追加
     {
-        auto comp = std::make_unique<ExplosionNumberDisplay>();
+        auto comp = std::make_unique<ScoreDisplay>();
         comp->SetScreenBuffer(screenBuffer3D);
         comp->SetShadowMapBuffer(shadowMapBuffer);
         comp->SetDisplayLifetime(explosionNumberDisplayLifetime_);
@@ -373,6 +371,18 @@ void GameScene::Initialize() {
         enemyManager_->SetOnEnemyDestroyedCallback([this]() {
             // このコールバックは現在使用されていないが、後方互換性のため保持
         });
+    }
+
+    // PlayerDieParticleManagerの初期化
+    {
+        auto comp = std::make_unique<PlayerDieParticleManager>();
+        comp->SetScreenBuffer(screenBuffer3D);
+        comp->SetShadowMapBuffer(shadowMapBuffer);
+        comp->SetPlayer(player_);
+        comp->SetParticleConfig(playerDieParticleConfig_);
+        playerDieParticleManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+        playerDieParticleManager_->InitializeParticlePool(playerDieParticleCount_);
     }
 
     {
@@ -503,6 +513,13 @@ void GameScene::OnUpdate() {
     SetParticleValue();
 #endif
 
+	// プレイヤーの体力が0になった際の処理
+    if (auto* health = player_->GetComponent3D<Health>()) {
+        if (health->GetOutGameTimerIsFinished()) {
+
+        }
+    }
+
     if (auto *debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
         if (GetInputCommand()->Evaluate("DebugCameraToggle").Triggered()) {
             debugCameraMovement->SetEnable(!debugCameraMovement->IsEnable());
@@ -611,6 +628,17 @@ void GameScene::OnUpdate() {
         if (r.Triggered()) {
             if (auto *window = Window::GetWindow("2301_CLUBOM")) {
                 window->DestroyNotify();
+            }
+        }
+    }
+
+    // デバッグ: 9キーでプレイヤー位置からDieParticleを発生
+    {
+        if (GetInput()->GetKeyboard().IsTrigger(Key::D9)) {
+            if (player_ && playerDieParticleManager_) {
+                if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+                    playerDieParticleManager_->SpawnParticles(tr->GetTranslate());
+                }
             }
         }
     }
@@ -833,6 +861,16 @@ void GameScene::LoadParticleStateJson() {
         if (index < values.size()) oneBeatParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) oneBeatParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
 
+        // PlayerDieParticle関連
+        if (index < values.size()) playerDieParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.lifeTimeSec = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.gravity = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.damping = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.spreadAngle = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerDieParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadParticleStateJson: %s\n", e.what());
         printf("[INFO] Using default particle settings.\n");
@@ -884,6 +922,17 @@ void GameScene::SaveParticleStateJson() {
     jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.x, "oneBeat_baseScale_x");
     jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.y, "oneBeat_baseScale_y");
     jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.z, "oneBeat_baseScale_z");
+
+    // PlayerDieParticle関連
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.initialSpeed, "playerDie_initialSpeed");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.speedVariation, "playerDie_speedVariation");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.lifeTimeSec, "playerDie_lifeTimeSec");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.gravity, "playerDie_gravity");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.damping, "playerDie_damping");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.spreadAngle, "playerDie_spreadAngle");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.x, "playerDie_baseScale_x");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.y, "playerDie_baseScale_y");
+    jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.z, "playerDie_baseScale_z");
 
     // JSONファイルに書き込み（jsonParticleManager_を使用）
     jsonParticleManager_->Write(loadToSaveParticleName_);
@@ -1061,6 +1110,10 @@ void GameScene::SetParticleValue() {
     if (enemyManager_) {
         enemyManager_->SetDieParticleConfig(enemyDieParticleConfig_);
     }
+
+    if (playerDieParticleManager_) {
+        playerDieParticleManager_->SetParticleConfig(playerDieParticleConfig_);
+    }
 }
 
 void GameScene::DrawParticleStateImGui() {
@@ -1102,6 +1155,17 @@ void GameScene::DrawParticleStateImGui() {
         ImGui::DragFloat("減衰率##onebeat", &oneBeatParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("広がる角度(度)##onebeat", &oneBeatParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
         ImGui::DragFloat3("基本スケール##onebeat", &oneBeatParticleConfig_.baseScale.x, 0.01f, 0.0f, 5.0f);
+    }
+
+    // PlayerDieParticle関連
+    if (ImGui::CollapsingHeader("PlayerDieParticle")) {
+        ImGui::DragFloat("初速度##playerdie", &playerDieParticleConfig_.initialSpeed, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("速度ランダム幅##playerdie", &playerDieParticleConfig_.speedVariation, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("生存時間(秒)##playerdie", &playerDieParticleConfig_.lifeTimeSec, 0.01f, 0.1f, 10.0f);
+        ImGui::DragFloat("重力##playerdie", &playerDieParticleConfig_.gravity, 0.1f, -100.0f, 100.0f);
+        ImGui::DragFloat("減衰率##playerdie", &playerDieParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("広がる角度(度)##playerdie", &playerDieParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
+        ImGui::DragFloat3("基本スケール##playerdie", &playerDieParticleConfig_.baseScale.x, 0.01f, 0.0f, 10.0f);
     }
 
     ImGui::End();

@@ -60,6 +60,9 @@ private:
     std::unique_ptr<JsonManager> jsonParticleManager_;
     std::string loadToSaveParticleName_ = "particleState";
 
+	Object3DBase* aBomb_ = nullptr;
+    Object3DBase* haku_ = nullptr;
+
     Object3DBase *stage_ = nullptr;
 
 	bool isGameStarted_ = false; // ゲーム開始フラグ
@@ -141,6 +144,8 @@ private:
         PointLight *light = nullptr;
     };
 
+    GameTimer nanidoTimer_;
+	int nanidoCount_ = 4;
 private:
     // パーティクル機能に渡す値
     ParticleConfig enemySpawnParticleConfig_{};

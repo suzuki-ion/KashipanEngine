@@ -177,6 +177,12 @@ private:
     // ステージライティング
     StageLighting *stageLighting_ = nullptr;
 
+    // カメラ位置
+    Vector3 cameraGameTargetPos_{};
+    Vector3 cameraGameTargetRot_{};
+    Vector3 cameraMenuTargetPos_{};
+    Vector3 cameraMenuTargetRot_{};
+
 protected:
     void OnUpdate() override;
 };

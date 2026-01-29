@@ -152,7 +152,7 @@ void BackMonitorWithMenuScreen::Update() {
 
     if (!GetBackMonitor() || !GetBackMonitor()->IsReady()) return;
 
-    const float animDuration = 0.2f; // zアニメーションは短めに保つ
+    //const float animDuration = 0.2f; // zアニメーションは短めに保つ
 
     //==================================================
     // 入力処理
@@ -160,7 +160,7 @@ void BackMonitorWithMenuScreen::Update() {
 
     if (!inputCommand_) return;
 
-    if (inputCommand_->Evaluate("MoveUp").Triggered()) {
+    /*if (inputCommand_->Evaluate("MoveUp").Triggered()) {
         selectedIndex_ = (selectedIndex_ - 1 + 4) % 4;
         for (int i = 0; i < 4; ++i) {
             if (!models_[i]) continue;
@@ -197,7 +197,7 @@ void BackMonitorWithMenuScreen::Update() {
                 zAnimating_[i] = true;
             }
         }
-    }
+    }*/
     if (!isSubmitted_ && inputCommand_->Evaluate("Submit").Triggered()) {
         isSubmitted_ = true;
         confirmedIndex_ = selectedIndex_;

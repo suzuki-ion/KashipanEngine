@@ -16,6 +16,12 @@ public:
     void Initialize() override;
     void Update() override;
 
+    int GetSelectedIndex() const { return selectedIndex_; }
+    int GetConfirmedIndex() const { return confirmedIndex_; }
+    bool IsSubmitted() const { return isSubmitted_; }
+    bool IsConfirming() const { return isConfirming_; }
+    bool IsConfirmed() const { return isSubmitted_ && !isConfirming_; }
+
 private:
     Model *menuTitle_ = nullptr;
     Model *menuStart_ = nullptr;

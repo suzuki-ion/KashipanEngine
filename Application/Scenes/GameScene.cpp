@@ -1,4 +1,4 @@
-#include "Scenes/GameScene.h"
+﻿#include "Scenes/GameScene.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Scenes/Components/PlayerHealthModelUI.h"
 #include "Scenes/Components/ScoreUI.h"
@@ -8,6 +8,8 @@
 #include "Objects/Components/Player/PlayerDieParticleManager.h"
 #include "objects/Components/Health.h"
 #include "Objects/SystemObjects/LightManager.h"
+#include "Scenes/Components/SceneChangeIn.h"
+#include "Scenes/Components/SceneChangeOut.h"
 #include <cmath>
 
 namespace KashipanEngine {
@@ -109,10 +111,17 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
+    // カメラコントローラーの追加
     {
         auto comp = std::make_unique<CameraController>(camera3D);
         cameraController_ = comp.get();
         AddSceneComponent(std::move(comp));
+
+        // カメラ位置設定
+        cameraGameTargetPos_ = cameraController_->GetTargetTranslate();
+        cameraGameTargetRot_ = cameraController_->GetTargetRotate();
+        cameraMenuTargetPos_ = Vector3(10.0f, 10.0f, 0.0f);
+        cameraMenuTargetRot_ = Vector3(0.0f, 0.0f, 0.0f);
     }
 
     {
@@ -524,6 +533,13 @@ void GameScene::Initialize() {
         auto comp = std::make_unique<DebugCameraMovement>(camera3D, GetInput());
         AddSceneComponent(std::move(comp));
     }
+
+    AddSceneComponent(std::make_unique<SceneChangeIn>());
+    AddSceneComponent(std::make_unique<SceneChangeOut>());
+
+    if (auto *in = GetSceneComponent<SceneChangeIn>()) {
+        in->Play();
+    }
 }
 
 GameScene::~GameScene() {}
@@ -539,11 +555,46 @@ void GameScene::OnUpdate() {
 
 	// プレイヤーの体力が0になった際の処理
     if (auto* health = player_->GetComponent3D<Health>()) {
-        if (health->GetOutGameTimerIsFinished()) {
-
+        static bool isDeadProcessed = false;
+        if (health->GetOutGameTimerIsFinished() && !isDeadProcessed) {
+            SetNextSceneName("TitleScene");
+            if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                out->Play();
+            }
+            isDeadProcessed = true;
+        } else if (!health->GetOutGameTimerIsFinished()) {
+            isDeadProcessed = false;
         }
     }
 
+    if (backMonitorMenu_ && backMonitorMenu_->IsActive()) {
+        if (backMonitorMenu_->IsConfirmed()) {
+            if (backMonitorMenu_->GetConfirmedIndex() == 0) {
+                InGameStart();
+            } else if (backMonitorMenu_->GetConfirmedIndex() == 1) {
+                SetNextSceneName("TitleScene");
+                if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                    out->Play();
+                }
+            }
+        }
+    }
+
+    if (cameraController_) {
+        if (isGameStarted_) {
+            cameraController_->SetTargetTranslate(cameraGameTargetPos_);
+            cameraController_->SetTargetRotate(cameraGameTargetRot_);
+            if (backMonitorGame_) backMonitorGame_->SetActive(true);
+            if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+        } else {
+            cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+            cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+            if (backMonitorGame_) backMonitorGame_->SetActive(false);
+            if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+        }
+    }
+
+#if defined(DEBUG_BUILD)
     if (auto *debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
         if (GetInputCommand()->Evaluate("DebugCameraToggle").Triggered()) {
             debugCameraMovement->SetEnable(!debugCameraMovement->IsEnable());
@@ -570,6 +621,7 @@ void GameScene::OnUpdate() {
             }
         }
     }
+#endif
 
     // OnUpdate 内で BPM 進行度を更新
     if (bombManager_) {
@@ -705,6 +757,20 @@ void GameScene::OnUpdate() {
 
     if (enemySpawner_) {
         enemySpawner_->SetSpawnInterval(nanidoCount_);
+    }
+
+    if (player_ && !player_->GetComponent3D<Health>()->IsAlive()) {
+        if (stageLighting_ && !stageLighting_->IsDeadLightingActive()) {
+            stageLighting_->StartDeadLighting();
+        }
+    }
+
+    if (!GetNextSceneName().empty()) {
+        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+            if (out->IsFinished()) {
+                ChangeToNextScene();
+            }
+        }
     }
 }
 

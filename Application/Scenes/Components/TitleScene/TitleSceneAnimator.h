@@ -33,8 +33,10 @@ public:
     void Finalize() override {}
 
     void Update() override {
+        isAnimating_ = false;
         if (!inputCommand_) return;
 
+#if defined(DEBUG_BUILD)
         if (inputCommand_->Evaluate("DebugReset").Triggered()) {
             if (carMove_) carMove_->Reset();
             if (playerEnter_) playerEnter_->Reset();
@@ -42,10 +44,12 @@ public:
             if (cameraMovement_) cameraMovement_->Reset();
             return;
         }
+#endif
 
         if (startTextUpdate_) {
             if (startTextUpdate_->IsFinishedTriggered()) {
                 if (carMove_) carMove_->StartMoveIn();
+                isAnimating_ = true;
             }
         }
 
@@ -54,6 +58,7 @@ public:
                 if (carMove_->IsMoveIn()) {
                     if (playerEnter_) playerEnter_->StartAppearance();
                     carMove_->StartMoveOut();
+                    isAnimating_ = true;
                 }
             }
         }
@@ -63,14 +68,20 @@ public:
                 if (playerEnter_->IsPlayerAppearance()) {
                     if (cameraMovement_) cameraMovement_->StartAnimation();
                     playerEnter_->StartEnter();
+                    isAnimating_ = true;
                 }
             }
         }
 
         if (cameraMovement_) {
             if (cameraMovement_->IsAnimating()) {
+                isAnimating_ = true;
             }
         }
+    }
+
+    bool IsAnimating() const {
+        return isAnimating_;
     }
 
     bool IsAnimationFinished() const {
@@ -94,6 +105,8 @@ private:
     PlayerEnter *playerEnter_ = nullptr;
     StartTextUpdate *startTextUpdate_ = nullptr;
     CameraStartMovement *cameraMovement_ = nullptr;
+
+    bool isAnimating_ = false;
 };
 
 } // namespace KashipanEngine

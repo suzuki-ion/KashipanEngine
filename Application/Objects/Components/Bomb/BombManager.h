@@ -78,6 +78,9 @@ public:
     /// @param hitObject 当たったオブジェクト
     void OnEnemyHit(Object3DBase* hitObject);
 
+	/// @brief 爆弾設置システムの開始・停止を設定
+	void SetIsStarted(bool isStarted) { isStarted_ = isStarted; }
+
 	/// @brief 爆弾のスケール範囲を設定
     void SetNormalScaleRange(const Vector3& minScale, const Vector3& maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
     void SetSpeedScaleRange(const Vector3& minScale, const Vector3& maxScale) { minSpeedScale_ = minScale; maxSpeedScale_ = maxScale; }
@@ -140,6 +143,8 @@ private:
     float missVolume_ = 0.1f;
 	float countVolume_ = 0.1f;
 	float fireVolume_ = 0.1f;
+
+	bool isStarted_ = false;
 };
 
 } // namespace KashipanEngine

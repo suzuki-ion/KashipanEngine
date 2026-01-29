@@ -42,7 +42,7 @@ namespace KashipanEngine {
             }
 
 			// BPM進行度に応じて移動入力をチェック
-            if (!isMoving_) {
+            if (!isMoving_ && isStarted_) {
                 if (useToleranceRange_) {
                     if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
                         JudgeMove(true);
@@ -101,6 +101,9 @@ namespace KashipanEngine {
 
 		/// @brief BombManagerの設定
         void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+		/// @brief ゲーム開始フラグの設定
+        void SetisStarted(bool start) { isStarted_ = start; }
 #if defined(USE_IMGUI)
         void ShowImGui() override {
             ImGui::TextUnformatted("PlayerArrowMove");
@@ -266,6 +269,8 @@ namespace KashipanEngine {
         };
     private:
 		PlayerDirection playerDirection_ = PlayerDirection::Down; // プレイヤーの向き
+
+		bool isStarted_ = false;
 
         float moveDistance_ = 2.0f;       // 1回の移動距離
         float moveDuration_ = 1.0f;       // 移動にかける時間（秒）

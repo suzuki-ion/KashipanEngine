@@ -47,6 +47,7 @@ namespace KashipanEngine {
 
         void SetEnemyDieParticleConfig(const ParticleConfig& config) { particleConfig_ = config; }
 
+		void SetIsStarted(bool isStarted) { isStarted_ = isStarted; }
 #if defined(USE_IMGUI)
         void ShowImGui() override;
 #endif
@@ -77,6 +78,8 @@ namespace KashipanEngine {
         std::vector<Object3DBase*> particlePool_; // プールに変更
         Vector3 nextSpawnPosition_{ 0.0f, 0.0f, 0.0f }; // 次のスポーン位置
         bool isEmittingParticles_ = false;  // パーティクル放出中フラグ
+
+		bool isStarted_ = false;
     };
 
 } // namespace KashipanEngine

@@ -49,6 +49,8 @@ private:
     void DrawParticleStateImGui();
     void SetParticleValue();
 #endif
+
+    void InGameStart();
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
@@ -59,6 +61,8 @@ private:
     std::string loadToSaveParticleName_ = "particleState";
 
     Object3DBase *stage_ = nullptr;
+
+	bool isGameStarted_ = false; // ゲーム開始フラグ
 
     // BPMオブジェクトのBPMに合わせた拡大縮小範囲
     static constexpr int kBpmObjectCount = 4;  // BPMオブジェクトの数

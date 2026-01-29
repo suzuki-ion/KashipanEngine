@@ -16,7 +16,6 @@ namespace KashipanEngine {
         void Initialize() override {
             ISceneComponent::Initialize();
             currentBeat_ = 0;
-            bpmTimer_.Start(beatDuration_, true);
         }
 
         void Update() override {
@@ -30,6 +29,10 @@ namespace KashipanEngine {
                 ++currentBeat_;
                 OnBeat();
             }
+        }
+
+        void MeasurementStart() {
+            bpmTimer_.Start(beatDuration_, true);
         }
 
         /// @brief 現在の拍内での進行度を取得 (0.0 ~ 1.0)

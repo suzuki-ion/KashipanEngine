@@ -107,7 +107,7 @@ void BombManager::Update() {
             }
         }
 
-        if (inputCommand_->Evaluate("Bomb").Triggered()) {
+        if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_) {
             if (useToleranceRange_) {
                 // BPM進行度が許容範囲内かチェック
                 if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {

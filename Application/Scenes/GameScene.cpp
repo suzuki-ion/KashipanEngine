@@ -115,6 +115,32 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
+    {
+		auto aBottom = ModelManager::GetModelDataFromFileName("aBomb.obj");
+        auto obj = std::make_unique<Model>(aBottom);
+        obj->SetName("A_Bomb");
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(-13.33f, -0.21f, 30.12f));
+            tr->SetParentTransform(camera3D->GetComponent3D<Transform3D>());
+            tr->SetScale(Vector3(1.0f));
+        }
+        if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        aBomb_ = obj.get();
+		AddObject3D(std::move(obj));
+
+        auto haku = ModelManager::GetModelDataFromFileName("haku.obj");
+        auto obj2 = std::make_unique<Model>(haku);
+        obj2->SetName("haku");
+        if (auto* tr = obj2->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(-10.83f, 0.88f, 27.3f));
+            tr->SetParentTransform(camera3D->GetComponent3D<Transform3D>());
+            tr->SetScale(Vector3(0.5f));
+        }
+        if (screenBuffer3D)  obj2->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        haku_ = obj2.get();
+        AddObject3D(std::move(obj2));
+    }
+
     // map (Box scaled)
     {
         for (int z = 0; z < kMapH; z++) {
@@ -667,6 +693,18 @@ void GameScene::OnUpdate() {
                 oneBeatEmitter_[i]->SetUseEmitter(true);
             }
         }
+    }
+
+    if (nanidoTimer_.IsFinished()) {
+        nanidoCount_--;
+        if (nanidoCount_ <= 1) {
+            nanidoCount_ = 1;
+        }
+    }
+    nanidoTimer_.Update();
+
+    if (enemySpawner_) {
+        enemySpawner_->SetSpawnInterval(nanidoCount_);
     }
 }
 
@@ -1221,6 +1259,8 @@ void GameScene::InGameStart() {
         if (enemySpawner_) {
             enemySpawner_->SetIsStarted(true);
         }
+
+        nanidoTimer_.Start(20.0f, true);
     }
 }
 

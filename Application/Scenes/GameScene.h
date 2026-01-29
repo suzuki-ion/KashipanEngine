@@ -143,6 +143,7 @@ private:
     ParticleConfig enemySpawnParticleConfig_{};
     ParticleConfig enemyDieParticleConfig_{};
     ParticleConfig oneBeatParticleConfig_{};
+    ParticleConfig oneBeatMissParticleConfig_{};
     ParticleConfig playerDieParticleConfig_{};
 
     int enemySpawnParticleCount_ = 20;

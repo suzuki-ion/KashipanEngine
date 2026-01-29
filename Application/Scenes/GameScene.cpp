@@ -138,7 +138,7 @@ void GameScene::Initialize() {
                 }
 
                 if (auto *mt = obj->GetComponent3D<Material3D>()) {
-                    mt->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+                    mt->SetColor(Vector4{ 0.5f,0.5f,0.5f,1.0f });
                 }
 
                 if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -500,6 +500,13 @@ void GameScene::Initialize() {
         auto comp = std::make_unique<DebugCameraMovement>(camera3D, GetInput());
         AddSceneComponent(std::move(comp));
     }
+
+    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
+    if (handle == AudioManager::kInvalidSoundHandle) {
+        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+        return;
+    }
+    AudioManager::Play(handle, 0.2f, 0.0f, true);
 }
 
 GameScene::~GameScene() {}

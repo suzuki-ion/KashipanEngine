@@ -83,7 +83,7 @@
   {
     "name": "oneBeat_initialSpeed",
     "type": 2,
-    "value": 20.000000
+    "value": 10.000000
   },
   {
     "name": "oneBeat_speedVariation",
@@ -98,7 +98,7 @@
   {
     "name": "oneBeat_gravity",
     "type": 2,
-    "value": 15.000000
+    "value": 5.000000
   },
   {
     "name": "oneBeat_damping",
@@ -108,22 +108,22 @@
   {
     "name": "oneBeat_spreadAngle",
     "type": 2,
-    "value": 25.000000
+    "value": 15.000000
   },
   {
     "name": "oneBeat_baseScale_x",
     "type": 2,
-    "value": 0.750000
+    "value": 0.600000
   },
   {
     "name": "oneBeat_baseScale_y",
     "type": 2,
-    "value": 0.750000
+    "value": 0.600000
   },
   {
     "name": "oneBeat_baseScale_z",
     "type": 2,
-    "value": 0.750000
+    "value": 0.600000
   },
   {
     "name": "playerDie_initialSpeed",

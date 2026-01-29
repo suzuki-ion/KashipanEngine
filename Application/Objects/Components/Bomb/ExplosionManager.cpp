@@ -140,12 +140,12 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
 
     // Material設定
     if (auto* mat = explosion->GetComponent3D<Material3D>()) {
-        mat->SetEnableLighting(true);
+        mat->SetEnableLighting(false);
         mat->SetColor(Vector4(1.0f, 0.5f, 0.0f, 1.0f)); // オレンジ色の爆発エフェクト
     }
 
     if (auto* mat = explosion2->GetComponent3D<Material3D>()) {
-        mat->SetEnableLighting(true);
+        mat->SetEnableLighting(false);
         mat->SetColor(Vector4(1.0f, 0.5f, 0.0f, 1.0f)); // オレンジ色の爆発エフェクト
     }
 

@@ -102,8 +102,8 @@ void ScoreDisplay::SpawnNumber(const Vector3& position, int count) {
 
     // Material設定
     if (auto* mat = numberModel->GetComponent3D<Material3D>()) {
-        mat->SetEnableLighting(true);
-        mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        mat->SetEnableLighting(false);
+        mat->SetColor(Vector4(0.45f, 0.45f, 0.45f, 1.0f));
     }
 
     // モデルのポインタを保存

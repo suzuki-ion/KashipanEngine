@@ -101,7 +101,7 @@ void GameScene::Initialize() {
     directionalLight->SetEnabled(true);
     directionalLight->SetColor(Vector4(0.8f, 0.6f, 1.0f, 1.0f));
     directionalLight->SetDirection(Vector3(0.0f, -1.0f, 0.0f));
-    directionalLight->SetIntensity(2.0f);
+    directionalLight->SetIntensity(1.0f);
 
     //==================================================
     // ↓ ここからゲームオブジェクト定義 ↓

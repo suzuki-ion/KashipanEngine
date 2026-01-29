@@ -63,10 +63,17 @@ void OneBeatEmitter::Update() {
 		return;
 	}
 
-	// プール内の全パーティクルにconfigを適用
-	for (auto* particle : particlePool_) {
-		if (auto* oneBeatParticle = particle->GetComponent3D<OneBeatParticle>()) {
-			oneBeatParticle->SetConfig(config_);
+	if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+		if (inputCommand_->Evaluate("MoveUp").Triggered()) {
+			isMissBeat_ = false;
+		} else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
+			isMissBeat_ = false;
+		} else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
+			isMissBeat_ = false;
+		} else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
+			isMissBeat_ = false;
+		} else if (inputCommand_->Evaluate("Bomb").Triggered()) {
+			isMissBeat_ = false;
 		}
 	}
 
@@ -77,11 +84,26 @@ void OneBeatEmitter::Update() {
 		if (useEmitter_) {
 			SpawnSparks();
 		}
+		isMissBeat_ = true;
 	}
 }
 
 void OneBeatEmitter::SpawnSparks() {
 	if (!emitter_) return;
+
+	config_.color = baseColor_;
+	missConfig_.color = missColor_;
+
+	// プール内の全パーティクルにconfigを適用
+	for (auto* particle : particlePool_) {
+		if (auto* oneBeatParticle = particle->GetComponent3D<OneBeatParticle>()) {
+			if (isMissBeat_) {
+				oneBeatParticle->SetConfig(missConfig_);
+			} else {
+				oneBeatParticle->SetConfig(config_);
+			}
+		}
+	}
 
 	// エミッターの位置を取得
 	Vector3 emitterPosition{ 0.0f, 0.0f, 0.0f };

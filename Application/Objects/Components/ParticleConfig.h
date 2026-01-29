@@ -11,6 +11,7 @@ namespace KashipanEngine {
 		float damping = 0.98f;                   // 減衰率
 		float spreadAngle = 30.0f;               // 広がる角度（度）
 		Vector3 baseScale{ 1.3f, 1.3f, 1.3f };   // 基本スケール
+		Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f }; // パーティクルの色
 	};
 
 } // namespace KashipanEngine

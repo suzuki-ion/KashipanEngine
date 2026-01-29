@@ -24,6 +24,8 @@ namespace KashipanEngine {
 		void Spawn(const Vector3& position);
 
 		void SetConfig(const ParticleConfig& config) { config_ = config; }
+		void SetMissConfig(const ParticleConfig& config) { missConfig_ = config; }
+
 		const ParticleConfig& GetConfig() const { return config_; }
 		bool IsAlive() const { return isAlive_; }
 
@@ -36,6 +38,8 @@ namespace KashipanEngine {
         Material3D *material_ = nullptr;
 
 		ParticleConfig config_{};
+		ParticleConfig missConfig_{};
+		
 		Vector3 velocity_{ 0.0f, 0.0f, 0.0f };
 		float elapsed_ = 0.0f;
 		bool isActive_ = false;

@@ -11,10 +11,9 @@ BackMonitorWithGameScreen::~BackMonitorWithGameScreen() {}
 void BackMonitorWithGameScreen::Initialize() {}
 
 void BackMonitorWithGameScreen::Update() {
-    static Sprite *blitSprite = nullptr;
     if (!IsActive()) {
-        if (blitSprite) {
-            if (auto *mat = blitSprite->GetComponent2D<Material2D>()) {
+        if (blitSprite_) {
+            if (auto *mat = blitSprite_->GetComponent2D<Material2D>()) {
                 mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
             }
         }
@@ -36,7 +35,7 @@ void BackMonitorWithGameScreen::Update() {
     auto main3D = sceneDefault->GetScreenBuffer3D();
     if (!main3D) return;
 
-    if (!blitSprite) {
+    if (!blitSprite_) {
         auto obj = std::make_unique<Sprite>();
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.GameScreenSprite");
@@ -51,10 +50,10 @@ void BackMonitorWithGameScreen::Update() {
             mat->SetTexture(main3D);
         }
         obj->AttachToRenderer(target, "Object2D.DoubleSidedCulling.BlendNormal");
-        blitSprite = obj.get();
+        blitSprite_ = obj.get();
         ctx->AddObject2D(std::move(obj));
     } else {
-        if (auto* mat = blitSprite->GetComponent2D<Material2D>()) {
+        if (auto* mat = blitSprite_->GetComponent2D<Material2D>()) {
             mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
             mat->SetTexture(main3D);
         }

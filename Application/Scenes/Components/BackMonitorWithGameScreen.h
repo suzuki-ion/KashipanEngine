@@ -10,6 +10,9 @@ public:
 
     void Initialize() override;
     void Update() override;
+
+private:
+    Sprite *blitSprite_ = nullptr;
 };
 
 } // namespace KashipanEngine

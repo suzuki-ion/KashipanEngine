@@ -197,6 +197,7 @@ void GameScene::Initialize() {
             comp->SetShadowMapBuffer(shadowMapBuffer);
             comp->SetBPMSystem(bpmSystem_);
             comp->SetEmitter(oneBeatEmitterObj_[i]);
+			comp->SetInputCommand(GetInputCommand());
             oneBeatEmitter_[i] = comp.get();
             AddSceneComponent(std::move(comp));
 
@@ -457,7 +458,7 @@ void GameScene::Initialize() {
     }
 
     //==================================================
-    // ↑ ここまでゲームオブジェクト定義 ↑
+    // ↑ ここまでゲームオブジェクト定義
     //==================================================
 
     // Player Health UI (ライフ表示)
@@ -503,7 +504,7 @@ void GameScene::Initialize() {
 
     auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
     if (handle == AudioManager::kInvalidSoundHandle) {
-        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+        // 音声が未ロードならログ出力するか無视（ここでは無害に戻す）
         return;
     }
     AudioManager::Play(handle, 0.2f, 0.0f, true);
@@ -667,6 +668,11 @@ void GameScene::OnUpdate() {
     }
 
     {
+        for (int i = 0; i < kOneBeatEmitterCount_; i++) {
+			oneBeatEmitter_[i]->SetBPMBpmProgress(bpmSystem_->GetBeatProgress());
+            oneBeatEmitter_[i]->SetBPMToleranceRange(playerBpmToleranceRange_);
+        }
+
         if (bpmSystem_->GetLeftRightToggle()) {
             for (int i = 0; i < kOneBeatEmitterCount_ / 2; i++) {
                 oneBeatEmitter_[i]->SetUseEmitter(true);
@@ -868,6 +874,17 @@ void GameScene::LoadParticleStateJson() {
         if (index < values.size()) oneBeatParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) oneBeatParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
 
+        // OneBeatMissParticle関連
+        if (index < values.size()) oneBeatMissParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.lifeTimeSec = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.gravity = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.damping = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.spreadAngle = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) oneBeatMissParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
+
         // PlayerDieParticle関連
         if (index < values.size()) playerDieParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerDieParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
@@ -929,6 +946,17 @@ void GameScene::SaveParticleStateJson() {
     jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.x, "oneBeat_baseScale_x");
     jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.y, "oneBeat_baseScale_y");
     jsonParticleManager_->RegistOutput(oneBeatParticleConfig_.baseScale.z, "oneBeat_baseScale_z");
+
+    // OneBeatMissParticle関連
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.initialSpeed, "oneBeatMiss_initialSpeed");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.speedVariation, "oneBeatMiss_speedVariation");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.lifeTimeSec, "oneBeatMiss_lifeTimeSec");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.gravity, "oneBeatMiss_gravity");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.damping, "oneBeatMiss_damping");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.spreadAngle, "oneBeatMiss_spreadAngle");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.baseScale.x, "oneBeatMiss_baseScale_x");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.baseScale.y, "oneBeatMiss_baseScale_y");
+    jsonParticleManager_->RegistOutput(oneBeatMissParticleConfig_.baseScale.z, "oneBeatMiss_baseScale_z");
 
     // PlayerDieParticle関連
     jsonParticleManager_->RegistOutput(playerDieParticleConfig_.initialSpeed, "playerDie_initialSpeed");
@@ -1090,7 +1118,7 @@ void GameScene::DrawObjectStateImGui() {
     // ExplosionNumberDisplay関連
     if (ImGui::CollapsingHeader("ScoreModel関連")) {
         ImGui::DragFloat("表示寿命(秒)", &explosionNumberDisplayLifetime_, 0.01f, 0.1f, 5.0f);
-        ImGui::DragFloat("スケール", &explosionNumberScale_, 0.01f, 0.1f, 5.0f);
+        ImGui::DragFloat("スコール", &explosionNumberScale_, 0.01f, 0.1f, 5.0f);
         ImGui::DragFloat("Y軸オフセット", &explosionNumberYOffset_, 0.01f, -10.0f, 10.0f);
     }
 
@@ -1107,6 +1135,7 @@ void GameScene::SetParticleValue() {
     for (int i = 0; i < kOneBeatEmitterCount_; ++i) {
         if (oneBeatEmitter_[i]) {
             oneBeatEmitter_[i]->SetParticleConfig(oneBeatParticleConfig_);
+			oneBeatEmitter_[i]->SetMissParticleConfig(oneBeatMissParticleConfig_);
         }
     }
 
@@ -1164,6 +1193,17 @@ void GameScene::DrawParticleStateImGui() {
         ImGui::DragFloat3("基本スケール##onebeat", &oneBeatParticleConfig_.baseScale.x, 0.01f, 0.0f, 5.0f);
     }
 
+    // OneBeatMissParticle関連
+    if (ImGui::CollapsingHeader("OneBeatMissParticle")) {
+        ImGui::DragFloat("初速度##onebeatmiss", &oneBeatMissParticleConfig_.initialSpeed, 0.1f, 0.0f, 20.0f);
+        ImGui::DragFloat("速度ランダム幅##onebeatmiss", &oneBeatMissParticleConfig_.speedVariation, 0.1f, 0.0f, 10.0f);
+        ImGui::DragFloat("生存時間(秒)##onebeatmiss", &oneBeatMissParticleConfig_.lifeTimeSec, 0.01f, 0.1f, 5.0f);
+        ImGui::DragFloat("重力##onebeatmiss", &oneBeatMissParticleConfig_.gravity, 0.1f, -20.0f, 20.0f);
+        ImGui::DragFloat("減衰率##onebeatmiss", &oneBeatMissParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("広がる角度(度)##onebeatmiss", &oneBeatMissParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
+        ImGui::DragFloat3("基本スケール##onebeatmiss", &oneBeatMissParticleConfig_.baseScale.x, 0.01f, 0.0f, 5.0f);
+    }
+
     // PlayerDieParticle関連
     if (ImGui::CollapsingHeader("PlayerDieParticle")) {
         ImGui::DragFloat("初速度##playerdie", &playerDieParticleConfig_.initialSpeed, 0.1f, 0.0f, 100.0f);
@@ -1179,4 +1219,4 @@ void GameScene::DrawParticleStateImGui() {
 }
 #endif
 
-} // namespace KashipanEngine
+}

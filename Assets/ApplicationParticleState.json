@@ -126,24 +126,69 @@
     "value": 0.600000
   },
   {
-    "name": "playerDie_initialSpeed",
-    "type": 2,
-    "value": 10.000000
-  },
-  {
-    "name": "playerDie_speedVariation",
+    "name": "oneBeatMiss_initialSpeed",
     "type": 2,
     "value": 5.000000
   },
   {
-    "name": "playerDie_lifeTimeSec",
+    "name": "oneBeatMiss_speedVariation",
     "type": 2,
     "value": 3.000000
   },
   {
-    "name": "playerDie_gravity",
+    "name": "oneBeatMiss_lifeTimeSec",
+    "type": 2,
+    "value": 0.500000
+  },
+  {
+    "name": "oneBeatMiss_gravity",
     "type": 2,
     "value": 0.000000
+  },
+  {
+    "name": "oneBeatMiss_damping",
+    "type": 2,
+    "value": 0.980000
+  },
+  {
+    "name": "oneBeatMiss_spreadAngle",
+    "type": 2,
+    "value": 15.000000
+  },
+  {
+    "name": "oneBeatMiss_baseScale_x",
+    "type": 2,
+    "value": 0.300000
+  },
+  {
+    "name": "oneBeatMiss_baseScale_y",
+    "type": 2,
+    "value": 0.300000
+  },
+  {
+    "name": "oneBeatMiss_baseScale_z",
+    "type": 2,
+    "value": 0.300000
+  },
+  {
+    "name": "playerDie_initialSpeed",
+    "type": 2,
+    "value": 8.000000
+  },
+  {
+    "name": "playerDie_speedVariation",
+    "type": 2,
+    "value": 2.000000
+  },
+  {
+    "name": "playerDie_lifeTimeSec",
+    "type": 2,
+    "value": 1.500000
+  },
+  {
+    "name": "playerDie_gravity",
+    "type": 2,
+    "value": 15.000000
   },
   {
     "name": "playerDie_damping",
@@ -153,22 +198,22 @@
   {
     "name": "playerDie_spreadAngle",
     "type": 2,
-    "value": 90.000000
+    "value": 30.000000
   },
   {
     "name": "playerDie_baseScale_x",
     "type": 2,
-    "value": 2.000000
+    "value": 1.300000
   },
   {
     "name": "playerDie_baseScale_y",
     "type": 2,
-    "value": 2.000000
+    "value": 1.300000
   },
   {
     "name": "playerDie_baseScale_z",
     "type": 2,
-    "value": 2.000000
+    "value": 1.300000
   }
   ]
 }

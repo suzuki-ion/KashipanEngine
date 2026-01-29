@@ -59,6 +59,8 @@ namespace KashipanEngine {
 		pos += velocity_ * dt;
 		transform_->SetTranslate(pos);
 
+		material_->SetColor(config_.color);
+
 		// スケールアニメーション (フェードアウト)
 		const float t = elapsed_ / config_.lifeTimeSec;
 		const float scaleMultiplier = EaseOutCubic(1.0f, 0.0f, t);
@@ -87,6 +89,8 @@ namespace KashipanEngine {
 		// 位置とスケールを設定
 		transform_->SetTranslate(position);
 		transform_->SetScale(config_.baseScale);
+
+		
 
 		// アクティブ化
 		isActive_ = true;

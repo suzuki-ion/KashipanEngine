@@ -54,6 +54,9 @@ public:
         onExplosionStartCallback_ = callback;
     }
 
+    /// @brief すべての敵を消去する
+    void ClearAllEnemies();
+
     // パーティクルプールを初期化
     void InitializeParticlePool();
 

@@ -31,9 +31,17 @@ namespace KashipanEngine {
             }
         }
 
+		/// @brief 測定開始
         void MeasurementStart() {
             bpmTimer_.Start(beatDuration_, true);
         }
+
+		/// @brief システムリセット
+        void ResetSystem() {
+			currentBeat_ = 0;
+			bpmTimer_.Reset();
+            leftRightToggle_ = false;
+		}
 
         /// @brief 現在の拍内での進行度を取得 (0.0 ~ 1.0)
         float GetBeatProgress() const {

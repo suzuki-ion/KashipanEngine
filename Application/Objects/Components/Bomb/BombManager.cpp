@@ -348,6 +348,21 @@ void BombManager::OnEnemyHit(Object3DBase* hitObject) {
     }
 }
 
+void BombManager::ClearAllBombs() {
+    auto* ctx = GetOwnerContext();
+    if (!ctx) return;
+
+    // すべての爆弾オブジェクトを削除
+    for (auto& bomb : activeBombs_) {
+        if (bomb.object) {
+            ctx->RemoveObject3D(bomb.object);
+        }
+    }
+
+    // 爆弾リストをクリア
+    activeBombs_.clear();
+}
+
 #if defined(USE_IMGUI)
 void BombManager::ShowImGui() {
     ImGui::Text("BombManager");

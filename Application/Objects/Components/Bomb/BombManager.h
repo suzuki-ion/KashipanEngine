@@ -81,6 +81,9 @@ public:
 	/// @brief 爆弾設置システムの開始・停止を設定
 	void SetIsStarted(bool isStarted) { isStarted_ = isStarted; }
 
+	/// @brief すべての爆弾を消去する
+	void ClearAllBombs();
+
 	/// @brief 爆弾のスケール範囲を設定
     void SetNormalScaleRange(const Vector3& minScale, const Vector3& maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
     void SetSpeedScaleRange(const Vector3& minScale, const Vector3& maxScale) { minSpeedScale_ = minScale; maxSpeedScale_ = maxScale; }

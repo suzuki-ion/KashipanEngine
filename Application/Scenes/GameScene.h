@@ -51,6 +51,7 @@ private:
 #endif
 
     void InGameStart();
+	void InGameQuit();
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
@@ -82,7 +83,6 @@ private:
     // BPM関連
     BPMSystem *bpmSystem_ = nullptr;
     int bpm_ = 120;   // BPM値
-
     
     AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
 
@@ -100,6 +100,7 @@ private:
 
     // プレイヤー関連
     Object3DBase *player_ = nullptr;
+    Vector3 playerStartPos_ = { 10.0f,0.0f,10.0f };
     Vector3 playerScaleMin_ = { 1.1f, 0.75f,1.1f }, playerScaleMax_ = { 1.0f ,1.0f ,1.0f };// プレイヤーのBpmに合わせた拡大縮小範囲
     float playerBpmToleranceRange_ = 0.2f;                 // プレイヤーがBPMに合わせる±の許容範囲 
     float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
@@ -146,9 +147,6 @@ private:
         Object3DBase *particle = nullptr;
         PointLight *light = nullptr;
     };
-
-    GameTimer nanidoTimer_;
-	int nanidoCount_ = 4;
 private:
     // パーティクル機能に渡す値
     ParticleConfig enemySpawnParticleConfig_{};

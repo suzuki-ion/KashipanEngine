@@ -163,7 +163,7 @@
   {
     "name": "enemySpawnInterval",
     "type": 1,
-    "value": 2
+    "value": 4
   }
   ]
 }

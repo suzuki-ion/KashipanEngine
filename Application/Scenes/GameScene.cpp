@@ -272,7 +272,7 @@ void GameScene::Initialize() {
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Player");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(10.0f, 0.0f, 10.0f));
+            tr->SetTranslate(playerStartPos_);
             tr->SetScale(Vector3(playerScaleMax_));
         }
 
@@ -746,18 +746,6 @@ void GameScene::OnUpdate() {
             }
         }
     }
-
-    /*if (nanidoTimer_.IsFinished()) {
-        nanidoCount_--;
-        if (nanidoCount_ <= 1) {
-            nanidoCount_ = 1;
-        }
-    }
-    nanidoTimer_.Update();
-
-    if (enemySpawner_) {
-        enemySpawner_->SetSpawnInterval(nanidoCount_);
-    }*/
 
     if (player_ && !player_->GetComponent3D<Health>()->IsAlive()) {
         if (stageLighting_ && !stageLighting_->IsDeadLightingActive()) {
@@ -1326,8 +1314,41 @@ void GameScene::InGameStart() {
         if (enemySpawner_) {
             enemySpawner_->SetIsStarted(true);
         }
+    }
+}
 
-        nanidoTimer_.Start(20.0f, true);
+void GameScene::InGameQuit() {
+    AudioManager::Stop(bgmPlayHandle_);
+
+    if (bpmSystem_) {
+		bpmSystem_->ResetSystem();
+    }
+
+    if (player_) {
+        if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(playerStartPos_);
+        }
+
+        if (auto* move = player_->GetComponent3D<PlayerMove>()) {
+            move->SetisStarted(false);
+        }
+    }
+
+    if (bombManager_) {
+        bombManager_->SetIsStarted(false);
+        bombManager_->ClearAllBombs();
+    }
+
+    if (enemySpawner_) {
+        enemySpawner_->SetIsStarted(false);
+        enemyManager_->ClearAllEnemies();
+    }
+
+    if (bpmObjects_[0] && bpmObjects_[1]) {
+        auto tr = bpmObjects_[0]->GetComponent3D<Transform3D>();
+        auto tr1 = bpmObjects_[1]->GetComponent3D<Transform3D>();
+        tr->SetTranslate(bpmObjectStart_[0]);
+        tr1->SetTranslate(bpmObjectStart_[1]);
     }
 }
 

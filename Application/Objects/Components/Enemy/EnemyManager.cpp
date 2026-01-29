@@ -325,4 +325,19 @@ bool EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
     return false;  // 敵ではなかった
 }
 
+void EnemyManager::ClearAllEnemies() {
+    auto* ctx = GetOwnerContext();
+    if (!ctx) return;
+
+    // すべての敵オブジェクトを削除
+    for (auto& enemy : activeEnemies_) {
+        if (enemy.object) {
+            ctx->RemoveObject3D(enemy.object);
+        }
+    }
+
+    // 敵リストをクリア
+    activeEnemies_.clear();
+}
+
 } // namespace KashipanEngine

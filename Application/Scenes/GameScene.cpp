@@ -1,4 +1,4 @@
-﻿#include "Scenes/GameScene.h"
+#include "Scenes/GameScene.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Scenes/Components/PlayerHealthModelUI.h"
 #include "Scenes/Components/ScoreUI.h"
@@ -747,7 +747,7 @@ void GameScene::OnUpdate() {
         }
     }
 
-    if (nanidoTimer_.IsFinished()) {
+    /*if (nanidoTimer_.IsFinished()) {
         nanidoCount_--;
         if (nanidoCount_ <= 1) {
             nanidoCount_ = 1;
@@ -757,7 +757,7 @@ void GameScene::OnUpdate() {
 
     if (enemySpawner_) {
         enemySpawner_->SetSpawnInterval(nanidoCount_);
-    }
+    }*/
 
     if (player_ && !player_->GetComponent3D<Health>()->IsAlive()) {
         if (stageLighting_ && !stageLighting_->IsDeadLightingActive()) {
@@ -768,6 +768,7 @@ void GameScene::OnUpdate() {
     if (!GetNextSceneName().empty()) {
         if (auto *out = GetSceneComponent<SceneChangeOut>()) {
             if (out->IsFinished()) {
+                AudioManager::Stop(bgmPlayHandle_);
                 ChangeToNextScene();
             }
         }
@@ -1308,7 +1309,7 @@ void GameScene::InGameStart() {
             // 音声が未ロードならログ出力するか無视（ここでは無害に戻す）
             return;
         }
-        AudioManager::Play(handle, 0.2f, 0.0f, true);
+        bgmPlayHandle_ = AudioManager::Play(handle, 0.2f, 0.0f, true);
 
         if (bpmSystem_) {
             bpmSystem_->MeasurementStart();

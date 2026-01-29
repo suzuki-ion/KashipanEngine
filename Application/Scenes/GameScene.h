@@ -83,6 +83,9 @@ private:
     BPMSystem *bpmSystem_ = nullptr;
     int bpm_ = 120;   // BPM値
 
+    
+    AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
+
     // マップ関連
     static constexpr int kMapW = 11;                // マップの横幅 (オブジェクト数)
     static constexpr int kMapH = 11;                // マップの縦幅 (オブジェクト数)

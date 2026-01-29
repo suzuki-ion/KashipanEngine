@@ -501,13 +501,6 @@ void GameScene::Initialize() {
         auto comp = std::make_unique<DebugCameraMovement>(camera3D, GetInput());
         AddSceneComponent(std::move(comp));
     }
-
-    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
-    if (handle == AudioManager::kInvalidSoundHandle) {
-        // 音声が未ロードならログ出力するか無视（ここでは無害に戻す）
-        return;
-    }
-    AudioManager::Play(handle, 0.2f, 0.0f, true);
 }
 
 GameScene::~GameScene() {}
@@ -648,6 +641,10 @@ void GameScene::OnUpdate() {
                     playerDieParticleManager_->SpawnParticles(tr->GetTranslate());
                 }
             }
+        }
+
+        if (GetInput()->GetKeyboard().IsTrigger(Key::D8)) {
+			InGameStart();
         }
     }
 
@@ -1218,5 +1215,33 @@ void GameScene::DrawParticleStateImGui() {
     ImGui::End();
 }
 #endif
+
+void GameScene::InGameStart() {
+    if (!isGameStarted_) {
+        isGameStarted_ = true;
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
+        if (handle == AudioManager::kInvalidSoundHandle) {
+            // 音声が未ロードならログ出力するか無视（ここでは無害に戻す）
+            return;
+        }
+        AudioManager::Play(handle, 0.2f, 0.0f, true);
+
+        if (bpmSystem_) {
+            bpmSystem_->MeasurementStart();
+        }
+
+        if (auto* move = player_->GetComponent3D<PlayerMove>()) {
+            move->SetisStarted(true);
+        }
+
+        if (bombManager_) {
+            bombManager_->SetIsStarted(true);
+        }
+
+        if (enemySpawner_) {
+            enemySpawner_->SetIsStarted(true);
+        }
+    }
+}
 
 }

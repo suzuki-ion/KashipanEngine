@@ -60,6 +60,7 @@ namespace KashipanEngine {
 
     void EnemySpawner::Update() {
         if (!bpmSystem_ || !enemyManager_) return;
+		if (!isStarted_) return;
 
         int currentBeat = bpmSystem_->GetCurrentBeat();
 

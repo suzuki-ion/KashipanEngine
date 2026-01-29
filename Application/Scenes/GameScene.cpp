@@ -53,7 +53,7 @@ void GameScene::Initialize() {
         bp.threshold = 0.5f;
         bp.softKnee = 0.25f;
         bp.intensity = 1.0f;
-        bp.blurRadius = 2.0f;
+        bp.blurRadius = 1.0f;
         bp.iterations = 4;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
@@ -100,8 +100,8 @@ void GameScene::Initialize() {
     // Directional Light (screenBuffer3D_)
     directionalLight->SetEnabled(true);
     directionalLight->SetColor(Vector4(0.8f, 0.6f, 1.0f, 1.0f));
-    directionalLight->SetDirection(Vector3(1.0f, -1.0f, 1.0f));
-    directionalLight->SetIntensity(0.5f);
+    directionalLight->SetDirection(Vector3(0.0f, -1.0f, 0.0f));
+    directionalLight->SetIntensity(2.0f);
 
     //==================================================
     // ↓ ここからゲームオブジェクト定義 ↓

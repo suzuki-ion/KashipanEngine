@@ -14,10 +14,11 @@ public:
         auto *shadowMapBuffer = sceneDefaultVariables->GetShadowMapBuffer();
 
         // 車モデル
-        auto modelHandle = ModelManager::GetModelDataFromFileName("player.obj");
+        auto modelHandle = ModelManager::GetModelDataFromFileName("car.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetName("CarModel");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetRotate(Vector3(0.0f, M_PI * 0.5f, 0.0f));
             tr->SetTranslate(moveInFrom_);
         }
         carModel_ = obj.get();

@@ -79,7 +79,7 @@ private:
     Camera3D *camera3D_ = nullptr;
 
     Vector3 cameraFromTranslate_ = Vector3(0.0f, 24.0f, -21.0f);
-    Vector3 cameraToTranslate_ = Vector3(0.0f, 28.0f, -21.0f);
+    Vector3 cameraToTranslate_ = Vector3(0.0f, 48.0f, -21.0f);
     Vector3 cameraFromRotate_ = Vector3(0.6f, 0.0f, 0.0f);
     Vector3 cameraToRotate_ = Vector3(0.0f, 0.0f, 0.0f);
 

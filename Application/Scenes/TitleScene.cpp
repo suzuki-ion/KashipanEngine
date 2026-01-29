@@ -80,20 +80,24 @@ void TitleScene::Initialize() {
     directionalLight->SetEnabled(true);
     directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
     directionalLight->SetDirection(Vector3(1.8f, -2.0f, 1.2f));
-    directionalLight->SetIntensity(1.0f);
+    directionalLight->SetIntensity(1.5f);
 
     //==================================================
     // ゲームオブジェクト
     //==================================================
 
-    // 床用ボックス
+    // タイトル用ステージ
     {
-        auto obj = std::make_unique<Box>();
+        auto modelHandle = ModelManager::GetModelDataFromFileName("stageTitle.obj");
+        auto obj = std::make_unique<Model>(modelHandle);
         obj->SetUniqueBatchKey();
-        obj->SetName("GroundBox");
+        obj->SetName("StageTitle");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3(128.0f, 1.0f, 128.0f));
-            tr->SetTranslate(Vector3(0.0f, -0.5f, 0.0f));
+            tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
+            tr->SetTranslate(Vector3(0.0f, 0.0f, 4.0f));
+        }
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
         }
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
@@ -115,9 +119,12 @@ void TitleScene::Initialize() {
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetName("TitleLogo");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 28.0f, 10.0f));
+            tr->SetTranslate(Vector3(0.0f, 48.0f, 10.0f));
             tr->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
             tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
         }
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(obj));

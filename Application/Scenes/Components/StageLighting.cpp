@@ -10,7 +10,11 @@ void StageLighting::Initialize() {
     if (!ctx) return;
     auto *sceneDefaults = ctx->GetComponent<SceneDefaultVariables>();
     lightManager_ = sceneDefaults ? sceneDefaults->GetLightManager() : nullptr;
+    directionalLight_ = sceneDefaults ? sceneDefaults->GetDirectionalLight() : nullptr;
     auto *screenBuffer3D = sceneDefaults ? sceneDefaults->GetScreenBuffer3D() : nullptr;
+
+    directionalLightOriginalColor_ = directionalLight_ ? directionalLight_->GetColor() : Vector4{ 1.0f, 1.0f, 1.0f, 1.0f };
+    directionalLightOriginalIntensity_ = directionalLight_ ? directionalLight_->GetIntensity() : 1.0f;
 
     // --- centerRotateSpotLight_ (3 lights) ---
     const size_t centerCount = 3;
@@ -18,15 +22,7 @@ void StageLighting::Initialize() {
     for (size_t i = 0; i < centerCount; ++i) {
         auto spotLight = std::make_unique<SpotLight>();
         spotLight->SetName("StageLighting.CenterRotateSpotLight." + std::to_string(i));
-        spotLight->SetEnabled(true);
-        // random color with constraint
-        float r, g, b;
-        do {
-            r = GetRandomFloat(0.2f, 1.0f);
-            g = GetRandomFloat(0.2f, 1.0f);
-            b = GetRandomFloat(0.2f, 1.0f);
-        } while ((r + g + b > 2.0f) && (r + g + b < 1.5f));
-        spotLight->SetColor(Vector4{ r, g, b, 1.0f });
+        RandomizeAndEnableSpotLight(spotLight.get());
 
         // position at stage center top
         spotLight->SetPosition(Vector3{ 10.0f, 10.0f, 10.0f });
@@ -60,15 +56,7 @@ void StageLighting::Initialize() {
             auto spotLight = std::make_unique<SpotLight>();
             int index = ix * gridCount + iz;
             spotLight->SetName("StageLighting.RhythmicalSpotLight." + std::to_string(index));
-            spotLight->SetEnabled(true);
-            // random color with constraint
-            float r, g, b;
-            do {
-                r = GetRandomFloat(0.2f, 1.0f);
-                g = GetRandomFloat(0.2f, 1.0f);
-                b = GetRandomFloat(0.2f, 1.0f);
-            } while ((r + g + b > 2.0f) && (r + g + b < 1.5f));
-            spotLight->SetColor(Vector4{ r, g, b, 1.0f });
+            RandomizeAndEnableSpotLight(spotLight.get());
 
             float x = stageMin + step * static_cast<float>(ix);
             float z = stageMin + step * static_cast<float>(iz);
@@ -96,14 +84,7 @@ void StageLighting::Initialize() {
     for (int i = 0; i < outsideCount; ++i) {
         auto spotLight = std::make_unique<SpotLight>();
         spotLight->SetName("StageLighting.OutsideSpotLight." + std::to_string(i));
-        spotLight->SetEnabled(true);
-        float r, g, b;
-        do {
-            r = GetRandomFloat(0.2f, 1.0f);
-            g = GetRandomFloat(0.2f, 1.0f);
-            b = GetRandomFloat(0.2f, 1.0f);
-        } while ((r + g + b > 2.0f) && (r + g + b < 1.5f));
-        spotLight->SetColor(Vector4{ r, g, b, 1.0f });
+        RandomizeAndEnableSpotLight(spotLight.get());
 
         float t = static_cast<float>(i) / static_cast<float>(outsideCount);
         // map t to perimeter coordinate
@@ -150,16 +131,15 @@ void StageLighting::Initialize() {
 }
 
 void StageLighting::Finalize() {
-    // Clear added lights from manager
-    if (lightManager_) {
-        lightManager_->ClearSpotLights();
-        lightManager_->ClearPointLights();
-    }
 }
 
 void StageLighting::Update() {
-    // call grouped updates with a placeholder deltaTime (could use real delta if available)
-    float deltaTime = 0.016f;
+    float deltaTime = GetDeltaTime();
+    if (isDeadLightingActive_) {
+        UpdateDeadLighting(deltaTime);
+        return;
+    }
+
     UpdateCenterRotateSpotLights(deltaTime);
     UpdateRhythmicalSpotLights(deltaTime);
     UpdateStageOutsideSpotLights(deltaTime);
@@ -191,6 +171,79 @@ void StageLighting::UpdateRhythmicalSpotLights(float /*deltaTime*/) {
 
 void StageLighting::UpdateStageOutsideSpotLights(float /*deltaTime*/) {
     // intentionally empty
+}
+
+void StageLighting::RandomizeAndEnableSpotLight(SpotLight* spot, bool enabled) {
+    if (!spot) return;
+    float r, g, b;
+    do {
+        r = GetRandomFloat(0.2f, 1.0f);
+        g = GetRandomFloat(0.2f, 1.0f);
+        b = GetRandomFloat(0.2f, 1.0f);
+    } while ((r + g + b > 2.0f) && (r + g + b < 1.5f));
+    spot->SetColor(Vector4{ r, g, b, 1.0f });
+    spot->SetEnabled(enabled);
+}
+
+void StageLighting::StartDeadLighting() {
+    if (isDeadLightingActive_) return;
+    isDeadLightingActive_ = true;
+    deadLightingElapsed_ = 0.0f;
+
+    // disable all spot lights
+    for (auto* s : centerRotateSpotLight_) {
+        if (s) s->SetEnabled(false);
+    }
+    for (auto* s : rhythmicalSpotLight_) {
+        if (s) s->SetEnabled(false);
+    }
+    for (auto* s : stageOutsideSpotLight_) {
+        if (s) s->SetEnabled(false);
+    }
+
+    // set directional light to dead start color
+    if (directionalLight_) {
+        directionalLight_->SetColor(directionalLightDeadStartColor_);
+        directionalLight_->SetIntensity(directionalLightDeadIntensity_);
+    }
+}
+
+void StageLighting::ResetLighting() {
+    // stop dead lighting if active
+    isDeadLightingActive_ = false;
+    deadLightingElapsed_ = 0.0f;
+
+    // restore directional light color
+    if (directionalLight_) {
+        directionalLight_->SetColor(directionalLightOriginalColor_);
+        directionalLight_->SetIntensity(directionalLightOriginalIntensity_);
+    }
+
+    // re-enable spot lights and randomize their colors similar to Initialize
+    for (size_t i = 0; i < centerRotateSpotLight_.size(); ++i) {
+        RandomizeAndEnableSpotLight(centerRotateSpotLight_[i], true);
+    }
+    for (size_t i = 0; i < rhythmicalSpotLight_.size(); ++i) {
+        RandomizeAndEnableSpotLight(rhythmicalSpotLight_[i], true);
+    }
+    for (size_t i = 0; i < stageOutsideSpotLight_.size(); ++i) {
+        RandomizeAndEnableSpotLight(stageOutsideSpotLight_[i], true);
+    }
+}
+
+void StageLighting::UpdateDeadLighting(float deltaTime) {
+    if (!isDeadLightingActive_) return;
+    deadLightingElapsed_ += deltaTime;
+    float t = deadLightingElapsed_ / deadLightingDuration_;
+    if (t >= 1.0f) {
+        deadLightingElapsed_ = deadLightingDuration_;
+        t = 1.0f;
+    }
+
+    Vector4 newColor = Lerp(directionalLightDeadStartColor_, directionalLightDeadEndColor_, t);
+    if (directionalLight_) {
+        directionalLight_->SetColor(newColor);
+    }
 }
 
 } // namespace KashipanEngine

@@ -2,7 +2,9 @@
 #include <KashipanEngine.h>
 
 #include "Scenes/TitleScene.h"
+#if DEBUG_BUILD
 #include "Scenes/TestScene.h"
+#endif
 #include "Scenes/GameScene.h"
 #include "Scenes/ResultScene.h"
 #include "Scenes/GameOverScene.h"
@@ -23,9 +25,11 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<ResultScene>("ResultScene");
         sm->RegisterScene<GameOverScene>("GameOverScene");
 
+#if DEBUG_BUILD
         sm->RegisterScene<TestScene>("TestScene");
+#endif
 
-        context.sceneManager->ChangeScene("GameScene");
+        context.sceneManager->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {

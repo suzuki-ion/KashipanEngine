@@ -20,14 +20,13 @@
 #include "Objects/Components/Player/PlayerDieParticleManager.h"
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/BackMonitor.h"
+#include "Scenes/Components/BackMonitorWithGameScreen.h"
+#include "Scenes/Components/BackMonitorWithMenuScreen.h"
+#include "Scenes/Components/BackMonitorWithParticle.h"
+#include "Scenes/Components/StageLighting.h"
 #include "Utilities/Json/JsonManager.h"
 
 namespace KashipanEngine {
-
-// Forward declarations for BackMonitor renderers
-class BackMonitorWithGameScreen;
-class BackMonitorWithMenuScreen;
-class BackMonitorWithParticle;
 
 class GameScene final : public SceneBase {
 public:
@@ -158,14 +157,19 @@ private:
     float particleLightIntensityMax_ = 4.0f;
     float particleLightRangeMin_ = 0.0f;
     float particleLightRangeMax_ = 5.0f;
-protected:
-    void OnUpdate() override;
 
+private:
     // BackMonitor related (debug test)
     BackMonitorWithGameScreen *backMonitorGame_ = nullptr;
     BackMonitorWithMenuScreen *backMonitorMenu_ = nullptr;
     BackMonitorWithParticle *backMonitorParticle_ = nullptr;
     int backMonitorMode_ = 0; // 0=game,1=menu,2=particle
+
+    // ステージライティング
+    StageLighting *stageLighting_ = nullptr;
+
+protected:
+    void OnUpdate() override;
 };
 
 } // namespace KashipanEngine

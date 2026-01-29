@@ -73,6 +73,19 @@ public:
         }
     }
 
+    bool IsAnimationFinished() const {
+        if (cameraMovement_) {
+            return cameraMovement_->IsFinished();
+        }
+        return false;
+    }
+    bool IsAnimationFinishedTriggered() const {
+        if (cameraMovement_) {
+            return cameraMovement_->IsFinishedTriggered();
+        }
+        return false;
+    }
+
 private:
     RegisterFunc registerFunc_;
     InputCommand *inputCommand_ = nullptr;

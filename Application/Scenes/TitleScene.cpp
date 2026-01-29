@@ -2,7 +2,6 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/TitleScene/StartTextUpdate.h"
-#include "Scenes/Components/TitleScene/TitleSceneAnimator.h"
 
 namespace KashipanEngine {
 
@@ -30,10 +29,10 @@ void TitleScene::Initialize() {
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
 
         BloomEffect::Params bp{};
-        bp.threshold = 0.0f;
-        bp.softKnee = 0.0f;
-        bp.intensity = 0.0f;
-        bp.blurRadius = 0.0f;
+        bp.threshold = 1.0f;
+        bp.softKnee = 0.25f;
+        bp.intensity = 1.0f;
+        bp.blurRadius = 1.0f;
         bp.iterations = 4;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
@@ -105,7 +104,9 @@ void TitleScene::Initialize() {
         auto regFunc = [this](std::unique_ptr<ISceneComponent> comp) {
             return this->AddSceneComponent(std::move(comp));
         };
-        AddSceneComponent(std::make_unique<TitleSceneAnimator>(regFunc, GetInputCommand()));
+        auto comp = std::make_unique<TitleSceneAnimator>(regFunc, GetInputCommand());
+        titleSceneAnimator_ = comp.get();
+        AddSceneComponent(std::move(comp));
     }
 
     // タイトルロゴ
@@ -137,11 +138,20 @@ void TitleScene::OnUpdate() {
     if (auto *ic = GetInputCommand()) {
         if (ic->Evaluate("DebugSceneChange").Triggered()) {
             if (GetNextSceneName().empty()) {
-                SetNextSceneName("MenuScene");
+                SetNextSceneName("GameScene");
             }
             if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                 out->Play();
             }
+        }
+    }
+
+    if (titleSceneAnimator_ && titleSceneAnimator_->IsAnimationFinishedTriggered()) {
+        if (GetNextSceneName().empty()) {
+            SetNextSceneName("GameScene");
+        }
+        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+            out->Play();
         }
     }
 

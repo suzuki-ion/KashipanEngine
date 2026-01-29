@@ -11,24 +11,38 @@ public:
     void Initialize() override;
     void Finalize() override;
     void Update() override;
-    
-    LightManager* GetLightManager() const { return lightManager_; }
-    const std::vector<SpotLight*>& GetSpotLights() const { return centerRotateSpotLight_; }
 
-    // Update functions for each group
+    void StartDeadLighting();
+    void ResetLighting();
+
+    bool IsDeadLightingActive() const { return isDeadLightingActive_; }
+
+private:
     void UpdateCenterRotateSpotLights(float deltaTime);
     void UpdateRhythmicalSpotLights(float deltaTime);
     void UpdateStageOutsideSpotLights(float deltaTime);
 
-private:
-    LightManager* lightManager_ = nullptr;
+    // dead lighting update that runs while the death sequence is active
+    void UpdateDeadLighting(float deltaTime);
+    void RandomizeAndEnableSpotLight(SpotLight *spot, bool enabled = true);
 
-    // Categorized spot light groups
-    std::vector<SpotLight*> centerRotateSpotLight_; // expected 3
-    std::vector<SpotLight*> rhythmicalSpotLight_;   // expected 16
-    std::vector<SpotLight*> stageOutsideSpotLight_; // expected 16
+    LightManager *lightManager_ = nullptr;
 
-    // retain point lights vector removed as requested
+    DirectionalLight *directionalLight_ = nullptr;
+    std::vector<SpotLight *> centerRotateSpotLight_;
+    std::vector<SpotLight *> rhythmicalSpotLight_;
+    std::vector<SpotLight *> stageOutsideSpotLight_;
+
+    Vector4 directionalLightOriginalColor_;
+    float directionalLightOriginalIntensity_ = 1.0f;
+    Vector4 directionalLightDeadStartColor_{ 1.0f, 0.5f, 0.5f, 1.0f };
+    Vector4 directionalLightDeadEndColor_{ 0.0f, 0.0f, 0.0f, 1.0f };
+    float directionalLightDeadIntensity_ = 2.0f;
+
+    // dead lighting state
+    bool isDeadLightingActive_ = false;
+    float deadLightingElapsed_ = 0.0f;
+    float deadLightingDuration_ = 2.0f;
 };
 
 } // namespace KashipanEngine

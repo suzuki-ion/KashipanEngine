@@ -2,11 +2,6 @@
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Scenes/Components/PlayerHealthModelUI.h"
 #include "Scenes/Components/ScoreUI.h"
-#include "Scenes/Components/BackMonitor.h"
-#include "Scenes/Components/BackMonitorWithGameScreen.h"
-#include "Scenes/Components/BackMonitorWithMenuScreen.h"
-#include "Scenes/Components/BackMonitorWithParticle.h"
-#include "Scenes/Components/StageLighting.h"
 #include "Objects/Components/ParticleMovement.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/Player/BpmbSpawn.h"
@@ -428,7 +423,9 @@ void GameScene::Initialize() {
     explosionManager_->SetPlayer(player_);
 
     // ステージのライティング用コンポーネント
-    AddSceneComponent(std::make_unique<StageLighting>());
+    auto stageLighting = std::make_unique<StageLighting>();
+    stageLighting_ = stageLighting.get();
+    AddSceneComponent(std::move(stageLighting));
 
     // ステージ後ろの画面用
     AddSceneComponent(std::make_unique<BackMonitor>());
@@ -544,6 +541,16 @@ void GameScene::OnUpdate() {
             if (backMonitorParticle_) backMonitorParticle_->SetActive(backMonitorMode_ == 2);
         }
     }
+    // Debug: StageLighting toggle
+    if (stageLighting_) {
+        if (GetInput()->GetKeyboard().IsTrigger(Key::L)) {
+            if (stageLighting_->IsDeadLightingActive()) {
+                stageLighting_->ResetLighting();
+            } else {
+                stageLighting_->StartDeadLighting();
+            }
+        }
+    }
 
     // OnUpdate 内で BPM 進行度を更新
     if (bombManager_) {
@@ -601,33 +608,6 @@ void GameScene::OnUpdate() {
                     }
                 }
             }
-        }
-    }
-
-    // Particle -> PointLight sync (position + lifetime-driven params)
-    {
-        for (auto &pl : particleLights_) {
-            if (!pl.particle || !pl.light) continue;
-
-            auto *tr = pl.particle->GetComponent3D<Transform3D>();
-            auto *pm = pl.particle->GetComponent3D<ParticleMovement>();
-            if (!tr || !pm) continue;
-
-            const Vector3 pos = tr->GetTranslate();
-            pl.light->SetPosition(pos);
-
-            const float t = pm->GetNormalizedLife(); // 0..1
-            float life01 = 0.0f;
-            if (t < 0.5f) {
-                life01 = (t / 0.5f);
-            } else {
-                life01 = (1.0f - (t - 0.5f) / 0.5f);
-            }
-            life01 = std::clamp(life01, 0.0f, 1.0f);
-
-            const float eased = EaseOutCubic(0.0f, 1.0f, life01);
-            pl.light->SetIntensity(particleLightIntensityMin_ + (particleLightIntensityMax_ - particleLightIntensityMin_) * eased);
-            pl.light->SetRange(particleLightRangeMin_ + (particleLightRangeMax_ - particleLightRangeMin_) * eased);
         }
     }
 

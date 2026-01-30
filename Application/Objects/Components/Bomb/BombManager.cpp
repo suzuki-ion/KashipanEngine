@@ -15,6 +15,11 @@ void BombManager::Initialize() {
     ISceneComponent::Initialize();
     activeBombs_.clear();
     prevBpmProgress_ = 0.0f;
+    pendingBombSpawn_ = false;
+    wasInBPMRange_ = false;
+    inputReceivedInThisBeat_ = false;
+    missedBeatsCount_ = 0;
+    moveInputTimer_.Start(moveInputInterval_, false);
 }
 
 void BombManager::Update() {
@@ -79,6 +84,8 @@ void BombManager::Update() {
                     auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/bombFire.mp3");
                     AudioManager::Play(handle, fireVolume_);
 
+                    bombSpawnMode_ = BombSpawnMode::None;
+
                     // 爆発を生成
                     if (explosionManager_) {
                         explosionManager_->SpawnExplosion(bomb.position, bomb.explosionSize);
@@ -108,19 +115,109 @@ void BombManager::Update() {
         }
 
         if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_) {
+            if (bombSpawnMode_ == BombSpawnMode::None) {
+                // Noneモードから移行する場合、既存の爆弾をすべて起爆
+                DetonateAllBombs();
+                
+                // 新しい爆弾を生成してChainモードに移行
+                SpawnBomb();
+                bombSpawnMode_ = BombSpawnMode::Chain;
+                missedBeatsCount_ = 0;  // Chainモード開始時にカウンターをリセット
+            } else if (bombSpawnMode_ == BombSpawnMode::Chain) {
+                bombSpawnMode_ = BombSpawnMode::None;
+                for (auto& bomb : activeBombs_) {
+                    bomb.isChainBomb = false;
+                }
+                missedBeatsCount_ = 0;  // Chainモード終了時にカウンターをリセット
+            }
+        }
+
+        // Chain モードで移動入力があった場合、移動完了後の爆弾生成を予約
+        if (bombSpawnMode_ == BombSpawnMode::Chain) {
+            bool moveInputDetected = false;
+            bool withinBPMRange = (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_);
+            
+            if (inputCommand_->Evaluate("MoveUp").Triggered()) {
+                moveInputDetected = true;
+                if (withinBPMRange && moveInputTimer_.IsFinished()) {
+                    pendingBombSpawn_ = true;
+                    inputReceivedInThisBeat_ = true;
+                }
+                moveInputTimer_.Start(moveInputInterval_, false);
+            } else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
+                moveInputDetected = true;
+                if (withinBPMRange && moveInputTimer_.IsFinished()) {
+                    pendingBombSpawn_ = true;
+                    inputReceivedInThisBeat_ = true;
+                }
+                moveInputTimer_.Start(moveInputInterval_, false);
+            } else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
+                moveInputDetected = true;
+                if (withinBPMRange && moveInputTimer_.IsFinished()) {
+                    pendingBombSpawn_ = true;
+                    inputReceivedInThisBeat_ = true;
+                }
+                moveInputTimer_.Start(moveInputInterval_, false);
+            } else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
+                moveInputDetected = true;
+                if (withinBPMRange && moveInputTimer_.IsFinished()) {
+                    pendingBombSpawn_ = true;
+                    inputReceivedInThisBeat_ = true;
+                }
+                moveInputTimer_.Start(moveInputInterval_, false);
+            }
+
+            // 移動入力があったがBPM許容範囲外の場合、Chainモードを解除
+            if (moveInputDetected && !withinBPMRange) {
+                bombSpawnMode_ = BombSpawnMode::None;
+                pendingBombSpawn_ = false;
+                missedBeatsCount_ = 0;
+                for (auto& bomb : activeBombs_) {
+                    bomb.isChainBomb = false;
+                }
+            }
+
+            // BPM許容範囲を抜けたことを検出（拍の境界を通過）
+            if (wasInBPMRange_ && !withinBPMRange) {
+                if (!inputReceivedInThisBeat_) {
+                    // 拍を見逃した
+                    missedBeatsCount_++;
+                    
+                    // 許容回数を超えたらChainモードを解除
+                    if (missedBeatsCount_ > maxMissedBeats_) {
+                        bombSpawnMode_ = BombSpawnMode::None;
+                        pendingBombSpawn_ = false;
+                        missedBeatsCount_ = 0;
+                        for (auto& bomb : activeBombs_) {
+                            bomb.isChainBomb = false;
+                        }
+                    }
+                } else {
+                    // 入力があったので見逃しカウントをリセット
+                    missedBeatsCount_ = 0;
+                }
+                
+                // 次の拍のために入力フラグをリセット
+                inputReceivedInThisBeat_ = false;
+            }
+
+            // 現在のBPM範囲状態を記録
+            wasInBPMRange_ = withinBPMRange;
+        }
+    }
+
+    // プレイヤーの移動が完了したら爆弾を生成
+    if (pendingBombSpawn_) {
+        auto* playerMove = player_->GetComponent3D<PlayerMove>();
+        if (playerMove && !playerMove->IsMoving()) {
             SpawnBomb();
-            //if (useToleranceRange_) {
-            //    // BPM進行度が許容範囲内かチェック
-            //    if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
-            //        SpawnBomb();
-            //    }
-            //} else {
-            //    SpawnBomb();
-            //}
+            pendingBombSpawn_ = false;
         }
     }
 
     prevBpmProgress_ = bpmProgress_;
+
+	moveInputTimer_.Update();
 }
 
 void BombManager::SpawnBomb() {
@@ -238,6 +335,7 @@ void BombManager::SpawnBomb() {
     info.beatAccumulator = 0.0f;
     info.position = bombPos;
     info.shouldDetonate = false;
+    info.isChainBomb = true;  // Chainモード中かを記録
     activeBombs_.push_back(info);
 
     // シーンに追加
@@ -379,9 +477,48 @@ void BombManager::ClearAllBombs() {
     activeBombs_.clear();
 }
 
+void BombManager::DetonateAllBombs() {
+    auto* ctx = GetOwnerContext();
+    if (!ctx) return;
+
+    // すべての爆弾を起爆
+    for (auto& bomb : activeBombs_) {
+        // 爆発音を再生
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/bombFire.mp3");
+        if (handle != AudioManager::kInvalidSoundHandle) {
+            AudioManager::Play(handle, fireVolume_);
+        }
+
+        // 爆発を生成
+        if (explosionManager_) {
+            explosionManager_->SpawnExplosion(bomb.position, bomb.explosionSize);
+        }
+
+        // オブジェクトを削除
+        if (bomb.object) {
+            ctx->RemoveObject3D(bomb.object);
+        }
+    }
+
+    // 爆弾リストをクリア
+    activeBombs_.clear();
+}
+
 void BombManager::IncrementAllBombExplosionSize(float increment) {
     for (auto& bomb : activeBombs_) {
-        bomb.explosionSize += increment;
+        // Chainモード中に生成された爆弾のみ爆発サイズを増加
+        if (bomb.isChainBomb) {
+            bomb.explosionSize += increment;
+        }
+    }
+}
+
+void BombManager::IncrementChainBombExplosionSize(float increment) {
+    for (auto& bomb : activeBombs_) {
+        // Chainモード中に生成された爆弾のみ爆発サイズを増加
+        if (bomb.isChainBomb) {
+            bomb.explosionSize += increment;
+        }
     }
 }
 
@@ -397,6 +534,10 @@ void BombManager::ShowImGui() {
     ImGui::DragFloat("BPM Tolerance", &bpmToleranceRange_, 0.01f, 0.0f, 0.5f);
     ImGui::Text("Current BPM Progress: %.2f", bpmProgress_);
     ImGui::Text("Map Size: %d x %d", mapWidth_, mapHeight_);
+    ImGui::Separator();
+    ImGui::Text("Chain Mode: %s", bombSpawnMode_ == BombSpawnMode::Chain ? "Active" : "Inactive");
+    ImGui::DragInt("Max Missed Beats", &maxMissedBeats_, 1, 0, 10);
+    ImGui::Text("Missed Beats: %d / %d", missedBeatsCount_, maxMissedBeats_);
     
     if (ImGui::TreeNode("Active Bombs Details")) {
         for (size_t i = 0; i < activeBombs_.size(); ++i) {

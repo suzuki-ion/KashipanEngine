@@ -24,6 +24,8 @@ void ExplosionManager::Update() {
 
     const float dt = GetDeltaTime();
 
+	size_ = std::clamp(size_, 1.0f, 9.0f);
+
     // 爆発とボムの衝突をチェック
     CheckExplosionBombCollisions();
 

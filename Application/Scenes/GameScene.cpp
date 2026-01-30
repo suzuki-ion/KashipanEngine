@@ -190,6 +190,41 @@ void GameScene::Initialize() {
         }
     }
 
+    // walls
+    {
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+
+                auto modelData = ModelManager::GetModelDataFromFileName("wall.obj");
+                auto obj = std::make_unique<Model>(modelData);
+
+                obj->SetName("wall" ":x" + std::to_string(x) + ":z" + std::to_string(z));
+
+                obj->RegisterComponent<BPMScaling>(Vector3(1.0f), Vector3(1.0f), EaseType::EaseOutExpo);
+
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
+                    tr->SetScale(Vector3(1.0f));
+                }
+
+                if (auto* mt = obj->GetComponent3D<Material3D>()) {
+                    mt->SetColor(Vector4{ 0.5f,0.5f,0.5f,0.0f });
+                }
+
+                if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+                if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+
+                // ここで "AddObject3D する前" にポインタ確保
+                walls_[z][x] = obj.get();
+
+                AddObject3D(std::move(obj));
+
+                wallIsActive_[z][x] = false;
+            }
+        }
+    }
+
 	// stage の追加
     {
         auto modelData = ModelManager::GetModelDataFromFileName("stage.obj");
@@ -716,6 +751,23 @@ void GameScene::OnUpdate() {
     }
 
     {
+        // Wallの表示
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+                if (walls_[z][x]) {
+                    if (auto* mt = walls_[z][x]->GetComponent3D<Material3D>()) {
+                        if (wallIsActive_[z][x]) {
+                            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+                        } else {
+                            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    {
         // 爆発範囲マーカーを更新
         UpdateBombExplosionMarkers();        
     }
@@ -1212,8 +1264,8 @@ void GameScene::DrawObjectStateImGui() {
 
     // 爆弾関連
     if (ImGui::CollapsingHeader("爆弾関連")) {
-        ImGui::DragInt("最大設置数", &bombMaxNumber_, 1.0f, 1, 10);
-        ImGui::DragInt("寿命(拍数)", &bombLifetimeBeats_, 1.0f, 1, 100);
+        ImGui::DragInt("最大設置数", &bombMaxNumber_, 1.0f, 1, 1000);
+        ImGui::DragInt("寿命(拍数)", &bombLifetimeBeats_, 1.0f, 1, 1000);
         ImGui::DragFloat("通常時拡小スケール", &bombNormalMinScale_, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat("通常時拡大スケール", &bombNormalMaxScale_, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat("起爆前拡小スケール", &bombSpeedMinScale_, 0.01f, 0.0f, 10.0f);
@@ -1333,8 +1385,9 @@ void GameScene::DrawParticleStateImGui() {
 
 void GameScene::InGameStart() {
     if (!isGameStarted_) {
-        isGameStarted_ = true;
-        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
+        isGameStarted_ = true; 
+        //auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
         if (handle == AudioManager::kInvalidSoundHandle) {
             // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
             return;

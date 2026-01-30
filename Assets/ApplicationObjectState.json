@@ -98,17 +98,17 @@
   {
     "name": "playerMoveDuration",
     "type": 2,
-    "value": 0.150000
+    "value": 0.250000
   },
   {
     "name": "bombMaxNumber",
     "type": 1,
-    "value": 3
+    "value": 1000
   },
   {
     "name": "bombLifetimeBeats",
     "type": 1,
-    "value": 4
+    "value": 1000
   },
   {
     "name": "bombNormalMinScale",

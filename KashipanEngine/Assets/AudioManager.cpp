@@ -75,7 +75,9 @@ std::vector<size_t> sFreePlayIndices;
 std::unordered_map<PlayHandle, size_t> sPlayHandleToIndex;
 std::unordered_set<PlayHandle> sUsedPlayHandles;
 
-static std::mt19937& Rng() {
+std::unordered_set<AudioManager::SoundBeat*> sRegisteredSoundBeats;
+
+std::mt19937& Rng() {
     static thread_local std::mt19937 rng{ std::random_device{}() };
     return rng;
 }
@@ -343,6 +345,107 @@ uint32_t EstimateDurationMs(const WAVEFORMATEX& wfex, const std::vector<BYTE>& b
 
 } // namespace
 
+bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
+    outSeconds = 0.0;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+
+    const PlayEntry& p = *sPlays[idx];
+    if (!p.voice) return false;
+    if (p.sound == kInvalidSoundHandle) return false;
+
+    XAUDIO2_VOICE_STATE state{};
+    p.voice->GetState(&state);
+
+    const auto it = sSounds.find(p.sound);
+    if (it == sSounds.end()) return false;
+    const WAVEFORMATEX& wf = it->second.wfex;
+    const uint32_t samplesPerSec = static_cast<uint32_t>(wf.nSamplesPerSec);
+    if (samplesPerSec == 0) return false;
+
+    const uint64_t samplesPlayed = state.SamplesPlayed; // フレーム（サンプルフレーム）
+    outSeconds = static_cast<double>(samplesPlayed) / static_cast<double>(samplesPerSec);
+    return true;
+}
+
+AudioManager::SoundBeat::SoundBeat() {
+    playHandle_ = kInvalidPlayHandle;
+    bpm_ = 0.0f;
+    startOffsetSec_ = 0.0;
+    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
+    sRegisteredSoundBeats.insert(this);
+}
+
+AudioManager::SoundBeat::SoundBeat(PlayHandle play, float bpm, double startOffsetSec) {
+    SetBeat(play, bpm, static_cast<float>(startOffsetSec));
+    sRegisteredSoundBeats.insert(this);
+}
+
+AudioManager::SoundBeat::~SoundBeat() {
+    sRegisteredSoundBeats.erase(this);
+}
+
+void AudioManager::SoundBeat::SetBeat(PlayHandle play, float bpm, double startOffsetSec) {
+    playHandle_ = play;
+    bpm_ = (bpm > 0.0f) ? bpm : 0.0f;
+    startOffsetSec_ = startOffsetSec;
+    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
+}
+
+void AudioManager::SoundBeat::SetOnBeat(std::function<void(PlayHandle, uint64_t, double)> cb) {
+    onBeatCallback_ = std::move(cb);
+}
+
+void AudioManager::SoundBeat::Update(Passkey<AudioManager>) {
+    isOnBeatTriggered_ = false;
+    if (!IsActive()) return;
+    double posSec = 0.0;
+    if (!GetPlayPositionSeconds(playHandle_, posSec)) return;
+
+    // まだオフセットに到達していない
+    if (posSec < startOffsetSec_) return;
+
+    const double interval = 60.0 / static_cast<double>(bpm_);
+    if (interval <= 0.0) return;
+
+    const uint64_t beatIndex = static_cast<uint64_t>(std::floor((posSec - startOffsetSec_) / interval));
+
+    if (currentBeatIndex_ == std::numeric_limits<uint64_t>::max()) {
+        // 最初の検出: 現在の拍に対してコールバックを呼ぶ
+        currentBeatIndex_ = beatIndex;
+        if (onBeatCallback_) onBeatCallback_(playHandle_, currentBeatIndex_, posSec);
+        isOnBeatTriggered_ = true;
+        return;
+    }
+
+    if (beatIndex != currentBeatIndex_) {
+        currentBeatIndex_ = beatIndex;
+        if (onBeatCallback_) onBeatCallback_(playHandle_, currentBeatIndex_, posSec);
+        isOnBeatTriggered_ = true;
+    }
+}
+
+float AudioManager::SoundBeat::GetBeatProgress() const {
+    if (!IsActive()) return 0.0f;
+    double posSec = 0.0;
+    if (!GetPlayPositionSeconds(playHandle_, posSec)) return 0.0f;
+    if (posSec < startOffsetSec_) return 0.0f;
+
+    const double interval = 60.0 / static_cast<double>(bpm_);
+    if (interval <= 0.0) return 0.0f;
+
+    const double t = std::fmod((posSec - startOffsetSec_), interval);
+    const double prog = t / interval;
+    if (prog < 0.0) return 0.0f;
+    if (prog > 1.0) return 1.0f;
+    return static_cast<float>(prog);
+}
+
+void AudioManager::SoundBeat::Reset() {
+    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
+}
+
 AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
@@ -541,6 +644,10 @@ void AudioManager::Update() {
 
     for (const auto h : toStop) {
         Stop(h);
+    }
+
+    for (auto* sb : sRegisteredSoundBeats) {
+        sb->Update({});
     }
 }
 

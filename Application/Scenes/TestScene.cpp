@@ -103,7 +103,8 @@ void TestScene::Initialize() {
 
     // BPMシステムの追加
     {
-        auto comp = std::make_unique<BPMSystem>(static_cast<float>(bpm_)); // BPM で初期化
+        //auto comp = std::make_unique<BPMSystem>(static_cast<float>(bpm_)); // BPM で初期化
+        auto comp = std::make_unique<BPMSystem>();
         bpmSystem_ = comp.get();
         AddSceneComponent(std::move(comp));
     }

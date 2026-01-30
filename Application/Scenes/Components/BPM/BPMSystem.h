@@ -6,50 +6,59 @@ namespace KashipanEngine {
 
     class BPMSystem final : public ISceneComponent {
     public:
-        explicit BPMSystem(float bpm = 120.0f)
+        explicit BPMSystem(AudioManager::PlayHandle bgmPlayHandle = AudioManager::kInvalidPlayHandle, float bpm = 120.0f, double beatStartOffset = 0.0)
             : ISceneComponent("BPMSystem", 1) {
-            SetBPM(bpm);
+            bgmPlayHandle_ = bgmPlayHandle;
+            bpm_ = bpm;
+            beatStartOffset_ = beatStartOffset;
+            soundBeat_.SetBeat(bgmPlayHandle_, bpm_, beatStartOffset_);
         }
 
         ~BPMSystem() override = default;
 
         void Initialize() override {
-            ISceneComponent::Initialize();
-            currentBeat_ = 0;
+            soundBeat_.SetOnBeat([this](auto, auto, auto) {
+                OnBeat();
+            });
         }
 
         void Update() override {
-            if (beatDuration_ <= 0.0f) return; // BPM未設定/無効なら無視
-
-            bpmTimer_.Update();
-
-            // タイマーが完了した瞬間のみ拍を進める
-            if (bpmTimer_.IsFinished()) {
-				leftRightToggle_ = !leftRightToggle_;
-                ++currentBeat_;
-                OnBeat();
+            if (soundBeat_.IsOnBeatTriggered()) {
+                leftRightToggle_ = !leftRightToggle_;
             }
         }
 
 		/// @brief 測定開始
-        void MeasurementStart() {
-            bpmTimer_.Start(beatDuration_, true);
+        void MeasurementStart(AudioManager::PlayHandle bgmPlayHandle = AudioManager::kInvalidPlayHandle, float bpm = 120.0f, double beatStartOffset = 0.0) {
+            bgmPlayHandle_ = bgmPlayHandle == AudioManager::kInvalidPlayHandle ? bgmPlayHandle_ : bgmPlayHandle;
+            bpm_ = bpm_ <= 0.0f ? bpm_ : bpm;
+            beatStartOffset_ = beatStartOffset < 0.0 ? beatStartOffset_ : beatStartOffset;
+            soundBeat_.SetBeat(bgmPlayHandle_, bpm_, beatStartOffset_);
         }
 
 		/// @brief システムリセット
         void ResetSystem() {
-			currentBeat_ = 0;
-			bpmTimer_.Reset();
-            leftRightToggle_ = false;
+            soundBeat_.Reset();
 		}
 
         /// @brief 現在の拍内での進行度を取得 (0.0 ~ 1.0)
         float GetBeatProgress() const {
-			return bpmTimer_.GetProgress();
+            return soundBeat_.GetBeatProgress();
         }
 
         /// @brief 現在の拍番号を取得
-        int GetCurrentBeat() const { return currentBeat_; }
+        int GetCurrentBeat() const { return static_cast<int>(soundBeat_.GetCurrentBeat()); }
+
+        /// @brief ビート情報の設定
+        /// @param bgmPlayHandle BGMの再生ハンドル
+        /// @param bpm BPM値
+        /// @param beatStartOffset ビート開始オフセット（秒）
+        void SetBeat(AudioManager::PlayHandle bgmPlayHandle, float bpm, double beatStartOffset = 0.0) {
+            bgmPlayHandle_ = bgmPlayHandle;
+            bpm_ = bpm;
+            beatStartOffset_ = beatStartOffset;
+            soundBeat_.SetBeat(bgmPlayHandle_, bpm_, beatStartOffset_);
+        }
 
         /// @brief BPMを設定
         void SetBPM(float bpm) {
@@ -57,21 +66,19 @@ namespace KashipanEngine {
                 // 無効なBPMは無視（もしくはデフォルトに戻す）
                 return;
             }
-            
             bpm_ = bpm;
-            beatDuration_ = 60.0f / bpm_;
-			bpmTimer_.SetDuration(beatDuration_);
+            soundBeat_.SetBPM(bpm_);
         }
 
         /// @brief BPMを取得
         float GetBPM() const { return bpm_; }
 
 		/// @brief 1拍の時間を取得（秒）
-		float GetBeatDuration() const { return beatDuration_; }
+        float GetBeatDuration() const { return 60.0f / bpm_; }
 
 		/// @brief 現在の拍が発生したかどうかを取得
         bool GetOnBeat() const {
-            return bpmTimer_.IsFinished();
+            return soundBeat_.IsOnBeatTriggered();
 		}
 
 		/// @brief 左右トグル状態を取得 true: 左, false: 右
@@ -90,10 +97,10 @@ namespace KashipanEngine {
             AudioManager::Play(handle, 0.2f);
         }
 
-		GameTimer bpmTimer_;
+        AudioManager::SoundBeat soundBeat_;
+        AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
         float bpm_ = 120.0f;
-        float beatDuration_ = 0.0f;
-        int currentBeat_ = 0;
+        double beatStartOffset_ = 0.0;
 
 		bool leftRightToggle_ = false;
     };

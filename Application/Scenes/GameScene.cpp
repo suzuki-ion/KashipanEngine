@@ -106,7 +106,7 @@ void GameScene::Initialize() {
 
     // BPMシステムの追加
     {
-        auto comp = std::make_unique<BPMSystem>(static_cast<float>(bpm_)); // BPM で初期化
+        auto comp = std::make_unique<BPMSystem>();
         bpmSystem_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
@@ -1340,9 +1340,9 @@ void GameScene::InGameStart() {
             return;
         }
         bgmPlayHandle_ = AudioManager::Play(handle, 0.2f, 0.0f, true);
-
+        
         if (bpmSystem_) {
-            bpmSystem_->MeasurementStart();
+            bpmSystem_->MeasurementStart(bgmPlayHandle_, static_cast<float>(bpm_));
         }
 
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {

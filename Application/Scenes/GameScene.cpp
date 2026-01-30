@@ -1386,8 +1386,8 @@ void GameScene::DrawParticleStateImGui() {
 void GameScene::InGameStart() {
     if (!isGameStarted_) {
         isGameStarted_ = true; 
-        //auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
-        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
+        //auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
         if (handle == AudioManager::kInvalidSoundHandle) {
             // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
             return;

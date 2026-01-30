@@ -94,6 +94,9 @@ public:
 	/// @brief すべての爆弾を消去する
 	void ClearAllBombs();
 
+	/// @brief すべての爆弾を起爆する
+	void DetonateAllBombs();
+
 	/// @brief プレイヤーの向きに基づいて爆弾を設置するかどうかを設定
 	void SetUsePlayerDirection(bool useDirection) { usePlayerDirection_ = useDirection; }
 
@@ -101,10 +104,17 @@ public:
 	/// @param increment 増加量（デフォルト: 1.0f）
 	void IncrementAllBombExplosionSize(float increment = 1.0f);
 
+	/// @brief Chainモード中の爆弾のみ爆発サイズを増加させる
+	/// @param increment 増加量（デフォルト: 1.0f）
+	void IncrementChainBombExplosionSize(float increment = 1.0f);
+
 	/// @brief 爆弾のスケール範囲を設定
     void SetNormalScaleRange(const Vector3& minScale, const Vector3& maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
     void SetSpeedScaleRange(const Vector3& minScale, const Vector3& maxScale) { minSpeedScale_ = minScale; maxSpeedScale_ = maxScale; }
     void SetDetonationScale(const Vector3& scale) { detonationScale_ = scale; }
+
+    /// @brief Chainモードで拍を見逃せる最大回数を設定
+    void SetMaxMissedBeats(int maxMissed) { maxMissedBeats_ = maxMissed; }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -131,7 +141,15 @@ private:
         Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆弾の位置（重複チェック用）
         bool shouldDetonate = false;          // 起爆フラグ
 		float explosionSize =  1.0f;          // 爆発時のサイズ中心から±マス分
+        bool isChainBomb = false;             // Chainモード中に生成された爆弾か
     };
+
+    enum class BombSpawnMode {
+        None,
+        Chain,
+	};
+
+	BombSpawnMode bombSpawnMode_ = BombSpawnMode::None;
 
     std::vector<BombInfo> activeBombs_;
 
@@ -165,8 +183,16 @@ private:
 	float countVolume_ = 0.1f;
 	float fireVolume_ = 0.1f;
 
-	bool isStarted_ = false;
-	bool usePlayerDirection_ = false; // プレイヤーの向きに基づいて爆弾を設置するかどうか
+    GameTimer moveInputTimer_;
+    float moveInputInterval_ = 0.3f;
+
+    bool isStarted_ = false;
+    bool usePlayerDirection_ = false; // プレイヤーの向きに基づいて爆弾を設置するかどうか
+    bool pendingBombSpawn_ = false;   // 移動完了後に爆弾を生成する予約フラグ
+    bool wasInBPMRange_ = false;      // 前フレームでBPM許容範囲内だったか
+    bool inputReceivedInThisBeat_ = false; // 現在の拍で入力があったか
+    int missedBeatsCount_ = 0;        // 連続して見逃した拍の数
+    int maxMissedBeats_ = 1;          // Chainモードで許容される最大見逃し回数
 };
 
 } // namespace KashipanEngine

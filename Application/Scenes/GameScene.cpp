@@ -1264,8 +1264,8 @@ void GameScene::DrawObjectStateImGui() {
 
     // 爆弾関連
     if (ImGui::CollapsingHeader("爆弾関連")) {
-        ImGui::DragInt("最大設置数", &bombMaxNumber_, 1.0f, 1, 10);
-        ImGui::DragInt("寿命(拍数)", &bombLifetimeBeats_, 1.0f, 1, 100);
+        ImGui::DragInt("最大設置数", &bombMaxNumber_, 1.0f, 1, 1000);
+        ImGui::DragInt("寿命(拍数)", &bombLifetimeBeats_, 1.0f, 1, 1000);
         ImGui::DragFloat("通常時拡小スケール", &bombNormalMinScale_, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat("通常時拡大スケール", &bombNormalMaxScale_, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat("起爆前拡小スケール", &bombSpeedMinScale_, 0.01f, 0.0f, 10.0f);

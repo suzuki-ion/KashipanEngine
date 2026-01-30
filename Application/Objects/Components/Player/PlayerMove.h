@@ -145,10 +145,10 @@ namespace KashipanEngine {
                     playerDirection_ = PlayerDirection::Up;
                     triggered_ = true;
                     
-                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
-                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            bombManager_->IncrementChainBombExplosionSize(1.0f);
                             shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }
@@ -162,10 +162,10 @@ namespace KashipanEngine {
                     playerDirection_ = PlayerDirection::Down;
                     triggered_ = true;
 
-                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
-                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            bombManager_->IncrementChainBombExplosionSize(1.0f);
                             shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }
@@ -179,10 +179,10 @@ namespace KashipanEngine {
                     playerDirection_ = PlayerDirection::Left;
                     triggered_ = true;
 
-                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
-                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            bombManager_->IncrementChainBombExplosionSize(1.0f);
                             shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }
@@ -196,10 +196,10 @@ namespace KashipanEngine {
                     playerDirection_ = PlayerDirection::Right;
                     triggered_ = true;
 
-                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
-                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            bombManager_->IncrementChainBombExplosionSize(1.0f);
                             shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }

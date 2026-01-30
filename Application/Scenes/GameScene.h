@@ -121,8 +121,8 @@ private:
 
     // 爆弾関連
     BombManager *bombManager_ = nullptr;
-    int bombMaxNumber_ = 3;     // プレイヤーが設置可能な爆弾の最大数
-    int bombLifetimeBeats_ = 4; // 設置してからの爆弾の寿命（拍数）
+    int bombMaxNumber_ = 1000;     // プレイヤーが設置可能な爆弾の最大数
+    int bombLifetimeBeats_ = 1000; // 設置してからの爆弾の寿命（拍数）
 
     // 爆発関連
     ExplosionManager *explosionManager_ = nullptr;

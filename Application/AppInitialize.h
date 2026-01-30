@@ -29,7 +29,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<TestScene>("TestScene");
 #endif
 
-        context.sceneManager->ChangeScene("GameScene");
+        context.sceneManager->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {

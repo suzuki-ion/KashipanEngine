@@ -33,7 +33,6 @@ public:
     void Finalize() override {}
 
     void Update() override {
-        isAnimating_ = false;
         if (!inputCommand_) return;
 
 #if defined(DEBUG_BUILD)
@@ -42,6 +41,7 @@ public:
             if (playerEnter_) playerEnter_->Reset();
             if (startTextUpdate_) startTextUpdate_->Reset();
             if (cameraMovement_) cameraMovement_->Reset();
+            isAnimating_ = false;
             return;
         }
 #endif

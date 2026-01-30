@@ -86,7 +86,7 @@ private:
     bool isAnimating_ = false;
     bool isFinished_ = false;
     bool isFinishedTriggered_ = false;
-    const float durationTime_ = 10.0f;
+    const float durationTime_ = 7.0f;
     const float easingStartTime_ = 0.0f;
     const float easingEndTime_ = 6.0f;
     float elapsedTime_ = 0.0f;

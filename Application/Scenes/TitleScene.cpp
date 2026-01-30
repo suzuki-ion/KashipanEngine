@@ -153,12 +153,15 @@ void TitleScene::OnUpdate() {
         }
     }
 
-    if (titleSceneAnimator_ && titleSceneAnimator_->IsAnimationFinishedTriggered()) {
-        if (GetNextSceneName().empty()) {
-            SetNextSceneName("GameScene");
-        }
-        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
-            out->Play();
+    if (titleSceneAnimator_) {
+        if (titleSceneAnimator_->IsAnimationFinishedTriggered() ||
+            titleSceneAnimator_->IsAnimating() && GetInputCommand()->Evaluate("Submit").Triggered()) {
+            if (GetNextSceneName().empty()) {
+                SetNextSceneName("GameScene");
+            }
+            if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                out->Play();
+            }
         }
     }
 

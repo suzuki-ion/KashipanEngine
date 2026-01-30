@@ -124,33 +124,7 @@ void GameScene::Initialize() {
         cameraMenuTargetRot_ = Vector3(0.0f, 0.0f, 0.0f);
     }
 
-    {
-		auto aBottom = ModelManager::GetModelDataFromFileName("aBomb.obj");
-        auto obj = std::make_unique<Model>(aBottom);
-        obj->SetName("A_Bomb");
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(-13.33f, -0.21f, 30.12f));
-            tr->SetParentTransform(camera3D->GetComponent3D<Transform3D>());
-            tr->SetScale(Vector3(1.0f));
-        }
-        if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        aBomb_ = obj.get();
-		AddObject3D(std::move(obj));
-
-        auto haku = ModelManager::GetModelDataFromFileName("haku.obj");
-        auto obj2 = std::make_unique<Model>(haku);
-        obj2->SetName("haku");
-        if (auto* tr = obj2->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(-10.83f, 0.88f, 27.3f));
-            tr->SetParentTransform(camera3D->GetComponent3D<Transform3D>());
-            tr->SetScale(Vector3(0.5f));
-        }
-        if (screenBuffer3D)  obj2->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        haku_ = obj2.get();
-        AddObject3D(std::move(obj2));
-    }
-
-    // map (Box scaled)
+    // mapBlock
     {
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
@@ -179,6 +153,39 @@ void GameScene::Initialize() {
                 maps_[z][x] = obj.get();
 
                 AddObject3D(std::move(obj));
+            }
+        }
+    }
+
+    // mapMarkers
+    {
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+
+                auto modelData = ModelManager::GetModelDataFromFileName("warning.obj");
+                auto obj = std::make_unique<Model>(modelData);
+
+                obj->SetName("MapMarker" ":x" + std::to_string(x) + ":z" + std::to_string(z));
+
+                obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_, EaseType::EaseOutExpo);
+
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
+                    tr->SetScale(Vector3(mapScaleMax_));
+                }
+
+                if (auto* mt = obj->GetComponent3D<Material3D>()) {
+                    mt->SetColor(Vector4{ 1.0f,0.0f,0.0f,0.0f });
+                }
+
+                if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+
+                // ここで "AddObject3D する前" にポインタ確保
+                mapMarkers_[z][x] = obj.get();
+
+                AddObject3D(std::move(obj));
+
+				mapMarkerIsActive_[z][x] = false;
             }
         }
     }
@@ -284,7 +291,7 @@ void GameScene::Initialize() {
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-        obj->RegisterComponent<Health>(3, 1.0f);
+        obj->RegisterComponent<Health>(10, 1.0f);
 
         // 衝突判定を追加（修正版）
         if (colliderComp && colliderComp->GetCollider()) {
@@ -683,6 +690,23 @@ void GameScene::OnUpdate() {
     }
 
     {
+        // 全マップをアニメーション
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+                if (mapMarkers_[z][x]) {
+                    if (auto* mt = mapMarkers_[z][x]->GetComponent3D<Material3D>()) {
+                        if (mapMarkerIsActive_[z][x]) {
+                            mt->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+                        } else {
+                            mt->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    {
         auto r = GetInputCommand()->Evaluate("DebugDestroyWindow");
         if (r.Triggered()) {
             if (auto *window = Window::GetWindow("2301_CLUBOM")) {
@@ -1071,6 +1095,7 @@ void GameScene::SetObjectValue() {
         if (auto *playerMove = player_->GetComponent3D<PlayerMove>()) {
             playerMove->SetBPMToleranceRange(playerBpmToleranceRange_);
             playerMove->SetMoveDuration(playerMoveDuration_);
+            playerMove->SetIsMoveBombStop(isMoveBombStop_);
         }
 
         // プレイヤーのダメージ時カメラシェイク更新
@@ -1088,6 +1113,7 @@ void GameScene::SetObjectValue() {
         bombManager_->SetNormalScaleRange(Vector3(bombNormalMinScale_), Vector3(bombNormalMaxScale_));
         bombManager_->SetSpeedScaleRange(Vector3(bombSpeedMinScale_), Vector3(bombSpeedMaxScale_));
         bombManager_->SetDetonationScale(Vector3(bombDetonationScale_));
+        bombManager_->SetUsePlayerDirection(usePlayerDirection_);
     }
 
     // 爆発関連の設定更新
@@ -1166,6 +1192,8 @@ void GameScene::DrawObjectStateImGui() {
         ImGui::DragFloat("BPM許容範囲", &playerBpmToleranceRange_, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("移動時間", &playerMoveDuration_, 0.01f, 0.0f, 1.0f);
         ImGui::Text("マップ座標: X=%d, Z=%d", playerMapX_, playerMapZ_);
+		ImGui::Checkbox("爆弾で移動が停止するか", &isMoveBombStop_);
+		ImGui::Checkbox("プレイヤーの向いている方向に爆弾を置くか", &usePlayerDirection_);
     }
 
     // 爆弾関連
@@ -1304,7 +1332,7 @@ void GameScene::InGameStart() {
         }
 
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {
-            move->SetisStarted(true);
+            move->SetIsStarted(true);
         }
 
         if (bombManager_) {
@@ -1330,7 +1358,7 @@ void GameScene::InGameQuit() {
         }
 
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {
-            move->SetisStarted(false);
+            move->SetIsStarted(false);
         }
     }
 

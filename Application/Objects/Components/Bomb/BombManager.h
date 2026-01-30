@@ -84,6 +84,9 @@ public:
 	/// @brief すべての爆弾を消去する
 	void ClearAllBombs();
 
+	/// @brief プレイヤーの向きに基づいて爆弾を設置するかどうかを設定
+	void SetUsePlayerDirection(bool useDirection) { usePlayerDirection_ = useDirection; }
+
 	/// @brief 爆弾のスケール範囲を設定
     void SetNormalScaleRange(const Vector3& minScale, const Vector3& maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
     void SetSpeedScaleRange(const Vector3& minScale, const Vector3& maxScale) { minSpeedScale_ = minScale; maxSpeedScale_ = maxScale; }
@@ -113,6 +116,7 @@ private:
         float beatAccumulator = 0.0f;         // ビートの蓄積（0.0～1.0で1ビート）
         Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆弾の位置（重複チェック用）
         bool shouldDetonate = false;          // 起爆フラグ
+		float explosionSize =  1.0f;          // 爆発時のサイズ
     };
 
     std::vector<BombInfo> activeBombs_;
@@ -148,6 +152,7 @@ private:
 	float fireVolume_ = 0.1f;
 
 	bool isStarted_ = false;
+	bool usePlayerDirection_ = false; // プレイヤーの向きに基づいて爆弾を設置するかどうか
 };
 
 } // namespace KashipanEngine

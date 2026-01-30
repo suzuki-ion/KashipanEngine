@@ -108,7 +108,7 @@ void ExplosionManager::Update() {
     );
 }
 
-void ExplosionManager::SpawnExplosion(const Vector3& position) {
+void ExplosionManager::SpawnExplosion(const Vector3& position, const float size) {
     auto* ctx = GetOwnerContext();
     if (!ctx || !screenBuffer_) {
         return;
@@ -118,6 +118,8 @@ void ExplosionManager::SpawnExplosion(const Vector3& position) {
     if (cameraController_) {
         cameraController_->Shake(shakePower_, shakeTime_);
     }
+
+	size_ = size;
 
     // 爆発オブジェクトを作成（BombManagerと同じパターン）
     auto modelData = ModelManager::GetModelDataFromFileName("Explosion.obj");

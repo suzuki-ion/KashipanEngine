@@ -81,7 +81,7 @@ void BombManager::Update() {
 
                     // 爆発を生成
                     if (explosionManager_) {
-                        explosionManager_->SpawnExplosion(bomb.position);
+                        explosionManager_->SpawnExplosion(bomb.position, bomb.explosionSize);
                     }
 
                     // オブジェクトを削除
@@ -108,14 +108,15 @@ void BombManager::Update() {
         }
 
         if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_) {
-            if (useToleranceRange_) {
-                // BPM進行度が許容範囲内かチェック
-                if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
-                    SpawnBomb();
-                }
-            } else {
-                SpawnBomb();
-            }
+            SpawnBomb();
+            //if (useToleranceRange_) {
+            //    // BPM進行度が許容範囲内かチェック
+            //    if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+            //        SpawnBomb();
+            //    }
+            //} else {
+            //    SpawnBomb();
+            //}
         }
     }
 
@@ -252,17 +253,32 @@ void BombManager::SpawnBomb() {
 }
 
 Vector3 BombManager::GetDirectionOffset(PlayerDirection direction) const {
-    switch (direction) {
-    case PlayerDirection::Up:
-        return Vector3(0.0f, 0.0f, 2.0f);
-    case PlayerDirection::Down:
-        return Vector3(0.0f, 0.0f, -2.0f);
-    case PlayerDirection::Left:
-        return Vector3(-2.0f, 0.0f, 0.0f);
-    case PlayerDirection::Right:
-        return Vector3(2.0f, 0.0f, 0.0f);
-    default:
-        return Vector3(0.0f, 0.0f, -1.0f);
+    if (usePlayerDirection_) {
+        switch (direction) {
+        case PlayerDirection::Up:
+            return Vector3(0.0f, 0.0f, 2.0f);
+        case PlayerDirection::Down:
+            return Vector3(0.0f, 0.0f, -2.0f);
+        case PlayerDirection::Left:
+            return Vector3(-2.0f, 0.0f, 0.0f);
+        case PlayerDirection::Right:
+            return Vector3(2.0f, 0.0f, 0.0f);
+        default:
+            return Vector3(0.0f, 0.0f, 0.0f);
+        }
+    } else {
+        switch (direction) {
+        case PlayerDirection::Up:
+            return Vector3(0.0f, 0.0f, 0.0f);
+        case PlayerDirection::Down:
+            return Vector3(0.0f, 0.0f, 0.0f);
+        case PlayerDirection::Left:
+            return Vector3(0.0f, 0.0f, 0.0f);
+        case PlayerDirection::Right:
+            return Vector3(0.0f, 0.0f, 0.0f);
+        default:
+            return Vector3(0.0f, 0.0f, 0.0f);
+        }
     }
 }
 
@@ -325,7 +341,7 @@ void BombManager::DetonateBombsInExplosionRange(const Vector3& explosionCenter, 
         
         // 爆発を生成
         if (explosionManager_) {
-            explosionManager_->SpawnExplosion(activeBombs_[index].position);
+            explosionManager_->SpawnExplosion(activeBombs_[index].position, activeBombs_[index].explosionSize);
         }
         
         // ボムを削除

@@ -56,7 +56,7 @@ public:
 
     /// @brief 指定位置に爆発を生成
     /// @param position 爆発を生成する位置
-    void SpawnExplosion(const Vector3& position);
+    void SpawnExplosion(const Vector3& position, const float size);
 
     /// @brief 爆発のスケールを設定
     void SetExplosionScale(float scale) { explosionScale_ = scale; }
@@ -74,7 +74,7 @@ public:
 	}
 
 	/// @brief 爆発のXZサイズを設定
-	void SetSize(float size) { size_ = size; }
+    void SetSize(float size) { size; }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif

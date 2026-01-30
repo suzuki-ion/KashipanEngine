@@ -1,12 +1,19 @@
 #pragma once
 #include <KashipanEngine.h>
-#include <array>
+#include <vector>
 #include "BackMonitorRenderer.h"
 
 namespace KashipanEngine {
 
 class Model;
 class InputCommand;
+
+enum class MenuModelIndex : size_t {
+    Start = 0,
+    Credit = 1,
+    Title = 2,
+    Quit = 3
+};
 
 class BackMonitorWithMenuScreen : public BackMonitorRenderer {
 public:
@@ -34,26 +41,28 @@ private:
     int confirmedIndex_ = -1;
     bool isSubmitted_ = false;
 
-    // [Start, Credit, Title, Quit]
-    std::array<Model*, 4> models_ = { nullptr, nullptr, nullptr, nullptr };
+    int modelCount_ = 0;
 
-    std::array<float, 4> zStart_ = { 2.5f, 2.5f, 2.5f, 2.5f };
-    std::array<float, 4> zEnd_ = { 2.5f, 2.5f, 2.5f, 2.5f };
-    std::array<float, 4> zElapsed_ = { 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 4> zDuration_ = { 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<bool, 4> zAnimating_ = { false, false, false, false };
+    // [Start, Credit, Title, Quit]
+    std::vector<Model*> models_;
+
+    std::vector<float> zStart_;
+    std::vector<float> zEnd_;
+    std::vector<float> zElapsed_;
+    std::vector<float> zDuration_;
+    std::vector<bool> zAnimating_;
 
     // For rotation (sinusoidal) on selected model
-    std::array<float, 4> rotOffsetX_ = { 0.0f, 0.0f, 0.0f, 0.0f };
+    std::vector<float> rotOffsetX_;
     float rotSineTime_ = 0.0f;
     float rotSineFrequency_ = 1.0f; // cycles per second
 
     // For confirm X-move animation of non-confirmed models
-    std::array<float, 4> xStart_ = { 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 4> xEnd_ = { 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 4> xElapsed_ = { 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<float, 4> xDuration_ = { 0.0f, 0.0f, 0.0f, 0.0f };
-    std::array<bool, 4> xAnimating_ = { false, false, false, false };
+    std::vector<float> xStart_;
+    std::vector<float> xEnd_;
+    std::vector<float> xElapsed_;
+    std::vector<float> xDuration_;
+    std::vector<bool> xAnimating_;
 
     Vector3 confirmStartPos_ = {0.0f, 0.0f, 0.0f};
     Vector3 confirmEndPos_ = {0.0f, 0.0f, 2.0f};

@@ -14,15 +14,35 @@ BackMonitorWithMenuScreen::BackMonitorWithMenuScreen(ScreenBuffer* target, Input
 BackMonitorWithMenuScreen::~BackMonitorWithMenuScreen() {}
 
 void BackMonitorWithMenuScreen::Initialize() {
+    static bool isInitialized = false;
+
     auto target = GetTargetScreenBuffer();
     if (!target) return;
     auto ctx = GetOwnerContext();
     if (!ctx) return;
 
+    // Set model count and resize vectors
+    if (!isInitialized) {
+        modelCount_ = 4;
+        models_.assign(modelCount_, nullptr);
+        zStart_.assign(modelCount_, 2.5f);
+        zEnd_.assign(modelCount_, 2.5f);
+        zElapsed_.assign(modelCount_, 0.0f);
+        zDuration_.assign(modelCount_, 0.0f);
+        zAnimating_.assign(modelCount_, false);
+        rotOffsetX_.assign(modelCount_, 0.0f);
+        xStart_.assign(modelCount_, 0.0f);
+        xEnd_.assign(modelCount_, 0.0f);
+        xElapsed_.assign(modelCount_, 0.0f);
+        xDuration_.assign(modelCount_, 0.0f);
+        xAnimating_.assign(modelCount_, false);
+        isInitialized = true;
+    }
+
     const float centerX = 0.0f;
     const float topY = 2.0f;
     const float bottomY = -2.0f;
-    const float spacing = (topY - bottomY) / 3.0f;
+    const float spacing = (topY - bottomY) / static_cast<float>(modelCount_ - 1);
     const float depth = 2.5f;
     const Vector3 scaleVec{ 1.0f, 1.0f, 1.0f };
 
@@ -33,7 +53,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.MenuStart");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        models_[0] = obj.get();
+        if (models_.size() > static_cast<size_t>(MenuModelIndex::Start))
+            models_[static_cast<size_t>(MenuModelIndex::Start)] = obj.get();
         menuStart_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
@@ -54,7 +75,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.MenuCredit");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        models_[1] = obj.get();
+        if (models_.size() > static_cast<size_t>(MenuModelIndex::Credit))
+            models_[static_cast<size_t>(MenuModelIndex::Credit)] = obj.get();
         menuCredit_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
@@ -75,7 +97,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.MenuTitle");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        models_[2] = obj.get();
+        if (models_.size() > static_cast<size_t>(MenuModelIndex::Title))
+            models_[static_cast<size_t>(MenuModelIndex::Title)] = obj.get();
         menuTitle_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
@@ -96,7 +119,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.MenuQuit");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        models_[3] = obj.get();
+        if (models_.size() > static_cast<size_t>(MenuModelIndex::Quit))
+            models_[static_cast<size_t>(MenuModelIndex::Quit)] = obj.get();
         menuQuit_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
@@ -115,30 +139,34 @@ void BackMonitorWithMenuScreen::Initialize() {
     // サイン波タイマーをリセット
     rotSineTime_ = 0.0f;
 
-    for (int i = 0; i < 4; ++i) {
-        if (auto *mat = models_[i]->GetComponent3D<Material3D>()) {
-            if (i == selectedIndex_) mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
-            else mat->SetColor(Vector4{ 0.5f,0.5f,0.5f,1.0f });
-        }
-        // 初期のX座標を0にする
-        if (auto *tr = models_[i]->GetComponent3D<Transform3D>()) {
-            Vector3 p = tr->GetTranslate();
-            p.x = 0.0f;
-            tr->SetTranslate(p);
+    size_t idx = 0;
+    for (const auto &m : models_) {
+        if (m) {
+            if (auto *mat = m->GetComponent3D<Material3D>()) {
+                if (static_cast<int>(idx) == selectedIndex_) mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+                else mat->SetColor(Vector4{ 0.5f,0.5f,0.5f,1.0f });
+            }
+            // 初期のX座標を0にする
+            if (auto *tr = m->GetComponent3D<Transform3D>()) {
+                Vector3 p = tr->GetTranslate();
+                p.x = 0.0f;
+                tr->SetTranslate(p);
+            }
         }
 
-        xAnimating_[i] = false;
-        xElapsed_[i] = 0.0f;
-        xDuration_[i] = 0.0f;
+        xAnimating_[idx] = false;
+        xElapsed_[idx] = 0.0f;
+        xDuration_[idx] = 0.0f;
+        ++idx;
     }
 }
 
 void BackMonitorWithMenuScreen::Update() {
     static bool preIsActive = false;
     if (!IsActive()) {
-        for (int i = 0; i < 4; ++i) {
-            if (!models_[i]) continue;
-            if (auto *mat = models_[i]->GetComponent3D<Material3D>()) {
+        for (const auto &m : models_) {
+            if (!m) continue;
+            if (auto *mat = m->GetComponent3D<Material3D>()) {
                 mat->SetColor(Vector4{ 0.0f,0.0f,0.0f,0.0f });
             }
         }
@@ -161,41 +189,45 @@ void BackMonitorWithMenuScreen::Update() {
     if (!inputCommand_) return;
 
     if (inputCommand_->Evaluate("MoveUp").Triggered()) {
-        selectedIndex_ = (selectedIndex_ - 1 + 4) % 4;
-        for (int i = 0; i < 4; ++i) {
-            if (!models_[i]) continue;
-            if (i == selectedIndex_) {
-                zStart_[i] = models_[i]->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[i] = 2.0f;
-                zElapsed_[i] = 0.0f;
-                zDuration_[i] = animDuration;
-                zAnimating_[i] = true;
+        selectedIndex_ = (selectedIndex_ - 1 + modelCount_) % modelCount_;
+        size_t idx = 0;
+        for (const auto &m : models_) {
+            if (!m) { ++idx; continue; }
+            if (static_cast<int>(idx) == selectedIndex_) {
+                zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
+                zEnd_[idx] = 2.0f;
+                zElapsed_[idx] = 0.0f;
+                zDuration_[idx] = animDuration;
+                zAnimating_[idx] = true;
             } else {
-                zStart_[i] = models_[i]->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[i] = 2.5f;
-                zElapsed_[i] = 0.0f;
-                zDuration_[i] = animDuration;
-                zAnimating_[i] = true;
+                zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
+                zEnd_[idx] = 2.5f;
+                zElapsed_[idx] = 0.0f;
+                zDuration_[idx] = animDuration;
+                zAnimating_[idx] = true;
             }
+            ++idx;
         }
     }
     if (inputCommand_->Evaluate("MoveDown").Triggered()) {
-        selectedIndex_ = (selectedIndex_ + 1) % 4;
-        for (int i = 0; i < 4; ++i) {
-            if (!models_[i]) continue;
-            if (i == selectedIndex_) {
-                zStart_[i] = models_[i]->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[i] = 2.0f;
-                zElapsed_[i] = 0.0f;
-                zDuration_[i] = animDuration;
-                zAnimating_[i] = true;
+        selectedIndex_ = (selectedIndex_ + 1) % modelCount_;
+        size_t idx = 0;
+        for (const auto &m : models_) {
+            if (!m) { ++idx; continue; }
+            if (static_cast<int>(idx) == selectedIndex_) {
+                zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
+                zEnd_[idx] = 2.0f;
+                zElapsed_[idx] = 0.0f;
+                zDuration_[idx] = animDuration;
+                zAnimating_[idx] = true;
             } else {
-                zStart_[i] = models_[i]->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[i] = 2.5f;
-                zElapsed_[i] = 0.0f;
-                zDuration_[i] = animDuration;
-                zAnimating_[i] = true;
+                zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
+                zEnd_[idx] = 2.5f;
+                zElapsed_[idx] = 0.0f;
+                zDuration_[idx] = animDuration;
+                zAnimating_[idx] = true;
             }
+            ++idx;
         }
     }
     if (!isSubmitted_ && inputCommand_->Evaluate("Submit").Triggered()) {
@@ -218,18 +250,20 @@ void BackMonitorWithMenuScreen::Update() {
         // 決定されていないモデルのX移動アニメを準備（上から下、0.05秒の遅延）
         const float baseXDuration = 0.3f;
         const float stagger = 0.05f;
-        for (int i = 0; i < 4; ++i) {
-            if (i == confirmedIndex_) continue;
-            if (!models_[i]) continue;
-            auto *tr = models_[i]->GetComponent3D<Transform3D>();
-            xStart_[i] = tr->GetTranslate().x;
-            xEnd_[i] = -16.0f;
+        size_t idx = 0;
+        for (const auto &m : models_) {
+            if (static_cast<int>(idx) == confirmedIndex_) { ++idx; continue; }
+            if (!m) { ++idx; continue; }
+            auto *tr = m->GetComponent3D<Transform3D>();
+            xStart_[idx] = tr->GetTranslate().x;
+            xEnd_[idx] = -16.0f;
             // 上（index 0）から下（index 3）の順で遅延を付与
-            float delay = static_cast<float>(i) * stagger;
+            float delay = static_cast<float>(idx) * stagger;
             // elapsedを負にして遅延を表現（負のelapsedはアニメ開始前の遅延）
-            xElapsed_[i] = -delay; // negative elapsed acts as delay before animation starts
-            xDuration_[i] = baseXDuration;
-            xAnimating_[i] = true;
+            xElapsed_[idx] = -delay; // negative elapsed acts as delay before animation starts
+            xDuration_[idx] = baseXDuration;
+            xAnimating_[idx] = true;
+            ++idx;
         }
     }
 
@@ -240,53 +274,58 @@ void BackMonitorWithMenuScreen::Update() {
     const float dt = GetDeltaTime();
 
     // zアニメーションの更新
-    for (int i = 0; i < 4; ++i) {
-        if (!models_[i]) continue;
-        if (zAnimating_[i]) {
-            zElapsed_[i] += dt;
-            float t = Normalize01(zElapsed_[i], 0.0f, zDuration_[i]);
-            float eased = EaseOutCubic(zStart_[i], zEnd_[i], t);
-            if (auto *tr = models_[i]->GetComponent3D<Transform3D>()) {
+    size_t idx = 0;
+    for (const auto &m : models_) {
+        if (!m) { ++idx; continue; }
+        if (zAnimating_[idx]) {
+            zElapsed_[idx] += dt;
+            float t = Normalize01(zElapsed_[idx], 0.0f, zDuration_[idx]);
+            float eased = EaseOutCubic(zStart_[idx], zEnd_[idx], t);
+            if (auto *tr = m->GetComponent3D<Transform3D>()) {
                 Vector3 pos = tr->GetTranslate();
                 pos.z = eased;
                 tr->SetTranslate(pos);
             }
             if (t >= 1.0f) {
-                zAnimating_[i] = false;
+                zAnimating_[idx] = false;
             }
         }
 
         // 選択に応じた色の更新
-        if (auto *mat = models_[i]->GetComponent3D<Material3D>()) {
-            if (i == selectedIndex_) mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+        if (auto *mat = m->GetComponent3D<Material3D>()) {
+            if (static_cast<int>(idx) == selectedIndex_) mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
             else mat->SetColor(Vector4{ 0.5f,0.5f,0.5f,1.0f });
         }
+        ++idx;
     }
 
     // X移動アニメーションの更新（決定後の非選択モデル用）
-    for (int i = 0; i < 4; ++i) {
-        if (!models_[i]) continue;
-        if (xAnimating_[i]) {
-            xElapsed_[i] += dt;
-            float t = Normalize01(xElapsed_[i], 0.0f, xDuration_[i]);
-            float easedX = EaseOutCubic(xStart_[i], xEnd_[i], t);
-            if (auto *tr = models_[i]->GetComponent3D<Transform3D>()) {
+    idx = 0;
+    for (const auto &m : models_) {
+        if (!m) { ++idx; continue; }
+        if (xAnimating_[idx]) {
+            xElapsed_[idx] += dt;
+            float t = Normalize01(xElapsed_[idx], 0.0f, xDuration_[idx]);
+            float easedX = EaseOutCubic(xStart_[idx], xEnd_[idx], t);
+            if (auto *tr = m->GetComponent3D<Transform3D>()) {
                 Vector3 pos = tr->GetTranslate();
                 pos.x = easedX;
                 tr->SetTranslate(pos);
             }
             if (t >= 1.0f) {
-                xAnimating_[i] = false;
+                xAnimating_[idx] = false;
             }
         }
+        ++idx;
     }
 
     // 回転の更新：選択中のみサイン回転、それ以外は0にする。
-    for (int i = 0; i < 4; ++i) {
-        if (!models_[i]) continue;
-        if (auto *tr = models_[i]->GetComponent3D<Transform3D>()) {
+    idx = 0;
+    for (const auto &m : models_) {
+        if (!m) { ++idx; continue; }
+        if (auto *tr = m->GetComponent3D<Transform3D>()) {
             if (!isSubmitted_) {
-                if (i == selectedIndex_) {
+                if (static_cast<int>(idx) == selectedIndex_) {
                     // 選択中のみサイン回転を適用
                     rotSineTime_ += dt;
                     const float degToRad = M_PI / 180.0f;
@@ -302,6 +341,7 @@ void BackMonitorWithMenuScreen::Update() {
                 }
             }
         }
+        ++idx;
     }
 
     // 確定アニメーションの更新

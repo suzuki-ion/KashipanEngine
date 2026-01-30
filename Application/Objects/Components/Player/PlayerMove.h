@@ -209,6 +209,13 @@ namespace KashipanEngine {
                 }
             }
 
+            // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+            if (bombManager_ && !isOutOfBounds_) {
+                if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
+                    bombManager_->IncrementAllBombExplosionSize(1.0f);
+                }
+            }
+
             isMoving_ = true;
             moveTimer_ = 0.0f;
             return true;

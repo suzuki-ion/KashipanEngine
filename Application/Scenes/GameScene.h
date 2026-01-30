@@ -42,6 +42,9 @@ private:
     void LoadParticleStateJson();
     void SaveParticleStateJson();
 
+    /// @brief アクティブな爆弾の爆発範囲を可視化するためにマップマーカーを更新
+    void UpdateBombExplosionMarkers();
+
 #if defined(USE_IMGUI)
     void DrawObjectStateImGui();
     void SetObjectValue();

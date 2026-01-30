@@ -379,6 +379,12 @@ void BombManager::ClearAllBombs() {
     activeBombs_.clear();
 }
 
+void BombManager::IncrementAllBombExplosionSize(float increment) {
+    for (auto& bomb : activeBombs_) {
+        bomb.explosionSize += increment;
+    }
+}
+
 #if defined(USE_IMGUI)
 void BombManager::ShowImGui() {
     ImGui::Text("BombManager");

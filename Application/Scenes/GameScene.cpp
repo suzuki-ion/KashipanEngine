@@ -690,20 +690,8 @@ void GameScene::OnUpdate() {
     }
 
     {
-        // 全マップをアニメーション
-        for (int z = 0; z < kMapH; z++) {
-            for (int x = 0; x < kMapW; x++) {
-                if (mapMarkers_[z][x]) {
-                    if (auto* mt = mapMarkers_[z][x]->GetComponent3D<Material3D>()) {
-                        if (mapMarkerIsActive_[z][x]) {
-                            mt->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-                        } else {
-                            mt->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-                        }
-                    }
-                }
-            }
-        }
+        // 爆発範囲マーカーを更新
+        UpdateBombExplosionMarkers();        
     }
 
     {
@@ -1322,7 +1310,7 @@ void GameScene::InGameStart() {
         isGameStarted_ = true;
         auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
         if (handle == AudioManager::kInvalidSoundHandle) {
-            // 音声が未ロードならログ出力するか無视（ここでは無害に戻す）
+            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
             return;
         }
         bgmPlayHandle_ = AudioManager::Play(handle, 0.2f, 0.0f, true);
@@ -1377,6 +1365,69 @@ void GameScene::InGameQuit() {
         auto tr1 = bpmObjects_[1]->GetComponent3D<Transform3D>();
         tr->SetTranslate(bpmObjectStart_[0]);
         tr1->SetTranslate(bpmObjectStart_[1]);
+    }
+}
+
+void GameScene::UpdateBombExplosionMarkers() {
+    // すべてのマーカーを一旦非アクティブ化
+    for (int z = 0; z < kMapH; z++) {
+        for (int x = 0; x < kMapW; x++) {
+            mapMarkerIsActive_[z][x] = false;
+        }
+    }
+
+    // BombManagerからアクティブな爆弾情報を取得
+    if (!bombManager_) return;
+
+    auto activeBombs = bombManager_->GetActiveBombsInfo();
+
+    // 各爆弾の爆発範囲をマーカーに反映
+    for (const auto& bombInfo : activeBombs) {
+        const Vector3& bombPos = bombInfo.first;
+        const float explosionSize = bombInfo.second;
+
+        // 爆弾の位置をグリッド座標に変換（2.0f間隔で配置されている前提）
+        const int bombX = static_cast<int>(std::round(bombPos.x / 2.0f));
+        const int bombZ = static_cast<int>(std::round(bombPos.z / 2.0f));
+
+        // 爆発サイズを整数に変換
+        const int size = static_cast<int>(explosionSize);
+
+        // 爆弾の中心マスをアクティブ化
+        if (bombX >= 0 && bombX < kMapW && bombZ >= 0 && bombZ < kMapH) {
+            mapMarkerIsActive_[bombZ][bombX] = true;
+        }
+
+        // X軸方向（左右）に±size分のマスをアクティブ化
+        for (int dx = -size; dx <= size; dx++) {
+            const int targetX = bombX + dx;
+            if (targetX >= 0 && targetX < kMapW && bombZ >= 0 && bombZ < kMapH && dx != 0) {
+                mapMarkerIsActive_[bombZ][targetX] = true;
+            }
+        }
+
+        // Z軸方向（上下）に±size分のマスをアクティブ化
+        for (int dz = -size; dz <= size; dz++) {
+            const int targetZ = bombZ + dz;
+            if (bombX >= 0 && bombX < kMapW && targetZ >= 0 && targetZ < kMapH && dz != 0) {
+                mapMarkerIsActive_[targetZ][bombX] = true;
+            }
+        }
+    }
+
+    // 爆発範囲マーカーの表示
+    for (int z = 0; z < kMapH; z++) {
+        for (int x = 0; x < kMapW; x++) {
+            if (mapMarkers_[z][x]) {
+                if (auto* mt = mapMarkers_[z][x]->GetComponent3D<Material3D>()) {
+                    if (mapMarkerIsActive_[z][x]) {
+                        mt->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+                    } else {
+                        mt->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+                    }
+                }
+            }
+        }
     }
 }
 

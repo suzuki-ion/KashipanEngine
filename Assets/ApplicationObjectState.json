@@ -98,7 +98,7 @@
   {
     "name": "playerMoveDuration",
     "type": 2,
-    "value": 0.250000
+    "value": 0.150000
   },
   {
     "name": "bombMaxNumber",

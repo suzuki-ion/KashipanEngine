@@ -26,6 +26,9 @@ namespace KashipanEngine {
             ptr->moveTimer_ = moveTimer_;
             ptr->startPosition_ = startPosition_;
             ptr->targetPosition_ = targetPosition_;
+            ptr->isRotating_ = isRotating_;
+            ptr->rotationTimer_ = rotationTimer_;
+            ptr->startRotationY_ = startRotationY_;
             return ptr;
         }
 
@@ -146,6 +149,7 @@ namespace KashipanEngine {
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
                             bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }
 
@@ -162,6 +166,7 @@ namespace KashipanEngine {
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
                             bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }
 
@@ -178,6 +183,7 @@ namespace KashipanEngine {
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
                             bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }
 
@@ -194,6 +200,7 @@ namespace KashipanEngine {
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
                             bombManager_->IncrementAllBombExplosionSize(1.0f);
+                            shouldRotate_ = true; // 拍に合わせた移動の場合、回転フラグを立てる
                         }
                     }
 
@@ -232,6 +239,7 @@ namespace KashipanEngine {
                 isOutOfBounds_ = true;
                 // マップ外の場合、targetPositionは元の位置に戻す
                 targetPosition_ = startPosition_;
+                shouldRotate_ = false; // マップ外への移動の場合は回転しない
 
                 switch (playerDirection_){
                 case PlayerDirection::Up:
@@ -247,6 +255,13 @@ namespace KashipanEngine {
 					playerDirection_ = PlayerDirection::Left;
                     break;
                 }
+            }
+
+            // 回転アニメーション開始
+            if (shouldRotate_) {
+                isRotating_ = true;
+                rotationTimer_ = 0.0f;
+                startRotationY_ = transform->GetRotate().y;
             }
 
             isMoving_ = true;
@@ -280,20 +295,39 @@ namespace KashipanEngine {
                     currentPos.y = currentPosY;
                     transform->SetTranslate(currentPos);
 
+                    // 回転アニメーション
+                    float baseRotationY = 0.0f;
                     switch (playerDirection_)
                     {
                     case PlayerDirection::Up:
-                        transform->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
+                        baseRotationY = 3.14f;
                         break;
                     case PlayerDirection::Down:
-                        transform->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+                        baseRotationY = 0.0f;
                         break;
                     case PlayerDirection::Left:
-                        transform->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
+                        baseRotationY = 1.57f;
                         break;
                     case PlayerDirection::Right:
-                        transform->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
+                        baseRotationY = -1.57f;
                         break;
+                    }
+
+                    // 拍に合わせた移動の場合、Y軸周りに1回転
+                    if (isRotating_) {
+                        rotationTimer_ += GetDeltaTime();
+                        float rotationT = std::min(1.0f, rotationTimer_ / moveDuration_);
+                        
+                        // 1回転 (2π rad = 6.28318...) を追加
+                        float additionalRotation = rotationT * 6.28318530718f;
+                        transform->SetRotate(Vector3{ 0.0f, baseRotationY + additionalRotation, 0.0f });
+                        
+                        if (rotationT >= 1.0f) {
+                            isRotating_ = false;
+                            rotationTimer_ = 0.0f;
+                        }
+                    } else {
+                        transform->SetRotate(Vector3{ 0.0f, baseRotationY, 0.0f });
                     }
                 }
             }
@@ -302,6 +336,7 @@ namespace KashipanEngine {
             if (t >= 1.0f) {
                 isMoving_ = false;
                 moveTimer_ = 0.0f;
+                shouldRotate_ = false;
             }
         };
     private:
@@ -327,6 +362,12 @@ namespace KashipanEngine {
 
         Vector3 startPosition_{ 0.0f, 0.0f, 0.0f };   // 移動開始位置
         Vector3 targetPosition_{ 0.0f, 0.0f, 0.0f };  // 移動目標位置
+
+        // 回転アニメーション用
+        bool shouldRotate_ = false;      // 回転すべきかどうか
+        bool isRotating_ = false;        // 回転中フラグ
+        float rotationTimer_ = 0.0f;     // 回転タイマー
+        float startRotationY_ = 0.0f;    // 回転開始時のY軸回転
 
         const InputCommand* inputCommand_ = nullptr;
         BombManager* bombManager_ = nullptr;

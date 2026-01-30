@@ -98,6 +98,9 @@ private:
     std::array<std::array<Object3DBase *, kMapW>, kMapH> mapMarkers_{};
     std::array<std::array<bool, kMapW>, kMapH> mapMarkerIsActive_{};
 
+    std::array<std::array<Object3DBase*, kMapW>, kMapH> walls_{};
+    std::array<std::array<bool, kMapW>, kMapH> wallIsActive_{};
+
     CameraController *cameraController_ = nullptr;
     float pDamageShakePower_ = 5.0f; float pDamageShakeTime_ = 1.0f; // プレイヤーダメージ時のカメラシェイク
     float bombShakePower_ = 5.0f; float bombShakeTime_ = 1.0f; // 爆弾爆発時のカメラシェイク

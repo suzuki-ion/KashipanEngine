@@ -156,7 +156,7 @@ private:
     float shakeTimeRemaining_ = 0.0f;
     bool isShakeX_ = true;
     bool isShakeY_ = true;
-    bool isShakeZ_ = true;
+    bool isShakeZ_ = false;
 };
 
 }  // namespace KashipanEngine

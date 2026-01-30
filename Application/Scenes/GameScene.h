@@ -66,6 +66,8 @@ private:
 
     Object3DBase *stage_ = nullptr;
 
+    Object3DBase* djNagasawa_ = nullptr;
+
 	bool isGameStarted_ = false; // ゲーム開始フラグ
 
     // BPMオブジェクトのBPMに合わせた拡大縮小範囲

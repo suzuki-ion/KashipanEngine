@@ -64,6 +64,9 @@ namespace KashipanEngine {
 
 		float bpmProgress_ = 0.0f;
 		float bpmToleranceRange_ = 0.0f;
+
+		GameTimer moveInputTimer_;
+		float moveInputInterval_ = 0.3f;
 	};
 
 } // namespace KashipanEngine

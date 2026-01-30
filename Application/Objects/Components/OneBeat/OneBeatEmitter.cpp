@@ -5,6 +5,7 @@ namespace KashipanEngine {
 void OneBeatEmitter::Initialize() {
 	ISceneComponent::Initialize();
 	lastBeat_ = -1;  // 初期化を明示的に行う
+	moveInputTimer_.Start(moveInputInterval_, false);
 }
 
 void OneBeatEmitter::InitializeParticlePool(int particlesPerBeat) {
@@ -62,20 +63,33 @@ void OneBeatEmitter::Update() {
 	if (!emitter_) {
 		return;
 	}
-
-	if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
 		if (inputCommand_->Evaluate("MoveUp").Triggered()) {
-			isMissBeat_ = false;
+			if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+				isMissBeat_ = false;
+			}
+			moveInputTimer_.Start(moveInputInterval_, false);
 		} else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
-			isMissBeat_ = false;
+			if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+				isMissBeat_ = false;
+			}
+			moveInputTimer_.Start(moveInputInterval_, false);
 		} else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
-			isMissBeat_ = false;
+			if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+				isMissBeat_ = false;
+			}
+			moveInputTimer_.Start(moveInputInterval_, false);
 		} else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
-			isMissBeat_ = false;
+			if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+				isMissBeat_ = false;
+			}
+			moveInputTimer_.Start(moveInputInterval_, false);
 		} else if (inputCommand_->Evaluate("Bomb").Triggered()) {
-			isMissBeat_ = false;
+			if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+				isMissBeat_ = false;
+			}
+			moveInputTimer_.Start(moveInputInterval_, false);
 		}
-	}
+	
 
 	// 一拍ごとに火花を発生
 	int currentBeat = bpmSystem_->GetCurrentBeat();
@@ -86,6 +100,8 @@ void OneBeatEmitter::Update() {
 		}
 		isMissBeat_ = true;
 	}
+
+	moveInputTimer_.Update();
 }
 
 void OneBeatEmitter::SpawnSparks() {

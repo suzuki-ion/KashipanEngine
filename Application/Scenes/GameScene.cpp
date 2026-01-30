@@ -190,6 +190,7 @@ void GameScene::Initialize() {
         }
     }
 
+	// stage の追加
     {
         auto modelData = ModelManager::GetModelDataFromFileName("stage.obj");
         auto obj = std::make_unique<Model>(modelData);
@@ -203,6 +204,25 @@ void GameScene::Initialize() {
         //if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
         stage_ = obj.get();
+        AddObject3D(std::move(obj));
+    }
+
+    // DJ
+    {
+        auto modelData = ModelManager::GetModelDataFromFileName("dj.obj");
+        auto obj = std::make_unique<Model>(modelData);
+        obj->SetName("DJ");
+        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(10.0f, 3.5f, 27.75f));
+            tr->SetScale(Vector3(1.0f));
+        }
+
+        obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
+
+        if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+        if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+        djNagasawa_ = obj.get();
         AddObject3D(std::move(obj));
     }
 
@@ -635,16 +655,22 @@ void GameScene::OnUpdate() {
         bombManager_->SetBPMProgress(bpmSystem_->GetBeatProgress());
     }
 
+    if (djNagasawa_) {
+        if (auto* bpmScaling = djNagasawa_->GetComponent3D<BPMScaling>()) {
+            bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
+        }
+    }
+
     if (player_) {
         if (auto *tr = player_->GetComponent3D<Transform3D>()) {
             playerMapX_ = static_cast<int>(tr->GetTranslate().x / 2.0f);
             playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
 
-            auto *playerArrowMove = player_->GetComponent3D<PlayerMove>();
-            playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            if (auto* playerArrowMove = player_->GetComponent3D<PlayerMove>()) {
+                playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            }
 
-            auto *bpmScaling = player_->GetComponent3D<BPMScaling>();
-            if (bpmScaling) {
+            if (auto* bpmScaling = player_->GetComponent3D<BPMScaling>()) {
                 bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
             }
 

@@ -42,6 +42,9 @@ private:
     void LoadParticleStateJson();
     void SaveParticleStateJson();
 
+    /// @brief アクティブな爆弾の爆発範囲を可視化するためにマップマーカーを更新
+    void UpdateBombExplosionMarkers();
+
 #if defined(USE_IMGUI)
     void DrawObjectStateImGui();
     void SetObjectValue();
@@ -61,10 +64,9 @@ private:
     std::unique_ptr<JsonManager> jsonParticleManager_;
     std::string loadToSaveParticleName_ = "particleState";
 
-	Object3DBase* aBomb_ = nullptr;
-    Object3DBase* haku_ = nullptr;
-
     Object3DBase *stage_ = nullptr;
+
+    Object3DBase* djNagasawa_ = nullptr;
 
 	bool isGameStarted_ = false; // ゲーム開始フラグ
 
@@ -93,6 +95,8 @@ private:
 
     bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション
     std::array<std::array<Object3DBase *, kMapW>, kMapH> maps_{};
+    std::array<std::array<Object3DBase *, kMapW>, kMapH> mapMarkers_{};
+    std::array<std::array<bool, kMapW>, kMapH> mapMarkerIsActive_{};
 
     CameraController *cameraController_ = nullptr;
     float pDamageShakePower_ = 5.0f; float pDamageShakeTime_ = 1.0f; // プレイヤーダメージ時のカメラシェイク
@@ -104,6 +108,9 @@ private:
     Vector3 playerScaleMin_ = { 1.1f, 0.75f,1.1f }, playerScaleMax_ = { 1.0f ,1.0f ,1.0f };// プレイヤーのBpmに合わせた拡大縮小範囲
     float playerBpmToleranceRange_ = 0.2f;                 // プレイヤーがBPMに合わせる±の許容範囲 
     float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
+
+    bool isMoveBombStop_ = false;
+    bool usePlayerDirection_ = false;
 
     int playerMapX_ = 0; // プレイヤーのマップ上のX座標
     int playerMapZ_ = 0; // プレイヤーのマップ上のZ座標

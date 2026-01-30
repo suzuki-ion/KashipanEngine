@@ -124,33 +124,7 @@ void GameScene::Initialize() {
         cameraMenuTargetRot_ = Vector3(0.0f, 0.0f, 0.0f);
     }
 
-    {
-		auto aBottom = ModelManager::GetModelDataFromFileName("aBomb.obj");
-        auto obj = std::make_unique<Model>(aBottom);
-        obj->SetName("A_Bomb");
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(-13.33f, -0.21f, 30.12f));
-            tr->SetParentTransform(camera3D->GetComponent3D<Transform3D>());
-            tr->SetScale(Vector3(1.0f));
-        }
-        if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        aBomb_ = obj.get();
-		AddObject3D(std::move(obj));
-
-        auto haku = ModelManager::GetModelDataFromFileName("haku.obj");
-        auto obj2 = std::make_unique<Model>(haku);
-        obj2->SetName("haku");
-        if (auto* tr = obj2->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(-10.83f, 0.88f, 27.3f));
-            tr->SetParentTransform(camera3D->GetComponent3D<Transform3D>());
-            tr->SetScale(Vector3(0.5f));
-        }
-        if (screenBuffer3D)  obj2->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        haku_ = obj2.get();
-        AddObject3D(std::move(obj2));
-    }
-
-    // map (Box scaled)
+    // mapBlock
     {
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
@@ -183,6 +157,40 @@ void GameScene::Initialize() {
         }
     }
 
+    // mapMarkers
+    {
+        for (int z = 0; z < kMapH; z++) {
+            for (int x = 0; x < kMapW; x++) {
+
+                auto modelData = ModelManager::GetModelDataFromFileName("warning.obj");
+                auto obj = std::make_unique<Model>(modelData);
+
+                obj->SetName("MapMarker" ":x" + std::to_string(x) + ":z" + std::to_string(z));
+
+                obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_, EaseType::EaseOutExpo);
+
+                if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
+                    tr->SetScale(Vector3(mapScaleMax_));
+                }
+
+                if (auto* mt = obj->GetComponent3D<Material3D>()) {
+                    mt->SetColor(Vector4{ 1.0f,0.0f,0.0f,0.0f });
+                }
+
+                if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+
+                // ここで "AddObject3D する前" にポインタ確保
+                mapMarkers_[z][x] = obj.get();
+
+                AddObject3D(std::move(obj));
+
+				mapMarkerIsActive_[z][x] = false;
+            }
+        }
+    }
+
+	// stage の追加
     {
         auto modelData = ModelManager::GetModelDataFromFileName("stage.obj");
         auto obj = std::make_unique<Model>(modelData);
@@ -196,6 +204,25 @@ void GameScene::Initialize() {
         //if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
         stage_ = obj.get();
+        AddObject3D(std::move(obj));
+    }
+
+    // DJ
+    {
+        auto modelData = ModelManager::GetModelDataFromFileName("dj.obj");
+        auto obj = std::make_unique<Model>(modelData);
+        obj->SetName("DJ");
+        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(10.0f, 3.5f, 27.75f));
+            tr->SetScale(Vector3(1.0f));
+        }
+
+        obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
+
+        if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+        if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+        djNagasawa_ = obj.get();
         AddObject3D(std::move(obj));
     }
 
@@ -284,7 +311,7 @@ void GameScene::Initialize() {
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-        obj->RegisterComponent<Health>(3, 1.0f);
+        obj->RegisterComponent<Health>(10, 1.0f);
 
         // 衝突判定を追加（修正版）
         if (colliderComp && colliderComp->GetCollider()) {
@@ -628,16 +655,22 @@ void GameScene::OnUpdate() {
         bombManager_->SetBPMProgress(bpmSystem_->GetBeatProgress());
     }
 
+    if (djNagasawa_) {
+        if (auto* bpmScaling = djNagasawa_->GetComponent3D<BPMScaling>()) {
+            bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
+        }
+    }
+
     if (player_) {
         if (auto *tr = player_->GetComponent3D<Transform3D>()) {
             playerMapX_ = static_cast<int>(tr->GetTranslate().x / 2.0f);
             playerMapZ_ = static_cast<int>(tr->GetTranslate().z / 2.0f);
 
-            auto *playerArrowMove = player_->GetComponent3D<PlayerMove>();
-            playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            if (auto* playerArrowMove = player_->GetComponent3D<PlayerMove>()) {
+                playerArrowMove->SetBPMProgress(bpmSystem_->GetBeatProgress());
+            }
 
-            auto *bpmScaling = player_->GetComponent3D<BPMScaling>();
-            if (bpmScaling) {
+            if (auto* bpmScaling = player_->GetComponent3D<BPMScaling>()) {
                 bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
             }
 
@@ -680,6 +713,11 @@ void GameScene::OnUpdate() {
                 }
             }
         }
+    }
+
+    {
+        // 爆発範囲マーカーを更新
+        UpdateBombExplosionMarkers();        
     }
 
     {
@@ -1071,6 +1109,7 @@ void GameScene::SetObjectValue() {
         if (auto *playerMove = player_->GetComponent3D<PlayerMove>()) {
             playerMove->SetBPMToleranceRange(playerBpmToleranceRange_);
             playerMove->SetMoveDuration(playerMoveDuration_);
+            playerMove->SetIsMoveBombStop(isMoveBombStop_);
         }
 
         // プレイヤーのダメージ時カメラシェイク更新
@@ -1088,6 +1127,7 @@ void GameScene::SetObjectValue() {
         bombManager_->SetNormalScaleRange(Vector3(bombNormalMinScale_), Vector3(bombNormalMaxScale_));
         bombManager_->SetSpeedScaleRange(Vector3(bombSpeedMinScale_), Vector3(bombSpeedMaxScale_));
         bombManager_->SetDetonationScale(Vector3(bombDetonationScale_));
+        bombManager_->SetUsePlayerDirection(usePlayerDirection_);
     }
 
     // 爆発関連の設定更新
@@ -1166,6 +1206,8 @@ void GameScene::DrawObjectStateImGui() {
         ImGui::DragFloat("BPM許容範囲", &playerBpmToleranceRange_, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("移動時間", &playerMoveDuration_, 0.01f, 0.0f, 1.0f);
         ImGui::Text("マップ座標: X=%d, Z=%d", playerMapX_, playerMapZ_);
+		ImGui::Checkbox("爆弾で移動が停止するか", &isMoveBombStop_);
+		ImGui::Checkbox("プレイヤーの向いている方向に爆弾を置くか", &usePlayerDirection_);
     }
 
     // 爆弾関連
@@ -1294,7 +1336,7 @@ void GameScene::InGameStart() {
         isGameStarted_ = true;
         auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
         if (handle == AudioManager::kInvalidSoundHandle) {
-            // 音声が未ロードならログ出力するか無视（ここでは無害に戻す）
+            // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
             return;
         }
         bgmPlayHandle_ = AudioManager::Play(handle, 0.2f, 0.0f, true);
@@ -1304,7 +1346,7 @@ void GameScene::InGameStart() {
         }
 
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {
-            move->SetisStarted(true);
+            move->SetIsStarted(true);
         }
 
         if (bombManager_) {
@@ -1330,7 +1372,7 @@ void GameScene::InGameQuit() {
         }
 
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {
-            move->SetisStarted(false);
+            move->SetIsStarted(false);
         }
     }
 
@@ -1349,6 +1391,69 @@ void GameScene::InGameQuit() {
         auto tr1 = bpmObjects_[1]->GetComponent3D<Transform3D>();
         tr->SetTranslate(bpmObjectStart_[0]);
         tr1->SetTranslate(bpmObjectStart_[1]);
+    }
+}
+
+void GameScene::UpdateBombExplosionMarkers() {
+    // すべてのマーカーを一旦非アクティブ化
+    for (int z = 0; z < kMapH; z++) {
+        for (int x = 0; x < kMapW; x++) {
+            mapMarkerIsActive_[z][x] = false;
+        }
+    }
+
+    // BombManagerからアクティブな爆弾情報を取得
+    if (!bombManager_) return;
+
+    auto activeBombs = bombManager_->GetActiveBombsInfo();
+
+    // 各爆弾の爆発範囲をマーカーに反映
+    for (const auto& bombInfo : activeBombs) {
+        const Vector3& bombPos = bombInfo.first;
+        const float explosionSize = bombInfo.second;
+
+        // 爆弾の位置をグリッド座標に変換（2.0f間隔で配置されている前提）
+        const int bombX = static_cast<int>(std::round(bombPos.x / 2.0f));
+        const int bombZ = static_cast<int>(std::round(bombPos.z / 2.0f));
+
+        // 爆発サイズを整数に変換
+        const int size = static_cast<int>(explosionSize);
+
+        // 爆弾の中心マスをアクティブ化
+        if (bombX >= 0 && bombX < kMapW && bombZ >= 0 && bombZ < kMapH) {
+            mapMarkerIsActive_[bombZ][bombX] = true;
+        }
+
+        // X軸方向（左右）に±size分のマスをアクティブ化
+        for (int dx = -size; dx <= size; dx++) {
+            const int targetX = bombX + dx;
+            if (targetX >= 0 && targetX < kMapW && bombZ >= 0 && bombZ < kMapH && dx != 0) {
+                mapMarkerIsActive_[bombZ][targetX] = true;
+            }
+        }
+
+        // Z軸方向（上下）に±size分のマスをアクティブ化
+        for (int dz = -size; dz <= size; dz++) {
+            const int targetZ = bombZ + dz;
+            if (bombX >= 0 && bombX < kMapW && targetZ >= 0 && targetZ < kMapH && dz != 0) {
+                mapMarkerIsActive_[targetZ][bombX] = true;
+            }
+        }
+    }
+
+    // 爆発範囲マーカーの表示
+    for (int z = 0; z < kMapH; z++) {
+        for (int x = 0; x < kMapW; x++) {
+            if (mapMarkers_[z][x]) {
+                if (auto* mt = mapMarkers_[z][x]->GetComponent3D<Material3D>()) {
+                    if (mapMarkerIsActive_[z][x]) {
+                        mt->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+                    } else {
+                        mt->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+                    }
+                }
+            }
+        }
     }
 }
 

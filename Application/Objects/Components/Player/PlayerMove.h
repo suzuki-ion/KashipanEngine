@@ -13,7 +13,9 @@ namespace KashipanEngine {
         explicit PlayerMove(float moveDistance = 2.0f, float moveDuration = 1.0f)
             : IObjectComponent3D("PlayerArrowMove", 1)
             , moveDistance_(moveDistance)
-            , moveDuration_(moveDuration) {}
+            , moveDuration_(moveDuration) {
+            moveInputTimer_.Start(moveInputInterval_, false);
+        }
 
         ~PlayerMove() override = default;
 
@@ -33,6 +35,8 @@ namespace KashipanEngine {
             moveDirection_ = Vector3{ 0.0f, 0.0f, 0.0f };
             triggered_ = false;
 
+			moveInputTimer_.Update();
+
             if (inputCommand_->Evaluate("ModeChange").Triggered()) {
                 if (useToleranceRange_) {
                     useToleranceRange_ = false;
@@ -43,15 +47,7 @@ namespace KashipanEngine {
 
 			// BPM進行度に応じて移動入力をチェック
             if (!isMoving_ && isStarted_) {
-                if (useToleranceRange_) {
-                    if (bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) {
-                        JudgeMove(true);
-                    } else {
-                        JudgeMove(false);
-                    }
-                } else {
-                    JudgeMove(true);
-                }
+                JudgeMove(true);
             }
 
 			// 移動処理開始
@@ -103,7 +99,10 @@ namespace KashipanEngine {
         void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
 
 		/// @brief ゲーム開始フラグの設定
-        void SetisStarted(bool start) { isStarted_ = start; }
+        void SetIsStarted(bool start) { isStarted_ = start; }
+
+		/// @brief Bombでの移動停止判定の設定
+		void SetIsMoveBombStop(bool f) { isMoveBombStop_ = f; }
 #if defined(USE_IMGUI)
         void ShowImGui() override {
             ImGui::TextUnformatted("PlayerArrowMove");
@@ -142,6 +141,15 @@ namespace KashipanEngine {
                     moveDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
                     playerDirection_ = PlayerDirection::Up;
                     triggered_ = true;
+                    
+                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    if (bombManager_ && !isOutOfBounds_) {
+                        if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                        }
+                    }
+
+                    moveInputTimer_.Start(moveInputInterval_, false);
                 }
 				PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
@@ -149,6 +157,15 @@ namespace KashipanEngine {
                     moveDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
                     playerDirection_ = PlayerDirection::Down;
                     triggered_ = true;
+
+                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    if (bombManager_ && !isOutOfBounds_) {
+                        if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                        }
+                    }
+
+                    moveInputTimer_.Start(moveInputInterval_, false);
                 }
                 PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
@@ -156,6 +173,15 @@ namespace KashipanEngine {
                     moveDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
                     playerDirection_ = PlayerDirection::Left;
                     triggered_ = true;
+
+                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    if (bombManager_ && !isOutOfBounds_) {
+                        if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                        }
+                    }
+
+                    moveInputTimer_.Start(moveInputInterval_, false);
                 }
                 PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
@@ -163,6 +189,15 @@ namespace KashipanEngine {
                     moveDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
                     playerDirection_ = PlayerDirection::Right;
                     triggered_ = true;
+
+                    // 拍に合わせた正常な移動成功時のみ、すべてのBombの爆発サイズを増加
+                    if (bombManager_ && !isOutOfBounds_) {
+                        if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
+                            bombManager_->IncrementAllBombExplosionSize(1.0f);
+                        }
+                    }
+
+                    moveInputTimer_.Start(moveInputInterval_, false);
                 }
                 PlayMoveSound(f);
             }
@@ -183,9 +218,11 @@ namespace KashipanEngine {
             startPosition_ = transform->GetTranslate();
             targetPosition_ = startPosition_ + moveDirection_;
 
-            // 移動先にBombがあるなら移動しない
-            if (bombManager_ && bombManager_->IsBombAtPosition(targetPosition_)) {
-                return false;
+            if (isMoveBombStop_) {
+                // 移動先にBombがあるなら移動しない
+                if (bombManager_ && bombManager_->IsBombAtPosition(targetPosition_)) {
+                    return false;
+                }
             }
 
             // マップ外への移動かチェック
@@ -271,6 +308,7 @@ namespace KashipanEngine {
 		PlayerDirection playerDirection_ = PlayerDirection::Down; // プレイヤーの向き
 
 		bool isStarted_ = false;
+		bool isMoveBombStop_ = false; // ボムのある方向に移動するかどうか 
 
         float moveDistance_ = 2.0f;       // 1回の移動距離
         float moveDuration_ = 1.0f;       // 移動にかける時間（秒）
@@ -292,6 +330,9 @@ namespace KashipanEngine {
 
         const InputCommand* inputCommand_ = nullptr;
         BombManager* bombManager_ = nullptr;
+
+		GameTimer moveInputTimer_;
+		float moveInputInterval_ = 0.3f;
 
 		float moveVolume_ = 0.1f;
 		float missVolume_ = 0.1f;

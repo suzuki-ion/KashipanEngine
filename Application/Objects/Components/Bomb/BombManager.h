@@ -74,6 +74,16 @@ public:
     /// @brief 指定位置にボムがあるか（プレイヤー移動のブロック判定用）
     bool IsBombAtPosition(const Vector3& position) const { return HasBombAtPosition(position); }
 
+    /// @brief アクティブな爆弾の情報を取得（爆発範囲の可視化用）
+    /// @return 爆弾の位置と爆発サイズのペアのベクター
+    std::vector<std::pair<Vector3, float>> GetActiveBombsInfo() const {
+        std::vector<std::pair<Vector3, float>> result;
+        for (const auto& bomb : activeBombs_) {
+            result.push_back({ bomb.position, bomb.explosionSize });
+        }
+        return result;
+    }
+
     /// @brief Enemyが爆弾に当たった時の処理
     /// @param hitObject 当たったオブジェクト
     void OnEnemyHit(Object3DBase* hitObject);
@@ -83,6 +93,13 @@ public:
 
 	/// @brief すべての爆弾を消去する
 	void ClearAllBombs();
+
+	/// @brief プレイヤーの向きに基づいて爆弾を設置するかどうかを設定
+	void SetUsePlayerDirection(bool useDirection) { usePlayerDirection_ = useDirection; }
+
+	/// @brief すべてのアクティブな爆弾の爆発サイズを増加させる
+	/// @param increment 増加量（デフォルト: 1.0f）
+	void IncrementAllBombExplosionSize(float increment = 1.0f);
 
 	/// @brief 爆弾のスケール範囲を設定
     void SetNormalScaleRange(const Vector3& minScale, const Vector3& maxScale) { minScale_ = minScale; maxScale_ = maxScale; }
@@ -113,6 +130,7 @@ private:
         float beatAccumulator = 0.0f;         // ビートの蓄積（0.0～1.0で1ビート）
         Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆弾の位置（重複チェック用）
         bool shouldDetonate = false;          // 起爆フラグ
+		float explosionSize =  1.0f;          // 爆発時のサイズ中心から±マス分
     };
 
     std::vector<BombInfo> activeBombs_;
@@ -148,6 +166,7 @@ private:
 	float fireVolume_ = 0.1f;
 
 	bool isStarted_ = false;
+	bool usePlayerDirection_ = false; // プレイヤーの向きに基づいて爆弾を設置するかどうか
 };
 
 } // namespace KashipanEngine

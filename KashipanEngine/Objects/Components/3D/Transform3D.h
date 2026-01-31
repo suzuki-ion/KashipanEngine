@@ -80,6 +80,12 @@ public:
         isWorldMatrixCalculated_ = false;
     }
 
+    void SetTranslateY(const float& translateY) {
+        if (translate_.y == translateY) return;
+        translate_.y = translateY;
+        isWorldMatrixCalculated_ = false;
+    }
+
     void SetRotate(const Vector3 &rotate) {
         if (rotate_ == rotate) return;
         rotate_ = rotate;

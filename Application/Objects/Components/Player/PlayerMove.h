@@ -2,6 +2,7 @@
 #include <KashipanEngine.h>
 #include "PlayerDrection.h"
 #include "Objects/Components/Bomb/BombManager.h"
+#include "Objects/Components/Bomb/ExplosionManager.h"
 
 #include "Utilities/Easing.h"
 
@@ -100,6 +101,9 @@ namespace KashipanEngine {
 
 		/// @brief BombManagerの設定
         void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+        /// @brief ExplosionManagerの設定
+        void SetExplosionManager(ExplosionManager* explosionManager) { explosionManager_ = explosionManager; }
 
 		/// @brief ゲーム開始フラグの設定
         void SetIsStarted(bool start) { isStarted_ = start; }
@@ -230,6 +234,11 @@ namespace KashipanEngine {
                 if (bombManager_ && bombManager_->IsBombAtPosition(targetPosition_)) {
                     return false;
                 }
+            }
+
+            // 移動先に壁（アクティブまたは移動中）があるなら移動しない
+            if (explosionManager_ && explosionManager_->IsWallActiveOrMoving(targetPosition_)) {
+                return false;
             }
 
             // マップ外への移動かチェック
@@ -371,6 +380,7 @@ namespace KashipanEngine {
 
         const InputCommand* inputCommand_ = nullptr;
         BombManager* bombManager_ = nullptr;
+        ExplosionManager* explosionManager_ = nullptr;
 
 		GameTimer moveInputTimer_;
 		float moveInputInterval_ = 0.3f;

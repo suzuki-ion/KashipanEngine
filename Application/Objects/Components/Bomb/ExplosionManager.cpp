@@ -24,8 +24,6 @@ void ExplosionManager::Update() {
 
     const float dt = GetDeltaTime();
 
-	size_ = std::clamp(size_, 1.0f, 9.0f);
-
     // 爆発とボムの衝突をチェック
     CheckExplosionBombCollisions();
 
@@ -122,6 +120,13 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
     }
 
 	size_ = size;
+    size_ = std::clamp(size_, 1.0f, 1.0f);
+
+    // 爆発範囲内の壁を破壊
+    DestroyWallsInExplosionRange(position, size_);
+
+    // 爆弾起爆位置に壁を設置
+    CreateWallAtBombPosition(position);
 
     // 爆発オブジェクトを作成（BombManagerと同じパターン）
     auto modelData = ModelManager::GetModelDataFromFileName("Explosion.obj");
@@ -252,6 +257,64 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
     ctx->AddObject3D(std::move(explosion2));
 }
 
+void ExplosionManager::CreateWallAtBombPosition(const Vector3& position) {
+    if (!walls_ || mapW_ <= 0 || mapH_ <= 0) return;
+
+    // 爆弾の位置をグリッド座標に変換
+    const int bombX = static_cast<int>(std::round(position.x / 2.0f));
+    const int bombZ = static_cast<int>(std::round(position.z / 2.0f));
+
+    // 範囲チェック
+    if (bombX < 0 || bombX >= mapW_ || bombZ < 0 || bombZ >= mapH_) return;
+
+    // 1次元配列のインデックスを計算: walls_[z][x] = walls_[z * mapW + x]
+    const int index = bombZ * mapW_ + bombX;
+
+    // 壁をアクティブ化
+    if (!walls_[index].isMoving) {
+        walls_[index].moveTimer.Start(walls_[index].moveTime, false);
+        walls_[index].isMoving = true;
+    }
+}
+
+void ExplosionManager::DestroyWallsInExplosionRange(const Vector3& position, float size) {
+    if (!walls_ || mapW_ <= 0 || mapH_ <= 0) return;
+
+    // 爆発の中心位置をグリッド座標に変換
+    const int centerX = static_cast<int>(std::round(position.x / 2.0f));
+    const int centerZ = static_cast<int>(std::round(position.z / 2.0f));
+
+    const int explosionSize = static_cast<int>(size);
+
+    // X軸方向（左右）の壁を破壊
+    for (int dx = -explosionSize; dx <= explosionSize; dx++) {
+        const int targetX = centerX + dx;
+        if (targetX >= 0 && targetX < mapW_ && centerZ >= 0 && centerZ < mapH_) {
+            const int index = centerZ * mapW_ + targetX;
+            if (walls_[index].isActive && walls_[index].isMoving) {
+                walls_[index].isActive = false;
+                walls_[index].isMoving = false;
+				walls_[index].moveTimer.Reset();
+				walls_[index].hp = 0;
+            }
+        }
+    }
+
+    // Z軸方向（上下）の壁を破壊
+    for (int dz = -explosionSize; dz <= explosionSize; dz++) {
+        const int targetZ = centerZ + dz;
+        if (centerX >= 0 && centerX < mapW_ && targetZ >= 0 && targetZ < mapH_) {
+            const int index = targetZ * mapW_ + centerX;
+            if (walls_[index].isActive && walls_[index].isMoving) {
+                walls_[index].isActive = false;
+				walls_[index].isMoving = false;
+                walls_[index].moveTimer.Reset();
+                walls_[index].hp = 0;
+            }
+        }
+    }
+}
+
 void ExplosionManager::CheckExplosionBombCollisions() {
     if (!bombManager_) return;
 
@@ -263,6 +326,27 @@ void ExplosionManager::CheckExplosionBombCollisions() {
         // BombManagerから全ボムの位置をチェックして起爆
         bombManager_->DetonateBombsInExplosionRange(explosion.position, explosionRange);
     }
+}
+
+bool ExplosionManager::IsWallActiveOrMoving(const Vector3& position) const {
+    if (!walls_ || mapW_ <= 0 || mapH_ <= 0) {
+        return false;
+    }
+
+    // 位置をグリッド座標に変換
+    const int gridX = static_cast<int>(std::round(position.x / 2.0f));
+    const int gridZ = static_cast<int>(std::round(position.z / 2.0f));
+
+    // 範囲チェック
+    if (gridX < 0 || gridX >= mapW_ || gridZ < 0 || gridZ >= mapH_) {
+        return false;
+    }
+
+    // 1次元配列のインデックスを計算
+    const int index = gridZ * mapW_ + gridX;
+
+    // 壁がアクティブまたは移動中かをチェック
+    return walls_[index].isActive || walls_[index].isMoving;
 }
 
 #if defined(USE_IMGUI)

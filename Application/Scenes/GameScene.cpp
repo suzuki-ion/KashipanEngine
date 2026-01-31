@@ -195,7 +195,7 @@ void GameScene::Initialize() {
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
 
-                auto modelData = ModelManager::GetModelDataFromFileName("wall.obj");
+                auto modelData = ModelManager::GetModelDataFromFileName("block.obj");
                 auto obj = std::make_unique<Model>(modelData);
 
                 obj->SetName("wall" ":x" + std::to_string(x) + ":z" + std::to_string(z));
@@ -203,12 +203,12 @@ void GameScene::Initialize() {
                 obj->RegisterComponent<BPMScaling>(Vector3(1.0f), Vector3(1.0f), EaseType::EaseOutExpo);
 
                 if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-                    tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
+                    tr->SetTranslate(Vector3(2.0f * x, 0.-0.1f, 2.0f * z));
                     tr->SetScale(Vector3(1.0f));
                 }
 
                 if (auto* mt = obj->GetComponent3D<Material3D>()) {
-                    mt->SetColor(Vector4{ 0.5f,0.5f,0.5f,0.0f });
+                    mt->SetColor(Vector4{ 0.5f,0.5f,0.5f,1.0f });
                 }
 
                 if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -216,11 +216,11 @@ void GameScene::Initialize() {
                 if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
 
                 // ここで "AddObject3D する前" にポインタ確保
-                walls_[z][x] = obj.get();
+                walls_[z][x].object = obj.get();
 
                 AddObject3D(std::move(obj));
 
-                wallIsActive_[z][x] = false;
+                walls_[z][x].isActive = false;
             }
         }
     }
@@ -378,6 +378,7 @@ void GameScene::Initialize() {
         comp->SetCameraController(cameraController_);  // カメラコントローラーを設定
         comp->SetCameraShake(bombShakePower_, bombShakeTime_);
         comp->SetSize(static_cast<float>(explosionSize_));
+        comp->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);  // 壁配列を設定
         explosionManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
@@ -421,6 +422,7 @@ void GameScene::Initialize() {
     if (player_ && bombManager_) {
         if (auto *playerMove = player_->GetComponent3D<PlayerMove>()) {
             playerMove->SetBombManager(bombManager_);
+            playerMove->SetExplosionManager(explosionManager_);
         }
     }
 
@@ -442,6 +444,7 @@ void GameScene::Initialize() {
         comp->SetCollider(colliderComp);
         comp->SetPlayer(player_);
         comp->SetBombManager(bombManager_);
+        comp->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);  // 壁配列を設定
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
         enemyManager_->InitializeParticlePool();
@@ -754,14 +757,29 @@ void GameScene::OnUpdate() {
         // Wallの表示
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
-                if (walls_[z][x]) {
-                    if (auto* mt = walls_[z][x]->GetComponent3D<Material3D>()) {
-                        if (wallIsActive_[z][x]) {
-                            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
-                        } else {
-                            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
+                if (walls_[z][x].object) {
+                    if (auto* tr = walls_[z][x].object->GetComponent3D<Transform3D>()) {
+                        if (walls_[z][x].moveTimer.IsActive()) {
+                            tr->SetTranslateY(MyEasing::Lerp(-0.1f, 2.0f, walls_[z][x].moveTimer.GetProgress()));
+                        }
+
+                        if (!walls_[z][x].isMoving) {
+                            tr->SetTranslateY(-0.1f);
                         }
                     }
+
+                    if (walls_[z][x].moveTimer.IsFinished()) {
+                        walls_[z][x].isActive = true;
+                    }
+
+                    if (walls_[z][x].hp <= 0) {
+                        walls_[z][x].isActive = false;
+                        walls_[z][x].isMoving = false;
+                        walls_[z][x].moveTimer.Reset();
+                        walls_[z][x].hp = 0;
+                    }
+
+                    walls_[z][x].moveTimer.Update();
                 }
             }
         }
@@ -1494,7 +1512,7 @@ void GameScene::UpdateBombExplosionMarkers() {
         }
     }
 
-    // 爆発範囲マーカーの表示
+    // ボムの爆発範囲を示すマーカーの表示
     for (int z = 0; z < kMapH; z++) {
         for (int x = 0; x < kMapW; x++) {
             if (mapMarkers_[z][x]) {

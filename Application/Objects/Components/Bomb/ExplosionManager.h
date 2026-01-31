@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Objects/Components/Enemy/EnemyManager.h"
+#include "Objects/Components/Map/WallInfo.h"
 #include "Scenes/Components/CameraController.h"
 
 namespace KashipanEngine {
@@ -54,6 +55,16 @@ public:
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
     void SetCollider2(ColliderComponent* collider) { collider2_ = collider; }
 
+    /// @brief 壁配列を設定
+    /// @param walls 壁配列へのポインタ
+    /// @param mapW マップの幅
+    /// @param mapH マップの高さ
+    void SetWalls(WallInfo* walls, int mapW, int mapH) {
+        walls_ = walls;
+        mapW_ = mapW;
+        mapH_ = mapH;
+    }
+
     /// @brief 指定位置に爆発を生成
     /// @param position 爆発を生成する位置
     void SpawnExplosion(const Vector3& position, const float size);
@@ -75,6 +86,12 @@ public:
 
 	/// @brief 爆発のXZサイズを設定
     void SetSize(float size) { size; }
+
+    /// @brief 指定位置に壁が存在し、アクティブまたは移動中かをチェック
+    /// @param position チェックする位置
+    /// @return 壁がアクティブまたは移動中ならtrue
+    bool IsWallActiveOrMoving(const Vector3& position) const;
+
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -94,6 +111,15 @@ private:
     /// @brief 爆発とボムの衝突をチェックして起爆させる
     void CheckExplosionBombCollisions();
 
+    /// @brief 爆弾起爆位置に壁を設置する
+    /// @param position 爆弾の位置
+    void CreateWallAtBombPosition(const Vector3& position);
+
+    /// @brief 爆発範囲内の壁を破壊する
+    /// @param position 爆発の中心位置
+    /// @param size 爆発のサイズ
+    void DestroyWallsInExplosionRange(const Vector3& position, float size);
+
     float size_ = 3.0f;
 
     ScreenBuffer* screenBuffer_ = nullptr;
@@ -109,6 +135,10 @@ private:
 
 	float shakePower_ = 5.0f;    // カメラシェイクの強さ
 	float shakeTime_ = 1.0f;     // カメラシェイクの時間（秒）
+
+    WallInfo* walls_ = nullptr;  // 壁配列へのポインタ
+    int mapW_ = 0;               // マップの幅
+    int mapH_ = 0;               // マップの高さ
 
     std::vector<ExplosionInfo> activeExplosions_;
 

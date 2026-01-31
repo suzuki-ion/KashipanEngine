@@ -274,6 +274,7 @@ void ExplosionManager::CreateWallAtBombPosition(const Vector3& position) {
     if (!walls_[index].isMoving) {
         walls_[index].moveTimer.Start(walls_[index].moveTime, false);
         walls_[index].isMoving = true;
+		walls_[index].hp = 1;
     }
 }
 

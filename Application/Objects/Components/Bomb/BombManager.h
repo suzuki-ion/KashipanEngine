@@ -180,7 +180,7 @@ private:
     Vector3 detonationScale_ = { 1.5f, 1.5f, 1.5f };      // 起爆時のスケール係数
 
     float missVolume_ = 0.1f;
-	float countVolume_ = 0.1f;
+	float countVolume_ = 0.0f;
 	float fireVolume_ = 0.1f;
 
     GameTimer moveInputTimer_;

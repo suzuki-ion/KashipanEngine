@@ -303,6 +303,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallInfo.h" />
     <ClInclude Include="Application\Objects\Components\OneBeatParticle.h" />
     <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatEmitter.h" />
     <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatParticle.h" />

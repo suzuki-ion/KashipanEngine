@@ -6,6 +6,7 @@
 #include "Scenes/Components/BPM/BPMSystem.h"
 #include "Objects/Components/Bomb/BombManager.h"
 #include "Objects/Components/ParticleConfig.h"
+#include "Objects/Components/Map/WallInfo.h"
 
 namespace KashipanEngine {
 
@@ -36,6 +37,16 @@ public:
     void SetPlayer(Object3DBase* player) { player_ = player; }
 
     void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+    /// @brief 壁配列を設定する
+    /// @param walls 壁配列の先頭ポインタ
+    /// @param width マップの横幅
+    /// @param height マップの縦幅
+    void SetWalls(WallInfo* walls, int width, int height) { 
+        walls_ = walls; 
+        wallsWidth_ = width;
+        wallsHeight_ = height;
+    }
 
     /// @brief 爆発が敵に当たった時の処理
     /// @param hitObject 当たったオブジェクト
@@ -70,6 +81,17 @@ private:
     // 死亡パーティクルを発生させる
     void SpawnDieParticles(const Vector3& position);
 
+    /// @brief 指定したマップ座標に壁があるかチェック
+    /// @param x マップX座標
+    /// @param z マップZ座標
+    /// @return 壁がある場合true
+    bool IsWallAt(int x, int z) const;
+
+    /// @brief 指定したマップ座標の壁にダメージを与える
+    /// @param x マップX座標
+    /// @param z マップZ座標
+    void DamageWallAt(int x, int z);
+
 	/// @brief アクティブな敵情報
     struct EnemyInfo {
         Object3DBase* object = nullptr; 
@@ -98,6 +120,10 @@ private:
     ColliderComponent* collider_ = nullptr;
     Object3DBase* player_ = nullptr;
     BombManager* bombManager_ = nullptr;
+
+    WallInfo* walls_ = nullptr;
+    int wallsWidth_ = 0;
+    int wallsHeight_ = 0;
 
     BPMSystem* bpmSystem_ = nullptr;
     int lastMoveBeat_ = -1;

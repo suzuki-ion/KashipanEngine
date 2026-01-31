@@ -92,9 +92,24 @@ void EnemyManager::Update() {
                 case EnemyDirection::Right: delta = Vector3{  moveDistance_, 0.0f, 0.0f }; break;
                 }
 
-                // 開始位置を現在位置に、目標位置を計算
-                e.startPosition = e.position;
-                e.targetPosition = e.position + delta;
+                // 移動先の座標を計算
+                Vector3 nextPosition = e.position + delta;
+                int nextX = static_cast<int>(std::round(nextPosition.x / 2.0f));
+                int nextZ = static_cast<int>(std::round(nextPosition.z / 2.0f));
+
+                // 移動先に壁があるかチェック
+                if (IsWallAt(nextX, nextZ)) {
+                    // 壁がある場合は移動せず、その場に留まる
+                    e.startPosition = e.position;
+                    e.targetPosition = e.position;
+                    
+                    // 壁にダメージを与える
+                    DamageWallAt(nextX, nextZ);
+                } else {
+                    // 壁がない場合は通常通り移動
+                    e.startPosition = e.position;
+                    e.targetPosition = nextPosition;
+                }
             } else {
                 // 止まる拍: その場でジャンプのみ（開始と目標を同じにする）
                 e.startPosition = e.position;
@@ -338,6 +353,35 @@ void EnemyManager::ClearAllEnemies() {
 
     // 敵リストをクリア
     activeEnemies_.clear();
+}
+
+bool EnemyManager::IsWallAt(int x, int z) const {
+    if (!walls_) return false;
+    
+    // 範囲外チェック
+    if (x < 0 || x >= wallsWidth_ || z < 0 || z >= wallsHeight_) {
+        return false;
+    }
+    
+    // 2次元配列として壁情報にアクセス
+    const WallInfo& wall = walls_[z * wallsWidth_ + x];
+    return wall.isActive;
+}
+
+void EnemyManager::DamageWallAt(int x, int z) {
+    if (!walls_) return;
+    
+    // 範囲外チェック
+    if (x < 0 || x >= wallsWidth_ || z < 0 || z >= wallsHeight_) {
+        return;
+    }
+    
+    // 2次元配列として壁情報にアクセス
+    WallInfo& wall = walls_[z * wallsWidth_ + x];
+    
+    if (wall.isActive && wall.hp > 0) {
+        wall.hp--;
+    }
 }
 
 } // namespace KashipanEngine

@@ -1,35 +1,17 @@
 #pragma once
 #include <KashipanEngine.h>
 
-#include "Scenes/TitleScene.h"
-#if DEBUG_BUILD
-#include "Scenes/TestScene.h"
-#endif
-#include "Scenes/GameScene.h"
-#include "Scenes/ResultScene.h"
-#include "Scenes/GameOverScene.h"
-
 namespace KashipanEngine {
 
 inline void AppInitialize(const GameEngine::Context &context) {
     auto monitorInfoOpt = WindowsAPI::QueryMonitorInfo();
     const RECT area = monitorInfoOpt ? monitorInfoOpt->WorkArea() : RECT{ 0, 0, 1280, 720 };
 
-    Window::CreateNormal("2301_CLUBOM", 1920, 1280);
+    Window::CreateNormal("Main Window", 1920, 1280);
 
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
         
-        sm->RegisterScene<TitleScene>("TitleScene");
-        sm->RegisterScene<GameScene>("GameScene");
-        sm->RegisterScene<ResultScene>("ResultScene");
-        sm->RegisterScene<GameOverScene>("GameOverScene");
-
-#if DEBUG_BUILD
-        sm->RegisterScene<TestScene>("TestScene");
-#endif
-
-        context.sceneManager->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {

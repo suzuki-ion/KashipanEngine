@@ -25,6 +25,9 @@ public:
         startTextModel_ = obj.get();
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         ownerContext->AddObject3D(std::move(obj));
+
+        // 音声ハンドル
+        startSound_ = AudioManager::GetSoundHandleFromFileName("start.mp3");
     }
 
     void Finalize() override {
@@ -32,7 +35,10 @@ public:
 
     void Update() override {
         if (!inputCommand_) return;
-        if (inputCommand_->Evaluate("Submit").Triggered()) {
+        if (!isAnimating_ && !isFinished_ && inputCommand_->Evaluate("Submit").Triggered()) {
+            if (startSound_ != AudioManager::kInvalidSoundHandle) {
+                AudioManager::Play(startSound_, 1.0f, 0.0f, false);
+            }
             StartTextAnimation();
         }
 
@@ -96,6 +102,8 @@ private:
 
     InputCommand *inputCommand_ = nullptr;
     Model *startTextModel_ = nullptr;
+
+    AudioManager::SoundHandle startSound_ = AudioManager::kInvalidSoundHandle;
 
     Vector3 fromScale_ = Vector3(1.0f, 1.0f, 1.0f);
     Vector3 toScale_ = Vector3(8.0f, 0.0f, 0.0f);

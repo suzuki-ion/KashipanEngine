@@ -45,6 +45,9 @@ private:
 
     InputCommand *inputCommand_ = nullptr;
 
+    AudioManager::SoundHandle soundHandleSelect_ = AudioManager::kInvalidSoundHandle;
+    AudioManager::SoundHandle soundHandleSubmit_ = AudioManager::kInvalidSoundHandle;
+
     int selectedIndex_ = 0;
     int confirmedIndex_ = -1;
     bool isSubmitted_ = false;

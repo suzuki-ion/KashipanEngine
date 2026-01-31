@@ -649,6 +649,12 @@ void GameScene::OnUpdate() {
                 if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                     out->Play();
                 }
+
+            } else if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Quit)) {
+                auto *mainWindow = sceneDefaultVariables_->GetMainWindow();
+                if (mainWindow) {
+                    mainWindow->DestroyNotify();
+                }
             }
         }
     }

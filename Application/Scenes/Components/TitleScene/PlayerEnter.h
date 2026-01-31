@@ -19,6 +19,7 @@ public:
         obj->SetName("PlayerModel");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(fromTranslate_);
+            tr->SetRotate(Vector3(0.0f, M_PI, 0.0f));
             tr->SetScale(fromScale_);
         }
         playerModel_ = obj.get();

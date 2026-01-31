@@ -35,6 +35,10 @@ void BackMonitorWithMenuScreen::Initialize() {
         xDuration_.assign(modelCount_, 0.0f);
         xAnimating_.assign(modelCount_, false);
         isInitialized_ = true;
+
+        // Load sound handles
+        soundHandleSelect_ = AudioManager::GetSoundHandleFromFileName("select.mp3");
+        soundHandleSubmit_ = AudioManager::GetSoundHandleFromFileName("submit.mp3");
     }
 
     const float centerX = 0.0f;
@@ -189,8 +193,9 @@ void BackMonitorWithMenuScreen::Update() {
 
     if (!inputCommand_) return;
 
-    if (inputCommand_->Evaluate("MoveUp").Triggered()) {
+    if (!isSubmitted_ && inputCommand_->Evaluate("MoveUp").Triggered()) {
         selectedIndex_ = (selectedIndex_ - 1 + modelCount_) % modelCount_;
+        AudioManager::Play(soundHandleSelect_, 1.0f, 0.0f, false);
         size_t idx = 0;
         for (const auto &m : models_) {
             if (!m) { ++idx; continue; }
@@ -210,8 +215,9 @@ void BackMonitorWithMenuScreen::Update() {
             ++idx;
         }
     }
-    if (inputCommand_->Evaluate("MoveDown").Triggered()) {
+    if (!isSubmitted_ && inputCommand_->Evaluate("MoveDown").Triggered()) {
         selectedIndex_ = (selectedIndex_ + 1) % modelCount_;
+        AudioManager::Play(soundHandleSelect_, 1.0f, 0.0f, false);
         size_t idx = 0;
         for (const auto &m : models_) {
             if (!m) { ++idx; continue; }
@@ -232,6 +238,7 @@ void BackMonitorWithMenuScreen::Update() {
         }
     }
     if (!isSubmitted_ && inputCommand_->Evaluate("Submit").Triggered()) {
+        AudioManager::Play(soundHandleSubmit_, 1.0f, 0.0f, false);
         isSubmitted_ = true;
         confirmedIndex_ = selectedIndex_;
         isConfirming_ = true;

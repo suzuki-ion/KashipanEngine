@@ -28,9 +28,20 @@ public:
         carMove_ = ctx->GetComponent<CarMove>();
         playerEnter_ = ctx->GetComponent<PlayerEnter>();
         startTextUpdate_ = ctx->GetComponent<StartTextUpdate>();
+        // BGM 再生
+        bgmHandle_ = AudioManager::GetSoundHandleFromFileName("titleBGM.mp3");
+        if (bgmHandle_ != AudioManager::kInvalidSoundHandle) {
+            bgmPlayHandle_ = AudioManager::Play(bgmHandle_, 0.5f, 0.0f, true);
+        }
     }
 
-    void Finalize() override {}
+    void Finalize() override {
+        // BGM 停止
+        if (bgmPlayHandle_ != AudioManager::kInvalidPlayHandle) {
+            AudioManager::Stop(bgmPlayHandle_);
+            bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
+        }
+    }
 
     void Update() override {
         if (!inputCommand_) return;
@@ -105,6 +116,9 @@ private:
     PlayerEnter *playerEnter_ = nullptr;
     StartTextUpdate *startTextUpdate_ = nullptr;
     CameraStartMovement *cameraMovement_ = nullptr;
+
+    AudioManager::SoundHandle bgmHandle_ = AudioManager::kInvalidSoundHandle;
+    AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
 
     bool isAnimating_ = false;
 };

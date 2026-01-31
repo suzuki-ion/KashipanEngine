@@ -27,6 +27,7 @@
 #include "Utilities/Json/JsonManager.h"
 #include "Objects/Components/Bomb/ExplosionManager.h"
 #include "Objects/Components/Map/WallInfo.h"
+#include "Objects/Components/Player/PlayerBombSpawnMode.h"
 
 namespace KashipanEngine {
 
@@ -110,8 +111,14 @@ private:
     Object3DBase *player_ = nullptr;
     Vector3 playerStartPos_ = { 10.0f,0.0f,10.0f };
     Vector3 playerScaleMin_ = { 1.1f, 0.75f,1.1f }, playerScaleMax_ = { 1.0f ,1.0f ,1.0f };// プレイヤーのBpmに合わせた拡大縮小範囲
-    float playerBpmToleranceRange_ = 0.2f;                 // プレイヤーがBPMに合わせる±の許容範囲 
+    float playerBpmToleranceRange_ = 0.1f;                 // プレイヤーがBPMに合わせる±の許容範囲 
+    float playerNoneBpmToleranceRange_ = 0.25f;           // プレイヤーがチェインBPMに合わせる±の許容範囲
+	float playerChainBpmToleranceRange_ = 0.25f;           // プレイヤーがチェインBPMに合わせる±の許容範囲
     float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
+
+	float playerMoveInputInterval_ = 0.0f;                 // プレイヤー移動入力のインターバル時間（秒）
+	float playerNoneMoveInputInterval_ = 0.4f;             // プレイヤー移動入力のインターバル時間（秒）（BPM外）
+	float playerChainMoveInputInterval_ = 0.25f;             // プレイヤー移動入力のインターバル時間（秒）（チェインBPM外）
 
     bool isMoveBombStop_ = false;
     bool usePlayerDirection_ = false;

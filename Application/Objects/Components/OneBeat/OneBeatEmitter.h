@@ -35,6 +35,7 @@ namespace KashipanEngine {
 		void SetInputCommand(const InputCommand* inputCommand) { inputCommand_ = inputCommand; }
 
 		void SetBPMToleranceRange(float range) { bpmToleranceRange_ = range; }
+		void SetMoveInputInterval(float interval) { moveInputInterval_ = interval; }
 		void SetBPMBpmProgress(float p) { bpmProgress_ = p; }
 	private:
 		/// @brief 一拍ごとに火花を発生させる

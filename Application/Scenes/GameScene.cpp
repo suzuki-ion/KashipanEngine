@@ -487,6 +487,8 @@ void GameScene::Initialize() {
         comp->SetShadowMapBuffer(shadowMapBuffer);
         comp->SetEnemyManager(enemyManager_);
         comp->SetBPMSystem(bpmSystem_);
+        comp->SetBombManager(bombManager_);  // BombManagerを設定
+        comp->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);  // 壁情報を設定
         enemySpawner_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
@@ -688,6 +690,16 @@ void GameScene::OnUpdate() {
     }
 #endif
 
+    if (bombManager_) {
+        if (bombManager_->GetBombSpawnMode() == BombSpawnMode::None) {
+            playerBpmToleranceRange_ = playerNoneBpmToleranceRange_;
+			playerMoveInputInterval_ = playerNoneMoveInputInterval_;
+        } else {
+            playerBpmToleranceRange_ = playerChainBpmToleranceRange_;
+			playerMoveInputInterval_ = playerChainMoveInputInterval_;
+        }
+    }
+
     // OnUpdate 内で BPM 進行度を更新
     if (bombManager_) {
         bombManager_->SetBPMProgress(bpmSystem_->GetBeatProgress());
@@ -834,6 +846,7 @@ void GameScene::OnUpdate() {
         for (int i = 0; i < kOneBeatEmitterCount_; i++) {
 			oneBeatEmitter_[i]->SetBPMBpmProgress(bpmSystem_->GetBeatProgress());
             oneBeatEmitter_[i]->SetBPMToleranceRange(playerBpmToleranceRange_);
+			oneBeatEmitter_[i]->SetMoveInputInterval(playerMoveInputInterval_);
         }
 
         if (bpmSystem_->GetLeftRightToggle()) {
@@ -1180,6 +1193,7 @@ void GameScene::SetObjectValue() {
             playerMove->SetBPMToleranceRange(playerBpmToleranceRange_);
             playerMove->SetMoveDuration(playerMoveDuration_);
             playerMove->SetIsMoveBombStop(isMoveBombStop_);
+			playerMove->SetMoveInputInterval(playerMoveInputInterval_);
         }
 
         // プレイヤーのダメージ時カメラシェイク更新
@@ -1198,6 +1212,7 @@ void GameScene::SetObjectValue() {
         bombManager_->SetSpeedScaleRange(Vector3(bombSpeedMinScale_), Vector3(bombSpeedMaxScale_));
         bombManager_->SetDetonationScale(Vector3(bombDetonationScale_));
         bombManager_->SetUsePlayerDirection(usePlayerDirection_);
+		bombManager_->SetMoveInputInterval(playerMoveInputInterval_);
     }
 
     // 爆発関連の設定更新

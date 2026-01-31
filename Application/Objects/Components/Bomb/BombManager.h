@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Objects/Components/Player/PlayerDrection.h"
+#include "Objects/Components/Player/PlayerBombSpawnMode.h"
 
 namespace KashipanEngine {
 
@@ -115,6 +116,10 @@ public:
 
     /// @brief Chainモードで拍を見逃せる最大回数を設定
     void SetMaxMissedBeats(int maxMissed) { maxMissedBeats_ = maxMissed; }
+
+	BombSpawnMode GetBombSpawnMode() const { return bombSpawnMode_; }
+
+	void SetMoveInputInterval(float interval) { moveInputInterval_ = interval; }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -143,11 +148,6 @@ private:
 		float explosionSize =  1.0f;          // 爆発時のサイズ中心から±マス分
         bool isChainBomb = false;             // Chainモード中に生成された爆弾か
     };
-
-    enum class BombSpawnMode {
-        None,
-        Chain,
-	};
 
 	BombSpawnMode bombSpawnMode_ = BombSpawnMode::None;
 

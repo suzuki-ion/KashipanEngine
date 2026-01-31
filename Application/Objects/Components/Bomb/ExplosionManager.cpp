@@ -179,8 +179,8 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
     if (collider_ && collider_->GetCollider()) {
         ColliderInfo3D collisionInfo;
         Math::AABB aabb;
-        aabb.min = Vector3{ (-size_ / 2.0f) + 0.5f, -0.5f, -0.5f };
-        aabb.max = Vector3{ (+size_ / 2.0f) - 0.5f, +0.5f, +0.5f };
+        aabb.min = Vector3{ (-size_ / 2.0f), -0.5f, -0.5f };
+        aabb.max = Vector3{ (+size_ / 2.0f), +0.5f, +0.5f };
         collisionInfo.shape = aabb;
         collisionInfo.attribute.set(2);
 
@@ -212,8 +212,8 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
     if (collider2_ && collider2_->GetCollider()) {
         ColliderInfo3D collisionInfo;
         Math::AABB aabb;
-        aabb.min = Vector3{ -0.5f, -0.5f, (-size_ / 2.0f) + 0.5f };
-        aabb.max = Vector3{ +0.5f, +0.5f, (+size_ / 2.0f) - 0.5f };
+        aabb.min = Vector3{ -0.5f, -0.5f, (-size_ / 2.0f) };
+        aabb.max = Vector3{ +0.5f, +0.5f, (+size_ / 2.0f) };
         collisionInfo.shape = aabb;
         collisionInfo.attribute.set(2);
 

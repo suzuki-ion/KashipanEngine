@@ -435,6 +435,7 @@
     <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticle.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticleManager.h" />
     <ClInclude Include="Application\Objects\Components\Map\WallInfo.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

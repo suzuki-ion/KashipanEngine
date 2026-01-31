@@ -30,6 +30,9 @@ namespace KashipanEngine {
             ptr->isRotating_ = isRotating_;
             ptr->rotationTimer_ = rotationTimer_;
             ptr->startRotationY_ = startRotationY_;
+            ptr->hasBufferedInput_ = hasBufferedInput_;
+            ptr->bufferedDirection_ = bufferedDirection_;
+            ptr->bufferedPlayerDirection_ = bufferedPlayerDirection_;
             return ptr;
         }
 
@@ -50,9 +53,7 @@ namespace KashipanEngine {
             }
 
 			// BPM進行度に応じて移動入力をチェック
-            if (!isMoving_ && isStarted_) {
-                JudgeMove(true);
-            }
+            JudgeMove(true);
 
 			// 移動処理開始
             if (triggered_) {
@@ -110,6 +111,13 @@ namespace KashipanEngine {
 
 		/// @brief Bombでの移動停止判定の設定
 		void SetIsMoveBombStop(bool f) { isMoveBombStop_ = f; }
+
+		/// @brief 移動入力のインターバル設定
+        void SetMoveInputInterval(float interval) { moveInputInterval_ = interval; }
+
+        /// @brief 入力バッファ受付開始タイミングの設定（移動完了までの残り時間の割合、0.0～1.0）
+        void SetInputBufferThreshold(float threshold) { inputBufferThreshold_ = threshold; }
+
 #if defined(USE_IMGUI)
         void ShowImGui() override {
             ImGui::TextUnformatted("PlayerArrowMove");
@@ -119,6 +127,8 @@ namespace KashipanEngine {
             if (isMoving_) {
                 ImGui::Text("Progress: %.1f%%", (moveTimer_ / moveDuration_) * 100.0f);
             }
+            ImGui::Text("Has Buffered Input: %s", hasBufferedInput_ ? "Yes" : "No");
+            ImGui::DragFloat("Input Buffer Threshold", &inputBufferThreshold_, 0.01f, 0.0f, 1.0f);
         }
 #endif
     private:
@@ -143,12 +153,23 @@ namespace KashipanEngine {
 
 		/// @brief 移動入力のチェック
         void JudgeMove(bool f) {
+            // 移動完了間近（inputBufferThreshold_より進行している場合）かチェック
+            bool canBuffer = isMoving_ && (moveTimer_ / moveDuration_) >= inputBufferThreshold_;
+            
             if (inputCommand_->Evaluate("MoveUp").Triggered()) {
                 if (f) {
-                    moveDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
-                    playerDirection_ = PlayerDirection::Up;
-                    triggered_ = true;
-                    
+                    if (!isMoving_ && isStarted_) {
+                        // 通常の移動開始
+                        moveDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
+                        playerDirection_ = PlayerDirection::Up;
+                        triggered_ = true;
+                    } else if (canBuffer && isStarted_) {
+                        // 移動中だが、バッファリング可能な場合
+                        hasBufferedInput_ = true;
+                        bufferedDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
+                        bufferedPlayerDirection_ = PlayerDirection::Up;
+                    }
+
                     // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
                         if ((bpmProgress_ <= 0.0f + bpmToleranceRange_ || bpmProgress_ >= 1.0f - bpmToleranceRange_) && moveInputTimer_.IsFinished()) {
@@ -162,9 +183,15 @@ namespace KashipanEngine {
 				PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
                 if (f) {
-                    moveDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
-                    playerDirection_ = PlayerDirection::Down;
-                    triggered_ = true;
+                    if (!isMoving_ && isStarted_) {
+                        moveDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
+                        playerDirection_ = PlayerDirection::Down;
+                        triggered_ = true;
+                    } else if (canBuffer && isStarted_) {
+                        hasBufferedInput_ = true;
+                        bufferedDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
+                        bufferedPlayerDirection_ = PlayerDirection::Down;
+                    }
 
                     // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
@@ -179,9 +206,15 @@ namespace KashipanEngine {
                 PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
                 if (f) {
-                    moveDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
-                    playerDirection_ = PlayerDirection::Left;
-                    triggered_ = true;
+                    if (!isMoving_ && isStarted_) {
+                        moveDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
+                        playerDirection_ = PlayerDirection::Left;
+                        triggered_ = true;
+                    } else if (canBuffer && isStarted_) {
+                        hasBufferedInput_ = true;
+                        bufferedDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
+                        bufferedPlayerDirection_ = PlayerDirection::Left;
+                    }
 
                     // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
@@ -196,9 +229,15 @@ namespace KashipanEngine {
                 PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
                 if (f) {
-                    moveDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
-                    playerDirection_ = PlayerDirection::Right;
-                    triggered_ = true;
+                    if (!isMoving_ && isStarted_) {
+                        moveDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
+                        playerDirection_ = PlayerDirection::Right;
+                        triggered_ = true;
+                    } else if (canBuffer && isStarted_) {
+                        hasBufferedInput_ = true;
+                        bufferedDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
+                        bufferedPlayerDirection_ = PlayerDirection::Right;
+                    }
 
                     // 拍に合わせた正常な移動成功時のみ、Chainモード中のBombの爆発サイズを増加
                     if (bombManager_ && !isOutOfBounds_) {
@@ -346,6 +385,17 @@ namespace KashipanEngine {
                 isMoving_ = false;
                 moveTimer_ = 0.0f;
                 shouldRotate_ = false;
+                
+                // バッファされた入力があれば、次の移動を開始
+                if (hasBufferedInput_) {
+                    moveDirection_ = bufferedDirection_;
+                    playerDirection_ = bufferedPlayerDirection_;
+                    triggered_ = true;
+                    hasBufferedInput_ = false;
+                    
+                    // すぐに次の移動を開始
+                    OnTheMove();
+                }
             }
         };
     private:
@@ -377,6 +427,12 @@ namespace KashipanEngine {
         bool isRotating_ = false;        // 回転中フラグ
         float rotationTimer_ = 0.0f;     // 回転タイマー
         float startRotationY_ = 0.0f;    // 回転開始時のY軸回転
+
+        // 入力バッファリング用
+        bool hasBufferedInput_ = false;  // バッファされた入力があるか
+        Vector3 bufferedDirection_{ 0.0f, 0.0f, 0.0f }; // バッファされた移動方向
+        PlayerDirection bufferedPlayerDirection_ = PlayerDirection::Down; // バッファされたプレイヤーの向き
+        float inputBufferThreshold_ = 0.7f; // 入力バッファを受け付ける移動完了までの割合（デフォルト70%）
 
         const InputCommand* inputCommand_ = nullptr;
         BombManager* bombManager_ = nullptr;

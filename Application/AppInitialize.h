@@ -65,7 +65,6 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Bomb", InputCommand::KeyboardKey{ Key::Z }, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Bomb", ControllerButton::A, InputCommand::InputState::Trigger);
 
-        ic->RegisterCommand("ModeChange", InputCommand::KeyboardKey{ Key::D1 }, InputCommand::InputState::Trigger);
         // 攻撃
         ic->RegisterCommand("AttackCharge", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Down);
         ic->RegisterCommand("AttackCharge", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Down);
@@ -92,6 +91,8 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
         // デバッグ用カメラ操作有効化/無効化
         ic->RegisterCommand("DebugCameraToggle", InputCommand::KeyboardKey{ Key::F3 }, InputCommand::InputState::Trigger);
+
+        ic->RegisterCommand("ModeChange", InputCommand::KeyboardKey{ Key::D1 }, InputCommand::InputState::Trigger);
 #endif
     }
 }

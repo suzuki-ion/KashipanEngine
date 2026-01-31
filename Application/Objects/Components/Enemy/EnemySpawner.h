@@ -4,6 +4,8 @@
 #include "EnemyManager.h"
 #include "EnemySpawnParticle.h"
 #include <Scenes/Components/BPM/BPMSystem.h>
+#include <Objects/Components/Bomb/BombManager.h>
+#include <Objects/Components/Map/WallInfo.h>
 #include <vector>
 #include <random>
 #include "Objects/Components/ParticleConfig.h"
@@ -36,6 +38,16 @@ namespace KashipanEngine {
 
         void SetBPMSystem(BPMSystem* bpmSystem) { bpmSystem_ = bpmSystem; }
 
+        /// @brief BombManagerを設定（スポーン位置から爆弾を除外するため）
+        void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+        /// @brief 壁情報を設定（スポーン位置から壁を除外するため）
+        void SetWalls(WallInfo* walls, int mapWidth, int mapHeight) {
+            walls_ = walls;
+            mapWidth_ = mapWidth;
+            mapHeight_ = mapHeight;
+        }
+
         // パーティクルプールを初期化
         void InitializeParticlePool(int particlesPerFrame = 1);
 
@@ -59,6 +71,12 @@ namespace KashipanEngine {
         EnemyDirection ChooseSpawnDirection_NoOutward(const Vector3& pos, int mapW = 13, int mapH = 13, float tile = 2.0f) const;
         const SpawnPoint& SelectSpawnPoint() const;
 
+        /// @brief 指定位置に爆弾または壁が存在するかチェック
+        bool IsPositionOccupied(const Vector3& position) const;
+
+        /// @brief 有効なスポーン位置を取得（爆弾や壁を避ける）
+        bool GetValidSpawnPosition(Vector3& outPosition);
+
         static constexpr int kParticlePoolSize_ = 50;
 
         std::vector<SpawnPoint> spawnPoints_;
@@ -67,6 +85,11 @@ namespace KashipanEngine {
         int preSpawnBeat_ = -1; // パーティクル発生用の拍数記録
         EnemyManager* enemyManager_ = nullptr;
         BPMSystem* bpmSystem_ = nullptr;
+        BombManager* bombManager_ = nullptr;
+
+        WallInfo* walls_ = nullptr;
+        int mapWidth_ = 0;
+        int mapHeight_ = 0;
 
         ScreenBuffer* screenBuffer_ = nullptr;
         ShadowMapBuffer* shadowMapBuffer_ = nullptr;

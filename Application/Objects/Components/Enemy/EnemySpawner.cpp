@@ -75,12 +75,17 @@ namespace KashipanEngine {
         if (currentBeat != preSpawnBeat_ && (currentBeat + 3) % spawnInterval_ == 0) {
             preSpawnBeat_ = currentBeat;
             
-            // 次のスポーン位置を決定
-            const auto& spawnPoint = SelectSpawnPoint();
-            nextSpawnPosition_ = spawnPoint.position;
-            
-            // パーティクル放出開始
-            isEmittingParticles_ = true;
+            // 有効なスポーン位置を決定（爆弾や壁を避ける）
+            Vector3 validPosition;
+            if (GetValidSpawnPosition(validPosition)) {
+                nextSpawnPosition_ = validPosition;
+                
+                // パーティクル放出開始
+                isEmittingParticles_ = true;
+            } else {
+                // 有効な位置がない場合は放出しない
+                isEmittingParticles_ = false;
+            }
         }
 
         // パーティクルを毎フレーム放出（プールから再利用）
@@ -91,7 +96,11 @@ namespace KashipanEngine {
         // 実際の敵のスポーン
         if (currentBeat != lastSpawnBeat_ && currentBeat % spawnInterval_ == 0) {
             lastSpawnBeat_ = currentBeat;
-            SpawnEnemy();
+            
+            // スポーン時にもう一度位置が有効かチェック
+            if (!IsPositionOccupied(nextSpawnPosition_)) {
+                SpawnEnemy();
+            }
             
             // パーティクル放出停止
             isEmittingParticles_ = false;
@@ -171,6 +180,68 @@ namespace KashipanEngine {
         std::uniform_int_distribution<size_t> dis(0, spawnPoints_.size() - 1);
         
         return spawnPoints_[dis(gen)];
+    }
+
+    bool EnemySpawner::IsPositionOccupied(const Vector3& position) const {
+        constexpr float kTile = 2.0f;
+        const int gridX = static_cast<int>(std::round(position.x / kTile));
+        const int gridZ = static_cast<int>(std::round(position.z / kTile));
+
+        // 範囲外チェック
+        if (gridX < 0 || gridX >= mapWidth_ || gridZ < 0 || gridZ >= mapHeight_) {
+            return true;
+        }
+
+        // 壁のチェック
+        if (walls_) {
+            const int index = gridZ * mapWidth_ + gridX;
+            const WallInfo& wall = walls_[index];
+            if (wall.isActive) {
+                return true;
+            }
+        }
+
+        // 爆弾のチェック
+        if (bombManager_) {
+            auto activeBombs = bombManager_->GetActiveBombsInfo();
+            for (const auto& bombInfo : activeBombs) {
+                const Vector3& bombPos = bombInfo.first;
+                const int bombX = static_cast<int>(std::round(bombPos.x / kTile));
+                const int bombZ = static_cast<int>(std::round(bombPos.z / kTile));
+                
+                if (bombX == gridX && bombZ == gridZ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool EnemySpawner::GetValidSpawnPosition(Vector3& outPosition) {
+        if (spawnPoints_.empty()) return false;
+
+        // ランダムシャッフルで全スポーン位置を試す
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        
+        std::vector<size_t> indices(spawnPoints_.size());
+        for (size_t i = 0; i < indices.size(); ++i) {
+            indices[i] = i;
+        }
+        std::shuffle(indices.begin(), indices.end(), gen);
+
+        // 全スポーン位置をチェック
+        for (size_t idx : indices) {
+            const Vector3& pos = spawnPoints_[idx].position;
+            if (!IsPositionOccupied(pos)) {
+                outPosition = pos;
+                return true;
+            }
+        }
+
+        // 有効な位置が見つからなかった
+        return false;
     }
 
 #if defined(USE_IMGUI)

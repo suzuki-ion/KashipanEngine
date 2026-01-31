@@ -76,11 +76,13 @@ void EnemyManager::Update() {
         lastMoveBeat_ = currentBeat;
         
         for (auto& e : activeEnemies_) {
+            if (!e.object || e.isDead) continue;
+
+            // 前の拍の移動を完了: targetPositionをpositionに反映
+            e.position = e.targetPosition;
 
             // 移動する拍かどうかを判定
             bool isMoveBeat = (currentBeat % e.moveEveryNBeats == 0);
-
-            if (!e.object || e.isDead) continue;
 
             if (isMoveBeat) {
                 // 移動する拍: 目標位置を計算
@@ -92,7 +94,7 @@ void EnemyManager::Update() {
                 case EnemyDirection::Right: delta = Vector3{  moveDistance_, 0.0f, 0.0f }; break;
                 }
 
-                // 移動先の座標を計算
+                // 移動先の座標を計算（前の移動が完了したpositionを基準にする）
                 Vector3 nextPosition = e.position + delta;
                 int nextX = static_cast<int>(std::round(nextPosition.x / 2.0f));
                 int nextZ = static_cast<int>(std::round(nextPosition.z / 2.0f));
@@ -138,8 +140,7 @@ void EnemyManager::Update() {
             (e.targetPosition.x <= minX) || (e.targetPosition.x >= maxX) ||
             (e.targetPosition.z <= minZ) || (e.targetPosition.z >= maxZ);
 
-        e.position = nextPos;
-
+        // 描画位置のみ更新（e.positionは次の拍まで更新しない）
         if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(nextPos.x, currentPosY, nextPos.z));
         }

@@ -605,6 +605,11 @@ void GameScene::Initialize() {
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
     }
+
+    if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+    if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+    if (backMonitorGame_) backMonitorGame_->SetActive(false);
+    if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
 }
 
 GameScene::~GameScene() {}
@@ -620,42 +625,31 @@ void GameScene::OnUpdate() {
 
 	// プレイヤーの体力が0になった際の処理
     if (auto* health = player_->GetComponent3D<Health>()) {
-        static bool isDeadProcessed = false;
-        if (health->GetOutGameTimerIsFinished() && !isDeadProcessed) {
-            SetNextSceneName("TitleScene");
-            if (auto *out = GetSceneComponent<SceneChangeOut>()) {
-                out->Play();
-            }
-            isDeadProcessed = true;
-        } else if (!health->GetOutGameTimerIsFinished()) {
-            isDeadProcessed = false;
+        if (health->GetOutGameTimerIsFinished()) {
+            InGameQuit();
+            if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+            if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+            if (backMonitorGame_) backMonitorGame_->SetActive(false);
+            if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
         }
     }
 
     if (backMonitorMenu_ && backMonitorMenu_->IsActive()) {
-        if (backMonitorMenu_->IsConfirmed()) {
-            if (backMonitorMenu_->GetConfirmedIndex() == 0) {
+        if (backMonitorMenu_->IsConfirmedTriggered()) {
+            if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Start)) {
                 InGameStart();
-            } else if (backMonitorMenu_->GetConfirmedIndex() == 1) {
+                if (cameraController_) cameraController_->SetTargetTranslate(cameraGameTargetPos_);
+                if (cameraController_) cameraController_->SetTargetRotate(cameraGameTargetRot_);
+                if (backMonitorGame_) backMonitorGame_->SetActive(true);
+                if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+                if (stageLighting_) { stageLighting_->ResetLighting(); }
+
+            } else if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Title)) {
                 SetNextSceneName("TitleScene");
                 if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                     out->Play();
                 }
             }
-        }
-    }
-
-    if (cameraController_) {
-        if (isGameStarted_) {
-            cameraController_->SetTargetTranslate(cameraGameTargetPos_);
-            cameraController_->SetTargetRotate(cameraGameTargetRot_);
-            if (backMonitorGame_) backMonitorGame_->SetActive(true);
-            if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
-        } else {
-            cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
-            cameraController_->SetTargetRotate(cameraMenuTargetRot_);
-            if (backMonitorGame_) backMonitorGame_->SetActive(false);
-            if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
         }
     }
 
@@ -1427,6 +1421,12 @@ void GameScene::InGameStart() {
         if (enemySpawner_) {
             enemySpawner_->SetIsStarted(true);
         }
+
+        if (player_) {
+            if (auto* health = player_->GetComponent3D<Health>()) {
+                health->ResetHealth(10);
+            }
+        }
     }
 }
 
@@ -1463,6 +1463,8 @@ void GameScene::InGameQuit() {
         tr->SetTranslate(bpmObjectStart_[0]);
         tr1->SetTranslate(bpmObjectStart_[1]);
     }
+
+    isGameStarted_ = false;
 }
 
 void GameScene::UpdateBombExplosionMarkers() {

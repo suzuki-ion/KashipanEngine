@@ -14,15 +14,13 @@ BackMonitorWithMenuScreen::BackMonitorWithMenuScreen(ScreenBuffer* target, Input
 BackMonitorWithMenuScreen::~BackMonitorWithMenuScreen() {}
 
 void BackMonitorWithMenuScreen::Initialize() {
-    static bool isInitialized = false;
-
     auto target = GetTargetScreenBuffer();
     if (!target) return;
     auto ctx = GetOwnerContext();
     if (!ctx) return;
 
     // Set model count and resize vectors
-    if (!isInitialized) {
+    if (!isInitialized_) {
         modelCount_ = 4;
         models_.assign(modelCount_, nullptr);
         zStart_.assign(modelCount_, 2.5f);
@@ -36,7 +34,7 @@ void BackMonitorWithMenuScreen::Initialize() {
         xElapsed_.assign(modelCount_, 0.0f);
         xDuration_.assign(modelCount_, 0.0f);
         xAnimating_.assign(modelCount_, false);
-        isInitialized = true;
+        isInitialized_ = true;
     }
 
     const float centerX = 0.0f;
@@ -135,6 +133,9 @@ void BackMonitorWithMenuScreen::Initialize() {
     }
 
     isSubmitted_ = false;
+    isConfirming_ = false;
+    isConfirmed_ = false;
+    isConfirmedTriggerd_ = false;
     selectedIndex_ = 0;
     // サイン波タイマーをリセット
     rotSineTime_ = 0.0f;
@@ -356,6 +357,10 @@ void BackMonitorWithMenuScreen::Update() {
         if (t >= 1.0f) {
             isConfirming_ = false;
         }
+    }
+
+    if (isSubmitted_ && !isConfirming_) {
+        isConfirmed_ = true;
     }
 }
 

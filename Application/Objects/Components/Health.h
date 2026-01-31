@@ -92,6 +92,17 @@ public:
     bool GetOutGameTimerIsFinished() const {
         return outGameTimer_.IsFinished();
 	}
+
+    void ResetHealth(int hp) {
+        hp_ = hp;
+        isAlive_ = true;
+        wasDamaged_ = false;
+        cooldownRemaining_ = 0.0f;
+        blinkTimer_ = 0.0f;
+        outGameTimer_.Reset();
+        UpdateMaterialTint();
+    }
+
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::TextUnformatted("Health");

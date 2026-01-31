@@ -27,7 +27,15 @@ public:
     int GetConfirmedIndex() const { return confirmedIndex_; }
     bool IsSubmitted() const { return isSubmitted_; }
     bool IsConfirming() const { return isConfirming_; }
-    bool IsConfirmed() const { return isSubmitted_ && !isConfirming_; }
+    bool IsConfirmed() const { return isConfirmed_; }
+    bool IsConfirmedTriggered() {
+        if (isConfirmedTriggerd_) return false;
+        if (isConfirmed_) {
+            isConfirmedTriggerd_ = true;
+            return true;
+        }
+        return false;
+    }
 
 private:
     Model *menuTitle_ = nullptr;
@@ -71,6 +79,10 @@ private:
     float confirmElapsed_ = 0.0f;
     float confirmDuration_ = 0.0f;
     bool isConfirming_ = false;
+    bool isConfirmed_ = false;
+    bool isConfirmedTriggerd_ = false;
+
+    bool isInitialized_ = false;
 };
 
 } // namespace KashipanEngine

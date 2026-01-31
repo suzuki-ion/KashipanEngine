@@ -12,9 +12,14 @@ void StageLighting::Initialize() {
     lightManager_ = sceneDefaults ? sceneDefaults->GetLightManager() : nullptr;
     directionalLight_ = sceneDefaults ? sceneDefaults->GetDirectionalLight() : nullptr;
     auto *screenBuffer3D = sceneDefaults ? sceneDefaults->GetScreenBuffer3D() : nullptr;
+    bpmSystem_ = ctx->GetComponent<BPMSystem>();
 
     directionalLightOriginalColor_ = directionalLight_ ? directionalLight_->GetColor() : Vector4{ 1.0f, 1.0f, 1.0f, 1.0f };
     directionalLightOriginalIntensity_ = directionalLight_ ? directionalLight_->GetIntensity() : 1.0f;
+
+    if (directionalLight_) {
+        directionalLight_->SetIntensity(0.0f);
+    }
 
     // --- centerRotateSpotLight_ (3 lights) ---
     const size_t centerCount = 3;
@@ -66,7 +71,7 @@ void StageLighting::Initialize() {
             spotLight->SetRange(64.0f);
             spotLight->SetInnerAngle(0.0f);
             spotLight->SetOuterAngle(0.3f);
-            spotLight->SetIntensity(1.0f);
+            spotLight->SetIntensity(0.0f);
             spotLight->SetDecay(0.0f);
             spotLight->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
             lightManager_->AddSpotLight(spotLight.get());
@@ -166,7 +171,28 @@ void StageLighting::UpdateCenterRotateSpotLights(float deltaTime) {
 }
 
 void StageLighting::UpdateRhythmicalSpotLights(float /*deltaTime*/) {
-    // intentionally empty
+    // change color on beat and adjust intensity according to beat progress
+    if (!bpmSystem_ || rhythmicalSpotLight_.empty()) return;
+
+    // Get progress within current beat (0.0f .. 1.0f)
+    float progress = bpmSystem_->GetBeatProgress();
+    if (progress < 0.0f) progress = 0.0f;
+    if (progress > 1.0f) progress = 1.0f;
+
+    // intensity should go from 1.0f at beat start to 0.0f at beat end
+    float intensity = 1.0f - progress;
+
+    // When a beat occurs, randomize colors of rhythmical lights
+    bool onBeat = bpmSystem_->GetOnBeat();
+
+    for (auto* s : rhythmicalSpotLight_) {
+        if (!s) continue;
+        if (onBeat) {
+            // randomize color and ensure enabled
+            RandomizeAndEnableSpotLight(s, true);
+        }
+        s->SetIntensity(intensity);
+    }
 }
 
 void StageLighting::UpdateStageOutsideSpotLights(float /*deltaTime*/) {

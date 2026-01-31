@@ -1,5 +1,6 @@
 #pragma once
 #include <KashipanEngine.h>
+#include "BPM/BPMSystem.h"
 
 namespace KashipanEngine {
 
@@ -27,6 +28,7 @@ private:
     void RandomizeAndEnableSpotLight(SpotLight *spot, bool enabled = true);
 
     LightManager *lightManager_ = nullptr;
+    BPMSystem *bpmSystem_ = nullptr;
 
     DirectionalLight *directionalLight_ = nullptr;
     std::vector<SpotLight *> centerRotateSpotLight_;

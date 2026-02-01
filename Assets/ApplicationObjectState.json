@@ -93,7 +93,7 @@
   {
     "name": "playerBpmToleranceRange",
     "type": 2,
-    "value": 0.200000
+    "value": 0.150000
   },
   {
     "name": "playerMoveDuration",
@@ -164,6 +164,36 @@
     "name": "enemySpawnInterval",
     "type": 1,
     "value": 4
+  },
+  {
+    "name": "playerNoneBpmToleranceRange",
+    "type": 2,
+    "value": 0.150000
+  },
+  {
+    "name": "playerChainBpmToleranceRange",
+    "type": 2,
+    "value": 0.250000
+  },
+  {
+    "name": "playerMoveInputInterval",
+    "type": 2,
+    "value": 0.400000
+  },
+  {
+    "name": "playerNoneMoveInputInterval",
+    "type": 2,
+    "value": 0.400000
+  },
+  {
+    "name": "playerChainMoveInputInterval",
+    "type": 2,
+    "value": 0.250000
+  },
+  {
+    "name": "isBreakWalls",
+    "type": 3,
+    "value": true
   }
   ]
 }

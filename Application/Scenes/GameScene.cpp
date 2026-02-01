@@ -241,9 +241,14 @@ void GameScene::Initialize() {
         auto modelData = ModelManager::GetModelDataFromFileName("dj.obj");
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("DJ");
+
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(10.0f, 3.5f, 27.75f));
             tr->SetScale(Vector3(1.0f));
+        }
+
+        if (auto* mt = obj->GetComponent3D<Material3D>()) {
+			mt->SetColor(Vector4{ 1.0f,1.0f,1.0f,0.0f });
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
@@ -555,15 +560,15 @@ void GameScene::Initialize() {
     //==================================================
 
     // Player Health UI (ライフ表示)
-    {
-        auto comp = std::make_unique<PlayerHealthUI>(screenBuffer2D);
-        if (player_) {
-            if (auto *health = player_->GetComponent3D<Health>()) {
-                comp->SetHealth(health);
-            }
-        }
-        AddSceneComponent(std::move(comp));
-    }
+    //{
+    //    auto comp = std::make_unique<PlayerHealthUI>(screenBuffer2D);
+    //    if (player_) {
+    //        if (auto *health = player_->GetComponent3D<Health>()) {
+    //            comp->SetHealth(health);
+    //        }
+    //    }
+    //    AddSceneComponent(std::move(comp));
+    //}
 
     // Score UI (スコア表示)
     {
@@ -611,12 +616,11 @@ void GameScene::Initialize() {
 GameScene::~GameScene() {}
 
 void GameScene::OnUpdate() {
+    SetObjectValue();
+    SetParticleValue();
 #if defined(USE_IMGUI)
     DrawObjectStateImGui();
-    SetObjectValue();
-
     DrawParticleStateImGui();
-    SetParticleValue();
 #endif
 
 	// プレイヤーの体力が0になった際の処理
@@ -703,6 +707,10 @@ void GameScene::OnUpdate() {
         if (auto* bpmScaling = djNagasawa_->GetComponent3D<BPMScaling>()) {
             bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
         }
+    }
+
+    if (playerHealthUI_) {
+        playerHealthUI_->SetBPMProgress(bpmSystem_->GetBeatProgress());
     }
 
     if (player_) {
@@ -940,6 +948,15 @@ void GameScene::LoadObjectStateJson() {
 
         // 敵関連
         if (index < values.size()) enemySpawnInterval_ = JsonManager::Reverse<int>(values[index++]);
+
+		// 後から追加
+        if (index < values.size()) playerNoneBpmToleranceRange_ = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerChainBpmToleranceRange_ = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerMoveInputInterval_ = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerNoneMoveInputInterval_ = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) playerChainMoveInputInterval_ = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) isBreakWalls_ = JsonManager::Reverse<bool>(values[index++]);
+
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadFromJson: %s\n", e.what());
         printf("[INFO] Using default emitter settings.\n");
@@ -1010,6 +1027,14 @@ void GameScene::SaveObjectStateJson() {
 
     // 敵関連
     jsonManager_->RegistOutput(enemySpawnInterval_, "enemySpawnInterval");
+
+    // 後から追加
+    jsonManager_->RegistOutput(playerNoneBpmToleranceRange_, "playerNoneBpmToleranceRange");
+    jsonManager_->RegistOutput(playerChainBpmToleranceRange_, "playerChainBpmToleranceRange");
+    jsonManager_->RegistOutput(playerMoveInputInterval_, "playerMoveInputInterval");
+    jsonManager_->RegistOutput(playerNoneMoveInputInterval_, "playerNoneMoveInputInterval");
+    jsonManager_->RegistOutput(playerChainMoveInputInterval_, "playerChainMoveInputInterval");
+    jsonManager_->RegistOutput(isBreakWalls_, "isBreakWalls");
 
     // JSONファイルに書き込み
     jsonManager_->Write(loadToSaveName_);
@@ -1158,7 +1183,6 @@ void GameScene::SaveParticleStateJson() {
     jsonParticleManager_->Write(loadToSaveParticleName_);
 }
 
-#if defined(USE_IMGUI)
 void GameScene::SetObjectValue() {
     // BPMシステムの更新
     if (bpmSystem_) {
@@ -1169,7 +1193,7 @@ void GameScene::SetObjectValue() {
     for (int z = 0; z < kMapH; z++) {
         for (int x = 0; x < kMapW; x++) {
             if (maps_[z][x]) {
-                if (auto *bpmScaling = maps_[z][x]->GetComponent3D<BPMScaling>()) {
+                if (auto* bpmScaling = maps_[z][x]->GetComponent3D<BPMScaling>()) {
                     bpmScaling->SetMinMaxScale(mapScaleMin_, mapScaleMax_);
                 }
             }
@@ -1178,20 +1202,20 @@ void GameScene::SetObjectValue() {
 
     // プレイヤーのスケール更新
     if (player_) {
-        if (auto *bpmScaling = player_->GetComponent3D<BPMScaling>()) {
+        if (auto* bpmScaling = player_->GetComponent3D<BPMScaling>()) {
             bpmScaling->SetMinMaxScale(playerScaleMin_, playerScaleMax_);
         }
 
         // プレイヤーの移動設定更新
-        if (auto *playerMove = player_->GetComponent3D<PlayerMove>()) {
+        if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
             playerMove->SetBPMToleranceRange(playerBpmToleranceRange_);
             playerMove->SetMoveDuration(playerMoveDuration_);
             playerMove->SetIsMoveBombStop(isMoveBombStop_);
-			playerMove->SetMoveInputInterval(playerMoveInputInterval_);
+            playerMove->SetMoveInputInterval(playerMoveInputInterval_);
         }
 
         // プレイヤーのダメージ時カメラシェイク更新
-        if (auto *health = player_->GetComponent3D<Health>()) {
+        if (auto* health = player_->GetComponent3D<Health>()) {
             health->SetShake(pDamageShakePower_, pDamageShakeTime_);
         }
     }
@@ -1206,7 +1230,7 @@ void GameScene::SetObjectValue() {
         bombManager_->SetSpeedScaleRange(Vector3(bombSpeedMinScale_), Vector3(bombSpeedMaxScale_));
         bombManager_->SetDetonationScale(Vector3(bombDetonationScale_));
         bombManager_->SetUsePlayerDirection(usePlayerDirection_);
-		bombManager_->SetMoveInputInterval(playerMoveInputInterval_);
+        bombManager_->SetMoveInputInterval(playerMoveInputInterval_);
     }
 
     // 爆発関連の設定更新
@@ -1214,6 +1238,7 @@ void GameScene::SetObjectValue() {
         explosionManager_->SetExplosionLifetime(explosionLifetime_);
         explosionManager_->SetCameraShake(bombShakePower_, bombShakeTime_);
         explosionManager_->SetSize(static_cast<float>(explosionSize_));
+        explosionManager_->SetIsBreakWalls(isBreakWalls_);
     }
 
     // ExplosionNumberDisplay関連の設定更新
@@ -1232,13 +1257,37 @@ void GameScene::SetObjectValue() {
     if (bpmObjects_[0]) {  // 代表として最初のオブジェクトをチェック
         for (int i = 0; i < kBpmObjectCount; ++i) {
             if (bpmObjects_[i]) {
-                if (auto *bpmScaling = bpmObjects_[i]->GetComponent3D<BPMScaling>()) {
+                if (auto* bpmScaling = bpmObjects_[i]->GetComponent3D<BPMScaling>()) {
                     bpmScaling->SetMinMaxScale(bpmObjectStart_[i], bpmObjectEnd_[i]);
                 }
             }
         }
     }
 }
+
+void GameScene::SetParticleValue() {
+
+    for (int i = 0; i < kOneBeatEmitterCount_; ++i) {
+        if (oneBeatEmitter_[i]) {
+            oneBeatEmitter_[i]->SetParticleConfig(oneBeatParticleConfig_);
+            oneBeatEmitter_[i]->SetMissParticleConfig(oneBeatMissParticleConfig_);
+        }
+    }
+
+    if (enemySpawner_) {
+        enemySpawner_->SetEnemyDieParticleConfig(enemySpawnParticleConfig_);
+    }
+
+    if (enemyManager_) {
+        enemyManager_->SetDieParticleConfig(enemyDieParticleConfig_);
+    }
+
+    if (playerDieParticleManager_) {
+        playerDieParticleManager_->SetParticleConfig(playerDieParticleConfig_);
+    }
+}
+
+#if defined(USE_IMGUI)
 
 void GameScene::DrawObjectStateImGui() {
     ImGui::Begin("ObjectStatus");
@@ -1283,7 +1332,12 @@ void GameScene::DrawObjectStateImGui() {
         ImGui::DragFloat3("プレイヤー最小スケール", &playerScaleMin_.x, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat3("プレイヤー最大スケール", &playerScaleMax_.x, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat("BPM許容範囲", &playerBpmToleranceRange_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("NoneBPM許容範囲", &playerNoneBpmToleranceRange_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("ChainBPM許容範囲", &playerChainBpmToleranceRange_, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("移動時間", &playerMoveDuration_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("移動入力インターバル", &playerMoveInputInterval_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("None移動入力インターバル", &playerNoneMoveInputInterval_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("Chain移動入力インターバル", &playerChainMoveInputInterval_, 0.01f, 0.0f, 1.0f);
         ImGui::Text("マップ座標: X=%d, Z=%d", playerMapX_, playerMapZ_);
 		ImGui::Checkbox("爆弾で移動が停止するか", &isMoveBombStop_);
 		ImGui::Checkbox("プレイヤーの向いている方向に爆弾を置くか", &usePlayerDirection_);
@@ -1304,6 +1358,7 @@ void GameScene::DrawObjectStateImGui() {
     if (ImGui::CollapsingHeader("爆発関連")) {
         ImGui::DragFloat("爆発寿命(秒)", &explosionLifetime_, 0.01f, 0.1f, 5.0f);
         ImGui::DragInt("爆発サイズ(XZ)", &explosionSize_, 1.0f, 1, 10);
+        ImGui::Checkbox("爆発で壁を壊すか", &isBreakWalls_);
     }
 
     // ExplosionNumberDisplay関連
@@ -1319,28 +1374,6 @@ void GameScene::DrawObjectStateImGui() {
     }
 
     ImGui::End();
-}
-
-void GameScene::SetParticleValue() {
-
-    for (int i = 0; i < kOneBeatEmitterCount_; ++i) {
-        if (oneBeatEmitter_[i]) {
-            oneBeatEmitter_[i]->SetParticleConfig(oneBeatParticleConfig_);
-			oneBeatEmitter_[i]->SetMissParticleConfig(oneBeatMissParticleConfig_);
-        }
-    }
-
-    if (enemySpawner_) {
-        enemySpawner_->SetEnemyDieParticleConfig(enemySpawnParticleConfig_);
-    }
-
-    if (enemyManager_) {
-        enemyManager_->SetDieParticleConfig(enemyDieParticleConfig_);
-    }
-
-    if (playerDieParticleManager_) {
-        playerDieParticleManager_->SetParticleConfig(playerDieParticleConfig_);
-    }
 }
 
 void GameScene::DrawParticleStateImGui() {
@@ -1425,6 +1458,10 @@ void GameScene::InGameStart() {
             bpmSystem_->MeasurementStart(bgmPlayHandle_, static_cast<float>(bpm_));
         }
 
+        if (auto* djMt = djNagasawa_->GetComponent3D<Material3D>()) {
+            djMt->SetColor(Vector4(1.0f));
+        }
+
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {
             move->SetIsStarted(true);
         }
@@ -1462,6 +1499,10 @@ void GameScene::InGameQuit() {
         }
     }
 
+    if (auto* djMt = djNagasawa_->GetComponent3D<Material3D>()) {
+        djMt->SetColor(Vector4(0.0f));
+    }
+
     if (bombManager_) {
         bombManager_->SetIsStarted(false);
         bombManager_->ClearAllBombs();
@@ -1469,6 +1510,9 @@ void GameScene::InGameQuit() {
 
     if (enemySpawner_) {
         enemySpawner_->SetIsStarted(false);
+    }
+
+    if (enemyManager_) {
         enemyManager_->ClearAllEnemies();
     }
 
@@ -1477,6 +1521,17 @@ void GameScene::InGameQuit() {
         auto tr1 = bpmObjects_[1]->GetComponent3D<Transform3D>();
         tr->SetTranslate(bpmObjectStart_[0]);
         tr1->SetTranslate(bpmObjectStart_[1]);
+    }
+
+    for (int z = 0; z < kMapH; z++) {
+        for (int x = 0; x < kMapW; x++) {
+            if (walls_[z][x].object) {
+                walls_[z][x].isActive = false;
+                walls_[z][x].isMoving = false;
+                walls_[z][x].moveTimer.Reset();
+                walls_[z][x].hp = 1;
+            }
+        }
     }
 
     isGameStarted_ = false;
@@ -1545,4 +1600,4 @@ void GameScene::UpdateBombExplosionMarkers() {
     }
 }
 
-}
+} // namespace GameSceneNS

@@ -1,6 +1,7 @@
 #pragma once
 #include <KashipanEngine.h>
 #include <vector>
+#include "Objects/Components/BPMScaling.h"
 
 namespace KashipanEngine {
 
@@ -27,9 +28,13 @@ namespace KashipanEngine {
         /// @brief 毎フレーム更新処理
         void Update() override;
 
+		/// @brief BPM進行度を設定（0.0～1.0）
+		void SetBPMProgress(float progress) { bpmProgress_ = progress; }
     private:
         void EnsureModels();
         void UpdateModelColors();
+
+		float bpmProgress_ = 0.0f;
 
         ScreenBuffer* screenBuffer_ = nullptr;
         Health* health_ = nullptr;

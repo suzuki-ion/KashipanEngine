@@ -50,11 +50,10 @@ private:
 
 #if defined(USE_IMGUI)
     void DrawObjectStateImGui();
-    void SetObjectValue();
-
     void DrawParticleStateImGui();
-    void SetParticleValue();
 #endif
+    void SetObjectValue();
+    void SetParticleValue();
 
     void InGameStart();
 	void InGameQuit();
@@ -137,6 +136,7 @@ private:
     ScoreDisplay *explosionNumberDisplay_ = nullptr;
     float explosionLifetime_ = 0.5f; // 爆発の寿命（秒）
     int explosionSize_ = 3;         // 爆発のXZサイズ
+	bool isBreakWalls_ = true;    // 爆発で壁を壊すかどうか
 
     // ExplosionNumberDisplay関連
     float explosionNumberDisplayLifetime_ = 1.0f; // 数字の表示時間（秒）

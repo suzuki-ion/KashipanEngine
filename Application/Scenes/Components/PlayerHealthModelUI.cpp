@@ -61,18 +61,19 @@ namespace KashipanEngine {
             }
 
             if (auto* mat = hpObj->GetComponent3D<Material3D>()) {
-                auto tex = TextureManager::GetTextureFromAssetPath("Application/HP/playerHp/playerHp.png");
-				mat->SetTexture(tex);
+                mat->SetColor(Vector4{ 1.0f,0.0f,0.0f,1.0f });
             }
 
             if (auto* tr = hpObj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-                tr->SetScale(Vector3{1.0f});
+                tr->SetTranslate(Vector3{-3.0f + (0.3f * i), 1.5f, 5.0f});
+                tr->SetScale(Vector3{0.25f});
                 // ペアレントを設定
                 if (parentTransform_) {
                     tr->SetParentTransform(parentTransform_);
                 }
             }
+
+            hpObj->RegisterComponent<BPMScaling>(Vector3{ 0.25f,0.25f,0.25f }, Vector3(0.275f, 0.235f, 0.25f),EaseType::EaseInExpo);
 
             auto* rawHp = hpObj.get();
             hpObject_.push_back(rawHp);
@@ -86,14 +87,13 @@ namespace KashipanEngine {
                 outlineObj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
             }
 
-            if (auto* mat = outlineObj->GetComponent3D<Material3D>()) { 
-                auto tex = TextureManager::GetTextureFromAssetPath("Application/HP/playerHpOutline/playerHpOutline.png");
-                mat->SetTexture(tex);
+            if (auto* mat = outlineObj->GetComponent3D<Material3D>()) {
+                mat->SetColor(Vector4{ 0.0f,0.0f,0.0f,1.0f });
             }
 
             if (auto* tr = outlineObj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3{ 0.0f, 0.0f, 0.0f });
-                tr->SetScale(Vector3{ 1.0f });
+                tr->SetTranslate(Vector3{ -3.0f + (0.3f * i), 1.5f, 5.0f });
+                tr->SetScale(Vector3{ 0.23f });
                 // ペアレントを設定
                 if (parentTransform_) {
                     tr->SetParentTransform(parentTransform_);
@@ -112,13 +112,32 @@ namespace KashipanEngine {
         for (int i = 0; i < static_cast<int>(hpObject_.size()); ++i) {
             auto* obj = hpObject_[i];
             if (!obj) continue;
+
+            auto* scaling = obj->GetComponent3D<BPMScaling>();
+            if (scaling) {
+                scaling->SetBPMProgress(bpmProgress_);
+			}
+
             auto* mat = obj->GetComponent3D<Material3D>();
             if (!mat) continue;
 
             if (i < hp) {
-                mat->SetColor(Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+                mat->SetColor(Vector4{1.0f, 0.0f, 0.0f, 1.0f});
             } else {
-                mat->SetColor(Vector4{0.0f, 0.0f, 0.0f, 1.0f});
+                mat->SetColor(Vector4{0.0f, 0.0f, 0.0f, 0.0f});
+            }
+        }
+
+        for (int i = 0; i < static_cast<int>(hpOutLineObject_.size()); ++i) {
+            auto* obj = hpOutLineObject_[i];
+            if (!obj) continue;
+            auto* mat = obj->GetComponent3D<Material3D>();
+            if (!mat) continue;
+
+            if (i < hp) {
+                mat->SetColor(Vector4{ 0.2f, 0.2f, 0.2f, 1.0f });
+            } else {
+                mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
             }
         }
     }

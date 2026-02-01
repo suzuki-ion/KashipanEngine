@@ -267,6 +267,20 @@ void ExplosionManager::CreateWallAtBombPosition(const Vector3& position) {
     // 範囲チェック
     if (bombX < 0 || bombX >= mapW_ || bombZ < 0 || bombZ >= mapH_) return;
 
+    // プレイヤーの位置をチェック
+    if (player_) {
+        if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+            const Vector3& playerPos = tr->GetTranslate();
+            const int playerX = static_cast<int>(std::round(playerPos.x / 2.0f));
+            const int playerZ = static_cast<int>(std::round(playerPos.z / 2.0f));
+            
+            // プレイヤーがいる位置には壁を起動しない
+            if (bombX == playerX && bombZ == playerZ) {
+                return;
+            }
+        }
+    }
+
     // 1次元配列のインデックスを計算: walls_[z][x] = walls_[z * mapW + x]
     const int index = bombZ * mapW_ + bombX;
 
@@ -281,38 +295,42 @@ void ExplosionManager::CreateWallAtBombPosition(const Vector3& position) {
 void ExplosionManager::DestroyWallsInExplosionRange(const Vector3& position, float size) {
     if (!walls_ || mapW_ <= 0 || mapH_ <= 0) return;
 
-    // 爆発の中心位置をグリッド座標に変換
-    const int centerX = static_cast<int>(std::round(position.x / 2.0f));
-    const int centerZ = static_cast<int>(std::round(position.z / 2.0f));
+    if (isBreakWalls_) {
 
-    const int explosionSize = static_cast<int>(size);
+        // 爆発の中心位置をグリッド座標に変換
+        const int centerX = static_cast<int>(std::round(position.x / 2.0f));
+        const int centerZ = static_cast<int>(std::round(position.z / 2.0f));
 
-    // X軸方向（左右）の壁を破壊
-    for (int dx = -explosionSize; dx <= explosionSize; dx++) {
-        const int targetX = centerX + dx;
-        if (targetX >= 0 && targetX < mapW_ && centerZ >= 0 && centerZ < mapH_) {
-            const int index = centerZ * mapW_ + targetX;
-            if (walls_[index].isActive && walls_[index].isMoving) {
-                walls_[index].isActive = false;
-                walls_[index].isMoving = false;
-				walls_[index].moveTimer.Reset();
-				walls_[index].hp = 0;
+        const int explosionSize = static_cast<int>(size);
+
+        // X軸方向（左右）の壁を破壊
+        for (int dx = -explosionSize; dx <= explosionSize; dx++) {
+            const int targetX = centerX + dx;
+            if (targetX >= 0 && targetX < mapW_ && centerZ >= 0 && centerZ < mapH_) {
+                const int index = centerZ * mapW_ + targetX;
+                if (walls_[index].isActive && walls_[index].isMoving) {
+                    walls_[index].isActive = false;
+                    walls_[index].isMoving = false;
+                    walls_[index].moveTimer.Reset();
+                    walls_[index].hp = 0;
+                }
             }
         }
-    }
 
-    // Z軸方向（上下）の壁を破壊
-    for (int dz = -explosionSize; dz <= explosionSize; dz++) {
-        const int targetZ = centerZ + dz;
-        if (centerX >= 0 && centerX < mapW_ && targetZ >= 0 && targetZ < mapH_) {
-            const int index = targetZ * mapW_ + centerX;
-            if (walls_[index].isActive && walls_[index].isMoving) {
-                walls_[index].isActive = false;
-				walls_[index].isMoving = false;
-                walls_[index].moveTimer.Reset();
-                walls_[index].hp = 0;
+        // Z軸方向（上下）の壁を破壊
+        for (int dz = -explosionSize; dz <= explosionSize; dz++) {
+            const int targetZ = centerZ + dz;
+            if (centerX >= 0 && centerX < mapW_ && targetZ >= 0 && targetZ < mapH_) {
+                const int index = targetZ * mapW_ + centerX;
+                if (walls_[index].isActive && walls_[index].isMoving) {
+                    walls_[index].isActive = false;
+                    walls_[index].isMoving = false;
+                    walls_[index].moveTimer.Reset();
+                    walls_[index].hp = 0;
+                }
             }
         }
+
     }
 }
 

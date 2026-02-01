@@ -38,6 +38,8 @@ public:
     }
 
 private:
+    void MenuCreditUpdate();
+
     Model *menuTitle_ = nullptr;
     Model *menuStart_ = nullptr;
     Model *menuQuit_ = nullptr;
@@ -47,6 +49,7 @@ private:
 
     AudioManager::SoundHandle soundHandleSelect_ = AudioManager::kInvalidSoundHandle;
     AudioManager::SoundHandle soundHandleSubmit_ = AudioManager::kInvalidSoundHandle;
+    AudioManager::SoundHandle soundHandleCancel_ = AudioManager::kInvalidSoundHandle;
 
     int selectedIndex_ = 0;
     int confirmedIndex_ = -1;
@@ -63,17 +66,35 @@ private:
     std::vector<float> zDuration_;
     std::vector<bool> zAnimating_;
 
-    // For rotation (sinusoidal) on selected model
+    // 回転用オフセット（現在未使用）
     std::vector<float> rotOffsetX_;
     float rotSineTime_ = 0.0f;
-    float rotSineFrequency_ = 1.0f; // cycles per second
+    float rotSineFrequency_ = 1.0f; // 1秒に1回
 
-    // For confirm X-move animation of non-confirmed models
+    // 移動用オフセット
     std::vector<float> xStart_;
     std::vector<float> xEnd_;
     std::vector<float> xElapsed_;
     std::vector<float> xDuration_;
     std::vector<bool> xAnimating_;
+
+    std::vector<Vector3> basePositions_;
+    std::vector<Vector3> baseRotations_;
+    std::vector<Vector3> returnStartPos_;
+    std::vector<Vector3> returnEndPos_;
+    std::vector<Vector3> returnStartRot_;
+    std::vector<Vector3> returnEndRot_;
+    std::vector<float> returnElapsed_;
+    std::vector<float> returnDuration_;
+    std::vector<bool> returnAnimating_;
+
+    Vector3 creditMoveStartPos_ = {0.0f, 0.0f, 0.0f};
+    Vector3 creditMoveEndPos_ = {0.0f, 0.0f, 0.0f};
+    float creditMoveElapsed_ = 0.0f;
+    float creditMoveDuration_ = 0.0f;
+    bool isCreditMoving_ = false;
+    bool isCreditMoved_ = false;
+    bool isReturning_ = false;
 
     Vector3 confirmStartPos_ = {0.0f, 0.0f, 0.0f};
     Vector3 confirmEndPos_ = {0.0f, 0.0f, 2.0f};
@@ -86,6 +107,7 @@ private:
     bool isConfirmedTriggerd_ = false;
 
     bool isInitialized_ = false;
+
 };
 
 } // namespace KashipanEngine

@@ -243,7 +243,6 @@
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
     <ClInclude Include="KashipanEngine\Graphics\GraphicsEngine.h" />
-    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\IShaderTexture.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h" />
     <ClInclude Include="KashipanEngine\Graphics\PipelineManager.h" />
@@ -435,6 +434,7 @@
     <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticle.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticleManager.h" />
     <ClInclude Include="Application\Objects\Components\Map\WallInfo.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
   </ItemGroup>
   <ItemGroup>
@@ -553,5 +553,9 @@
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.DotMatrix.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DotMatrix.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DotMatrixPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Dither.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Dither.json" />
+    <None Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DitherPS.hlsl" />
   </ItemGroup>
 </Project>

@@ -40,12 +40,6 @@ void GameScene::Initialize() {
     ScreenBuffer *velocityBuffer = nullptr;
 
     if (screenBuffer3D) {
-        /*ChromaticAberrationEffect::Params p{};
-        p.directionX = 1.0f;
-        p.directionY = 0.0f;
-        p.strength = 0.001f;
-        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));*/
-
         BloomEffect::Params bp{};
         bp.threshold = 0.5f;
         bp.softKnee = 0.25f;
@@ -98,7 +92,7 @@ void GameScene::Initialize() {
     directionalLight->SetEnabled(true);
     directionalLight->SetColor(Vector4(0.8f, 0.6f, 1.0f, 1.0f));
     directionalLight->SetDirection(Vector3(0.0f, -1.0f, 0.0f));
-    directionalLight->SetIntensity(2.0f);
+    directionalLight->SetIntensity(1.5f);
 
     //==================================================
     // ↓ ここからゲームオブジェクト定義 ↓

@@ -365,6 +365,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
@@ -438,7 +439,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
     <ClInclude Include="KashipanEngine\Graphics\GraphicsEngine.h" />
-    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
+    <None Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\IShaderTexture.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h" />
     <ClInclude Include="KashipanEngine\Graphics\PipelineManager.h" />
@@ -603,6 +604,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Prefilter.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Bloom.Upsample.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ChromaticAberration.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Dither.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.DotMatrix.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.HistoryCopy.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.MotionBlur.json" />
@@ -645,6 +647,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\ShadowMap.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Dither.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Line.hlsli" />
@@ -778,6 +781,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DotMatrixPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DitherPS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

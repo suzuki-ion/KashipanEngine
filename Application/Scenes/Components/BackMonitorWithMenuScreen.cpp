@@ -34,11 +34,21 @@ void BackMonitorWithMenuScreen::Initialize() {
         xElapsed_.assign(modelCount_, 0.0f);
         xDuration_.assign(modelCount_, 0.0f);
         xAnimating_.assign(modelCount_, false);
+        basePositions_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
+        baseRotations_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
+        returnStartPos_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
+        returnEndPos_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
+        returnStartRot_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
+        returnEndRot_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
+        returnElapsed_.assign(modelCount_, 0.0f);
+        returnDuration_.assign(modelCount_, 0.0f);
+        returnAnimating_.assign(modelCount_, false);
         isInitialized_ = true;
 
         // Load sound handles
         soundHandleSelect_ = AudioManager::GetSoundHandleFromFileName("select.mp3");
         soundHandleSubmit_ = AudioManager::GetSoundHandleFromFileName("submit.mp3");
+        soundHandleCancel_ = AudioManager::GetSoundHandleFromFileName("cancel.mp3");
     }
 
     const float centerX = 0.0f;
@@ -64,6 +74,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 0, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
+        basePositions_[static_cast<size_t>(MenuModelIndex::Start)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(MenuModelIndex::Start)] = tr->GetRotate();
     }
     if (auto *mat = menuStart_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
@@ -86,6 +98,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 1, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
+        basePositions_[static_cast<size_t>(MenuModelIndex::Credit)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(MenuModelIndex::Credit)] = tr->GetRotate();
     }
     if (auto *mat = menuCredit_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
@@ -108,6 +122,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 2, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
+        basePositions_[static_cast<size_t>(MenuModelIndex::Title)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(MenuModelIndex::Title)] = tr->GetRotate();
     }
     if (auto *mat = menuTitle_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
@@ -130,6 +146,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 3, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
+        basePositions_[static_cast<size_t>(MenuModelIndex::Quit)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(MenuModelIndex::Quit)] = tr->GetRotate();
     }
     if (auto *mat = menuQuit_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
@@ -140,6 +158,9 @@ void BackMonitorWithMenuScreen::Initialize() {
     isConfirming_ = false;
     isConfirmed_ = false;
     isConfirmedTriggerd_ = false;
+    isCreditMoving_ = false;
+    isCreditMoved_ = false;
+    isReturning_ = false;
     selectedIndex_ = 0;
     // サイン波タイマーをリセット
     rotSineTime_ = 0.0f;
@@ -162,6 +183,9 @@ void BackMonitorWithMenuScreen::Initialize() {
         xAnimating_[idx] = false;
         xElapsed_[idx] = 0.0f;
         xDuration_[idx] = 0.0f;
+        returnAnimating_[idx] = false;
+        returnElapsed_[idx] = 0.0f;
+        returnDuration_[idx] = 0.0f;
         ++idx;
     }
 }
@@ -242,6 +266,11 @@ void BackMonitorWithMenuScreen::Update() {
         isSubmitted_ = true;
         confirmedIndex_ = selectedIndex_;
         isConfirming_ = true;
+        isConfirmed_ = false;
+        isConfirmedTriggerd_ = false;
+        isCreditMoving_ = false;
+        isCreditMoved_ = false;
+        isReturning_ = false;
         // 確定用アニメーションの準備
         if (models_[confirmedIndex_]) {
             auto *tr = models_[confirmedIndex_]->GetComponent3D<Transform3D>();
@@ -271,6 +300,40 @@ void BackMonitorWithMenuScreen::Update() {
             xElapsed_[idx] = -delay; // negative elapsed acts as delay before animation starts
             xDuration_[idx] = baseXDuration;
             xAnimating_[idx] = true;
+            ++idx;
+        }
+    }
+
+    if (isSubmitted_ && confirmedIndex_ == static_cast<int>(MenuModelIndex::Credit) && isCreditMoved_ && !isReturning_
+        && inputCommand_->Evaluate("Submit").Triggered()) {
+        AudioManager::Play(soundHandleCancel_, 1.0f, 0.0f, false);
+        const float returnDuration = 0.5f;
+        const float stagger = 0.05f;
+        const float degToRad = M_PI / 180.0f;
+        isReturning_ = true;
+        isConfirmed_ = false;
+        isConfirmedTriggerd_ = false;
+        size_t idx = 0;
+        for (const auto &m : models_) {
+            if (!m) { ++idx; continue; }
+            auto *tr = m->GetComponent3D<Transform3D>();
+            returnStartPos_[idx] = tr->GetTranslate();
+            returnEndPos_[idx] = basePositions_[idx];
+            returnStartRot_[idx] = tr->GetRotate();
+            returnEndRot_[idx] = baseRotations_[idx];
+            if (static_cast<int>(idx) == static_cast<int>(MenuModelIndex::Quit)) {
+                returnEndRot_[idx].x = baseRotations_[idx].x + 360.0f * degToRad;
+            }
+            float delay = 0.0f;
+            if (static_cast<int>(idx) == static_cast<int>(MenuModelIndex::Title)) {
+                delay = stagger;
+            } else if (static_cast<int>(idx) == static_cast<int>(MenuModelIndex::Quit)) {
+                delay = stagger * 2.0f;
+            }
+            returnElapsed_[idx] = -delay;
+            returnDuration_[idx] = returnDuration;
+            returnAnimating_[idx] = true;
+            xAnimating_[idx] = false;
             ++idx;
         }
     }
@@ -363,12 +426,70 @@ void BackMonitorWithMenuScreen::Update() {
         tr->SetRotate(rot);
         if (t >= 1.0f) {
             isConfirming_ = false;
+            if (confirmedIndex_ == static_cast<int>(MenuModelIndex::Credit)) {
+                creditMoveStartPos_ = tr->GetTranslate();
+                creditMoveEndPos_ = Vector3{ creditMoveStartPos_.x, 2.0f, creditMoveStartPos_.z };
+                creditMoveElapsed_ = 0.0f;
+                creditMoveDuration_ = 0.5f;
+                isCreditMoving_ = true;
+            } else {
+                isConfirmed_ = true;
+            }
         }
     }
 
-    if (isSubmitted_ && !isConfirming_) {
+    if (isCreditMoving_ && confirmedIndex_ == static_cast<int>(MenuModelIndex::Credit) && models_[confirmedIndex_]) {
+        creditMoveElapsed_ += dt;
+        float t = Normalize01(creditMoveElapsed_, 0.0f, creditMoveDuration_);
+        auto *tr = models_[confirmedIndex_]->GetComponent3D<Transform3D>();
+        Vector3 pos = EaseOutCubic(creditMoveStartPos_, creditMoveEndPos_, t);
+        tr->SetTranslate(pos);
+        if (t >= 1.0f) {
+            isCreditMoving_ = false;
+            isCreditMoved_ = true;
+            isConfirmed_ = true;
+        }
+    }
+
+    bool hasReturnAnimating = false;
+    if (isReturning_) {
+        size_t returnIdx = 0;
+        for (const auto &m : models_) {
+            if (!m) { ++returnIdx; continue; }
+            if (returnAnimating_[returnIdx]) {
+                returnElapsed_[returnIdx] += dt;
+                float t = Normalize01(returnElapsed_[returnIdx], 0.0f, returnDuration_[returnIdx]);
+                Vector3 pos = EaseOutCubic(returnStartPos_[returnIdx], returnEndPos_[returnIdx], t);
+                Vector3 rot = EaseOutCubic(returnStartRot_[returnIdx], returnEndRot_[returnIdx], t);
+                if (auto *tr = m->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(pos);
+                    tr->SetRotate(rot);
+                }
+                if (t >= 1.0f) {
+                    returnAnimating_[returnIdx] = false;
+                }
+            }
+            if (returnAnimating_[returnIdx]) {
+                hasReturnAnimating = true;
+            }
+            ++returnIdx;
+        }
+        if (!hasReturnAnimating) {
+            isReturning_ = false;
+            isSubmitted_ = false;
+            isConfirmed_ = false;
+            isConfirmedTriggerd_ = false;
+            isCreditMoved_ = false;
+            confirmedIndex_ = -1;
+        }
+    }
+
+    if (isSubmitted_ && !isConfirming_ && confirmedIndex_ != static_cast<int>(MenuModelIndex::Credit) && !isReturning_) {
         isConfirmed_ = true;
     }
+}
+
+void BackMonitorWithMenuScreen::MenuCreditUpdate() {
 }
 
 } // namespace KashipanEngine

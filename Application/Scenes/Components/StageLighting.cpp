@@ -27,7 +27,7 @@ void StageLighting::Initialize() {
     for (size_t i = 0; i < centerCount; ++i) {
         auto spotLight = std::make_unique<SpotLight>();
         spotLight->SetName("StageLighting.CenterRotateSpotLight." + std::to_string(i));
-        RandomizeAndEnableSpotLight(spotLight.get());
+        RandomizeAndEnableSpotLight(spotLight.get(), false);
 
         // position at stage center top
         spotLight->SetPosition(Vector3{ 10.0f, 10.0f, 10.0f });
@@ -61,7 +61,7 @@ void StageLighting::Initialize() {
             auto spotLight = std::make_unique<SpotLight>();
             int index = ix * gridCount + iz;
             spotLight->SetName("StageLighting.RhythmicalSpotLight." + std::to_string(index));
-            RandomizeAndEnableSpotLight(spotLight.get());
+            RandomizeAndEnableSpotLight(spotLight.get(), false);
 
             float x = stageMin + step * static_cast<float>(ix);
             float z = stageMin + step * static_cast<float>(iz);
@@ -89,7 +89,7 @@ void StageLighting::Initialize() {
     for (int i = 0; i < outsideCount; ++i) {
         auto spotLight = std::make_unique<SpotLight>();
         spotLight->SetName("StageLighting.OutsideSpotLight." + std::to_string(i));
-        RandomizeAndEnableSpotLight(spotLight.get());
+        RandomizeAndEnableSpotLight(spotLight.get(), false);
 
         float t = static_cast<float>(i) / static_cast<float>(outsideCount);
         // map t to perimeter coordinate

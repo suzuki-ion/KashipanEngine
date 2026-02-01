@@ -92,6 +92,7 @@ public:
     /// @return 壁がアクティブまたは移動中ならtrue
     bool IsWallActiveOrMoving(const Vector3& position) const;
 
+	void SetIsBreakWalls(bool isBreak) { isBreakWalls_ = isBreak; }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -144,6 +145,8 @@ private:
 
     float explosionScale_ = 1.0f;
     float explosionLifetime_ = 0.5f;      // 爆発の寿命（秒）
+
+	bool isBreakWalls_ = true;      // 爆発で壁を壊すかどうか
 };
 
 } // namespace KashipanEngine

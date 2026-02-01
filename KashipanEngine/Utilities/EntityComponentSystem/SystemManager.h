@@ -1,9 +1,11 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <memory>
 #include <algorithm>
 #include "EntityDefinition.h"
 #include "ComponentStrage.h"
+
+namespace KashipanEngine {
 
 /// @brief システムの共通インターフェイス
 class ISystem {
@@ -167,3 +169,5 @@ private:
         return systemIndex;
     }
 };
+
+} // namespace KashipanEngine

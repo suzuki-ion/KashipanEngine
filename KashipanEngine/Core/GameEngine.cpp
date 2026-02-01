@@ -119,8 +119,6 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     if (graphicsEngine_) {
         auto* renderer = graphicsEngine_->GetRenderer(Passkey<GameEngine>{});
         ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, renderer);
-        Object2DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
-        Object3DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
     }
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
@@ -194,8 +192,6 @@ GameEngine::~GameEngine() {
     textureManager_.reset();
 
     ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    Object2DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    Object3DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
 
     graphicsEngine_.reset();
     directXCommon_.reset();
@@ -271,7 +267,13 @@ void GameEngine::GameLoopDraw() {
     directXCommon_->BeginDraw({});
     Window::Draw({});
 
-    graphicsEngine_->RenderFrame({});
+    if (graphicsEngine_) {
+        if (sceneManager_) {
+            if (auto *scene = sceneManager_->GetCurrentScene()) {
+                graphicsEngine_->RenderFrame({}, scene->GetWorld());
+            }
+        }
+    }
 
 #if defined(USE_IMGUI)
     if (imguiManager_) {

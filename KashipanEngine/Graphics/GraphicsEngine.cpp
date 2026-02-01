@@ -41,8 +41,8 @@ GraphicsEngine::~GraphicsEngine() {
     Window::SetRenderer(Passkey<GraphicsEngine>{}, nullptr);
 }
 
-void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
-    renderer_->RenderFrame({});
+void GraphicsEngine::RenderFrame(Passkey<GameEngine>, WorldECS &world) {
+    renderer_->RenderFrame({}, world);
 }
 
 } // namespace KashipanEngine

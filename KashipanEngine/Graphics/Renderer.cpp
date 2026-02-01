@@ -5,8 +5,14 @@
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
 #include "Graphics/PostEffectComponents/IPostEffectComponent.h"
+#include "Utilities/EntityComponentSystem/WorldECS.h"
+#include "ECS/EcsComponents.h"
+#include "Assets/TextureManager.h"
+#include "Assets/SamplerManager.h"
 #include <unordered_map>
 #include <chrono>
+#include <cstring>
+#include <algorithm>
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -16,6 +22,16 @@ namespace KashipanEngine {
 
 namespace {
 using Clock = std::chrono::high_resolution_clock;
+
+struct LightCounts {
+    std::uint32_t pointCount = 0;
+    std::uint32_t spotCount = 0;
+    std::uint32_t padding[2] = {0, 0};
+};
+
+struct TransformInstanceData {
+    Matrix4x4 world{};
+};
 }
 
 class RendererCpuTimerScope final {
@@ -98,65 +114,300 @@ void Renderer::AddCpuTimerSample_(CpuTimerStats::Scope scope, double ms) noexcep
     }
 }
 
-void Renderer::RenderFrame(Passkey<GraphicsEngine>) {
-    BeginCpuTimerFrame_();
-    RendererCpuTimerScope tFrame(*this, CpuTimerStats::Scope::RenderFrame);
+void Renderer::RenderFrame(Passkey<GraphicsEngine>, WorldECS &world) {
+    if (!directXCommon_ || !pipelineManager_) {
+        return;
+    }
 
     for (auto &[hwnd, binder] : windowBinders_) {
         binder.Invalidate();
     }
 
-    {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllBeginRecord);
-        ShadowMapBuffer::AllBeginRecord(Passkey<Renderer>{});
-    }
-    {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllBeginRecord);
-        ScreenBuffer::AllBeginRecord(Passkey<Renderer>{});
-    }
+    const auto &cameraEntities = world.GetEntitiesWithComponents<TransformComponent, CameraComponent>();
+    CameraComponent *activeCamera = nullptr;
+    TransformComponent *cameraTransform = nullptr;
 
-    {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Passes);
-        RenderShadowMapPasses();
-    }
-    {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Passes);
-        RenderOffscreenPasses();
-    }
-
-    decltype(ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{})) smLists;
-    {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_AllEndRecord);
-        smLists = ShadowMapBuffer::AllEndRecord(Passkey<Renderer>{});
-    }
-    if (!smLists.empty() && directXCommon_) {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::ShadowMap_Execute);
-        for (auto *cl : smLists) {
-            directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, cl);
+    for (const auto &entity : cameraEntities) {
+        auto *camera = world.GetComponent<CameraComponent>(entity);
+        if (camera && camera->isActive) {
+            activeCamera = camera;
+            cameraTransform = world.GetComponent<TransformComponent>(entity);
+            break;
         }
     }
 
-    decltype(ScreenBuffer::AllEndRecord(Passkey<Renderer>{})) sbLists;
-    {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_AllEndRecord);
-        sbLists = ScreenBuffer::AllEndRecord(Passkey<Renderer>{});
+    if (!activeCamera && !cameraEntities.empty()) {
+        const auto entity = cameraEntities.front();
+        activeCamera = world.GetComponent<CameraComponent>(entity);
+        cameraTransform = world.GetComponent<TransformComponent>(entity);
     }
-    if (!sbLists.empty() && directXCommon_) {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Offscreen_Execute);
-        for (auto *cl : sbLists) {
-            directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, cl);
+
+    if (!activeCamera) {
+        return;
+    }
+
+    if (cameraTransform) {
+        Vector3 forward = Vector3{0.0f, 0.0f, 1.0f};
+        Matrix4x4 rot = Matrix4x4::Identity();
+        rot.MakeRotate(cameraTransform->rotate);
+        forward = forward.Transform(rot);
+
+        Vector3 up{0.0f, 1.0f, 0.0f};
+        Vector3 eye = cameraTransform->translate;
+        Vector3 target = eye + forward;
+
+        activeCamera->buffer.view.MakeViewMatrix(eye, target, up);
+        activeCamera->buffer.eyePosition = Vector4{eye.x, eye.y, eye.z, 1.0f};
+        activeCamera->buffer.fov = activeCamera->fovY;
+
+        if (activeCamera->type == CameraComponent::CameraType::Perspective) {
+            activeCamera->buffer.projection.MakePerspectiveFovMatrix(activeCamera->fovY, activeCamera->aspectRatio, activeCamera->nearClip, activeCamera->farClip);
+        } else {
+            activeCamera->buffer.projection.MakeOrthographicMatrix(activeCamera->orthoLeft, activeCamera->orthoTop, activeCamera->orthoRight, activeCamera->orthoBottom, activeCamera->nearClip, activeCamera->farClip);
+        }
+
+        activeCamera->buffer.viewProjection = activeCamera->buffer.view * activeCamera->buffer.projection;
+    }
+
+    if (!ecsCameraBuffer_) {
+        ecsCameraBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(CameraComponent::CameraBuffer));
+    }
+
+    {
+        void *map = ecsCameraBuffer_->Map();
+        if (map) {
+            std::memcpy(map, &activeCamera->buffer, sizeof(CameraComponent::CameraBuffer));
+        }
+    }
+
+    if (!ecsDirectionalLightBuffer_) {
+        ecsDirectionalLightBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(DirectionalLightComponent));
+    }
+
+    if (!ecsLightCountsBuffer_) {
+        ecsLightCountsBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(LightCounts));
+    }
+
+    std::vector<PointLightComponent> pointLights;
+    const auto &pointLightEntities = world.GetEntitiesWithComponents<PointLightComponent>();
+    pointLights.reserve(pointLightEntities.size());
+    for (const auto &entity : pointLightEntities) {
+        auto *light = world.GetComponent<PointLightComponent>(entity);
+        if (light) {
+            pointLights.push_back(*light);
+        }
+    }
+
+    std::vector<SpotLightComponent> spotLights;
+    const auto &spotLightEntities = world.GetEntitiesWithComponents<SpotLightComponent>();
+    spotLights.reserve(spotLightEntities.size());
+    for (const auto &entity : spotLightEntities) {
+        auto *light = world.GetComponent<SpotLightComponent>(entity);
+        if (light) {
+            spotLights.push_back(*light);
+        }
+    }
+
+    const size_t pointCount = pointLights.size();
+    const size_t spotCount = spotLights.size();
+
+    const size_t pointBufferCount = std::max<size_t>(1, pointCount);
+    const size_t spotBufferCount = std::max<size_t>(1, spotCount);
+
+    if (!ecsPointLightBuffer_ || ecsPointLightBuffer_->GetElementStride() != sizeof(PointLightComponent)
+        || ecsPointLightBuffer_->GetElementCount() < pointBufferCount) {
+        ecsPointLightBuffer_ = std::make_unique<StructuredBufferResource>(sizeof(PointLightComponent), pointBufferCount);
+    }
+
+    if (!ecsSpotLightBuffer_ || ecsSpotLightBuffer_->GetElementStride() != sizeof(SpotLightComponent)
+        || ecsSpotLightBuffer_->GetElementCount() < spotBufferCount) {
+        ecsSpotLightBuffer_ = std::make_unique<StructuredBufferResource>(sizeof(SpotLightComponent), spotBufferCount);
+    }
+
+    LightCounts lightCounts{};
+    lightCounts.pointCount = static_cast<std::uint32_t>(pointCount);
+    lightCounts.spotCount = static_cast<std::uint32_t>(spotCount);
+
+    {
+        void *map = ecsLightCountsBuffer_->Map();
+        if (map) {
+            std::memcpy(map, &lightCounts, sizeof(LightCounts));
+        }
+    }
+
+    DirectionalLightComponent directionalLight{};
+    directionalLight.enabled = 0;
+    const auto &dirLightEntities = world.GetEntitiesWithComponents<DirectionalLightComponent>();
+    if (!dirLightEntities.empty()) {
+        auto *light = world.GetComponent<DirectionalLightComponent>(dirLightEntities.front());
+        if (light) {
+            directionalLight = *light;
         }
     }
 
     {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::PostEffect_Passes);
-        RenderScreenPasses();
+        void *map = ecsDirectionalLightBuffer_->Map();
+        if (map) {
+            std::memcpy(map, &directionalLight, sizeof(DirectionalLightComponent));
+        }
     }
-    ScreenBuffer::AllCloseRecord(Passkey<Renderer>{});
 
     {
-        RendererCpuTimerScope t(*this, CpuTimerStats::Scope::Persistent_Passes);
-        RenderPersistentPasses();
+        void *map = ecsPointLightBuffer_->Map();
+        if (map) {
+            std::memset(map, 0, sizeof(PointLightComponent) * pointBufferCount);
+            if (pointCount > 0) {
+                std::memcpy(map, pointLights.data(), sizeof(PointLightComponent) * pointCount);
+            }
+        }
+    }
+
+    {
+        void *map = ecsSpotLightBuffer_->Map();
+        if (map) {
+            std::memset(map, 0, sizeof(SpotLightComponent) * spotBufferCount);
+            if (spotCount > 0) {
+                std::memcpy(map, spotLights.data(), sizeof(SpotLightComponent) * spotCount);
+            }
+        }
+    }
+
+    if (!ecsTransformBuffer_) {
+        ecsTransformBuffer_ = std::make_unique<StructuredBufferResource>(sizeof(TransformInstanceData), 1);
+    }
+
+    if (!ecsMaterialBuffer_) {
+        ecsMaterialBuffer_ = std::make_unique<StructuredBufferResource>(sizeof(MaterialComponent::InstanceData), 1);
+    }
+
+    auto updateTransformWorld = [&](Entity entity, auto &selfRef) -> void {
+        auto *transform = world.GetComponent<TransformComponent>(entity);
+        if (!transform || !transform->dirty) return;
+
+        Matrix4x4 local = Matrix4x4::Identity();
+        local.MakeAffine(transform->scale, transform->rotate, transform->translate);
+
+        if (transform->parent != Entity(-1)) {
+            selfRef(transform->parent, selfRef);
+            auto *parent = world.GetComponent<TransformComponent>(transform->parent);
+            if (parent) {
+                transform->world = local * parent->world;
+            } else {
+                transform->world = local;
+            }
+        } else {
+            transform->world = local;
+        }
+
+        transform->dirty = false;
+        ++transform->version;
+    };
+
+    const auto &renderEntities = world.GetEntitiesWithComponents<TransformComponent, MeshComponent, MaterialComponent, RenderPipelineComponent>();
+    for (const auto &entity : renderEntities) {
+        auto *transform = world.GetComponent<TransformComponent>(entity);
+        auto *mesh = world.GetComponent<MeshComponent>(entity);
+        auto *material = world.GetComponent<MaterialComponent>(entity);
+        auto *pipeline = world.GetComponent<RenderPipelineComponent>(entity);
+        if (!transform || !mesh || !material || !pipeline) {
+            continue;
+        }
+
+        Window *targetWindow = nullptr;
+        if (world.HasComponent<RenderTargetComponent>(entity)) {
+            auto *target = world.GetComponent<RenderTargetComponent>(entity);
+            if (target) {
+                targetWindow = target->window;
+            }
+        }
+
+        if (!targetWindow && !windowBinders_.empty()) {
+            targetWindow = Window::GetWindow(windowBinders_.begin()->first);
+        }
+
+        if (!targetWindow || targetWindow->IsPendingDestroy() || targetWindow->IsMinimized() || !targetWindow->IsVisible()) {
+            continue;
+        }
+
+        const HWND hwnd = targetWindow->GetWindowHandle();
+        auto it = windowBinders_.find(hwnd);
+        if (it == windowBinders_.end()) {
+            continue;
+        }
+
+        auto *commandList = directXCommon_->GetRecordedCommandList(Passkey<Renderer>{}, hwnd);
+        if (!commandList) {
+            continue;
+        }
+
+        updateTransformWorld(entity, updateTransformWorld);
+
+        PipelineBinder pipelineBinder = it->second;
+        pipelineBinder.SetCommandList(commandList);
+        pipelineBinder.UsePipeline(pipeline->pipelineName);
+
+        auto &shaderBinder = pipelineManager_->GetShaderVariableBinder({}, pipeline->pipelineName);
+        shaderBinder.SetCommandList(commandList);
+
+        if (shaderBinder.GetNameMap().Contains("Vertex:gCamera")) {
+            shaderBinder.Bind("Vertex:gCamera", ecsCameraBuffer_.get());
+        }
+        if (shaderBinder.GetNameMap().Contains("Pixel:gCamera")) {
+            shaderBinder.Bind("Pixel:gCamera", ecsCameraBuffer_.get());
+        }
+        if (shaderBinder.GetNameMap().Contains("Pixel:gDirectionalLight")) {
+            shaderBinder.Bind("Pixel:gDirectionalLight", ecsDirectionalLightBuffer_.get());
+        }
+        if (shaderBinder.GetNameMap().Contains("Pixel:LightCounts")) {
+            shaderBinder.Bind("Pixel:LightCounts", ecsLightCountsBuffer_.get());
+        }
+        if (shaderBinder.GetNameMap().Contains("Pixel:gPointLights")) {
+            shaderBinder.Bind("Pixel:gPointLights", ecsPointLightBuffer_->GetGPUDescriptorHandle());
+        }
+        if (shaderBinder.GetNameMap().Contains("Pixel:gSpotLights")) {
+            shaderBinder.Bind("Pixel:gSpotLights", ecsSpotLightBuffer_->GetGPUDescriptorHandle());
+        }
+
+        TransformInstanceData transformInstance{};
+        transformInstance.world = transform->world;
+        if (void *map = ecsTransformBuffer_->Map()) {
+            std::memcpy(map, &transformInstance, sizeof(TransformInstanceData));
+        }
+
+        if (void *map = ecsMaterialBuffer_->Map()) {
+            std::memcpy(map, &material->instanceData, sizeof(MaterialComponent::InstanceData));
+        }
+
+        if (shaderBinder.GetNameMap().Contains("Vertex:gTransformationMatrices")) {
+            shaderBinder.Bind("Vertex:gTransformationMatrices", ecsTransformBuffer_->GetGPUDescriptorHandle());
+        }
+        if (shaderBinder.GetNameMap().Contains("Pixel:gMaterials")) {
+            shaderBinder.Bind("Pixel:gMaterials", ecsMaterialBuffer_->GetGPUDescriptorHandle());
+        }
+
+        if (shaderBinder.GetNameMap().Contains("Pixel:gTexture") && material->textureHandle != TextureManager::kInvalidHandle) {
+            TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", material->textureHandle);
+        }
+        if (shaderBinder.GetNameMap().Contains("Pixel:gSampler") && material->samplerHandle != SamplerManager::kInvalidHandle) {
+            SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
+        }
+
+        if (mesh->vertexBuffer && mesh->vertexCount > 0) {
+            if (mesh->vertexView.SizeInBytes == 0 && mesh->vertexStride > 0) {
+                mesh->vertexView = mesh->vertexBuffer->GetView(mesh->vertexStride);
+            }
+            pipelineBinder.SetVertexBufferView(0, 1, &mesh->vertexView);
+        }
+
+        if (mesh->indexBuffer && mesh->indexCount > 0) {
+            if (mesh->indexView.SizeInBytes == 0) {
+                mesh->indexView = mesh->indexBuffer->GetView();
+            }
+            pipelineBinder.SetIndexBufferView(&mesh->indexView);
+            commandList->DrawIndexedInstanced(mesh->indexCount, 1, 0, 0, 0);
+        } else if (mesh->vertexCount > 0) {
+            commandList->DrawInstanced(mesh->vertexCount, 1, 0, 0);
+        }
     }
 }
 
@@ -591,214 +842,6 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
     }
 }
 
-void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses,
-     std::function<void *(const RenderPass *)> /*getTargetKeyFunc*/) {
-    RendererCpuTimerScope tTotal(*this, CpuTimerStats::Scope::Instancing_Total);
-
-    for (auto &kv : renderPasses) {
-        const auto &key = kv.first;
-        auto &itemsPtrs = kv.second;
-        if (itemsPtrs.empty()) continue;
-
-        const RenderPass *first = itemsPtrs.front();
-        if (!first) continue;
-
-        if (first->window) {
-            Window *window = first->window;
-            if (window->IsPendingDestroy() || window->IsMinimized() || !window->IsVisible()) {
-                continue;
-            }
-        } else if (first->screenBuffer) {
-            // ok
-        } else if (first->shadowMapBuffer) {
-            // ok
-        } else {
-            continue;
-        }
-
-        if (!first->batchedRenderFunction || !first->renderCommandFunction || !first->submitInstanceFunction) {
-            continue;
-        }
-
-        ID3D12GraphicsCommandList *commandList = nullptr;
-        PipelineBinder pipelineBinder;
-
-        if (first->shadowMapBuffer) {
-            ShadowMapBuffer *smb = first->shadowMapBuffer;
-
-            if (!smb->IsRecording(Passkey<Renderer>{})) {
-                continue;
-            }
-
-            commandList = smb->GetRecordedCommandList(Passkey<Renderer>{});
-            if (!commandList) {
-                continue;
-            }
-
-            pipelineBinder.SetManager(pipelineManager_);
-            pipelineBinder.SetCommandList(commandList);
-            pipelineBinder.Invalidate();
-        } else if (first->screenBuffer) {
-            ScreenBuffer *sb = first->screenBuffer;
-
-            // フレーム開始で RecordState は作成済み。実際の BeginRecord は初回使用時に行う。
-            if (!sb->IsRecording(Passkey<Renderer>{})) {
-                if (!sb->BeginRecord(Passkey<Renderer>{}, false)) {
-                    ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
-                    continue;
-                }
-            }
-
-            commandList = sb->GetRecordedCommandList(Passkey<Renderer>{});
-            if (!commandList) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, sb);
-                continue;
-            }
-
-            pipelineBinder.SetManager(pipelineManager_);
-            pipelineBinder.SetCommandList(commandList);
-            pipelineBinder.Invalidate();
-        } else {
-            if (!directXCommon_) continue;
-
-            const HWND hwnd = first->window->GetWindowHandle();
-            auto it = windowBinders_.find(hwnd);
-            if (it == windowBinders_.end()) continue;
-
-            commandList = directXCommon_->GetRecordedCommandList(Passkey<Renderer>{}, hwnd);
-            if (!commandList) continue;
-
-            pipelineBinder = it->second;
-            pipelineBinder.SetCommandList(commandList);
-        }
-
-        pipelineBinder.UsePipeline(key.pipelineName);
-
-        auto &shaderVariableBinder = pipelineManager_->GetShaderVariableBinder({}, key.pipelineName);
-        shaderVariableBinder.SetCommandList(commandList);
-
-        const std::uint32_t instanceCount = static_cast<std::uint32_t>(itemsPtrs.size());
-        bool ok = true;
-
-        // Constant buffers (shared per batch)
-        {
-            RendererCpuTimerScope tCbUpdate(*this, CpuTimerStats::Scope::Instancing_ConstantBuffer_Update);
-            std::vector<void *> cbMappedPtrs;
-            cbMappedPtrs.reserve(first->constantBufferRequirements.size());
-            std::vector<ConstantBufferResource *> cbMappedBuffers;
-            cbMappedBuffers.reserve(first->constantBufferRequirements.size());
-
-            for (const auto &req : first->constantBufferRequirements) {
-                ConstantBufferKey cbKey{ key.targetKey, key.pipelineName, key.key, req.shaderNameKey, req.byteSize };
-                auto &entry = constantBuffers_[cbKey];
-                if (!entry.buffer || entry.byteSize != req.byteSize) {
-                    entry.byteSize = req.byteSize;
-                    entry.buffer = std::make_unique<ConstantBufferResource>(req.byteSize);
-                }
-                void *p = entry.buffer->Map();
-                cbMappedPtrs.push_back(p);
-                cbMappedBuffers.push_back(entry.buffer.get());
-            }
-
-            void *constantBufferMaps = cbMappedPtrs.empty() ? nullptr : cbMappedPtrs.data();
-            if (first->updateConstantBuffersFunction) {
-                ok = ok && first->updateConstantBuffersFunction(constantBufferMaps, instanceCount);
-            }
-
-            // 永続Mapのため Unmap は不要
-
-            if (ok) {
-                // Bind は update と分けて計測したいので、ここで update計測を閉じて Bind側を別スコープにする
-            }
-        }
-        {
-            RendererCpuTimerScope tCbBind(*this, CpuTimerStats::Scope::Instancing_ConstantBuffer_Bind);
-            if (ok) {
-                for (const auto &req : first->constantBufferRequirements) {
-                    ConstantBufferKey cbKey{ key.targetKey, key.pipelineName, key.key, req.shaderNameKey, req.byteSize };
-                    auto itCB = constantBuffers_.find(cbKey);
-                    if (itCB == constantBuffers_.end() || !itCB->second.buffer) {
-                        ok = false;
-                        break;
-                    }
-                    ok = ok && shaderVariableBinder.Bind(req.shaderNameKey, itCB->second.buffer.get());
-                    if (!ok) break;
-                }
-            }
-        }
-
-        if (ok) {
-            ok = first->batchedRenderFunction(shaderVariableBinder, instanceCount);
-        }
-
-        // Instance buffers
-        std::vector<void *> mappedPtrs;
-        std::vector<StructuredBufferResource *> mappedBuffers;
-        if (ok) {
-            RendererCpuTimerScope tIb(*this, CpuTimerStats::Scope::Instancing_InstanceBuffer_MapBind);
-            mappedPtrs.reserve(first->instanceBufferRequirements.size());
-            mappedBuffers.reserve(first->instanceBufferRequirements.size());
-
-            for (const auto &req : first->instanceBufferRequirements) {
-                InstanceBufferKey ibKey{ key.targetKey, key.pipelineName, key.key, req.shaderNameKey, req.elementStride };
-                auto &entry = instanceBuffers_[ibKey];
-                if (entry.capacity < instanceCount || !entry.buffer) {
-                    entry.capacity = instanceCount;
-                    entry.buffer = std::make_unique<StructuredBufferResource>(req.elementStride, entry.capacity);
-                }
-
-                ok = ok && shaderVariableBinder.Bind(req.shaderNameKey, entry.buffer->GetGPUDescriptorHandle());
-                if (!ok) break;
-
-                void *p = entry.buffer->Map();
-                mappedPtrs.push_back(p);
-                mappedBuffers.push_back(entry.buffer.get());
-            }
-        }
-
-        if (!ok) {
-            if (first->screenBuffer) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
-            }
-            continue;
-        }
-
-        {
-            std::vector<void *> mapsTable = mappedPtrs;
-            void *instanceMaps = mapsTable.empty() ? nullptr : mapsTable.data();
-
-            RendererCpuTimerScope tSubmit(*this, CpuTimerStats::Scope::Instancing_SubmitInstances);
-            for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                if (!itemsPtrs[i]->submitInstanceFunction(instanceMaps, shaderVariableBinder, i)) {
-                    ok = false;
-                    break;
-                }
-            }
-        }
-
-        if (!ok) {
-            if (first->screenBuffer) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
-            }
-            continue;
-        }
-
-        RendererCpuTimerScope tCmd(*this, CpuTimerStats::Scope::Instancing_RenderCommand);
-        auto renderCommandOpt = first->renderCommandFunction(pipelineBinder);
-        if (!renderCommandOpt) {
-            if (first->screenBuffer) {
-                ScreenBuffer::MarkDiscard(Passkey<Renderer>{}, first->screenBuffer);
-            }
-            continue;
-        }
-
-        RenderCommand cmd = *renderCommandOpt;
-        cmd.instanceCount = instanceCount;
-        cmd.startInstanceLocation = 0;
-        IssueRenderCommand(commandList, cmd);
-    }
-}
-
 void Renderer::Render3DStandard(std::vector<const RenderPass *> renderPasses,
     std::function<void *(const RenderPass *)> getTargetKeyFunc) {
     Render2DStandard(std::move(renderPasses), std::move(getTargetKeyFunc));
@@ -1077,9 +1120,9 @@ void Renderer::RenderOffscreenPasses() {
     Render3DInstancing(offscreen3DInstancing_, getTargetKey);
 
     Render2DStandard(offscreenSys2DStandard_, getTargetKey);
-    Render2DInstancing(offscreenSys2DInstancing_, getTargetKey);
+    //Render2DInstancing(offscreenSys2DInstancing_, getTargetKey);
     Render2DStandard(offscreen2DStandard_, getTargetKey);
-    Render2DInstancing(offscreen2DInstancing_, getTargetKey);
+    //Render2DInstancing(offscreen2DInstancing_, getTargetKey);
 }
 
 void Renderer::RenderPersistentPasses() {

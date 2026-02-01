@@ -29,6 +29,7 @@ class Object3DBase;
 class ScreenBuffer;
 class ShadowMapBuffer;
 class IPostEffectComponent;
+class WorldECS;
 
 /// @brief オブジェクト種別
 enum class ObjectType {
@@ -309,6 +310,9 @@ public:
         D3D12_GPU_DESCRIPTOR_HANDLE sampler{};
     };
 
+    /// @brief ECS ワールドを描画
+    void RenderFrame(Passkey<GraphicsEngine>, WorldECS &world);
+
 private:
     struct PersistentPassEntry {
         PersistentPassHandle handle;
@@ -438,7 +442,7 @@ private:
     void RenderShadowMapPasses();
 
     void Render2DStandard(std::vector<const RenderPass *> renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
-    void Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
+    //void Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
     void Render3DStandard(std::vector<const RenderPass *> renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
     void Render3DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
     
@@ -501,6 +505,15 @@ private:
     std::unordered_map<ConstantBufferKey, ConstantBufferEntry, ConstantBufferKeyHasher> constantBuffers_;
     /// @brief インスタンシング用バッファマップ
     std::unordered_map<InstanceBufferKey, InstanceBufferEntry, InstanceBufferKeyHasher> instanceBuffers_;
+    
+    std::unique_ptr<ConstantBufferResource> ecsCameraBuffer_;
+    std::unique_ptr<ConstantBufferResource> ecsDirectionalLightBuffer_;
+    std::unique_ptr<ConstantBufferResource> ecsLightCountsBuffer_;
+    std::unique_ptr<StructuredBufferResource> ecsPointLightBuffer_;
+    std::unique_ptr<StructuredBufferResource> ecsSpotLightBuffer_;
+    std::unique_ptr<StructuredBufferResource> ecsTransformBuffer_;
+    std::unique_ptr<StructuredBufferResource> ecsMaterialBuffer_;
 };
+
 
 } // namespace KashipanEngine

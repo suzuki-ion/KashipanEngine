@@ -1,8 +1,10 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <memory>
 #include <bitset>
 #include "EntityDefinition.h"
+
+namespace KashipanEngine {
 
 using ComponentSignature = std::bitset<64>;
 
@@ -43,20 +45,29 @@ private:
         /// @brief コンポーネントデータの削除
         /// @param entity 対象のエンティティ
         void RemoveData(const Entity &entity) override {
+            if (entity >= entityToIndex_.size()) return;
             size_t index = entityToIndex_[entity];
+            if (index == Entity(-1) || index >= size_) return;
             size_t lastIndex = size_ - 1;
-            componentData_[index] = componentData_[lastIndex];
-            Entity lastEntity = indexToEntity_[lastIndex];
-            entityToIndex_[lastEntity] = index;
-            indexToEntity_[index] = lastEntity;
+            if (index != lastIndex) {
+                componentData_[index] = componentData_[lastIndex];
+                Entity lastEntity = indexToEntity_[lastIndex];
+                entityToIndex_[lastEntity] = index;
+                indexToEntity_[index] = lastEntity;
+            }
             entityToIndex_[entity] = Entity(-1);
-            size_--;
+            if (size_ > 0) {
+                componentData_.pop_back();
+                indexToEntity_.pop_back();
+                size_--;
+            }
         }
 
         /// @brief コンポーネントデータの取得
         /// @param entity 対象のエンティティ
         /// @return コンポーネントデータへのポインタ（存在しない場合はnullptr）
         ComponentType *GetData(const Entity &entity) {
+            if (entity >= entityToIndex_.size()) return nullptr;
             size_t index = entityToIndex_[entity];
             if (index != Entity(-1) && index < size_) {
                 return &componentData_[index];
@@ -68,6 +79,7 @@ private:
         /// @param entity 対象のエンティティ
         /// @return コンポーネントデータが存在するかどうか
         bool HasData(const Entity &entity) const {
+            if (entity >= entityToIndex_.size()) return false;
             size_t index = entityToIndex_[entity];
             return index != Entity(-1) && index < size_;
         }
@@ -138,6 +150,9 @@ public:
         const size_t &typeIndex = GetTypeIndex<ComponentType>();
         if (typeIndex < componentArrays_.size() && componentArrays_[typeIndex]) {
             auto *componentArray = static_cast<ComponentArray<ComponentType> *>(componentArrays_[typeIndex].get());
+            if (!componentArray->HasData(entity)) {
+                return false;
+            }
             componentArray->RemoveData(entity);
             return true;
         }
@@ -262,10 +277,12 @@ private:
     std::vector<std::unique_ptr<IComponentArray>> componentArrays_;
     size_t entityCapacity_ = 0;
 
-    size_t componentTypeCounter_ = 0;
+    static inline size_t componentTypeCounter_ = 0;
     template <typename T>
-    const size_t &GetTypeIndex() {
+    static const size_t &GetTypeIndex() {
         static size_t typeIndex = componentTypeCounter_++;
         return typeIndex;
     }
 };
+
+} // namespace KashipanEngine

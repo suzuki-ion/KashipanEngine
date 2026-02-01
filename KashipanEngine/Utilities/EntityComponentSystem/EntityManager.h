@@ -1,7 +1,9 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <stack>
 #include "EntityDefinition.h"
+
+namespace KashipanEngine {
 
 /// @brief エンティティ管理クラス
 class EntityManager {
@@ -75,3 +77,5 @@ private:
     std::vector<char> entityAliveFlags_;
     std::stack<Entity> freeEntityIDs_;
 };
+
+} // namespace KashipanEngine

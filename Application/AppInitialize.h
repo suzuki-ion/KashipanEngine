@@ -10,7 +10,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
     Window::CreateNormal("Main Window", 1920, 1280);
 
     if (context.sceneManager) {
-        auto *sm = context.sceneManager;
+        //auto *sm = context.sceneManager;
         
     }
 

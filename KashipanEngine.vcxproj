@@ -194,9 +194,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
@@ -230,9 +227,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
@@ -262,6 +257,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
+    <ClInclude Include="KashipanEngine\ECS\EcsComponents.h" />
+    <ClInclude Include="KashipanEngine\ECS\EcsSystems.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
@@ -279,7 +276,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -382,10 +378,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Input\Key.h" />
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem.h" />
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\ComponentStrage.h" />
@@ -453,9 +445,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
-    <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
     <ClInclude Include="KashipanEngine\UtilitiesHeaders.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />

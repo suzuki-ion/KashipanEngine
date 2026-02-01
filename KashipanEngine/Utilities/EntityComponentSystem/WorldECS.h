@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <vector>
 #include <stack>
 #include <memory>
@@ -6,6 +6,8 @@
 #include "EntityManager.h"
 #include "ComponentStrage.h"
 #include "SystemManager.h"
+
+namespace KashipanEngine {
 
 /// @brief ECSワールドクラス
 class WorldECS {
@@ -103,7 +105,7 @@ public:
     /// @return 削除に成功したかどうか
     template <typename SystemType>
     bool RemoveSystem() {
-        systemManager_.RemoveSystem<SystemType>();
+        return systemManager_.RemoveSystem<SystemType>();
     }
 
     /// @brief システムの取得
@@ -147,3 +149,5 @@ private:
     ComponentStorage componentStorage_;
     SystemManager systemManager_;
 };
+
+} // namespace KashipanEngine

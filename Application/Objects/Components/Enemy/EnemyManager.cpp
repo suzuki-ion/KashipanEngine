@@ -90,19 +90,78 @@ void EnemyManager::Update() {
             bool isMoveBeat = (currentBeat % e.moveEveryNBeats == 0);
 
             if (isMoveBeat) {
-                // 移動する拍: 目標位置を計算
                 Vector3 delta{ 0.0f, 0.0f, 0.0f };
-                switch (e.direction) {
-                case EnemyDirection::Up:    delta = Vector3{ 0.0f, 0.0f,  moveDistance_ }; break;
-                case EnemyDirection::Down:  delta = Vector3{ 0.0f, 0.0f, -moveDistance_ }; break;
-                case EnemyDirection::Left:  delta = Vector3{ -moveDistance_, 0.0f, 0.0f }; break;
-                case EnemyDirection::Right: delta = Vector3{  moveDistance_, 0.0f, 0.0f }; break;
+                
+                // 中心エリアへの移動中かチェック
+                if (e.isMovingToCenter) {
+                    // 中心エリア内の最も近い中心位置を選択
+                    Vector3 centerTarget = Vector3(9.0f, 0.0f, 9.0f);  // 中心エリアの中央（グリッド座標4.5, 4.5）
+                    
+                    // 現在位置から中心への方向を計算
+                    Vector3 toCenter = centerTarget - e.position;
+                    
+                    // X軸とZ軸のどちらの距離が大きいかで移動方向を決定
+                    if (std::abs(toCenter.x) > std::abs(toCenter.z)) {
+                        // X軸方向に移動
+                        delta = Vector3{ toCenter.x > 0.0f ? moveDistance_ : -moveDistance_, 0.0f, 0.0f };
+                        
+                        // モデルの向きを更新
+                        if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
+                            if (toCenter.x > 0.0f) {
+                                tr->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });  // 右向き
+                            } else {
+                                tr->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });   // 左向き
+                            }
+                        }
+                    } else {
+                        // Z軸方向に移動
+                        delta = Vector3{ 0.0f, 0.0f, toCenter.z > 0.0f ? moveDistance_ : -moveDistance_ };
+                        
+                        // モデルの向きを更新
+                        if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
+                            if (toCenter.z > 0.0f) {
+                                tr->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });   // 上向き
+                            } else {
+                                tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });    // 下向き
+                            }
+                        }
+                    }
+                } else {
+                    // 通常の方向移動
+                    switch (e.direction) {
+                    case EnemyDirection::Up:    delta = Vector3{ 0.0f, 0.0f,  moveDistance_ }; break;
+                    case EnemyDirection::Down:  delta = Vector3{ 0.0f, 0.0f, -moveDistance_ }; break;
+                    case EnemyDirection::Left:  delta = Vector3{ -moveDistance_, 0.0f, 0.0f }; break;
+                    case EnemyDirection::Right: delta = Vector3{  moveDistance_, 0.0f, 0.0f }; break;
+                    }
                 }
 
                 // 移動先の座標を計算（前の移動が完了したpositionを基準にする）
                 Vector3 nextPosition = e.position + delta;
                 int nextX = static_cast<int>(std::round(nextPosition.x / 2.0f));
                 int nextZ = static_cast<int>(std::round(nextPosition.z / 2.0f));
+
+                // 十字エリアに入ったかチェック
+                bool reachedCrossArea = IsCrossAreaFromCenter(nextX, nextZ);
+                
+                // 十字エリアに入ったら移動モードを変更（反転フラグが立っていない場合のみ）
+                if (reachedCrossArea && !e.isMovingToCenter && !e.isReversedFromWall) {
+                    e.isMovingToCenter = true;
+                }
+
+                // 中心エリアに入ったかチェック
+                bool reachedCenterArea = false;
+                for (const auto& centerPos : centerPositions_) {
+                    if (nextX == centerPos.first && nextZ == centerPos.second) {
+                        reachedCenterArea = true;
+                        break;
+                    }
+                }
+                
+                // 中心エリアに入ったら移動モードを変更（反転フラグが立っていない場合のみ）
+                if (reachedCenterArea && !e.isMovingToCenter && !e.isReversedFromWall) {
+                    e.isMovingToCenter = true;
+                }
 
                 // 移動先に壁があるかチェック
                 if (IsWallAt(nextX, nextZ)) {
@@ -113,29 +172,76 @@ void EnemyManager::Update() {
                     // 壁にダメージを与える
                     DamageWallAt(nextX, nextZ);
                     
-                    // 進行方向を逆転
-                    switch (e.direction) {
-                    case EnemyDirection::Up:    e.direction = EnemyDirection::Down; break;
-                    case EnemyDirection::Down:  e.direction = EnemyDirection::Up; break;
-                    case EnemyDirection::Left:  e.direction = EnemyDirection::Right; break;
-                    case EnemyDirection::Right: e.direction = EnemyDirection::Left; break;
-                    }
-                    
-                    // 方向転換に合わせてオブジェクトの向きも更新
-                    if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
+                    // 中心移動中も壁に当たったら方向を逆転
+                    if (e.isMovingToCenter) {
+                        // 反転フラグを立てる
+                        e.isReversedFromWall = true;
+                        // 中心移動モードを解除
+                        e.isMovingToCenter = false;
+                        
+                        // 中心移動中の逆転: 中心から離れる方向に移動
+                        Vector3 centerTarget = Vector3(9.0f, 0.0f, 9.0f);
+                        Vector3 fromCenter = e.position - centerTarget;
+                        
+                        // 逆方向をdirectionに設定
+                        if (std::abs(fromCenter.x) > std::abs(fromCenter.z)) {
+                            // X軸方向
+                            if (fromCenter.x > 0.0f) {
+                                e.direction = EnemyDirection::Right;
+                            } else {
+                                e.direction = EnemyDirection::Left;
+                            }
+                        } else {
+                            // Z軸方向
+                            if (fromCenter.z > 0.0f) {
+                                e.direction = EnemyDirection::Up;
+                            } else {
+                                e.direction = EnemyDirection::Down;
+                            }
+                        }
+                        
+                        // モデルの向きを更新
+                        if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
+                            switch (e.direction) {
+                            case EnemyDirection::Up:
+                                tr->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
+                                break;
+                            case EnemyDirection::Down:
+                                tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+                                break;
+                            case EnemyDirection::Left:
+                                tr->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
+                                break;
+                            case EnemyDirection::Right:
+                                tr->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
+                                break;
+                            }
+                        }
+                    } else {
+                        // 通常の方向転換
                         switch (e.direction) {
-                        case EnemyDirection::Up:
-                            tr->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
-                            break;
-                        case EnemyDirection::Down:
-                            tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
-                            break;
-                        case EnemyDirection::Left:
-                            tr->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
-                            break;
-                        case EnemyDirection::Right:
-                            tr->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
-                            break;
+                        case EnemyDirection::Up:    e.direction = EnemyDirection::Down; break;
+                        case EnemyDirection::Down:  e.direction = EnemyDirection::Up; break;
+                        case EnemyDirection::Left:  e.direction = EnemyDirection::Right; break;
+                        case EnemyDirection::Right: e.direction = EnemyDirection::Left; break;
+                        }
+                        
+                        // 方向転換に合わせてオブジェクトの向きも更新
+                        if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
+                            switch (e.direction) {
+                            case EnemyDirection::Up:
+                                tr->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
+                                break;
+                            case EnemyDirection::Down:
+                                tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+                                break;
+                            case EnemyDirection::Left:
+                                tr->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
+                                break;
+                            case EnemyDirection::Right:
+                                tr->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
+                                break;
+                            }
                         }
                     }
                 } else {
@@ -222,7 +328,7 @@ void EnemyManager::Update() {
         }
         
         // 中心に到達した場合、プレイヤーにダメージを与えて敵を削除
-        if (reachedCenter && bpmProgress_ > 0.5f) {
+        if (reachedCenter && bpmProgress_ > 0.5f && e.isMovingToCenter) {
             if (player_) {
                 if (auto* health = player_->GetComponent3D<Health>()) {
                     health->Damage(1);
@@ -592,6 +698,20 @@ void EnemyManager::DestroyWallAt(int x, int z) {
         wall.hp = 0;
         wall.moveTimer.Reset();
     }
+}
+
+bool EnemyManager::IsCrossAreaFromCenter(int x, int z) const {
+    // 中心から上下の十字ライン: X座標が4または5
+    bool isVerticalLine = (x == 4 || x == 5);
+    
+    // 中心から左右の十字ライン: Z座標が4または5
+    bool isHorizontalLine = (z == 4 || z == 5);
+    
+    // 中心エリア自体は除外
+    bool isCenterArea = (x >= 4 && x <= 5 && z >= 4 && z <= 5);
+    
+    // 十字ライン上にあり、かつ中心エリアでない場合はtrue
+    return (isVerticalLine || isHorizontalLine) && !isCenterArea;
 }
 
 } // namespace KashipanEngine

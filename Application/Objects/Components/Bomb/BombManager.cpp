@@ -3,6 +3,7 @@
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/BPMScaling.h"
 #include "Objects/Components/Bomb/BombScaling.h"
+#include "Scenes/Components/WaveSystem.h"
 
 namespace KashipanEngine {
 
@@ -307,6 +308,15 @@ void BombManager::SpawnBomb() {
         return;
     }
 
+    // WaveSystemのパーティクル放出位置には設置できない
+    if (waveSystem_ && waveSystem_->IsParticleEmittingAt(bombPos)) {
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/beatMiss.mp3");
+        if (handle != AudioManager::kInvalidSoundHandle) {
+            AudioManager::Play(handle, missVolume_);
+        }
+        return;
+    }
+
     // 爆弾オブジェクトを生成
     auto modelData = ModelManager::GetModelDataFromFileName("bomb.obj");
     auto bomb = std::make_unique<Model>(modelData);
@@ -572,6 +582,32 @@ int BombManager::GetCurrentChainCount() const {
         }
     }
     return count;
+}
+
+void BombManager::RemoveBombAtPosition(const Vector3& position) {
+    auto* ctx = GetOwnerContext();
+    if (!ctx) return;
+
+    // 位置の許容誤差（グリッドの半分程度）
+    const float tolerance = spawnDistance_ * 0.5f;
+
+    activeBombs_.erase(
+        std::remove_if(activeBombs_.begin(), activeBombs_.end(),
+            [this, ctx, &position, tolerance](BombInfo& bomb) {
+                float dx = std::abs(bomb.position.x - position.x);
+                float dz = std::abs(bomb.position.z - position.z);
+                
+                if (dx < tolerance && dz < tolerance) {
+                    // 爆弾オブジェクトを削除
+                    if (bomb.object) {
+                        ctx->RemoveObject3D(bomb.object);
+                    }
+                    return true;
+                }
+                return false;
+            }),
+        activeBombs_.end()
+    );
 }
 
 #if defined(USE_IMGUI)

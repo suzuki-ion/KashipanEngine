@@ -30,7 +30,7 @@ public:
     void Update() override;
 
     // 敵を生成
-    void SpawnEnemy(EnemyType type, EnemyDirection direction, const Vector3& position);
+    int SpawnEnemy(EnemyType type, EnemyDirection direction, const Vector3& position);
 
 	void SetScreenBuffer(ScreenBuffer* screenBuffer) { screenBuffer_ = screenBuffer; }
 
@@ -81,6 +81,11 @@ public:
 
     /// @brief すべての敵を消去する
     void ClearAllEnemies();
+
+    /// @brief 敵が生存しているかチェック
+    /// @param enemyID 敵のID（activeEnemiesのインデックス）
+    /// @return 生存している場合true
+    bool IsEnemyAlive(int enemyID) const;
 
     // パーティクルプールを初期化
     void InitializeParticlePool();

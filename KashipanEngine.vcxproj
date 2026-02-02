@@ -453,6 +453,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadWindow.h" />
     <ClInclude Include="KashipanEngine\Graphics\GraphicsEngine.h" />
+    <None Include="IMPLEMENTATION_INSTRUCTIONS.md" />
     <None Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\IShaderTexture.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h" />

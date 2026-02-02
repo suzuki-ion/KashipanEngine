@@ -10,6 +10,9 @@
 
 namespace KashipanEngine {
 
+// Forward declaration
+class BombManager;
+
 /// @brief Waveの種類を定義する列挙型
 enum class Wave {
     Wave1,
@@ -119,7 +122,35 @@ public:
     /// @brief カウントダウン用のNumberModelプールを初期化
     void InitializeCountdownModels();
 
+    /// @brief Wave表示用のModelを初期化
+    void InitializeWaveModels();
+
+    /// @brief Wave表示位置を設定
+    void SetWaveDisplayPosition(const Vector3& position) { waveDisplayPosition_ = position; }
+
+    /// @brief Wave表示スケールを設定
+    void SetWaveDisplayScale(float scale) { waveDisplayScale_ = scale; }
+
 	void SetParentTransform(Transform3D* parent) { parentTransform_ = parent; }
+
+    /// @brief 壁配列を設定
+    /// @param walls 壁配列へのポインタ
+    /// @param mapW マップの幅
+    /// @param mapH マップの高さ
+    void SetWalls(WallInfo* walls, int mapW, int mapH) {
+        walls_ = walls;
+        mapW_ = mapW;
+        mapH_ = mapH;
+    }
+
+    /// @brief BombManagerを設定（Bomb削除用）
+    void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+    /// @brief 指定位置でパーティクル放出中かどうかをチェック
+    /// @param position チェックする位置
+    /// @return パーティクル放出中ならtrue
+    bool IsParticleEmittingAt(const Vector3& position) const;
+
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -155,12 +186,25 @@ private:
     /// @brief カウントダウンを非表示
     void HideCountdown();
 
+    /// @brief Wave表示を更新
+    void UpdateWaveDisplay();
+
+    /// @brief Wave切り替えアニメーションを更新
+    void UpdateWaveTransitionAnimation();
+
+    /// @brief 指定されたWaveを表示
+    void ShowWaveNumber(int waveNumber);
+
+    /// @brief Wave表示を非表示
+    void HideWaveDisplay();
+
     Transform3D* parentTransform_ = nullptr;
 
     BPMSystem* bpmSystem_ = nullptr;
     EnemyManager* enemyManager_ = nullptr;
     EnemySpawner* enemySpawner_ = nullptr;
     ScreenBuffer* screenBuffer_ = nullptr;
+    BombManager* bombManager_ = nullptr;
    
     // Wave管理
     std::vector<WaveData> waveDataList_;
@@ -179,6 +223,7 @@ private:
     bool isWaitingForWaveStart_ = true; // Wave開始待機中か
     bool isWaitingForNextWave_ = false; // 次のWave待機中か
     bool isAllWavesCompleted_ = false;  // 全Waveが終了したか
+    bool isDurationExceeded_ = false;   // duration超過フラグ
 
     // 設定
     int preWaveDelayBeats_ = 4;         // Wave開始前の待機拍数
@@ -189,6 +234,11 @@ private:
     int mapWidth_ = 10;
     int mapHeight_ = 10;
     float tileSize_ = 2.0f;
+
+    // 壁管理
+    WallInfo* walls_ = nullptr;
+    int mapW_ = 0;
+    int mapH_ = 0;
 
     // パーティクル関連
     ParticleConfig spawnParticleConfig_{};
@@ -215,6 +265,37 @@ private:
     int currentCountdownNumber_ = -1;  // 現在表示中の数字（-1は非表示）
     Vector3 countdownPosition_{ 0.0f, 0.0f, 15.0f };  // カウントダウン表示位置
     float countdownScale_ = 3.0f;  // カウントダウンのスケール
+
+    // Wave表示用
+    static constexpr int kMaxWaveNumbers_ = 9;  // Wave1-9
+    std::array<Object3DBase*, kMaxWaveNumbers_> waveNumbers_{};
+    int currentDisplayedWave_ = -1;  // 現在表示中のWave（-1は非表示）
+    Vector3 waveDisplayPosition_{ 9.0f, 5.5f, 20.0f };  // Wave表示位置
+    float waveDisplayScale_ = 1.0f;  // Wave表示のスケール
+
+    Vector3 waveDisplayStartPosition_{ 9.0f, 5.5f, 20.0f };
+    Vector3 waveDisplayEndPosition_{ -0.35f, 0.0f, 6.0f };
+
+    Vector3 waveDisplayStartRotate_{ -0.05f, 0.4f, -0.1f };
+    Vector3 waveDisplayEndRotate_{ 0.0f, 0.0f, 0.0f };
+
+    // Wave切り替えアニメーション用
+    enum class WaveTransitionState {
+        Idle,              // アニメーションなし
+        MovingOut,         // 開始位置→終了位置へ移動中
+        WaitingToSwitch,   // Wave切り替え前の待機
+        SwitchingWave,     // Wave切り替え（瞬時）
+        MovingIn           // 終了位置→開始位置へ移動中
+    };
+    WaveTransitionState waveTransitionState_ = WaveTransitionState::Idle;
+    float waveTransitionTimer_ = 0.0f;
+    static constexpr float kWaveTransitionDuration_ = 1.0f;  // 1秒
+    static constexpr float kWaveSwitchDelay_ = 0.5f;  // Wave切り替え前の待機時間（0.5秒）
+    int nextWaveToDisplay_ = -1;  // 切り替え先のWave番号
+
+    // Wave内で生成された敵の総数とID追跡
+    int currentWaveSpawnedEnemyCount_ = 0;      // 現在のWaveで生成した敵の総数
+    std::vector<int> currentWaveEnemyIDs_;      // 現在のWaveで生成した敵のIDリスト
 
     // コールバック
     std::function<void()> onAllWavesCompletedCallback_;

@@ -1219,6 +1219,16 @@ void GameScene::SetObjectValue() {
         }
     }
 
+    for (int z = 4; z < 6; z++) {
+        for (int x = 4; x < 6; x++) {
+            if (maps_[z][x]) {
+                if (auto* mt = maps_[z][x]->GetComponent3D<Material3D>()) {
+                    mt->SetColor({ 1.0f,0.25f,0.25f,1.0f });
+                }
+            }
+        }
+    }
+
     // プレイヤーのスケール更新
     if (player_) {
         if (auto* bpmScaling = player_->GetComponent3D<BPMScaling>()) {

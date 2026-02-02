@@ -225,7 +225,7 @@ void GameScene::Initialize() {
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Stage");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(10.0f, -1.0f, 10.0f));
+            tr->SetTranslate(Vector3(9.0f, -1.0f, 9.0f));
             tr->SetScale(Vector3(1.0f));
         }
 
@@ -243,7 +243,7 @@ void GameScene::Initialize() {
         obj->SetName("DJ");
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(10.0f, 3.5f, 27.75f));
+            tr->SetTranslate(Vector3(9.0f, 3.5f, 26.75f));
             tr->SetScale(Vector3(1.0f));
         }
 
@@ -262,16 +262,16 @@ void GameScene::Initialize() {
 
     // OneBeatEmitter の追加
     {
-        emitterTranslate_[0] = Vector3(-2.0f, 0.5f, -2.0f);
-        emitterTranslate_[1] = Vector3(-2.0f, 0.5f, 3.65f);
-        emitterTranslate_[2] = Vector3(-2.0f, 0.5f, 10.0f);
-        emitterTranslate_[3] = Vector3(-2.0f, 0.5f, 16.3f);
-        emitterTranslate_[4] = Vector3(-2.0f, 0.5f, 22.0f);
-        emitterTranslate_[5] = Vector3(22.0f, 0.5f, -2.0f);
-        emitterTranslate_[6] = Vector3(22.0f, 0.5f, 3.65f);
-        emitterTranslate_[7] = Vector3(22.0f, 0.5f, 10.0f);
-        emitterTranslate_[8] = Vector3(22.0f, 0.5f, 16.3f);
-        emitterTranslate_[9] = Vector3(22.0f, 0.5f, 22.0f);
+        emitterTranslate_[0] = Vector3(-3.0f, 0.5f, -3.0f);
+        emitterTranslate_[1] = Vector3(-3.0f, 0.5f, 2.65f);
+        emitterTranslate_[2] = Vector3(-3.0f, 0.5f, 9.0f);
+        emitterTranslate_[3] = Vector3(-3.0f, 0.5f, 15.3f);
+        emitterTranslate_[4] = Vector3(-3.0f, 0.5f, 21.0f);
+        emitterTranslate_[5] = Vector3(21.0f, 0.5f, -3.0f);
+        emitterTranslate_[6] = Vector3(21.0f, 0.5f, 2.65f);
+        emitterTranslate_[7] = Vector3(21.0f, 0.5f, 9.0f);
+        emitterTranslate_[8] = Vector3(21.0f, 0.5f, 15.3f);
+        emitterTranslate_[9] = Vector3(21.0f, 0.5f, 21.0f);
         for (int i = 0; i < kOneBeatEmitterCount_; ++i) {
             auto obj = std::make_unique<Box>();
             if (auto *tr = obj->GetComponent3D<Transform3D>()) {
@@ -323,8 +323,8 @@ void GameScene::Initialize() {
             AddObject3D(std::move(obj));
         }
 
-        bpmObjectStart_[0] = { -15.0f,0.0f,10.0f }; bpmObjectEnd_[0] = { -2.75f,0.0f,10.0f };
-        bpmObjectStart_[1] = { 35.0f,0.0f,10.0f }; bpmObjectEnd_[1] = { 22.75f,0.0f,10.0f };
+        bpmObjectStart_[0] = { -14.0f,0.0f,10.0f }; bpmObjectEnd_[0] = { -3.75f,0.0f,10.0f };
+        bpmObjectStart_[1] = { 34.0f,0.0f,10.0f }; bpmObjectEnd_[1] = { 21.75f,0.0f,10.0f };
     }
 
     // Player（衝突判定を修正）
@@ -1661,7 +1661,7 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer) {
     // Wave2
     WaveData wave2{};
     wave2.wave = Wave::Wave2;
-    wave2.duration = 20;
+    wave2.duration = 20000;
     wave2.spawnList = {
         { 5, 0, 1, EnemyType::Basic },
         { 5, 0, 2, EnemyType::Basic },

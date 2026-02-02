@@ -140,29 +140,71 @@ void BombManager::Update() {
             if (inputCommand_->Evaluate("MoveUp").Triggered()) {
                 moveInputDetected = true;
                 if (withinBPMRange && moveInputTimer_.IsFinished()) {
-                    pendingBombSpawn_ = true;
-                    inputReceivedInThisBeat_ = true;
+                    // 最大Chain数チェック
+                    int currentChainCount = GetCurrentChainCount();
+                    if (maxChainCount_ > 0 && currentChainCount >= maxChainCount_) {
+                        // 最大数を超えたらChainモードを解除
+                        bombSpawnMode_ = BombSpawnMode::None;
+                        pendingBombSpawn_ = false;
+                        missedBeatsCount_ = 0;
+                        for (auto& bomb : activeBombs_) {
+                            bomb.isChainBomb = false;
+                        }
+                    } else {
+                        pendingBombSpawn_ = true;
+                        inputReceivedInThisBeat_ = true;
+                    }
                 }
                 moveInputTimer_.Start(moveInputInterval_, false);
             } else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
                 moveInputDetected = true;
                 if (withinBPMRange && moveInputTimer_.IsFinished()) {
-                    pendingBombSpawn_ = true;
-                    inputReceivedInThisBeat_ = true;
+                    int currentChainCount = GetCurrentChainCount();
+                    if (maxChainCount_ > 0 && currentChainCount >= maxChainCount_) {
+                        bombSpawnMode_ = BombSpawnMode::None;
+                        pendingBombSpawn_ = false;
+                        missedBeatsCount_ = 0;
+                        for (auto& bomb : activeBombs_) {
+                            bomb.isChainBomb = false;
+                        }
+                    } else {
+                        pendingBombSpawn_ = true;
+                        inputReceivedInThisBeat_ = true;
+                    }
                 }
                 moveInputTimer_.Start(moveInputInterval_, false);
             } else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
                 moveInputDetected = true;
                 if (withinBPMRange && moveInputTimer_.IsFinished()) {
-                    pendingBombSpawn_ = true;
-                    inputReceivedInThisBeat_ = true;
+                    int currentChainCount = GetCurrentChainCount();
+                    if (maxChainCount_ > 0 && currentChainCount >= maxChainCount_) {
+                        bombSpawnMode_ = BombSpawnMode::None;
+                        pendingBombSpawn_ = false;
+                        missedBeatsCount_ = 0;
+                        for (auto& bomb : activeBombs_) {
+                            bomb.isChainBomb = false;
+                        }
+                    } else {
+                        pendingBombSpawn_ = true;
+                        inputReceivedInThisBeat_ = true;
+                    }
                 }
                 moveInputTimer_.Start(moveInputInterval_, false);
             } else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
                 moveInputDetected = true;
                 if (withinBPMRange && moveInputTimer_.IsFinished()) {
-                    pendingBombSpawn_ = true;
-                    inputReceivedInThisBeat_ = true;
+                    int currentChainCount = GetCurrentChainCount();
+                    if (maxChainCount_ > 0 && currentChainCount >= maxChainCount_) {
+                        bombSpawnMode_ = BombSpawnMode::None;
+                        pendingBombSpawn_ = false;
+                        missedBeatsCount_ = 0;
+                        for (auto& bomb : activeBombs_) {
+                            bomb.isChainBomb = false;
+                        }
+                    } else {
+                        pendingBombSpawn_ = true;
+                        inputReceivedInThisBeat_ = true;
+                    }
                 }
                 moveInputTimer_.Start(moveInputInterval_, false);
             }
@@ -522,6 +564,16 @@ void BombManager::IncrementChainBombExplosionSize(float increment) {
     }
 }
 
+int BombManager::GetCurrentChainCount() const {
+    int count = 0;
+    for (const auto& bomb : activeBombs_) {
+        if (bomb.isChainBomb) {
+            count++;
+        }
+    }
+    return count;
+}
+
 #if defined(USE_IMGUI)
 void BombManager::ShowImGui() {
     ImGui::Text("BombManager");
@@ -538,6 +590,8 @@ void BombManager::ShowImGui() {
     ImGui::Text("Chain Mode: %s", bombSpawnMode_ == BombSpawnMode::Chain ? "Active" : "Inactive");
     ImGui::DragInt("Max Missed Beats", &maxMissedBeats_, 1, 0, 10);
     ImGui::Text("Missed Beats: %d / %d", missedBeatsCount_, maxMissedBeats_);
+    ImGui::DragInt("Max Chain Count", &maxChainCount_, 1, 0, 100);
+    ImGui::Text("Current Chain Count: %d / %s", GetCurrentChainCount(), maxChainCount_ > 0 ? std::to_string(maxChainCount_).c_str() : "Unlimited");
     
     if (ImGui::TreeNode("Active Bombs Details")) {
         for (size_t i = 0; i < activeBombs_.size(); ++i) {

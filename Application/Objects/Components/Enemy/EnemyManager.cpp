@@ -329,11 +329,11 @@ void EnemyManager::Update() {
         
         // 中心に到達した場合、プレイヤーにダメージを与えて敵を削除
         if (reachedCenter && bpmProgress_ > 0.5f && e.isMovingToCenter) {
-            if (player_) {
+            /*if (player_) {
                 if (auto* health = player_->GetComponent3D<Health>()) {
                     health->Damage(1);
                 }
-            }
+            }*/
             SpawnDieParticles(e.targetPosition);
             e.isDead = true;
         }

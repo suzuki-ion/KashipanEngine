@@ -514,6 +514,11 @@ void GameScene::Initialize() {
         }
     }
 
+    // WaveSystemの初期化
+    {
+        InitWaveSystem(screenBuffer3D);
+    }
+
     // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
     if (explosionManager_ && bombManager_) {
         explosionManager_->SetBombManager(bombManager_);
@@ -580,7 +585,7 @@ void GameScene::Initialize() {
     }
 
     // Player Health UI (ライフ表示)
-    {
+    /*{
         auto comp = std::make_unique<PlayerHealthModelUI>(screenBuffer3D);
         if (player_) {
             if (auto *health = player_->GetComponent3D<Health>()) {
@@ -592,7 +597,7 @@ void GameScene::Initialize() {
             playerHealthUI_ = comp.get();
         }
         AddSceneComponent(std::move(comp));
-    }
+    }*/
 
     // デバッグ用カメラ操作コンポーネント
     {
@@ -709,9 +714,9 @@ void GameScene::OnUpdate() {
         }
     }
 
-    if (playerHealthUI_) {
+    /*if (playerHealthUI_) {
         playerHealthUI_->SetBPMProgress(bpmSystem_->GetBeatProgress());
-    }
+    }*/
 
     if (player_) {
         if (auto *tr = player_->GetComponent3D<Transform3D>()) {
@@ -974,6 +979,7 @@ void GameScene::LoadObjectStateJson() {
         if (index < values.size()) playerNoneMoveInputInterval_ = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerChainMoveInputInterval_ = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) isBreakWalls_ = JsonManager::Reverse<bool>(values[index++]);
+        if (index < values.size()) bombMaxChainCount_ = JsonManager::Reverse<int>(values[index++]);
 
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadFromJson: %s\n", e.what());
@@ -1053,6 +1059,7 @@ void GameScene::SaveObjectStateJson() {
     jsonManager_->RegistOutput(playerNoneMoveInputInterval_, "playerNoneMoveInputInterval");
     jsonManager_->RegistOutput(playerChainMoveInputInterval_, "playerChainMoveInputInterval");
     jsonManager_->RegistOutput(isBreakWalls_, "isBreakWalls");
+    jsonManager_->RegistOutput(bombMaxChainCount_, "bombMaxChainCount");
 
     // JSONファイルに書き込み
     jsonManager_->Write(loadToSaveName_);
@@ -1260,6 +1267,7 @@ void GameScene::SetObjectValue() {
         bombManager_->SetDetonationScale(Vector3(bombDetonationScale_));
         bombManager_->SetUsePlayerDirection(usePlayerDirection_);
         bombManager_->SetMoveInputInterval(playerMoveInputInterval_);
+		bombManager_->SetMaxChainCount(bombMaxChainCount_);
     }
 
     // 爆発関連の設定更新
@@ -1304,7 +1312,12 @@ void GameScene::SetParticleValue() {
     }
 
     if (enemySpawner_) {
-        enemySpawner_->SetEnemyDieParticleConfig(enemySpawnParticleConfig_);
+        //enemySpawner_->SetEnemyDieParticleConfig(enemySpawnParticleConfig_);
+    }
+
+    if (waveSystem_) {
+        // パーティクル設定を設定（enemySpawnParticleConfig_を使用）
+        waveSystem_->SetSpawnParticleConfig(enemySpawnParticleConfig_);
     }
 
     if (enemyManager_) {
@@ -1376,6 +1389,7 @@ void GameScene::DrawObjectStateImGui() {
     if (ImGui::CollapsingHeader("爆弾関連")) {
         ImGui::DragInt("最大設置数", &bombMaxNumber_, 1.0f, 1, 1000);
         ImGui::DragInt("寿命(拍数)", &bombLifetimeBeats_, 1.0f, 1, 1000);
+        ImGui::DragInt("連鎖最大数", &bombMaxChainCount_, 1.0f, 1, 100);
         ImGui::DragFloat("通常時拡小スケール", &bombNormalMinScale_, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat("通常時拡大スケール", &bombNormalMaxScale_, 0.01f, 0.0f, 10.0f);
         ImGui::DragFloat("起爆前拡小スケール", &bombSpeedMinScale_, 0.01f, 0.0f, 10.0f);
@@ -1500,7 +1514,12 @@ void GameScene::InGameStart() {
         }
 
         if (enemySpawner_) {
-            enemySpawner_->SetIsStarted(true);
+            enemySpawner_->SetIsStarted(false);
+        }
+
+        // WaveSystemを開始
+        if (waveSystem_) {
+            waveSystem_->StartSystem();
         }
 
         if (player_) {
@@ -1539,6 +1558,12 @@ void GameScene::InGameQuit() {
 
     if (enemySpawner_) {
         enemySpawner_->SetIsStarted(false);
+    }
+
+    // WaveSystemを停止してリセット
+    if (waveSystem_) {
+        waveSystem_->StopSystem();
+        waveSystem_->ResetSystem();
     }
 
     if (enemyManager_) {
@@ -1605,4 +1630,55 @@ void GameScene::UpdateWallRespawnMarkers() {
     }
 }
 
+
+void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer) {
+    auto comp = std::make_unique<WaveSystem>();
+    comp->SetBPMSystem(bpmSystem_);
+    comp->SetEnemyManager(enemyManager_);
+    comp->SetEnemySpawner(enemySpawner_);
+    comp->SetScreenBuffer(screenBuffer);
+    comp->SetPreWaveDelay(4);           // Wave開始前の待機拍数
+    comp->SetPostWaveDelay(4);          // Wave終了後の待機拍数
+    comp->SetSpawnParticleLeadBeats(4); // SpawnParticle発生から敵生成までの拍数
+    waveSystem_ = comp.get();
+    AddSceneComponent(std::move(comp));
+
+    // パーティクルプールを初期化
+    waveSystem_->InitializeParticlePool(1000);
+
+    // サンプルWaveデータを設定
+    // Wave1
+    WaveData wave1{};
+    wave1.wave = Wave::Wave1;
+    wave1.duration = 16; // 16拍で終了
+    wave1.spawnList = {
+        { 6, 0, 9, EnemyType::Basic },   // 4拍目に(0,5)にBasic敵
+        { 6, 9, 0, EnemyType::Basic },   // 8拍目に(9,5)にBasic敵
+        { 12, 5, 0, EnemyType::Speedy }, // 12拍目に(5,0)にSpeedy敵
+    };
+    waveSystem_->AddWaveData(wave1);
+
+    // Wave2
+    WaveData wave2{};
+    wave2.wave = Wave::Wave2;
+    wave2.duration = 20;
+    wave2.spawnList = {
+        { 5, 0, 1, EnemyType::Basic },
+        { 5, 0, 2, EnemyType::Basic },
+        { 5, 0, 3, EnemyType::Basic },
+        { 5, 0, 4, EnemyType::Basic },
+        { 16, 0, 5, EnemyType::Basic },
+    };
+    waveSystem_->AddWaveData(wave2);
+
+    // 全Wave終了時のコールバック
+    waveSystem_->SetOnAllWavesCompletedCallback([this]() {
+        // 全Wave終了時の処理（将来のResult画面遷移などに使用）
+        InGameQuit();
+        if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+        if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+        if (backMonitorGame_) backMonitorGame_->SetActive(false);
+        if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+        });
+}
 } // namespace GameSceneNS

@@ -117,7 +117,13 @@ public:
     /// @brief Chainモードで拍を見逃せる最大回数を設定
     void SetMaxMissedBeats(int maxMissed) { maxMissedBeats_ = maxMissed; }
 
+    /// @brief Chainモードで連鎖できる最大爆弾数を設定
+    void SetMaxChainCount(int maxCount) { maxChainCount_ = maxCount; }
+
 	BombSpawnMode GetBombSpawnMode() const { return bombSpawnMode_; }
+
+    /// @brief 現在のChain爆弾数を取得
+    int GetCurrentChainCount() const;
 
 	void SetMoveInputInterval(float interval) { moveInputInterval_ = interval; }
 #if defined(USE_IMGUI)
@@ -193,6 +199,7 @@ private:
     bool inputReceivedInThisBeat_ = false; // 現在の拍で入力があったか
     int missedBeatsCount_ = 0;        // 連続して見逃した拍の数
     int maxMissedBeats_ = 1;          // Chainモードで許容される最大見逃し回数
+    int maxChainCount_ = 10;          // Chainモードで連鎖できる最大爆弾数（0=無制限）
 };
 
-} // namespace KashipanEngine
+} // namespace KashipanEngine} // namespace KashipanEngine

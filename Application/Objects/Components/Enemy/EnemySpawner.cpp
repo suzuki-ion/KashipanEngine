@@ -231,9 +231,28 @@ namespace KashipanEngine {
         }
         std::shuffle(indices.begin(), indices.end(), gen);
 
+        constexpr float kTile = 2.0f;
+
         // 全スポーン位置をチェック
         for (size_t idx : indices) {
             const Vector3& pos = spawnPoints_[idx].position;
+            
+            // グリッド座標を計算
+            const int gridX = static_cast<int>(std::round(pos.x / kTile));
+            const int gridZ = static_cast<int>(std::round(pos.z / kTile));
+            
+            // 四隅のチェック（マップの四隅を除外）
+            const bool isTopLeft = (gridX == 0 && gridZ == mapHeight_ - 1);
+            const bool isTopRight = (gridX == mapWidth_ - 1 && gridZ == mapHeight_ - 1);
+            const bool isBottomLeft = (gridX == 0 && gridZ == 0);
+            const bool isBottomRight = (gridX == mapWidth_ - 1 && gridZ == 0);
+            const bool isCorner = isTopLeft || isTopRight || isBottomLeft || isBottomRight;
+            
+            // 四隅ならスキップ
+            if (isCorner) {
+                continue;
+            }
+            
             if (!IsPositionOccupied(pos)) {
                 outPosition = pos;
                 return true;

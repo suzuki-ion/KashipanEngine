@@ -3,6 +3,7 @@
 #include "ScoreDisplay.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
 #include "Objects/Components/Player/ScoreManager.h"
+#include "Objects/Components/Player/PlayerMove.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "objects/Components/Health.h"
 #include <algorithm>
@@ -186,21 +187,21 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
 
         // ラムダで爆発インデックスをキャプチャ
         collisionInfo.onCollisionEnter = [this, currentExplosionIndex](const HitInfo3D& hitInfo) {
-            // 敵との衝突をEnemyManagerに通知
-            if (enemyManager_) {
-                bool wasEnemy = enemyManager_->OnExplosionHit(hitInfo.otherObject);
-                // 敵を倒した場合、この爆発のカウントを増やす
-                if (wasEnemy && currentExplosionIndex < activeExplosions_.size()) {
-                    activeExplosions_[currentExplosionIndex].enemiesHit++;
-                }
+            // 敵との衝突をEnemyManagerに通知（爆発の位置も渡す）
+            if (enemyManager_ && currentExplosionIndex < activeExplosions_.size()) {
+                const Vector3& explosionCenter = activeExplosions_[currentExplosionIndex].position;
+                enemyManager_->OnExplosionHit(hitInfo.otherObject, explosionCenter);
             }
 
             // Playerと衝突したかチェック
             if (hitInfo.otherObject == player_) {
-                // Playerにダメージを与える
+                // Playerを吹き飛ばす
                 if (player_) {
-                    if (auto* health = player_->GetComponent3D<Health>()) {
-                        health->Damage(1);
+                    if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+                        if (currentExplosionIndex < activeExplosions_.size()) {
+                            const Vector3& explosionCenter = activeExplosions_[currentExplosionIndex].position;
+                            playerMove->KnockBack(explosionCenter);
+                        }
                     }
                 }
             }
@@ -219,25 +220,26 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
 
         // ラムダで爆発インデックスをキャプチャ
         collisionInfo.onCollisionEnter = [this, currentExplosionIndex](const HitInfo3D& hitInfo) {
-            // 敵との衝突をEnemyManagerに通知
-            if (enemyManager_) {
-                bool wasEnemy = enemyManager_->OnExplosionHit(hitInfo.otherObject);
-                // 敵を倒した場合、この爆発のカウントを増やす
-                if (wasEnemy && currentExplosionIndex < activeExplosions_.size()) {
-                    activeExplosions_[currentExplosionIndex].enemiesHit++;
-                }
+            // 敵との衝突をEnemyManagerに通知（爆発の位置も渡す）
+            if (enemyManager_ && currentExplosionIndex < activeExplosions_.size()) {
+                const Vector3& explosionCenter = activeExplosions_[currentExplosionIndex].position;
+                enemyManager_->OnExplosionHit(hitInfo.otherObject, explosionCenter);
             }
 
             // Playerと衝突したかチェック
             if (hitInfo.otherObject == player_) {
-                // Playerにダメージを与える
+                // Playerを吹き飛ばす
                 if (player_) {
-                    if (auto* health = player_->GetComponent3D<Health>()) {
-                        health->Damage(1);
+                    if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+                        if (currentExplosionIndex < activeExplosions_.size()) {
+                            const Vector3& explosionCenter = activeExplosions_[currentExplosionIndex].position;
+                            playerMove->KnockBack(explosionCenter);
+                        }
                     }
                 }
             }
         };
+
 
         explosion2->RegisterComponent<Collision3D>(collider2_->GetCollider(), collisionInfo);
     }
@@ -266,6 +268,17 @@ void ExplosionManager::CreateWallAtBombPosition(const Vector3& position) {
 
     // 範囲チェック
     if (bombX < 0 || bombX >= mapW_ || bombZ < 0 || bombZ >= mapH_) return;
+
+    // マップ中心の4か所には壁を生成しない
+    const bool isCenterPosition = 
+        (bombX == 4 && bombZ == 4) ||
+        (bombX == 5 && bombZ == 4) ||
+        (bombX == 4 && bombZ == 5) ||
+        (bombX == 5 && bombZ == 5);
+    
+    if (isCenterPosition) {
+        return;
+    }
 
     // プレイヤーの位置をチェック
     if (player_) {

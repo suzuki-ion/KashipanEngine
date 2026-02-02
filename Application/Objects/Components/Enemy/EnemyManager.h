@@ -50,8 +50,8 @@ public:
 
     /// @brief 爆発が敵に当たった時の処理
     /// @param hitObject 当たったオブジェクト
-    /// @return 敵を倒した場合true、それ以外false
-    bool OnExplosionHit(Object3DBase* hitObject);
+    /// @param explosionCenter 爆発の中心位置
+    void OnExplosionHit(Object3DBase* hitObject, const Vector3& explosionCenter);
 
     /// @brief 敵が倒された時のコールバックを設定
     /// @param callback 倒された時に呼ばれるコールバック関数
@@ -92,6 +92,11 @@ private:
     /// @param z マップZ座標
     void DamageWallAt(int x, int z);
 
+    /// @brief 指定したマップ座標の壁を破壊する
+    /// @param x マップX座標
+    /// @param z マップZ座標
+    void DestroyWallAt(int x, int z);
+
 	/// @brief アクティブな敵情報
     struct EnemyInfo {
         Object3DBase* object = nullptr; 
@@ -102,6 +107,11 @@ private:
 		Vector3 targetPosition{ 0.0f, 0.0f, 0.0f };  // 追加: 移動目標位置
 		bool isDead = false;
         int moveEveryNBeats = 2;  // 何拍ごとに移動するか（デフォルト: 1拍ごと）
+        
+        // 吹き飛び関連
+        bool isKnockedBack = false;  // 吹き飛び中かどうか
+        Vector3 knockbackVelocity{ 0.0f, 0.0f, 0.0f };  // 吹き飛び速度
+        float knockbackTimer = 0.0f;  // 吹き飛び経過時間
     };
 
     std::vector<EnemyInfo> activeEnemies_;
@@ -136,6 +146,14 @@ private:
 	float bpmProgress_ = 0.0f;
 
 	float dieVolume_ = 0.1f;
+    
+    // 吹き飛び設定
+    float knockbackSpeed_ = 10.0f;     // 吹き飛び速度（より速く）
+    
+    // マップ中心の設定
+    std::vector<std::pair<int, int>> centerPositions_ = {
+        {4, 4}, {5, 4}, {4, 5}, {5, 5}
+    };
 };
 
 } // namespace KashipanEngine

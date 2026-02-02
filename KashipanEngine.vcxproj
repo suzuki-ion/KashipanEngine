@@ -405,6 +405,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\imgui\imstb_truetype.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="resource.h" />
     <None Include="Application\AppInitialize.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
@@ -790,6 +791,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DitherPS.hlsl">
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="KashipanEngine.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\KashipanEngine\EngineLogo\engineLogo.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

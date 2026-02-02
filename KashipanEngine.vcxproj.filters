@@ -438,6 +438,7 @@
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
@@ -559,5 +560,11 @@
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Dither.json" />
     <None Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DitherPS.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="KashipanEngine.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\KashipanEngine\EngineLogo\engineLogo.ico" />
   </ItemGroup>
 </Project>

@@ -44,30 +44,6 @@ void ExplosionManager::Update() {
                     t = 1.0f;
                 }
 
-                // 数字表示（一度だけ、爆発が始まってすぐに）
-                if (!explosion.numberDisplayed && explosion.enemiesHit > 0 && explosionNumberDisplay_) {
-                    explosionNumberDisplay_->SpawnNumber(explosion.position, explosion.enemiesHit);
-                    explosion.numberDisplayed = true;
-                }
-
-                // スコア計算（一度だけ、爆発が終わる直前に）
-                if (!explosion.scoreCalculated && t >= 0.9f && explosion.enemiesHit > 0) {
-                    if (scoreManager_) {
-                        int points = 0;
-                        if (explosion.enemiesHit == 1) {
-                            points = 100;
-                        } else if (explosion.enemiesHit == 2) {
-                            points = 300;
-						} else if (explosion.enemiesHit == 3) {
-                            points = 900;
-                        } else {
-                            points = 1500;
-                        }
-                        scoreManager_->AddScore(points);
-                    }
-                    explosion.scoreCalculated = true;
-                }
-
                 // 線形補間でスケールを縮小（初期 scale -> 0）
                 Vector3 startScale((size_ * 2.0f) + 0.5f, 0.5f, 0.5f);
                 Vector3 endScale(0.0f, 0.0f, 0.0f);

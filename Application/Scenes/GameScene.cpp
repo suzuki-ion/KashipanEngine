@@ -394,11 +394,6 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
-    // ExplosionManagerにExplosionNumberDisplayを設定
-    if (explosionManager_ && explosionNumberDisplay_) {
-        explosionManager_->SetExplosionNumberDisplay(explosionNumberDisplay_);
-    }
-
     // BombManager の追加
     {
         auto comp = std::make_unique<BombManager>(bombMaxNumber_);
@@ -455,17 +450,10 @@ void GameScene::Initialize() {
         scoreManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
-
-    // ExplosionManagerにScoreManagerを設定
-    if (explosionManager_ && scoreManager_) {
-        explosionManager_->SetScoreManager(scoreManager_);
-    }
-
-    // EnemyManagerにScoreManagerのコールバックを設定（後方互換性のため保持）
+    
+    // EnemyManagerにScoreManagerを設定
     if (enemyManager_ && scoreManager_) {
-        enemyManager_->SetOnEnemyDestroyedCallback([this]() {
-            // このコールバックは現在使用されていないが、後方互換性のため保持
-        });
+        enemyManager_->SetScoreManager(scoreManager_);
     }
 
     // PlayerDieParticleManagerの初期化
@@ -538,7 +526,7 @@ void GameScene::Initialize() {
 
     // Debug: BackMonitor render components (game/menu/particle)
     {
-        auto *bm = GetSceneComponent<BackMonitor>();
+        auto* bm = GetSceneComponent<BackMonitor>();
         if (bm) {
             auto compG = std::make_unique<BackMonitorWithGameScreen>(bm->GetScreenBuffer());
             backMonitorGame_ = compG.get();
@@ -1338,6 +1326,8 @@ void GameScene::DrawObjectStateImGui() {
         SaveObjectStateJson();
     }
 
+    ImGui::Text("スコア:%d", scoreManager_->GetScore());
+
     ImGui::SameLine();
     ImGui::Separator();
 
@@ -1568,6 +1558,11 @@ void GameScene::InGameQuit() {
 
     if (enemyManager_) {
         enemyManager_->ClearAllEnemies();
+    }
+    
+    // スコアをリセット
+    if (scoreManager_) {
+        scoreManager_->ResetScore();
     }
 
     if (bpmObjects_[0] && bpmObjects_[1]) {

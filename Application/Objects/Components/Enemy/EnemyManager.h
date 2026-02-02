@@ -97,6 +97,12 @@ private:
     /// @param z マップZ座標
     void DestroyWallAt(int x, int z);
 
+    /// @brief 指定したマップ座標が中心から伸びる十字エリアかチェック
+    /// @param x マップX座標
+    /// @param z マップZ座標
+    /// @return 十字エリアの場合true
+    bool IsCrossAreaFromCenter(int x, int z) const;
+
 	/// @brief アクティブな敵情報
     struct EnemyInfo {
         Object3DBase* object = nullptr; 
@@ -107,6 +113,10 @@ private:
 		Vector3 targetPosition{ 0.0f, 0.0f, 0.0f };  // 追加: 移動目標位置
 		bool isDead = false;
         int moveEveryNBeats = 2;  // 何拍ごとに移動するか（デフォルト: 1拍ごと）
+        
+        // 移動状態の追加
+        bool isMovingToCenter = false;  // 中心エリアに向かって移動中かどうか
+        bool isReversedFromWall = false;  // 壁で反転したフラグ（中心に向かわない）
         
         // 吹き飛び関連
         bool isKnockedBack = false;  // 吹き飛び中かどうか

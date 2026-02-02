@@ -68,7 +68,7 @@ namespace KashipanEngine {
         void SpawnEnemy();
         void SpawnParticlesAtPosition(const Vector3& position);
         EnemyType DetermineEnemyType() const;
-        EnemyDirection ChooseSpawnDirection_NoOutward(const Vector3& pos, int mapW = 13, int mapH = 13, float tile = 2.0f) const;
+        EnemyDirection ChooseSpawnDirection_NoOutward(const Vector3& pos, int mapW = 10, int mapH = 10, float tile = 2.0f) const;
         const SpawnPoint& SelectSpawnPoint() const;
 
         /// @brief 指定位置に爆弾または壁が存在するかチェック

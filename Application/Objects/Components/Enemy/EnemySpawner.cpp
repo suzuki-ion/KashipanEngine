@@ -150,27 +150,31 @@ namespace KashipanEngine {
         return static_cast<EnemyType>(dis(gen));
     }
 
-    EnemyDirection EnemySpawner::ChooseSpawnDirection_NoOutward(const Vector3& pos, int mapW, int mapH, float tile) const {
-        // マップの中心を計算
-        float centerX = (mapW - 1) * tile * 0.5f;
-        float centerZ = (mapH - 1) * tile * 0.5f;
+    EnemyDirection EnemySpawner::ChooseSpawnDirection_NoOutward(const Vector3& pos, int mapW, int mapH, [[maybe_unused]] float tile) const {
+        constexpr float kTile = 2.0f;
+        const int gridX = static_cast<int>(std::round(pos.x / kTile));
+        const int gridZ = static_cast<int>(std::round(pos.z / kTile));
 
-        // スポーン位置から中心への方向を計算
-        Vector3 toCenter = { centerX - pos.x, 0.0f, centerZ - pos.z };
-        toCenter = toCenter.Normalize();
+        // マップの端を判定して、反対側の辺に向かう方向を返す
+        // 上辺 (Z = mapH - 1) から生成された場合 → 下 (Down) に移動
+        if (gridZ == mapH - 1) {
+            return EnemyDirection::Down;
+        }
+        // 下辺 (Z = 0) から生成された場合 → 上 (Up) に移動
+        else if (gridZ == 0) {
+            return EnemyDirection::Up;
+        }
+        // 左辺 (X = 0) から生成された場合 → 右 (Right) に移動
+        else if (gridX == 0) {
+            return EnemyDirection::Right;
+        }
+        // 右辺 (X = mapW - 1) から生成された場合 → 左 (Left) に移動
+        else if (gridX == mapW - 1) {
+            return EnemyDirection::Left;
+        }
 
-        // 最も近い方向を選択
-        float dotUp = toCenter.Dot({ 0.0f, 0.0f, 1.0f });
-        float dotDown = toCenter.Dot({ 0.0f, 0.0f, -1.0f });
-        float dotLeft = toCenter.Dot({ -1.0f, 0.0f, 0.0f });
-        float dotRight = toCenter.Dot({ 1.0f, 0.0f, 0.0f });
-
-        float maxDot = std::max({ dotUp, dotDown, dotLeft, dotRight });
-
-        if (maxDot == dotUp) return EnemyDirection::Up;
-        if (maxDot == dotDown) return EnemyDirection::Down;
-        if (maxDot == dotLeft) return EnemyDirection::Left;
-        return EnemyDirection::Right;
+        // デフォルト（通常は到達しない）
+        return EnemyDirection::Down;
     }
 
     const SpawnPoint& EnemySpawner::SelectSpawnPoint() const {

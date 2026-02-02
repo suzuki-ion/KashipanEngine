@@ -76,10 +76,6 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object3DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\ObjectContext.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
@@ -239,7 +235,6 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\FaceNormal3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexData3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h" />
@@ -259,9 +254,6 @@
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Ray.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Segment.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Triangle.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object2DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object3DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h" />
@@ -333,6 +325,8 @@
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem.h" />
     <ClInclude Include="KashipanEngine\ECS\EcsComponents.h" />
     <ClInclude Include="KashipanEngine\ECS\EcsSystems.h" />
+    <ClInclude Include="KashipanEngine\ECS\Components\Transform.h" />
+    <ClInclude Include="KashipanEngine\Graphics\IRenderTarget.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

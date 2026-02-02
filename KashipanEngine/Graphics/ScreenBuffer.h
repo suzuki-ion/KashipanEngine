@@ -13,6 +13,7 @@
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
+#include "Graphics/IRenderTarget.h"
 #include "Graphics/IShaderTexture.h"
 
 namespace KashipanEngine {

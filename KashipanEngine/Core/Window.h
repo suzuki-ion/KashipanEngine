@@ -25,8 +25,6 @@ class GraphicsEngine;
 class PipelineManager;
 class Renderer;
 class ImGuiManager;
-class Object2DBase;
-class Object3DBase;
 class ScreenBuffer;
 
 /// @brief ウィンドウの種類
@@ -196,9 +194,9 @@ public:
     void SetWindowPosition(int32_t x, int32_t y);
     /// @brief ウィンドウの表示/非表示を切り替える
     void SetWindowVisible(bool visible);
-	/// @brief 親ウィンドウを設定する
-	/// @param parentHwnd 親ウィンドウのHWND
-	void SetWindowParent(HWND parentHwnd, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
+    /// @brief 親ウィンドウを設定する
+    /// @param parentHwnd 親ウィンドウのHWND
+    void SetWindowParent(HWND parentHwnd, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
     /// @brief 親ウィンドウを設定する
     /// @param parentWindow 親ウィンドウのポインタ
     void SetWindowParent(Window *parentWindow, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
@@ -215,7 +213,7 @@ public:
 
     /// @brief ウィンドウイベントを登録する（既定イベント型は値で、拡張イベントはunique_ptrで保持）
     template<class TEvent, class... Args>
-    requires (IsDefaultEventV<TEvent>)
+        requires (IsDefaultEventV<TEvent>)
     void RegisterWindowEvent(Args&&... args) {
         // 一度だけ仮生成してメッセージ値を取得
         TEvent temp(std::forward<Args>(args)...);
@@ -229,7 +227,7 @@ public:
 
     /// @brief ウィンドウ既定イベントを登録する（unique_ptr版、値にムーブして保持）
     template<class TEvent>
-    requires (IsDefaultEventV<TEvent>)
+        requires (IsDefaultEventV<TEvent>)
     void RegisterWindowEvent(std::unique_ptr<TEvent> handler) {
         if (!handler) return;
         const UINT msg = handler->kTargetMessage_;
@@ -240,7 +238,7 @@ public:
 
     /// @brief ウィンドウ拡張イベントを登録する（unique_ptr保持）
     template<class TEvent> requires (IsUserEventV<TEvent>)
-    void RegisterWindowEvent(std::unique_ptr<TEvent> handler) {
+        void RegisterWindowEvent(std::unique_ptr<TEvent> handler) {
         if (!handler) return;
         handler->SetWindow(this);
         const UINT msg = handler->kTargetMessage_;
@@ -252,7 +250,7 @@ public:
 
     /// @brief ウィンドウ拡張イベントを登録する（値指定でも内部でunique_ptr化）
     template<class TEvent, class... Args> requires (IsUserEventV<TEvent>)
-    void RegisterWindowEvent(Args&&... args) {
+        void RegisterWindowEvent(Args&&... args) {
         auto ptr = std::make_unique<TEvent>(std::forward<Args>(args)...);
         ptr->SetWindow(this);
         const UINT msg = ptr->kTargetMessage_;
@@ -275,7 +273,7 @@ public:
     /// @brief ウィンドウハンドルを取得する
     HWND GetWindowHandle() const noexcept { return descriptor_.hwnd; }
     /// @brief ウィンドウクラスを取得する
-    const WNDCLASS& GetWindowClass() const noexcept { return descriptor_.wc; }
+    const WNDCLASS &GetWindowClass() const noexcept { return descriptor_.wc; }
     /// @brief ウィンドウ位置（左上座標）を取得する
     POINT GetWindowPosition() const noexcept { return { size_.windowRect.left, size_.windowRect.top }; }
     /// @brief クライアント幅を取得する
@@ -373,7 +371,7 @@ private:
     WindowSize size_{};
     // メッセージ関連
     std::unordered_map<UINT, WindowMessage> messages_;
-    
+
     // DX12スワップチェーン
     DX12SwapChain *dx12SwapChain_ = nullptr;
 
@@ -395,7 +393,7 @@ private:
 
     // 親子管理データ
     Window *parentWindow_ = nullptr;
-    std::vector<Window*> childWindows_{};
+    std::vector<Window *> childWindows_{};
 
     // 破棄通知フラグ
     bool isPendingDestroy_ = false;

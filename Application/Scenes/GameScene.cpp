@@ -161,7 +161,7 @@ void GameScene::Initialize() {
 
                 obj->SetName("MapMarker" ":x" + std::to_string(x) + ":z" + std::to_string(z));
 
-                obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_, EaseType::EaseOutExpo);
+                obj->RegisterComponent<BPMScaling>(Vector3(1.0f), Vector3(0.8f), EaseType::EaseOutExpo);
 
                 if (auto* tr = obj->GetComponent3D<Transform3D>()) {
                     tr->SetTranslate(Vector3(2.0f * x, 0.0f, 2.0f * z));
@@ -786,22 +786,40 @@ void GameScene::OnUpdate() {
                         walls_[z][x].isActive = true;
                     }
 
-                    if (walls_[z][x].hp <= 0) {
+                    if (walls_[z][x].hp <= 0 && !walls_[z][x].isWaitingRespawn) {
                         walls_[z][x].isActive = false;
                         walls_[z][x].isMoving = false;
                         walls_[z][x].moveTimer.Reset();
                         walls_[z][x].hp = 0;
+                        walls_[z][x].isWaitingRespawn = true;
+                        walls_[z][x].currentSpawnAgainCount = 0;
                     }
 
                     walls_[z][x].moveTimer.Update();
                 }
             }
         }
+
+        // 拍が発生したときに再生成カウンターを更新
+        if (bpmSystem_ && bpmSystem_->GetOnBeat()) {
+            for (int z = 0; z < kMapH; z++) {
+                for (int x = 0; x < kMapW; x++) {
+                    if (walls_[z][x].isWaitingRespawn) {
+                        walls_[z][x].currentSpawnAgainCount++;
+                        if (walls_[z][x].currentSpawnAgainCount >= walls_[z][x].spawnAgainCount) {
+                            walls_[z][x].isWaitingRespawn = false;
+                            walls_[z][x].currentSpawnAgainCount = 0;
+                            walls_[z][x].hp = 1; // HPを回復して再設置可能に
+                        }
+                    }
+                }
+            }
+        }
     }
 
     {
-        // 爆発範囲マーカーを更新
-        UpdateBombExplosionMarkers();        
+        // 壁の再生成待機中マーカーを更新
+        UpdateWallRespawnMarkers();        
     }
 
     {
@@ -1094,6 +1112,7 @@ void GameScene::LoadParticleStateJson() {
         if (index < values.size()) oneBeatMissParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) oneBeatMissParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) oneBeatMissParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
+
 
         // PlayerDieParticle関連
         if (index < values.size()) playerDieParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
@@ -1530,6 +1549,8 @@ void GameScene::InGameQuit() {
                 walls_[z][x].isMoving = false;
                 walls_[z][x].moveTimer.Reset();
                 walls_[z][x].hp = 1;
+                walls_[z][x].isWaitingRespawn = false;
+                walls_[z][x].currentSpawnAgainCount = 0;
             }
         }
     }
@@ -1537,7 +1558,7 @@ void GameScene::InGameQuit() {
     isGameStarted_ = false;
 }
 
-void GameScene::UpdateBombExplosionMarkers() {
+void GameScene::UpdateWallRespawnMarkers() {
     // すべてのマーカーを一旦非アクティブ化
     for (int z = 0; z < kMapH; z++) {
         for (int x = 0; x < kMapW; x++) {
@@ -1545,49 +1566,23 @@ void GameScene::UpdateBombExplosionMarkers() {
         }
     }
 
-    // BombManagerからアクティブな爆弾情報を取得
-    if (!bombManager_) return;
-
-    auto activeBombs = bombManager_->GetActiveBombsInfo();
-
-    // 各爆弾の爆発範囲をマーカーに反映
-    for (const auto& bombInfo : activeBombs) {
-        const Vector3& bombPos = bombInfo.first;
-        const float explosionSize = bombInfo.second;
-
-        // 爆弾の位置をグリッド座標に変換（2.0f間隔で配置されている前提）
-        const int bombX = static_cast<int>(std::round(bombPos.x / 2.0f));
-        const int bombZ = static_cast<int>(std::round(bombPos.z / 2.0f));
-
-        // 爆発サイズを整数に変換
-        const int size = static_cast<int>(explosionSize);
-
-        // 爆弾の中心マスをアクティブ化
-        if (bombX >= 0 && bombX < kMapW && bombZ >= 0 && bombZ < kMapH) {
-            mapMarkerIsActive_[bombZ][bombX] = true;
-        }
-
-        // X軸方向（左右）に±size分のマスをアクティブ化
-        for (int dx = -size; dx <= size; dx++) {
-            const int targetX = bombX + dx;
-            if (targetX >= 0 && targetX < kMapW && bombZ >= 0 && bombZ < kMapH && dx != 0) {
-                mapMarkerIsActive_[bombZ][targetX] = true;
-            }
-        }
-
-        // Z軸方向（上下）に±size分のマスをアクティブ化
-        for (int dz = -size; dz <= size; dz++) {
-            const int targetZ = bombZ + dz;
-            if (bombX >= 0 && bombX < kMapW && targetZ >= 0 && targetZ < kMapH && dz != 0) {
-                mapMarkerIsActive_[targetZ][bombX] = true;
+    // 壁が再生成待機中の場所をマーカーに反映
+    for (int z = 0; z < kMapH; z++) {
+        for (int x = 0; x < kMapW; x++) {
+            if (walls_[z][x].isWaitingRespawn) {
+                mapMarkerIsActive_[z][x] = true;
             }
         }
     }
 
-    // ボムの爆発範囲を示すマーカーの表示
+    // 壁の再生成待機中を示すマーカーの表示
     for (int z = 0; z < kMapH; z++) {
         for (int x = 0; x < kMapW; x++) {
             if (mapMarkers_[z][x]) {
+                if (auto* s = mapMarkers_[z][x]->GetComponent3D<BPMScaling>()) {
+                    s->SetBPMProgress(bpmSystem_->GetBeatProgress());
+                }
+
                 if (auto* mt = mapMarkers_[z][x]->GetComponent3D<Material3D>()) {
                     if (mapMarkerIsActive_[z][x]) {
                         mt->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -297,6 +297,11 @@ void ExplosionManager::CreateWallAtBombPosition(const Vector3& position) {
     // 1次元配列のインデックスを計算: walls_[z][x] = walls_[z * mapW + x]
     const int index = bombZ * mapW_ + bombX;
 
+    // 再生成待機中の壁には設置できない
+    if (walls_[index].isWaitingRespawn) {
+        return;
+    }
+
     // 壁をアクティブ化
     if (!walls_[index].isMoving) {
         walls_[index].moveTimer.Start(walls_[index].moveTime, false);
@@ -326,6 +331,8 @@ void ExplosionManager::DestroyWallsInExplosionRange(const Vector3& position, flo
                     walls_[index].isMoving = false;
                     walls_[index].moveTimer.Reset();
                     walls_[index].hp = 0;
+                    walls_[index].isWaitingRespawn = true;
+                    walls_[index].currentSpawnAgainCount = 0;
                 }
             }
         }
@@ -340,6 +347,8 @@ void ExplosionManager::DestroyWallsInExplosionRange(const Vector3& position, flo
                     walls_[index].isMoving = false;
                     walls_[index].moveTimer.Reset();
                     walls_[index].hp = 0;
+                    walls_[index].isWaitingRespawn = true;
+                    walls_[index].currentSpawnAgainCount = 0;
                 }
             }
         }

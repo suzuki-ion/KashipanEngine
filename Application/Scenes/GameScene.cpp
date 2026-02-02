@@ -825,7 +825,10 @@ void GameScene::OnUpdate() {
 
     {
         // 壁の再生成待機中マーカーを更新
-        UpdateWallRespawnMarkers();        
+        UpdateWallRespawnMarkers();
+        
+        // 壁の透明度を更新（後ろにオブジェクトがある場合は半透明に）
+        UpdateWallTransparency();
     }
 
     {
@@ -852,7 +855,7 @@ void GameScene::OnUpdate() {
         }
     }
 
-    // OnUpdate内の既存の bpmObject_ 更新部分を置き換え
+    // OnUpdate 内で BPM 進行度を更新
     {
         if (bpmObjects_[0] && bpmObjects_[1]) {
             auto tr = bpmObjects_[0]->GetComponent3D<Transform3D>();
@@ -1419,6 +1422,10 @@ void GameScene::DrawObjectStateImGui() {
         ImGui::DragInt("スポーン間隔(拍数)", &enemySpawnInterval_, 1.0f, 1, 100);
     }
 
+    if (ImGui::CollapsingHeader("壁関連")) {
+        ImGui::DragFloat("壁の透明度", &wallAlpha_, 0.01f, 0.0f, 1.0f);
+    }
+
     ImGui::End();
 }
 
@@ -1638,7 +1645,78 @@ void GameScene::UpdateWallRespawnMarkers() {
     }
 }
 
+void GameScene::UpdateWallTransparency() {
+    // すべての壁の透明度を一旦リセット（アクティブな壁は不透明に）
+    for (int z = 0; z < kMapH; z++) {
+        for (int x = 0; x < kMapW; x++) {
+            if (walls_[z][x].object && walls_[z][x].isActive) {
+                if (auto* mt = walls_[z][x].object->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 1.0f;
+                    mt->SetColor(color);
+                }
+            }
+        }
+    }
 
+    // 各壁について、Z方向１マス上にオブジェクトがあるかチェック
+    for (int z = 0; z < kMapH - 1; z++) {  // kMapH - 1 まで（Z+1をチェックするため）
+        for (int x = 0; x < kMapW; x++) {
+            if (!walls_[z][x].isActive) {
+                continue;  // 非アクティブな壁はスキップ
+            }
+
+            bool hasObjectBehind = false;
+
+            // Z+1の位置（ワールド座標）
+            Vector3 checkPos(2.0f * x, 0.0f, 2.0f * (z + 1));
+
+            // プレイヤーがZ+1の位置にいるかチェック
+            if (player_) {
+                if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+                    Vector3 playerPos = tr->GetTranslate();
+                    if (std::abs(playerPos.x - checkPos.x) < 0.1f && 
+                        std::abs(playerPos.z - checkPos.z) < 0.1f) {
+                        hasObjectBehind = true;
+                    }
+                }
+            }
+
+            // 爆弾がZ+1の位置にあるかチェック
+            if (!hasObjectBehind && bombManager_) {
+                auto bombsInfo = bombManager_->GetActiveBombsInfo();
+                for (const auto& bombInfo : bombsInfo) {
+                    if (std::abs(bombInfo.first.x - checkPos.x) < 0.1f && 
+                        std::abs(bombInfo.first.z - checkPos.z) < 0.1f) {
+                        hasObjectBehind = true;
+                        break;
+                    }
+                }
+            }
+
+            // 敵がZ+1の位置にいるかチェック
+            if (!hasObjectBehind && enemyManager_) {
+                auto enemyPositions = enemyManager_->GetActiveEnemyPositions();
+                for (const auto& enemyPos : enemyPositions) {
+                    if (std::abs(enemyPos.x - checkPos.x) < 0.1f && 
+                        std::abs(enemyPos.z - checkPos.z) < 0.1f) {
+                        hasObjectBehind = true;
+                        break;
+                    }
+                }
+            }
+
+            // オブジェクトがあれば透明度を0.5fに設定
+            if (hasObjectBehind) {
+                if (auto* mt = walls_[z][x].object->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = wallAlpha_;
+                    mt->SetColor(color);
+                }
+            }
+        }
+    }
+}
 void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transform) {
     auto comp = std::make_unique<WaveSystem>();
     comp->SetBPMSystem(bpmSystem_);

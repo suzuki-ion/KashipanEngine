@@ -223,6 +223,7 @@ private:
     bool isWaitingForWaveStart_ = true; // Wave開始待機中か
     bool isWaitingForNextWave_ = false; // 次のWave待機中か
     bool isAllWavesCompleted_ = false;  // 全Waveが終了したか
+    bool isDurationExceeded_ = false;   // duration超過フラグ
 
     // 設定
     int preWaveDelayBeats_ = 4;         // Wave開始前の待機拍数
@@ -291,6 +292,10 @@ private:
     static constexpr float kWaveTransitionDuration_ = 1.0f;  // 1秒
     static constexpr float kWaveSwitchDelay_ = 0.5f;  // Wave切り替え前の待機時間（0.5秒）
     int nextWaveToDisplay_ = -1;  // 切り替え先のWave番号
+
+    // Wave内で生成された敵の総数とID追跡
+    int currentWaveSpawnedEnemyCount_ = 0;      // 現在のWaveで生成した敵の総数
+    std::vector<int> currentWaveEnemyIDs_;      // 現在のWaveで生成した敵のIDリスト
 
     // コールバック
     std::function<void()> onAllWavesCompletedCallback_;

@@ -93,24 +93,46 @@ void WaveSystem::Update() {
         // Wave終了チェック
         if (currentWaveIndex_ < static_cast<int>(waveDataList_.size())) {
             const auto& waveData = waveDataList_[currentWaveIndex_];
-            if (waveBeatCount_ >= waveData.duration) {
-                // Wave終了 - アニメーション開始
-                isWaveStarted_ = false;
-                isWaitingForNextWave_ = true;
-                delayBeatCount_ = 0;
+            
+            // duration超過フラグを設定
+            if (waveBeatCount_ >= waveData.duration && !isDurationExceeded_) {
+                isDurationExceeded_ = true;
                 activeEmitPositions_.clear(); // パーティクル放出停止
+            }
 
-                // Wave切り替えアニメーション開始（次のWaveへの遷移前に開始）
-                int nextWaveIndex = currentWaveIndex_ + 1;
-                if (nextWaveIndex < static_cast<int>(waveDataList_.size())) {
-                    nextWaveToDisplay_ = nextWaveIndex + 1;
-                    waveTransitionState_ = WaveTransitionState::MovingOut;
-                    waveTransitionTimer_ = 0.0f;
-                } else {
-                    // 全Wave終了の場合
-                    nextWaveToDisplay_ = -1;
-                    waveTransitionState_ = WaveTransitionState::MovingOut;
-                    waveTransitionTimer_ = 0.0f;
+            // duration超過後、全敵が死亡したかチェック
+            if (isDurationExceeded_) {
+                // 現在のWaveで生成した敵がすべて死亡しているかチェック
+                bool allEnemiesDead = true;
+                if (enemyManager_) {
+                    for (int enemyID : currentWaveEnemyIDs_) {
+                        if (enemyManager_->IsEnemyAlive(enemyID)) {
+                            allEnemiesDead = false;
+                            break;
+                        }
+                    }
+                }
+
+                // すべての敵が死亡していればWave終了
+                if (allEnemiesDead) {
+                    // Wave終了 - アニメーション開始
+                    isWaveStarted_ = false;
+                    isWaitingForNextWave_ = true;
+                    delayBeatCount_ = 0;
+                    isDurationExceeded_ = false;
+
+                    // Wave切り替えアニメーション開始（次のWaveへの遷移前に開始）
+                    int nextWaveIndex = currentWaveIndex_ + 1;
+                    if (nextWaveIndex < static_cast<int>(waveDataList_.size())) {
+                        nextWaveToDisplay_ = nextWaveIndex + 1;
+                        waveTransitionState_ = WaveTransitionState::MovingOut;
+                        waveTransitionTimer_ = 0.0f;
+                    } else {
+                        // 全Wave終了の場合
+                        nextWaveToDisplay_ = -1;
+                        waveTransitionState_ = WaveTransitionState::MovingOut;
+                        waveTransitionTimer_ = 0.0f;
+                    }
                 }
             }
         }
@@ -139,9 +161,13 @@ void WaveSystem::ResetSystem() {
     isWaitingForWaveStart_ = true;
     isWaitingForNextWave_ = false;
     isAllWavesCompleted_ = false;
+    isDurationExceeded_ = false;
 
     scheduledSpawns_.clear();
     activeEmitPositions_.clear();
+
+    currentWaveSpawnedEnemyCount_ = 0;
+    currentWaveEnemyIDs_.clear();
 
     // Wave切り替えアニメーションをリセット
     waveTransitionState_ = WaveTransitionState::Idle;
@@ -321,6 +347,11 @@ void WaveSystem::TransitionToNextWave() {
     isWaitingForWaveStart_ = true;
     delayBeatCount_ = 0;
     scheduledSpawns_.clear();
+    isDurationExceeded_ = false;
+    
+    // 敵追跡情報をリセット
+    currentWaveSpawnedEnemyCount_ = 0;
+    currentWaveEnemyIDs_.clear();
 
     // アニメーションはWave終了時に開始済み
 }
@@ -331,7 +362,13 @@ void WaveSystem::SpawnEnemyInternal(int mapX, int mapZ, EnemyType enemyType) {
     Vector3 position = MapToWorldPosition(mapX, mapZ);
     EnemyDirection direction = DetermineDirection(mapX, mapZ);
 
-    enemyManager_->SpawnEnemy(enemyType, direction, position);
+    int enemyID = enemyManager_->SpawnEnemy(enemyType, direction, position);
+    
+    // 生成した敵のIDを記録
+    if (enemyID >= 0) {
+        currentWaveEnemyIDs_.push_back(enemyID);
+        currentWaveSpawnedEnemyCount_++;
+    }
 }
 
 void WaveSystem::SpawnParticlesAtPosition(const Vector3& position, int count) {

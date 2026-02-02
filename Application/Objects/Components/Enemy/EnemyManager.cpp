@@ -358,9 +358,9 @@ void EnemyManager::Update() {
     CleanupDeadEnemies();
 }
 
-void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Vector3& position) {
+int EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Vector3& position) {
     auto* ctx = GetOwnerContext();
-    if (!ctx) return;
+    if (!ctx) return -1;
 
     // 敵オブジェクトを生成
 
@@ -520,6 +520,9 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
 
     // シーンに追加
     ctx->AddObject3D(std::move(enemy));
+
+    // 敵のID（activeEnemiesのインデックス）を返す
+    return static_cast<int>(activeEnemies_.size() - 1);
 }
 
 void EnemyManager::SpawnDieParticles(const Vector3& position) {
@@ -681,6 +684,18 @@ void EnemyManager::ClearAllEnemies() {
 
     // 敵リストをクリア
     activeEnemies_.clear();
+}
+
+bool EnemyManager::IsEnemyAlive(int enemyID) const {
+    // 範囲外チェック
+    if (enemyID < 0 || enemyID >= static_cast<int>(activeEnemies_.size())) {
+        return false;
+    }
+
+    const auto& enemy = activeEnemies_[enemyID];
+    
+    // オブジェクトが存在し、死んでいない場合は生存
+    return enemy.object != nullptr && !enemy.isDead;
 }
 
 bool EnemyManager::IsWallAt(int x, int z) const {

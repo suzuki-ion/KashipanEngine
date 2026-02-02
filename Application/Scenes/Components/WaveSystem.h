@@ -116,6 +116,10 @@ public:
     /// @brief パーティクルプールを初期化
     void InitializeParticlePool(int particlesPerFrame = 1);
 
+    /// @brief カウントダウン用のNumberModelプールを初期化
+    void InitializeCountdownModels();
+
+	void SetParentTransform(Transform3D* parent) { parentTransform_ = parent; }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -141,6 +145,17 @@ private:
 
     /// @brief 予約されたパーティクルを処理
     void ProcessScheduledParticles();
+
+    /// @brief カウントダウン表示を更新
+    void UpdateCountdown();
+
+    /// @brief カウントダウンの数字を表示
+    void ShowCountdownNumber(int number);
+
+    /// @brief カウントダウンを非表示
+    void HideCountdown();
+
+    Transform3D* parentTransform_ = nullptr;
 
     BPMSystem* bpmSystem_ = nullptr;
     EnemyManager* enemyManager_ = nullptr;
@@ -193,6 +208,13 @@ private:
 
     // パーティクル放出中の位置リスト（EnemySpawnerと同じ挙動のため）
     std::vector<Vector3> activeEmitPositions_;
+
+    // カウントダウン表示用
+    static constexpr int kMaxCountdownNumbers_ = 10;  // 0-9の数字
+    std::array<Object3DBase*, kMaxCountdownNumbers_> countdownNumbers_{};
+    int currentCountdownNumber_ = -1;  // 現在表示中の数字（-1は非表示）
+    Vector3 countdownPosition_{ 0.0f, 0.0f, 15.0f };  // カウントダウン表示位置
+    float countdownScale_ = 3.0f;  // カウントダウンのスケール
 
     // コールバック
     std::function<void()> onAllWavesCompletedCallback_;

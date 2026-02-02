@@ -70,7 +70,7 @@ void GameScene::Initialize() {
     // 3D Main Camera (screenBuffer3D_)
     if (screenBuffer3D && camera3D) {
         if (auto *tr = camera3D->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(10.0f, 24.0f, -21.0f));
+            tr->SetTranslate(Vector3(9.0f, 24.0f, -22.0f));
             tr->SetRotate(Vector3(0.6f, 0.0f, 0.0f));
         }
         const float w = static_cast<float>(screenBuffer3D->GetWidth());
@@ -114,7 +114,7 @@ void GameScene::Initialize() {
         // カメラ位置設定
         cameraGameTargetPos_ = cameraController_->GetTargetTranslate();
         cameraGameTargetRot_ = cameraController_->GetTargetRotate();
-        cameraMenuTargetPos_ = Vector3(10.0f, 10.0f, 0.0f);
+        cameraMenuTargetPos_ = Vector3(9.0f, 10.0f, 1.0f);
         cameraMenuTargetRot_ = Vector3(0.0f, 0.0f, 0.0f);
     }
 
@@ -509,7 +509,7 @@ void GameScene::Initialize() {
 
     // WaveSystemの初期化
     {
-        InitWaveSystem(screenBuffer3D);
+        InitWaveSystem(screenBuffer3D, camera3D->GetComponent3D<Transform3D>());
     }
 
     // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
@@ -1631,13 +1631,14 @@ void GameScene::UpdateWallRespawnMarkers() {
 }
 
 
-void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer) {
+void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transform) {
     auto comp = std::make_unique<WaveSystem>();
     comp->SetBPMSystem(bpmSystem_);
     comp->SetEnemyManager(enemyManager_);
     comp->SetEnemySpawner(enemySpawner_);
     comp->SetScreenBuffer(screenBuffer);
-    comp->SetPreWaveDelay(4);           // Wave開始前の待機拍数
+	comp->SetParentTransform(transform);
+    comp->SetPreWaveDelay(8);           // Wave開始前の待機拍数
     comp->SetPostWaveDelay(4);          // Wave終了後の待機拍数
     comp->SetSpawnParticleLeadBeats(4); // SpawnParticle発生から敵生成までの拍数
     waveSystem_ = comp.get();
@@ -1645,6 +1646,9 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer) {
 
     // パーティクルプールを初期化
     waveSystem_->InitializeParticlePool(1000);
+
+    // カウントダウンモデルを初期化
+    waveSystem_->InitializeCountdownModels();
 
     // サンプルWaveデータを設定
     // Wave1

@@ -147,6 +147,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
+    <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
     <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
@@ -357,6 +358,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombManager.h" />
+    <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />

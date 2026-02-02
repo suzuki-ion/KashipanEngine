@@ -1,6 +1,6 @@
 #pragma once
 #include <KashipanEngine.h>
-
+#include "Scenes/EngineLogoScene.h"
 #include "Scenes/TitleScene.h"
 #if DEBUG_BUILD
 #include "Scenes/TestScene.h"
@@ -20,6 +20,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
         
+        sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "TitleScene");
         sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
@@ -29,7 +30,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<TestScene>("TestScene");
 #endif
 
-        context.sceneManager->ChangeScene("TitleScene");
+        context.sceneManager->ChangeScene("EngineLogoScene");
     }
 
     if (context.inputCommand) {

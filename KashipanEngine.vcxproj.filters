@@ -157,6 +157,7 @@
     <ClCompile Include="Application\Objects\Components\Bomb\ScoreDisplay.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
+    <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -436,6 +437,7 @@
     <ClInclude Include="Application\Objects\Components\Map\WallInfo.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
+    <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

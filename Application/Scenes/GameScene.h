@@ -50,7 +50,7 @@ private:
     void UpdateWallRespawnMarkers();
 
 	/// @brief  Waveシステム初期化
-	void InitWaveSystem(ScreenBuffer* screenBuffer);
+    void InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transform);
 #if defined(USE_IMGUI)
     void DrawObjectStateImGui();
     void DrawParticleStateImGui();

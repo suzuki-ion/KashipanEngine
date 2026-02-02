@@ -70,7 +70,7 @@ void GameScene::Initialize() {
     // 3D Main Camera (screenBuffer3D_)
     if (screenBuffer3D && camera3D) {
         if (auto *tr = camera3D->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(10.0f, 24.0f, -21.0f));
+            tr->SetTranslate(Vector3(9.0f, 24.0f, -22.0f));
             tr->SetRotate(Vector3(0.6f, 0.0f, 0.0f));
         }
         const float w = static_cast<float>(screenBuffer3D->GetWidth());
@@ -114,7 +114,7 @@ void GameScene::Initialize() {
         // カメラ位置設定
         cameraGameTargetPos_ = cameraController_->GetTargetTranslate();
         cameraGameTargetRot_ = cameraController_->GetTargetRotate();
-        cameraMenuTargetPos_ = Vector3(10.0f, 10.0f, 0.0f);
+        cameraMenuTargetPos_ = Vector3(9.0f, 10.0f, 1.0f);
         cameraMenuTargetRot_ = Vector3(0.0f, 0.0f, 0.0f);
     }
 
@@ -225,7 +225,7 @@ void GameScene::Initialize() {
         auto obj = std::make_unique<Model>(modelData);
         obj->SetName("Stage");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(10.0f, -1.0f, 10.0f));
+            tr->SetTranslate(Vector3(9.0f, -1.0f, 9.0f));
             tr->SetScale(Vector3(1.0f));
         }
 
@@ -243,7 +243,7 @@ void GameScene::Initialize() {
         obj->SetName("DJ");
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(10.0f, 3.5f, 27.75f));
+            tr->SetTranslate(Vector3(9.0f, 3.5f, 26.75f));
             tr->SetScale(Vector3(1.0f));
         }
 
@@ -262,16 +262,16 @@ void GameScene::Initialize() {
 
     // OneBeatEmitter の追加
     {
-        emitterTranslate_[0] = Vector3(-2.0f, 0.5f, -2.0f);
-        emitterTranslate_[1] = Vector3(-2.0f, 0.5f, 3.65f);
-        emitterTranslate_[2] = Vector3(-2.0f, 0.5f, 10.0f);
-        emitterTranslate_[3] = Vector3(-2.0f, 0.5f, 16.3f);
-        emitterTranslate_[4] = Vector3(-2.0f, 0.5f, 22.0f);
-        emitterTranslate_[5] = Vector3(22.0f, 0.5f, -2.0f);
-        emitterTranslate_[6] = Vector3(22.0f, 0.5f, 3.65f);
-        emitterTranslate_[7] = Vector3(22.0f, 0.5f, 10.0f);
-        emitterTranslate_[8] = Vector3(22.0f, 0.5f, 16.3f);
-        emitterTranslate_[9] = Vector3(22.0f, 0.5f, 22.0f);
+        emitterTranslate_[0] = Vector3(-3.0f, 0.5f, -3.0f);
+        emitterTranslate_[1] = Vector3(-3.0f, 0.5f, 2.65f);
+        emitterTranslate_[2] = Vector3(-3.0f, 0.5f, 9.0f);
+        emitterTranslate_[3] = Vector3(-3.0f, 0.5f, 15.3f);
+        emitterTranslate_[4] = Vector3(-3.0f, 0.5f, 21.0f);
+        emitterTranslate_[5] = Vector3(21.0f, 0.5f, -3.0f);
+        emitterTranslate_[6] = Vector3(21.0f, 0.5f, 2.65f);
+        emitterTranslate_[7] = Vector3(21.0f, 0.5f, 9.0f);
+        emitterTranslate_[8] = Vector3(21.0f, 0.5f, 15.3f);
+        emitterTranslate_[9] = Vector3(21.0f, 0.5f, 21.0f);
         for (int i = 0; i < kOneBeatEmitterCount_; ++i) {
             auto obj = std::make_unique<Box>();
             if (auto *tr = obj->GetComponent3D<Transform3D>()) {
@@ -323,8 +323,8 @@ void GameScene::Initialize() {
             AddObject3D(std::move(obj));
         }
 
-        bpmObjectStart_[0] = { -15.0f,0.0f,10.0f }; bpmObjectEnd_[0] = { -2.75f,0.0f,10.0f };
-        bpmObjectStart_[1] = { 35.0f,0.0f,10.0f }; bpmObjectEnd_[1] = { 22.75f,0.0f,10.0f };
+        bpmObjectStart_[0] = { -14.0f,0.0f,10.0f }; bpmObjectEnd_[0] = { -3.75f,0.0f,10.0f };
+        bpmObjectStart_[1] = { 34.0f,0.0f,10.0f }; bpmObjectEnd_[1] = { 21.75f,0.0f,10.0f };
     }
 
     // Player（衝突判定を修正）
@@ -394,11 +394,6 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
-    // ExplosionManagerにExplosionNumberDisplayを設定
-    if (explosionManager_ && explosionNumberDisplay_) {
-        explosionManager_->SetExplosionNumberDisplay(explosionNumberDisplay_);
-    }
-
     // BombManager の追加
     {
         auto comp = std::make_unique<BombManager>(bombMaxNumber_);
@@ -455,17 +450,15 @@ void GameScene::Initialize() {
         scoreManager_ = comp.get();
         AddSceneComponent(std::move(comp));
     }
-
-    // ExplosionManagerにScoreManagerを設定
-    if (explosionManager_ && scoreManager_) {
-        explosionManager_->SetScoreManager(scoreManager_);
+    
+    // EnemyManagerにScoreManagerを設定
+    if (enemyManager_ && scoreManager_) {
+        enemyManager_->SetScoreManager(scoreManager_);
     }
 
-    // EnemyManagerにScoreManagerのコールバックを設定（後方互換性のため保持）
-    if (enemyManager_ && scoreManager_) {
-        enemyManager_->SetOnEnemyDestroyedCallback([this]() {
-            // このコールバックは現在使用されていないが、後方互換性のため保持
-        });
+    // EnemyManagerにScoreDisplayを設定
+    if (enemyManager_ && explosionNumberDisplay_) {
+        enemyManager_->SetScoreDisplay(explosionNumberDisplay_);
     }
 
     // PlayerDieParticleManagerの初期化
@@ -516,7 +509,7 @@ void GameScene::Initialize() {
 
     // WaveSystemの初期化
     {
-        InitWaveSystem(screenBuffer3D);
+        InitWaveSystem(screenBuffer3D, camera3D->GetComponent3D<Transform3D>());
     }
 
     // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
@@ -538,7 +531,7 @@ void GameScene::Initialize() {
 
     // Debug: BackMonitor render components (game/menu/particle)
     {
-        auto *bm = GetSceneComponent<BackMonitor>();
+        auto* bm = GetSceneComponent<BackMonitor>();
         if (bm) {
             auto compG = std::make_unique<BackMonitorWithGameScreen>(bm->GetScreenBuffer());
             backMonitorGame_ = compG.get();
@@ -1338,6 +1331,8 @@ void GameScene::DrawObjectStateImGui() {
         SaveObjectStateJson();
     }
 
+    ImGui::Text("スコア:%d", scoreManager_->GetScore());
+
     ImGui::SameLine();
     ImGui::Separator();
 
@@ -1569,6 +1564,11 @@ void GameScene::InGameQuit() {
     if (enemyManager_) {
         enemyManager_->ClearAllEnemies();
     }
+    
+    // スコアをリセット
+    if (scoreManager_) {
+        scoreManager_->ResetScore();
+    }
 
     if (bpmObjects_[0] && bpmObjects_[1]) {
         auto tr = bpmObjects_[0]->GetComponent3D<Transform3D>();
@@ -1631,13 +1631,14 @@ void GameScene::UpdateWallRespawnMarkers() {
 }
 
 
-void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer) {
+void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transform) {
     auto comp = std::make_unique<WaveSystem>();
     comp->SetBPMSystem(bpmSystem_);
     comp->SetEnemyManager(enemyManager_);
     comp->SetEnemySpawner(enemySpawner_);
     comp->SetScreenBuffer(screenBuffer);
-    comp->SetPreWaveDelay(4);           // Wave開始前の待機拍数
+	comp->SetParentTransform(transform);
+    comp->SetPreWaveDelay(8);           // Wave開始前の待機拍数
     comp->SetPostWaveDelay(4);          // Wave終了後の待機拍数
     comp->SetSpawnParticleLeadBeats(4); // SpawnParticle発生から敵生成までの拍数
     waveSystem_ = comp.get();
@@ -1645,6 +1646,9 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer) {
 
     // パーティクルプールを初期化
     waveSystem_->InitializeParticlePool(1000);
+
+    // カウントダウンモデルを初期化
+    waveSystem_->InitializeCountdownModels();
 
     // サンプルWaveデータを設定
     // Wave1
@@ -1661,7 +1665,7 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer) {
     // Wave2
     WaveData wave2{};
     wave2.wave = Wave::Wave2;
-    wave2.duration = 20;
+    wave2.duration = 20000;
     wave2.spawnList = {
         { 5, 0, 1, EnemyType::Basic },
         { 5, 0, 2, EnemyType::Basic },

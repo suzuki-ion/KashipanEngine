@@ -1,5 +1,6 @@
 #include "WaveSystem.h"
 #include "Objects/Components/Enemy/EnemySpawnParticle.h"
+#include "Objects/Components/BPMScaling.h"
 
 namespace KashipanEngine {
 
@@ -25,6 +26,9 @@ void WaveSystem::Update() {
         SpawnParticlesAtPosition(emitPos, 1); // 各位置から1粒ずつ
     }
 
+    // カウントダウン表示を更新
+    UpdateCountdown();
+
     // 新しい拍が発生した場合のみ処理
     if (currentBeat == lastProcessedBeat_) return;
     lastProcessedBeat_ = currentBeat;
@@ -40,6 +44,9 @@ void WaveSystem::Update() {
             isWaveStarted_ = true;
             waveBeatCount_ = 0;
             delayBeatCount_ = 0;
+
+            // カウントダウンを非表示
+            HideCountdown();
 
             // 現在のWaveのスポーンデータを予約リストに追加
             if (currentWaveIndex_ < static_cast<int>(waveDataList_.size())) {
@@ -185,6 +192,45 @@ void WaveSystem::InitializeParticlePool(int particlesPerFrame) {
     }
 }
 
+void WaveSystem::InitializeCountdownModels() {
+    auto* ctx = GetOwnerContext();
+    if (!ctx) return;
+
+    // 数字モデル 0-9 を初期化
+    for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+        std::string modelName = std::to_string(i) + ".obj";
+        auto modelData = ModelManager::GetModelDataFromFileName(modelName);
+        auto obj = std::make_unique<Model>(modelData);
+        
+        obj->SetName("CountdownNumber_" + std::to_string(i));
+
+        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(countdownPosition_);
+            tr->SetParentTransform(parentTransform_);
+            tr->SetScale(Vector3(0.0f));  // 初期状態は非表示
+        }
+
+        if (auto* mt = obj->GetComponent3D<Material3D>()) {
+            mt->SetColor(Vector4(0.75f, 0.75f, 0.75f, 1.0f));
+            mt->SetEnableLighting(true);
+        }
+
+        // BPMScalingコンポーネントを追加してビート連動させる
+        obj->RegisterComponent<BPMScaling>(
+            Vector3(countdownScale_ * 0.9f), 
+            Vector3(countdownScale_ * 1.1f), 
+            EaseType::EaseOutExpo
+        );
+
+        if (screenBuffer_) {
+            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
+        }
+
+        countdownNumbers_[i] = obj.get();
+        ctx->AddObject3D(std::move(obj));
+    }
+}
+
 void WaveSystem::TransitionToNextWave() {
     currentWaveIndex_++;
 
@@ -193,6 +239,9 @@ void WaveSystem::TransitionToNextWave() {
         isAllWavesCompleted_ = true;
         isSystemRunning_ = false;
         isWaitingForNextWave_ = false;
+
+        // カウントダウンを非表示
+        HideCountdown();
 
         if (onAllWavesCompletedCallback_) {
             onAllWavesCompletedCallback_();
@@ -308,6 +357,75 @@ void WaveSystem::ProcessScheduledSpawns() {
     }
 }
 
+void WaveSystem::UpdateCountdown() {
+    if (!isWaitingForWaveStart_ || !bpmSystem_) {
+        return;
+    }
+
+    // 残り拍数を計算
+    int remainingBeats = preWaveDelayBeats_ - delayBeatCount_;
+    
+    if (remainingBeats > 0 && remainingBeats <= 9) {
+        ShowCountdownNumber(remainingBeats);
+        
+        // BPM進行度を各数字モデルに設定
+        for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+            if (countdownNumbers_[i]) {
+                if (auto* bpmScaling = countdownNumbers_[i]->GetComponent3D<BPMScaling>()) {
+                    bpmScaling->SetBPMProgress(bpmSystem_->GetBeatProgress());
+                }
+            }
+        }
+    } else if (remainingBeats <= 0) {
+        HideCountdown();
+    }
+}
+
+void WaveSystem::ShowCountdownNumber(int number) {
+    if (number < 0 || number >= kMaxCountdownNumbers_) {
+        return;
+    }
+
+    // 現在表示中の数字と異なる場合のみ更新
+    if (currentCountdownNumber_ != number) {
+        // 全ての数字を透明化
+        for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+            if (countdownNumbers_[i]) {
+                if (auto* mt = countdownNumbers_[i]->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 0.0f;  // Alpha = 0
+                    mt->SetColor(color);
+                }
+            }
+        }
+
+        // 新しい数字を表示（不透明化）
+        if (countdownNumbers_[number]) {
+            if (auto* mt = countdownNumbers_[number]->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 1.0f;  // Alpha = 1
+                mt->SetColor(color);
+            }
+        }
+
+        currentCountdownNumber_ = number;
+    }
+}
+
+void WaveSystem::HideCountdown() {
+    // 全ての数字を透明化
+    for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+        if (countdownNumbers_[i]) {
+            if (auto* mt = countdownNumbers_[i]->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.0f;  // Alpha = 0
+                mt->SetColor(color);
+            }
+        }
+    }
+    currentCountdownNumber_ = -1;
+}
+
 #if defined(USE_IMGUI)
 void WaveSystem::ShowImGui() {
     if (ImGui::TreeNode("WaveSystem")) {
@@ -325,6 +443,12 @@ void WaveSystem::ShowImGui() {
         ImGui::DragInt("Pre-Wave Delay", &preWaveDelayBeats_, 1, 1, 16);
         ImGui::DragInt("Post-Wave Delay", &postWaveDelayBeats_, 1, 1, 16);
         ImGui::DragInt("Spawn Particle Lead", &spawnParticleLeadBeats_, 1, 1, 8);
+
+        ImGui::Separator();
+        ImGui::Text("Countdown Settings");
+        ImGui::DragFloat3("Countdown Position", &countdownPosition_.x, 0.1f);
+        ImGui::DragFloat("Countdown Scale", &countdownScale_, 0.1f, 0.1f, 10.0f);
+        ImGui::Text("Current Countdown Number: %d", currentCountdownNumber_);
 
         if (ImGui::Button("Start System")) {
             StartSystem();

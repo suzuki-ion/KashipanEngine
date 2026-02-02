@@ -3,6 +3,8 @@
 #include "Objects/Components/BPMScaling.h"
 #include "Objects/Components/Health.h"
 #include "Objects/Components/Player/PlayerMove.h"
+#include "Objects/Components/Player/ScoreManager.h"
+#include "Objects/Components/Bomb/ScoreDisplay.h"
 #include "Objects/Components/3D/Collision3D.h"
 #include "Scene/Components/ColliderComponent.h"
 #include <algorithm>
@@ -294,6 +296,7 @@ void EnemyManager::Update() {
             if (e.position.x <= minX || e.position.x >= maxX ||
                 e.position.z <= minZ || e.position.z >= maxZ) {
                 SpawnDieParticles(e.position);
+                e.deathCause = EnemyDeathCause::Explosion;  // 吹き飛んで場外 = 爆発による死亡
                 e.isDead = true;
             }
             
@@ -335,6 +338,7 @@ void EnemyManager::Update() {
                 }
             }*/
             SpawnDieParticles(e.targetPosition);
+            e.deathCause = EnemyDeathCause::Area;  // 中心到達も場外扱い
             e.isDead = true;
         }
 
@@ -346,6 +350,7 @@ void EnemyManager::Update() {
         // 拍の終わり（進行度が1.0に近い）で範囲外なら削除
         if (out && bpmProgress_ > 0.5f) {
             SpawnDieParticles(e.targetPosition);
+            e.deathCause = EnemyDeathCause::OutOfBounds;  // 通常の場外死亡
             e.isDead = true;
         }
     }
@@ -425,12 +430,13 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
                     for (auto& e : activeEnemies_) {
                         if (e.object == hitInfo.otherObject && !e.isKnockedBack) {
                             SpawnDieParticles(e.position);
+                            e.deathCause = EnemyDeathCause::Explosion;  // 吹き飛び敵との衝突 = 爆発による死亡
                             e.isDead = true;
                             break;
                         }
                     }
                 }
-                
+
                 // 吹き飛び中の敵がプレイヤーと衝突した場合、プレイヤーを吹き飛ばす
                 if (hitInfo.otherObject == player_) {
                     if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
@@ -551,6 +557,32 @@ void EnemyManager::CleanupDeadEnemies() {
         auto& e = activeEnemies_[i];
 
         if (e.isDead && e.object) {
+            // スコアを加算
+            if (scoreManager_) {
+                if (e.deathCause == EnemyDeathCause::Explosion) {
+                    // 爆発で死んだ場合: +300点
+                    scoreManager_->AddScore(300);
+                } else if (e.deathCause == EnemyDeathCause::OutOfBounds) {
+                    // 場外で死んだ場合: +100点
+                    scoreManager_->AddScore(100);
+                } else {
+                    // 中心
+                    scoreManager_->AddScore(0);
+                }
+            }
+            
+            // スコア表示を発動
+            if (scoreDisplay_) {
+                if (e.deathCause == EnemyDeathCause::Explosion) {
+                    // 爆発で死んだ場合: 300.obj (count = 2)
+                    scoreDisplay_->SpawnNumber(e.position, 2);
+                } else if (e.deathCause == EnemyDeathCause::OutOfBounds) {
+                    // 場外で死んだ場合: 100.obj (count = 1)
+                    scoreDisplay_->SpawnNumber(e.position, 1);
+                }
+                // 中心エリアで死んだ場合は表示しない
+            }
+            
             ctx->RemoveObject3D(e.object);
             activeEnemies_.erase(activeEnemies_.begin() + static_cast<std::ptrdiff_t>(i));
         } else {

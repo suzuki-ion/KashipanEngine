@@ -43,14 +43,6 @@ public:
     /// @brief カメラコントローラーを設定
     void SetCameraController(CameraController* cameraController) { cameraController_ = cameraController; }
 
-    /// @brief ScoreManagerを設定
-    void SetScoreManager(ScoreManager* scoreManager) { scoreManager_ = scoreManager; }
-
-    /// @brief ExplosionNumberDisplayを設定
-    void SetExplosionNumberDisplay(ScoreDisplay* explosionNumberDisplay) { 
-        explosionNumberDisplay_ = explosionNumberDisplay; 
-    }
-
     /// @brief 衝突判定用ColliderComponentを設定
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
     void SetCollider2(ColliderComponent* collider) { collider2_ = collider; }
@@ -129,8 +121,6 @@ private:
     EnemyManager* enemyManager_ = nullptr;
     Object3DBase* player_ = nullptr;
     CameraController* cameraController_ = nullptr;
-    ScoreManager* scoreManager_ = nullptr;
-    ScoreDisplay* explosionNumberDisplay_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     ColliderComponent* collider2_ = nullptr;
 

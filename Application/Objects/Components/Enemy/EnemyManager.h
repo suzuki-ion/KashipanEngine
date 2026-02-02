@@ -10,6 +10,14 @@
 
 namespace KashipanEngine {
 
+// 敵の死因を表す列挙型
+enum class EnemyDeathCause {
+    OutOfBounds,  // 場外で死亡
+    Explosion,    // 爆発で死亡
+	Area,         // 中心エリアで死亡
+	Collision     // 吹き飛んだ敵と衝突で死亡
+};
+
 class EnemyManager final : public ISceneComponent {
 public:
     explicit EnemyManager()
@@ -37,6 +45,12 @@ public:
     void SetPlayer(Object3DBase* player) { player_ = player; }
 
     void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+    // ScoreManagerを設定
+    void SetScoreManager(class ScoreManager* scoreManager) { scoreManager_ = scoreManager; }
+
+    // ScoreDisplayを設定
+    void SetScoreDisplay(class ScoreDisplay* scoreDisplay) { scoreDisplay_ = scoreDisplay; }
 
     /// @brief 壁配列を設定する
     /// @param walls 壁配列の先頭ポインタ
@@ -122,6 +136,9 @@ private:
         bool isKnockedBack = false;  // 吹き飛び中かどうか
         Vector3 knockbackVelocity{ 0.0f, 0.0f, 0.0f };  // 吹き飛び速度
         float knockbackTimer = 0.0f;  // 吹き飛び経過時間
+        
+        // 死因の追加
+        EnemyDeathCause deathCause = EnemyDeathCause::OutOfBounds;  // 死因（デフォルトは場外）
     };
 
     std::vector<EnemyInfo> activeEnemies_;
@@ -140,6 +157,8 @@ private:
     ColliderComponent* collider_ = nullptr;
     Object3DBase* player_ = nullptr;
     BombManager* bombManager_ = nullptr;
+    class ScoreManager* scoreManager_ = nullptr;  // スコアマネージャー
+    class ScoreDisplay* scoreDisplay_ = nullptr;  // スコア表示
 
     WallInfo* walls_ = nullptr;
     int wallsWidth_ = 0;

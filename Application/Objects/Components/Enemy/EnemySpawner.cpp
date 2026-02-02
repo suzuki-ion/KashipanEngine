@@ -36,12 +36,12 @@ namespace KashipanEngine {
 
             // EnemySpawnParticleコンポーネント追加
             particleConfig_.initialSpeed = 5.0f;
-            particleConfig_.speedVariation = 2.0f;
-            particleConfig_.lifeTimeSec = 2.0f;
+            particleConfig_.speedVariation = 1.5f;
+            particleConfig_.lifeTimeSec = 1.0f;
             particleConfig_.gravity = -5.0f;
-            particleConfig_.damping = 0.95f;
+            particleConfig_.damping = 0.98f;
             particleConfig_.spreadAngle = 0.0f;
-            particleConfig_.baseScale = Vector3{ 0.3f, 0.3f, 0.3f };
+            particleConfig_.baseScale = Vector3{ 0.25f, 0.25f, 0.25f };
 
             particle->RegisterComponent<EnemySpawnParticle>(particleConfig_);
 

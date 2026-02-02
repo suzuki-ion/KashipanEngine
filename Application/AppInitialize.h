@@ -30,7 +30,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<TestScene>("TestScene");
 #endif
 
-        context.sceneManager->ChangeScene("EngineLogoScene");
+        context.sceneManager->ChangeScene("GameScene");
     }
 
     if (context.inputCommand) {

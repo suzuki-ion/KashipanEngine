@@ -2,6 +2,7 @@
 #include <KashipanEngine.h>
 
 #include "Scenes/Components/BPM/BPMSystem.h"
+#include "Scenes/Components/WaveSystem.h"
 #include "objects/Components/Bomb/BombManager.h"
 #include "objects/Components/Bomb/explosionManager.h"
 #include "objects/Components/Bomb/ScoreDisplay.h"
@@ -48,6 +49,8 @@ private:
     /// @brief 壁の再生成待機中の場所を可視化するためにマップマーカーを更新
     void UpdateWallRespawnMarkers();
 
+	/// @brief  Waveシステム初期化
+	void InitWaveSystem(ScreenBuffer* screenBuffer);
 #if defined(USE_IMGUI)
     void DrawObjectStateImGui();
     void DrawParticleStateImGui();
@@ -124,12 +127,13 @@ private:
 
     int playerMapX_ = 0; // プレイヤーのマップ上のX座標
     int playerMapZ_ = 0; // プレイヤーのマップ上のZ座標
-    PlayerHealthModelUI *playerHealthUI_ = nullptr;
+    //PlayerHealthModelUI *playerHealthUI_ = nullptr;
 
     // 爆弾関連
     BombManager *bombManager_ = nullptr;
     int bombMaxNumber_ = 1000;     // プレイヤーが設置可能な爆弾の最大数
     int bombLifetimeBeats_ = 1000; // 設置してからの爆弾の寿命（拍数）
+    int bombMaxChainCount_ = 10;   // Chainモードで連鎖できる最大爆弾数
 
     // 爆発関連
     ExplosionManager *explosionManager_ = nullptr;
@@ -154,6 +158,9 @@ private:
     int enemySpawnInterval_ = 4; // 敵のスポーン間隔（拍数）
 
     EnemyManager *enemyManager_ = nullptr;
+
+    // Wave関連
+    WaveSystem *waveSystem_ = nullptr;
 
     // プレイヤー死亡パーティクル関連
     PlayerDieParticleManager *playerDieParticleManager_ = nullptr;

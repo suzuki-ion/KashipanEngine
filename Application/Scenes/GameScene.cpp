@@ -382,6 +382,19 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
+    // BombExplosionParticleManager の追加
+    {
+        auto comp = std::make_unique<BombExplosionParticleManager>();
+        comp->SetScreenBuffer(screenBuffer3D);
+        bombExplosionParticleManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    // ExplosionManagerにBombExplosionParticleManagerを設定
+    if (explosionManager_ && bombExplosionParticleManager_) {
+        explosionManager_->SetBombExplosionParticleManager(bombExplosionParticleManager_);
+    }
+
     // ExplosionNumberDisplay の追加
     {
         auto comp = std::make_unique<ScoreDisplay>();

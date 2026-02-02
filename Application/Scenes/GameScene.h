@@ -6,6 +6,7 @@
 #include "objects/Components/Bomb/BombManager.h"
 #include "objects/Components/Bomb/explosionManager.h"
 #include "objects/Components/Bomb/ScoreDisplay.h"
+#include "objects/Components/Bomb/BombExplosionParticleManager.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "Scenes/Components/PlayerHealthModelUI.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
@@ -141,6 +142,7 @@ private:
 
     // 爆発関連
     ExplosionManager *explosionManager_ = nullptr;
+    BombExplosionParticleManager *bombExplosionParticleManager_ = nullptr;
     ScoreDisplay *explosionNumberDisplay_ = nullptr;
     float explosionLifetime_ = 0.5f; // 爆発の寿命（秒）
     int explosionSize_ = 3;         // 爆発のXZサイズ

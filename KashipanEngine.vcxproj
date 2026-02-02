@@ -119,6 +119,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\ScoreDisplay.cpp" />
@@ -299,6 +301,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\ScoreDisplay.h" />

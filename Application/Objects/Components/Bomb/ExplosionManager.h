@@ -15,6 +15,7 @@ class CameraController;
 class ScoreManager;
 class ScoreDisplay;
 class WaveSystem;
+class BombExplosionParticleManager;
 
 /// @brief 爆発エフェクトを一括管理するクラス
 class ExplosionManager final : public ISceneComponent {
@@ -60,6 +61,11 @@ public:
 
     /// @brief WaveSystemを設定（スポーンパーティクル位置チェック用）
     void SetWaveSystem(class WaveSystem* waveSystem) { waveSystem_ = waveSystem; }
+
+    /// @brief BombExplosionParticleManagerを設定
+    void SetBombExplosionParticleManager(BombExplosionParticleManager* particleManager) { 
+        bombExplosionParticleManager_ = particleManager; 
+    }
 
     /// @brief 指定位置に爆発を生成
     /// @param position 爆発を生成する位置
@@ -136,6 +142,7 @@ private:
     int mapH_ = 0;               // マップの高さ
 
     class WaveSystem* waveSystem_ = nullptr;  // WaveSystemへの参照
+    class BombExplosionParticleManager* bombExplosionParticleManager_ = nullptr;  // パーティクルマネージャー
 
     std::vector<ExplosionInfo> activeExplosions_;
 

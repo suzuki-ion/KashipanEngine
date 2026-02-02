@@ -104,6 +104,8 @@ void TitleScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
+    AddSceneComponent(std::make_unique<Letterbox>());
+
     if (sceneDefaultVariables_) {
         auto regFunc = [this](std::unique_ptr<ISceneComponent> comp) {
             return this->AddSceneComponent(std::move(comp));
@@ -111,23 +113,6 @@ void TitleScene::Initialize() {
         auto comp = std::make_unique<TitleSceneAnimator>(regFunc, GetInputCommand());
         titleSceneAnimator_ = comp.get();
         AddSceneComponent(std::move(comp));
-    }
-
-    // タイトルロゴ
-    {
-        auto modelHandle = ModelManager::GetModelDataFromFileName("title.obj");
-        auto obj = std::make_unique<Model>(modelHandle);
-        obj->SetName("TitleLogo");
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 48.0f, 10.0f));
-            tr->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
-            tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
-        }
-        if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        }
-        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(obj));
     }
 
     AddSceneComponent(std::make_unique<SceneFade>());

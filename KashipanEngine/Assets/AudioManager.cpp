@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <chrono>
 
 #pragma comment(lib, "xaudio2.lib")
 #pragma comment(lib, "mf.lib")
@@ -374,11 +375,12 @@ AudioManager::SoundBeat::SoundBeat() {
     bpm_ = 0.0f;
     startOffsetSec_ = 0.0;
     currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
+    isUseManualTime_ = false;
     sRegisteredSoundBeats.insert(this);
 }
 
 AudioManager::SoundBeat::SoundBeat(PlayHandle play, float bpm, double startOffsetSec) {
-    SetBeat(play, bpm, static_cast<float>(startOffsetSec));
+    SetBeat(play, bpm, startOffsetSec);
     sRegisteredSoundBeats.insert(this);
 }
 
@@ -391,6 +393,29 @@ void AudioManager::SoundBeat::SetBeat(PlayHandle play, float bpm, double startOf
     bpm_ = (bpm > 0.0f) ? bpm : 0.0f;
     startOffsetSec_ = startOffsetSec;
     currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
+
+    if (playHandle_ == kInvalidPlayHandle) {
+        isUseManualTime_ = false;
+    } else {
+        isUseManualTime_ = false;
+    }
+}
+
+void AudioManager::SoundBeat::SetPlayHandle(PlayHandle play) noexcept {
+    playHandle_ = play;
+    if (playHandle_ == kInvalidPlayHandle) {
+        isUseManualTime_ = false;
+    } else {
+        isUseManualTime_ = false;
+    }
+}
+
+void AudioManager::SoundBeat::StartManualBeat() {
+    if (playHandle_ != kInvalidPlayHandle) return;
+    isUseManualTime_ = true;
+    manualStartTime_ = std::chrono::steady_clock::now();
+    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
+    isOnBeatTriggered_ = false;
 }
 
 void AudioManager::SoundBeat::SetOnBeat(std::function<void(PlayHandle, uint64_t, double)> cb) {
@@ -401,7 +426,14 @@ void AudioManager::SoundBeat::Update(Passkey<AudioManager>) {
     isOnBeatTriggered_ = false;
     if (!IsActive()) return;
     double posSec = 0.0;
-    if (!GetPlayPositionSeconds(playHandle_, posSec)) return;
+
+    if (playHandle_ != kInvalidPlayHandle) {
+        if (!GetPlayPositionSeconds(playHandle_, posSec)) return;
+    } else {
+        if (!isUseManualTime_) return;
+        const auto now = std::chrono::steady_clock::now();
+        posSec = std::chrono::duration<double>(now - manualStartTime_).count();
+    }
 
     // まだオフセットに到達していない
     if (posSec < startOffsetSec_) return;
@@ -429,7 +461,13 @@ void AudioManager::SoundBeat::Update(Passkey<AudioManager>) {
 float AudioManager::SoundBeat::GetBeatProgress() const {
     if (!IsActive()) return 0.0f;
     double posSec = 0.0;
-    if (!GetPlayPositionSeconds(playHandle_, posSec)) return 0.0f;
+    if (playHandle_ != kInvalidPlayHandle) {
+        if (!GetPlayPositionSeconds(playHandle_, posSec)) return 0.0f;
+    } else {
+        if (!isUseManualTime_) return 0.0f;
+        const auto now = std::chrono::steady_clock::now();
+        posSec = std::chrono::duration<double>(now - manualStartTime_).count();
+    }
     if (posSec < startOffsetSec_) return 0.0f;
 
     const double interval = 60.0 / static_cast<double>(bpm_);
@@ -444,6 +482,8 @@ float AudioManager::SoundBeat::GetBeatProgress() const {
 
 void AudioManager::SoundBeat::Reset() {
     currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
+    // reset manual time start so timing restarts from now
+    if (isUseManualTime_) manualStartTime_ = std::chrono::steady_clock::now();
 }
 
 AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath)

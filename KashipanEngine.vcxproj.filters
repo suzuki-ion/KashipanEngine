@@ -161,6 +161,7 @@
     <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialMove.cpp" />
     <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBomb.cpp" />
     <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialConnect.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -446,6 +447,7 @@
     <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBomb.h" />
     <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialConnect.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

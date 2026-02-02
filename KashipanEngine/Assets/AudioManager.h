@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <limits>
+#include <chrono>
 
 #include "Utilities/Passkeys.h"
 
@@ -111,7 +112,7 @@ public:
 
         /// @brief 再生ハンドルの設定
         /// @param play 再生中の音声のプレイハンドル
-        void SetPlayHandle(PlayHandle play) noexcept { playHandle_ = play; }
+        void SetPlayHandle(PlayHandle play) noexcept;
 
         /// @brief BPM値の設定
         /// @param bpm BPM値（例：120.0f）
@@ -137,10 +138,13 @@ public:
         void Reset();
 
         /// @brief アクティブかどうか
-        bool IsActive() const noexcept { return playHandle_ != kInvalidPlayHandle && bpm_ > 0.0f; }
+        bool IsActive() const noexcept { return bpm_ > 0.0f; }
 
         /// @brief ビート到達がトリガーされたかどうか
         bool IsOnBeatTriggered() const noexcept { return isOnBeatTriggered_; }
+
+        /// @brief 拍の判定を手動時間で開始する（再生ハンドルが無い場合のみ）
+        void StartManualBeat();
 
     private:
         PlayHandle playHandle_{ kInvalidPlayHandle };
@@ -151,6 +155,9 @@ public:
         uint64_t currentBeatIndex_{ std::numeric_limits<uint64_t>::max() };
 
         std::function<void(PlayHandle, uint64_t, double)> onBeatCallback_;
+
+        bool isUseManualTime_{ false };
+        std::chrono::steady_clock::time_point manualStartTime_{};
     };
 
     /// @brief 再生中の音声の現在位置を秒単位で取得する

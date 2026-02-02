@@ -33,11 +33,20 @@ namespace KashipanEngine {
             ptr->hasBufferedInput_ = hasBufferedInput_;
             ptr->bufferedDirection_ = bufferedDirection_;
             ptr->bufferedPlayerDirection_ = bufferedPlayerDirection_;
+            ptr->isKnockedBack_ = isKnockedBack_;
+            ptr->knockbackStartPosition_ = knockbackStartPosition_;
+            ptr->knockbackTargetPosition_ = knockbackTargetPosition_;
+            ptr->knockbackTimer_ = knockbackTimer_;
             return ptr;
         }
 
         std::optional<bool> Update() override {
-           
+            // 吹き飛び中の処理
+            if (isKnockedBack_) {
+                UpdateKnockback();
+                return true;
+            }
+
             // 移動していない場合、キー入力をチェック
             moveDirection_ = Vector3{ 0.0f, 0.0f, 0.0f };
             triggered_ = false;
@@ -118,6 +127,140 @@ namespace KashipanEngine {
         /// @brief 入力バッファ受付開始タイミングの設定（移動完了までの残り時間の割合、0.0～1.0）
         void SetInputBufferThreshold(float threshold) { inputBufferThreshold_ = threshold; }
 
+        /// @brief プレイヤーを吹き飛ばす
+        /// @param explosionCenter 爆発の中心位置
+        void KnockBack(const Vector3& explosionCenter) {
+            // 既に吹き飛び中なら無視
+            if (isKnockedBack_) {
+                return;
+            }
+
+            auto* ctx = GetOwner3DContext();
+            if (!ctx) {
+                return;
+            }
+
+            auto* transform = ctx->GetComponent<Transform3D>();
+            if (!transform) {
+                return;
+            }
+
+            // 現在の位置を取得してグリッド座標にスナップ
+            Vector3 currentPos = transform->GetTranslate();
+            currentPos.y = 0.0f;
+            
+            // 現在位置をグリッド座標に変換
+            int currentGridX = static_cast<int>(std::round(currentPos.x / 2.0f));
+            int currentGridZ = static_cast<int>(std::round(currentPos.z / 2.0f));
+            
+            // グリッド座標から正確なワールド座標を計算
+            Vector3 snappedCurrentPos = Vector3{
+                static_cast<float>(currentGridX * 2),
+                0.0f,
+                static_cast<float>(currentGridZ * 2)
+            };
+
+            // 爆発の中心をグリッド座標にスナップ
+            int explosionGridX = static_cast<int>(std::round(explosionCenter.x / 2.0f));
+            int explosionGridZ = static_cast<int>(std::round(explosionCenter.z / 2.0f));
+            
+            Vector3 snappedExplosionCenter = Vector3{
+                static_cast<float>(explosionGridX * 2),
+                0.0f,
+                static_cast<float>(explosionGridZ * 2)
+            };
+
+            // 爆発の中心からプレイヤーへのグリッド方向を計算
+            int deltaGridX = currentGridX - explosionGridX;
+            int deltaGridZ = currentGridZ - explosionGridZ;
+            
+            Vector3 knockbackDirection{ 0.0f, 0.0f, 0.0f };
+            
+            // グリッド上の方向を4方向にスナップ
+            if (deltaGridX == 0 && deltaGridZ == 0) {
+                // 完全に同じ位置の場合は、プレイヤーの向きの逆方向を使用
+                switch (playerDirection_) {
+                case PlayerDirection::Up:
+                    knockbackDirection = Vector3{ 0.0f, 0.0f, -1.0f };
+                    break;
+                case PlayerDirection::Down:
+                    knockbackDirection = Vector3{ 0.0f, 0.0f, 1.0f };
+                    break;
+                case PlayerDirection::Left:
+                    knockbackDirection = Vector3{ 1.0f, 0.0f, 0.0f };
+                    break;
+                case PlayerDirection::Right:
+                    knockbackDirection = Vector3{ -1.0f, 0.0f, 0.0f };
+                    break;
+                }
+            } else {
+                // X軸とZ軸のどちらが強いかを判定（グリッド座標での距離）
+                int absDeltaX = std::abs(deltaGridX);
+                int absDeltaZ = std::abs(deltaGridZ);
+                
+                if (absDeltaX > absDeltaZ) {
+                    // X軸方向に吹き飛ぶ（左右）
+                    if (deltaGridX > 0) {
+                        knockbackDirection = Vector3{ 1.0f, 0.0f, 0.0f };  // 右
+                    } else {
+                        knockbackDirection = Vector3{ -1.0f, 0.0f, 0.0f }; // 左
+                    }
+                } else {
+                    // Z軸方向に吹き飛ぶ（上下）
+                    if (deltaGridZ > 0) {
+                        knockbackDirection = Vector3{ 0.0f, 0.0f, 1.0f };  // 上
+                    } else {
+                        knockbackDirection = Vector3{ 0.0f, 0.0f, -1.0f }; // 下
+                    }
+                }
+            }
+
+            // 1マス分（moveDistance_）吹き飛ぶ（グリッド座標で計算）
+            knockbackStartPosition_ = snappedCurrentPos;
+            Vector3 targetPos = snappedCurrentPos + (knockbackDirection * moveDistance_);
+            
+            // 目標位置のグリッド座標を計算
+            int targetGridX = static_cast<int>(std::round(targetPos.x / 2.0f));
+            int targetGridZ = static_cast<int>(std::round(targetPos.z / 2.0f));
+            
+            // マップ範囲外への吹き飛びをクランプ（グリッド座標で）
+            targetGridX = std::clamp(targetGridX, 0, mapW_ - 1);
+            targetGridZ = std::clamp(targetGridZ, 0, mapH_ - 1);
+            
+            // グリッド座標から正確なワールド座標を計算
+            knockbackTargetPosition_ = Vector3{
+                static_cast<float>(targetGridX * 2),
+                0.0f,
+                static_cast<float>(targetGridZ * 2)
+            };
+
+            // 吹き飛び先に壁があるかチェック
+            if (explosionManager_ && explosionManager_->IsWallActiveOrMoving(knockbackTargetPosition_)) {
+                // 壁がある場合は吹き飛ばない
+                return;
+            }
+
+            // 吹き飛び先にボムがあるかチェック
+            if (isMoveBombStop_ && bombManager_ && bombManager_->IsBombAtPosition(knockbackTargetPosition_)) {
+                // ボムがある場合は吹き飛ばない
+                return;
+            }
+
+            // 吹き飛び状態に設定
+            isKnockedBack_ = true;
+            knockbackTimer_ = 0.0f;
+
+            // 移動中なら中断
+            if (isMoving_) {
+                isMoving_ = false;
+                moveTimer_ = 0.0f;
+                hasBufferedInput_ = false;
+            }
+        }
+
+        /// @brief 吹き飛び中かどうかを取得
+        bool IsKnockedBack() const { return isKnockedBack_; }
+
 #if defined(USE_IMGUI)
         void ShowImGui() override {
             ImGui::TextUnformatted("PlayerArrowMove");
@@ -150,6 +293,34 @@ namespace KashipanEngine {
                 AudioManager::Play(handle, missVolume_);
             }
 		}
+
+		/// @brief 吹き飛び処理
+        void UpdateKnockback() {
+            knockbackTimer_ += GetDeltaTime();
+            float t = std::min(1.0f, knockbackTimer_ / knockbackDuration_);
+
+            // イージングを使って滑らかに吹き飛ぶ
+            Vector3 currentPos = Vector3(MyEasing::Lerp(knockbackStartPosition_, knockbackTargetPosition_, t, EaseType::EaseOutExpo));
+
+            // 高さの補間
+            float currentPosY = float(MyEasing::Lerp_GAB(0.0f, 0.5f, t, EaseType::EaseOutCirc, EaseType::EaseInCirc));
+
+            // Transform3Dに反映
+            auto* ctx = GetOwner3DContext();
+            if (ctx) {
+                auto* transform = ctx->GetComponent<Transform3D>();
+                if (transform) {
+                    currentPos.y = currentPosY;
+                    transform->SetTranslate(currentPos);
+                }
+            }
+
+            // 吹き飛び完了チェック
+            if (t >= 1.0f) {
+                isKnockedBack_ = false;
+                knockbackTimer_ = 0.0f;
+            }
+        }
 
 		/// @brief 移動入力のチェック
         void JudgeMove(bool f) {
@@ -311,7 +482,6 @@ namespace KashipanEngine {
                 rotationTimer_ = 0.0f;
                 startRotationY_ = transform->GetRotate().y;
             }
-
             isMoving_ = true;
             moveTimer_ = 0.0f;
             return true;
@@ -398,6 +568,7 @@ namespace KashipanEngine {
                 }
             }
         };
+
     private:
 		PlayerDirection playerDirection_ = PlayerDirection::Down; // プレイヤーの向き
 
@@ -433,6 +604,13 @@ namespace KashipanEngine {
         Vector3 bufferedDirection_{ 0.0f, 0.0f, 0.0f }; // バッファされた移動方向
         PlayerDirection bufferedPlayerDirection_ = PlayerDirection::Down; // バッファされたプレイヤーの向き
         float inputBufferThreshold_ = 0.7f; // 入力バッファを受け付ける移動完了までの割合（デフォルト70%）
+
+        // 吹き飛び関連
+        bool isKnockedBack_ = false;              // 吹き飛び中フラグ
+        Vector3 knockbackStartPosition_{ 0.0f, 0.0f, 0.0f };  // 吹き飛び開始位置
+        Vector3 knockbackTargetPosition_{ 0.0f, 0.0f, 0.0f }; // 吹き飛び目標位置
+        float knockbackTimer_ = 0.0f;             // 吹き飛びタイマー
+        float knockbackDuration_ = 0.3f;          // 吹き飛び時間（秒）
 
         const InputCommand* inputCommand_ = nullptr;
         BombManager* bombManager_ = nullptr;

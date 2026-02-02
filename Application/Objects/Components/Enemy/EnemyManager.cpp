@@ -2,6 +2,7 @@
 #include "EnemyDieParticle.h"
 #include "Objects/Components/BPMScaling.h"
 #include "Objects/Components/Health.h"
+#include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/3D/Collision3D.h"
 #include "Scene/Components/ColliderComponent.h"
 #include <algorithm>
@@ -68,6 +69,7 @@ void EnemyManager::Update() {
     bpmProgress_ = bpmSystem_->GetBeatProgress();
 
     const int currentBeat = bpmSystem_->GetCurrentBeat();
+    const float dt = GetDeltaTime();
     
     // 新しい拍になったかチェック
     bool isNewBeat = (currentBeat != lastMoveBeat_);
@@ -77,6 +79,9 @@ void EnemyManager::Update() {
         
         for (auto& e : activeEnemies_) {
             if (!e.object || e.isDead) continue;
+            
+            // 吹き飛び中の敵は通常の移動をスキップ
+            if (e.isKnockedBack) continue;
 
             // 前の拍の移動を完了: targetPositionをpositionに反映
             e.position = e.targetPosition;
@@ -101,12 +106,38 @@ void EnemyManager::Update() {
 
                 // 移動先に壁があるかチェック
                 if (IsWallAt(nextX, nextZ)) {
-                    // 壁がある場合は移動せず、その場に留まる
+                    // 壁がある場合は移動せず、その場に留まり、方向を逆転させる
                     e.startPosition = e.position;
                     e.targetPosition = e.position;
                     
                     // 壁にダメージを与える
                     DamageWallAt(nextX, nextZ);
+                    
+                    // 進行方向を逆転
+                    switch (e.direction) {
+                    case EnemyDirection::Up:    e.direction = EnemyDirection::Down; break;
+                    case EnemyDirection::Down:  e.direction = EnemyDirection::Up; break;
+                    case EnemyDirection::Left:  e.direction = EnemyDirection::Right; break;
+                    case EnemyDirection::Right: e.direction = EnemyDirection::Left; break;
+                    }
+                    
+                    // 方向転換に合わせてオブジェクトの向きも更新
+                    if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
+                        switch (e.direction) {
+                        case EnemyDirection::Up:
+                            tr->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
+                            break;
+                        case EnemyDirection::Down:
+                            tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+                            break;
+                        case EnemyDirection::Left:
+                            tr->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
+                            break;
+                        case EnemyDirection::Right:
+                            tr->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
+                            break;
+                        }
+                    }
                 } else {
                     // 壁がない場合は通常通り移動
                     e.startPosition = e.position;
@@ -126,6 +157,44 @@ void EnemyManager::Update() {
 
 		e.object->GetComponent3D<BPMScaling>()->SetBPMProgress(bpmProgress_);
 
+        // 吹き飛び処理
+        if (e.isKnockedBack) {
+            // 現在の位置を保存
+            Vector3 oldPosition = e.position;
+            
+            // 吹き飛び速度を適用（減衰なし）
+            e.position += e.knockbackVelocity * dt;
+            
+            // 吹き飛び中の壁破壊チェック
+            const int currentGridX = static_cast<int>(std::round(e.position.x / 2.0f));
+            const int currentGridZ = static_cast<int>(std::round(e.position.z / 2.0f));
+            
+            // 壁があれば破壊
+            if (IsWallAt(currentGridX, currentGridZ)) {
+                DestroyWallAt(currentGridX, currentGridZ);
+            }
+            
+            // 吹き飛び中は現在位置をそのまま描画
+            if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(e.position);
+            }
+            
+            // マップ範囲外チェック
+            const float minX = -2.0f;
+            const float minZ = -2.0f;
+            const float maxX = static_cast<float>((mapW_) * 2.0f);
+            const float maxZ = static_cast<float>((mapH_) * 2.0f);
+            
+            if (e.position.x <= minX || e.position.x >= maxX ||
+                e.position.z <= minZ || e.position.z >= maxZ) {
+                SpawnDieParticles(e.position);
+                e.isDead = true;
+            }
+            
+            continue;
+        }
+
+        // 通常の移動処理（吹き飛び中でない場合）
         // イージングで現在位置を計算（移動する拍では移動、止まる拍では同じ位置）
         Vector3 nextPos = Vector3(MyEasing::Lerp(e.startPosition, e.targetPosition, bpmProgress_, EaseType::EaseOutQuint));
         float currentPosY = float(MyEasing::Lerp_GAB(0.0f, 0.5f, bpmProgress_, EaseType::EaseOutCirc, EaseType::EaseInCirc));
@@ -139,6 +208,29 @@ void EnemyManager::Update() {
         const bool out =
             (e.targetPosition.x <= minX) || (e.targetPosition.x >= maxX) ||
             (e.targetPosition.z <= minZ) || (e.targetPosition.z >= maxZ);
+
+        // マップ中心に到達したかチェック
+        const int targetGridX = static_cast<int>(std::round(e.targetPosition.x / 2.0f));
+        const int targetGridZ = static_cast<int>(std::round(e.targetPosition.z / 2.0f));
+        
+        bool reachedCenter = false;
+        for (const auto& centerPos : centerPositions_) {
+            if (targetGridX == centerPos.first && targetGridZ == centerPos.second) {
+                reachedCenter = true;
+                break;
+            }
+        }
+        
+        // 中心に到達した場合、プレイヤーにダメージを与えて敵を削除
+        if (reachedCenter && bpmProgress_ > 0.5f) {
+            if (player_) {
+                if (auto* health = player_->GetComponent3D<Health>()) {
+                    health->Damage(1);
+                }
+            }
+            SpawnDieParticles(e.targetPosition);
+            e.isDead = true;
+        }
 
         // 描画位置のみ更新（e.positionは次の拍まで更新しない）
         if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
@@ -210,20 +302,62 @@ void EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Ve
 
         // ラムダで敵オブジェクトポインタをキャプチャ
         collisionInfo.onCollisionEnter = [this, enemyPtr](const HitInfo3D& hitInfo) {
-            // Playerと衝突したかチェック
-            if (hitInfo.otherObject == player_) {
-                // activeEnemies_から該当する敵を検索してisDead=trueに設定
-                for (auto& e : activeEnemies_) {
-                    if (e.object == enemyPtr) {
-                        e.isDead = true;
-                        break;
+            // この敵が吹き飛び中かどうかをチェック
+            bool isThisEnemyKnockedBack = false;
+            for (const auto& e : activeEnemies_) {
+                if (e.object == enemyPtr && e.isKnockedBack) {
+                    isThisEnemyKnockedBack = true;
+                    break;
+                }
+            }
+            
+            // 吹き飛び中の敵が他の敵と衝突した場合、相手を破壊
+            if (isThisEnemyKnockedBack) {
+                auto* otherCollision = hitInfo.otherObject ? hitInfo.otherObject->GetComponent3D<Collision3D>() : nullptr;
+                if (otherCollision && otherCollision->GetColliderInfo().attribute.test(1)) {
+                    // 相手も敵なので破壊
+                    for (auto& e : activeEnemies_) {
+                        if (e.object == hitInfo.otherObject && !e.isKnockedBack) {
+                            SpawnDieParticles(e.position);
+                            e.isDead = true;
+                            break;
+                        }
                     }
                 }
                 
-                // Playerにダメージを与える
-                if (player_) {
-                    if (auto* health = player_->GetComponent3D<Health>()) {
-                        health->Damage(1);
+                // 吹き飛び中の敵がプレイヤーと衝突した場合、プレイヤーを吹き飛ばす
+                if (hitInfo.otherObject == player_) {
+                    if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+                        // 敵の位置を爆発中心として使用
+                        for (const auto& e : activeEnemies_) {
+                            if (e.object == enemyPtr) {
+                                playerMove->KnockBack(e.position);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                return;
+            }
+            
+            // Playerと衝突したかチェック（通常の敵の場合はダメージを与える）
+            if (hitInfo.otherObject == player_) {
+                // activeEnemies_から該当する敵を検索してisDead=trueに設定
+                //for (auto& e : activeEnemies_) {
+                //    if (e.object == enemyPtr) {
+                //        e.isDead = true;
+                //        break;
+                //    }
+                //}
+                
+                if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+                    // 敵の位置を爆発中心として使用
+                    for (const auto& e : activeEnemies_) {
+                        if (e.object == enemyPtr) {
+                            playerMove->KnockBack(e.position);
+                            break;
+                        }
                     }
                 }
             }
@@ -319,26 +453,81 @@ void EnemyManager::CleanupDeadEnemies() {
     }
 }
 
-bool EnemyManager::OnExplosionHit(Object3DBase* hitObject) {
-    if (!hitObject) return false;
+void EnemyManager::OnExplosionHit(Object3DBase* hitObject, const Vector3& explosionCenter) {
+    if (!hitObject) return;
 
-    // activeEnemies_からも削除フラグを立てる
+    // activeEnemies_から該当する敵を探して吹き飛ばす
     for (auto& enemyInfo : activeEnemies_) {
         if (enemyInfo.object == hitObject) {
-
-            SpawnDieParticles(enemyInfo.position);
-            enemyInfo.isDead = true;
-
-            // 敵が倒された時のコールバックを呼ぶ（後方互換性のため）
-            if (onEnemyDestroyedCallback_) {
-                onEnemyDestroyedCallback_();
+            
+            // 既に吹き飛び中なら無視
+            if (enemyInfo.isKnockedBack) {
+                return;
             }
+            
+            // 移動中の場合、現在の描画位置を取得して論理位置として設定
+            if (auto* tr = enemyInfo.object->GetComponent3D<Transform3D>()) {
+                Vector3 currentVisualPos = tr->GetTranslate();
+                currentVisualPos.y = 0.0f; // Y軸はリセット
+                enemyInfo.position = currentVisualPos;
+                enemyInfo.startPosition = currentVisualPos;
+                enemyInfo.targetPosition = currentVisualPos;
+            }
+            
+            // 爆発の中心から敵への方向ベクトルを計算
+            Vector3 toEnemy = enemyInfo.position - explosionCenter;
+            toEnemy.y = 0.0f; // Y軸は無視
+            
+            // ベクトルを正規化（長さを1にする）
+            Vector3 knockbackDirection = toEnemy.Normalize();
+            
+            // 正規化に失敗した場合（敵と爆発が完全に同じ位置）は、敵の進行方向の逆を使用
+            if (knockbackDirection.Length() < 0.01f) {
+                switch (enemyInfo.direction) {
+                case EnemyDirection::Up:    
+                    knockbackDirection = Vector3{ 0.0f, 0.0f, -1.0f };
+                    break;
+                case EnemyDirection::Down:  
+                    knockbackDirection = Vector3{ 0.0f, 0.0f, 1.0f };
+                    break;
+                case EnemyDirection::Left:  
+                    knockbackDirection = Vector3{ 1.0f, 0.0f, 0.0f };
+                    break;
+                case EnemyDirection::Right: 
+                    knockbackDirection = Vector3{ -1.0f, 0.0f, 0.0f };
+                    break;
+                }
+            } else {
+                // 方向ベクトルを最も近い軸方向（上下左右）にスナップ
+                float absX = std::abs(knockbackDirection.x);
+                float absZ = std::abs(knockbackDirection.z);
+                
+                // X軸とZ軸のどちらが強いかを判定
+                if (absX > absZ) {
+                    // X軸方向に吹き飛ぶ（左右）
+                    if (knockbackDirection.x > 0.0f) {
+                        knockbackDirection = Vector3{ 1.0f, 0.0f, 0.0f };  // 右
+                    } else {
+                        knockbackDirection = Vector3{ -1.0f, 0.0f, 0.0f }; // 左
+                    }
+                } else {
+                    // Z軸方向に吹き飛ぶ（上下）
+                    if (knockbackDirection.z > 0.0f) {
+                        knockbackDirection = Vector3{ 0.0f, 0.0f, 1.0f };  // 上
+                    } else {
+                        knockbackDirection = Vector3{ 0.0f, 0.0f, -1.0f }; // 下
+                    }
+                }
+            }
+            
+            // 吹き飛び状態に設定
+            enemyInfo.isKnockedBack = true;
+            enemyInfo.knockbackVelocity = knockbackDirection * knockbackSpeed_;
+            enemyInfo.knockbackTimer = 0.0f;
 
-            return true;  // 敵を倒した
+            return;
         }
     }
-
-    return false;  // 敵ではなかった
 }
 
 void EnemyManager::ClearAllEnemies() {
@@ -382,6 +571,26 @@ void EnemyManager::DamageWallAt(int x, int z) {
     
     if (wall.isActive && wall.hp > 0) {
         wall.hp--;
+    }
+}
+
+void EnemyManager::DestroyWallAt(int x, int z) {
+    if (!walls_) return;
+    
+    // 範囲外チェック
+    if (x < 0 || x >= wallsWidth_ || z < 0 || z >= wallsHeight_) {
+        return;
+    }
+    
+    // 2次元配列として壁情報にアクセス
+    WallInfo& wall = walls_[z * wallsWidth_ + x];
+    
+    // 壁を即座に破壊
+    if (wall.isActive || wall.isMoving) {
+        wall.isActive = false;
+        wall.isMoving = false;
+        wall.hp = 0;
+        wall.moveTimer.Reset();
     }
 }
 

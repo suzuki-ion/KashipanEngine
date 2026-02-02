@@ -91,8 +91,8 @@ private:
     AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
 
     // マップ関連
-    static constexpr int kMapW = 11;                // マップの横幅 (オブジェクト数)
-    static constexpr int kMapH = 11;                // マップの縦幅 (オブジェクト数)
+    static constexpr int kMapW = 10;                // マップの横幅 (オブジェクト数)
+    static constexpr int kMapH = 10;                // マップの縦幅 (オブジェクト数)
     Vector3 mapScaleMin_ = { 0.65f ,0.95f ,0.95f }, mapScaleMax_ = { 0.95f ,0.95f ,0.95f }; // マップのBpmに合わせた拡大縮小範囲
 
     bool allMapAnimation_ = false; // true -> 全Mapアニメーション  false-> プレイヤー位置のみアニメーション

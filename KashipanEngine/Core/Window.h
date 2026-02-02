@@ -141,7 +141,7 @@ public:
     /// @param style ウィンドウスタイル
     /// @param iconPath アイコンパス
     /// @return 生成されたウィンドウインスタンスへのポインタ
-    static Window *CreateNormal(const std::string &title = "", int32_t width = 0, int32_t height = 0, DWORD style = 0, const std::string &iconPath = "");
+    static Window *CreateNormal(const std::string &title = "", int32_t width = 0, int32_t height = 0, DWORD style = 0, const std::string &iconPath = "./Assets/KashipanEngine/EngineLogo/engineLogo.ico");
     /// @brief オーバーレイウィンドウ生成
     /// @param title ウィンドウタイトル
     /// @param width ウィンドウ幅
@@ -149,7 +149,7 @@ public:
     /// @param clickThrough 通常クリック透過設定
     /// @param iconPath アイコンパス
     /// @return 生成されたウィンドウインスタンスへのポインタ
-    static Window *CreateOverlay(const std::string &title = "", int32_t width = 0, int32_t height = 0, bool clickThrough = false, const std::string &iconPath = "");
+    static Window *CreateOverlay(const std::string &title = "", int32_t width = 0, int32_t height = 0, bool clickThrough = false, const std::string &iconPath = "./Assets/KashipanEngine/EngineLogo/engineLogo.ico");
 
     /// @brief コンストラクタ（Window限定）
     /// @param windowType ウィンドウの種類

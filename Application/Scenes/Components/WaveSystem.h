@@ -122,6 +122,15 @@ public:
     /// @brief カウントダウン用のNumberModelプールを初期化
     void InitializeCountdownModels();
 
+    /// @brief Wave表示用のModelを初期化
+    void InitializeWaveModels();
+
+    /// @brief Wave表示位置を設定
+    void SetWaveDisplayPosition(const Vector3& position) { waveDisplayPosition_ = position; }
+
+    /// @brief Wave表示スケールを設定
+    void SetWaveDisplayScale(float scale) { waveDisplayScale_ = scale; }
+
 	void SetParentTransform(Transform3D* parent) { parentTransform_ = parent; }
 
     /// @brief 壁配列を設定
@@ -176,6 +185,18 @@ private:
 
     /// @brief カウントダウンを非表示
     void HideCountdown();
+
+    /// @brief Wave表示を更新
+    void UpdateWaveDisplay();
+
+    /// @brief Wave切り替えアニメーションを更新
+    void UpdateWaveTransitionAnimation();
+
+    /// @brief 指定されたWaveを表示
+    void ShowWaveNumber(int waveNumber);
+
+    /// @brief Wave表示を非表示
+    void HideWaveDisplay();
 
     Transform3D* parentTransform_ = nullptr;
 
@@ -243,6 +264,33 @@ private:
     int currentCountdownNumber_ = -1;  // 現在表示中の数字（-1は非表示）
     Vector3 countdownPosition_{ 0.0f, 0.0f, 15.0f };  // カウントダウン表示位置
     float countdownScale_ = 3.0f;  // カウントダウンのスケール
+
+    // Wave表示用
+    static constexpr int kMaxWaveNumbers_ = 9;  // Wave1-9
+    std::array<Object3DBase*, kMaxWaveNumbers_> waveNumbers_{};
+    int currentDisplayedWave_ = -1;  // 現在表示中のWave（-1は非表示）
+    Vector3 waveDisplayPosition_{ 9.0f, 5.5f, 20.0f };  // Wave表示位置
+    float waveDisplayScale_ = 1.0f;  // Wave表示のスケール
+
+    Vector3 waveDisplayStartPosition_{ 9.0f, 5.5f, 20.0f };
+    Vector3 waveDisplayEndPosition_{ -0.35f, 0.0f, 6.0f };
+
+    Vector3 waveDisplayStartRotate_{ -0.05f, 0.4f, -0.1f };
+    Vector3 waveDisplayEndRotate_{ 0.0f, 0.0f, 0.0f };
+
+    // Wave切り替えアニメーション用
+    enum class WaveTransitionState {
+        Idle,              // アニメーションなし
+        MovingOut,         // 開始位置→終了位置へ移動中
+        WaitingToSwitch,   // Wave切り替え前の待機
+        SwitchingWave,     // Wave切り替え（瞬時）
+        MovingIn           // 終了位置→開始位置へ移動中
+    };
+    WaveTransitionState waveTransitionState_ = WaveTransitionState::Idle;
+    float waveTransitionTimer_ = 0.0f;
+    static constexpr float kWaveTransitionDuration_ = 1.0f;  // 1秒
+    static constexpr float kWaveSwitchDelay_ = 0.5f;  // Wave切り替え前の待機時間（0.5秒）
+    int nextWaveToDisplay_ = -1;  // 切り替え先のWave番号
 
     // コールバック
     std::function<void()> onAllWavesCompletedCallback_;

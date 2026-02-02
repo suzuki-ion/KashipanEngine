@@ -1658,6 +1658,9 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     // カウントダウンモデルを初期化
     waveSystem_->InitializeCountdownModels();
 
+	// Waveモデルを初期化
+    waveSystem_->InitializeWaveModels();
+    
     // BombManagerとWallsを設定
     waveSystem_->SetBombManager(bombManager_);
     waveSystem_->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);

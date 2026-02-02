@@ -24,8 +24,6 @@ private:
 
     // アニメーションで使用する Rect オブジェクトを事前生成してポインタ保持
     Rect *animationRect_ = nullptr;
-    // フェードアウト用 Rect
-    Rect *fadeRect_ = nullptr;
 
     // アニメーション制御
     float elapsedTime_ = 0.0f;

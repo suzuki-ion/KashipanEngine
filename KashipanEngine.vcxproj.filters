@@ -158,6 +158,9 @@
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialMove.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBomb.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialConnect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -439,6 +442,10 @@
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialMove.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBomb.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialConnect.h" />
+    <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

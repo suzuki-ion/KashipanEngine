@@ -1,6 +1,6 @@
 #include "Scenes/TitleScene.h"
-#include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
+#include "Scenes/Components/SceneFade.h"
 #include "Scenes/Components/TitleScene/StartTextUpdate.h"
 
 namespace KashipanEngine {
@@ -130,11 +130,15 @@ void TitleScene::Initialize() {
         AddObject3D(std::move(obj));
     }
 
-    AddSceneComponent(std::make_unique<SceneChangeIn>());
+    AddSceneComponent(std::make_unique<SceneFade>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
 
-    if (auto *in = GetSceneComponent<SceneChangeIn>()) {
-        in->Play();
+    if (auto *fade = GetSceneComponent<SceneFade>()) {
+        // フェードイン（色->透明）を実行
+        fade->SetColor(Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+        fade->SetDuration(1.0f);
+        fade->SetDelayBefore(1.0f); // 1秒待ってからフェードを開始
+        fade->PlayIn();
     }
 }
 

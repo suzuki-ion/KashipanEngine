@@ -6,6 +6,7 @@
 #include "Objects/Components/2D/Material2D.h"
 #include "Scene/Components/SceneDefaultVariables.h"
 #include "Utilities/MathUtils/Easings.h"
+#include "Scenes/Components/SceneFade.h"
 
 namespace KashipanEngine {
 
@@ -63,7 +64,6 @@ void EngineLogoScene::Initialize() {
 
     // スプライト共通設定（位置は中央を基準に少しずらす）
     const float cx = static_cast<float>(winW) * 0.5f;
-    const float cy = static_cast<float>(winH) * 0.5f;
 
     // ロゴギア: X=center, Y=height*2/3
     {
@@ -164,25 +164,13 @@ void EngineLogoScene::Initialize() {
         AddObject2D(std::move(ar));
     }
 
-    // フェードアウト用Rectを作成（初期色RGBA=0）
-    {
-        auto fr = std::make_unique<Rect>();
-        fr->SetName("EngineLogo_FadeRect");
-        fr->SetUniqueBatchKey();
-        if (auto t = fr->GetComponent2D<Transform2D>("Transform2D")) {
-            t->SetTranslate(Vector3(cx, cy, 0.0f));
-            t->SetScale(Vector3(static_cast<float>(winW), static_cast<float>(winH), 1.0f));
-        }
-        if (auto m = fr->GetComponent2D<Material2D>("Material2D")) {
-            m->SetColor(Vector4(0.0f,0.0f,0.0f,0.0f));
-        }
+    // フェード用コンポーネントを追加
+    AddSceneComponent(std::make_unique<SceneFade>());
 
-        if (screenBuffer2D) {
-            fr->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        }
-
-        fadeRect_ = fr.get();
-        AddObject2D(std::move(fr));
+    // 初期設定: フェード色や時間が必要ならここで設定可能
+    if (auto *fade = GetSceneComponent<SceneFade>()) {
+        fade->SetColor(Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+        fade->SetDuration(1.0f);
     }
 
     elapsedTime_ = 0.0f;
@@ -262,20 +250,18 @@ void EngineLogoScene::OnUpdate() {
         }
     }
 
-    // fadeRect: t 2.0 - 3.0 alpha 0->1 Lerp
-    if (fadeRect_) {
-        if (auto m = fadeRect_->GetComponent2D<Material2D>("Material2D")) {
-            if (t >= 2.0f && t <= 3.0f) {
-                const float nt = Normalize01(t, 2.0f, 3.0f);
-                const float a = Lerp(0.0f, 1.0f, nt);
-                Vector4 c = m->GetColor();
-                c.w = a;
-                m->SetColor(c);
-            } else if (t > 3.0f) {
-                // アニメーション完了で次シーンへ
-                if (!GetNextSceneName().empty()) {
-                    ChangeToNextScene();
-                }
+    // フェード開始タイミング: t >= 2.0 でフェードアウトを開始
+    if (elapsedTime_ >= (animationStartOffset_ + 2.0f) && prevElapsedTime_ < (animationStartOffset_ + 2.0f)) {
+        if (auto *fade = GetSceneComponent<SceneFade>()) {
+            fade->PlayOut();
+        }
+    }
+
+    // フェード完了で次シーンへ
+    if (!GetNextSceneName().empty()) {
+        if (auto *fade = GetSceneComponent<SceneFade>()) {
+            if (fade->IsFinished()) {
+                ChangeToNextScene();
             }
         }
     }

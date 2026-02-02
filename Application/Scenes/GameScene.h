@@ -49,6 +49,9 @@ private:
     /// @brief 壁の再生成待機中の場所を可視化するためにマップマーカーを更新
     void UpdateWallRespawnMarkers();
 
+    /// @brief 壁の後ろにオブジェクトがある場合、壁を半透明にする
+    void UpdateWallTransparency();
+
 	/// @brief  Waveシステム初期化
     void InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transform);
 #if defined(USE_IMGUI)
@@ -104,6 +107,7 @@ private:
     std::array<std::array<bool, kMapW>, kMapH> mapMarkerIsActive_{};
 
     std::array<std::array<WallInfo, kMapW>, kMapH> walls_{};
+	float wallAlpha_ = 0.5f; // 壁の透明度
     
     CameraController *cameraController_ = nullptr;
     float pDamageShakePower_ = 5.0f; float pDamageShakeTime_ = 1.0f; // プレイヤーダメージ時のカメラシェイク

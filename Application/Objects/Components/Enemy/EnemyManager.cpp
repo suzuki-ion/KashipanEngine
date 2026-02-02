@@ -698,6 +698,19 @@ bool EnemyManager::IsEnemyAlive(int enemyID) const {
     return enemy.object != nullptr && !enemy.isDead;
 }
 
+std::vector<Vector3> EnemyManager::GetActiveEnemyPositions() const {
+    std::vector<Vector3> positions;
+    positions.reserve(activeEnemies_.size());
+    
+    for (const auto& enemy : activeEnemies_) {
+        if (enemy.object && !enemy.isDead) {
+            positions.push_back(enemy.position);
+        }
+    }
+    
+    return positions;
+}
+
 bool EnemyManager::IsWallAt(int x, int z) const {
     if (!walls_) return false;
     

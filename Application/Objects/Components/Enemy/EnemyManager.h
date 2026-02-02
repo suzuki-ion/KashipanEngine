@@ -87,6 +87,10 @@ public:
     /// @return 生存している場合true
     bool IsEnemyAlive(int enemyID) const;
 
+    /// @brief すべてのアクティブな敵の位置を取得
+    /// @return 敵の位置のベクター
+    std::vector<Vector3> GetActiveEnemyPositions() const;
+
     // パーティクルプールを初期化
     void InitializeParticlePool();
 

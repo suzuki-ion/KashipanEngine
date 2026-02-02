@@ -49,6 +49,9 @@ public:
     // ScoreManagerを設定
     void SetScoreManager(class ScoreManager* scoreManager) { scoreManager_ = scoreManager; }
 
+    // ScoreDisplayを設定
+    void SetScoreDisplay(class ScoreDisplay* scoreDisplay) { scoreDisplay_ = scoreDisplay; }
+
     /// @brief 壁配列を設定する
     /// @param walls 壁配列の先頭ポインタ
     /// @param width マップの横幅
@@ -155,6 +158,7 @@ private:
     Object3DBase* player_ = nullptr;
     BombManager* bombManager_ = nullptr;
     class ScoreManager* scoreManager_ = nullptr;  // スコアマネージャー
+    class ScoreDisplay* scoreDisplay_ = nullptr;  // スコア表示
 
     WallInfo* walls_ = nullptr;
     int wallsWidth_ = 0;

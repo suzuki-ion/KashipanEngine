@@ -456,6 +456,11 @@ void GameScene::Initialize() {
         enemyManager_->SetScoreManager(scoreManager_);
     }
 
+    // EnemyManagerにScoreDisplayを設定
+    if (enemyManager_ && explosionNumberDisplay_) {
+        enemyManager_->SetScoreDisplay(explosionNumberDisplay_);
+    }
+
     // PlayerDieParticleManagerの初期化
     {
         auto comp = std::make_unique<PlayerDieParticleManager>();

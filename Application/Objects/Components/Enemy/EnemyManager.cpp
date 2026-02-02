@@ -4,6 +4,7 @@
 #include "Objects/Components/Health.h"
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Objects/Components/Player/ScoreManager.h"
+#include "Objects/Components/Bomb/ScoreDisplay.h"
 #include "Objects/Components/3D/Collision3D.h"
 #include "Scene/Components/ColliderComponent.h"
 #include <algorithm>
@@ -568,6 +569,18 @@ void EnemyManager::CleanupDeadEnemies() {
                     // 中心
                     scoreManager_->AddScore(0);
                 }
+            }
+            
+            // スコア表示を発動
+            if (scoreDisplay_) {
+                if (e.deathCause == EnemyDeathCause::Explosion) {
+                    // 爆発で死んだ場合: 300.obj (count = 2)
+                    scoreDisplay_->SpawnNumber(e.position, 2);
+                } else if (e.deathCause == EnemyDeathCause::OutOfBounds) {
+                    // 場外で死んだ場合: 100.obj (count = 1)
+                    scoreDisplay_->SpawnNumber(e.position, 1);
+                }
+                // 中心エリアで死んだ場合は表示しない
             }
             
             ctx->RemoveObject3D(e.object);

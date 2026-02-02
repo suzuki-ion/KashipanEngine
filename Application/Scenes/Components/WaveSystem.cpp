@@ -317,6 +317,34 @@ void WaveSystem::ProcessScheduledParticles() {
         // パーティクル発生開始タイミング
         if (waveBeatCount_ == particleSpawnBeat && !spawn.particleSpawned) {
             Vector3 position = MapToWorldPosition(spawn.mapX, spawn.mapZ);
+
+            // この位置にあるBombを削除
+            if (bombManager_) {
+                bombManager_->RemoveBombAtPosition(position);
+            }
+
+            // この位置のWallを非アクティブ化
+            if (walls_ && mapW_ > 0 && mapH_ > 0) {
+                const int gridX = static_cast<int>(std::round(position.x / 2.0f));
+                const int gridZ = static_cast<int>(std::round(position.z / 2.0f));
+                if (gridX >= 0 && gridX < mapW_ && gridZ >= 0 && gridZ < mapH_) {
+                    const int index = gridZ * mapW_ + gridX;
+                    if (walls_[index].isActive || walls_[index].isMoving) {
+                        walls_[index].isActive = false;
+                        walls_[index].isMoving = false;
+                        walls_[index].moveTimer.Reset();
+                        walls_[index].hp = 0;
+                    }
+                }
+            }
+
+            activeEmitPositions_.push_back(position);
+            spawn.particleSpawned = true;
+        }
+
+        // パーティクル発生開始タイミング
+        if (waveBeatCount_ == particleSpawnBeat && !spawn.particleSpawned) {
+            Vector3 position = MapToWorldPosition(spawn.mapX, spawn.mapZ);
             activeEmitPositions_.push_back(position);
             spawn.particleSpawned = true;
         }
@@ -424,6 +452,22 @@ void WaveSystem::HideCountdown() {
         }
     }
     currentCountdownNumber_ = -1;
+}
+
+bool WaveSystem::IsParticleEmittingAt(const Vector3& position) const {
+    // 位置の許容誤差（グリッドの半分程度）
+    const float tolerance = tileSize_ * 0.5f;
+
+    for (const auto& emitPos : activeEmitPositions_) {
+        float dx = std::abs(emitPos.x - position.x);
+        float dz = std::abs(emitPos.z - position.z);
+
+        // XZ平面で近い位置にあるかチェック（Y座標は無視）
+        if (dx < tolerance && dz < tolerance) {
+            return true;
+        }
+    }
+    return false;
 }
 
 #if defined(USE_IMGUI)

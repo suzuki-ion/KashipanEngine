@@ -6,6 +6,7 @@
 #include "Objects/Components/Player/PlayerMove.h"
 #include "Scenes/Components/PlayerHealthUI.h"
 #include "objects/Components/Health.h"
+#include "Scenes/Components/WaveSystem.h"
 #include <algorithm>
 
 namespace KashipanEngine {
@@ -237,6 +238,11 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
 
 void ExplosionManager::CreateWallAtBombPosition(const Vector3& position) {
     if (!walls_ || mapW_ <= 0 || mapH_ <= 0) return;
+
+    // WaveSystemのパーティクル放出位置には壁を設置できない
+    if (waveSystem_ && waveSystem_->IsParticleEmittingAt(position)) {
+        return;
+    }
 
     // 爆弾の位置をグリッド座標に変換
     const int bombX = static_cast<int>(std::round(position.x / 2.0f));

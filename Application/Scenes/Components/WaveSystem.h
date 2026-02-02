@@ -10,6 +10,9 @@
 
 namespace KashipanEngine {
 
+// Forward declaration
+class BombManager;
+
 /// @brief Waveの種類を定義する列挙型
 enum class Wave {
     Wave1,
@@ -120,6 +123,25 @@ public:
     void InitializeCountdownModels();
 
 	void SetParentTransform(Transform3D* parent) { parentTransform_ = parent; }
+
+    /// @brief 壁配列を設定
+    /// @param walls 壁配列へのポインタ
+    /// @param mapW マップの幅
+    /// @param mapH マップの高さ
+    void SetWalls(WallInfo* walls, int mapW, int mapH) {
+        walls_ = walls;
+        mapW_ = mapW;
+        mapH_ = mapH;
+    }
+
+    /// @brief BombManagerを設定（Bomb削除用）
+    void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+    /// @brief 指定位置でパーティクル放出中かどうかをチェック
+    /// @param position チェックする位置
+    /// @return パーティクル放出中ならtrue
+    bool IsParticleEmittingAt(const Vector3& position) const;
+
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -161,6 +183,7 @@ private:
     EnemyManager* enemyManager_ = nullptr;
     EnemySpawner* enemySpawner_ = nullptr;
     ScreenBuffer* screenBuffer_ = nullptr;
+    BombManager* bombManager_ = nullptr;
    
     // Wave管理
     std::vector<WaveData> waveDataList_;
@@ -189,6 +212,11 @@ private:
     int mapWidth_ = 10;
     int mapHeight_ = 10;
     float tileSize_ = 2.0f;
+
+    // 壁管理
+    WallInfo* walls_ = nullptr;
+    int mapW_ = 0;
+    int mapH_ = 0;
 
     // パーティクル関連
     ParticleConfig spawnParticleConfig_{};

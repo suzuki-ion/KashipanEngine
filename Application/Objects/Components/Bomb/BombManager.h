@@ -10,6 +10,7 @@ namespace KashipanEngine {
 
 // Forward declaration
 class ExplosionManager;
+class WaveSystem;
 
 /// @brief プレイヤーが生成するBombを一括管理するクラス
 class BombManager final : public ISceneComponent {
@@ -39,6 +40,9 @@ public:
 
     /// @brief 衝突判定用ColliderComponentを設定
     void SetCollider(ColliderComponent* collider) { collider_ = collider; }
+
+    /// @brief WaveSystemを設定（パーティクル位置チェック用）
+    void SetWaveSystem(WaveSystem* waveSystem) { waveSystem_ = waveSystem; }
 
     /// @brief BPM進行度を設定（0.0～1.0）
     void SetBPMProgress(float progress) { bpmProgress_ = progress; }
@@ -74,6 +78,10 @@ public:
 
     /// @brief 指定位置にボムがあるか（プレイヤー移動のブロック判定用）
     bool IsBombAtPosition(const Vector3& position) const { return HasBombAtPosition(position); }
+
+    /// @brief 指定位置にある爆弾を削除
+    /// @param position 削除する位置
+    void RemoveBombAtPosition(const Vector3& position);
 
     /// @brief アクティブな爆弾の情報を取得（爆発範囲の可視化用）
     /// @return 爆弾の位置と爆発サイズのペアのベクター
@@ -165,6 +173,7 @@ private:
     const InputCommand* inputCommand_ = nullptr;
     ExplosionManager* explosionManager_ = nullptr;
     ColliderComponent* collider_ = nullptr;
+    WaveSystem* waveSystem_ = nullptr;
 
 	int maxBombs_ = 10;              // 同時に設置可能な爆弾の最大数
 	float bpmProgress_ = 0.0f;       // 現在フレームのBPM進行度（0.0～1.0）

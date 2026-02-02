@@ -512,6 +512,14 @@ void GameScene::Initialize() {
         InitWaveSystem(screenBuffer3D, camera3D->GetComponent3D<Transform3D>());
     }
 
+    // BombManagerとExplosionManagerにWaveSystemを設定
+    if (bombManager_ && waveSystem_) {
+        bombManager_->SetWaveSystem(waveSystem_);
+    }
+    if (explosionManager_ && waveSystem_) {
+        explosionManager_->SetWaveSystem(waveSystem_);
+    }
+
     // ExplosionManagerにBombManagerを設定（爆発とボムの衝突検出用）
     if (explosionManager_ && bombManager_) {
         explosionManager_->SetBombManager(bombManager_);
@@ -1649,6 +1657,10 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
 
     // カウントダウンモデルを初期化
     waveSystem_->InitializeCountdownModels();
+
+    // BombManagerとWallsを設定
+    waveSystem_->SetBombManager(bombManager_);
+    waveSystem_->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);
 
     // サンプルWaveデータを設定
     // Wave1

@@ -65,7 +65,7 @@ namespace KashipanEngine {
             }
 
             if (auto* tr = hpObj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3{-3.0f + (0.3f * i), 1.5f, 5.0f});
+                tr->SetTranslate(Vector3{-2.9f + (0.3f * i), 1.47f, 5.0f});
                 tr->SetScale(Vector3{0.25f});
                 // ペアレントを設定
                 if (parentTransform_) {
@@ -92,7 +92,7 @@ namespace KashipanEngine {
             }
 
             if (auto* tr = outlineObj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3{ -3.0f + (0.3f * i), 1.5f, 5.0f });
+                tr->SetTranslate(Vector3{ -2.9f + (0.3f * i), 1.47f, 5.0f });
                 tr->SetScale(Vector3{ 0.23f });
                 // ペアレントを設定
                 if (parentTransform_) {

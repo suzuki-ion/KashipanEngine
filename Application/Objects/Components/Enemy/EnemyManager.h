@@ -67,6 +67,13 @@ public:
     /// @param explosionCenter 爆発の中心位置
     void OnExplosionHit(Object3DBase* hitObject, const Vector3& explosionCenter);
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="hitObject"></param>
+	/// <param name="center"></param>
+	void OnPlayerHit(Object3DBase* hitObject, const Vector3& center);
+
     /// @brief 敵が倒された時のコールバックを設定
     /// @param callback 倒された時に呼ばれるコールバック関数
     void SetOnEnemyDestroyedCallback(std::function<void()> callback) {

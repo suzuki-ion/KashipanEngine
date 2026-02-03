@@ -42,11 +42,29 @@ void BackMonitorWithPauseScreen::Initialize() {
     }
 
     const float centerX = 0.0f;
-    const float topY = 2.0f;
-    const float bottomY = -2.0f;
-    const float spacing = (topY - bottomY) / static_cast<float>(modelCount_ - 1);
-    const float depth = 2.5f;
+    const float topY = 0.6f;
+    const float spacing = 1.2f;
+    const float depth = 3.0f;
     const Vector3 scaleVec{ 1.0f, 1.0f, 1.0f };
+
+    if (!pauseLogo_) {
+        auto modelHandle = ModelManager::GetModelDataFromFileName("pause.obj");
+        auto obj = std::make_unique<Model>(modelHandle);
+        obj->SetUniqueBatchKey();
+        obj->SetName("BackMonitor.PauseLogo");
+        obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
+        pauseLogo_ = obj.get();
+        ctx->AddObject3D(std::move(obj));
+    }
+    if (auto *tr = pauseLogo_->GetComponent3D<Transform3D>()) {
+        tr->SetTranslate(Vector3{ centerX, 2.0f, 2.0f });
+        tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+        tr->SetScale(scaleVec);
+    }
+    if (auto *mat = pauseLogo_->GetComponent3D<Material3D>()) {
+        mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+        mat->SetEnableShadowMapProjection(false);
+    }
 
     if (!menuContinue_) {
         //auto modelHandle = ModelManager::GetModelDataFromFileName("menuContinue.obj");
@@ -74,8 +92,7 @@ void BackMonitorWithPauseScreen::Initialize() {
     }
 
     if (!menuMenu_) {
-        //auto modelHandle = ModelManager::GetModelDataFromFileName("menuMenu.obj");
-        auto modelHandle = ModelManager::GetModelDataFromFileName("menuStart.obj");
+        auto modelHandle = ModelManager::GetModelDataFromFileName("pauseMenu.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.PauseMenu");
@@ -172,12 +189,32 @@ void BackMonitorWithPauseScreen::Initialize() {
         xDuration_[idx] = 0.0f;
         ++idx;
     }
+
+    if (pauseLogo_) {
+        if (auto *mat = pauseLogo_->GetComponent3D<Material3D>()) {
+            mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+        }
+        if (auto *tr = pauseLogo_->GetComponent3D<Transform3D>()) {
+            Vector3 p = tr->GetTranslate();
+            p.x = 0.0f;
+            tr->SetTranslate(p);
+        }
+    }
+
+    pauseLogoXAnimating_ = false;
+    pauseLogoXElapsed_ = 0.0f;
+    pauseLogoXDuration_ = 0.0f;
 }
 
 void BackMonitorWithPauseScreen::Update() {
     if (!IsActive()) {
         if (wasActive_) {
             Initialize();
+        }
+        if (pauseLogo_) {
+            if (auto *mat = pauseLogo_->GetComponent3D<Material3D>()) {
+                mat->SetColor(Vector4{ 0.0f,0.0f,0.0f,0.0f });
+            }
         }
         for (const auto &m : models_) {
             if (!m) continue;
@@ -187,6 +224,12 @@ void BackMonitorWithPauseScreen::Update() {
         }
         wasActive_ = false;
         return;
+    } else {
+        if (pauseLogo_) {
+            if (auto *mat = pauseLogo_->GetComponent3D<Material3D>()) {
+                mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+            }
+        }
     }
 
     if (!wasActive_) {
@@ -225,10 +268,10 @@ void BackMonitorWithPauseScreen::Update() {
             if (!m) { ++idx; continue; }
             if (static_cast<int>(idx) == selectedIndex_) {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[idx] = 2.0f;
+                zEnd_[idx] = 2.5f;
             } else {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[idx] = 2.5f;
+                zEnd_[idx] = 3.0f;
             }
             zElapsed_[idx] = 0.0f;
             zDuration_[idx] = animDuration;
@@ -245,10 +288,10 @@ void BackMonitorWithPauseScreen::Update() {
             if (!m) { ++idx; continue; }
             if (static_cast<int>(idx) == selectedIndex_) {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[idx] = 2.0f;
+                zEnd_[idx] = 2.5f;
             } else {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
-                zEnd_[idx] = 2.5f;
+                zEnd_[idx] = 3.0f;
             }
             zElapsed_[idx] = 0.0f;
             zDuration_[idx] = animDuration;
@@ -379,6 +422,16 @@ void BackMonitorWithPauseScreen::Update() {
                 xElapsed_[confirmedIndex_] = 0.0f;
                 xDuration_[confirmedIndex_] = baseXDuration;
                 xAnimating_[confirmedIndex_] = true;
+
+                if (pauseLogo_) {
+                    auto *logoTr = pauseLogo_->GetComponent3D<Transform3D>();
+                    pauseLogoXStart_ = logoTr ? logoTr->GetTranslate().x : 0.0f;
+                    pauseLogoXEnd_ = -16.0f;
+                    pauseLogoXElapsed_ = 0.0f;
+                    pauseLogoXDuration_ = baseXDuration;
+                    pauseLogoXAnimating_ = true;
+                }
+
                 isMenuConfirmSliding_ = true;
             } else {
                 isConfirmed_ = true;
@@ -386,8 +439,24 @@ void BackMonitorWithPauseScreen::Update() {
         }
     }
 
+    if (pauseLogoXAnimating_) {
+        pauseLogoXElapsed_ += dt;
+        float t = Normalize01(pauseLogoXElapsed_, 0.0f, pauseLogoXDuration_);
+        float easedX = EaseOutCubic(pauseLogoXStart_, pauseLogoXEnd_, t);
+        if (pauseLogo_) {
+            if (auto *tr = pauseLogo_->GetComponent3D<Transform3D>()) {
+                Vector3 pos = tr->GetTranslate();
+                pos.x = easedX;
+                tr->SetTranslate(pos);
+            }
+        }
+        if (t >= 1.0f) {
+            pauseLogoXAnimating_ = false;
+        }
+    }
+
     if (isMenuConfirmSliding_) {
-        if (!xAnimating_[confirmedIndex_]) {
+        if (!xAnimating_[confirmedIndex_] && !pauseLogoXAnimating_) {
             isMenuConfirmSliding_ = false;
             isConfirmed_ = true;
         }

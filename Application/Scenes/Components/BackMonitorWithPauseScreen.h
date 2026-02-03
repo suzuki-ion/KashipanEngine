@@ -38,6 +38,7 @@ public:
     }
 
 private:
+    Model *pauseLogo_ = nullptr;
     Model *menuContinue_ = nullptr;
     Model *menuMenu_ = nullptr;
     Model *menuTitle_ = nullptr;
@@ -85,6 +86,12 @@ private:
     bool isConfirmed_ = false;
     bool isConfirmedTriggerd_ = false;
     bool isMenuConfirmSliding_ = false;
+
+    float pauseLogoXStart_ = 0.0f;
+    float pauseLogoXEnd_ = 0.0f;
+    float pauseLogoXElapsed_ = 0.0f;
+    float pauseLogoXDuration_ = 0.0f;
+    bool pauseLogoXAnimating_ = false;
 
     bool isInitialized_ = false;
     bool wasActive_ = false;

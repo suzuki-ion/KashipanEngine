@@ -149,9 +149,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
-    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBomb.cpp" />
-    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialConnect.cpp" />
-    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialMove.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\WaveSystem.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
     <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
@@ -362,9 +360,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
-    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBomb.h" />
-    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialConnect.h" />
-    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialMove.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBase.h" />
     <ClInclude Include="Application\Scenes\Components\WaveSystem.h" />
     <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Application\Scenes\GameScene.h" />

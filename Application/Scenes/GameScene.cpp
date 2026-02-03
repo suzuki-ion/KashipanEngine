@@ -10,6 +10,8 @@
 #include "Objects/SystemObjects/LightManager.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
+
+#include "Scenes/Components/Tutorial/TutorialBase.h"
 #include <cmath>
 
 namespace KashipanEngine {
@@ -654,6 +656,9 @@ void GameScene::Initialize() {
     if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
     if (backMonitorGame_) backMonitorGame_->SetActive(false);
     if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+
+    /*AddSceneComponent(std::make_unique<TutorialBase>(GetInputCommand(),
+        cameraGameTargetPos_, cameraGameTargetRot_, cameraMenuTargetPos_, cameraMenuTargetRot_));*/
 }
 
 GameScene::~GameScene() {}
@@ -685,7 +690,7 @@ void GameScene::OnUpdate() {
                 if (cameraController_) cameraController_->SetTargetRotate(cameraGameTargetRot_);
                 if (backMonitorGame_) backMonitorGame_->SetActive(true);
                 if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
-                if (stageLighting_) { stageLighting_->ResetLighting(); }
+                if (stageLighting_) { stageLighting_->EnableLighting(); }
 
             } else if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Title)) {
                 SetNextSceneName("TitleScene");
@@ -1544,7 +1549,7 @@ void GameScene::DrawParticleStateImGui() {
 void GameScene::InGameStart() {
     if (!isGameStarted_) {
         isGameStarted_ = true; 
-        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_120BPM.mp3");
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/gameBGM.mp3");
         //auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
         if (handle == AudioManager::kInvalidSoundHandle) {
             // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）

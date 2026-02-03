@@ -253,6 +253,7 @@ void WaveSystem::InitializeCountdownModels() {
         auto obj = std::make_unique<Model>(modelData);
         
         obj->SetName("CountdownNumber_" + std::to_string(i));
+        obj->SetUniqueBatchKey();
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(countdownPosition_);
@@ -292,6 +293,7 @@ void WaveSystem::InitializeWaveModels() {
         auto obj = std::make_unique<Model>(modelData);
         
         obj->SetName("WaveDisplay_" + std::to_string(i + 1));
+        obj->SetUniqueBatchKey();
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(waveDisplayPosition_);

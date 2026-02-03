@@ -81,7 +81,7 @@ void BackMonitor::Initialize() {
         obj->SetName("BackMonitor Plane Parent");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetScale(Vector3{ 39.0f, 17.5f, 1.0f });
-            tr->SetTranslate(Vector3{ 10.0f, 9.5f, 35.5f });
+            tr->SetTranslate(Vector3{ 9.0f, 9.5f, 34.5f });
         }
         planeParent_ = obj.get();
         context->AddObject3D(std::move(obj));

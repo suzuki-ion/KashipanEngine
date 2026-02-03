@@ -217,6 +217,22 @@ void GameScene::Initialize() {
                 walls_[z][x].isActive = false;
             }
         }
+
+        if (walls_[3][4].object && walls_[3][4].isActive) {
+            if (auto* mt = walls_[3][4].object->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.5f;
+                mt->SetColor(color);
+            }
+        }
+
+        if (walls_[3][5].object && walls_[3][5].isActive) {
+            if (auto* mt = walls_[3][5].object->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.5f;
+                mt->SetColor(color);
+            }
+        }
     }
 
 	// stage の追加
@@ -799,6 +815,7 @@ void GameScene::OnUpdate() {
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
                 if (walls_[z][x].object) {
+                    walls_[z][x].spawnAgainCount = wallSpawnAgainCount_;
                     if (auto* tr = walls_[z][x].object->GetComponent3D<Transform3D>()) {
                         if (walls_[z][x].moveTimer.IsActive()) {
                             tr->SetTranslateY(MyEasing::Lerp(-0.1f, 2.0f, walls_[z][x].moveTimer.GetProgress()));
@@ -1006,6 +1023,7 @@ void GameScene::LoadObjectStateJson() {
         if (index < values.size()) isBreakWalls_ = JsonManager::Reverse<bool>(values[index++]);
         if (index < values.size()) bombMaxChainCount_ = JsonManager::Reverse<int>(values[index++]);
         if (index < values.size()) enablePlayerDestructiveKnockback_ = JsonManager::Reverse<bool>(values[index++]);
+        if (index < values.size()) wallSpawnAgainCount_ = JsonManager::Reverse<int>(values[index++]);
 
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadFromJson: %s\n", e.what());
@@ -1087,6 +1105,7 @@ void GameScene::SaveObjectStateJson() {
     jsonManager_->RegistOutput(isBreakWalls_, "isBreakWalls");
     jsonManager_->RegistOutput(bombMaxChainCount_, "bombMaxChainCount");
     jsonManager_->RegistOutput(enablePlayerDestructiveKnockback_, "enablePlayerDestructiveKnockback");
+    jsonManager_->RegistOutput(wallSpawnAgainCount_, "wallSpawnAgainCount");
 
     // JSONファイルに書き込み
     jsonManager_->Write(loadToSaveName_);
@@ -1449,6 +1468,7 @@ void GameScene::DrawObjectStateImGui() {
 
     if (ImGui::CollapsingHeader("壁関連")) {
         ImGui::DragFloat("壁の透明度", &wallAlpha_, 0.01f, 0.0f, 1.0f);
+		ImGui::DragInt("壁の再スポーンインターバル", &wallSpawnAgainCount_, 1, 1, 100);
     }
 
     ImGui::End();
@@ -1739,6 +1759,22 @@ void GameScene::UpdateWallTransparency() {
                     mt->SetColor(color);
                 }
             }
+        }
+    }
+
+    if (walls_[3][4].object && walls_[3][4].isActive) {
+        if (auto* mt = walls_[3][4].object->GetComponent3D<Material3D>()) {
+            Vector4 color = mt->GetColor();
+            color.w = 0.5f;
+            mt->SetColor(color);
+        }
+    }
+
+    if (walls_[3][5].object && walls_[3][5].isActive) {
+        if (auto* mt = walls_[3][5].object->GetComponent3D<Material3D>()) {
+            Vector4 color = mt->GetColor();
+            color.w = 0.5f;
+            mt->SetColor(color);
         }
     }
 }

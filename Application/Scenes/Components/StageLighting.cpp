@@ -30,7 +30,7 @@ void StageLighting::Initialize() {
         RandomizeAndEnableSpotLight(spotLight.get(), false);
 
         // position at stage center top
-        spotLight->SetPosition(Vector3{ 10.0f, 10.0f, 10.0f });
+        spotLight->SetPosition(Vector3{ 10.0f, 10.0f, 10.0f } + lightPositionOffset_);
 
         // direction: point to circle around origin at radius centerRadius
         float angle = (2.0f * 3.14159265f * static_cast<float>(i)) / static_cast<float>(centerCount);
@@ -65,7 +65,7 @@ void StageLighting::Initialize() {
 
             float x = stageMin + step * static_cast<float>(ix);
             float z = stageMin + step * static_cast<float>(iz);
-            spotLight->SetPosition(Vector3{ x, 10.0f, z });
+            spotLight->SetPosition(Vector3{ x, 10.0f, z } + lightPositionOffset_);
             spotLight->SetDirection(Vector3{ 0.0f, -1.0f, 0.0f });
 
             spotLight->SetRange(64.0f);
@@ -114,7 +114,7 @@ void StageLighting::Initialize() {
             x = outerMin;
             z = outerMax - (perimPos - 3.0f * perimeter);
         }
-        spotLight->SetPosition(Vector3{ x, 10.0f, z });
+        spotLight->SetPosition(Vector3{ x, 10.0f, z } + lightPositionOffset_);
 
         // direction: point towards nearest point on stage [-4..24]
         float clampedX = std::clamp(x, -4.0f, 24.0f);

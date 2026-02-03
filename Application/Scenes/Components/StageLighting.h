@@ -35,6 +35,8 @@ private:
     std::vector<SpotLight *> rhythmicalSpotLight_;
     std::vector<SpotLight *> stageOutsideSpotLight_;
 
+    Vector3 lightPositionOffset_{ -1.0f, 0.0f, -1.0f };
+
     Vector4 directionalLightOriginalColor_;
     float directionalLightOriginalIntensity_ = 1.0f;
     Vector4 directionalLightDeadStartColor_{ 1.0f, 0.5f, 0.5f, 1.0f };

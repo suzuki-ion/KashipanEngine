@@ -457,20 +457,41 @@ int EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Vec
             
             // Playerと衝突したかチェック（通常の敵の場合はダメージを与える）
             if (hitInfo.otherObject == player_) {
-                // activeEnemies_から該当する敵を検索してisDead=trueに設定
-                //for (auto& e : activeEnemies_) {
-                //    if (e.object == enemyPtr) {
-                //        e.isDead = true;
-                //        break;
-                //    }
-                //}
-                
+                // プレイヤーを向いている反対方向に押し出す
                 if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
-                    // 敵の位置を爆発中心として使用
-                    for (const auto& e : activeEnemies_) {
-                        if (e.object == enemyPtr) {
-                            playerMove->KnockBack(e.position);
-                            break;
+                    PlayerDirection playerDirection = playerMove->GetPlayerDirection();
+                    
+                    // プレイヤーの向いている方向の反対方向を計算
+                    Vector3 pushDirection{ 0.0f, 0.0f, 0.0f };
+                    switch (playerDirection) {
+                    case PlayerDirection::Up:
+                        pushDirection = Vector3{ 0.0f, 0.0f, -2.0f };  // 下方向に押す
+                        break;
+                    case PlayerDirection::Down:
+                        pushDirection = Vector3{ 0.0f, 0.0f, 2.0f };   // 上方向に押す
+                        break;
+                    case PlayerDirection::Left:
+                        pushDirection = Vector3{ 2.0f, 0.0f, 0.0f };   // 右方向に押す
+                        break;
+                    case PlayerDirection::Right:
+                        pushDirection = Vector3{ -2.0f, 0.0f, 0.0f };  // 左方向に押す
+                        break;
+                    }
+                    
+                    // プレイヤーの現在位置を取得
+                    if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+                        Vector3 currentPos = tr->GetTranslate();
+                        Vector3 newPos = currentPos + pushDirection;
+                        
+                        // マップ範囲内かチェック
+                        int newGridX = static_cast<int>(std::round(newPos.x / 2.0f));
+                        int newGridZ = static_cast<int>(std::round(newPos.z / 2.0f));
+                        
+                        // マップ範囲内で、壁がない場合のみ移動
+                        if (newGridX >= 0 && newGridX < mapW_ && 
+                            newGridZ >= 0 && newGridZ < mapH_ &&
+                            !IsWallAt(newGridX, newGridZ)) {
+                            tr->SetTranslate(newPos);
                         }
                     }
                 }

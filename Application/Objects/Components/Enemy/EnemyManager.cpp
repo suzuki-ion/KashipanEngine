@@ -460,38 +460,42 @@ int EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Vec
                 // プレイヤーを向いている反対方向に押し出す
                 if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
                     PlayerDirection playerDirection = playerMove->GetPlayerDirection();
-                    
-                    // プレイヤーの向いている方向の反対方向を計算
-                    Vector3 pushDirection{ 0.0f, 0.0f, 0.0f };
-                    switch (playerDirection) {
-                    case PlayerDirection::Up:
-                        pushDirection = Vector3{ 0.0f, 0.0f, -2.0f };  // 下方向に押す
-                        break;
-                    case PlayerDirection::Down:
-                        pushDirection = Vector3{ 0.0f, 0.0f, 2.0f };   // 上方向に押す
-                        break;
-                    case PlayerDirection::Left:
-                        pushDirection = Vector3{ 2.0f, 0.0f, 0.0f };   // 右方向に押す
-                        break;
-                    case PlayerDirection::Right:
-                        pushDirection = Vector3{ -2.0f, 0.0f, 0.0f };  // 左方向に押す
-                        break;
-                    }
-                    
-                    // プレイヤーの現在位置を取得
-                    if (auto* tr = player_->GetComponent3D<Transform3D>()) {
-                        Vector3 currentPos = tr->GetTranslate();
-                        Vector3 newPos = currentPos + pushDirection;
-                        
-                        // マップ範囲内かチェック
-                        int newGridX = static_cast<int>(std::round(newPos.x / 2.0f));
-                        int newGridZ = static_cast<int>(std::round(newPos.z / 2.0f));
-                        
-                        // マップ範囲内で、壁がない場合のみ移動
-                        if (newGridX >= 0 && newGridX < mapW_ && 
-                            newGridZ >= 0 && newGridZ < mapH_ &&
-                            !IsWallAt(newGridX, newGridZ)) {
-                            tr->SetTranslate(newPos);
+                    if (!playerMove->GetIsKnockedBack())
+                    {
+
+
+                        // プレイヤーの向いている方向の反対方向を計算
+                        Vector3 pushDirection{ 0.0f, 0.0f, 0.0f };
+                        switch (playerDirection) {
+                        case PlayerDirection::Up:
+                            pushDirection = Vector3{ 0.0f, 0.0f, -2.0f };  // 下方向に押す
+                            break;
+                        case PlayerDirection::Down:
+                            pushDirection = Vector3{ 0.0f, 0.0f, 2.0f };   // 上方向に押す
+                            break;
+                        case PlayerDirection::Left:
+                            pushDirection = Vector3{ 2.0f, 0.0f, 0.0f };   // 右方向に押す
+                            break;
+                        case PlayerDirection::Right:
+                            pushDirection = Vector3{ -2.0f, 0.0f, 0.0f };  // 左方向に押す
+                            break;
+                        }
+
+                        // プレイヤーの現在位置を取得
+                        if (auto* tr = player_->GetComponent3D<Transform3D>()) {
+                            Vector3 currentPos = tr->GetTranslate();
+                            Vector3 newPos = currentPos + pushDirection;
+
+                            // マップ範囲内かチェック
+                            int newGridX = static_cast<int>(std::round(newPos.x / 2.0f));
+                            int newGridZ = static_cast<int>(std::round(newPos.z / 2.0f));
+
+                            // マップ範囲内で、壁がない場合のみ移動
+                            if (newGridX >= 0 && newGridX < mapW_ &&
+                                newGridZ >= 0 && newGridZ < mapH_ &&
+                                !IsWallAt(newGridX, newGridZ)) {
+                                tr->SetTranslate(newPos);
+                            }
                         }
                     }
                 }
@@ -688,6 +692,24 @@ void EnemyManager::OnExplosionHit(Object3DBase* hitObject, const Vector3& explos
             enemyInfo.isKnockedBack = true;
             enemyInfo.knockbackVelocity = knockbackDirection * knockbackSpeed_;
             enemyInfo.knockbackTimer = 0.0f;
+
+            return;
+        }
+    }
+}
+
+void EnemyManager::OnPlayerHit(Object3DBase* hitObject, const Vector3& center) {
+    if (!hitObject) return;
+
+    // activeEnemies_から該当する敵を探して削除
+    for (auto& enemyInfo : activeEnemies_) {
+        if (enemyInfo.object == hitObject) {
+            // パーティクルを発生させる
+            SpawnDieParticles(center);
+
+            // 敵を死亡状態にする
+            enemyInfo.deathCause = EnemyDeathCause::Explosion;
+            enemyInfo.isDead = true;
 
             return;
         }

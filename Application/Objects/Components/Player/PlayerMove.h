@@ -135,6 +135,9 @@ namespace KashipanEngine {
         /// @brief 入力バッファ受付開始タイミングの設定（移動完了までの残り時間の割合、0.0～1.0）
         void SetInputBufferThreshold(float threshold) { inputBufferThreshold_ = threshold; }
 
+		/// @brief 現在プレイヤーが吹き飛び中かを取得
+		bool GetIsKnockedBack() const { return isKnockedBack_; }
+
         /// @brief プレイヤーを吹き飛ばす
         /// @param explosionCenter 爆発の中心位置
         void KnockBack(const Vector3& explosionCenter) {
@@ -359,15 +362,42 @@ namespace KashipanEngine {
                 const int currentGridX = static_cast<int>(std::round(newPosition.x / 2.0f));
                 const int currentGridZ = static_cast<int>(std::round(newPosition.z / 2.0f));
                 
-                // 壁があれば破壊
+                // 壁との衝突チェック（衝突したら停止）
                 if (walls_ && currentGridX >= 0 && currentGridX < wallsWidth_ && 
                     currentGridZ >= 0 && currentGridZ < wallsHeight_) {
                     const int index = currentGridZ * wallsWidth_ + currentGridX;
                     if (walls_[index].isActive || walls_[index].isMoving) {
-                        walls_[index].isActive = false;
-                        walls_[index].isMoving = false;
-                        walls_[index].hp = 0;
-                        walls_[index].moveTimer.Reset();
+                        // 壁に衝突したので吹き飛びを停止
+                        // 前のグリッド位置にスナップ
+                        int prevGridX = static_cast<int>(std::round(oldPosition.x / 2.0f));
+                        int prevGridZ = static_cast<int>(std::round(oldPosition.z / 2.0f));
+                        Vector3 finalPos = Vector3{
+                            static_cast<float>(prevGridX * 2),
+                            0.0f,
+                            static_cast<float>(prevGridZ * 2)
+                        };
+                        transform->SetTranslate(finalPos);
+                        
+                        // 向きをリセット
+                        switch (playerDirection_) {
+                        case PlayerDirection::Up:
+                            transform->SetRotate(Vector3{ 0.0f, 3.14f, 0.0f });
+                            break;
+                        case PlayerDirection::Down:
+                            transform->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+                            break;
+                        case PlayerDirection::Left:
+                            transform->SetRotate(Vector3{ 0.0f, 1.57f, 0.0f });
+                            break;
+                        case PlayerDirection::Right:
+                            transform->SetRotate(Vector3{ 0.0f, -1.57f, 0.0f });
+                            break;
+                        }
+                        
+                        isKnockedBack_ = false;
+                        knockbackTimer_ = 0.0f;
+                        knockbackRotation_ = 0.0f;
+                        return;
                     }
                 }
                 
@@ -384,7 +414,7 @@ namespace KashipanEngine {
                         if (currentGridX == enemyGridX && currentGridZ == enemyGridZ) {
                             // 敵を破壊（爆発扱いでダメージ）
                             if (i < activeEnemies.size() && activeEnemies[i].object) {
-                                enemyManager_->OnExplosionHit(activeEnemies[i].object, newPosition);
+                                enemyManager_->OnPlayerHit(activeEnemies[i].object, newPosition);
                             }
                         }
                     }

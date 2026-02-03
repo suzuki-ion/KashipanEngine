@@ -576,6 +576,7 @@
     <None Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DitherPS.hlsl" />
     <None Include="IMPLEMENTATION_INSTRUCTIONS.md" />
+    <None Include="TWITCH_MODE_IMPLEMENTATION.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KashipanEngine.rc" />

@@ -129,6 +129,7 @@ private:
 
     bool isMoveBombStop_ = false;
     bool usePlayerDirection_ = false;
+    bool enablePlayerDestructiveKnockback_ = false;  // プレイヤーの破壊的ノックバックを有効化
 
     int playerMapX_ = 0; // プレイヤーのマップ上のX座標
     int playerMapZ_ = 0; // プレイヤーのマップ上のZ座標

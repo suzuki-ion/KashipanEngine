@@ -67,8 +67,7 @@ void BackMonitorWithPauseScreen::Initialize() {
     }
 
     if (!menuContinue_) {
-        //auto modelHandle = ModelManager::GetModelDataFromFileName("menuContinue.obj");
-        auto modelHandle = ModelManager::GetModelDataFromFileName("menuStart.obj");
+        auto modelHandle = ModelManager::GetModelDataFromFileName("continue.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetUniqueBatchKey();
         obj->SetName("BackMonitor.PauseContinue");

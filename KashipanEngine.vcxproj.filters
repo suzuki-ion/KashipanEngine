@@ -452,6 +452,9 @@
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.h" />
     <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBase.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithPauseScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\PlayerEscape.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\CarEscape.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ResultSceneAnimator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

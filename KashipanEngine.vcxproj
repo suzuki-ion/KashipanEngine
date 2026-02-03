@@ -346,6 +346,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
     <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\CarEscape.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\PlayerEscape.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ResultSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\Components\ScoreUI.h" />
     <ClInclude Include="Application\Scenes\Components\StageLighting.h" />

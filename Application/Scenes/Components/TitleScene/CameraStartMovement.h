@@ -52,6 +52,19 @@ public:
         elapsedTime_ = 0.0f;
     }
 
+    void EndAnimation() {
+        if (camera3D_) {
+            if (auto *tr = camera3D_->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(cameraToTranslate_);
+                tr->SetRotate(cameraToRotate_);
+            }
+        }
+        isAnimating_ = false;
+        isFinished_ = true;
+        isFinishedTriggered_ = true;
+        elapsedTime_ = durationTime_;
+    }
+
     void Reset() {
         if (camera3D_) {
             if (auto *tr = camera3D_->GetComponent3D<Transform3D>()) {

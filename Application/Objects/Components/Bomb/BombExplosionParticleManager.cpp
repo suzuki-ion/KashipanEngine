@@ -8,11 +8,11 @@ BombExplosionParticleManager::BombExplosionParticleManager()
 {
     config_.initialSpeed = 8.0f;
     config_.speedVariation = 3.0f;
-    config_.lifeTimeSec = 1.2f;
+    config_.lifeTimeSec = 1.0f;
     config_.gravity = 15.0f;
     config_.damping = 0.96f;
-    config_.baseScale = Vector3{ 2.0f, 2.0f, 2.0f };
-    config_.color = Vector4{ 1.0f, 0.6f, 0.2f, 1.0f };
+    config_.baseScale = Vector3{ 1.0f, 1.0f, 1.0f };
+    config_.color = Vector4{ 1.0f, 0.5f, 0.0f, 1.0f };
 }
 
 void BombExplosionParticleManager::Initialize() {
@@ -27,7 +27,7 @@ void BombExplosionParticleManager::Initialize() {
         obj->SetName("BombExplosionParticle_" + std::to_string(i));
 
         if (auto* mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetEnableLighting(false);
+            mat->SetEnableLighting(true);
             mat->SetColor(config_.color);
         }
 

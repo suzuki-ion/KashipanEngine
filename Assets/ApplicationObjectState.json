@@ -194,6 +194,16 @@
     "name": "isBreakWalls",
     "type": 3,
     "value": true
+  },
+  {
+    "name": "bombMaxChainCount",
+    "type": 1,
+    "value": 10
+  },
+  {
+    "name": "enablePlayerDestructiveKnockback",
+    "type": 3,
+    "value": true
   }
   ]
 }

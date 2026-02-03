@@ -1,6 +1,7 @@
 #include "ExplosionManager.h"
 #include "BombManager.h"
 #include "ScoreDisplay.h"
+#include "BombExplosionParticleManager.h"
 #include "Objects/Components/Enemy/EnemyManager.h"
 #include "Objects/Components/Player/ScoreManager.h"
 #include "Objects/Components/Player/PlayerMove.h"
@@ -90,6 +91,11 @@ void ExplosionManager::SpawnExplosion(const Vector3& position, const float size)
     auto* ctx = GetOwnerContext();
     if (!ctx || !screenBuffer_) {
         return;
+    }
+
+    // パーティクル生成
+    if (bombExplosionParticleManager_) {
+        bombExplosionParticleManager_->SpawnParticles(position, 10);
     }
 
     // 爆弾が起爆した瞬間にカメラをシェイク

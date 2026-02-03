@@ -285,6 +285,8 @@ void EnemyManager::Update() {
             // 吹き飛び中は現在位置をそのまま描画
             if (auto* tr = e.object->GetComponent3D<Transform3D>()) {
                 tr->SetTranslate(e.position);
+				e.rY_ += 12.56f * dt;
+				tr->SetRotate(Vector3{ 0.0f, e.rY_, 0.0f });
             }
             
             // マップ範囲外チェック

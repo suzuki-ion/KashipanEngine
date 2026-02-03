@@ -382,6 +382,19 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
+    // BombExplosionParticleManager の追加
+    {
+        auto comp = std::make_unique<BombExplosionParticleManager>();
+        comp->SetScreenBuffer(screenBuffer3D);
+        bombExplosionParticleManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    // ExplosionManagerにBombExplosionParticleManagerを設定
+    if (explosionManager_ && bombExplosionParticleManager_) {
+        explosionManager_->SetBombExplosionParticleManager(bombExplosionParticleManager_);
+    }
+
     // ExplosionNumberDisplay の追加
     {
         auto comp = std::make_unique<ScoreDisplay>();
@@ -442,6 +455,14 @@ void GameScene::Initialize() {
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
         enemyManager_->InitializeParticlePool();
+    }
+
+    // PlayerMoveに EnemyManager と Walls を設定
+    if (player_ && enemyManager_) {
+        if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+            playerMove->SetEnemyManager(enemyManager_);
+            playerMove->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);
+        }
     }
 
     // ScoreManagerの初期化
@@ -984,6 +1005,7 @@ void GameScene::LoadObjectStateJson() {
         if (index < values.size()) playerChainMoveInputInterval_ = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) isBreakWalls_ = JsonManager::Reverse<bool>(values[index++]);
         if (index < values.size()) bombMaxChainCount_ = JsonManager::Reverse<int>(values[index++]);
+        if (index < values.size()) enablePlayerDestructiveKnockback_ = JsonManager::Reverse<bool>(values[index++]);
 
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadFromJson: %s\n", e.what());
@@ -1064,6 +1086,7 @@ void GameScene::SaveObjectStateJson() {
     jsonManager_->RegistOutput(playerChainMoveInputInterval_, "playerChainMoveInputInterval");
     jsonManager_->RegistOutput(isBreakWalls_, "isBreakWalls");
     jsonManager_->RegistOutput(bombMaxChainCount_, "bombMaxChainCount");
+    jsonManager_->RegistOutput(enablePlayerDestructiveKnockback_, "enablePlayerDestructiveKnockback");
 
     // JSONファイルに書き込み
     jsonManager_->Write(loadToSaveName_);
@@ -1252,6 +1275,7 @@ void GameScene::SetObjectValue() {
             playerMove->SetMoveDuration(playerMoveDuration_);
             playerMove->SetIsMoveBombStop(isMoveBombStop_);
             playerMove->SetMoveInputInterval(playerMoveInputInterval_);
+			playerMove->SetEnableDestructiveKnockback(enablePlayerDestructiveKnockback_);
         }
 
         // プレイヤーのダメージ時カメラシェイク更新
@@ -1389,6 +1413,7 @@ void GameScene::DrawObjectStateImGui() {
         ImGui::Text("マップ座標: X=%d, Z=%d", playerMapX_, playerMapZ_);
 		ImGui::Checkbox("爆弾で移動が停止するか", &isMoveBombStop_);
 		ImGui::Checkbox("プレイヤーの向いている方向に爆弾を置くか", &usePlayerDirection_);
+		ImGui::Checkbox("プレイヤーの破壊的ノックバックを有効化", &enablePlayerDestructiveKnockback_);
     }
 
     // 爆弾関連

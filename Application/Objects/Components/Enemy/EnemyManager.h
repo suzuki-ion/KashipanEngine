@@ -97,6 +97,37 @@ public:
     void SetDieParticleConfig(const ParticleConfig& config) {
         dieParticleConfig_ = config;
 	}
+
+    /// @brief アクティブな敵情報
+    struct EnemyInfo {
+        Object3DBase* object = nullptr; 
+        EnemyType type = EnemyType::Basic;
+        EnemyDirection direction = EnemyDirection::Down;
+        Vector3 position{ 0.0f, 0.0f, 0.0f };
+        Vector3 startPosition{ 0.0f, 0.0f, 0.0f };   // 追加: 移動開始位置
+        Vector3 targetPosition{ 0.0f, 0.0f, 0.0f };  // 追加: 移動目標位置
+        bool isDead = false;
+        int moveEveryNBeats = 2;  // 何拍ごとに移動するか（デフォルト: 1拍ごと）
+        
+        // 移動状態の追加
+        bool isMovingToCenter = false;  // 中心エリアに向かって移動中かどうか
+        bool isReversedFromWall = false;  // 壁で反転したフラグ（中心に向かわない）
+        
+        // 吹き飛び関連
+        bool isKnockedBack = false;  // 吹き飛び中かどうか
+        Vector3 knockbackVelocity{ 0.0f, 0.0f, 0.0f };  // 吹き飛び速度
+        float knockbackTimer = 0.0f;  // 吹き飛び経過時間
+        
+        float rY_ = 0.0f;
+
+        // 死因の追加
+        EnemyDeathCause deathCause = EnemyDeathCause::OutOfBounds;  // 死因（デフォルトは場外）
+    };
+
+    /// @brief すべてのアクティブな敵情報を取得
+    /// @return 敵情報のベクターへの参照
+    const std::vector<EnemyInfo>& GetActiveEnemies() const { return activeEnemies_; }
+
 private:
 
     void CleanupDeadEnemies();
@@ -125,30 +156,6 @@ private:
     /// @param z マップZ座標
     /// @return 十字エリアの場合true
     bool IsCrossAreaFromCenter(int x, int z) const;
-
-	/// @brief アクティブな敵情報
-    struct EnemyInfo {
-        Object3DBase* object = nullptr; 
-		EnemyType type = EnemyType::Basic;
-		EnemyDirection direction = EnemyDirection::Down;
-        Vector3 position{ 0.0f, 0.0f, 0.0f };
-		Vector3 startPosition{ 0.0f, 0.0f, 0.0f };   // 追加: 移動開始位置
-		Vector3 targetPosition{ 0.0f, 0.0f, 0.0f };  // 追加: 移動目標位置
-		bool isDead = false;
-        int moveEveryNBeats = 2;  // 何拍ごとに移動するか（デフォルト: 1拍ごと）
-        
-        // 移動状態の追加
-        bool isMovingToCenter = false;  // 中心エリアに向かって移動中かどうか
-        bool isReversedFromWall = false;  // 壁で反転したフラグ（中心に向かわない）
-        
-        // 吹き飛び関連
-        bool isKnockedBack = false;  // 吹き飛び中かどうか
-        Vector3 knockbackVelocity{ 0.0f, 0.0f, 0.0f };  // 吹き飛び速度
-        float knockbackTimer = 0.0f;  // 吹き飛び経過時間
-        
-        // 死因の追加
-        EnemyDeathCause deathCause = EnemyDeathCause::OutOfBounds;  // 死因（デフォルトは場外）
-    };
 
     std::vector<EnemyInfo> activeEnemies_;
     
@@ -184,9 +191,9 @@ private:
 	float bpmProgress_ = 0.0f;
 
 	float dieVolume_ = 0.1f;
-    
+
     // 吹き飛び設定
-    float knockbackSpeed_ = 10.0f;     // 吹き飛び速度（より速く）
+    float knockbackSpeed_ = 20.0f; // 吹き飛び速度（より速く）
     
     // マップ中心の設定
     std::vector<std::pair<int, int>> centerPositions_ = {

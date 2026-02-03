@@ -217,6 +217,22 @@ void GameScene::Initialize() {
                 walls_[z][x].isActive = false;
             }
         }
+
+        if (walls_[3][4].object && walls_[3][4].isActive) {
+            if (auto* mt = walls_[3][4].object->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.5f;
+                mt->SetColor(color);
+            }
+        }
+
+        if (walls_[3][5].object && walls_[3][5].isActive) {
+            if (auto* mt = walls_[3][5].object->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.5f;
+                mt->SetColor(color);
+            }
+        }
     }
 
 	// stage の追加
@@ -1739,6 +1755,22 @@ void GameScene::UpdateWallTransparency() {
                     mt->SetColor(color);
                 }
             }
+        }
+    }
+
+    if (walls_[3][4].object && walls_[3][4].isActive) {
+        if (auto* mt = walls_[3][4].object->GetComponent3D<Material3D>()) {
+            Vector4 color = mt->GetColor();
+            color.w = 0.5f;
+            mt->SetColor(color);
+        }
+    }
+
+    if (walls_[3][5].object && walls_[3][5].isActive) {
+        if (auto* mt = walls_[3][5].object->GetComponent3D<Material3D>()) {
+            Vector4 color = mt->GetColor();
+            color.w = 0.5f;
+            mt->SetColor(color);
         }
     }
 }

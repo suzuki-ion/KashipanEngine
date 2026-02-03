@@ -3,7 +3,7 @@
   {
     "name": "bpm",
     "type": 1,
-    "value": 120
+    "value": 90
   },
   {
     "name": "mapScaleMin_x",
@@ -204,6 +204,11 @@
     "name": "enablePlayerDestructiveKnockback",
     "type": 3,
     "value": true
+  },
+  {
+    "name": "wallSpawnAgainCount",
+    "type": 1,
+    "value": 8
   }
   ]
 }

@@ -1785,7 +1785,7 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     comp->SetEnemySpawner(enemySpawner_);
     comp->SetScreenBuffer(screenBuffer);
 	comp->SetParentTransform(transform);
-    comp->SetPreWaveDelay(8);           // Wave開始前の待機拍数
+    comp->SetPreWaveDelay(8);           // Wave開始前の待機拍数 
     comp->SetPostWaveDelay(4);          // Wave終了後の待機拍数
     comp->SetSpawnParticleLeadBeats(4); // SpawnParticle発生から敵生成までの拍数
     waveSystem_ = comp.get();

@@ -169,6 +169,8 @@ private:
     // Wave関連
     WaveSystem *waveSystem_ = nullptr;
 
+	int wallSpawnAgainCount_ = 8; // 壁の再生成までの待機拍数
+
     // プレイヤー死亡パーティクル関連
     PlayerDieParticleManager *playerDieParticleManager_ = nullptr;
 

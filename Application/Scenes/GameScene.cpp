@@ -361,7 +361,7 @@ void GameScene::Initialize() {
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-        obj->RegisterComponent<Health>(10, 1.0f);
+        obj->RegisterComponent<Health>(5, 1.0f);
 
         // 衝突判定を追加（修正版）
         if (colliderComp && colliderComp->GetCollider()) {
@@ -623,7 +623,7 @@ void GameScene::Initialize() {
     }
 
     // Player Health UI (ライフ表示)
-    /*{
+    {
         auto comp = std::make_unique<PlayerHealthModelUI>(screenBuffer3D);
         if (player_) {
             if (auto *health = player_->GetComponent3D<Health>()) {
@@ -635,7 +635,7 @@ void GameScene::Initialize() {
             playerHealthUI_ = comp.get();
         }
         AddSceneComponent(std::move(comp));
-    }*/
+    }
 
     // デバッグ用カメラ操作コンポーネント
     {
@@ -752,9 +752,9 @@ void GameScene::OnUpdate() {
         }
     }
 
-    /*if (playerHealthUI_) {
+    if (playerHealthUI_) {
         playerHealthUI_->SetBPMProgress(bpmSystem_->GetBeatProgress());
-    }*/
+    }
 
     if (player_) {
         if (auto *tr = player_->GetComponent3D<Transform3D>()) {

@@ -1638,7 +1638,9 @@ void GameScene::DrawParticleStateImGui() {
 void GameScene::InGameStart() {
     if (!isGameStarted_) {
         isGameStarted_ = true; 
-        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/gameBGM.mp3");
+
+        auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_180.mp3");
+
         //auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
         if (handle == AudioManager::kInvalidSoundHandle) {
             // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
@@ -1871,7 +1873,7 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     comp->SetEnemySpawner(enemySpawner_);
     comp->SetScreenBuffer(screenBuffer);
 	comp->SetParentTransform(transform);
-    comp->SetPreWaveDelay(8);           // Wave開始前の待機拍数
+    comp->SetPreWaveDelay(8);           // Wave開始前の待機拍数 
     comp->SetPostWaveDelay(4);          // Wave終了後の待機拍数
     comp->SetSpawnParticleLeadBeats(4); // SpawnParticle発生から敵生成までの拍数
     waveSystem_ = comp.get();
@@ -1894,11 +1896,32 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     // Wave1
     WaveData wave1{};
     wave1.wave = Wave::Wave1;
-    wave1.duration = 16; // 16拍で終了
+    wave1.duration = 64; // Waveの終了拍数
     wave1.spawnList = {
-        { 6, 0, 9, EnemyType::Basic },   // 4拍目に(0,5)にBasic敵
-        { 6, 9, 0, EnemyType::Basic },   // 8拍目に(9,5)にBasic敵
-        { 12, 5, 0, EnemyType::Speedy }, // 12拍目に(5,0)にSpeedy敵
+        { 8, 4, 0, EnemyType::Basic },
+        { 8, 5, 0, EnemyType::Basic },
+        { 16, 4, 9, EnemyType::Basic },
+        { 16, 5, 9, EnemyType::Basic },
+        { 24, 0, 5, EnemyType::Basic },
+        { 24, 0, 4, EnemyType::Basic },
+        { 32, 9, 5, EnemyType::Basic },
+        { 32, 9, 4, EnemyType::Basic },
+        { 40, 0, 3, EnemyType::Basic },
+        { 40, 0, 4, EnemyType::Basic },
+        { 40, 0, 5, EnemyType::Basic },
+        { 40, 0, 6, EnemyType::Basic },
+        { 48, 3, 0, EnemyType::Basic },
+        { 48, 4, 0, EnemyType::Basic },
+        { 48, 5, 0, EnemyType::Basic },
+        { 48, 6, 0, EnemyType::Basic },
+        { 56, 0, 3, EnemyType::Basic },
+        { 56, 0, 4, EnemyType::Basic },
+        { 56, 0, 5, EnemyType::Basic },
+        { 56, 0, 6, EnemyType::Basic },
+        { 64, 3, 0, EnemyType::Basic },
+        { 64, 4, 0, EnemyType::Basic },
+        { 64, 5, 0, EnemyType::Basic },
+        { 64, 6, 0, EnemyType::Basic },
     };
     waveSystem_->AddWaveData(wave1);
 

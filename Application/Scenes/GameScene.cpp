@@ -10,7 +10,10 @@
 #include "Objects/SystemObjects/LightManager.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
+
+#include "Scenes/Components/Tutorial/TutorialBase.h"
 #include <cmath>
+#include <algorithm>
 
 namespace KashipanEngine {
 
@@ -361,7 +364,7 @@ void GameScene::Initialize() {
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-        obj->RegisterComponent<Health>(10, 1.0f);
+        obj->RegisterComponent<Health>(5, 1.0f);
 
         // 衝突判定を追加（修正版）
         if (colliderComp && colliderComp->GetCollider()) {
@@ -586,6 +589,10 @@ void GameScene::Initialize() {
             backMonitorMenu_ = compM.get();
             AddSceneComponent(std::move(compM));
 
+            auto compPz = std::make_unique<BackMonitorWithPauseScreen>(bm->GetScreenBuffer(), GetInputCommand());
+            backMonitorPause_ = compPz.get();
+            AddSceneComponent(std::move(compPz));
+
             auto compP = std::make_unique<BackMonitorWithParticle>(bm->GetScreenBuffer());
             backMonitorParticle_ = compP.get();
             AddSceneComponent(std::move(compP));
@@ -594,6 +601,7 @@ void GameScene::Initialize() {
             backMonitorMode_ = 0;
             if (backMonitorGame_) backMonitorGame_->SetActive(true);
             if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+            if (backMonitorPause_) backMonitorPause_->SetActive(false);
             if (backMonitorParticle_) backMonitorParticle_->SetActive(false);
         }
     }
@@ -623,7 +631,7 @@ void GameScene::Initialize() {
     }
 
     // Player Health UI (ライフ表示)
-    /*{
+    {
         auto comp = std::make_unique<PlayerHealthModelUI>(screenBuffer3D);
         if (player_) {
             if (auto *health = player_->GetComponent3D<Health>()) {
@@ -635,7 +643,7 @@ void GameScene::Initialize() {
             playerHealthUI_ = comp.get();
         }
         AddSceneComponent(std::move(comp));
-    }*/
+    }
 
     // デバッグ用カメラ操作コンポーネント
     {
@@ -654,6 +662,10 @@ void GameScene::Initialize() {
     if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
     if (backMonitorGame_) backMonitorGame_->SetActive(false);
     if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+    if (backMonitorPause_) backMonitorPause_->SetActive(false);
+
+    /*AddSceneComponent(std::make_unique<TutorialBase>(GetInputCommand(),
+        cameraGameTargetPos_, cameraGameTargetRot_, cameraMenuTargetPos_, cameraMenuTargetRot_));*/
 }
 
 GameScene::~GameScene() {}
@@ -661,6 +673,7 @@ GameScene::~GameScene() {}
 void GameScene::OnUpdate() {
     SetObjectValue();
     SetParticleValue();
+    UpdateDjFade();
 #if defined(USE_IMGUI)
     DrawObjectStateImGui();
     DrawParticleStateImGui();
@@ -679,27 +692,79 @@ void GameScene::OnUpdate() {
 
     if (backMonitorMenu_ && backMonitorMenu_->IsActive()) {
         if (backMonitorMenu_->IsConfirmedTriggered()) {
-            if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Start)) {
+            switch (static_cast<MenuModelIndex>(backMonitorMenu_->GetConfirmedIndex())) {
+            case MenuModelIndex::Start:
                 InGameStart();
                 if (cameraController_) cameraController_->SetTargetTranslate(cameraGameTargetPos_);
                 if (cameraController_) cameraController_->SetTargetRotate(cameraGameTargetRot_);
                 if (backMonitorGame_) backMonitorGame_->SetActive(true);
                 if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
-                if (stageLighting_) { stageLighting_->ResetLighting(); }
+                if (stageLighting_) { stageLighting_->EnableLighting(true, true); }
+                StartDjFade(1.0f);
+                break;
 
-            } else if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Title)) {
+            case MenuModelIndex::Title:
                 SetNextSceneName("TitleScene");
                 if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                     out->Play();
                 }
+                break;
 
-            } else if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Quit)) {
+            case MenuModelIndex::Quit:
                 auto *mainWindow = sceneDefaultVariables_->GetMainWindow();
                 if (mainWindow) {
                     mainWindow->DestroyNotify();
                 }
+                break;
             }
         }
+    }
+
+    if (backMonitorPause_ && backMonitorPause_->IsActive()) {
+        if (backMonitorPause_->IsConfirmedTriggered()) {
+            switch (static_cast<PauseModelIndex>(backMonitorPause_->GetConfirmedIndex())) {
+            case PauseModelIndex::Continue:
+                if (backMonitorPause_) backMonitorPause_->SetActive(false);
+                if (backMonitorGame_) backMonitorGame_->SetActive(true);
+                if (cameraController_) cameraController_->SetTargetTranslate(cameraGameTargetPos_);
+                if (cameraController_) cameraController_->SetTargetRotate(cameraGameTargetRot_);
+                StartDjFade(1.0f);
+                break;
+
+            case PauseModelIndex::Menu:
+                InGameQuit();
+                if (stageLighting_) stageLighting_->DisableLighting(true, true);
+                if (backMonitorPause_) backMonitorPause_->SetActive(false);
+                if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+                if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+                if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+                break;
+
+            case PauseModelIndex::Title:
+                SetNextSceneName("TitleScene");
+                if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                    out->Play();
+                }
+                break;
+
+            case PauseModelIndex::Quit:
+                auto *mainWindow = sceneDefaultVariables_->GetMainWindow();
+                if (mainWindow) {
+                    mainWindow->DestroyNotify();
+                }
+                break;
+            }
+        }
+    }
+
+    if (backMonitorMenu_ && !backMonitorMenu_->IsActive() &&
+        backMonitorPause_ && !backMonitorPause_->IsActive() && GetInputCommand()->Evaluate("Escape").Triggered()) {
+        if (backMonitorPause_) backMonitorPause_->SetActive(true);
+        if (backMonitorGame_) backMonitorGame_->SetActive(false);
+        if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+        if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+        if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+        StartDjFade(0.0f);
     }
 
 #if defined(DEBUG_BUILD)
@@ -752,9 +817,9 @@ void GameScene::OnUpdate() {
         }
     }
 
-    /*if (playerHealthUI_) {
+    if (playerHealthUI_) {
         playerHealthUI_->SetBPMProgress(bpmSystem_->GetBeatProgress());
-    }*/
+    }
 
     if (player_) {
         if (auto *tr = player_->GetComponent3D<Transform3D>()) {
@@ -1255,6 +1320,35 @@ void GameScene::SaveParticleStateJson() {
     jsonParticleManager_->Write(loadToSaveParticleName_);
 }
 
+void GameScene::StartDjFade(float targetAlpha) {
+    if (!djNagasawa_) return;
+    auto *mat = djNagasawa_->GetComponent3D<Material3D>();
+    if (!mat) return;
+    djFadeStartAlpha_ = mat->GetColor().w;
+    djFadeTargetAlpha_ = targetAlpha;
+    djFadeElapsed_ = 0.0f;
+    isDjFadeActive_ = true;
+}
+
+void GameScene::UpdateDjFade() {
+    if (!isDjFadeActive_) return;
+    if (!djNagasawa_) { isDjFadeActive_ = false; return; }
+    auto *mat = djNagasawa_->GetComponent3D<Material3D>();
+    if (!mat) { isDjFadeActive_ = false; return; }
+
+    djFadeElapsed_ += GetDeltaTime();
+    float t = djFadeDuration_ > 0.0f ? djFadeElapsed_ / djFadeDuration_ : 1.0f;
+    t = std::clamp(t, 0.0f, 1.0f);
+
+    Vector4 color = mat->GetColor();
+    color.w = Lerp(djFadeStartAlpha_, djFadeTargetAlpha_, t);
+    mat->SetColor(color);
+
+    if (t >= 1.0f) {
+        isDjFadeActive_ = false;
+    }
+}
+
 void GameScene::SetObjectValue() {
     // BPMシステムの更新
     if (bpmSystem_) {
@@ -1544,7 +1638,9 @@ void GameScene::DrawParticleStateImGui() {
 void GameScene::InGameStart() {
     if (!isGameStarted_) {
         isGameStarted_ = true; 
+
         auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/GameBGM_180.mp3");
+
         //auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Sounds/BPM120.wav");
         if (handle == AudioManager::kInvalidSoundHandle) {
             // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
@@ -1554,10 +1650,6 @@ void GameScene::InGameStart() {
         
         if (bpmSystem_) {
             bpmSystem_->MeasurementStart(bgmPlayHandle_, static_cast<float>(bpm_));
-        }
-
-        if (auto* djMt = djNagasawa_->GetComponent3D<Material3D>()) {
-            djMt->SetColor(Vector4(1.0f));
         }
 
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {
@@ -1600,10 +1692,6 @@ void GameScene::InGameQuit() {
         if (auto* move = player_->GetComponent3D<PlayerMove>()) {
             move->SetIsStarted(false);
         }
-    }
-
-    if (auto* djMt = djNagasawa_->GetComponent3D<Material3D>()) {
-        djMt->SetColor(Vector4(0.0f));
     }
 
     if (bombManager_) {

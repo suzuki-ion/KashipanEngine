@@ -273,7 +273,7 @@ private:
     Vector3 waveDisplayPosition_{ 9.0f, 5.5f, 20.0f };  // Wave表示位置
     float waveDisplayScale_ = 1.0f;  // Wave表示のスケール
 
-    Vector3 waveDisplayStartPosition_{ 9.0f, 5.5f, 20.0f };
+    Vector3 waveDisplayStartPosition_{ 9.0f, 5.7f, 20.0f };
     Vector3 waveDisplayEndPosition_{ -0.35f, 0.0f, 6.0f };
 
     Vector3 waveDisplayStartRotate_{ -0.05f, 0.4f, -0.1f };

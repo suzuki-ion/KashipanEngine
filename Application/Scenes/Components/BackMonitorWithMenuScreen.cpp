@@ -191,21 +191,41 @@ void BackMonitorWithMenuScreen::Initialize() {
 }
 
 void BackMonitorWithMenuScreen::Update() {
-    static bool preIsActive = false;
     if (!IsActive()) {
+        if (wasActive_) {
+            Initialize();
+        }
         for (const auto &m : models_) {
             if (!m) continue;
             if (auto *mat = m->GetComponent3D<Material3D>()) {
                 mat->SetColor(Vector4{ 0.0f,0.0f,0.0f,0.0f });
             }
         }
-        if (!preIsActive) {
-            Initialize();
-            preIsActive = true;
-        }
+        wasActive_ = false;
         return;
     }
-    preIsActive = false;
+
+    if (!wasActive_) {
+        wasActive_ = true;
+        const float baseXDuration = 0.3f;
+        const float stagger = 0.05f;
+        for (size_t idx = 0; idx < models_.size(); ++idx) {
+            auto *m = models_[idx];
+            if (!m) continue;
+            auto *tr = m->GetComponent3D<Transform3D>();
+            if (!tr) continue;
+            const float startX = -16.0f;
+            Vector3 pos = tr->GetTranslate();
+            pos.x = startX;
+            tr->SetTranslate(pos);
+
+            xStart_[idx] = startX;
+            xEnd_[idx] = basePositions_[idx].x;
+            xElapsed_[idx] = -static_cast<float>(idx) * stagger;
+            xDuration_[idx] = baseXDuration;
+            xAnimating_[idx] = true;
+        }
+    }
 
     if (!GetBackMonitor() || !GetBackMonitor()->IsReady()) return;
 

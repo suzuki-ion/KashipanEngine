@@ -145,6 +145,11 @@ void StageLighting::Update() {
         return;
     }
 
+    if (isLightingTransitionActive_) {
+        UpdateLightingTransition(deltaTime);
+        return;
+    }
+
     UpdateCenterRotateSpotLights(deltaTime);
     UpdateRhythmicalSpotLights(deltaTime);
     UpdateStageOutsideSpotLights(deltaTime);
@@ -269,6 +274,142 @@ void StageLighting::UpdateDeadLighting(float deltaTime) {
     Vector4 newColor = Lerp(directionalLightDeadStartColor_, directionalLightDeadEndColor_, t);
     if (directionalLight_) {
         directionalLight_->SetColor(newColor);
+    }
+}
+
+void StageLighting::EnableLighting(bool isEnableDirectionalLight, bool isEnableSpotLights) {
+    if (isDeadLightingActive_) return;
+    isLightingTransitionActive_ = true;
+    lightingTransitionTargetEnabled_ = true;
+    lightingTransitionElapsed_ = 0.0f;
+    lightingTransitionDirectionalEnabled_ = isEnableDirectionalLight;
+    lightingTransitionSpotEnabled_ = isEnableSpotLights;
+
+    if (lightingTransitionDirectionalEnabled_) {
+        directionalLightTransitionStartIntensity_ = directionalLight_ ? directionalLight_->GetIntensity() : 0.0f;
+        if (directionalLight_) {
+            directionalLight_->SetEnabled(true);
+        }
+    }
+
+    if (lightingTransitionSpotEnabled_) {
+        centerRotateSpotLightStartIntensity_.clear();
+        centerRotateSpotLightStartIntensity_.reserve(centerRotateSpotLight_.size());
+        for (auto *s : centerRotateSpotLight_) {
+            centerRotateSpotLightStartIntensity_.push_back(s ? s->GetIntensity() : 0.0f);
+            if (s) s->SetEnabled(true);
+        }
+
+        rhythmicalSpotLightStartIntensity_.clear();
+        rhythmicalSpotLightStartIntensity_.reserve(rhythmicalSpotLight_.size());
+        for (auto *s : rhythmicalSpotLight_) {
+            rhythmicalSpotLightStartIntensity_.push_back(s ? s->GetIntensity() : 0.0f);
+            if (s) s->SetEnabled(true);
+        }
+
+        stageOutsideSpotLightStartIntensity_.clear();
+        stageOutsideSpotLightStartIntensity_.reserve(stageOutsideSpotLight_.size());
+        for (auto *s : stageOutsideSpotLight_) {
+            stageOutsideSpotLightStartIntensity_.push_back(s ? s->GetIntensity() : 0.0f);
+            if (s) s->SetEnabled(true);
+        }
+    }
+}
+
+void StageLighting::DisableLighting(bool isEnableDirectionalLight, bool isEnableSpotLights) {
+    if (isDeadLightingActive_) return;
+    isLightingTransitionActive_ = true;
+    lightingTransitionTargetEnabled_ = false;
+    lightingTransitionElapsed_ = 0.0f;
+    lightingTransitionDirectionalEnabled_ = isEnableDirectionalLight;
+    lightingTransitionSpotEnabled_ = isEnableSpotLights;
+
+    if (lightingTransitionDirectionalEnabled_) {
+        directionalLightTransitionStartIntensity_ = directionalLight_ ? directionalLight_->GetIntensity() : 0.0f;
+        if (directionalLight_) {
+            directionalLight_->SetEnabled(true);
+        }
+    }
+
+    if (lightingTransitionSpotEnabled_) {
+        centerRotateSpotLightStartIntensity_.clear();
+        centerRotateSpotLightStartIntensity_.reserve(centerRotateSpotLight_.size());
+        for (auto *s : centerRotateSpotLight_) {
+            centerRotateSpotLightStartIntensity_.push_back(s ? s->GetIntensity() : 0.0f);
+            if (s) s->SetEnabled(true);
+        }
+
+        rhythmicalSpotLightStartIntensity_.clear();
+        rhythmicalSpotLightStartIntensity_.reserve(rhythmicalSpotLight_.size());
+        for (auto *s : rhythmicalSpotLight_) {
+            rhythmicalSpotLightStartIntensity_.push_back(s ? s->GetIntensity() : 0.0f);
+            if (s) s->SetEnabled(true);
+        }
+
+        stageOutsideSpotLightStartIntensity_.clear();
+        stageOutsideSpotLightStartIntensity_.reserve(stageOutsideSpotLight_.size());
+        for (auto *s : stageOutsideSpotLight_) {
+            stageOutsideSpotLightStartIntensity_.push_back(s ? s->GetIntensity() : 0.0f);
+            if (s) s->SetEnabled(true);
+        }
+    }
+}
+
+void StageLighting::UpdateLightingTransition(float deltaTime) {
+    if (!isLightingTransitionActive_) return;
+
+    lightingTransitionElapsed_ += deltaTime;
+    float t = (lightingTransitionDuration_ > 0.0f) ? (lightingTransitionElapsed_ / lightingTransitionDuration_) : 1.0f;
+    t = std::clamp(t, 0.0f, 1.0f);
+
+    const float spotEnd = lightingTransitionTargetEnabled_ ? 1.0f : 0.0f;
+
+    if (lightingTransitionSpotEnabled_) {
+        for (size_t i = 0; i < centerRotateSpotLight_.size(); ++i) {
+            auto *s = centerRotateSpotLight_[i];
+            if (!s) continue;
+            float start = (i < centerRotateSpotLightStartIntensity_.size()) ? centerRotateSpotLightStartIntensity_[i] : s->GetIntensity();
+            s->SetIntensity(Lerp(start, spotEnd, t));
+        }
+
+        for (size_t i = 0; i < rhythmicalSpotLight_.size(); ++i) {
+            auto *s = rhythmicalSpotLight_[i];
+            if (!s) continue;
+            float start = (i < rhythmicalSpotLightStartIntensity_.size()) ? rhythmicalSpotLightStartIntensity_[i] : s->GetIntensity();
+            s->SetIntensity(Lerp(start, spotEnd, t));
+        }
+
+        for (size_t i = 0; i < stageOutsideSpotLight_.size(); ++i) {
+            auto *s = stageOutsideSpotLight_[i];
+            if (!s) continue;
+            float start = (i < stageOutsideSpotLightStartIntensity_.size()) ? stageOutsideSpotLightStartIntensity_[i] : s->GetIntensity();
+            s->SetIntensity(Lerp(start, spotEnd, t));
+        }
+    }
+
+    if (lightingTransitionDirectionalEnabled_ && directionalLight_) {
+        const float dirEnd = lightingTransitionTargetEnabled_ ? directionalLightOriginalIntensity_ : 0.0f;
+        directionalLight_->SetIntensity(Lerp(directionalLightTransitionStartIntensity_, dirEnd, t));
+    }
+
+    if (t >= 1.0f) {
+        isLightingTransitionActive_ = false;
+        if (!lightingTransitionTargetEnabled_) {
+            if (lightingTransitionDirectionalEnabled_ && directionalLight_) {
+                directionalLight_->SetEnabled(false);
+            }
+            if (lightingTransitionSpotEnabled_) {
+                for (auto *s : centerRotateSpotLight_) {
+                    if (s) s->SetEnabled(false);
+                }
+                for (auto *s : rhythmicalSpotLight_) {
+                    if (s) s->SetEnabled(false);
+                }
+                for (auto *s : stageOutsideSpotLight_) {
+                    if (s) s->SetEnabled(false);
+                }
+            }
+        }
     }
 }
 

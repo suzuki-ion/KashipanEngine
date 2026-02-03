@@ -158,13 +158,12 @@
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
-    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialMove.cpp" />
-    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBomb.cpp" />
-    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialConnect.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
     <ClCompile Include="Application\Scenes\Components\WaveSystem.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBase.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithPauseScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -446,14 +445,13 @@
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialMove.h" />
-    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBomb.h" />
-    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialConnect.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
     <ClInclude Include="Application\Scenes\Components\WaveSystem.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticle.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBase.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithPauseScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

@@ -16,12 +16,16 @@ public:
     void StartDeadLighting();
     void ResetLighting();
 
+    void EnableLighting(bool isEnableDirectionalLight, bool isEnableSpotLights);
+    void DisableLighting(bool isEnableDirectionalLight, bool isEnableSpotLights);
+
     bool IsDeadLightingActive() const { return isDeadLightingActive_; }
 
 private:
     void UpdateCenterRotateSpotLights(float deltaTime);
     void UpdateRhythmicalSpotLights(float deltaTime);
     void UpdateStageOutsideSpotLights(float deltaTime);
+    void UpdateLightingTransition(float deltaTime);
 
     // dead lighting update that runs while the death sequence is active
     void UpdateDeadLighting(float deltaTime);
@@ -47,6 +51,18 @@ private:
     bool isDeadLightingActive_ = false;
     float deadLightingElapsed_ = 0.0f;
     float deadLightingDuration_ = 2.0f;
+
+    bool isLightingTransitionActive_ = false;
+    bool lightingTransitionTargetEnabled_ = true;
+    float lightingTransitionElapsed_ = 0.0f;
+    float lightingTransitionDuration_ = 1.0f;
+    bool lightingTransitionDirectionalEnabled_ = true;
+    bool lightingTransitionSpotEnabled_ = true;
+
+    float directionalLightTransitionStartIntensity_ = 0.0f;
+    std::vector<float> centerRotateSpotLightStartIntensity_{};
+    std::vector<float> rhythmicalSpotLightStartIntensity_{};
+    std::vector<float> stageOutsideSpotLightStartIntensity_{};
 };
 
 } // namespace KashipanEngine

@@ -107,6 +107,7 @@ private:
     bool isConfirmedTriggerd_ = false;
 
     bool isInitialized_ = false;
+    bool wasActive_ = false;
 
 };
 

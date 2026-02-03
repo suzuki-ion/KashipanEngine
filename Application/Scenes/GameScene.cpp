@@ -690,7 +690,7 @@ void GameScene::OnUpdate() {
                 if (cameraController_) cameraController_->SetTargetRotate(cameraGameTargetRot_);
                 if (backMonitorGame_) backMonitorGame_->SetActive(true);
                 if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
-                if (stageLighting_) { stageLighting_->EnableLighting(); }
+                if (stageLighting_) { stageLighting_->EnableLighting(true, true); }
 
             } else if (backMonitorMenu_->GetConfirmedIndex() == static_cast<size_t>(MenuModelIndex::Title)) {
                 SetNextSceneName("TitleScene");

@@ -16,8 +16,8 @@ public:
     void StartDeadLighting();
     void ResetLighting();
 
-    void EnableLighting();
-    void DisableLighting();
+    void EnableLighting(bool isEnableDirectionalLight, bool isEnableSpotLights);
+    void DisableLighting(bool isEnableDirectionalLight, bool isEnableSpotLights);
 
     bool IsDeadLightingActive() const { return isDeadLightingActive_; }
 
@@ -56,6 +56,8 @@ private:
     bool lightingTransitionTargetEnabled_ = true;
     float lightingTransitionElapsed_ = 0.0f;
     float lightingTransitionDuration_ = 1.0f;
+    bool lightingTransitionDirectionalEnabled_ = true;
+    bool lightingTransitionSpotEnabled_ = true;
 
     float directionalLightTransitionStartIntensity_ = 0.0f;
     std::vector<float> centerRotateSpotLightStartIntensity_{};

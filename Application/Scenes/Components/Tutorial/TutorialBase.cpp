@@ -13,7 +13,7 @@ void TutorialBase::StartTutorial() {
         cameraController_->SetTargetRotate(gameTargetRot_);
     }
     if (stageLighting_) {
-        stageLighting_->EnableLighting();
+        stageLighting_->EnableLighting(true, true);
     }
     isActive_ = true;
     isLookAtMonitor_ = false;
@@ -26,7 +26,7 @@ void TutorialBase::StartMonitorText() {
         cameraController_->SetTargetRotate(menuTargetRot_);
     }
     if (stageLighting_) {
-        stageLighting_->DisableLighting();
+        stageLighting_->DisableLighting(true, true);
     }
     isActive_ = true;
     isLookAtMonitor_ = true;
@@ -42,7 +42,7 @@ void TutorialBase::QuitTutorial() {
         cameraController_->SetTargetRotate(menuTargetRot_);
     }
     if (stageLighting_) {
-        stageLighting_->DisableLighting();
+        stageLighting_->DisableLighting(true, true);
     }
     isActive_ = false;
     isLookAtMonitor_ = false;

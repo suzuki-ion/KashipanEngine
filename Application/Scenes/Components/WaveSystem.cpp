@@ -261,7 +261,7 @@ void WaveSystem::InitializeCountdownModels() {
         }
 
         if (auto* mt = obj->GetComponent3D<Material3D>()) {
-            mt->SetColor(Vector4(0.75f, 0.75f, 0.75f, 1.0f));
+            mt->SetColor(Vector4(0.75f, 0.75f, 0.75f, 0.0f));
             mt->SetEnableLighting(true);
         }
 

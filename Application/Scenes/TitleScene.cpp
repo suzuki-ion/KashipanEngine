@@ -2,6 +2,8 @@
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/SceneFade.h"
 #include "Scenes/Components/TitleScene/StartTextUpdate.h"
+#include "Scenes/Components/TitleScene/TitleSceneAnimator.h"
+#include "Objects/Components/ParticleMovement.h"
 
 namespace KashipanEngine {
 
@@ -20,6 +22,8 @@ void TitleScene::Initialize() {
     auto *cameraLight = sceneDefaultVariables_ ? sceneDefaultVariables_->GetLightCamera3D() : nullptr;
     auto *shadowMapBuffer = sceneDefaultVariables_ ? sceneDefaultVariables_->GetShadowMapBuffer() : nullptr;
     auto *directionalLight = sceneDefaultVariables_ ? sceneDefaultVariables_->GetDirectionalLight() : nullptr;
+
+    auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
     
     if (screenBuffer3D) {
         BloomEffect::Params bp{};
@@ -118,6 +122,37 @@ void TitleScene::Initialize() {
         fade->SetDuration(1.0f);
         fade->SetDelayBefore(1.0f); // 1秒待ってからフェードを開始
         fade->PlayIn();
+    }
+
+    // パーティクル
+    {
+        constexpr std::uint32_t kParticleCount = 64;
+        for (std::uint32_t i = 0; i < kParticleCount; ++i) {
+            auto obj = std::make_unique<Billboard>();
+            obj->SetName(std::string("ParticleBillboard_") + std::to_string(i));
+            obj->SetCamera(camera3D);
+            obj->SetFacingMode(Billboard::FacingMode::LookAtCamera);
+            obj->RegisterComponent<ParticleMovement>(
+                ParticleMovement::SpawnBox{
+                    Vector3{-64.0f, 24.0f, 32.0f},
+                    Vector3{64.0f, 80.0f, 64.0f} },
+                    0.5f,
+                    5.0f,
+                    Vector3{ 0.2f, 0.2f, 0.2f });
+
+            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(Vector3(0.0f, -99999.0f, 0.0f));
+                tr->SetScale(Vector3(0.0f, 0.0f, 0.0f));
+            }
+            if (auto *mat = obj->GetComponent3D<Material3D>()) {
+                mat->SetTexture(whiteTex);
+                mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                mat->SetEnableLighting(false);
+                mat->SetEnableShadowMapProjection(false);
+            }
+            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+            AddObject3D(std::move(obj));
+        }
     }
 }
 

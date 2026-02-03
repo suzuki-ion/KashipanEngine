@@ -28,7 +28,7 @@ protected:
     BackMonitor* backMonitor_ = nullptr;
 
 private:
-    bool isActive_ = true;
+    bool isActive_ = false;
 };
 
 } // namespace KashipanEngine

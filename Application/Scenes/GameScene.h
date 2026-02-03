@@ -24,6 +24,7 @@
 #include "Scenes/Components/BackMonitor.h"
 #include "Scenes/Components/BackMonitorWithGameScreen.h"
 #include "Scenes/Components/BackMonitorWithMenuScreen.h"
+#include "Scenes/Components/BackMonitorWithPauseScreen.h"
 #include "Scenes/Components/BackMonitorWithParticle.h"
 #include "Scenes/Components/StageLighting.h"
 #include "Utilities/Json/JsonManager.h"
@@ -46,6 +47,9 @@ private:
 
     void LoadParticleStateJson();
     void SaveParticleStateJson();
+
+    void StartDjFade(float targetAlpha);
+    void UpdateDjFade();
 
     /// @brief 壁の再生成待機中の場所を可視化するためにマップマーカーを更新
     void UpdateWallRespawnMarkers();
@@ -76,6 +80,12 @@ private:
     Object3DBase *stage_ = nullptr;
 
     Object3DBase* djNagasawa_ = nullptr;
+
+    bool isDjFadeActive_ = false;
+    float djFadeElapsed_ = 0.0f;
+    float djFadeDuration_ = 0.5f;
+    float djFadeStartAlpha_ = 1.0f;
+    float djFadeTargetAlpha_ = 1.0f;
 
 	bool isGameStarted_ = false; // ゲーム開始フラグ
 
@@ -206,6 +216,7 @@ private:
     // BackMonitor related (debug test)
     BackMonitorWithGameScreen *backMonitorGame_ = nullptr;
     BackMonitorWithMenuScreen *backMonitorMenu_ = nullptr;
+    BackMonitorWithPauseScreen *backMonitorPause_ = nullptr;
     BackMonitorWithParticle *backMonitorParticle_ = nullptr;
     int backMonitorMode_ = 0; // 0=game,1=menu,2=particle
 

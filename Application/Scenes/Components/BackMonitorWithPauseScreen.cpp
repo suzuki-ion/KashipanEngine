@@ -1,4 +1,4 @@
-#include "BackMonitorWithMenuScreen.h"
+#include "BackMonitorWithPauseScreen.h"
 #include "BackMonitor.h"
 #include "Objects/GameObjects/3D/Model.h"
 #include "Objects/Components/3D/Transform3D.h"
@@ -8,18 +8,17 @@
 
 namespace KashipanEngine {
 
-BackMonitorWithMenuScreen::BackMonitorWithMenuScreen(ScreenBuffer* target, InputCommand* inputCommand)
-    : BackMonitorRenderer("BackMonitorWithMenuScreen", target), inputCommand_(inputCommand) {}
+BackMonitorWithPauseScreen::BackMonitorWithPauseScreen(ScreenBuffer *target, InputCommand *inputCommand)
+    : BackMonitorRenderer("BackMonitorWithPauseScreen", target), inputCommand_(inputCommand) {}
 
-BackMonitorWithMenuScreen::~BackMonitorWithMenuScreen() {}
+BackMonitorWithPauseScreen::~BackMonitorWithPauseScreen() {}
 
-void BackMonitorWithMenuScreen::Initialize() {
+void BackMonitorWithPauseScreen::Initialize() {
     auto target = GetTargetScreenBuffer();
     if (!target) return;
     auto ctx = GetOwnerContext();
     if (!ctx) return;
 
-    // Set model count and resize vectors
     if (!isInitialized_) {
         modelCount_ = 4;
         models_.assign(modelCount_, nullptr);
@@ -34,21 +33,12 @@ void BackMonitorWithMenuScreen::Initialize() {
         xElapsed_.assign(modelCount_, 0.0f);
         xDuration_.assign(modelCount_, 0.0f);
         xAnimating_.assign(modelCount_, false);
-        basePositions_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
-        baseRotations_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
-        returnStartPos_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
-        returnEndPos_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
-        returnStartRot_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
-        returnEndRot_.assign(modelCount_, Vector3{0.0f, 0.0f, 0.0f});
-        returnElapsed_.assign(modelCount_, 0.0f);
-        returnDuration_.assign(modelCount_, 0.0f);
-        returnAnimating_.assign(modelCount_, false);
+        basePositions_.assign(modelCount_, Vector3{ 0.0f, 0.0f, 0.0f });
+        baseRotations_.assign(modelCount_, Vector3{ 0.0f, 0.0f, 0.0f });
         isInitialized_ = true;
 
-        // Load sound handles
         soundHandleSelect_ = AudioManager::GetSoundHandleFromFileName("select.mp3");
         soundHandleSubmit_ = AudioManager::GetSoundHandleFromFileName("submit.mp3");
-        soundHandleCancel_ = AudioManager::GetSoundHandleFromFileName("cancel.mp3");
     }
 
     const float centerX = 0.0f;
@@ -58,63 +48,65 @@ void BackMonitorWithMenuScreen::Initialize() {
     const float depth = 2.5f;
     const Vector3 scaleVec{ 1.0f, 1.0f, 1.0f };
 
-    // Start（インデックス0）-> 上
-    if (!menuStart_) {
+    if (!menuContinue_) {
+        //auto modelHandle = ModelManager::GetModelDataFromFileName("menuContinue.obj");
         auto modelHandle = ModelManager::GetModelDataFromFileName("menuStart.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetUniqueBatchKey();
-        obj->SetName("BackMonitor.MenuStart");
+        obj->SetName("BackMonitor.PauseContinue");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        if (models_.size() > static_cast<size_t>(MenuModelIndex::Start))
-            models_[static_cast<size_t>(MenuModelIndex::Start)] = obj.get();
-        menuStart_ = obj.get();
+        if (models_.size() > static_cast<size_t>(PauseModelIndex::Continue)) {
+            models_[static_cast<size_t>(PauseModelIndex::Continue)] = obj.get();
+        }
+        menuContinue_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
-    if (auto *tr = menuStart_->GetComponent3D<Transform3D>()) {
+    if (auto *tr = menuContinue_->GetComponent3D<Transform3D>()) {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 0, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
-        basePositions_[static_cast<size_t>(MenuModelIndex::Start)] = tr->GetTranslate();
-        baseRotations_[static_cast<size_t>(MenuModelIndex::Start)] = tr->GetRotate();
+        basePositions_[static_cast<size_t>(PauseModelIndex::Continue)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(PauseModelIndex::Continue)] = tr->GetRotate();
     }
-    if (auto *mat = menuStart_->GetComponent3D<Material3D>()) {
+    if (auto *mat = menuContinue_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
         mat->SetEnableShadowMapProjection(false);
     }
 
-    // Credit（インデックス1）
-    if (!menuCredit_) {
-        auto modelHandle = ModelManager::GetModelDataFromFileName("menuCredit.obj");
+    if (!menuMenu_) {
+        //auto modelHandle = ModelManager::GetModelDataFromFileName("menuMenu.obj");
+        auto modelHandle = ModelManager::GetModelDataFromFileName("menuStart.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetUniqueBatchKey();
-        obj->SetName("BackMonitor.MenuCredit");
+        obj->SetName("BackMonitor.PauseMenu");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        if (models_.size() > static_cast<size_t>(MenuModelIndex::Credit))
-            models_[static_cast<size_t>(MenuModelIndex::Credit)] = obj.get();
-        menuCredit_ = obj.get();
+        if (models_.size() > static_cast<size_t>(PauseModelIndex::Menu)) {
+            models_[static_cast<size_t>(PauseModelIndex::Menu)] = obj.get();
+        }
+        menuMenu_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
-    if (auto *tr = menuCredit_->GetComponent3D<Transform3D>()) {
+    if (auto *tr = menuMenu_->GetComponent3D<Transform3D>()) {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 1, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
-        basePositions_[static_cast<size_t>(MenuModelIndex::Credit)] = tr->GetTranslate();
-        baseRotations_[static_cast<size_t>(MenuModelIndex::Credit)] = tr->GetRotate();
+        basePositions_[static_cast<size_t>(PauseModelIndex::Menu)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(PauseModelIndex::Menu)] = tr->GetRotate();
     }
-    if (auto *mat = menuCredit_->GetComponent3D<Material3D>()) {
+    if (auto *mat = menuMenu_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
         mat->SetEnableShadowMapProjection(false);
     }
 
-    // Title（インデックス2）
     if (!menuTitle_) {
         auto modelHandle = ModelManager::GetModelDataFromFileName("menuTitle.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetUniqueBatchKey();
-        obj->SetName("BackMonitor.MenuTitle");
+        obj->SetName("BackMonitor.PauseTitle");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        if (models_.size() > static_cast<size_t>(MenuModelIndex::Title))
-            models_[static_cast<size_t>(MenuModelIndex::Title)] = obj.get();
+        if (models_.size() > static_cast<size_t>(PauseModelIndex::Title)) {
+            models_[static_cast<size_t>(PauseModelIndex::Title)] = obj.get();
+        }
         menuTitle_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
@@ -122,23 +114,23 @@ void BackMonitorWithMenuScreen::Initialize() {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 2, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
-        basePositions_[static_cast<size_t>(MenuModelIndex::Title)] = tr->GetTranslate();
-        baseRotations_[static_cast<size_t>(MenuModelIndex::Title)] = tr->GetRotate();
+        basePositions_[static_cast<size_t>(PauseModelIndex::Title)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(PauseModelIndex::Title)] = tr->GetRotate();
     }
     if (auto *mat = menuTitle_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
         mat->SetEnableShadowMapProjection(false);
     }
 
-    // Quit（インデックス3）-> 下
     if (!menuQuit_) {
         auto modelHandle = ModelManager::GetModelDataFromFileName("menuQuit.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetUniqueBatchKey();
-        obj->SetName("BackMonitor.MenuQuit");
+        obj->SetName("BackMonitor.PauseQuit");
         obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
-        if (models_.size() > static_cast<size_t>(MenuModelIndex::Quit))
-            models_[static_cast<size_t>(MenuModelIndex::Quit)] = obj.get();
+        if (models_.size() > static_cast<size_t>(PauseModelIndex::Quit)) {
+            models_[static_cast<size_t>(PauseModelIndex::Quit)] = obj.get();
+        }
         menuQuit_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
@@ -146,8 +138,8 @@ void BackMonitorWithMenuScreen::Initialize() {
         tr->SetTranslate(Vector3{ centerX, topY - spacing * 3, depth });
         tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
         tr->SetScale(scaleVec);
-        basePositions_[static_cast<size_t>(MenuModelIndex::Quit)] = tr->GetTranslate();
-        baseRotations_[static_cast<size_t>(MenuModelIndex::Quit)] = tr->GetRotate();
+        basePositions_[static_cast<size_t>(PauseModelIndex::Quit)] = tr->GetTranslate();
+        baseRotations_[static_cast<size_t>(PauseModelIndex::Quit)] = tr->GetRotate();
     }
     if (auto *mat = menuQuit_->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
@@ -158,11 +150,7 @@ void BackMonitorWithMenuScreen::Initialize() {
     isConfirming_ = false;
     isConfirmed_ = false;
     isConfirmedTriggerd_ = false;
-    isCreditMoving_ = false;
-    isCreditMoved_ = false;
-    isReturning_ = false;
     selectedIndex_ = 0;
-    // サイン波タイマーをリセット
     rotSineTime_ = 0.0f;
 
     size_t idx = 0;
@@ -172,7 +160,6 @@ void BackMonitorWithMenuScreen::Initialize() {
                 if (static_cast<int>(idx) == selectedIndex_) mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
                 else mat->SetColor(Vector4{ 0.5f,0.5f,0.5f,1.0f });
             }
-            // 初期のX座標を0にする
             if (auto *tr = m->GetComponent3D<Transform3D>()) {
                 Vector3 p = tr->GetTranslate();
                 p.x = 0.0f;
@@ -183,14 +170,11 @@ void BackMonitorWithMenuScreen::Initialize() {
         xAnimating_[idx] = false;
         xElapsed_[idx] = 0.0f;
         xDuration_[idx] = 0.0f;
-        returnAnimating_[idx] = false;
-        returnElapsed_[idx] = 0.0f;
-        returnDuration_[idx] = 0.0f;
         ++idx;
     }
 }
 
-void BackMonitorWithMenuScreen::Update() {
+void BackMonitorWithPauseScreen::Update() {
     if (!IsActive()) {
         if (wasActive_) {
             Initialize();
@@ -229,11 +213,7 @@ void BackMonitorWithMenuScreen::Update() {
 
     if (!GetBackMonitor() || !GetBackMonitor()->IsReady()) return;
 
-    const float animDuration = 0.2f; // zアニメーションは短めに保つ
-
-    //==================================================
-    // 入力処理
-    //==================================================
+    const float animDuration = 0.2f;
 
     if (!inputCommand_) return;
 
@@ -246,19 +226,17 @@ void BackMonitorWithMenuScreen::Update() {
             if (static_cast<int>(idx) == selectedIndex_) {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
                 zEnd_[idx] = 2.0f;
-                zElapsed_[idx] = 0.0f;
-                zDuration_[idx] = animDuration;
-                zAnimating_[idx] = true;
             } else {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
                 zEnd_[idx] = 2.5f;
-                zElapsed_[idx] = 0.0f;
-                zDuration_[idx] = animDuration;
-                zAnimating_[idx] = true;
             }
+            zElapsed_[idx] = 0.0f;
+            zDuration_[idx] = animDuration;
+            zAnimating_[idx] = true;
             ++idx;
         }
     }
+
     if (!isSubmitted_ && inputCommand_->Evaluate("MoveDown").Triggered()) {
         selectedIndex_ = (selectedIndex_ + 1) % modelCount_;
         AudioManager::Play(soundHandleSelect_, 1.0f, 0.0f, false);
@@ -268,19 +246,17 @@ void BackMonitorWithMenuScreen::Update() {
             if (static_cast<int>(idx) == selectedIndex_) {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
                 zEnd_[idx] = 2.0f;
-                zElapsed_[idx] = 0.0f;
-                zDuration_[idx] = animDuration;
-                zAnimating_[idx] = true;
             } else {
                 zStart_[idx] = m->GetComponent3D<Transform3D>()->GetTranslate().z;
                 zEnd_[idx] = 2.5f;
-                zElapsed_[idx] = 0.0f;
-                zDuration_[idx] = animDuration;
-                zAnimating_[idx] = true;
             }
+            zElapsed_[idx] = 0.0f;
+            zDuration_[idx] = animDuration;
+            zAnimating_[idx] = true;
             ++idx;
         }
     }
+
     if (!isSubmitted_ && inputCommand_->Evaluate("Submit").Triggered()) {
         AudioManager::Play(soundHandleSubmit_, 1.0f, 0.0f, false);
         isSubmitted_ = true;
@@ -288,10 +264,8 @@ void BackMonitorWithMenuScreen::Update() {
         isConfirming_ = true;
         isConfirmed_ = false;
         isConfirmedTriggerd_ = false;
-        isCreditMoving_ = false;
-        isCreditMoved_ = false;
-        isReturning_ = false;
-        // 確定用アニメーションの準備
+        isMenuConfirmSliding_ = false;
+
         if (models_[confirmedIndex_]) {
             auto *tr = models_[confirmedIndex_]->GetComponent3D<Transform3D>();
             confirmStartPos_ = tr->GetTranslate();
@@ -300,11 +274,9 @@ void BackMonitorWithMenuScreen::Update() {
             const float degToRad = M_PI / 180.0f;
             confirmEndRot_ = Vector3{ 360.0f * degToRad, confirmStartRot_.y, confirmStartRot_.z };
             confirmElapsed_ = 0.0f;
-            // 確定アニメーション時間を0.5fに増加
             confirmDuration_ = 0.5f;
         }
 
-        // 決定されていないモデルのX移動アニメを準備（上から下、0.05秒の遅延）
         const float baseXDuration = 0.3f;
         const float stagger = 0.05f;
         size_t idx = 0;
@@ -314,57 +286,16 @@ void BackMonitorWithMenuScreen::Update() {
             auto *tr = m->GetComponent3D<Transform3D>();
             xStart_[idx] = tr->GetTranslate().x;
             xEnd_[idx] = -16.0f;
-            // 上（index 0）から下（index 3）の順で遅延を付与
             float delay = static_cast<float>(idx) * stagger;
-            // elapsedを負にして遅延を表現（負のelapsedはアニメ開始前の遅延）
-            xElapsed_[idx] = -delay; // negative elapsed acts as delay before animation starts
+            xElapsed_[idx] = -delay;
             xDuration_[idx] = baseXDuration;
             xAnimating_[idx] = true;
             ++idx;
         }
     }
 
-    if (isSubmitted_ && confirmedIndex_ == static_cast<int>(MenuModelIndex::Credit) && isCreditMoved_ && !isReturning_
-        && inputCommand_->Evaluate("Submit").Triggered()) {
-        AudioManager::Play(soundHandleCancel_, 1.0f, 0.0f, false);
-        const float returnDuration = 0.5f;
-        const float stagger = 0.05f;
-        const float degToRad = M_PI / 180.0f;
-        isReturning_ = true;
-        isConfirmed_ = false;
-        isConfirmedTriggerd_ = false;
-        size_t idx = 0;
-        for (const auto &m : models_) {
-            if (!m) { ++idx; continue; }
-            auto *tr = m->GetComponent3D<Transform3D>();
-            returnStartPos_[idx] = tr->GetTranslate();
-            returnEndPos_[idx] = basePositions_[idx];
-            returnStartRot_[idx] = tr->GetRotate();
-            returnEndRot_[idx] = baseRotations_[idx];
-            if (static_cast<int>(idx) == static_cast<int>(MenuModelIndex::Quit)) {
-                returnEndRot_[idx].x = baseRotations_[idx].x + 360.0f * degToRad;
-            }
-            float delay = 0.0f;
-            if (static_cast<int>(idx) == static_cast<int>(MenuModelIndex::Title)) {
-                delay = stagger;
-            } else if (static_cast<int>(idx) == static_cast<int>(MenuModelIndex::Quit)) {
-                delay = stagger * 2.0f;
-            }
-            returnElapsed_[idx] = -delay;
-            returnDuration_[idx] = returnDuration;
-            returnAnimating_[idx] = true;
-            xAnimating_[idx] = false;
-            ++idx;
-        }
-    }
-
-    //==================================================
-    // アニメーション処理
-    //==================================================
-
     const float dt = GetDeltaTime();
 
-    // zアニメーションの更新
     size_t idx = 0;
     for (const auto &m : models_) {
         if (!m) { ++idx; continue; }
@@ -382,7 +313,6 @@ void BackMonitorWithMenuScreen::Update() {
             }
         }
 
-        // 選択に応じた色の更新
         if (auto *mat = m->GetComponent3D<Material3D>()) {
             if (static_cast<int>(idx) == selectedIndex_) mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
             else mat->SetColor(Vector4{ 0.5f,0.5f,0.5f,1.0f });
@@ -390,7 +320,6 @@ void BackMonitorWithMenuScreen::Update() {
         ++idx;
     }
 
-    // X移動アニメーションの更新（決定後の非選択モデル用）
     idx = 0;
     for (const auto &m : models_) {
         if (!m) { ++idx; continue; }
@@ -410,24 +339,21 @@ void BackMonitorWithMenuScreen::Update() {
         ++idx;
     }
 
-    // 回転の更新：選択中のみサイン回転、それ以外は0にする。
     idx = 0;
     for (const auto &m : models_) {
         if (!m) { ++idx; continue; }
         if (auto *tr = m->GetComponent3D<Transform3D>()) {
             if (!isSubmitted_) {
                 if (static_cast<int>(idx) == selectedIndex_) {
-                    // 選択中のみサイン回転を適用
                     rotSineTime_ += dt;
                     const float degToRad = M_PI / 180.0f;
-                    const float amplitude = 15.0f * degToRad; // 15度をラジアンに変換
+                    const float amplitude = 15.0f * degToRad;
                     const float omega = 2.0f * static_cast<float>(M_PI) * rotSineFrequency_;
                     float sinVal = std::sin(rotSineTime_ * omega);
                     Vector3 rot = tr->GetRotate();
                     rot.x = sinVal * amplitude;
                     tr->SetRotate(rot);
                 } else {
-                    // 選択が外れたら回転を0に戻す
                     tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
                 }
             }
@@ -435,7 +361,6 @@ void BackMonitorWithMenuScreen::Update() {
         ++idx;
     }
 
-    // 確定アニメーションの更新
     if (isConfirming_ && models_[confirmedIndex_]) {
         confirmElapsed_ += dt;
         float t = Normalize01(confirmElapsed_, 0.0f, confirmDuration_);
@@ -446,70 +371,31 @@ void BackMonitorWithMenuScreen::Update() {
         tr->SetRotate(rot);
         if (t >= 1.0f) {
             isConfirming_ = false;
-            if (confirmedIndex_ == static_cast<int>(MenuModelIndex::Credit)) {
-                creditMoveStartPos_ = tr->GetTranslate();
-                creditMoveEndPos_ = Vector3{ creditMoveStartPos_.x, 2.0f, creditMoveStartPos_.z };
-                creditMoveElapsed_ = 0.0f;
-                creditMoveDuration_ = 0.5f;
-                isCreditMoving_ = true;
+            if (confirmedIndex_ == static_cast<int>(PauseModelIndex::Menu)) {
+                const float baseXDuration = 0.3f;
+                auto *menuTr = models_[confirmedIndex_]->GetComponent3D<Transform3D>();
+                xStart_[confirmedIndex_] = menuTr->GetTranslate().x;
+                xEnd_[confirmedIndex_] = -16.0f;
+                xElapsed_[confirmedIndex_] = 0.0f;
+                xDuration_[confirmedIndex_] = baseXDuration;
+                xAnimating_[confirmedIndex_] = true;
+                isMenuConfirmSliding_ = true;
             } else {
                 isConfirmed_ = true;
             }
         }
     }
 
-    if (isCreditMoving_ && confirmedIndex_ == static_cast<int>(MenuModelIndex::Credit) && models_[confirmedIndex_]) {
-        creditMoveElapsed_ += dt;
-        float t = Normalize01(creditMoveElapsed_, 0.0f, creditMoveDuration_);
-        auto *tr = models_[confirmedIndex_]->GetComponent3D<Transform3D>();
-        Vector3 pos = EaseOutCubic(creditMoveStartPos_, creditMoveEndPos_, t);
-        tr->SetTranslate(pos);
-        if (t >= 1.0f) {
-            isCreditMoving_ = false;
-            isCreditMoved_ = true;
+    if (isMenuConfirmSliding_) {
+        if (!xAnimating_[confirmedIndex_]) {
+            isMenuConfirmSliding_ = false;
             isConfirmed_ = true;
         }
     }
 
-    bool hasReturnAnimating = false;
-    if (isReturning_) {
-        size_t returnIdx = 0;
-        for (const auto &m : models_) {
-            if (!m) { ++returnIdx; continue; }
-            if (returnAnimating_[returnIdx]) {
-                returnElapsed_[returnIdx] += dt;
-                float t = Normalize01(returnElapsed_[returnIdx], 0.0f, returnDuration_[returnIdx]);
-                Vector3 pos = EaseOutCubic(returnStartPos_[returnIdx], returnEndPos_[returnIdx], t);
-                Vector3 rot = EaseOutCubic(returnStartRot_[returnIdx], returnEndRot_[returnIdx], t);
-                if (auto *tr = m->GetComponent3D<Transform3D>()) {
-                    tr->SetTranslate(pos);
-                    tr->SetRotate(rot);
-                }
-                if (t >= 1.0f) {
-                    returnAnimating_[returnIdx] = false;
-                }
-            }
-            if (returnAnimating_[returnIdx]) {
-                hasReturnAnimating = true;
-            }
-            ++returnIdx;
-        }
-        if (!hasReturnAnimating) {
-            isReturning_ = false;
-            isSubmitted_ = false;
-            isConfirmed_ = false;
-            isConfirmedTriggerd_ = false;
-            isCreditMoved_ = false;
-            confirmedIndex_ = -1;
-        }
-    }
-
-    if (isSubmitted_ && !isConfirming_ && confirmedIndex_ != static_cast<int>(MenuModelIndex::Credit) && !isReturning_) {
+    if (isSubmitted_ && !isConfirming_ && !isMenuConfirmSliding_) {
         isConfirmed_ = true;
     }
-}
-
-void BackMonitorWithMenuScreen::MenuCreditUpdate() {
 }
 
 } // namespace KashipanEngine

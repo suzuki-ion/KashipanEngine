@@ -86,6 +86,9 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
 
+        ic->RegisterCommand("Escape", InputCommand::KeyboardKey{ Key::Escape }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Escape", ControllerButton::Start, InputCommand::InputState::Trigger);
+
 #ifdef DEBUG_BUILD
         // デバッグ用シーン遷移
         ic->RegisterCommand("DebugSceneChange", InputCommand::KeyboardKey{ Key::F1 }, InputCommand::InputState::Trigger);

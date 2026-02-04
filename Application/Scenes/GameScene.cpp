@@ -2225,6 +2225,7 @@ void GameScene::InitTutorialManager() {
     // 全チュートリアル完了時のコールバックを設定
     comp->SetOnAllTutorialsCompletedCallback([this]() {
         // チュートリアル完了後、メニュー画面に移行
+        InGameQuit();
         isTutorialMode_ = false;
         if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
         if (backMonitorGame_) backMonitorGame_->SetActive(false);

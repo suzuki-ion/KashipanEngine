@@ -41,6 +41,7 @@ namespace KashipanEngine {
 
 		/// @brief システムリセット
         void ResetSystem() {
+            soundBeat_.StopManualBeat();
             soundBeat_.Reset();
 		}
 

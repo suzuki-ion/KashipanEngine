@@ -931,6 +931,10 @@ void GameScene::OnUpdate() {
 
                     if (walls_[z][x].moveTimer.IsFinished()) {
                         walls_[z][x].isActive = true;
+                        // 壁がアクティブになった時点での拍数を記録（まだ記録されていない場合）
+                        if (walls_[z][x].particleSpawnBeat < 0 && bpmSystem_) {
+                            walls_[z][x].particleSpawnBeat = bpmSystem_->GetCurrentBeat();
+                        }
                     }
 
                     if (walls_[z][x].hp <= 0 && !walls_[z][x].isWaitingRespawn) {
@@ -940,6 +944,7 @@ void GameScene::OnUpdate() {
                         walls_[z][x].hp = 0;
                         walls_[z][x].isWaitingRespawn = true;
                         walls_[z][x].currentSpawnAgainCount = 0;
+                        walls_[z][x].particleSpawnBeat = -1; // パーティクル生成拍数をリセット
                     }
 
                     walls_[z][x].moveTimer.Update();
@@ -957,6 +962,29 @@ void GameScene::OnUpdate() {
                             walls_[z][x].isWaitingRespawn = false;
                             walls_[z][x].currentSpawnAgainCount = 0;
                             walls_[z][x].hp = 1; // HPを回復して再設置可能に
+                        }
+                    }
+
+                    // パーティクル生成から16拍経過で自動的に壁を非アクティブ化
+                    if (walls_[z][x].isActive && walls_[z][x].particleSpawnBeat >= 0) {
+                        int beatsSinceSpawn = bpmSystem_->GetCurrentBeat() - walls_[z][x].particleSpawnBeat;
+                        if (beatsSinceSpawn >= walls_[z][x].autoDeactivateBeatCount) {
+                            // パーティクルを発生
+                            if (wallBreakParticleManager_ && walls_[z][x].object) {
+                                if (auto* tr = walls_[z][x].object->GetComponent3D<Transform3D>()) {
+                                    Vector3 particlePos = tr->GetTranslate();
+                                    particlePos.y += 1.0f; // 壁の上部からパーティクルを出す
+                                    wallBreakParticleManager_->SpawnParticles(particlePos, 10);
+                                }
+                            }
+                            // 壁を非アクティブ化
+                            walls_[z][x].isActive = false;
+                            walls_[z][x].isMoving = false;
+                            walls_[z][x].moveTimer.Reset();
+                            walls_[z][x].hp = 1;
+                            walls_[z][x].isWaitingRespawn = false;
+                            walls_[z][x].currentSpawnAgainCount = 0;
+                            walls_[z][x].particleSpawnBeat = -1;
                         }
                     }
                 }
@@ -1813,6 +1841,7 @@ void GameScene::InGameQuit() {
                 walls_[z][x].hp = 1;
                 walls_[z][x].isWaitingRespawn = false;
                 walls_[z][x].currentSpawnAgainCount = 0;
+                walls_[z][x].particleSpawnBeat = -1; // パーティクル生成拍数をリセット
             }
         }
     }
@@ -2008,6 +2037,9 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     // BombManagerとWallsを設定
     waveSystem_->SetBombManager(bombManager_);
     waveSystem_->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);
+
+    // WallBreakParticleManagerを設定（Wave切り替わり時のパーティクル用）
+    waveSystem_->SetWallBreakParticleManager(wallBreakParticleManager_);
 
     // サンプルWaveデータを設定
     // Wave1

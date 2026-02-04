@@ -1,6 +1,7 @@
 #include "WaveSystem.h"
 #include "Objects/Components/Enemy/EnemySpawnParticle.h"
 #include "Objects/Components/BPMScaling.h"
+#include "Objects/Components/Map/WallBreakParticleManager.h"
 
 namespace KashipanEngine {
 
@@ -370,6 +371,9 @@ void WaveSystem::InitializeWaveModels() {
 }
 
 void WaveSystem::TransitionToNextWave() {
+    // Wave切り替わり時に全壁を非アクティブ化（パーティクル付き）
+    DeactivateAllWallsWithParticle();
+
     currentWaveIndex_++;
 
     if (currentWaveIndex_ >= static_cast<int>(waveDataList_.size())) {
@@ -906,5 +910,37 @@ void WaveSystem::ShowImGui() {
     }
 }
 #endif
+
+void WaveSystem::DeactivateAllWallsWithParticle() {
+    if (!walls_ || mapW_ <= 0 || mapH_ <= 0) return;
+
+    for (int z = 0; z < mapH_; z++) {
+        for (int x = 0; x < mapW_; x++) {
+            const int index = z * mapW_ + x;
+            WallInfo& wall = walls_[index];
+            
+            // アクティブまたは移動中の壁のみ処理
+            if (wall.isActive || wall.isMoving) {
+                // パーティクルを発生
+                if (wallBreakParticleManager_ && wall.object) {
+                    if (auto* tr = wall.object->GetComponent3D<Transform3D>()) {
+                        Vector3 particlePos = tr->GetTranslate();
+                        particlePos.y += 1.0f; // 壁の上部からパーティクルを出す
+                        wallBreakParticleManager_->SpawnParticles(particlePos, 10);
+                    }
+                }
+
+                // 壁を非アクティブ化
+                wall.isActive = false;
+                wall.isMoving = false;
+                wall.moveTimer.Reset();
+                wall.hp = 1;
+                wall.isWaitingRespawn = false;
+                wall.currentSpawnAgainCount = 0;
+                wall.particleSpawnBeat = -1; // パーティクル生成拍数をリセット
+            }
+        }
+    }
+}
 
 } // namespace KashipanEngine

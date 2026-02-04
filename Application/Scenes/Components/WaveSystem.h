@@ -12,6 +12,7 @@ namespace KashipanEngine {
 
 // Forward declaration
 class BombManager;
+class WallBreakParticleManager;
 
 /// @brief Waveの種類を定義する列挙型
 enum class Wave {
@@ -146,6 +147,9 @@ public:
     /// @brief BombManagerを設定（Bomb削除用）
     void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
 
+    /// @brief WallBreakParticleManagerを設定
+    void SetWallBreakParticleManager(WallBreakParticleManager* manager) { wallBreakParticleManager_ = manager; }
+
     /// @brief 指定位置でパーティクル放出中かどうかをチェック
     /// @param position チェックする位置
     /// @return パーティクル放出中ならtrue
@@ -241,6 +245,9 @@ private:
     /// @brief Wave表示を非表示
     void HideWaveDisplay();
 
+    /// @brief Wave切り替わり時に全壁を非アクティブ化（パーティクル付き）
+    void DeactivateAllWallsWithParticle();
+
     Transform3D* parentTransform_ = nullptr;
 
     BPMSystem* bpmSystem_ = nullptr;
@@ -248,6 +255,7 @@ private:
     EnemySpawner* enemySpawner_ = nullptr;
     ScreenBuffer* screenBuffer_ = nullptr;
     BombManager* bombManager_ = nullptr;
+    WallBreakParticleManager* wallBreakParticleManager_ = nullptr;
    
     // Wave管理
     std::vector<WaveData> waveDataList_;

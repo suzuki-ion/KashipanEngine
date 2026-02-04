@@ -2015,47 +2015,98 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     // Wave1
     WaveData wave1{};
     wave1.wave = Wave::Wave1;
-    wave1.duration = 64; // Waveの終了拍数
+    wave1.duration = 107; // Waveの終了拍数
     wave1.spawnList = {
-        { 8, 4, 0, EnemyType::Basic },
-        { 8, 5, 0, EnemyType::Basic },
-        { 16, 4, 9, EnemyType::Basic },
-        { 16, 5, 9, EnemyType::Basic },
-        { 24, 0, 5, EnemyType::Basic },
-        { 24, 0, 4, EnemyType::Basic },
-        { 32, 9, 5, EnemyType::Basic },
-        { 32, 9, 4, EnemyType::Basic },
-        { 40, 0, 3, EnemyType::Basic },
-        { 40, 0, 4, EnemyType::Basic },
-        { 40, 0, 5, EnemyType::Basic },
-        { 40, 0, 6, EnemyType::Basic },
-        { 48, 3, 0, EnemyType::Basic },
-        { 48, 4, 0, EnemyType::Basic },
-        { 48, 5, 0, EnemyType::Basic },
-        { 48, 6, 0, EnemyType::Basic },
-        { 56, 0, 3, EnemyType::Basic },
-        { 56, 0, 4, EnemyType::Basic },
-        { 56, 0, 5, EnemyType::Basic },
-        { 56, 0, 6, EnemyType::Basic },
-        { 64, 3, 0, EnemyType::Basic },
-        { 64, 4, 0, EnemyType::Basic },
-        { 64, 5, 0, EnemyType::Basic },
-        { 64, 6, 0, EnemyType::Basic },
+       { 6, 4, 0, EnemyType::Basic },
+       { 14, 9, 4, EnemyType::Basic },
+       { 24, 5, 9, EnemyType::Basic },
+       { 32, 0, 5, EnemyType::Basic },
+       { 40, 4, 0, EnemyType::Basic },
+       { 43, 9, 4, EnemyType::Basic },
+       { 46, 5, 9, EnemyType::Basic },
+       { 49, 0, 5, EnemyType::Basic },
+       { 55, 5, 0, EnemyType::Speedy },
+       { 61, 9, 5, EnemyType::Speedy },
+       { 67, 4, 9, EnemyType::Speedy },
+       { 73, 0, 4, EnemyType::Speedy },
+       { 77, 5, 0, EnemyType::Speedy },
+       { 81, 9, 5, EnemyType::Speedy },
+       { 85, 4, 9, EnemyType::Speedy },
+       { 89, 0, 4, EnemyType::Speedy },
+       { 89, 0, 1, EnemyType::Basic },
+       { 89, 0, 2, EnemyType::Basic },
+       { 95, 9, 8, EnemyType::Basic },
+       { 95, 9, 7, EnemyType::Basic },
+       { 101, 1, 9, EnemyType::Basic },
+       { 101, 2, 9, EnemyType::Basic },
+       { 107, 7, 0, EnemyType::Basic },
+       { 107, 8, 0, EnemyType::Basic },
     };
     waveSystem_->AddWaveData(wave1);
 
     // Wave2
     WaveData wave2{};
     wave2.wave = Wave::Wave2;
-    wave2.duration = 20000;
+    wave2.duration = 47;
     wave2.spawnList = {
-        { 5, 0, 1, EnemyType::Basic },
-        { 5, 0, 2, EnemyType::Basic },
-        { 5, 0, 3, EnemyType::Basic },
-        { 5, 0, 4, EnemyType::Basic },
-        { 16, 0, 5, EnemyType::Basic },
+       { 5, 0, 1, EnemyType::Basic },
+       { 5, 0, 2, EnemyType::Basic },
+       { 5, 0, 3, EnemyType::Basic },
+       { 9, 9, 8, EnemyType::Basic },
+       { 9, 9, 7, EnemyType::Basic },
+       { 9, 9, 6, EnemyType::Basic },
+       { 14, 1, 9, EnemyType::Basic },
+       { 14, 2, 9, EnemyType::Basic },
+       { 14, 3, 9, EnemyType::Basic },
+       { 18, 6, 0, EnemyType::Basic },
+       { 18, 7, 0, EnemyType::Basic },
+       { 18, 8, 0, EnemyType::Basic },
+       { 28, 9, 8, EnemyType::Speedy },
+       { 28, 9, 7, EnemyType::Speedy },
+       { 28, 9, 6, EnemyType::Speedy },
+       { 35, 0, 1, EnemyType::Speedy },
+       { 35, 0, 2, EnemyType::Speedy },
+       { 35, 0, 3, EnemyType::Speedy },
+       { 41, 6, 0, EnemyType::Speedy },
+       { 41, 7, 0, EnemyType::Speedy },
+       { 41, 8, 0, EnemyType::Speedy },
+       { 47, 1, 9, EnemyType::Speedy },
+       { 47, 2, 9, EnemyType::Speedy },
+       { 47, 3, 9, EnemyType::Speedy },
     };
     waveSystem_->AddWaveData(wave2);
+
+    // Wave3
+    WaveData wave3{};
+    wave3.wave = Wave::Wave3;
+    wave3.duration = 63;
+    wave3.spawnList = {
+        { 5, 2, 0, EnemyType::Basic },
+        { 9, 1, 0, EnemyType::Basic },
+        { 9, 2, 0, EnemyType::Basic },
+        { 14, 7, 9, EnemyType::Basic },
+        { 17, 7, 9, EnemyType::Basic },
+        { 17, 8, 9, EnemyType::Basic },
+        { 22, 0, 7, EnemyType::Basic },
+        { 26, 0, 7, EnemyType::Basic },
+        { 26, 0, 8, EnemyType::Basic },
+        { 31, 9, 2, EnemyType::Basic },
+        { 35, 9, 1, EnemyType::Basic },
+        { 35, 9, 2, EnemyType::Basic },
+        { 41, 2, 0, EnemyType::Speedy },
+        { 43, 1, 0, EnemyType::Speedy },
+        { 43, 2, 0, EnemyType::Speedy },
+        { 47, 7, 9, EnemyType::Speedy },
+        { 49, 7, 9, EnemyType::Speedy },
+        { 49, 8, 9, EnemyType::Speedy },
+        { 53, 0, 7, EnemyType::Speedy },
+        { 55, 0, 7, EnemyType::Speedy },
+        { 55, 0, 8, EnemyType::Speedy },
+        { 59, 9, 2, EnemyType::Speedy },
+        { 63, 9, 1, EnemyType::Speedy },
+        { 63, 9, 2, EnemyType::Speedy },
+    };
+    waveSystem_->AddWaveData(wave3);
 
     // 全Wave終了時のコールバック
     waveSystem_->SetOnAllWavesCompletedCallback([this]() {

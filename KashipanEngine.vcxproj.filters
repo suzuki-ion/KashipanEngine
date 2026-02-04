@@ -164,6 +164,7 @@
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithPauseScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithScoreScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -455,6 +456,7 @@
     <ClInclude Include="Application\Scenes\Components\ResultScene\PlayerEscape.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\CarEscape.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\ResultSceneAnimator.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithScoreScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

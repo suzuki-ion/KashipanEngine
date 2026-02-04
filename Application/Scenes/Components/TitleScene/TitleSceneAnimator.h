@@ -62,7 +62,7 @@ public:
         }
 
         bpmHandle_ = AudioManager::GetSoundHandleFromFileName("BPM.mp3");
-        soundBeat_.SetBeat(AudioManager::kInvalidPlayHandle, 120.0f, 0.0);
+        soundBeat_.SetBeat(AudioManager::kInvalidPlayHandle, 90.0f, 0.0);
         soundBeat_.StartManualBeat();
     }
 

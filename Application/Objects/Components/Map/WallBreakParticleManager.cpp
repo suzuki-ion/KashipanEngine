@@ -6,13 +6,13 @@ namespace KashipanEngine {
     WallBreakParticleManager::WallBreakParticleManager()
         : ISceneComponent("WallBreakParticleManager")
     {
-        config_.initialSpeed = 8.0f;
-        config_.speedVariation = 3.0f;
-        config_.lifeTimeSec = 1.0f;
-        config_.gravity = 15.0f;
-        config_.damping = 0.96f;
-        config_.baseScale = Vector3{ 5.0f, 5.0f, 5.0f };
-        config_.color = Vector4{ 0.0f, 1.0f, 0.0f, 1.0f };
+        config_.initialSpeed = 30.0f;
+        config_.speedVariation = 5.0f;
+        config_.lifeTimeSec = 0.5f;
+        config_.gravity = 0.0f;
+        config_.damping = 0.98f;
+        config_.baseScale = Vector3{ 1.0f, 1.0f, 1.0f };
+        config_.color = Vector4{ 0.5f, 0.5f, 0.5f, 1.0f };
     }
 
     void WallBreakParticleManager::Initialize() {

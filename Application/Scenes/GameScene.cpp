@@ -478,6 +478,7 @@ void GameScene::Initialize() {
         comp->SetCollider(colliderComp);
         comp->SetPlayer(player_);
         comp->SetBombManager(bombManager_);
+        comp->SetWallBreak(wallBreakParticleManager_);
         comp->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);  // 壁配列を設定
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
@@ -1504,6 +1505,10 @@ void GameScene::SetParticleValue() {
 
     if (explosionManager_) {
 		explosionManager_->SetWallBreakConfig(wallBreakParticleConfig_);
+    }
+
+    if (wallBreakParticleManager_) {
+        wallBreakParticleManager_->SetParticleConfig(wallBreakParticleConfig_);
     }
 }
 

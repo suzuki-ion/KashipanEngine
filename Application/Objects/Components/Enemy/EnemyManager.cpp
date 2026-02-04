@@ -167,6 +167,15 @@ void EnemyManager::Update() {
 
                 // 移動先に壁があるかチェック
                 if (IsWallAt(nextX, nextZ)) {
+
+                    // グリッド座標をワールド座標に変換（moveDistance_は2.0fと仮定）
+                    Vector3 worldPos = Vector3{
+                        static_cast<float>(nextX) * 2.0f,
+                        1.0f,
+                        static_cast<float>(nextZ) * 2.0f
+                    };
+                    wallBreakParticle_->SpawnParticles(worldPos);
+
                     // 壁がある場合は移動せず、その場に留まり、方向を逆転させる
                     e.startPosition = e.position;
                     e.targetPosition = e.position;
@@ -280,6 +289,13 @@ void EnemyManager::Update() {
             // 壁があれば破壊
             if (IsWallAt(currentGridX, currentGridZ)) {
                 DestroyWallAt(currentGridX, currentGridZ);
+                // グリッド座標をワールド座標に変換（moveDistance_は2.0fと仮定）
+                Vector3 worldPos = Vector3{
+                    static_cast<float>(currentGridX) * 2.0f,
+                    1.0f,
+                    static_cast<float>(currentGridZ) * 2.0f
+                };
+                wallBreakParticle_->SpawnParticles(worldPos);
             }
             
             // 吹き飛び中は現在位置をそのまま描画

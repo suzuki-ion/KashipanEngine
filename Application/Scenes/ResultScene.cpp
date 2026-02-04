@@ -4,6 +4,10 @@
 #include "Scenes/Components/ResultScene/ScoreSaveAndLoad.h"
 #include "Scenes/Components/ResultScene/ShowScoreNumModels.h"
 #include "Objects/Components/ParticleMovement.h"
+#include "Objects/GameObjects/3D/Box.h"
+#include "Objects/Components/SmokeParticle.h"
+#include <array>
+#include <string>
 
 namespace KashipanEngine {
 
@@ -101,6 +105,32 @@ void ResultScene::Initialize() {
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
         AddObject3D(std::move(obj));
+    }
+
+    if (screenBuffer3D) {
+        constexpr size_t kSmokeSetCount = 3;
+        constexpr size_t kSmokePerSet = 32;
+        const std::array<SmokeParticle::SpawnBox, kSmokeSetCount> spawnBoxes = {
+            SmokeParticle::SpawnBox{ Vector3{ -7.5f, 7.0f, 10.5f }, Vector3{ -6.5f, 7.5f, 11.5f } },
+            SmokeParticle::SpawnBox{ Vector3{ -3.5f, 9.0f, 10.5f }, Vector3{ -2.5f, 9.5f, 11.5f } },
+            SmokeParticle::SpawnBox{ Vector3{ 3.5f, 8.0f, 9.5f }, Vector3{ 4.5f, 8.5f, 10.5f } }
+        };
+
+        for (size_t setIndex = 0; setIndex < kSmokeSetCount; ++setIndex) {
+            for (size_t i = 0; i < kSmokePerSet; ++i) {
+                auto obj = std::make_unique<Box>();
+                obj->SetUniqueBatchKey();
+                obj->SetName("Result.SmokeParticle_" + std::to_string(setIndex) + "_" + std::to_string(i));
+                obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                obj->RegisterComponent<SmokeParticle>(spawnBoxes[setIndex]);
+                if (auto *mat = obj->GetComponent3D<Material3D>()) {
+                    mat->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+                    mat->SetEnableLighting(false);
+                    mat->SetEnableShadowMapProjection(false);
+                }
+                AddObject3D(std::move(obj));
+            }
+        }
     }
 
     AddSceneComponent(std::make_unique<Letterbox>());

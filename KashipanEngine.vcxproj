@@ -334,6 +334,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
     <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
     <ClInclude Include="Application\Objects\Components\Player\ScoreManager.h" />
+    <ClInclude Include="Application\Objects\Components\SmokeParticle.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />

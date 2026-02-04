@@ -470,6 +470,7 @@
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithScoreScreen.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.h" />
+    <ClInclude Include="Application\Objects\Components\SmokeParticle.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

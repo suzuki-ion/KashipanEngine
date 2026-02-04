@@ -389,6 +389,8 @@ private:
     LONG prevWindowStyle_ = 0;
     LONG prevWindowExStyle_ = 0;
     RECT prevWindowRect_{};
+    int32_t prevClientWidth_ = 0;
+    int32_t prevClientHeight_ = 0;
 
     // イベントハンドラマップ（既定イベント or ユーザーイベント）
     std::unordered_map<UINT, Events> eventHandlers_;

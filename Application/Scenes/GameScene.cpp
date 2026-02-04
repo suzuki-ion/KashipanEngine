@@ -724,6 +724,7 @@ void GameScene::OnUpdate() {
         if (backMonitorPause_->IsConfirmedTriggered()) {
             switch (static_cast<PauseModelIndex>(backMonitorPause_->GetConfirmedIndex())) {
             case PauseModelIndex::Continue:
+                InGamePauseQuit();
                 if (backMonitorPause_) backMonitorPause_->SetActive(false);
                 if (backMonitorGame_) backMonitorGame_->SetActive(true);
                 if (cameraController_) cameraController_->SetTargetTranslate(cameraGameTargetPos_);
@@ -733,6 +734,7 @@ void GameScene::OnUpdate() {
 
             case PauseModelIndex::Menu:
                 InGameQuit();
+                InGamePauseQuit();
                 if (stageLighting_) stageLighting_->DisableLighting(true, true);
                 if (backMonitorPause_) backMonitorPause_->SetActive(false);
                 if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
@@ -741,6 +743,7 @@ void GameScene::OnUpdate() {
                 break;
 
             case PauseModelIndex::Title:
+                InGamePauseQuit();
                 SetNextSceneName("TitleScene");
                 if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                     out->Play();
@@ -759,6 +762,7 @@ void GameScene::OnUpdate() {
 
     if (backMonitorMenu_ && !backMonitorMenu_->IsActive() &&
         backMonitorPause_ && !backMonitorPause_->IsActive() && GetInputCommand()->Evaluate("Escape").Triggered()) {
+		InGamePause();
         if (backMonitorPause_) backMonitorPause_->SetActive(true);
         if (backMonitorGame_) backMonitorGame_->SetActive(false);
         if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
@@ -1739,6 +1743,44 @@ void GameScene::InGameQuit() {
     }
 
     isGameStarted_ = false;
+}
+
+void GameScene::InGamePause() {
+    AudioManager::Pause(bgmPlayHandle_);
+    if (auto* pMove = player_->GetComponent3D<PlayerMove>()) {
+        pMove->SetIsPause(true);
+    }
+
+    if (bombManager_) {
+		bombManager_->SetIsPause(true);
+    }
+
+    if (playerHealthUI_) {
+        playerHealthUI_->SetIsPause(true);
+    }
+
+    if (waveSystem_) {
+        waveSystem_->SetIsPause(true);
+    }
+}
+
+void GameScene::InGamePauseQuit() {
+    AudioManager::Resume(bgmPlayHandle_);
+    if (auto* pMove = player_->GetComponent3D<PlayerMove>()) {
+        pMove->SetIsPause(false);
+    }
+
+    if (bombManager_) {
+        bombManager_->SetIsPause(false);
+    }
+
+    if (playerHealthUI_) {
+        playerHealthUI_->SetIsPause(false);
+    }
+
+    if (waveSystem_) {
+		waveSystem_->QuitPause();
+    }
 }
 
 void GameScene::UpdateWallRespawnMarkers() {

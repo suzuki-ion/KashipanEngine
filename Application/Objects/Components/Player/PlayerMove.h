@@ -126,6 +126,9 @@ namespace KashipanEngine {
 		/// @brief ゲーム開始フラグの設定
         void SetIsStarted(bool start) { isStarted_ = start; }
 
+		/// @brief 一時停止フラグの設定
+		void SetIsPause(bool pause) { isPause_ = pause; }
+
 		/// @brief Bombでの移動停止判定の設定
 		void SetIsMoveBombStop(bool f) { isMoveBombStop_ = f; }
 
@@ -507,12 +510,12 @@ namespace KashipanEngine {
             
             if (inputCommand_->Evaluate("MoveUp").Triggered()) {
                 if (f) {
-                    if (!isMoving_ && isStarted_) {
+                    if (!isMoving_ && isStarted_ && !isPause_) {
                         // 通常の移動開始
                         moveDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
                         playerDirection_ = PlayerDirection::Up;
                         triggered_ = true;
-                    } else if (canBuffer && isStarted_) {
+                    } else if (canBuffer && isStarted_ && !isPause_) {
                         // 移動中だが、バッファリング可能な場合
                         hasBufferedInput_ = true;
                         bufferedDirection_ = Vector3{ 0.0f, 0.0f, moveDistance_ };
@@ -532,11 +535,11 @@ namespace KashipanEngine {
 				PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveDown").Triggered()) {
                 if (f) {
-                    if (!isMoving_ && isStarted_) {
+                    if (!isMoving_ && isStarted_ && !isPause_) {
                         moveDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
                         playerDirection_ = PlayerDirection::Down;
                         triggered_ = true;
-                    } else if (canBuffer && isStarted_) {
+                    } else if (canBuffer && isStarted_ && !isPause_) {
                         hasBufferedInput_ = true;
                         bufferedDirection_ = Vector3{ 0.0f, 0.0f, -moveDistance_ };
                         bufferedPlayerDirection_ = PlayerDirection::Down;
@@ -555,11 +558,11 @@ namespace KashipanEngine {
                 PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveLeft").Triggered()) {
                 if (f) {
-                    if (!isMoving_ && isStarted_) {
+                    if (!isMoving_ && isStarted_ && !isPause_) {
                         moveDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
                         playerDirection_ = PlayerDirection::Left;
                         triggered_ = true;
-                    } else if (canBuffer && isStarted_) {
+                    } else if (canBuffer && isStarted_ && !isPause_) {
                         hasBufferedInput_ = true;
                         bufferedDirection_ = Vector3{ -moveDistance_, 0.0f, 0.0f };
                         bufferedPlayerDirection_ = PlayerDirection::Left;
@@ -578,11 +581,11 @@ namespace KashipanEngine {
                 PlayMoveSound(f);
             } else if (inputCommand_->Evaluate("MoveRight").Triggered()) {
                 if (f) {
-                    if (!isMoving_ && isStarted_) {
+                    if (!isMoving_ && isStarted_ && !isPause_) {
                         moveDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
                         playerDirection_ = PlayerDirection::Right;
                         triggered_ = true;
-                    } else if (canBuffer && isStarted_) {
+                    } else if (canBuffer && isStarted_ && !isPause_) {
                         hasBufferedInput_ = true;
                         bufferedDirection_ = Vector3{ moveDistance_, 0.0f, 0.0f };
                         bufferedPlayerDirection_ = PlayerDirection::Right;
@@ -751,6 +754,7 @@ namespace KashipanEngine {
 		PlayerDirection playerDirection_ = PlayerDirection::Down; // プレイヤーの向き
 
 		bool isStarted_ = false;
+		bool isPause_ = false;
 		bool isMoveBombStop_ = false; // ボムのある方向に移動するかどうか 
 
         float moveDistance_ = 2.0f;       // 1回の移動距離

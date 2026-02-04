@@ -12,6 +12,30 @@ void WaveSystem::Initialize() {
 void WaveSystem::Update() {
     if (!isSystemRunning_ || !bpmSystem_) return;
 
+    if (isPause_) {
+        // 全てのWave表示を透明化
+        for (int i = 0; i < kMaxWaveNumbers_; ++i) {
+            if (waveNumbers_[i]) {
+                if (auto* mt = waveNumbers_[i]->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 0.0f;  // Alpha = 0
+                    mt->SetColor(color);
+                }
+            }
+        }
+
+        // 全ての数字を透明化
+        for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+            if (countdownNumbers_[i]) {
+                if (auto* mt = countdownNumbers_[i]->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 0.0f;  // Alpha = 0
+                    mt->SetColor(color);
+                }
+            }
+        }
+    }
+
     int currentBeat = bpmSystem_->GetCurrentBeat();
 
     // プール内の全パーティクルにconfigを適用（EnemySpawnerと同じ）
@@ -523,23 +547,36 @@ void WaveSystem::ShowCountdownNumber(int number) {
 
     // 現在表示中の数字と異なる場合のみ更新
     if (currentCountdownNumber_ != number) {
-        // 全ての数字を透明化
-        for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
-            if (countdownNumbers_[i]) {
-                if (auto* mt = countdownNumbers_[i]->GetComponent3D<Material3D>()) {
-                    Vector4 color = mt->GetColor();
-                    color.w = 0.0f;  // Alpha = 0
-                    mt->SetColor(color);
+        if (isPause_) {
+            // 全ての数字を透明化
+            for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+                if (countdownNumbers_[i]) {
+                    if (auto* mt = countdownNumbers_[i]->GetComponent3D<Material3D>()) {
+                        Vector4 color = mt->GetColor();
+                        color.w = 0.0f;  // Alpha = 0
+                        mt->SetColor(color);
+                    }
                 }
             }
-        }
+        } else {
+            // 全ての数字を透明化
+            for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+                if (countdownNumbers_[i]) {
+                    if (auto* mt = countdownNumbers_[i]->GetComponent3D<Material3D>()) {
+                        Vector4 color = mt->GetColor();
+                        color.w = 0.0f;  // Alpha = 0
+                        mt->SetColor(color);
+                    }
+                }
+            }
 
-        // 新しい数字を表示（不透明化）
-        if (countdownNumbers_[number]) {
-            if (auto* mt = countdownNumbers_[number]->GetComponent3D<Material3D>()) {
-                Vector4 color = mt->GetColor();
-                color.w = 1.0f;  // Alpha = 1
-                mt->SetColor(color);
+            // 新しい数字を表示（不透明化）
+            if (countdownNumbers_[number]) {
+                if (auto* mt = countdownNumbers_[number]->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 1.0f;  // Alpha = 1
+                    mt->SetColor(color);
+                }
             }
         }
 
@@ -609,23 +646,36 @@ void WaveSystem::ShowWaveNumber(int waveNumber) {
 
     // 現在表示中のWaveと異なる場合のみ更新
     if (currentDisplayedWave_ != waveNumber) {
-        // 全てのWave表示を透明化
-        for (int i = 0; i < kMaxWaveNumbers_; ++i) {
-            if (waveNumbers_[i]) {
-                if (auto* mt = waveNumbers_[i]->GetComponent3D<Material3D>()) {
-                    Vector4 color = mt->GetColor();
-                    color.w = 0.0f;  // Alpha = 0
-                    mt->SetColor(color);
+        if (isPause_) {
+            // 全てのWave表示を透明化
+            for (int i = 0; i < kMaxWaveNumbers_; ++i) {
+                if (waveNumbers_[i]) {
+                    if (auto* mt = waveNumbers_[i]->GetComponent3D<Material3D>()) {
+                        Vector4 color = mt->GetColor();
+                        color.w = 0.0f;  // Alpha = 0
+                        mt->SetColor(color);
+                    }
                 }
             }
-        }
+        } else {
+            // 全てのWave表示を透明化
+            for (int i = 0; i < kMaxWaveNumbers_; ++i) {
+                if (waveNumbers_[i]) {
+                    if (auto* mt = waveNumbers_[i]->GetComponent3D<Material3D>()) {
+                        Vector4 color = mt->GetColor();
+                        color.w = 0.0f;  // Alpha = 0
+                        mt->SetColor(color);
+                    }
+                }
+            }
 
-        // 新しいWaveを表示（不透明化）
-        if (waveNumbers_[index]) {
-            if (auto* mt = waveNumbers_[index]->GetComponent3D<Material3D>()) {
-                Vector4 color = mt->GetColor();
-                color.w = 1.0f;  // Alpha = 1
-                mt->SetColor(color);
+            // 新しいWaveを表示（不透明化）
+            if (waveNumbers_[index]) {
+                if (auto* mt = waveNumbers_[index]->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 1.0f;  // Alpha = 1
+                    mt->SetColor(color);
+                }
             }
         }
 

@@ -151,6 +151,34 @@ public:
     /// @return パーティクル放出中ならtrue
     bool IsParticleEmittingAt(const Vector3& position) const;
 
+	void SetIsPause(bool isPause) { isPause_ = isPause; }
+
+	void QuitPause() { 
+        isPause_ = false;
+        
+        // 現在表示中のカウントダウン数字のAlphaを1.0fに戻す
+        if (currentCountdownNumber_ >= 0 && currentCountdownNumber_ < kMaxCountdownNumbers_) {
+            if (countdownNumbers_[currentCountdownNumber_]) {
+                if (auto* mt = countdownNumbers_[currentCountdownNumber_]->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 1.0f;  // Alpha = 1
+                    mt->SetColor(color);
+                }
+            }
+        }
+        
+        // 現在表示中のWaveのAlphaを1.0fに戻す
+        if (currentDisplayedWave_ >= 1 && currentDisplayedWave_ <= kMaxWaveNumbers_) {
+            int index = currentDisplayedWave_ - 1;
+            if (waveNumbers_[index]) {
+                if (auto* mt = waveNumbers_[index]->GetComponent3D<Material3D>()) {
+                    Vector4 color = mt->GetColor();
+                    color.w = 1.0f;  // Alpha = 1
+                    mt->SetColor(color);
+                }
+            }
+        }
+    }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -224,6 +252,7 @@ private:
     bool isWaitingForNextWave_ = false; // 次のWave待機中か
     bool isAllWavesCompleted_ = false;  // 全Waveが終了したか
     bool isDurationExceeded_ = false;   // duration超過フラグ
+    bool isPause_ = false;
 
     // 設定
     int preWaveDelayBeats_ = 4;         // Wave開始前の待機拍数

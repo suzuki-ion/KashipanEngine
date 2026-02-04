@@ -68,6 +68,9 @@ private:
 
     void InGameStart();
 	void InGameQuit();
+
+    void InGamePause();
+    void InGamePauseQuit();
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 

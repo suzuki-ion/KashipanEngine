@@ -109,35 +109,57 @@ namespace KashipanEngine {
     void PlayerHealthModelUI::UpdateModelColors() {
         const int hp = health_ ? std::max(0, health_->GetHp()) : 0;
 
-        for (int i = 0; i < static_cast<int>(hpObject_.size()); ++i) {
-            auto* obj = hpObject_[i];
-            if (!obj) continue;
+        if (isPause_) {
+            for (int i = 0; i < static_cast<int>(hpObject_.size()); ++i) {
+                auto* obj = hpObject_[i];
+                if (!obj) continue;
 
-            auto* scaling = obj->GetComponent3D<BPMScaling>();
-            if (scaling) {
-                scaling->SetBPMProgress(bpmProgress_);
-			}
+                auto* mat = obj->GetComponent3D<Material3D>();
+                if (!mat) continue;
 
-            auto* mat = obj->GetComponent3D<Material3D>();
-            if (!mat) continue;
-
-            if (i < hp) {
-                mat->SetColor(Vector4{1.0f, 0.0f, 0.0f, 1.0f});
-            } else {
-                mat->SetColor(Vector4{0.0f, 0.0f, 0.0f, 0.0f});
-            }
-        }
-
-        for (int i = 0; i < static_cast<int>(hpOutLineObject_.size()); ++i) {
-            auto* obj = hpOutLineObject_[i];
-            if (!obj) continue;
-            auto* mat = obj->GetComponent3D<Material3D>();
-            if (!mat) continue;
-
-            if (i < hp) {
-                mat->SetColor(Vector4{ 0.2f, 0.2f, 0.2f, 1.0f });
-            } else {
                 mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+            }
+
+            for (int i = 0; i < static_cast<int>(hpOutLineObject_.size()); ++i) {
+                auto* obj = hpOutLineObject_[i];
+                if (!obj) continue;
+
+                auto* mat = obj->GetComponent3D<Material3D>();
+                if (!mat) continue;
+
+                mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+            }
+        } else {
+            for (int i = 0; i < static_cast<int>(hpObject_.size()); ++i) {
+                auto* obj = hpObject_[i];
+                if (!obj) continue;
+
+                auto* scaling = obj->GetComponent3D<BPMScaling>();
+                if (scaling) {
+                    scaling->SetBPMProgress(bpmProgress_);
+                }
+
+                auto* mat = obj->GetComponent3D<Material3D>();
+                if (!mat) continue;
+
+                if (i < hp) {
+                    mat->SetColor(Vector4{ 1.0f, 0.0f, 0.0f, 1.0f });
+                } else {
+                    mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+                }
+            }
+
+            for (int i = 0; i < static_cast<int>(hpOutLineObject_.size()); ++i) {
+                auto* obj = hpOutLineObject_[i];
+                if (!obj) continue;
+                auto* mat = obj->GetComponent3D<Material3D>();
+                if (!mat) continue;
+
+                if (i < hp) {
+                    mat->SetColor(Vector4{ 0.2f, 0.2f, 0.2f, 1.0f });
+                } else {
+                    mat->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+                }
             }
         }
     }

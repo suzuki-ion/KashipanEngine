@@ -134,6 +134,10 @@ public:
     int GetCurrentChainCount() const;
 
 	void SetMoveInputInterval(float interval) { moveInputInterval_ = interval; }
+
+    /// @brief ポーズ状態を設定
+    void SetIsPause(bool isPause) { isPause_ = isPause; };
+
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif
@@ -202,6 +206,8 @@ private:
     float moveInputInterval_ = 0.3f;
 
     bool isStarted_ = false;
+	bool isPause_ = false;
+
     bool usePlayerDirection_ = false; // プレイヤーの向きに基づいて爆弾を設置するかどうか
     bool pendingBombSpawn_ = false;   // 移動完了後に爆弾を生成する予約フラグ
     bool wasInBPMRange_ = false;      // 前フレームでBPM許容範囲内だったか

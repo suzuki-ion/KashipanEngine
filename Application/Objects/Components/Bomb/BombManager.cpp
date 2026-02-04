@@ -115,7 +115,7 @@ void BombManager::Update() {
             }
         }
 
-        if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_) {
+        if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_) {
             if (bombSpawnMode_ == BombSpawnMode::None) {
                 // Noneモードから移行する場合、既存の爆弾をすべて起爆
                 DetonateAllBombs();

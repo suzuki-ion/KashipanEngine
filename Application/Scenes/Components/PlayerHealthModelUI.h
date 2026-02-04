@@ -30,11 +30,16 @@ namespace KashipanEngine {
 
 		/// @brief BPM進行度を設定（0.0～1.0）
 		void SetBPMProgress(float progress) { bpmProgress_ = progress; }
+
+		/// @brief ポーズ状態を設定
+		void SetIsPause(bool isPause) { isPause_ = isPause; }
     private:
         void EnsureModels();
         void UpdateModelColors();
 
 		float bpmProgress_ = 0.0f;
+
+		bool isPause_ = false;
 
         ScreenBuffer* screenBuffer_ = nullptr;
         Health* health_ = nullptr;

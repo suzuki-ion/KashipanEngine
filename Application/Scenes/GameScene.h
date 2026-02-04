@@ -31,6 +31,7 @@
 #include "Objects/Components/Bomb/ExplosionManager.h"
 #include "Objects/Components/Map/WallInfo.h"
 #include "Objects/Components/Player/PlayerBombSpawnMode.h"
+#include "Objects/Components/Map/WallBreakParticleManager.h"
 
 namespace KashipanEngine {
 
@@ -181,6 +182,7 @@ private:
 
     // Wave関連
     WaveSystem *waveSystem_ = nullptr;
+    WallBreakParticleManager* wallBreakParticleManager_ = nullptr;
 
 	int wallSpawnAgainCount_ = 8; // 壁の再生成までの待機拍数
 
@@ -201,6 +203,7 @@ private:
     ParticleConfig oneBeatParticleConfig_{};
     ParticleConfig oneBeatMissParticleConfig_{};
     ParticleConfig playerDieParticleConfig_{};
+	ParticleConfig wallBreakParticleConfig_{};
 
     int enemySpawnParticleCount_ = 20;
     int enemyDieParticleCount_ = 30;

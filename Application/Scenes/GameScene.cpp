@@ -409,9 +409,17 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
+    {
+        auto comp = std::make_unique<WallBreakParticleManager>();
+        comp->SetScreenBuffer(screenBuffer3D);
+        wallBreakParticleManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
     // ExplosionManagerにBombExplosionParticleManagerを設定
     if (explosionManager_ && bombExplosionParticleManager_) {
         explosionManager_->SetBombExplosionParticleManager(bombExplosionParticleManager_);
+		explosionManager_->SetWallBreakParticleManager(wallBreakParticleManager_);
     }
 
     // ExplosionNumberDisplay の追加
@@ -1235,7 +1243,6 @@ void GameScene::LoadParticleStateJson() {
         if (index < values.size()) oneBeatMissParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) oneBeatMissParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
 
-
         // PlayerDieParticle関連
         if (index < values.size()) playerDieParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerDieParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
@@ -1246,6 +1253,17 @@ void GameScene::LoadParticleStateJson() {
         if (index < values.size()) playerDieParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerDieParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerDieParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
+
+        // 関連
+        if (index < values.size()) wallBreakParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.lifeTimeSec = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.gravity = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.damping = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.spreadAngle = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadParticleStateJson: %s\n", e.what());
         printf("[INFO] Using default particle settings.\n");
@@ -1319,6 +1337,17 @@ void GameScene::SaveParticleStateJson() {
     jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.x, "playerDie_baseScale_x");
     jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.y, "playerDie_baseScale_y");
     jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.z, "playerDie_baseScale_z");
+
+    // WallBreakParticle関連
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.initialSpeed, "wallBreak_initialSpeed");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.speedVariation, "wallBreak_speedVariation");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.lifeTimeSec, "wallBreak_lifeTimeSec");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.gravity, "wallBreak_gravity");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.damping, "wallBreak_damping");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.spreadAngle, "wallBreak_spreadAngle");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.baseScale.x, "wallBreak_baseScale_x");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.baseScale.y, "wallBreak_baseScale_y");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.baseScale.z, "wallBreak_baseScale_z");
 
     // JSONファイルに書き込み（jsonParticleManager_を使用）
     jsonParticleManager_->Write(loadToSaveParticleName_);
@@ -1471,6 +1500,10 @@ void GameScene::SetParticleValue() {
 
     if (playerDieParticleManager_) {
         playerDieParticleManager_->SetParticleConfig(playerDieParticleConfig_);
+    }
+
+    if (explosionManager_) {
+		explosionManager_->SetWallBreakConfig(wallBreakParticleConfig_);
     }
 }
 
@@ -1633,6 +1666,17 @@ void GameScene::DrawParticleStateImGui() {
         ImGui::DragFloat("減衰率##playerdie", &playerDieParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("広がる角度(度)##playerdie", &playerDieParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
         ImGui::DragFloat3("基本スケール##playerdie", &playerDieParticleConfig_.baseScale.x, 0.01f, 0.0f, 10.0f);
+    }
+
+    // wallBreakParticle関連
+    if (ImGui::CollapsingHeader("wallDieParticle")) {
+        ImGui::DragFloat("初速度##walldie", &wallBreakParticleConfig_.initialSpeed, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("速度ランダム幅##walldie", &wallBreakParticleConfig_.speedVariation, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("生存時間(秒)##walldie", &wallBreakParticleConfig_.lifeTimeSec, 0.01f, 0.1f, 10.0f);
+        ImGui::DragFloat("重力##walldie", &wallBreakParticleConfig_.gravity, 0.1f, -100.0f, 100.0f);
+        ImGui::DragFloat("減衰率##walldie", &wallBreakParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("広がる角度(度)##walldie", &wallBreakParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
+        ImGui::DragFloat3("基本スケール##walldie", &wallBreakParticleConfig_.baseScale.x, 0.01f, 0.0f, 10.0f);
     }
 
     ImGui::End();

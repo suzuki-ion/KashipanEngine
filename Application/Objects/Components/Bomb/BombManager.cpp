@@ -126,11 +126,19 @@ void BombManager::Update() {
                 bombSpawnMode_ = BombSpawnMode::Chain;
                 missedBeatsCount_ = 0;  // Chainモード開始時にカウンターをリセット
             } else if (bombSpawnMode_ == BombSpawnMode::Chain) {
-                bombSpawnMode_ = BombSpawnMode::None;
-                for (auto& bomb : activeBombs_) {
-                    bomb.isChainBomb = false;
+                // ChainモードでBombが1個だけの場合、そのBombを即起爆
+                if (GetCurrentChainCount() <= 10) {
+                    DetonateAllBombs();
+                    bombSpawnMode_ = BombSpawnMode::None;
+                    missedBeatsCount_ = 0;
+                } else {
+                    // 複数ある場合は従来通りChainモードを解除
+                    bombSpawnMode_ = BombSpawnMode::None;
+                    for (auto& bomb : activeBombs_) {
+                        bomb.isChainBomb = false;
+                    }
+                    missedBeatsCount_ = 0;  // Chainモード終了時にカウンターをリセット
                 }
-                missedBeatsCount_ = 0;  // Chainモード終了時にカウンターをリセット
             }
         }
 

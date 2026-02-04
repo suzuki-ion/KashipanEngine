@@ -803,6 +803,7 @@ void GameScene::OnUpdate() {
     }
 
     if (!isGameClearProcCompleted_ &&
+        tutorialManager_ && tutorialManager_->IsAllTutorialsCompleted() &&
         backMonitorMenu_ && !backMonitorMenu_->IsActive() &&
         backMonitorPause_ && !backMonitorPause_->IsActive() && GetInputCommand()->Evaluate("Escape").Triggered()) {
 		InGamePause();

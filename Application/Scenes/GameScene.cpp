@@ -695,6 +695,13 @@ void GameScene::Initialize() {
         }
     }
 
+    // スコア保存・読み込み用コンポーネントの追加
+    {
+        auto comp = std::make_unique<ScoreSaveAndLoad>();
+        scoreSaveAndLoad_ = comp.get();
+        scoreSaveAndLoad_->Load();
+        AddSceneComponent(std::move(comp));
+    }
 }
 
 GameScene::~GameScene() {}
@@ -708,16 +715,29 @@ void GameScene::OnUpdate() {
     DrawParticleStateImGui();
 #endif
 
+    // ウェーブシステムのウェーブが全て完了した際の処理
+    if (waveSystem_ && waveSystem_->IsAllWavesCompleted() && !isGameClearProcCompleted_) {
+        scoreSaveAndLoad_->RegisterScore(scoreManager_->GetScore());
+        scoreSaveAndLoad_->Save();
+        SetNextSceneName("ResultScene");
+        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+            out->Play();
+        }
+        isGameClearProcCompleted_ = true;
+    }
+
 	// プレイヤーの体力が0になった際の処理
-    if (auto* health = player_->GetComponent3D<Health>()) {
-        if (health->GetOutGameTimerIsFinished()) {
-            InGameQuit();
-            if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
-            if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
-            //if (backMonitorGame_) backMonitorGame_->SetActive(false);
-            if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
-            if (backMonitorPause_) backMonitorPause_->SetActive(false);
-            if (backMonitorScore_) backMonitorScore_->SetActive(false);
+    if (!isGameClearProcCompleted_) {
+        if (auto *health = player_->GetComponent3D<Health>()) {
+            if (health->GetOutGameTimerIsFinished()) {
+                InGameQuit();
+                if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+                if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+                //if (backMonitorGame_) backMonitorGame_->SetActive(false);
+                if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+                if (backMonitorPause_) backMonitorPause_->SetActive(false);
+                if (backMonitorScore_) backMonitorScore_->SetActive(false);
+            }
         }
     }
 
@@ -793,7 +813,8 @@ void GameScene::OnUpdate() {
         }
     }
 
-    if (backMonitorMenu_ && !backMonitorMenu_->IsActive() &&
+    if (!isGameClearProcCompleted_ &&
+        backMonitorMenu_ && !backMonitorMenu_->IsActive() &&
         backMonitorPause_ && !backMonitorPause_->IsActive() && GetInputCommand()->Evaluate("Escape").Triggered()) {
 		InGamePause();
         if (backMonitorPause_) backMonitorPause_->SetActive(true);

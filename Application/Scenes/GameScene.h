@@ -36,6 +36,7 @@
 #include "Scenes/Components/Tutorial/TutorialBase.h"
 #include "Scenes/Components/Tutorial/MoveTutorial.h"
 #include "Scenes/Components/Tutorial/TutorialManager.h"
+#include "Scenes/Components/ResultScene/ScoreSaveAndLoad.h"
 
 namespace KashipanEngine {
 
@@ -246,6 +247,10 @@ private:
     Vector3 cameraGameTargetRot_{};
     Vector3 cameraMenuTargetPos_{};
     Vector3 cameraMenuTargetRot_{};
+
+    // スコア保存・読み込み
+    ScoreSaveAndLoad *scoreSaveAndLoad_ = nullptr;
+    bool isGameClearProcCompleted_ = false;
 
 protected:
     void OnUpdate() override;

@@ -44,6 +44,7 @@ private:
     Model *menuStart_ = nullptr;
     Model *menuQuit_ = nullptr;
     Model *menuCredit_ = nullptr;
+    Model *creditText_ = nullptr;
 
     InputCommand *inputCommand_ = nullptr;
 
@@ -95,6 +96,15 @@ private:
     bool isCreditMoving_ = false;
     bool isCreditMoved_ = false;
     bool isReturning_ = false;
+
+    Vector3 creditTextBasePos_ = {0.0f, 0.0f, 0.0f};
+    Vector3 creditTextStartPos_ = {0.0f, 0.0f, 0.0f};
+    Vector3 creditTextEndPos_ = {0.0f, 0.0f, 0.0f};
+    float creditTextElapsed_ = 0.0f;
+    float creditTextDuration_ = 0.0f;
+    bool isCreditTextMoving_ = false;
+    bool isCreditTextReturning_ = false;
+    bool isCreditTextMoved_ = false;
 
     Vector3 confirmStartPos_ = {0.0f, 0.0f, 0.0f};
     Vector3 confirmEndPos_ = {0.0f, 0.0f, 2.0f};

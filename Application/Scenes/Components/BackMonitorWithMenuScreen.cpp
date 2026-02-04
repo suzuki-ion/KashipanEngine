@@ -154,6 +154,26 @@ void BackMonitorWithMenuScreen::Initialize() {
         mat->SetEnableShadowMapProjection(false);
     }
 
+    if (!creditText_) {
+        auto modelHandle = ModelManager::GetModelDataFromFileName("creditText.obj");
+        auto obj = std::make_unique<Model>(modelHandle);
+        obj->SetUniqueBatchKey();
+        obj->SetName("BackMonitor.CreditText");
+        obj->AttachToRenderer(target, "Object3D.Solid.BlendNormal");
+        creditText_ = obj.get();
+        ctx->AddObject3D(std::move(obj));
+    }
+    if (auto *tr = creditText_->GetComponent3D<Transform3D>()) {
+        creditTextBasePos_ = Vector3{ centerX, -10.0f, 2.5f };
+        tr->SetTranslate(creditTextBasePos_);
+        tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+        tr->SetScale(scaleVec);
+    }
+    if (auto *mat = creditText_->GetComponent3D<Material3D>()) {
+        mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+        mat->SetEnableShadowMapProjection(false);
+    }
+
     isSubmitted_ = false;
     isConfirming_ = false;
     isConfirmed_ = false;
@@ -161,6 +181,11 @@ void BackMonitorWithMenuScreen::Initialize() {
     isCreditMoving_ = false;
     isCreditMoved_ = false;
     isReturning_ = false;
+    isCreditTextMoving_ = false;
+    isCreditTextReturning_ = false;
+    isCreditTextMoved_ = false;
+    creditTextElapsed_ = 0.0f;
+    creditTextDuration_ = 0.0f;
     selectedIndex_ = 0;
     // サイン波タイマーをリセット
     rotSineTime_ = 0.0f;
@@ -201,6 +226,11 @@ void BackMonitorWithMenuScreen::Update() {
                 mat->SetColor(Vector4{ 0.0f,0.0f,0.0f,0.0f });
             }
         }
+        if (creditText_) {
+            if (auto *mat = creditText_->GetComponent3D<Material3D>()) {
+                mat->SetColor(Vector4{ 0.0f,0.0f,0.0f,0.0f });
+            }
+        }
         wasActive_ = false;
         return;
     }
@@ -224,6 +254,12 @@ void BackMonitorWithMenuScreen::Update() {
             xElapsed_[idx] = -static_cast<float>(idx) * stagger;
             xDuration_[idx] = baseXDuration;
             xAnimating_[idx] = true;
+        }
+
+        if (creditText_) {
+            if (auto *mat = creditText_->GetComponent3D<Material3D>()) {
+                mat->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+            }
         }
     }
 
@@ -356,6 +392,18 @@ void BackMonitorWithMenuScreen::Update() {
             xAnimating_[idx] = false;
             ++idx;
         }
+
+        if (creditText_) {
+            if (auto *tr = creditText_->GetComponent3D<Transform3D>()) {
+                creditTextStartPos_ = tr->GetTranslate();
+            }
+            creditTextEndPos_ = creditTextBasePos_;
+            creditTextElapsed_ = 0.0f;
+            creditTextDuration_ = returnDuration;
+            isCreditTextReturning_ = true;
+            isCreditTextMoving_ = false;
+            isCreditTextMoved_ = false;
+        }
     }
 
     //==================================================
@@ -448,10 +496,23 @@ void BackMonitorWithMenuScreen::Update() {
             isConfirming_ = false;
             if (confirmedIndex_ == static_cast<int>(MenuModelIndex::Credit)) {
                 creditMoveStartPos_ = tr->GetTranslate();
-                creditMoveEndPos_ = Vector3{ creditMoveStartPos_.x, 2.0f, creditMoveStartPos_.z };
+                creditMoveEndPos_ = Vector3{ creditMoveStartPos_.x, 4.0f, creditMoveStartPos_.z };
                 creditMoveElapsed_ = 0.0f;
                 creditMoveDuration_ = 0.5f;
                 isCreditMoving_ = true;
+
+                if (creditText_) {
+                    creditTextStartPos_ = creditTextBasePos_;
+                    creditTextEndPos_ = Vector3{ creditTextBasePos_.x, -1.2f, creditTextBasePos_.z };
+                    creditTextElapsed_ = 0.0f;
+                    creditTextDuration_ = creditMoveDuration_;
+                    isCreditTextMoving_ = true;
+                    isCreditTextReturning_ = false;
+                    isCreditTextMoved_ = false;
+                    if (auto *creditTr = creditText_->GetComponent3D<Transform3D>()) {
+                        creditTr->SetTranslate(creditTextStartPos_);
+                    }
+                }
             } else {
                 isConfirmed_ = true;
             }
@@ -467,7 +528,37 @@ void BackMonitorWithMenuScreen::Update() {
         if (t >= 1.0f) {
             isCreditMoving_ = false;
             isCreditMoved_ = true;
-            isConfirmed_ = true;
+            if (!creditText_ || isCreditTextMoved_) {
+                isConfirmed_ = true;
+            }
+        }
+    }
+
+    if (isCreditTextMoving_ && creditText_) {
+        creditTextElapsed_ += dt;
+        float t = Normalize01(creditTextElapsed_, 0.0f, creditTextDuration_);
+        if (auto *tr = creditText_->GetComponent3D<Transform3D>()) {
+            Vector3 pos = EaseOutCubic(creditTextStartPos_, creditTextEndPos_, t);
+            tr->SetTranslate(pos);
+        }
+        if (t >= 1.0f) {
+            isCreditTextMoving_ = false;
+            isCreditTextMoved_ = true;
+            if (isCreditMoved_) {
+                isConfirmed_ = true;
+            }
+        }
+    }
+
+    if (isCreditTextReturning_ && creditText_) {
+        creditTextElapsed_ += dt;
+        float t = Normalize01(creditTextElapsed_, 0.0f, creditTextDuration_);
+        if (auto *tr = creditText_->GetComponent3D<Transform3D>()) {
+            Vector3 pos = EaseOutCubic(creditTextStartPos_, creditTextEndPos_, t);
+            tr->SetTranslate(pos);
+        }
+        if (t >= 1.0f) {
+            isCreditTextReturning_ = false;
         }
     }
 
@@ -493,6 +584,9 @@ void BackMonitorWithMenuScreen::Update() {
                 hasReturnAnimating = true;
             }
             ++returnIdx;
+        }
+        if (isCreditTextReturning_) {
+            hasReturnAnimating = true;
         }
         if (!hasReturnAnimating) {
             isReturning_ = false;

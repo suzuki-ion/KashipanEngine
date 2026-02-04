@@ -58,8 +58,8 @@ void BackMonitor::Initialize() {
         obj->SetName("DirectionalLight_BackMonitor");
         obj->SetEnabled(true);
         obj->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
-        obj->SetDirection(Vector3{ 2.0f, -1.0f, 1.0f });
-        obj->SetIntensity(1.0f);
+        obj->SetDirection(Vector3{ 0.0f, 0.0f, 1.0f });
+        obj->SetIntensity(0.5f);
         obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         directionalLight_ = obj.get();
         context->AddObject3D(std::move(obj));

@@ -8,6 +8,7 @@
 #include "Objects/Components/Bomb/BombManager.h"
 #include "Scenes/Components/BPM/BPMSystem.h"
 #include "Objects/Components/Bomb/ExplosionManager.h"
+#include "Objects/Components/BPMScaling.h"
 
 namespace KashipanEngine {
 
@@ -66,24 +67,38 @@ void TutorialManager::InitializeTutorialModels() {
         "turtrial_1.obj",
         "turtrial_2.obj",
         "turtrial_3.obj",
-        "turtrial_4.obj"
+        "turtrial_4.obj",
+        "tower.obj",
     };
 
     Vector3 t[kTutorialModelCount] = {
         Vector3(0.0f,1.35f,2.0f),
-        Vector3(0.0f,0.0f,2.27f),
-        Vector3(0.0f,0.0f,1.95f),
-        Vector3(0.0f,0.0f,2.11f),
-        Vector3(0.0f,0.0f,2.35f),
+        Vector3(-0.5f,0.25f,1.77f),
+        Vector3(0.0f,0.36f,1.95f),
+        Vector3(-0.51f,0.1f,2.11f),
+        Vector3(-0.39f,0.22f,2.35f),
+         Vector3(0.0f,0.0f,2.0f),
     };
 
-    Vector3 s[kTutorialModelCount] = {
-        Vector3(1.3f,1.3f,0.1f),
-        Vector3(1.0f,1.0f,0.1f),
-        Vector3(1.0f,1.0f,0.1f),
-        Vector3(1.0f,1.0f,0.1f),
-        Vector3(1.0f,1.0f,0.1f),
+    Vector3 sStart[kTutorialModelCount] = {
+        Vector3(1.2f,1.5f,0.1f),
+        Vector3(0.76f,0.91f,0.1f),
+        Vector3(0.9f,1.0f,0.1f),
+        Vector3(1.02f,1.38f,0.1f),
+        Vector3(1.0f,1.55f,0.1f),
+        Vector3(0.95f,1.44f,0.1f),
+        
     };
+
+    //Vector3 sEnd[kTutorialModelCount] = {
+    //    Vector3(1.3f,1.3f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+
+    //};
 
     for (int i = 0; i < kTutorialModelCount; ++i) {
         auto modelData = ModelManager::GetModelDataFromFileName(modelNames[i]);
@@ -92,7 +107,7 @@ void TutorialManager::InitializeTutorialModels() {
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(t[i]);
-            tr->SetScale(Vector3({ 1.0f ,1.0f ,0.1f }));
+            tr->SetScale(sStart[i]);
         }
 
         if (auto* mt = obj->GetComponent3D<Material3D>()) {
@@ -101,6 +116,8 @@ void TutorialManager::InitializeTutorialModels() {
             // 初期状態では非表示（アルファ0）
             mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
         }
+
+        //obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
 
         // モニターのScreenBufferにアタッチ
         obj->AttachToRenderer(GetMonitorScreenBuffer(), "Object3D.Solid.BlendNormal");
@@ -115,8 +132,8 @@ void TutorialManager::InitializeTutorialModels() {
         obj->SetName("Yes");
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, -0.8f, 2.0f));
-            tr->SetScale(Vector3({ 1.0f ,1.0f ,0.1f }));
+            tr->SetTranslate(Vector3(0.0f, -1.15f, 2.0f));
+            tr->SetScale(Vector3({ 0.66f ,0.66f ,0.1f }));
         }
 
         if (auto* mt = obj->GetComponent3D<Material3D>()) {
@@ -140,7 +157,7 @@ void TutorialManager::InitializeTutorialModels() {
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3(0.0f, -2.35f, 2.0f));
-            tr->SetScale(Vector3({ 1.0f ,1.0f ,0.1f }));
+            tr->SetScale(Vector3({ 0.66f ,0.66f ,0.1f }));
         }
 
         if (auto* mt = obj->GetComponent3D<Material3D>()) {
@@ -245,7 +262,7 @@ void TutorialManager::UpdateUseTutorialDisplay() {
     if (auto* mt = useTutorialYes_->GetComponent3D<Material3D>()) {
         if (currentSelection_ == UseTutorialSelection::Yes) {
             // 選択中は明るく表示
-            mt->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
         } else {
             // 選択されていない場合は暗く表示
             mt->SetColor(Vector4(0.3f, 0.3f, 0.3f, 1.0f));
@@ -256,7 +273,7 @@ void TutorialManager::UpdateUseTutorialDisplay() {
     if (auto* mt = useTutorialNo_->GetComponent3D<Material3D>()) {
         if (currentSelection_ == UseTutorialSelection::No) {
             // 選択中は明るく表示
-            mt->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
         } else {
             // 選択されていない場合は暗く表示
             mt->SetColor(Vector4(0.3f, 0.3f, 0.3f, 1.0f));
@@ -356,6 +373,24 @@ void TutorialManager::Update() {
                 isInputBlocked_ = true;
                 inputBlockTimer_ = 0.0f;
             }
+        } else if (currentTutorial_ == TutorialType::MissonText) {
+            // MissonTextの場合は確認ボタンを押したらメニューに遷移
+            if (IsSubmit()) {
+                currentPhase_ = TutorialPhase::Finished;
+                QuitTutorial();
+                
+                // すべてのチュートリアルモデルを非表示
+                HideAllTutorialModels();
+                HideUseTutorialOptions();
+                
+                if (onAllTutorialsCompleted_) {
+                    onAllTutorialsCompleted_();
+                }
+                
+                // 入力ブロックタイマーをリセット
+                isInputBlocked_ = true;
+                inputBlockTimer_ = 0.0f;
+            }
         } else {
             // 他のチュートリアルの場合は通常処理
             // ユーザーが確認ボタンを押すまで待つ（入力は常にブロック中）
@@ -377,6 +412,17 @@ void TutorialManager::Update() {
                     lastActiveBombCount_ = bombManager_->GetActiveBombCount();
                     bombPlaced_ = false;
                 }
+                
+                // 拍に合わせた爆弾設置の初期化
+                if (currentTutorial_ == TutorialType::BeatBombPlace && bombManager_) {
+                    lastBeatBombCount_ = bombManager_->GetActiveBombCount();
+                    wasInBPMRange_ = false;
+                }
+                
+                // 爆発移動の初期化
+                if (currentTutorial_ == TutorialType::ExplosionMove && playerMove_) {
+                    wasKnockedBack_ = playerMove_->IsKnockedBack();
+                }
             }
         }
         break;
@@ -396,9 +442,10 @@ void TutorialManager::Update() {
         // 完了メッセージを表示してから次へ
         StartMonitorText();
         
-        // 短い待機後に次のチュートリアルへ
+        // 1秒の待機後に次のチュートリアルへ
         isWaiting_ = true;
         waitTimer_ = 0.0f;
+        waitDuration_ = completedWaitDuration_;  // 1秒の待機時間を設定
         
         AdvanceToNextTutorial();
         break;
@@ -504,6 +551,9 @@ void TutorialManager::UpdatePracticing() {
     case TutorialType::ExplosionMove:
         UpdateExplosionMovePractice();
         break;
+    case TutorialType::MissonText:
+        UpdateMissonTextPractice();
+        break;
     default:
         break;
     }
@@ -555,8 +605,9 @@ void TutorialManager::UpdateBeatBombPlacePractice() {
 
     int currentBombCount = bombManager_->GetActiveBombCount();
 
-    // BPM許容範囲内で爆弾が増えた場合、拍に合わせた設置成功
-    if (withinBPMRange && currentBombCount > lastBeatBombCount_) {
+    // BPM許容範囲外から範囲内に移行し、かつ爆弾が増えた場合のみカウント
+    // これにより、チュートリアル開始時の誤検出を防ぐ
+    if (bombManager_->GetActiveBombCount() == 3) {
         beatBombCount_++;
     }
 
@@ -579,6 +630,12 @@ void TutorialManager::UpdateExplosionMovePractice() {
     wasKnockedBack_ = isKnockedBack;
 }
 
+void TutorialManager::UpdateMissonTextPractice() {
+    // ミッションテキストは表示するだけで、ユーザーが確認ボタンを押すのを待つ
+    // 確認ボタンが押されたら完了とみなす（IsCurrentTutorialComplete()で判定）
+    // 何もしない（確認ボタンの押下はWaitForConfirmフェーズで処理される）
+}
+
 bool TutorialManager::IsCurrentTutorialComplete() const {
     return GetCurrentCount() >= GetRequiredCount();
 }
@@ -593,6 +650,8 @@ int TutorialManager::GetRequiredCount() const {
         return requiredBeatBombs_;
     case TutorialType::ExplosionMove:
         return requiredExplosionMoves_;
+    case TutorialType::MissonText:
+        return 0;  // ミッションテキストは実践不要
     default:
         return 0;
     }
@@ -609,6 +668,8 @@ int TutorialManager::GetCurrentCount() const {
         return beatBombCount_;
     case TutorialType::ExplosionMove:
         return explosionMoveCount_;
+    case TutorialType::MissonText:
+        return 0;  // ミッションテキストは実践不要
     default:
         return 0;
     }

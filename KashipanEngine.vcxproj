@@ -621,6 +621,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="MyStd\NameMap.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
+    <None Include="MISSON_TEXT_IMPLEMENTATION.md" />
     <None Include="TUTORIAL_INPUT_BLOCK.md" />
     <None Include="TUTORIAL_SELECTION_IMPLEMENTATION.md" />
     <None Include="TWITCH_MODE_IMPLEMENTATION.md" />

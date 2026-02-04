@@ -795,7 +795,13 @@ void GameScene::OnUpdate() {
 
     if (backMonitorMenu_ && !backMonitorMenu_->IsActive() &&
         backMonitorPause_ && !backMonitorPause_->IsActive() && GetInputCommand()->Evaluate("Escape").Triggered()) {
-		InGamePause();
+        // チュートリアル完了していない場合はPauseを許可しない
+        if (tutorialManager_ && !tutorialManager_->IsAllTutorialsCompleted()) {
+            // Pauseを開かない
+            return;
+        }
+        
+        InGamePause();
         if (backMonitorPause_) backMonitorPause_->SetActive(true);
         //if (backMonitorGame_) backMonitorGame_->SetActive(false);
         if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
@@ -2156,6 +2162,13 @@ void GameScene::InitTutorialManager() {
 
     // BombManagerにTutorialManagerを設定
     bombManager_->SetTutorialManager(tutorialManager_);
+
+    // PlayerMoveにTutorialManagerを設定
+    if (player_) {
+        if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+            playerMove->SetTutorialManager(tutorialManager_);
+        }
+    }
 
     // チュートリアルモデルを初期化（MonitorScreenBuffer設定後に呼び出す）
     tutorialManager_->InitializeTutorialModels();

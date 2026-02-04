@@ -4,10 +4,15 @@
 #include "Objects/Components/Bomb/BombManager.h"
 #include "Objects/Components/Bomb/ExplosionManager.h"
 #include "Objects/Components/Map/WallInfo.h"
+#include "Scenes/Components/Tutorial/TutorialManager.h"
 
 #include "Utilities/Easing.h"
 
 namespace KashipanEngine {
+
+    class PlayerMove;
+    class BombManager;
+    class ExplosionManager;
 
     /// 矢印キー4方向の入力で指定距離を移動するコンポーネント
     class PlayerMove final : public IObjectComponent3D {
@@ -69,8 +74,20 @@ namespace KashipanEngine {
                 }
             }
 
-			// BPM進行度に応じて移動入力をチェック
-            JudgeMove(true);
+            // チュートリアル実行中でなければ移動入力を受け付けない
+            bool canAcceptInput = true;
+            if (tutorialManager_) {
+                // TutorialManagerが存在する場合のみチェック
+                // 全チュートリアル完了後は入力を許可
+                if (!tutorialManager_->IsAllTutorialsCompleted() && !tutorialManager_->CanAcceptInput()) {
+                    canAcceptInput = false;
+                }
+            }
+
+            // BPM進行度に応じて移動入力をチェック（チュートリアルの許可がある場合のみ）
+            if (canAcceptInput) {
+                JudgeMove(true);
+            }
 
 			// 移動処理開始
             if (triggered_) {
@@ -302,6 +319,9 @@ namespace KashipanEngine {
             wallsWidth_ = width;
             wallsHeight_ = height;
         }
+
+        /// @brief TutorialManagerの設定
+        void SetTutorialManager(TutorialManager* tutorialManager) { tutorialManager_ = tutorialManager; }
 
 #if defined(USE_IMGUI)
         void ShowImGui() override {
@@ -807,6 +827,7 @@ namespace KashipanEngine {
         const InputCommand* inputCommand_ = nullptr;
         BombManager* bombManager_ = nullptr;
         ExplosionManager* explosionManager_ = nullptr;
+        TutorialManager* tutorialManager_ = nullptr;
 
 		GameTimer moveInputTimer_;
 		float moveInputInterval_ = 0.3f;

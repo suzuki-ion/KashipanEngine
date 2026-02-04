@@ -118,8 +118,12 @@ void BombManager::Update() {
 
         // TutorialManagerが入力をブロックしている場合は爆弾を設置しない
         bool inputAllowed = true;
-        if (tutorialManager_ && !tutorialManager_->CanAcceptInput()) {
-            inputAllowed = false;
+        if (tutorialManager_) {
+            // TutorialManagerが存在する場合のみチェック
+            // 全チュートリアル完了後は入力を許可
+            if (!tutorialManager_->IsAllTutorialsCompleted() && !tutorialManager_->CanAcceptInput()) {
+                inputAllowed = false;
+            }
         }
 
         auto* pMove = player_->GetComponent3D<PlayerMove>();

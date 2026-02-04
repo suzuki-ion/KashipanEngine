@@ -4,6 +4,7 @@
 #include "Objects/Components/BPMScaling.h"
 #include "Objects/Components/Bomb/BombScaling.h"
 #include "Scenes/Components/WaveSystem.h"
+#include "Scenes/Components/Tutorial/TutorialManager.h"
 
 namespace KashipanEngine {
 
@@ -115,8 +116,14 @@ void BombManager::Update() {
             }
         }
 
+        // TutorialManagerが入力をブロックしている場合は爆弾を設置しない
+        bool inputAllowed = true;
+        if (tutorialManager_ && !tutorialManager_->CanAcceptInput()) {
+            inputAllowed = false;
+        }
+
         auto* pMove = player_->GetComponent3D<PlayerMove>();
-        if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_ && !pMove->GetIsKnockedBack()) {
+        if (inputAllowed && inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_ && !pMove->GetIsKnockedBack()) {
             if (bombSpawnMode_ == BombSpawnMode::None) {
                 // Noneモードから移行する場合、既存の爆弾をすべて起爆
                 DetonateAllBombs();

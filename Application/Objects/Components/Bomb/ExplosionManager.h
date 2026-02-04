@@ -105,6 +105,10 @@ namespace KashipanEngine {
         void SetWallBreakConfig(const ParticleConfig& config) {
             wallBreakConfig_ = config;
         }
+
+        /// @brief すべての壁を消去する
+        void ClearAllWalls();
+
 #if defined(USE_IMGUI)
         void ShowImGui() override;
 #endif

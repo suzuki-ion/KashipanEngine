@@ -414,4 +414,22 @@ void ExplosionManager::ShowImGui() {
 }
 #endif
 
+void ExplosionManager::ClearAllWalls() {
+    if (!walls_ || mapW_ <= 0 || mapH_ <= 0) return;
+
+    for (int z = 0; z < mapH_; z++) {
+        for (int x = 0; x < mapW_; x++) {
+            const int index = z * mapW_ + x;
+            if (walls_[index].isActive) {
+                walls_[index].isActive = false;
+                walls_[index].isMoving = false;
+                walls_[index].moveTimer.Reset();
+                walls_[index].hp = 0;
+                walls_[index].isWaitingRespawn = false;
+                walls_[index].currentSpawnAgainCount = 0;
+            }
+        }
+    }
+}
+
 } // namespace KashipanEngine

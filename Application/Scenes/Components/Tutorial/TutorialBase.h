@@ -25,8 +25,13 @@ public:
 
     ~TutorialBase() override = default;
 
+	// カメラをモニターからステージに向ける
     void StartTutorial();
+
+	// カメラをステージからモニターに向ける
     void StartMonitorText();
+
+	// チュートリアル終了
     void QuitTutorial();
 
     bool IsActive() const { return isActive_; }
@@ -35,6 +40,8 @@ public:
 
 protected:
     void InitializeInternal();
+
+    // ABottom判定
     bool IsSubmit() const;
 
     ScreenBuffer *GetMonitorScreenBuffer() const { return screenBuffer_; }

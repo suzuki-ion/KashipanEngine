@@ -12,6 +12,7 @@
 #include "Scenes/Components/SceneChangeOut.h"
 
 #include "Scenes/Components/Tutorial/TutorialBase.h"
+#include "Scenes/Components/Tutorial/TutorialManager.h"
 #include <cmath>
 #include <algorithm>
 
@@ -670,11 +671,24 @@ void GameScene::Initialize() {
     if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
     if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
     if (backMonitorGame_) backMonitorGame_->SetActive(false);
-    if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+    if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
     if (backMonitorPause_) backMonitorPause_->SetActive(false);
 
-    /*AddSceneComponent(std::make_unique<TutorialBase>(GetInputCommand(),
-        cameraGameTargetPos_, cameraGameTargetRot_, cameraMenuTargetPos_, cameraMenuTargetRot_));*/
+    // TutorialManagerを初期化
+    InitTutorialManager();
+
+    bpmSystem_->MeasurementStart(AudioManager::kInvalidPlayHandle, 90.0f, 0.0f);
+
+    {
+        if (auto* move = player_->GetComponent3D<PlayerMove>()) {
+            move->SetIsStarted(true);
+        }
+
+        if (bombManager_) {
+            bombManager_->SetIsStarted(true);
+        }
+    }
+
 }
 
 GameScene::~GameScene() {}
@@ -2040,4 +2054,58 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
         if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
         });
 }
+
+void GameScene::InitTutorialManager() {
+    auto comp = std::make_unique<TutorialManager>(
+        GetInputCommand(),
+        cameraGameTargetPos_,
+        cameraGameTargetRot_,
+        cameraMenuTargetPos_,
+        cameraMenuTargetRot_
+    );
+
+    // プレイヤーのPlayerMoveコンポーネントを設定
+    if (player_) {
+        if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+            comp->SetPlayerMove(playerMove);
+        }
+        comp->SetPlayer(player_);
+    }
+
+    // 各種マネージャーを設定
+    comp->SetBombManager(bombManager_);
+    comp->SetBPMSystem(bpmSystem_);
+    comp->SetExplosionManager(explosionManager_);
+
+    // モニターのScreenBufferを設定
+    if (auto* backMonitor = GetSceneComponent<BackMonitor>()) {
+        comp->SetMonitorScreenBuffer(backMonitor->GetScreenBuffer());
+    }
+
+    // 全チュートリアル完了時のコールバックを設定
+    comp->SetOnAllTutorialsCompletedCallback([this]() {
+        // チュートリアル完了後、メニュー画面に移行
+        isTutorialMode_ = false;
+        if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+        if (backMonitorGame_) backMonitorGame_->SetActive(false);
+        if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+        if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+        if (stageLighting_) stageLighting_->DisableLighting(true, true);
+    });
+
+    tutorialManager_ = comp.get();
+    AddSceneComponent(std::move(comp));
+
+    // BombManagerにTutorialManagerを設定
+    bombManager_->SetTutorialManager(tutorialManager_);
+
+    // チュートリアルモデルを初期化（MonitorScreenBuffer設定後に呼び出す）
+    tutorialManager_->InitializeTutorialModels();
+
+    // チュートリアルモードなら開始
+    if (isTutorialMode_) {
+        tutorialManager_->StartTutorials();
+    }
+}
+
 } // namespace GameSceneNS

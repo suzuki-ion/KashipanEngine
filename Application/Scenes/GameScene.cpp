@@ -193,7 +193,7 @@ void GameScene::Initialize() {
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
 
-                auto modelData = ModelManager::GetModelDataFromFileName("block.obj");
+                auto modelData = ModelManager::GetModelDataFromFileName("Wall.obj");
                 auto obj = std::make_unique<Model>(modelData);
 
                 obj->SetName("wall" ":x" + std::to_string(x) + ":z" + std::to_string(z));
@@ -201,7 +201,7 @@ void GameScene::Initialize() {
                 obj->RegisterComponent<BPMScaling>(Vector3(1.0f), Vector3(1.0f), EaseType::EaseOutExpo);
 
                 if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-                    tr->SetTranslate(Vector3(2.0f * x, 0.-0.1f, 2.0f * z));
+                    tr->SetTranslate(Vector3(2.0f * x, -2.1f, 2.0f * z));
                     tr->SetScale(Vector3(1.0f));
                 }
 
@@ -921,11 +921,22 @@ void GameScene::OnUpdate() {
                     walls_[z][x].spawnAgainCount = wallSpawnAgainCount_;
                     if (auto* tr = walls_[z][x].object->GetComponent3D<Transform3D>()) {
                         if (walls_[z][x].moveTimer.IsActive()) {
-                            tr->SetTranslateY(MyEasing::Lerp(-0.1f, 2.0f, walls_[z][x].moveTimer.GetProgress()));
+                            tr->SetTranslateY(MyEasing::Lerp(-2.1f, 0.0f, walls_[z][x].moveTimer.GetProgress()));
                         }
 
                         if (!walls_[z][x].isMoving) {
-                            tr->SetTranslateY(-0.1f);
+                            tr->SetTranslateY(-2.1f);
+                        }
+
+                        // ScaleYを拍数に基づいて更新
+                        if (walls_[z][x].isActive && walls_[z][x].particleSpawnBeat >= 0 && bpmSystem_) {
+                            int beatsSinceSpawn = bpmSystem_->GetCurrentBeat() - walls_[z][x].particleSpawnBeat;
+                            float scaleYProgress = 1.0f - (static_cast<float>(beatsSinceSpawn) / static_cast<float>(walls_[z][x].autoDeactivateBeatCount));
+                            scaleYProgress = std::clamp(scaleYProgress, 0.0f, 1.0f);
+                            
+                            Vector3 currentScale = tr->GetScale();
+                            currentScale.y = scaleYProgress;
+                            tr->SetScale(currentScale);
                         }
                     }
 
@@ -1778,7 +1789,7 @@ void GameScene::InGameStart() {
 
         if (player_) {
             if (auto* health = player_->GetComponent3D<Health>()) {
-                health->ResetHealth(10);
+                health->ResetHealth(5);
             }
         }
     }
@@ -1786,6 +1797,10 @@ void GameScene::InGameStart() {
 
 void GameScene::InGameQuit() {
     AudioManager::Stop(bgmPlayHandle_);
+
+    auto* mat = djNagasawa_->GetComponent3D<Material3D>();
+    if (!mat) return;
+	mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
 
     if (bpmSystem_) {
 		bpmSystem_->ResetSystem();

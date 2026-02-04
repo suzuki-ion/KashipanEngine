@@ -9,10 +9,14 @@ namespace KashipanEngine {
 
 ShowScoreNumModels::ShowScoreNumModels()
     : ISceneComponent("ShowScoreNumModels", 1) {
-    centerPositions_[0] = Vector3{ 0.0f, 4.5f, 6.0f };
-    centerPositions_[1] = Vector3{ 0.0f, 2.5f, 6.0f };
-    centerPositions_[2] = Vector3{ 0.0f, 0.5f, 6.0f };
-    centerPositions_[3] = Vector3{ 0.0f, -2.0f, 6.0f };
+    const float baseY = 2.5f;
+    const float lineSpacing = 1.0f;
+    const float z = 0.0f;
+    centerPositions_[0] = Vector3{ 0.0f, baseY + lineSpacing, z };
+    centerPositions_[1] = Vector3{ 0.0f, baseY, z };
+    centerPositions_[2] = Vector3{ 0.0f, baseY - lineSpacing, z };
+    centerPositions_[3] = Vector3{ 0.0f, baseY - lineSpacing * 3.0f, z };
+    rankingTextPosition_ = Vector3{ 0.0f, baseY + lineSpacing * 2.5f, z };
 }
 
 void ShowScoreNumModels::Initialize() {
@@ -29,6 +33,7 @@ void ShowScoreNumModels::Initialize() {
                 slot.fill(nullptr);
             }
         }
+        rankDigitModels_.fill(nullptr);
         isInitialized_ = true;
     }
 
@@ -62,6 +67,46 @@ void ShowScoreNumModels::Initialize() {
         }
     }
 
+    if (!rankingTextModel_) {
+        auto modelHandle = ModelManager::GetModelDataFromFileName("ranking.obj");
+        auto obj = std::make_unique<Model>(modelHandle);
+        obj->SetUniqueBatchKey();
+        obj->SetName("Result.RankingText");
+        obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(rankingTextPosition_);
+            tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+            tr->SetScale(digitScale_);
+        }
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+            mat->SetEnableShadowMapProjection(false);
+        }
+        rankingTextModel_ = obj.get();
+        ctx->AddObject3D(std::move(obj));
+    }
+
+    for (size_t i = 0; i < kRankCount; ++i) {
+        if (rankDigitModels_[i]) continue;
+        const std::string fileName = std::to_string(static_cast<int>(i) + 1) + ".obj";
+        auto modelHandle = ModelManager::GetModelDataFromFileName(fileName);
+        auto obj = std::make_unique<Model>(modelHandle);
+        obj->SetUniqueBatchKey();
+        obj->SetName("Result.RankDigit_" + std::to_string(i + 1));
+        obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(rankDigitPositions_[i]);
+            tr->SetRotate(Vector3{ 0.0f, 0.0f, 0.0f });
+            tr->SetScale(digitScale_);
+        }
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+            mat->SetEnableShadowMapProjection(false);
+        }
+        rankDigitModels_[i] = obj.get();
+        ctx->AddObject3D(std::move(obj));
+    }
+
     UpdateDigitModels();
 }
 
@@ -81,13 +126,25 @@ void ShowScoreNumModels::Update() {
                 }
             }
         }
+        if (rankingTextModel_) {
+            if (auto *tr = rankingTextModel_->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(rankingTextPosition_);
+            }
+        }
+        for (size_t i = 0; i < kRankCount; ++i) {
+            auto *model = rankDigitModels_[i];
+            if (!model) continue;
+            if (auto *tr = model->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(rankDigitPositions_[i]);
+            }
+        }
         positionsDirty_ = false;
     }
 
     UpdateDigitModels();
 }
 
-void ShowScoreNumModels::SetScores(const std::vector<float> &scores) {
+void ShowScoreNumModels::SetScores(const std::vector<int> &scores) {
     scores_ = scores;
     UpdateDisplayScores();
     if (isInitialized_) {
@@ -95,10 +152,11 @@ void ShowScoreNumModels::SetScores(const std::vector<float> &scores) {
     }
 }
 
-void ShowScoreNumModels::SetCenterPosition(size_t setIndex, const Vector3 &center) {
-    if (setIndex >= kSetCount) return;
-    centerPositions_[setIndex] = center;
-    positionsDirty_ = true;
+void ShowScoreNumModels::SetVisible(bool visible) {
+    isVisible_ = visible;
+    if (isInitialized_) {
+        UpdateDigitModels();
+    }
 }
 
 void ShowScoreNumModels::UpdateDigitPositions() {
@@ -110,12 +168,18 @@ void ShowScoreNumModels::UpdateDigitPositions() {
             digitPositions_[setIndex][i] = Vector3{ center.x + offset, center.y, center.z };
         }
     }
+
+    const float rankOffsetX = halfCount * digitSpacing_ + digitSpacing_ * 1.5f;
+    for (size_t i = 0; i < kRankCount; ++i) {
+        const Vector3 &center = centerPositions_[i];
+        rankDigitPositions_[i] = Vector3{ center.x - rankOffsetX, center.y, center.z };
+    }
 }
 
 void ShowScoreNumModels::UpdateDisplayScores() {
-    displayScores_.fill(0.0f);
-    std::vector<float> sortedScores = scores_;
-    std::sort(sortedScores.begin(), sortedScores.end(), [](float a, float b) { return a > b; });
+    displayScores_.fill(0);
+    std::vector<int> sortedScores = scores_;
+    std::sort(sortedScores.begin(), sortedScores.end(), [](int a, int b) { return a > b; });
 
     for (size_t i = 0; i < 3 && i < sortedScores.size(); ++i) {
         displayScores_[i] = sortedScores[i];
@@ -128,8 +192,8 @@ void ShowScoreNumModels::UpdateDisplayScores() {
 
 void ShowScoreNumModels::UpdateDigitModels() {
     for (size_t setIndex = 0; setIndex < kSetCount; ++setIndex) {
-        const float scoreValue = displayScores_[setIndex];
-        const int clampedScore = static_cast<int>(std::clamp(scoreValue, 0.0f, 999999.0f));
+        const int scoreValue = displayScores_[setIndex];
+        const int clampedScore = std::clamp(scoreValue, 0, 999999);
         std::array<int, kDigitCount> digits{};
         int temp = clampedScore;
         for (int i = static_cast<int>(kDigitCount) - 1; i >= 0; --i) {
@@ -146,9 +210,29 @@ void ShowScoreNumModels::UpdateDigitModels() {
                     if (static_cast<int>(value) == digits[digitIndex]) {
                         color.w = 1.0f;
                     }
+                    if (!isVisible_) {
+                        color.w = 0.0f;
+                    }
                     mat->SetColor(color);
                 }
             }
+        }
+    }
+
+    if (rankingTextModel_) {
+        if (auto *mat = rankingTextModel_->GetComponent3D<Material3D>()) {
+            Vector4 color = mat->GetColor();
+            color.w = isVisible_ ? 1.0f : 0.0f;
+            mat->SetColor(color);
+        }
+    }
+
+    for (auto *model : rankDigitModels_) {
+        if (!model) continue;
+        if (auto *mat = model->GetComponent3D<Material3D>()) {
+            Vector4 color = mat->GetColor();
+            color.w = isVisible_ ? 1.0f : 0.0f;
+            mat->SetColor(color);
         }
     }
 }

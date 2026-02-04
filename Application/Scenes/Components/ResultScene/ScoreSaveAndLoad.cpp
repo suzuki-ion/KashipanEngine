@@ -6,10 +6,10 @@ namespace KashipanEngine {
 
 namespace {
 constexpr const char *kScoreDataFile = "ScoreData.json";
-std::vector<float> sScores;
+std::vector<int> sScores = { 0, 0, 0 };
 } // namespace
 
-void ScoreSaveAndLoad::RegisterScore(float score) {
+void ScoreSaveAndLoad::RegisterScore(int score) {
     sScores.push_back(score);
 }
 
@@ -28,15 +28,13 @@ void ScoreSaveAndLoad::Load() {
     Json jsonData = LoadJSON(kScoreDataFile);
     if (jsonData.contains("scores") && jsonData["scores"].is_array()) {
         try {
-            sScores = jsonData["scores"].get<std::vector<float>>();
-            return;
+            sScores = jsonData["scores"].get<std::vector<int>>();
         } catch (const std::exception &) {
         }
     }
-    sScores.clear();
 }
 
-const std::vector<float> &ScoreSaveAndLoad::GetScores() const {
+const std::vector<int> &ScoreSaveAndLoad::GetScores() const {
     return sScores;
 }
 

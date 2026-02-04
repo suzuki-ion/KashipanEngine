@@ -1,8 +1,8 @@
 #pragma once
 #include <KashipanEngine.h>
-#include "Scenes/Components/TitleScene/CameraStartMovement.h"
 #include "Scenes/Components/ResultScene/CarEscape.h"
 #include "Scenes/Components/ResultScene/PlayerEscape.h"
+#include "Scenes/Components/ResultScene/ShowScoreNumModels.h"
 
 namespace KashipanEngine {
 
@@ -23,10 +23,20 @@ public:
         if (!ctx) return;
         carEscape_ = ctx->GetComponent<CarEscape>();
         playerEscape_ = ctx->GetComponent<PlayerEscape>();
-        cameraMovement_ = ctx->GetComponent<CameraStartMovement>();
+        showScoreNumModels_ = ctx->GetComponent<ShowScoreNumModels>();
         letterbox_ = ctx->GetComponent<Letterbox>();
         if (letterbox_) {
             letterbox_->SetThickness(0.0f);
+        }
+        if (playerEscape_) {
+            playerEscape_->Reset();
+            playerEscape_->SetVisible(true);
+        }
+        if (carEscape_) {
+            carEscape_->Reset();
+        }
+        if (showScoreNumModels_) {
+            showScoreNumModels_->SetVisible(false);
         }
     }
 
@@ -42,55 +52,87 @@ public:
             if (playerEscape_) {
                 playerEscape_->StartEscape();
                 isAnimating_ = true;
+                step_ = Step::PlayerMove;
+            } else {
+                step_ = Step::CarMoveIn;
             }
             started_ = true;
         }
 
-        if (playerEscape_) {
-            if (playerEscape_->IsFinishedTriggered()) {
-                if (playerEscape_->IsPlayerEscape()) {
-                    playerEscape_->StartDisappear();
-                    isAnimating_ = true;
-                } else {
+        if (!started_) return;
+
+        switch (step_) {
+            case Step::PlayerMove:
+                if (playerEscape_ && playerEscape_->IsFinished()) {
                     if (carEscape_) {
-                        carEscape_->StartMoveOut();
-                        isAnimating_ = true;
-                    }
-                    if (cameraMovement_) {
-                        cameraMovement_->StartAnimation();
-                        isAnimating_ = true;
+                        carEscape_->StartMoveIn();
+                        step_ = Step::CarMoveIn;
+                    } else {
+                        step_ = Step::ShowScore;
                     }
                 }
-            }
+                break;
+            case Step::CarMoveIn:
+                if (carEscape_ && carEscape_->IsFinished()) {
+                    if (playerEscape_) {
+                        playerEscape_->SetVisible(false);
+                    }
+                    if (showScoreNumModels_) {
+                        showScoreNumModels_->SetVisible(true);
+                    }
+                    if (carEscape_) {
+                        carEscape_->StartMoveOut();
+                        step_ = Step::CarMoveOut;
+                    } else {
+                        step_ = Step::Finished;
+                    }
+                }
+                break;
+            case Step::CarMoveOut:
+                if (carEscape_ && carEscape_->IsFinished()) {
+                    step_ = Step::Finished;
+                }
+                break;
+            case Step::ShowScore:
+                if (playerEscape_) {
+                    playerEscape_->SetVisible(false);
+                }
+                if (showScoreNumModels_) {
+                    showScoreNumModels_->SetVisible(true);
+                }
+                if (carEscape_) {
+                    carEscape_->StartMoveOut();
+                    step_ = Step::CarMoveOut;
+                } else {
+                    step_ = Step::Finished;
+                }
+                break;
+            case Step::Finished:
+                break;
         }
 
-        if (carEscape_ && cameraMovement_) {
-            if (carEscape_->IsFinished() && cameraMovement_->IsFinished()) {
-                isAnimationFinished_ = true;
-                isAnimating_ = false;
-            }
-        } else if (carEscape_) {
-            if (carEscape_->IsFinished()) {
-                isAnimationFinished_ = true;
-                isAnimating_ = false;
-            }
+        if (step_ == Step::Finished) {
+            isAnimationFinished_ = true;
+            isAnimating_ = false;
         }
     }
 
     void EndAnimation() {
         if (playerEscape_) {
             playerEscape_->EndAnimation();
+            playerEscape_->SetVisible(false);
         }
         if (carEscape_) {
             carEscape_->EndAnimation();
         }
-        if (cameraMovement_) {
-            cameraMovement_->EndAnimation();
+        if (showScoreNumModels_) {
+            showScoreNumModels_->SetVisible(true);
         }
         isAnimating_ = false;
         isAnimationFinished_ = true;
         started_ = true;
         elapsedTime_ = startDelaySec_;
+        step_ = Step::Finished;
     }
 
     bool IsAnimating() const {
@@ -102,13 +144,23 @@ public:
     }
 
 private:
+    enum class Step {
+        PlayerMove,
+        CarMoveIn,
+        ShowScore,
+        CarMoveOut,
+        Finished
+    };
+
     RegisterFunc registerFunc_;
     InputCommand *inputCommand_ = nullptr;
 
     CarEscape *carEscape_ = nullptr;
     PlayerEscape *playerEscape_ = nullptr;
-    CameraStartMovement *cameraMovement_ = nullptr;
+    ShowScoreNumModels *showScoreNumModels_ = nullptr;
     Letterbox *letterbox_ = nullptr;
+
+    Step step_ = Step::PlayerMove;
 
     bool started_ = false;
     bool isAnimating_ = false;

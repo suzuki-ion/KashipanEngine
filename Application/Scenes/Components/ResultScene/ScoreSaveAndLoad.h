@@ -8,11 +8,11 @@ class ScoreSaveAndLoad final : public ISceneComponent {
 public:
     ScoreSaveAndLoad() : ISceneComponent("ScoreSaveAndLoad", 1) {}
 
-    void RegisterScore(float score);
+    void RegisterScore(int score);
     void Save() const;
     void Load();
 
-    const std::vector<float> &GetScores() const;
+    const std::vector<int> &GetScores() const;
 };
 
 } // namespace KashipanEngine

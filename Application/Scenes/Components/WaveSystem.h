@@ -18,8 +18,6 @@ enum class Wave {
     Wave1,
     Wave2,
     Wave3,
-    Wave4,
-    Wave5,
     Count  // Waveの総数
 };
 

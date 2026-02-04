@@ -14,7 +14,7 @@ public:
         auto *screenBuffer3D = sceneDefaultVariables->GetScreenBuffer3D();
 
         // スタートテキストモデル
-        auto modelHandle = ModelManager::GetModelDataFromFileName("startText.obj");
+        auto modelHandle = ModelManager::GetModelDataFromFileName("startText_Button.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetName("StartText");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {

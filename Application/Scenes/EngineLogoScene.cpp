@@ -186,34 +186,28 @@ void EngineLogoScene::OnUpdate() {
     // logoGear: t 0.0 - 0.5 scale 0->512 EaseOutBack, rotation 0->360 EaseOutCubic
     if (logoGearSprite_) {
         if (auto tcomp = logoGearSprite_->GetComponent2D<Transform2D>("Transform2D")) {
-            if (t >= 0.0f && t <= 0.5f) {
-                const float nt = Normalize01(t, 0.0f, 0.5f);
-                const float s = EaseOutBack(0.0f, 512.0f, nt);
-                tcomp->SetScale(Vector3(s, s, 1.0f));
-            }
-            if (t >= 0.0f && t <= 0.5f) {
-                const float nt = Normalize01(t, 0.0f, 0.5f);
-                const float rot = EaseOutCubic(0.0f, 360.0f, nt);
-                tcomp->SetRotate(Vector3(0.0f, 0.0f, rot * (3.14159265f / 180.0f)));
-            }
+            const float nt1 = Normalize01(t, 0.0f, 0.5f);
+            const float s = EaseOutBack(0.0f, 512.0f, nt1);
+            tcomp->SetScale(Vector3(s, s, 1.0f));
+            const float nt2 = Normalize01(t, 0.0f, 0.5f);
+            const float rot = EaseOutCubic(0.0f, 360.0f, nt2);
+            tcomp->SetRotate(Vector3(0.0f, 0.0f, rot * (3.14159265f / 180.0f)));
         }
     }
 
     // logoBread: t 0.25 - 0.75 scale 0->512 EaseOutCubic
     if (logoBreadSprite_) {
         if (auto tcomp = logoBreadSprite_->GetComponent2D<Transform2D>("Transform2D")) {
-            if (t >= 0.25f && t <= 0.75f) {
-                const float nt = Normalize01(t, 0.25f, 0.75f);
-                const float s = EaseOutCubic(0.0f, 512.0f, nt);
-                tcomp->SetScale(Vector3(s, s, 1.0f));
-            }
+            const float nt = Normalize01(t, 0.25f, 0.75f);
+            const float s = EaseOutCubic(0.0f, 512.0f, nt);
+            tcomp->SetScale(Vector3(s, s, 1.0f));
         }
     }
 
     // logoText: at t == 0.75 instantly set color alpha to 1.0
     if (logoTextSprite_) {
         if (auto mcomp = logoTextSprite_->GetComponent2D<Material2D>("Material2D")) {
-            if (elapsedTime_ >= (animationStartOffset_ + 0.75f) && prevElapsedTime_ < (animationStartOffset_ + 0.75f)) {
+            if (elapsedTime_ >= (animationStartOffset_ + 0.75f)) {
                 mcomp->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
             }
         }
@@ -238,7 +232,7 @@ void EngineLogoScene::OnUpdate() {
                 const float width = Lerp(0.0f, textWidth, p);
                 rectT->SetTranslate(Vector3(centerX, rectT->GetTranslate().y, 0.0f));
                 rectT->SetScale(Vector3(width, rectT->GetScale().y, 1.0f));
-            } else if (t >= 0.75f && t <= 1.0f) {
+            } else if (t >= 0.75f) {
                 const float nt = Normalize01(t, 0.75f, 1.0f);
                 const float p = EaseOutCubic(0.0f, 1.0f, nt);
                 // shrink from full width back to 0 but keep center moving left->right

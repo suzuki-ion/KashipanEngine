@@ -146,6 +146,11 @@ public:
         /// @brief 拍の判定を手動時間で開始する（再生ハンドルが無い場合のみ）
         void StartManualBeat();
 
+        /// @brief 拍の判定を停止（再生ハンドルが無い場合のみ）
+        void StopManualBeat() {
+            isUseManualTime_ = false;
+        }
+
     private:
         PlayHandle playHandle_{ kInvalidPlayHandle };
         float bpm_{ 0.0f };

@@ -18,8 +18,7 @@ public:
         obj->SetName("PlayerModel");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(fromTranslate_);
-            tr->SetRotate(Vector3(0.0f, M_PI, 0.0f));
-            tr->SetScale(fromScale_);
+            tr->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
         }
         playerModel_ = obj.get();
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -34,18 +33,10 @@ public:
         if (!isAnimating_) return;
         elapsedTime_ += GetDeltaTime();
         Escape();
-        Disappear();
     }
 
     void StartEscape() {
         if (isAnimating_) return;
-        isPlayerEscape_ = true;
-        StartAnimation();
-    }
-
-    void StartDisappear() {
-        if (isAnimating_) return;
-        isPlayerEscape_ = false;
         StartAnimation();
     }
 
@@ -53,31 +44,34 @@ public:
         if (playerModel_) {
             if (auto *tr = playerModel_->GetComponent3D<Transform3D>()) {
                 tr->SetTranslate(toTranslate_);
-                tr->SetScale(toScale_);
             }
         }
         isAnimating_ = false;
         isFinished_ = true;
         isFinishedTriggered_ = true;
-        elapsedTime_ = scaleDurationTime_;
+        elapsedTime_ = translateDurationTime_;
     }
 
     void Reset() {
         if (playerModel_) {
             if (auto *tr = playerModel_->GetComponent3D<Transform3D>()) {
                 tr->SetTranslate(fromTranslate_);
-                tr->SetScale(fromScale_);
             }
-            if (auto *mt = playerModel_->GetComponent3D<Material3D>()) {
-                Vector4 color = mt->GetColor();
-                color.w = 1.0f;
-                mt->SetColor(color);
-            }
+            SetVisible(true);
         }
         isAnimating_ = false;
         isFinished_ = false;
         isFinishedTriggered_ = false;
         elapsedTime_ = 0.0f;
+    }
+
+    void SetVisible(bool visible) {
+        if (!playerModel_) return;
+        if (auto *mt = playerModel_->GetComponent3D<Material3D>()) {
+            Vector4 color = mt->GetColor();
+            color.w = visible ? 1.0f : 0.0f;
+            mt->SetColor(color);
+        }
     }
 
     bool IsAnimating() const { return isAnimating_; }
@@ -89,7 +83,6 @@ public:
         }
         return false;
     }
-    bool IsPlayerEscape() const { return isPlayerEscape_; }
 
 private:
     void StartAnimation() {
@@ -100,7 +93,6 @@ private:
     }
 
     void Escape() {
-        if (!isPlayerEscape_) return;
         float t = Normalize01(elapsedTime_, easingTranslateStartTime_, easingTranslateEndTime_);
 
         if (auto *tr = playerModel_->GetComponent3D<Transform3D>()) {
@@ -114,42 +106,20 @@ private:
         }
     }
 
-    void Disappear() {
-        if (isPlayerEscape_) return;
-        float t = Normalize01(elapsedTime_, easingScaleStartTime_, easingScaleEndTime_);
-
-        if (auto *tr = playerModel_->GetComponent3D<Transform3D>()) {
-            Vector3 newScale = EaseInBack(fromScale_, toScale_, t);
-            tr->SetScale(newScale);
-        }
-
-        if (elapsedTime_ >= scaleDurationTime_) {
-            isAnimating_ = false;
-            isFinished_ = true;
-        }
-    }
-
     Model *playerModel_ = nullptr;
 
     Vector3 fromTranslate_ = Vector3(0.0f, 0.0f, 16.0f);
-    Vector3 toTranslate_ = Vector3(0.0f, 0.0f, 2.0f);
-    Vector3 fromScale_ = Vector3(1.0f, 1.0f, 1.0f);
-    Vector3 toScale_ = Vector3(0.0f, 0.0f, 0.0f);
+    Vector3 toTranslate_ = Vector3(0.0f, 0.0f, 3.0f);
 
     const float easingTranslateStartTime_ = 0.0f;
     const float easingTranslateEndTime_ = 2.0f;
 
-    const float easingScaleStartTime_ = 0.5f;
-    const float easingScaleEndTime_ = 2.0f;
-
     const float translateDurationTime_ = 2.0f;
-    const float scaleDurationTime_ = 2.0f;
     float elapsedTime_ = 0.0f;
 
     bool isAnimating_ = false;
     bool isFinished_ = false;
     bool isFinishedTriggered_ = false;
-    bool isPlayerEscape_ = false;
 };
 
 } // namespace KashipanEngine

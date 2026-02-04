@@ -607,12 +607,17 @@ void GameScene::Initialize() {
             backMonitorParticle_ = compP.get();
             AddSceneComponent(std::move(compP));
 
+            auto compS = std::make_unique<BackMonitorWithScoreScreen>(bm->GetScreenBuffer(), scoreManager_);
+            backMonitorScore_ = compS.get();
+            AddSceneComponent(std::move(compS));
+
             // set initial mode
             backMonitorMode_ = 0;
-            if (backMonitorGame_) backMonitorGame_->SetActive(true);
+            if (backMonitorGame_) backMonitorGame_->SetActive(false);
             if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
             if (backMonitorPause_) backMonitorPause_->SetActive(false);
             if (backMonitorParticle_) backMonitorParticle_->SetActive(false);
+            if (backMonitorScore_) backMonitorScore_->SetActive(false);
         }
     }
 
@@ -672,7 +677,10 @@ void GameScene::Initialize() {
     if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
     if (backMonitorGame_) backMonitorGame_->SetActive(false);
     if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+    //if (backMonitorGame_) backMonitorGame_->SetActive(false);
+    if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
     if (backMonitorPause_) backMonitorPause_->SetActive(false);
+    if (backMonitorScore_) backMonitorScore_->SetActive(false);
 
     // TutorialManagerを初期化
     InitTutorialManager();
@@ -708,8 +716,10 @@ void GameScene::OnUpdate() {
             InGameQuit();
             if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
             if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
-            if (backMonitorGame_) backMonitorGame_->SetActive(false);
+            //if (backMonitorGame_) backMonitorGame_->SetActive(false);
             if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+            if (backMonitorPause_) backMonitorPause_->SetActive(false);
+            if (backMonitorScore_) backMonitorScore_->SetActive(false);
         }
     }
 
@@ -720,8 +730,9 @@ void GameScene::OnUpdate() {
                 InGameStart();
                 if (cameraController_) cameraController_->SetTargetTranslate(cameraGameTargetPos_);
                 if (cameraController_) cameraController_->SetTargetRotate(cameraGameTargetRot_);
-                if (backMonitorGame_) backMonitorGame_->SetActive(true);
+                //if (backMonitorGame_) backMonitorGame_->SetActive(true);
                 if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+                if (backMonitorScore_) backMonitorScore_->SetActive(true);
                 if (stageLighting_) { stageLighting_->EnableLighting(true, true); }
                 StartDjFade(1.0f);
                 break;
@@ -749,7 +760,8 @@ void GameScene::OnUpdate() {
             case PauseModelIndex::Continue:
                 InGamePauseQuit();
                 if (backMonitorPause_) backMonitorPause_->SetActive(false);
-                if (backMonitorGame_) backMonitorGame_->SetActive(true);
+                //if (backMonitorGame_) backMonitorGame_->SetActive(true);
+                if (backMonitorScore_) backMonitorScore_->SetActive(true);
                 if (cameraController_) cameraController_->SetTargetTranslate(cameraGameTargetPos_);
                 if (cameraController_) cameraController_->SetTargetRotate(cameraGameTargetRot_);
                 StartDjFade(1.0f);
@@ -787,8 +799,9 @@ void GameScene::OnUpdate() {
         backMonitorPause_ && !backMonitorPause_->IsActive() && GetInputCommand()->Evaluate("Escape").Triggered()) {
 		InGamePause();
         if (backMonitorPause_) backMonitorPause_->SetActive(true);
-        if (backMonitorGame_) backMonitorGame_->SetActive(false);
+        //if (backMonitorGame_) backMonitorGame_->SetActive(false);
         if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
+        if (backMonitorScore_) backMonitorScore_->SetActive(false);
         if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
         if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
         StartDjFade(0.0f);

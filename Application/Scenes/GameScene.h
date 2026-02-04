@@ -26,6 +26,7 @@
 #include "Scenes/Components/BackMonitorWithMenuScreen.h"
 #include "Scenes/Components/BackMonitorWithPauseScreen.h"
 #include "Scenes/Components/BackMonitorWithParticle.h"
+#include "Scenes/Components/BackMonitorWithScoreScreen.h"
 #include "Scenes/Components/StageLighting.h"
 #include "Utilities/Json/JsonManager.h"
 #include "Objects/Components/Bomb/ExplosionManager.h"
@@ -234,6 +235,7 @@ private:
     BackMonitorWithMenuScreen *backMonitorMenu_ = nullptr;
     BackMonitorWithPauseScreen *backMonitorPause_ = nullptr;
     BackMonitorWithParticle *backMonitorParticle_ = nullptr;
+    BackMonitorWithScoreScreen *backMonitorScore_ = nullptr;
     int backMonitorMode_ = 0; // 0=game,1=menu,2=particle
 
     // ステージライティング

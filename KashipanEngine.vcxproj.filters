@@ -168,6 +168,9 @@
     <ClCompile Include="Application\Objects\Components\Map\WallBreakParticleManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\Tutorial\MoveTutorial.cpp" />
     <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialManager.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithScoreScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -464,6 +467,9 @@
     <ClInclude Include="Application\Scenes\Components\Tutorial\MoveTutorial.h" />
     <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialStage.h" />
     <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialManager.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithScoreScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

@@ -1,7 +1,9 @@
 #include "Scenes/ResultScene.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/SceneFade.h"
-#include "Scenes/Components/TitleScene/CameraStartMovement.h"
+#include "Scenes/Components/ResultScene/ScoreSaveAndLoad.h"
+#include "Scenes/Components/ResultScene/ShowScoreNumModels.h"
+#include "Objects/Components/ParticleMovement.h"
 
 namespace KashipanEngine {
 
@@ -19,8 +21,11 @@ void ResultScene::Initialize() {
     auto *camera3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainCamera3D() : nullptr;
     auto *cameraLight = sceneDefaultVariables_ ? sceneDefaultVariables_->GetLightCamera3D() : nullptr;
     auto *shadowMapBuffer = sceneDefaultVariables_ ? sceneDefaultVariables_->GetShadowMapBuffer() : nullptr;
+    auto *shadowMapCameraSync = sceneDefaultVariables_ ? sceneDefaultVariables_->GetShadowMapCameraSync() : nullptr;
     auto *directionalLight = sceneDefaultVariables_ ? sceneDefaultVariables_->GetDirectionalLight() : nullptr;
 
+    auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
+    
     if (screenBuffer3D) {
         /*ChromaticAberrationEffect::Params p{};
         p.directionX = 1.0f;
@@ -28,7 +33,7 @@ void ResultScene::Initialize() {
         p.strength = 0.001f;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));*/
 
-        BloomEffect::Params bp{};
+        /*BloomEffect::Params bp{};
         bp.threshold = 1.0f;
         bp.softKnee = 0.25f;
         bp.intensity = 1.0f;
@@ -36,7 +41,7 @@ void ResultScene::Initialize() {
         bp.iterations = 4;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
-        screenBuffer3D->AttachToRenderer("ScreenBuffer_ResultScene");
+        screenBuffer3D->AttachToRenderer("ScreenBuffer_ResultScene");*/
     }
 
     if (mainWindow && windowCamera) {
@@ -55,14 +60,14 @@ void ResultScene::Initialize() {
 
     if (screenBuffer3D && camera3D) {
         if (auto *tr = camera3D->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 24.0f, -21.0f));
-            tr->SetRotate(Vector3(0.6f, 0.0f, 0.0f));
+            tr->SetTranslate(Vector3(0.0f, 1.0f, -8.0f));
+            tr->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
         }
         const float w = static_cast<float>(screenBuffer3D->GetWidth());
         const float h = static_cast<float>(screenBuffer3D->GetHeight());
         camera3D->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
         camera3D->SetViewportParams(0.0f, 0.0f, w, h);
-        camera3D->SetFovY(0.7f);
+        camera3D->SetFovY(1.2f);
     }
 
     if (shadowMapBuffer && cameraLight) {
@@ -70,6 +75,10 @@ void ResultScene::Initialize() {
         const float h = static_cast<float>(shadowMapBuffer->GetHeight());
         cameraLight->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
         cameraLight->SetViewportParams(0.0f, 0.0f, w, h);
+    }
+
+    if (shadowMapCameraSync) {
+        shadowMapCameraSync->SetShadowFar(24.0f);
     }
 
     directionalLight->SetEnabled(true);
@@ -84,7 +93,7 @@ void ResultScene::Initialize() {
         obj->SetName("StageTitle");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
-            tr->SetTranslate(Vector3(0.0f, 0.0f, 4.0f));
+            tr->SetTranslate(Vector3(0.5f, -1.0f, 19.0f));
         }
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
             mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -95,15 +104,17 @@ void ResultScene::Initialize() {
     }
 
     AddSceneComponent(std::make_unique<Letterbox>());
-    AddSceneComponent(std::make_unique<CameraStartMovement>());
 
-    if (sceneDefaultVariables_) {
-        auto regFunc = [this](std::unique_ptr<ISceneComponent> comp) {
-            return this->AddSceneComponent(std::move(comp));
-        };
-        auto comp = std::make_unique<ResultSceneAnimator>(regFunc, GetInputCommand());
-        resultSceneAnimator_ = comp.get();
-        AddSceneComponent(std::move(comp));
+    auto scoreSaveAndLoad = std::make_unique<ScoreSaveAndLoad>();
+    auto showScoreNumModels = std::make_unique<ShowScoreNumModels>();
+    auto *scoreSaveAndLoadPtr = scoreSaveAndLoad.get();
+    auto *showScoreNumModelsPtr = showScoreNumModels.get();
+    AddSceneComponent(std::move(scoreSaveAndLoad));
+    AddSceneComponent(std::move(showScoreNumModels));
+    if (scoreSaveAndLoadPtr && showScoreNumModelsPtr) {
+        scoreSaveAndLoadPtr->Load();
+        showScoreNumModelsPtr->SetScores(scoreSaveAndLoadPtr->GetScores());
+        showScoreNumModelsPtr->SetVisible(false);
     }
 
     AddSceneComponent(std::make_unique<SceneFade>());
@@ -114,6 +125,46 @@ void ResultScene::Initialize() {
         fade->SetDuration(1.0f);
         fade->SetDelayBefore(1.0f);
         fade->PlayIn();
+    }
+
+    if (sceneDefaultVariables_) {
+        auto regFunc = [this](std::unique_ptr<ISceneComponent> comp) {
+            return this->AddSceneComponent(std::move(comp));
+            };
+        auto comp = std::make_unique<ResultSceneAnimator>(regFunc, GetInputCommand());
+        resultSceneAnimator_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
+    // パーティクル
+    {
+        constexpr std::uint32_t kParticleCount = 64;
+        for (std::uint32_t i = 0; i < kParticleCount; ++i) {
+            auto obj = std::make_unique<Billboard>();
+            obj->SetName(std::string("ParticleBillboard_") + std::to_string(i));
+            obj->SetCamera(camera3D);
+            obj->SetFacingMode(Billboard::FacingMode::LookAtCamera);
+            obj->RegisterComponent<ParticleMovement>(
+                ParticleMovement::SpawnBox{
+                    Vector3{-32.0f, 0.0f, 16.0f},
+                    Vector3{32.0f, 64.0f, 64.0f} },
+                    0.5f,
+                    5.0f,
+                    Vector3{ 0.2f, 0.2f, 0.2f });
+
+            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(Vector3(0.0f, -99999.0f, 0.0f));
+                tr->SetScale(Vector3(0.0f, 0.0f, 0.0f));
+            }
+            if (auto *mat = obj->GetComponent3D<Material3D>()) {
+                mat->SetTexture(whiteTex);
+                mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                mat->SetEnableLighting(false);
+                mat->SetEnableShadowMapProjection(false);
+            }
+            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+            AddObject3D(std::move(obj));
+        }
     }
 }
 

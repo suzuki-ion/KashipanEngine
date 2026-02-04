@@ -677,8 +677,6 @@ void GameScene::Initialize() {
     if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
     if (backMonitorGame_) backMonitorGame_->SetActive(false);
     if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
-    //if (backMonitorGame_) backMonitorGame_->SetActive(false);
-    if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
     if (backMonitorPause_) backMonitorPause_->SetActive(false);
     if (backMonitorScore_) backMonitorScore_->SetActive(false);
 

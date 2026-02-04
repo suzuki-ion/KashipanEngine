@@ -44,6 +44,12 @@ protected:
     // ABottom判定
     bool IsSubmit() const;
 
+    // 左右入力の判定
+    bool IsMoveLeft() const { return inputCommand_ && inputCommand_->Evaluate("MoveLeft").Triggered(); }
+    bool IsMoveRight() const { return inputCommand_ && inputCommand_->Evaluate("MoveRight").Triggered(); }
+	bool IsMoveUp() const { return inputCommand_ && inputCommand_->Evaluate("MoveUp").Triggered(); }
+	bool IsMoveDown() const { return inputCommand_ && inputCommand_->Evaluate("MoveDown").Triggered(); }
+
     ScreenBuffer *GetMonitorScreenBuffer() const { return screenBuffer_; }
     BackMonitorWithGameScreen *GetBackMonitorGame() const { return backMonitorGame_; }
     BackMonitorWithMenuScreen *GetBackMonitorMenu() const { return backMonitorMenu_; }

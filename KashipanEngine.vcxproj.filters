@@ -594,6 +594,7 @@
     <None Include="IMPLEMENTATION_INSTRUCTIONS.md" />
     <None Include="TWITCH_MODE_IMPLEMENTATION.md" />
     <None Include="TUTORIAL_INPUT_BLOCK.md" />
+    <None Include="TUTORIAL_SELECTION_IMPLEMENTATION.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KashipanEngine.rc" />

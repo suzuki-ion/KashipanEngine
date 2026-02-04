@@ -193,6 +193,28 @@ void WaveSystem::ResetSystem() {
     currentWaveSpawnedEnemyCount_ = 0;
     currentWaveEnemyIDs_.clear();
 
+    // 全ての数字を透明化
+    for (int i = 0; i < kMaxCountdownNumbers_; ++i) {
+        if (countdownNumbers_[i]) {
+            if (auto* mt = countdownNumbers_[i]->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.0f;  // Alpha = 0
+                mt->SetColor(color);
+            }
+        }
+    }
+
+    // 全てのWave表示を透明化
+    for (int i = 0; i < kMaxWaveNumbers_; ++i) {
+        if (waveNumbers_[i]) {
+            if (auto* mt = waveNumbers_[i]->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 0.0f;  // Alpha = 0
+                mt->SetColor(color);
+            }
+        }
+    }
+
     // Wave切り替えアニメーションをリセット
     waveTransitionState_ = WaveTransitionState::Idle;
     waveTransitionTimer_ = 0.0f;

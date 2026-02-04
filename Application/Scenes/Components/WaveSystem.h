@@ -179,6 +179,21 @@ public:
             }
         }
     }
+
+    void Start() {
+        if (waveNumbers_[0]) {
+            if (auto* mt = waveNumbers_[0]->GetComponent3D<Material3D>()) {
+                Vector4 color = mt->GetColor();
+                color.w = 1.0f;  // Alpha = 1
+                mt->SetColor(color);
+            }
+
+            if (auto* tr = waveNumbers_[0]->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(waveDisplayStartPosition_);
+                tr->SetRotate(waveDisplayStartRotate_);
+            }
+        }
+    }
 #if defined(USE_IMGUI)
     void ShowImGui() override;
 #endif

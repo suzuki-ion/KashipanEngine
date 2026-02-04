@@ -115,7 +115,8 @@ void BombManager::Update() {
             }
         }
 
-        if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_) {
+        auto* pMove = player_->GetComponent3D<PlayerMove>();
+        if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_ && !pMove->GetIsKnockedBack()) {
             if (bombSpawnMode_ == BombSpawnMode::None) {
                 // Noneモードから移行する場合、既存の爆弾をすべて起爆
                 DetonateAllBombs();

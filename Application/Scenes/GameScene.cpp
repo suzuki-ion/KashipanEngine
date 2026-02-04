@@ -733,8 +733,8 @@ void GameScene::OnUpdate() {
                 break;
 
             case PauseModelIndex::Menu:
+				InGamePauseQuit();
                 InGameQuit();
-                InGamePauseQuit();
                 if (stageLighting_) stageLighting_->DisableLighting(true, true);
                 if (backMonitorPause_) backMonitorPause_->SetActive(false);
                 if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
@@ -1671,6 +1671,7 @@ void GameScene::InGameStart() {
         // WaveSystemを開始
         if (waveSystem_) {
             waveSystem_->StartSystem();
+            waveSystem_->Start();
         }
 
         if (player_) {

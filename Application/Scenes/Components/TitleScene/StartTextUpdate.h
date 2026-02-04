@@ -18,8 +18,8 @@ public:
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetName("StartText");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 4.0f, 0.0f));
-            tr->SetRotate(Vector3(0.6f, 0.0f, 0.0f));
+            tr->SetTranslate(Vector3(0.0f, -0.5f, 0.0f));
+            tr->SetRotate(Vector3(M_PI * 0.5f, 0.0f, 0.0f));
             tr->SetScale(fromScale_);
         }
         startTextModel_ = obj.get();

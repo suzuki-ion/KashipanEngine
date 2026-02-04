@@ -2,6 +2,8 @@
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/SceneFade.h"
 #include "Scenes/Components/TitleScene/CameraStartMovement.h"
+#include "Scenes/Components/ResultScene/ScoreSaveAndLoad.h"
+#include "Scenes/Components/ResultScene/ShowScoreNumModels.h"
 
 namespace KashipanEngine {
 
@@ -84,7 +86,7 @@ void ResultScene::Initialize() {
         obj->SetName("StageTitle");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
-            tr->SetTranslate(Vector3(0.0f, 0.0f, 4.0f));
+            tr->SetTranslate(Vector3(0.0f, -1.0f, 19.0f));
         }
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
             mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -104,6 +106,17 @@ void ResultScene::Initialize() {
         auto comp = std::make_unique<ResultSceneAnimator>(regFunc, GetInputCommand());
         resultSceneAnimator_ = comp.get();
         AddSceneComponent(std::move(comp));
+    }
+
+    auto scoreSaveAndLoad = std::make_unique<ScoreSaveAndLoad>();
+    auto showScoreNumModels = std::make_unique<ShowScoreNumModels>();
+    auto *scoreSaveAndLoadPtr = scoreSaveAndLoad.get();
+    auto *showScoreNumModelsPtr = showScoreNumModels.get();
+    AddSceneComponent(std::move(scoreSaveAndLoad));
+    AddSceneComponent(std::move(showScoreNumModels));
+    if (scoreSaveAndLoadPtr && showScoreNumModelsPtr) {
+        scoreSaveAndLoadPtr->Load();
+        showScoreNumModelsPtr->SetScores(scoreSaveAndLoadPtr->GetScores());
     }
 
     AddSceneComponent(std::make_unique<SceneFade>());

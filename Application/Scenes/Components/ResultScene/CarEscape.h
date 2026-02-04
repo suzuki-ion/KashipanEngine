@@ -18,6 +18,7 @@ public:
         obj->SetName("CarModel");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetRotate(Vector3(0.0f, M_PI * 0.5f, 0.0f));
+            tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
             tr->SetTranslate(moveOutFrom_);
         }
         carModel_ = obj.get();

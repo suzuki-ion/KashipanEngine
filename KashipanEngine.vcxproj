@@ -148,6 +148,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
     <ClCompile Include="Application\Scenes\Components\PlayerHealthModelUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.cpp" />
     <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
@@ -351,6 +353,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\ResultScene\CarEscape.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\PlayerEscape.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\ResultSceneAnimator.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\Components\ScoreUI.h" />
     <ClInclude Include="Application\Scenes\Components\StageLighting.h" />

@@ -92,7 +92,7 @@ void TitleScene::Initialize() {
         obj->SetName("StageTitle");
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
             tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
-            tr->SetTranslate(Vector3(0.0f, 0.0f, 4.0f));
+            tr->SetTranslate(Vector3(0.0f, -1.0f, 19.0f));
         }
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
             mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));

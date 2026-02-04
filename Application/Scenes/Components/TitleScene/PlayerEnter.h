@@ -118,7 +118,7 @@ private:
 
     Model *playerModel_ = nullptr;
 
-    Vector3 fromTranslate_ = Vector3(0.0f, 0.0f, 2.0f);
+    Vector3 fromTranslate_ = Vector3(0.0f, 0.0f, 3.0f);
     Vector3 fromScale_ = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 toTranslate_ = Vector3(0.0f, 0.0f, 16.0f);
     Vector3 toScale_ = Vector3(1.0f, 1.0f, 1.0f);

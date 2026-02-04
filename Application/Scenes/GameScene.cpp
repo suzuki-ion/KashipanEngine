@@ -715,17 +715,6 @@ void GameScene::OnUpdate() {
     DrawParticleStateImGui();
 #endif
 
-    // ウェーブシステムのウェーブが全て完了した際の処理
-    if (waveSystem_ && waveSystem_->IsAllWavesCompleted() && !isGameClearProcCompleted_) {
-        scoreSaveAndLoad_->RegisterScore(scoreManager_->GetScore());
-        scoreSaveAndLoad_->Save();
-        SetNextSceneName("ResultScene");
-        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
-            out->Play();
-        }
-        isGameClearProcCompleted_ = true;
-    }
-
 	// プレイヤーの体力が0になった際の処理
     if (!isGameClearProcCompleted_) {
         if (auto *health = player_->GetComponent3D<Health>()) {
@@ -2142,11 +2131,13 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     // 全Wave終了時のコールバック
     waveSystem_->SetOnAllWavesCompletedCallback([this]() {
         // 全Wave終了時の処理（将来のResult画面遷移などに使用）
-        InGameQuit();
-        if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
-        if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
-        if (backMonitorGame_) backMonitorGame_->SetActive(false);
-        if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+        scoreSaveAndLoad_->RegisterScore(scoreManager_->GetScore());
+        scoreSaveAndLoad_->Save();
+        SetNextSceneName("ResultScene");
+        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+            out->Play();
+        }
+        isGameClearProcCompleted_ = true;
         });
 }
 

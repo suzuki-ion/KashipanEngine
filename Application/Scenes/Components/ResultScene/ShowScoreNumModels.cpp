@@ -192,6 +192,15 @@ void ShowScoreNumModels::UpdateDisplayScores() {
 
 void ShowScoreNumModels::UpdateDigitModels() {
     const int latestScore = scores_.empty() ? -1 : scores_.back();
+    size_t highlightIndex = kRankCount;
+    if (latestScore > 0) {
+        for (size_t i = 0; i < kRankCount; ++i) {
+            if (displayScores_[i] == latestScore) {
+                highlightIndex = i;
+                break;
+            }
+        }
+    }
     for (size_t setIndex = 0; setIndex < kSetCount; ++setIndex) {
         const int scoreValue = displayScores_[setIndex];
         const int clampedScore = std::clamp(scoreValue, 0, 999999);
@@ -202,7 +211,7 @@ void ShowScoreNumModels::UpdateDigitModels() {
             temp /= 10;
         }
 
-        const bool highlight = (setIndex < kRankCount) && (latestScore >= 0) && (scoreValue == latestScore);
+        const bool highlight = (setIndex == highlightIndex) && (scoreValue > 0);
         for (size_t digitIndex = 0; digitIndex < kDigitCount; ++digitIndex) {
             for (size_t value = 0; value < kDigitVariants; ++value) {
                 auto *model = digitModels_[setIndex][digitIndex][value];
@@ -238,7 +247,7 @@ void ShowScoreNumModels::UpdateDigitModels() {
         if (auto *mat = model->GetComponent3D<Material3D>()) {
             Vector4 color = mat->GetColor();
             color.w = isVisible_ ? 1.0f : 0.0f;
-            if (isVisible_ && i < kRankCount && latestScore >= 0 && displayScores_[i] == latestScore) {
+            if (isVisible_ && i == highlightIndex && displayScores_[i] > 0) {
                 color = Vector4{ 1.0f, 1.0f, 0.5f, 1.0f };
             }
             mat->SetColor(color);

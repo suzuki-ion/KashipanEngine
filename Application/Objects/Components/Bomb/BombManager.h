@@ -11,6 +11,7 @@ namespace KashipanEngine {
 // Forward declaration
 class ExplosionManager;
 class WaveSystem;
+class TutorialManager;
 
 /// @brief プレイヤーが生成するBombを一括管理するクラス
 class BombManager final : public ISceneComponent {
@@ -135,6 +136,9 @@ public:
 
 	void SetMoveInputInterval(float interval) { moveInputInterval_ = interval; }
 
+    /// @brief TutorialManagerを設定
+    void SetTutorialManager(TutorialManager* tutorialManager) { tutorialManager_ = tutorialManager; }
+
     /// @brief ポーズ状態を設定
     void SetIsPause(bool isPause) { isPause_ = isPause; };
 
@@ -178,6 +182,7 @@ private:
     ExplosionManager* explosionManager_ = nullptr;
     ColliderComponent* collider_ = nullptr;
     WaveSystem* waveSystem_ = nullptr;
+    TutorialManager* tutorialManager_ = nullptr;
 
 	int maxBombs_ = 10;              // 同時に設置可能な爆弾の最大数
 	float bpmProgress_ = 0.0f;       // 現在フレームのBPM進行度（0.0～1.0）

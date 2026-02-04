@@ -32,6 +32,10 @@
 #include "Objects/Components/Bomb/ExplosionManager.h"
 #include "Objects/Components/Map/WallInfo.h"
 #include "Objects/Components/Player/PlayerBombSpawnMode.h"
+#include "Objects/Components/Map/WallBreakParticleManager.h"
+#include "Scenes/Components/Tutorial/TutorialBase.h"
+#include "Scenes/Components/Tutorial/MoveTutorial.h"
+#include "Scenes/Components/Tutorial/TutorialManager.h"
 
 namespace KashipanEngine {
 
@@ -60,6 +64,9 @@ private:
 
 	/// @brief  Waveシステム初期化
     void InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transform);
+
+    /// @brief チュートリアルマネージャーを初期化
+    void InitTutorialManager();
 #if defined(USE_IMGUI)
     void DrawObjectStateImGui();
     void DrawParticleStateImGui();
@@ -92,6 +99,7 @@ private:
     float djFadeTargetAlpha_ = 1.0f;
 
 	bool isGameStarted_ = false; // ゲーム開始フラグ
+    bool isTutorialMode_ = true; // チュートリアルモードフラグ
 
     // BPMオブジェクトのBPMに合わせた拡大縮小範囲
     static constexpr int kBpmObjectCount = 4;  // BPMオブジェクトの数
@@ -182,6 +190,7 @@ private:
 
     // Wave関連
     WaveSystem *waveSystem_ = nullptr;
+    WallBreakParticleManager* wallBreakParticleManager_ = nullptr;
 
 	int wallSpawnAgainCount_ = 8; // 壁の再生成までの待機拍数
 
@@ -190,6 +199,9 @@ private:
 
     // スコア関連
     ScoreManager *scoreManager_ = nullptr;
+
+    // チュートリアル関連
+    TutorialManager *tutorialManager_ = nullptr;
 
     struct ParticleLightPair {
         Object3DBase *particle = nullptr;
@@ -202,6 +214,7 @@ private:
     ParticleConfig oneBeatParticleConfig_{};
     ParticleConfig oneBeatMissParticleConfig_{};
     ParticleConfig playerDieParticleConfig_{};
+	ParticleConfig wallBreakParticleConfig_{};
 
     int enemySpawnParticleCount_ = 20;
     int enemyDieParticleCount_ = 30;

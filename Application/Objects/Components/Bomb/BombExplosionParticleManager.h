@@ -19,6 +19,7 @@ public:
     void SpawnParticles(const Vector3& position, int particleCount = 10);
 
     void SetParticleConfig(const ParticleConfig& config) { config_ = config; }
+
     const ParticleConfig& GetParticleConfig() const { return config_; }
 
 #if defined(USE_IMGUI)

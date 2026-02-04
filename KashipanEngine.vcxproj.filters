@@ -164,6 +164,10 @@
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithPauseScreen.cpp" />
+    <ClCompile Include="Application\Objects\Components\Map\WallBreakParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Map\WallBreakParticleManager.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\MoveTutorial.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorWithScoreScreen.cpp" />
     <ClCompile Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.cpp" />
     <ClCompile Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.cpp" />
@@ -458,6 +462,11 @@
     <ClInclude Include="Application\Scenes\Components\ResultScene\PlayerEscape.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\CarEscape.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\ResultSceneAnimator.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallBreakParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallBreakParticleManager.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\MoveTutorial.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialStage.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialManager.h" />
     <ClInclude Include="Application\Scenes\Components\BackMonitorWithScoreScreen.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.h" />
     <ClInclude Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.h" />
@@ -584,6 +593,7 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\PostEffect\DitherPS.hlsl" />
     <None Include="IMPLEMENTATION_INSTRUCTIONS.md" />
     <None Include="TWITCH_MODE_IMPLEMENTATION.md" />
+    <None Include="TUTORIAL_INPUT_BLOCK.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KashipanEngine.rc" />

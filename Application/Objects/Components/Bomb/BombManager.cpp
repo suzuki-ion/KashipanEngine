@@ -4,6 +4,7 @@
 #include "Objects/Components/BPMScaling.h"
 #include "Objects/Components/Bomb/BombScaling.h"
 #include "Scenes/Components/WaveSystem.h"
+#include "Scenes/Components/Tutorial/TutorialManager.h"
 
 namespace KashipanEngine {
 
@@ -115,8 +116,14 @@ void BombManager::Update() {
             }
         }
 
+        // TutorialManagerが入力をブロックしている場合は爆弾を設置しない
+        bool inputAllowed = true;
+        if (tutorialManager_ && !tutorialManager_->CanAcceptInput()) {
+            inputAllowed = false;
+        }
+
         auto* pMove = player_->GetComponent3D<PlayerMove>();
-        if (inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_ && !pMove->GetIsKnockedBack()) {
+        if (inputAllowed && inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_ && !pMove->GetIsKnockedBack()) {
             if (bombSpawnMode_ == BombSpawnMode::None) {
                 // Noneモードから移行する場合、既存の爆弾をすべて起爆
                 DetonateAllBombs();
@@ -126,11 +133,19 @@ void BombManager::Update() {
                 bombSpawnMode_ = BombSpawnMode::Chain;
                 missedBeatsCount_ = 0;  // Chainモード開始時にカウンターをリセット
             } else if (bombSpawnMode_ == BombSpawnMode::Chain) {
-                bombSpawnMode_ = BombSpawnMode::None;
-                for (auto& bomb : activeBombs_) {
-                    bomb.isChainBomb = false;
+                // ChainモードでBombが1個だけの場合、そのBombを即起爆
+                if (GetCurrentChainCount() <= 10) {
+                    DetonateAllBombs();
+                    bombSpawnMode_ = BombSpawnMode::None;
+                    missedBeatsCount_ = 0;
+                } else {
+                    // 複数ある場合は従来通りChainモードを解除
+                    bombSpawnMode_ = BombSpawnMode::None;
+                    for (auto& bomb : activeBombs_) {
+                        bomb.isChainBomb = false;
+                    }
+                    missedBeatsCount_ = 0;  // Chainモード終了時にカウンターをリセット
                 }
-                missedBeatsCount_ = 0;  // Chainモード終了時にカウンターをリセット
             }
         }
 

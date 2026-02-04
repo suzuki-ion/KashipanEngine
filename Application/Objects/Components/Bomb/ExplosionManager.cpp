@@ -27,6 +27,10 @@ void ExplosionManager::Update() {
 
     const float dt = GetDeltaTime();
 
+    if (wallBreakParticleManager_) {
+        wallBreakParticleManager_->SetParticleConfig(wallBreakConfig_);
+    }
+
     // 爆発とボムの衝突をチェック
     CheckExplosionBombCollisions();
 
@@ -315,6 +319,12 @@ void ExplosionManager::DestroyWallsInExplosionRange(const Vector3& position, flo
             if (targetX >= 0 && targetX < mapW_ && centerZ >= 0 && centerZ < mapH_) {
                 const int index = centerZ * mapW_ + targetX;
                 if (walls_[index].isActive && walls_[index].isMoving) {
+                    // 壁の中心位置を計算してパーティクルを生成
+                    if (wallBreakParticleManager_) {
+                        Vector3 wallCenter(targetX * 2.0f, 0.0f, centerZ * 2.0f);
+                        wallBreakParticleManager_->SpawnParticles(wallCenter);
+                    }
+
                     walls_[index].isActive = false;
                     walls_[index].isMoving = false;
                     walls_[index].moveTimer.Reset();
@@ -331,6 +341,12 @@ void ExplosionManager::DestroyWallsInExplosionRange(const Vector3& position, flo
             if (centerX >= 0 && centerX < mapW_ && targetZ >= 0 && targetZ < mapH_) {
                 const int index = targetZ * mapW_ + centerX;
                 if (walls_[index].isActive && walls_[index].isMoving) {
+                    // 壁の中心位置を計算してパーティクルを生成
+                    if (wallBreakParticleManager_) {
+                        Vector3 wallCenter(centerX * 2.0f, 0.0f, targetZ * 2.0f);
+                        wallBreakParticleManager_->SpawnParticles(wallCenter);
+                    }
+
                     walls_[index].isActive = false;
                     walls_[index].isMoving = false;
                     walls_[index].moveTimer.Reset();
@@ -397,5 +413,23 @@ void ExplosionManager::ShowImGui() {
     }
 }
 #endif
+
+void ExplosionManager::ClearAllWalls() {
+    if (!walls_ || mapW_ <= 0 || mapH_ <= 0) return;
+
+    for (int z = 0; z < mapH_; z++) {
+        for (int x = 0; x < mapW_; x++) {
+            const int index = z * mapW_ + x;
+            if (walls_[index].isActive) {
+                walls_[index].isActive = false;
+                walls_[index].isMoving = false;
+                walls_[index].moveTimer.Reset();
+                walls_[index].hp = 0;
+                walls_[index].isWaitingRespawn = false;
+                walls_[index].currentSpawnAgainCount = 0;
+            }
+        }
+    }
+}
 
 } // namespace KashipanEngine

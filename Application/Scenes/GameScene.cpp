@@ -12,6 +12,7 @@
 #include "Scenes/Components/SceneChangeOut.h"
 
 #include "Scenes/Components/Tutorial/TutorialBase.h"
+#include "Scenes/Components/Tutorial/TutorialManager.h"
 #include <cmath>
 #include <algorithm>
 
@@ -409,9 +410,17 @@ void GameScene::Initialize() {
         AddSceneComponent(std::move(comp));
     }
 
+    {
+        auto comp = std::make_unique<WallBreakParticleManager>();
+        comp->SetScreenBuffer(screenBuffer3D);
+        wallBreakParticleManager_ = comp.get();
+        AddSceneComponent(std::move(comp));
+    }
+
     // ExplosionManagerにBombExplosionParticleManagerを設定
     if (explosionManager_ && bombExplosionParticleManager_) {
         explosionManager_->SetBombExplosionParticleManager(bombExplosionParticleManager_);
+		explosionManager_->SetWallBreakParticleManager(wallBreakParticleManager_);
     }
 
     // ExplosionNumberDisplay の追加
@@ -470,6 +479,7 @@ void GameScene::Initialize() {
         comp->SetCollider(colliderComp);
         comp->SetPlayer(player_);
         comp->SetBombManager(bombManager_);
+        comp->SetWallBreak(wallBreakParticleManager_);
         comp->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);  // 壁配列を設定
         enemyManager_ = comp.get();
         AddSceneComponent(std::move(comp));
@@ -665,13 +675,28 @@ void GameScene::Initialize() {
 
     if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
     if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+    if (backMonitorGame_) backMonitorGame_->SetActive(false);
+    if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
     //if (backMonitorGame_) backMonitorGame_->SetActive(false);
     if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
     if (backMonitorPause_) backMonitorPause_->SetActive(false);
     if (backMonitorScore_) backMonitorScore_->SetActive(false);
 
-    /*AddSceneComponent(std::make_unique<TutorialBase>(GetInputCommand(),
-        cameraGameTargetPos_, cameraGameTargetRot_, cameraMenuTargetPos_, cameraMenuTargetRot_));*/
+    // TutorialManagerを初期化
+    InitTutorialManager();
+
+    bpmSystem_->MeasurementStart(AudioManager::kInvalidPlayHandle, 90.0f, 0.0f);
+
+    {
+        if (auto* move = player_->GetComponent3D<PlayerMove>()) {
+            move->SetIsStarted(true);
+        }
+
+        if (bombManager_) {
+            bombManager_->SetIsStarted(true);
+        }
+    }
+
 }
 
 GameScene::~GameScene() {}
@@ -1246,7 +1271,6 @@ void GameScene::LoadParticleStateJson() {
         if (index < values.size()) oneBeatMissParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) oneBeatMissParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
 
-
         // PlayerDieParticle関連
         if (index < values.size()) playerDieParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerDieParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
@@ -1257,6 +1281,17 @@ void GameScene::LoadParticleStateJson() {
         if (index < values.size()) playerDieParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerDieParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
         if (index < values.size()) playerDieParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
+
+        // 関連
+        if (index < values.size()) wallBreakParticleConfig_.initialSpeed = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.speedVariation = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.lifeTimeSec = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.gravity = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.damping = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.spreadAngle = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.baseScale.x = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.baseScale.y = JsonManager::Reverse<float>(values[index++]);
+        if (index < values.size()) wallBreakParticleConfig_.baseScale.z = JsonManager::Reverse<float>(values[index++]);
     } catch (const std::exception &e) {
         printf("[ERROR] Critical error in LoadParticleStateJson: %s\n", e.what());
         printf("[INFO] Using default particle settings.\n");
@@ -1330,6 +1365,17 @@ void GameScene::SaveParticleStateJson() {
     jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.x, "playerDie_baseScale_x");
     jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.y, "playerDie_baseScale_y");
     jsonParticleManager_->RegistOutput(playerDieParticleConfig_.baseScale.z, "playerDie_baseScale_z");
+
+    // WallBreakParticle関連
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.initialSpeed, "wallBreak_initialSpeed");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.speedVariation, "wallBreak_speedVariation");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.lifeTimeSec, "wallBreak_lifeTimeSec");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.gravity, "wallBreak_gravity");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.damping, "wallBreak_damping");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.spreadAngle, "wallBreak_spreadAngle");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.baseScale.x, "wallBreak_baseScale_x");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.baseScale.y, "wallBreak_baseScale_y");
+    jsonParticleManager_->RegistOutput(wallBreakParticleConfig_.baseScale.z, "wallBreak_baseScale_z");
 
     // JSONファイルに書き込み（jsonParticleManager_を使用）
     jsonParticleManager_->Write(loadToSaveParticleName_);
@@ -1482,6 +1528,14 @@ void GameScene::SetParticleValue() {
 
     if (playerDieParticleManager_) {
         playerDieParticleManager_->SetParticleConfig(playerDieParticleConfig_);
+    }
+
+    if (explosionManager_) {
+		explosionManager_->SetWallBreakConfig(wallBreakParticleConfig_);
+    }
+
+    if (wallBreakParticleManager_) {
+        wallBreakParticleManager_->SetParticleConfig(wallBreakParticleConfig_);
     }
 }
 
@@ -1644,6 +1698,17 @@ void GameScene::DrawParticleStateImGui() {
         ImGui::DragFloat("減衰率##playerdie", &playerDieParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat("広がる角度(度)##playerdie", &playerDieParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
         ImGui::DragFloat3("基本スケール##playerdie", &playerDieParticleConfig_.baseScale.x, 0.01f, 0.0f, 10.0f);
+    }
+
+    // wallBreakParticle関連
+    if (ImGui::CollapsingHeader("wallDieParticle")) {
+        ImGui::DragFloat("初速度##walldie", &wallBreakParticleConfig_.initialSpeed, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("速度ランダム幅##walldie", &wallBreakParticleConfig_.speedVariation, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("生存時間(秒)##walldie", &wallBreakParticleConfig_.lifeTimeSec, 0.01f, 0.1f, 10.0f);
+        ImGui::DragFloat("重力##walldie", &wallBreakParticleConfig_.gravity, 0.1f, -100.0f, 100.0f);
+        ImGui::DragFloat("減衰率##walldie", &wallBreakParticleConfig_.damping, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("広がる角度(度)##walldie", &wallBreakParticleConfig_.spreadAngle, 1.0f, 0.0f, 180.0f);
+        ImGui::DragFloat3("基本スケール##walldie", &wallBreakParticleConfig_.baseScale.x, 0.01f, 0.0f, 10.0f);
     }
 
     ImGui::End();
@@ -2002,4 +2067,58 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
         if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
         });
 }
+
+void GameScene::InitTutorialManager() {
+    auto comp = std::make_unique<TutorialManager>(
+        GetInputCommand(),
+        cameraGameTargetPos_,
+        cameraGameTargetRot_,
+        cameraMenuTargetPos_,
+        cameraMenuTargetRot_
+    );
+
+    // プレイヤーのPlayerMoveコンポーネントを設定
+    if (player_) {
+        if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+            comp->SetPlayerMove(playerMove);
+        }
+        comp->SetPlayer(player_);
+    }
+
+    // 各種マネージャーを設定
+    comp->SetBombManager(bombManager_);
+    comp->SetBPMSystem(bpmSystem_);
+    comp->SetExplosionManager(explosionManager_);
+
+    // モニターのScreenBufferを設定
+    if (auto* backMonitor = GetSceneComponent<BackMonitor>()) {
+        comp->SetMonitorScreenBuffer(backMonitor->GetScreenBuffer());
+    }
+
+    // 全チュートリアル完了時のコールバックを設定
+    comp->SetOnAllTutorialsCompletedCallback([this]() {
+        // チュートリアル完了後、メニュー画面に移行
+        isTutorialMode_ = false;
+        if (backMonitorMenu_) backMonitorMenu_->SetActive(true);
+        if (backMonitorGame_) backMonitorGame_->SetActive(false);
+        if (cameraController_) cameraController_->SetTargetTranslate(cameraMenuTargetPos_);
+        if (cameraController_) cameraController_->SetTargetRotate(cameraMenuTargetRot_);
+        if (stageLighting_) stageLighting_->DisableLighting(true, true);
+    });
+
+    tutorialManager_ = comp.get();
+    AddSceneComponent(std::move(comp));
+
+    // BombManagerにTutorialManagerを設定
+    bombManager_->SetTutorialManager(tutorialManager_);
+
+    // チュートリアルモデルを初期化（MonitorScreenBuffer設定後に呼び出す）
+    tutorialManager_->InitializeTutorialModels();
+
+    // チュートリアルモードなら開始
+    if (isTutorialMode_) {
+        tutorialManager_->StartTutorials();
+    }
+}
+
 } // namespace GameSceneNS

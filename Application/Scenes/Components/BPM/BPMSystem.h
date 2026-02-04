@@ -34,6 +34,9 @@ namespace KashipanEngine {
             bpm_ = bpm_ <= 0.0f ? bpm_ : bpm;
             beatStartOffset_ = beatStartOffset < 0.0 ? beatStartOffset_ : beatStartOffset;
             soundBeat_.SetBeat(bgmPlayHandle_, bpm_, beatStartOffset_);
+            if (bgmPlayHandle_ == AudioManager::kInvalidPlayHandle) {
+                soundBeat_.StartManualBeat();
+			}
         }
 
 		/// @brief システムリセット

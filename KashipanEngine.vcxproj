@@ -129,6 +129,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
     <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Map\WallBreakParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Map\WallBreakParticleManager.cpp" />
     <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatEmitter.cpp" />
     <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
@@ -153,7 +155,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
     <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\MoveTutorial.cpp" />
     <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBase.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\WaveSystem.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
     <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
@@ -315,6 +319,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
     <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallBreakParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallBreakParticleManager.h" />
     <ClInclude Include="Application\Objects\Components\Map\WallInfo.h" />
     <ClInclude Include="Application\Objects\Components\OneBeatParticle.h" />
     <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatEmitter.h" />
@@ -371,7 +377,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
     <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\MoveTutorial.h" />
     <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBase.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialManager.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialStage.h" />
     <ClInclude Include="Application\Scenes\Components\WaveSystem.h" />
     <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Application\Scenes\GameScene.h" />
@@ -612,6 +621,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="MyStd\NameMap.h" />
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
+    <None Include="TUTORIAL_INPUT_BLOCK.md" />
     <None Include="TWITCH_MODE_IMPLEMENTATION.md" />
   </ItemGroup>
   <ItemGroup>

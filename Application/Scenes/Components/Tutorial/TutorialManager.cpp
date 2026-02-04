@@ -8,6 +8,7 @@
 #include "Objects/Components/Bomb/BombManager.h"
 #include "Scenes/Components/BPM/BPMSystem.h"
 #include "Objects/Components/Bomb/ExplosionManager.h"
+#include "Objects/Components/BPMScaling.h"
 
 namespace KashipanEngine {
 
@@ -20,7 +21,7 @@ TutorialManager::TutorialManager(InputCommand* inputCommand,
 
 void TutorialManager::Initialize() {
     InitializeInternal();
-    currentTutorial_ = TutorialType::Movement;
+    currentTutorial_ = TutorialType::UseTutorial;
     currentPhase_ = TutorialPhase::Initial;
     moveCount_ = 0;
     bombCount_ = 0;
@@ -31,6 +32,10 @@ void TutorialManager::Initialize() {
     bombPlaced_ = false;
     isInputBlocked_ = false;
     inputBlockTimer_ = 0.0f;
+    
+    // UseTutorial選択状態を初期化
+    currentSelection_ = UseTutorialSelection::Yes;
+    useTutorialDecided_ = false;
 
     // 拍に合わせた爆弾設置の監視用変数を初期化
     lastBeatBombCount_ = 0;
@@ -58,18 +63,42 @@ void TutorialManager::InitializeTutorialModels() {
 
     // turtrial_1.obj ～ turtrial_4.obj を読み込み
     std::string modelNames[kTutorialModelCount] = {
+        "turtrial_0.obj",
         "turtrial_1.obj",
         "turtrial_2.obj",
         "turtrial_3.obj",
-        "turtrial_4.obj"
+        "turtrial_4.obj",
+        "tower.obj",
     };
 
-    float z[kTutorialModelCount] = {
-        2.27f,
-1.95f,
-2.11f,
-2.35f,
+    Vector3 t[kTutorialModelCount] = {
+        Vector3(0.0f,1.35f,2.0f),
+        Vector3(-0.5f,0.25f,1.77f),
+        Vector3(0.0f,0.36f,1.95f),
+        Vector3(-0.51f,0.1f,2.11f),
+        Vector3(-0.39f,0.22f,2.35f),
+         Vector3(0.0f,0.0f,2.0f),
     };
+
+    Vector3 sStart[kTutorialModelCount] = {
+        Vector3(1.2f,1.5f,0.1f),
+        Vector3(0.76f,0.91f,0.1f),
+        Vector3(0.9f,1.0f,0.1f),
+        Vector3(1.02f,1.38f,0.1f),
+        Vector3(1.0f,1.55f,0.1f),
+        Vector3(0.95f,1.44f,0.1f),
+        
+    };
+
+    //Vector3 sEnd[kTutorialModelCount] = {
+    //    Vector3(1.3f,1.3f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+    //    Vector3(1.0f,1.0f,0.1f),
+
+    //};
 
     for (int i = 0; i < kTutorialModelCount; ++i) {
         auto modelData = ModelManager::GetModelDataFromFileName(modelNames[i]);
@@ -77,8 +106,8 @@ void TutorialManager::InitializeTutorialModels() {
         obj->SetName("TutorialModel_" + std::to_string(i + 1));
 
         if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 0.0f, z[i]));
-            tr->SetScale(Vector3({ 1.0f ,1.0f ,0.1f }));
+            tr->SetTranslate(t[i]);
+            tr->SetScale(sStart[i]);
         }
 
         if (auto* mt = obj->GetComponent3D<Material3D>()) {
@@ -88,10 +117,60 @@ void TutorialManager::InitializeTutorialModels() {
             mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
         }
 
+        //obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
+
         // モニターのScreenBufferにアタッチ
         obj->AttachToRenderer(GetMonitorScreenBuffer(), "Object3D.Solid.BlendNormal");
 
         tutorialModels_[i] = obj.get();
+        ctx->AddObject3D(std::move(obj));
+    }
+
+    {
+        auto modelData = ModelManager::GetModelDataFromFileName("Yes.obj");
+        auto obj = std::make_unique<Model>(modelData);
+        obj->SetName("Yes");
+
+        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(0.0f, -1.15f, 2.0f));
+            tr->SetScale(Vector3({ 0.66f ,0.66f ,0.1f }));
+        }
+
+        if (auto* mt = obj->GetComponent3D<Material3D>()) {
+            mt->SetEnableLighting(false);
+            mt->SetEnableShadowMapProjection(false);
+            // 初期状態では非表示（アルファ0）
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
+        }
+
+        // モニターのScreenBufferにアタッチ
+        obj->AttachToRenderer(GetMonitorScreenBuffer(), "Object3D.Solid.BlendNormal");
+
+        useTutorialYes_ = obj.get();
+        ctx->AddObject3D(std::move(obj));
+    }
+
+    {
+        auto modelData = ModelManager::GetModelDataFromFileName("No.obj");
+        auto obj = std::make_unique<Model>(modelData);
+        obj->SetName("No");
+
+        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetTranslate(Vector3(0.0f, -2.35f, 2.0f));
+            tr->SetScale(Vector3({ 0.66f ,0.66f ,0.1f }));
+        }
+
+        if (auto* mt = obj->GetComponent3D<Material3D>()) {
+            mt->SetEnableLighting(false);
+            mt->SetEnableShadowMapProjection(false);
+            // 初期状態では非表示（アルファ0）
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
+        }
+
+        // モニターのScreenBufferにアタッチ
+        obj->AttachToRenderer(GetMonitorScreenBuffer(), "Object3D.Solid.BlendNormal");
+
+        useTutorialNo_ = obj.get();
         ctx->AddObject3D(std::move(obj));
     }
 
@@ -105,9 +184,18 @@ void TutorialManager::UpdateTutorialModelDisplay() {
 
     // すべてのモデルを非表示
     HideAllTutorialModels();
+    
+    // UseTutorialオプションも非表示
+    HideUseTutorialOptions();
 
     // チュートリアル完了後は何も表示しない
     if (currentPhase_ == TutorialPhase::Finished) {
+        return;
+    }
+    
+    // UseTutorialの場合は選択肢を表示
+    if (currentTutorial_ == TutorialType::UseTutorial) {
+        UpdateUseTutorialDisplay();
         return;
     }
 
@@ -126,6 +214,69 @@ void TutorialManager::HideAllTutorialModels() {
             if (auto* mt = tutorialModels_[i]->GetComponent3D<Material3D>()) {
                 mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
             }
+        }
+    }
+}
+
+void TutorialManager::HideUseTutorialOptions() {
+    if (useTutorialYes_) {
+        if (auto* mt = useTutorialYes_->GetComponent3D<Material3D>()) {
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
+        }
+    }
+    if (useTutorialNo_) {
+        if (auto* mt = useTutorialNo_->GetComponent3D<Material3D>()) {
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.0f));
+        }
+    }
+}
+
+void TutorialManager::UpdateUseTutorialSelection() {
+    // 左右入力で選択を変更
+    if (IsMoveLeft() || IsMoveRight() || IsMoveUp() || IsMoveDown()) {
+        // Yes <-> No を切り替え
+        if (currentSelection_ == UseTutorialSelection::Yes) {
+            currentSelection_ = UseTutorialSelection::No;
+        } else {
+            currentSelection_ = UseTutorialSelection::Yes;
+        }
+        
+        // 表示を更新
+        UpdateUseTutorialDisplay();
+    }
+}
+
+void TutorialManager::UpdateUseTutorialDisplay() {
+    if (!useTutorialYes_ || !useTutorialNo_) {
+        return;
+    }
+    
+    // turtrial_0.obj を表示
+    if (tutorialModels_[0]) {
+        if (auto* mt = tutorialModels_[0]->GetComponent3D<Material3D>()) {
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+        }
+    }
+    
+    // Yesの表示
+    if (auto* mt = useTutorialYes_->GetComponent3D<Material3D>()) {
+        if (currentSelection_ == UseTutorialSelection::Yes) {
+            // 選択中は明るく表示
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+        } else {
+            // 選択されていない場合は暗く表示
+            mt->SetColor(Vector4(0.3f, 0.3f, 0.3f, 1.0f));
+        }
+    }
+    
+    // Noの表示
+    if (auto* mt = useTutorialNo_->GetComponent3D<Material3D>()) {
+        if (currentSelection_ == UseTutorialSelection::No) {
+            // 選択中は明るく表示
+            mt->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+        } else {
+            // 選択されていない場合は暗く表示
+            mt->SetColor(Vector4(0.3f, 0.3f, 0.3f, 1.0f));
         }
     }
 }
@@ -200,24 +351,78 @@ void TutorialManager::Update() {
         break;
 
     case TutorialPhase::WaitForConfirm:
-        // ユーザーが確認ボタンを押すまで待つ（入力は常にブロック中）
-        if (IsSubmit()) {
-            // ステージに視点を向けて実践開始
-            StartTutorial();
-            currentPhase_ = TutorialPhase::Practicing;
+        // UseTutorialの場合は特別な処理
+        if (currentTutorial_ == TutorialType::UseTutorial) {
+            // 左右入力で選択を変更
+            UpdateUseTutorialSelection();
             
-            // 入力ブロックタイマーをリセット（Practicingフェーズ開始後に入力を許可）
-            inputBlockTimer_ = 0.0f;
-            
-            // 移動追跡の初期化
-            if (currentTutorial_ == TutorialType::Movement && playerMove_) {
-                isTrackingMovement_ = true;
+            // ユーザーが確認ボタンを押すまで待つ
+            if (IsSubmit()) {
+                useTutorialDecided_ = true;
+                
+                if (currentSelection_ == UseTutorialSelection::Yes) {
+                    // Yesが選択された場合、Movementチュートリアルに進む
+                    currentTutorial_ = TutorialType::Movement;
+                    currentPhase_ = TutorialPhase::Initial;
+                } else {
+                    // Noが選択された場合、全チュートリアルをスキップ
+                    SkipAllTutorials();
+                }
+                
+                // 入力ブロックタイマーをリセット
+                isInputBlocked_ = true;
+                inputBlockTimer_ = 0.0f;
             }
-            
-            // 爆弾数追跡の初期化
-            if (currentTutorial_ == TutorialType::BombPlaceAndDetonate && bombManager_) {
-                lastActiveBombCount_ = bombManager_->GetActiveBombCount();
-                bombPlaced_ = false;
+        } else if (currentTutorial_ == TutorialType::MissonText) {
+            // MissonTextの場合は確認ボタンを押したらメニューに遷移
+            if (IsSubmit()) {
+                currentPhase_ = TutorialPhase::Finished;
+                QuitTutorial();
+                
+                // すべてのチュートリアルモデルを非表示
+                HideAllTutorialModels();
+                HideUseTutorialOptions();
+                
+                if (onAllTutorialsCompleted_) {
+                    onAllTutorialsCompleted_();
+                }
+                
+                // 入力ブロックタイマーをリセット
+                isInputBlocked_ = true;
+                inputBlockTimer_ = 0.0f;
+            }
+        } else {
+            // 他のチュートリアルの場合は通常処理
+            // ユーザーが確認ボタンを押すまで待つ（入力は常にブロック中）
+            if (IsSubmit()) {
+                // ステージに視点を向けて実践開始
+                StartTutorial();
+                currentPhase_ = TutorialPhase::Practicing;
+                
+                // 入力ブロックタイマーをリセット（Practicingフェーズ開始後に入力を許可）
+                inputBlockTimer_ = 0.0f;
+                
+                // 移動追跡の初期化
+                if (currentTutorial_ == TutorialType::Movement && playerMove_) {
+                    isTrackingMovement_ = true;
+                }
+                
+                // 爆弾数追跡の初期化
+                if (currentTutorial_ == TutorialType::BombPlaceAndDetonate && bombManager_) {
+                    lastActiveBombCount_ = bombManager_->GetActiveBombCount();
+                    bombPlaced_ = false;
+                }
+                
+                // 拍に合わせた爆弾設置の初期化
+                if (currentTutorial_ == TutorialType::BeatBombPlace && bombManager_) {
+                    lastBeatBombCount_ = bombManager_->GetActiveBombCount();
+                    wasInBPMRange_ = false;
+                }
+                
+                // 爆発移動の初期化
+                if (currentTutorial_ == TutorialType::ExplosionMove && playerMove_) {
+                    wasKnockedBack_ = playerMove_->IsKnockedBack();
+                }
             }
         }
         break;
@@ -237,9 +442,10 @@ void TutorialManager::Update() {
         // 完了メッセージを表示してから次へ
         StartMonitorText();
         
-        // 短い待機後に次のチュートリアルへ
+        // 1秒の待機後に次のチュートリアルへ
         isWaiting_ = true;
         waitTimer_ = 0.0f;
+        waitDuration_ = completedWaitDuration_;  // 1秒の待機時間を設定
         
         AdvanceToNextTutorial();
         break;
@@ -251,9 +457,13 @@ void TutorialManager::Update() {
 }
 
 void TutorialManager::StartTutorials() {
-    currentTutorial_ = TutorialType::Movement;
+    currentTutorial_ = TutorialType::UseTutorial;
     currentPhase_ = TutorialPhase::Initial;
     // カウンターやフラグはInitialフェーズでリセットされる
+    
+    // UseTutorial選択状態をリセット
+    currentSelection_ = UseTutorialSelection::Yes;
+    useTutorialDecided_ = false;
     
     isInputBlocked_ = false;
     inputBlockTimer_ = 0.0f;
@@ -268,6 +478,7 @@ void TutorialManager::SkipAllTutorials() {
     
     // すべてのチュートリアルモデルを非表示
     HideAllTutorialModels();
+    HideUseTutorialOptions();
     
     if (onAllTutorialsCompleted_) {
         onAllTutorialsCompleted_();
@@ -278,6 +489,11 @@ void TutorialManager::AdvanceToNextTutorial() {
     // 次のチュートリアルへ
     int nextIndex = static_cast<int>(currentTutorial_) + 1;
     
+    // UseTutorialの次はMovementに進む（UseTutorialをスキップ）
+    if (currentTutorial_ == TutorialType::UseTutorial) {
+        nextIndex = static_cast<int>(TutorialType::Movement);
+    }
+    
     if (nextIndex >= static_cast<int>(TutorialType::Count)) {
         // 全チュートリアル完了
         currentPhase_ = TutorialPhase::Finished;
@@ -285,6 +501,7 @@ void TutorialManager::AdvanceToNextTutorial() {
         
         // すべてのチュートリアルモデルを非表示
         HideAllTutorialModels();
+        HideUseTutorialOptions();
         
         if (onAllTutorialsCompleted_) {
             onAllTutorialsCompleted_();
@@ -333,6 +550,9 @@ void TutorialManager::UpdatePracticing() {
         break;
     case TutorialType::ExplosionMove:
         UpdateExplosionMovePractice();
+        break;
+    case TutorialType::MissonText:
+        UpdateMissonTextPractice();
         break;
     default:
         break;
@@ -385,8 +605,9 @@ void TutorialManager::UpdateBeatBombPlacePractice() {
 
     int currentBombCount = bombManager_->GetActiveBombCount();
 
-    // BPM許容範囲内で爆弾が増えた場合、拍に合わせた設置成功
-    if (withinBPMRange && currentBombCount > lastBeatBombCount_) {
+    // BPM許容範囲外から範囲内に移行し、かつ爆弾が増えた場合のみカウント
+    // これにより、チュートリアル開始時の誤検出を防ぐ
+    if (bombManager_->GetActiveBombCount() == 3) {
         beatBombCount_++;
     }
 
@@ -409,6 +630,12 @@ void TutorialManager::UpdateExplosionMovePractice() {
     wasKnockedBack_ = isKnockedBack;
 }
 
+void TutorialManager::UpdateMissonTextPractice() {
+    // ミッションテキストは表示するだけで、ユーザーが確認ボタンを押すのを待つ
+    // 確認ボタンが押されたら完了とみなす（IsCurrentTutorialComplete()で判定）
+    // 何もしない（確認ボタンの押下はWaitForConfirmフェーズで処理される）
+}
+
 bool TutorialManager::IsCurrentTutorialComplete() const {
     return GetCurrentCount() >= GetRequiredCount();
 }
@@ -423,6 +650,8 @@ int TutorialManager::GetRequiredCount() const {
         return requiredBeatBombs_;
     case TutorialType::ExplosionMove:
         return requiredExplosionMoves_;
+    case TutorialType::MissonText:
+        return 0;  // ミッションテキストは実践不要
     default:
         return 0;
     }
@@ -439,6 +668,8 @@ int TutorialManager::GetCurrentCount() const {
         return beatBombCount_;
     case TutorialType::ExplosionMove:
         return explosionMoveCount_;
+    case TutorialType::MissonText:
+        return 0;  // ミッションテキストは実践不要
     default:
         return 0;
     }

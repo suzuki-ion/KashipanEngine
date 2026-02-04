@@ -12,11 +12,19 @@ class ExplosionManager;
 
 /// @brief チュートリアルの種類
 enum class TutorialType {
+	UseTutorial,           // チュートリアルを使用するか確認
     Movement,              // 移動チュートリアル
     BombPlaceAndDetonate,  // 爆弾設置→起爆チュートリアル
     BeatBombPlace,         // 拍に合わせて爆弾設置チュートリアル
     ExplosionMove,         // 爆発に巻き込まれて移動チュートリアル
+	MissonText,            // ミッションテキスト表示、押したらMenuに行く
     Count                  // チュートリアルの総数
+};
+
+/// @brief UseTutorial選択肢
+enum class UseTutorialSelection {
+    Yes,
+    No
 };
 
 /// @brief チュートリアルの進行状態
@@ -97,7 +105,10 @@ public:
     void IncrementExplosionMoveCount() { explosionMoveCount_++; }
 
     /// @brief BombManagerとPlayerMoveが入力を受け付けられる状態かを取得
-    bool CanAcceptInput() const { return !isInputBlocked_; }
+    bool CanAcceptInput() const { 
+        // Practicingフェーズ中かつ入力ブロック中でない場合のみ入力を受け付ける
+        return currentPhase_ == TutorialPhase::Practicing && !isInputBlocked_; 
+    }
 
     /// @brief チュートリアルモデルを初期化
     void InitializeTutorialModels();
@@ -124,6 +135,9 @@ private:
     /// @brief 爆発移動チュートリアルの実践更新
     void UpdateExplosionMovePractice();
 
+    /// @brief ミッションテキストチュートリアルの実践更新
+    void UpdateMissonTextPractice();
+
     /// @brief 現在のチュートリアルが完了条件を満たしたかチェック
     bool IsCurrentTutorialComplete() const;
 
@@ -139,6 +153,15 @@ private:
     /// @brief すべてのチュートリアルモデルを非表示にする
     void HideAllTutorialModels();
 
+    /// @brief UseTutorialの選択を更新（左右入力）
+    void UpdateUseTutorialSelection();
+
+    /// @brief UseTutorialの表示を更新
+    void UpdateUseTutorialDisplay();
+
+    /// @brief Yes/Noオプションを非表示にする
+    void HideUseTutorialOptions();
+
 private:
     PlayerMove* playerMove_ = nullptr;
     BombManager* bombManager_ = nullptr;
@@ -147,14 +170,16 @@ private:
     Object3DBase* player_ = nullptr;
     ScreenBuffer* monitorScreenBuffer_ = nullptr;
 
-    TutorialType currentTutorial_ = TutorialType::Movement;
+    TutorialType currentTutorial_ = TutorialType::UseTutorial;
     TutorialPhase currentPhase_ = TutorialPhase::Initial;
 
     std::function<void()> onAllTutorialsCompleted_;
 
     // チュートリアルモデル（turtrial_1.obj ～ turtrial_4.obj）
-    static constexpr int kTutorialModelCount = 4;
+    static constexpr int kTutorialModelCount = 6;
     std::array<Object3DBase*, kTutorialModelCount> tutorialModels_{};
+	Object3DBase* useTutorialYes_ = nullptr;
+    Object3DBase* useTutorialNo_ = nullptr;
     bool tutorialModelsInitialized_ = false;
 
     // 移動チュートリアル用
@@ -166,7 +191,7 @@ private:
     // 爆弾設置→起爆チュートリアル用
     int bombCount_ = 0;
     int explosionCount_ = 0;
-    int requiredBombDetonations_ = 1;  // 必要な爆弾設置→起爆回数
+    int requiredBombDetonations_ = 2;  // 必要な爆弾設置→起爆回数
     int lastActiveBombCount_ = 0;
     bool bombPlaced_ = false;  // 爆弾が設置されたかどうか
 
@@ -191,12 +216,17 @@ private:
     // 待機タイマー（チュートリアル間の遷移用）
     float waitTimer_ = 0.0f;
     float waitDuration_ = 0.5f;
+    float completedWaitDuration_ = 0.5f;  // ミッション完了後の待機時間
     bool isWaiting_ = false;
 
     // 入力ブロック（確認ボタン押下後の誤入力防止）
     bool isInputBlocked_ = false;
     float inputBlockTimer_ = 0.0f;
     float inputBlockDuration_ = 0.3f;  // 入力を無効にする時間
+
+    // UseTutorial選択状態
+    UseTutorialSelection currentSelection_ = UseTutorialSelection::Yes;
+    bool useTutorialDecided_ = false;  // UseTutorial選択が完了したか
 
     GameTimer moveTimer_;
     GameTimer bombTimer_;

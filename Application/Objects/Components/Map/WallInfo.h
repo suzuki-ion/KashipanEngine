@@ -16,6 +16,10 @@ namespace KashipanEngine {
         int spawnAgainCount = 8; // 壁が壊れてから再度設置できるようになるまでの拍数
         int currentSpawnAgainCount = 0; // 壊れてからの経過拍数カウンター
         bool isWaitingRespawn = false; // 再生成待機中フラグ
+
+        // パーティクル生成（壁が設置された）時の拍数（自動非アクティブ化用）
+        int particleSpawnBeat = -1; // -1 = 未設定
+        int autoDeactivateBeatCount = 16; // パーティクル生成から自動非アクティブ化までの拍数
     };
 
 } // namespace KashipanEngine

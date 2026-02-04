@@ -193,7 +193,7 @@ void GameScene::Initialize() {
         for (int z = 0; z < kMapH; z++) {
             for (int x = 0; x < kMapW; x++) {
 
-                auto modelData = ModelManager::GetModelDataFromFileName("block.obj");
+                auto modelData = ModelManager::GetModelDataFromFileName("Wall.obj");
                 auto obj = std::make_unique<Model>(modelData);
 
                 obj->SetName("wall" ":x" + std::to_string(x) + ":z" + std::to_string(z));
@@ -201,7 +201,7 @@ void GameScene::Initialize() {
                 obj->RegisterComponent<BPMScaling>(Vector3(1.0f), Vector3(1.0f), EaseType::EaseOutExpo);
 
                 if (auto* tr = obj->GetComponent3D<Transform3D>()) {
-                    tr->SetTranslate(Vector3(2.0f * x, 0.-0.1f, 2.0f * z));
+                    tr->SetTranslate(Vector3(2.0f * x, -2.1f, 2.0f * z));
                     tr->SetScale(Vector3(1.0f));
                 }
 
@@ -806,7 +806,13 @@ void GameScene::OnUpdate() {
         tutorialManager_ && tutorialManager_->IsAllTutorialsCompleted() &&
         backMonitorMenu_ && !backMonitorMenu_->IsActive() &&
         backMonitorPause_ && !backMonitorPause_->IsActive() && GetInputCommand()->Evaluate("Escape").Triggered()) {
-		InGamePause();
+        // チュートリアル完了していない場合はPauseを許可しない
+        if (tutorialManager_ && !tutorialManager_->IsAllTutorialsCompleted()) {
+            // Pauseを開かない
+            return;
+        }
+        
+        InGamePause();
         if (backMonitorPause_) backMonitorPause_->SetActive(true);
         //if (backMonitorGame_) backMonitorGame_->SetActive(false);
         if (backMonitorMenu_) backMonitorMenu_->SetActive(false);
@@ -932,16 +938,31 @@ void GameScene::OnUpdate() {
                     walls_[z][x].spawnAgainCount = wallSpawnAgainCount_;
                     if (auto* tr = walls_[z][x].object->GetComponent3D<Transform3D>()) {
                         if (walls_[z][x].moveTimer.IsActive()) {
-                            tr->SetTranslateY(MyEasing::Lerp(-0.1f, 2.0f, walls_[z][x].moveTimer.GetProgress()));
+                            tr->SetTranslateY(MyEasing::Lerp(-2.1f, 0.0f, walls_[z][x].moveTimer.GetProgress()));
                         }
 
                         if (!walls_[z][x].isMoving) {
-                            tr->SetTranslateY(-0.1f);
+                            tr->SetTranslateY(-2.1f);
+                        }
+
+                        // ScaleYを拍数に基づいて更新
+                        if (walls_[z][x].isActive && walls_[z][x].particleSpawnBeat >= 0 && bpmSystem_) {
+                            int beatsSinceSpawn = bpmSystem_->GetCurrentBeat() - walls_[z][x].particleSpawnBeat;
+                            float scaleYProgress = 1.0f - (static_cast<float>(beatsSinceSpawn) / static_cast<float>(walls_[z][x].autoDeactivateBeatCount));
+                            scaleYProgress = std::clamp(scaleYProgress, 0.0f, 1.0f);
+                            
+                            Vector3 currentScale = tr->GetScale();
+                            currentScale.y = scaleYProgress;
+                            tr->SetScale(currentScale);
                         }
                     }
 
                     if (walls_[z][x].moveTimer.IsFinished()) {
                         walls_[z][x].isActive = true;
+                        // 壁がアクティブになった時点での拍数を記録（まだ記録されていない場合）
+                        if (walls_[z][x].particleSpawnBeat < 0 && bpmSystem_) {
+                            walls_[z][x].particleSpawnBeat = bpmSystem_->GetCurrentBeat();
+                        }
                     }
 
                     if (walls_[z][x].hp <= 0 && !walls_[z][x].isWaitingRespawn) {
@@ -951,6 +972,7 @@ void GameScene::OnUpdate() {
                         walls_[z][x].hp = 0;
                         walls_[z][x].isWaitingRespawn = true;
                         walls_[z][x].currentSpawnAgainCount = 0;
+                        walls_[z][x].particleSpawnBeat = -1; // パーティクル生成拍数をリセット
                     }
 
                     walls_[z][x].moveTimer.Update();
@@ -968,6 +990,29 @@ void GameScene::OnUpdate() {
                             walls_[z][x].isWaitingRespawn = false;
                             walls_[z][x].currentSpawnAgainCount = 0;
                             walls_[z][x].hp = 1; // HPを回復して再設置可能に
+                        }
+                    }
+
+                    // パーティクル生成から16拍経過で自動的に壁を非アクティブ化
+                    if (walls_[z][x].isActive && walls_[z][x].particleSpawnBeat >= 0) {
+                        int beatsSinceSpawn = bpmSystem_->GetCurrentBeat() - walls_[z][x].particleSpawnBeat;
+                        if (beatsSinceSpawn >= walls_[z][x].autoDeactivateBeatCount) {
+                            // パーティクルを発生
+                            if (wallBreakParticleManager_ && walls_[z][x].object) {
+                                if (auto* tr = walls_[z][x].object->GetComponent3D<Transform3D>()) {
+                                    Vector3 particlePos = tr->GetTranslate();
+                                    particlePos.y += 1.0f; // 壁の上部からパーティクルを出す
+                                    wallBreakParticleManager_->SpawnParticles(particlePos, 10);
+                                }
+                            }
+                            // 壁を非アクティブ化
+                            walls_[z][x].isActive = false;
+                            walls_[z][x].isMoving = false;
+                            walls_[z][x].moveTimer.Reset();
+                            walls_[z][x].hp = 1;
+                            walls_[z][x].isWaitingRespawn = false;
+                            walls_[z][x].currentSpawnAgainCount = 0;
+                            walls_[z][x].particleSpawnBeat = -1;
                         }
                     }
                 }
@@ -1761,7 +1806,7 @@ void GameScene::InGameStart() {
 
         if (player_) {
             if (auto* health = player_->GetComponent3D<Health>()) {
-                health->ResetHealth(10);
+                health->ResetHealth(5);
             }
         }
     }
@@ -1769,6 +1814,10 @@ void GameScene::InGameStart() {
 
 void GameScene::InGameQuit() {
     AudioManager::Stop(bgmPlayHandle_);
+
+    auto* mat = djNagasawa_->GetComponent3D<Material3D>();
+    if (!mat) return;
+	mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
 
     if (bpmSystem_) {
 		bpmSystem_->ResetSystem();
@@ -1824,6 +1873,7 @@ void GameScene::InGameQuit() {
                 walls_[z][x].hp = 1;
                 walls_[z][x].isWaitingRespawn = false;
                 walls_[z][x].currentSpawnAgainCount = 0;
+                walls_[z][x].particleSpawnBeat = -1; // パーティクル生成拍数をリセット
             }
         }
     }
@@ -2020,6 +2070,9 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     waveSystem_->SetBombManager(bombManager_);
     waveSystem_->SetWalls(reinterpret_cast<WallInfo*>(walls_.data()), kMapW, kMapH);
 
+    // WallBreakParticleManagerを設定（Wave切り替わり時のパーティクル用）
+    waveSystem_->SetWallBreakParticleManager(wallBreakParticleManager_);
+
     // サンプルWaveデータを設定
     // Wave1
     WaveData wave1{};
@@ -2185,6 +2238,13 @@ void GameScene::InitTutorialManager() {
 
     // BombManagerにTutorialManagerを設定
     bombManager_->SetTutorialManager(tutorialManager_);
+
+    // PlayerMoveにTutorialManagerを設定
+    if (player_) {
+        if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
+            playerMove->SetTutorialManager(tutorialManager_);
+        }
+    }
 
     // チュートリアルモデルを初期化（MonitorScreenBuffer設定後に呼び出す）
     tutorialManager_->InitializeTutorialModels();

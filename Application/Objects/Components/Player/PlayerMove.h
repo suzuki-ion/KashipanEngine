@@ -166,6 +166,11 @@ namespace KashipanEngine {
                 return;
             }
 
+            // Chainモードを解除
+            if (bombManager_) {
+                bombManager_->BreakChainMode();
+            }
+
             auto* ctx = GetOwner3DContext();
             if (!ctx) {
                 return;
@@ -340,19 +345,23 @@ namespace KashipanEngine {
 
         void PlayMoveSound(bool f) {
             if (f) {
-                auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/playerJump.mp3");
-                if (handle == AudioManager::kInvalidSoundHandle) {
-                    // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
-                    return;
+                if (isStarted_) {
+                    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/playerJump.mp3");
+                    if (handle == AudioManager::kInvalidSoundHandle) {
+                        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+                        return;
+                    }
+                    AudioManager::Play(handle, moveVolume_);
                 }
-                AudioManager::Play(handle, moveVolume_);
             } else {
-                auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/beatMiss.mp3");
-                if (handle == AudioManager::kInvalidSoundHandle) {
-                    // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
-                    return;
+                if (isStarted_) {
+                    auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/beatMiss.mp3");
+                    if (handle == AudioManager::kInvalidSoundHandle) {
+                        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+                        return;
+                    }
+                    AudioManager::Play(handle, missVolume_);
                 }
-                AudioManager::Play(handle, missVolume_);
             }
 		}
 

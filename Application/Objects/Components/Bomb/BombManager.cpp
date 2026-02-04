@@ -21,6 +21,7 @@ void BombManager::Initialize() {
     wasInBPMRange_ = false;
     inputReceivedInThisBeat_ = false;
     missedBeatsCount_ = 0;
+    justDetonated_ = false;
     moveInputTimer_.Start(moveInputInterval_, false);
 }
 
@@ -68,7 +69,7 @@ void BombManager::Update() {
                 } else if (bpmScaling->IsSpeed3Scaling()) {
                     mt->SetColor(Vector4{ 1.0f,0.0f,0.0f,1.0f });
                 } else {
-                    mt->SetColor(Vector4{ 0.0f,0.0f,0.0f,1.0f });
+                    mt->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
                 }
             }
         }
@@ -87,6 +88,8 @@ void BombManager::Update() {
                     AudioManager::Play(handle, fireVolume_);
 
                     bombSpawnMode_ = BombSpawnMode::None;
+                    pendingBombSpawn_ = false;  // 起爆時は爆弾設置予約をキャンセル
+                    justDetonated_ = true;      // 起爆直後フラグを立てる
 
                     // 爆発を生成
                     if (explosionManager_) {
@@ -127,19 +130,24 @@ void BombManager::Update() {
         }
 
         auto* pMove = player_->GetComponent3D<PlayerMove>();
-        if (inputAllowed && inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_ && !pMove->GetIsKnockedBack()) {
+        if (inputAllowed && inputCommand_->Evaluate("Bomb").Triggered() && isStarted_ && !isPause_ && !pMove->GetIsKnockedBack() && !justDetonated_) {
             if (bombSpawnMode_ == BombSpawnMode::None) {
-                // Noneモードから移行する場合、既存の爆弾をすべて起爆
-                DetonateAllBombs();
-                
-                // 新しい爆弾を生成してChainモードに移行
-                SpawnBomb();
-                bombSpawnMode_ = BombSpawnMode::Chain;
-                missedBeatsCount_ = 0;  // Chainモード開始時にカウンターをリセット
+                // Noneモードの場合
+                if (!activeBombs_.empty()) {
+                    // 既存の爆弾がある場合は起爆のみ行う（新しい爆弾は設置しない）
+                    DetonateAllBombs();
+                    justDetonated_ = true;
+                } else {
+                    // 爆弾がない場合のみ新しい爆弾を生成してChainモードに移行
+                    SpawnBomb();
+                    bombSpawnMode_ = BombSpawnMode::Chain;
+                    missedBeatsCount_ = 0;
+                }
             } else if (bombSpawnMode_ == BombSpawnMode::Chain) {
                 // ChainモードでBombが1個だけの場合、そのBombを即起爆
                 if (GetCurrentChainCount() <= 10) {
                     DetonateAllBombs();
+                    justDetonated_ = true;  // 起爆直後フラグを立てる
                     bombSpawnMode_ = BombSpawnMode::None;
                     missedBeatsCount_ = 0;
                 } else {
@@ -270,7 +278,7 @@ void BombManager::Update() {
     }
 
     // プレイヤーの移動が完了したら爆弾を生成
-    if (pendingBombSpawn_) {
+    if (pendingBombSpawn_ && !justDetonated_) {
         auto* playerMove = player_->GetComponent3D<PlayerMove>();
         if (playerMove && !playerMove->IsMoving()) {
             SpawnBomb();
@@ -279,6 +287,9 @@ void BombManager::Update() {
     }
 
     prevBpmProgress_ = bpmProgress_;
+
+    // 起爆直後フラグをリセット（前フレームで起爆があった場合、このフレームではリセット）
+    justDetonated_ = false;
 
 	moveInputTimer_.Update();
 }
@@ -349,9 +360,7 @@ void BombManager::SpawnBomb() {
 
     if (auto* mat = bomb->GetComponent3D<Material3D>()) {
         mat->SetEnableLighting(true);
-        mat->SetColor(Vector4(0.2f, 0.2f, 0.2f, 1.0f));
-        auto tex = TextureManager::GetTextureFromFileName("white1x1.png");
-        mat->SetTexture(tex);
+        mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
     // 爆弾オブジェクトのポインタを保存（move前）
@@ -416,7 +425,7 @@ void BombManager::SpawnBomb() {
     // 設置音再生（オプション）
     auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/bombCount.mp3");
     if (handle == AudioManager::kInvalidSoundHandle) {
-        // 音声が未ロードならログ出力するか無視（ここでは無害に戻す）
+        // 音声が未ロードならログ出力するか無害に戻す）
         return;
     }
     AudioManager::Play(handle, countVolume_);
@@ -555,6 +564,8 @@ void BombManager::DetonateAllBombs() {
 
     // すべての爆弾を起爆
     for (auto& bomb : activeBombs_) {
+		justDetonated_ = true;  // 起爆直後フラグを立てる
+
         // 爆発音を再生
         auto handle = AudioManager::GetSoundHandleFromAssetPath("Application/Audio/InGame/bombFire.mp3");
         if (handle != AudioManager::kInvalidSoundHandle) {
@@ -574,6 +585,9 @@ void BombManager::DetonateAllBombs() {
 
     // 爆弾リストをクリア
     activeBombs_.clear();
+    
+    // 起爆時は爆弾設置予約をキャンセル
+    pendingBombSpawn_ = false;
 }
 
 void BombManager::IncrementAllBombExplosionSize(float increment) {

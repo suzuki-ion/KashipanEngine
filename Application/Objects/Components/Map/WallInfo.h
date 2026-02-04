@@ -9,7 +9,7 @@ namespace KashipanEngine {
         bool isActive = false;
 
 		GameTimer moveTimer{};
-        float moveTime = 1.0f;
+        float moveTime = 0.1f;
 		bool isMoving = false;
 
 		int hp = 1;

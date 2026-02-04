@@ -33,6 +33,10 @@ void TutorialManager::Initialize() {
     isInputBlocked_ = false;
     inputBlockTimer_ = 0.0f;
     
+    soundHandleSelect_ = AudioManager::GetSoundHandleFromFileName("select.mp3");
+    soundHandleSubmit_ = AudioManager::GetSoundHandleFromFileName("submit.mp3");
+    soundHandlePinpon_ = AudioManager::GetSoundHandleFromFileName("pinpon.mp3");
+
     // UseTutorial選択状態を初期化
     currentSelection_ = UseTutorialSelection::Yes;
     useTutorialDecided_ = false;
@@ -237,8 +241,10 @@ void TutorialManager::UpdateUseTutorialSelection() {
         // Yes <-> No を切り替え
         if (currentSelection_ == UseTutorialSelection::Yes) {
             currentSelection_ = UseTutorialSelection::No;
+            AudioManager::Play(soundHandleSelect_, 1.0f, 0.0f, false);
         } else {
             currentSelection_ = UseTutorialSelection::Yes;
+            AudioManager::Play(soundHandleSelect_, 1.0f, 0.0f, false);
         }
         
         // 表示を更新
@@ -359,6 +365,7 @@ void TutorialManager::Update() {
             // ユーザーが確認ボタンを押すまで待つ
             if (IsSubmit()) {
                 useTutorialDecided_ = true;
+                AudioManager::Play(soundHandleSubmit_, 1.0f, 0.0f, false);
                 
                 if (currentSelection_ == UseTutorialSelection::Yes) {
                     // Yesが選択された場合、Movementチュートリアルに進む
@@ -376,6 +383,7 @@ void TutorialManager::Update() {
         } else if (currentTutorial_ == TutorialType::MissonText) {
             // MissonTextの場合は確認ボタンを押したらメニューに遷移
             if (IsSubmit()) {
+                AudioManager::Play(soundHandleSubmit_, 1.0f, 0.0f, false);
                 currentPhase_ = TutorialPhase::Finished;
                 QuitTutorial();
                 
@@ -395,6 +403,7 @@ void TutorialManager::Update() {
             // 他のチュートリアルの場合は通常処理
             // ユーザーが確認ボタンを押すまで待つ（入力は常にブロック中）
             if (IsSubmit()) {
+                AudioManager::Play(soundHandleSubmit_, 1.0f, 0.0f, false);
                 // ステージに視点を向けて実践開始
                 StartTutorial();
                 currentPhase_ = TutorialPhase::Practicing;
@@ -513,6 +522,7 @@ void TutorialManager::AdvanceToNextTutorial() {
         // 次のチュートリアルへ
         currentTutorial_ = static_cast<TutorialType>(nextIndex);
         currentPhase_ = TutorialPhase::Initial;
+        AudioManager::Play(soundHandlePinpon_, 0.5f, 0.0f, false);
         // カウンターはInitialフェーズでリセットされる
     }
 }

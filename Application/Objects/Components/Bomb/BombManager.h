@@ -107,8 +107,15 @@ public:
 	/// @brief すべての爆弾を起爆する
 	void DetonateAllBombs();
 
-	/// @brief プレイヤーの向きに基づいて爆弾を設置するかどうかを設定
-	void SetUsePlayerDirection(bool useDirection) { usePlayerDirection_ = useDirection; }
+    /// @brief Chainモードを強制的に解除する（ノックバック時などに使用）
+    void BreakChainMode() {
+        bombSpawnMode_ = BombSpawnMode::None;
+        pendingBombSpawn_ = false;
+        missedBeatsCount_ = 0;
+        for (auto& bomb : activeBombs_) {
+            bomb.isChainBomb = false;
+        }
+    }
 
 	/// @brief すべてのアクティブな爆弾の爆発サイズを増加させる
 	/// @param increment 増加量（デフォルト: 1.0f）
@@ -141,6 +148,9 @@ public:
 
     /// @brief ポーズ状態を設定
     void SetIsPause(bool isPause) { isPause_ = isPause; };
+
+    /// @brief プレイヤーの向きに基づいて爆弾を設置するかどうかを設定
+    void SetUsePlayerDirection(bool usePlayerDirection) { usePlayerDirection_ = usePlayerDirection; }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override;
@@ -220,6 +230,7 @@ private:
     int missedBeatsCount_ = 0;        // 連続して見逃した拍の数
     int maxMissedBeats_ = 1;          // Chainモードで許容される最大見逃し回数
     int maxChainCount_ = 10;          // Chainモードで連鎖できる最大爆弾数（0=無制限）
+    bool justDetonated_ = false;      // 起爆直後フラグ（同一フレームでの設置を防ぐ）
 };
 
 } // namespace KashipanEngine} // namespace KashipanEngine

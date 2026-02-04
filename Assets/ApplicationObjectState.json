@@ -198,7 +198,7 @@
   {
     "name": "bombMaxChainCount",
     "type": 1,
-    "value": 10
+    "value": 5
   },
   {
     "name": "enablePlayerDestructiveKnockback",

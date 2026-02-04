@@ -137,6 +137,8 @@ private:
     float pDamageShakePower_ = 5.0f; float pDamageShakeTime_ = 1.0f; // プレイヤーダメージ時のカメラシェイク
     float bombShakePower_ = 5.0f; float bombShakeTime_ = 1.0f; // 爆弾爆発時のカメラシェイク
 
+    Object3DBase* superBlock_[2][2];
+
     // プレイヤー関連
     Object3DBase *player_ = nullptr;
     Vector3 playerStartPos_ = { 10.0f,0.0f,10.0f };
@@ -162,7 +164,7 @@ private:
     BombManager *bombManager_ = nullptr;
     int bombMaxNumber_ = 1000;     // プレイヤーが設置可能な爆弾の最大数
     int bombLifetimeBeats_ = 1000; // 設置してからの爆弾の寿命（拍数）
-    int bombMaxChainCount_ = 10;   // Chainモードで連鎖できる最大爆弾数
+    int bombMaxChainCount_ = 5;   // Chainモードで連鎖できる最大爆弾数
 
     // 爆発関連
     ExplosionManager *explosionManager_ = nullptr;

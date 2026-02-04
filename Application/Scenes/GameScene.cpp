@@ -155,6 +155,38 @@ void GameScene::Initialize() {
         }
     }
 
+    {
+        //for (int z = 0; z < 2; z++) {
+        //    for (int x = 0; x < 2; x++) {
+
+        //        auto modelData = ModelManager::GetModelDataFromFileName("superBlock.obj");
+        //        auto obj = std::make_unique<Model>(modelData);
+
+        //        obj->SetName("SMap" ":x" + std::to_string(x) + ":z" + std::to_string(z));
+
+        //        //obj->RegisterComponent<BPMScaling>(mapScaleMin_, mapScaleMax_, EaseType::EaseOutExpo);
+
+        //        if (auto* tr = obj->GetComponent3D<Transform3D>()) {
+        //            tr->SetTranslate(Vector3(2.0f * x + 8.0f, 0.0f, 2.0f * z + 8.0f));
+        //            tr->SetScale(Vector3(1.0f));
+        //        }
+
+        //        if (auto* mt = obj->GetComponent3D<Material3D>()) {
+        //            mt->SetColor(Vector4{ 1.0f,1.0f,1.0f,1.0f });
+        //        }
+
+        //        if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        //        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+        //        if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
+
+        //        // ここで "AddObject3D する前" にポインタ確保
+        //        superBlock_[z][x] = obj.get();
+
+        //        AddObject3D(std::move(obj));
+        //    }
+        //}
+    }
+
     // mapMarkers
     {
         for (int z = 0; z < kMapH; z++) {
@@ -950,9 +982,12 @@ void GameScene::OnUpdate() {
                             int beatsSinceSpawn = bpmSystem_->GetCurrentBeat() - walls_[z][x].particleSpawnBeat;
                             float scaleYProgress = 1.0f - (static_cast<float>(beatsSinceSpawn) / static_cast<float>(walls_[z][x].autoDeactivateBeatCount));
                             scaleYProgress = std::clamp(scaleYProgress, 0.0f, 1.0f);
-                            
+
+                            // 0.0f～1.0fの進行度を0.25f～1.0fのスケール値に変換
+                            float scaleY = 0.5f + (scaleYProgress * 0.5f);
+
                             Vector3 currentScale = tr->GetScale();
-                            currentScale.y = scaleYProgress;
+                            currentScale.y = scaleY;
                             tr->SetScale(currentScale);
                         }
                     }
@@ -1817,10 +1852,10 @@ void GameScene::InGameQuit() {
 
     auto* mat = djNagasawa_->GetComponent3D<Material3D>();
     if (!mat) return;
-	mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+    mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
 
     if (bpmSystem_) {
-		bpmSystem_->ResetSystem();
+        bpmSystem_->ResetSystem();
     }
 
     if (player_) {
@@ -1878,6 +1913,11 @@ void GameScene::InGameQuit() {
         }
     }
 
+    // StageLightingをリセット（追加）
+    if (stageLighting_) {
+        stageLighting_->ResetLighting();
+    }
+
     isGameStarted_ = false;
 }
 
@@ -1927,17 +1967,57 @@ void GameScene::UpdateWallRespawnMarkers() {
         }
     }
 
-    // 壁が再生成待機中の場所をマーカーに反映
+    // 壁が再生成待機中の場所をマーカーに反映し、マップの色を更新
     for (int z = 0; z < kMapH; z++) {
         for (int x = 0; x < kMapW; x++) {
             if (walls_[z][x].isWaitingRespawn) {
                 mapMarkerIsActive_[z][x] = true;
+                
+                // マップブロックの色を更新（再生成待機中の進行度に基づいて赤から白へ）
+                if (maps_[z][x]) {
+                    if (auto* mt = maps_[z][x]->GetComponent3D<Material3D>()) {
+                        // 進行度を計算 (0.0 = 壊れた直後 = 赤、1.0 = 再生成可能 = 白)
+                        float progress = 0.0f;
+                        if (walls_[z][x].spawnAgainCount > 0) {
+                            progress = static_cast<float>(walls_[z][x].currentSpawnAgainCount) / 
+                                      static_cast<float>(walls_[z][x].spawnAgainCount);
+                            progress = std::clamp(progress, 0.0f, 1.0f);
+                        }
+                        
+                        // 赤 {1.0f, 0.0f, 0.0f, 1.0f} から 白 {1.0f, 1.0f, 1.0f, 1.0f} へ補間
+                        Vector4 color;
+                        color.x = 1.0f;
+                        color.y = progress;
+                        color.z = progress;
+                        color.w = 1.0f;
+                        
+                        mt->SetColor(color);
+                    }
+                }
+            } else {
+                // 再生成待機中でない場合は通常の色に戻す
+                if (maps_[z][x]) {
+                    if (auto* mt = maps_[z][x]->GetComponent3D<Material3D>()) {
+                        mt->SetColor(Vector4{ 0.5f, 0.5f, 0.5f, 1.0f });
+                    }
+                }
+            }
+        }
+    }
+
+    // 特定の座標は赤色にオーバーライド
+    for (int z = 4; z < 6; z++) {
+        for (int x = 4; x < 6; x++) {
+            if (maps_[z][x]) {
+                if (auto* mt = maps_[z][x]->GetComponent3D<Material3D>()) {
+                    mt->SetColor({ 1.0f, 0.25f, 0.25f, 1.0f });
+                }
             }
         }
     }
 
     // 壁の再生成待機中を示すマーカーの表示
-    for (int z = 0; z < kMapH; z++) {
+    /*for (int z = 0; z < kMapH; z++) {
         for (int x = 0; x < kMapW; x++) {
             if (mapMarkers_[z][x]) {
                 if (auto* s = mapMarkers_[z][x]->GetComponent3D<BPMScaling>()) {
@@ -1953,7 +2033,7 @@ void GameScene::UpdateWallRespawnMarkers() {
                 }
             }
         }
-    }
+    }*/
 }
 
 void GameScene::UpdateWallTransparency() {

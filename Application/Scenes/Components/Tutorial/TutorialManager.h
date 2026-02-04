@@ -230,6 +230,10 @@ private:
 
     GameTimer moveTimer_;
     GameTimer bombTimer_;
+
+    AudioManager::SoundHandle soundHandleSelect_ = AudioManager::kInvalidSoundHandle;
+    AudioManager::SoundHandle soundHandleSubmit_ = AudioManager::kInvalidSoundHandle;
+    AudioManager::SoundHandle soundHandlePinpon_ = AudioManager::kInvalidSoundHandle;
 };
 
 } // namespace KashipanEngine

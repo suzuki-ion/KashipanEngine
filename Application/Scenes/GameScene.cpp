@@ -2247,18 +2247,6 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
         { 59, 9, 2, EnemyType::Speedy },
         { 63, 9, 1, EnemyType::Speedy },
         { 63, 9, 2, EnemyType::Speedy },
-        { 67, 0, 3, EnemyType::Basic },
-        { 67, 0, 4, EnemyType::Speedy },
-        { 67, 0, 5, EnemyType::Speedy },
-        { 67, 0, 6, EnemyType::Basic },
-        { 67, 1, 0, EnemyType::Speedy },
-        { 67, 1, 9, EnemyType::Speedy },
-        { 71, 9, 3, EnemyType::Basic },
-        { 71, 9, 4, EnemyType::Speedy },
-        { 71, 9, 5, EnemyType::Speedy },
-        { 71, 9, 6, EnemyType::Basic },
-        { 71, 8, 0, EnemyType::Speedy },
-        { 71, 8, 9, EnemyType::Speedy },
     };
     waveSystem_->AddWaveData(wave3);
 

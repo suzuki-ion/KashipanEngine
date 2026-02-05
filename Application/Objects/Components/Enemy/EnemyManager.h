@@ -132,6 +132,7 @@ namespace KashipanEngine {
             bool isKnockedBack = false;  // 吹き飛び中かどうか
             Vector3 knockbackVelocity{ 0.0f, 0.0f, 0.0f };  // 吹き飛び速度
             float knockbackTimer = 0.0f;  // 吹き飛び経過時間
+            int knockbackChainCount = 0;  // 吹き飛び中に倒した敵の数
 
             float rY_ = 0.0f;
 
@@ -215,6 +216,10 @@ namespace KashipanEngine {
         std::vector<std::pair<int, int>> centerPositions_ = {
             {4, 4}, {5, 4}, {4, 5}, {5, 5}
         };
+
+        // 吹き飛び連鎖スコア設定
+        static constexpr int kKnockbackBaseScore_ = 300;  // 基本スコア
+        static constexpr int kKnockbackMaxChain_ = 3;     // 最大連鎖数
     };
 
 } // namespace KashipanEngine

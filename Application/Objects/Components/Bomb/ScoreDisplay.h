@@ -53,7 +53,7 @@ private:
     std::vector<NumberDisplayInfo> activeNumbers_;
 
     float displayLifetime_ = 1.0f;  // 数字の表示時間（秒）
-    float numberScale_ = 1.0f;      // 数字のスケール
+    float numberScale_ = 0.5f;      // 数字のスケール
     float yOffset_ = 1.0f;          // Y方向のオフセット
 };
 

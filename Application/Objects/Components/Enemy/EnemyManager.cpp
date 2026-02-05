@@ -433,42 +433,48 @@ int EnemyManager::SpawnEnemy(EnemyType type, EnemyDirection direction, const Vec
         collisionInfo.onCollisionEnter = [this, enemyPtr](const HitInfo3D& hitInfo) {
             // この敵が吹き飛び中かどうかをチェック
             bool isThisEnemyKnockedBack = false;
-            for (const auto& e : activeEnemies_) {
+            EnemyInfo* knockedBackEnemy = nullptr;
+            for (auto& e : activeEnemies_) {
                 if (e.object == enemyPtr && e.isKnockedBack) {
                     isThisEnemyKnockedBack = true;
+                    knockedBackEnemy = &e;
                     break;
                 }
             }
             
             // 吹き飛び中の敵が他の敵と衝突した場合、相手を破壊
-            if (isThisEnemyKnockedBack) {
+            if (isThisEnemyKnockedBack && knockedBackEnemy) {
                 auto* otherCollision = hitInfo.otherObject ? hitInfo.otherObject->GetComponent3D<Collision3D>() : nullptr;
                 if (otherCollision && otherCollision->GetColliderInfo().attribute.test(1)) {
                     // 相手も敵なので破壊
                     for (auto& e : activeEnemies_) {
-                        if (e.object == hitInfo.otherObject && !e.isKnockedBack) {
+                        if (e.object == hitInfo.otherObject && !e.isKnockedBack && !e.isDead) {
                             SpawnDieParticles(e.position);
                             e.deathCause = EnemyDeathCause::Explosion;  // 吹き飛び敵との衝突 = 爆発による死亡
                             e.isDead = true;
+                            
+                            // 連鎖数をインクリメント（最大3まで）
+                            if (knockedBackEnemy->knockbackChainCount < kKnockbackMaxChain_) {
+                                knockedBackEnemy->knockbackChainCount++;
+                                
+                                // 連鎖数に応じたスコアを加算
+                                int chainScore = kKnockbackBaseScore_ * knockedBackEnemy->knockbackChainCount;
+                                if (scoreManager_) {
+                                    scoreManager_->AddScore(chainScore);
+                                }
+                                
+                                // スコア表示を発動
+                                if (scoreDisplay_) {
+                                    // chainCount: 1 = 300 (count = 2), 2 = 600 (count = 3), 3 = 900 (count = 4)
+                                    int displayCount = knockedBackEnemy->knockbackChainCount + 1;
+                                    scoreDisplay_->SpawnNumber(e.position, displayCount);
+                                }
+                            }
+                            
                             break;
                         }
                     }
                 }
-
-                // 吹き飛び中の敵がプレイヤーと衝突した場合、プレイヤーを吹き飛ばす
-                if (hitInfo.otherObject == player_) {
-                    if (auto* playerMove = player_->GetComponent3D<PlayerMove>()) {
-                        // 敵の位置を爆発中心として使用
-                        for (const auto& e : activeEnemies_) {
-                            if (e.object == enemyPtr) {
-                                playerMove->KnockBack(e.position);
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                return;
             }
             
             // Playerと衝突したかチェック（通常の敵の場合はダメージを与える）
@@ -605,8 +611,11 @@ void EnemyManager::CleanupDeadEnemies() {
         if (e.isDead && e.object) {
             // スコアを加算
             if (scoreManager_) {
-                if (e.deathCause == EnemyDeathCause::Explosion) {
-                    // 爆発で死んだ場合: +300点
+                if (e.isKnockedBack) {
+                    // 吹き飛び中の敵が場外で死んだ場合: +300点
+                    scoreManager_->AddScore(300);
+                } else if (e.deathCause == EnemyDeathCause::Explosion) {
+                    // 爆発で死んだ場合（直接爆発）: +300点
                     scoreManager_->AddScore(300);
                 } else if (e.deathCause == EnemyDeathCause::OutOfBounds) {
                     // 場外で死んだ場合: +100点
@@ -619,7 +628,10 @@ void EnemyManager::CleanupDeadEnemies() {
             
             // スコア表示を発動
             if (scoreDisplay_) {
-                if (e.deathCause == EnemyDeathCause::Explosion) {
+                if (e.isKnockedBack) {
+                    // 吹き飛び中の敵が場外で死んだ場合: 300.obj (count = 2)
+                    scoreDisplay_->SpawnNumber(e.position, 2);
+                } else if (e.deathCause == EnemyDeathCause::Explosion) {
                     // 爆発で死んだ場合: 300.obj (count = 2)
                     scoreDisplay_->SpawnNumber(e.position, 2);
                 } else if (e.deathCause == EnemyDeathCause::OutOfBounds) {
@@ -708,6 +720,7 @@ void EnemyManager::OnExplosionHit(Object3DBase* hitObject, const Vector3& explos
             enemyInfo.isKnockedBack = true;
             enemyInfo.knockbackVelocity = knockbackDirection * knockbackSpeed_;
             enemyInfo.knockbackTimer = 0.0f;
+            enemyInfo.knockbackChainCount = 0;  // 連鎖数をリセット
 
             return;
         }

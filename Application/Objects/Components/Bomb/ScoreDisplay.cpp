@@ -37,7 +37,7 @@ void ScoreDisplay::Update() {
                 if (info.object) {
                     if (auto* tr = info.object->GetComponent3D<Transform3D>()) {
                         // スケールを徐々に大きくする
-                        float currentScale = info.initialScale * (1.0f + t * 0.5f);
+                        float currentScale = info.initialScale * (1.0f + t * 1.5f);
                         tr->SetScale(Vector3(currentScale, currentScale, currentScale));
                     }
 
@@ -79,10 +79,10 @@ void ScoreDisplay::SpawnNumber(const Vector3& position, int count) {
         modelFileName = "300.obj";
         break;
     case 3:
-        modelFileName = "900.obj";
+        modelFileName = "600.obj";
         break;
     default:
-        modelFileName = "1500.obj"; // 4体以上
+        modelFileName = "900.obj";
         break;
     }
 
@@ -103,7 +103,7 @@ void ScoreDisplay::SpawnNumber(const Vector3& position, int count) {
     // Material設定
     if (auto* mat = numberModel->GetComponent3D<Material3D>()) {
         mat->SetEnableLighting(false);
-        mat->SetColor(Vector4(0.45f, 0.45f, 0.45f, 1.0f));
+        mat->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
     }
 
     // モデルのポインタを保存

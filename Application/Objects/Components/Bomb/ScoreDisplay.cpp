@@ -37,7 +37,7 @@ void ScoreDisplay::Update() {
                 if (info.object) {
                     if (auto* tr = info.object->GetComponent3D<Transform3D>()) {
                         // スケールを徐々に大きくする
-                        float currentScale = info.initialScale * (1.0f + t * 1.5f);
+                        float currentScale = info.initialScale * (1.0f + t * 0.5f);
                         tr->SetScale(Vector3(currentScale, currentScale, currentScale));
                     }
 

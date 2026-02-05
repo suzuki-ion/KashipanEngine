@@ -397,7 +397,7 @@ void GameScene::Initialize() {
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-        obj->RegisterComponent<Health>(5, 1.0f);
+        obj->RegisterComponent<Health>(7, 1.0f);
 
         // 衝突判定を追加（修正版）
         if (colliderComp && colliderComp->GetCollider()) {
@@ -1841,7 +1841,7 @@ void GameScene::InGameStart() {
 
         if (player_) {
             if (auto* health = player_->GetComponent3D<Health>()) {
-                health->ResetHealth(5);
+                health->ResetHealth(7);
             }
         }
     }

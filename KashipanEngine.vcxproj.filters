@@ -56,6 +56,7 @@
     <ClCompile Include="KashipanEngine\Input\Keyboard.cpp" />
     <ClCompile Include="KashipanEngine\Input\Mouse.cpp" />
     <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
@@ -76,11 +77,17 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Object3DBase.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\ObjectContext.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
@@ -111,6 +118,8 @@
     <ClCompile Include="EnemySpawner.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Easing.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\JsonManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonInput.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Json\Data\JsonOutput.cpp" />
@@ -128,6 +137,7 @@
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_win32.h" />
     <ClInclude Include="Externals\imgui\imconfig.h" />
@@ -214,6 +224,7 @@
     <ClInclude Include="KashipanEngine\Input\Key.h" />
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Math\Matrix4x4.h" />
@@ -235,6 +246,7 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\FaceNormal3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexData3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h" />
@@ -254,6 +266,9 @@
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Ray.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Segment.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Triangle.h" />
+    <ClInclude Include="KashipanEngine\Objects\Object2DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\Object3DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h" />
@@ -265,7 +280,9 @@
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
     <ClInclude Include="KashipanEngine\UtilitiesHeaders.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
@@ -310,7 +327,10 @@
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
     <ClInclude Include="KashipanEngine\Utilities\Easing.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
     <ClInclude Include="KashipanEngine\Utilities\Json\JsonManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\Json\Data\Value.h" />
@@ -323,10 +343,9 @@
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\SystemManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\WorldECS.h" />
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem.h" />
-    <ClInclude Include="KashipanEngine\ECS\EcsComponents.h" />
-    <ClInclude Include="KashipanEngine\ECS\EcsSystems.h" />
-    <ClInclude Include="KashipanEngine\ECS\Components\Transform.h" />
-    <ClInclude Include="KashipanEngine\Graphics\IRenderTarget.h" />
+    <ClInclude Include="KashipanEngine\Assets\MeshAssets.h" />
+    <ClInclude Include="KashipanEngine\Graphics\MeshComponent.h" />
+    <ClInclude Include="KashipanEngine\Graphics\RenderPassesComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\EngineSettings.json" />

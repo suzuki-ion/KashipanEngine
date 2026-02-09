@@ -125,6 +125,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
+    meshAssets_ = std::make_unique<MeshAssets>(Passkey<GameEngine>{});
     Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
 #if defined(USE_IMGUI)
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
@@ -142,6 +143,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         modelManager_.get(),
         samplerManager_.get(),
         textureManager_.get(),
+        meshAssets_.get(),
         input_.get(),
         inputCommand_.get());
 
@@ -190,6 +192,7 @@ GameEngine::~GameEngine() {
     modelManager_.reset();
     samplerManager_.reset();
     textureManager_.reset();
+    meshAssets_.reset();
 
     ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
 
@@ -267,13 +270,14 @@ void GameEngine::GameLoopDraw() {
     directXCommon_->BeginDraw({});
     Window::Draw({});
 
-    if (graphicsEngine_) {
-        if (sceneManager_) {
-            if (auto *scene = sceneManager_->GetCurrentScene()) {
-                graphicsEngine_->RenderFrame({}, scene->GetWorld());
-            }
+    WorldECS *world = nullptr;
+    if (sceneManager_) {
+        if (auto *scene = sceneManager_->GetCurrentScene()) {
+            world = &scene->GetWorld();
         }
     }
+
+    graphicsEngine_->RenderFrame({}, world);
 
 #if defined(USE_IMGUI)
     if (imguiManager_) {

@@ -11,6 +11,7 @@
 #include "Assets/SamplerManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/AudioManager.h"
+#include "Assets/MeshAssets.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Graphics/ScreenBuffer.h"
@@ -121,6 +122,8 @@ private:
     std::unique_ptr<ModelManager> modelManager_;
     /// @brief 音声管理クラス
     std::unique_ptr<AudioManager> audioManager_;
+    /// @brief メッシュ管理クラス
+    std::unique_ptr<MeshAssets> meshAssets_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス

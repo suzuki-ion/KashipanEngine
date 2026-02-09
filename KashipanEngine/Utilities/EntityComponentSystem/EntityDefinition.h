@@ -3,6 +3,6 @@
 
 namespace KashipanEngine {
 
-using Entity = size_t;
+using Entity = std::size_t;
 
 } // namespace KashipanEngine

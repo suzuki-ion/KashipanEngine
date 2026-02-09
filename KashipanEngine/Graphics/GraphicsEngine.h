@@ -3,11 +3,12 @@
 
 namespace KashipanEngine {
 
+class WorldECS;
+
 class GameEngine;
 class DirectXCommon;
 class PipelineManager;
 class Renderer;
-class WorldECS;
 
 /// @brief グラフィックスエンジンクラス
 class GraphicsEngine final {
@@ -20,7 +21,7 @@ public:
     Renderer *GetRenderer(Passkey<GameEngine>) const { return renderer_.get(); }
 
     /// @brief フレーム描画処理
-    void RenderFrame(Passkey<GameEngine>, WorldECS &world);
+    void RenderFrame(Passkey<GameEngine>, WorldECS *world);
 
 private:
     GraphicsEngine(const GraphicsEngine&) = delete;

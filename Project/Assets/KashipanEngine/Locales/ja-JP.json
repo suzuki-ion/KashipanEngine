@@ -348,6 +348,25 @@
 		"engine.imgui.directionalLight.direction": "方向",
 		"engine.imgui.directionalLight.intensity": "強度",
 
+		"engine.imgui.spotLight.params": "SpotLight パラメータ",
+		"engine.imgui.spotLight.enabled": "有効",
+		"engine.imgui.spotLight.color": "色",
+		"engine.imgui.spotLight.position": "位置",
+		"engine.imgui.spotLight.direction": "方向",
+		"engine.imgui.spotLight.range": "範囲",
+		"engine.imgui.spotLight.innerAngle": "内角",
+		"engine.imgui.spotLight.outerAngle": "外角",
+		"engine.imgui.spotLight.intensity": "強度",
+		"engine.imgui.spotLight.decay": "減衰",
+
+		"engine.imgui.pointLight.params": "PointLight パラメータ",
+		"engine.imgui.pointLight.enabled": "有効",
+		"engine.imgui.pointLight.color": "色",
+		"engine.imgui.pointLight.position": "位置",
+		"engine.imgui.pointLight.range": "範囲",
+		"engine.imgui.pointLight.intensity": "強度",
+		"engine.imgui.pointLight.decay": "減衰",
+
 		//--------- 設定 ---------//
 		"engine.settings.load.success": "エンジンの設定が正常に読み込まれました。ファイルパス：",
 		"engine.settings.load.failed": "エンジンの設定の読み込みに失敗しました。デフォルトの設定を使用します。ファイルパス：",

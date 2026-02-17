@@ -519,6 +519,45 @@
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClCompile>
+    <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\BombScaling.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\ExplosionManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Bomb\ScoreDisplay.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyDieParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemyManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawner.cpp" />
+    <ClCompile Include="Application\Objects\Components\Enemy\EnemySpawnParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Map\WallBreakParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Map\WallBreakParticleManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatEmitter.cpp" />
+    <ClCompile Include="Application\Objects\Components\OneBeat\OneBeatParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
+    <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
+    <ClCompile Include="Application\Objects\Components\BPMScaling.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\MoveTutorial.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialBase.cpp" />
+    <ClCompile Include="Application\Scenes\Components\Tutorial\TutorialManager.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithGameScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithMenuScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithParticle.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithPauseScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BackMonitorWithScoreScreen.cpp" />
+    <ClCompile Include="Application\Scenes\Components\BombSpawn.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PlayerHealthModelUI.cpp" />
+    <ClCompile Include="Application\Scenes\Components\ScoreUI.cpp" />
+    <ClCompile Include="Application\Scenes\Components\StageLighting.cpp" />
+    <ClCompile Include="Application\Scenes\Components\WaveSystem.cpp" />
+    <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -1212,6 +1251,68 @@
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClInclude>
     <ClInclude Include="MyStd\UniversalIndex.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombManager.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\BombScaling.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ExplosionManager.h" />
+    <ClInclude Include="Application\Objects\Components\Bomb\ScoreDisplay.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyDieParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyManager.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawner.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemySpawnParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Enemy\EnemyType.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallBreakParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallBreakParticleManager.h" />
+    <ClInclude Include="Application\Objects\Components\Map\WallInfo.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatEmitter.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeat\OneBeatParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Player\BpmbSpawn.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerBombMaking.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerBombSpawnMode.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticle.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDieParticleManager.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerDrection.h" />
+    <ClInclude Include="Application\Objects\Components\Player\PlayerMove.h" />
+    <ClInclude Include="Application\Objects\Components\Player\ScoreManager.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScaling.h" />
+    <ClInclude Include="Application\Objects\Components\BPMScalingType.h" />
+    <ClInclude Include="Application\Objects\Components\OneBeatParticle.h" />
+    <ClInclude Include="Application\Objects\Components\ParticleConfig.h" />
+    <ClInclude Include="Application\Objects\Components\SmokeParticle.h" />
+    <ClInclude Include="Application\Scenes\Components\BPM\BPMSystem.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\CarEscape.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\PlayerEscape.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ResultSceneAnimator.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ScoreSaveAndLoad.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultScene\ShowScoreNumModels.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CameraStartMovement.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\CarMove.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\PlayerEnter.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\StartTextUpdate.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleScene\TitleSceneAnimator.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\MoveTutorial.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialBase.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialManager.h" />
+    <ClInclude Include="Application\Scenes\Components\Tutorial\TutorialStage.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitor.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorRenderer.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithGameScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithMenuScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithParticle.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithPauseScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BackMonitorWithScoreScreen.h" />
+    <ClInclude Include="Application\Scenes\Components\BombSpawn.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerHealthModelUI.h" />
+    <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
+    <ClInclude Include="Application\Scenes\Components\ScoreUI.h" />
+    <ClInclude Include="Application\Scenes\Components\StageLighting.h" />
+    <ClInclude Include="Application\Scenes\Components\WaveSystem.h" />
+    <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\SphericalCoordinates.h" />
+    <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
@@ -1391,5 +1492,11 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example\Vertex.hlsl">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include=".editorconfig" />
+    <None Include=".gitattributes" />
+    <None Include="exclusion.dic" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="DpiAwarenessPerMonitor.manifest" />
   </ItemGroup>
 </Project>

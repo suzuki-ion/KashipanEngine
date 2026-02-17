@@ -1,0 +1,171 @@
+#pragma once
+#include <KashipanEngine.h>
+#include <vector>
+#include <memory>
+
+#include "Objects/Components/Enemy/EnemyManager.h"
+#include "Objects/Components/Map/WallInfo.h"
+#include "Scenes/Components/CameraController.h"
+#include "Objects/Components/Map/WallBreakParticleManager.h"
+
+namespace KashipanEngine {
+
+    // Forward declaration
+    class BombManager;
+    class CameraController;
+    class ScoreManager;
+    class ScoreDisplay;
+    class WaveSystem;
+    class BombExplosionParticleManager;
+    class WallBreakParticleManager;
+
+    /// @brief 爆発エフェクトを一括管理するクラス
+    class ExplosionManager final : public ISceneComponent {
+    public:
+        /// @brief コンストラクタ
+        ExplosionManager();
+        ~ExplosionManager() override = default;
+
+        void Initialize() override;
+        void Update() override;
+
+        /// @brief ScreenBufferを設定（爆発のレンダリング用）
+        void SetScreenBuffer(ScreenBuffer* screenBuffer) { screenBuffer_ = screenBuffer; }
+
+        /// @brief ShadowMapBufferを設定（爆発の影用）
+        void SetShadowMapBuffer(ShadowMapBuffer* shadowMapBuffer) { shadowMapBuffer_ = shadowMapBuffer; }
+
+        /// @brief BombManagerを設定（爆発との衝突検出用）
+        void SetBombManager(BombManager* bombManager) { bombManager_ = bombManager; }
+
+        /// @brief EnemyManagerを設定（敵との衝突検出用）
+        void SetEnemyManager(EnemyManager* enemyManager) { enemyManager_ = enemyManager; }
+
+        /// @brief Playerを設定（プレイヤーとの衝突検出用）
+        void SetPlayer(Object3DBase* player) { player_ = player; }
+
+        /// @brief カメラコントローラーを設定
+        void SetCameraController(CameraController* cameraController) { cameraController_ = cameraController; }
+
+        /// @brief 衝突判定用ColliderComponentを設定
+        void SetCollider(ColliderComponent* collider) { collider_ = collider; }
+        void SetCollider2(ColliderComponent* collider) { collider2_ = collider; }
+
+        /// @brief 壁配列を設定
+        /// @param walls 壁配列へのポインタ
+        /// @param mapW マップの幅
+        /// @param mapH マップの高さ
+        void SetWalls(WallInfo* walls, int mapW, int mapH) {
+            walls_ = walls;
+            mapW_ = mapW;
+            mapH_ = mapH;
+        }
+
+        /// @brief WaveSystemを設定（スポーンパーティクル位置チェック用）
+        void SetWaveSystem(class WaveSystem* waveSystem) { waveSystem_ = waveSystem; }
+
+        /// @brief BombExplosionParticleManagerを設定
+        void SetBombExplosionParticleManager(BombExplosionParticleManager* particleManager) {
+            bombExplosionParticleManager_ = particleManager;
+        }
+
+        void SetWallBreakParticleManager(WallBreakParticleManager* particleManager) {
+            wallBreakParticleManager_ = particleManager;
+        }
+
+        /// @brief 指定位置に爆発を生成
+        /// @param position 爆発を生成する位置
+        void SpawnExplosion(const Vector3& position, const float size);
+
+        /// @brief 爆発のスケールを設定
+        void SetExplosionScale(float scale) { explosionScale_ = scale; }
+
+        /// @brief 爆発の寿命を設定（秒）
+        void SetExplosionLifetime(float lifetime) { explosionLifetime_ = lifetime; }
+
+        /// @brief 現在アクティブな爆発の数を取得
+        int GetActiveExplosionCount() const { return static_cast<int>(activeExplosions_.size()); }
+
+        /// @brief カメラシェイクの設定
+        void SetCameraShake(float power, float time) {
+            shakePower_ = power;
+            shakeTime_ = time;
+        }
+
+        /// @brief 爆発のXZサイズを設定
+        void SetSize(float size) { size; }
+
+        /// @brief 指定位置に壁が存在し、アクティブまたは移動中かをチェック
+        /// @param position チェックする位置
+        /// @return 壁がアクティブまたは移動中ならtrue
+        bool IsWallActiveOrMoving(const Vector3& position) const;
+
+        void SetIsBreakWalls(bool isBreak) { isBreakWalls_ = isBreak; }
+
+        void SetWallBreakConfig(const ParticleConfig& config) {
+            wallBreakConfig_ = config;
+        }
+
+        /// @brief すべての壁を消去する
+        void ClearAllWalls();
+
+#if defined(USE_IMGUI)
+        void ShowImGui() override;
+#endif
+
+    private:
+        /// @brief 爆発情報
+        struct ExplosionInfo {
+            Model* object = nullptr;
+            Model* object2 = nullptr;
+            float elapsedTime = 0.0f;             // 経過時間（秒）
+            Vector3 position{ 0.0f, 0.0f, 0.0f }; // 爆発の位置
+            int enemiesHit = 0;                   // この爆発で倒した敵の数
+            bool scoreCalculated = false;         // スコアが計算済みかどうか
+            bool numberDisplayed = false;         // 数字が表示済みかどうか
+        };
+
+        /// @brief 爆発とボムの衝突をチェックして起爆させる
+        void CheckExplosionBombCollisions();
+
+        /// @brief 爆弾起爆位置に壁を設置する
+        /// @param position 爆弾の位置
+        void CreateWallAtBombPosition(const Vector3& position);
+
+        /// @brief 爆発範囲内の壁を破壊する
+        /// @param position 爆発の中心位置
+        /// @param size 爆発のサイズ
+        void DestroyWallsInExplosionRange(const Vector3& position, float size);
+
+        float size_ = 3.0f;
+
+        ScreenBuffer* screenBuffer_ = nullptr;
+        ShadowMapBuffer* shadowMapBuffer_ = nullptr;
+        BombManager* bombManager_ = nullptr;
+        EnemyManager* enemyManager_ = nullptr;
+        Object3DBase* player_ = nullptr;
+        CameraController* cameraController_ = nullptr;
+        ColliderComponent* collider_ = nullptr;
+        ColliderComponent* collider2_ = nullptr;
+
+        float shakePower_ = 5.0f;    // カメラシェイクの強さ
+        float shakeTime_ = 1.0f;     // カメラシェイクの時間（秒）
+
+        WallInfo* walls_ = nullptr;  // 壁配列へのポインタ
+        int mapW_ = 0;               // マップの幅
+        int mapH_ = 0;               // マップの高さ
+
+        WaveSystem* waveSystem_ = nullptr;  // WaveSystemへの参照
+        BombExplosionParticleManager* bombExplosionParticleManager_ = nullptr;  // パーティクルマネージャー
+        WallBreakParticleManager* wallBreakParticleManager_ = nullptr;  // パーティクルマネージャー
+        ParticleConfig wallBreakConfig_;
+
+        std::vector<ExplosionInfo> activeExplosions_;
+
+        float explosionScale_ = 1.0f;
+        float explosionLifetime_ = 0.5f;      // 爆発の寿命（秒）
+
+        bool isBreakWalls_ = true;
+    };
+
+} // namespace KashipanEngine

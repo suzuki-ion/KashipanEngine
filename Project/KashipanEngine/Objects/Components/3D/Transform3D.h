@@ -80,6 +80,12 @@ public:
         isWorldMatrixCalculated_ = false;
     }
 
+    void SetTranslateY(const float& translateY) {
+        if (translate_.y == translateY) return;
+        translate_.y = translateY;
+        isWorldMatrixCalculated_ = false;
+    }
+
     void SetRotate(const Vector3 &rotate) {
         if (rotate_ == rotate) return;
         rotate_ = rotate;
@@ -139,9 +145,9 @@ public:
         Vector3 r = rotate_;
         Vector3 s = scale_;
 
-        ImGui::DragFloat3(Translation("engine.imgui.transform.translate").c_str(), &t.x, 0.05f);
-        ImGui::DragFloat3(Translation("engine.imgui.transform.rotate").c_str(), &r.x, 0.02f, -3.14f, 3.14f);
-        ImGui::DragFloat3(Translation("engine.imgui.transform.scale").c_str(), &s.x, 0.05f);
+        ImGui::DragFloat3(Translation("engine.imgui.transform.translate").c_str(), &t.x, 0.01f);
+        ImGui::DragFloat3(Translation("engine.imgui.transform.rotate").c_str(), &r.x, 0.01f, -3.14f, 3.14f);
+        ImGui::DragFloat3(Translation("engine.imgui.transform.scale").c_str(), &s.x, 0.01f);
 
         SetTranslate(t);
         SetRotate(r);

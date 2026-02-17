@@ -1495,6 +1495,20 @@
     <None Include=".editorconfig" />
     <None Include=".gitattributes" />
     <None Include="exclusion.dic" />
+    <None Include="Reference\README.md" />
+    <None Include="Reference\00_Index.md" />
+    <None Include="Reference\01_AppInitialize.md" />
+    <None Include="Reference\02_GameObjects.md" />
+    <None Include="Reference\03_ObjectComponents.md" />
+    <None Include="Reference\04_Scenes.md" />
+    <None Include="Reference\05_SceneComponents.md" />
+    <None Include="Reference\06_Window.md" />
+    <None Include="Reference\07_Offscreen.md" />
+    <None Include="Reference\08_Rendering.md" />
+    <None Include="Reference\09_Utilities.md" />
+    <None Include="Reference\10_Input.md" />
+    <None Include="Reference\11_Assets.md" />
+    <None Include="Reference\12_PostEffects.md" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />

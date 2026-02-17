@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <functional>
+#include <limits>
+#include <chrono>
 
 #include "Utilities/Passkeys.h"
 
@@ -87,6 +90,86 @@ public:
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }
+
+    class SoundBeat {
+    public:
+        SoundBeat();
+        /// @brief コンストラクタ
+        /// @param play 再生中の音声のプレイハンドル
+        /// @param bpm BPM値（例：120.0f）
+        /// @param startOffsetSec 音声開始からビート開始までのオフセット時間（秒）
+        SoundBeat(PlayHandle play, float bpm, double startOffsetSec);
+        ~SoundBeat();
+
+        /// @brief 現在の再生位置をポーリングしてビート管理を行う更新関数（AudioManager から自動で呼ばれる）
+        void Update(Passkey<AudioManager>);
+
+        /// @brief ビート情報の設定
+        /// @param play 再生中の音声のプレイハンドル
+        /// @param bpm BPM値（例：120.0f）
+        /// @param startOffsetSec 音声開始からビート開始までのオフセット時間（秒）
+        void SetBeat(PlayHandle play, float bpm, double startOffsetSec);
+
+        /// @brief 再生ハンドルの設定
+        /// @param play 再生中の音声のプレイハンドル
+        void SetPlayHandle(PlayHandle play) noexcept;
+
+        /// @brief BPM値の設定
+        /// @param bpm BPM値（例：120.0f）
+        void SetBPM(float bpm) noexcept { bpm_ = bpm; }
+
+        /// @brief 開始オフセット時間の設定
+        /// @param startOffsetSec 音声開始からビート開始までのオフセット時間（秒）
+        void SetStartOffsetSec(double startOffsetSec) noexcept { startOffsetSec_ = startOffsetSec; }
+
+        /// @brief ビート到達時のコールバック設定
+        /// @param cb コールバック関数（引数：再生ハンドル、拍インデックス、拍到達時の再生位置秒）
+        void SetOnBeat(std::function<void(PlayHandle, uint64_t, double)> cb);
+
+        /// @brief 拍の進行状況取得用関数
+        /// @return 拍の進行状況（0.0f ～ 1.0f）
+        float GetBeatProgress() const;
+
+        /// @brief 現在の拍インデックス取得用関数
+        /// @return 現在の拍インデックス（0 から始まる連番。未開始時は uint64_t の最大値）
+        uint64_t GetCurrentBeat() const noexcept { return currentBeatIndex_; }
+
+        /// @brief 現在の拍インデックスをリセット
+        void Reset();
+
+        /// @brief アクティブかどうか
+        bool IsActive() const noexcept { return bpm_ > 0.0f; }
+
+        /// @brief ビート到達がトリガーされたかどうか
+        bool IsOnBeatTriggered() const noexcept { return isOnBeatTriggered_; }
+
+        /// @brief 拍の判定を手動時間で開始する（再生ハンドルが無い場合のみ）
+        void StartManualBeat();
+
+        /// @brief 拍の判定を停止（再生ハンドルが無い場合のみ）
+        void StopManualBeat() {
+            isUseManualTime_ = false;
+        }
+
+    private:
+        PlayHandle playHandle_{ kInvalidPlayHandle };
+        float bpm_{ 0.0f };
+        double startOffsetSec_{ 0.0 }; // 秒
+        bool isOnBeatTriggered_{ false };
+
+        uint64_t currentBeatIndex_{ std::numeric_limits<uint64_t>::max() };
+
+        std::function<void(PlayHandle, uint64_t, double)> onBeatCallback_;
+
+        bool isUseManualTime_{ false };
+        std::chrono::steady_clock::time_point manualStartTime_{};
+    };
+
+    /// @brief 再生中の音声の現在位置を秒単位で取得する
+    /// @param play 再生ハンドル
+    /// @param outSeconds 取得した秒数の出力先
+    /// @return 成功した場合 true
+    static bool GetPlayPositionSeconds(PlayHandle play, double& outSeconds);
 
 private:
 #if defined(USE_IMGUI)

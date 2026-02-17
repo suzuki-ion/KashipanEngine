@@ -17,6 +17,11 @@ struct TimeRecord {
     long long millisecond;
 };
 
+/// @brief ゲームスピードを設定する
+void SetGameSpeed(float speed);
+/// @brief ゲームスピードを取得する
+float GetGameSpeed();
+
 /// @brief 現在の年を取得する
 int GetNowTimeYear();
 /// @brief 現在の月を取得する

@@ -9,7 +9,7 @@ float Normalize01(const float &value, const float &min, const float &max) {
 	if (std::abs(max - min) < 1e-6f) {
 		return 0.0f;
 	}
-    return std::clamp((value - min) / (max - min), 0.0f, 1.0f);
+	return std::clamp((value - min) / (max - min), 0.0f, 1.0f);
 }
 
 Vector2 Normalize01(const Vector2 &value, const Vector2 &min, const Vector2 &max) {
@@ -36,21 +36,110 @@ Vector4 Normalize01(const Vector4 &value, const Vector4 &min, const Vector4 &max
 	);
 }
 
-float Lerp(const float& start, const float& end, const float& t) {
-	//return (1.0f - t) * start + t * end;
+float Lerp(const float &start, const float &end, const float &t) {
 	return start + t * (end - start);
 }
 
 Vector2 Lerp(const Vector2 &start, const Vector2 &end, const float &t) {
-    return Vector2(start.x + t * (end.x - start.x), start.y + t * (end.y - start.y));
+	return Vector2(start.x + t * (end.x - start.x), start.y + t * (end.y - start.y));
 }
 
-Vector3 Lerp(const Vector3& start, const Vector3& end, const float& t) {
-	return Vector3(start.x + t * (end.x - start.x), start.y + t * (end.y - start.y) ,start.z + t * (end.z - start.z));
+Vector3 Lerp(const Vector3 &start, const Vector3 &end, const float &t) {
+	return Vector3(start.x + t * (end.x - start.x), start.y + t * (end.y - start.y), start.z + t * (end.z - start.z));
 }
 
-Vector4 Lerp(const Vector4& start, const Vector4& end, const float& t) {
+Vector4 Lerp(const Vector4 &start, const Vector4 &end, const float &t) {
 	return Vector4(start.x + t * (end.x - start.x), start.y + t * (end.y - start.y), start.z + t * (end.z - start.z), start.w + t * (end.w - start.w));
+}
+
+float Apply(float t, EaseType type) {
+	switch (type) {
+		case EaseType::Linear:
+			return t;
+		case EaseType::EaseInSine:
+			return EaseInSine(0.0f, 1.0f, t);
+		case EaseType::EaseOutSine:
+			return EaseOutSine(0.0f, 1.0f, t);
+		case EaseType::EaseInOutSine:
+			return EaseInOutSine(0.0f, 1.0f, t);
+		case EaseType::EaseOutInSine:
+			return EaseOutInSine(0.0f, 1.0f, t);
+		case EaseType::EaseInQuad:
+			return EaseInQuad(0.0f, 1.0f, t);
+		case EaseType::EaseOutQuad:
+			return EaseOutQuad(0.0f, 1.0f, t);
+		case EaseType::EaseInOutQuad:
+			return EaseInOutQuad(0.0f, 1.0f, t);
+		case EaseType::EaseOutInQuad:
+			return EaseOutInQuad(0.0f, 1.0f, t);
+		case EaseType::EaseInCubic:
+			return EaseInCubic(0.0f, 1.0f, t);
+		case EaseType::EaseOutCubic:
+			return EaseOutCubic(0.0f, 1.0f, t);
+		case EaseType::EaseInOutCubic:
+			return EaseInOutCubic(0.0f, 1.0f, t);
+		case EaseType::EaseOutInCubic:
+			return EaseOutInCubic(0.0f, 1.0f, t);
+		case EaseType::EaseInQuart:
+			return EaseInQuart(0.0f, 1.0f, t);
+		case EaseType::EaseOutQuart:
+			return EaseOutQuart(0.0f, 1.0f, t);
+		case EaseType::EaseInOutQuart:
+			return EaseInOutQuart(0.0f, 1.0f, t);
+		case EaseType::EaseOutInQuart:
+			return EaseOutInQuart(0.0f, 1.0f, t);
+		case EaseType::EaseInQuint:
+			return EaseInQuint(0.0f, 1.0f, t);
+		case EaseType::EaseOutQuint:
+			return EaseOutQuint(0.0f, 1.0f, t);
+		case EaseType::EaseInOutQuint:
+			return EaseInOutQuint(0.0f, 1.0f, t);
+		case EaseType::EaseOutInQuint:
+			return EaseOutInQuint(0.0f, 1.0f, t);
+		case EaseType::EaseInExpo:
+			return EaseInExpo(0.0f, 1.0f, t);
+		case EaseType::EaseOutExpo:
+			return EaseOutExpo(0.0f, 1.0f, t);
+		case EaseType::EaseInOutExpo:
+			return EaseInOutExpo(0.0f, 1.0f, t);
+		case EaseType::EaseOutInExpo:
+			return EaseOutInExpo(0.0f, 1.0f, t);
+		case EaseType::EaseInCirc:
+			return EaseInCirc(0.0f, 1.0f, t);
+		case EaseType::EaseOutCirc:
+			return EaseOutCirc(0.0f, 1.0f, t);
+		case EaseType::EaseInOutCirc:
+			return EaseInOutCirc(0.0f, 1.0f, t);
+		case EaseType::EaseOutInCirc:
+			return EaseOutInCirc(0.0f, 1.0f, t);
+		case EaseType::EaseInBack:
+			return EaseInBack(0.0f, 1.0f, t);
+		case EaseType::EaseOutBack:
+			return EaseOutBack(0.0f, 1.0f, t);
+		case EaseType::EaseInOutBack:
+			return EaseInOutBack(0.0f, 1.0f, t);
+		case EaseType::EaseOutInBack:
+			return EaseOutInBack(0.0f, 1.0f, t);
+		case EaseType::EaseInElastic:
+			return EaseInElastic(0.0f, 1.0f, t);
+		case EaseType::EaseOutElastic:
+			return EaseOutElastic(0.0f, 1.0f, t);
+		case EaseType::EaseInOutElastic:
+			return EaseInOutElastic(0.0f, 1.0f, t);
+		case EaseType::EaseOutInElastic:
+			return EaseOutInElastic(0.0f, 1.0f, t);
+		case EaseType::EaseInBounce:
+			return EaseInBounce(0.0f, 1.0f, t);
+		case EaseType::EaseOutBounce:
+			return EaseOutBounce(0.0f, 1.0f, t);
+		case EaseType::EaseInOutBounce:
+			return EaseInOutBounce(0.0f, 1.0f, t);
+		case EaseType::EaseOutInBounce:
+			return EaseOutInBounce(0.0f, 1.0f, t);
+		default:
+			assert(false && "Unknown EaseType");
+			return t;
+	}
 }
 
 float EaseIn(const float& t) {
@@ -87,7 +176,7 @@ float EaseInOutSine(float x1, float x2, float t) {
 float EaseOutInSine(float x1, float x2, float t) {
 	float easedT = t < 0.5f
 		? 0.5f * sinf(PI * t)
-		: 1.0f - 0.5f * cosf(PI * (t - 0.5f)) * 2.0f;
+		: 1.0f - 0.5f * cosf(((2.0f * t - 1.0f) * PI) / 2.0f);
 	return (1.0f - easedT) * x1 + easedT * x2;
 }
 
@@ -108,9 +197,14 @@ float EaseInOutQuad(float x1, float x2, float t) {
 }
 
 float EaseOutInQuad(float x1, float x2, float t) {
-	float easedT = t < 0.5f
-		? 0.5f * (1.0f - (1.0f - 2.0f * t) * (1.0f - 2.0f * t))
-		: 0.5f * ((2.0f * t - 1.0f) * (2.0f * t - 1.0f)) + 0.5f;
+	float easedT = 0.0f;
+	if (t < 0.5f) {
+		float value = 1.0f - 2.0f * t;
+		easedT = 0.5f * (1.0f - value * value);
+	} else {
+		float value = 2.0f * t - 1.0f;
+		easedT = 0.5f + 0.5f * value * value;
+	}
 	return (1.0f - easedT) * x1 + easedT * x2;
 }
 
@@ -206,10 +300,16 @@ float EaseInOutExpo(float x1, float x2, float t) {
 }
 
 float EaseOutInExpo(float x1, float x2, float t) {
-	float easedT = t == 0.0f ? 0.0f
-		: t == 1.0f ? 1.0f
-		: t < 0.5f ? (1.0f - powf(2.0f, -20.0f * t + 10.0f)) / 2.0f
-		: (powf(2.0f, 20.0f * (t - 0.5f) - 10.0f) + 1.0f) / 2.0f;
+	float easedT = 0.0f;
+	if (t == 0.0f) {
+		easedT = 0.0f;
+	} else if (t == 1.0f) {
+		easedT = 1.0f;
+	} else if (t < 0.5f) {
+		easedT = 0.5f * (1.0f - powf(2.0f, -20.0f * t));
+	} else {
+		easedT = 0.5f + 0.5f * powf(2.0f, 20.0f * (t - 1.0f));
+	}
 	return (1.0f - easedT) * x1 + easedT * x2;
 }
 
@@ -231,9 +331,9 @@ float EaseInOutCirc(float x1, float x2, float t) {
 }
 
 float EaseOutInCirc(float x1, float x2, float t) {
-	float easedT = t < 0.5f
-		? 0.5f * (1.0f - sqrtf(1.0f - powf(1.0f - 2.0f * t, 2.0f)))
-		: 0.5f * (sqrtf(1.0f - powf(2.0f * t - 1.0f, 2.0f)) + 1.0f);
+	float value = 2.0f * t - 1.0f;
+	float eased = sqrtf(1.0f - value * value);
+	float easedT = (t < 0.5f) ? 0.5f * eased : 1.0f - 0.5f * eased;
 	return (1.0f - easedT) * x1 + easedT * x2;
 }
 
@@ -265,11 +365,14 @@ float EaseInOutBack(float x1, float x2, float t) {
 
 float EaseOutInBack(float x1, float x2, float t) {
 	static const float c1 = 1.70158f;
-	static const float c2 = c1 * 1.525f;
-
-	float easedT = t < 0.5f
-		? 0.5f * ((1.0f - powf(1.0f - 2.0f * t, 2.0f) * ((c2 + 1.0f) * (1.0f - 2.0f * t) - c2)))
-		: 0.5f * (powf(2.0f * t - 1.0f, 2.0f) * ((c2 + 1.0f) * (2.0f * t - 1.0f) + c2) + 1.0f);
+	static const float c3 = c1 + 1.0f;
+	float value = 2.0f * t - 1.0f;
+	float easedT = 0.0f;
+	if (t < 0.5f) {
+		easedT = 0.5f * (1.0f + c3 * powf(value, 3.0f) + c1 * powf(value, 2.0f));
+	} else {
+		easedT = 0.5f + 0.5f * (c3 * powf(value, 3.0f) - c1 * powf(value, 2.0f));
+	}
 	return (1.0f - easedT) * x1 + easedT * x2;
 }
 
@@ -303,13 +406,17 @@ float EaseInOutElastic(float x1, float x2, float t) {
 }
 
 float EaseOutInElastic(float x1, float x2, float t) {
-	static const float c5 = (2.0f * PI) / 4.5f;
-
-	float easedT = t == 0.0f ? 0.0f
-		: t == 1.0f ? 1.0f
-		: t < 0.5f
-		? 0.5f * (powf(2.0f, -20.0f * t + 10.0f) * sinf((20.0f * t - 11.125f) * c5) + 1.0f)
-		: 0.5f * (-powf(2.0f, 20.0f * (t - 0.5f) - 10.0f) * sinf((20.0f * (t - 0.5f) - 11.125f) * c5)) + 0.5f;
+	static const float c4 = (2.0f * PI) / 3.0f;
+	float easedT = 0.0f;
+	if (t == 0.0f) {
+		easedT = 0.0f;
+	} else if (t == 1.0f) {
+		easedT = 1.0f;
+	} else if (t < 0.5f) {
+		easedT = 0.5f * (powf(2.0f, -20.0f * t) * sinf((20.0f * t - 0.75f) * c4) + 1.0f);
+	} else {
+		easedT = 1.0f - 0.5f * powf(2.0f, 20.0f * (t - 1.0f)) * sinf((20.0f * (t - 1.0f) - 10.75f) * c4);
+	}
 	return (1.0f - easedT) * x1 + easedT * x2;
 }
 
@@ -347,9 +454,28 @@ float EaseInOutBounce(float x1, float x2, float t) {
 }
 
 float EaseOutInBounce(float x1, float x2, float t) {
+	auto easeOutBounce = [](float value) {
+		static const float n1 = 7.5625f;
+		static const float d1 = 2.75f;
+
+		if (value < 1.0f / d1) {
+			return n1 * value * value;
+		}
+		if (value < 2.0f / d1) {
+			value -= 1.5f / d1;
+			return n1 * value * value + 0.75f;
+		}
+		if (value < 2.5f / d1) {
+			value -= 2.25f / d1;
+			return n1 * value * value + 0.9375f;
+		}
+		value -= 2.625f / d1;
+		return n1 * value * value + 0.984375f;
+	};
+
 	float easedT = t < 0.5f
-		? 0.5f * EaseOutBounce(0.0f, 1.0f, 2.0f * t)
-		: 0.5f * (1.0f - EaseOutBounce(0.0f, 1.0f, 2.0f * (1.0f - t))) + 0.5f;
+		? 0.5f * easeOutBounce(2.0f * t)
+		: 1.0f - 0.5f * easeOutBounce(2.0f - 2.0f * t);
 	return (1.0f - easedT) * x1 + easedT * x2;
 }
 
@@ -455,7 +581,6 @@ Vector3 EaseInElastic(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(Ease
 Vector3 EaseOutElastic(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseOutElastic, x1, x2, t); }
 Vector3 EaseInOutElastic(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseInOutElastic, x1, x2, t); }
 Vector3 EaseOutInElastic(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseOutInElastic, x1, x2, t); }
-
 Vector3 EaseInBounce(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseInBounce, x1, x2, t); }
 Vector3 EaseOutBounce(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseOutBounce, x1, x2, t); }
 Vector3 EaseInOutBounce(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseInOutBounce, x1, x2, t); }

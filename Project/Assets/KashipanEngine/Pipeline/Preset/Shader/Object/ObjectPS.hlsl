@@ -64,6 +64,18 @@ float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, floa
 	float spec = pow(saturate(NdotH), shininess);
 	return spec;
 }
+
+float Dither4x4(float2 screenPos) {
+	int2 ipos = int2(screenPos) & 3;
+	int idx = ipos.x + ipos.y * 4;
+	static const float dither[16] = {
+		0.0f, 8.0f, 2.0f, 10.0f,
+		12.0f, 4.0f, 14.0f, 6.0f,
+		3.0f, 11.0f, 1.0f, 9.0f,
+		15.0f, 7.0f, 13.0f, 5.0f
+	};
+	return (dither[idx] + 0.5f) / 16.0f;
+}
 #endif
 
 PSOutput main(VSOutput input) {
@@ -153,6 +165,13 @@ PSOutput main(VSOutput input) {
 	output.color.a = mat.color.a * textureColor.a;
 	if (output.color.a < 0.01f) {
 		discard;
+	}
+	if (output.color.a < 1.0f) {
+		float threshold = Dither4x4(input.position.xy);
+		if (output.color.a <= threshold) {
+			discard;
+		}
+		output.color.a = 1.0f;
 	}
 #endif
 	return output;

@@ -20,6 +20,9 @@ float sDeltaTime = 0.0f;
 /// @brief デルタタイム計測用初回フラグ
 bool sIsFirstDeltaTimeCall = true;
 
+/// @brief ゲームスピード
+float sGameSpeed = 1.0f;
+
 /// @brief タイムゾーン付き現在時刻の取得
 /// @return タイムゾーン付き現在時刻
 auto GetZonedTime() {
@@ -38,6 +41,14 @@ void UpdateDeltaTime(Passkey<GameEngine>) {
         sDeltaTime = std::chrono::duration<float>(currentTime - sPreviousTime).count();
     }
     sPreviousTime = currentTime;
+}
+
+void SetGameSpeed(float speed) {
+    sGameSpeed = speed;
+}
+
+float GetGameSpeed() {
+    return sGameSpeed;
 }
 
 int GetNowTimeYear() {

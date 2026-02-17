@@ -1,6 +1,5 @@
 #include "Scenes/Components/JustAvoidParticle.h"
 #include "Objects/Components/MovementController.h"
-#include "Scene/SceneContext.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -34,13 +33,9 @@ Vector3 MakeRandomDirectionNear(const Vector3& dir) {
 void JustAvoidParticle::Initialize() {
     auto* ctx = GetOwnerContext();
     if (!ctx) return;
-    sceneDefault_ = ctx->GetComponent<SceneDefaultVariables>("SceneDefaultVariables");
-    camera3D_ = sceneDefault_ ? sceneDefault_->GetMainCamera3D() : nullptr;
 
     const auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
     const auto textTex = TextureManager::GetTextureFromFileName("avoidJustText.png");
-
-    ScreenBuffer* sb = sceneDefault_ ? sceneDefault_->GetScreenBuffer3D() : nullptr;
 
     // particle billboards
     for (size_t i = 0; i < billboards_.size(); ++i) {
@@ -69,8 +64,8 @@ void JustAvoidParticle::Initialize() {
 
         obj->RegisterComponent<MovementController>(std::vector<MovementController::MoveEntry>{});
 
-        if (sb) {
-            obj->AttachToRenderer(sb, "Object3D.Solid.BlendNormal");
+        if (screenBuffer_) {
+            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         }
 
         billboards_[i] = obj.get();
@@ -105,8 +100,8 @@ void JustAvoidParticle::Initialize() {
 
         obj->RegisterComponent<MovementController>(std::vector<MovementController::MoveEntry>{});
 
-        if (sb) {
-            obj->AttachToRenderer(sb, "Object3D.Solid.BlendNormal");
+        if (screenBuffer_) {
+            obj->AttachToRenderer(screenBuffer_, "Object3D.Solid.BlendNormal");
         }
 
         textBillboard_ = obj.get();
@@ -206,8 +201,10 @@ void JustAvoidParticle::Update() {
             }
             if (auto* mat = bb->GetComponent3D<Material3D>()) {
                 auto c = mat->GetColor();
-                c.w = 0.0f;
-                mat->SetColor(c);
+                if (c.w != 0.0f) {
+                    c.w = 0.0f;
+                    mat->SetColor(c);
+                }
             }
         }
     }
@@ -223,8 +220,10 @@ void JustAvoidParticle::Update() {
             }
             if (auto* mat = textBillboard_->GetComponent3D<Material3D>()) {
                 auto c = mat->GetColor();
-                c.w = 0.0f;
-                mat->SetColor(c);
+                if (c.w != 0.0f) {
+                    c.w = 0.0f;
+                    mat->SetColor(c);
+                }
             }
         }
     }

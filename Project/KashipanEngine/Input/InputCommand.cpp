@@ -230,19 +230,53 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
 
         const float t = b.threshold;
         bool fired = false;
-        switch (b.state) {
-        case InputState::Down:
-            fired = std::abs(v) > t;
-            break;
-        case InputState::Trigger:
-            fired = std::abs(v) > t;
-            break;
-        case InputState::Release:
-            fired = std::abs(v) <= t;
-            break;
-        default:
-            fired = false;
-            break;
+
+        // Get delta (previous frame difference) and compute previous value
+        float dv = 0.0f;
+        switch (static_cast<ControllerAnalog>(b.code)) {
+        case ControllerAnalog::LeftTrigger: dv = NormalizeTriggerDelta255(ct.GetDeltaLeftTrigger(idx)); break;
+        case ControllerAnalog::RightTrigger: dv = NormalizeTriggerDelta255(ct.GetDeltaRightTrigger(idx)); break;
+        case ControllerAnalog::LeftStickX: dv = NormalizeStickDeltaInt16(ct.GetDeltaLeftStickX(idx)); break;
+        case ControllerAnalog::LeftStickY: dv = NormalizeStickDeltaInt16(ct.GetDeltaLeftStickY(idx)); break;
+        case ControllerAnalog::RightStickX: dv = NormalizeStickDeltaInt16(ct.GetDeltaRightStickX(idx)); break;
+        case ControllerAnalog::RightStickY: dv = NormalizeStickDeltaInt16(ct.GetDeltaRightStickY(idx)); break;
+        default: dv = 0.0f; break;
+        }
+
+        const float prev = v - dv;
+
+        if (t >= 0.0f) {
+            // Positive-direction threshold
+            switch (b.state) {
+            case InputState::Down:
+                fired = (v > t);
+                break;
+            case InputState::Trigger:
+                fired = (prev <= t) && (v > t);
+                break;
+            case InputState::Release:
+                fired = (prev > t) && (v <= t);
+                break;
+            default:
+                fired = false;
+                break;
+            }
+        } else {
+            // Negative-direction threshold
+            switch (b.state) {
+            case InputState::Down:
+                fired = (v < t);
+                break;
+            case InputState::Trigger:
+                fired = (prev >= t) && (v < t);
+                break;
+            case InputState::Release:
+                fired = (prev < t) && (v >= t);
+                break;
+            default:
+                fired = false;
+                break;
+            }
         }
 
         return applyInvertIfNeeded(MakeReturnInfo(fired, v));

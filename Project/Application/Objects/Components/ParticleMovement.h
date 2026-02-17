@@ -13,11 +13,6 @@ public:
         Vector3 max{ 5.0f, 5.0f, 5.0f };
     };
 
-    /// @brief パーティクルの生成ボックス、速度、寿命、基準スケールを指定して作成する
-    /// @param spawnBox 生成位置の範囲
-    /// @param speed 速度
-    /// @param lifeTimeSec 寿命（秒）
-    /// @param baseScale 基本スケール
     ParticleMovement(
         SpawnBox spawnBox = {},
         float speed = 2.0f,
@@ -30,10 +25,8 @@ public:
           baseScale_(baseScale) {
     }
 
-    /// @brief デストラクタ
     ~ParticleMovement() override = default;
 
-    /// @brief コンポーネントを複製して返す
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<ParticleMovement>(spawnBox_, speed_, lifeTimeSec_, baseScale_);
         ptr->elapsed_ = elapsed_;
@@ -41,8 +34,6 @@ public:
         return ptr;
     }
 
-    /// @brief 初期化処理（初期リスポーンなど）
-    /// @return 初期化成功時は true
     std::optional<bool> Initialize() override {
         Respawn_();
         elapsed_ = GetRandomFloat(0.0f, lifeTimeSec_);
@@ -50,8 +41,6 @@ public:
         return true;
     }
 
-    /// @brief 毎フレームの更新（移動・スケール・リスポーン）
-    /// @return 更新成功時は true
     std::optional<bool> Update() override {
         if (!transform_) return true;
         const float dt = std::max(0.0f, GetDeltaTime());
@@ -89,30 +78,16 @@ public:
         return true;
     }
 
-    /// @brief 生成ボックスを設定する
-    /// @param b 新しい生成ボックス
     void SetSpawnBox(const SpawnBox &b) { spawnBox_ = b; }
-    /// @brief 速度を設定する
-    /// @param s 速度
     void SetSpeed(float s) { speed_ = s; }
-    /// @brief 寿命を秒単位で設定する
-    /// @param s 寿命（秒）
     void SetLifeTimeSec(float s) { lifeTimeSec_ = s; }
-    /// @brief 基準スケールを設定する
-    /// @param s 基準スケール
     void SetBaseScale(const Vector3 &s) { baseScale_ = s; }
 
-    /// @brief 生成ボックスを取得する
     const SpawnBox &GetSpawnBox() const { return spawnBox_; }
-    /// @brief 速度を取得する
     float GetSpeed() const { return speed_; }
-    /// @brief 寿命（秒）を取得する
     float GetLifeTimeSec() const { return lifeTimeSec_; }
-    /// @brief 基準スケールを取得する
     const Vector3 &GetBaseScale() const { return baseScale_; }
-    /// @brief 経過秒数を取得する
     float GetElapsedSec() const { return elapsed_; }
-    /// @brief 正規化された寿命（0..1）を取得する
     float GetNormalizedLife() const {
         if (lifeTimeSec_ <= 0.0f) return 0.0f;
         return std::clamp(elapsed_ / lifeTimeSec_, 0.0f, 1.0f);

@@ -342,6 +342,11 @@ void Window::SetWindowMode(WindowMode windowMode) {
         case WindowMode::Window:
             SetWindowLong(descriptor_.hwnd, GWL_STYLE, prevWindowStyle_);
             SetWindowLong(descriptor_.hwnd, GWL_EXSTYLE, prevWindowExStyle_);
+            descriptor_.windowStyle = prevWindowStyle_;
+
+            size_.clientWidth = prevClientWidth_ > 0 ? prevClientWidth_ : size_.clientWidth;
+            size_.clientHeight = prevClientHeight_ > 0 ? prevClientHeight_ : size_.clientHeight;
+            CalculateAspectRatio();
 
             SetWindowPos(descriptor_.hwnd, HWND_TOP,
                 prevWindowRect_.left,
@@ -349,28 +354,37 @@ void Window::SetWindowMode(WindowMode windowMode) {
                 prevWindowRect_.right - prevWindowRect_.left,
                 prevWindowRect_.bottom - prevWindowRect_.top,
                 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-            
+
             break;
 
-        case WindowMode::FullScreen:
-            auto mi = WindowsAPI::QueryMonitorInfo(MonitorFromWindow(descriptor_.hwnd, MONITOR_DEFAULTTOPRIMARY));
+        case WindowMode::FullScreen: {
+            auto mi = WindowsAPI::QueryMonitorInfo(MonitorFromWindow(descriptor_.hwnd, MONITOR_DEFAULTTONEAREST));
             if (!mi) break;
 
             GetWindowRect(descriptor_.hwnd, &prevWindowRect_);
             prevWindowStyle_ = GetWindowLong(descriptor_.hwnd, GWL_STYLE);
             prevWindowExStyle_ = GetWindowLong(descriptor_.hwnd, GWL_EXSTYLE);
+            prevClientWidth_ = size_.clientWidth;
+            prevClientHeight_ = size_.clientHeight;
 
-            SetWindowLong(descriptor_.hwnd, GWL_STYLE, prevWindowStyle_ & ~(WS_CAPTION | WS_THICKFRAME));
+            const DWORD fullScreenStyle = prevWindowStyle_ & ~(WS_CAPTION | WS_THICKFRAME);
+            SetWindowLong(descriptor_.hwnd, GWL_STYLE, fullScreenStyle);
             SetWindowLong(descriptor_.hwnd, GWL_EXSTYLE, prevWindowExStyle_ & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE));
+            descriptor_.windowStyle = fullScreenStyle;
 
             RECT mr = mi->MonitorRect();
+            size_.clientWidth = mr.right - mr.left;
+            size_.clientHeight = mr.bottom - mr.top;
+            CalculateAspectRatio();
+
             SetWindowPos(descriptor_.hwnd, HWND_TOP,
                 mr.left, mr.top,
                 mr.right - mr.left,
                 mr.bottom - mr.top,
                 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-            
+
             break;
+        }
     }
     AdjustWindowSize();
 }

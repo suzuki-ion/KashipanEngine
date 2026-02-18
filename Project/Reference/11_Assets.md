@@ -164,3 +164,7 @@ KashipanEngine::AudioManager::Stop(play);
 - `Assets/KashipanEngine/Pipeline/...`（パイプライン定義やプリセット）
 
 > `EngineSettings.json` の内容は `GameEngine` 起動時に読み込まれ、ウィンドウ初期パラメータ等に反映されます。
+
+## ファイル名指定時について
+
+> ファイル名指定時の文字の大文字小文字は、Windowsの仕様に則って関係しないようにしています。

@@ -1509,6 +1509,17 @@
     <None Include="Reference\10_Input.md" />
     <None Include="Reference\11_Assets.md" />
     <None Include="Reference\12_PostEffects.md" />
+    <None Include="Reference\09_Utilities_Index.md" />
+    <None Include="Reference\09_Utilities_Conversion.md" />
+    <None Include="Reference\09_Utilities_Dialogs.md" />
+    <None Include="Reference\09_Utilities_FileIO.md" />
+    <None Include="Reference\09_Utilities_Math.md" />
+    <None Include="Reference\09_Utilities_Passkeys.md" />
+    <None Include="Reference\09_Utilities_Random.md" />
+    <None Include="Reference\09_Utilities_SourceLocation.md" />
+    <None Include="Reference\09_Utilities_TemplateLiteral.md" />
+    <None Include="Reference\09_Utilities_Time.md" />
+    <None Include="Reference\09_Utilities_Translation.md" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />

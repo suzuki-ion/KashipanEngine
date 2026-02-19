@@ -6,6 +6,9 @@
 # imgui.ini fille
 imgui.ini
 
+# Tools folder
+Tools/
+
 # exclusion files
 *.dmp
 *.log

@@ -1531,6 +1531,8 @@
     <None Include="Reference\Tutorial\07_AudioHandle.md" />
     <None Include="Reference\Tutorial\08_ModelHandle.md" />
     <None Include="Reference\Tutorial\09_ChangeScene.md" />
+    <None Include="Tools\convert_reference_to_html.py" />
+    <None Include="Reference\reference.css" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />

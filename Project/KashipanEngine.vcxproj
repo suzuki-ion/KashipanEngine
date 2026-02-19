@@ -748,6 +748,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Reference\11_Assets.md" />
     <None Include="Reference\12_PostEffects.md" />
     <None Include="Reference\README.md" />
+    <None Include="Reference\reference.css" />
     <None Include="Reference\Tutorial\00_Index.md" />
     <None Include="Reference\Tutorial\01_CreateScene.md" />
     <None Include="Reference\Tutorial\02_RegisterScene.md" />
@@ -759,6 +760,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Reference\Tutorial\08_ModelHandle.md" />
     <None Include="Reference\Tutorial\09_ChangeScene.md" />
     <None Include="Reference\Tutorial\README.md" />
+    <None Include="Tools\convert_reference_to_html.py" />
     <None Include="tools\sync_filters.py" />
   </ItemGroup>
   <ItemGroup>

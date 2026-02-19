@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>シーン用コンポーネント（`ISceneComponent`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1>シーン用コンポーネント（<code>ISceneComponent</code>）</h1>
+<p>シーン全体に 1 つ（または少数）だけ存在する機能は、<code>ISceneComponent</code> としてシーンに追加します。</p>
+<p>例：</p>
+<ul>
+<li>デフォルト変数群（カメラ/ライト/ScreenBuffer など）</li>
+<li>画面比率維持</li>
+<li>シャドウマップ同期</li>
+<li>シーン全体の進行（UI/フェーズ管理）</li>
+</ul>
+<hr />
+<h2>公開API：<code>ISceneComponent</code>（<code>KashipanEngine/Scene/Components/ISceneComponent.h</code>）</h2>
+<ul>
+<li>基本情報</li>
+<ul>
+<li><code>const std::string&amp; GetComponentType() const</code></li>
+<li><code>size_t GetMaxComponentCountPerScene() const</code></li>
+</ul>
+<li>ライフサイクル</li>
+<ul>
+<li><code>virtual void Initialize()</code></li>
+<li><code>virtual void Update()</code></li>
+<li><code>virtual void Finalize()</code></li>
+</ul>
+<li>更新優先度</li>
+<ul>
+<li><code>int GetUpdatePriority() const</code></li>
+<li><code>void SetUpdatePriority(int priority)</code></li>
+</ul>
+<li>所属コンテキスト</li>
+<ul>
+<li><code>void SetOwnerContext(SceneContext* context)</code>（エンジンが登録時に設定）</li>
+<li><code>SceneContext* GetOwnerContext() const</code>（protected）</li>
+<li><code>SceneBase* GetOwnerScene() const</code>（protected）</li>
+</ul>
+</ul>
+<hr />
+<h2>例：シーンコンポーネント実装</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">class</span> MySceneTicker <span class="kw">final</span> : <span class="kw">public</span> KashipanEngine::ISceneComponent {
+<span class="kw">public</span>:
+    MySceneTicker() : ISceneComponent(<span class="str">&quot;MySceneTicker&quot;</span>, <span class="num">1</span>) {}
+
+    <span class="type">void</span> Initialize() <span class="kw">override</span> {
+        <span class="com">// シーン初期化時に一度</span>
+    }
+
+    <span class="type">void</span> Update() <span class="kw">override</span> {
+        <span class="com">// 毎フレーム</span>
+        <span class="kw">auto</span>* scene = GetOwnerScene();
+        (<span class="type">void</span>)scene;
+    }
+
+    <span class="type">void</span> Finalize() <span class="kw">override</span> {
+        <span class="com">// シーン終了時</span>
+    }
+};
+</code></pre>
+<hr />
+<h2>例：シーンへ追加・取得</h2>
+<pre><code class="language-cpp">
+<span class="type">void</span> MyScene::Initialize() {
+    AddSceneComponent(std::make_unique&lt;MySceneTicker&gt;());
+
+    <span class="kw">auto</span>* t = GetSceneComponent&lt;MySceneTicker&gt;();
+    (<span class="type">void</span>)t;
+}
+</code></pre>
+<hr />
+<h2><code>SceneDefaultVariables</code>（標準の便利コンポーネント）</h2>
+<p><code>SceneDefaultVariables</code> は、シーン内でよく使う要素をまとめて提供します。</p>
+<p>主な取得 API（<code>KashipanEngine/Scene/Components/SceneDefaultVariables.h</code>）：</p>
+<ul>
+<li><code>ScreenBuffer* GetScreenBuffer2D() const</code></li>
+<li><code>ScreenBuffer* GetScreenBuffer3D() const</code></li>
+<li><code>Sprite* GetScreenBuffer2DSprite() const</code></li>
+<li><code>Sprite* GetScreenBuffer3DSprite() const</code></li>
+<li><code>Camera3D* GetMainCamera3D() const</code></li>
+<li><code>Camera2D* GetMainCamera2D() const</code></li>
+<li><code>DirectionalLight* GetDirectionalLight() const</code></li>
+<li><code>Window* GetMainWindow() const</code></li>
+</ul>
+<p>利用例：</p>
+<pre><code class="language-cpp">
+<span class="type">void</span> MyScene::Initialize() {
+    AddSceneComponent(std::make_unique&lt;KashipanEngine::SceneDefaultVariables&gt;());
+    <span class="kw">auto</span>* defaults = GetSceneComponent&lt;KashipanEngine::SceneDefaultVariables&gt;();
+    <span class="kw">if</span> (!defaults) <span class="kw">return</span>;
+
+    <span class="kw">auto</span>* mainWindow = defaults-&gt;GetMainWindow();
+    <span class="kw">auto</span>* sb2d = defaults-&gt;GetScreenBuffer2D();
+    (<span class="type">void</span>)mainWindow;
+    (<span class="type">void</span>)sb2d;
+}
+</code></pre>
+</body>
+</html>

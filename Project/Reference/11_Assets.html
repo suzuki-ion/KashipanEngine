@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>`Assets` フォルダと各種マネージャ（Texture/Model/Sampler/Audio）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1><code>Assets</code> フォルダと各種マネージャ（Texture/Model/Sampler/Audio）</h1>
+<p>KashipanEngine は <code>GameEngine</code> 初期化時に各種アセットマネージャを生成し、<code>SceneBase</code> から静的アクセサで参照できるように設定します。</p>
+<ul>
+<li><code>TextureManager</code></li>
+<li><code>SamplerManager</code></li>
+<li><code>ModelManager</code></li>
+<li><code>AudioManager</code></li>
+</ul>
+<p>関連：<code>KashipanEngine/AssetsHeaders.h</code>、<code>KashipanEngine/Assets/*</code>、<code>KashipanEngine/Core/GameEngine.cpp</code></p>
+<hr />
+<h2>重要：<code>Assets</code> 配下のファイルは「起動時に読み込まれる」</h2>
+<p>各マネージャ（<code>TextureManager</code> / <code>ModelManager</code> / <code>AudioManager</code>）は内部に <code>LoadAllFromAssetsFolder()</code> を持ち、 **Assets ルート以下を起動時に走査して事前ロード**する設計になっています。</p>
+<p>そのため、基本運用は以下です。</p>
+<ul>
+<li>ゲームで使うファイルを <code>Assets/</code> 配下へ配置しておく</li>
+<li>実行時は「ファイル名」または「Assets ルートからの相対パス」でハンドルを取得して使う</li>
+</ul>
+<blockquote>
+<p>事前ロードの対象拡張子や探索ルールは各 <code>*Manager.cpp</code> の実装に従います。</p>
+</blockquote>
+<hr />
+<h2>公開API（入口）</h2>
+<h3><code>SceneBase</code>（エンジン資産への静的アクセサ）</h3>
+<ul>
+<li><code>static AudioManager* GetAudioManager()</code></li>
+<li><code>static ModelManager* GetModelManager()</code></li>
+<li><code>static SamplerManager* GetSamplerManager()</code></li>
+<li><code>static TextureManager* GetTextureManager()</code></li>
+</ul>
+<p>これらのポインタは <code>GameEngine</code> が <code>SceneBase::SetEnginePointers(...)</code> で設定します。</p>
+<hr />
+<h2><code>TextureManager</code>（テクスチャ）</h2>
+<p>ヘッダ：<code>KashipanEngine/Assets/TextureManager.h</code></p>
+<h3>設計</h3>
+<ul>
+<li>テクスチャは <code>TextureHandle</code>（<code>uint32_t</code>）で管理します。</li>
+<li>外部へ D3D12 の SRV ハンドルを直接渡さず、必要に応じて <code>BindTexture(...)</code> を通してバインドします。</li>
+</ul>
+<h3>公開API（抜粋）</h3>
+<ul>
+<li><code>TextureHandle LoadTexture(const std::string&amp; filePath)</code></li>
+<ul>
+<li><code>Assets</code> ルート相対パス or フルパスでロード</li>
+</ul>
+<li>取得</li>
+<ul>
+<li><code>static TextureHandle GetTexture(TextureHandle handle)</code></li>
+<li><code>static TextureHandle GetTextureFromFileName(const std::string&amp; fileName)</code></li>
+<li><code>static TextureHandle GetTextureFromAssetPath(const std::string&amp; assetPath)</code></li>
+</ul>
+<li>ビュー</li>
+<ul>
+<li><code>static TextureView GetTextureView(TextureHandle handle)</code>（<code>IShaderTexture</code> として扱える）</li>
+</ul>
+<li>バインド</li>
+<ul>
+<li><code>static bool BindTexture(ShaderVariableBinder* shaderBinder, const std::string&amp; nameKey, TextureHandle handle)</code></li>
+<li><code>static bool BindTexture(ShaderVariableBinder* shaderBinder, const std::string&amp; nameKey, const IShaderTexture&amp; texture)</code></li>
+</ul>
+</ul>
+<h3>例：ファイル名から取得してバインド</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> tex = KashipanEngine::TextureManager::GetTextureFromFileName(<span class="str">&quot;player.png&quot;</span>);
+
+<span class="com">// binder は Object の Render() / BindShaderVariables() 等から渡される想定</span>
+<span class="com">// TextureManager::BindTexture(&amp;binder, &quot;Pixel:gDiffuseTexture&quot;, tex);</span>
+</code></pre>
+<hr />
+<h2><code>ModelManager</code>（モデル）</h2>
+<p>ヘッダ：<code>KashipanEngine/Assets/ModelManager.h</code></p>
+<h3>設計</h3>
+<ul>
+<li>モデルは <code>ModelHandle</code>（<code>uint32_t</code>）で管理します。</li>
+<li><code>ModelData</code> はモデル生成用データ（頂点/インデックス/マテリアル）を保持します。</li>
+</ul>
+<h3>公開API（抜粋）</h3>
+<ul>
+<li><code>ModelHandle LoadModel(const std::string&amp; filePath)</code></li>
+<li>取得</li>
+<ul>
+<li><code>static ModelHandle GetModelHandleFromFileName(const std::string&amp; fileName)</code></li>
+<li><code>static ModelHandle GetModelHandleFromAssetPath(const std::string&amp; assetPath)</code></li>
+<li><code>static const ModelData&amp; GetModelData(ModelHandle handle)</code></li>
+<li><code>static const ModelData&amp; GetModelDataFromFileName(const std::string&amp; fileName)</code></li>
+<li><code>static const ModelData&amp; GetModelDataFromAssetPath(const std::string&amp; assetPath)</code></li>
+</ul>
+</ul>
+<h3>例：ファイル名から <code>ModelData</code> を参照</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> h = KashipanEngine::ModelManager::GetModelHandleFromFileName(<span class="str">&quot;enemy.fbx&quot;</span>);
+<span class="kw">const</span> <span class="kw">auto</span>&amp; data = KashipanEngine::ModelManager::GetModelData(h);
+
+<span class="type">uint32_t</span> vtx = data.GetVertexCount();
+<span class="type">uint32_t</span> idx = data.GetIndexCount();
+(<span class="type">void</span>)vtx;
+(<span class="type">void</span>)idx;
+</code></pre>
+<hr />
+<h2><code>AudioManager</code>（音声）</h2>
+<p>ヘッダ：<code>KashipanEngine/Assets/AudioManager.h</code></p>
+<h3>設計</h3>
+<ul>
+<li>音声（リソース）は <code>SoundHandle</code></li>
+<li>再生（インスタンス）は <code>PlayHandle</code></li>
+</ul>
+<h3>公開API（抜粋）</h3>
+<ul>
+<li><code>SoundHandle Load(const std::string&amp; filePath)</code></li>
+<li>取得</li>
+<ul>
+<li><code>static SoundHandle GetSoundHandleFromFileName(const std::string&amp; fileName)</code></li>
+<li><code>static SoundHandle GetSoundHandleFromAssetPath(const std::string&amp; assetPath)</code></li>
+</ul>
+<li>再生制御</li>
+<ul>
+<li><code>static PlayHandle Play(SoundHandle sound, float volume = 1.0f, float pitch = 0.0f, bool loop = false)</code></li>
+<li><code>static bool Stop(PlayHandle play)</code></li>
+<li><code>static bool Pause(PlayHandle play)</code> / <code>static bool Resume(PlayHandle play)</code></li>
+<li><code>static bool SetVolume(PlayHandle play, float volume)</code></li>
+<li><code>static bool SetPitch(PlayHandle play, float pitch)</code></li>
+<li><code>static bool IsPlaying(PlayHandle play)</code> / <code>static bool IsPaused(PlayHandle play)</code></li>
+</ul>
+</ul>
+<h3>例：ファイル名で音声を引いて再生</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> se = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;se_shot.wav&quot;</span>);
+<span class="kw">auto</span> play = KashipanEngine::AudioManager::Play(se, <span class="num">0.8f</span>);
+
+<span class="com">// 後で停止</span>
+KashipanEngine::AudioManager::Stop(play);
+</code></pre>
+<hr />
+<h2><code>SamplerManager</code>（サンプラー）</h2>
+<p>ヘッダ：<code>KashipanEngine/Assets/SamplerManager.h</code></p>
+<h3>設計</h3>
+<ul>
+<li>サンプラーは <code>SamplerHandle</code>（<code>uint32_t</code>）で管理し、外部へ D3D12 ハンドルを出しません。</li>
+<li>既定サンプラーは <code>DefaultSampler</code>（<code>PointClamp</code> / <code>LinearWrap</code> 等）として利用できます。</li>
+</ul>
+<h3>公開API（抜粋）</h3>
+<ul>
+<li><code>static SamplerHandle CreateSampler(const D3D12_SAMPLER_DESC&amp; desc)</code></li>
+<li><code>static bool BindSampler(ShaderVariableBinder* shaderBinder, const std::string&amp; nameKey, SamplerHandle handle)</code></li>
+<li><code>static bool BindSampler(ShaderVariableBinder* shaderBinder, const std::string&amp; nameKey, DefaultSampler defaultSampler)</code></li>
+</ul>
+<h3>例：既定サンプラーをバインド</h3>
+<pre><code class="language-cpp">
+<span class="com">// SamplerManager::BindSampler(&amp;binder, &quot;Pixel:gSampler&quot;, KashipanEngine::DefaultSampler::LinearWrap);</span>
+</code></pre>
+<hr />
+<h2><code>Assets</code> の配置（実務上のルール）</h2>
+<ul>
+<li><code>Assets/</code> 直下〜配下に配置したファイルがロード対象</li>
+<li>engine 付属のデータ（パイプライン定義、エンジンロゴ等）は <code>Assets/KashipanEngine/...</code> に配置されている想定</li>
+</ul>
+<p>例：</p>
+<ul>
+<li><code>Assets/KashipanEngine/EngineSettings.json</code></li>
+<li><code>Assets/KashipanEngine/Pipeline/...</code>（パイプライン定義やプリセット）</li>
+</ul>
+<blockquote>
+<p><code>EngineSettings.json</code> の内容は <code>GameEngine</code> 起動時に読み込まれ、ウィンドウ初期パラメータ等に反映されます。</p>
+</blockquote>
+<h2>ファイル名指定時について</h2>
+<blockquote>
+<p>ファイル名指定時の文字の大文字小文字は、Windowsの仕様に則って関係しないようにしています。</p>
+</blockquote>
+</body>
+</html>

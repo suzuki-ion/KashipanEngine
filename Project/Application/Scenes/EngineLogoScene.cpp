@@ -40,34 +40,34 @@ void EngineLogoScene::Initialize() {
     }
 
     // 背景用 Rect を生成
-    //{
-    //    auto bg = std::make_unique<Rect>();
-    //    bg->SetName("EngineLogoBackground");
-    //    bg->SetUniqueBatchKey();
-    //    // Transform および Material は既に存在する前提なので登録しない
-    //    // 背景色: F7C052 -> (247,192,82) / 255
-    //    const Vector4 bgColor(static_cast<float>(247) / 255.0f,
-    //                          static_cast<float>(192) / 255.0f,
-    //                          static_cast<float>(82) / 255.0f,
-    //                          1.0f);
-    //    if (auto m = bg->GetComponent2D<Material2D>("Material2D")) {
-    //        m->SetColor(bgColor);
-    //    }
+    {
+        auto bg = std::make_unique<Rect>();
+        bg->SetName("EngineLogoBackground");
+        bg->SetUniqueBatchKey();
+        // Transform および Material は既に存在する前提なので登録しない
+        // 背景色: F7C052 -> (247,192,82) / 255
+        const Vector4 bgColor(static_cast<float>(247) / 255.0f,
+                              static_cast<float>(192) / 255.0f,
+                              static_cast<float>(82) / 255.0f,
+                              1.0f);
+        if (auto m = bg->GetComponent2D<Material2D>("Material2D")) {
+            m->SetColor(bgColor);
+        }
 
-    //    // Transform の設定
-    //    if (auto t = bg->GetComponent2D<Transform2D>("Transform2D")) {
-    //        t->SetTranslate(Vector3(static_cast<float>(winW) * 0.5f, static_cast<float>(winH) * 0.5f, 0.0f));
-    //        t->SetScale(Vector3(static_cast<float>(winW), static_cast<float>(winH), 1.0f));
-    //    }
+        // Transform の設定
+        if (auto t = bg->GetComponent2D<Transform2D>("Transform2D")) {
+            t->SetTranslate(Vector3(static_cast<float>(winW) * 0.5f, static_cast<float>(winH) * 0.5f, 0.0f));
+            t->SetScale(Vector3(static_cast<float>(winW), static_cast<float>(winH), 1.0f));
+        }
 
-    //    // ScreenBuffer にアタッチ (パイプライン名: Object2D.DoubleSidedCulling.BlendNormal)
-    //    if (screenBuffer2D) {
-    //        bg->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-    //    }
+        // ScreenBuffer にアタッチ (パイプライン名: Object2D.DoubleSidedCulling.BlendNormal)
+        if (screenBuffer2D) {
+            bg->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        }
 
-    //    // シーンに追加
-    //    AddObject2D(std::move(bg));
-    //}
+        // シーンに追加
+        AddObject2D(std::move(bg));
+    }
 
     // スプライト共通設定（位置は中央を基準に少しずらす）
     const float cx = static_cast<float>(srcW) * 0.5f;

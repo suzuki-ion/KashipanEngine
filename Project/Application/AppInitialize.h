@@ -15,11 +15,11 @@ inline void AppInitialize(const GameEngine::Context &context) {
     auto monitorInfoOpt = WindowsAPI::QueryMonitorInfo();
     const RECT area = monitorInfoOpt ? monitorInfoOpt->WorkArea() : RECT{ 0, 0, 1280, 720 };
 
-    Window::CreateOverlay("Main Window", area.right - area.left, area.bottom - area.top, true);
+    Window::CreateNormal("Main Window", 1920, 1080);
 
-    for (int i = 0; i < 8; ++i) {
+    /*for (int i = 0; i < 8; ++i) {
         Window::CreateNormal("Sub Window " + std::to_string(i + 1), 320, 240);
-    }
+    }*/
 
     if (context.sceneManager) {
         auto *sm = context.sceneManager;

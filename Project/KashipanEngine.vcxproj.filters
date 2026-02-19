@@ -1520,6 +1520,17 @@
     <None Include="Reference\09_Utilities_TemplateLiteral.md" />
     <None Include="Reference\09_Utilities_Time.md" />
     <None Include="Reference\09_Utilities_Translation.md" />
+    <None Include="Reference\Tutorial\README.md" />
+    <None Include="Reference\Tutorial\00_Index.md" />
+    <None Include="Reference\Tutorial\01_CreateScene.md" />
+    <None Include="Reference\Tutorial\02_RegisterScene.md" />
+    <None Include="Reference\Tutorial\03_CreateObject.md" />
+    <None Include="Reference\Tutorial\04_AddObjectComponent.md" />
+    <None Include="Reference\Tutorial\05_AddSceneComponent.md" />
+    <None Include="Reference\Tutorial\06_TextureHandle.md" />
+    <None Include="Reference\Tutorial\07_AudioHandle.md" />
+    <None Include="Reference\Tutorial\08_ModelHandle.md" />
+    <None Include="Reference\Tutorial\09_ChangeScene.md" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />

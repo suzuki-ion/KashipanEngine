@@ -26,8 +26,7 @@ void TestScene::Initialize() {
     auto *shadowMapBuffer = sceneDefaultVariables_ ? sceneDefaultVariables_->GetShadowMapBuffer() : nullptr;
     auto *directionalLight = sceneDefaultVariables_ ? sceneDefaultVariables_->GetDirectionalLight() : nullptr;
     auto *colliderComp = sceneDefaultVariables_ ? sceneDefaultVariables_->GetColliderComp() : nullptr;
-    ScreenBuffer *velocityBuffer = nullptr;
-
+    
     if (screenBuffer3D) {
         ChromaticAberrationEffect::Params p{};
         p.directionX = 1.0f;
@@ -138,8 +137,7 @@ void TestScene::Initialize() {
 
                 if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
                 if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-                if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
-
+               
                 // ここで "AddObject3D する前" にポインタ確保
                 maps_[z][x] = obj.get();
 
@@ -159,7 +157,6 @@ void TestScene::Initialize() {
 
         if (screenBuffer3D)  obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         //if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-        if (velocityBuffer)  obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
         stage_ = obj.get();
         AddObject3D(std::move(obj));
     }
@@ -198,7 +195,6 @@ void TestScene::Initialize() {
 
         if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-        if (velocityBuffer) obj->AttachToRenderer(velocityBuffer, "Object3D.Velocity");
         player_ = obj.get();
         AddObject3D(std::move(obj));
     }

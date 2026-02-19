@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>1. シーンの作成</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<h1>1. シーンの作成</h1>
+<p>KashipanEngine のシーンは <code>SceneBase</code> を継承して作成します。</p>
+<ul>
+<li>ヘッダ：<code>KashipanEngine/Scene/SceneBase.h</code></li>
+<li>代表的なオーバーライド：</li>
+<ul>
+<li><code>Initialize()</code>：シーン開始時（SceneManager から呼ばれる）</li>
+<li><code>Finalize()</code>：シーン終了時（SceneManager から呼ばれる）</li>
+<li><code>OnUpdate()</code>：毎フレーム更新（<code>SceneBase::Update()</code> から呼ばれる）</li>
+</ul>
+</ul>
+<hr />
+<h2>最小構成の例</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">namespace</span> KashipanEngine {
+
+<span class="kw">class</span> MyScene <span class="kw">final</span> : <span class="kw">public</span> SceneBase {
+<span class="kw">public</span>:
+    MyScene() : SceneBase(<span class="str">&quot;MyScene&quot;</span>) {}
+    ~MyScene() <span class="kw">override</span> = default;
+
+    <span class="type">void</span> Initialize() <span class="kw">override</span> {
+        <span class="com">// シーン開始時の一度だけ行う処理</span>
+    }
+
+    <span class="type">void</span> Finalize() <span class="kw">override</span> {
+        <span class="com">// シーン終了時の後片付け</span>
+    }
+
+<span class="kw">private</span>:
+    <span class="type">void</span> OnUpdate() <span class="kw">override</span> {
+        <span class="com">// 毎フレーム処理</span>
+        <span class="com">// 例：入力を見るなら GetInputCommand() 等を利用</span>
+    }
+};
+
+} <span class="com">// namespace KashipanEngine</span>
+</code></pre>
+<hr />
+<h2>ポイント（厳密）</h2>
+<ul>
+<li><code>SceneBase</code> はデフォルトコンストラクタが削除されているため、必ず <code>SceneBase(&quot;SceneName&quot;)</code> で構築します。</li>
+<li><code>SceneBase</code> は <code>GetInput()</code> / <code>GetInputCommand()</code> / 各種 AssetManager へのアクセサを **protected static** に持ちます。</li>
+<ul>
+<li>シーン派生クラス内部では <code>GetInputCommand()</code> 等を直接呼べます。</li>
+</ul>
+</ul>
+</body>
+</html>

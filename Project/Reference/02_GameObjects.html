@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ゲームオブジェクト（`Object2DBase` / `Object3DBase`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1>ゲームオブジェクト（<code>Object2DBase</code> / <code>Object3DBase</code>）</h1>
+<p>KashipanEngine の「オブジェクト」は、</p>
+<ul>
+<li><code>Object2DBase</code>（2D）</li>
+<li><code>Object3DBase</code>（3D）</li>
+</ul>
+<p>を基底として作成します。</p>
+<p>オブジェクトの振る舞いは「オブジェクトコンポーネント（<code>IObjectComponent2D</code> / <code>IObjectComponent3D</code>）」として登録し、<code>Update()</code> で順に更新されます。</p>
+<hr />
+<h2>エンジン標準のプリミティブ/既定オブジェクト</h2>
+<p>エンジン側には、すぐに使えるプリミティブ（既定の頂点/インデックス生成を行う）オブジェクトが用意されています。</p>
+<h3>2D（<code>KashipanEngine/Objects/GameObjects/2D/*</code>）</h3>
+<ul>
+<li><code>Sprite</code>（<code>Sprite.h</code>）</li>
+<li><code>Rect</code></li>
+<li><code>Triangle2D</code></li>
+<li><code>Ellipse</code></li>
+<li><code>Line2D</code></li>
+</ul>
+<p><code>Sprite</code> 例：</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> sprite = std::make_unique&lt;KashipanEngine::Sprite&gt;();
+
+<span class="com">// アンカーポイント（(0,0)=左上、(0.5,0.5)=中央）</span>
+sprite-&gt;SetAnchorPoint(<span class="num">0.5f</span>, <span class="num">0.5f</span>);
+</code></pre>
+<h3>3D（<code>KashipanEngine/Objects/GameObjects/3D/*</code>）</h3>
+<ul>
+<li><code>Box</code></li>
+<li><code>Sphere</code></li>
+<li><code>Plane3D</code></li>
+<li><code>Triangle3D</code></li>
+<li><code>Line3D</code></li>
+<li><code>Billboard</code></li>
+<li><code>Model</code>（モデルローダー連携）</li>
+</ul>
+<blockquote>
+<p>これらは「ゲームオブジェクト」であり、追加の振る舞いはコンポーネントとして積む運用を想定しています。</p>
+</blockquote>
+<hr />
+<h2>公開API（抜粋）</h2>
+<h3><code>Object2DBase</code>（<code>KashipanEngine/Objects/Object2DBase.h</code>）</h3>
+<ul>
+<li>ライフサイクル</li>
+<ul>
+<li><code>void Update()</code></li>
+<li><code>void Render()</code></li>
+</ul>
+<li>名前</li>
+<ul>
+<li><code>void SetName(const std::string&amp;)</code></li>
+<li><code>const std::string&amp; GetName() const</code></li>
+</ul>
+<li>ユーザーデータ</li>
+<ul>
+<li><code>MyStd::AnyUnorderedMap&amp; UserData()</code> / <code>const MyStd::AnyUnorderedMap&amp; UserData() const</code></li>
+</ul>
+<li>コンポーネント</li>
+<ul>
+<li><code>template&lt;typename T, typename... Args&gt; bool RegisterComponent(Args&amp;&amp;... args)</code></li>
+<li><code>bool RegisterComponent(std::unique_ptr&lt;IObjectComponent&gt; comp)</code></li>
+<li><code>std::vector&lt;IObjectComponent2D*&gt; GetComponents2D(const std::string&amp;) const</code></li>
+<li><code>IObjectComponent2D* GetComponent2D(const std::string&amp;) const</code></li>
+<li><code>template&lt;typename T&gt; T* GetComponent2D() const</code></li>
+<li><code>size_t HasComponents2D(const std::string&amp;) const</code></li>
+<li><code>bool RemoveComponent2D(const std::string&amp;, size_t index = 0)</code></li>
+</ul>
+<li>描画（永続レンダーパス登録）</li>
+<ul>
+<li><code>RenderPassRegistrationHandle AttachToRenderer(Window* targetWindow, const std::string&amp; pipelineName, ...)</code></li>
+<li><code>RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer* targetBuffer, const std::string&amp; pipelineName, ...)</code></li>
+<li><code>void DetachFromRenderer()</code> / <code>bool DetachFromRenderer(RenderPassRegistrationHandle)</code></li>
+<li><code>std::vector&lt;RenderPassRegistrationInfo&gt; GetRenderPassRegistrations() const</code></li>
+</ul>
+</ul>
+<h3><code>Object3DBase</code>（概念は <code>Object2DBase</code> と同様）</h3>
+<ul>
+<li>3D は描画先として <code>ShadowMapBuffer</code> もサポートします（<code>AttachToRenderer(ShadowMapBuffer*, ...)</code>）。</li>
+</ul>
+<hr />
+<h2>例：最小の 2D オブジェクト</h2>
+<p><code>Object2DBase</code> は派生クラス側で <code>OnUpdate()</code> をオーバーライドして挙動を書けます。</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">class</span> MyObject2D <span class="kw">final</span> : <span class="kw">public</span> KashipanEngine::Object2DBase {
+<span class="kw">public</span>:
+    MyObject2D() : Object2DBase(<span class="str">&quot;MyObject2D&quot;</span>) {
+        <span class="com">// 例：必要なコンポーネントを登録</span>
+        <span class="com">// RegisterComponent&lt;MyComponent2D&gt;(...);</span>
+    }
+
+<span class="kw">private</span>:
+    <span class="type">void</span> OnUpdate() <span class="kw">override</span> {
+        <span class="com">// 毎フレーム処理</span>
+    }
+};
+</code></pre>
+<hr />
+<h2>例：永続レンダーパス登録（Window へ描画）</h2>
+<p>描画は <code>Renderer</code> に「永続レンダーパス」を登録する方式になっています。</p>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> h = obj-&gt;AttachToRenderer(
+    Window::GetWindow(<span class="str">&quot;Main Window&quot;</span>),
+    <span class="str">&quot;Object2D.Solid.BlendNormal&quot;</span> <span class="com">// 例：パイプライン名（json/asset 側と一致させる）</span>
+);
+
+<span class="com">// 解除</span>
+obj-&gt;DetachFromRenderer(h);
+</code></pre>
+<blockquote>
+<p>パイプライン名はプロジェクトのパイプライン定義（例：<code>Assets/.../Pipelines/*.json</code>）と対応します。</p>
+</blockquote>
+<hr />
+<h2>例：ユーザーデータ領域の利用</h2>
+<p><code>Object2DBase::UserData()</code> はアプリ側の一時データ管理向けです。</p>
+<pre><code class="language-cpp">
+obj-&gt;UserData()[<span class="str">&quot;Score&quot;</span>].SetValue&lt;<span class="type">int</span>&gt;(<span class="num">100</span>);
+
+<span class="type">int</span> score = <span class="num">0</span>;
+obj-&gt;UserData().at(<span class="str">&quot;Score&quot;</span>).TryGetValue(score);
+</code></pre>
+<p>※ <code>AnyUnorderedMap</code> / <code>Any</code> の操作は <code>MyStd</code> 側の API に従います。</p>
+</body>
+</html>

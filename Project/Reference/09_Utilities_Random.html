@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：乱数（`RandomValue`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1>ユーティリティ：乱数（<code>RandomValue</code>）</h1>
+<p>対象ヘッダ：<code>Utilities/RandomValue.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p>ゲーム側で頻出する「範囲指定乱数」を簡易APIとして提供します。</p>
+<hr />
+<h2>2. 公開API</h2>
+<ul>
+<li><code>int GetRandomInt(int min, int max);</code></li>
+<ul>
+<li><code>min</code> 以上 <code>max</code> 以下の整数乱数。</li>
+</ul>
+</ul>
+<ul>
+<li><code>float GetRandomFloat(float min, float max);</code></li>
+<ul>
+<li><code>min</code> 以上 <code>max</code> 以下の <code>float</code> 乱数。</li>
+</ul>
+</ul>
+<ul>
+<li><code>double GetRandomDouble(double min, double max);</code></li>
+<ul>
+<li><code>min</code> 以上 <code>max</code> 以下の <code>double</code> 乱数。</li>
+</ul>
+</ul>
+<ul>
+<li><code>bool GetRandomBool(float trueProbability = 0.5f);</code></li>
+<ul>
+<li><code>trueProbability</code>（0.0〜1.0）の確率で <code>true</code> を返す。</li>
+</ul>
+</ul>
+<hr />
+<h2>3. 使用例</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="type">int</span> r1 = KashipanEngine::GetRandomInt(<span class="num">0</span>, <span class="num">10</span>);
+<span class="type">float</span> r2 = KashipanEngine::GetRandomFloat(-<span class="num">1.0f</span>, <span class="num">1.0f</span>);
+<span class="type">bool</span> crit = KashipanEngine::GetRandomBool(<span class="num">0.1f</span>); <span class="com">// 10%</span>
+
+(<span class="type">void</span>)r1;
+(<span class="type">void</span>)r2;
+(<span class="type">void</span>)crit;
+</code></pre>
+<hr />
+<h2>4. 注意点</h2>
+<ul>
+<li>乱数のシード・乱数エンジンの種類・スレッドセーフ性は実装（<code>RandomValue.cpp</code>）に従います。</li>
+<li>確率的挙動の再現（リプレイ）を厳密に行いたい場合は、ゲーム側で乱数エンジンを別途管理する設計も検討してください。</li>
+</ul>
+</body>
+</html>

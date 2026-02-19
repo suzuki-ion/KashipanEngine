@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>4. オブジェクトにコンポーネントを付与</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<h1>4. オブジェクトにコンポーネントを付与</h1>
+<p>オブジェクトの振る舞いは「オブジェクトコンポーネント」として追加します。</p>
+<ul>
+<li>2D：<code>IObjectComponent2D</code></li>
+<li>3D：<code>IObjectComponent3D</code></li>
+</ul>
+<p>追加は <code>Object2DBase</code> / <code>Object3DBase</code> の <code>RegisterComponent(...)</code> を使います。</p>
+<hr />
+<h2>4.1 エンジン標準コンポーネントを付ける例</h2>
+<p>例：<code>Model</code> オブジェクトに移動コンポーネント（アプリ側実装の <code>PlayerMove</code>）を付ける</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+#include <span class="str">&quot;Objects/Components/Player/PlayerMove.h&quot;</span>
+
+<span class="com">// obj は Object3DBase 派生（例：Model）</span>
+obj-&gt;RegisterComponent&lt;PlayerMove&gt;(<span class="num">2.0f</span>, <span class="num">0.25f</span>);
+
+<span class="kw">if</span> (<span class="kw">auto</span>* pm = obj-&gt;GetComponent3D&lt;PlayerMove&gt;()) {
+    pm-&gt;SetInputCommand(GetInputCommand());
+}
+</code></pre>
+<hr />
+<h2>4.2 自作コンポーネントを付ける例</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">class</span> Spin <span class="kw">final</span> : <span class="kw">public</span> KashipanEngine::IObjectComponent3D {
+<span class="kw">public</span>:
+    Spin() : IObjectComponent3D(<span class="str">&quot;Spin&quot;</span>) {}
+
+    <span class="type">void</span> Update() <span class="kw">override</span> {
+        <span class="kw">auto</span>* owner = GetOwnerObject3D();
+        <span class="kw">if</span> (!owner) <span class="kw">return</span>;
+        <span class="kw">if</span> (<span class="kw">auto</span>* tr = owner-&gt;GetComponent3D&lt;KashipanEngine::Transform3D&gt;()) {
+            <span class="kw">auto</span> r = tr-&gt;GetRotate();
+            r.y += <span class="num">1.0f</span> * KashipanEngine::GetDeltaTime();
+            tr-&gt;SetRotate(r);
+        }
+    }
+
+    std::unique_ptr&lt;IObjectComponent&gt; Clone() <span class="kw">override</span> {
+        <span class="kw">return</span> std::make_unique&lt;Spin&gt;(*this);
+    }
+};
+
+<span class="com">// 追加</span>
+obj-&gt;RegisterComponent&lt;Spin&gt;();
+</code></pre>
+<blockquote>
+<p><code>IObjectComponent2D/3D</code> の厳密な API は <a href="../03_ObjectComponents.html"><code>Reference/03_ObjectComponents.md</code></a> を参照してください。</p>
+</blockquote>
+</body>
+</html>

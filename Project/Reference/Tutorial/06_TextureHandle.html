@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>6. テクスチャのハンドルを取得し、オブジェクトに適用したいとき</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<h1>6. テクスチャのハンドルを取得し、オブジェクトに適用したいとき</h1>
+<p>テクスチャは <code>TextureManager</code> が管理し、<code>TextureHandle</code>（<code>uint32_t</code>）で識別します。</p>
+<ul>
+<li>ヘッダ：<code>KashipanEngine/Assets/TextureManager.h</code></li>
+</ul>
+<hr />
+<h2>6.1 ハンドル型と無効値</h2>
+<ul>
+<li><code>TextureManager::TextureHandle</code>：<code>uint32_t</code></li>
+<li>無効値：<code>TextureManager::kInvalidHandle</code>（0）</li>
+</ul>
+<hr />
+<h2>6.2 ハンドルの取得（既にロード済みの前提）</h2>
+<p>このプロジェクトでは Assets 起動時にテクスチャがロードされるため、通常は「取得」だけを行います。</p>
+<ul>
+<li>ファイル名単体から取得：</li>
+</ul>
+<pre><code class="language-cpp">
+KashipanEngine::TextureManager::TextureHandle tex =
+    KashipanEngine::TextureManager::GetTextureFromFileName(<span class="str">&quot;white1x1.png&quot;</span>);
+</code></pre>
+<ul>
+<li>Assets ルート相対パスから取得：</li>
+</ul>
+<pre><code class="language-cpp">
+KashipanEngine::TextureManager::TextureHandle tex =
+    KashipanEngine::TextureManager::GetTextureFromAssetPath(<span class="str">&quot;KashipanEngine/Textures/white1x1.png&quot;</span>);
+</code></pre>
+<hr />
+<h2>6.3 その場で読み込みたい場合（必要なときだけ）</h2>
+<p><code>TextureManager::LoadTexture(filePath)</code> は、Assets ルート相対パスまたはフルパスを受け取ります。</p>
+<pre><code class="language-cpp">
+<span class="com">// ※ TextureManager インスタンスが必要（通常は GameEngine が所有）</span>
+<span class="com">// TextureManager* tm = ...;</span>
+<span class="com">// auto tex = tm-&gt;LoadTexture(&quot;Textures/new.png&quot;);</span>
+</code></pre>
+<hr />
+<h2>6.4 <code>Sprite</code> に適用する例（<code>Material2D</code>）</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Sprite&gt;();
+obj-&gt;SetName(<span class="str">&quot;MySprite&quot;</span>);
+
+<span class="kw">auto</span> tex = KashipanEngine::TextureManager::GetTextureFromFileName(<span class="str">&quot;white1x1.png&quot;</span>);
+
+<span class="kw">if</span> (<span class="kw">auto</span>* mat = obj-&gt;GetComponent2D&lt;KashipanEngine::Material2D&gt;()) {
+    mat-&gt;SetTexture(tex);
+    mat-&gt;SetColor(KashipanEngine::Vector4(<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>, <span class="num">1</span>));
+}
+</code></pre>
+<hr />
+<h2>6.5 <code>Model</code> に適用する例（<code>Material3D</code>）</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> tex = KashipanEngine::TextureManager::GetTextureFromFileName(<span class="str">&quot;uvChecker.png&quot;</span>);
+
+<span class="kw">if</span> (<span class="kw">auto</span>* mat = obj3d-&gt;GetComponent3D&lt;KashipanEngine::Material3D&gt;()) {
+    mat-&gt;SetTexture(tex);
+}
+</code></pre>
+<hr />
+<h2>注意点（厳密）</h2>
+<ul>
+<li><code>GetTextureFromFileName</code> は「ファイル名単体」で検索します。</li>
+<ul>
+<li>同名ファイルが複数ある場合、どれが返るかは <code>TextureManager</code> 実装に依存します。</li>
+</ul>
+<li>取得/読み込みに失敗した場合は <code>TextureManager::kInvalidHandle</code>（0）が返ります。</li>
+<li>シェーダーバインドを行う場合は <code>TextureManager::BindTexture(...)</code> が利用できます。</li>
+</ul>
+</body>
+</html>

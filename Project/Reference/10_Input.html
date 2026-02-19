@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>入力（キーボード/マウス/コントローラー）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1>入力（キーボード/マウス/コントローラー）</h1>
+<p>KashipanEngine は <code>Input</code> が生のデバイス状態を管理し、<code>InputCommand</code> が「アクション名 → 入力バインド」を管理します。</p>
+<ul>
+<li><code>GameEngine</code> 内で <code>Input::Update()</code> が毎フレーム呼ばれます。</li>
+<li>アプリ側は <code>AppInitialize</code> で <code>InputCommand</code> にコマンドを登録し、ゲーム側は <code>InputCommand::Evaluate(&quot;Action&quot;)</code> で参照する想定です。</li>
+</ul>
+<p>関連：</p>
+<ul>
+<li><code>KashipanEngine/Input/Input.h</code></li>
+<li><code>KashipanEngine/Input/InputCommand.h</code></li>
+</ul>
+<hr />
+<h2>公開API：<code>InputCommand</code>（抜粋）</h2>
+<ul>
+<li><code>void Clear()</code></li>
+<li><code>void RegisterCommand(...)</code>（複数オーバーロード）</li>
+<ul>
+<li>キーボード：<code>RegisterCommand(action, KeyboardKey{Key::...}, InputState, invertValue)</code></li>
+<li>マウスボタン：<code>RegisterCommand(action, MouseButton{0..7}, InputState, invertValue)</code></li>
+<li>マウス軸：<code>RegisterCommand(action, MouseAxis, hwnd, threshold, invertValue)</code></li>
+<li>パッドボタン：<code>RegisterCommand(action, ControllerButton, InputState, controllerIndex, invertValue)</code></li>
+<li>パッドアナログ：<code>RegisterCommand(action, ControllerAnalog, InputState, controllerIndex, threshold, invertValue)</code></li>
+<li>パッドアナログ差分：<code>RegisterCommand(action, ControllerAnalog, controllerIndex, threshold, invertValue)</code></li>
+</ul>
+<li><code>ReturnInfo Evaluate(const std::string&amp; action) const</code></li>
+</ul>
+<h3><code>ReturnInfo</code></h3>
+<ul>
+<li><code>bool Triggered() const noexcept</code></li>
+<li><code>float Value() const noexcept</code></li>
+</ul>
+<hr />
+<h2>例：コマンド登録（<code>Application/AppInitialize.h</code> の流儀）</h2>
+<pre><code class="language-cpp">
+ic-&gt;Clear();
+
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Down, <span class="kw">true</span>);
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Down);
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down);
+
+ic-&gt;RegisterCommand(<span class="str">&quot;Attack&quot;</span>, InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Release);
+ic-&gt;RegisterCommand(<span class="str">&quot;Attack&quot;</span>, InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Release);
+</code></pre>
+<hr />
+<h2>例：ゲーム側で評価</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = KashipanEngine::SceneBase::GetInputCommand();
+<span class="kw">if</span> (!ic) <span class="kw">return</span>;
+
+<span class="kw">const</span> <span class="kw">auto</span> moveX = ic-&gt;Evaluate(<span class="str">&quot;MoveX&quot;</span>);
+<span class="kw">if</span> (moveX.Triggered()) {
+    <span class="type">float</span> axis = moveX.Value(); <span class="com">// -1..1 相当</span>
+    <span class="com">// 移動処理</span>
+}
+
+<span class="kw">const</span> <span class="kw">auto</span> attack = ic-&gt;Evaluate(<span class="str">&quot;Attack&quot;</span>);
+<span class="kw">if</span> (attack.Triggered()) {
+    <span class="com">// 攻撃</span>
+}
+</code></pre>
+<hr />
+<h2>マウス座標（Screen / Client）</h2>
+<p><code>RegisterCommand(action, MouseAxis axis, void* hwnd, ...)</code> で</p>
+<ul>
+<li><code>hwnd == nullptr</code>：Screen 座標系</li>
+<li><code>hwnd != nullptr</code>：Client 座標系</li>
+</ul>
+<p>として扱われます。</p>
+</body>
+</html>

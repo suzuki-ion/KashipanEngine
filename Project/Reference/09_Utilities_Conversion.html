@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：変換（Color / String）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1>ユーティリティ：変換（Color / String）</h1>
+<p>対象ヘッダ：</p>
+<ul>
+<li><code>Utilities/Conversion/ConvertColor.h</code></li>
+<li><code>Utilities/Conversion/ConvertString.h</code></li>
+</ul>
+<hr />
+<h2>1. Color 変換（<code>ConvertColor</code>）</h2>
+<h3>目的</h3>
+<p>色表現を <code>Vector4(r,g,b,a)</code> の **正規化レンジ（0.0f〜1.0f）** に統一するための変換です。</p>
+<h3>公開API</h3>
+<ul>
+<li><code>Vector4 ConvertColor(unsigned int color);</code></li>
+<li><code>Vector4 ConvertColor(const Vector4 &amp;color);</code></li>
+</ul>
+<h3>使いどころ</h3>
+<ul>
+<li>32bit 色（例：<code>0xRRGGBBAA</code> 形式の packed color）をシェーダ定数用の <code>Vector4</code> に変換したい</li>
+<li>外部入力（GUI/設定ファイル等）で 0〜255 などのスケールを想定した値を正規化したい</li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="com">// 例：packed color を Vector4 へ</span>
+Vector4 c = KashipanEngine::ConvertColor(0xFF8040FF);
+
+<span class="com">// 例：0〜255スケールの Vector4 を正規化</span>
+Vector4 input{<span class="num">255.0f</span>, <span class="num">128.0f</span>, <span class="num">64.0f</span>, <span class="num">255.0f</span>};
+Vector4 normalized = KashipanEngine::ConvertColor(input);
+</code></pre>
+<blockquote>
+<p>packed color のバイト並び（R/G/B/Aの位置）は <code>ConvertColor(unsigned int)</code> 実装に従います。</p>
+</blockquote>
+<hr />
+<h2>2. 文字列変換（<code>ConvertString</code> / SJIS 変換）</h2>
+<h3>目的</h3>
+<p>Windows API / ファイルパス / 外部データ等で混在しがちな文字列型・エンコーディングを変換します。</p>
+<ul>
+<li><code>std::string</code>：UTF-8 を想定</li>
+<li><code>std::wstring</code>：UTF-16 を想定</li>
+</ul>
+<p>また、ShiftJIS との変換ユーティリティも提供します。</p>
+<h3>公開API</h3>
+<ul>
+<li><code>std::wstring ConvertString(const std::string &amp;str);</code></li>
+<li><code>std::string ConvertString(const std::wstring &amp;str);</code></li>
+<li><code>std::wstring ShiftJISToUTF16(const std::string &amp;sjis);</code></li>
+<li><code>std::string UTF16ToUTF8(const std::wstring &amp;utf16);</code></li>
+<li><code>std::string ShiftJISToUTF8(const std::string &amp;sjis);</code></li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="com">// UTF-8 -&gt; UTF-16</span>
+std::wstring w = KashipanEngine::ConvertString(std::string(<span class="str">&quot;Assets/テクスチャ.png&quot;</span>));
+
+<span class="com">// UTF-16 -&gt; UTF-8</span>
+std::string u8 = KashipanEngine::ConvertString(w);
+
+<span class="com">// ShiftJIS -&gt; UTF-8</span>
+std::string utf8 = KashipanEngine::ShiftJISToUTF8(<span class="str">&quot;...sjis bytes...&quot;</span>);
+</code></pre>
+<h3>注意点</h3>
+<ul>
+<li>ShiftJIS 変換が必要なのは、外部ファイルや古い環境由来の入力を扱う場合が中心です。</li>
+<li>Win32 API は wide 版（<code>W</code>）を使う場面が多いため、<code>std::wstring</code> への変換が必要になることがあります。</li>
+</ul>
+</body>
+</html>

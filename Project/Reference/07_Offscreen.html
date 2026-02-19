@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>オフスクリーン（`ScreenBuffer` / `ShadowMapBuffer`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1>オフスクリーン（<code>ScreenBuffer</code> / <code>ShadowMapBuffer</code>）</h1>
+<p>KashipanEngine では、</p>
+<ul>
+<li><code>ScreenBuffer</code>：オフスクリーン用カラー＋深度（ポストエフェクトも対応）</li>
+<li><code>ShadowMapBuffer</code>：シャドウマップ用（深度中心）</li>
+</ul>
+<p>を使用します。</p>
+<hr />
+<h2>描画の前提（必ず必要になるオブジェクト）</h2>
+<p><code>ScreenBuffer</code> は内部で DirectX リソースやコマンド記録を行うため、エンジン初期化時に以下が設定されます。</p>
+<ul>
+<li><code>ScreenBuffer::SetDirectXCommon(Passkey&lt;GameEngine&gt;, DirectXCommon*)</code></li>
+<li><code>ScreenBuffer::SetRenderer(Passkey&lt;GameEngine&gt;, Renderer*)</code></li>
+</ul>
+<p>これは <code>GameEngine</code> が行うため、アプリ側は通常 **<code>Create</code> して使うだけ** でOKです。</p>
+<p>同様に <code>ShadowMapBuffer</code> も <code>GameEngine</code> が <code>DirectXCommon</code> を設定します。</p>
+<hr />
+<h2><code>ScreenBuffer</code> 公開API（抜粋）</h2>
+<p>ヘッダ：<code>KashipanEngine/Graphics/ScreenBuffer.h</code></p>
+<h3>生成/破棄</h3>
+<ul>
+<li><code>static ScreenBuffer* Create(std::uint32_t width, std::uint32_t height, DXGI_FORMAT colorFormat = ..., DXGI_FORMAT depthFormat = ...)</code></li>
+<li><code>static void DestroyNotify(ScreenBuffer* buffer)</code></li>
+<li><code>static void CommitDestroy(Passkey&lt;GameEngine&gt;)</code></li>
+<li><code>static void AllDestroy(Passkey&lt;GameEngine&gt;)</code></li>
+</ul>
+<h3>情報取得</h3>
+<ul>
+<li><code>std::uint32_t GetWidth() const</code> / <code>std::uint32_t GetHeight() const</code></li>
+<li><code>D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const</code>（カラー SRV）</li>
+<li><code>D3D12_GPU_DESCRIPTOR_HANDLE GetDepthSrvHandle() const</code>（深度 SRV。未作成なら空）</li>
+<li><code>RenderTargetResource* GetRenderTarget() const</code></li>
+<li><code>DepthStencilResource* GetDepthStencil() const</code></li>
+</ul>
+<h3>ポストエフェクト</h3>
+<ul>
+<li><code>bool RegisterPostEffectComponent(std::unique_ptr&lt;IPostEffectComponent&gt; component)</code></li>
+<li><code>const std::vector&lt;std::unique_ptr&lt;IPostEffectComponent&gt;&gt;&amp; GetPostEffectComponents() const</code></li>
+<li><code>void InvalidatePostEffectPasses()</code>（キャッシュ無効化）</li>
+</ul>
+<hr />
+<h2>ポストエフェクト（<code>IPostEffectComponent</code>）</h2>
+<p>ポストエフェクトは <code>ScreenBuffer</code> に「コンポーネント」として登録し、 コンポーネントが <code>PostEffectPass</code> を生成して描画パイプラインに組み込まれます。</p>
+<ul>
+<li>インターフェース：<code>KashipanEngine/Graphics/PostEffectComponents/IPostEffectComponent.h</code></li>
+<li>設計：</li>
+<ul>
+<li><code>BuildPostEffectPasses()</code> が、このコンポーネントが提供する <code>PostEffectPass</code> の配列を返す</li>
+<li><code>ScreenBuffer</code> はそれをキャッシュし、必要に応じて <code>InvalidatePostEffectPasses()</code> で再構築する</li>
+</ul>
+</ul>
+<h3><code>IPostEffectComponent</code> 公開API（抜粋）</h3>
+<ul>
+<li><code>const std::string&amp; GetComponentType() const</code></li>
+<li><code>size_t GetMaxComponentCountPerBuffer() const</code></li>
+<li><code>virtual std::optional&lt;bool&gt; Initialize()</code> / <code>Finalize()</code></li>
+<li><code>virtual std::vector&lt;PostEffectPass&gt; BuildPostEffectPasses() const</code></li>
+<li><code>virtual std::unique_ptr&lt;IPostEffectComponent&gt; Clone() const = 0</code></li>
+</ul>
+<p>エンジン標準のポストエフェクト実装例：</p>
+<ul>
+<li><code>BloomEffect</code></li>
+<li><code>FXAAEffect</code></li>
+<li><code>MotionBlurEffect</code></li>
+<li><code>ChromaticAberrationEffect</code></li>
+<li><code>DitherEffect</code></li>
+<li><code>DotMatrixEffect</code></li>
+</ul>
+<h3>例：ポストエフェクトを追加する</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span>* sb = ScreenBuffer::Create(<span class="num">1280</span>, <span class="num">720</span>);
+
+<span class="com">// 例：FXAA（実際のコンストラクタ引数は各クラス定義に従ってください）</span>
+<span class="com">// sb-&gt;RegisterPostEffectComponent(std::make_unique&lt;KashipanEngine::FXAAEffect&gt;());</span>
+
+sb-&gt;InvalidatePostEffectPasses();
+</code></pre>
+<hr />
+<h2>例：<code>ScreenBuffer</code> を作ってオブジェクトの描画先にする</h2>
+<pre><code class="language-cpp">
+<span class="com">// オフスクリーン生成</span>
+<span class="kw">auto</span>* sb = ScreenBuffer::Create(<span class="num">1280</span>, <span class="num">720</span>);
+
+<span class="com">// 例：2Dオブジェクトを ScreenBuffer へ描画</span>
+obj2d-&gt;AttachToRenderer(sb, <span class="str">&quot;Object2D.Solid.BlendNormal&quot;</span>);
+
+<span class="com">// 破棄は通知してフレーム終端でコミットされる</span>
+ScreenBuffer::DestroyNotify(sb);
+</code></pre>
+<hr />
+<h2><code>ShadowMapBuffer</code></h2>
+<p><code>ShadowMapBuffer</code> は <code>GameEngine</code> が <code>DirectXCommon</code> を設定し、フレーム終端で <code>CommitDestroy</code> される管理方式です。</p>
+<ul>
+<li>参照：<code>KashipanEngine/Graphics/ShadowMapBuffer.h</code> / <code>.cpp</code></li>
+<li>デバッグ表示：<code>ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow()</code>（<code>USE_IMGUI</code> 時）</li>
+</ul>
+<p><code>Object3DBase</code> は <code>AttachToRenderer(ShadowMapBuffer*, ...)</code> を持ち、シャドウマップ向けの永続パス登録に対応します。</p>
+</body>
+</html>

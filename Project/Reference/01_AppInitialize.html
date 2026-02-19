@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>`AppInitialize`（アプリ側初期化）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<h1><code>AppInitialize</code>（アプリ側初期化）</h1>
+<p><code>GameEngine</code> は起動時に <code>AppInitialize(context)</code> を呼び出し、アプリ側で以下を行う想定です。</p>
+<ul>
+<li>ウィンドウ生成（<code>Window::CreateNormal</code> / <code>Window::CreateOverlay</code>）</li>
+<li>シーン登録（<code>SceneManager::RegisterScene</code>）と初期シーンへの遷移（<code>ChangeScene</code>）</li>
+<li>入力マッピング（<code>InputCommand::RegisterCommand</code>）</li>
+<li>必要ならゲームループ終了条件の差し替え（<code>context.SetGameLoopEndCondition</code>）</li>
+</ul>
+<p>関連実装：<code>Application/AppInitialize.h</code></p>
+<hr />
+<h2>公開API（利用側が触るもの）</h2>
+<h3><code>GameEngine::Context</code></h3>
+<ul>
+<li><code>SceneManager* sceneManager</code></li>
+<li><code>InputCommand* inputCommand</code></li>
+<li><code>void SetGameLoopEndCondition(const std::function&lt;bool()&gt; &amp;func) const</code></li>
+</ul>
+<h3><code>Window</code></h3>
+<ul>
+<li><code>static Window* CreateNormal(...)</code></li>
+<li><code>static Window* CreateOverlay(...)</code></li>
+</ul>
+<h3><code>SceneManager</code></h3>
+<ul>
+<li><code>template&lt;typename TScene, typename... Args&gt; void RegisterScene(const std::string&amp; sceneName, Args&amp;&amp;... args)</code></li>
+<li><code>bool ChangeScene(const std::string&amp; sceneName)</code></li>
+</ul>
+<h3><code>InputCommand</code></h3>
+<ul>
+<li><code>void Clear()</code></li>
+<li><code>void RegisterCommand(...)</code>（キーボード/マウス/パッドなど複数オーバーロード）</li>
+</ul>
+<hr />
+<h2>例：基本形（ウィンドウ作成＋シーン登録＋初期シーン）</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+#include <span class="str">&quot;Scenes/MyScene.h&quot;</span>
+
+<span class="kw">namespace</span> KashipanEngine {
+
+<span class="kw">inline</span> <span class="type">void</span> AppInitialize(<span class="kw">const</span> GameEngine::Context &amp;context) {
+    Window::CreateOverlay(<span class="str">&quot;Main Window&quot;</span>, <span class="num">1280</span>, <span class="num">720</span>, <span class="kw">true</span>);
+
+    <span class="kw">if</span> (context.sceneManager) {
+        <span class="kw">auto</span> *sm = context.sceneManager;
+        sm-&gt;RegisterScene&lt;MyScene&gt;(<span class="str">&quot;MyScene&quot;</span>);
+        sm-&gt;ChangeScene(<span class="str">&quot;MyScene&quot;</span>);
+    }
+}
+
+} <span class="com">// namespace KashipanEngine</span>
+</code></pre>
+<hr />
+<h2>例：ゲームループ終了条件の上書き</h2>
+<p>デフォルトの終了条件は「Window が 0 個になったら終了」です。アプリ側で差し替え可能です。</p>
+<pre><code class="language-cpp">
+<span class="kw">inline</span> <span class="type">void</span> AppInitialize(<span class="kw">const</span> GameEngine::Context &amp;context) {
+    context.SetGameLoopEndCondition([]{
+        <span class="com">// 任意の終了条件を返す</span>
+        <span class="kw">return</span> Window::GetWindowCount() == <span class="num">0</span>;
+    });
+}
+</code></pre>
+</body>
+</html>

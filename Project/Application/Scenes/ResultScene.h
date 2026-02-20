@@ -1,6 +1,5 @@
 #pragma once
 #include <KashipanEngine.h>
-#include "Scenes/Components/ResultScene/ResultSceneAnimator.h"
 
 namespace KashipanEngine {
 
@@ -16,8 +15,6 @@ protected:
 
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
-
-    ResultSceneAnimator *resultSceneAnimator_ = nullptr;
 };
 
 } // namespace KashipanEngine

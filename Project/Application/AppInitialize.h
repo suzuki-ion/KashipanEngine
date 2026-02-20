@@ -2,7 +2,7 @@
 #include <KashipanEngine.h>
 #include "Scenes/EngineLogoScene.h"
 #include "Scenes/TitleScene.h"
-#if defined(DEBUG_BUILD) or defined(USE_IMGUI)
+#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
 #include "Scenes/TestScene.h"
 #endif
 #include "Scenes/GameScene.h"
@@ -17,95 +17,45 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
     Window::CreateNormal("Main Window", 1920, 1080);
 
-    /*for (int i = 0; i < 8; ++i) {
-        Window::CreateNormal("Sub Window " + std::to_string(i + 1), 320, 240);
-    }*/
-
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
         
-        sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
+        //sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
         //sm->RegisterScene<TitleScene>("TitleScene");
         //sm->RegisterScene<GameScene>("GameScene");
         //sm->RegisterScene<ResultScene>("ResultScene");
         //sm->RegisterScene<GameOverScene>("GameOverScene");
 
-#if DEBUG_BUILD
+#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
         sm->RegisterScene<TestScene>("TestScene");
+        context.sceneManager->ChangeScene("TestScene");
 #endif
-
-        context.sceneManager->ChangeScene("EngineLogoScene");
     }
 
     if (context.inputCommand) {
         auto *ic = context.inputCommand;
         ic->Clear();
 
-        // 移動
-        ic->RegisterCommand("MoveX", InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Down, true);
-        ic->RegisterCommand("MoveX", InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Down);
-        ic->RegisterCommand("MoveX", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down);
-
-        ic->RegisterCommand("MoveZ", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Down);
-        ic->RegisterCommand("MoveZ", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Down, true);
-        ic->RegisterCommand("MoveZ", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down);
-
-        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::Up }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.5f);
-        
-        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::Down }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.5f);
-        
+        // 左右移動
         ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::Left }, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.5f);
-        
+        ic->RegisterCommand("MoveLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.1f);
         ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::Right }, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("MoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.1f);
+        
+        // 上下移動
+        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::Up }, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveUp", ControllerButton::DPadUp, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, -0.1f);
+        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::Down }, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveDown", ControllerButton::DPadDown, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, 0.1f);
 
-        ic->RegisterCommand("Bomb", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Bomb", InputCommand::KeyboardKey{ Key::Z }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Bomb", ControllerButton::A, InputCommand::InputState::Trigger);
-
-        // 攻撃
-        ic->RegisterCommand("AttackCharge", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Down);
-        ic->RegisterCommand("AttackCharge", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Down);
-
-        ic->RegisterCommand("Attack", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Release);
-        ic->RegisterCommand("Attack", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Release);
-
-        // ダッシュ
-        ic->RegisterCommand("Dash", InputCommand::KeyboardKey{ Key::Shift }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Dash", ControllerButton::X, InputCommand::InputState::Trigger);
-
-        // 決定
-        ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Enter }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
-
-        ic->RegisterCommand("Escape", InputCommand::KeyboardKey{ Key::Escape }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Escape", ControllerButton::Start, InputCommand::InputState::Trigger);
-
-#ifdef DEBUG_BUILD
-        // デバッグ用シーン遷移
-        ic->RegisterCommand("DebugSceneChange", InputCommand::KeyboardKey{ Key::F1 }, InputCommand::InputState::Trigger);
-        // デバッグ用バックモニター描画切り替え
-        ic->RegisterCommand("DebugChangeBackMonitor", InputCommand::KeyboardKey{ Key::F2 }, InputCommand::InputState::Trigger);
-        // デバッグ用リセットコマンド
-        ic->RegisterCommand("DebugReset", InputCommand::KeyboardKey{ Key::R }, InputCommand::InputState::Trigger);
-
-        // デバッグ用カメラ操作有効化/無効化
-        ic->RegisterCommand("DebugCameraToggle", InputCommand::KeyboardKey{ Key::F3 }, InputCommand::InputState::Trigger);
-
-        ic->RegisterCommand("ModeChange", InputCommand::KeyboardKey{ Key::D1 }, InputCommand::InputState::Trigger);
-#endif
     }
 }
 

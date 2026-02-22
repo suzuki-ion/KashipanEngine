@@ -101,7 +101,7 @@ namespace KashipanEngine {
             AudioManager::Play(handle, 0.2f);
         }
 
-        AudioManager::SoundBeat soundBeat_;
+        SoundBeat soundBeat_;
         AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
         float bpm_ = 120.0f;
         double beatStartOffset_ = 0.0;

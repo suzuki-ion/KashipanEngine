@@ -558,6 +558,8 @@
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -1313,6 +1315,9 @@
     <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
+    <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
+    <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

@@ -2,6 +2,8 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 
+#include <algorithm>
+
 namespace KashipanEngine {
 
 TestScene::TestScene()
@@ -32,6 +34,28 @@ void TestScene::Initialize() {
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
     }
+
+    audioPlayerTestSounds_.clear();
+    audioPlayerTestTimer_ = 0.0f;
+    audioPlayerTestActive_ = false;
+
+    const std::vector<std::string> soundNames = {
+        "test1.mp3",
+        "test2.mp3"
+    };
+
+    for (const auto& name : soundNames) {
+        const auto handle = AudioManager::GetSoundHandleFromFileName(name);
+        if (handle != AudioManager::kInvalidSoundHandle) {
+            audioPlayerTestSounds_.push_back(handle);
+        }
+    }
+
+    if (!audioPlayerTestSounds_.empty()) {
+        audioPlayer_.AddAudios(audioPlayerTestSounds_);
+        audioPlayer_.ChangeAudio(0.0, 0);
+        audioPlayerTestActive_ = true;
+    }
 }
 
 TestScene::~TestScene() {
@@ -54,6 +78,15 @@ void TestScene::OnUpdate() {
             if (out->IsFinished()) {
                 ChangeToNextScene();
             }
+        }
+    }
+
+    if (audioPlayerTestActive_ && audioPlayerTestSounds_.size() > 1) {
+        const float dt = std::max(0.0f, GetDeltaTime());
+        audioPlayerTestTimer_ += dt;
+        if (audioPlayerTestTimer_ >= 5.0f) {
+            audioPlayerTestTimer_ = 0.0f;
+            audioPlayer_.ChangeAudio(1.0);
         }
     }
 }

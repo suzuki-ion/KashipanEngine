@@ -244,8 +244,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
@@ -461,6 +463,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
+    <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />

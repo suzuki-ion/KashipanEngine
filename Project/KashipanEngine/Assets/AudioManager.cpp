@@ -1,5 +1,7 @@
 #include "AudioManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Assets/AudioPlayer.h"
+#include "Assets/SoundBeat.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/Translation.h"
@@ -58,6 +60,7 @@ struct PlayEntry final {
     IXAudio2SourceVoice* voice = nullptr;
     bool paused = false;
     bool loop = false;
+    double startTimeSec = 0.0;
 };
 
 std::unordered_map<SoundHandle, SoundEntry> sSounds;
@@ -76,7 +79,8 @@ std::vector<size_t> sFreePlayIndices;
 std::unordered_map<PlayHandle, size_t> sPlayHandleToIndex;
 std::unordered_set<PlayHandle> sUsedPlayHandles;
 
-std::unordered_set<AudioManager::SoundBeat*> sRegisteredSoundBeats;
+std::unordered_set<SoundBeat*> sRegisteredSoundBeats;
+std::unordered_set<AudioPlayer*> sRegisteredAudioPlayers;
 
 std::mt19937& Rng() {
     static thread_local std::mt19937 rng{ std::random_device{}() };
@@ -193,6 +197,7 @@ void StopVoice(PlayEntry& p) {
     p.voice = nullptr;
     p.sound = AudioManager::kInvalidSoundHandle;
     p.paused = false;
+    p.startTimeSec = 0.0;
 }
 
 bool EnsureAudioInitialized() {
@@ -367,123 +372,8 @@ bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
 
     const uint64_t samplesPlayed = state.SamplesPlayed; // フレーム（サンプルフレーム）
     outSeconds = static_cast<double>(samplesPlayed) / static_cast<double>(samplesPerSec);
+    outSeconds += p.startTimeSec;
     return true;
-}
-
-AudioManager::SoundBeat::SoundBeat() {
-    playHandle_ = kInvalidPlayHandle;
-    bpm_ = 0.0f;
-    startOffsetSec_ = 0.0;
-    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
-    isUseManualTime_ = false;
-    sRegisteredSoundBeats.insert(this);
-}
-
-AudioManager::SoundBeat::SoundBeat(PlayHandle play, float bpm, double startOffsetSec) {
-    SetBeat(play, bpm, startOffsetSec);
-    sRegisteredSoundBeats.insert(this);
-}
-
-AudioManager::SoundBeat::~SoundBeat() {
-    sRegisteredSoundBeats.erase(this);
-}
-
-void AudioManager::SoundBeat::SetBeat(PlayHandle play, float bpm, double startOffsetSec) {
-    playHandle_ = play;
-    bpm_ = (bpm > 0.0f) ? bpm : 0.0f;
-    startOffsetSec_ = startOffsetSec;
-    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
-
-    if (playHandle_ == kInvalidPlayHandle) {
-        isUseManualTime_ = false;
-    } else {
-        isUseManualTime_ = false;
-    }
-}
-
-void AudioManager::SoundBeat::SetPlayHandle(PlayHandle play) noexcept {
-    playHandle_ = play;
-    if (playHandle_ == kInvalidPlayHandle) {
-        isUseManualTime_ = false;
-    } else {
-        isUseManualTime_ = false;
-    }
-}
-
-void AudioManager::SoundBeat::StartManualBeat() {
-    if (playHandle_ != kInvalidPlayHandle) return;
-    isUseManualTime_ = true;
-    manualStartTime_ = std::chrono::steady_clock::now();
-    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
-    isOnBeatTriggered_ = false;
-}
-
-void AudioManager::SoundBeat::SetOnBeat(std::function<void(PlayHandle, uint64_t, double)> cb) {
-    onBeatCallback_ = std::move(cb);
-}
-
-void AudioManager::SoundBeat::Update(Passkey<AudioManager>) {
-    isOnBeatTriggered_ = false;
-    if (!IsActive()) return;
-    double posSec = 0.0;
-
-    if (playHandle_ != kInvalidPlayHandle) {
-        if (!GetPlayPositionSeconds(playHandle_, posSec)) return;
-    } else {
-        if (!isUseManualTime_) return;
-        const auto now = std::chrono::steady_clock::now();
-        posSec = std::chrono::duration<double>(now - manualStartTime_).count();
-    }
-
-    // まだオフセットに到達していない
-    if (posSec < startOffsetSec_) return;
-
-    const double interval = 60.0 / static_cast<double>(bpm_);
-    if (interval <= 0.0) return;
-
-    const uint64_t beatIndex = static_cast<uint64_t>(std::floor((posSec - startOffsetSec_) / interval));
-
-    if (currentBeatIndex_ == std::numeric_limits<uint64_t>::max()) {
-        // 最初の検出: 現在の拍に対してコールバックを呼ぶ
-        currentBeatIndex_ = beatIndex;
-        if (onBeatCallback_) onBeatCallback_(playHandle_, currentBeatIndex_, posSec);
-        isOnBeatTriggered_ = true;
-        return;
-    }
-
-    if (beatIndex != currentBeatIndex_) {
-        currentBeatIndex_ = beatIndex;
-        if (onBeatCallback_) onBeatCallback_(playHandle_, currentBeatIndex_, posSec);
-        isOnBeatTriggered_ = true;
-    }
-}
-
-float AudioManager::SoundBeat::GetBeatProgress() const {
-    if (!IsActive()) return 0.0f;
-    double posSec = 0.0;
-    if (playHandle_ != kInvalidPlayHandle) {
-        if (!GetPlayPositionSeconds(playHandle_, posSec)) return 0.0f;
-    } else {
-        if (!isUseManualTime_) return 0.0f;
-        const auto now = std::chrono::steady_clock::now();
-        posSec = std::chrono::duration<double>(now - manualStartTime_).count();
-    }
-    if (posSec < startOffsetSec_) return 0.0f;
-
-    const double interval = 60.0 / static_cast<double>(bpm_);
-    if (interval <= 0.0) return 0.0f;
-
-    const double t = std::fmod((posSec - startOffsetSec_), interval);
-    const double prog = t / interval;
-    if (prog < 0.0) return 0.0f;
-    if (prog > 1.0) return 1.0f;
-    return static_cast<float>(prog);
-}
-
-void AudioManager::SoundBeat::Reset() {
-    currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
-    // reset manual time start so timing restarts from now
-    if (isUseManualTime_) manualStartTime_ = std::chrono::steady_clock::now();
 }
 
 AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath)
@@ -589,14 +479,51 @@ SoundHandle AudioManager::GetSoundHandleFromAssetPath(const std::string &assetPa
     return it->second;
 }
 
-AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop) {
+AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop,
+    double startTimeSec, double endTimeSec) {
+    PlayParams params{};
+    params.sound = sound;
+    params.volume = volume;
+    params.pitch = pitch;
+    params.loop = loop;
+    params.startTimeSec = startTimeSec;
+    params.endTimeSec = endTimeSec;
+    return Play(params);
+}
+
+AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     LogScope scope;
-    if (sound == kInvalidSoundHandle) return kInvalidPlayHandle;
+    if (params.sound == kInvalidSoundHandle) return kInvalidPlayHandle;
 
     if (!EnsureAudioInitialized()) return kInvalidPlayHandle;
 
-    auto it = sSounds.find(sound);
+    auto it = sSounds.find(params.sound);
     if (it == sSounds.end()) return kInvalidPlayHandle;
+
+    const WAVEFORMATEX& wfex = it->second.wfex;
+    if (wfex.nBlockAlign == 0 || wfex.nSamplesPerSec == 0) return kInvalidPlayHandle;
+
+    const uint64_t totalFrames = it->second.buffer.size() / wfex.nBlockAlign;
+    if (totalFrames == 0) return kInvalidPlayHandle;
+
+    const double startSec = std::max(0.0, params.startTimeSec);
+    const double endSec = params.endTimeSec;
+
+    uint64_t startFrame = static_cast<uint64_t>(std::floor(startSec * static_cast<double>(wfex.nSamplesPerSec)));
+    if (startFrame >= totalFrames) return kInvalidPlayHandle;
+
+    bool hasEnd = endSec > 0.0;
+    uint64_t endFrame = totalFrames;
+    if (hasEnd) {
+        const double clampedEnd = std::max(0.0, endSec);
+        endFrame = static_cast<uint64_t>(std::floor(clampedEnd * static_cast<double>(wfex.nSamplesPerSec)));
+        endFrame = std::min(endFrame, totalFrames);
+        if (endFrame <= startFrame) return kInvalidPlayHandle;
+    }
+
+    const uint64_t playLengthFrames = hasEnd ? (endFrame - startFrame) : 0u;
+    if (startFrame > std::numeric_limits<uint32_t>::max()) return kInvalidPlayHandle;
+    if (hasEnd && playLengthFrames > std::numeric_limits<uint32_t>::max()) return kInvalidPlayHandle;
 
     const size_t idx = AcquirePlayIndex();
     if (idx == static_cast<size_t>(-1)) {
@@ -611,9 +538,10 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
     }
 
     PlayEntry& playEntry = *sPlays[idx];
-    playEntry.sound = sound;
+    playEntry.sound = params.sound;
     playEntry.paused = false;
-    playEntry.loop = loop;
+    playEntry.loop = params.loop;
+    playEntry.startTimeSec = startSec;
 
     HRESULT hr = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex);
     if (FAILED(hr) || !playEntry.voice) {
@@ -627,7 +555,17 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
     buffer.AudioBytes = static_cast<UINT32>(it->second.buffer.size());
     buffer.pAudioData = it->second.buffer.data();
     buffer.Flags = XAUDIO2_END_OF_STREAM;
-    buffer.LoopCount = loop ? XAUDIO2_LOOP_INFINITE : 0;
+    buffer.PlayBegin = static_cast<UINT32>(startFrame);
+    if (hasEnd) {
+        buffer.PlayLength = static_cast<UINT32>(playLengthFrames);
+    }
+    buffer.LoopCount = params.loop ? XAUDIO2_LOOP_INFINITE : 0;
+    if (params.loop) {
+        buffer.LoopBegin = buffer.PlayBegin;
+        if (hasEnd) {
+            buffer.LoopLength = buffer.PlayLength;
+        }
+    }
 
     hr = playEntry.voice->SubmitSourceBuffer(&buffer);
     if (FAILED(hr)) {
@@ -637,9 +575,9 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
         return kInvalidPlayHandle;
     }
 
-    volume = std::clamp(volume, 0.0f, 1.0f);
+    const float volume = std::clamp(params.volume, 0.0f, 1.0f);
     playEntry.voice->SetVolume(volume);
-    playEntry.voice->SetFrequencyRatio(SemitonesToFrequencyRatio(pitch));
+    playEntry.voice->SetFrequencyRatio(SemitonesToFrequencyRatio(params.pitch));
 
     hr = playEntry.voice->Start();
     if (FAILED(hr)) {
@@ -655,6 +593,26 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
     sPlayHandleToIndex[playHandle] = idx;
 
     return playHandle;
+}
+
+void AudioManager::RegisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat) {
+    if (!soundBeat) return;
+    sRegisteredSoundBeats.insert(soundBeat);
+}
+
+void AudioManager::UnregisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat) {
+    if (!soundBeat) return;
+    sRegisteredSoundBeats.erase(soundBeat);
+}
+
+void AudioManager::RegisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player) {
+    if (!player) return;
+    sRegisteredAudioPlayers.insert(player);
+}
+
+void AudioManager::UnregisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player) {
+    if (!player) return;
+    sRegisteredAudioPlayers.erase(player);
 }
 
 void AudioManager::Update() {
@@ -688,6 +646,10 @@ void AudioManager::Update() {
 
     for (auto* sb : sRegisteredSoundBeats) {
         sb->Update({});
+    }
+
+    for (auto* player : sRegisteredAudioPlayers) {
+        if (player) player->Update({});
     }
 }
 

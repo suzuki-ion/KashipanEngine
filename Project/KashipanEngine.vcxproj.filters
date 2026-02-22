@@ -1538,6 +1538,13 @@
     <None Include="Reference\Tutorial\09_ChangeScene.md" />
     <None Include="Tools\convert_reference_to_html.py" />
     <None Include="Reference\reference.css" />
+    <None Include="Reference\11_Assets_Index.md" />
+    <None Include="Reference\11_Assets_TextureManager.md" />
+    <None Include="Reference\11_Assets_ModelManager.md" />
+    <None Include="Reference\11_Assets_AudioManager.md" />
+    <None Include="Reference\11_Assets_AudioPlayer.md" />
+    <None Include="Reference\11_Assets_SoundBeat.md" />
+    <None Include="Reference\11_Assets_SamplerManager.md" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />

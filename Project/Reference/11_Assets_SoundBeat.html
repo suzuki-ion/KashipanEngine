@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>アセット管理：ビート検出（`SoundBeat`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>アセット管理：ビート検出（<code>SoundBeat</code>）</h1>
+<p>対象ヘッダ：<code>KashipanEngine/Assets/SoundBeat.h</code></p>
+<p>関連：<a href="11_Assets_AudioManager.html"><code>11_Assets_AudioManager.md</code></a></p>
+<hr />
+<h2>1. 目的</h2>
+<p>再生中の音声に対して BPM（テンポ）ベースのビート検出を行うクラスです。 リズムゲームや音楽同期演出など、ビートに合わせた処理を実現します。</p>
+<hr />
+<h2>2. 設計概要</h2>
+<ul>
+<li><code>AudioManager</code> の再生ハンドル（<code>PlayHandle</code>）と BPM を組み合わせてビートタイミングを計算します。</li>
+<li><code>AudioManager::Update()</code> から自動的に <code>SoundBeat::Update()</code> が呼び出されます（<code>AudioManager</code> に自動登録）。</li>
+<li>ビートが発生するとコールバックを呼び出し、<code>IsOnBeatTriggered()</code> が <code>true</code> を返します。</li>
+<li>再生ハンドルなしでも「手動ビートモード」で動作可能です。</li>
+<li>コピー・ムーブは禁止されています。</li>
+</ul>
+<hr />
+<h2>3. 公開API</h2>
+<h3>3.1 型定義</h3>
+<pre><code class="language-cpp">
+<span class="kw">using</span> PlayHandle = AudioManager::PlayHandle;
+</code></pre>
+<h3>3.2 コンストラクタ・デストラクタ</h3>
+<pre><code class="language-cpp">
+SoundBeat();
+SoundBeat(PlayHandle play, <span class="type">float</span> bpm, <span class="type">double</span> startOffsetSec);
+~SoundBeat();
+</code></pre>
+<ul>
+<li>デフォルトコンストラクタ：非アクティブ状態（BPM = <code>0</code>）で作成されます。</li>
+<li>パラメータ付きコンストラクタ：再生ハンドル・BPM・開始オフセットを指定して即座にアクティブになります。</li>
+<li>いずれも <code>AudioManager</code> に自動登録されます。</li>
+</ul>
+<h3>3.3 ビート設定</h3>
+<pre><code class="language-cpp">
+<span class="type">void</span> SetBeat(PlayHandle play, <span class="type">float</span> bpm, <span class="type">double</span> startOffsetSec);
+<span class="type">void</span> SetPlayHandle(PlayHandle play) noexcept;
+<span class="type">void</span> SetBPM(<span class="type">float</span> bpm) noexcept;
+<span class="type">void</span> SetStartOffsetSec(<span class="type">double</span> startOffsetSec) noexcept;
+</code></pre>
+<ul>
+<li><code>SetBeat</code>: 再生ハンドル・BPM・開始オフセットを一括設定します。ビートカウントもリセットされます。</li>
+<li><code>SetPlayHandle</code>: 再生ハンドルのみ変更します。</li>
+<li><code>SetBPM</code>: BPM のみ変更します。</li>
+<li><code>SetStartOffsetSec</code>: 開始オフセットのみ変更します。</li>
+</ul>
+<h3>3.4 コールバック</h3>
+<pre><code class="language-cpp">
+<span class="type">void</span> SetOnBeat(std::function&lt;<span class="type">void</span>(PlayHandle, <span class="type">uint64_t</span>, <span class="type">double</span>)&gt; cb);
+</code></pre>
+<ul>
+<li>ビートが検出されるたびに呼ばれるコールバックを設定します。</li>
+<li>引数は <code>(再生ハンドル, ビートインデックス, 現在の再生位置（秒）)</code> です。</li>
+</ul>
+<h3>3.5 状態取得</h3>
+<pre><code class="language-cpp">
+<span class="type">float</span> GetBeatProgress() <span class="kw">const</span>;
+<span class="type">uint64_t</span> GetCurrentBeat() <span class="kw">const</span> noexcept;
+<span class="type">bool</span> IsActive() <span class="kw">const</span> noexcept;
+<span class="type">bool</span> IsOnBeatTriggered() <span class="kw">const</span> noexcept;
+</code></pre>
+<ul>
+<li><code>GetBeatProgress</code>: 現在のビート区間内の進行度を <code>0.0f</code> ～ <code>1.0f</code> で返します。</li>
+<li><code>GetCurrentBeat</code>: 現在のビートインデックス（0始まり）を返します。</li>
+<li><code>IsActive</code>: BPM が正の値であればアクティブです。</li>
+<li><code>IsOnBeatTriggered</code>: 直前の <code>Update()</code> でビートが発生したかどうかを返します。</li>
+</ul>
+<h3>3.6 リセット</h3>
+<pre><code class="language-cpp">
+<span class="type">void</span> Reset();
+</code></pre>
+<ul>
+<li>ビートカウントをリセットします。手動ビートモードの場合は開始時刻もリセットされます。</li>
+</ul>
+<h3>3.7 手動ビートモード</h3>
+<pre><code class="language-cpp">
+<span class="type">void</span> StartManualBeat();
+<span class="type">void</span> StopManualBeat();
+</code></pre>
+<ul>
+<li><code>StartManualBeat</code>: 再生ハンドルなし（<code>kInvalidPlayHandle</code>）で、現在時刻を基準にビート検出を開始します。</li>
+<li><code>StopManualBeat</code>: 手動ビートモードを停止します。</li>
+</ul>
+<blockquote>
+<p>手動ビートモードは、音声を再生せずにテンポだけで同期処理をしたい場合に使用します。</p>
+</blockquote>
+<hr />
+<h2>4. ビート検出の仕組み</h2>
+<p>1. 毎フレームの <code>Update()</code> で再生位置（秒）を取得します。 2. <code>(再生位置 - 開始オフセット) / (60.0 / BPM)</code> でビートインデックスを算出します。 3. 前回のビートインデックスと異なる場合、ビートが発生したと判定します。 4. コールバックが設定されていれば呼び出し、<code>IsOnBeatTriggered()</code> を <code>true</code> にします。</p>
+<hr />
+<h2>5. 使用例</h2>
+<h3>基本的なビート検出</h3>
+<pre><code class="language-cpp">
+<span class="com">// 音声を再生</span>
+<span class="kw">auto</span> bgm = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;bgm.mp3&quot;</span>);
+<span class="kw">auto</span> play = KashipanEngine::AudioManager::Play(bgm, <span class="num">1.0f</span>, <span class="num">0.0f</span>, <span class="kw">true</span>);
+
+<span class="com">// SoundBeat を設定（120 BPM、オフセットなし）</span>
+KashipanEngine::SoundBeat beat(play, <span class="num">120.0f</span>, <span class="num">0.0</span>);
+</code></pre>
+<h3>コールバックでビートごとに処理</h3>
+<pre><code class="language-cpp">
+KashipanEngine::SoundBeat beat;
+beat.SetBeat(playHandle, <span class="num">140.0f</span>, <span class="num">0.5</span>);
+beat.SetOnBeat([](KashipanEngine::AudioManager::PlayHandle ph, <span class="type">uint64_t</span> beatIndex, <span class="type">double</span> posSec) {
+    <span class="com">// ビートごとに実行される処理</span>
+    (<span class="type">void</span>)ph;
+    (<span class="type">void</span>)beatIndex;
+    (<span class="type">void</span>)posSec;
+});
+</code></pre>
+<h3>ビート進行度を使った演出</h3>
+<pre><code class="language-cpp">
+<span class="com">// 毎フレームの更新処理内で</span>
+<span class="type">float</span> progress = beat.GetBeatProgress();
+<span class="com">// progress: 0.0（ビート直後）～ 1.0（次のビート直前）</span>
+<span class="com">// この値を使ってスケーリングや色変化などの演出に利用</span>
+</code></pre>
+<h3>手動ビートモード</h3>
+<pre><code class="language-cpp">
+KashipanEngine::SoundBeat beat;
+beat.SetBPM(<span class="num">100.0f</span>);
+beat.StartManualBeat();
+
+<span class="com">// 毎フレーム、IsOnBeatTriggered() でビートを検出可能</span>
+<span class="kw">if</span> (beat.IsOnBeatTriggered()) {
+    <span class="com">// ビート発生時の処理</span>
+}
+</code></pre>
+</body>
+</html>

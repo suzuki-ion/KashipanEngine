@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>アセット管理：サンプラー（`SamplerManager`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>アセット管理：サンプラー（<code>SamplerManager</code>）</h1>
+<p>対象ヘッダ：<code>KashipanEngine/Assets/SamplerManager.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p>D3D12 サンプラーの作成・管理・シェーダーへのバインドを一括して行うクラスです。 D3D12 のサンプラーハンドルを外部へ直接公開せず、ハンドルベースの抽象化を提供します。</p>
+<hr />
+<h2>2. 設計概要</h2>
+<ul>
+<li>サンプラーは <code>SamplerHandle</code>（<code>uint32_t</code>）で管理します。</li>
+<li>無効ハンドルは <code>SamplerManager::kInvalidHandle</code>（<code>0</code>）です。</li>
+<li>エンジン初期化時に 6 種類のデフォルトサンプラーが自動作成されます。</li>
+<li>サンプラーの同一設定による重複排除（dedup）は行いません。</li>
+</ul>
+<hr />
+<h2>3. <code>DefaultSampler</code>（既定サンプラー列挙型）</h2>
+<pre><code class="language-cpp">
+<span class="kw">enum</span> <span class="kw">class</span> DefaultSampler {
+    PointClamp = <span class="num">0</span>,
+    PointWrap = <span class="num">1</span>,
+    LinearClamp = <span class="num">2</span>,
+    LinearWrap = <span class="num">3</span>,
+    AnisotropicClamp = <span class="num">4</span>,
+    AnisotropicWrap = <span class="num">5</span>,
+};
+</code></pre>
+<p>エンジン初期化時に以下のサンプラーが自動的に作成されます。</p>
+<ul>
+<li><code>PointClamp</code> - 最近傍補間 + クランプ</li>
+<li><code>PointWrap</code> - 最近傍補間 + ラップ</li>
+<li><code>LinearClamp</code> - バイリニア補間 + クランプ</li>
+<li><code>LinearWrap</code> - バイリニア補間 + ラップ</li>
+<li><code>AnisotropicClamp</code> - 異方性フィルタリング（16x）+ クランプ</li>
+<li><code>AnisotropicWrap</code> - 異方性フィルタリング（16x）+ ラップ</li>
+</ul>
+<hr />
+<h2>4. 公開API</h2>
+<h3>4.1 型定義・定数</h3>
+<pre><code class="language-cpp">
+<span class="kw">using</span> SamplerHandle = <span class="type">uint32_t</span>;
+<span class="kw">static</span> <span class="kw">constexpr</span> SamplerHandle kInvalidHandle = <span class="num">0</span>;
+</code></pre>
+<h3>4.2 コンストラクタ（<code>GameEngine</code> からのみ生成可能）</h3>
+<pre><code class="language-cpp">
+SamplerManager(Passkey&lt;GameEngine&gt;, DirectXCommon* directXCommon);
+</code></pre>
+<h3>4.3 サンプラー作成</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> SamplerHandle CreateSampler(<span class="kw">const</span> D3D12_SAMPLER_DESC&amp; desc);
+</code></pre>
+<ul>
+<li><code>D3D12_SAMPLER_DESC</code> を指定してカスタムサンプラーを作成します。</li>
+<li>同一設定であっても毎回新しいハンドルが割り当てられます。</li>
+<li>失敗時は <code>kInvalidHandle</code> を返します。</li>
+</ul>
+<h3>4.4 バインド</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> <span class="type">bool</span> BindSampler(ShaderVariableBinder* shaderBinder, <span class="kw">const</span> std::string&amp; nameKey, SamplerHandle handle);
+<span class="kw">static</span> <span class="type">bool</span> BindSampler(ShaderVariableBinder* shaderBinder, <span class="kw">const</span> std::string&amp; nameKey, DefaultSampler defaultSampler);
+</code></pre>
+<ul>
+<li>シェーダー変数バインダー経由でサンプラーをシェーダーにバインドします。</li>
+<li><code>nameKey</code> はシェーダーステージとスロット名の組み合わせ（例：<code>&quot;Pixel:gSampler&quot;</code>）を指定します。</li>
+<li><code>DefaultSampler</code> オーバーロードでは、列挙値に対応する既定サンプラーがバインドされます。</li>
+</ul>
+<hr />
+<h2>5. 使用例</h2>
+<h3>既定サンプラーをバインド</h3>
+<pre><code class="language-cpp">
+KashipanEngine::SamplerManager::BindSampler(&amp;binder, <span class="str">&quot;Pixel:gSampler&quot;</span>, KashipanEngine::DefaultSampler::LinearWrap);
+</code></pre>
+<h3>カスタムサンプラーを作成してバインド</h3>
+<pre><code class="language-cpp">
+D3D12_SAMPLER_DESC desc{};
+desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+desc.MaxLOD = D3D12_FLOAT32_MAX;
+desc.MaxAnisotropy = <span class="num">1</span>;
+
+<span class="kw">auto</span> sampler = KashipanEngine::SamplerManager::CreateSampler(desc);
+KashipanEngine::SamplerManager::BindSampler(&amp;binder, <span class="str">&quot;Pixel:gSampler&quot;</span>, sampler);
+</code></pre>
+<h3>各 DefaultSampler の選び方</h3>
+<ul>
+<li>**ピクセルアートなど、ぼかさずに拡大したい場合** → <code>PointClamp</code> または <code>PointWrap</code></li>
+<li>**一般的な3Dテクスチャに滑らかなフィルタリングが必要な場合** → <code>LinearWrap</code></li>
+<li>**テクスチャの端でリピートさせたくない場合** → <code>LinearClamp</code></li>
+<li>**高品質な異方性フィルタリングが必要な場合** → <code>AnisotropicWrap</code> または <code>AnisotropicClamp</code></li>
+</ul>
+</body>
+</html>

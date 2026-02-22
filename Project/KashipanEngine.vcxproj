@@ -751,6 +751,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Reference\09_Utilities_Translation.md" />
     <None Include="Reference\10_Input.md" />
     <None Include="Reference\11_Assets.md" />
+    <None Include="Reference\11_Assets_AudioManager.md" />
+    <None Include="Reference\11_Assets_AudioPlayer.md" />
+    <None Include="Reference\11_Assets_Index.md" />
+    <None Include="Reference\11_Assets_ModelManager.md" />
+    <None Include="Reference\11_Assets_SamplerManager.md" />
+    <None Include="Reference\11_Assets_SoundBeat.md" />
+    <None Include="Reference\11_Assets_TextureManager.md" />
     <None Include="Reference\12_PostEffects.md" />
     <None Include="Reference\README.md" />
     <None Include="Reference\reference.css" />

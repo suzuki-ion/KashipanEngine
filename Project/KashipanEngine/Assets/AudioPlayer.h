@@ -26,22 +26,26 @@ public:
     AudioPlayer& operator=(AudioPlayer&&) = delete;
 
     void AddAudio(SoundHandle sound);
+    void AddAudio(const AudioManager::PlayParams& params);
     void AddAudios(const std::vector<SoundHandle>& sounds);
+    void AddAudios(const std::vector<AudioManager::PlayParams>& paramsList);
     void RemoveAudio(SoundHandle sound);
     void RemoveAudios(const std::vector<SoundHandle>& sounds);
 
     bool ChangeAudio(double crossFadeSec, size_t changeAudioIndex = kInvalidAudioIndex);
+    bool ChangeAudio(double crossFadeSec, const AudioManager::PlayParams& params, size_t changeAudioIndex = kInvalidAudioIndex);
     void Update(Passkey<AudioManager>);
 
     size_t GetCurrentAudioIndex() const noexcept { return currentIndex_; }
     PlayHandle GetCurrentPlayHandle() const noexcept { return currentPlay_; }
 
 private:
+    bool ChangeAudioInternal(double crossFadeSec, const AudioManager::PlayParams* params, size_t changeAudioIndex);
     void StopHandle(PlayHandle& handle);
     void ApplyVolume(PlayHandle handle, float volume);
-    size_t ResolveNextIndex(size_t changeAudioIndex) const;
+    size_t ResolveNextIndex(size_t changeAudioIndex, const AudioManager::PlayParams* params) const;
 
-    std::vector<SoundHandle> sounds_{};
+    std::vector<AudioManager::PlayParams> sounds_;
     size_t currentIndex_{ kInvalidAudioIndex };
     size_t nextIndex_{ kInvalidAudioIndex };
     PlayHandle currentPlay_{ AudioManager::kInvalidPlayHandle };
@@ -49,7 +53,8 @@ private:
     double crossFadeDurationSec_{ 0.0 };
     double crossFadeElapsedSec_{ 0.0 };
     bool isCrossFading_{ false };
-    float baseVolume_{ 1.0f };
+    float currentVolumeTarget_{ 1.0f };
+    float nextVolumeTarget_{ 1.0f };
     std::chrono::steady_clock::time_point lastUpdateTime_{};
 };
 

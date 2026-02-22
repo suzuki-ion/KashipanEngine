@@ -18,7 +18,7 @@ protected:
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
     AudioPlayer audioPlayer_{};
-    std::vector<AudioManager::SoundHandle> audioPlayerTestSounds_{};
+    std::vector<AudioManager::PlayParams> audioPlayerTestSounds_{};
     float audioPlayerTestTimer_ = 0.0f;
     bool audioPlayerTestActive_ = false;
 };

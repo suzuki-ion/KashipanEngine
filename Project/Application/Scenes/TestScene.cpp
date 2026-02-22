@@ -47,7 +47,14 @@ void TestScene::Initialize() {
     for (const auto& name : soundNames) {
         const auto handle = AudioManager::GetSoundHandleFromFileName(name);
         if (handle != AudioManager::kInvalidSoundHandle) {
-            audioPlayerTestSounds_.push_back(handle);
+            AudioManager::PlayParams params;
+            params.sound = handle;
+            params.volume = 1.0f;
+            params.pitch = 0.0f;
+            params.loop = true;
+            params.startTimeSec = 10.0f;
+            params.endTimeSec = 0.0f;
+            audioPlayerTestSounds_.push_back(params);
         }
     }
 
@@ -84,9 +91,9 @@ void TestScene::OnUpdate() {
     if (audioPlayerTestActive_ && audioPlayerTestSounds_.size() > 1) {
         const float dt = std::max(0.0f, GetDeltaTime());
         audioPlayerTestTimer_ += dt;
-        if (audioPlayerTestTimer_ >= 5.0f) {
+        if (audioPlayerTestTimer_ >= 10.0f) {
             audioPlayerTestTimer_ = 0.0f;
-            audioPlayer_.ChangeAudio(1.0);
+            audioPlayer_.ChangeAudio(3.0);
         }
     }
 }

@@ -560,6 +560,13 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
+    <ClCompile Include="Application\Objects\Container\BlockContainer.cpp" />
+    <ClCompile Include="Application\Objects\Container\BlockSpriteContainer.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\BlockScroller.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Thermometer.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -1318,6 +1325,14 @@
     <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
+    <ClInclude Include="Application\Objects\Container\BlockContainer.h" />
+    <ClInclude Include="Application\Config\GameSceneConfig.h" />
+    <ClInclude Include="Application\Objects\Container\BlockSpriteContainer.h" />
+    <ClInclude Include="Application\Objects\GameSystem\BlockScroller.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Thermometer.h" />
+    <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
+    <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

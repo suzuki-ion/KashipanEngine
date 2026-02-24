@@ -193,6 +193,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Components\Player\BpmbSpawn.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
+    <ClCompile Include="Application\Objects\Container\BlockContainer.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\BlockScroller.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Thermometer.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
@@ -222,6 +228,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
     <ClCompile Include="Application\Scenes\TitleScene.cpp" />
+    <ClCompile Include="Application\Objects\Container\BlockSpriteContainer.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -361,6 +368,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application\Config\GameSceneConfig.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticle.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.h" />
@@ -396,6 +404,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\Player\ScoreManager.h" />
     <ClInclude Include="Application\Objects\Components\RailMovement.h" />
     <ClInclude Include="Application\Objects\Components\SmokeParticle.h" />
+    <ClInclude Include="Application\Objects\Container\BlockContainer.h" />
+    <ClInclude Include="Application\Objects\Container\BlockSpriteContainer.h" />
+    <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
+    <ClInclude Include="Application\Objects\GameSystem\BlockScroller.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
+    <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Thermometer.h" />
     <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />

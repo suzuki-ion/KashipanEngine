@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <vector>
+#include <KashipanEngine.h>
 
 namespace Application {
 	/// パズルのブロックを管理するクラス(0,0が左下、row,colが右上)

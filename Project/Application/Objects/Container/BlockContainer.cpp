@@ -35,22 +35,21 @@ void Application::BlockContainer::SetBlock(int32_t row, int32_t col, int32_t val
 
 void Application::BlockContainer::PushBlock(int32_t row, int32_t col, int32_t value)
 {
-	if (row >= 0 && row < static_cast<int32_t>(blocks_.size()-1) &&
+	if (row >= 0 && row < static_cast<int32_t>(blocks_.size()) &&
 		col >= 0 && col < static_cast<int32_t>(blocks_[row].size())) {
-		// 指定された位置から上に向かってブロックを押し上げる
-		for (int32_t r = row; r < static_cast<int32_t>(blocks_.size()); ++r) {
-			// 0以外のブロックが最上段に達した場合はオーバーフローとみなす
+		// 指定された列を上から下に向かって押し上げる
+		for (int32_t r = static_cast<int32_t>(blocks_.size()) - 1; r > row; --r) {
+			// 最上段の0以外のブロックはオーバーフローとみなす
 			if (r == static_cast<int32_t>(blocks_.size()) - 1) {
 				if (blocks_[r][col] != 0) {
 					overflowCount_++;
 				}
-				break;
 			}
-			// 上の行のブロックを現在の行に移動
-			blocks_[r][col] = blocks_[r + 1][col];
+			// 下の行のブロックを現在の行に移動
+			blocks_[r][col] = blocks_[r - 1][col];
 		}
 
-		// 最下段に新しいブロックを差し込む
+		// 指定位置に新しいブロックを差し込む
 		blocks_[row][col] = value;
 	}
 }

@@ -12,6 +12,8 @@ namespace Application
 
 		/// ブロックコンテナの状態を解析し、消えるブロックの位置を返します。
 		std::vector<std::pair<int32_t, int32_t>> ResolveMatches(const std::vector<std::vector<int32_t>>& blockContainer);
+		/// 4番のブロックに隣接したブロックが無いならば、その位置を返します。
+		std::vector<std::pair<int32_t, int32_t>> ResolveIsolatedBlocks(const std::vector<std::vector<int32_t>>& blockContainer);
 
 		bool HaveMatch() const { return haveMatch_; }
 		bool IsCompleteMatchStopFrame() const { return isCompleteMatchStopFrame_; }

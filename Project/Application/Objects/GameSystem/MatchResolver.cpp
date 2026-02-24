@@ -80,3 +80,36 @@ std::vector<std::pair<int32_t, int32_t>> Application::MatchResolver::ResolveMatc
 
 	return matchedPositions;
 }
+
+std::vector<std::pair<int32_t, int32_t>> Application::MatchResolver::ResolveIsolatedBlocks(const std::vector<std::vector<int32_t>>& blockContainer)
+{
+	// 4のブロックで、隣接する4マスのどれかに0があるブロックの位置を検出する
+	std::vector<std::pair<int32_t, int32_t>> isolatedPositions;
+	int32_t rows = static_cast<int32_t>(blockContainer.size());
+	int32_t cols = rows > 0 ? static_cast<int32_t>(blockContainer[0].size()) : 0;
+
+	for (int32_t row = 0; row < rows; ++row) {
+		for (int32_t col = 0; col < cols; ++col) {
+			if (blockContainer[row][col] == 4) {
+				bool hasZeroAdjacent = false;
+				// 上下左右をチェック
+				const std::vector<std::pair<int32_t, int32_t>> directions = { {0,1}, {0,-1}, {1,0}, {-1,0} };
+				for (const auto& dir : directions) {
+					int32_t newRow = row + dir.first;
+					int32_t newCol = col + dir.second;
+					if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
+						if (blockContainer[newRow][newCol] == 0) {
+							hasZeroAdjacent = true;
+							break;
+						}
+					}
+				}
+				if (hasZeroAdjacent) {
+					isolatedPositions.emplace_back(row, col);
+				}
+			}
+		}
+	}
+
+	return isolatedPositions;
+}

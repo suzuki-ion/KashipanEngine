@@ -22,14 +22,15 @@ inline void AppInitialize(const GameEngine::Context &context) {
         
         //sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
         //sm->RegisterScene<TitleScene>("TitleScene");
-        //sm->RegisterScene<GameScene>("GameScene");
+        sm->RegisterScene<GameScene>("GameScene");
         //sm->RegisterScene<ResultScene>("ResultScene");
         //sm->RegisterScene<GameOverScene>("GameOverScene");
 
-#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
-        sm->RegisterScene<TestScene>("TestScene");
-        context.sceneManager->ChangeScene("TestScene");
-#endif
+        //#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+        //        sm->RegisterScene<TestScene>("TestScene");
+        //        context.sceneManager->ChangeScene("TestScene");
+        //#endif
+		context.sceneManager->ChangeScene("GameScene");
     }
 
     if (context.inputCommand) {

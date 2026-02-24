@@ -129,6 +129,11 @@ public:
     /// @brief 指定ハンドルの描画パス登録情報を取得
     std::optional<RenderPassRegistrationInfo> GetRenderPassRegistration(RenderPassRegistrationHandle handle) const;
 
+    /// @brief バッチキーの設定（同じパイプラインを使う他オブジェクトとバッチングされる）
+    /// @param key バッチキー（同じキーを持つオブジェクト同士がバッチングされる）
+    /// @param renderType renderType バッチングの種類（デフォルトはインスタンシング、個別描画にしたい場合は RenderType::Standard を指定）
+    void SetBatchKey(std::uint64_t key, RenderType renderType = RenderType::Instancing);
+
     /// @brief バッチキーを個別のものに設定（同じパイプラインを使う他オブジェクトとバッチングされなくなる）
     void SetUniqueBatchKey();
 

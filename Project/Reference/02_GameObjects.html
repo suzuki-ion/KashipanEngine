@@ -83,11 +83,83 @@ sprite-&gt;SetAnchorPoint(<span class="num">0.5f</span>, <span class="num">0.5f<
 <li><code>void DetachFromRenderer()</code> / <code>bool DetachFromRenderer(RenderPassRegistrationHandle)</code></li>
 <li><code>std::vector&lt;RenderPassRegistrationInfo&gt; GetRenderPassRegistrations() const</code></li>
 </ul>
+<li>バッチキー</li>
+<ul>
+<li><code>void SetBatchKey(std::uint64_t key, RenderType renderType = RenderType::Instancing)</code></li>
+<li><code>void SetUniqueBatchKey()</code></li>
+<li><code>std::uint64_t GetInstanceBatchKey() const</code></li>
+</ul>
 </ul>
 <h3><code>Object3DBase</code>（概念は <code>Object2DBase</code> と同様）</h3>
 <ul>
 <li>3D は描画先として <code>ShadowMapBuffer</code> もサポートします（<code>AttachToRenderer(ShadowMapBuffer*, ...)</code>）。</li>
 </ul>
+<hr />
+<h2>バッチキー（Batch Key）</h2>
+<h3>概要</h3>
+<p>バッチキーは、同じパイプラインを使用するオブジェクト同士を**まとめて描画（バッチング/インスタンシング）**するための仕組みです。</p>
+<p>同じバッチキーを持つオブジェクトは、GPU 描画時にまとめて処理されるため描画コール数が削減され、パフォーマンスが向上します。</p>
+<h3>設計</h3>
+<ul>
+<li>バッチキーは <code>std::uint64_t</code> 型の値です。</li>
+<li>**同じバッチキー + 同じパイプライン** を持つオブジェクト同士がバッチングの対象になります。</li>
+<li>デフォルトのバッチキーはオブジェクト名のハッシュ値です。同じ名前のオブジェクトは自動的にバッチングされます。</li>
+<li>バッチキーに加えて <code>RenderType</code> を指定できます。</li>
+<ul>
+<li><code>RenderType::Instancing</code>（デフォルト）：インスタンシング描画でまとめられます。</li>
+<li><code>RenderType::Standard</code>：個別描画になります（バッチングされません）。</li>
+</ul>
+</ul>
+<h3>公開API</h3>
+<pre><code class="language-cpp">
+<span class="com">// バッチキーを明示的に設定（同じキーのオブジェクト同士がバッチングされる）</span>
+<span class="type">void</span> SetBatchKey(std::<span class="type">uint64_t</span> key, RenderType renderType = RenderType::Instancing);
+
+<span class="com">// バッチキーを一意な値に設定（他のオブジェクトとバッチングされなくなる）</span>
+<span class="type">void</span> SetUniqueBatchKey();
+
+<span class="com">// 現在のバッチキーを取得</span>
+std::<span class="type">uint64_t</span> GetInstanceBatchKey() <span class="kw">const</span>;
+</code></pre>
+<h3>使い分けの指針</h3>
+<ul>
+<li>**同じ見た目のオブジェクトを大量に描画する場合（敵、弾、パーティクルなど）**</li>
+<ul>
+<li>同じバッチキーを設定 → インスタンシングで効率よく描画されます。</li>
+</ul>
+<li>**個別にシェーダー変数を切り替えたいオブジェクト（UI 要素など）**</li>
+<ul>
+<li><code>SetUniqueBatchKey()</code> で個別描画にします。</li>
+</ul>
+<li>**同じパイプラインの ScreenBuffer 表示用スプライトなど**</li>
+<ul>
+<li>テクスチャが異なるため、<code>SetUniqueBatchKey()</code> で分離する必要があります。</li>
+</ul>
+</ul>
+<h3>例：同じバッチキーでインスタンシング描画</h3>
+<pre><code class="language-cpp">
+<span class="com">// 同じバッチキーを設定すると、同一パイプライン上でまとめて描画される</span>
+<span class="kw">constexpr</span> std::<span class="type">uint64_t</span> kEnemyBatchKey = <span class="num">100</span>;
+
+<span class="kw">auto</span> enemy1 = std::make_unique&lt;KashipanEngine::Box&gt;();
+enemy1-&gt;SetBatchKey(kEnemyBatchKey);
+enemy1-&gt;AttachToRenderer(screenBuffer, <span class="str">&quot;Object3D.Solid.BlendNormal&quot;</span>);
+
+<span class="kw">auto</span> enemy2 = std::make_unique&lt;KashipanEngine::Box&gt;();
+enemy2-&gt;SetBatchKey(kEnemyBatchKey);
+enemy2-&gt;AttachToRenderer(screenBuffer, <span class="str">&quot;Object3D.Solid.BlendNormal&quot;</span>);
+
+<span class="com">// enemy1 と enemy2 は 1 回の描画コールでまとめて描画される</span>
+</code></pre>
+<h3>例：個別描画に設定</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> sprite = std::make_unique&lt;KashipanEngine::Sprite&gt;();
+sprite-&gt;SetUniqueBatchKey(); <span class="com">// 他のオブジェクトとバッチングしない</span>
+sprite-&gt;AttachToRenderer(window, <span class="str">&quot;Object2D.DoubleSidedCulling.BlendNormal&quot;</span>);
+</code></pre>
+<blockquote>
+<p><code>SetUniqueBatchKey()</code> はオブジェクト名とポインタのハッシュを組み合わせた一意なキーを内部的に生成し、<code>RenderType::Standard</code> を設定します。</p>
+</blockquote>
 <hr />
 <h2>例：最小の 2D オブジェクト</h2>
 <p><code>Object2DBase</code> は派生クラス側で <code>OnUpdate()</code> をオーバーライドして挙動を書けます。</p>

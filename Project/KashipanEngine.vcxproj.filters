@@ -565,6 +565,8 @@
     <ClCompile Include="Application\Objects\GameSystem\BlockScroller.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Thermometer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -1329,6 +1331,8 @@
     <ClInclude Include="Application\Objects\GameSystem\BlockScroller.h" />
     <ClInclude Include="Application\Objects\GameSystem\Thermometer.h" />
     <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
+    <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

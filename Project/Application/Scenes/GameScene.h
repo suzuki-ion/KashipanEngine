@@ -5,8 +5,10 @@
 #include <Objects/Container/BlockSpriteContainer.h>
 
 #include <Objects/GameSystem/BlockScroller.h>
+#include <Objects/GameSystem/BlockFaller.h>
 #include <Objects/GameSystem/Thermometer.h>
 #include <Objects/GameSystem/MatchResolver.h>
+#include <Objects/GameSystem/Cursor.h>
 
 namespace KashipanEngine {
 
@@ -28,8 +30,11 @@ private:
 
 	// ゲームシステムのまとまりクラス
 	Application::BlockScroller blockScroller_;
+	Application::BlockFaller blockFaller_;
 	Application::Thermometer thermometer_;
 	Application::MatchResolver matchResolver_;
+	Application::Cursor cursor_;
+	Sprite* cursorSprite_ = nullptr;
 
 	// 描画用のオブジェクトのまとまりクラス
     Vector2 blockSpriteBasePos_;

@@ -69,3 +69,15 @@ void Application::BlockSpriteContainer::SetBlockSpriteScale(int32_t row, int32_t
 		}
 	}
 }
+
+Vector2 Application::BlockSpriteContainer::GetBlockPosition(int32_t row, int32_t col) const
+{
+	Vector2 position;
+	if (auto* sprite = GetBlockSprite(row, col)) {
+		if (auto* tr = sprite->GetComponent2D<Transform2D>())
+		{
+			position = tr->GetTranslate();
+		}
+	}
+	return position;
+}

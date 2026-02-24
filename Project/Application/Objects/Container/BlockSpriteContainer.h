@@ -20,6 +20,8 @@ namespace Application {
 
 		void SetBlockSpriteScale(int32_t row, int32_t col, const Vector2& scale);
 
+		Vector2 GetBlockPosition(int32_t row, int32_t col) const;
+
 	private:
 		std::vector<std::vector<KashipanEngine::Sprite*>> blockSprites_;
 	};

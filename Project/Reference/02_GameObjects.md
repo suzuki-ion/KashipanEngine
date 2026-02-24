@@ -68,9 +68,81 @@ sprite->SetAnchorPoint(0.5f, 0.5f);
   - `RenderPassRegistrationHandle AttachToRenderer(ScreenBuffer* targetBuffer, const std::string& pipelineName, ...)`
   - `void DetachFromRenderer()` / `bool DetachFromRenderer(RenderPassRegistrationHandle)`
   - `std::vector<RenderPassRegistrationInfo> GetRenderPassRegistrations() const`
+- バッチキー
+  - `void SetBatchKey(std::uint64_t key, RenderType renderType = RenderType::Instancing)`
+  - `void SetUniqueBatchKey()`
+  - `std::uint64_t GetInstanceBatchKey() const`
 
 ### `Object3DBase`（概念は `Object2DBase` と同様）
 - 3D は描画先として `ShadowMapBuffer` もサポートします（`AttachToRenderer(ShadowMapBuffer*, ...)`）。
+
+---
+
+## バッチキー（Batch Key）
+
+### 概要
+
+バッチキーは、同じパイプラインを使用するオブジェクト同士を**まとめて描画（バッチング/インスタンシング）**するための仕組みです。
+
+同じバッチキーを持つオブジェクトは、GPU 描画時にまとめて処理されるため描画コール数が削減され、パフォーマンスが向上します。
+
+### 設計
+
+- バッチキーは `std::uint64_t` 型の値です。
+- **同じバッチキー + 同じパイプライン** を持つオブジェクト同士がバッチングの対象になります。
+- デフォルトのバッチキーはオブジェクト名のハッシュ値です。同じ名前のオブジェクトは自動的にバッチングされます。
+- バッチキーに加えて `RenderType` を指定できます。
+  - `RenderType::Instancing`（デフォルト）：インスタンシング描画でまとめられます。
+  - `RenderType::Standard`：個別描画になります（バッチングされません）。
+
+### 公開API
+
+```cpp
+// バッチキーを明示的に設定（同じキーのオブジェクト同士がバッチングされる）
+void SetBatchKey(std::uint64_t key, RenderType renderType = RenderType::Instancing);
+
+// バッチキーを一意な値に設定（他のオブジェクトとバッチングされなくなる）
+void SetUniqueBatchKey();
+
+// 現在のバッチキーを取得
+std::uint64_t GetInstanceBatchKey() const;
+```
+
+### 使い分けの指針
+
+- **同じ見た目のオブジェクトを大量に描画する場合（敵、弾、パーティクルなど）**
+  - 同じバッチキーを設定 → インスタンシングで効率よく描画されます。
+- **個別にシェーダー変数を切り替えたいオブジェクト（UI 要素など）**
+  - `SetUniqueBatchKey()` で個別描画にします。
+- **同じパイプラインの ScreenBuffer 表示用スプライトなど**
+  - テクスチャが異なるため、`SetUniqueBatchKey()` で分離する必要があります。
+
+### 例：同じバッチキーでインスタンシング描画
+
+```cpp
+// 同じバッチキーを設定すると、同一パイプライン上でまとめて描画される
+constexpr std::uint64_t kEnemyBatchKey = 100;
+
+auto enemy1 = std::make_unique<KashipanEngine::Box>();
+enemy1->SetBatchKey(kEnemyBatchKey);
+enemy1->AttachToRenderer(screenBuffer, "Object3D.Solid.BlendNormal");
+
+auto enemy2 = std::make_unique<KashipanEngine::Box>();
+enemy2->SetBatchKey(kEnemyBatchKey);
+enemy2->AttachToRenderer(screenBuffer, "Object3D.Solid.BlendNormal");
+
+// enemy1 と enemy2 は 1 回の描画コールでまとめて描画される
+```
+
+### 例：個別描画に設定
+
+```cpp
+auto sprite = std::make_unique<KashipanEngine::Sprite>();
+sprite->SetUniqueBatchKey(); // 他のオブジェクトとバッチングしない
+sprite->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
+```
+
+> `SetUniqueBatchKey()` はオブジェクト名とポインタのハッシュを組み合わせた一意なキーを内部的に生成し、`RenderType::Standard` を設定します。
 
 ---
 

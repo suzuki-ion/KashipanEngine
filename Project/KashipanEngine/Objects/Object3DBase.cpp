@@ -276,6 +276,11 @@ std::optional<Object3DBase::RenderPassRegistrationInfo> Object3DBase::GetRenderP
     return it->second.info;
 }
 
+void Object3DBase::SetBatchKey(std::uint64_t batchKey, RenderType renderType) {
+    instanceBatchKey_ = batchKey;
+    renderType_ = renderType;
+}
+
 void Object3DBase::SetUniqueBatchKey() {
     instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
     renderType_ = RenderType::Standard;

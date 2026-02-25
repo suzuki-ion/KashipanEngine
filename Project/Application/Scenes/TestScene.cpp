@@ -15,6 +15,8 @@ void TestScene::Initialize() {
 
     // 2D用オフスクリーンバッファを取得。描画先として使用するため、以降のオブジェクト生成時に必要になる。
     auto *screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D();
+    // 3D用オフスクリーンバッファを取得。描画先として使用するため、以降のオブジェクト生成時に必要になる。
+    auto *screenBuffer3D = sceneDefaultVariables_->GetScreenBuffer3D();
 
     //--------- テスト用スプライトオブジェクト ---------//
     {
@@ -110,6 +112,10 @@ void TestScene::Initialize() {
         audioPlayer_.ChangeAudio(0.0, 0);
         audioPlayerTestActive_ = true;
     }
+
+    //--------- パーティクルマネージャーテスト ---------//
+
+    AddSceneComponent(std::make_unique<ParticleManager>(screenBuffer2D, screenBuffer3D));
 }
 
 TestScene::~TestScene() {

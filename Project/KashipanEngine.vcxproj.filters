@@ -182,6 +182,7 @@
     <ClCompile Include="KashipanEngine\Utilities\TimeUtils.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ParticleManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -494,6 +495,7 @@
     <ClInclude Include="MyStd\OnlyPointer.h" />
     <ClInclude Include="MyStd\UniversalIndex.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ParticleManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

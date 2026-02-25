@@ -143,6 +143,8 @@ void TestScene::OnUpdate() {
             audioPlayer_.ChangeAudio(3.0);
         }
     }
+
+    testText_->SetTextFormat("デルタタイム:{}", GetDeltaTime());
 }
 
 } // namespace KashipanEngine

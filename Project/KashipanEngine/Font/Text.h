@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <format>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "Font/FontStructs.h"
@@ -53,6 +55,19 @@ public:
     /// @param text テキストの文字列(""の前にu8と付けたUTF8形式の文字列。例: u8"Hello, World!")
     void SetText(const std::u8string &text);
 
+    /// @brief テキストの設定
+    /// @param text テキストの文字列
+    void SetText(const std::string &text) {
+        SetText(ToU8String(text));
+    }
+
+    /// @brief テキストの設定（`std::format` スタイル）
+    template<typename... Args>
+    void SetTextFormat(std::format_string<Args...> format, Args&&... args) {
+        const std::string formatted = std::format(format, std::forward<Args>(args)...);
+        SetText(ToU8String(formatted));
+    }
+
     /// @brief テキストの揃え方を設定する
     /// @param textAlignX 水平方向の揃え方
     /// @param textAlignY 垂直方向の揃え方
@@ -92,6 +107,7 @@ private:
     void ResolveFontTextures();
     void HideSprite(size_t index);
     void UpdateSpriteForChar(size_t index, const CharInfo &charData);
+    static std::u8string ToU8String(const std::string &text);
 
     FontData fontData_;
     std::u8string text_;

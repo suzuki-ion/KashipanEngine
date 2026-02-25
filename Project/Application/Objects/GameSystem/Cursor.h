@@ -14,6 +14,10 @@ namespace Application
 		
 		/// カーソルの現在の行と列を取得します。
 		std::pair<int32_t, int32_t> GetPosition() const { return {row_, col_}; }
+		void SetPosition(int32_t row, int32_t col) {
+			row_ = std::clamp(row, 0, maxRows_ - 1);
+			col_ = std::clamp(col, 0, maxCols_ - 1);
+		}
 		
 	private:
 		int32_t row_; // カーソルの行位置

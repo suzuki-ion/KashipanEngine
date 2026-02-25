@@ -194,6 +194,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Player\PlayerDieParticleManager.cpp" />
     <ClCompile Include="Application\Objects\Container\BlockContainer.cpp" />
+    <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
+    <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockScroller.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
@@ -406,6 +408,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Components\SmokeParticle.h" />
     <ClInclude Include="Application\Objects\Container\BlockContainer.h" />
     <ClInclude Include="Application\Objects\Container\BlockSpriteContainer.h" />
+    <ClInclude Include="Application\Objects\Container\HandBlockContainer.h" />
+    <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockScroller.h" />
     <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />

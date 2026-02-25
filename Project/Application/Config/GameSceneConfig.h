@@ -7,4 +7,6 @@ namespace Application
 	inline constexpr float kBlockSize = 64.0f; // ブロックの1辺の長さ
 
 	inline constexpr float kInitialTemperature = 12.0f; // 温度計の初期温度
+
+	inline constexpr int32_t kMaxHandBlocks = 3; // 手持ちのブロックの最大数
 }

@@ -40,6 +40,28 @@ void TestScene::Initialize() {
         AddObject2D(std::move(obj));
     }
 
+    //--------- テスト用テキストオブジェクト ---------//
+    {
+        auto obj = std::make_unique<Text>(128);
+        obj->SetName("TestText");
+
+        if (auto *tr = obj->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector2(120.0f, 720.0f));
+            tr->SetScale(Vector2(1.0f, 1.0f));
+        }
+
+        const std::string fontPath = "Assets/Application/test.fnt";
+        if (IsFileExist(fontPath)) {
+            obj->SetFont(fontPath.c_str());
+            obj->SetText(u8"Hello, KashipanEngine!\nText Rendering Test\nこんにちは、かしぱんエンジン！\nテキスト描画テスト");
+            obj->SetTextAlign(TextAlignX::Left, TextAlignY::Top);
+        }
+
+        obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        testText_ = obj.get();
+        AddObject2D(std::move(obj));
+    }
+
     //--------- シーン遷移用アニメーションのシーンコンポーネント ---------//
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());

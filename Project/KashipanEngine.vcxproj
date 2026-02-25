@@ -254,6 +254,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Font\FontLoader.cpp" />
+    <ClCompile Include="KashipanEngine\Font\Text.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
@@ -484,6 +486,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
     <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\FontHeaders.h" />
+    <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
+    <ClInclude Include="KashipanEngine\Font\FontStructs.h" />
+    <ClInclude Include="KashipanEngine\Font\Text.h" />
     <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />

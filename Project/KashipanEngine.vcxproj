@@ -784,6 +784,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Reference\11_Assets_SoundBeat.md" />
     <None Include="Reference\11_Assets_TextureManager.md" />
     <None Include="Reference\12_PostEffects.md" />
+    <None Include="Reference\13_Font.md" />
     <None Include="Reference\README.md" />
     <None Include="Reference\reference.css" />
     <None Include="Reference\Tutorial\00_Index.md" />

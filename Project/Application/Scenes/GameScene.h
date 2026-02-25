@@ -3,6 +3,8 @@
 
 #include <Objects/Container/BlockContainer.h>
 #include <Objects/Container/BlockSpriteContainer.h>
+#include <Objects/Container/HandBlockContainer.h>
+#include <Objects/Container/HandBlockSpriteContainer.h>
 
 #include <Objects/GameSystem/BlockScroller.h>
 #include <Objects/GameSystem/BlockFaller.h>
@@ -27,6 +29,7 @@ private:
 
     // ゲームで使うデータのまとまりクラス
 	Application::BlockContainer blockContainer_;
+	Application::HandBlockContainer handBlockContainer_;
 
 	// ゲームシステムのまとまりクラス
 	Application::BlockScroller blockScroller_;
@@ -39,6 +42,8 @@ private:
 	// 描画用のオブジェクトのまとまりクラス
     Vector2 blockSpriteBasePos_;
 	Application::BlockSpriteContainer blockSpriteContainer_;
+	Vector2 handBlockSpriteBasePos_;
+	Application::HandBlockSpriteContainer handBlockSpriteContainer_;
 
     // 関数
 	void UpdateBlockColor();

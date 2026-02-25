@@ -43,6 +43,35 @@ AddObject2D(std::move(text));
 <p><code>SetText(...)</code> を呼ぶと、内部レイアウトを再構築します。</p>
 <pre><code class="language-cpp">
 text-&gt;SetText(u8<span class="str">&quot;Score: 100&quot;</span>);
+<span class="com">// u8string型でなくても通常のstring型も受け付けます。</span>
+text-&gt;SetText(<span class="str">&quot;Time: 12.34&quot;</span>);
+</code></pre>
+<h3>テキスト更新（<code>std::format</code> スタイル）</h3>
+<p><code>SetTextFormat(...)</code> で <code>std::format</code> と同様に <code>{}</code> プレースホルダーへ値を埋め込めます。</p>
+<pre><code class="language-cpp">
+<span class="type">int</span> score = <span class="num">100</span>;
+<span class="type">float</span> time = <span class="num">12.34f</span>;
+text-&gt;SetTextFormat(<span class="str">&quot;Score: {}  Time: {:.2f}&quot;</span>, score, time);
+</code></pre>
+<blockquote>
+<p><code>SetTextFormat(...)</code> の format は <code>std::format_string&lt;...&gt;</code> のため、</p>
+<p>文字列リテラル（またはコンパイル時に妥当性が取れる形式）での使用を推奨します。</p>
+</blockquote>
+<hr />
+<h2>文字ごとの <code>Sprite</code> へのアクセス（<code>operator[]</code>）</h2>
+<p><code>Text</code> は内部的に文字単位の <code>Sprite</code> を保持しており、<code>operator[]</code> でアクセスできます。</p>
+<ul>
+<li><code>text[i]</code> は i 番目の文字スプライト（<code>Sprite*</code>）を返します</li>
+<li>範囲外の場合は <code>nullptr</code> を返します</li>
+</ul>
+<p>これにより、文字ごとに色・座標・拡大率などを個別に調整できます。</p>
+<p>例：先頭の1文字だけ色を変える</p>
+<pre><code class="language-cpp">
+<span class="kw">if</span> (<span class="kw">auto</span>* s = (*text)[<span class="num">0</span>]) {
+    <span class="kw">if</span> (<span class="kw">auto</span>* mat = s-&gt;GetComponent2D&lt;Material2D&gt;()) {
+        mat-&gt;SetColor(Vector4(<span class="num">1.0f</span>, <span class="num">0.2f</span>, <span class="num">0.2f</span>, <span class="num">1.0f</span>));
+    }
+}
 </code></pre>
 <hr />
 <h2>揃え（アライン）</h2>

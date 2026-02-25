@@ -259,4 +259,8 @@ void Text::UpdateSpriteForChar(size_t index, const CharInfo &charData) {
     }
 }
 
+std::u8string Text::ToU8String(const std::string &text) {
+    return std::u8string(reinterpret_cast<const char8_t *>(text.data()), text.size());
+}
+
 } // namespace KashipanEngine

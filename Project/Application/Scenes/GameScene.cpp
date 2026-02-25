@@ -25,6 +25,7 @@ namespace KashipanEngine {
 		blockContainer_.Initialize(
 			Application::kBlockContainerRows,
 			Application::kBlockContainerCols);
+		handBlockContainer_.Initialize(Application::kMaxHandBlocks);
 
 		// * ゲームシステムの初期化 * //
 		thermometer_.SetTemperature(Application::kInitialTemperature);
@@ -70,6 +71,41 @@ namespace KashipanEngine {
 		blockSpriteContainer_.RsetBlockPosition(blockSpriteBasePos_, Vector2(Application::kBlockSize, Application::kBlockSize));
 		UpdateBlockColor();
 
+		// 手持ちブロック描画用
+		{
+			handBlockSpriteContainer_.Initialize(Application::kMaxHandBlocks);
+			handBlockSpriteBasePos_ = Vector2(1920.0f * 0.5f, 1080.0f - 100.0f);
+			for (int i = 0; i < Application::kMaxHandBlocks; i++) {
+				auto obj = std::make_unique<Sprite>();
+				handBlockSpriteContainer_.SetHandBlockSprite(i, obj.get());
+				std::string name = "HandBlockSprite[" + std::to_string(i) + "]";
+				obj->SetName(name);
+				if (auto* mat = obj->GetComponent2D<Material2D>()) {
+					int value = handBlockContainer_.GetHandBlocks()[i];
+					switch (value) {
+					case 0:
+						mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
+						break;
+					case 1:
+						mat->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+						break;
+					case 2:
+						mat->SetColor(Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+						break;
+					case 3:
+						mat->SetColor(Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+						break;
+					default:
+						mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+						break;
+					}
+				}
+				obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+				AddObject2D(std::move(obj));
+			}
+			handBlockSpriteContainer_.SetPosition(handBlockSpriteBasePos_);
+		}
+
 		// カーソル描画用
 		{
 			std::unique_ptr<Sprite> obj = std::make_unique<Sprite>();
@@ -94,16 +130,83 @@ namespace KashipanEngine {
 	void GameScene::OnUpdate() {
 		// カーソルの更新
 		cursor_.UpdatePosition(KashipanEngine::SceneBase::GetInputCommand());
-		if (KashipanEngine::SceneBase::GetInputCommand()->Evaluate("Submit").Triggered()) {
+		if (KashipanEngine::SceneBase::GetInputCommand()->Evaluate("Submit").Triggered() && handBlockContainer_.HaveHandBlocks()) {
 			// 決定ボタンが押されたとき、カーソルの位置にブロックを差し込む
 			auto [row, col] = cursor_.GetPosition();
-			blockContainer_.PushBlock(row, col, rand() % 3 + 1);
+			// ４番のブロックに差し込んだ場合、差し込んだ色と同じ色で繋がっているブロックをすべて0にする
+			if (blockContainer_.GetBlock(row, col) == 4) {
+				int blockType = handBlockContainer_.PopHandBlock();
+				blockContainer_.SetBlock(row, col, blockType);
+				auto connectedBlocks = matchResolver_.GetConnectedBlocksOfType(blockContainer_.GetBlocks(), row, col, blockType);
+				
+				// 2つ以上繋がっている場合は、繋がっているブロックをすべて0にする
+				if (connectedBlocks.size() >= 2) {
+					for (auto& pos : connectedBlocks) {
+						blockContainer_.SetBlock(pos.first, pos.second, 0);
+					}
+				} else {
+					blockContainer_.SetBlock(row, col, blockType);
+				}
+
+			} else {
+				blockContainer_.PushBlock(row, col, handBlockContainer_.PopHandBlock());
+			}
+			
 			UpdateBlockColor();
+
+			// 手持ちのブロックの色を更新する
+			for (int i = 0; i < Application::kMaxHandBlocks; i++) {
+				if (auto* mat = handBlockSpriteContainer_.GetHandBlockSprite(i)->GetComponent2D<Material2D>()) {
+					int value = handBlockContainer_.GetHandBlocks()[i];
+					switch (value) {
+					case 0:
+						mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
+						break;
+					case 1:
+						mat->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+						break;
+					case 2:
+						mat->SetColor(Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+						break;
+					case 3:
+						mat->SetColor(Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+						break;
+					default:
+						mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+						break;
+					}
+				}
+			}
 		}
 
 		// ブロックのスクロール
 		if (!matchResolver_.HaveMatch() && !blockFaller_.IsFalling()) {
 			blockScroller_.Update(KashipanEngine::GetDeltaTime());
+			// 止まっていない時は手持ちをリロードする
+			handBlockContainer_.ReloadBlocks(KashipanEngine::GetDeltaTime());
+			// 手持ちのブロックの色を更新する
+			for (int i = 0; i < Application::kMaxHandBlocks; i++) {
+				if (auto* mat = handBlockSpriteContainer_.GetHandBlockSprite(i)->GetComponent2D<Material2D>()) {
+					int value = handBlockContainer_.GetHandBlocks()[i];
+					switch (value) {
+					case 0:
+						mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
+						break;
+					case 1:
+						mat->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+						break;
+					case 2:
+						mat->SetColor(Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+						break;
+					case 3:
+						mat->SetColor(Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+						break;
+					default:
+						mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+						break;
+					}
+				}
+			}
 
 			blockSpriteContainer_.RsetBlockPosition(
 				blockSpriteBasePos_ + Vector2(0.0f, blockScroller_.GetCurrentScroll()),
@@ -138,7 +241,14 @@ namespace KashipanEngine {
 
 				// ブロックの色を更新
 				UpdateBlockColor();
+
+				// スクロールでカーソルを押し上げる
+				auto [cursorRow, cursorCol] = cursor_.GetPosition();
+				cursor_.SetPosition(cursorRow + 1, cursorCol);
 			}
+		} else {
+
+			handBlockContainer_.ResetReloadTimer();
 		}
 
 		// ブロックの落下

@@ -567,6 +567,8 @@
     <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
+    <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
+    <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
@@ -1333,6 +1335,8 @@
     <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
     <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
+    <ClInclude Include="Application\Objects\Container\HandBlockContainer.h" />
+    <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

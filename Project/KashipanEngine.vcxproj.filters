@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="リソース ファイル">
@@ -567,6 +567,8 @@
     <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
+    <ClCompile Include="KashipanEngine\Font\FontLoader.cpp" />
+    <ClCompile Include="KashipanEngine\Font\Text.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
   </ItemGroup>
@@ -1335,6 +1337,10 @@
     <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
     <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
+    <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
+    <ClInclude Include="KashipanEngine\Font\FontStructs.h" />
+    <ClInclude Include="KashipanEngine\Font\Text.h" />
+    <ClInclude Include="KashipanEngine\FontHeaders.h" />
     <ClInclude Include="Application\Objects\Container\HandBlockContainer.h" />
     <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
   </ItemGroup>

@@ -30,6 +30,7 @@
 - `11_Assets_SoundBeat.md` - アセット管理：ビート検出（`SoundBeat`）
 - `11_Assets_SamplerManager.md` - アセット管理：サンプラー（`SamplerManager` / `DefaultSampler`）
 - `12_PostEffects.md` - ポストエフェクト（`IPostEffectComponent`）
+- `13_Font.md` - フォント / テキスト描画（`Text` / `FontLoader`）
 
 > コード例は「概念例」ではなく、可能な限りエンジンの公開 API（ヘッダの関数）に合わせています。
 

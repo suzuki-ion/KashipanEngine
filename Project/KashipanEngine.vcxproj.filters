@@ -183,6 +183,10 @@
     <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ParticleManager.cpp" />
+    <ClCompile Include="Application\Config\PuzzleGameConfig.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleBoard.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleCursor.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -496,6 +500,11 @@
     <ClInclude Include="MyStd\UniversalIndex.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ParticleManager.h" />
+    <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
+    <ClInclude Include="Application\Config\PuzzleGameConfig.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleBoard.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

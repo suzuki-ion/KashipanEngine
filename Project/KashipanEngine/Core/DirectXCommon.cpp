@@ -28,7 +28,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     LogScope scope;
     Log(Translation("engine.directx.initialize.start"), LogSeverity::Debug);
 
-#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+#if defined(DEBUG_BUILD)
     Log(enableDebugLayer ?
         Translation("engine.directx.debuglayer.enabled") :
         Translation("engine.directx.debuglayer.disabled"),

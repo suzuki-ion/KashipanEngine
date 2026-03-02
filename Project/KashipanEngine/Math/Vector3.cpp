@@ -132,7 +132,7 @@ float Vector3::Length() const noexcept {
     return KashipanEngine::MathUtils::Length(*this);
 }
 
-constexpr float Vector3::LengthSquared() const noexcept {
+float Vector3::LengthSquared() const noexcept {
     return KashipanEngine::MathUtils::LengthSquared(*this);
 }
 

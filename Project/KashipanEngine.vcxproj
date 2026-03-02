@@ -175,6 +175,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Config\PuzzleGameConfig.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
@@ -201,6 +202,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Thermometer.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleBoard.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleCursor.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
@@ -374,6 +378,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
+    <ClInclude Include="Application\Config\PuzzleGameConfig.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticle.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.h" />
@@ -418,6 +423,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
     <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
     <ClInclude Include="Application\Objects\GameSystem\Thermometer.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleBoard.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
     <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />
@@ -502,6 +510,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
+    <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />

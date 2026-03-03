@@ -9,6 +9,7 @@
 #include "Objects/Components/2D/Material2D.h"
 #include "Objects/Components/2D/Transform2D.h"
 #include "Objects/GameObjects/2D/VertexData2D.h"
+#include "Utilities/RandomValue.h"
 
 namespace KashipanEngine {
 
@@ -18,11 +19,13 @@ Text::Text(uint32_t textCount)
     textCodePoints_.resize(textCount, -1);
     basePositions_.resize(textCount, Vector2{0.0f, 0.0f});
 
+    spriteBatchKey_ = GetRandomValue<uint64_t>(0, UINT64_MAX);
+
     parentTransform_ = GetComponent2D<Transform2D>();
 
     for (uint32_t i = 0; i < textCount; ++i) {
         auto sprite = std::make_unique<Sprite>();
-        sprite->SetUniqueBatchKey();
+        sprite->SetBatchKey(spriteBatchKey_);
         sprite->SetName(std::string("TextChar_") + std::to_string(i));
         sprite->SetAnchorPoint(0.0f, 0.0f);
 
@@ -250,12 +253,12 @@ void Text::UpdateSpriteForChar(size_t index, const CharInfo &charData) {
     const float u1 = (charData.x + charData.width) * invW;
     const float v1 = (charData.y + charData.height) * invH;
 
-    auto verts = sprite->GetVertexData<VertexData2D>();
-    if (verts.size() >= 4) {
-        verts[0].texcoord = Vector2{u0, v1};
-        verts[1].texcoord = Vector2{u0, v0};
-        verts[2].texcoord = Vector2{u1, v0};
-        verts[3].texcoord = Vector2{u1, v1};
+    if (auto *mat = sprite->GetComponent2D<Material2D>()) {
+        Material2D::UVTransform uvTransform;
+        uvTransform.scale = Vector3{u1 - u0, v1 - v0, 1.0f};
+        uvTransform.rotate = Vector3{0.0f, 0.0f, 0.0f};
+        uvTransform.translate = Vector3{u0, v0, 0.0f};
+        mat->SetUVTransform(uvTransform);
     }
 }
 

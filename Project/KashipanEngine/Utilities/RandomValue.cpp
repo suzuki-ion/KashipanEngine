@@ -30,6 +30,11 @@ double GetRandomDouble(double min, double max) {
     return dist(mtEngine);
 }
 
+int64_t GetRandomInt64(int64_t min, int64_t max) {
+    std::uniform_int_distribution<int64_t> dist(min, max);
+    return dist(mtEngine);
+}
+
 bool GetRandomBool(float trueProbability) {
     std::bernoulli_distribution dist(trueProbability);
     return dist(mtEngine);

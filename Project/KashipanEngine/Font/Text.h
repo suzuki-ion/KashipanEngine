@@ -118,6 +118,8 @@ private:
     Transform2D *parentTransform_ = nullptr;
     TextAlignX textAlignX_ = TextAlignX::Left;
     TextAlignY textAlignY_ = TextAlignY::Top;
+
+    uint64_t spriteBatchKey_ = 0;
 };
 
 } // namespace KashipanEngine

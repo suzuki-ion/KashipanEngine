@@ -42,32 +42,32 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->Clear();
 
         // 左右移動
-        ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::Left }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveLeft", Key::A, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveLeft", Key::Left, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.1f);
-        ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::Right }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveRight", Key::D, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveRight", Key::Right, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.1f);
         
         // 上下移動
-        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::Up }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveUp", Key::W, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveUp", Key::Up, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.1f);
-        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::Down }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveDown", Key::S, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("MoveDown", Key::Down, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
         ic->RegisterCommand("MoveDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.1f);
 
 		// 決定
-        ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Enter }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Submit", Key::Enter, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Submit", Key::Space, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", ControllerButton::Start, InputCommand::InputState::Trigger);
         // キャンセル
-        ic->RegisterCommand("Cancel", InputCommand::KeyboardKey{ Key::Escape }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Cancel", Key::Escape, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Cancel", ControllerButton::B, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Cancel", ControllerButton::Back, InputCommand::InputState::Trigger);
     }

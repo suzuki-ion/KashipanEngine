@@ -81,14 +81,22 @@
 <p><code>SceneDefaultVariables</code> は、シーン内でよく使う要素をまとめて提供します。</p>
 <p>主な取得 API（<code>KashipanEngine/Scene/Components/SceneDefaultVariables.h</code>）：</p>
 <ul>
-<li><code>ScreenBuffer* GetScreenBuffer2D() const</code></li>
-<li><code>ScreenBuffer* GetScreenBuffer3D() const</code></li>
-<li><code>Sprite* GetScreenBuffer2DSprite() const</code></li>
-<li><code>Sprite* GetScreenBuffer3DSprite() const</code></li>
-<li><code>Camera3D* GetMainCamera3D() const</code></li>
-<li><code>Camera2D* GetMainCamera2D() const</code></li>
-<li><code>DirectionalLight* GetDirectionalLight() const</code></li>
-<li><code>Window* GetMainWindow() const</code></li>
+<li><code>ScreenBuffer* GetScreenBuffer2D() const</code> — 2D用ScreenBuffer（→ <a href="07_Offscreen.html"><code>07_Offscreen.md</code></a>）</li>
+<li><code>ScreenBuffer* GetScreenBuffer3D() const</code> — 3D用ScreenBuffer（→ <a href="07_Offscreen.html"><code>07_Offscreen.md</code></a>）</li>
+<li><code>Sprite* GetScreenBuffer2DSprite() const</code> — 2D用ScreenBufferスプライト（→ <a href="02_GameObjects.html"><code>02_GameObjects.md</code></a>）</li>
+<li><code>Sprite* GetScreenBuffer3DSprite() const</code> — 3D用ScreenBufferスプライト（→ <a href="02_GameObjects.html"><code>02_GameObjects.md</code></a>）</li>
+<li><code>Camera3D* GetMainCamera3D() const</code> — 3D用メインカメラ（→ <a href="02_GameObjects.html"><code>02_GameObjects.md</code></a>）</li>
+<li><code>Camera2D* GetMainCamera2D() const</code> — 2D用メインカメラ（→ <a href="02_GameObjects.html"><code>02_GameObjects.md</code></a>）</li>
+<li><code>ScreenBufferKeepRatio* GetKeepRatioComp() const</code> — ScreenBufferアスペクト比維持コンポーネント</li>
+<li><code>ColliderComponent* GetColliderComp() const</code> — コライダーコンポーネント</li>
+<li><code>DirectionalLight* GetDirectionalLight() const</code> — 平行光源（→ <a href="08_Rendering.html"><code>08_Rendering.md</code></a>）</li>
+<li><code>LightManager* GetLightManager() const</code> — ライト管理</li>
+<li><code>ShadowMapBuffer* GetShadowMapBuffer() const</code> — シャドウマッピング用バッファ（→ <a href="07_Offscreen.html"><code>07_Offscreen.md</code></a>）</li>
+<li><code>ShadowMapBinder* GetShadowMapBinder() const</code> — シャドウマッピング用バインダー</li>
+<li><code>ShadowMapCameraSync* GetShadowMapCameraSync() const</code> — シャドウマッピング用カメラ同期</li>
+<li><code>Camera3D* GetLightCamera3D() const</code> — シャドウマッピング用ライトカメラ（→ <a href="02_GameObjects.html"><code>02_GameObjects.md</code></a>）</li>
+<li><code>Camera2D* GetWindowCamera2D() const</code> — ウィンドウ表示用2Dカメラ（→ <a href="02_GameObjects.html"><code>02_GameObjects.md</code></a>）</li>
+<li><code>Window* GetMainWindow() const</code> — メインウィンドウ（→ <a href="06_Window.html"><code>06_Window.md</code></a>）</li>
 </ul>
 <p>利用例：</p>
 <pre><code class="language-cpp">
@@ -102,6 +110,5 @@
     (<span class="type">void</span>)mainWindow;
     (<span class="type">void</span>)sb2d;
 }
-</code></pre>
 </body>
 </html>

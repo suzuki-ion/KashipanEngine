@@ -496,6 +496,7 @@
     <ClInclude Include="MyStd\UniversalIndex.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ParticleManager.h" />
+    <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -606,5 +607,10 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVS.hlsl" />
     <None Include="Reference\13_Font.md" />
+    <None Include="Reference\10_Input_Keyboard.md" />
+    <None Include="Reference\10_Input_Mouse.md" />
+    <None Include="Reference\10_Input_Controller.md" />
+    <None Include="Reference\10_Input_InputCommand.md" />
+    <None Include="Reference\14_BuildMacros.md" />
   </ItemGroup>
 </Project>

@@ -501,6 +501,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
+    <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
@@ -777,6 +778,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Reference\09_Utilities_Time.md" />
     <None Include="Reference\09_Utilities_Translation.md" />
     <None Include="Reference\10_Input.md" />
+    <None Include="Reference\10_Input_Controller.md" />
+    <None Include="Reference\10_Input_InputCommand.md" />
+    <None Include="Reference\10_Input_Keyboard.md" />
+    <None Include="Reference\10_Input_Mouse.md" />
     <None Include="Reference\11_Assets.md" />
     <None Include="Reference\11_Assets_AudioManager.md" />
     <None Include="Reference\11_Assets_AudioPlayer.md" />
@@ -787,6 +792,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Reference\11_Assets_TextureManager.md" />
     <None Include="Reference\12_PostEffects.md" />
     <None Include="Reference\13_Font.md" />
+    <None Include="Reference\14_BuildMacros.md" />
     <None Include="Reference\README.md" />
     <None Include="Reference\reference.css" />
     <None Include="Reference\Tutorial\00_Index.md" />

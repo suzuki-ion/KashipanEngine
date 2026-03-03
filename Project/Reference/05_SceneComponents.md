@@ -74,14 +74,22 @@ void MyScene::Initialize() {
 `SceneDefaultVariables` は、シーン内でよく使う要素をまとめて提供します。
 
 主な取得 API（`KashipanEngine/Scene/Components/SceneDefaultVariables.h`）：
-- `ScreenBuffer* GetScreenBuffer2D() const`
-- `ScreenBuffer* GetScreenBuffer3D() const`
-- `Sprite* GetScreenBuffer2DSprite() const`
-- `Sprite* GetScreenBuffer3DSprite() const`
-- `Camera3D* GetMainCamera3D() const`
-- `Camera2D* GetMainCamera2D() const`
-- `DirectionalLight* GetDirectionalLight() const`
-- `Window* GetMainWindow() const`
+- `ScreenBuffer* GetScreenBuffer2D() const` — 2D用ScreenBuffer（→ `07_Offscreen.md`）
+- `ScreenBuffer* GetScreenBuffer3D() const` — 3D用ScreenBuffer（→ `07_Offscreen.md`）
+- `Sprite* GetScreenBuffer2DSprite() const` — 2D用ScreenBufferスプライト（→ `02_GameObjects.md`）
+- `Sprite* GetScreenBuffer3DSprite() const` — 3D用ScreenBufferスプライト（→ `02_GameObjects.md`）
+- `Camera3D* GetMainCamera3D() const` — 3D用メインカメラ（→ `02_GameObjects.md`）
+- `Camera2D* GetMainCamera2D() const` — 2D用メインカメラ（→ `02_GameObjects.md`）
+- `ScreenBufferKeepRatio* GetKeepRatioComp() const` — ScreenBufferアスペクト比維持コンポーネント
+- `ColliderComponent* GetColliderComp() const` — コライダーコンポーネント
+- `DirectionalLight* GetDirectionalLight() const` — 平行光源（→ `08_Rendering.md`）
+- `LightManager* GetLightManager() const` — ライト管理
+- `ShadowMapBuffer* GetShadowMapBuffer() const` — シャドウマッピング用バッファ（→ `07_Offscreen.md`）
+- `ShadowMapBinder* GetShadowMapBinder() const` — シャドウマッピング用バインダー
+- `ShadowMapCameraSync* GetShadowMapCameraSync() const` — シャドウマッピング用カメラ同期
+- `Camera3D* GetLightCamera3D() const` — シャドウマッピング用ライトカメラ（→ `02_GameObjects.md`）
+- `Camera2D* GetWindowCamera2D() const` — ウィンドウ表示用2Dカメラ（→ `02_GameObjects.md`）
+- `Window* GetMainWindow() const` — メインウィンドウ（→ `06_Window.md`）
 
 利用例：
 ```cpp
@@ -95,4 +103,3 @@ void MyScene::Initialize() {
     (void)mainWindow;
     (void)sb2d;
 }
-```

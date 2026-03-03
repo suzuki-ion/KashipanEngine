@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>マウス入力（`Mouse` / `MouseButton`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>マウス入力（<code>Mouse</code> / <code>MouseButton</code>）</h1>
+<p>マウス入力は <code>Mouse</code> クラスで管理されます。<code>Input::GetMouse()</code> で取得できます。</p>
+<p>関連ヘッダ：</p>
+<ul>
+<li><code>KashipanEngine/Input/Mouse.h</code></li>
+<li><code>KashipanEngine/Input/MouseButton.h</code></li>
+</ul>
+<hr />
+<h2>公開API：<code>Mouse</code>（<code>KashipanEngine/Input/Mouse.h</code>）</h2>
+<h3>ボタン入力</h3>
+<ul>
+<li><code>bool IsButtonDown(int button) const</code> — 指定マウスボタンが押されているか</li>
+<li><code>bool IsButtonTrigger(int button) const</code> — 指定マウスボタンが押された瞬間か（トリガー）</li>
+<li><code>bool IsButtonRelease(int button) const</code> — 指定マウスボタンが離された瞬間か（リリース）</li>
+<li><code>bool WasButtonDown(int button) const</code> — 前フレームで指定マウスボタンが押されていたか</li>
+</ul>
+<p><code>button</code> は <code>MouseButton</code> 列挙型の値を <code>static_cast&lt;int&gt;</code> して渡すか、直接整数値（0-7）を指定します。</p>
+<h3>移動量（フレーム差分）</h3>
+<ul>
+<li><code>int GetDeltaX() const</code> — X方向の移動量</li>
+<li><code>int GetDeltaY() const</code> — Y方向の移動量</li>
+<li><code>int GetPrevDeltaX() const</code> — 前フレームのX方向移動量</li>
+<li><code>int GetPrevDeltaY() const</code> — 前フレームのY方向移動量</li>
+</ul>
+<h3>ホイール</h3>
+<ul>
+<li><code>int GetWheel() const</code> — ホイールのフレーム差分（縦方向）</li>
+<li><code>int GetWheelValue() const</code> — ホイール累積値（縦方向）</li>
+<li><code>int GetPrevWheel() const</code> — 前フレームのホイール差分</li>
+<li><code>int GetPrevWheelValue() const</code> — 前フレームのホイール累積値</li>
+</ul>
+<h3>カーソル座標</h3>
+<p><code>HWND</code> を指定するとクライアント座標系、<code>nullptr</code> を指定するとスクリーン座標系で取得します。<code>Window*</code> を直接渡すオーバーロードもあります。</p>
+<ul>
+<li><code>POINT GetPos(HWND hwnd) const</code> — マウス座標を取得</li>
+<li><code>POINT GetPrevPos(HWND hwnd) const</code> — 前フレームのマウス座標を取得</li>
+<li><code>int GetX(HWND hwnd) const</code> / <code>int GetY(HWND hwnd) const</code> — X/Y座標を個別取得</li>
+<li><code>int GetPrevX(HWND hwnd) const</code> / <code>int GetPrevY(HWND hwnd) const</code> — 前フレームのX/Y座標を個別取得</li>
+<li><code>POINT GetPos(const Window* window) const</code> — Window指定で座標を取得</li>
+<li><code>POINT GetPrevPos(const Window* window) const</code> — Window指定で前フレーム座標を取得</li>
+<li><code>int GetX(const Window* window) const</code> / <code>int GetY(const Window* window) const</code></li>
+<li><code>int GetPrevX(const Window* window) const</code> / <code>int GetPrevY(const Window* window) const</code></li>
+</ul>
+<hr />
+<h2><code>MouseButton</code> 列挙型（<code>KashipanEngine/Input/MouseButton.h</code>）</h2>
+<p>マウスボタンを表す列挙型です。GameInput API のボタンビットインデックスに対応しています。</p>
+<ul>
+<li><code>MouseButton::Left</code> — 左ボタン（0）</li>
+<li><code>MouseButton::Right</code> — 右ボタン（1）</li>
+<li><code>MouseButton::Middle</code> — 中ボタン / ホイールクリック（2）</li>
+<li><code>MouseButton::Button4</code> — サイドボタン4（3）</li>
+<li><code>MouseButton::Button5</code> — サイドボタン5（4）</li>
+<li><code>MouseButton::Button6</code> — ボタン6（5）</li>
+<li><code>MouseButton::Button7</code> — ボタン7（6）</li>
+<li><code>MouseButton::Button8</code> — ボタン8（7）</li>
+</ul>
+<hr />
+<h2>例：マウス入力の直接取得</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* input = KashipanEngine::SceneBase::GetInput();
+<span class="kw">if</span> (!input) <span class="kw">return</span>;
+
+<span class="kw">const</span> <span class="kw">auto</span>&amp; mouse = input-&gt;GetMouse();
+
+<span class="com">// 左クリック判定</span>
+<span class="kw">if</span> (mouse.IsButtonTrigger(static_cast&lt;<span class="type">int</span>&gt;(MouseButton::Left))) {
+    <span class="com">// 左ボタンが押された瞬間</span>
+}
+
+<span class="com">// マウス移動量の取得</span>
+<span class="type">int</span> dx = mouse.GetDeltaX();
+<span class="type">int</span> dy = mouse.GetDeltaY();
+
+<span class="com">// クライアント座標系でのカーソル位置</span>
+POINT pos = mouse.GetPos(windowHandle);
+</code></pre>
+<hr />
+<h2>例：<code>InputCommand</code> でのマウスボタン登録</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = context.inputCommand;
+
+<span class="com">// 左クリック</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;Attack&quot;</span>, MouseButton::Left, InputCommand::InputState::Trigger);
+
+<span class="com">// 右クリック</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;Block&quot;</span>, MouseButton::Right, InputCommand::InputState::Down);
+</code></pre>
+<hr />
+<h2>例：<code>InputCommand</code> でのマウス軸登録</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = context.inputCommand;
+
+<span class="com">// マウス移動量X（Screen座標系）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;LookX&quot;</span>,
+    InputCommand::MouseAxis::DeltaX,
+    <span class="kw">nullptr</span>, <span class="num">0.0f</span>);
+
+<span class="com">// マウスホイール差分</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;Zoom&quot;</span>,
+    InputCommand::MouseAxis::DeltaWheel,
+    <span class="kw">nullptr</span>, <span class="num">0.0f</span>);
+
+<span class="com">// クライアント座標系で取得（hwnd を指定）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;CursorX&quot;</span>,
+    InputCommand::MouseAxis::X,
+    hwnd, <span class="num">0.0f</span>);
+</code></pre>
+<blockquote>
+<p>詳しくは <a href="10_Input_InputCommand.html"><code>10_Input_InputCommand.md</code></a> を参照してください。</p>
+</blockquote>
+</body>
+</html>

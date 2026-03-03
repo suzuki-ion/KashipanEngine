@@ -21,7 +21,11 @@
 - `09_Utilities_TemplateLiteral.md` - ユーティリティ：文字列テンプレート（`TemplateLiteral`）
 - `09_Utilities_Time.md` - ユーティリティ：時間（TimeUtils / GameTimer）
 - `09_Utilities_Translation.md` - ユーティリティ：翻訳
-- `10_Input.md` - キーボード/マウス/コントローラー入力（`Input` / `InputCommand`）
+- `10_Input.md` - 入力（`Input`）（カテゴリ別インデックス）
+- `10_Input_Keyboard.md` - 入力：キーボード（`Keyboard` / `Key`）
+- `10_Input_Mouse.md` - 入力：マウス（`Mouse` / `MouseButton`）
+- `10_Input_Controller.md` - 入力：コントローラー（`Controller` / `ControllerButton`）
+- `10_Input_InputCommand.md` - 入力：入力コマンド（`InputCommand`）
 - `11_Assets_Index.md` - アセット管理（カテゴリ別インデックス）
 - `11_Assets_TextureManager.md` - アセット管理：テクスチャ（`TextureManager` / `TextureView` / `IShaderTexture`）
 - `11_Assets_ModelManager.md` - アセット管理：モデル（`ModelManager` / `ModelData`）
@@ -31,6 +35,7 @@
 - `11_Assets_SamplerManager.md` - アセット管理：サンプラー（`SamplerManager` / `DefaultSampler`）
 - `12_PostEffects.md` - ポストエフェクト（`IPostEffectComponent`）
 - `13_Font.md` - フォント / テキスト描画（`Text` / `FontLoader`）
+- `14_BuildMacros.md` - ビルド時マクロ（`DEBUG_BUILD` / `DEVELOPMENT_BUILD` / `RELEASE_BUILD` / `USE_IMGUI`）
 
 > コード例は「概念例」ではなく、可能な限りエンジンの公開 API（ヘッダの関数）に合わせています。
 

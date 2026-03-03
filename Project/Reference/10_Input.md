@@ -1,73 +1,41 @@
-﻿# 入力（キーボード/マウス/コントローラー）
+﻿# 入力（Input）
 
-KashipanEngine は `Input` が生のデバイス状態を管理し、`InputCommand` が「アクション名 → 入力バインド」を管理します。
+KashipanEngine の入力システムは、キーボード・マウス・コントローラーの 3 種類のデバイスに対応しています。
 
-- `GameEngine` 内で `Input::Update()` が毎フレーム呼ばれます。
-- アプリ側は `AppInitialize` で `InputCommand` にコマンドを登録し、ゲーム側は `InputCommand::Evaluate("Action")` で参照する想定です。
-
-関連：
-- `KashipanEngine/Input/Input.h`
-- `KashipanEngine/Input/InputCommand.h`
+- `Input` クラスが生のデバイス状態を管理し、`Keyboard` / `Mouse` / `Controller` の各クラスを保持します。
+- `InputCommand` クラスが「アクション名 → 入力バインド」を管理し、複数デバイスの入力を統一的に評価できます。
+- `GameEngine` 内で `Input::Update()` が毎フレーム自動的に呼ばれます。
 
 ---
 
-## 公開API：`InputCommand`（抜粋）
+## カテゴリ別リファレンス
 
-- `void Clear()`
-- `void RegisterCommand(...)`（複数オーバーロード）
-  - キーボード：`RegisterCommand(action, KeyboardKey{Key::...}, InputState, invertValue)`
-  - マウスボタン：`RegisterCommand(action, MouseButton{0..7}, InputState, invertValue)`
-  - マウス軸：`RegisterCommand(action, MouseAxis, hwnd, threshold, invertValue)`
-  - パッドボタン：`RegisterCommand(action, ControllerButton, InputState, controllerIndex, invertValue)`
-  - パッドアナログ：`RegisterCommand(action, ControllerAnalog, InputState, controllerIndex, threshold, invertValue)`
-  - パッドアナログ差分：`RegisterCommand(action, ControllerAnalog, controllerIndex, threshold, invertValue)`
-- `ReturnInfo Evaluate(const std::string& action) const`
-
-### `ReturnInfo`
-- `bool Triggered() const noexcept`
-- `float Value() const noexcept`
+- `10_Input_Keyboard.md` - キーボード入力（`Keyboard` / `Key`）
+- `10_Input_Mouse.md` - マウス入力（`Mouse` / `MouseButton`）
+- `10_Input_Controller.md` - コントローラー入力（`Controller` / `ControllerButton`）
+- `10_Input_InputCommand.md` - 入力コマンド（`InputCommand`）
 
 ---
 
-## 例：コマンド登録（`Application/AppInitialize.h` の流儀）
+## `Input` クラス（`KashipanEngine/Input/Input.h`）
+
+`Input` はエンジン内部で生成され、各デバイスクラスへのアクセスを提供します。
+
+- `Keyboard& GetKeyboard()` / `const Keyboard& GetKeyboard() const`
+- `Mouse& GetMouse()` / `const Mouse& GetMouse() const`
+- `Controller& GetController()` / `const Controller& GetController() const`
+
+### 取得方法
+
+シーン内では `SceneBase::GetInput()` で取得できます。
 
 ```cpp
-ic->Clear();
+auto* input = KashipanEngine::SceneBase::GetInput();
+if (!input) return;
 
-ic->RegisterCommand("MoveX", InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Down, true);
-ic->RegisterCommand("MoveX", InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Down);
-ic->RegisterCommand("MoveX", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down);
-
-ic->RegisterCommand("Attack", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Release);
-ic->RegisterCommand("Attack", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Release);
+const auto& keyboard = input->GetKeyboard();
+const auto& mouse = input->GetMouse();
+const auto& controller = input->GetController();
 ```
 
----
-
-## 例：ゲーム側で評価
-
-```cpp
-auto* ic = KashipanEngine::SceneBase::GetInputCommand();
-if (!ic) return;
-
-const auto moveX = ic->Evaluate("MoveX");
-if (moveX.Triggered()) {
-    float axis = moveX.Value(); // -1..1 相当
-    // 移動処理
-}
-
-const auto attack = ic->Evaluate("Attack");
-if (attack.Triggered()) {
-    // 攻撃
-}
-```
-
----
-
-## マウス座標（Screen / Client）
-
-`RegisterCommand(action, MouseAxis axis, void* hwnd, ...)` で
-- `hwnd == nullptr`：Screen 座標系
-- `hwnd != nullptr`：Client 座標系
-
-として扱われます。
+> 通常のゲームロジックでは `InputCommand` を使用することを推奨します。`Input` を直接使うのは、`InputCommand` では対応できない特殊な用途向けです。

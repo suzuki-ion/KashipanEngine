@@ -2,10 +2,12 @@
 #include "Objects/IObjectComponent.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
+#include "Math/Quaternion.h"
 #include <memory>
 #include <optional>
 #include <cstring>
 #include <cstdint>
+#include <cmath>
 
 namespace KashipanEngine {
 
@@ -29,6 +31,7 @@ public:
         auto ptr = std::make_unique<Transform3D>();
         ptr->translate_ = translate_;
         ptr->rotate_ = rotate_;
+        ptr->rotateQuat_ = rotateQuat_;
         ptr->scale_ = scale_;
         ptr->isWorldMatrixCalculated_ = false;
         ptr->worldMatrix_ = Matrix4x4::Identity();
@@ -86,9 +89,20 @@ public:
         isWorldMatrixCalculated_ = false;
     }
 
+    /// @brief オイラー角で回転を設定する（互換用）
+    /// @param rotate オイラー角（ラジアン）
     void SetRotate(const Vector3 &rotate) {
         if (rotate_ == rotate) return;
         rotate_ = rotate;
+        rotateQuat_ = EulerToQuaternion(rotate);
+        isWorldMatrixCalculated_ = false;
+    }
+
+    /// @brief クォータニオンで回転を設定する
+    /// @param quat クォータニオン
+    void SetRotateQuaternion(const Quaternion &quat) {
+        rotateQuat_ = quat.Normalize();
+        rotate_ = QuaternionToEuler(rotateQuat_);
         isWorldMatrixCalculated_ = false;
     }
 
@@ -99,13 +113,29 @@ public:
     }
 
     const Vector3 &GetTranslate() const { return translate_; }
+
+    /// @brief オイラー角で回転を取得する（互換用）
+    /// @return オイラー角（ラジアン）
     const Vector3 &GetRotate() const { return rotate_; }
+
+    /// @brief クォータニオンで回転を取得する
+    /// @return クォータニオン
+    const Quaternion &GetRotateQuaternion() const { return rotateQuat_; }
+
     const Vector3 &GetScale() const { return scale_; }
 
     const Matrix4x4 &GetWorldMatrix() {
         if (IsWorldMatrixDirty()) {
-            Matrix4x4 local = Matrix4x4::Identity();
-            local.MakeAffine(scale_, rotate_, translate_);
+            // クォータニオンから回転行列を生成してワールド行列を構築
+            Matrix4x4 scaleMat;
+            scaleMat.MakeScale(scale_);
+
+            Matrix4x4 rotateMat = rotateQuat_.MakeRotateMatrix();
+
+            Matrix4x4 translateMat;
+            translateMat.MakeTranslate(translate_);
+
+            Matrix4x4 local = scaleMat * rotateMat * translateMat;
 
             if (parentTransform_) {
                 // 親のワールド行列を取得（必要なら親が再計算される）
@@ -156,8 +186,40 @@ public:
 #endif
 
 private:
+    /// @brief オイラー角からクォータニオンへの変換（XYZ回転順）
+    static Quaternion EulerToQuaternion(const Vector3 &euler) {
+        Quaternion q;
+        Quaternion qx = q.MakeRotateAxisAngle(Vector3(1.0f, 0.0f, 0.0f), euler.x);
+        Quaternion qy = q.MakeRotateAxisAngle(Vector3(0.0f, 1.0f, 0.0f), euler.y);
+        Quaternion qz = q.MakeRotateAxisAngle(Vector3(0.0f, 0.0f, 1.0f), euler.z);
+        return (qx * qy * qz).Normalize();
+    }
+
+    /// @brief クォータニオンからオイラー角への変換（XYZ回転順）
+    static Vector3 QuaternionToEuler(const Quaternion &q) {
+        Matrix4x4 mat = q.MakeRotateMatrix();
+        float rotX, rotY, rotZ;
+
+        float sy = mat.m[0][2];
+        if (sy > 0.9999f) {
+            rotY = 3.14159265f * 0.5f;
+            rotX = std::atan2(mat.m[1][0], mat.m[1][1]);
+            rotZ = 0.0f;
+        } else if (sy < -0.9999f) {
+            rotY = -3.14159265f * 0.5f;
+            rotX = std::atan2(-mat.m[1][0], mat.m[1][1]);
+            rotZ = 0.0f;
+        } else {
+            rotY = std::asin(sy);
+            rotX = std::atan2(-mat.m[1][2], mat.m[2][2]);
+            rotZ = std::atan2(-mat.m[0][1], mat.m[0][0]);
+        }
+        return Vector3(rotX, rotY, rotZ);
+    }
+
     Vector3 translate_{ 0.0f, 0.0f, 0.0f };
     Vector3 rotate_{ 0.0f, 0.0f, 0.0f };
+    Quaternion rotateQuat_ = Quaternion::Identity();
     Vector3 scale_{ 1.0f, 1.0f, 1.0f };
 
     Transform3D *parentTransform_ = nullptr;

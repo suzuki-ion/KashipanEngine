@@ -34,7 +34,7 @@ struct Vector3 final {
     [[nodiscard]] float Dot(const Vector3 &vector) const noexcept;
     [[nodiscard]] Vector3 Cross(const Vector3 &vector) const noexcept;
     [[nodiscard]] float Length() const noexcept;
-    [[nodiscard]] constexpr float LengthSquared() const noexcept;
+    [[nodiscard]] float LengthSquared() const noexcept;
     [[nodiscard]] Vector3 Normalize() const;
     [[nodiscard]] Vector3 Projection(const Vector3 &vector) const noexcept;
     [[nodiscard]] Vector3 Perpendicular() const noexcept;

@@ -64,7 +64,7 @@ void PuzzleBoard::ShiftColDown(int col) {
 	board_[size_ - 1][col] = first;
 }
 
-std::vector<PuzzleBoard::MatchLine> PuzzleBoard::DetectMatches() const {
+std::vector<PuzzleBoard::MatchLine> PuzzleBoard::DetectMatches(int minMatch) const {
 	std::vector<MatchLine> matches;
 
 	// 横方向のマッチ
@@ -74,13 +74,13 @@ std::vector<PuzzleBoard::MatchLine> PuzzleBoard::DetectMatches() const {
 			if (board_[r][c] == board_[r][c - 1] && board_[r][c] > 0) {
 				count++;
 			} else {
-				if (count >= 3) {
+				if (count >= minMatch) {
 					matches.push_back({ true, r, c - count, count, board_[r][c - 1] });
 				}
 				count = 1;
 			}
 		}
-		if (count >= 3) {
+		if (count >= minMatch) {
 			matches.push_back({ true, r, size_ - count, count, board_[r][size_ - 1] });
 		}
 	}
@@ -92,13 +92,13 @@ std::vector<PuzzleBoard::MatchLine> PuzzleBoard::DetectMatches() const {
 			if (board_[r][c] == board_[r - 1][c] && board_[r][c] > 0) {
 				count++;
 			} else {
-				if (count >= 3) {
+				if (count >= minMatch) {
 					matches.push_back({ false, c, r - count, count, board_[r - 1][c] });
 				}
 				count = 1;
 			}
 		}
-		if (count >= 3) {
+		if (count >= minMatch) {
 			matches.push_back({ false, c, size_ - count, count, board_[size_ - 1][c] });
 		}
 	}

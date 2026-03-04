@@ -48,9 +48,10 @@ public:
 		int type;              ///< パネル種類
 	};
 
-	/// 3つ以上のマッチを検出する
+	/// 指定個数以上のマッチを検出する
+	/// @param minMatch 消える最低個数（デフォルト3）
 	/// @return マッチした直線のリスト
-	std::vector<MatchLine> DetectMatches() const;
+	std::vector<MatchLine> DetectMatches(int minMatch = 3) const;
 
 	/// マッチしたパネルを消去し、仕様に基づいて新パネルを補充する
 	/// - 横消し: 消えた分だけ左のパネルが右に移動し、左端から新パネルが出現

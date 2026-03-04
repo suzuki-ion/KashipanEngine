@@ -8,6 +8,7 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	if (json.is_null()) return;
 
 	stageSize = KashipanEngine::GetJSONValueOrDefault(json, "stageSize", stageSize);
+	minMatchCount = KashipanEngine::GetJSONValueOrDefault(json, "minMatchCount", minMatchCount);
 	panelEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "panelEasingDuration", panelEasingDuration);
 	cursorEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "cursorEasingDuration", cursorEasingDuration);
 	cameraHeight = KashipanEngine::GetJSONValueOrDefault(json, "cameraHeight", cameraHeight);
@@ -48,6 +49,7 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	KashipanEngine::JSON json;
 	json["stageSize"] = stageSize;
+	json["minMatchCount"] = minMatchCount;
 	json["panelEasingDuration"] = panelEasingDuration;
 	json["cursorEasingDuration"] = cursorEasingDuration;
 	json["cameraHeight"] = cameraHeight;

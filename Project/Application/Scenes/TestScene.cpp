@@ -83,7 +83,7 @@ void TestScene::Initialize() {
         auto text = std::make_unique<Text>(64);
         text->SetName("ResultText");
         if (auto *tr = text->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3(cx, cy * 0.2f, 0.0f));
+            tr->SetTranslate(Vector3(cx, cy * 1.8f, 0.0f));
         }
         text->SetFont("Assets/Application/test.fnt");
         text->SetText("");
@@ -168,6 +168,8 @@ void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
     // クロスの場合は行1つ＋列1つをロック
     int crossLocks = summary.crossCount;
     for (int i = 0; i < crossLocks; i++) {
+        if (defender.GetTotalLockCount() >= 2) break;
+
         // 行ロック：未ロックの行からランダム
         bool foundRow = false;
         for (int attempt = 0; attempt < boardSize; attempt++) {
@@ -178,9 +180,8 @@ void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
                 break;
             }
         }
-        if (!foundRow) {
-            // 全行ロック済み → 既存に加算済み
-        }
+
+        if (defender.GetTotalLockCount() >= 2) break;
 
         // 列ロック：未ロックの列からランダム
         bool foundCol = false;
@@ -197,6 +198,8 @@ void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
     // ノーマル/ストレート/スクエア → 行or列1つをロック
     int otherLocks = summary.normalCount + summary.straightCount + summary.squareCount;
     for (int i = 0; i < otherLocks; i++) {
+        if (defender.GetTotalLockCount() >= 2) break;
+
         bool isRow = KashipanEngine::GetRandomBool(0.5f);
         bool found = false;
         for (int attempt = 0; attempt < boardSize * 2; attempt++) {

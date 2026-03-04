@@ -63,6 +63,8 @@ public:
 	void ApplyLock(bool isRow, int index, float seconds);
 	/// 既存ロック全てに秒数を加算
 	void AddToExistingLocks(float seconds);
+	/// 全ロックを解除
+	void ClearAllLocks();
 
 	// ================================================================
 	// 状態取得
@@ -100,6 +102,9 @@ public:
 	/// 列がロックされているか
 	bool IsColLocked(int col) const;
 
+	/// 現在のロック合計数を取得
+	int GetTotalLockCount() const { return static_cast<int>(rowLocks_.size() + colLocks_.size()); }
+
 	/// カーソル位置取得
 	std::pair<int, int> GetCursorPosition() const { return cursor_.GetPosition(); }
 
@@ -121,6 +126,11 @@ private:
 	void UpdateTimerGauge();
 	void UpdateHPGauge();
 	void UpdateMatchText();
+
+	// ================================================================
+	// シェイク
+	// ================================================================
+	void UpdateShake(float deltaTime);
 
 	// ================================================================
 	// アニメーションフェーズ
@@ -186,6 +196,13 @@ private:
 	// ロック
 	std::map<int, LockInfo> rowLocks_;
 	std::map<int, LockInfo> colLocks_;
+	static constexpr int kMaxTotalLocks = 2;
+
+	// シェイク
+	float shakeTimer_ = 0.0f;
+	float shakeDuration_ = 0.3f;
+	float shakeIntensity_ = 10.0f;
+	Vector3 parentOriginalPos_{};
 
 	// ================================================================
 	// スプライト

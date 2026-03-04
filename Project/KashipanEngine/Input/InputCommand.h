@@ -7,6 +7,7 @@
 
 #include "Input/ControllerButton.h"
 #include "Input/Key.h"
+#include "Input/MouseButton.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -45,9 +46,6 @@ public:
         Client,
     };
 
-    struct KeyboardKey { Key value = Key::Unknown; };
-    struct MouseButton { int value = 0; };
-
     struct ReturnInfo {
     private:
         friend class InputCommand;
@@ -69,16 +67,16 @@ public:
     /// @brief すべてのコマンド登録をクリア
     void Clear();
 
-    /// @brief コマンドを登録する
+    /// @brief コマンドを登録する（キーボード）
     /// @param action コマンド名
     /// @param key キー（KashipanEngine::Key）
     /// @param state 入力状態（押下、トリガー、リリース）
     /// @param invertValue 評価値(value)を反転させるかどうか
-    void RegisterCommand(const std::string& action, KeyboardKey key, InputState state, bool invertValue = false);
+    void RegisterCommand(const std::string& action, Key key, InputState state, bool invertValue = false);
 
     /// @brief コマンドを登録する（マウスボタン）
     /// @param action コマンド名
-    /// @param button マウスボタン番号（0-7）
+    /// @param button マウスボタン（KashipanEngine::MouseButton）
     /// @param state 入力状態（押下、トリガー、リリース）
     /// @param invertValue 評価値(value)を反転させるかどうか
     void RegisterCommand(const std::string& action, MouseButton button, InputState state, bool invertValue = false);
@@ -125,6 +123,37 @@ public:
     /// @return 入力評価結果
     ReturnInfo Evaluate(const std::string& action) const;
 
+    /// @brief 登録済みコマンドをJSONファイルに保存する
+    /// @param filepath 保存先ファイルパス
+    /// @return 保存に成功した場合 true
+    bool SaveToJSON(const std::string& filepath) const;
+
+    /// @brief JSONファイルからコマンドを読み込んで登録する
+    /// @details 読み込み前に既存のコマンドはクリアされる。
+    /// @param filepath 読み込み元ファイルパス
+    /// @return 読み込みに成功した場合 true
+    bool LoadFromJSON(const std::string& filepath);
+
+    // --- 文字列 ↔ 列挙型変換ユーティリティ ---
+
+    static std::string KeyToString(Key key);
+    static Key StringToKey(const std::string& str);
+
+    static std::string MouseButtonToString(MouseButton button);
+    static MouseButton StringToMouseButton(const std::string& str);
+
+    static std::string ControllerButtonToString(ControllerButton button);
+    static ControllerButton StringToControllerButton(const std::string& str);
+
+    static std::string ControllerAnalogToString(ControllerAnalog analog);
+    static ControllerAnalog StringToControllerAnalog(const std::string& str);
+
+    static std::string InputStateToString(InputState state);
+    static InputState StringToInputState(const std::string& str);
+
+    static std::string MouseAxisToString(MouseAxis axis);
+    static MouseAxis StringToMouseAxis(const std::string& str);
+
 private:
     enum class DeviceKind {
         Keyboard,
@@ -157,6 +186,9 @@ private:
     ReturnInfo EvaluateBinding(const Binding& b) const;
 
     static ReturnInfo MakeReturnInfo(bool triggered, float value) { return ReturnInfo(triggered, value); }
+
+    static std::string DeviceKindToString(DeviceKind kind);
+    static DeviceKind StringToDeviceKind(const std::string& str);
 };
 
 } // namespace KashipanEngine

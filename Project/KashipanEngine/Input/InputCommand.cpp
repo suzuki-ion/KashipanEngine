@@ -4,6 +4,7 @@
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
 #include "Input/Controller.h"
+#include "Utilities/FileIO/JSON.h"
 
 #include <algorithm>
 #include <cmath>
@@ -56,12 +57,12 @@ void InputCommand::Clear() {
     bindings_.clear();
 }
 
-void InputCommand::RegisterCommand(const std::string& action, KeyboardKey key, InputState state, bool invertValue) {
+void InputCommand::RegisterCommand(const std::string& action, Key key, InputState state, bool invertValue) {
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::Keyboard;
     b.state = state;
-    b.key = key.value;
+    b.key = key;
     b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
@@ -71,7 +72,7 @@ void InputCommand::RegisterCommand(const std::string& action, MouseButton button
     Binding b{};
     b.kind = DeviceKind::MouseButton;
     b.state = state;
-    b.code = button.value;
+    b.code = static_cast<int>(button);
     b.invertValue = invertValue;
     bindings_[action].push_back(b);
 }
@@ -303,6 +304,350 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
     default:
         return MakeReturnInfo(false, 0.0f);
     }
+}
+
+// ===== JSON import/export =====
+
+bool InputCommand::SaveToJSON(const std::string& filepath) const {
+    JSON root = JSON::object();
+
+    for (const auto& [action, binds] : bindings_) {
+        JSON arr = JSON::array();
+        for (const auto& b : binds) {
+            JSON entry = JSON::object();
+            entry["device"] = DeviceKindToString(b.kind);
+            entry["invertValue"] = b.invertValue;
+
+            switch (b.kind) {
+            case DeviceKind::Keyboard:
+                entry["key"] = KeyToString(b.key);
+                entry["state"] = InputStateToString(b.state);
+                break;
+            case DeviceKind::MouseButton:
+                entry["button"] = MouseButtonToString(static_cast<MouseButton>(b.code));
+                entry["state"] = InputStateToString(b.state);
+                break;
+            case DeviceKind::MouseAxis:
+                entry["axis"] = MouseAxisToString(b.mouseAxis);
+                entry["threshold"] = b.threshold;
+                break;
+            case DeviceKind::ControllerButton:
+                entry["button"] = ControllerButtonToString(b.controllerButton);
+                entry["state"] = InputStateToString(b.state);
+                entry["controllerIndex"] = b.controllerIndex;
+                break;
+            case DeviceKind::ControllerAnalog:
+                entry["analog"] = ControllerAnalogToString(static_cast<ControllerAnalog>(b.code));
+                entry["state"] = InputStateToString(b.state);
+                entry["controllerIndex"] = b.controllerIndex;
+                entry["threshold"] = b.threshold;
+                break;
+            case DeviceKind::ControllerAnalogDelta:
+                entry["analog"] = ControllerAnalogToString(static_cast<ControllerAnalog>(b.code));
+                entry["controllerIndex"] = b.controllerIndex;
+                entry["threshold"] = b.threshold;
+                break;
+            }
+
+            arr.push_back(std::move(entry));
+        }
+        root[action] = std::move(arr);
+    }
+
+    return SaveJSON(root, filepath);
+}
+
+bool InputCommand::LoadFromJSON(const std::string& filepath) {
+    if (!IsJSONFileValid(filepath)) return false;
+
+    JSON root = LoadJSON(filepath);
+    if (root.is_null() || !root.is_object()) return false;
+
+    bindings_.clear();
+
+    for (auto it = root.begin(); it != root.end(); ++it) {
+        const std::string& action = it.key();
+        if (!it.value().is_array()) continue;
+
+        for (const auto& entry : it.value()) {
+            if (!entry.is_object() || !entry.contains("device")) continue;
+
+            const DeviceKind kind = StringToDeviceKind(entry.value("device", ""));
+            const bool invertValue = entry.value("invertValue", false);
+
+            switch (kind) {
+            case DeviceKind::Keyboard: {
+                Key key = StringToKey(entry.value("key", ""));
+                InputState state = StringToInputState(entry.value("state", ""));
+                Binding b{};
+                b.kind = DeviceKind::Keyboard;
+                b.key = key;
+                b.state = state;
+                b.invertValue = invertValue;
+                bindings_[action].push_back(b);
+                break;
+            }
+            case DeviceKind::MouseButton: {
+                MouseButton btn = StringToMouseButton(entry.value("button", ""));
+                InputState state = StringToInputState(entry.value("state", ""));
+                Binding b{};
+                b.kind = DeviceKind::MouseButton;
+                b.code = static_cast<int>(btn);
+                b.state = state;
+                b.invertValue = invertValue;
+                bindings_[action].push_back(b);
+                break;
+            }
+            case DeviceKind::MouseAxis: {
+                MouseAxis axis = StringToMouseAxis(entry.value("axis", ""));
+                float threshold = entry.value("threshold", 0.0f);
+                Binding b{};
+                b.kind = DeviceKind::MouseAxis;
+                b.mouseAxis = axis;
+                b.mouseSpace = MouseSpace::Screen; // JSON では hwnd を保持できないため Screen 固定
+                b.threshold = threshold;
+                b.invertValue = invertValue;
+                bindings_[action].push_back(b);
+                break;
+            }
+            case DeviceKind::ControllerButton: {
+                ControllerButton btn = StringToControllerButton(entry.value("button", ""));
+                InputState state = StringToInputState(entry.value("state", ""));
+                int idx = entry.value("controllerIndex", 0);
+                Binding b{};
+                b.kind = DeviceKind::ControllerButton;
+                b.controllerButton = btn;
+                b.state = state;
+                b.controllerIndex = idx;
+                b.invertValue = invertValue;
+                bindings_[action].push_back(b);
+                break;
+            }
+            case DeviceKind::ControllerAnalog: {
+                ControllerAnalog analog = StringToControllerAnalog(entry.value("analog", ""));
+                InputState state = StringToInputState(entry.value("state", ""));
+                int idx = entry.value("controllerIndex", 0);
+                float threshold = entry.value("threshold", 0.0f);
+                Binding b{};
+                b.kind = DeviceKind::ControllerAnalog;
+                b.code = static_cast<int>(analog);
+                b.state = state;
+                b.controllerIndex = idx;
+                b.threshold = threshold;
+                b.invertValue = invertValue;
+                bindings_[action].push_back(b);
+                break;
+            }
+            case DeviceKind::ControllerAnalogDelta: {
+                ControllerAnalog analog = StringToControllerAnalog(entry.value("analog", ""));
+                int idx = entry.value("controllerIndex", 0);
+                float threshold = entry.value("threshold", 0.0f);
+                Binding b{};
+                b.kind = DeviceKind::ControllerAnalogDelta;
+                b.code = static_cast<int>(analog);
+                b.controllerIndex = idx;
+                b.threshold = threshold;
+                b.invertValue = invertValue;
+                bindings_[action].push_back(b);
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    }
+
+    return true;
+}
+
+// ===== String conversion utilities =====
+
+std::string InputCommand::KeyToString(Key key) {
+    static const std::unordered_map<Key, std::string> kMap = {
+        {Key::Unknown, "Unknown"},
+        {Key::A, "A"}, {Key::B, "B"}, {Key::C, "C"}, {Key::D, "D"},
+        {Key::E, "E"}, {Key::F, "F"}, {Key::G, "G"}, {Key::H, "H"},
+        {Key::I, "I"}, {Key::J, "J"}, {Key::K, "K"}, {Key::L, "L"},
+        {Key::M, "M"}, {Key::N, "N"}, {Key::O, "O"}, {Key::P, "P"},
+        {Key::Q, "Q"}, {Key::R, "R"}, {Key::S, "S"}, {Key::T, "T"},
+        {Key::U, "U"}, {Key::V, "V"}, {Key::W, "W"}, {Key::X, "X"},
+        {Key::Y, "Y"}, {Key::Z, "Z"},
+        {Key::D0, "D0"}, {Key::D1, "D1"}, {Key::D2, "D2"}, {Key::D3, "D3"},
+        {Key::D4, "D4"}, {Key::D5, "D5"}, {Key::D6, "D6"}, {Key::D7, "D7"},
+        {Key::D8, "D8"}, {Key::D9, "D9"},
+        {Key::Left, "Left"}, {Key::Right, "Right"}, {Key::Up, "Up"}, {Key::Down, "Down"},
+        {Key::LeftShift, "LeftShift"}, {Key::RightShift, "RightShift"},
+        {Key::LeftControl, "LeftControl"}, {Key::RightControl, "RightControl"},
+        {Key::LeftAlt, "LeftAlt"}, {Key::RightAlt, "RightAlt"},
+        {Key::Shift, "Shift"}, {Key::Control, "Control"}, {Key::Alt, "Alt"},
+        {Key::Space, "Space"}, {Key::Enter, "Enter"}, {Key::Escape, "Escape"},
+        {Key::Tab, "Tab"}, {Key::Backspace, "Backspace"},
+        {Key::F1, "F1"}, {Key::F2, "F2"}, {Key::F3, "F3"}, {Key::F4, "F4"},
+        {Key::F5, "F5"}, {Key::F6, "F6"}, {Key::F7, "F7"}, {Key::F8, "F8"},
+        {Key::F9, "F9"}, {Key::F10, "F10"}, {Key::F11, "F11"}, {Key::F12, "F12"},
+    };
+    auto it = kMap.find(key);
+    return (it != kMap.end()) ? it->second : "Unknown";
+}
+
+Key InputCommand::StringToKey(const std::string& str) {
+    static const std::unordered_map<std::string, Key> kMap = {
+        {"Unknown", Key::Unknown},
+        {"A", Key::A}, {"B", Key::B}, {"C", Key::C}, {"D", Key::D},
+        {"E", Key::E}, {"F", Key::F}, {"G", Key::G}, {"H", Key::H},
+        {"I", Key::I}, {"J", Key::J}, {"K", Key::K}, {"L", Key::L},
+        {"M", Key::M}, {"N", Key::N}, {"O", Key::O}, {"P", Key::P},
+        {"Q", Key::Q}, {"R", Key::R}, {"S", Key::S}, {"T", Key::T},
+        {"U", Key::U}, {"V", Key::V}, {"W", Key::W}, {"X", Key::X},
+        {"Y", Key::Y}, {"Z", Key::Z},
+        {"D0", Key::D0}, {"D1", Key::D1}, {"D2", Key::D2}, {"D3", Key::D3},
+        {"D4", Key::D4}, {"D5", Key::D5}, {"D6", Key::D6}, {"D7", Key::D7},
+        {"D8", Key::D8}, {"D9", Key::D9},
+        {"Left", Key::Left}, {"Right", Key::Right}, {"Up", Key::Up}, {"Down", Key::Down},
+        {"LeftShift", Key::LeftShift}, {"RightShift", Key::RightShift},
+        {"LeftControl", Key::LeftControl}, {"RightControl", Key::RightControl},
+        {"LeftAlt", Key::LeftAlt}, {"RightAlt", Key::RightAlt},
+        {"Shift", Key::Shift}, {"Control", Key::Control}, {"Alt", Key::Alt},
+        {"Space", Key::Space}, {"Enter", Key::Enter}, {"Escape", Key::Escape},
+        {"Tab", Key::Tab}, {"Backspace", Key::Backspace},
+        {"F1", Key::F1}, {"F2", Key::F2}, {"F3", Key::F3}, {"F4", Key::F4},
+        {"F5", Key::F5}, {"F6", Key::F6}, {"F7", Key::F7}, {"F8", Key::F8},
+        {"F9", Key::F9}, {"F10", Key::F10}, {"F11", Key::F11}, {"F12", Key::F12},
+    };
+    auto it = kMap.find(str);
+    return (it != kMap.end()) ? it->second : Key::Unknown;
+}
+
+std::string InputCommand::MouseButtonToString(MouseButton button) {
+    static const std::unordered_map<MouseButton, std::string> kMap = {
+        {MouseButton::Left, "Left"}, {MouseButton::Right, "Right"}, {MouseButton::Middle, "Middle"},
+        {MouseButton::Button4, "Button4"}, {MouseButton::Button5, "Button5"},
+        {MouseButton::Button6, "Button6"}, {MouseButton::Button7, "Button7"}, {MouseButton::Button8, "Button8"},
+    };
+    auto it = kMap.find(button);
+    return (it != kMap.end()) ? it->second : "Left";
+}
+
+MouseButton InputCommand::StringToMouseButton(const std::string& str) {
+    static const std::unordered_map<std::string, MouseButton> kMap = {
+        {"Left", MouseButton::Left}, {"Right", MouseButton::Right}, {"Middle", MouseButton::Middle},
+        {"Button4", MouseButton::Button4}, {"Button5", MouseButton::Button5},
+        {"Button6", MouseButton::Button6}, {"Button7", MouseButton::Button7}, {"Button8", MouseButton::Button8},
+    };
+    auto it = kMap.find(str);
+    return (it != kMap.end()) ? it->second : MouseButton::Left;
+}
+
+std::string InputCommand::ControllerButtonToString(ControllerButton button) {
+    static const std::unordered_map<ControllerButton, std::string> kMap = {
+        {ControllerButton::DPadUp, "DPadUp"}, {ControllerButton::DPadDown, "DPadDown"},
+        {ControllerButton::DPadLeft, "DPadLeft"}, {ControllerButton::DPadRight, "DPadRight"},
+        {ControllerButton::Start, "Start"}, {ControllerButton::Back, "Back"},
+        {ControllerButton::LeftThumb, "LeftThumb"}, {ControllerButton::RightThumb, "RightThumb"},
+        {ControllerButton::LeftShoulder, "LeftShoulder"}, {ControllerButton::RightShoulder, "RightShoulder"},
+        {ControllerButton::A, "A"}, {ControllerButton::B, "B"},
+        {ControllerButton::X, "X"}, {ControllerButton::Y, "Y"},
+    };
+    auto it = kMap.find(button);
+    return (it != kMap.end()) ? it->second : "A";
+}
+
+ControllerButton InputCommand::StringToControllerButton(const std::string& str) {
+    static const std::unordered_map<std::string, ControllerButton> kMap = {
+        {"DPadUp", ControllerButton::DPadUp}, {"DPadDown", ControllerButton::DPadDown},
+        {"DPadLeft", ControllerButton::DPadLeft}, {"DPadRight", ControllerButton::DPadRight},
+        {"Start", ControllerButton::Start}, {"Back", ControllerButton::Back},
+        {"LeftThumb", ControllerButton::LeftThumb}, {"RightThumb", ControllerButton::RightThumb},
+        {"LeftShoulder", ControllerButton::LeftShoulder}, {"RightShoulder", ControllerButton::RightShoulder},
+        {"A", ControllerButton::A}, {"B", ControllerButton::B},
+        {"X", ControllerButton::X}, {"Y", ControllerButton::Y},
+    };
+    auto it = kMap.find(str);
+    return (it != kMap.end()) ? it->second : ControllerButton::A;
+}
+
+std::string InputCommand::ControllerAnalogToString(ControllerAnalog analog) {
+    switch (analog) {
+    case ControllerAnalog::LeftTrigger:  return "LeftTrigger";
+    case ControllerAnalog::RightTrigger: return "RightTrigger";
+    case ControllerAnalog::LeftStickX:   return "LeftStickX";
+    case ControllerAnalog::LeftStickY:   return "LeftStickY";
+    case ControllerAnalog::RightStickX:  return "RightStickX";
+    case ControllerAnalog::RightStickY:  return "RightStickY";
+    default: return "LeftTrigger";
+    }
+}
+
+InputCommand::ControllerAnalog InputCommand::StringToControllerAnalog(const std::string& str) {
+    static const std::unordered_map<std::string, ControllerAnalog> kMap = {
+        {"LeftTrigger", ControllerAnalog::LeftTrigger}, {"RightTrigger", ControllerAnalog::RightTrigger},
+        {"LeftStickX", ControllerAnalog::LeftStickX}, {"LeftStickY", ControllerAnalog::LeftStickY},
+        {"RightStickX", ControllerAnalog::RightStickX}, {"RightStickY", ControllerAnalog::RightStickY},
+    };
+    auto it = kMap.find(str);
+    return (it != kMap.end()) ? it->second : ControllerAnalog::LeftTrigger;
+}
+
+std::string InputCommand::InputStateToString(InputState state) {
+    switch (state) {
+    case InputState::Down:    return "Down";
+    case InputState::Trigger: return "Trigger";
+    case InputState::Release: return "Release";
+    default: return "Down";
+    }
+}
+
+InputCommand::InputState InputCommand::StringToInputState(const std::string& str) {
+    if (str == "Trigger") return InputState::Trigger;
+    if (str == "Release") return InputState::Release;
+    return InputState::Down;
+}
+
+std::string InputCommand::MouseAxisToString(MouseAxis axis) {
+    switch (axis) {
+    case MouseAxis::X:          return "X";
+    case MouseAxis::Y:          return "Y";
+    case MouseAxis::DeltaX:     return "DeltaX";
+    case MouseAxis::DeltaY:     return "DeltaY";
+    case MouseAxis::Wheel:      return "Wheel";
+    case MouseAxis::DeltaWheel: return "DeltaWheel";
+    default: return "X";
+    }
+}
+
+InputCommand::MouseAxis InputCommand::StringToMouseAxis(const std::string& str) {
+    static const std::unordered_map<std::string, MouseAxis> kMap = {
+        {"X", MouseAxis::X}, {"Y", MouseAxis::Y},
+        {"DeltaX", MouseAxis::DeltaX}, {"DeltaY", MouseAxis::DeltaY},
+        {"Wheel", MouseAxis::Wheel}, {"DeltaWheel", MouseAxis::DeltaWheel},
+    };
+    auto it = kMap.find(str);
+    return (it != kMap.end()) ? it->second : MouseAxis::X;
+}
+
+std::string InputCommand::DeviceKindToString(DeviceKind kind) {
+    switch (kind) {
+    case DeviceKind::Keyboard:             return "Keyboard";
+    case DeviceKind::MouseButton:          return "MouseButton";
+    case DeviceKind::MouseAxis:            return "MouseAxis";
+    case DeviceKind::ControllerButton:     return "ControllerButton";
+    case DeviceKind::ControllerAnalog:     return "ControllerAnalog";
+    case DeviceKind::ControllerAnalogDelta:return "ControllerAnalogDelta";
+    default: return "Keyboard";
+    }
+}
+
+InputCommand::DeviceKind InputCommand::StringToDeviceKind(const std::string& str) {
+    static const std::unordered_map<std::string, DeviceKind> kMap = {
+        {"Keyboard", DeviceKind::Keyboard},
+        {"MouseButton", DeviceKind::MouseButton},
+        {"MouseAxis", DeviceKind::MouseAxis},
+        {"ControllerButton", DeviceKind::ControllerButton},
+        {"ControllerAnalog", DeviceKind::ControllerAnalog},
+        {"ControllerAnalogDelta", DeviceKind::ControllerAnalogDelta},
+    };
+    auto it = kMap.find(str);
+    return (it != kMap.end()) ? it->second : DeviceKind::Keyboard;
 }
 
 } // namespace KashipanEngine

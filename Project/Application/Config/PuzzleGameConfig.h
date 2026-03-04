@@ -48,9 +48,9 @@ struct PuzzleGameConfig {
 	Vector4 stageBackgroundColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
 
 	// プレイヤーのHP
-	int playerHP = 100;
+	int playerHP = 300;
 	// 制限時間（秒）
-	float timeLimit = 10.0f;
+	float timeLimit = 30.0f;
 
 	// ダメージ量
 	int normalDamage = 1;

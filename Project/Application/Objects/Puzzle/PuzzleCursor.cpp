@@ -3,7 +3,8 @@
 
 namespace Application {
 
-void PuzzleCursor::Initialize(int startRow, int startCol, int boardSize, float easingDuration) {
+void PuzzleCursor::Initialize(int startRow, int startCol, int boardSize, float easingDuration,
+	const std::string& commandPrefix) {
 	row_ = startRow;
 	col_ = startCol;
 	boardSize_ = boardSize;
@@ -14,6 +15,12 @@ void PuzzleCursor::Initialize(int startRow, int startCol, int boardSize, float e
 	moveTimer_ = 0.0f;
 	hasMoveAction_ = false;
 	moveActionDir_ = -1;
+
+	cmdUp_ = commandPrefix + "Up";
+	cmdDown_ = commandPrefix + "Down";
+	cmdLeft_ = commandPrefix + "Left";
+	cmdRight_ = commandPrefix + "Right";
+	cmdActionHold_ = commandPrefix + "ActionHold";
 }
 
 void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float deltaTime, bool panelsAnimating) {
@@ -38,32 +45,28 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 
 	if (!inputCommand) return;
 
-	// Spaceキー/Aボタンが押されている場合 → 移動アクション
-	bool actionHeld = inputCommand->Evaluate("PuzzleActionHold").Triggered();
+	bool actionHeld = inputCommand->Evaluate(cmdActionHold_).Triggered();
 
-	// 方向入力
-	int dirUp = inputCommand->Evaluate("PuzzleUp").Triggered() ? 1 : 0;
-	int dirDown = inputCommand->Evaluate("PuzzleDown").Triggered() ? 1 : 0;
-	int dirLeft = inputCommand->Evaluate("PuzzleLeft").Triggered() ? 1 : 0;
-	int dirRight = inputCommand->Evaluate("PuzzleRight").Triggered() ? 1 : 0;
+	int dirUp = inputCommand->Evaluate(cmdUp_).Triggered() ? 1 : 0;
+	int dirDown = inputCommand->Evaluate(cmdDown_).Triggered() ? 1 : 0;
+	int dirLeft = inputCommand->Evaluate(cmdLeft_).Triggered() ? 1 : 0;
+	int dirRight = inputCommand->Evaluate(cmdRight_).Triggered() ? 1 : 0;
 
 	if (actionHeld && !panelsAnimating) {
-		// 移動アクション: 行/列のパネルを動かす
 		if (dirUp) {
 			hasMoveAction_ = true;
-			moveActionDir_ = 0; // 上
+			moveActionDir_ = 0;
 		} else if (dirDown) {
 			hasMoveAction_ = true;
-			moveActionDir_ = 1; // 下
+			moveActionDir_ = 1;
 		} else if (dirLeft) {
 			hasMoveAction_ = true;
-			moveActionDir_ = 2; // 左
+			moveActionDir_ = 2;
 		} else if (dirRight) {
 			hasMoveAction_ = true;
-			moveActionDir_ = 3; // 右
+			moveActionDir_ = 3;
 		}
 	} else if (!actionHeld) {
-		// カーソル移動
 		int newRow = row_;
 		int newCol = col_;
 

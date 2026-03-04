@@ -5,12 +5,12 @@
 
 namespace Application {
 
-void PuzzleBoard::Initialize(int size) {
+void PuzzleBoard::Initialize(int size, int panelTypeCount) {
 	size_ = size;
+	panelTypeCount_ = panelTypeCount;
 	board_.resize(size, std::vector<int>(size, 0));
 	spawnTable_.clear();
 
-	// ランダムにパズルパネルを敷き詰める（出現テーブルを使用）
 	for (int r = 0; r < size_; r++) {
 		for (int c = 0; c < size_; c++) {
 			board_[r][c] = GetNextPanelFromTable();
@@ -64,87 +64,232 @@ void PuzzleBoard::ShiftColDown(int col) {
 	board_[size_ - 1][col] = first;
 }
 
-std::vector<PuzzleBoard::MatchLine> PuzzleBoard::DetectMatches(int minMatch) const {
-	std::vector<MatchLine> matches;
+// ================================================================
+// 直線マッチ検出ヘルパー
+// ================================================================
 
-	// 横方向のマッチ
+std::vector<PuzzleBoard::LineSeg> PuzzleBoard::DetectLineMatches(int minCount) const {
+	std::vector<LineSeg> segs;
+
+	// 横方向
 	for (int r = 0; r < size_; r++) {
 		int count = 1;
 		for (int c = 1; c < size_; c++) {
 			if (board_[r][c] == board_[r][c - 1] && board_[r][c] > 0) {
 				count++;
 			} else {
-				if (count >= minMatch) {
-					matches.push_back({ true, r, c - count, count, board_[r][c - 1] });
+				if (count >= minCount) {
+					segs.push_back({ true, r, c - count, count, board_[r][c - 1] });
 				}
 				count = 1;
 			}
 		}
-		if (count >= minMatch) {
-			matches.push_back({ true, r, size_ - count, count, board_[r][size_ - 1] });
+		if (count >= minCount) {
+			segs.push_back({ true, r, size_ - count, count, board_[r][size_ - 1] });
 		}
 	}
 
-	// 縦方向のマッチ
+	// 縦方向
 	for (int c = 0; c < size_; c++) {
 		int count = 1;
 		for (int r = 1; r < size_; r++) {
 			if (board_[r][c] == board_[r - 1][c] && board_[r][c] > 0) {
 				count++;
 			} else {
-				if (count >= minMatch) {
-					matches.push_back({ false, c, r - count, count, board_[r - 1][c] });
+				if (count >= minCount) {
+					segs.push_back({ false, c, r - count, count, board_[r - 1][c] });
 				}
 				count = 1;
 			}
 		}
-		if (count >= minMatch) {
-			matches.push_back({ false, c, size_ - count, count, board_[size_ - 1][c] });
+		if (count >= minCount) {
+			segs.push_back({ false, c, size_ - count, count, board_[size_ - 1][c] });
 		}
 	}
 
-	return matches;
+	return segs;
 }
 
-int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchLine>& matches) {
+// ================================================================
+// 全マッチパターン検出
+// ================================================================
+
+std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMin, int straightMin) const {
+	std::vector<MatchResult> results;
+	// consumed: 既に上位パターンで消費済みのセル
+	std::vector<std::vector<bool>> consumed(size_, std::vector<bool>(size_, false));
+
+	// --- 1. Square (3x3) ---
+	for (int r = 0; r <= size_ - 3; r++) {
+		for (int c = 0; c <= size_ - 3; c++) {
+			int type = board_[r][c];
+			if (type <= 0) continue;
+			bool allSame = true;
+			for (int dr = 0; dr < 3 && allSame; dr++) {
+				for (int dc = 0; dc < 3 && allSame; dc++) {
+					if (board_[r + dr][c + dc] != type) allSame = false;
+				}
+			}
+			if (!allSame) continue;
+			// 消費済みでないか確認
+			bool anyConsumed = false;
+			for (int dr = 0; dr < 3 && !anyConsumed; dr++) {
+				for (int dc = 0; dc < 3 && !anyConsumed; dc++) {
+					if (consumed[r + dr][c + dc]) anyConsumed = true;
+				}
+			}
+			if (anyConsumed) continue;
+
+			MatchResult mr;
+			mr.type = MatchType::Square;
+			mr.panelType = type;
+			for (int dr = 0; dr < 3; dr++) {
+				for (int dc = 0; dc < 3; dc++) {
+					mr.cells.push_back({ r + dr, c + dc });
+					consumed[r + dr][c + dc] = true;
+				}
+			}
+			results.push_back(std::move(mr));
+		}
+	}
+
+	// --- 2. Cross (縦3+横3の十字) ---
+	// 中心セルから縦3(中心±1)と横3(中心±1)が全て同色
+	for (int r = 1; r < size_ - 1; r++) {
+		for (int c = 1; c < size_ - 1; c++) {
+			int type = board_[r][c];
+			if (type <= 0) continue;
+			// 十字: (r-1,c), (r,c-1), (r,c), (r,c+1), (r+1,c)
+			if (board_[r - 1][c] != type) continue;
+			if (board_[r + 1][c] != type) continue;
+			if (board_[r][c - 1] != type) continue;
+			if (board_[r][c + 1] != type) continue;
+
+			std::vector<std::pair<int, int>> cells = {
+				{r - 1, c}, {r, c - 1}, {r, c}, {r, c + 1}, {r + 1, c}
+			};
+
+			bool anyConsumed = false;
+			for (auto& [cr, cc] : cells) {
+				if (consumed[cr][cc]) { anyConsumed = true; break; }
+			}
+			if (anyConsumed) continue;
+
+			MatchResult mr;
+			mr.type = MatchType::Cross;
+			mr.panelType = type;
+			mr.cells = std::move(cells);
+			for (auto& [cr, cc] : mr.cells) {
+				consumed[cr][cc] = true;
+			}
+			results.push_back(std::move(mr));
+		}
+	}
+
+	// --- 3. Straight (直線 straightMin 以上) ---
+	{
+		auto segs = DetectLineMatches(straightMin);
+		for (auto& seg : segs) {
+			std::vector<std::pair<int, int>> cells;
+			bool anyConsumed = false;
+			if (seg.isHorizontal) {
+				for (int i = 0; i < seg.length; i++) {
+					if (consumed[seg.fixedIndex][seg.start + i]) { anyConsumed = true; break; }
+					cells.push_back({ seg.fixedIndex, seg.start + i });
+				}
+			} else {
+				for (int i = 0; i < seg.length; i++) {
+					if (consumed[seg.start + i][seg.fixedIndex]) { anyConsumed = true; break; }
+					cells.push_back({ seg.start + i, seg.fixedIndex });
+				}
+			}
+			if (anyConsumed) continue;
+
+			MatchResult mr;
+			mr.type = MatchType::Straight;
+			mr.panelType = seg.type;
+			mr.cells = std::move(cells);
+			mr.isHorizontal = seg.isHorizontal;
+			mr.fixedIndex = seg.fixedIndex;
+			for (auto& [cr, cc] : mr.cells) {
+				consumed[cr][cc] = true;
+			}
+			results.push_back(std::move(mr));
+		}
+	}
+
+	// --- 4. Normal (直線 normalMin 以上) ---
+	{
+		auto segs = DetectLineMatches(normalMin);
+		for (auto& seg : segs) {
+			std::vector<std::pair<int, int>> cells;
+			bool anyConsumed = false;
+			if (seg.isHorizontal) {
+				for (int i = 0; i < seg.length; i++) {
+					if (consumed[seg.fixedIndex][seg.start + i]) { anyConsumed = true; break; }
+					cells.push_back({ seg.fixedIndex, seg.start + i });
+				}
+			} else {
+				for (int i = 0; i < seg.length; i++) {
+					if (consumed[seg.start + i][seg.fixedIndex]) { anyConsumed = true; break; }
+					cells.push_back({ seg.start + i, seg.fixedIndex });
+				}
+			}
+			if (anyConsumed) continue;
+
+			MatchResult mr;
+			mr.type = MatchType::Normal;
+			mr.panelType = seg.type;
+			mr.cells = std::move(cells);
+			mr.isHorizontal = seg.isHorizontal;
+			mr.fixedIndex = seg.fixedIndex;
+			for (auto& [cr, cc] : mr.cells) {
+				consumed[cr][cc] = true;
+			}
+			results.push_back(std::move(mr));
+		}
+	}
+
+	return results;
+}
+
+int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 	if (matches.empty()) return 0;
 
 	// マッチした位置をマーク
 	std::vector<std::vector<bool>> cleared(size_, std::vector<bool>(size_, false));
 	int totalCleared = 0;
 
+	// 横消し行と縦消し列を追跡
+	std::set<int> hRows;
+	std::set<int> vCols;
+
 	for (const auto& m : matches) {
-		if (m.isHorizontal) {
-			// 横マッチ
-			for (int i = 0; i < m.length; i++) {
-				int c = m.start + i;
-				if (!cleared[m.fixedIndex][c]) {
-					cleared[m.fixedIndex][c] = true;
-					totalCleared++;
-				}
+		for (auto& [r, c] : m.cells) {
+			if (!cleared[r][c]) {
+				cleared[r][c] = true;
+				totalCleared++;
+			}
+		}
+		// 方向の追跡（Normal/Straightは方向あり、Cross/Squareは両方向扱い）
+		if (m.type == MatchType::Normal || m.type == MatchType::Straight) {
+			if (m.isHorizontal) {
+				hRows.insert(m.fixedIndex);
+			} else {
+				vCols.insert(m.fixedIndex);
 			}
 		} else {
-			// 縦マッチ
-			for (int i = 0; i < m.length; i++) {
-				int r = m.start + i;
-				if (!cleared[r][m.fixedIndex]) {
-					cleared[r][m.fixedIndex] = true;
-					totalCleared++;
-				}
+			// Cross/Square: 含まれる行と列を全て対象
+			for (auto& [r, c] : m.cells) {
+				// 行に消えたセルがあれば横方向補充、列にあれば縦方向補充
+				// 簡易的に：消えたセルの行は横扱い
+				hRows.insert(r);
 			}
 		}
 	}
 
-	// 横マッチの処理: 消えた行について、消えた分だけ左のパネルが右に移動し、左端から新パネル
-	// 行ごとに処理
-	std::set<int> hRows;
-	for (const auto& m : matches) {
-		if (m.isHorizontal) {
-			hRows.insert(m.fixedIndex);
-		}
-	}
+	// 横マッチ行の処理
 	for (int row : hRows) {
-		// この行で消えたマスを処理
 		std::vector<int> remaining;
 		for (int c = 0; c < size_; c++) {
 			if (!cleared[row][c]) {
@@ -153,28 +298,19 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchLine>& matches) {
 		}
 		int remainCount = static_cast<int>(remaining.size());
 		int fillCount = size_ - remainCount;
-		// 新パネルを左から、残存パネルを右に配置
 		for (int c = 0; c < fillCount; c++) {
 			board_[row][c] = GetNextPanelFromTable();
 		}
 		for (int c = 0; c < remainCount; c++) {
 			board_[row][fillCount + c] = remaining[c];
 		}
-		// この行のclearedフラグをリセット（二重処理防止）
 		for (int c = 0; c < size_; c++) {
 			cleared[row][c] = false;
 		}
 	}
 
-	// 縦マッチの処理: 消えた列について、消えた分だけ上(row+方向)のパネルが下に移動し、上端から新パネル
-	std::set<int> vCols;
-	for (const auto& m : matches) {
-		if (!m.isHorizontal) {
-			vCols.insert(m.fixedIndex);
-		}
-	}
+	// 縦マッチ列の処理
 	for (int col : vCols) {
-		// この列で消えたマスを処理
 		std::vector<int> remaining;
 		for (int r = 0; r < size_; r++) {
 			if (!cleared[r][col]) {
@@ -182,7 +318,6 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchLine>& matches) {
 			}
 		}
 		int remainCount = static_cast<int>(remaining.size());
-		// 残存パネルを下から、新パネルを上端に配置
 		for (int r = 0; r < remainCount; r++) {
 			board_[r][col] = remaining[r];
 		}
@@ -192,6 +327,15 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchLine>& matches) {
 	}
 
 	return totalCleared;
+}
+
+bool PuzzleBoard::IsEmpty() const {
+	for (int r = 0; r < size_; r++) {
+		for (int c = 0; c < size_; c++) {
+			if (board_[r][c] > 0) return false;
+		}
+	}
+	return true;
 }
 
 void PuzzleBoard::SetBoard(const std::vector<std::vector<int>>& board) {
@@ -209,10 +353,9 @@ int PuzzleBoard::GetNextPanelFromTable() {
 }
 
 void PuzzleBoard::RefillSpawnTable() {
-	// 存在する種類分（1～size_）のテーブルを用意
-	std::vector<int> table(size_);
-	std::iota(table.begin(), table.end(), 1); // 1, 2, ..., size_
-	// ランダムにシャッフル
+	int count = (panelTypeCount_ > 0) ? panelTypeCount_ : size_;
+	std::vector<int> table(count);
+	std::iota(table.begin(), table.end(), 1);
 	for (int i = static_cast<int>(table.size()) - 1; i > 0; i--) {
 		int j = KashipanEngine::GetRandomInt(0, i);
 		std::swap(table[i], table[j]);

@@ -8,28 +8,44 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	if (json.is_null()) return;
 
 	stageSize = KashipanEngine::GetJSONValueOrDefault(json, "stageSize", stageSize);
-	minMatchCount = KashipanEngine::GetJSONValueOrDefault(json, "minMatchCount", minMatchCount);
-	panelEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "panelEasingDuration", panelEasingDuration);
+	panelScale = KashipanEngine::GetJSONValueOrDefault(json, "panelScale", panelScale);
+	panelGap = KashipanEngine::GetJSONValueOrDefault(json, "panelGap", panelGap);
+	panelTypeCount = KashipanEngine::GetJSONValueOrDefault(json, "panelTypeCount", panelTypeCount);
+	panelMoveEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "panelMoveEasingDuration", panelMoveEasingDuration);
+	panelClearEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "panelClearEasingDuration", panelClearEasingDuration);
+	panelSpawnEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "panelSpawnEasingDuration", panelSpawnEasingDuration);
 	cursorEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "cursorEasingDuration", cursorEasingDuration);
-	cameraHeight = KashipanEngine::GetJSONValueOrDefault(json, "cameraHeight", cameraHeight);
-	cameraZDistance = KashipanEngine::GetJSONValueOrDefault(json, "cameraZDistance", cameraZDistance);
-	cameraFov = KashipanEngine::GetJSONValueOrDefault(json, "cameraFov", cameraFov);
-	panelClearRiseHeight = KashipanEngine::GetJSONValueOrDefault(json, "panelClearRiseHeight", panelClearRiseHeight);
-	panelClearDuration = KashipanEngine::GetJSONValueOrDefault(json, "panelClearDuration", panelClearDuration);
+	normalMinCount = KashipanEngine::GetJSONValueOrDefault(json, "normalMinCount", normalMinCount);
+	straightMinCount = KashipanEngine::GetJSONValueOrDefault(json, "straightMinCount", straightMinCount);
+	playerHP = KashipanEngine::GetJSONValueOrDefault(json, "playerHP", playerHP);
+	timeLimit = KashipanEngine::GetJSONValueOrDefault(json, "timeLimit", timeLimit);
+	normalDamage = KashipanEngine::GetJSONValueOrDefault(json, "normalDamage", normalDamage);
+	straightDamage = KashipanEngine::GetJSONValueOrDefault(json, "straightDamage", straightDamage);
+	crossDamage = KashipanEngine::GetJSONValueOrDefault(json, "crossDamage", crossDamage);
+	squareDamage = KashipanEngine::GetJSONValueOrDefault(json, "squareDamage", squareDamage);
+	normalLockTime = KashipanEngine::GetJSONValueOrDefault(json, "normalLockTime", normalLockTime);
+	straightLockTime = KashipanEngine::GetJSONValueOrDefault(json, "straightLockTime", straightLockTime);
+	crossLockTime = KashipanEngine::GetJSONValueOrDefault(json, "crossLockTime", crossLockTime);
+	squareLockTime = KashipanEngine::GetJSONValueOrDefault(json, "squareLockTime", squareLockTime);
+	comboDamageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboDamageMultiplier", comboDamageMultiplier);
+	breakDamageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "breakDamageMultiplier", breakDamageMultiplier);
+	comboLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboLockMultiplier", comboLockMultiplier);
+	breakLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "breakLockMultiplier", breakLockMultiplier);
+	remainingTimeDamageBonus = KashipanEngine::GetJSONValueOrDefault(json, "remainingTimeDamageBonus", remainingTimeDamageBonus);
+	remainingTimeLockBonus = KashipanEngine::GetJSONValueOrDefault(json, "remainingTimeLockBonus", remainingTimeLockBonus);
 
-	if (json.contains("groundColor") && json["groundColor"].is_array() && json["groundColor"].size() >= 4) {
-		groundColor.x = json["groundColor"][0].get<float>();
-		groundColor.y = json["groundColor"][1].get<float>();
-		groundColor.z = json["groundColor"][2].get<float>();
-		groundColor.w = json["groundColor"][3].get<float>();
-	}
+	auto loadColor = [&](const char* key, Vector4& color) {
+		if (json.contains(key) && json[key].is_array() && json[key].size() >= 4) {
+			color.x = json[key][0].get<float>();
+			color.y = json[key][1].get<float>();
+			color.z = json[key][2].get<float>();
+			color.w = json[key][3].get<float>();
+		}
+	};
 
-	if (json.contains("cursorColor") && json["cursorColor"].is_array() && json["cursorColor"].size() >= 4) {
-		cursorColor.x = json["cursorColor"][0].get<float>();
-		cursorColor.y = json["cursorColor"][1].get<float>();
-		cursorColor.z = json["cursorColor"][2].get<float>();
-		cursorColor.w = json["cursorColor"][3].get<float>();
-	}
+	loadColor("lockColor", lockColor);
+	loadColor("cursorColor", cursorColor);
+	loadColor("stageBackgroundColor", stageBackgroundColor);
 
 	if (json.contains("panelColors") && json["panelColors"].is_array()) {
 		int count = static_cast<int>(json["panelColors"].size());
@@ -49,16 +65,39 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	KashipanEngine::JSON json;
 	json["stageSize"] = stageSize;
-	json["minMatchCount"] = minMatchCount;
-	json["panelEasingDuration"] = panelEasingDuration;
+	json["panelScale"] = panelScale;
+	json["panelGap"] = panelGap;
+	json["panelTypeCount"] = panelTypeCount;
+	json["panelMoveEasingDuration"] = panelMoveEasingDuration;
+	json["panelClearEasingDuration"] = panelClearEasingDuration;
+	json["panelSpawnEasingDuration"] = panelSpawnEasingDuration;
 	json["cursorEasingDuration"] = cursorEasingDuration;
-	json["cameraHeight"] = cameraHeight;
-	json["cameraZDistance"] = cameraZDistance;
-	json["cameraFov"] = cameraFov;
-	json["panelClearRiseHeight"] = panelClearRiseHeight;
-	json["panelClearDuration"] = panelClearDuration;
-	json["groundColor"] = { groundColor.x, groundColor.y, groundColor.z, groundColor.w };
-	json["cursorColor"] = { cursorColor.x, cursorColor.y, cursorColor.z, cursorColor.w };
+	json["normalMinCount"] = normalMinCount;
+	json["straightMinCount"] = straightMinCount;
+	json["playerHP"] = playerHP;
+	json["timeLimit"] = timeLimit;
+	json["normalDamage"] = normalDamage;
+	json["straightDamage"] = straightDamage;
+	json["crossDamage"] = crossDamage;
+	json["squareDamage"] = squareDamage;
+	json["normalLockTime"] = normalLockTime;
+	json["straightLockTime"] = straightLockTime;
+	json["crossLockTime"] = crossLockTime;
+	json["squareLockTime"] = squareLockTime;
+	json["comboDamageMultiplier"] = comboDamageMultiplier;
+	json["breakDamageMultiplier"] = breakDamageMultiplier;
+	json["comboLockMultiplier"] = comboLockMultiplier;
+	json["breakLockMultiplier"] = breakLockMultiplier;
+	json["remainingTimeDamageBonus"] = remainingTimeDamageBonus;
+	json["remainingTimeLockBonus"] = remainingTimeLockBonus;
+
+	auto saveColor = [](const Vector4& c) {
+		return KashipanEngine::JSON::array({ c.x, c.y, c.z, c.w });
+	};
+
+	json["lockColor"] = saveColor(lockColor);
+	json["cursorColor"] = saveColor(cursorColor);
+	json["stageBackgroundColor"] = saveColor(stageBackgroundColor);
 
 	KashipanEngine::JSON colorsArr = KashipanEngine::JSON::array();
 	for (int i = 0; i < kMaxPanelTypes; i++) {

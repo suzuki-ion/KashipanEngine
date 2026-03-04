@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
@@ -187,6 +187,8 @@
     <ClCompile Include="Application\Objects\Puzzle\PuzzleBoard.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleCursor.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzlePlayer.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -505,6 +507,8 @@
     <ClInclude Include="Application\Objects\Puzzle\PuzzleBoard.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzlePlayer.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleNPC.h" />
     <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
   </ItemGroup>
   <ItemGroup>

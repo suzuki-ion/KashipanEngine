@@ -1,5 +1,5 @@
 {
-    "cameraFov": 45.0,
+    "cameraFov": 29.41200065612793,
     "cameraHeight": 20.0,
     "cameraZDistance": -12.0,
     "cursorColor": [
@@ -15,8 +15,9 @@
         0.30000001192092896,
         1.0
     ],
+    "minMatchCount": 3,
     "panelClearDuration": 0.30000001192092896,
-    "panelClearRiseHeight": 1.0,
+    "panelClearRiseHeight": 0.5120000243186951,
     "panelColors": [
         [
             0.800000011920929,
@@ -67,6 +68,6 @@
             1.0
         ]
     ],
-    "panelEasingDuration": 0.10000000149011612,
+    "panelEasingDuration": 0.25,
     "stageSize": 5
 }

@@ -325,7 +325,7 @@ void TestScene::OnMoveFinished() {
 }
 
 bool TestScene::StartClearingPhase() {
-    pendingMatches_ = board_.DetectMatches();
+    pendingMatches_ = board_.DetectMatches(config_.minMatchCount);
     if (pendingMatches_.empty()) return false;
 
     // コンボ加算
@@ -360,7 +360,7 @@ bool TestScene::StartClearingPhase() {
             a.startPos = pos;
             a.endPos = endPos;
             a.startScale = kPanelScale;
-            a.endScale = Vector3(kPanelScale.x, 0.0f, kPanelScale.z); // Y を潰して消す
+            a.endScale = kPanelScale;
             phaseAnims_.push_back(a);
         }
     }
@@ -627,6 +627,7 @@ void TestScene::OnUpdate() {
     ImGui::Begin("Puzzle Game Config");
 
     ImGui::SliderInt("Stage Size", &config_.stageSize, 3, 8);
+    ImGui::SliderInt("Min Match Count", &config_.minMatchCount, 2, 8);
     ImGui::SliderFloat("Panel Easing Duration", &config_.panelEasingDuration, 0.01f, 1.0f);
     ImGui::SliderFloat("Cursor Easing Duration", &config_.cursorEasingDuration, 0.01f, 1.0f);
     ImGui::SliderFloat("Camera Height", &config_.cameraHeight, 5.0f, 50.0f);

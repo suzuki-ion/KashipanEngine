@@ -7,6 +7,8 @@ namespace Application {
 struct PuzzleGameConfig {
 	// ステージの大きさ（n x n）
 	int stageSize = 5;
+	// パズルパネルが消える最低個数
+	int minMatchCount = 3;
 	// パズルパネルの各種類の色 (RGBA) ※種類数 = stageSize
 	static constexpr int kMaxPanelTypes = 8;
 	Vector4 panelColors[kMaxPanelTypes] = {

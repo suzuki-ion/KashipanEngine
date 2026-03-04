@@ -7,3 +7,4 @@
 #include "Input/Key.h"
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
+#include "Input/MouseButton.h"

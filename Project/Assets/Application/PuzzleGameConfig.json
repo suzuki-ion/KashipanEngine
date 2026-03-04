@@ -9,24 +9,14 @@
         0.501960813999176
     ],
     "cursorEasingDuration": 0.10000000149011612,
-    "emptyGroundColor": [
-        0.15000000596046448,
-        0.15000000596046448,
-        0.15000000596046448,
-        1.0
-    ],
-    "goalMoveCount": 10,
-    "goalPanelOffset": [
-        -11.0,
-        0.009999999776482582,
-        0.0
-    ],
     "groundColor": [
         0.30000001192092896,
         0.30000001192092896,
         0.30000001192092896,
         1.0
     ],
+    "panelClearDuration": 0.30000001192092896,
+    "panelClearRiseHeight": 1.0,
     "panelColors": [
         [
             0.800000011920929,
@@ -77,7 +67,6 @@
             1.0
         ]
     ],
-    "panelEasingDuration": 0.15000000596046448,
-    "panelTypeCount": 5,
+    "panelEasingDuration": 0.10000000149011612,
     "stageSize": 5
 }

@@ -5,12 +5,11 @@
 namespace Application {
 
 struct PuzzleGameConfig {
-	// ステージの大きさ（必ず奇数）
+	// ステージの大きさ（n x n）
 	int stageSize = 5;
-	// パズルパネルの種類数
-	int panelTypeCount = 3;
-	// パズルパネルの各種類の色 (RGBA)
-	Vector4 panelColors[8] = {
+	// パズルパネルの各種類の色 (RGBA) ※種類数 = stageSize
+	static constexpr int kMaxPanelTypes = 8;
+	Vector4 panelColors[kMaxPanelTypes] = {
 		Vector4(0.8f, 0.2f, 0.2f, 1.0f), // タイプ1: 赤
 		Vector4(0.2f, 0.6f, 0.8f, 1.0f), // タイプ2: 青
 		Vector4(0.2f, 0.8f, 0.3f, 1.0f), // タイプ3: 緑
@@ -30,16 +29,14 @@ struct PuzzleGameConfig {
 	float cameraZDistance = -12.0f;
 	// カメラのfov（度数）
 	float cameraFov = 45.0f;
-	// 目標パネルの配置位置（ステージ左隣）
-	Vector3 goalPanelOffset = Vector3(-10.0f, 0.01f, 0.0f);
 	// 地面パネルの色
 	Vector4 groundColor = Vector4(0.3f, 0.3f, 0.3f, 1.0f);
-	// 空きマスの地面色
-	Vector4 emptyGroundColor = Vector4(0.15f, 0.15f, 0.15f, 1.0f);
 	// カーソルの色
 	Vector4 cursorColor = Vector4(1.0f, 1.0f, 0.0f, 0.6f);
-	// 目標パネル生成時の移動回数
-	int goalMoveCount = 5;
+	// パネル消去時の上昇量
+	float panelClearRiseHeight = 1.0f;
+	// パネル消去時のイージング時間（秒）
+	float panelClearDuration = 0.3f;
 
 	void LoadFromJSON(const std::string& filepath);
 	void SaveToJSON(const std::string& filepath) const;

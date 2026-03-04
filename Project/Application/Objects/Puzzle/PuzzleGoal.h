@@ -6,22 +6,31 @@ namespace Application {
 
 class PuzzleBoard;
 
-/// 目標パネルの管理クラス
-/// 3x3の目標パターンを保持し、ステージ中央と比較する
+/// コンボ管理クラス
+/// 1回の移動で複数の色が揃うとその揃った分がコンボとなる
 class PuzzleGoal {
 public:
-	/// 目標パターンを生成する
-	/// boardの現在の状態から、moveCount回の移動で到達可能なパターンをランダムに生成する
-	void Generate(const PuzzleBoard& board, int panelTypeCount, int moveCount = 5);
+	/// 初期化
+	void Initialize();
 
-	/// 目標パターンの取得（3x3）
-	const std::vector<std::vector<int>>& GetGoalPattern() const { return goalPattern_; }
+	/// コンボ数を設定
+	void SetCombo(int combo) { currentCombo_ = combo; }
 
-	/// ステージ中央3x3が目標パターンと一致しているかチェック
-	bool IsGoalReached(const PuzzleBoard& board) const;
+	/// 現在のコンボ数を取得
+	int GetCurrentCombo() const { return currentCombo_; }
+
+	/// 総コンボ数を取得
+	int GetTotalCombo() const { return totalCombo_; }
+
+	/// コンボをリセット
+	void ResetCombo() { currentCombo_ = 0; }
+
+	/// コンボを加算
+	void AddCombo(int count);
 
 private:
-	std::vector<std::vector<int>> goalPattern_;
+	int currentCombo_ = 0;
+	int totalCombo_ = 0;
 };
 
 } // namespace Application

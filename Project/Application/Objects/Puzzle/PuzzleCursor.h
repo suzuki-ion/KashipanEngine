@@ -4,14 +4,18 @@
 
 namespace Application {
 
-/// パズルゲーム用カーソル（イージング移動付き）
+/// パズルゲーム用カーソル
+/// カーソルは常にステージ上のどこかしらのパズルパネルを選択している
+/// Space/Aボタンを押しながら方向入力で行/列の移動アクションを行う
 class PuzzleCursor {
 public:
 	void Initialize(int startRow, int startCol, int boardSize, float easingDuration);
 
 	/// カーソル入力の更新
-	/// イージング中は入力を受け付けない
-	void Update(KashipanEngine::InputCommand* inputCommand, float deltaTime);
+	/// @param inputCommand 入力コマンド
+	/// @param deltaTime デルタタイム
+	/// @param panelsAnimating パズルパネルがアニメーション中かどうか
+	void Update(KashipanEngine::InputCommand* inputCommand, float deltaTime, bool panelsAnimating);
 
 	/// 現在の論理位置（行, 列）
 	std::pair<int, int> GetPosition() const { return { row_, col_ }; }
@@ -19,13 +23,16 @@ public:
 	/// 現在の補間済み位置（行, 列）を取得（float）
 	std::pair<float, float> GetInterpolatedPosition() const { return { currentRow_, currentCol_ }; }
 
-	/// イージング中かどうか
+	/// カーソルがイージング中かどうか
 	bool IsMoving() const { return isMoving_; }
 
-	/// ボードサイズの設定
-	void SetBoardSize(int size) { boardSize_ = size; }
+	/// 移動アクションが発生したかどうか（1フレームだけtrue）
+	bool HasMoveAction() const { return hasMoveAction_; }
 
-	/// イージング時間の設定
+	/// 移動アクションの方向を取得（0=上, 1=下, 2=左, 3=右）
+	int GetMoveActionDirection() const { return moveActionDir_; }
+
+	void SetBoardSize(int size) { boardSize_ = size; }
 	void SetEasingDuration(float duration) { easingDuration_ = duration; }
 
 private:
@@ -43,6 +50,10 @@ private:
 	float targetCol_ = 0.0f;
 	float currentRow_ = 0.0f;
 	float currentCol_ = 0.0f;
+
+	// 移動アクション
+	bool hasMoveAction_ = false;
+	int moveActionDir_ = -1; ///< 0=上, 1=下, 2=左, 3=右
 };
 
 } // namespace Application

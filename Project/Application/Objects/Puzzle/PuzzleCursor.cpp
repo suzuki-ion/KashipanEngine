@@ -12,9 +12,15 @@ void PuzzleCursor::Initialize(int startRow, int startCol, int boardSize, float e
 	currentCol_ = static_cast<float>(startCol);
 	isMoving_ = false;
 	moveTimer_ = 0.0f;
+	hasMoveAction_ = false;
+	moveActionDir_ = -1;
 }
 
-void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float deltaTime) {
+void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float deltaTime, bool panelsAnimating) {
+	hasMoveAction_ = false;
+	moveActionDir_ = -1;
+
+	// イージング更新
 	if (isMoving_) {
 		moveTimer_ += deltaTime;
 		float t = std::clamp(moveTimer_ / easingDuration_, 0.0f, 1.0f);
@@ -27,45 +33,58 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 			currentRow_ = targetRow_;
 			currentCol_ = targetCol_;
 		}
-		return; // イージング中は入力を受け付けない
+		return;
 	}
 
 	if (!inputCommand) return;
 
-	int newRow = row_;
-	int newCol = col_;
+	// Spaceキー/Aボタンが押されている場合 → 移動アクション
+	bool actionHeld = inputCommand->Evaluate("PuzzleActionHold").Triggered();
 
-	// W / ↑ / 左スティックY+ / 十字キー上 → 上（row増加=Z+方向=画面奥）
-	if (inputCommand->Evaluate("PuzzleUp").Triggered()) {
-		newRow++;
-	}
-	// S / ↓ / 左スティックY- / 十字キー下 → 下（row減少=Z-方向=画面手前）
-	if (inputCommand->Evaluate("PuzzleDown").Triggered()) {
-		newRow--;
-	}
-	// A / ← / 左スティックX- / 十字キー左 → 左
-	if (inputCommand->Evaluate("PuzzleLeft").Triggered()) {
-		newCol--;
-	}
-	// D / → / 左スティックX+ / 十字キー右 → 右
-	if (inputCommand->Evaluate("PuzzleRight").Triggered()) {
-		newCol++;
-	}
+	// 方向入力
+	int dirUp = inputCommand->Evaluate("PuzzleUp").Triggered() ? 1 : 0;
+	int dirDown = inputCommand->Evaluate("PuzzleDown").Triggered() ? 1 : 0;
+	int dirLeft = inputCommand->Evaluate("PuzzleLeft").Triggered() ? 1 : 0;
+	int dirRight = inputCommand->Evaluate("PuzzleRight").Triggered() ? 1 : 0;
 
-	// 範囲制限
-	newRow = std::clamp(newRow, 0, boardSize_ - 1);
-	newCol = std::clamp(newCol, 0, boardSize_ - 1);
+	if (actionHeld && !panelsAnimating) {
+		// 移動アクション: 行/列のパネルを動かす
+		if (dirUp) {
+			hasMoveAction_ = true;
+			moveActionDir_ = 0; // 上
+		} else if (dirDown) {
+			hasMoveAction_ = true;
+			moveActionDir_ = 1; // 下
+		} else if (dirLeft) {
+			hasMoveAction_ = true;
+			moveActionDir_ = 2; // 左
+		} else if (dirRight) {
+			hasMoveAction_ = true;
+			moveActionDir_ = 3; // 右
+		}
+	} else if (!actionHeld) {
+		// カーソル移動
+		int newRow = row_;
+		int newCol = col_;
 
-	if (newRow != row_ || newCol != col_) {
-		// イージング開始
-		startRow_ = currentRow_;
-		startCol_ = currentCol_;
-		targetRow_ = static_cast<float>(newRow);
-		targetCol_ = static_cast<float>(newCol);
-		row_ = newRow;
-		col_ = newCol;
-		isMoving_ = true;
-		moveTimer_ = 0.0f;
+		if (dirUp) newRow++;
+		if (dirDown) newRow--;
+		if (dirLeft) newCol--;
+		if (dirRight) newCol++;
+
+		newRow = std::clamp(newRow, 0, boardSize_ - 1);
+		newCol = std::clamp(newCol, 0, boardSize_ - 1);
+
+		if (newRow != row_ || newCol != col_) {
+			startRow_ = currentRow_;
+			startCol_ = currentCol_;
+			targetRow_ = static_cast<float>(newRow);
+			targetCol_ = static_cast<float>(newCol);
+			row_ = newRow;
+			col_ = newCol;
+			isMoving_ = true;
+			moveTimer_ = 0.0f;
+		}
 	}
 }
 

@@ -107,6 +107,10 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
         ic->RegisterCommand("PuzzleAction", Key::Space, InputCommand::InputState::Trigger);
         ic->RegisterCommand("PuzzleAction", ControllerButton::A, InputCommand::InputState::Trigger);
+
+        // パズルパネル移動アクション（押しっぱなし判定用）
+        ic->RegisterCommand("PuzzleActionHold", Key::Space, InputCommand::InputState::Down);
+        ic->RegisterCommand("PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down);
     }
 }
 

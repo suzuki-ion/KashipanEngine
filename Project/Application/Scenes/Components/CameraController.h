@@ -5,6 +5,7 @@
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Math/Vector3.h"
+#include "Math/Quaternion.h"
 
 #include <algorithm>
 #include <cmath>
@@ -19,7 +20,9 @@ public:
         if (camera_) {
             if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
                 targetTranslate_ = tr->GetTranslate();
-                targetRotate_ = tr->GetRotate();
+                // 初期回転をオイラー角からクォータニオンに変換
+                targetRotateQuat_ = EulerToQuaternion(tr->GetRotate());
+                currentRotateQuat_ = targetRotateQuat_;
             }
             targetFovY_ = camera_->GetFovY();
         }
@@ -55,10 +58,12 @@ public:
 
         if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
             const Vector3 curT = tr->GetTranslate();
-            const Vector3 curR = tr->GetRotate();
 
             tr->SetTranslate(Vector3::Lerp(curT, desiredTranslate, t));
-            tr->SetRotate(Vector3::Lerp(curR, targetRotate_, t));
+
+            // クォータニオンSlerpで回転を補間（ジンバルロック回避＆最短経路回転）
+            currentRotateQuat_ = Quaternion::Slerp(currentRotateQuat_, targetRotateQuat_, t);
+            tr->SetRotateQuaternion(currentRotateQuat_);
         }
 
         const float curF = camera_->GetFovY();
@@ -66,7 +71,15 @@ public:
     }
 
     void SetTargetTranslate(const Vector3 &v) { targetTranslate_ = v; }
-    void SetTargetRotate(const Vector3 &v) { targetRotate_ = v; }
+
+    void SetTargetRotate(const Vector3 &v) {
+        targetRotateQuat_ = EulerToQuaternion(v);
+    }
+
+    void SetTargetRotateQuaternion(const Quaternion &q) {
+        targetRotateQuat_ = q;
+    }
+
     void SetTargetFovY(float v) { targetFovY_ = v; }
 
     void SetLerpFactor(float t) { lerpFactor_ = t; }
@@ -79,7 +92,7 @@ public:
     const Vector3 &GetFollowOffset() const { return followOffset_; }
 
     const Vector3 &GetTargetTranslate() const { return targetTranslate_; }
-    const Vector3 &GetTargetRotate() const { return targetRotate_; }
+    const Quaternion &GetTargetRotateQuaternion() const { return targetRotateQuat_; }
     float GetTargetFovY() const { return targetFovY_; }
 
     void SetIsShakeX(bool v) { isShakeX_ = v; }
@@ -110,7 +123,10 @@ public:
     void ShowImGui() {
         if (ImGui::CollapsingHeader("CameraController")) {
             ImGui::InputFloat3("Target Translate", &targetTranslate_.x);
-            ImGui::InputFloat3("Target Rotate", &targetRotate_.x);
+            Vector3 euler = QuaternionToEuler(targetRotateQuat_);
+            if (ImGui::InputFloat3("Target Rotate", &euler.x)) {
+                targetRotateQuat_ = EulerToQuaternion(euler);
+            }
             ImGui::InputFloat("Target FovY", &targetFovY_);
             ImGui::Separator();
             ImGui::InputFloat("Lerp Factor", &lerpFactor_);
@@ -139,6 +155,39 @@ public:
 #endif
 
 private:
+    // オイラー角からクォータニオンへの変換（XYZ回転順）
+    static Quaternion EulerToQuaternion(const Vector3 &euler) {
+        Quaternion q;
+        Quaternion qx = q.MakeRotateAxisAngle(Vector3(1.0f, 0.0f, 0.0f), euler.x);
+        Quaternion qy = q.MakeRotateAxisAngle(Vector3(0.0f, 1.0f, 0.0f), euler.y);
+        Quaternion qz = q.MakeRotateAxisAngle(Vector3(0.0f, 0.0f, 1.0f), euler.z);
+        return (qx * qy * qz).Normalize();
+    }
+
+    // クォータニオンからオイラー角への変換（XYZ回転順）
+    static Vector3 QuaternionToEuler(const Quaternion &q) {
+        // 回転行列経由で変換
+        Matrix4x4 m = q.MakeRotateMatrix();
+        float rotX, rotY, rotZ;
+
+        // m[0][2] = sin(Y) in XYZ order
+        float sy = m.m[0][2];
+        if (sy > 0.9999f) {
+            rotY = 3.14159265f * 0.5f;
+            rotX = std::atan2(m.m[1][0], m.m[1][1]);
+            rotZ = 0.0f;
+        } else if (sy < -0.9999f) {
+            rotY = -3.14159265f * 0.5f;
+            rotX = std::atan2(-m.m[1][0], m.m[1][1]);
+            rotZ = 0.0f;
+        } else {
+            rotY = std::asin(sy);
+            rotX = std::atan2(-m.m[1][2], m.m[2][2]);
+            rotZ = std::atan2(-m.m[0][1], m.m[0][0]);
+        }
+        return Vector3(rotX, rotY, rotZ);
+    }
+
     Camera3D *camera_ = nullptr;
 
     Object3DBase *followTarget_ = nullptr;
@@ -146,7 +195,8 @@ private:
     Vector3 followOffset_{0.0f, 0.0f, 0.0f};
 
     Vector3 targetTranslate_{0.0f, 0.0f, 0.0f};
-    Vector3 targetRotate_{0.0f, 0.0f, 0.0f};
+    Quaternion targetRotateQuat_ = Quaternion::Identity();
+    Quaternion currentRotateQuat_ = Quaternion::Identity();
     float targetFovY_ = 0.7f;
 
     float lerpFactor_ = 0.1f;
@@ -159,4 +209,4 @@ private:
     bool isShakeZ_ = false;
 };
 
-}  // namespace KashipanEngine
+}  // namespace KashipanEngine}  // namespace KashipanEngine

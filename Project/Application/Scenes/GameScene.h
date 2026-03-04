@@ -26,27 +26,6 @@ protected:
 
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
-
-    // ゲームで使うデータのまとまりクラス
-	Application::BlockContainer blockContainer_;
-	Application::HandBlockContainer handBlockContainer_;
-
-	// ゲームシステムのまとまりクラス
-	Application::BlockScroller blockScroller_;
-	Application::BlockFaller blockFaller_;
-	Application::Thermometer thermometer_;
-	Application::MatchResolver matchResolver_;
-	Application::Cursor cursor_;
-	Sprite* cursorSprite_ = nullptr;
-
-	// 描画用のオブジェクトのまとまりクラス
-    Vector2 blockSpriteBasePos_;
-	Application::BlockSpriteContainer blockSpriteContainer_;
-	Vector2 handBlockSpriteBasePos_;
-	Application::HandBlockSpriteContainer handBlockSpriteContainer_;
-
-    // 関数
-	void UpdateBlockColor();
 };
 
 } // namespace KashipanEngine

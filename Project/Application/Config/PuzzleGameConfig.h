@@ -8,7 +8,7 @@ struct PuzzleGameConfig {
 	// ステージの大きさ（n x n）
 	int stageSize = 6;
 	// パネルのスケール（ピクセル）
-	float panelScale = 120.0f;
+	float panelScale = 80.0f;
 	// パネルとパネルの間の隙間（ピクセル）
 	float panelGap = 8.0f;
 	// パズルパネルの種類数

@@ -110,12 +110,12 @@ int PuzzleNPC::SimulateAndScore(int row, int col, int direction) const {
 	PuzzleBoard simBoard;
 	simBoard.SetBoard(player_->GetBoard().GetBoard());
 
-	// シミュレート：指定方向にシフト
+	// シミュレート：指定方向にシフト（実際のゲーム操作と同じマッピング）
 	switch (direction) {
-	case 0: simBoard.ShiftColUp(col);    break;
-	case 1: simBoard.ShiftColDown(col);  break;
-	case 2: simBoard.ShiftRowLeft(row);  break;
-	case 3: simBoard.ShiftRowRight(row); break;
+	case 0: simBoard.ShiftColDown(col);   break;
+	case 1: simBoard.ShiftColUp(col);     break;
+	case 2: simBoard.ShiftRowLeft(row);   break;
+	case 3: simBoard.ShiftRowRight(row);  break;
 	}
 
 	auto matches = simBoard.DetectAllMatches(config.normalMinCount, config.straightMinCount);

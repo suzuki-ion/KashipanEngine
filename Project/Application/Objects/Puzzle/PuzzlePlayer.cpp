@@ -80,11 +80,18 @@ void PuzzlePlayer::CreateSprites() {
 		}
 	};
 
-	// 繧ｹ繝・・繧ｸ閭梧勹繝代ロ繝ｫ
+	float cellSize = config_.panelScale + config_.panelGap;
+	float stageWidth = static_cast<float>(n) * cellSize;
+	float stageHeight = static_cast<float>(n) * cellSize;
+
+	// ================================================================
+	// 1. ステージ背景パネル（最背面）
+	// ================================================================
 	stagePanelSprites_.resize(n * n);
 	for (int r = 0; r < n; r++) {
 		for (int c = 0; c < n; c++) {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
+			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_Stage_" + std::to_string(r) + "_" + std::to_string(c));
 			sprite->SetAnchorPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
@@ -103,11 +110,14 @@ void PuzzlePlayer::CreateSprites() {
 		}
 	}
 
-	// 繝代ぜ繝ｫ繝代ロ繝ｫ
+	// ================================================================
+	// 2. パズルパネル
+	// ================================================================
 	puzzlePanelSprites_.resize(n * n);
 	for (int r = 0; r < n; r++) {
 		for (int c = 0; c < n; c++) {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
+			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_Panel_" + std::to_string(r) + "_" + std::to_string(c));
 			sprite->SetAnchorPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
@@ -125,78 +135,10 @@ void PuzzlePlayer::CreateSprites() {
 		}
 	}
 
-	// 笧ｯ繧ｶ繝ｳ
-	{
-		auto sprite = std::make_unique<KashipanEngine::Sprite>();
-		sprite->SetUniqueBatchKey();
-		sprite->SetName(playerName_ + "_Cursor");
-		sprite->SetAnchorPoint(0.5f, 0.5f);
-		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-			mat->SetColor(config_.cursorColor);
-			mat->SetTexture(whiteTexture);
-		}
-		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
-			tr->SetParentTransform(parentTransform_);
-			auto [cr, cc] = cursor_.GetPosition();
-			Vector2 pos = BoardToScreen(cr, cc);
-			float cursorScale = config_.panelScale + config_.panelGap * 2.0f;
-			tr->SetTranslate(Vector3(pos.x, pos.y, 0.0f));
-			tr->SetScale(Vector3(cursorScale, cursorScale, 1.0f));
-		}
-		attachSprite(sprite.get());
-		cursorSprite_ = sprite.get();
-		addObject2DFunc_(std::move(sprite));
-	}
-
-	// 繝ｭ繝・け繧ｪ繝ｼ繝舌・繝ｬ繧､・郁｡鯉ｼ・
-	rowLockSprites_.resize(n);
-	float cellSize = config_.panelScale + config_.panelGap;
-	float stageWidth = static_cast<float>(n) * cellSize;
-	for (int r = 0; r < n; r++) {
-		auto sprite = std::make_unique<KashipanEngine::Sprite>();
-		sprite->SetUniqueBatchKey();
-		sprite->SetName(playerName_ + "_RowLock_" + std::to_string(r));
-		sprite->SetAnchorPoint(0.5f, 0.5f);
-		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-			mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-			mat->SetTexture(whiteTexture);
-		}
-		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
-			tr->SetParentTransform(parentTransform_);
-			Vector2 pos = BoardToScreen(r, n / 2);
-			tr->SetTranslate(Vector3(0.0f, pos.y, 0.0f));
-			tr->SetScale(Vector3(stageWidth, config_.panelScale, 1.0f));
-		}
-		attachSprite(sprite.get());
-		rowLockSprites_[r] = sprite.get();
-		addObject2DFunc_(std::move(sprite));
-	}
-
-	// 矢ｺ繝・け繧ｪ繝ｼ繝舌・繝ｬ繧､・亥・・・
-	colLockSprites_.resize(n);
-	float stageHeight = static_cast<float>(n) * cellSize;
-	for (int c = 0; c < n; c++) {
-		auto sprite = std::make_unique<KashipanEngine::Sprite>();
-		sprite->SetUniqueBatchKey();
-		sprite->SetName(playerName_ + "_ColLock_" + std::to_string(c));
-		sprite->SetAnchorPoint(0.5f, 0.5f);
-		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-			mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-			mat->SetTexture(whiteTexture);
-		}
-		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
-			tr->SetParentTransform(parentTransform_);
-			Vector2 pos = BoardToScreen(n / 2, c);
-			tr->SetTranslate(Vector3(pos.x, 0.0f, 0.0f));
-			tr->SetScale(Vector3(config_.panelScale, stageHeight, 1.0f));
-		}
-		attachSprite(sprite.get());
-		colLockSprites_[c] = sprite.get();
-		addObject2DFunc_(std::move(sprite));
-	}
-
-	// 繧ｿ繧､繝槭・繧ｲ繝ｼ繧ｸ
-	float gaugeY = static_cast<float>(n) * cellSize * 0.5f + 20.0f;
+	// ================================================================
+	// 3. タイマーゲージ（UI背景）
+	// ================================================================
+	float gaugeY = stageHeight * 0.5f + 20.0f;
 	{
 		auto sprite = std::make_unique<KashipanEngine::Sprite>();
 		sprite->SetUniqueBatchKey();
@@ -221,7 +163,7 @@ void PuzzlePlayer::CreateSprites() {
 		sprite->SetName(playerName_ + "_TimerGaugeFill");
 		sprite->SetAnchorPoint(0.0f, 0.5f);
 		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-			mat->SetColor(Vector4(0.2f, 0.8f, 0.2f, 1.0f));
+			mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 			mat->SetTexture(whiteTexture);
 		}
 		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
@@ -234,7 +176,9 @@ void PuzzlePlayer::CreateSprites() {
 		addObject2DFunc_(std::move(sprite));
 	}
 
-	// HP繧ｲ繝ｼ繧ｸ
+	// ================================================================
+	// 4. HPゲージ（UI背景）
+	// ================================================================
 	float gaugeX = -stageWidth * 0.5f - 20.0f;
 	{
 		auto sprite = std::make_unique<KashipanEngine::Sprite>();
@@ -260,12 +204,12 @@ void PuzzlePlayer::CreateSprites() {
 		sprite->SetName(playerName_ + "_HPGaugeFill");
 		sprite->SetAnchorPoint(0.5f, 1.0f);
 		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-			mat->SetColor(Vector4(0.8f, 0.2f, 0.2f, 1.0f));
+			mat->SetColor(Vector4(0.2f, 0.8f, 0.3f, 1.0f));
 			mat->SetTexture(whiteTexture);
 		}
 		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
 			tr->SetParentTransform(parentTransform_);
-			tr->SetTranslate(Vector3(gaugeX, stageHeight * 0.5f, 0.0f));
+			tr->SetTranslate(Vector3(gaugeX, -stageHeight * 0.5f, 0.0f));
 			tr->SetScale(Vector3(12.0f, stageHeight, 1.0f));
 		}
 		attachSprite(sprite.get());
@@ -273,13 +217,88 @@ void PuzzlePlayer::CreateSprites() {
 		addObject2DFunc_(std::move(sprite));
 	}
 
-	// 繝槭ャ繝√ユ繧ｭ繧ｹ繝・
+	// ================================================================
+	// 5. ロックオーバーレイ（行）— パネルより上面
+	// ================================================================
+	rowLockSprites_.resize(n);
+	for (int r = 0; r < n; r++) {
+		auto sprite = std::make_unique<KashipanEngine::Sprite>();
+		sprite->SetUniqueBatchKey();
+		sprite->SetName(playerName_ + "_RowLock_" + std::to_string(r));
+		sprite->SetAnchorPoint(0.5f, 0.5f);
+		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+			mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+			mat->SetTexture(whiteTexture);
+		}
+		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
+			tr->SetParentTransform(parentTransform_);
+			Vector2 pos = BoardToScreen(r, n / 2);
+			tr->SetTranslate(Vector3(0.0f, pos.y, 0.0f));
+			tr->SetScale(Vector3(stageWidth, config_.panelScale, 1.0f));
+		}
+		attachSprite(sprite.get());
+		rowLockSprites_[r] = sprite.get();
+		addObject2DFunc_(std::move(sprite));
+	}
+
+	// ================================================================
+	// 6. ロックオーバーレイ（列）— パネルより上面
+	// ================================================================
+	colLockSprites_.resize(n);
+	for (int c = 0; c < n; c++) {
+		auto sprite = std::make_unique<KashipanEngine::Sprite>();
+		sprite->SetUniqueBatchKey();
+		sprite->SetName(playerName_ + "_ColLock_" + std::to_string(c));
+		sprite->SetAnchorPoint(0.5f, 0.5f);
+		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+			mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+			mat->SetTexture(whiteTexture);
+		}
+		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
+			tr->SetParentTransform(parentTransform_);
+			Vector2 pos = BoardToScreen(n / 2, c);
+			tr->SetTranslate(Vector3(pos.x, 0.0f, 0.0f));
+			tr->SetScale(Vector3(config_.panelScale, stageHeight, 1.0f));
+		}
+		attachSprite(sprite.get());
+		colLockSprites_[c] = sprite.get();
+		addObject2DFunc_(std::move(sprite));
+	}
+
+	// ================================================================
+	// 7. カーソル（最前面）
+	// ================================================================
+	{
+		auto sprite = std::make_unique<KashipanEngine::Sprite>();
+		sprite->SetUniqueBatchKey();
+		sprite->SetName(playerName_ + "_Cursor");
+		sprite->SetAnchorPoint(0.5f, 0.5f);
+		if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+			mat->SetColor(config_.cursorColor);
+			mat->SetTexture(whiteTexture);
+		}
+		if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
+			tr->SetParentTransform(parentTransform_);
+			auto [cr, cc] = cursor_.GetPosition();
+			Vector2 pos = BoardToScreen(cr, cc);
+			float cursorScale = config_.panelScale + config_.panelGap * 2.0f;
+			tr->SetTranslate(Vector3(pos.x, pos.y, 0.0f));
+			tr->SetScale(Vector3(cursorScale, cursorScale, 1.0f));
+		}
+		attachSprite(sprite.get());
+		cursorSprite_ = sprite.get();
+		addObject2DFunc_(std::move(sprite));
+	}
+
+	// ================================================================
+	// 8. マッチテキスト
+	// ================================================================
 	{
 		auto text = std::make_unique<KashipanEngine::Text>(64);
 		text->SetName(playerName_ + "_MatchText");
 		if (auto* tr = text->GetComponent2D<KashipanEngine::Transform2D>()) {
 			tr->SetParentTransform(parentTransform_);
-			tr->SetTranslate(Vector3(stageWidth * 0.5f + 30.0f, -stageHeight * 0.5f, 0.0f));
+			tr->SetTranslate(Vector3(stageWidth * 0.5f + 30.0f, stageHeight * 0.5f, 0.0f));
 		}
 		text->SetFont("Assets/Application/test.fnt");
 		text->SetText("");
@@ -293,13 +312,15 @@ void PuzzlePlayer::CreateSprites() {
 		addObject2DFunc_(std::move(text));
 	}
 
-	// 繧ｳ繝ｳ繝懊ユ繧ｭ繧ｹ繝・
+	// ================================================================
+	// 9. コンボテキスト
+	// ================================================================
 	{
 		auto text = std::make_unique<KashipanEngine::Text>(32);
 		text->SetName(playerName_ + "_ComboText");
 		if (auto* tr = text->GetComponent2D<KashipanEngine::Transform2D>()) {
 			tr->SetParentTransform(parentTransform_);
-			tr->SetTranslate(Vector3(stageWidth * 0.5f + 30.0f, -stageHeight * 0.5f + 80.0f, 0.0f));
+			tr->SetTranslate(Vector3(stageWidth * 0.5f + 30.0f, stageHeight * 0.5f - 80.0f, 0.0f));
 		}
 		text->SetFont("Assets/Application/test.fnt");
 		text->SetText("");
@@ -450,22 +471,43 @@ void PuzzlePlayer::UpdateLocks(float deltaTime) {
 void PuzzlePlayer::ApplyDamage(int damage) {
 	hp_ -= damage;
 	if (hp_ < 0) hp_ = 0;
+
+	// ダメージを受けたらシェイク開始
+	if (damage > 0) {
+		shakeTimer_ = shakeDuration_;
+		if (parentTransform_) {
+			parentOriginalPos_ = parentTransform_->GetTranslate();
+		}
+	}
 }
 
 void PuzzlePlayer::ApplyLock(bool isRow, int index, float seconds) {
+	// 既にロック済みの場合は時間を加算
 	if (isRow) {
 		if (rowLocks_.count(index)) {
 			rowLocks_[index].remainingTime += seconds;
-		} else {
-			rowLocks_[index] = { seconds };
+			return;
 		}
 	} else {
 		if (colLocks_.count(index)) {
 			colLocks_[index].remainingTime += seconds;
-		} else {
-			colLocks_[index] = { seconds };
+			return;
 		}
 	}
+
+	// ロック合計数が上限に達している場合は新規ロックを追加しない
+	if (GetTotalLockCount() >= kMaxTotalLocks) return;
+
+	if (isRow) {
+		rowLocks_[index] = { seconds };
+	} else {
+		colLocks_[index] = { seconds };
+	}
+}
+
+void PuzzlePlayer::ClearAllLocks() {
+	rowLocks_.clear();
+	colLocks_.clear();
 }
 
 void PuzzlePlayer::AddToExistingLocks(float seconds) {
@@ -474,14 +516,12 @@ void PuzzlePlayer::AddToExistingLocks(float seconds) {
 }
 
 void PuzzlePlayer::SetCursorPosition(int row, int col) {
-	// NPC逕ｨ縺ｮ蠑ｷ蛻ｶ繧ｻ繝・ヨ・亥・驛ｨ逧・↓迸ｬ譎ゅ↓遘ｻ蜍包ｼ・
 	cursor_.Initialize(row, col, config_.stageSize, config_.cursorEasingDuration);
 }
 
 void PuzzlePlayer::ForceMove(int direction) {
 	if (IsAnimating()) return;
 	auto [row, col] = cursor_.GetPosition();
-	// 笧ｯ繧ｶ繝ｳ繝・け
 	if (direction == 0 || direction == 1) {
 		if (IsColLocked(col)) return;
 	} else {
@@ -505,10 +545,10 @@ void PuzzlePlayer::StartMoveAction(int direction) {
 	float scale = config_.panelScale;
 
 	switch (direction) {
-	case 0: board_.ShiftColUp(col);    break;
-	case 1: board_.ShiftColDown(col);  break;
-	case 2: board_.ShiftRowLeft(row);  break;
-	case 3: board_.ShiftRowRight(row); break;
+	case 0: board_.ShiftColDown(col);   break;
+	case 1: board_.ShiftColUp(col);     break;
+	case 2: board_.ShiftRowLeft(row);   break;
+	case 3: board_.ShiftRowRight(row);  break;
 	}
 
 	phaseAnims_.clear();
@@ -533,8 +573,8 @@ void PuzzlePlayer::StartMoveAction(int direction) {
 	};
 
 	switch (direction) {
-	case 0: for (int r = 0; r < n; r++) addAnim(r, col, (r == 0) ? -1 : (r - 1), col); break;
-	case 1: for (int r = 0; r < n; r++) addAnim(r, col, (r == n - 1) ? n : (r + 1), col); break;
+	case 0: for (int r = 0; r < n; r++) addAnim(r, col, (r == n - 1) ? n : (r + 1), col); break;
+	case 1: for (int r = 0; r < n; r++) addAnim(r, col, (r == 0) ? -1 : (r - 1), col); break;
 	case 2: for (int c = 0; c < n; c++) addAnim(row, c, row, (c == n - 1) ? n : (c + 1)); break;
 	case 3: for (int c = 0; c < n; c++) addAnim(row, c, row, (c == 0) ? -1 : (c - 1)); break;
 	}
@@ -550,7 +590,7 @@ void PuzzlePlayer::StartMoveAction(int direction) {
 				if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
 					Vector2 pos = BoardToScreen(r, c);
 					tr->SetTranslate(Vector3(pos.x, pos.y, 0.0f));
-					tr->SetScale(Vector3(scale, scale, 1.0f));
+				 tr->SetScale(Vector3(scale, scale, 1.0f));
 				}
 			}
 		}
@@ -563,10 +603,8 @@ void PuzzlePlayer::StartMoveAction(int direction) {
 
 void PuzzlePlayer::OnMoveFinished() {
 	SyncAllPanelVisuals();
-	if (!StartClearingPhase()) {
-		combo_.ResetCombo();
-		phase_ = Phase::Idle;
-	}
+	// マッチ評価はタイマー切れ or 時間スキップ時にのみ行う
+	phase_ = Phase::Idle;
 }
 
 bool PuzzlePlayer::StartClearingPhase() {
@@ -751,6 +789,9 @@ void PuzzlePlayer::OnFillFinished() {
 // ================================================================
 
 void PuzzlePlayer::OnTimerExpired() {
+	// ロックを全解除
+	ClearAllLocks();
+
 	if (!IsAnimating()) {
 		if (!StartClearingPhase()) {
 			combo_.ResetCombo();
@@ -761,11 +802,19 @@ void PuzzlePlayer::OnTimerExpired() {
 
 void PuzzlePlayer::OnTimeSkip() {
 	remainingTimeAtSkip_ = timer_;
-	OnTimerExpired();
+	// ロックを全解除
+	ClearAllLocks();
+	// タイマーリセット＆マッチ評価
+	if (!IsAnimating()) {
+		if (!StartClearingPhase()) {
+			combo_.ResetCombo();
+		}
+	}
+	timer_ = config_.timeLimit;
 }
 
 // ================================================================
-// 繝繝｡繝ｼ繧ｸ/繝ｭ繝・け險育ｮ・
+// 笝ｭ繝・け
 // ================================================================
 
 void PuzzlePlayer::CalculateAttackFromMatches() {
@@ -798,7 +847,7 @@ void PuzzlePlayer::CalculateAttackFromMatches() {
 
 	pendingDamage_ = static_cast<int>(std::round(baseDamage * comboMult * breakMult));
 
-	// 繝ｭ繝・け譎る俣險育ｮ・
+	// 笝ｭ繝・け譎る俣險育ｮ・
 	float baseLock = 0.0f;
 	baseLock += static_cast<float>(lastMatchSummary_.normalCount) * config_.normalLockTime;
 	baseLock += static_cast<float>(lastMatchSummary_.straightCount) * config_.straightLockTime;
@@ -817,7 +866,7 @@ void PuzzlePlayer::CalculateAttackFromMatches() {
 }
 
 // ================================================================
-// 繝輔ぉ繝ｼ繧ｺ譖ｴ譁ｰ
+// 笝ｭ繝・け繧ｸ
 // ================================================================
 
 void PuzzlePlayer::UpdatePhase(float deltaTime) {
@@ -913,6 +962,31 @@ void PuzzlePlayer::Update(float deltaTime, KashipanEngine::InputCommand* inputCo
 	UpdateTimerGauge();
 	UpdateHPGauge();
 	UpdateMatchText();
+	UpdateShake(deltaTime);
+}
+
+// ================================================================
+// 蛻ｶ髯先凾髢・
+// ================================================================
+
+void PuzzlePlayer::UpdateShake(float deltaTime) {
+	if (shakeTimer_ <= 0.0f) return;
+	if (!parentTransform_) return;
+
+	shakeTimer_ -= deltaTime;
+	if (shakeTimer_ <= 0.0f) {
+		shakeTimer_ = 0.0f;
+		parentTransform_->SetTranslate(parentOriginalPos_);
+		return;
+	}
+
+	float t = shakeTimer_ / shakeDuration_;
+	float offsetX = KashipanEngine::GetRandomFloat(-shakeIntensity_, shakeIntensity_) * t;
+	float offsetY = KashipanEngine::GetRandomFloat(-shakeIntensity_, shakeIntensity_) * t;
+	parentTransform_->SetTranslate(Vector3(
+		parentOriginalPos_.x + offsetX,
+		parentOriginalPos_.y + offsetY,
+		parentOriginalPos_.z));
 }
 
 } // namespace Application

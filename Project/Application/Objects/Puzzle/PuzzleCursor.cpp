@@ -70,8 +70,8 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 		int newRow = row_;
 		int newCol = col_;
 
-		if (dirUp) newRow++;
-		if (dirDown) newRow--;
+		if (dirUp) newRow--;
+		if (dirDown) newRow++;
 		if (dirLeft) newCol--;
 		if (dirRight) newCol++;
 

@@ -1,8 +1,8 @@
-{
+﻿{
     "breakDamageMultiplier": 2.0,
     "breakLockMultiplier": 2.0,
-    "comboDamageMultiplier": 2.0,
-    "comboLockMultiplier": 2.0,
+    "comboDamageMultiplier": 1.5,
+    "comboLockMultiplier": 1.5,
     "crossDamage": 3,
     "crossLockTime": 5.0,
     "cursorColor": [
@@ -77,7 +77,7 @@
     "panelScale": 80.0,
     "panelSpawnEasingDuration": 0.15000000596046448,
     "panelTypeCount": 4,
-    "playerHP": 500,
+    "playerHP": 1000,
     "remainingTimeDamageBonus": 0.5,
     "remainingTimeLockBonus": 0.5,
     "squareDamage": 5,

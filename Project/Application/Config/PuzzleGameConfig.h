@@ -73,8 +73,17 @@ struct PuzzleGameConfig {
 	int movesPerGarbage = 5;
 	// 攻撃時に消したパネル数→お邪魔パネル個数の倍率
 	float attackGarbageMultiplier = 0.5f;
-	// 未使用ステージの崩壊度減少速度（秒あたりのお邪魔パネル減少数）
-	float inactiveGarbageDecayPerSec = 1.0f;
+	// 未使用ステージのお邪魔パネルが1個消えるまでの秒数
+	float inactiveGarbageDecayInterval = 1.0f;
+
+	// パズルパネルの形状ごとのお邪魔パネル出現量
+	int normalGarbageCount = 1;
+	int straightGarbageCount = 3;
+	int crossGarbageCount = 5;
+	int squareGarbageCount = 9;
+
+	// 敗北とみなす崩壊度のパーセンテージ (0.0~1.0)
+	float defeatCollapseRatio = 0.7f;
 
 	void LoadFromJSON(const std::string& filepath);
 	void SaveToJSON(const std::string& filepath) const;

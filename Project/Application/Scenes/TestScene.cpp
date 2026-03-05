@@ -35,6 +35,33 @@ void TestScene::Initialize() {
     float cy = window ? static_cast<float>(window->GetClientHeight()) * 0.5f : 540.0f;
 
     // ================================================================
+    // 背景スプライト
+    // ================================================================
+    {
+        auto sprite = std::make_unique<Sprite>();
+        sprite->SetUniqueBatchKey();
+        sprite->SetName("PuzzleBackground");
+        sprite->SetAnchorPoint(0.5f, 0.5f);
+        if (auto *mat = sprite->GetComponent2D<Material2D>()) {
+            mat->SetTexture(TextureManager::GetTextureFromFileName("puzzleBackground.png"));
+            mat->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+        }
+        if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3(cx, cy, 0.0f));
+            float w = window ? static_cast<float>(window->GetClientWidth()) : 1920.0f;
+            float h = window ? static_cast<float>(window->GetClientHeight()) : 1080.0f;
+            tr->SetScale(Vector3(w, h, 1.0f));
+        }
+        if (screenBuffer2D) {
+            sprite->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        } else if (window) {
+            sprite->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
+        }
+        backgroundSprite_ = sprite.get();
+        AddObject2D(std::move(sprite));
+    }
+
+    // ================================================================
     // プレイヤー1 親スプライト（左側）
     // ================================================================
     {
@@ -102,7 +129,7 @@ void TestScene::Initialize() {
 }
 
 // ================================================================
-// 対戦処理
+/// 対戦処理
 // ================================================================
 
 void TestScene::ProcessAttack(Application::PuzzlePlayer& attacker, Application::PuzzlePlayer& defender) {
@@ -321,7 +348,15 @@ void TestScene::OnUpdate() {
     ImGui::Text("Garbage Settings");
     ImGui::SliderInt("Moves Per Garbage", &config_.movesPerGarbage, 1, 30);
     ImGui::SliderFloat("Attack Garbage Mult", &config_.attackGarbageMultiplier, 0.0f, 3.0f);
-    ImGui::SliderFloat("Inactive Decay/sec", &config_.inactiveGarbageDecayPerSec, 0.0f, 5.0f);
+    ImGui::SliderFloat("Inactive Decay Interval", &config_.inactiveGarbageDecayInterval, 0.1f, 10.0f);
+    ImGui::SliderInt("Normal Garbage Count", &config_.normalGarbageCount, 0, 20);
+    ImGui::SliderInt("Straight Garbage Count", &config_.straightGarbageCount, 0, 20);
+    ImGui::SliderInt("Cross Garbage Count", &config_.crossGarbageCount, 0, 20);
+    ImGui::SliderInt("Square Garbage Count", &config_.squareGarbageCount, 0, 20);
+
+    ImGui::Separator();
+    ImGui::Text("Defeat Settings");
+    ImGui::SliderFloat("Defeat Collapse Ratio", &config_.defeatCollapseRatio, 0.1f, 1.0f);
 
     ImGui::Separator();
     ImGui::Text("Colors");

@@ -352,7 +352,12 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 				totalCleared++;
 			}
 		}
-		if (m.type == MatchType::Normal || m.type == MatchType::Straight) {
+		if (m.panelType == kGarbageType) {
+			// お邪魔パネルのダミーマッチ → セルごとに行に追加
+			for (auto& [r, c] : m.cells) {
+				hRows.insert(r);
+			}
+		} else if (m.type == MatchType::Normal || m.type == MatchType::Straight) {
 			if (m.isHorizontal) {
 				hRows.insert(m.fixedIndex);
 			} else {

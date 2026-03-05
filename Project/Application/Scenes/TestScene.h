@@ -58,7 +58,7 @@ private:
     // NPC（対NPC戦の場合）
     bool isNPCMode_ = true;
     Application::PuzzleNPC npc_;
-    Application::PuzzleNPC::Difficulty npcDifficulty_ = Application::PuzzleNPC::Difficulty::Hard;
+    Application::PuzzleNPC::Difficulty npcDifficulty_ = Application::PuzzleNPC::Difficulty::Normal;
 
     // ゲーム状態
     bool gameOver_ = false;
@@ -66,6 +66,9 @@ private:
 
     // 結果テキスト
     Text* resultText_ = nullptr;
+
+    // 背景スプライト
+    Sprite* backgroundSprite_ = nullptr;
 
     // 設定ファイルパス
     static constexpr const char* kConfigPath = "Assets/Application/PuzzleGameConfig.json";

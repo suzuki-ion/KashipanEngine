@@ -27,7 +27,12 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	remainingTimeLockBonus = KashipanEngine::GetJSONValueOrDefault(json, "remainingTimeLockBonus", remainingTimeLockBonus);
 	movesPerGarbage = KashipanEngine::GetJSONValueOrDefault(json, "movesPerGarbage", movesPerGarbage);
 	attackGarbageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "attackGarbageMultiplier", attackGarbageMultiplier);
-	inactiveGarbageDecayPerSec = KashipanEngine::GetJSONValueOrDefault(json, "inactiveGarbageDecayPerSec", inactiveGarbageDecayPerSec);
+	inactiveGarbageDecayInterval = KashipanEngine::GetJSONValueOrDefault(json, "inactiveGarbageDecayInterval", inactiveGarbageDecayInterval);
+	normalGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "normalGarbageCount", normalGarbageCount);
+	straightGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "straightGarbageCount", straightGarbageCount);
+	crossGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "crossGarbageCount", crossGarbageCount);
+	squareGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "squareGarbageCount", squareGarbageCount);
+	defeatCollapseRatio = KashipanEngine::GetJSONValueOrDefault(json, "defeatCollapseRatio", defeatCollapseRatio);
 
 	auto loadColor = [&](const char* key, Vector4& color) {
 		if (json.contains(key) && json[key].is_array() && json[key].size() >= 4) {
@@ -81,7 +86,12 @@ void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	json["remainingTimeLockBonus"] = remainingTimeLockBonus;
 	json["movesPerGarbage"] = movesPerGarbage;
 	json["attackGarbageMultiplier"] = attackGarbageMultiplier;
-	json["inactiveGarbageDecayPerSec"] = inactiveGarbageDecayPerSec;
+	json["inactiveGarbageDecayInterval"] = inactiveGarbageDecayInterval;
+	json["normalGarbageCount"] = normalGarbageCount;
+	json["straightGarbageCount"] = straightGarbageCount;
+	json["crossGarbageCount"] = crossGarbageCount;
+	json["squareGarbageCount"] = squareGarbageCount;
+	json["defeatCollapseRatio"] = defeatCollapseRatio;
 
 	auto saveColor = [](const Vector4& c) {
 		return KashipanEngine::JSON::array({ c.x, c.y, c.z, c.w });

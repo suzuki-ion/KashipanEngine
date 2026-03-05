@@ -132,7 +132,14 @@ private:
 	void UpdateCollapseGauge();
 	void UpdateMatchText();
 	void UpdateInactivePreview(float deltaTime);
+	void UpdateInactiveLockOverlays();
 	void UpdateGarbageWarnings();
+	void UpdateMoveGarbageWarnings();
+
+	// ================================================================
+	// 移動時お邪魔パネル予告位置計算
+	// ================================================================
+	void PreCalculateMoveGarbagePositions();
 
 	// ================================================================
 	// シェイク
@@ -169,6 +176,8 @@ private:
 	// ステージ切り替え
 	// ================================================================
 	void SwitchBoard();
+	/// 自動ステージ切り替え（崩壊度が閾値に達した場合）
+	void AutoSwitchBoardIfNeeded();
 
 	// ================================================================
 	// ロック更新
@@ -229,6 +238,9 @@ private:
 	// お邪魔パネル予告位置
 	std::vector<std::pair<int, int>> pendingGarbagePositions_;
 
+	// 移動時お邪魔パネルの次回出現予告位置
+	std::vector<std::pair<int, int>> nextMoveGarbagePositions_;
+
 	// ================================================================
 	// スプライト
 	// ================================================================
@@ -249,6 +261,9 @@ private:
 	// お邪魔パネル予告オーバーレイ
 	std::vector<KashipanEngine::Sprite*> garbageWarningSprites_;
 
+	// 移動時お邪魔パネル予告オーバーレイ
+	std::vector<KashipanEngine::Sprite*> moveGarbageWarningSprites_;
+
 	KashipanEngine::Sprite* timerGaugeBgSprite_ = nullptr;
 	KashipanEngine::Sprite* timerGaugeFillSprite_ = nullptr;
 
@@ -259,6 +274,10 @@ private:
 	// 非アクティブボード小表示スプライト
 	std::vector<KashipanEngine::Sprite*> inactivePreviewSprites_;
 	KashipanEngine::Sprite* inactivePreviewBg_ = nullptr;
+
+	// 非アクティブボードプレビュー用ロックオーバーレイ
+	std::vector<KashipanEngine::Sprite*> inactiveRowLockSprites_;
+	std::vector<KashipanEngine::Sprite*> inactiveColLockSprites_;
 
 	KashipanEngine::Text* matchText_ = nullptr;
 	KashipanEngine::Text* comboText_ = nullptr;

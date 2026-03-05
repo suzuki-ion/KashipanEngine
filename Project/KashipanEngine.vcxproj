@@ -176,6 +176,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application\Config\PuzzleGameConfig.cpp" />
+    <ClCompile Include="Application\MatsumotoUtility.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticle.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.cpp" />
     <ClCompile Include="Application\Objects\Components\Bomb\BombManager.cpp" />
@@ -197,11 +198,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Objects\Container\BlockContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
+    <ClCompile Include="Application\Objects\Container\MenuSpriteCotainer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockScroller.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Thermometer.cpp" />
+    <ClCompile Include="Application\Objects\OutGameSystem\MenuActionManager.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleBoard.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleCursor.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
@@ -379,6 +382,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
     <ClInclude Include="Application\Config\PuzzleGameConfig.h" />
+    <ClInclude Include="Application\MatsumotoUtility.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticle.h" />
     <ClInclude Include="Application\Objects\Components\Bomb\BombExplosionParticleManager.h" />
@@ -418,11 +422,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Objects\Container\BlockSpriteContainer.h" />
     <ClInclude Include="Application\Objects\Container\HandBlockContainer.h" />
     <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
+    <ClInclude Include="Application\Objects\Container\MenuSpriteCotainer.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockScroller.h" />
     <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
     <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
     <ClInclude Include="Application\Objects\GameSystem\Thermometer.h" />
+    <ClInclude Include="Application\Objects\OutGameSystem\MenuActionManager.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleBoard.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />

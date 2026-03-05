@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <KashipanEngine.h>
 #include "Scenes/EngineLogoScene.h"
 #include "Scenes/TitleScene.h"
@@ -30,17 +30,43 @@ inline void AppInitialize(const GameEngine::Context &context) {
         //sm->RegisterScene<ResultScene>("ResultScene");
         //sm->RegisterScene<GameOverScene>("GameOverScene");
 
-        #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+        /*#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
                 sm->RegisterScene<TestScene>("TestScene");
                 context.sceneManager->ChangeScene("TestScene");
-        #endif
-		context.sceneManager->ChangeScene("TestScene");
+        #endif*/
+		context.sceneManager->ChangeScene("GameScene");
     }
 
     if (context.inputCommand) {
         auto *ic = context.inputCommand;
         ic->Clear();
 
+        // * ゲーム外のコマンド * //
+        // 決定
+        ic->RegisterCommand("Submit", Key::Enter, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Submit", Key::Space, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
+        
+        // キャンセル
+        ic->RegisterCommand("Cancel", Key::Escape, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Cancel", ControllerButton::B, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Cancel", ControllerButton::Back, InputCommand::InputState::Trigger);
+
+		// メニュー呼び出し
+		ic->RegisterCommand("Menu", Key::M, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Menu", Key::E, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Menu", ControllerButton::Start, InputCommand::InputState::Trigger);
+
+		// 上下選択
+		ic->RegisterCommand("Up", Key::Up, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("Up", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("Down", Key::Down, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("Down", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
+
+        // デバッグ用シーン遷移
+        ic->RegisterCommand("DebugSceneChange", Key::F1, InputCommand::InputState::Trigger);
+
+		// * ゲームプレイ用入力コマンド * //
         // 左右移動: A/D or 左右矢印, コントローラー左スティックX/十字キー
         ic->RegisterCommand("MoveLeft", Key::A, InputCommand::InputState::Down);
         ic->RegisterCommand("MoveLeft", Key::Left, InputCommand::InputState::Down);
@@ -70,19 +96,6 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("TurnRight", Key::K, InputCommand::InputState::Trigger);
         ic->RegisterCommand("TurnRight", InputCommand::ControllerAnalog::RightStickX, InputCommand::InputState::Trigger, 0, 0.5f);
         ic->RegisterCommand("TurnRight", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
-
-		// 決定
-        ic->RegisterCommand("Submit", Key::Enter, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Submit", Key::Space, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Submit", ControllerButton::Start, InputCommand::InputState::Trigger);
-        // キャンセル
-        ic->RegisterCommand("Cancel", Key::Escape, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Cancel", ControllerButton::B, InputCommand::InputState::Trigger);
-		ic->RegisterCommand("Cancel", ControllerButton::Back, InputCommand::InputState::Trigger);
-
-        // デバッグ用シーン遷移
-        ic->RegisterCommand("DebugSceneChange", Key::F1, InputCommand::InputState::Trigger);
 
         // パズルゲーム用入力
         ic->RegisterCommand("PuzzleUp", Key::W, InputCommand::InputState::Trigger);

@@ -32,6 +32,7 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	straightGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "straightGarbageCount", straightGarbageCount);
 	crossGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "crossGarbageCount", crossGarbageCount);
 	squareGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "squareGarbageCount", squareGarbageCount);
+	comboGarbageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboGarbageMultiplier", comboGarbageMultiplier);
 	defeatCollapseRatio = KashipanEngine::GetJSONValueOrDefault(json, "defeatCollapseRatio", defeatCollapseRatio);
 
 	auto loadColor = [&](const char* key, Vector4& color) {
@@ -91,6 +92,7 @@ void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	json["straightGarbageCount"] = straightGarbageCount;
 	json["crossGarbageCount"] = crossGarbageCount;
 	json["squareGarbageCount"] = squareGarbageCount;
+	json["comboGarbageMultiplier"] = comboGarbageMultiplier;
 	json["defeatCollapseRatio"] = defeatCollapseRatio;
 
 	auto saveColor = [](const Vector4& c) {

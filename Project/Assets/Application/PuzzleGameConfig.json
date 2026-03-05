@@ -2,7 +2,7 @@
     "attackGarbageMultiplier": 1.0,
     "breakLockMultiplier": 2.0,
     "comboLockMultiplier": 1.5,
-    "crossGarbageCount": 5,
+    "crossGarbageCount": 8,
     "crossLockTime": 5.0,
     "cursorColor": [
         1.0,
@@ -24,7 +24,7 @@
         0.5,
         0.5
     ],
-    "inactiveGarbageDecayInterval": 5.005000114440918,
+    "inactiveGarbageDecayInterval": 10.0,
     "lockColor": [
         0.0,
         0.0,
@@ -32,7 +32,7 @@
         0.5
     ],
     "movesPerGarbage": 5,
-    "normalGarbageCount": 1,
+    "normalGarbageCount": 2,
     "normalLockTime": 1.0,
     "normalMinCount": 3,
     "panelClearEasingDuration": 0.30000001192092896,
@@ -92,7 +92,7 @@
     "panelSpawnEasingDuration": 0.15000000596046448,
     "panelTypeCount": 4,
     "remainingTimeLockBonus": 0.5,
-    "squareGarbageCount": 9,
+    "squareGarbageCount": 12,
     "squareLockTime": 15.0,
     "stageBackgroundColor": [
         0.20000000298023224,
@@ -101,7 +101,7 @@
         1.0
     ],
     "stageSize": 6,
-    "straightGarbageCount": 3,
+    "straightGarbageCount": 5,
     "straightLockTime": 3.0,
     "straightMinCount": 5,
     "timeLimit": 30.0

@@ -625,5 +625,6 @@
     <None Include="Reference\10_Input_Controller.md" />
     <None Include="Reference\10_Input_InputCommand.md" />
     <None Include="Reference\14_BuildMacros.md" />
+    <None Include="Application\Config\PuzzleGameConfigGuide.md" />
   </ItemGroup>
 </Project>

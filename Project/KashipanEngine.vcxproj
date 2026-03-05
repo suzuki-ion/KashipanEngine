@@ -718,6 +718,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <None Include=".editorconfig" />
     <None Include=".gitattributes" />
+    <None Include="Application\Config\PuzzleGameConfigGuide.md" />
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />

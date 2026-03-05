@@ -68,6 +68,7 @@ void PuzzlePlayer::Initialize(
 
 	pendingGarbagePositions_.clear();
 	nextMoveGarbagePositions_.clear();
+	pendingGarbageAccumulator_ = 0.0f;
 
 	CreateSprites();
 	SyncAllPanelVisuals();
@@ -748,20 +749,22 @@ void PuzzlePlayer::UpdateLocks(float deltaTime) {
 
 void PuzzlePlayer::ApplyGarbage(int count) {
 	if (count <= 0) return;
-	// 予告位置を決定
+	// 既存の予告位置を除外して追加分の位置を決定
 	auto& board = GetActiveBoard();
+	std::set<std::pair<int, int>> existingSet(pendingGarbagePositions_.begin(), pendingGarbagePositions_.end());
 	std::vector<std::pair<int, int>> normalCells;
 	int n = config_.stageSize;
 	for (int r = 0; r < n; r++) {
 		for (int c = 0; c < n; c++) {
-			if (board.GetPanel(r, c) > 0) normalCells.push_back({ r, c });
+			if (board.GetPanel(r, c) > 0 && existingSet.count({ r, c }) == 0) {
+				normalCells.push_back({ r, c });
+			}
 		}
 	}
 	for (int i = static_cast<int>(normalCells.size()) - 1; i > 0; i--) {
 		int j = KashipanEngine::GetRandomInt(0, i);
 		std::swap(normalCells[i], normalCells[j]);
 	}
-	pendingGarbagePositions_.clear();
 	for (int i = 0; i < count && i < static_cast<int>(normalCells.size()); i++) {
 		pendingGarbagePositions_.push_back(normalCells[i]);
 	}
@@ -926,6 +929,12 @@ bool PuzzlePlayer::StartClearingPhase() {
 	pendingMatches_ = GetActiveBoard().DetectAllMatches(config_.normalMinCount, config_.straightMinCount);
 	if (pendingMatches_.empty()) return false;
 
+	// コンボチェーン開始時に蓄積をリセット
+	if (combo_.GetCurrentCombo() == 0) {
+		pendingGarbageAccumulator_ = 0.0f;
+		pendingGarbageToSend_ = 0;
+	}
+
 	combo_.AddCombo(static_cast<int>(pendingMatches_.size()));
 
 	int n = config_.stageSize;
@@ -1064,7 +1073,7 @@ void PuzzlePlayer::StartFillingPhase() {
 			if (auto* panel = puzzlePanelSprites_[idx]) {
 				if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
 					tr->SetTranslate(Vector3(startP.x, startP.y, 0.0f));
-					tr->SetScale(Vector3(scale, scale, 1.0f));
+				 tr->SetScale(Vector3(scale, scale, 1.0f));
 				}
 			}
 		}
@@ -1170,7 +1179,7 @@ void PuzzlePlayer::CalculateAttackFromMatches() {
 	baseLock += static_cast<float>(lastMatchSummary_.normalCount) * config_.normalLockTime;
 	baseLock += static_cast<float>(lastMatchSummary_.straightCount) * config_.straightLockTime;
 	baseLock += static_cast<float>(lastMatchSummary_.crossCount) * config_.crossLockTime;
-baseLock += static_cast<float>(lastMatchSummary_.squareCount) * config_.squareLockTime;
+	baseLock += static_cast<float>(lastMatchSummary_.squareCount) * config_.squareLockTime;
 
 	float lockComboMult = 1.0f;
 	if (lastMatchSummary_.comboCount > 1) {
@@ -1179,12 +1188,24 @@ baseLock += static_cast<float>(lastMatchSummary_.squareCount) * config_.squareLo
 	float lockBreakMult = lastMatchSummary_.isBreak ? config_.breakLockMultiplier : 1.0f;
 	pendingLockTime_ = baseLock * lockComboMult * lockBreakMult;
 
-	// お邪魔パネル数計算（形状ごとのパラメータで算出）
-	pendingGarbageToSend_ = 0;
-	pendingGarbageToSend_ += lastMatchSummary_.normalCount * config_.normalGarbageCount;
-	pendingGarbageToSend_ += lastMatchSummary_.straightCount * config_.straightGarbageCount;
-	pendingGarbageToSend_ += lastMatchSummary_.crossCount * config_.crossGarbageCount;
-	pendingGarbageToSend_ += lastMatchSummary_.squareCount * config_.squareGarbageCount;
+	// お邪魔パネル数計算（形状ごとのパラメータで算出、floatで蓄積）
+	float garbageBase = 0.0f;
+	garbageBase += static_cast<float>(lastMatchSummary_.normalCount) * config_.normalGarbageCount;
+	garbageBase += static_cast<float>(lastMatchSummary_.straightCount) * config_.straightGarbageCount;
+	garbageBase += static_cast<float>(lastMatchSummary_.crossCount) * config_.crossGarbageCount;
+	garbageBase += static_cast<float>(lastMatchSummary_.squareCount) * config_.squareGarbageCount;
+
+	// コンボ倍率を適用
+	float comboGarbageMult = 1.0f;
+	if (lastMatchSummary_.comboCount > 1) {
+		comboGarbageMult = std::pow(config_.comboGarbageMultiplier, static_cast<float>(lastMatchSummary_.comboCount - 1));
+	}
+	garbageBase *= comboGarbageMult;
+
+	// 蓄積（コンボチェーン中に加算し続ける）
+	pendingGarbageAccumulator_ += garbageBase;
+	// 小数点以下切り捨てで最終個数を算出
+	pendingGarbageToSend_ = static_cast<int>(pendingGarbageAccumulator_);
 
 	hasPendingAttack_ = (pendingLockTime_ > 0.0f || pendingGarbageToSend_ > 0);
 }

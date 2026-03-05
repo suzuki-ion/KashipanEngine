@@ -77,10 +77,13 @@ struct PuzzleGameConfig {
 	float inactiveGarbageDecayInterval = 1.0f;
 
 	// パズルパネルの形状ごとのお邪魔パネル出現量
-	int normalGarbageCount = 1;
-	int straightGarbageCount = 3;
-	int crossGarbageCount = 5;
-	int squareGarbageCount = 9;
+	float normalGarbageCount = 1.0f;
+	float straightGarbageCount = 3.0f;
+	float crossGarbageCount = 5.0f;
+	float squareGarbageCount = 9.0f;
+
+	// コンボ時のお邪魔パネル出現量倍数（1コンボごとにm倍）
+	float comboGarbageMultiplier = 1.5f;
 
 	// 敗北とみなす崩壊度のパーセンテージ (0.0~1.0)
 	float defeatCollapseRatio = 0.7f;

@@ -215,6 +215,7 @@ private:
 	MatchSummary lastMatchSummary_{};
 	bool hasPendingAttack_ = false;
 	int pendingGarbageToSend_ = 0;
+	float pendingGarbageAccumulator_ = 0.0f;
 	float pendingLockTime_ = 0.0f;
 	float remainingTimeAtSkip_ = 0.0f;
 

@@ -349,10 +349,11 @@ void TestScene::OnUpdate() {
     ImGui::SliderInt("Moves Per Garbage", &config_.movesPerGarbage, 1, 30);
     ImGui::SliderFloat("Attack Garbage Mult", &config_.attackGarbageMultiplier, 0.0f, 3.0f);
     ImGui::SliderFloat("Inactive Decay Interval", &config_.inactiveGarbageDecayInterval, 0.1f, 10.0f);
-    ImGui::SliderInt("Normal Garbage Count", &config_.normalGarbageCount, 0, 20);
-    ImGui::SliderInt("Straight Garbage Count", &config_.straightGarbageCount, 0, 20);
-    ImGui::SliderInt("Cross Garbage Count", &config_.crossGarbageCount, 0, 20);
-    ImGui::SliderInt("Square Garbage Count", &config_.squareGarbageCount, 0, 20);
+    ImGui::SliderFloat("Normal Garbage Count", &config_.normalGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Straight Garbage Count", &config_.straightGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Cross Garbage Count", &config_.crossGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Square Garbage Count", &config_.squareGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Combo Garbage Mult", &config_.comboGarbageMultiplier, 1.0f, 5.0f);
 
     ImGui::Separator();
     ImGui::Text("Defeat Settings");

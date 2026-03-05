@@ -8,7 +8,6 @@
 namespace Application {
 
 /// パズルゲームNPC AI
-/// Easy / Normal / Hard の3段階
 class PuzzleNPC {
 public:
 	enum class Difficulty {
@@ -56,6 +55,7 @@ private:
 	float thinkInterval_ = 1.0f;    ///< 行動間隔（難易度で変化）
 	float skipChance_ = 0.0f;       ///< 時間スキップする確率
 	float skipThreshold_ = 0.4f;    ///< 残り時間がこの割合以下でスキップ検討
+	float switchChance_ = 0.1f;     ///< ボードをスイッチする確率
 	int maxMovesPerTurn_ = 1;       ///< 1ターンの最大移動回数
 	int movesThisTurn_ = 0;
 

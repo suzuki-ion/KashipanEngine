@@ -12,22 +12,25 @@ void PuzzleNPC::Initialize(PuzzlePlayer* player, Difficulty difficulty) {
 
 	switch (difficulty_) {
 	case Difficulty::Easy:
-		thinkInterval_ = 2.0f;
+		thinkInterval_ = 0.5f;
 		skipChance_ = 0.1f;
 		skipThreshold_ = 0.3f;
-		maxMovesPerTurn_ = 2;
+		switchChance_ = 0.05f;
+		maxMovesPerTurn_ = 32;
 		break;
 	case Difficulty::Normal:
-		thinkInterval_ = 1.0f;
+		thinkInterval_ = 0.25f;
 		skipChance_ = 0.3f;
 		skipThreshold_ = 0.4f;
-		maxMovesPerTurn_ = 4;
+		switchChance_ = 0.1f;
+		maxMovesPerTurn_ = 64;
 		break;
 	case Difficulty::Hard:
-		thinkInterval_ = 0.4f;
+		thinkInterval_ = 0.1f;
 		skipChance_ = 0.5f;
 		skipThreshold_ = 0.5f;
-		maxMovesPerTurn_ = 8;
+		switchChance_ = 0.15f;
+		maxMovesPerTurn_ = 128;
 		break;
 	}
 
@@ -36,7 +39,7 @@ void PuzzleNPC::Initialize(PuzzlePlayer* player, Difficulty difficulty) {
 
 void PuzzleNPC::Update(float deltaTime) {
 	if (!player_) return;
-	if (player_->IsDead()) return;
+	if (player_->IsDefeated()) return;
 	if (player_->IsAnimating()) return;
 
 	thinkTimer_ -= deltaTime;
@@ -49,7 +52,13 @@ void PuzzleNPC::Update(float deltaTime) {
 void PuzzleNPC::DecideNextAction() {
 	if (!player_) return;
 
-	// 時間スキップ判定：残り時間が閾値以下のときにスキップを検討
+	// 崩壊度が高い場合、ステージ切り替えを検討
+	if (player_->GetActiveCollapseRatio() > 0.5f && KashipanEngine::GetRandomBool(switchChance_)) {
+		player_->ForceSwitchBoard();
+		return;
+	}
+
+	// 時間スキップ判定
 	float timerRatio = player_->GetTimer() / player_->GetTimeLimit();
 	if (timerRatio < skipThreshold_ && KashipanEngine::GetRandomBool(skipChance_)) {
 		player_->ForceTimeSkip();
@@ -57,7 +66,6 @@ void PuzzleNPC::DecideNextAction() {
 		return;
 	}
 
-	// 難易度に応じた行動を選択
 	switch (difficulty_) {
 	case Difficulty::Easy:
 		DoRandomMove();
@@ -88,7 +96,6 @@ void PuzzleNPC::DoRandomMove() {
 
 	int direction = KashipanEngine::GetRandomInt(0, 3);
 
-	// ロックされていたら別の方向を試す
 	for (int attempt = 0; attempt < 4; attempt++) {
 		bool blocked = false;
 		if (direction == 0 || direction == 1) {
@@ -110,7 +117,6 @@ int PuzzleNPC::SimulateAndScore(int row, int col, int direction) const {
 	PuzzleBoard simBoard;
 	simBoard.SetBoard(player_->GetBoard().GetBoard());
 
-	// シミュレート：指定方向にシフト（実際のゲーム操作と同じマッピング）
 	switch (direction) {
 	case 0: simBoard.ShiftColDown(col);   break;
 	case 1: simBoard.ShiftColUp(col);     break;
@@ -123,13 +129,17 @@ int PuzzleNPC::SimulateAndScore(int row, int col, int direction) const {
 
 	int score = 0;
 	for (const auto& m : matches) {
+		if (m.panelType == PuzzleBoard::kGarbageType) {
+			// お邪魔パネル除去はボーナス
+			score += static_cast<int>(m.cells.size()) * 5;
+			continue;
+		}
 		switch (m.type) {
 		case PuzzleBoard::MatchType::Square:   score += 50; break;
 		case PuzzleBoard::MatchType::Cross:    score += 30; break;
 		case PuzzleBoard::MatchType::Straight: score += 20; break;
 		case PuzzleBoard::MatchType::Normal:   score += 10; break;
 		}
-		// マッチセル数でボーナス
 		score += static_cast<int>(m.cells.size());
 	}
 

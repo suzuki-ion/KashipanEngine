@@ -116,8 +116,12 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("PuzzleTimeSkip", Key::LeftShift, InputCommand::InputState::Trigger);
         ic->RegisterCommand("PuzzleTimeSkip", Key::RightShift, InputCommand::InputState::Trigger);
         ic->RegisterCommand("PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleTimeSkip", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
-        ic->RegisterCommand("PuzzleTimeSkip", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+
+        // パズルステージ切り替え
+        ic->RegisterCommand("PuzzleSwitchBoard", Key::E, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleSwitchBoard", Key::Enter, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
 
         // パズルゲーム用入力（2P用：コントローラー0）
         // コントローラー1台の場合：1P=キーボード、2P=コントローラー0
@@ -138,8 +142,9 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("P2PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down, 0);
 
         ic->RegisterCommand("P2PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger, 0);
-        ic->RegisterCommand("P2PuzzleTimeSkip", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
-        ic->RegisterCommand("P2PuzzleTimeSkip", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+
+        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
     }
 }
 

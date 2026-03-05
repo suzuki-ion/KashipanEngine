@@ -17,22 +17,17 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	cursorEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "cursorEasingDuration", cursorEasingDuration);
 	normalMinCount = KashipanEngine::GetJSONValueOrDefault(json, "normalMinCount", normalMinCount);
 	straightMinCount = KashipanEngine::GetJSONValueOrDefault(json, "straightMinCount", straightMinCount);
-	playerHP = KashipanEngine::GetJSONValueOrDefault(json, "playerHP", playerHP);
 	timeLimit = KashipanEngine::GetJSONValueOrDefault(json, "timeLimit", timeLimit);
-	normalDamage = KashipanEngine::GetJSONValueOrDefault(json, "normalDamage", normalDamage);
-	straightDamage = KashipanEngine::GetJSONValueOrDefault(json, "straightDamage", straightDamage);
-	crossDamage = KashipanEngine::GetJSONValueOrDefault(json, "crossDamage", crossDamage);
-	squareDamage = KashipanEngine::GetJSONValueOrDefault(json, "squareDamage", squareDamage);
 	normalLockTime = KashipanEngine::GetJSONValueOrDefault(json, "normalLockTime", normalLockTime);
 	straightLockTime = KashipanEngine::GetJSONValueOrDefault(json, "straightLockTime", straightLockTime);
 	crossLockTime = KashipanEngine::GetJSONValueOrDefault(json, "crossLockTime", crossLockTime);
 	squareLockTime = KashipanEngine::GetJSONValueOrDefault(json, "squareLockTime", squareLockTime);
-	comboDamageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboDamageMultiplier", comboDamageMultiplier);
-	breakDamageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "breakDamageMultiplier", breakDamageMultiplier);
 	comboLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboLockMultiplier", comboLockMultiplier);
 	breakLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "breakLockMultiplier", breakLockMultiplier);
-	remainingTimeDamageBonus = KashipanEngine::GetJSONValueOrDefault(json, "remainingTimeDamageBonus", remainingTimeDamageBonus);
 	remainingTimeLockBonus = KashipanEngine::GetJSONValueOrDefault(json, "remainingTimeLockBonus", remainingTimeLockBonus);
+	movesPerGarbage = KashipanEngine::GetJSONValueOrDefault(json, "movesPerGarbage", movesPerGarbage);
+	attackGarbageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "attackGarbageMultiplier", attackGarbageMultiplier);
+	inactiveGarbageDecayPerSec = KashipanEngine::GetJSONValueOrDefault(json, "inactiveGarbageDecayPerSec", inactiveGarbageDecayPerSec);
 
 	auto loadColor = [&](const char* key, Vector4& color) {
 		if (json.contains(key) && json[key].is_array() && json[key].size() >= 4) {
@@ -46,6 +41,8 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	loadColor("lockColor", lockColor);
 	loadColor("cursorColor", cursorColor);
 	loadColor("stageBackgroundColor", stageBackgroundColor);
+	loadColor("garbageColor", garbageColor);
+	loadColor("garbageWarningColor", garbageWarningColor);
 
 	if (json.contains("panelColors") && json["panelColors"].is_array()) {
 		int count = static_cast<int>(json["panelColors"].size());
@@ -74,22 +71,17 @@ void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	json["cursorEasingDuration"] = cursorEasingDuration;
 	json["normalMinCount"] = normalMinCount;
 	json["straightMinCount"] = straightMinCount;
-	json["playerHP"] = playerHP;
 	json["timeLimit"] = timeLimit;
-	json["normalDamage"] = normalDamage;
-	json["straightDamage"] = straightDamage;
-	json["crossDamage"] = crossDamage;
-	json["squareDamage"] = squareDamage;
 	json["normalLockTime"] = normalLockTime;
 	json["straightLockTime"] = straightLockTime;
 	json["crossLockTime"] = crossLockTime;
 	json["squareLockTime"] = squareLockTime;
-	json["comboDamageMultiplier"] = comboDamageMultiplier;
-	json["breakDamageMultiplier"] = breakDamageMultiplier;
 	json["comboLockMultiplier"] = comboLockMultiplier;
 	json["breakLockMultiplier"] = breakLockMultiplier;
-	json["remainingTimeDamageBonus"] = remainingTimeDamageBonus;
 	json["remainingTimeLockBonus"] = remainingTimeLockBonus;
+	json["movesPerGarbage"] = movesPerGarbage;
+	json["attackGarbageMultiplier"] = attackGarbageMultiplier;
+	json["inactiveGarbageDecayPerSec"] = inactiveGarbageDecayPerSec;
 
 	auto saveColor = [](const Vector4& c) {
 		return KashipanEngine::JSON::array({ c.x, c.y, c.z, c.w });
@@ -98,6 +90,8 @@ void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	json["lockColor"] = saveColor(lockColor);
 	json["cursorColor"] = saveColor(cursorColor);
 	json["stageBackgroundColor"] = saveColor(stageBackgroundColor);
+	json["garbageColor"] = saveColor(garbageColor);
+	json["garbageWarningColor"] = saveColor(garbageWarningColor);
 
 	KashipanEngine::JSON colorsArr = KashipanEngine::JSON::array();
 	for (int i = 0; i < kMaxPanelTypes; i++) {

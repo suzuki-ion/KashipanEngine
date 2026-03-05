@@ -187,6 +187,9 @@
     <ClCompile Include="Application\Objects\Puzzle\PuzzleBoard.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleCursor.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
+    <ClCompile Include="Application\Objects\OutGameSystem\MenuActionManager.cpp" />
+    <ClCompile Include="Application\Objects\Container\MenuSpriteCotainer.cpp" />
+    <ClCompile Include="Application\MatsumotoUtility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -506,6 +509,9 @@
     <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
     <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
+    <ClInclude Include="Application\Objects\OutGameSystem\MenuActionManager.h" />
+    <ClInclude Include="Application\Objects\Container\MenuSpriteCotainer.h" />
+    <ClInclude Include="Application\MatsumotoUtility.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

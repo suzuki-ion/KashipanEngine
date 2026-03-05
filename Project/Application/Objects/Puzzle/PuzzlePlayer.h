@@ -13,9 +13,9 @@
 namespace Application {
 
 /// 1プレイヤー分のパズルステージ・UI・状態を管理するクラス
+/// 2つのボード（A/B）を持ち、切り替えて使用する
 class PuzzlePlayer {
 public:
-	/// アニメーションフェーズ
 	enum class Phase {
 		Idle,
 		Moving,
@@ -23,7 +23,6 @@ public:
 		Filling,
 	};
 
-	/// マッチ集計結果
 	struct MatchSummary {
 		int normalCount = 0;
 		int straightCount = 0;
@@ -31,14 +30,13 @@ public:
 		int squareCount = 0;
 		int comboCount = 0;
 		bool isBreak = false;
+		int totalClearedCells = 0;
 	};
 
-	/// ロック情報
 	struct LockInfo {
 		float remainingTime = 0.0f;
 	};
 
-	/// オブジェクト追加用コールバック型
 	using AddObject2DFunc = std::function<bool(std::unique_ptr<KashipanEngine::Object2DBase>)>;
 
 	void Initialize(
@@ -48,18 +46,18 @@ public:
 		AddObject2DFunc addObject2DFunc,
 		KashipanEngine::Transform2D* parentTransform,
 		const std::string& playerName,
-		const std::string& commandPrefix = "Puzzle");
+		const std::string& commandPrefix = "Puzzle",
+		bool isPlayer2 = false);
 
-	/// 毎フレーム更新
 	void Update(float deltaTime, KashipanEngine::InputCommand* inputCommand);
 
 	// ================================================================
-	// 外部操作（NPC/対戦処理から呼ぶ）
+	// 外部操作
 	// ================================================================
 
-	/// HPを減らす
-	void ApplyDamage(int damage);
-	/// 行/列ロックを追加
+	/// お邪魔パネルを現在のアクティブボードに配置する
+	void ApplyGarbage(int count);
+	/// 行/列ロックを追加（アクティブボード）
 	void ApplyLock(bool isRow, int index, float seconds);
 	/// 既存ロック全てに秒数を加算
 	void AddToExistingLocks(float seconds);
@@ -70,8 +68,7 @@ public:
 	// 状態取得
 	// ================================================================
 
-	int GetHP() const { return hp_; }
-	bool IsDead() const { return hp_ <= 0; }
+	bool IsDefeated() const;
 	bool IsAnimating() const { return phase_ != Phase::Idle; }
 	Phase GetPhase() const { return phase_; }
 	float GetTimer() const { return timer_; }
@@ -79,36 +76,44 @@ public:
 	const MatchSummary& GetLastMatchSummary() const { return lastMatchSummary_; }
 	bool HasPendingAttack() const { return hasPendingAttack_; }
 	void ClearPendingAttack() { hasPendingAttack_ = false; }
+	int GetPendingGarbageToSend() const { return pendingGarbageToSend_; }
+	void ClearPendingGarbage() { pendingGarbageToSend_ = 0; }
 	float GetRemainingTimeAtSkip() const { return remainingTimeAtSkip_; }
-	const PuzzleBoard& GetBoard() const { return board_; }
+	const PuzzleBoard& GetBoard() const { return GetActiveBoard(); }
 	const PuzzleGoal& GetCombo() const { return combo_; }
 	int GetBoardSize() const { return config_.stageSize; }
 	const PuzzleGameConfig& GetConfig() const { return config_; }
 
-	/// 行のロック情報
-	const std::map<int, LockInfo>& GetRowLocks() const { return rowLocks_; }
-	/// 列のロック情報
-	const std::map<int, LockInfo>& GetColLocks() const { return colLocks_; }
+	/// アクティブボードの崩壊度(0.0~1.0)
+	float GetActiveCollapseRatio() const;
+	/// 非アクティブボードの崩壊度(0.0~1.0)
+	float GetInactiveCollapseRatio() const;
+	/// アクティブボードのインデックス
+	int GetActiveIndex() const { return activeBoard_; }
 
-	/// NPC用：カーソル位置を強制設定
+	const std::map<int, LockInfo>& GetRowLocks() const { return rowLocks_[activeBoard_]; }
+	const std::map<int, LockInfo>& GetColLocks() const { return colLocks_[activeBoard_]; }
+
 	void SetCursorPosition(int row, int col);
-	/// NPC用：移動アクションを強制実行
 	void ForceMove(int direction);
-	/// NPC用：時間スキップを強制実行
 	void ForceTimeSkip();
+	void ForceSwitchBoard();
 
-	/// 行がロックされているか
 	bool IsRowLocked(int row) const;
-	/// 列がロックされているか
 	bool IsColLocked(int col) const;
+	int GetTotalLockCount() const { return static_cast<int>(rowLocks_[activeBoard_].size() + colLocks_[activeBoard_].size()); }
 
-	/// 現在のロック合計数を取得
-	int GetTotalLockCount() const { return static_cast<int>(rowLocks_.size() + colLocks_.size()); }
-
-	/// カーソル位置取得
 	std::pair<int, int> GetCursorPosition() const { return cursor_.GetPosition(); }
 
 private:
+	// ================================================================
+	// ボードアクセス
+	// ================================================================
+	PuzzleBoard& GetActiveBoard() { return boards_[activeBoard_]; }
+	const PuzzleBoard& GetActiveBoard() const { return boards_[activeBoard_]; }
+	PuzzleBoard& GetInactiveBoard() { return boards_[1 - activeBoard_]; }
+	const PuzzleBoard& GetInactiveBoard() const { return boards_[1 - activeBoard_]; }
+
 	// ================================================================
 	// 座標変換
 	// ================================================================
@@ -116,7 +121,7 @@ private:
 	Vector2 BoardToScreen(float row, float col) const;
 
 	// ================================================================
-	// スプライト生成
+	// スプライト生成・更新
 	// ================================================================
 	void CreateSprites();
 	void ApplyPanelColor(int row, int col);
@@ -124,8 +129,10 @@ private:
 	void UpdateCursorSprite();
 	void UpdateLockOverlays();
 	void UpdateTimerGauge();
-	void UpdateHPGauge();
+	void UpdateCollapseGauge();
 	void UpdateMatchText();
+	void UpdateInactivePreview(float deltaTime);
+	void UpdateGarbageWarnings();
 
 	// ================================================================
 	// シェイク
@@ -159,24 +166,34 @@ private:
 	void OnTimeSkip();
 
 	// ================================================================
+	// ステージ切り替え
+	// ================================================================
+	void SwitchBoard();
+
+	// ================================================================
 	// ロック更新
 	// ================================================================
 	void UpdateLocks(float deltaTime);
 
 	// ================================================================
-	// ダメージ/ロック計算
+	// 攻撃計算
 	// ================================================================
 	void CalculateAttackFromMatches();
+
+	// ================================================================
+	// 非アクティブボード更新
+	// ================================================================
+	void UpdateInactiveBoard(float deltaTime);
 
 	// ================================================================
 	// データ
 	// ================================================================
 	PuzzleGameConfig config_;
-	PuzzleBoard board_;
+	PuzzleBoard boards_[2];
+	int activeBoard_ = 0;
 	PuzzleCursor cursor_;
 	PuzzleGoal combo_;
 
-	int hp_ = 100;
 	float timer_ = 0.0f;
 	bool timerActive_ = false;
 	Phase phase_ = Phase::Idle;
@@ -186,23 +203,31 @@ private:
 	std::vector<PanelAnim> phaseAnims_;
 	std::vector<PuzzleBoard::MatchResult> pendingMatches_;
 
-	// 攻撃結果
 	MatchSummary lastMatchSummary_{};
 	bool hasPendingAttack_ = false;
-	int pendingDamage_ = 0;
+	int pendingGarbageToSend_ = 0;
 	float pendingLockTime_ = 0.0f;
 	float remainingTimeAtSkip_ = 0.0f;
 
-	// ロック
-	std::map<int, LockInfo> rowLocks_;
-	std::map<int, LockInfo> colLocks_;
+	// 移動回数カウント（お邪魔パネル出現用）
+	int moveCount_ = 0;
+
+	// ロック（ボード別）
+	std::map<int, LockInfo> rowLocks_[2];
+	std::map<int, LockInfo> colLocks_[2];
 	static constexpr int kMaxTotalLocks = 2;
+
+	// 非アクティブボードのお邪魔パネル減少タイマー
+	float inactiveDecayTimer_ = 0.0f;
 
 	// シェイク
 	float shakeTimer_ = 0.0f;
 	float shakeDuration_ = 0.3f;
 	float shakeIntensity_ = 10.0f;
 	Vector3 parentOriginalPos_{};
+
+	// お邪魔パネル予告位置
+	std::vector<std::pair<int, int>> pendingGarbagePositions_;
 
 	// ================================================================
 	// スプライト
@@ -212,32 +237,37 @@ private:
 	AddObject2DFunc addObject2DFunc_;
 	KashipanEngine::Transform2D* parentTransform_ = nullptr;
 	std::string playerName_;
+	bool isPlayer2_ = false;
 
 	std::vector<KashipanEngine::Sprite*> stagePanelSprites_;
 	std::vector<KashipanEngine::Sprite*> puzzlePanelSprites_;
 	KashipanEngine::Sprite* cursorSprite_ = nullptr;
 
-	// ロックオーバーレイスプライト（行/列）
 	std::vector<KashipanEngine::Sprite*> rowLockSprites_;
 	std::vector<KashipanEngine::Sprite*> colLockSprites_;
 
-	// タイマーゲージ
+	// お邪魔パネル予告オーバーレイ
+	std::vector<KashipanEngine::Sprite*> garbageWarningSprites_;
+
 	KashipanEngine::Sprite* timerGaugeBgSprite_ = nullptr;
 	KashipanEngine::Sprite* timerGaugeFillSprite_ = nullptr;
 
-	// HPゲージ
-	KashipanEngine::Sprite* hpGaugeBgSprite_ = nullptr;
-	KashipanEngine::Sprite* hpGaugeFillSprite_ = nullptr;
+	// 崩壊度テキスト（アクティブ/非アクティブ）
+	KashipanEngine::Text* activeCollapseText_ = nullptr;
+	KashipanEngine::Text* inactiveCollapseText_ = nullptr;
 
-	// マッチ/コンボテキスト
+	// 非アクティブボード小表示スプライト
+	std::vector<KashipanEngine::Sprite*> inactivePreviewSprites_;
+	KashipanEngine::Sprite* inactivePreviewBg_ = nullptr;
+
 	KashipanEngine::Text* matchText_ = nullptr;
 	KashipanEngine::Text* comboText_ = nullptr;
 	float matchTextTimer_ = 0.0f;
 	static constexpr float kMatchTextDuration = 2.0f;
 
-	// コマンドプレフィックス
 	std::string commandPrefix_ = "Puzzle";
 	std::string cmdTimeSkip_ = "PuzzleTimeSkip";
+	std::string cmdSwitchBoard_ = "PuzzleSwitchBoard";
 };
 
 } // namespace Application

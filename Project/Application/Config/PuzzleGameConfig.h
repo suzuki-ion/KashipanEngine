@@ -26,6 +26,11 @@ struct PuzzleGameConfig {
 		Vector4(0.9f, 0.9f, 0.9f, 1.0f), // タイプ8: 白
 	};
 
+	// お邪魔パネルの色
+	Vector4 garbageColor = Vector4(0.3f, 0.3f, 0.3f, 1.0f);
+	// お邪魔パネル予告の色
+	Vector4 garbageWarningColor = Vector4(0.5f, 0.5f, 0.5f, 0.5f);
+
 	// パズルパネルが移動する際のイージング時間（秒）
 	float panelMoveEasingDuration = 0.15f;
 	// パズルパネルが消える際のイージング時間（秒）
@@ -47,16 +52,8 @@ struct PuzzleGameConfig {
 	// ステージ背景の色
 	Vector4 stageBackgroundColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
 
-	// プレイヤーのHP
-	int playerHP = 300;
 	// 制限時間（秒）
 	float timeLimit = 30.0f;
-
-	// ダメージ量
-	int normalDamage = 1;
-	int straightDamage = 2;
-	int crossDamage = 3;
-	int squareDamage = 5;
 
 	// ロック時間（秒）
 	float normalLockTime = 1.0f;
@@ -64,19 +61,20 @@ struct PuzzleGameConfig {
 	float crossLockTime = 5.0f;
 	float squareLockTime = 15.0f;
 
-	// コンボ時のダメージ倍数
-	float comboDamageMultiplier = 2.0f;
-	// 『ブレイク』時のダメージ倍数
-	float breakDamageMultiplier = 2.0f;
 	// コンボ時のロック時間倍数
 	float comboLockMultiplier = 2.0f;
 	// 『ブレイク』時のロック時間倍数
 	float breakLockMultiplier = 2.0f;
 
-	// 制限時間の余った秒数ぶんのダメージ量加算
-	float remainingTimeDamageBonus = 0.5f;
 	// 制限時間の余った秒数ぶんのロック時間加算
 	float remainingTimeLockBonus = 0.5f;
+
+	// お邪魔パネルが出現するまでの移動回数
+	int movesPerGarbage = 5;
+	// 攻撃時に消したパネル数→お邪魔パネル個数の倍率
+	float attackGarbageMultiplier = 0.5f;
+	// 未使用ステージの崩壊度減少速度（秒あたりのお邪魔パネル減少数）
+	float inactiveGarbageDecayPerSec = 1.0f;
 
 	void LoadFromJSON(const std::string& filepath);
 	void SaveToJSON(const std::string& filepath) const;

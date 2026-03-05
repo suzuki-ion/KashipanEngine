@@ -58,7 +58,7 @@ private:
     // NPC（対NPC戦の場合）
     bool isNPCMode_ = true;
     Application::PuzzleNPC npc_;
-    Application::PuzzleNPC::Difficulty npcDifficulty_ = Application::PuzzleNPC::Difficulty::Normal;
+    Application::PuzzleNPC::Difficulty npcDifficulty_ = Application::PuzzleNPC::Difficulty::Hard;
 
     // ゲーム状態
     bool gameOver_ = false;

@@ -19,13 +19,67 @@ void PuzzleBoard::Initialize(int size, int panelTypeCount) {
 }
 
 int PuzzleBoard::GetPanel(int row, int col) const {
-	if (row < 0 || row >= size_ || col < 0 || col >= size_) return -1;
+	if (row < 0 || row >= size_ || col < 0 || col >= size_) return 0;
 	return board_[row][col];
 }
 
 void PuzzleBoard::SetPanel(int row, int col, int type) {
 	if (row < 0 || row >= size_ || col < 0 || col >= size_) return;
 	board_[row][col] = type;
+}
+
+bool PuzzleBoard::IsGarbage(int row, int col) const {
+	return GetPanel(row, col) == kGarbageType;
+}
+
+int PuzzleBoard::CountGarbage() const {
+	int count = 0;
+	for (int r = 0; r < size_; r++) {
+		for (int c = 0; c < size_; c++) {
+			if (board_[r][c] == kGarbageType) count++;
+		}
+	}
+	return count;
+}
+
+int PuzzleBoard::PlaceGarbageRandom(int count) {
+	// 通常パネルの位置リストを作成
+	std::vector<std::pair<int, int>> normalCells;
+	for (int r = 0; r < size_; r++) {
+		for (int c = 0; c < size_; c++) {
+			if (board_[r][c] > 0) {
+				normalCells.push_back({ r, c });
+			}
+		}
+	}
+	// シャッフル
+	for (int i = static_cast<int>(normalCells.size()) - 1; i > 0; i--) {
+		int j = KashipanEngine::GetRandomInt(0, i);
+		std::swap(normalCells[i], normalCells[j]);
+	}
+	int placed = 0;
+	for (int i = 0; i < count && i < static_cast<int>(normalCells.size()); i++) {
+		auto [r, c] = normalCells[i];
+		board_[r][c] = kGarbageType;
+		placed++;
+	}
+	return placed;
+}
+
+bool PuzzleBoard::RemoveOneGarbageRandom() {
+	std::vector<std::pair<int, int>> garbageCells;
+	for (int r = 0; r < size_; r++) {
+		for (int c = 0; c < size_; c++) {
+			if (board_[r][c] == kGarbageType) {
+				garbageCells.push_back({ r, c });
+			}
+		}
+	}
+	if (garbageCells.empty()) return false;
+	int idx = KashipanEngine::GetRandomInt(0, static_cast<int>(garbageCells.size()) - 1);
+	auto [r, c] = garbageCells[idx];
+	board_[r][c] = GetNextPanelFromTable();
+	return true;
 }
 
 void PuzzleBoard::ShiftRowRight(int row) {
@@ -71,20 +125,20 @@ void PuzzleBoard::ShiftColDown(int col) {
 std::vector<PuzzleBoard::LineSeg> PuzzleBoard::DetectLineMatches(int minCount) const {
 	std::vector<LineSeg> segs;
 
-	// 横方向
+	// 横方向（お邪魔パネルはマッチ対象外）
 	for (int r = 0; r < size_; r++) {
 		int count = 1;
 		for (int c = 1; c < size_; c++) {
-			if (board_[r][c] == board_[r][c - 1] && board_[r][c] > 0) {
+			if (board_[r][c] > 0 && board_[r][c] == board_[r][c - 1]) {
 				count++;
 			} else {
-				if (count >= minCount) {
+				if (count >= minCount && board_[r][c - 1] > 0) {
 					segs.push_back({ true, r, c - count, count, board_[r][c - 1] });
 				}
 				count = 1;
 			}
 		}
-		if (count >= minCount) {
+		if (count >= minCount && board_[r][size_ - 1] > 0) {
 			segs.push_back({ true, r, size_ - count, count, board_[r][size_ - 1] });
 		}
 	}
@@ -93,16 +147,16 @@ std::vector<PuzzleBoard::LineSeg> PuzzleBoard::DetectLineMatches(int minCount) c
 	for (int c = 0; c < size_; c++) {
 		int count = 1;
 		for (int r = 1; r < size_; r++) {
-			if (board_[r][c] == board_[r - 1][c] && board_[r][c] > 0) {
+			if (board_[r][c] > 0 && board_[r][c] == board_[r - 1][c]) {
 				count++;
 			} else {
-				if (count >= minCount) {
+				if (count >= minCount && board_[r - 1][c] > 0) {
 					segs.push_back({ false, c, r - count, count, board_[r - 1][c] });
 				}
 				count = 1;
 			}
 		}
-		if (count >= minCount) {
+		if (count >= minCount && board_[size_ - 1][c] > 0) {
 			segs.push_back({ false, c, size_ - count, count, board_[size_ - 1][c] });
 		}
 	}
@@ -116,7 +170,6 @@ std::vector<PuzzleBoard::LineSeg> PuzzleBoard::DetectLineMatches(int minCount) c
 
 std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMin, int straightMin) const {
 	std::vector<MatchResult> results;
-	// consumed: 既に上位パターンで消費済みのセル
 	std::vector<std::vector<bool>> consumed(size_, std::vector<bool>(size_, false));
 
 	// --- 1. Square (3x3) ---
@@ -131,7 +184,6 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 				}
 			}
 			if (!allSame) continue;
-			// 消費済みでないか確認
 			bool anyConsumed = false;
 			for (int dr = 0; dr < 3 && !anyConsumed; dr++) {
 				for (int dc = 0; dc < 3 && !anyConsumed; dc++) {
@@ -153,13 +205,11 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 		}
 	}
 
-	// --- 2. Cross (縦3+横3の十字) ---
-	// 中心セルから縦3(中心±1)と横3(中心±1)が全て同色
+	// --- 2. Cross ---
 	for (int r = 1; r < size_ - 1; r++) {
 		for (int c = 1; c < size_ - 1; c++) {
 			int type = board_[r][c];
 			if (type <= 0) continue;
-			// 十字: (r-1,c), (r,c-1), (r,c), (r,c+1), (r+1,c)
 			if (board_[r - 1][c] != type) continue;
 			if (board_[r + 1][c] != type) continue;
 			if (board_[r][c - 1] != type) continue;
@@ -186,7 +236,7 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 		}
 	}
 
-	// --- 3. Straight (直線 straightMin 以上) ---
+	// --- 3. Straight ---
 	{
 		auto segs = DetectLineMatches(straightMin);
 		for (auto& seg : segs) {
@@ -218,7 +268,7 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 		}
 	}
 
-	// --- 4. Normal (直線 normalMin 以上) ---
+	// --- 4. Normal ---
 	{
 		auto segs = DetectLineMatches(normalMin);
 		for (auto& seg : segs) {
@@ -250,17 +300,48 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 		}
 	}
 
+	// --- 5. 隣接お邪魔パネルを追加 ---
+	// 消えるセルに隣接しているお邪魔パネルも一緒に消す
+	std::set<std::pair<int, int>> matchedCells;
+	for (auto& mr : results) {
+		for (auto& cell : mr.cells) {
+			matchedCells.insert(cell);
+		}
+	}
+
+	std::set<std::pair<int, int>> garbageToRemove;
+	static const int dr[] = { -1, 1, 0, 0 };
+	static const int dc[] = { 0, 0, -1, 1 };
+	for (auto& [r, c] : matchedCells) {
+		for (int d = 0; d < 4; d++) {
+			int nr = r + dr[d];
+			int nc = c + dc[d];
+			if (nr < 0 || nr >= size_ || nc < 0 || nc >= size_) continue;
+			if (board_[nr][nc] == kGarbageType && matchedCells.find({ nr, nc }) == matchedCells.end()) {
+				garbageToRemove.insert({ nr, nc });
+			}
+		}
+	}
+	// お邪魔パネルをダミーマッチとして追加
+	if (!garbageToRemove.empty()) {
+		MatchResult garbageMatch;
+		garbageMatch.type = MatchType::Normal;
+		garbageMatch.panelType = kGarbageType;
+		for (auto& cell : garbageToRemove) {
+			garbageMatch.cells.push_back(cell);
+		}
+		results.push_back(std::move(garbageMatch));
+	}
+
 	return results;
 }
 
 int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 	if (matches.empty()) return 0;
 
-	// マッチした位置をマーク
 	std::vector<std::vector<bool>> cleared(size_, std::vector<bool>(size_, false));
 	int totalCleared = 0;
 
-	// 横消し行と縦消し列を追跡
 	std::set<int> hRows;
 	std::set<int> vCols;
 
@@ -271,7 +352,6 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 				totalCleared++;
 			}
 		}
-		// 方向の追跡（Normal/Straightは方向あり、Cross/Squareは両方向扱い）
 		if (m.type == MatchType::Normal || m.type == MatchType::Straight) {
 			if (m.isHorizontal) {
 				hRows.insert(m.fixedIndex);
@@ -279,16 +359,12 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 				vCols.insert(m.fixedIndex);
 			}
 		} else {
-			// Cross/Square: 含まれる行と列を全て対象
 			for (auto& [r, c] : m.cells) {
-				// 行に消えたセルがあれば横方向補充、列にあれば縦方向補充
-				// 簡易的に：消えたセルの行は横扱い
 				hRows.insert(r);
 			}
 		}
 	}
 
-	// 横マッチ行の処理
 	for (int row : hRows) {
 		std::vector<int> remaining;
 		for (int c = 0; c < size_; c++) {
@@ -309,7 +385,6 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 		}
 	}
 
-	// 縦マッチ列の処理
 	for (int col : vCols) {
 		std::vector<int> remaining;
 		for (int r = 0; r < size_; r++) {

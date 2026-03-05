@@ -1,24 +1,32 @@
 ﻿{
-    "breakDamageMultiplier": 2.0,
     "breakLockMultiplier": 2.0,
-    "comboDamageMultiplier": 1.5,
     "comboLockMultiplier": 1.5,
-    "crossDamage": 3,
     "crossLockTime": 5.0,
     "cursorColor": [
         1.0,
         1.0,
         1.0,
-        0.501960813999176
+        0.8313725590705872
     ],
     "cursorEasingDuration": 0.10000000149011612,
+    "garbageColor": [
+        0.3,
+        0.3,
+        0.3,
+        1.0
+    ],
+    "garbageWarningColor": [
+        0.5,
+        0.5,
+        0.5,
+        0.5
+    ],
     "lockColor": [
         0.0,
         0.0,
         0.0,
         0.5
     ],
-    "normalDamage": 1,
     "normalLockTime": 1.0,
     "normalMinCount": 3,
     "panelClearEasingDuration": 0.30000001192092896,
@@ -77,10 +85,7 @@
     "panelScale": 80.0,
     "panelSpawnEasingDuration": 0.15000000596046448,
     "panelTypeCount": 4,
-    "playerHP": 1000,
-    "remainingTimeDamageBonus": 0.5,
     "remainingTimeLockBonus": 0.5,
-    "squareDamage": 5,
     "squareLockTime": 15.0,
     "stageBackgroundColor": [
         0.20000000298023224,
@@ -89,8 +94,10 @@
         1.0
     ],
     "stageSize": 6,
-    "straightDamage": 2,
     "straightLockTime": 3.0,
     "straightMinCount": 5,
-    "timeLimit": 30.0
+    "timeLimit": 30.0,
+    "movesPerGarbage": 5,
+    "attackGarbageMultiplier": 0.5,
+    "inactiveGarbageDecayPerSec": 1.0
 }

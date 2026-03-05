@@ -70,8 +70,8 @@ void TestScene::Initialize() {
     // プレイヤー初期化
     // ================================================================
     auto addObj2D = [this](std::unique_ptr<Object2DBase> obj) { return AddObject2D(std::move(obj)); };
-    player1_.Initialize(config_, screenBuffer2D, window, addObj2D, player1ParentTransform_, "P1", "Puzzle");
-    player2_.Initialize(config_, screenBuffer2D, window, addObj2D, player2ParentTransform_, "P2", "P2Puzzle");
+    player1_.Initialize(config_, screenBuffer2D, window, addObj2D, player1ParentTransform_, "P1", "Puzzle", false);
+    player2_.Initialize(config_, screenBuffer2D, window, addObj2D, player2ParentTransform_, "P2", "P2Puzzle", true);
 
     // NPC初期化
     if (isNPCMode_) {
@@ -110,25 +110,6 @@ void TestScene::ProcessAttack(Application::PuzzlePlayer& attacker, Application::
 
     const auto& summary = attacker.GetLastMatchSummary();
 
-    // ダメージ計算
-    float baseDamage = 0.0f;
-    baseDamage += static_cast<float>(summary.normalCount * config_.normalDamage);
-    baseDamage += static_cast<float>(summary.straightCount * config_.straightDamage);
-    baseDamage += static_cast<float>(summary.crossCount * config_.crossDamage);
-    baseDamage += static_cast<float>(summary.squareCount * config_.squareDamage);
-
-    float comboMult = 1.0f;
-    if (summary.comboCount > 1) {
-        comboMult = std::pow(config_.comboDamageMultiplier, static_cast<float>(summary.comboCount - 1));
-    }
-    float breakMult = summary.isBreak ? config_.breakDamageMultiplier : 1.0f;
-
-    // 余り時間ボーナス
-    float remainBonus = attacker.GetRemainingTimeAtSkip() * config_.remainingTimeDamageBonus;
-
-    int totalDamage = static_cast<int>(std::round((baseDamage * comboMult * breakMult) + remainBonus));
-    defender.ApplyDamage(totalDamage);
-
     // ロック時間計算
     float baseLock = 0.0f;
     baseLock += static_cast<float>(summary.normalCount) * config_.normalLockTime;
@@ -148,7 +129,14 @@ void TestScene::ProcessAttack(Application::PuzzlePlayer& attacker, Application::
     // ロック適用
     ApplyLockToDefender(defender, summary, totalLockTime);
 
+    // お邪魔パネル送信
+    int garbageCount = attacker.GetPendingGarbageToSend();
+    if (garbageCount > 0) {
+        defender.ApplyGarbage(garbageCount);
+    }
+
     attacker.ClearPendingAttack();
+    attacker.ClearPendingGarbage();
 }
 
 void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
@@ -170,26 +158,20 @@ void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
     for (int i = 0; i < crossLocks; i++) {
         if (defender.GetTotalLockCount() >= 2) break;
 
-        // 行ロック：未ロックの行からランダム
-        bool foundRow = false;
         for (int attempt = 0; attempt < boardSize; attempt++) {
             int r = KashipanEngine::GetRandomInt(0, boardSize - 1);
             if (!defender.IsRowLocked(r)) {
                 defender.ApplyLock(true, r, lockTime);
-                foundRow = true;
                 break;
             }
         }
 
         if (defender.GetTotalLockCount() >= 2) break;
 
-        // 列ロック：未ロックの列からランダム
-        bool foundCol = false;
         for (int attempt = 0; attempt < boardSize; attempt++) {
             int c = KashipanEngine::GetRandomInt(0, boardSize - 1);
             if (!defender.IsColLocked(c)) {
                 defender.ApplyLock(false, c, lockTime);
-                foundCol = true;
                 break;
             }
         }
@@ -201,17 +183,14 @@ void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
         if (defender.GetTotalLockCount() >= 2) break;
 
         bool isRow = KashipanEngine::GetRandomBool(0.5f);
-        bool found = false;
         for (int attempt = 0; attempt < boardSize * 2; attempt++) {
             int idx = KashipanEngine::GetRandomInt(0, boardSize - 1);
             if (isRow && !defender.IsRowLocked(idx)) {
                 defender.ApplyLock(true, idx, lockTime);
-                found = true;
                 break;
             }
             if (!isRow && !defender.IsColLocked(idx)) {
                 defender.ApplyLock(false, idx, lockTime);
-                found = true;
                 break;
             }
             isRow = !isRow;
@@ -222,11 +201,11 @@ void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
 void TestScene::CheckWinCondition() {
     if (gameOver_) return;
 
-    if (player1_.IsDead()) {
+    if (player1_.IsDefeated()) {
         gameOver_ = true;
         winner_ = 2;
         if (resultText_) resultText_->SetText("Player 2 Wins!");
-    } else if (player2_.IsDead()) {
+    } else if (player2_.IsDefeated()) {
         gameOver_ = true;
         winner_ = 1;
         if (resultText_) resultText_->SetText("Player 1 Wins!");
@@ -285,8 +264,14 @@ void TestScene::OnUpdate() {
     ImGui::Begin("Puzzle Game Config");
 
     ImGui::Text("=== Battle Status ===");
-    ImGui::Text("P1 HP: %d / %d", player1_.GetHP(), config_.playerHP);
-    ImGui::Text("P2 HP: %d / %d", player2_.GetHP(), config_.playerHP);
+    ImGui::Text("P1 Active Board: %d", player1_.GetActiveIndex());
+    ImGui::Text("P1 Collapse: %.0f%% / %.0f%%",
+        player1_.GetActiveCollapseRatio() * 100.0f,
+        player1_.GetInactiveCollapseRatio() * 100.0f);
+    ImGui::Text("P2 Active Board: %d", player2_.GetActiveIndex());
+    ImGui::Text("P2 Collapse: %.0f%% / %.0f%%",
+        player2_.GetActiveCollapseRatio() * 100.0f,
+        player2_.GetInactiveCollapseRatio() * 100.0f);
     ImGui::Text("P1 Timer: %.1f", player1_.GetTimer());
     ImGui::Text("P2 Timer: %.1f", player2_.GetTimer());
     const char *phaseNames[] = { "Idle", "Moving", "Clearing", "Filling" };
@@ -323,22 +308,20 @@ void TestScene::OnUpdate() {
 
     ImGui::Separator();
     ImGui::Text("Battle Settings");
-    ImGui::SliderInt("Player HP", &config_.playerHP, 1, 500);
     ImGui::SliderFloat("Time Limit", &config_.timeLimit, 1.0f, 60.0f);
-    ImGui::SliderInt("Normal Damage", &config_.normalDamage, 0, 50);
-    ImGui::SliderInt("Straight Damage", &config_.straightDamage, 0, 50);
-    ImGui::SliderInt("Cross Damage", &config_.crossDamage, 0, 50);
-    ImGui::SliderInt("Square Damage", &config_.squareDamage, 0, 50);
     ImGui::SliderFloat("Normal Lock Time", &config_.normalLockTime, 0.0f, 30.0f);
     ImGui::SliderFloat("Straight Lock Time", &config_.straightLockTime, 0.0f, 30.0f);
     ImGui::SliderFloat("Cross Lock Time", &config_.crossLockTime, 0.0f, 30.0f);
     ImGui::SliderFloat("Square Lock Time", &config_.squareLockTime, 0.0f, 30.0f);
-    ImGui::SliderFloat("Combo Damage Mult", &config_.comboDamageMultiplier, 1.0f, 10.0f);
-    ImGui::SliderFloat("Break Damage Mult", &config_.breakDamageMultiplier, 1.0f, 10.0f);
     ImGui::SliderFloat("Combo Lock Mult", &config_.comboLockMultiplier, 1.0f, 10.0f);
     ImGui::SliderFloat("Break Lock Mult", &config_.breakLockMultiplier, 1.0f, 10.0f);
-    ImGui::SliderFloat("Remain Time Dmg Bonus", &config_.remainingTimeDamageBonus, 0.0f, 5.0f);
     ImGui::SliderFloat("Remain Time Lock Bonus", &config_.remainingTimeLockBonus, 0.0f, 5.0f);
+
+    ImGui::Separator();
+    ImGui::Text("Garbage Settings");
+    ImGui::SliderInt("Moves Per Garbage", &config_.movesPerGarbage, 1, 30);
+    ImGui::SliderFloat("Attack Garbage Mult", &config_.attackGarbageMultiplier, 0.0f, 3.0f);
+    ImGui::SliderFloat("Inactive Decay/sec", &config_.inactiveGarbageDecayPerSec, 0.0f, 5.0f);
 
     ImGui::Separator();
     ImGui::Text("Colors");
@@ -349,6 +332,8 @@ void TestScene::OnUpdate() {
     ImGui::ColorEdit4("Stage BG Color", &config_.stageBackgroundColor.x);
     ImGui::ColorEdit4("Cursor Color", &config_.cursorColor.x);
     ImGui::ColorEdit4("Lock Color", &config_.lockColor.x);
+    ImGui::ColorEdit4("Garbage Color", &config_.garbageColor.x);
+    ImGui::ColorEdit4("Garbage Warning", &config_.garbageWarningColor.x);
 
     if (ImGui::Button("Save Config")) {
         config_.SaveToJSON(kConfigPath);

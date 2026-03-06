@@ -564,6 +564,33 @@ namespace Application {
 			switchCooldownSprite_ = sprite.get();
 			addObject2DFunc_(std::move(sprite));
 		}
+
+		// 15. 残り移動回数テキスト
+		{
+			auto text = std::make_unique<KashipanEngine::Text>(32);
+			text->SetName(playerName_ + "_reMoveCount");
+			if (auto* tr = text->GetComponent2D<KashipanEngine::Transform2D>()) {
+				tr->SetParentTransform(activeBoardTransform_);
+				if (isPlayer2_) {
+					tr->SetTranslate(Vector3(stageHeight * 0.5f + 100.0f,0.0f, 0.0f));
+				}
+				else {
+					tr->SetTranslate(Vector3(-stageHeight * 0.5f - 100.0f, 0.0f, 0.0f));
+				}
+				
+			}
+			text->SetFont("Assets/Application/test.fnt");
+			text->SetText("0%");
+			text->SetTextAlign(KashipanEngine::TextAlignX::Center, KashipanEngine::TextAlignY::Center);
+			if (screenBuffer2D_) {
+				text->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
+			}
+			else if (window_) {
+				text->AttachToRenderer(window_, "Object2D.DoubleSidedCulling.BlendNormal");
+			}
+			activeCollapseText_ = text.get();
+			addObject2DFunc_(std::move(text));
+		}
 	}
 
 	// ================================================================
@@ -963,6 +990,14 @@ namespace Application {
 				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 0.0f, 0.5f);
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, getAlpha));
 			}
+		}
+	}
+
+	void PuzzlePlayer::UpdateMoveCountText()
+	{
+		if (activeCollapseText_) {
+			int pct = config_.movesPerGarbage - moveCount_;
+			activeCollapseText_->SetTextFormat("{}", pct);
 		}
 	}
 
@@ -1731,6 +1766,7 @@ namespace Application {
 		UpdateShake(deltaTime);
 		UpdateSwapCoolDownSpriteAnimation(deltaTime);
 		UpdateSwapPanelAnimations(deltaTime);
+		UpdateMoveCountText();
 	}
 
 } // namespace Application

@@ -155,6 +155,7 @@ private:
 	void UpdateMoveGarbageWarnings();
 	void UpdateSwapPanelAnimations(float deltaTime);
 	void UpdateSwapCoolDownSpriteAnimation(float deltaTime);
+	void UpdateMoveCountText();
 
 	// ================================================================
 	// 移動時お邪魔パネル予告位置計算
@@ -335,6 +336,9 @@ private:
 	// ステージ切り替えのクールダウン用スプライト
 	KashipanEngine::Sprite* switchCooldownSprite_;
 	KashipanEngine::Sprite* switchCooldownBackGroundSprite_;
+
+	// 残りスライド回数テキスト
+	KashipanEngine::Text* remainingSlideCountText_;
 };
 
 } // namespace Application

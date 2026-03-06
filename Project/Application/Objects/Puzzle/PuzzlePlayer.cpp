@@ -519,6 +519,11 @@ namespace Application {
 			comboText_ = text.get();
 			addObject2DFunc_(std::move(text));
 		}
+
+		// 14. 入れ替えのクールダウン
+		{
+			swapCooldown_.Initialize(config_.swapCooldown);
+		}
 	}
 
 	// ================================================================
@@ -565,14 +570,14 @@ namespace Application {
 
 	void PuzzlePlayer::StartSwapPanelAnimation() {
 		if (isPlayer2_) {
-			activeBoardTransform_->SetTranslate(Vector3(500.0f, -500.0f, 0.0f));
-			inactiveBoardTransform_->SetTranslate(Vector3(-500.0f, 500.0f, 0.0f));
+			activeBoardTransform_->SetTranslate(Vector3(300.0f, -300.0f, 0.0f));
+			inactiveBoardTransform_->SetTranslate(Vector3(-300.0f, 300.0f, 0.0f));
 		} else {
-			activeBoardTransform_->SetTranslate(Vector3(-500.0f, -500.0f, 0.0f));
-			inactiveBoardTransform_->SetTranslate(Vector3(500.0f, 500.0f, 0.0f));
+			activeBoardTransform_->SetTranslate(Vector3(-300.0f, -300.0f, 0.0f));
+			inactiveBoardTransform_->SetTranslate(Vector3(300.0f, 300.0f, 0.0f));
 		}
-		activeBoardTransform_->SetScale(Vector3(0.5f, 0.5f, 1.0f));
-		inactiveBoardTransform_->SetScale(Vector3(2.0f, 2.0f, 1.0f));
+		activeBoardTransform_->SetScale(Vector3(0.3f, 0.3f, 1.3f));
+		inactiveBoardTransform_->SetScale(Vector3(1.5f, 1.5f, 1.0f));
 	}
 
 	void PuzzlePlayer::UpdateCursorSprite() {
@@ -757,7 +762,7 @@ namespace Application {
 		Vector3 inactiveTargetScale(previewScale, previewScale, 1.0f);
 
 		// イージング係数
-		float easingFactor = 0.1f;
+		float easingFactor = 0.5f;
 
 		// アクティブボードの位置とスケールを更新
 		float newActiveX = Application::MatsumotoUtility::SimpleEaseIn(activeTranslate.x, activeTargetTranslate.x, easingFactor);
@@ -945,6 +950,7 @@ namespace Application {
 		UpdateCursorSprite();
 
 		StartSwapPanelAnimation();
+		swapCooldown_.SetOnCooldown();
 	}
 
 	void PuzzlePlayer::AutoSwitchBoardIfNeeded() {
@@ -1416,6 +1422,7 @@ namespace Application {
 	// ================================================================
 
 	void PuzzlePlayer::Update(float deltaTime, KashipanEngine::InputCommand* inputCommand) {
+		swapCooldown_.Update(deltaTime);
 		UpdateLocks(deltaTime);
 
 		if (timerActive_ && !IsAnimating()) {
@@ -1431,7 +1438,13 @@ namespace Application {
 				OnTimeSkip();
 			}
 			if (inputCommand->Evaluate(cmdSwitchBoard_).Triggered() && !IsAnimating()) {
-				SwitchBoard();
+				if(swapCooldown_.IsOnCooldown()) {
+					// クールダウン中のスイッチはシェイクでフィードバック（関数が何故か存在しないため一旦放置）
+					// TODO: クールダウン中のスイッチはシェイクでフィードバック
+				}
+				else {
+					SwitchBoard();
+				}
 			}
 		}
 

@@ -8,6 +8,7 @@
 #include <Objects/Puzzle/PuzzleBoard.h>
 #include <Objects/Puzzle/PuzzleCursor.h>
 #include <Objects/Puzzle/PuzzleGoal.h>
+#include <Objects/Puzzle/PuzzleSwapCooldown.h>
 #include <Config/PuzzleGameConfig.h>
 
 namespace Application {
@@ -251,6 +252,9 @@ private:
 
 	// 移動時お邪魔パネルの次回出現予告位置
 	std::vector<std::pair<int, int>> nextMoveGarbagePositions_;
+
+	// 入れ替え用のクールダウン管理クラス
+	PuzzleSwapCooldown swapCooldown_;
 
 	// ================================================================
 	// スプライト

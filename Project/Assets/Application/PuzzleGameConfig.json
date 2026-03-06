@@ -1,8 +1,9 @@
 {
     "attackGarbageMultiplier": 1.0,
     "breakLockMultiplier": 2.0,
+    "comboGarbageMultiplier": 1.1100000143051147,
     "comboLockMultiplier": 1.5,
-    "crossGarbageCount": 8,
+    "crossGarbageCount": 3.0250000953674316,
     "crossLockTime": 5.0,
     "cursorColor": [
         1.0,
@@ -32,7 +33,7 @@
         0.5
     ],
     "movesPerGarbage": 5,
-    "normalGarbageCount": 2,
+    "normalGarbageCount": 0.15299999713897705,
     "normalLockTime": 1.0,
     "normalMinCount": 3,
     "panelClearEasingDuration": 0.30000001192092896,
@@ -92,7 +93,7 @@
     "panelSpawnEasingDuration": 0.15000000596046448,
     "panelTypeCount": 4,
     "remainingTimeLockBonus": 0.5,
-    "squareGarbageCount": 12,
+    "squareGarbageCount": 10.592000007629395,
     "squareLockTime": 15.0,
     "stageBackgroundColor": [
         0.20000000298023224,
@@ -101,7 +102,7 @@
         1.0
     ],
     "stageSize": 6,
-    "straightGarbageCount": 5,
+    "straightGarbageCount": 0.5149999856948853,
     "straightLockTime": 3.0,
     "straightMinCount": 5,
     "timeLimit": 30.0

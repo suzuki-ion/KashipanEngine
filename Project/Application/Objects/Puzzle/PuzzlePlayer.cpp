@@ -523,7 +523,7 @@ namespace Application {
 		// 14. 入れ替えのクールダウン
 		{
 			swapCooldown_.Initialize(config_.swapCooldown);
-			float size = 500.0f;
+			float size = 500.0f;// クールダウン表示は結構大きめにして目立たせる
 			// ローディングみたいな丸がクルクル回るやつの背景オーバーレイ
 			auto bgSprite = std::make_unique<KashipanEngine::Sprite>();
 			bgSprite->SetUniqueBatchKey();

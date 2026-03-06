@@ -15,5 +15,4 @@
 #include "Utilities/TemplateLiteral.h"
 #include "Utilities/TimeUtils.h"
 #include "Utilities/Translation.h"
-#include "Utilities/Easing.h"
 #include "Utilities/GameTimer.h"

@@ -1,5 +1,7 @@
 #include "AudioManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Assets/AudioPlayer.h"
+#include "Assets/SoundBeat.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/Translation.h"
@@ -29,6 +31,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <chrono>
 
 #pragma comment(lib, "xaudio2.lib")
 #pragma comment(lib, "mf.lib")
@@ -57,6 +60,7 @@ struct PlayEntry final {
     IXAudio2SourceVoice* voice = nullptr;
     bool paused = false;
     bool loop = false;
+    double startTimeSec = 0.0;
 };
 
 std::unordered_map<SoundHandle, SoundEntry> sSounds;
@@ -75,7 +79,10 @@ std::vector<size_t> sFreePlayIndices;
 std::unordered_map<PlayHandle, size_t> sPlayHandleToIndex;
 std::unordered_set<PlayHandle> sUsedPlayHandles;
 
-static std::mt19937& Rng() {
+std::unordered_set<SoundBeat*> sRegisteredSoundBeats;
+std::unordered_set<AudioPlayer*> sRegisteredAudioPlayers;
+
+std::mt19937& Rng() {
     static thread_local std::mt19937 rng{ std::random_device{}() };
     return rng;
 }
@@ -190,6 +197,7 @@ void StopVoice(PlayEntry& p) {
     p.voice = nullptr;
     p.sound = AudioManager::kInvalidSoundHandle;
     p.paused = false;
+    p.startTimeSec = 0.0;
 }
 
 bool EnsureAudioInitialized() {
@@ -343,6 +351,31 @@ uint32_t EstimateDurationMs(const WAVEFORMATEX& wfex, const std::vector<BYTE>& b
 
 } // namespace
 
+bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
+    outSeconds = 0.0;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+
+    const PlayEntry& p = *sPlays[idx];
+    if (!p.voice) return false;
+    if (p.sound == kInvalidSoundHandle) return false;
+
+    XAUDIO2_VOICE_STATE state{};
+    p.voice->GetState(&state);
+
+    const auto it = sSounds.find(p.sound);
+    if (it == sSounds.end()) return false;
+    const WAVEFORMATEX& wf = it->second.wfex;
+    const uint32_t samplesPerSec = static_cast<uint32_t>(wf.nSamplesPerSec);
+    if (samplesPerSec == 0) return false;
+
+    const uint64_t samplesPlayed = state.SamplesPlayed; // フレーム（サンプルフレーム）
+    outSeconds = static_cast<double>(samplesPlayed) / static_cast<double>(samplesPerSec);
+    outSeconds += p.startTimeSec;
+    return true;
+}
+
 AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
@@ -446,14 +479,51 @@ SoundHandle AudioManager::GetSoundHandleFromAssetPath(const std::string &assetPa
     return it->second;
 }
 
-AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop) {
+AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop,
+    double startTimeSec, double endTimeSec) {
+    PlayParams params{};
+    params.sound = sound;
+    params.volume = volume;
+    params.pitch = pitch;
+    params.loop = loop;
+    params.startTimeSec = startTimeSec;
+    params.endTimeSec = endTimeSec;
+    return Play(params);
+}
+
+AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     LogScope scope;
-    if (sound == kInvalidSoundHandle) return kInvalidPlayHandle;
+    if (params.sound == kInvalidSoundHandle) return kInvalidPlayHandle;
 
     if (!EnsureAudioInitialized()) return kInvalidPlayHandle;
 
-    auto it = sSounds.find(sound);
+    auto it = sSounds.find(params.sound);
     if (it == sSounds.end()) return kInvalidPlayHandle;
+
+    const WAVEFORMATEX& wfex = it->second.wfex;
+    if (wfex.nBlockAlign == 0 || wfex.nSamplesPerSec == 0) return kInvalidPlayHandle;
+
+    const uint64_t totalFrames = it->second.buffer.size() / wfex.nBlockAlign;
+    if (totalFrames == 0) return kInvalidPlayHandle;
+
+    const double startSec = std::max(0.0, params.startTimeSec);
+    const double endSec = params.endTimeSec;
+
+    uint64_t startFrame = static_cast<uint64_t>(std::floor(startSec * static_cast<double>(wfex.nSamplesPerSec)));
+    if (startFrame >= totalFrames) return kInvalidPlayHandle;
+
+    bool hasEnd = endSec > 0.0;
+    uint64_t endFrame = totalFrames;
+    if (hasEnd) {
+        const double clampedEnd = std::max(0.0, endSec);
+        endFrame = static_cast<uint64_t>(std::floor(clampedEnd * static_cast<double>(wfex.nSamplesPerSec)));
+        endFrame = std::min(endFrame, totalFrames);
+        if (endFrame <= startFrame) return kInvalidPlayHandle;
+    }
+
+    const uint64_t playLengthFrames = hasEnd ? (endFrame - startFrame) : 0u;
+    if (startFrame > std::numeric_limits<uint32_t>::max()) return kInvalidPlayHandle;
+    if (hasEnd && playLengthFrames > std::numeric_limits<uint32_t>::max()) return kInvalidPlayHandle;
 
     const size_t idx = AcquirePlayIndex();
     if (idx == static_cast<size_t>(-1)) {
@@ -468,9 +538,10 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
     }
 
     PlayEntry& playEntry = *sPlays[idx];
-    playEntry.sound = sound;
+    playEntry.sound = params.sound;
     playEntry.paused = false;
-    playEntry.loop = loop;
+    playEntry.loop = params.loop;
+    playEntry.startTimeSec = startSec;
 
     HRESULT hr = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex);
     if (FAILED(hr) || !playEntry.voice) {
@@ -484,7 +555,17 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
     buffer.AudioBytes = static_cast<UINT32>(it->second.buffer.size());
     buffer.pAudioData = it->second.buffer.data();
     buffer.Flags = XAUDIO2_END_OF_STREAM;
-    buffer.LoopCount = loop ? XAUDIO2_LOOP_INFINITE : 0;
+    buffer.PlayBegin = static_cast<UINT32>(startFrame);
+    if (hasEnd) {
+        buffer.PlayLength = static_cast<UINT32>(playLengthFrames);
+    }
+    buffer.LoopCount = params.loop ? XAUDIO2_LOOP_INFINITE : 0;
+    if (params.loop) {
+        buffer.LoopBegin = buffer.PlayBegin;
+        if (hasEnd) {
+            buffer.LoopLength = buffer.PlayLength;
+        }
+    }
 
     hr = playEntry.voice->SubmitSourceBuffer(&buffer);
     if (FAILED(hr)) {
@@ -494,9 +575,9 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
         return kInvalidPlayHandle;
     }
 
-    volume = std::clamp(volume, 0.0f, 1.0f);
+    const float volume = std::clamp(params.volume, 0.0f, 1.0f);
     playEntry.voice->SetVolume(volume);
-    playEntry.voice->SetFrequencyRatio(SemitonesToFrequencyRatio(pitch));
+    playEntry.voice->SetFrequencyRatio(SemitonesToFrequencyRatio(params.pitch));
 
     hr = playEntry.voice->Start();
     if (FAILED(hr)) {
@@ -512,6 +593,26 @@ AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, flo
     sPlayHandleToIndex[playHandle] = idx;
 
     return playHandle;
+}
+
+void AudioManager::RegisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat) {
+    if (!soundBeat) return;
+    sRegisteredSoundBeats.insert(soundBeat);
+}
+
+void AudioManager::UnregisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat) {
+    if (!soundBeat) return;
+    sRegisteredSoundBeats.erase(soundBeat);
+}
+
+void AudioManager::RegisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player) {
+    if (!player) return;
+    sRegisteredAudioPlayers.insert(player);
+}
+
+void AudioManager::UnregisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player) {
+    if (!player) return;
+    sRegisteredAudioPlayers.erase(player);
 }
 
 void AudioManager::Update() {
@@ -541,6 +642,14 @@ void AudioManager::Update() {
 
     for (const auto h : toStop) {
         Stop(h);
+    }
+
+    for (auto* sb : sRegisteredSoundBeats) {
+        sb->Update({});
+    }
+
+    for (auto* player : sRegisteredAudioPlayers) {
+        if (player) player->Update({});
     }
 }
 

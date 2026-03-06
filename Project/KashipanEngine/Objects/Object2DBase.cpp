@@ -209,6 +209,11 @@ std::optional<Object2DBase::RenderPassRegistrationInfo> Object2DBase::GetRenderP
     return it->second.info;
 }
 
+void Object2DBase::SetBatchKey(std::uint64_t key, RenderType renderType) {
+    instanceBatchKey_ = key;
+    renderType_ = renderType;
+}
+
 void Object2DBase::SetUniqueBatchKey() {
     instanceBatchKey_ = std::hash<std::string>{}(name_) ^ (std::hash<const void *>{}(this) << 1);
     renderType_ = RenderType::Standard;

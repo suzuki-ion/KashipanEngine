@@ -13,11 +13,8 @@ public:
     SceneChangeIn(const SceneChangeIn &) = delete;
     SceneChangeIn &operator=(const SceneChangeIn &) = delete;
 
-    /// @brief トランジションが完了しているかを取得する
-    /// @return 完了していれば true
     bool IsFinished() const noexcept { return finished_; }
 
-    /// @brief トランジション再生を開始する
     void Play() {
         if (playing_) return;
         playing_ = true;
@@ -25,7 +22,6 @@ public:
         elapsed_ = 0.0f;
     }
 
-    /// @brief コンポーネント初期化処理
     void Initialize() override {
         elapsed_ = 0.0f;
         initialized_ = false;
@@ -33,7 +29,6 @@ public:
         finished_ = false;
     }
 
-    /// @brief コンポーネント終了処理
     void Finalize() override {
         blackSprite_ = nullptr;
         whiteSprite_ = nullptr;
@@ -41,7 +36,6 @@ public:
         finished_ = false;
     }
 
-    /// @brief 毎フレーム更新処理
     void Update() override {
         if (!playing_) return;
 

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ウィンドウ（`Window`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>ウィンドウ（<code>Window</code>）</h1>
+<p><code>Window</code> は Win32 ウィンドウと swap chain を管理し、エンジンの更新・描画ループから毎フレーム更新されます。</p>
+<p>関連：<code>KashipanEngine/Core/Window.h</code></p>
+<hr />
+<h2>公開API（抜粋）</h2>
+<h3>生成/破棄</h3>
+<ul>
+<li><code>static Window* CreateNormal(const std::string&amp; title = &quot;&quot;, int32_t width = 0, int32_t height = 0, DWORD style = 0, const std::string&amp; iconPath = ...)</code></li>
+<li><code>static Window* CreateOverlay(const std::string&amp; title = &quot;&quot;, int32_t width = 0, int32_t height = 0, bool clickThrough = false, const std::string&amp; iconPath = ...)</code></li>
+<li><code>static void AllDestroy(Passkey&lt;GameEngine&gt;)</code></li>
+<li><code>void DestroyNotify()</code>（個別）</li>
+<li><code>static void CommitDestroy(Passkey&lt;GameEngine&gt;)</code></li>
+</ul>
+<h3>検索</h3>
+<ul>
+<li><code>static Window* GetWindow(HWND hwnd)</code></li>
+<li><code>static Window* GetWindow(const std::string&amp; title)</code></li>
+<li><code>static std::vector&lt;Window*&gt; GetWindows(const std::string&amp; title)</code></li>
+<li><code>static size_t GetWindowCount()</code></li>
+</ul>
+<h3>更新/描画（エンジン側が呼ぶ）</h3>
+<ul>
+<li><code>static void Update(Passkey&lt;GameEngine&gt;)</code></li>
+<li><code>static void Draw(Passkey&lt;GameEngine&gt;)</code></li>
+</ul>
+<h3>状態・設定</h3>
+<ul>
+<li><code>void SetSizeChangeMode(SizeChangeMode)</code></li>
+<li><code>void SetWindowMode(WindowMode)</code></li>
+<li><code>void SetWindowTitle(const std::string&amp;)</code> / <code>void SetWindowTitle(const std::wstring&amp;)</code></li>
+<li><code>void SetWindowSize(int32_t width, int32_t height)</code></li>
+<li><code>void SetWindowPosition(int32_t x, int32_t y)</code></li>
+<li><code>void SetWindowVisible(bool visible)</code></li>
+<li>親子</li>
+<ul>
+<li><code>void SetWindowParent(...)</code> / <code>void SetWindowChild(...)</code></li>
+<li><code>void ClearWindowParent(...)</code> / <code>void ClearWindowChild(...)</code></li>
+</ul>
+</ul>
+<h3>情報取得</h3>
+<ul>
+<li><code>WindowType GetWindowType() const</code></li>
+<li><code>WindowMode GetWindowMode() const</code></li>
+<li><code>SizeChangeMode GetSizeChangeMode() const</code></li>
+<li><code>const std::string&amp; GetWindowTitle() const</code></li>
+<li><code>HWND GetWindowHandle() const</code></li>
+<li><code>int32_t GetClientWidth() const</code> / <code>int32_t GetClientHeight() const</code></li>
+<li><code>float GetAspectRatio() const</code></li>
+</ul>
+<hr />
+<h2>ウィンドウイベント（<code>IWindowEvent</code> / DefaultEvents）</h2>
+<p><code>Window</code> は Win32 メッセージ（<code>WM_*</code>）に対して「イベントハンドラ」を登録できます。</p>
+<ul>
+<li>インターフェース：<code>KashipanEngine/Core/WindowsAPI/WindowEvents/IWindowEvent.h</code></li>
+<ul>
+<li><code>IWindowEvent(UINT targetMessage)</code>（対象メッセージを指定）</li>
+<li><code>std::optional&lt;LRESULT&gt; OnEvent(UINT msg, WPARAM wparam, LPARAM lparam)</code>（処理。未処理なら <code>std::nullopt</code>）</li>
+<li><code>std::unique_ptr&lt;IWindowEvent&gt; Clone()</code>（内部複製用）</li>
+</ul>
+<li>既定イベント群：<code>KashipanEngine/Core/WindowsAPI/WindowEvents/DefaultEvents.h</code></li>
+<ul>
+<li><code>WindowDefaultEvent::ActivateEvent</code>（<code>WM_ACTIVATE</code>）</li>
+<li><code>WindowDefaultEvent::ClickThroughEvent</code>（<code>WM_NCHITTEST</code> で <code>HTTRANSPARENT</code> を返す）</li>
+<li><code>WindowDefaultEvent::CloseEvent</code>（<code>WM_CLOSE</code>）</li>
+<li><code>WindowDefaultEvent::DestroyEvent</code>（<code>WM_DESTROY</code>）</li>
+<li><code>WindowDefaultEvent::SizeEvent</code>（<code>WM_SIZE</code>）</li>
+<li><code>WindowDefaultEvent::SizingEvent</code>（<code>WM_SIZING</code>）</li>
+<li><code>WindowDefaultEvent::SysCommandCloseEvent</code>（<code>WM_SYSCOMMAND</code> の <code>SC_CLOSE</code> 捕捉）</li>
+</ul>
+</ul>
+<h3>登録API</h3>
+<ul>
+<li>既定イベント（値として保持）</li>
+<ul>
+<li><code>template&lt;class TEvent, class... Args&gt; void RegisterWindowEvent(Args&amp;&amp;... args)</code></li>
+</ul>
+<li>既定イベント（<code>unique_ptr</code> をムーブして値保持）</li>
+<ul>
+<li><code>template&lt;class TEvent&gt; void RegisterWindowEvent(std::unique_ptr&lt;TEvent&gt; handler)</code></li>
+</ul>
+<li>拡張イベント（<code>unique_ptr&lt;IWindowEvent&gt;</code> として保持）</li>
+<ul>
+<li><code>template&lt;class TEvent&gt; void RegisterWindowEvent(std::unique_ptr&lt;TEvent&gt; handler)</code></li>
+<li><code>template&lt;class TEvent, class... Args&gt; void RegisterWindowEvent(Args&amp;&amp;... args)</code></li>
+</ul>
+<li>解除</li>
+<ul>
+<li><code>void UnregisterWindowEvent(UINT msg)</code></li>
+</ul>
+</ul>
+<h3>例：クリック透過の切り替え（Overlay Window）</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* w = Window::GetWindow(<span class="str">&quot;Main Window&quot;</span>);
+<span class="kw">if</span> (w) {
+    <span class="com">// WM_NCHITTEST 用の既定イベントを登録</span>
+    w-&gt;RegisterWindowEvent&lt;KashipanEngine::WindowDefaultEvent::ClickThroughEvent&gt;(<span class="kw">true</span>);
+}
+</code></pre>
+<hr />
+<h2>例：ウィンドウ作成</h2>
+<pre><code class="language-cpp">
+Window::CreateOverlay(<span class="str">&quot;Main Window&quot;</span>, <span class="num">1280</span>, <span class="num">720</span>, <span class="kw">true</span>);
+Window::CreateNormal(<span class="str">&quot;Tool Window&quot;</span>, <span class="num">640</span>, <span class="num">480</span>);
+</code></pre>
+<hr />
+<h2>例：タイトル変更とフルスクリーン切替</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* w = Window::GetWindow(<span class="str">&quot;Main Window&quot;</span>);
+<span class="kw">if</span> (w) {
+    w-&gt;SetWindowTitle(<span class="str">&quot;My Game&quot;</span>);
+    w-&gt;SetWindowMode(WindowMode::FullScreen);
+}
+</body>
+</html>

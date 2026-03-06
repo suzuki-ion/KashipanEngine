@@ -1,8 +1,10 @@
 #pragma once
 #include <KashipanEngine.h>
-
+#include "Scenes/EngineLogoScene.h"
 #include "Scenes/TitleScene.h"
+#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
 #include "Scenes/TestScene.h"
+#endif
 #include "Scenes/GameScene.h"
 #include "Scenes/ResultScene.h"
 #include "Scenes/GameOverScene.h"
@@ -12,75 +14,150 @@ namespace KashipanEngine {
 inline void AppInitialize(const GameEngine::Context &context) {
     auto monitorInfoOpt = WindowsAPI::QueryMonitorInfo();
     const RECT area = monitorInfoOpt ? monitorInfoOpt->WorkArea() : RECT{ 0, 0, 1280, 720 };
-    Window::CreateNormal("Main Window", 1920, 1280);
+
+    auto *mainWIndow = Window::CreateNormal("Main Window", 1920, 1080);
+#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
+    mainWIndow->UnregisterWindowEvent(WM_SYSCOMMAND);
+    mainWIndow->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();
+#endif
 
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
-
-        sm->RegisterScene<TitleScene>("TitleScene");
+        
+        //sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
+        //sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<GameScene>("GameScene");
-        sm->RegisterScene<ResultScene>("ResultScene");
-        sm->RegisterScene<GameOverScene>("GameOverScene");
+        //sm->RegisterScene<ResultScene>("ResultScene");
+        //sm->RegisterScene<GameOverScene>("GameOverScene");
 
-        sm->RegisterScene<TestScene>("TestScene");
-
-        context.sceneManager->ChangeScene("TitleScene");
+        #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+                sm->RegisterScene<TestScene>("TestScene");
+                context.sceneManager->ChangeScene("TestScene");
+        #endif
+		//context.sceneManager->ChangeScene("GameScene");
     }
 
     if (context.inputCommand) {
         auto *ic = context.inputCommand;
         ic->Clear();
 
-        // 移動
-        ic->RegisterCommand("MoveX", InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Down, true);
-        ic->RegisterCommand("MoveX", InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Down);
-        ic->RegisterCommand("MoveX", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down);
-
-        ic->RegisterCommand("MoveZ", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Down);
-        ic->RegisterCommand("MoveZ", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Down, true);
-        ic->RegisterCommand("MoveZ", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down);
-
-        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::W }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveUp", InputCommand::KeyboardKey{ Key::Up }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
-        
-        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::S }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveDown", InputCommand::KeyboardKey{ Key::Down }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
-        
-        ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::A }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveLeft", InputCommand::KeyboardKey{ Key::Left }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
-        
-        ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::D }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveRight", InputCommand::KeyboardKey{ Key::Right }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("MoveRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
-
-        ic->RegisterCommand("Bomb", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Bomb", InputCommand::KeyboardKey{ Key::Z }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Bomb", ControllerButton::A, InputCommand::InputState::Trigger);
-
-        ic->RegisterCommand("ModeChange", InputCommand::KeyboardKey{ Key::D1 }, InputCommand::InputState::Trigger);
-        // 攻撃
-        ic->RegisterCommand("AttackCharge", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Down);
-        ic->RegisterCommand("AttackCharge", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Down);
-
-        ic->RegisterCommand("Attack", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Release);
-        ic->RegisterCommand("Attack", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Release);
-
-        // ダッシュ
-        ic->RegisterCommand("Dash", InputCommand::KeyboardKey{ Key::Shift }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Dash", ControllerButton::X, InputCommand::InputState::Trigger);
-
+        // * ゲーム外のコマンド * //
         // 決定
-        ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Enter }, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Submit", InputCommand::KeyboardKey{ Key::Space }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Submit", Key::Enter, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Submit", Key::Space, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
+        
+        // キャンセル
+        ic->RegisterCommand("Cancel", Key::Escape, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Cancel", ControllerButton::B, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Cancel", ControllerButton::Back, InputCommand::InputState::Trigger);
+
+		// メニュー呼び出し
+		ic->RegisterCommand("Menu", Key::M, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Menu", Key::E, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Menu", ControllerButton::Start, InputCommand::InputState::Trigger);
+
+		// 上下選択
+		ic->RegisterCommand("Up", Key::Up, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("Up", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("Down", Key::Down, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("Down", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
 
         // デバッグ用シーン遷移
-        ic->RegisterCommand("DebugSceneChange", InputCommand::KeyboardKey{ Key::F1 }, InputCommand::InputState::Trigger);
-        // デバッグ用ウィンドウ破棄
-        ic->RegisterCommand("DebugDestroyWindow", InputCommand::KeyboardKey{ Key::F2 }, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("DebugSceneChange", Key::F1, InputCommand::InputState::Trigger);
+
+		// * ゲームプレイ用入力コマンド * //
+        // 左右移動: A/D or 左右矢印, コントローラー左スティックX/十字キー
+        ic->RegisterCommand("MoveLeft", Key::A, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveLeft", Key::Left, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveLeft", ControllerButton::DPadLeft, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, -0.1f);
+        ic->RegisterCommand("MoveRight", Key::D, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveRight", Key::Right, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveRight", ControllerButton::DPadRight, InputCommand::InputState::Down);
+        ic->RegisterCommand("MoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, 0.1f);
+        
+        // 蹴る: W/上矢印(前蹴り), S/下矢印(下蹴り)
+        ic->RegisterCommand("KickFront", Key::W, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("KickFront", Key::Up, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("KickFront", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("KickFront", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.1f);
+        ic->RegisterCommand("KickDown", Key::S, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("KickDown", Key::Down, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("KickDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("KickDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.1f);
+
+        // 旋回: Q/E or J/K, コントローラー右スティックX/LT/RT
+        ic->RegisterCommand("TurnLeft", Key::Q, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("TurnLeft", Key::J, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("TurnLeft", InputCommand::ControllerAnalog::RightStickX, InputCommand::InputState::Trigger, 0, -0.5f);
+        ic->RegisterCommand("TurnLeft", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("TurnRight", Key::E, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("TurnRight", Key::K, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("TurnRight", InputCommand::ControllerAnalog::RightStickX, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("TurnRight", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+
+        // パズルゲーム用入力
+        ic->RegisterCommand("PuzzleUp", Key::W, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleUp", Key::Up, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.5f);
+
+        ic->RegisterCommand("PuzzleDown", Key::S, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleDown", Key::Down, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.5f);
+
+        ic->RegisterCommand("PuzzleLeft", Key::A, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleLeft", Key::Left, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.5f);
+
+        ic->RegisterCommand("PuzzleRight", Key::D, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleRight", Key::Right, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.5f);
+
+        ic->RegisterCommand("PuzzleAction", Key::Space, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleAction", ControllerButton::A, InputCommand::InputState::Trigger);
+
+        // パズルパネル移動アクション（押しっぱなし判定用）
+        ic->RegisterCommand("PuzzleActionHold", Key::Space, InputCommand::InputState::Down);
+        ic->RegisterCommand("PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down);
+
+        // パズル時間スキップ
+        ic->RegisterCommand("PuzzleTimeSkip", Key::LeftShift, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleTimeSkip", Key::RightShift, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger);
+
+        // パズルステージ切り替え
+        ic->RegisterCommand("PuzzleSwitchBoard", Key::E, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleSwitchBoard", Key::Enter, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+
+        // パズルゲーム用入力（2P用：コントローラー0）
+        // コントローラー1台の場合：1P=キーボード、2P=コントローラー0
+        // コントローラー2台の場合：1P=コントローラー0、2P=コントローラー1
+        // ※ 2P用コマンドはP2Puzzle*という名前で登録
+        ic->RegisterCommand("P2PuzzleUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 1, 0.5f);
+
+        ic->RegisterCommand("P2PuzzleDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 1, -0.5f);
+
+        ic->RegisterCommand("P2PuzzleLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 1, -0.5f);
+
+        ic->RegisterCommand("P2PuzzleRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 1, 0.5f);
+
+        ic->RegisterCommand("P2PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down, 1);
+
+        ic->RegisterCommand("P2PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger, 1);
+
+        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 1, 0.5f);
+        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 1, 0.5f);
     }
 }
 

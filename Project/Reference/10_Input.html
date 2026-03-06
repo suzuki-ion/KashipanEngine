@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>入力（Input）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>入力（Input）</h1>
+<p>KashipanEngine の入力システムは、キーボード・マウス・コントローラーの 3 種類のデバイスに対応しています。</p>
+<ul>
+<li><code>Input</code> クラスが生のデバイス状態を管理し、<code>Keyboard</code> / <code>Mouse</code> / <code>Controller</code> の各クラスを保持します。</li>
+<li><code>InputCommand</code> クラスが「アクション名 → 入力バインド」を管理し、複数デバイスの入力を統一的に評価できます。</li>
+<li><code>GameEngine</code> 内で <code>Input::Update()</code> が毎フレーム自動的に呼ばれます。</li>
+</ul>
+<hr />
+<h2>カテゴリ別リファレンス</h2>
+<ul>
+<li><a href="10_Input_Keyboard.html"><code>10_Input_Keyboard.md</code></a> - キーボード入力（<code>Keyboard</code> / <code>Key</code>）</li>
+<li><a href="10_Input_Mouse.html"><code>10_Input_Mouse.md</code></a> - マウス入力（<code>Mouse</code> / <code>MouseButton</code>）</li>
+<li><a href="10_Input_Controller.html"><code>10_Input_Controller.md</code></a> - コントローラー入力（<code>Controller</code> / <code>ControllerButton</code>）</li>
+<li><a href="10_Input_InputCommand.html"><code>10_Input_InputCommand.md</code></a> - 入力コマンド（<code>InputCommand</code>）</li>
+</ul>
+<hr />
+<h2><code>Input</code> クラス（<code>KashipanEngine/Input/Input.h</code>）</h2>
+<p><code>Input</code> はエンジン内部で生成され、各デバイスクラスへのアクセスを提供します。</p>
+<ul>
+<li><code>Keyboard&amp; GetKeyboard()</code> / <code>const Keyboard&amp; GetKeyboard() const</code></li>
+<li><code>Mouse&amp; GetMouse()</code> / <code>const Mouse&amp; GetMouse() const</code></li>
+<li><code>Controller&amp; GetController()</code> / <code>const Controller&amp; GetController() const</code></li>
+</ul>
+<h3>取得方法</h3>
+<p>シーン内では <code>SceneBase::GetInput()</code> で取得できます。</p>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* input = KashipanEngine::SceneBase::GetInput();
+<span class="kw">if</span> (!input) <span class="kw">return</span>;
+
+<span class="kw">const</span> <span class="kw">auto</span>&amp; keyboard = input-&gt;GetKeyboard();
+<span class="kw">const</span> <span class="kw">auto</span>&amp; mouse = input-&gt;GetMouse();
+<span class="kw">const</span> <span class="kw">auto</span>&amp; controller = input-&gt;GetController();
+</code></pre>
+<blockquote>
+<p>通常のゲームロジックでは <code>InputCommand</code> を使用することを推奨します。<code>Input</code> を直接使うのは、<code>InputCommand</code> では対応できない特殊な用途向けです。</p>
+</blockquote>
+</body>
+</html>

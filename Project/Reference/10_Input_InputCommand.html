@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>入力コマンド（`InputCommand`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>入力コマンド（<code>InputCommand</code>）</h1>
+<p><code>InputCommand</code> は、アクション名に対して複数の入力バインドを登録し、統一的に評価できる仕組みです。 キーボード・マウス・コントローラーの入力を 1 つのアクション名にまとめて扱えます。</p>
+<ul>
+<li><code>AppInitialize</code> でコマンドを登録し、ゲーム側は <code>Evaluate(&quot;Action&quot;)</code> で参照する設計です。</li>
+<li><code>GameEngine</code> 内部で生成され、<code>SceneBase::GetInputCommand()</code> で取得できます。</li>
+<li>コマンド設定を JSON ファイルに保存・読み込みできます。</li>
+</ul>
+<p>関連ヘッダ：</p>
+<ul>
+<li><code>KashipanEngine/Input/InputCommand.h</code></li>
+</ul>
+<hr />
+<h2>公開列挙型</h2>
+<h3><code>InputCommand::InputState</code></h3>
+<p>入力の状態を指定します。</p>
+<ul>
+<li><code>Down</code> — 押されている間（毎フレーム true）</li>
+<li><code>Trigger</code> — 押された瞬間（1 フレームだけ true）</li>
+<li><code>Release</code> — 離された瞬間（1 フレームだけ true）</li>
+</ul>
+<h3><code>InputCommand::ControllerAnalog</code></h3>
+<p>コントローラーのアナログ入力の種別です。</p>
+<ul>
+<li><code>LeftTrigger</code> — 左トリガー（0.0 ～ 1.0）</li>
+<li><code>RightTrigger</code> — 右トリガー（0.0 ～ 1.0）</li>
+<li><code>LeftStickX</code> — 左スティック X（-1.0 ～ 1.0）</li>
+<li><code>LeftStickY</code> — 左スティック Y（-1.0 ～ 1.0）</li>
+<li><code>RightStickX</code> — 右スティック X（-1.0 ～ 1.0）</li>
+<li><code>RightStickY</code> — 右スティック Y（-1.0 ～ 1.0）</li>
+</ul>
+<h3><code>InputCommand::MouseAxis</code></h3>
+<p>マウスの軸入力の種別です。</p>
+<ul>
+<li><code>X</code> — X座標（スクリーンまたはクライアント）</li>
+<li><code>Y</code> — Y座標（スクリーンまたはクライアント）</li>
+<li><code>DeltaX</code> — X方向移動量（フレーム差分）</li>
+<li><code>DeltaY</code> — Y方向移動量（フレーム差分）</li>
+<li><code>Wheel</code> — ホイール累積値</li>
+<li><code>DeltaWheel</code> — ホイールフレーム差分</li>
+</ul>
+<h3><code>InputCommand::MouseSpace</code></h3>
+<p>マウス座標系（内部で自動設定されます）。</p>
+<ul>
+<li><code>Screen</code> — スクリーン座標系（hwnd = nullptr の場合）</li>
+<li><code>Client</code> — クライアント座標系（hwnd を指定した場合）</li>
+</ul>
+<hr />
+<h2>公開構造体</h2>
+<h3><code>InputCommand::ReturnInfo</code></h3>
+<p><code>Evaluate</code> の戻り値です。</p>
+<ul>
+<li><code>bool Triggered() const noexcept</code> — 入力が評価条件を満たしたか</li>
+<li><code>float Value() const noexcept</code> — 入力の評価値（-1.0 ～ 1.0）</li>
+</ul>
+<hr />
+<h2>公開API</h2>
+<h3>コマンド管理</h3>
+<ul>
+<li><code>void Clear()</code> — すべてのコマンド登録をクリア</li>
+</ul>
+<h3>コマンド登録（<code>RegisterCommand</code> オーバーロード一覧）</h3>
+<h4>キーボード</h4>
+<pre><code class="language-cpp">
+<span class="type">void</span> RegisterCommand(
+    <span class="kw">const</span> std::string&amp; action,
+    Key key,
+    InputState state,
+    <span class="type">bool</span> invertValue = <span class="kw">false</span>);
+</code></pre>
+<ul>
+<li><code>key</code> — <code>Key::Space</code> などで直接キーを指定</li>
+<li><code>state</code> — 入力状態（Down / Trigger / Release）</li>
+<li><code>invertValue</code> — <code>true</code> にすると <code>Value()</code> の符号を反転（例：左移動に -1.0 を割り当て）</li>
+</ul>
+<h4>マウスボタン</h4>
+<pre><code class="language-cpp">
+<span class="type">void</span> RegisterCommand(
+    <span class="kw">const</span> std::string&amp; action,
+    MouseButton button,
+    InputState state,
+    <span class="type">bool</span> invertValue = <span class="kw">false</span>);
+</code></pre>
+<ul>
+<li><code>button</code> — <code>MouseButton::Left</code> などで直接ボタンを指定</li>
+</ul>
+<h4>マウス軸</h4>
+<pre><code class="language-cpp">
+<span class="type">void</span> RegisterCommand(
+    <span class="kw">const</span> std::string&amp; action,
+    MouseAxis axis,
+    <span class="type">void</span>* hwnd = <span class="kw">nullptr</span>,
+    <span class="type">float</span> threshold = <span class="num">0.0f</span>,
+    <span class="type">bool</span> invertValue = <span class="kw">false</span>);
+</code></pre>
+<ul>
+<li><code>axis</code> — 取得する軸（X / Y / DeltaX / DeltaY / Wheel / DeltaWheel）</li>
+<li><code>hwnd</code> — クライアント座標系で扱う場合の HWND（<code>nullptr</code> でスクリーン座標系）</li>
+<li><code>threshold</code> — 絶対値がこの閾値を超えたら <code>Triggered() = true</code></li>
+</ul>
+<h4>コントローラーボタン</h4>
+<pre><code class="language-cpp">
+<span class="type">void</span> RegisterCommand(
+    <span class="kw">const</span> std::string&amp; action,
+    ControllerButton button,
+    InputState state,
+    <span class="type">int</span> controllerIndex = <span class="num">0</span>,
+    <span class="type">bool</span> invertValue = <span class="kw">false</span>);
+</code></pre>
+<ul>
+<li><code>button</code> — <code>ControllerButton::A</code> などでボタンを指定</li>
+<li><code>controllerIndex</code> — コントローラー番号（0-3）</li>
+</ul>
+<h4>コントローラーアナログ</h4>
+<pre><code class="language-cpp">
+<span class="type">void</span> RegisterCommand(
+    <span class="kw">const</span> std::string&amp; action,
+    ControllerAnalog analog,
+    InputState state,
+    <span class="type">int</span> controllerIndex = <span class="num">0</span>,
+    <span class="type">float</span> threshold = <span class="num">0.0f</span>,
+    <span class="type">bool</span> invertValue = <span class="kw">false</span>);
+</code></pre>
+<ul>
+<li><code>analog</code> — アナログ入力種別</li>
+<li><code>threshold</code> — 閾値。正の値で正方向判定、負の値で負方向判定</li>
+<ul>
+<li><code>InputState::Down</code> — 値が閾値を超えている間 true</li>
+<li><code>InputState::Trigger</code> — 前フレームで閾値以下、今フレームで閾値超過の瞬間 true</li>
+<li><code>InputState::Release</code> — 前フレームで閾値超過、今フレームで閾値以下の瞬間 true</li>
+</ul>
+</ul>
+<h4>コントローラーアナログ差分</h4>
+<pre><code class="language-cpp">
+<span class="type">void</span> RegisterCommand(
+    <span class="kw">const</span> std::string&amp; action,
+    ControllerAnalog analog,
+    <span class="type">int</span> controllerIndex = <span class="num">0</span>,
+    <span class="type">float</span> threshold = <span class="num">0.0f</span>,
+    <span class="type">bool</span> invertValue = <span class="kw">false</span>);
+</code></pre>
+<ul>
+<li>current - previous の差分を -1.0 ～ 1.0 相当に正規化して返す</li>
+<li><code>threshold</code> — 差分の絶対値がこの閾値を超えたら <code>Triggered() = true</code></li>
+</ul>
+<h3>コマンド評価</h3>
+<pre><code class="language-cpp">
+ReturnInfo Evaluate(<span class="kw">const</span> std::string&amp; action) <span class="kw">const</span>;
+</code></pre>
+<ul>
+<li>同じアクション名に複数のバインドが登録されている場合、いずれかが条件を満たせば <code>Triggered() = true</code></li>
+<li><code>Value()</code> は条件を満たした全バインドの値を合算し、-1.0 ～ 1.0 にクランプした値</li>
+</ul>
+<h3>JSON 保存・読み込み</h3>
+<h4>保存</h4>
+<pre><code class="language-cpp">
+<span class="type">bool</span> SaveToJSON(<span class="kw">const</span> std::string&amp; filepath) <span class="kw">const</span>;
+</code></pre>
+<ul>
+<li>現在登録されているすべてのコマンドを JSON ファイルに書き出す</li>
+<li>成功時 <code>true</code>、失敗時 <code>false</code> を返す</li>
+<li>マウス軸の <code>hwnd</code>（HWND）は保存できないため、読み込み時は Screen 座標系として復元される</li>
+</ul>
+<h4>読み込み</h4>
+<pre><code class="language-cpp">
+<span class="type">bool</span> LoadFromJSON(<span class="kw">const</span> std::string&amp; filepath);
+</code></pre>
+<ul>
+<li>JSON ファイルからコマンドを読み込んで登録する</li>
+<li>**読み込み前に既存のコマンドはすべてクリアされる**</li>
+<li>成功時 <code>true</code>、失敗時 <code>false</code> を返す</li>
+</ul>
+<h3>文字列 ↔ 列挙型変換ユーティリティ</h3>
+<p>JSON の読み書きやデバッグ用途に使える静的メソッドです。</p>
+<pre><code class="language-cpp">
+<span class="kw">static</span> std::string KeyToString(Key key);
+<span class="kw">static</span> Key StringToKey(<span class="kw">const</span> std::string&amp; str);
+
+<span class="kw">static</span> std::string MouseButtonToString(MouseButton button);
+<span class="kw">static</span> MouseButton StringToMouseButton(<span class="kw">const</span> std::string&amp; str);
+
+<span class="kw">static</span> std::string ControllerButtonToString(ControllerButton button);
+<span class="kw">static</span> ControllerButton StringToControllerButton(<span class="kw">const</span> std::string&amp; str);
+
+<span class="kw">static</span> std::string ControllerAnalogToString(ControllerAnalog analog);
+<span class="kw">static</span> ControllerAnalog StringToControllerAnalog(<span class="kw">const</span> std::string&amp; str);
+
+<span class="kw">static</span> std::string InputStateToString(InputState state);
+<span class="kw">static</span> InputState StringToInputState(<span class="kw">const</span> std::string&amp; str);
+
+<span class="kw">static</span> std::string MouseAxisToString(MouseAxis axis);
+<span class="kw">static</span> MouseAxis StringToMouseAxis(<span class="kw">const</span> std::string&amp; str);
+</code></pre>
+<hr />
+<h2>例：コマンド登録（<code>AppInitialize</code> 内）</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = context.inputCommand;
+ic-&gt;Clear();
+
+<span class="com">// 左右移動（キーボード + コントローラー）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, Key::A, InputCommand::InputState::Down, <span class="kw">true</span>);
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, Key::D, InputCommand::InputState::Down);
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down);
+
+<span class="com">// 攻撃（キーボード + コントローラートリガー）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;Attack&quot;</span>, Key::Space, InputCommand::InputState::Release);
+ic-&gt;RegisterCommand(<span class="str">&quot;Attack&quot;</span>, InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Release);
+
+<span class="com">// マウスボタン</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;Fire&quot;</span>, MouseButton::Left, InputCommand::InputState::Trigger);
+
+<span class="com">// マウス軸</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;LookX&quot;</span>, InputCommand::MouseAxis::DeltaX);
+</code></pre>
+<hr />
+<h2>例：ゲーム側での評価</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = KashipanEngine::SceneBase::GetInputCommand();
+<span class="kw">if</span> (!ic) <span class="kw">return</span>;
+
+<span class="com">// 移動</span>
+<span class="kw">const</span> <span class="kw">auto</span> moveX = ic-&gt;Evaluate(<span class="str">&quot;MoveX&quot;</span>);
+<span class="kw">if</span> (moveX.Triggered()) {
+    <span class="type">float</span> axis = moveX.Value(); <span class="com">// -1.0 ～ 1.0 相当</span>
+    <span class="com">// 移動処理</span>
+}
+
+<span class="com">// 攻撃</span>
+<span class="kw">const</span> <span class="kw">auto</span> attack = ic-&gt;Evaluate(<span class="str">&quot;Attack&quot;</span>);
+<span class="kw">if</span> (attack.Triggered()) {
+    <span class="com">// 攻撃処理</span>
+}
+
+<span class="com">// マウス視点操作</span>
+<span class="kw">const</span> <span class="kw">auto</span> lookX = ic-&gt;Evaluate(<span class="str">&quot;LookX&quot;</span>);
+<span class="type">float</span> mouseDX = lookX.Value();
+</code></pre>
+<hr />
+<h2><code>invertValue</code> の使い方</h2>
+<p><code>invertValue = true</code> を指定すると、<code>Value()</code> の符号が反転します。これにより、同じアクション名に対して正方向と負方向のキーを割り当てられます。</p>
+<pre><code class="language-cpp">
+<span class="com">// A キー → Value = -1.0（左方向）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, Key::A, InputCommand::InputState::Down, <span class="kw">true</span>);
+<span class="com">// D キー → Value = +1.0（右方向）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>, Key::D, InputCommand::InputState::Down, <span class="kw">false</span>);
+</code></pre>
+<hr />
+<h2>マウス座標系（Screen / Client）</h2>
+<p><code>RegisterCommand(action, MouseAxis, hwnd, ...)</code> で座標系を制御できます。</p>
+<ul>
+<li><code>hwnd == nullptr</code> — スクリーン座標系（<code>MouseSpace::Screen</code>）</li>
+<li><code>hwnd != nullptr</code> — クライアント座標系（<code>MouseSpace::Client</code>）</li>
+</ul>
+<p>クライアント座標系の場合、指定した HWND のクライアント領域に対する座標が返されます。</p>
+<hr />
+<h2>JSON 形式</h2>
+<p><code>SaveToJSON</code> で出力される JSON の形式です。各アクション名をキーとし、バインド配列を値とするオブジェクトになります。</p>
+<pre><code class="language-json">
+{
+    &quot;MoveLeft&quot;: [
+        {
+            &quot;device&quot;: &quot;Keyboard&quot;,
+            &quot;key&quot;: &quot;A&quot;,
+            &quot;state&quot;: &quot;Trigger&quot;,
+            &quot;invertValue&quot;: false
+        },
+        {
+            &quot;device&quot;: &quot;ControllerButton&quot;,
+            &quot;button&quot;: &quot;DPadLeft&quot;,
+            &quot;state&quot;: &quot;Trigger&quot;,
+            &quot;controllerIndex&quot;: 0,
+            &quot;invertValue&quot;: false
+        }
+    ],
+    &quot;Attack&quot;: [
+        {
+            &quot;device&quot;: &quot;MouseButton&quot;,
+            &quot;button&quot;: &quot;Left&quot;,
+            &quot;state&quot;: &quot;Trigger&quot;,
+            &quot;invertValue&quot;: false
+        }
+    ],
+    &quot;LookX&quot;: [
+        {
+            &quot;device&quot;: &quot;MouseAxis&quot;,
+            &quot;axis&quot;: &quot;DeltaX&quot;,
+            &quot;threshold&quot;: 0.0,
+            &quot;invertValue&quot;: false
+        }
+    ],
+    &quot;Accelerate&quot;: [
+        {
+            &quot;device&quot;: &quot;ControllerAnalog&quot;,
+            &quot;analog&quot;: &quot;RightTrigger&quot;,
+            &quot;state&quot;: &quot;Down&quot;,
+            &quot;controllerIndex&quot;: 0,
+            &quot;threshold&quot;: 0.1,
+            &quot;invertValue&quot;: false
+        }
+    ],
+    &quot;LookDeltaX&quot;: [
+        {
+            &quot;device&quot;: &quot;ControllerAnalogDelta&quot;,
+            &quot;analog&quot;: &quot;RightStickX&quot;,
+            &quot;controllerIndex&quot;: 0,
+            &quot;threshold&quot;: 0.05,
+            &quot;invertValue&quot;: false
+        }
+    ]
+}
+</code></pre>
+<h3>デバイス別フィールド一覧</h3>
+<p>| device | 必須フィールド | オプション | |---|---|---| | <code>Keyboard</code> | <code>key</code>, <code>state</code> | <code>invertValue</code> | | <code>MouseButton</code> | <code>button</code>, <code>state</code> | <code>invertValue</code> | | <code>MouseAxis</code> | <code>axis</code> | <code>threshold</code>, <code>invertValue</code> | | <code>ControllerButton</code> | <code>button</code>, <code>state</code> | <code>controllerIndex</code>, <code>invertValue</code> | | <code>ControllerAnalog</code> | <code>analog</code>, <code>state</code> | <code>controllerIndex</code>, <code>threshold</code>, <code>invertValue</code> | | <code>ControllerAnalogDelta</code> | <code>analog</code> | <code>controllerIndex</code>, <code>threshold</code>, <code>invertValue</code> |</p>
+<h3>例：JSON からの読み込み</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = context.inputCommand;
+<span class="kw">if</span> (!ic-&gt;LoadFromJSON(<span class="str">&quot;Assets/InputBindings.json&quot;</span>)) {
+    <span class="com">// 読み込み失敗時のフォールバック</span>
+    ic-&gt;Clear();
+    ic-&gt;RegisterCommand(<span class="str">&quot;Submit&quot;</span>, Key::Enter, InputCommand::InputState::Trigger);
+}
+</code></pre>
+<h3>例：JSON への保存</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = KashipanEngine::SceneBase::GetInputCommand();
+<span class="kw">if</span> (ic) {
+    ic-&gt;SaveToJSON(<span class="str">&quot;Assets/InputBindings.json&quot;</span>);
+}
+</body>
+</html>

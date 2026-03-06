@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：翻訳（Translation）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：翻訳（Translation）</h1>
+<p>対象ヘッダ：<code>Utilities/Translation.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p>翻訳キー（例：<code>&quot;engine.initialize.start&quot;</code>）を、 現在の言語設定（language code）に対応するテキストへ変換します。</p>
+<p>エンジン内ログ出力などでも利用されています。</p>
+<hr />
+<h2>2. 公開API</h2>
+<ul>
+<li><code>bool LoadTranslationFile(const std::string &amp;filePath);</code></li>
+</ul>
+<ul>
+<li><code>const std::string &amp;GetTranslationText(const std::string &amp;lang, const std::string &amp;key);</code></li>
+<li><code>const std::string &amp;GetTranslationText(const std::string &amp;key);</code></li>
+</ul>
+<ul>
+<li><code>inline const std::string &amp;Translation(const std::string &amp;lang, const std::string &amp;key);</code></li>
+<li><code>inline const std::string &amp;Translation(const std::string &amp;key);</code></li>
+</ul>
+<ul>
+<li><code>const std::string &amp;GetCurrentLanguage();</code></li>
+<li><code>void SetCurrentLanguage(const std::string &amp;lang);</code></li>
+</ul>
+<ul>
+<li><code>const std::string &amp;GetCurrentLanguageFontPath();</code></li>
+</ul>
+<hr />
+<h2>3. 厳密な仕様（ヘッダから読み取れる部分）</h2>
+<ul>
+<li>翻訳が見つからない場合、返り値は「キー文字列」そのものになります。</li>
+<li><code>Translation(...)</code> は <code>GetTranslationText(...)</code> の薄いラッパです。</li>
+</ul>
+<hr />
+<h2>4. 使用例</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="com">// 例：言語を選ぶ</span>
+KashipanEngine::SetCurrentLanguage(<span class="str">&quot;ja&quot;</span>);
+
+<span class="com">// 例：現在言語で取得</span>
+<span class="kw">const</span> <span class="kw">auto</span>&amp; t1 = KashipanEngine::Translation(<span class="str">&quot;engine.initialize.start&quot;</span>);
+
+<span class="com">// 例：言語コード指定で取得</span>
+<span class="kw">const</span> <span class="kw">auto</span>&amp; t2 = KashipanEngine::Translation(<span class="str">&quot;en&quot;</span>, <span class="str">&quot;engine.initialize.start&quot;</span>);
+
+(<span class="type">void</span>)t1;
+(<span class="type">void</span>)t2;
+</code></pre>
+<hr />
+<h2>5. 翻訳ファイル配置</h2>
+<p>翻訳ファイルのパスは <code>EngineSettings</code> の translations 設定や、 <code>LoadTranslationFile(...)</code> の呼び出し側設計に従います。</p>
+<p>（どの JSON 構造を要求するかは実装に依存します。詳細は <code>Translation.cpp</code> を参照してください。）</p>
+</body>
+</html>

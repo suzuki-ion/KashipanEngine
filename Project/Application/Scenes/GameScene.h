@@ -1,57 +1,27 @@
 #pragma once
 #include <KashipanEngine.h>
 
-namespace KashipanEngine {
+#include <Objects/OutGameSystem/MenuActionManager.h>
+#include <Objects/Container/MenuSpriteCotainer.h>
 
-class Camera2D;
-class Sprite;
-class Camera3D;
-class Billboard;
-class Sphere;
-class Model;
-class Plane3D;
-class CameraController;
-class DirectionalLight;
-class SpotLight;
+namespace KashipanEngine {
 
 class GameScene final : public SceneBase {
 public:
     GameScene();
     ~GameScene() override;
 
+    void Initialize() override;
+
 protected:
     void OnUpdate() override;
 
 private:
-    SceneDefaultVariables *sceneDefault_ = nullptr;
+    SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
-    // MainCamera3D を制御するシーンコンポーネント
-    CameraController *cameraController_ = nullptr;
-
-    // 移動用の親オブジェクト（RailMovement を登録する Sphere）
-    Sphere *mover_ = nullptr;
-    // 移動床
-    Plane3D *floorPlane_ = nullptr;
-
-    Sphere *player_ = nullptr;
-    Model *skySphere_ = nullptr;
-    std::vector<Billboard *> particleBillboards_;
-
-    bool prevDamagedThisCooldown_ = false;
-    bool prevGameProgressFinished_ = false;
-
-    int justDodgeCount_ = 0;
-    bool prevJustDodging_ = false;
-    bool justDodgeCountedThisDash_ = false;
-
-    bool prevDashTriggered_ = false;
-
-    std::vector<SpotLight *> rotatingSpotLights_;
-
-    AudioManager::PlayHandle bgmPlay_ = AudioManager::kInvalidPlayHandle;
-    AudioManager::PlayHandle avoidPlay_ = AudioManager::kInvalidPlayHandle;
-    AudioManager::PlayHandle avoidJustPlay_ = AudioManager::kInvalidPlayHandle;
-    AudioManager::PlayHandle damagePlay_ = AudioManager::kInvalidPlayHandle;
+	Vector2 menuPosition_;
+	Application::MenuActionManager menuActionManager_;
+	Application::MenuSpriteContainer menuSpriteContainer_;
 };
 
 } // namespace KashipanEngine

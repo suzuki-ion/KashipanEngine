@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>アセット管理：音声プレイヤー（`AudioPlayer`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="11_Assets_Index.html">目次へ</a></nav>
+<h1>アセット管理：音声プレイヤー（<code>AudioPlayer</code>）</h1>
+<p>対象ヘッダ：<code>KashipanEngine/Assets/AudioPlayer.h</code></p>
+<p>関連：<a href="11_Assets_AudioManager.html"><code>11_Assets_AudioManager.md</code></a></p>
+<hr />
+<h2>1. 目的</h2>
+<p>複数の音声をプレイリストとして管理し、クロスフェードによる切り替えをサポートする音声プレイヤーです。 BGM の切り替えなど、シームレスな音声遷移が必要な場面で使用します。</p>
+<hr />
+<h2>2. 設計概要</h2>
+<ul>
+<li><code>AudioManager</code> の上位レイヤーとして動作します。</li>
+<li>内部に <code>AudioManager::PlayParams</code> のリスト（プレイリスト）を保持します。</li>
+<li>クロスフェード時は現在再生中の音声をフェードアウトしつつ、次の音声をフェードインします。</li>
+<li><code>AudioManager::Update()</code> から自動的に <code>AudioPlayer::Update()</code> が呼び出されます（<code>AudioManager</code> に自動登録）。</li>
+<li>コピー・ムーブは禁止されています。</li>
+</ul>
+<hr />
+<h2>3. 公開API</h2>
+<h3>3.1 型定義・定数</h3>
+<pre><code class="language-cpp">
+<span class="kw">using</span> SoundHandle = AudioManager::SoundHandle;
+<span class="kw">using</span> PlayHandle = AudioManager::PlayHandle;
+<span class="kw">static</span> <span class="kw">constexpr</span> <span class="type">size_t</span> kInvalidAudioIndex = std::numeric_limits&lt;<span class="type">size_t</span>&gt;::max();
+</code></pre>
+<h3>3.2 コンストラクタ・デストラクタ</h3>
+<pre><code class="language-cpp">
+AudioPlayer();
+~AudioPlayer();
+</code></pre>
+<ul>
+<li>コンストラクタで <code>AudioManager</code> に自動登録されます。</li>
+<li>デストラクタで自動登録解除および再生中の音声を停止します。</li>
+</ul>
+<h3>3.3 プレイリスト管理</h3>
+<pre><code class="language-cpp">
+<span class="type">void</span> AddAudio(SoundHandle sound);
+<span class="type">void</span> AddAudio(<span class="kw">const</span> AudioManager::PlayParams&amp; params);
+<span class="type">void</span> AddAudios(<span class="kw">const</span> std::vector&lt;SoundHandle&gt;&amp; sounds);
+<span class="type">void</span> AddAudios(<span class="kw">const</span> std::vector&lt;AudioManager::PlayParams&gt;&amp; paramsList);
+<span class="type">void</span> RemoveAudio(SoundHandle sound);
+<span class="type">void</span> RemoveAudios(<span class="kw">const</span> std::vector&lt;SoundHandle&gt;&amp; sounds);
+</code></pre>
+<ul>
+<li><code>AddAudio</code>: プレイリストに音声を追加します。<code>SoundHandle</code> のみの場合はデフォルトパラメータで追加されます。</li>
+<li><code>AddAudios</code>: 複数の音声を一括追加します。</li>
+<li><code>RemoveAudio</code>: プレイリストから指定の音声を削除します。再生中の場合は停止されます。</li>
+<li><code>RemoveAudios</code>: 複数の音声を一括削除します。</li>
+</ul>
+<h3>3.4 音声切り替え</h3>
+<pre><code class="language-cpp">
+<span class="type">bool</span> ChangeAudio(<span class="type">double</span> crossFadeSec, <span class="type">size_t</span> changeAudioIndex = kInvalidAudioIndex);
+<span class="type">bool</span> ChangeAudio(<span class="type">double</span> crossFadeSec, <span class="kw">const</span> AudioManager::PlayParams&amp; params, <span class="type">size_t</span> changeAudioIndex = kInvalidAudioIndex);
+</code></pre>
+<ul>
+<li><code>crossFadeSec</code>: クロスフェードの時間（秒）。<code>0</code> 以下の場合は即座に切り替えます。</li>
+<li><code>changeAudioIndex</code>: 切り替え先のプレイリスト内インデックス。<code>kInvalidAudioIndex</code> の場合は次の曲へ進みます。</li>
+<li><code>params</code> オーバーロード: 再生パラメータを上書きして切り替えます。</li>
+<li>成功時に <code>true</code> を返します。</li>
+</ul>
+<h3>3.5 状態取得</h3>
+<pre><code class="language-cpp">
+<span class="type">size_t</span> GetCurrentAudioIndex() <span class="kw">const</span> noexcept;
+PlayHandle GetCurrentPlayHandle() <span class="kw">const</span> noexcept;
+</code></pre>
+<ul>
+<li><code>GetCurrentAudioIndex</code>: 現在再生中のプレイリスト内インデックスを返します。</li>
+<li><code>GetCurrentPlayHandle</code>: 現在再生中の <code>PlayHandle</code> を返します。</li>
+</ul>
+<hr />
+<h2>4. クロスフェードの動作</h2>
+<p>1. <code>ChangeAudio()</code> が呼ばれると、次の音声が音量 <code>0</code> で再生開始されます。 2. 毎フレームの <code>Update()</code> で経過時間に応じて音量が補間されます。</p>
+<ul>
+<ul>
+<li>現在の音声：<code>(1 - t) * currentVolume</code> でフェードアウト</li>
+<li>次の音声：<code>t * nextVolume</code> でフェードイン</li>
+</ul>
+</ul>
+<p>3. クロスフェードが完了すると、現在の音声が停止され、次の音声が現在の音声に昇格します。</p>
+<hr />
+<h2>5. 使用例</h2>
+<h3>BGM をプレイリストで管理し、クロスフェードで切り替え</h3>
+<pre><code class="language-cpp">
+<span class="com">// AudioPlayer のインスタンスを作成</span>
+KashipanEngine::AudioPlayer player;
+
+<span class="com">// プレイリストに BGM を追加</span>
+<span class="kw">auto</span> bgm1 = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;bgm_title.mp3&quot;</span>);
+<span class="kw">auto</span> bgm2 = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;bgm_battle.mp3&quot;</span>);
+player.AddAudio(bgm1);
+player.AddAudio(bgm2);
+
+<span class="com">// 最初の曲を再生開始（即座に切り替え）</span>
+player.ChangeAudio(<span class="num">0.0</span>);
+
+<span class="com">// 2秒かけて次の曲へクロスフェード</span>
+player.ChangeAudio(<span class="num">2.0</span>);
+</code></pre>
+<h3>PlayParams を使用した切り替え</h3>
+<pre><code class="language-cpp">
+KashipanEngine::AudioManager::PlayParams params;
+params.volume = <span class="num">0.7f</span>;
+params.loop = <span class="kw">true</span>;
+
+<span class="com">// インデックス 1 の音声に、指定パラメータでクロスフェード切り替え</span>
+player.ChangeAudio(<span class="num">3.0</span>, params, <span class="num">1</span>);
+</code></pre>
+</body>
+</html>

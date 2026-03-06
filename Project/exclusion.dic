@@ -1,4 +1,4 @@
-// C++ & Standard Library
+﻿// C++ & Standard Library
 nullptr
 constexpr
 consteval
@@ -119,3 +119,39 @@ skybox
 wireframe
 fullscreen
 vsync
+title
+scene
+result
+over
+game
+register
+context
+initialize
+monitor
+info
+area
+summary
+brief
+param
+clamp
+start
+end
+float
+vector
+update
+default
+variables
+animator
+screen
+buffer
+transform
+material
+unique
+batch
+component
+color
+engine
+logo
+background
+make
+cast

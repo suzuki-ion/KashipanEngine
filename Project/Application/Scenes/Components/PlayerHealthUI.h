@@ -1,7 +1,6 @@
 #pragma once
 #include <KashipanEngine.h>
 #include <vector>
-#include "Scene/Components/SceneDefaultVariables.h"
 
 namespace KashipanEngine {
 
@@ -12,9 +11,9 @@ class Sprite;
 class PlayerHealthUI final : public ISceneComponent {
 public:
     /// @brief プレイヤーのHPを表示するUIコンポーネントを作成する
-    /// @param screenBuffer 描画先のスクリーンバッファ (ignored)
-    PlayerHealthUI(ScreenBuffer * /*screenBuffer*/)
-        : ISceneComponent("PlayerHealthUI", 1) {}
+    /// @param screenBuffer 描画先のスクリーンバッファ
+    PlayerHealthUI(ScreenBuffer *screenBuffer)
+        : ISceneComponent("PlayerHealthUI", 1), screenBuffer_(screenBuffer) {}
 
     /// @brief デストラクタ
     ~PlayerHealthUI() override = default;
@@ -26,13 +25,11 @@ public:
     /// @brief 毎フレーム更新処理
     void Update() override;
 
-    void Initialize() override;
-
 private:
     void EnsureSprites();
     void UpdateSpriteColors();
 
-    SceneDefaultVariables *sceneDefault_ = nullptr;
+    ScreenBuffer *screenBuffer_ = nullptr;
     Health *health_ = nullptr;
 
     int maxHpAtBind_ = 0;

@@ -106,6 +106,12 @@ public:
 
 	std::pair<int, int> GetCursorPosition() const { return cursor_.GetPosition(); }
 
+	// ================================================================
+	// ボードトランスフォーム操作
+	// ================================================================
+	KashipanEngine::Transform2D* GetActiveBoardTransform() { return activeBoardTransform_; }
+	KashipanEngine::Transform2D* GetInactiveBoardTransform() { return inactiveBoardTransform_; }
+
 private:
 	// ================================================================
 	// ボードアクセス
@@ -125,8 +131,10 @@ private:
 	// スプライト生成・更新
 	// ================================================================
 	void CreateSprites();
+	void CreateBoardRootTransforms();
 	void ApplyPanelColor(int row, int col);
 	void SyncAllPanelVisuals();
+	void StartSwapPanelAnimation();
 	void UpdateCursorSprite();
 	void UpdateLockOverlays();
 	void UpdateTimerGauge();
@@ -136,6 +144,7 @@ private:
 	void UpdateInactiveLockOverlays();
 	void UpdateGarbageWarnings();
 	void UpdateMoveGarbageWarnings();
+	void UpdateSwapPanelAnimations(float deltaTime);
 
 	// ================================================================
 	// 移動時お邪魔パネル予告位置計算
@@ -252,6 +261,10 @@ private:
 	KashipanEngine::Transform2D* parentTransform_ = nullptr;
 	std::string playerName_;
 	bool isPlayer2_ = false;
+
+	// ボードルートトランスフォーム
+	KashipanEngine::Transform2D* activeBoardTransform_ = nullptr;
+	KashipanEngine::Transform2D* inactiveBoardTransform_ = nullptr;
 
 	std::vector<KashipanEngine::Sprite*> stagePanelSprites_;
 	std::vector<KashipanEngine::Sprite*> puzzlePanelSprites_;

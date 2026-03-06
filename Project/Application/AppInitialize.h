@@ -140,24 +140,24 @@ inline void AppInitialize(const GameEngine::Context &context) {
         // コントローラー1台の場合：1P=キーボード、2P=コントローラー0
         // コントローラー2台の場合：1P=コントローラー0、2P=コントローラー1
         // ※ 2P用コマンドはP2Puzzle*という名前で登録
-        ic->RegisterCommand("P2PuzzleUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger, 0);
-        ic->RegisterCommand("P2PuzzleUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("P2PuzzleUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 1, 0.5f);
 
-        ic->RegisterCommand("P2PuzzleDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger, 0);
-        ic->RegisterCommand("P2PuzzleDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.5f);
+        ic->RegisterCommand("P2PuzzleDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 1, -0.5f);
 
-        ic->RegisterCommand("P2PuzzleLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger, 0);
-        ic->RegisterCommand("P2PuzzleLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.5f);
+        ic->RegisterCommand("P2PuzzleLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 1, -0.5f);
 
-        ic->RegisterCommand("P2PuzzleRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger, 0);
-        ic->RegisterCommand("P2PuzzleRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("P2PuzzleRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger, 1);
+        ic->RegisterCommand("P2PuzzleRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 1, 0.5f);
 
-        ic->RegisterCommand("P2PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down, 0);
+        ic->RegisterCommand("P2PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down, 1);
 
-        ic->RegisterCommand("P2PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger, 0);
+        ic->RegisterCommand("P2PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger, 1);
 
-        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
-        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 1, 0.5f);
+        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 1, 0.5f);
     }
 }
 

@@ -8,27 +8,23 @@ void PuzzleNPC::Initialize(PuzzlePlayer* player, Difficulty difficulty) {
 	player_ = player;
 	difficulty_ = difficulty;
 	movesThisTurn_ = 0;
-	shouldSkip_ = false;
 
 	switch (difficulty_) {
 	case Difficulty::Easy:
 		thinkInterval_ = 0.5f;
 		skipChance_ = 0.1f;
-		skipThreshold_ = 0.3f;
 		switchChance_ = 0.05f;
 		maxMovesPerTurn_ = 32;
 		break;
 	case Difficulty::Normal:
 		thinkInterval_ = 0.25f;
 		skipChance_ = 0.3f;
-		skipThreshold_ = 0.4f;
 		switchChance_ = 0.1f;
 		maxMovesPerTurn_ = 64;
 		break;
 	case Difficulty::Hard:
 		thinkInterval_ = 0.1f;
 		skipChance_ = 0.5f;
-		skipThreshold_ = 0.5f;
 		switchChance_ = 0.15f;
 		maxMovesPerTurn_ = 128;
 		break;
@@ -58,10 +54,9 @@ void PuzzleNPC::DecideNextAction() {
 		return;
 	}
 
-	// 時間スキップ判定
-	float timerRatio = player_->GetTimer() / player_->GetTimeLimit();
-	if (timerRatio < skipThreshold_ && KashipanEngine::GetRandomBool(skipChance_)) {
-		player_->ForceTimeSkip();
+	// 攻撃判定（一定確率で攻撃を試みる）
+	if (KashipanEngine::GetRandomBool(skipChance_)) {
+		player_->ForceAttack();
 		movesThisTurn_ = 0;
 		return;
 	}

@@ -5,9 +5,6 @@
 namespace Application {
 
 struct PuzzleGameConfig {
-	// 盤面クールダウンの秒数
-	float swapCooldown = 1.5f;
-
 	// ステージの大きさ（n x n）
 	int stageSize = 6;
 	// パネルのスケール（ピクセル）
@@ -98,7 +95,6 @@ struct PuzzleGameConfig {
 
 	void LoadFromJSON(const std::string& filepath);
 	void SaveToJSON(const std::string& filepath) const;
-
 };
 
 } // namespace Application

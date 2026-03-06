@@ -2,18 +2,9 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 
-#include <numbers>
 #include <algorithm>
-#include <map>
-#include <set>
 
 namespace KashipanEngine {
-
-// ================================================================
-// パネルの基本スケール
-// ================================================================
-static constexpr Vector3 kPanelScale{ 2.0f, 1.0f, 2.0f };
-static constexpr float   kPanelY = 1.0f; // 地面パネルの上面
 
 // ================================================================
 // ctor / dtor / Initialize
@@ -37,536 +28,214 @@ void TestScene::Initialize() {
     // 設定の読み込み
     config_.LoadFromJSON(kConfigPath);
 
-    // ボードの初期化
-    board_.Initialize(config_.stageSize);
+    auto *screenBuffer2D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer2D() : nullptr;
+    auto *window = Window::GetWindow("Main Window");
 
-    // カーソルの初期化（ボード中央）
-    int center = config_.stageSize / 2;
-    cursor_.Initialize(center, center, config_.stageSize, config_.cursorEasingDuration);
+    float cx = window ? static_cast<float>(window->GetClientWidth()) * 0.5f : 960.0f;
+    float cy = window ? static_cast<float>(window->GetClientHeight()) * 0.5f : 540.0f;
 
-    // コンボ管理の初期化
-    combo_.Initialize();
-
-    // 3Dオブジェクトの生成
-    CreateStageObjects();
-
-    // カメラの設定
-    if (auto *cam = sceneDefaultVariables_->GetMainCamera3D()) {
-        float fovRad = config_.cameraFov * std::numbers::pi_v<float> / 180.0f;
-        cam->SetFovY(fovRad);
-
-        if (auto *tr = cam->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, config_.cameraHeight, config_.cameraZDistance));
-            float pitch = std::atan2(config_.cameraHeight, -config_.cameraZDistance);
-            tr->SetRotate(Vector3(pitch, 0.0f, 0.0f));
-        }
-    }
-
-    // 全パネルの見た目を同期
-    SyncAllPanelVisuals();
-    UpdateCursorObject();
-
-    phase_ = Phase::Idle;
-}
-
-// ================================================================
-// 座標変換
-// ================================================================
-
-Vector3 TestScene::BoardToWorld(int row, int col) const {
-    return BoardToWorld(static_cast<float>(row), static_cast<float>(col));
-}
-
-Vector3 TestScene::BoardToWorld(float row, float col) const {
-    float halfN = static_cast<float>(config_.stageSize) * 0.5f;
-    float x = (col - halfN + 0.5f) * 2.0f;
-    float z = (row - halfN + 0.5f) * 2.0f;
-    return Vector3(x, 0.0f, z);
-}
-
-// ================================================================
-// ステージ生成
-// ================================================================
-
-void TestScene::CreateStageObjects() {
-    int n = config_.stageSize;
-    auto *screenBuffer3D = sceneDefaultVariables_->GetScreenBuffer3D();
-
-    // 地面パネル
-    groundPanels_.resize(n * n);
-    for (int r = 0; r < n; r++) {
-        for (int c = 0; c < n; c++) {
-            auto box = std::make_unique<Box>();
-            box->SetName("Ground_" + std::to_string(r) + "_" + std::to_string(c));
-            if (auto *tr = box->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(BoardToWorld(r, c));
-                tr->SetScale(kPanelScale);
-            }
-            if (auto *mat = box->GetComponent3D<Material3D>()) {
-                mat->SetColor(config_.groundColor);
-                mat->SetEnableLighting(true);
-            }
-            if (screenBuffer3D) {
-                box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            }
-            groundPanels_[r * n + c] = box.get();
-            AddObject3D(std::move(box));
-        }
-    }
-
-    // パズルパネル
-    puzzlePanels_.resize(n * n);
-    for (int r = 0; r < n; r++) {
-        for (int c = 0; c < n; c++) {
-            auto box = std::make_unique<Box>();
-            box->SetName("Panel_" + std::to_string(r) + "_" + std::to_string(c));
-            if (auto *tr = box->GetComponent3D<Transform3D>()) {
-                Vector3 pos = BoardToWorld(r, c);
-                pos.y = kPanelY;
-                tr->SetTranslate(pos);
-                tr->SetScale(kPanelScale);
-            }
-            if (auto *mat = box->GetComponent3D<Material3D>()) {
-                mat->SetEnableLighting(true);
-            }
-            if (screenBuffer3D) {
-                box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            }
-            puzzlePanels_[r * n + c] = box.get();
-            AddObject3D(std::move(box));
-        }
-    }
-
-    // カーソル
+    // ================================================================
+    // 背景スプライト
+    // ================================================================
     {
-        auto box = std::make_unique<Box>();
-        box->SetName("Cursor");
-        if (auto *tr = box->GetComponent3D<Transform3D>()) {
-            Vector3 pos = BoardToWorld(cursor_.GetPosition().first,
-                                       cursor_.GetPosition().second);
-            pos.y = kPanelY + 1.05f;
-            tr->SetTranslate(pos);
-            tr->SetScale(Vector3(2.1f, 0.1f, 2.1f));
+        auto sprite = std::make_unique<Sprite>();
+        sprite->SetUniqueBatchKey();
+        sprite->SetName("PuzzleBackground");
+        sprite->SetAnchorPoint(0.5f, 0.5f);
+        if (auto *mat = sprite->GetComponent2D<Material2D>()) {
+            mat->SetTexture(TextureManager::GetTextureFromFileName("puzzleBackground.png"));
+            mat->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
         }
-        if (auto *mat = box->GetComponent3D<Material3D>()) {
-            mat->SetColor(config_.cursorColor);
-            mat->SetEnableLighting(false);
+        if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3(cx, cy, 0.0f));
+            float w = window ? static_cast<float>(window->GetClientWidth()) : 1920.0f;
+            float h = window ? static_cast<float>(window->GetClientHeight()) : 1080.0f;
+            tr->SetScale(Vector3(w, h, 1.0f));
         }
-        if (screenBuffer3D) {
-            box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        if (screenBuffer2D) {
+            sprite->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        } else if (window) {
+            sprite->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
         }
-        cursorObject_ = box.get();
-        AddObject3D(std::move(box));
+        backgroundSprite_ = sprite.get();
+        AddObject2D(std::move(sprite));
     }
+
+    // ================================================================
+    // プレイヤー1 親スプライト（左側）
+    // ================================================================
+    {
+        auto sprite = std::make_unique<Sprite>();
+        sprite->SetName("P1_Parent");
+        sprite->SetAnchorPoint(0.5f, 0.5f);
+        if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3(cx * 0.5f, cy, 0.0f));
+            tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        player1ParentSprite_ = sprite.get();
+        player1ParentTransform_ = sprite->GetComponent2D<Transform2D>();
+        AddObject2D(std::move(sprite));
+    }
+
+    // ================================================================
+    // プレイヤー2 親スプライト（右側）
+    // ================================================================
+    {
+        auto sprite = std::make_unique<Sprite>();
+        sprite->SetName("P2_Parent");
+        sprite->SetAnchorPoint(0.5f, 0.5f);
+        if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3(cx * 1.5f, cy, 0.0f));
+            tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        player2ParentSprite_ = sprite.get();
+        player2ParentTransform_ = sprite->GetComponent2D<Transform2D>();
+        AddObject2D(std::move(sprite));
+    }
+
+    // ================================================================
+    // プレイヤー初期化
+    // ================================================================
+    auto addObj2D = [this](std::unique_ptr<Object2DBase> obj) { return AddObject2D(std::move(obj)); };
+    player1_.Initialize(config_, screenBuffer2D, window, addObj2D, player1ParentTransform_, "P1", "Puzzle", false);
+    player2_.Initialize(config_, screenBuffer2D, window, addObj2D, player2ParentTransform_, "P2", "P2Puzzle", true);
+
+    // NPC初期化
+    if (isNPCMode_) {
+        npc_.Initialize(&player2_, npcDifficulty_);
+    }
+
+    // 結果テキスト
+    {
+        auto text = std::make_unique<Text>(64);
+        text->SetName("ResultText");
+        if (auto *tr = text->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3(cx, cy * 1.8f, 0.0f));
+        }
+        text->SetFont("Assets/Application/test.fnt");
+        text->SetText("");
+        text->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        if (screenBuffer2D) {
+            text->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        } else if (window) {
+            text->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
+        }
+        resultText_ = text.get();
+        AddObject2D(std::move(text));
+    }
+
+    gameOver_ = false;
+    winner_ = 0;
 }
 
 // ================================================================
-// パネル見た目ユーティリティ
+/// 対戦処理
 // ================================================================
 
-void TestScene::ApplyPanelColor(int row, int col) {
-    int idx = row * config_.stageSize + col;
-    if (idx < 0 || idx >= static_cast<int>(puzzlePanels_.size())) return;
-    auto *panel = puzzlePanels_[idx];
-    if (!panel) return;
+void TestScene::ProcessAttack(Application::PuzzlePlayer& attacker, Application::PuzzlePlayer& defender) {
+    if (!attacker.HasPendingAttack()) return;
 
-    int type = board_.GetPanel(row, col);
-    if (type > 0 && type <= Application::PuzzleGameConfig::kMaxPanelTypes) {
-        if (auto *mat = panel->GetComponent3D<Material3D>()) {
-            mat->SetColor(config_.panelColors[type - 1]);
-        }
+    const auto& summary = attacker.GetLastMatchSummary();
+
+    // ロック時間計算
+    float baseLock = 0.0f;
+    baseLock += static_cast<float>(summary.normalCount) * config_.normalLockTime;
+    baseLock += static_cast<float>(summary.straightCount) * config_.straightLockTime;
+    baseLock += static_cast<float>(summary.crossCount) * config_.crossLockTime;
+    baseLock += static_cast<float>(summary.squareCount) * config_.squareLockTime;
+
+    float lockComboMult = 1.0f;
+    if (summary.comboCount > 1) {
+        lockComboMult = std::pow(config_.comboLockMultiplier, static_cast<float>(summary.comboCount - 1));
     }
+    float lockBreakMult = summary.isBreak ? config_.breakLockMultiplier : 1.0f;
+
+    float remainLockBonus = attacker.GetRemainingTimeAtSkip() * config_.remainingTimeLockBonus;
+    float totalLockTime = (baseLock * lockComboMult * lockBreakMult) + remainLockBonus;
+
+    // ロック適用
+    ApplyLockToDefender(defender, summary, totalLockTime);
+
+    // お邪魔パネル送信
+    int garbageCount = attacker.GetPendingGarbageToSend();
+    if (garbageCount > 0) {
+        defender.ApplyGarbage(garbageCount);
+    }
+
+    attacker.ClearPendingAttack();
+    attacker.ClearPendingGarbage();
 }
 
-void TestScene::SyncAllPanelVisuals() {
-    int n = config_.stageSize;
-    for (int r = 0; r < n; r++) {
-        for (int c = 0; c < n; c++) {
-            int idx = r * n + c;
-            if (idx >= static_cast<int>(puzzlePanels_.size())) continue;
-            auto *panel = puzzlePanels_[idx];
-            if (!panel) continue;
+void TestScene::ApplyLockToDefender(Application::PuzzlePlayer& defender,
+    const Application::PuzzlePlayer::MatchSummary& summary,
+    float lockTime) {
 
-            ApplyPanelColor(r, c);
+    if (lockTime <= 0.0f) return;
 
-            if (auto *tr = panel->GetComponent3D<Transform3D>()) {
-                Vector3 pos = BoardToWorld(r, c);
-                pos.y = kPanelY;
-                tr->SetTranslate(pos);
-                tr->SetScale(kPanelScale);
+    int boardSize = defender.GetBoardSize();
+    if (boardSize <= 0) return;
+
+    // 既存ロックに加算
+    if (!defender.GetRowLocks().empty() || !defender.GetColLocks().empty()) {
+        defender.AddToExistingLocks(lockTime);
+    }
+
+    // クロスの場合は行1つ＋列1つをロック
+    int crossLocks = summary.crossCount;
+    for (int i = 0; i < crossLocks; i++) {
+        if (defender.GetTotalLockCount() >= 2) break;
+
+        for (int attempt = 0; attempt < boardSize; attempt++) {
+            int r = KashipanEngine::GetRandomInt(0, boardSize - 1);
+            if (!defender.IsRowLocked(r)) {
+                defender.ApplyLock(true, r, lockTime);
+                break;
             }
         }
-    }
-}
 
-void TestScene::UpdateCursorObject() {
-    if (!cursorObject_) return;
-    auto [interpRow, interpCol] = cursor_.GetInterpolatedPosition();
-    if (auto *tr = cursorObject_->GetComponent3D<Transform3D>()) {
-        Vector3 pos = BoardToWorld(interpRow, interpCol);
-        pos.y = kPanelY + 1.05f;
-        tr->SetTranslate(pos);
-    }
-}
+        if (defender.GetTotalLockCount() >= 2) break;
 
-// ================================================================
-// フェーズ遷移ヘルパー
-// ================================================================
-
-void TestScene::StartMoveAction(int direction) {
-    auto [row, col] = cursor_.GetPosition();
-    int n = config_.stageSize;
-
-    // --- 内部データを瞬時に更新 ---
-    switch (direction) {
-    case 0: board_.ShiftColUp(col);    break;
-    case 1: board_.ShiftColDown(col);  break;
-    case 2: board_.ShiftRowLeft(row);  break;
-    case 3: board_.ShiftRowRight(row); break;
-    }
-
-    // --- 色を新しいデータに合わせて即更新 ---
-    // ただし位置は「移動前」に設定する（アニメーションで動かすため）
-    phaseAnims_.clear();
-
-    auto addAnim = [&](int r, int c, int fromR, int fromC) {
-        int idx = r * n + c;
-        auto *panel = puzzlePanels_[idx];
-        if (!panel) return;
-
-        // 色は新しい種類に更新
-        ApplyPanelColor(r, c);
-
-        // 移動前の位置
-        Vector3 startP = BoardToWorld(fromR, fromC);
-        startP.y = kPanelY;
-        // 移動先の位置
-        Vector3 endP = BoardToWorld(r, c);
-        endP.y = kPanelY;
-
-        // オブジェクトを開始位置に配置
-        if (auto *tr = panel->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(startP);
-            tr->SetScale(kPanelScale);
-        }
-
-        PanelAnim a;
-        a.row = r;
-        a.col = c;
-        a.startPos = startP;
-        a.endPos = endP;
-        a.startScale = kPanelScale;
-        a.endScale = kPanelScale;
-        phaseAnims_.push_back(a);
-    };
-
-    switch (direction) {
-    case 0: // 列を上にシフト（row+方向）
-        for (int r = 0; r < n; r++) {
-            // ループ元は画面外の下端から来る表現にする
-            int visualFromR = (r == 0) ? -1 : (r - 1);
-            addAnim(r, col, visualFromR, col);
-        }
-        break;
-    case 1: // 列を下にシフト
-        for (int r = 0; r < n; r++) {
-            int visualFromR = (r == n - 1) ? n : (r + 1);
-            addAnim(r, col, visualFromR, col);
-        }
-        break;
-    case 2: // 行を左にシフト
-        for (int c = 0; c < n; c++) {
-            int visualFromC = (c == n - 1) ? n : (c + 1);
-            addAnim(row, c, row, visualFromC);
-        }
-        break;
-    case 3: // 行を右にシフト
-        for (int c = 0; c < n; c++) {
-            int visualFromC = (c == 0) ? -1 : (c - 1);
-            addAnim(row, c, row, visualFromC);
-        }
-        break;
-    }
-
-    // アニメーション対象でないパネルの位置も正しく設定
-    // （移動対象以外は SyncAllPanelVisuals 相当の位置に）
-    std::set<int> animIndices;
-    for (auto &a : phaseAnims_) animIndices.insert(a.row * n + a.col);
-    for (int r = 0; r < n; r++) {
-        for (int c = 0; c < n; c++) {
-            int idx = r * n + c;
-            if (animIndices.count(idx)) continue;
-            ApplyPanelColor(r, c);
-            if (auto *panel = puzzlePanels_[idx]) {
-                if (auto *tr = panel->GetComponent3D<Transform3D>()) {
-                    Vector3 pos = BoardToWorld(r, c);
-                    pos.y = kPanelY;
-                    tr->SetTranslate(pos);
-                    tr->SetScale(kPanelScale);
-                }
-            }
-        }
-    }
-
-    phase_ = Phase::Moving;
-    phaseTimer_ = 0.0f;
-    phaseDuration_ = config_.panelEasingDuration;
-}
-
-void TestScene::OnMoveFinished() {
-    // 全パネル位置を確定
-    SyncAllPanelVisuals();
-
-    // マッチ検出 → Clearing or Idle
-    if (!StartClearingPhase()) {
-        combo_.ResetCombo();
-        phase_ = Phase::Idle;
-    }
-}
-
-bool TestScene::StartClearingPhase() {
-    pendingMatches_ = board_.DetectMatches(config_.minMatchCount);
-    if (pendingMatches_.empty()) return false;
-
-    // コンボ加算
-    combo_.AddCombo(static_cast<int>(pendingMatches_.size()));
-
-    int n = config_.stageSize;
-    std::vector<std::vector<bool>> toBeClear(n, std::vector<bool>(n, false));
-    for (const auto &m : pendingMatches_) {
-        if (m.isHorizontal) {
-            for (int i = 0; i < m.length; i++)
-                toBeClear[m.fixedIndex][m.start + i] = true;
-        } else {
-            for (int i = 0; i < m.length; i++)
-                toBeClear[m.start + i][m.fixedIndex] = true;
-        }
-    }
-
-    phaseAnims_.clear();
-    for (int r = 0; r < n; r++) {
-        for (int c = 0; c < n; c++) {
-            if (!toBeClear[r][c]) continue;
-
-            Vector3 pos = BoardToWorld(r, c);
-            pos.y = kPanelY;
-
-            Vector3 endPos = pos;
-            endPos.y = kPanelY + config_.panelClearRiseHeight;
-
-            PanelAnim a;
-            a.row = r;
-            a.col = c;
-            a.startPos = pos;
-            a.endPos = endPos;
-            a.startScale = kPanelScale;
-            a.endScale = kPanelScale;
-            phaseAnims_.push_back(a);
-        }
-    }
-
-    phase_ = Phase::Clearing;
-    phaseTimer_ = 0.0f;
-    phaseDuration_ = config_.panelClearDuration;
-    return true;
-}
-
-void TestScene::OnClearFinished() {
-    // 内部データの消去＆補充（瞬時）
-    board_.ClearAndFillMatches(pendingMatches_);
-    // pendingMatches_ は StartFillingPhase 内で参照するためここではクリアしない
-
-    // Filling フェーズへ
-    StartFillingPhase();
-}
-
-void TestScene::StartFillingPhase() {
-    // ClearAndFillMatches 後のボードは既に補充済み。
-    // pendingMatches_ を参照して、横消し/縦消しの方向に応じたスライドインアニメーションを付ける。
-    //
-    // 仕様:
-    //   横消し → 消えた分だけ左のパネルが右に移動し、左端から新パネル出現
-    //   縦消し → 消えた分だけ上のパネルが下に移動し、上端から新パネル出現
-
-    int n = config_.stageSize;
-
-    // 消した行/列ごとの消去数を集計
-    std::map<int, int> hRowClearCount; // 横消し行 → 消去パネル数
-    std::map<int, int> vColClearCount; // 縦消し列 → 消去パネル数
-
-    for (const auto &m : pendingMatches_) {
-        if (m.isHorizontal) {
-            hRowClearCount[m.fixedIndex] += m.length;
-        } else {
-            vColClearCount[m.fixedIndex] += m.length;
-        }
-    }
-    // 重複セルがあるかもしれないので上限 clamp
-    for (auto &[row, cnt] : hRowClearCount) cnt = std::min(cnt, n);
-    for (auto &[col, cnt] : vColClearCount) cnt = std::min(cnt, n);
-
-    pendingMatches_.clear();
-
-    phaseAnims_.clear();
-
-    // 色を全更新
-    for (int r = 0; r < n; r++)
-        for (int c = 0; c < n; c++)
-            ApplyPanelColor(r, c);
-
-    // 横消し行: 各パネルを clearCount マス分右からスライドイン
-    // 仕様: 「消えた分だけ左のパネルが右に移動してきて、左から新パネルが出現」
-    //   → パネル全体が右方向に clearCount マスぶん移動してくるように見える
-    for (auto &[row, clearCount] : hRowClearCount) {
-        for (int c = 0; c < n; c++) {
-            Vector3 endP = BoardToWorld(row, c);
-            endP.y = kPanelY;
-            // 左側 clearCount マス分ずれた位置から来る
-            Vector3 startP = BoardToWorld(row, c - clearCount);
-            startP.y = kPanelY;
-
-            PanelAnim a;
-            a.row = row;
-            a.col = c;
-            a.startPos = startP;
-            a.endPos = endP;
-            a.startScale = kPanelScale;
-            a.endScale = kPanelScale;
-            phaseAnims_.push_back(a);
-
-            // 開始位置にセット
-            int idx = row * n + c;
-            if (auto *panel = puzzlePanels_[idx]) {
-                if (auto *tr = panel->GetComponent3D<Transform3D>()) {
-                    tr->SetTranslate(startP);
-                    tr->SetScale(kPanelScale);
-                }
+        for (int attempt = 0; attempt < boardSize; attempt++) {
+            int c = KashipanEngine::GetRandomInt(0, boardSize - 1);
+            if (!defender.IsColLocked(c)) {
+                defender.ApplyLock(false, c, lockTime);
+                break;
             }
         }
     }
 
-    // 縦消し列: 各パネルを clearCount マス分下からスライドイン
-    // 仕様: 「消えた分だけ上のパネルが下に移動してきて、上から新パネルが出現」
-    //   → パネル全体が下方向に clearCount マスぶん移動してくるように見える
-    std::set<int> hRowSet;
-    for (auto &[row, cnt] : hRowClearCount) hRowSet.insert(row);
+    // ノーマル/ストレート/スクエア → 行or列1つをロック
+    int otherLocks = summary.normalCount + summary.straightCount + summary.squareCount;
+    for (int i = 0; i < otherLocks; i++) {
+        if (defender.GetTotalLockCount() >= 2) break;
 
-    for (auto &[col, clearCount] : vColClearCount) {
-        for (int r = 0; r < n; r++) {
-            // 横消し行と重複するセルはスキップ（横のアニメが優先）
-            if (hRowSet.count(r)) continue;
-
-            Vector3 endP = BoardToWorld(r, col);
-            endP.y = kPanelY;
-            // 上端 clearCount マス分ずれた位置から来る
-            Vector3 startP = BoardToWorld(r + clearCount, col);
-            startP.y = kPanelY;
-
-            PanelAnim a;
-            a.row = r;
-            a.col = col;
-            a.startPos = startP;
-            a.endPos = endP;
-            a.startScale = kPanelScale;
-            a.endScale = kPanelScale;
-            phaseAnims_.push_back(a);
-
-            int idx = r * n + col;
-            if (auto *panel = puzzlePanels_[idx]) {
-                if (auto *tr = panel->GetComponent3D<Transform3D>()) {
-                    tr->SetTranslate(startP);
-                    tr->SetScale(kPanelScale);
-                }
+        bool isRow = KashipanEngine::GetRandomBool(0.5f);
+        for (int attempt = 0; attempt < boardSize * 2; attempt++) {
+            int idx = KashipanEngine::GetRandomInt(0, boardSize - 1);
+            if (isRow && !defender.IsRowLocked(idx)) {
+                defender.ApplyLock(true, idx, lockTime);
+                break;
             }
-        }
-    }
-
-    // アニメーション対象外のパネルは正規位置へ
-    std::set<int> animSet;
-    for (auto &a : phaseAnims_) animSet.insert(a.row * n + a.col);
-    for (int r = 0; r < n; r++) {
-        for (int c = 0; c < n; c++) {
-            int idx = r * n + c;
-            if (animSet.count(idx)) continue;
-            if (auto *panel = puzzlePanels_[idx]) {
-                if (auto *tr = panel->GetComponent3D<Transform3D>()) {
-                    Vector3 pos = BoardToWorld(r, c);
-                    pos.y = kPanelY;
-                    tr->SetTranslate(pos);
-                    tr->SetScale(kPanelScale);
-                }
+            if (!isRow && !defender.IsColLocked(idx)) {
+                defender.ApplyLock(false, idx, lockTime);
+                break;
             }
+            isRow = !isRow;
         }
-    }
-
-    if (phaseAnims_.empty()) {
-        // 補充アニメーション無し → 即座に連鎖チェック
-        SyncAllPanelVisuals();
-        OnFillFinished();
-        return;
-    }
-
-    phase_ = Phase::Filling;
-    phaseTimer_ = 0.0f;
-    phaseDuration_ = config_.panelEasingDuration;
-}
-
-void TestScene::OnFillFinished() {
-    SyncAllPanelVisuals();
-
-    // 連鎖マッチチェック
-    if (!StartClearingPhase()) {
-        combo_.ResetCombo();
-        phase_ = Phase::Idle;
     }
 }
 
-// ================================================================
-// フェーズ更新
-// ================================================================
+void TestScene::CheckWinCondition() {
+    if (gameOver_) return;
 
-void TestScene::UpdatePhase(float deltaTime) {
-    if (phase_ == Phase::Idle) return;
-
-    phaseTimer_ += deltaTime;
-    float t = std::clamp(phaseTimer_ / phaseDuration_, 0.0f, 1.0f);
-    float easedT = Apply(t, EaseType::EaseOutCubic);
-
-    int n = config_.stageSize;
-
-    for (auto &a : phaseAnims_) {
-        int idx = a.row * n + a.col;
-        if (idx < 0 || idx >= static_cast<int>(puzzlePanels_.size())) continue;
-        auto *panel = puzzlePanels_[idx];
-        if (!panel) continue;
-
-        if (auto *tr = panel->GetComponent3D<Transform3D>()) {
-            Vector3 pos = Lerp(a.startPos, a.endPos, easedT);
-            tr->SetTranslate(pos);
-
-            Vector3 scale = Lerp(a.startScale, a.endScale, easedT);
-            tr->SetScale(scale);
-        }
-    }
-
-    // フェーズ完了判定
-    if (t >= 1.0f) {
-        Phase finishedPhase = phase_;
-        phaseAnims_.clear();
-
-        switch (finishedPhase) {
-        case Phase::Moving:
-            OnMoveFinished();
-            break;
-        case Phase::Clearing:
-            OnClearFinished();
-            break;
-        case Phase::Filling:
-            OnFillFinished();
-            break;
-        default:
-            break;
-        }
+    if (player1_.IsDefeated()) {
+        gameOver_ = true;
+        winner_ = 2;
+        if (resultText_) resultText_->SetText("Player 2 Wins!");
+    } else if (player2_.IsDefeated()) {
+        gameOver_ = true;
+        winner_ = 1;
+        if (resultText_) resultText_->SetText("Player 1 Wins!");
     }
 }
 
@@ -597,68 +266,110 @@ void TestScene::OnUpdate() {
         }
     }
 
-    // フェーズアニメーション更新
-    UpdatePhase(deltaTime);
+    if (!gameOver_) {
+        // プレイヤー1 更新（キーボード/コントローラー）
+        player1_.Update(deltaTime, GetInputCommand());
 
-    // カーソル更新
-    cursor_.Update(GetInputCommand(), deltaTime, IsAnimating());
-
-    // カーソルオブジェクトの位置更新
-    UpdateCursorObject();
-
-    // 移動アクション処理（Idle 時のみ受付）
-    if (cursor_.HasMoveAction() && !IsAnimating()) {
-        StartMoveAction(cursor_.GetMoveActionDirection());
-    }
-
-    // カメラ設定の動的更新
-    if (auto *cam = sceneDefaultVariables_->GetMainCamera3D()) {
-        float fovRad = config_.cameraFov * std::numbers::pi_v<float> / 180.0f;
-        cam->SetFovY(fovRad);
-
-        if (auto *tr = cam->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, config_.cameraHeight, config_.cameraZDistance));
-            float pitch = std::atan2(config_.cameraHeight, -config_.cameraZDistance);
-            tr->SetRotate(Vector3(pitch, 0.0f, 0.0f));
+        // プレイヤー2 / NPC 更新
+        if (isNPCMode_) {
+            npc_.Update(deltaTime);
+            player2_.Update(deltaTime, nullptr); // NPC制御なので入力なし
+        } else {
+            // ローカル対戦の場合：2Pはコントローラー入力（P2Puzzle*コマンド）
+            player2_.Update(deltaTime, GetInputCommand());
         }
+
+        // 攻撃処理
+        ProcessAttack(player1_, player2_);
+        ProcessAttack(player2_, player1_);
+
+        // 勝敗判定
+        CheckWinCondition();
     }
 
 #if defined(USE_IMGUI)
     ImGui::Begin("Puzzle Game Config");
 
-    ImGui::SliderInt("Stage Size", &config_.stageSize, 3, 8);
-    ImGui::SliderInt("Min Match Count", &config_.minMatchCount, 2, 8);
-    ImGui::SliderFloat("Panel Easing Duration", &config_.panelEasingDuration, 0.01f, 1.0f);
-    ImGui::SliderFloat("Cursor Easing Duration", &config_.cursorEasingDuration, 0.01f, 1.0f);
-    ImGui::SliderFloat("Camera Height", &config_.cameraHeight, 5.0f, 50.0f);
-    ImGui::SliderFloat("Camera Z Distance", &config_.cameraZDistance, -30.0f, 0.0f);
-    ImGui::SliderFloat("Camera FOV", &config_.cameraFov, 10.0f, 120.0f);
-    ImGui::SliderFloat("Panel Clear Rise Height", &config_.panelClearRiseHeight, 0.1f, 5.0f);
-    ImGui::SliderFloat("Panel Clear Duration", &config_.panelClearDuration, 0.1f, 2.0f);
+    ImGui::Text("=== Battle Status ===");
+    ImGui::Text("P1 Active Board: %d", player1_.GetActiveIndex());
+    ImGui::Text("P1 Collapse: %.0f%% / %.0f%%",
+        player1_.GetActiveCollapseRatio() * 100.0f,
+        player1_.GetInactiveCollapseRatio() * 100.0f);
+    ImGui::Text("P2 Active Board: %d", player2_.GetActiveIndex());
+    ImGui::Text("P2 Collapse: %.0f%% / %.0f%%",
+        player2_.GetActiveCollapseRatio() * 100.0f,
+        player2_.GetInactiveCollapseRatio() * 100.0f);
+    ImGui::Text("P1 Timer: %.1f", player1_.GetTimer());
+    ImGui::Text("P2 Timer: %.1f", player2_.GetTimer());
+    const char *phaseNames[] = { "Idle", "Moving", "Clearing", "Filling" };
+    ImGui::Text("P1 Phase: %s", phaseNames[static_cast<int>(player1_.GetPhase())]);
+    ImGui::Text("P2 Phase: %s", phaseNames[static_cast<int>(player2_.GetPhase())]);
+    ImGui::Text("P1 Combo: %d", player1_.GetCombo().GetCurrentCombo());
+    ImGui::Text("P2 Combo: %d", player2_.GetCombo().GetCurrentCombo());
 
-    for (int i = 0; i < std::min(config_.stageSize, Application::PuzzleGameConfig::kMaxPanelTypes); i++) {
+    if (gameOver_) {
+        ImGui::TextColored(ImVec4(1, 1, 0, 1), "Winner: Player %d", winner_);
+    }
+
+    ImGui::Separator();
+    ImGui::Text("=== NPC Settings ===");
+    ImGui::Checkbox("NPC Mode", &isNPCMode_);
+    int diff = static_cast<int>(npcDifficulty_);
+    const char* diffNames[] = { "Easy", "Normal", "Hard" };
+    if (ImGui::Combo("NPC Difficulty", &diff, diffNames, 3)) {
+        npcDifficulty_ = static_cast<Application::PuzzleNPC::Difficulty>(diff);
+    }
+
+    ImGui::Separator();
+    ImGui::Text("=== Config ===");
+    ImGui::SliderInt("Stage Size", &config_.stageSize, 3, 8);
+    ImGui::SliderFloat("Panel Scale", &config_.panelScale, 16.0f, 128.0f);
+    ImGui::SliderFloat("Panel Gap", &config_.panelGap, 0.0f, 16.0f);
+    ImGui::SliderInt("Panel Type Count", &config_.panelTypeCount, 2, Application::PuzzleGameConfig::kMaxPanelTypes);
+    ImGui::SliderFloat("Panel Move Easing", &config_.panelMoveEasingDuration, 0.01f, 1.0f);
+    ImGui::SliderFloat("Panel Clear Easing", &config_.panelClearEasingDuration, 0.01f, 2.0f);
+    ImGui::SliderFloat("Panel Spawn Easing", &config_.panelSpawnEasingDuration, 0.01f, 1.0f);
+    ImGui::SliderFloat("Cursor Easing", &config_.cursorEasingDuration, 0.01f, 1.0f);
+    ImGui::SliderInt("Normal Min Count", &config_.normalMinCount, 2, 8);
+    ImGui::SliderInt("Straight Min Count", &config_.straightMinCount, 3, 8);
+
+    ImGui::Separator();
+    ImGui::Text("Battle Settings");
+    ImGui::SliderFloat("Time Limit", &config_.timeLimit, 1.0f, 60.0f);
+    ImGui::SliderFloat("Normal Lock Time", &config_.normalLockTime, 0.0f, 30.0f);
+    ImGui::SliderFloat("Straight Lock Time", &config_.straightLockTime, 0.0f, 30.0f);
+    ImGui::SliderFloat("Cross Lock Time", &config_.crossLockTime, 0.0f, 30.0f);
+    ImGui::SliderFloat("Square Lock Time", &config_.squareLockTime, 0.0f, 30.0f);
+    ImGui::SliderFloat("Combo Lock Mult", &config_.comboLockMultiplier, 1.0f, 10.0f);
+    ImGui::SliderFloat("Break Lock Mult", &config_.breakLockMultiplier, 1.0f, 10.0f);
+    ImGui::SliderFloat("Remain Time Lock Bonus", &config_.remainingTimeLockBonus, 0.0f, 5.0f);
+
+    ImGui::Separator();
+    ImGui::Text("Garbage Settings");
+    ImGui::SliderInt("Moves Per Garbage", &config_.movesPerGarbage, 1, 30);
+    ImGui::SliderFloat("Attack Garbage Mult", &config_.attackGarbageMultiplier, 0.0f, 3.0f);
+    ImGui::SliderFloat("Inactive Decay Interval", &config_.inactiveGarbageDecayInterval, 0.1f, 10.0f);
+    ImGui::SliderFloat("Normal Garbage Count", &config_.normalGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Straight Garbage Count", &config_.straightGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Cross Garbage Count", &config_.crossGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Square Garbage Count", &config_.squareGarbageCount, 0.0f, 20.0f);
+    ImGui::SliderFloat("Combo Garbage Mult", &config_.comboGarbageMultiplier, 1.0f, 5.0f);
+
+    ImGui::Separator();
+    ImGui::Text("Defeat Settings");
+    ImGui::SliderFloat("Defeat Collapse Ratio", &config_.defeatCollapseRatio, 0.1f, 1.0f);
+
+    ImGui::Separator();
+    ImGui::Text("Colors");
+    for (int i = 0; i < std::min(config_.panelTypeCount, Application::PuzzleGameConfig::kMaxPanelTypes); i++) {
         std::string label = "Panel Color " + std::to_string(i + 1);
         ImGui::ColorEdit4(label.c_str(), &config_.panelColors[i].x);
     }
-    ImGui::ColorEdit4("Ground Color", &config_.groundColor.x);
+    ImGui::ColorEdit4("Stage BG Color", &config_.stageBackgroundColor.x);
     ImGui::ColorEdit4("Cursor Color", &config_.cursorColor.x);
-
-    // 色変更を即反映（Idle 時のみ安全に全同期）
-    if (!IsAnimating()) {
-        SyncAllPanelVisuals();
-    }
-    if (cursorObject_) {
-        if (auto *mat = cursorObject_->GetComponent3D<Material3D>()) {
-            mat->SetColor(config_.cursorColor);
-        }
-    }
-    for (auto *ground : groundPanels_) {
-        if (ground) {
-            if (auto *mat = ground->GetComponent3D<Material3D>()) {
-                mat->SetColor(config_.groundColor);
-            }
-        }
-    }
+    ImGui::ColorEdit4("Lock Color", &config_.lockColor.x);
+    ImGui::ColorEdit4("Garbage Color", &config_.garbageColor.x);
+    ImGui::ColorEdit4("Garbage Warning", &config_.garbageWarningColor.x);
 
     if (ImGui::Button("Save Config")) {
         config_.SaveToJSON(kConfigPath);
@@ -667,18 +378,29 @@ void TestScene::OnUpdate() {
     if (ImGui::Button("Load Config")) {
         config_.LoadFromJSON(kConfigPath);
     }
+    ImGui::SameLine();
+    if (ImGui::Button("Restart")) {
+        SetNextSceneName(GetName());
+        ChangeToNextScene();
+    }
 
+    // ロック情報表示
     ImGui::Separator();
-    ImGui::Text("Combo: %d", combo_.GetCurrentCombo());
-    ImGui::Text("Total Combo: %d", combo_.GetTotalCombo());
-
-    auto [curRow, curCol] = cursor_.GetPosition();
-    ImGui::Text("Cursor: (%d, %d)", curRow, curCol);
-
-    const char *phaseNames[] = { "Idle", "Moving", "Clearing", "Filling" };
-    ImGui::Text("Phase: %s", phaseNames[static_cast<int>(phase_)]);
-    if (IsAnimating()) {
-        ImGui::Text("Progress: %.1f%%", (phaseTimer_ / phaseDuration_) * 100.0f);
+    ImGui::Text("P1 Row Locks:");
+    for (auto& [k, v] : player1_.GetRowLocks()) {
+        ImGui::Text("  Row %d: %.1fs", k, v.remainingTime);
+    }
+    ImGui::Text("P1 Col Locks:");
+    for (auto& [k, v] : player1_.GetColLocks()) {
+        ImGui::Text("  Col %d: %.1fs", k, v.remainingTime);
+    }
+    ImGui::Text("P2 Row Locks:");
+    for (auto& [k, v] : player2_.GetRowLocks()) {
+        ImGui::Text("  Row %d: %.1fs", k, v.remainingTime);
+    }
+    ImGui::Text("P2 Col Locks:");
+    for (auto& [k, v] : player2_.GetColLocks()) {
+        ImGui::Text("  Col %d: %.1fs", k, v.remainingTime);
     }
 
     ImGui::End();

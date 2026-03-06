@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -208,6 +208,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\Objects\Puzzle\PuzzleBoard.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleCursor.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzlePlayer.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
@@ -432,6 +434,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Puzzle\PuzzleBoard.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzlePlayer.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleNPC.h" />
     <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />
@@ -720,6 +724,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   <ItemGroup>
     <None Include=".editorconfig" />
     <None Include=".gitattributes" />
+    <None Include="Application\Config\PuzzleGameConfigGuide.md" />
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />

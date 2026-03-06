@@ -8,75 +8,89 @@ namespace Application {
 
 /// パズルボードのデータ管理クラス
 /// 二次元配列でパネルの種類を管理する。
-/// 仕様: n×nのボード、パネル種類数=n、行/列単位の移動（ループ）、3つ以上の直線マッチで消去
+/// 正の値: 通常パネル(1～panelTypeCount)
+/// kGarbageType(-1): お邪魔パネル
 class PuzzleBoard {
 public:
+	/// お邪魔パネルの種類値
+	static constexpr int kGarbageType = -1;
+
 	/// ボードの初期化
-	/// @param size ボードサイズ（n x n）
-	void Initialize(int size);
+	void Initialize(int size, int panelTypeCount);
 
-	/// ボードのサイズ（n x n）
 	int GetSize() const { return size_; }
-
-	/// パネル種類数（= size）
-	int GetPanelTypeCount() const { return size_; }
-
-	/// 指定位置のパネル種類を取得（1～size）
+	int GetPanelTypeCount() const { return panelTypeCount_; }
 	int GetPanel(int row, int col) const;
-
-	/// 指定位置のパネル種類を設定
 	void SetPanel(int row, int col, int type);
 
-	/// 指定行を右に1マス移動する（ループ）
+	/// お邪魔パネルかどうか
+	bool IsGarbage(int row, int col) const;
+
+	/// お邪魔パネルの数を返す
+	int CountGarbage() const;
+
+	/// ランダムな位置にお邪魔パネルを置く（通常パネルを上書き）
+	/// @param count 置く数
+	/// @return 実際に置いた数
+	int PlaceGarbageRandom(int count);
+
+	/// ランダムなお邪魔パネルを1つ除去し通常パネルに置き換える
+	/// @return 除去した場合true
+	bool RemoveOneGarbageRandom();
+
 	void ShiftRowRight(int row);
-
-	/// 指定行を左に1マス移動する（ループ）
 	void ShiftRowLeft(int row);
-
-	/// 指定列を上に1マス移動する（ループ: 行インデックス増加方向=Z+方向）
 	void ShiftColUp(int col);
-
-	/// 指定列を下に1マス移動する（ループ: 行インデックス減少方向=Z-方向）
 	void ShiftColDown(int col);
 
-	/// マッチ結果を表す構造体
-	struct MatchLine {
-		bool isHorizontal;     ///< true=横、false=縦
-		int fixedIndex;        ///< 横なら行、縦なら列
-		int start;             ///< 開始位置（横なら列、縦なら行）
-		int length;            ///< 連続数
-		int type;              ///< パネル種類
+	// ================================================================
+	// マッチパターン
+	// ================================================================
+
+	enum class MatchType {
+		Normal,
+		Straight,
+		Cross,
+		Square,
 	};
 
-	/// 指定個数以上のマッチを検出する
-	/// @param minMatch 消える最低個数（デフォルト3）
-	/// @return マッチした直線のリスト
-	std::vector<MatchLine> DetectMatches(int minMatch = 3) const;
+	struct MatchResult {
+		MatchType type;
+		int panelType;
+		std::vector<std::pair<int, int>> cells;
+		bool isHorizontal = false;
+		int fixedIndex = 0;
+	};
 
-	/// マッチしたパネルを消去し、仕様に基づいて新パネルを補充する
-	/// - 横消し: 消えた分だけ左のパネルが右に移動し、左端から新パネルが出現
-	/// - 縦消し: 消えた分だけ上のパネルが下に移動し、上端から新パネルが出現
-	/// @param matches 消去するマッチリスト
-	/// @return 実際に消去されたマス数
-	int ClearAndFillMatches(const std::vector<MatchLine>& matches);
+	/// 全マッチパターンを検出する
+	/// お邪魔パネルはマッチ対象外だが、消えるパネルに隣接する場合は一緒に消える
+	std::vector<MatchResult> DetectAllMatches(int normalMin, int straightMin) const;
 
-	/// ボード全体の状態を取得
+	/// マッチしたパネルを消去し新パネルを補充する
+	int ClearAndFillMatches(const std::vector<MatchResult>& matches);
+
+	bool IsEmpty() const;
+
 	const std::vector<std::vector<int>>& GetBoard() const { return board_; }
-
-	/// ボードの状態を設定
 	void SetBoard(const std::vector<std::vector<int>>& board);
 
-	/// 出現テーブルから次のパネル種類を取得する
 	int GetNextPanelFromTable();
 
 private:
-	/// 出現テーブルを再生成しシャッフルする
 	void RefillSpawnTable();
 
-	int size_ = 0;
-	std::vector<std::vector<int>> board_;
+	struct LineSeg {
+		bool isHorizontal;
+		int fixedIndex;
+		int start;
+		int length;
+		int type;
+	};
+	std::vector<LineSeg> DetectLineMatches(int minCount) const;
 
-	/// パネル出現テーブル（シャッフル済みキュー）
+	int size_ = 0;
+	int panelTypeCount_ = 0;
+	std::vector<std::vector<int>> board_;
 	std::deque<int> spawnTable_;
 };
 

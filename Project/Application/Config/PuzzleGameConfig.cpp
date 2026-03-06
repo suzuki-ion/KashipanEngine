@@ -17,14 +17,12 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	cursorEasingDuration = KashipanEngine::GetJSONValueOrDefault(json, "cursorEasingDuration", cursorEasingDuration);
 	normalMinCount = KashipanEngine::GetJSONValueOrDefault(json, "normalMinCount", normalMinCount);
 	straightMinCount = KashipanEngine::GetJSONValueOrDefault(json, "straightMinCount", straightMinCount);
-	timeLimit = KashipanEngine::GetJSONValueOrDefault(json, "timeLimit", timeLimit);
 	normalLockTime = KashipanEngine::GetJSONValueOrDefault(json, "normalLockTime", normalLockTime);
 	straightLockTime = KashipanEngine::GetJSONValueOrDefault(json, "straightLockTime", straightLockTime);
 	crossLockTime = KashipanEngine::GetJSONValueOrDefault(json, "crossLockTime", crossLockTime);
 	squareLockTime = KashipanEngine::GetJSONValueOrDefault(json, "squareLockTime", squareLockTime);
 	comboLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboLockMultiplier", comboLockMultiplier);
 	breakLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "breakLockMultiplier", breakLockMultiplier);
-	remainingTimeLockBonus = KashipanEngine::GetJSONValueOrDefault(json, "remainingTimeLockBonus", remainingTimeLockBonus);
 	movesPerGarbage = KashipanEngine::GetJSONValueOrDefault(json, "movesPerGarbage", movesPerGarbage);
 	attackGarbageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "attackGarbageMultiplier", attackGarbageMultiplier);
 	inactiveGarbageDecayInterval = KashipanEngine::GetJSONValueOrDefault(json, "inactiveGarbageDecayInterval", inactiveGarbageDecayInterval);
@@ -34,6 +32,10 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	squareGarbageCount = KashipanEngine::GetJSONValueOrDefault(json, "squareGarbageCount", squareGarbageCount);
 	comboGarbageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboGarbageMultiplier", comboGarbageMultiplier);
 	defeatCollapseRatio = KashipanEngine::GetJSONValueOrDefault(json, "defeatCollapseRatio", defeatCollapseRatio);
+	garbageClearedBonus = KashipanEngine::GetJSONValueOrDefault(json, "garbageClearedBonus", garbageClearedBonus);
+	garbageDelayTimeMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "garbageDelayTimeMultiplier", garbageDelayTimeMultiplier);
+	garbageEscalationInterval = KashipanEngine::GetJSONValueOrDefault(json, "garbageEscalationInterval", garbageEscalationInterval);
+	garbageEscalationIncrement = KashipanEngine::GetJSONValueOrDefault(json, "garbageEscalationIncrement", garbageEscalationIncrement);
 
 	auto loadColor = [&](const char* key, Vector4& color) {
 		if (json.contains(key) && json[key].is_array() && json[key].size() >= 4) {
@@ -77,14 +79,12 @@ void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	json["cursorEasingDuration"] = cursorEasingDuration;
 	json["normalMinCount"] = normalMinCount;
 	json["straightMinCount"] = straightMinCount;
-	json["timeLimit"] = timeLimit;
 	json["normalLockTime"] = normalLockTime;
 	json["straightLockTime"] = straightLockTime;
 	json["crossLockTime"] = crossLockTime;
 	json["squareLockTime"] = squareLockTime;
 	json["comboLockMultiplier"] = comboLockMultiplier;
 	json["breakLockMultiplier"] = breakLockMultiplier;
-	json["remainingTimeLockBonus"] = remainingTimeLockBonus;
 	json["movesPerGarbage"] = movesPerGarbage;
 	json["attackGarbageMultiplier"] = attackGarbageMultiplier;
 	json["inactiveGarbageDecayInterval"] = inactiveGarbageDecayInterval;
@@ -94,6 +94,10 @@ void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	json["squareGarbageCount"] = squareGarbageCount;
 	json["comboGarbageMultiplier"] = comboGarbageMultiplier;
 	json["defeatCollapseRatio"] = defeatCollapseRatio;
+	json["garbageClearedBonus"] = garbageClearedBonus;
+	json["garbageDelayTimeMultiplier"] = garbageDelayTimeMultiplier;
+	json["garbageEscalationInterval"] = garbageEscalationInterval;
+	json["garbageEscalationIncrement"] = garbageEscalationIncrement;
 
 	auto saveColor = [](const Vector4& c) {
 		return KashipanEngine::JSON::array({ c.x, c.y, c.z, c.w });

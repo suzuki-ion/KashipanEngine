@@ -193,6 +193,7 @@
     <ClCompile Include="Application\Objects\Puzzle\PuzzlePlayer.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameTutorialManager.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleSwapCooldown.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -518,6 +519,7 @@
     <ClInclude Include="Application\Objects\Container\MenuSpriteCotainer.h" />
     <ClInclude Include="Application\MatsumotoUtility.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameTutorialManager.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleSwapCooldown.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

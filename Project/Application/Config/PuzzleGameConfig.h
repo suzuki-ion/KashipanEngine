@@ -5,6 +5,9 @@
 namespace Application {
 
 struct PuzzleGameConfig {
+	// スワップのクールダウン時間（秒）
+	float swapCooldown = 1.5f;
+
 	// ステージの大きさ（n x n）
 	int stageSize = 6;
 	// パネルのスケール（ピクセル）

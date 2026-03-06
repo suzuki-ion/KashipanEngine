@@ -83,6 +83,7 @@ public:
 	const PuzzleGoal& GetCombo() const { return combo_; }
 	int GetBoardSize() const { return config_.stageSize; }
 	const PuzzleGameConfig& GetConfig() const { return config_; }
+	bool IsMoveCursorMode() const { return cursor_.IsHoldingAction(); }
 
 	/// アクティブボードの崩壊度(0.0~1.0)
 	float GetActiveCollapseRatio() const;

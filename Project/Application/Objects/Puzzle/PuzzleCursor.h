@@ -37,11 +37,14 @@ public:
 	void SetBoardSize(int size) { boardSize_ = size; }
 	void SetEasingDuration(float duration) { easingDuration_ = duration; }
 
+	bool IsHoldingAction() const;
+
 private:
 	int row_ = 0;
 	int col_ = 0;
 	int boardSize_ = 0;
 	float easingDuration_ = 0.1f;
+	bool isHoldingAction_ = false;
 
 	// コマンド名
 	std::string cmdUp_ = "PuzzleUp";

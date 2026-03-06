@@ -11,6 +11,8 @@
 #include <Objects/Puzzle/PuzzleNPC.h>
 #include <Config/PuzzleGameConfig.h>
 
+#include <Objects/OutGameSystem/GameTutorialManager.h>
+
 namespace KashipanEngine {
 
 class TestScene final : public SceneBase {
@@ -49,11 +51,13 @@ private:
     Sprite* player1ParentSprite_ = nullptr;
     Transform2D* player1ParentTransform_ = nullptr;
     Application::PuzzlePlayer player1_;
+	Application::GameTutorialManager tutorialManager1P_;
 
     // プレイヤー2（右側）/ NPC
     Sprite* player2ParentSprite_ = nullptr;
     Transform2D* player2ParentTransform_ = nullptr;
     Application::PuzzlePlayer player2_;
+	Application::GameTutorialManager tutorialManager2P_;
 
     // NPC（対NPC戦の場合）
     bool isNPCMode_ = false;

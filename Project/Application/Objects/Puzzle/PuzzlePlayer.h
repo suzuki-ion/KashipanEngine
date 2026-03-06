@@ -31,10 +31,18 @@ public:
 		int comboCount = 0;
 		bool isBreak = false;
 		int totalClearedCells = 0;
+		int garbageClearedCells = 0;
 	};
 
 	struct LockInfo {
 		float remainingTime = 0.0f;
+	};
+
+	/// 相手から送られてくるお邪魔パネルの遅延キュー要素
+	struct GarbageQueueEntry {
+		float remainingTime = 0.0f;
+		float totalTime = 0.0f;
+		float garbageAmount = 0.0f;
 	};
 
 	using AddObject2DFunc = std::function<bool(std::unique_ptr<KashipanEngine::Object2DBase>)>;
@@ -55,8 +63,8 @@ public:
 	// 外部操作
 	// ================================================================
 
-	/// お邪魔パネルを現在のアクティブボードに配置する
-	void ApplyGarbage(int count);
+	/// お邪魔パネルの遅延キューを追加する（相手からの攻撃）
+	void EnqueueGarbage(float amount, float delayTime);
 	/// 行/列ロックを追加（アクティブボード）
 	void ApplyLock(bool isRow, int index, float seconds);
 	/// 既存ロック全てに秒数を加算
@@ -71,14 +79,13 @@ public:
 	bool IsDefeated() const;
 	bool IsAnimating() const { return phase_ != Phase::Idle; }
 	Phase GetPhase() const { return phase_; }
-	float GetTimer() const { return timer_; }
-	float GetTimeLimit() const { return config_.timeLimit; }
+	float GetGameElapsedTime() const { return gameElapsedTime_; }
 	const MatchSummary& GetLastMatchSummary() const { return lastMatchSummary_; }
 	bool HasPendingAttack() const { return hasPendingAttack_; }
 	void ClearPendingAttack() { hasPendingAttack_ = false; }
 	int GetPendingGarbageToSend() const { return pendingGarbageToSend_; }
+	float GetPendingGarbageToSendFloat() const { return pendingGarbageAccumulator_; }
 	void ClearPendingGarbage() { pendingGarbageToSend_ = 0; }
-	float GetRemainingTimeAtSkip() const { return remainingTimeAtSkip_; }
 	const PuzzleBoard& GetBoard() const { return GetActiveBoard(); }
 	const PuzzleGoal& GetCombo() const { return combo_; }
 	int GetBoardSize() const { return config_.stageSize; }
@@ -95,9 +102,11 @@ public:
 	const std::map<int, LockInfo>& GetRowLocks() const { return rowLocks_[activeBoard_]; }
 	const std::map<int, LockInfo>& GetColLocks() const { return colLocks_[activeBoard_]; }
 
+	const std::vector<GarbageQueueEntry>& GetGarbageQueue() const { return garbageQueue_; }
+
 	void SetCursorPosition(int row, int col);
 	void ForceMove(int direction);
-	void ForceTimeSkip();
+	void ForceAttack();
 	void ForceSwitchBoard();
 
 	bool IsRowLocked(int row) const;
@@ -105,6 +114,10 @@ public:
 	int GetTotalLockCount() const { return static_cast<int>(rowLocks_[activeBoard_].size() + colLocks_[activeBoard_].size()); }
 
 	std::pair<int, int> GetCursorPosition() const { return cursor_.GetPosition(); }
+
+	/// お邪魔パネルキューを相殺する（自分が攻撃した時に呼ばれる）
+	/// @return 相殺しきれなかった余剰分
+	float OffsetGarbageQueue(float amount);
 
 private:
 	// ================================================================
@@ -129,7 +142,7 @@ private:
 	void SyncAllPanelVisuals();
 	void UpdateCursorSprite();
 	void UpdateLockOverlays();
-	void UpdateTimerGauge();
+	void UpdateGarbageQueueGauges();
 	void UpdateCollapseGauge();
 	void UpdateMatchText();
 	void UpdateInactivePreview(float deltaTime);
@@ -168,10 +181,9 @@ private:
 	void OnFillFinished();
 
 	// ================================================================
-	// 制限時間
+	// 攻撃アクション
 	// ================================================================
-	void OnTimerExpired();
-	void OnTimeSkip();
+	void OnAttack();
 
 	// ================================================================
 	// ステージ切り替え
@@ -191,9 +203,19 @@ private:
 	void CalculateAttackFromMatches();
 
 	// ================================================================
+	// お邪魔パネルキュー更新
+	// ================================================================
+	void UpdateGarbageQueue(float deltaTime);
+
+	// ================================================================
 	// 非アクティブボード更新
 	// ================================================================
 	void UpdateInactiveBoard(float deltaTime);
+
+	// ================================================================
+	// 時間経過倍率
+	// ================================================================
+	float GetEscalationMultiplier() const;
 
 	// ================================================================
 	// データ
@@ -204,8 +226,7 @@ private:
 	PuzzleCursor cursor_;
 	PuzzleGoal combo_;
 
-	float timer_ = 0.0f;
-	bool timerActive_ = false;
+	float gameElapsedTime_ = 0.0f;
 	Phase phase_ = Phase::Idle;
 
 	float phaseTimer_ = 0.0f;
@@ -218,7 +239,6 @@ private:
 	int pendingGarbageToSend_ = 0;
 	float pendingGarbageAccumulator_ = 0.0f;
 	float pendingLockTime_ = 0.0f;
-	float remainingTimeAtSkip_ = 0.0f;
 
 	// 移動回数カウント（お邪魔パネル出現用）
 	int moveCount_ = 0;
@@ -243,6 +263,9 @@ private:
 	// 移動時お邪魔パネルの次回出現予告位置
 	std::vector<std::pair<int, int>> nextMoveGarbagePositions_;
 
+	// お邪魔パネル遅延キュー（相手からの攻撃）
+	std::vector<GarbageQueueEntry> garbageQueue_;
+
 	// ================================================================
 	// スプライト
 	// ================================================================
@@ -266,8 +289,14 @@ private:
 	// 移動時お邪魔パネル予告オーバーレイ
 	std::vector<KashipanEngine::Sprite*> moveGarbageWarningSprites_;
 
-	KashipanEngine::Sprite* timerGaugeBgSprite_ = nullptr;
-	KashipanEngine::Sprite* timerGaugeFillSprite_ = nullptr;
+	// お邪魔パネルキューゲージ（背景・Fill・テキスト）
+	static constexpr int kMaxGarbageGauges = 8;
+	struct GarbageGaugeSprites {
+		KashipanEngine::Sprite* bg = nullptr;
+		KashipanEngine::Sprite* fill = nullptr;
+		KashipanEngine::Text* amountText = nullptr;
+	};
+	GarbageGaugeSprites garbageGaugeSprites_[kMaxGarbageGauges];
 
 	// 崩壊度テキスト（アクティブ/非アクティブ）
 	KashipanEngine::Text* activeCollapseText_ = nullptr;
@@ -287,7 +316,7 @@ private:
 	static constexpr float kMatchTextDuration = 2.0f;
 
 	std::string commandPrefix_ = "Puzzle";
-	std::string cmdTimeSkip_ = "PuzzleTimeSkip";
+	std::string cmdAttack_ = "PuzzleTimeSkip";
 	std::string cmdSwitchBoard_ = "PuzzleSwitchBoard";
 };
 

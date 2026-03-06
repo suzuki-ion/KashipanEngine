@@ -8,7 +8,6 @@
 #include <Objects/Puzzle/PuzzleBoard.h>
 #include <Objects/Puzzle/PuzzleCursor.h>
 #include <Objects/Puzzle/PuzzleGoal.h>
-#include <Objects/Puzzle/PuzzleSwapCooldown.h>
 #include <Config/PuzzleGameConfig.h>
 
 namespace Application {
@@ -116,11 +115,6 @@ public:
 
 	std::pair<int, int> GetCursorPosition() const { return cursor_.GetPosition(); }
 
-	// ================================================================
-	// ボードトランスフォーム操作
-	// ================================================================
-	KashipanEngine::Transform2D* GetActiveBoardTransform() { return activeBoardTransform_; }
-	KashipanEngine::Transform2D* GetInactiveBoardTransform() { return inactiveBoardTransform_; }
 	/// お邪魔パネルキューを相殺する（自分が攻撃した時に呼ばれる）
 	/// @return 相殺しきれなかった余剰分
 	float OffsetGarbageQueue(float amount);
@@ -144,10 +138,8 @@ private:
 	// スプライト生成・更新
 	// ================================================================
 	void CreateSprites();
-	void CreateBoardRootTransforms();
 	void ApplyPanelColor(int row, int col);
 	void SyncAllPanelVisuals();
-	void StartSwapPanelAnimation();
 	void UpdateCursorSprite();
 	void UpdateLockOverlays();
 	void UpdateGarbageQueueGauges();
@@ -157,8 +149,6 @@ private:
 	void UpdateInactiveLockOverlays();
 	void UpdateGarbageWarnings();
 	void UpdateMoveGarbageWarnings();
-	void UpdateSwapPanelAnimations(float deltaTime);
-	void UpdateSwapCoolDownSpriteAnimation(float deltaTime);
 
 	// ================================================================
 	// 移動時お邪魔パネル予告位置計算
@@ -273,8 +263,6 @@ private:
 	// 移動時お邪魔パネルの次回出現予告位置
 	std::vector<std::pair<int, int>> nextMoveGarbagePositions_;
 
-	// 入れ替え用のクールダウン管理クラス
-	PuzzleSwapCooldown swapCooldown_;
 	// お邪魔パネル遅延キュー（相手からの攻撃）
 	std::vector<GarbageQueueEntry> garbageQueue_;
 
@@ -287,10 +275,6 @@ private:
 	KashipanEngine::Transform2D* parentTransform_ = nullptr;
 	std::string playerName_;
 	bool isPlayer2_ = false;
-
-	// ボードルートトランスフォーム
-	KashipanEngine::Transform2D* activeBoardTransform_ = nullptr;
-	KashipanEngine::Transform2D* inactiveBoardTransform_ = nullptr;
 
 	std::vector<KashipanEngine::Sprite*> stagePanelSprites_;
 	std::vector<KashipanEngine::Sprite*> puzzlePanelSprites_;
@@ -334,10 +318,6 @@ private:
 	std::string commandPrefix_ = "Puzzle";
 	std::string cmdAttack_ = "PuzzleTimeSkip";
 	std::string cmdSwitchBoard_ = "PuzzleSwitchBoard";
-
-	// ステージ切り替えのクールダウン用スプライト
-	KashipanEngine::Sprite* switchCooldownSprite_;
-	KashipanEngine::Sprite* switchCooldownBackGroundSprite_;
 };
 
 } // namespace Application

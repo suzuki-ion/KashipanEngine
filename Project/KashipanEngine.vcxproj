@@ -211,6 +211,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzlePlayer.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleSwapCooldown.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
@@ -438,6 +439,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzlePlayer.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleNPC.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleSwapCooldown.h" />
     <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />

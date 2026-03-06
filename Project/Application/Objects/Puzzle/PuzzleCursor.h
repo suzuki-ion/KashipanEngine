@@ -1,6 +1,7 @@
 #pragma once
 #include <KashipanEngine.h>
 #include <utility>
+#include <string>
 
 namespace Application {
 
@@ -9,7 +10,8 @@ namespace Application {
 /// Space/Aボタンを押しながら方向入力で行/列の移動アクションを行う
 class PuzzleCursor {
 public:
-	void Initialize(int startRow, int startCol, int boardSize, float easingDuration);
+	void Initialize(int startRow, int startCol, int boardSize, float easingDuration,
+		const std::string& commandPrefix = "Puzzle");
 
 	/// カーソル入力の更新
 	/// @param inputCommand 入力コマンド
@@ -40,6 +42,13 @@ private:
 	int col_ = 0;
 	int boardSize_ = 0;
 	float easingDuration_ = 0.1f;
+
+	// コマンド名
+	std::string cmdUp_ = "PuzzleUp";
+	std::string cmdDown_ = "PuzzleDown";
+	std::string cmdLeft_ = "PuzzleLeft";
+	std::string cmdRight_ = "PuzzleRight";
+	std::string cmdActionHold_ = "PuzzleActionHold";
 
 	// イージング用
 	bool isMoving_ = false;

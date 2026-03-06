@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
@@ -190,6 +190,8 @@
     <ClCompile Include="Application\Objects\OutGameSystem\MenuActionManager.cpp" />
     <ClCompile Include="Application\Objects\Container\MenuSpriteCotainer.cpp" />
     <ClCompile Include="Application\MatsumotoUtility.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzlePlayer.cpp" />
+    <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -508,6 +510,8 @@
     <ClInclude Include="Application\Objects\Puzzle\PuzzleBoard.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzlePlayer.h" />
+    <ClInclude Include="Application\Objects\Puzzle\PuzzleNPC.h" />
     <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\MenuActionManager.h" />
     <ClInclude Include="Application\Objects\Container\MenuSpriteCotainer.h" />
@@ -627,5 +631,6 @@
     <None Include="Reference\10_Input_Controller.md" />
     <None Include="Reference\10_Input_InputCommand.md" />
     <None Include="Reference\14_BuildMacros.md" />
+    <None Include="Application\Config\PuzzleGameConfigGuide.md" />
   </ItemGroup>
 </Project>

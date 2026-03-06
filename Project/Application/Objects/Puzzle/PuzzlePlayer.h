@@ -146,6 +146,7 @@ private:
 	void UpdateGarbageWarnings();
 	void UpdateMoveGarbageWarnings();
 	void UpdateSwapPanelAnimations(float deltaTime);
+	void UpdateSwapCoolDownSpriteAnimation(float deltaTime);
 
 	// ================================================================
 	// 移動時お邪魔パネル予告位置計算
@@ -306,6 +307,10 @@ private:
 	std::string commandPrefix_ = "Puzzle";
 	std::string cmdTimeSkip_ = "PuzzleTimeSkip";
 	std::string cmdSwitchBoard_ = "PuzzleSwitchBoard";
+
+	// ステージ切り替えのクールダウン用スプライト
+	KashipanEngine::Sprite* switchCooldownSprite_;
+	KashipanEngine::Sprite* switchCooldownBackGroundSprite_;
 };
 
 } // namespace Application

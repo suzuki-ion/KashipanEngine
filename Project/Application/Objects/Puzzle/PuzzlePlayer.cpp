@@ -523,6 +523,49 @@ namespace Application {
 		// 14. 入れ替えのクールダウン
 		{
 			swapCooldown_.Initialize(config_.swapCooldown);
+			float size = 500.0f;
+			// ローディングみたいな丸がクルクル回るやつの背景オーバーレイ
+			auto bgSprite = std::make_unique<KashipanEngine::Sprite>();
+			bgSprite->SetUniqueBatchKey();
+			bgSprite->SetName(playerName_ + "_SwapCooldownBG");
+			bgSprite->SetAnchorPoint(0.5f, 0.5f);
+			if (auto* mat = bgSprite->GetComponent2D<KashipanEngine::Material2D>()) {
+				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.8f));
+				mat->SetTexture(whiteTexture);
+			}
+			if (auto* tr = bgSprite->GetComponent2D<KashipanEngine::Transform2D>()) {
+				tr->SetParentTransform(inactiveBoardTransform_);
+				tr->SetScale(Vector3(size, size, 1.0f));
+			}
+			if (screenBuffer2D_) {
+				bgSprite->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
+			}
+			else if (window_) {
+				bgSprite->AttachToRenderer(window_, "Object2D.DoubleSidedCulling.BlendNormal");
+			}
+			switchCooldownBackGroundSprite_ = bgSprite.get();
+			addObject2DFunc_(std::move(bgSprite));
+
+			// ローディングみたいな丸がクルクル回るやつ
+			auto sprite = std::make_unique<KashipanEngine::Sprite>();
+			 sprite->SetUniqueBatchKey();
+			 sprite->SetName(playerName_ + "_SwapCooldown");
+			 sprite->SetAnchorPoint(0.5f, 0.5f);
+			 if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+				 mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+				 mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("loading.png"));
+			 }
+			 if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
+				 tr->SetParentTransform(inactiveBoardTransform_);
+				 tr->SetScale(Vector3(size, size, 1.0f));
+			 }
+			 if (screenBuffer2D_) {
+				 sprite->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
+			 } else if (window_) {
+				 sprite->AttachToRenderer(window_, "Object2D.DoubleSidedCulling.BlendNormal");
+			 }
+			 switchCooldownSprite_ = sprite.get();
+			 addObject2DFunc_(std::move(sprite));
 		}
 	}
 
@@ -787,6 +830,43 @@ namespace Application {
 
 		inactiveBoardTransform_->SetTranslate(Vector3(newInactiveX, newInactiveY, newInactiveZ));
 		inactiveBoardTransform_->SetScale(Vector3(newInactiveScaleX, newInactiveScaleY, newInactiveScaleZ));
+	}
+
+	void PuzzlePlayer::UpdateSwapCoolDownSpriteAnimation(float deltaTime)
+	{
+		if (swapCooldown_.IsOnCooldown()) {
+			if (auto* tr = switchCooldownSprite_->GetComponent2D<KashipanEngine::Transform2D>()) {
+				tr->SetRotate(tr->GetRotate() + Vector3(0.0f, 0.0f, 3.14f * deltaTime));
+			}
+
+			if (auto* mat = switchCooldownSprite_->GetComponent2D<KashipanEngine::Material2D>())
+			{
+				float getAlpha = mat->GetColor().w;
+				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 1.0f, 0.5f);
+				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, getAlpha));
+			}
+			if (auto* mat = switchCooldownBackGroundSprite_->GetComponent2D<KashipanEngine::Material2D>())
+			{
+				float getAlpha = mat->GetColor().w;
+				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 0.8f, 0.5f);
+				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, getAlpha));
+			}
+		}
+		else {
+			
+			if (auto* mat = switchCooldownSprite_->GetComponent2D<KashipanEngine::Material2D>())
+			{
+				float getAlpha = mat->GetColor().w;
+				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 0.0f, 0.5f);
+				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, getAlpha));
+			}
+			if (auto* mat = switchCooldownBackGroundSprite_->GetComponent2D<KashipanEngine::Material2D>())
+			{
+				float getAlpha = mat->GetColor().w;
+				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 0.0f, 0.5f);
+				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, getAlpha));
+			}
+		}
 	}
 
 	void PuzzlePlayer::PreCalculateMoveGarbagePositions() {
@@ -1486,6 +1566,7 @@ namespace Application {
 		UpdateMoveGarbageWarnings();
 		UpdateShake(deltaTime);
 		UpdateSwapPanelAnimations(deltaTime);
+		UpdateSwapCoolDownSpriteAnimation(deltaTime);
 	}
 
 } // namespace Application

@@ -15,6 +15,7 @@ void PuzzleCursor::Initialize(int startRow, int startCol, int boardSize, float e
 	moveTimer_ = 0.0f;
 	hasMoveAction_ = false;
 	moveActionDir_ = -1;
+	isHoldingAction_ = false;
 
 	cmdUp_ = commandPrefix + "Up";
 	cmdDown_ = commandPrefix + "Down";
@@ -45,14 +46,14 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 
 	if (!inputCommand) return;
 
-	bool actionHeld = inputCommand->Evaluate(cmdActionHold_).Triggered();
+	isHoldingAction_ = inputCommand->Evaluate(cmdActionHold_).Triggered();
 
 	int dirUp = inputCommand->Evaluate(cmdUp_).Triggered() ? 1 : 0;
 	int dirDown = inputCommand->Evaluate(cmdDown_).Triggered() ? 1 : 0;
 	int dirLeft = inputCommand->Evaluate(cmdLeft_).Triggered() ? 1 : 0;
 	int dirRight = inputCommand->Evaluate(cmdRight_).Triggered() ? 1 : 0;
 
-	if (actionHeld && !panelsAnimating) {
+	if (isHoldingAction_ && !panelsAnimating) {
 		if (dirUp) {
 			hasMoveAction_ = true;
 			moveActionDir_ = 0;
@@ -66,7 +67,7 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 			hasMoveAction_ = true;
 			moveActionDir_ = 3;
 		}
-	} else if (!actionHeld) {
+	} else if (!isHoldingAction_) {
 		int newRow = row_;
 		int newCol = col_;
 
@@ -89,6 +90,10 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 			moveTimer_ = 0.0f;
 		}
 	}
+}
+
+bool PuzzleCursor::IsHoldingAction() const {
+	return isHoldingAction_;
 }
 
 } // namespace Application

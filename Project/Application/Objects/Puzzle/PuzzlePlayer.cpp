@@ -401,7 +401,7 @@ namespace Application {
 					float px = previewX + (c - halfPN + 0.5f) * previewCellSize;
 					float py = previewY + (static_cast<float>(n - 1) - r - halfPN + 0.5f) * previewCellSize;
 					tr->SetTranslate(Vector3(px, py, 0.0f));
-					tr->SetScale(Vector3(config_.panelScale , config_.panelScale , 1.0f));
+					tr->SetScale(Vector3(config_.panelScale * previewScale, config_.panelScale * previewScale, 1.0f));
 				}
 				attachSprite(sprite.get());
 				inactivePreviewSprites_[r * n + c] = sprite.get();

@@ -123,6 +123,10 @@ public:
     /// @return 入力評価結果
     ReturnInfo Evaluate(const std::string& action) const;
 
+#if defined(USE_IMGUI)
+    void ShowImGui();
+#endif
+
     /// @brief 登録済みコマンドをJSONファイルに保存する
     /// @param filepath 保存先ファイルパス
     /// @return 保存に成功した場合 true

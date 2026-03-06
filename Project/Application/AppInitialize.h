@@ -30,11 +30,11 @@ inline void AppInitialize(const GameEngine::Context &context) {
         //sm->RegisterScene<ResultScene>("ResultScene");
         //sm->RegisterScene<GameOverScene>("GameOverScene");
 
-        /*#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+        #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
                 sm->RegisterScene<TestScene>("TestScene");
                 context.sceneManager->ChangeScene("TestScene");
-        #endif*/
-		context.sceneManager->ChangeScene("GameScene");
+        #endif
+		//context.sceneManager->ChangeScene("GameScene");
     }
 
     if (context.inputCommand) {

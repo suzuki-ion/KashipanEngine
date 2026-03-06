@@ -205,16 +205,21 @@ namespace KashipanEngine {
 		}
 		float lockBreakMult = summary.isBreak ? config_.breakLockMultiplier : 1.0f;
 
-		float remainLockBonus = attacker.GetRemainingTimeAtSkip() * config_.remainingTimeLockBonus;
-		float totalLockTime = (baseLock * lockComboMult * lockBreakMult) + remainLockBonus;
+		float totalLockTime = baseLock * lockComboMult * lockBreakMult;
 
 		// ロック適用
 		ApplyLockToDefender(defender, summary, totalLockTime);
 
-		// お邪魔パネル送信
-		int garbageCount = attacker.GetPendingGarbageToSend();
-		if (garbageCount > 0) {
-			defender.ApplyGarbage(garbageCount);
+		// お邪魔パネル送信（遅延キュー方式＋相殺）
+		float garbageAmount = attacker.GetPendingGarbageToSendFloat();
+		if (garbageAmount > 0.0f) {
+			// まず自分のキューを相殺
+			float surplus = attacker.OffsetGarbageQueue(garbageAmount);
+			// 余剰分を相手に遅延キューとして送信
+			if (surplus > 0.0f) {
+				float delayTime = surplus * config_.garbageDelayTimeMultiplier;
+				defender.EnqueueGarbage(surplus, delayTime);
+			}
 		}
 
 		attacker.ClearPendingAttack();
@@ -361,13 +366,15 @@ namespace KashipanEngine {
 		ImGui::Text("P2 Collapse: %.0f%% / %.0f%%",
 			player2_.GetActiveCollapseRatio() * 100.0f,
 			player2_.GetInactiveCollapseRatio() * 100.0f);
-		ImGui::Text("P1 Timer: %.1f", player1_.GetTimer());
-		ImGui::Text("P2 Timer: %.1f", player2_.GetTimer());
+		ImGui::Text("P1 Elapsed: %.1f", player1_.GetGameElapsedTime());
+		ImGui::Text("P2 Elapsed: %.1f", player2_.GetGameElapsedTime());
 		const char* phaseNames[] = { "Idle", "Moving", "Clearing", "Filling" };
 		ImGui::Text("P1 Phase: %s", phaseNames[static_cast<int>(player1_.GetPhase())]);
 		ImGui::Text("P2 Phase: %s", phaseNames[static_cast<int>(player2_.GetPhase())]);
 		ImGui::Text("P1 Combo: %d", player1_.GetCombo().GetCurrentCombo());
 		ImGui::Text("P2 Combo: %d", player2_.GetCombo().GetCurrentCombo());
+		ImGui::Text("P1 Garbage Queue: %d", static_cast<int>(player1_.GetGarbageQueue().size()));
+		ImGui::Text("P2 Garbage Queue: %d", static_cast<int>(player2_.GetGarbageQueue().size()));
 
 		if (gameOver_) {
 			ImGui::TextColored(ImVec4(1, 1, 0, 1), "Winner: Player %d", winner_);
@@ -397,14 +404,12 @@ namespace KashipanEngine {
 
 		ImGui::Separator();
 		ImGui::Text("Battle Settings");
-		ImGui::SliderFloat("Time Limit", &config_.timeLimit, 1.0f, 60.0f);
 		ImGui::SliderFloat("Normal Lock Time", &config_.normalLockTime, 0.0f, 30.0f);
 		ImGui::SliderFloat("Straight Lock Time", &config_.straightLockTime, 0.0f, 30.0f);
 		ImGui::SliderFloat("Cross Lock Time", &config_.crossLockTime, 0.0f, 30.0f);
 		ImGui::SliderFloat("Square Lock Time", &config_.squareLockTime, 0.0f, 30.0f);
 		ImGui::SliderFloat("Combo Lock Mult", &config_.comboLockMultiplier, 1.0f, 10.0f);
 		ImGui::SliderFloat("Break Lock Mult", &config_.breakLockMultiplier, 1.0f, 10.0f);
-		ImGui::SliderFloat("Remain Time Lock Bonus", &config_.remainingTimeLockBonus, 0.0f, 5.0f);
 
 		ImGui::Separator();
 		ImGui::Text("Garbage Settings");
@@ -416,6 +421,10 @@ namespace KashipanEngine {
 		ImGui::SliderFloat("Cross Garbage Count", &config_.crossGarbageCount, 0.0f, 20.0f);
 		ImGui::SliderFloat("Square Garbage Count", &config_.squareGarbageCount, 0.0f, 20.0f);
 		ImGui::SliderFloat("Combo Garbage Mult", &config_.comboGarbageMultiplier, 1.0f, 5.0f);
+		ImGui::SliderFloat("Garbage Cleared Bonus", &config_.garbageClearedBonus, 0.0f, 5.0f);
+		ImGui::SliderFloat("Garbage Delay Time Mult", &config_.garbageDelayTimeMultiplier, 0.01f, 5.0f);
+		ImGui::SliderFloat("Escalation Interval", &config_.garbageEscalationInterval, 10.0f, 300.0f);
+		ImGui::SliderFloat("Escalation Increment", &config_.garbageEscalationIncrement, 0.0f, 1.0f);
 
 		ImGui::Separator();
 		ImGui::Text("Defeat Settings");
@@ -463,6 +472,19 @@ namespace KashipanEngine {
 		ImGui::Text("P2 Col Locks:");
 		for (auto& [k, v] : player2_.GetColLocks()) {
 			ImGui::Text("  Col %d: %.1fs", k, v.remainingTime);
+		}
+
+		// お邪魔パネルキュー表示
+		ImGui::Separator();
+		ImGui::Text("P1 Garbage Queue:");
+		for (size_t i = 0; i < player1_.GetGarbageQueue().size(); i++) {
+			const auto& e = player1_.GetGarbageQueue()[i];
+			ImGui::Text("  [%d] %.0f pcs, %.1fs / %.1fs", static_cast<int>(i), e.garbageAmount, e.remainingTime, e.totalTime);
+		}
+		ImGui::Text("P2 Garbage Queue:");
+		for (size_t i = 0; i < player2_.GetGarbageQueue().size(); i++) {
+			const auto& e = player2_.GetGarbageQueue()[i];
+			ImGui::Text("  [%d] %.0f pcs, %.1fs / %.1fs", static_cast<int>(i), e.garbageAmount, e.remainingTime, e.totalTime);
 		}
 
 		ImGui::End();

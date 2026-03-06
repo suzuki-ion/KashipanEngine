@@ -53,13 +53,10 @@ private:
 
 	float thinkTimer_ = 0.0f;       ///< 次に行動するまでの待ち時間
 	float thinkInterval_ = 1.0f;    ///< 行動間隔（難易度で変化）
-	float skipChance_ = 0.0f;       ///< 時間スキップする確率
-	float skipThreshold_ = 0.4f;    ///< 残り時間がこの割合以下でスキップ検討
+	float skipChance_ = 0.0f;       ///< 攻撃する確率
 	float switchChance_ = 0.1f;     ///< ボードをスイッチする確率
 	int maxMovesPerTurn_ = 1;       ///< 1ターンの最大移動回数
 	int movesThisTurn_ = 0;
-
-	bool shouldSkip_ = false;
 };
 
 } // namespace Application

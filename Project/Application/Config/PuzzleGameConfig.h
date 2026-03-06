@@ -55,9 +55,6 @@ struct PuzzleGameConfig {
 	// ステージ背景の色
 	Vector4 stageBackgroundColor = Vector4(0.2f, 0.2f, 0.2f, 1.0f);
 
-	// 制限時間（秒）
-	float timeLimit = 30.0f;
-
 	// ロック時間（秒）
 	float normalLockTime = 1.0f;
 	float straightLockTime = 3.0f;
@@ -68,9 +65,6 @@ struct PuzzleGameConfig {
 	float comboLockMultiplier = 2.0f;
 	// 『ブレイク』時のロック時間倍数
 	float breakLockMultiplier = 2.0f;
-
-	// 制限時間の余った秒数ぶんのロック時間加算
-	float remainingTimeLockBonus = 0.5f;
 
 	// お邪魔パネルが出現するまでの移動回数
 	int movesPerGarbage = 5;
@@ -90,6 +84,17 @@ struct PuzzleGameConfig {
 
 	// 敗北とみなす崩壊度のパーセンテージ (0.0~1.0)
 	float defeatCollapseRatio = 0.7f;
+
+	// お邪魔パネル1個あたりの出現量（お邪魔パネルが消えたとき攻撃量に加算される値）
+	float garbageClearedBonus = 1.0f;
+
+	// お邪魔パネル出現遅延時間の倍率（出現量 × この値 = 出現までの時間(秒)）
+	float garbageDelayTimeMultiplier = 0.5f;
+
+	// 時間経過によるお邪魔パネル出現量の倍率増加間隔（秒）
+	float garbageEscalationInterval = 60.0f;
+	// 時間経過によるお邪魔パネル出現量の倍率増加値
+	float garbageEscalationIncrement = 0.1f;
 
 	void LoadFromJSON(const std::string& filepath);
 	void SaveToJSON(const std::string& filepath) const;

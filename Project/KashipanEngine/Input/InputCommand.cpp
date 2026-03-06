@@ -9,6 +9,10 @@
 #include <algorithm>
 #include <cmath>
 
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#endif
+
 namespace KashipanEngine {
 
 namespace {
@@ -144,6 +148,86 @@ InputCommand::ReturnInfo InputCommand::Evaluate(const std::string& action) const
 
     return MakeReturnInfo(anyTriggered, value);
 }
+
+#if defined(USE_IMGUI)
+void InputCommand::ShowImGui() {
+    if (!ImGui::Begin("InputCommand - Registered Commands")) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Text("Command Count: %d", static_cast<int>(bindings_.size()));
+
+    if (bindings_.empty()) {
+        ImGui::TextUnformatted("No registered input commands.");
+        ImGui::End();
+        return;
+    }
+
+    for (const auto& [action, binds] : bindings_) {
+        const ReturnInfo cmdResult = Evaluate(action);
+
+        ImGui::PushID(action.c_str());
+        if (ImGui::TreeNode("%s", action.c_str())) {
+            ImGui::Text("Result: Triggered=%s  Value=%.3f", cmdResult.Triggered() ? "true" : "false", cmdResult.Value());
+            ImGui::Text("Binding Count: %d", static_cast<int>(binds.size()));
+
+            for (size_t i = 0; i < binds.size(); ++i) {
+                const auto& b = binds[i];
+                const ReturnInfo bindResult = EvaluateBinding(b);
+
+                ImGui::PushID(static_cast<int>(i));
+                if (ImGui::TreeNode("Binding")) {
+                    ImGui::Text("Index: %d", static_cast<int>(i));
+                    ImGui::Text("Device: %s", DeviceKindToString(b.kind).c_str());
+                    ImGui::Text("Result: Triggered=%s  Value=%.3f", bindResult.Triggered() ? "true" : "false", bindResult.Value());
+                    ImGui::Text("InvertValue: %s", b.invertValue ? "true" : "false");
+
+                    switch (b.kind) {
+                    case DeviceKind::Keyboard:
+                        ImGui::Text("Key: %s", KeyToString(b.key).c_str());
+                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
+                        break;
+                    case DeviceKind::MouseButton:
+                        ImGui::Text("Button: %s", MouseButtonToString(static_cast<MouseButton>(b.code)).c_str());
+                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
+                        break;
+                    case DeviceKind::MouseAxis:
+                        ImGui::Text("Axis: %s", MouseAxisToString(b.mouseAxis).c_str());
+                        ImGui::Text("Threshold: %.3f", b.threshold);
+                        ImGui::Text("Space: %s", b.mouseSpace == MouseSpace::Client ? "Client" : "Screen");
+                        break;
+                    case DeviceKind::ControllerButton:
+                        ImGui::Text("Button: %s", ControllerButtonToString(b.controllerButton).c_str());
+                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
+                        ImGui::Text("ControllerIndex: %d", b.controllerIndex);
+                        break;
+                    case DeviceKind::ControllerAnalog:
+                        ImGui::Text("Analog: %s", ControllerAnalogToString(static_cast<ControllerAnalog>(b.code)).c_str());
+                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
+                        ImGui::Text("ControllerIndex: %d", b.controllerIndex);
+                        ImGui::Text("Threshold: %.3f", b.threshold);
+                        break;
+                    case DeviceKind::ControllerAnalogDelta:
+                        ImGui::Text("Analog: %s", ControllerAnalogToString(static_cast<ControllerAnalog>(b.code)).c_str());
+                        ImGui::Text("ControllerIndex: %d", b.controllerIndex);
+                        ImGui::Text("Threshold: %.3f", b.threshold);
+                        break;
+                    }
+
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
+            }
+
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+    }
+
+    ImGui::End();
+}
+#endif
 
 InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
     if (!input_) return MakeReturnInfo(false, 0.0f);

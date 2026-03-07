@@ -22,6 +22,8 @@ private:
 	Application::TitleSelectManager titleSelectManager_;
 	// タイトル画面のスプライト管理
 	Application::TitleSpriteManager titleSpriteManager_;
+
+	bool transitionStarted_ = false;
 };
 
 } // namespace KashipanEngine

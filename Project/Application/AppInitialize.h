@@ -26,7 +26,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         
         //sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
         sm->RegisterScene<TitleScene>("TitleScene");
-        sm->RegisterScene<GameScene>("TestScene");
+        sm->RegisterScene<TestScene>("TestScene");
         sm->RegisterScene<ResultScene>("ResultScene");
         //sm->RegisterScene<GameOverScene>("GameOverScene");
 

@@ -74,6 +74,9 @@ private:
     // 背景スプライト
     Sprite* backgroundSprite_ = nullptr;
 
+    // 音声プレイヤー
+    AudioPlayer audioPlayer_;
+
     // 設定ファイルパス
     static constexpr const char* kConfigPath = "Assets/Application/PuzzleGameConfig.json";
 };

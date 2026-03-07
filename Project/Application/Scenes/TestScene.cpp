@@ -181,6 +181,17 @@ namespace KashipanEngine {
 			tutorialManager2P_.SetPosition(Vector2(cx * 1.8f, cy *0.1f));
 		}
 
+        // ================================================================
+        // BGM
+		// ================================================================
+		{
+            AudioManager::PlayParams params;
+            params.sound = AudioManager::GetSoundHandleFromFileName("bgmGame.mp3");
+            params.volume = 0.5f;
+            params.loop = true;
+            audioPlayer_.AddAudio(params);
+            audioPlayer_.ChangeAudio(2.0);
+        }
 	}
 
 	// ================================================================
@@ -216,7 +227,7 @@ namespace KashipanEngine {
 			// まず自分のキューを相殺
 			float surplus = attacker.OffsetGarbageQueue(garbageAmount);
 			// 余剰分を相手に遅延キューとして送信
-			if (surplus > 0.0f) {
+			if (surplus >= 1.0f) {
 				float delayTime = surplus * config_.garbageDelayTimeMultiplier;
 				defender.EnqueueGarbage(surplus, delayTime);
 

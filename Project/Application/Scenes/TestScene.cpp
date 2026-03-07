@@ -219,6 +219,11 @@ namespace KashipanEngine {
 			if (surplus > 0.0f) {
 				float delayTime = surplus * config_.garbageDelayTimeMultiplier;
 				defender.EnqueueGarbage(surplus, delayTime);
+
+				auto h = AudioManager::GetSoundHandleFromFileName("noiseSend.mp3");
+				if (h != AudioManager::kInvalidSoundHandle) {
+					AudioManager::Play(h, 0.9f);
+				}
 			}
 		}
 

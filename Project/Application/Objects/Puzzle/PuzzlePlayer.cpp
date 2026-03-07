@@ -1,4 +1,5 @@
 #include "Objects/Puzzle/PuzzlePlayer.h"
+#include "Assets/AudioManager.h"
 #include <algorithm>
 #include <set>
 #include <cmath>
@@ -61,6 +62,8 @@ namespace Application {
 		phase_ = Phase::Idle;
 		moveCount_ = 0;
 		inactiveDecayTimer_ = 0.0f;
+		prevActionHoldingForSE_ = false;
+		comboSePitch_ = -5.0f;
 
 		rowLocks_[0].clear();
 		colLocks_[0].clear();
@@ -808,7 +811,7 @@ namespace Application {
 				if (auto* tr = gs.amountText->GetComponent2D<KashipanEngine::Transform2D>()) {
 					// 1P: ゲージ右側、2P: ゲージ左側
 					float textX = isPlayer2_ ? (-stageWidth * 0.5f - 4.0f) : (stageWidth * 0.5f + 4.0f);
-					tr->SetTranslate(Vector3(textX, gaugeY, 0.0f));
+				 tr->SetTranslate(Vector3(textX, gaugeY, 0.0f));
 				}
 			}
 		}
@@ -871,7 +874,7 @@ namespace Application {
 				auto* sprite = garbageWarningSprites_[idx];
 				if (!sprite) continue;
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-					bool warn = warningSet.count({ r, c }) > 0;
+				 bool warn = warningSet.count({ r, c }) > 0;
 					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 				}
 			}
@@ -888,7 +891,7 @@ namespace Application {
 				auto* sprite = moveGarbageWarningSprites_[idx];
 				if (!sprite) continue;
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-					bool warn = warningSet.count({ r, c }) > 0;
+				 bool warn = warningSet.count({ r, c }) > 0;
 					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 				}
 			}
@@ -1101,6 +1104,11 @@ namespace Application {
 		if (static_cast<int>(rLocks.size() + cLocks.size()) >= kMaxTotalLocks) return;
 		if (isRow) rLocks[index] = { seconds };
 		else cLocks[index] = { seconds };
+
+		auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("lineLock.mp3");
+		if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+			KashipanEngine::AudioManager::Play(h, 0.9f);
+		}
 	}
 
 	void PuzzlePlayer::ClearAllLocks() {
@@ -1168,6 +1176,11 @@ namespace Application {
 		float scale = config_.panelScale;
 		auto& board = GetActiveBoard();
 
+		auto panelMoveHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName("panelMove.mp3");
+		if (panelMoveHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+			KashipanEngine::AudioManager::Play(panelMoveHandle, 0.9f);
+		}
+
 		switch (direction) {
 		case 0: board.ShiftColDown(col);   break;
 		case 1: board.ShiftColUp(col);     break;
@@ -1179,10 +1192,18 @@ namespace Application {
 		moveCount_++;
 		if (config_.movesPerGarbage > 0 && moveCount_ >= config_.movesPerGarbage) {
 			moveCount_ = 0;
+			bool spawnedAny = false;
 			// 予告していた位置にお邪魔パネルを配置
 			for (auto& [r, c] : nextMoveGarbagePositions_) {
 				if (board.GetPanel(r, c) > 0) {
 					board.SetPanel(r, c, PuzzleBoard::kGarbageType);
+					spawnedAny = true;
+				}
+			}
+			if (spawnedAny) {
+				auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("noiseSpawn.mp3");
+				if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+					KashipanEngine::AudioManager::Play(h, 0.9f);
 				}
 			}
 			nextMoveGarbagePositions_.clear();
@@ -1282,7 +1303,21 @@ namespace Application {
 
 		CalculateAttackFromMatches();
 
+		const bool hasAnyShapeMatch =
+			(lastMatchSummary_.normalCount > 0) ||
+			(lastMatchSummary_.straightCount > 0) ||
+			(lastMatchSummary_.crossCount > 0) ||
+			(lastMatchSummary_.squareCount > 0);
+		if (hasAnyShapeMatch) {
+			auto comboHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName("combo.mp3");
+			if (comboHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+				KashipanEngine::AudioManager::Play(comboHandle, 1.0f, std::clamp(comboSePitch_, -5.0f, 5.0f));
+				comboSePitch_ = std::min(comboSePitch_ + 1.0f, 5.0f);
+			}
+		}
+
 		{
+
 			std::string text;
 			if (lastMatchSummary_.normalCount > 0)
 				text += "Normal x" + std::to_string(lastMatchSummary_.normalCount) + "\n";
@@ -1329,25 +1364,20 @@ namespace Application {
 
 	void PuzzlePlayer::StartFillingPhase() {
 		int n = config_.stageSize;
-		float scale = config_.panelScale;
+	 float scale = config_.panelScale;
 
 		std::map<int, int> hRowClearCount;
 		std::map<int, int> vColClearCount;
 		for (const auto& m : pendingMatches_) {
-			if (m.type == PuzzleBoard::MatchType::Normal || m.type == PuzzleBoard::MatchType::Straight) {
-				if (m.panelType == PuzzleBoard::kGarbageType) {
-					// お邪魔パネルのダミーマッチ → セルごとに行に追加
-					for (auto& [r, c] : m.cells) hRowClearCount[r]++;
-				}
-				else if (m.isHorizontal) {
-					hRowClearCount[m.fixedIndex] += static_cast<int>(m.cells.size());
-				}
-				else {
-					vColClearCount[m.fixedIndex] += static_cast<int>(m.cells.size());
-				}
+			if (m.panelType == PuzzleBoard::kGarbageType) {
+				// お邪魔パネルのダミーマッチ → セルごとに行に追加
+				for (auto& [r, c] : m.cells) hRowClearCount[r]++;
+			}
+			else if (m.isHorizontal) {
+				hRowClearCount[m.fixedIndex] += static_cast<int>(m.cells.size());
 			}
 			else {
-				for (auto& [r, c] : m.cells) hRowClearCount[r]++;
+				vColClearCount[m.fixedIndex] += static_cast<int>(m.cells.size());
 			}
 		}
 		for (auto& [row, cnt] : hRowClearCount) cnt = std::min(cnt, n);
@@ -1519,13 +1549,13 @@ namespace Application {
 					for (int i = 0; i < count && i < static_cast<int>(normalCells.size()); i++) {
 						board.SetPanel(normalCells[i].first, normalCells[i].second, PuzzleBoard::kGarbageType);
 					}
-					SyncAllPanelVisuals();
 
-					// シェイク演出
-					if (parentTransform_) {
-						parentOriginalPos_ = parentTransform_->GetTranslate();
-						shakeTimer_ = shakeDuration_;
+					auto spawnHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName("noiseSpawn.mp3");
+					if (spawnHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+						KashipanEngine::AudioManager::Play(spawnHandle, 0.9f);
 					}
+
+					SyncAllPanelVisuals();
 				}
 				it = garbageQueue_.erase(it);
 			}
@@ -1551,6 +1581,7 @@ namespace Application {
 
 	void PuzzlePlayer::OnAttack() {
 		if (!IsAnimating()) {
+			comboSePitch_ = -5.0f;
 			if (!StartClearingPhase()) {
 				combo_.ResetCombo();
 			}
@@ -1728,8 +1759,34 @@ namespace Application {
 
 		UpdatePhase(deltaTime);
 
+		const auto prevCursorPos = cursor_.GetPosition();
+		const bool prevHolding = cursor_.IsHoldingAction();
 		cursor_.Update(inputCommand, deltaTime, IsAnimating());
 		UpdateCursorSprite();
+
+		if (inputCommand) {
+			const auto currentCursorPos = cursor_.GetPosition();
+			if (currentCursorPos != prevCursorPos) {
+				auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("cursorMove.mp3");
+				if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+					KashipanEngine::AudioManager::Play(h, 0.8f);
+				}
+			}
+
+			const bool nowHolding = cursor_.IsHoldingAction();
+			if (!prevHolding && nowHolding) {
+				auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("cursorSubmit.mp3");
+				if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+					KashipanEngine::AudioManager::Play(h, 0.8f);
+				}
+			}
+			if (prevHolding && !nowHolding) {
+				auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("cursorCancel.mp3");
+				if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+					KashipanEngine::AudioManager::Play(h, 0.8f);
+				}
+			}
+		}
 
 		if (cursor_.HasMoveAction() && !IsAnimating()) {
 			int dir = cursor_.GetMoveActionDirection();

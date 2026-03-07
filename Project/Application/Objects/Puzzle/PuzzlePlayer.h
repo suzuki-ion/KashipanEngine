@@ -333,6 +333,10 @@ private:
 	std::string cmdAttack_ = "PuzzleTimeSkip";
 	std::string cmdSwitchBoard_ = "PuzzleSwitchBoard";
 
+	// SE管理
+	bool prevActionHoldingForSE_ = false;
+	float comboSePitch_ = -5.0f;
+
 	// ステージ切り替えのクールダウン用スプライト
 	KashipanEngine::Sprite* switchCooldownSprite_;
 	KashipanEngine::Sprite* switchCooldownBackGroundSprite_;

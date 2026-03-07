@@ -19,6 +19,11 @@ namespace KashipanEngine {
 	TestScene::~TestScene() {}
 
 	void TestScene::Initialize() {
+		SetNextSceneName("ResultScene");
+
+		gameStartSystem_.Initialize();
+		gameStartSystem_.StartSequence(1.0f);
+
 		sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
 
 		AddSceneComponent(std::make_unique<SceneChangeIn>());
@@ -297,6 +302,8 @@ namespace KashipanEngine {
 			winner_ = 1;
 			if (resultText_) resultText_->SetText("Player 1 Wins!");
 		}
+
+		autoSceneChangeTimer_ = 3.0f;
 	}
 
 	// ================================================================
@@ -326,7 +333,8 @@ namespace KashipanEngine {
 			}
 		}
 
-		if (!gameOver_) {
+		gameStartSystem_.Update(deltaTime);
+		if (!gameOver_ && gameStartSystem_.IsGameStarted()) {
 			// プレイヤー1 更新（キーボード/コントローラー）
 			player1_.Update(deltaTime, GetInputCommand());
 			
@@ -354,8 +362,27 @@ namespace KashipanEngine {
 			CheckWinCondition();
 		}
 
+		// ゲームオーバー後の自動シーン遷移処理
+		if (gameOver_) {
+			autoSceneChangeTimer_ -= deltaTime;
+			if(autoSceneChangeTimer_ <= 0.0f) {
+				if (GetNextSceneName().empty()) {
+					SetNextSceneName("MenuScene");
+				}
+				if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+					out->Play();
+				}
+			}
+		}
+
 #if defined(USE_IMGUI)
 		ImGui::Begin("Puzzle Game Config");
+
+		if (ImGui::Button("Force GameOver")) {
+			gameOver_ = true;
+			winner_ = 1;
+			if (resultText_) resultText_->SetText("Player 1 Wins!");
+		}
 
 		ImGui::Text("=== Battle Status ===");
 		ImGui::Text("P1 Active Board: %d", player1_.GetActiveIndex());

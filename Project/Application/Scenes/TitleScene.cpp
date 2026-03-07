@@ -41,13 +41,21 @@ void TitleScene::Initialize() {
             name); };
 	// タイトルスプライトマネージャーの初期化
 	titleSpriteManager_.Initialize(CreateSirite);
-
+    SetNextSceneName("TestScene");
 }
 
 TitleScene::~TitleScene() {
 }
 
 void TitleScene::OnUpdate() {
+    if (!GetNextSceneName().empty()) {
+        if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+            if (out->IsFinished()) {
+                ChangeToNextScene();
+            }
+        }
+    }
+
 	// タイトルセレクトマネージャーの更新
 	float deltaTime = KashipanEngine::GetDeltaTime();
     titleSelectManager_.Update(deltaTime);
@@ -56,11 +64,9 @@ void TitleScene::OnUpdate() {
 
 	// モード選択が完了して遷移すべきか
     if (titleSelectManager_.GetModeSelectSubmitted()) {
-        if (!transitionStarted_) {
-            if (auto* out = GetSceneComponent<SceneChangeOut>()) {
-                out->Play();
-				transitionStarted_ = true;
-            }
+        if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+            out->Play();
+            transitionStarted_ = true;
         }
     }
 
@@ -75,15 +81,7 @@ void TitleScene::OnUpdate() {
         }
     }
 
-    if (!GetNextSceneName().empty()) {
-        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
-            if (out->IsFinished()) {
-                // 遷移先はゲームシーン
-                SetNextSceneName("TestScene");
-                ChangeToNextScene();
-            }
-        }
-    }
+   
 }
 
 } // namespace KashipanEngine

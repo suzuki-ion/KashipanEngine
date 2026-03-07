@@ -212,6 +212,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\Objects\Puzzle\PuzzlePlayer.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleSwapCooldown.cpp" />
+    <ClCompile Include="Application\Objects\TitleSystem\SelectNumderManager.cpp" />
+    <ClCompile Include="Application\Objects\TitleSystem\TitleSelectManager.cpp" />
+    <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
@@ -440,6 +443,10 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Puzzle\PuzzlePlayer.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleNPC.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleSwapCooldown.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\SelectNumderManager.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\TitleSection.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\TitleSelectManager.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\TitleSpriteManager.h" />
     <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />

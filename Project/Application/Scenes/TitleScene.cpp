@@ -20,8 +20,7 @@ void TitleScene::Initialize() {
         in->Play();
     }
 
-    // 遷移先はゲームシーン
-    SetNextSceneName("TestScene");
+	transitionStarted_ = false;
 
 	// タイトルセレクトマネージャーの初期化
 	titleSelectManager_.Initialize(
@@ -55,6 +54,16 @@ void TitleScene::OnUpdate() {
 	titleSpriteManager_.Update(
         deltaTime,titleSelectManager_.GetCurrentSection(),titleSelectManager_.GetCurrentSelectNumber());
 
+	// モード選択が完了して遷移すべきか
+    if (titleSelectManager_.GetModeSelectSubmitted()) {
+        if (!transitionStarted_) {
+            if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+                out->Play();
+				transitionStarted_ = true;
+            }
+        }
+    }
+
     if (auto *ic = GetInputCommand()) {
         if (ic->Evaluate("DebugSceneChange").Triggered()) {
             if (GetNextSceneName().empty()) {
@@ -69,6 +78,8 @@ void TitleScene::OnUpdate() {
     if (!GetNextSceneName().empty()) {
         if (auto *out = GetSceneComponent<SceneChangeOut>()) {
             if (out->IsFinished()) {
+                // 遷移先はゲームシーン
+                SetNextSceneName("TestScene");
                 ChangeToNextScene();
             }
         }

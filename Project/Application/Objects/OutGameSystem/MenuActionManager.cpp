@@ -20,9 +20,6 @@ void Application::MenuActionManager::Initialize(
 	// メニューを閉じるアクションは常時有効にしておく
 	menuActions_.clear();
 	menuActions_.push_back([this]() { isMenuOpen_ = false; });
-	// ダミーのメニューアクションを追加
-	menuActions_.push_back([]() { /* メニューアクション1 */ });
-	menuActions_.push_back([]() { /* メニューアクション2 */ });
 }
 
 void MenuActionManager::Update()

@@ -58,12 +58,13 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
 		// メニュー呼び出し
 		ic->RegisterCommand("Menu", Key::M, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("Menu", Key::E, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Menu", ControllerButton::Start, InputCommand::InputState::Trigger);
 
 		// 上下選択
+        ic->RegisterCommand("Up", Key::W, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Up", Key::Up, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Up", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Down", Key::S, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Down", Key::Down, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Down", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
 

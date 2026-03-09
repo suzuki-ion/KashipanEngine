@@ -192,7 +192,7 @@ namespace KashipanEngine {
 		{
             AudioManager::PlayParams params;
             params.sound = AudioManager::GetSoundHandleFromFileName("bgmGame.mp3");
-            params.volume = 0.5f;
+            params.volume = 0.2f;
             params.loop = true;
             audioPlayer_.AddAudio(params);
             audioPlayer_.ChangeAudio(2.0);

@@ -12,6 +12,7 @@
 #include <Config/PuzzleGameConfig.h>
 
 #include <Objects/OutGameSystem/GameTutorialManager.h>
+#include <Objects/OutGameSystem/GameStartSystem.h>
 
 namespace KashipanEngine {
 
@@ -42,9 +43,11 @@ private:
     void CheckWinCondition();
 
     // ================================================================
+	float autoSceneChangeTimer_ = 3.0f;
 
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
+	Application::GameStartSystem gameStartSystem_;
     Application::PuzzleGameConfig config_;
 
     // プレイヤー1（左側）

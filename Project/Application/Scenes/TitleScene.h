@@ -1,5 +1,7 @@
 #pragma once
 #include <KashipanEngine.h>
+#include <Objects/TitleSystem/TitleSelectManager.h>
+#include <Objects/TitleSystem/TitleSpriteManager.h>
 
 namespace KashipanEngine {
 
@@ -15,6 +17,13 @@ protected:
 
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
+
+	// タイトル画面のセクション管理(データのみ)
+	Application::TitleSelectManager titleSelectManager_;
+	// タイトル画面のスプライト管理
+	Application::TitleSpriteManager titleSpriteManager_;
+
+	bool transitionStarted_ = false;
 };
 
 } // namespace KashipanEngine

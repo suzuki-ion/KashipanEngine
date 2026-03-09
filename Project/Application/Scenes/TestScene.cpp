@@ -1,6 +1,7 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
+#include "Objects/TitleSystem/TitleSection.h"
 
 #include <algorithm>
 
@@ -20,6 +21,9 @@ namespace KashipanEngine {
 
 	void TestScene::Initialize() {
 		SetNextSceneName("ResultScene");
+
+        auto titleSection = GetSceneVariableOr<Application::TitleSection>("SelectedModeSection", Application::TitleSection::AISelect);
+        int aiDifficultyInt = GetSceneVariableOr<int>("SelectedAINumber", -1);
 
 		gameStartSystem_.Initialize();
 		gameStartSystem_.StartSequence(1.0f);
@@ -109,7 +113,9 @@ namespace KashipanEngine {
 		player2_.Initialize(config_, screenBuffer2D, window, addObj2D, player2ParentTransform_, "P2", "P2Puzzle", true);
 
 		// NPC初期化
+        isNPCMode_ = (titleSection == Application::TitleSection::AISelect);
 		if (isNPCMode_) {
+            npcDifficulty_ = static_cast<Application::PuzzleNPC::Difficulty>(std::clamp(aiDifficultyInt, 0, 2));
 			npc_.Initialize(&player2_, npcDifficulty_);
 		}
 

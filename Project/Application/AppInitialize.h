@@ -25,16 +25,16 @@ inline void AppInitialize(const GameEngine::Context &context) {
         auto *sm = context.sceneManager;
         
         //sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
-        //sm->RegisterScene<TitleScene>("TitleScene");
-        sm->RegisterScene<GameScene>("GameScene");
-        //sm->RegisterScene<ResultScene>("ResultScene");
+        sm->RegisterScene<TitleScene>("TitleScene");
+        sm->RegisterScene<TestScene>("TestScene");
+        sm->RegisterScene<ResultScene>("ResultScene");
         //sm->RegisterScene<GameOverScene>("GameOverScene");
 
-        #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+        /*#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
                 sm->RegisterScene<TestScene>("TestScene");
                 context.sceneManager->ChangeScene("TestScene");
-        #endif
-		//context.sceneManager->ChangeScene("GameScene");
+        #endif*/
+		context.sceneManager->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {
@@ -46,11 +46,15 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Submit", Key::Enter, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", Key::Space, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
+
+        ic->RegisterCommand("P2Submit", ControllerButton::A, InputCommand::InputState::Down, 1);
         
         // キャンセル
         ic->RegisterCommand("Cancel", Key::Escape, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Cancel", ControllerButton::B, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Cancel", ControllerButton::Back, InputCommand::InputState::Trigger);
+
+        ic->RegisterCommand("P2Cancel", ControllerButton::B, InputCommand::InputState::Down, 1);
 
 		// メニュー呼び出し
 		ic->RegisterCommand("Menu", Key::M, InputCommand::InputState::Trigger);

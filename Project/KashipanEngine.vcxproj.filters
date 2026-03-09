@@ -194,6 +194,11 @@
     <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameTutorialManager.cpp" />
     <ClCompile Include="Application\Objects\Puzzle\PuzzleSwapCooldown.cpp" />
+    <ClCompile Include="Application\Objects\TitleSystem\SelectNumderManager.cpp" />
+    <ClCompile Include="Application\Objects\TitleSystem\TitleSelectManager.cpp" />
+    <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
+    <ClCompile Include="Application\Objects\OutGameSystem\GameStartSystem.cpp" />
+    <ClCompile Include="Application\Objects\ResultSystem\ResultSelector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -520,6 +525,12 @@
     <ClInclude Include="Application\MatsumotoUtility.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameTutorialManager.h" />
     <ClInclude Include="Application\Objects\Puzzle\PuzzleSwapCooldown.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\TitleSelectManager.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\SelectNumderManager.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\TitleSpriteManager.h" />
+    <ClInclude Include="Application\Objects\TitleSystem\TitleSection.h" />
+    <ClInclude Include="Application\Objects\OutGameSystem\GameStartSystem.h" />
+    <ClInclude Include="Application\Objects\ResultSystem\ResultSelector.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

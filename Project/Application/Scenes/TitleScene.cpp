@@ -64,6 +64,15 @@ void TitleScene::OnUpdate() {
 
 	// モード選択が完了して遷移すべきか
     if (titleSelectManager_.GetModeSelectSubmitted()) {
+        Application::TitleSection selectedSection = titleSelectManager_.GetCurrentSection();
+        if (selectedSection == Application::TitleSection::AISelect) {
+            int aiNumber = titleSelectManager_.GetCurrentSelectNumber();
+            AddSceneVariable("SelectedAINumber", aiNumber);
+        } else if (selectedSection == Application::TitleSection::MultiplayerSelect) {
+            int multiplayerNumber = titleSelectManager_.GetCurrentSelectNumber();
+            AddSceneVariable("SelectedMultiplayerNumber", multiplayerNumber);
+        }
+        AddSceneVariable("SelectedModeSection", selectedSection);
         if (auto* out = GetSceneComponent<SceneChangeOut>()) {
             out->Play();
             transitionStarted_ = true;

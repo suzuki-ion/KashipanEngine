@@ -316,6 +316,9 @@ private:
 	KashipanEngine::Text* activeCollapseText_ = nullptr;
 	KashipanEngine::Text* inactiveCollapseText_ = nullptr;
 
+	// 残り移動回数テキスト
+	KashipanEngine::Text *remainingMoveCount_ = nullptr;
+
 	// 非アクティブボード小表示スプライト
 	std::vector<KashipanEngine::Sprite*> inactivePreviewSprites_;
 	KashipanEngine::Sprite* inactivePreviewBg_ = nullptr;

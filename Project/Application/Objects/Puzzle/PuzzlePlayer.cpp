@@ -591,7 +591,7 @@ namespace Application {
 			else if (window_) {
 				text->AttachToRenderer(window_, "Object2D.DoubleSidedCulling.BlendNormal");
 			}
-			activeCollapseText_ = text.get();
+			remainingMoveCount_ = text.get();
 			addObject2DFunc_(std::move(text));
 		}
 	}
@@ -998,9 +998,9 @@ namespace Application {
 
 	void PuzzlePlayer::UpdateMoveCountText()
 	{
-		if (activeCollapseText_) {
+		if (remainingMoveCount_) {
 			int pct = config_.movesPerGarbage - moveCount_;
-			activeCollapseText_->SetTextFormat("{}", pct);
+			remainingMoveCount_->SetTextFormat("{}", pct);
 		}
 	}
 

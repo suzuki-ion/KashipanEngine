@@ -262,7 +262,7 @@ private:
 	float shakeTimer_ = 0.0f;
 	float shakeDuration_ = 0.3f;
 	float shakeIntensity_ = 10.0f;
-	Vector3 parentOriginalPos_{};
+    Vector3 parentOriginalPos_ = { 0.0f, 0.0f, 0.0f };
 
 	// お邪魔パネル予告位置
 	std::vector<std::pair<int, int>> pendingGarbagePositions_;

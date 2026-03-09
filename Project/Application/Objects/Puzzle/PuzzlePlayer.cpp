@@ -49,6 +49,8 @@ namespace Application {
 		cmdAttack_ = commandPrefix + "TimeSkip";
 		cmdSwitchBoard_ = commandPrefix + "SwitchBoard";
 
+        parentOriginalPos_ = parentTransform_ ? parentTransform_->GetTranslate() : Vector3(0.0f, 0.0f, 0.0f);
+
 		boards_[0].Initialize(config_.stageSize, config_.panelTypeCount);
 		boards_[1].Initialize(config_.stageSize, config_.panelTypeCount);
 		activeBoard_ = 0;
@@ -1556,6 +1558,7 @@ namespace Application {
 						KashipanEngine::AudioManager::Play(spawnHandle, 0.9f);
 					}
 
+                    shakeTimer_ = shakeDuration_;
 					SyncAllPanelVisuals();
 				}
 				it = garbageQueue_.erase(it);

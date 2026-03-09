@@ -361,7 +361,7 @@ namespace Application {
 		}
 
 		// 9. 非アクティブボードプレビュー背景
-		float previewScale = 0.3f;
+		float previewScale = 1.0f;
 		float previewCellSize = (config_.panelScale + config_.panelGap) * previewScale;
 		float previewWidth = static_cast<float>(n) * previewCellSize;
 		float previewHeight = static_cast<float>(n) * previewCellSize;
@@ -401,8 +401,8 @@ namespace Application {
 				}
 				if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
 					tr->SetParentTransform(inactiveBoardTransform_);
-					float px = previewX + (c - halfPN + 0.5f) * previewCellSize;
-					float py = previewY + (static_cast<float>(n - 1) - r - halfPN + 0.5f) * previewCellSize;
+					float px = (c - halfPN + 0.5f) * previewCellSize;
+					float py = (static_cast<float>(n - 1) - r - halfPN + 0.5f) * previewCellSize;
 					tr->SetTranslate(Vector3(px, py, 0.0f));
 					tr->SetScale(Vector3(config_.panelScale * previewScale, config_.panelScale * previewScale, 1.0f));
 				}
@@ -462,7 +462,8 @@ namespace Application {
 			text->SetName(playerName_ + "_InactiveCollapse");
 			if (auto* tr = text->GetComponent2D<KashipanEngine::Transform2D>()) {
 				tr->SetParentTransform(inactiveBoardTransform_);
-				tr->SetTranslate(Vector3(previewX, previewY - previewHeight * 0.5f - 12.0f, 0.0f));
+				tr->SetTranslate(Vector3(0.0f, previewY - previewHeight * 0.5f - 12.0f, 0.0f));
+                tr->SetScale(Vector3(2.0f, 2.0f, 2.0f));
 			}
 			text->SetFont("Assets/Application/test.fnt");
 			text->SetText("0%");

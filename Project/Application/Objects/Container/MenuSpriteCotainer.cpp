@@ -74,7 +74,7 @@ void MenuSpriteContainer::Update(float delta) {
 
 				// 中心を向くように回転(中心方向のベクトルから角度を計算)
 				float rotationAngle = std::atan2(-offset.y, -offset.x);
-				tr->SetRotate(Vector3(0.0f, 0.0f, rotationAngle));
+				tr->SetRotate(Vector3(0.0f, 0.0f, rotationAngle+3.14f));
 			}
 		}
 	}

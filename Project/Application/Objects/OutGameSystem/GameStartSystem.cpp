@@ -10,6 +10,9 @@ void Application::GameStartSystem::Initialize()
 void Application::GameStartSystem::Update(float delta)
 {
 	if (gameStarted_) return;
+	
+	if (delta >= 0.016f) delta = 0.016f;
+
 	startTimer_ += delta;
 	if (startTimer_ >= startDelay_) {
 		gameStarted_ = true;

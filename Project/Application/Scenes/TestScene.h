@@ -14,6 +14,9 @@
 #include <Objects/OutGameSystem/GameTutorialManager.h>
 #include <Objects/OutGameSystem/GameStartSystem.h>
 
+#include <Objects/Container/MenuSpriteCotainer.h>
+#include <Objects/OutGameSystem/MenuActionManager.h>
+
 namespace KashipanEngine {
 
 class TestScene final : public SceneBase {
@@ -48,7 +51,14 @@ private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
 
 	Application::GameStartSystem gameStartSystem_;
+	Sprite* gameStartSprite_ = nullptr;
+
     Application::PuzzleGameConfig config_;
+
+	// メニュー関連
+    Vector2 menuPosition_;
+    Application::MenuActionManager menuActionManager_;
+    Application::MenuSpriteContainer menuSpriteContainer_;
 
     // プレイヤー1（左側）
     Sprite* player1ParentSprite_ = nullptr;

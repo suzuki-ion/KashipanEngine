@@ -22,7 +22,7 @@ namespace KashipanEngine {
 		SetNextSceneName("ResultScene");
 
 		gameStartSystem_.Initialize();
-		gameStartSystem_.StartSequence(1.0f);
+		gameStartSystem_.StartSequence(3.0f);
 
 		sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
 
@@ -186,6 +186,69 @@ namespace KashipanEngine {
 			tutorialManager2P_.SetPosition(Vector2(cx * 1.8f, cy *0.1f));
 		}
 
+		// ================================================================
+		// Menu
+		// ================================================================
+		// メニューで使う入力を登録
+		menuActionManager_.Initialize(
+			[this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Menu").Triggered(); },
+			[this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Submit").Triggered(); },
+			[this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Cancel").Triggered(); },
+			[this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Up").Triggered(); },
+			[this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Down").Triggered(); }
+		);
+		menuActionManager_.AddMenuAction([this]() {
+			if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+				SetNextSceneName("TitleScene");
+				out->Play();
+			}
+			});
+		menuActionManager_.AddMenuAction([this]() {
+			if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+				SetNextSceneName("TestScene");
+				out->Play();
+			}
+			});
+		// メニューのスプライトを初期化
+		menuSpriteContainer_.Initialize();
+		menuPosition_ = Vector2(400.0f, 300.0f);
+		menuSpriteContainer_.SetPosition(menuPosition_);
+		std::vector<Sprite*> menuSprites;
+		for (int i = 0; i < 3; ++i) {
+			auto obj = std::make_unique<Sprite>();
+			obj->SetName("MenuSprite" + std::to_string(i));
+			obj->SetUniqueBatchKey();
+			if (auto* mat = obj->GetComponent2D<Material2D>()) {
+				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+				mat->SetTexture(TextureManager::GetTextureFromFileName("menu_" + std::to_string(i) + ".png"));
+			}
+			menuSprites.push_back(obj.get());
+			obj->AttachToRenderer(sceneDefaultVariables_->GetMainWindow(), "Object2D.DoubleSidedCulling.BlendNormal");
+			AddObject2D(std::move(obj));
+		}
+		menuSpriteContainer_.SetMenuSprite(menuSprites);
+
+		// ================================================================
+		// GameStartSprite
+		// ================================================================
+		{
+			auto obj = std::make_unique<Sprite>();
+			obj->SetName("GameStartSprite");
+			obj->SetUniqueBatchKey();
+			obj->SetAnchorPoint(0.5f, 0.5f);
+			if (auto* mat = obj->GetComponent2D<Material2D>()) {
+				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+				mat->SetTexture(TextureManager::GetTextureFromFileName("GameStart.png"));
+			}
+			menuSprites.push_back(obj.get());
+			obj->AttachToRenderer(sceneDefaultVariables_->GetMainWindow(), "Object2D.DoubleSidedCulling.BlendNormal");
+			gameStartSprite_ = obj.get();
+			AddObject2D(std::move(obj));
+
+			Application::MatsumotoUtility::FitSpriteToTexture(gameStartSprite_);
+			Application::MatsumotoUtility::SetTranslateToSprite(gameStartSprite_, Vector2(cx, cy));
+		}
+
         // ================================================================
         // BGM
 		// ================================================================
@@ -329,6 +392,13 @@ namespace KashipanEngine {
 	void TestScene::OnUpdate() {
 		float deltaTime = GetDeltaTime();
 
+		menuSpriteContainer_.SetPosition(menuPosition_);
+
+		menuActionManager_.Update();
+		menuSpriteContainer_.SetSelectedIndex(menuActionManager_.GetSelectedIndex());
+		menuSpriteContainer_.SetMenuOpen(menuActionManager_.IsMenuOpen());
+		menuSpriteContainer_.Update(KashipanEngine::GetDeltaTime());
+
 		// シーン遷移処理
 		if (auto* ic = GetInputCommand()) {
 			if (ic->Evaluate("DebugSceneChange").Triggered()) {
@@ -350,7 +420,13 @@ namespace KashipanEngine {
 		}
 
 		gameStartSystem_.Update(deltaTime);
-		if (!gameOver_ && gameStartSystem_.IsGameStarted()) {
+		if (!gameOver_ && gameStartSystem_.IsGameStarted() && !menuActionManager_.IsMenuOpen()) {
+			// ゲーム開始演出の更新
+			Vector3 startGameSpriteScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartSprite_);
+			startGameSpriteScale.x = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.x, 0.0f, 0.3f);
+			startGameSpriteScale.y = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.y, 0.0f, 0.3f);
+			Application::MatsumotoUtility::SetScaleToSprite(gameStartSprite_, startGameSpriteScale);
+
 			// プレイヤー1 更新（キーボード/コントローラー）
 			player1_.Update(deltaTime, GetInputCommand());
 			

@@ -59,6 +59,8 @@ void TitleScene::OnUpdate() {
 	// タイトルセレクトマネージャーの更新
 	float deltaTime = KashipanEngine::GetDeltaTime();
     titleSelectManager_.Update(deltaTime);
+	titleSpriteManager_.SetTriggered1PTimer(titleSelectManager_.Get1PTriggerGraceTime());
+	titleSpriteManager_.SetTriggered2PTimer(titleSelectManager_.Get2PTriggerGraceTime());
 	titleSpriteManager_.Update(
         deltaTime,titleSelectManager_.GetCurrentSection(),titleSelectManager_.GetCurrentSelectNumber());
 

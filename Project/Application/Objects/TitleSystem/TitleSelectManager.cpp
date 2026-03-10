@@ -19,7 +19,6 @@ void Application::TitleSelectManager::Initialize(std::function<bool()> upNumberF
 	multiplayerCancelFunc_ = multiplayerCancelFunc;
 
 	deltaTime_ = 0.016f;
-	simultaneousSubmitGraceTime_ = 0.0f;
 	modeSelectSubmitted_ = false;
 }
 void Application::TitleSelectManager::Update(float delta)
@@ -48,7 +47,7 @@ void Application::TitleSelectManager::UpdateModeSelectSection()
 {
 	modeSelectNumberManager_.Update();
 	if (submitFunc_()) {
-		if(modeSelectNumberManager_.GetSelectNumber() == 0) {
+		if (modeSelectNumberManager_.GetSelectNumber() == 0) {
 			currentSection_ = TitleSection::AISelect;
 		}
 		else {
@@ -73,32 +72,38 @@ void Application::TitleSelectManager::UpdateAISelectSection()
 
 void Application::TitleSelectManager::UpdateMultiplayerSelectSection()
 {
-	// 同時押し判定の猶予時間がある場合は、両方の決定がされたか、どちらかが先に決定したかをチェック
-	if(simultaneousSubmitGraceTime_ > 0.0f) {
-		// 1Pと2Pの同時決定の猶予時間中は、両方の決定がされたか、どちらかが先に決定したかをチェック
-		if (multiplayerSubmitFunc_() && submitFunc_()) {
-			modeSelectSubmitted_ = true;
-		}
-		simultaneousSubmitGraceTime_ -= deltaTime_;
-	}
-	else {
-		// 同時押し判定のクールダウン中は、どちらかが決定しても同時押し判定の猶予時間は開始せず、クールダウンが終わるまで待つ
-		if (simultaneousSubmitCooldown_ > 0.0f) {
-			simultaneousSubmitCooldown_ -= deltaTime_;
-		}
+	// 同時押し猶予時間の設定
+	float simultaneousSubmitGraceTime = 0.5f;
 
-		// 同時押し判定のクールダウンが終わっている状態で、どちらかが決定したら同時押し判定の猶予時間を開始
-		if (submitFunc_() || multiplayerSubmitFunc_()) {
-			if (simultaneousSubmitCooldown_ <= 0.0f) {
-				simultaneousSubmitCooldown_ = 1.0f; // 同時押し判定のクールダウンを開始
-				simultaneousSubmitGraceTime_ = 0.5f; // どちらかが決定したら、もう一方が同時に決定する猶予時間を開始
-			}
+	// 入力があった場合、猶予時間を設定
+	if (submitFunc_()) {
+		if (triggered1PTimer_ <= 0.0f) {
+			triggered1PTimer_ = simultaneousSubmitGraceTime;
 		}
+	}
+	if (multiplayerSubmitFunc_()) {
+		if (triggered2PTimer_ <= 0.0f) {
+			triggered2PTimer_ = simultaneousSubmitGraceTime;
+		}
+	}
+
+	// どちらかの猶予時間が残っている場合、遷移の条件を満たす
+	if (triggered1PTimer_ > 0.0f && triggered2PTimer_ > 0.0f) {
+		// これが遷移するトリガー
+		modeSelectSubmitted_ = true;
+	}
+
+	// 1pと2pの猶予時間を更新
+	if (triggered1PTimer_ > 0.0f) {
+		triggered1PTimer_ -= deltaTime_;
+	}
+	if (triggered2PTimer_ > 0.0f) {
+		triggered2PTimer_ -= deltaTime_;
 	}
 
 	// 猶予時間中であっても、どちらかがキャンセルしたらモード選択に戻る
 	if (multiplayerCancelFunc_() || cancelFunc_()) {
-		simultaneousSubmitGraceTime_ = 0.0f;
+
 		currentSection_ = TitleSection::ModeSelect;
 	}
 }

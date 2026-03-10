@@ -8,6 +8,8 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	float windowWidth = 1920.0f;
 	float windowHeight = 1080.0f;
 	centerPosition_ = Vector3(windowWidth * 0.5f, windowHeight *0.5f, 0.0f);
+	triggered1PTimer_ = 0.0f;
+	triggered2PTimer_ = 0.0f;
 
 	// セクションごとの更新関数を登録しておく
 	sectionUpdateFunctions_[TitleSection::TitleCall] = [this]() { UpdateTitleCallSection(); };
@@ -198,4 +200,12 @@ void Application::TitleSpriteManager::UpdateMultiplayerSelectSection()
 	Vector3 currentTranslateMultiBG = GetTranslateFromSprite(sprites_["SimultaneousSubmitGuideBG"]);
 	currentTranslateMultiBG.y = SimpleEaseIn(currentTranslateMultiBG.y, centerPosition_.y, 0.3f);
 	SetTranslateToSprite(sprites_["SimultaneousSubmitGuideBG"], currentTranslateMultiBG);
+
+	Vector3 currentControllerP1Translate = GetTranslateFromSprite(sprites_["ControllerP1"]);
+	currentControllerP1Translate.y = SimpleEaseIn(currentControllerP1Translate.y, triggered1PTimer_ * triggered1PTimer_ * 0.1f, 0.3f);
+	SetTranslateToSprite(sprites_["ControllerP1"], currentControllerP1Translate);
+
+	Vector3 currentControllerP2Translate = GetTranslateFromSprite(sprites_["ControllerP2"]);
+	currentControllerP2Translate.y = SimpleEaseIn(currentControllerP2Translate.y, triggered2PTimer_ * triggered2PTimer_ * 0.1f, 0.3f);
+	SetTranslateToSprite(sprites_["ControllerP2"], currentControllerP2Translate);
 }

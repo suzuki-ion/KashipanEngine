@@ -156,6 +156,16 @@ void Application::MatsumotoUtility::ShowSprite(KashipanEngine::Sprite* sprite)
 	}
 }
 
+void Application::MatsumotoUtility::RotateSprite(KashipanEngine::Sprite* sprite, Vector3 deltaRotation)
+{
+	if (!sprite) return;
+	if (auto *tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
+		Vector3 rotation = tr->GetRotate();
+		rotation += deltaRotation;
+		tr->SetRotate(rotation);
+	}
+}
+
 float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float transitionSpeed)
 {
 	float value = from;

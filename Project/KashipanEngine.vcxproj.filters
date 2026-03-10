@@ -25,11 +25,6 @@
     <ClCompile Include="Application\Objects\Container\BlockContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\BlockFaller.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\BlockScroller.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\MatchResolver.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\Thermometer.cpp" />
     <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitor.cpp" />
     <ClCompile Include="Application\Scenes\Components\BackMonitorRenderer.cpp" />
@@ -241,11 +236,6 @@
     <ClInclude Include="Application\Objects\Container\BlockSpriteContainer.h" />
     <ClInclude Include="Application\Objects\Container\HandBlockContainer.h" />
     <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
-    <ClInclude Include="Application\Objects\GameSystem\BlockFaller.h" />
-    <ClInclude Include="Application\Objects\GameSystem\BlockScroller.h" />
-    <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
-    <ClInclude Include="Application\Objects\GameSystem\MatchResolver.h" />
-    <ClInclude Include="Application\Objects\GameSystem\Thermometer.h" />
     <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
     <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />

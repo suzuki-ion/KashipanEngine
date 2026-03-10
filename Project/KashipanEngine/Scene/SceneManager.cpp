@@ -13,9 +13,9 @@ bool SceneManager::ChangeScene(const std::string &sceneName) {
     return true;
 }
 
-void SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
+bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     if (!hasPendingSceneChange_) {
-        return;
+        return false;
     }
 
     hasPendingSceneChange_ = false;
@@ -23,7 +23,7 @@ void SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     auto itF = factoriesByName_.find(pendingSceneName_);
     if (itF == factoriesByName_.end()) {
         pendingSceneName_.clear();
-        return;
+        return false;
     }
 
     if (currentScene_) {
@@ -38,6 +38,7 @@ void SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     }
 
     pendingSceneName_.clear();
+    return true;
 }
 
 } // namespace KashipanEngine

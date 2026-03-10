@@ -32,7 +32,7 @@ struct PuzzleGameConfig {
 	// お邪魔パネルの色
 	Vector4 garbageColor = Vector4(0.3f, 0.3f, 0.3f, 1.0f);
 	// お邪魔パネル予告の色
-	Vector4 garbageWarningColor = Vector4(0.5f, 0.5f, 0.5f, 0.5f);
+	Vector4 garbageWarningColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// パズルパネルが移動する際のイージング時間（秒）
 	float panelMoveEasingDuration = 0.15f;

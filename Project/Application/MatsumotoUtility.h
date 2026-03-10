@@ -36,6 +36,8 @@ namespace Application::MatsumotoUtility
 	void HideSprite(KashipanEngine::Sprite* sprite);
 	/// @brief スプライトを表示する(透明度を限界まで下げる)
 	void ShowSprite(KashipanEngine::Sprite* sprite);
+	/// @brief スプライトの回転をdeltaRotationだけ増加させる（単位はラジアン）
+	void RotateSprite(KashipanEngine::Sprite* sprite, Vector3 deltaRotation);
 
 	/// @brief 簡易イージング関数（イージングなしの線形補間に近い挙動）
 	float SimpleEaseIn(float from, float to, float transitionSpeed);

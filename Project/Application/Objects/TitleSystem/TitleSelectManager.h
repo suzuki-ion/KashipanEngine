@@ -33,6 +33,11 @@ namespace Application {
 			return 0;
 		}
 
+		/// 現在1pのコントローラの猶予時間を取得する
+		float Get1PTriggerGraceTime() const { return triggered1PTimer_; }
+		/// 現在2pのコントローラの猶予時間を取得する
+		float Get2PTriggerGraceTime() const { return triggered2PTimer_; }
+
 	private:
 		float deltaTime_;
 
@@ -54,13 +59,13 @@ namespace Application {
 		// マルチプレイ用の2Pの決定とキャンセルの関数（マルチプレイヤー選択セクションで使用）
 		std::function<bool()> multiplayerSubmitFunc_;
 		std::function<bool()> multiplayerCancelFunc_;
-		// 1Pと2Pの同時決定の猶予時間（秒）
-		float simultaneousSubmitGraceTime_;
-		// 同時押し判定クールダウン
-		float simultaneousSubmitCooldown_;
-
+		
 		// 遷移をさせるためのフラグ
 		bool modeSelectSubmitted_;
+
+		// 同時押し判定用のタイマー
+		float triggered1PTimer_ = 0.0f;
+		float triggered2PTimer_ = 0.0f;
 
 	private:
 		// タイトルコールセクションの処理

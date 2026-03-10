@@ -876,10 +876,22 @@ namespace Application {
 				if (idx >= static_cast<int>(garbageWarningSprites_.size())) continue;
 				auto* sprite = garbageWarningSprites_[idx];
 				if (!sprite) continue;
+
+				// ゴミ警告位置にスプライトを表示
+				Application::MatsumotoUtility::SetTextureToSprite(sprite, "Reticle.png");
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				 bool warn = warningSet.count({ r, c }) > 0;
 					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+					if (warn) {
+						int a = 30;
+						a = 30 + a;
+					}
 				}
+
+				
+
+				// ちょっとずつ回す
+				Application::MatsumotoUtility::RotateSprite(sprite, Vector3(0.0f,0.0f,0.016f * 3.0f));
 			}
 		}
 	}
@@ -893,10 +905,16 @@ namespace Application {
 				if (idx >= static_cast<int>(moveGarbageWarningSprites_.size())) continue;
 				auto* sprite = moveGarbageWarningSprites_[idx];
 				if (!sprite) continue;
+
+				// 警告スプライトは常にレティクルテクスチャで、警告がある場合は色をつける、ない場合は透明にする
+				Application::MatsumotoUtility::SetTextureToSprite(sprite, "Reticle.png");
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				 bool warn = warningSet.count({ r, c }) > 0;
 					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 				}
+
+				// ちょっとずつ回す
+				Application::MatsumotoUtility::RotateSprite(sprite, Vector3(0.0f, 0.0f, 0.016f * 3.0f));
 			}
 		}
 	}

@@ -283,7 +283,7 @@ namespace Application {
 			sprite->SetAnchorPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-				mat->SetTexture(whiteTexture);
+				mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("Lock_Horizontal.png"));
 			}
 			if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
 				tr->SetParentTransform(activeBoardTransform_);
@@ -305,7 +305,7 @@ namespace Application {
 			sprite->SetAnchorPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-				mat->SetTexture(whiteTexture);
+				mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("Lock_Vertical.png"));
 			}
 			if (auto* tr = sprite->GetComponent2D<KashipanEngine::Transform2D>()) {
 				tr->SetParentTransform(activeBoardTransform_);
@@ -660,10 +660,12 @@ namespace Application {
 		int type = GetActiveBoard().GetPanel(row, col);
 		if (auto* mat = panel->GetComponent2D<KashipanEngine::Material2D>()) {
 			if (type == PuzzleBoard::kGarbageType) {
+				mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("Noise.png"));
 				mat->SetColor(config_.garbageColor);
 			}
 			else if (type > 0 && type <= PuzzleGameConfig::kMaxPanelTypes) {
 				mat->SetColor(config_.panelColors[type - 1]);
+				mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("white1x1.png"));
 			}
 			else {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -748,6 +750,7 @@ namespace Application {
 			if (r >= static_cast<int>(inactiveRowLockSprites_.size())) break;
 			auto* sprite = inactiveRowLockSprites_[r];
 			if (!sprite) continue;
+			MatsumotoUtility::SetTextureToSprite(sprite, "lock.png");
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				bool locked = rLocks.count(r) > 0;
 				mat->SetColor(locked ? config_.lockColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -757,6 +760,7 @@ namespace Application {
 			if (c >= static_cast<int>(inactiveColLockSprites_.size())) break;
 			auto* sprite = inactiveColLockSprites_[c];
 			if (!sprite) continue;
+			MatsumotoUtility::SetTextureToSprite(sprite, "lock.png");
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				bool locked = cLocks.count(c) > 0;
 				mat->SetColor(locked ? config_.lockColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));

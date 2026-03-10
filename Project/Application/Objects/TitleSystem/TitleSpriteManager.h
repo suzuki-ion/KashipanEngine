@@ -10,6 +10,9 @@ namespace Application {
 
 		void Update(float deltaTime, TitleSection currentSection, int selectNumber);
 
+		void SetTriggered1PTimer(float time) { triggered1PTimer_ = time; }
+		void SetTriggered2PTimer(float time) { triggered2PTimer_ = time; }
+
 	private:
 		Vector3 centerPosition_ ;
 
@@ -20,6 +23,9 @@ namespace Application {
 		float deltaTime_;
 		TitleSection currentSection_;
 		int currentSelectNumber_;
+
+		float triggered1PTimer_;
+		float triggered2PTimer_;
 
 	private:
 		void UpdateTitleCallSection();

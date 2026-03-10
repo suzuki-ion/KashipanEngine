@@ -58,6 +58,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
 		// メニュー呼び出し
 		ic->RegisterCommand("Menu", Key::M, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Menu", Key::Escape, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Menu", ControllerButton::Start, InputCommand::InputState::Trigger);
 
 		// 上下選択

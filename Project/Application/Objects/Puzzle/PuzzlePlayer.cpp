@@ -1150,6 +1150,24 @@ namespace Application {
 		cursor_.Initialize(row, col, config_.stageSize, config_.cursorEasingDuration);
 	}
 
+	bool PuzzlePlayer::MoveCursorOneStepToward(int targetRow, int targetCol) {
+		if (cursor_.IsMoving()) return false;
+
+		auto [row, col] = cursor_.GetPosition();
+		targetRow = std::clamp(targetRow, 0, config_.stageSize - 1);
+		targetCol = std::clamp(targetCol, 0, config_.stageSize - 1);
+
+		if (row < targetRow) return cursor_.StepMove(1);
+		if (row > targetRow) return cursor_.StepMove(0);
+		if (col < targetCol) return cursor_.StepMove(3);
+		if (col > targetCol) return cursor_.StepMove(2);
+		return false;
+	}
+
+	void PuzzlePlayer::CountCursorStepForGarbage() {
+		AdvanceMoveGarbageCounter();
+	}
+
 	void PuzzlePlayer::ForceMove(int direction) {
 		if (IsAnimating()) return;
 		auto [row, col] = cursor_.GetPosition();
@@ -1172,10 +1190,6 @@ namespace Application {
 		SwitchBoard();
 	}
 
-	// ================================================================
-	// ステージ切り替え
-	// ================================================================
-
 	void PuzzlePlayer::SwitchBoard() {
 		activeBoard_ = 1 - activeBoard_;
 		inactiveDecayTimer_ = 0.0f;
@@ -1191,9 +1205,28 @@ namespace Application {
 		// 自動ステージ切り替えは行わない
 	}
 
-	// ================================================================
-	// アニメーションフェーズ
-	// ================================================================
+	void PuzzlePlayer::AdvanceMoveGarbageCounter() {
+		moveCount_++;
+		if (config_.movesPerGarbage <= 0 || moveCount_ < config_.movesPerGarbage) return;
+
+		moveCount_ = 0;
+		auto& board = GetActiveBoard();
+		bool spawnedAny = false;
+		for (auto& [r, c] : nextMoveGarbagePositions_) {
+			if (board.GetPanel(r, c) > 0) {
+				board.SetPanel(r, c, PuzzleBoard::kGarbageType);
+				spawnedAny = true;
+			}
+		}
+		if (spawnedAny) {
+			auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("noiseSpawn.mp3");
+			if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+				KashipanEngine::AudioManager::Play(h, 0.9f);
+			}
+		}
+		nextMoveGarbagePositions_.clear();
+		PreCalculateMoveGarbagePositions();
+	}
 
 	void PuzzlePlayer::StartMoveAction(int direction) {
 		auto [row, col] = cursor_.GetPosition();
@@ -1214,27 +1247,7 @@ namespace Application {
 		}
 
 		// 移動回数カウント
-		moveCount_++;
-		if (config_.movesPerGarbage > 0 && moveCount_ >= config_.movesPerGarbage) {
-			moveCount_ = 0;
-			bool spawnedAny = false;
-			// 予告していた位置にお邪魔パネルを配置
-			for (auto& [r, c] : nextMoveGarbagePositions_) {
-				if (board.GetPanel(r, c) > 0) {
-					board.SetPanel(r, c, PuzzleBoard::kGarbageType);
-					spawnedAny = true;
-				}
-			}
-			if (spawnedAny) {
-				auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("noiseSpawn.mp3");
-				if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
-					KashipanEngine::AudioManager::Play(h, 0.9f);
-				}
-			}
-			nextMoveGarbagePositions_.clear();
-			// 次回の予告位置を計算
-			PreCalculateMoveGarbagePositions();
-		}
+		AdvanceMoveGarbageCounter();
 
 		phaseAnims_.clear();
 
@@ -1332,7 +1345,7 @@ namespace Application {
 			(lastMatchSummary_.normalCount > 0) ||
 			(lastMatchSummary_.straightCount > 0) ||
 			(lastMatchSummary_.crossCount > 0) ||
-			(lastMatchSummary_.squareCount > 0);
+				(lastMatchSummary_.squareCount > 0);
 		if (hasAnyShapeMatch) {
 			auto comboHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName("combo.mp3");
 			if (comboHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {

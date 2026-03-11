@@ -8,6 +8,7 @@ void PuzzleNPC::Initialize(PuzzlePlayer* player, Difficulty difficulty) {
 	player_ = player;
 	difficulty_ = difficulty;
 	movesThisTurn_ = 0;
+	hasPendingMove_ = false;
 
 	switch (difficulty_) {
 	case Difficulty::Easy:
@@ -48,6 +49,10 @@ void PuzzleNPC::Update(float deltaTime) {
 void PuzzleNPC::DecideNextAction() {
 	if (!player_) return;
 
+	if (TryProcessPendingMove()) {
+		return;
+	}
+
 	// 崩壊度が高い場合、ステージ切り替えを検討
 	if (player_->GetActiveCollapseRatio() > 0.5f && KashipanEngine::GetRandomBool(switchChance_)) {
 		player_->ForceSwitchBoard();
@@ -72,11 +77,37 @@ void PuzzleNPC::DecideNextAction() {
 		DoBestMove();
 		break;
 	}
+}
+
+void PuzzleNPC::QueueMove(const ScoredMove& move) {
+	pendingMove_ = move;
+	hasPendingMove_ = true;
+}
+
+bool PuzzleNPC::TryProcessPendingMove() {
+	if (!player_ || !hasPendingMove_) return false;
+
+	if (player_->IsCursorMoving()) {
+		return true;
+	}
+
+	auto [curRow, curCol] = player_->GetCursorPosition();
+	if (curRow != pendingMove_.cursorRow || curCol != pendingMove_.cursorCol) {
+		if (player_->MoveCursorOneStepToward(pendingMove_.cursorRow, pendingMove_.cursorCol)) {
+			player_->CountCursorStepForGarbage();
+		}
+		return true;
+	}
+
+	player_->ForceMove(pendingMove_.direction);
+	hasPendingMove_ = false;
 
 	movesThisTurn_++;
 	if (movesThisTurn_ >= maxMovesPerTurn_) {
 		movesThisTurn_ = 0;
 	}
+
+	return true;
 }
 
 void PuzzleNPC::DoRandomMove() {
@@ -87,7 +118,6 @@ void PuzzleNPC::DoRandomMove() {
 
 	int row = KashipanEngine::GetRandomInt(0, boardSize - 1);
 	int col = KashipanEngine::GetRandomInt(0, boardSize - 1);
-	player_->SetCursorPosition(row, col);
 
 	int direction = KashipanEngine::GetRandomInt(0, 3);
 
@@ -102,7 +132,7 @@ void PuzzleNPC::DoRandomMove() {
 		direction = (direction + 1) % 4;
 	}
 
-	player_->ForceMove(direction);
+	QueueMove({ row, col, direction, 0 });
 }
 
 int PuzzleNPC::SimulateAndScore(int row, int col, int direction) const {
@@ -191,8 +221,7 @@ void PuzzleNPC::DoBestMove() {
 
 	// 最もスコアの高い移動を実行
 	const auto& best = moves[0];
-	player_->SetCursorPosition(best.cursorRow, best.cursorCol);
-	player_->ForceMove(best.direction);
+	QueueMove(best);
 }
 
 void PuzzleNPC::DoDecentMove() {
@@ -206,8 +235,7 @@ void PuzzleNPC::DoDecentMove() {
 	int topCount = std::min(static_cast<int>(moves.size()), 3);
 	int idx = KashipanEngine::GetRandomInt(0, topCount - 1);
 	const auto& chosen = moves[idx];
-	player_->SetCursorPosition(chosen.cursorRow, chosen.cursorCol);
-	player_->ForceMove(chosen.direction);
+	QueueMove(chosen);
 }
 
 } // namespace Application

@@ -39,6 +39,10 @@ public:
 
 	bool IsHoldingAction() const;
 
+	/// 1マス分だけカーソルを移動する（0=上,1=下,2=左,3=右）
+	/// @return 実際に移動した場合 true
+	bool StepMove(int direction);
+
 private:
 	int row_ = 0;
 	int col_ = 0;

@@ -2,6 +2,7 @@
 #include <KashipanEngine.h>
 #include <Objects/ResultSystem/ResultSelector.h>
 #include "Scenes/Components/ResultSceneAnimator.h"
+#include "Assets/AudioPlayer.h"
 
 namespace KashipanEngine {
 
@@ -23,6 +24,8 @@ namespace KashipanEngine {
 
         std::map<std::string, Sprite*> spriteMap_;
 
+        AudioPlayer bgmPlayer_;
+        int prevSelectedNumber_ = -1;
     };
 
 }

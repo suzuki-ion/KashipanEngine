@@ -37,6 +37,8 @@ public:
 
     /// @brief サンプラーを作成してハンドルを返す（同一設定の dedup は行わない）
     static SamplerHandle CreateSampler(const D3D12_SAMPLER_DESC& desc);
+    /// @brief デフォルトのサンプラーを取得
+    static SamplerHandle GetSampler(DefaultSampler state);
 
     /// @brief ハンドルのサンプラーをシェーダーへバインドする
     static bool BindSampler(ShaderVariableBinder* shaderBinder, const std::string& nameKey, SamplerHandle handle);

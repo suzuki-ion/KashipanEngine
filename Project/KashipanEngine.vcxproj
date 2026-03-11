@@ -366,6 +366,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\TitleSystem\TitleSection.h" />
     <ClInclude Include="Application\Objects\TitleSystem\TitleSelectManager.h" />
     <ClInclude Include="Application\Objects\TitleSystem\TitleSpriteManager.h" />
+    <ClInclude Include="Application\Scenes\Components\BackgroundSprite.h" />
     <ClInclude Include="Application\Scenes\Components\ResultSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />

@@ -2,6 +2,7 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/ResultSceneAnimator.h"
+#include "Scenes/Components/BackgroundSprite.h"
 
 #include <MatsumotoUtility.h>
 
@@ -16,6 +17,7 @@ ResultScene::ResultScene()
 void ResultScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
 
+    AddSceneComponent(std::make_unique<BackgroundSprite>());
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
     AddSceneComponent(std::make_unique<ResultSceneAnimator>());

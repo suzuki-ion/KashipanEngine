@@ -42,6 +42,18 @@ void TitleScene::Initialize() {
 	// タイトルスプライトマネージャーの初期化
 	titleSpriteManager_.Initialize(CreateSirite);
     SetNextSceneName("TestScene");
+
+    // ================================================================
+    // BGM
+    // ================================================================
+    {
+        AudioManager::PlayParams params;
+        params.sound = AudioManager::GetSoundHandleFromFileName("bgmTitle.mp3");
+        params.volume = 0.2f;
+        params.loop = true;
+        audioPlayer_.AddAudio(params);
+        audioPlayer_.ChangeAudio(2.0);
+    }
 }
 
 TitleScene::~TitleScene() {

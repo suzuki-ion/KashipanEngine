@@ -24,6 +24,9 @@ private:
 	Application::TitleSpriteManager titleSpriteManager_;
 
 	bool transitionStarted_ = false;
+
+	// 音声プレイヤー
+	AudioPlayer audioPlayer_;
 };
 
 } // namespace KashipanEngine

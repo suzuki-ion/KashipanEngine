@@ -67,6 +67,10 @@ namespace Application {
 		float triggered1PTimer_ = 0.0f;
 		float triggered2PTimer_ = 0.0f;
 
+		// 使用するSEハンドルのマップ
+		std::map<std::string, uint32_t> seMap_;
+		float seVolume_ = 0.9f;
+
 	private:
 		// タイトルコールセクションの処理
 		void UpdateTitleCallSection();

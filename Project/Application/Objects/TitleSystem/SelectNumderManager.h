@@ -22,6 +22,8 @@ namespace Application
 		int GetSelectNumber() const { return selectNumber_; }
 		// 選択可能な最大数字を取得する
 		int GetMaxNumber() const { return maxNumber_; }
+		// 数字が移動しているか
+		bool IsMoving() const { return isMoving_; }
 
 	private:
 		std::function<bool()> upNumberFunc_;
@@ -31,5 +33,6 @@ namespace Application
 
 		int selectNumber_;
 		int maxNumber_;
+		bool isMoving_;
 	};
 }

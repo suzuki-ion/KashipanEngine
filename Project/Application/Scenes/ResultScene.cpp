@@ -56,6 +56,18 @@ void ResultScene::Initialize() {
         resultSceneAnimator_->SetTargetTransforms(std::move(transforms));
         resultSceneAnimator_->PlayBackgroundDropIn();
     }
+
+    const auto bgmHandle = AudioManager::GetSoundHandleFromFileName("bgmResult.mp3");
+    if (bgmHandle != AudioManager::kInvalidSoundHandle) {
+        AudioManager::PlayParams p{};
+        p.sound = bgmHandle;
+        p.volume = 1.0f;
+        p.loop = true;
+        bgmPlayer_.AddAudio(p);
+        bgmPlayer_.ChangeAudio(0.0, 0);
+    }
+
+    prevSelectedNumber_ = resultSelector_.GetSelectNumber();
 }
 
 ResultScene::~ResultScene() {
@@ -75,6 +87,15 @@ void ResultScene::OnUpdate() {
     resultSelector_.Update();
     {
         int selectedNumber = resultSelector_.GetSelectNumber();
+
+        if (selectedNumber != prevSelectedNumber_) {
+            auto selectHandle = AudioManager::GetSoundHandleFromFileName("menuSelect.mp3");
+            if (selectHandle != AudioManager::kInvalidSoundHandle) {
+                AudioManager::Play(selectHandle, 1.0f, 0.0f, false);
+            }
+            prevSelectedNumber_ = selectedNumber;
+        }
+
         if (selectedNumber == 0) {
             SetTextureToSprite(spriteMap_["BackToTitle"], "result_0.png");
         }
@@ -85,13 +106,18 @@ void ResultScene::OnUpdate() {
     
 
 
-    if (resultSelector_.IsSelecting()) {
+    if (resultSelector_.IsSelecting() && GetNextSceneName().empty()) {
 		int selectedNumber = resultSelector_.GetSelectNumber(); 
         if (selectedNumber == 0) {
             SetNextSceneName("TitleScene");
         }
         else if (selectedNumber == 1) {
             SetNextSceneName("TestScene");
+        }
+
+        auto decideHandle = AudioManager::GetSoundHandleFromFileName("menuDecide.mp3");
+        if (decideHandle != AudioManager::kInvalidSoundHandle) {
+            AudioManager::Play(decideHandle, 1.0f, 0.0f, false);
         }
 
         if (auto* out = GetSceneComponent<SceneChangeOut>()) {

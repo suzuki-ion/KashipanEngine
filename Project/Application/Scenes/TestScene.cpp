@@ -400,7 +400,10 @@ namespace KashipanEngine {
 
 		menuSpriteContainer_.SetPosition(menuPosition_);
 
-		menuActionManager_.Update();
+		if (gameStartSystem_.IsGameStarted()) {
+			menuActionManager_.Update();
+		}
+		
 		menuSpriteContainer_.SetSelectedIndex(menuActionManager_.GetSelectedIndex());
 		menuSpriteContainer_.SetMenuOpen(menuActionManager_.IsMenuOpen());
 		menuSpriteContainer_.Update(KashipanEngine::GetDeltaTime());
@@ -426,7 +429,7 @@ namespace KashipanEngine {
 		}
 
 		gameStartSystem_.Update(deltaTime);
-		if (!gameOver_ && gameStartSystem_.IsGameStarted() && !menuActionManager_.IsMenuOpen()) {
+		if (!gameOver_ && !menuActionManager_.IsMenuOpen() && gameStartSystem_.IsGameStarted()) {
 			// ゲーム開始演出の更新
 			Vector3 startGameSpriteScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartSprite_);
 			startGameSpriteScale.x = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.x, 0.0f, 0.3f);

@@ -33,6 +33,9 @@ namespace Application
 		/// メニューの選択肢数を取得する
 		int GetMenuActionCount() const { return static_cast<int>(menuActions_.size()); }
 
+		/// メニューの開閉を設定する
+		void SetMenuOpen(bool isOpen) { isMenuOpen_ = isOpen; }
+
 	private:
 		bool isMenuOpen_; // メニューが開いているかどうか
 		std::vector<std::function<void()>> menuActions_; // メニューのアクションリスト

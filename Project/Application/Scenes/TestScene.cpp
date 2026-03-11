@@ -382,10 +382,12 @@ namespace KashipanEngine {
 			gameOver_ = true;
 			winner_ = 2;
 			if (resultText_) resultText_->SetText("Player 2 Wins!");
+			AddSceneVariable("PuzzleWinner", winner_);
 		} else if (player2_.IsDefeated()) {
 			gameOver_ = true;
 			winner_ = 1;
 			if (resultText_) resultText_->SetText("Player 1 Wins!");
+			AddSceneVariable("PuzzleWinner", winner_);
 		}
 
 		autoSceneChangeTimer_ = 3.0f;

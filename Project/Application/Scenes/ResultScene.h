@@ -23,6 +23,7 @@ namespace KashipanEngine {
         ResultSceneAnimator* resultSceneAnimator_ = nullptr;
 
         std::map<std::string, Sprite*> spriteMap_;
+        Text* winnerText_ = nullptr;
 
         AudioPlayer bgmPlayer_;
         int prevSelectedNumber_ = -1;

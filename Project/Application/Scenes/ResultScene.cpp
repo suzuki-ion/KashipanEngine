@@ -1,6 +1,7 @@
 #include "Scenes/ResultScene.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
+#include "Scenes/Components/ResultSceneAnimator.h"
 
 #include <MatsumotoUtility.h>
 
@@ -17,6 +18,7 @@ void ResultScene::Initialize() {
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
+    AddSceneComponent(std::make_unique<ResultSceneAnimator>());
 
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
@@ -41,6 +43,19 @@ void ResultScene::Initialize() {
 	SetTextureToSprite(spriteMap_["BackToTitle"], "result_0.png");
 	FitSpriteToTexture(spriteMap_["BackToTitle"]);
 	SetTranslateToSprite(spriteMap_["BackToTitle"], Vector3(960.0f, 540.0f, 0.0f));
+
+    resultSceneAnimator_ = GetSceneComponent<ResultSceneAnimator>();
+    if (resultSceneAnimator_) {
+        std::vector<Transform2D*> transforms;
+        if (auto* bg = spriteMap_["BackToTitle"]) {
+            if (auto* tr = bg->GetComponent2D<Transform2D>()) {
+                transforms.push_back(tr);
+                resultSceneAnimator_->SetBackgroundTransform(tr);
+            }
+        }
+        resultSceneAnimator_->SetTargetTransforms(std::move(transforms));
+        resultSceneAnimator_->PlayBackgroundDropIn();
+    }
 }
 
 ResultScene::~ResultScene() {

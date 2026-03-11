@@ -1,6 +1,7 @@
 #pragma once
 #include <KashipanEngine.h>
 #include <Objects/ResultSystem/ResultSelector.h>
+#include "Scenes/Components/ResultSceneAnimator.h"
 
 namespace KashipanEngine {
 
@@ -18,6 +19,7 @@ namespace KashipanEngine {
         SceneDefaultVariables* sceneDefaultVariables_ = nullptr;
 
         Application::ResultSelector resultSelector_;
+        ResultSceneAnimator* resultSceneAnimator_ = nullptr;
 
         std::map<std::string, Sprite*> spriteMap_;
 

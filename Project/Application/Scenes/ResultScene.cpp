@@ -46,6 +46,33 @@ void ResultScene::Initialize() {
 	FitSpriteToTexture(spriteMap_["BackToTitle"]);
 	SetTranslateToSprite(spriteMap_["BackToTitle"], Vector3(960.0f, 540.0f, 0.0f));
 
+    {
+        auto text = std::make_unique<Text>(64);
+        text->SetName("WinnerText");
+        text->SetFont("Assets/Application/test.fnt");
+        text->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        if (auto* tr = text->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3(960.0f, 260.0f, 0.0f));
+        }
+        if (sceneDefaultVariables_ && sceneDefaultVariables_->GetScreenBuffer2D()) {
+            text->AttachToRenderer(sceneDefaultVariables_->GetScreenBuffer2D(), "Object2D.DoubleSidedCulling.BlendNormal");
+        } else if (sceneDefaultVariables_ && sceneDefaultVariables_->GetMainWindow()) {
+            text->AttachToRenderer(sceneDefaultVariables_->GetMainWindow(), "Object2D.DoubleSidedCulling.BlendNormal");
+        }
+
+        const int winner = GetSceneVariableOr<int>("PuzzleWinner", 0);
+        if (winner == 1) {
+            text->SetText("Player 1 Wins!");
+        } else if (winner == 2) {
+            text->SetText("Player 2 Wins!");
+        } else {
+            text->SetText("このテキストは表示されないはずだよ");
+        }
+
+        winnerText_ = text.get();
+        AddObject2D(std::move(text));
+    }
+
     resultSceneAnimator_ = GetSceneComponent<ResultSceneAnimator>();
     if (resultSceneAnimator_) {
         std::vector<Transform2D*> transforms;

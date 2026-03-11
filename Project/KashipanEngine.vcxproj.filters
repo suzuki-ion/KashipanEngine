@@ -466,6 +466,7 @@
     <ClInclude Include="Application\Objects\TitleSystem\TitleSection.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameStartSystem.h" />
     <ClInclude Include="Application\Objects\ResultSystem\ResultSelector.h" />
+    <ClInclude Include="Application\Scenes\Components\ResultSceneAnimator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

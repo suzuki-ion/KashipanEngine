@@ -61,7 +61,7 @@ void ResultScene::Initialize() {
     if (bgmHandle != AudioManager::kInvalidSoundHandle) {
         AudioManager::PlayParams p{};
         p.sound = bgmHandle;
-        p.volume = 1.0f;
+        p.volume = 0.3f;
         p.loop = true;
         bgmPlayer_.AddAudio(p);
         bgmPlayer_.ChangeAudio(0.0, 0);

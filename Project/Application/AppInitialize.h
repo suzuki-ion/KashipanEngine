@@ -62,12 +62,18 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Menu", ControllerButton::Start, InputCommand::InputState::Trigger);
 
 		// 上下選択
+        ic->RegisterCommand("Up", Key::D, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Up", Key::W, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Up", Key::Up, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Up", Key::Right, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Up", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Up", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Down", Key::A, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("Down", Key::Left, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Down", Key::S, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Down", Key::Down, InputCommand::InputState::Trigger);
 		ic->RegisterCommand("Down", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("Down", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
 
         // デバッグ用シーン遷移
         ic->RegisterCommand("DebugSceneChange", Key::F1, InputCommand::InputState::Trigger);

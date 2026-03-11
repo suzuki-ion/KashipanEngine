@@ -8,15 +8,20 @@ void Application::SelectNumderManager::Initialize(std::function<bool()> upNumber
 	cancelNumberFunc_ = cancelNumberFunc;
 	selectNumber_ = 0;
 	maxNumber_ = 0;
+	isMoving_ = false;
 }
 
 void Application::SelectNumderManager::Update()
 {
+	isMoving_ = false;
+
 	if (upNumberFunc_ && upNumberFunc_()) {
 		selectNumber_ = (selectNumber_ + 1) % (maxNumber_ + 1);
+		isMoving_ = true;
 	}
 	if (downNumberFunc_ && downNumberFunc_()) {
 		selectNumber_ = (selectNumber_ - 1 + (maxNumber_ + 1)) % (maxNumber_ + 1);
+		isMoving_ = true;
 	}
 }
 

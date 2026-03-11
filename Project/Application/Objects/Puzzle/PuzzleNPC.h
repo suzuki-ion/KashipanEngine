@@ -48,6 +48,9 @@ private:
 	/// ある程度良い移動を実行する（Normal用）
 	void DoDecentMove();
 
+	bool TryProcessPendingMove();
+	void QueueMove(const ScoredMove& move);
+
 	PuzzlePlayer* player_ = nullptr;
 	Difficulty difficulty_ = Difficulty::Normal;
 
@@ -57,6 +60,9 @@ private:
 	float switchChance_ = 0.1f;     ///< ボードをスイッチする確率
 	int maxMovesPerTurn_ = 1;       ///< 1ターンの最大移動回数
 	int movesThisTurn_ = 0;
+
+	ScoredMove pendingMove_{ 0, 0, 0, 0 };
+	bool hasPendingMove_ = false;
 };
 
 } // namespace Application

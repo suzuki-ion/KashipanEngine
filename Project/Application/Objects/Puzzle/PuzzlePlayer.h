@@ -93,6 +93,9 @@ public:
 	int GetBoardSize() const { return config_.stageSize; }
 	const PuzzleGameConfig& GetConfig() const { return config_; }
 	bool IsMoveCursorMode() const { return cursor_.IsHoldingAction(); }
+	bool IsCursorMoving() const { return cursor_.IsMoving(); }
+	bool MoveCursorOneStepToward(int targetRow, int targetCol);
+	void CountCursorStepForGarbage();
 
 	/// アクティブボードの崩壊度(0.0~1.0)
 	float GetActiveCollapseRatio() const;
@@ -181,6 +184,7 @@ private:
 
 	void UpdatePhase(float deltaTime);
 	void StartMoveAction(int direction);
+	void AdvanceMoveGarbageCounter();
 	void OnMoveFinished();
 	bool StartClearingPhase();
 	void OnClearFinished();

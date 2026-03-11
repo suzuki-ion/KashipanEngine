@@ -71,13 +71,12 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 		int newRow = row_;
 		int newCol = col_;
 
-		if (dirUp) newRow--;
-		if (dirDown) newRow++;
-		if (dirLeft) newCol--;
-		if (dirRight) newCol++;
-
-		newRow = std::clamp(newRow, 0, boardSize_ - 1);
-		newCol = std::clamp(newCol, 0, boardSize_ - 1);
+		if (boardSize_ > 0) {
+			if (dirUp) newRow = (row_ - 1 + boardSize_) % boardSize_;
+			if (dirDown) newRow = (row_ + 1) % boardSize_;
+			if (dirLeft) newCol = (col_ - 1 + boardSize_) % boardSize_;
+			if (dirRight) newCol = (col_ + 1) % boardSize_;
+		}
 
 		if (newRow != row_ || newCol != col_) {
 			startRow_ = currentRow_;
@@ -94,19 +93,18 @@ void PuzzleCursor::Update(KashipanEngine::InputCommand* inputCommand, float delt
 
 bool PuzzleCursor::StepMove(int direction) {
 	if (isMoving_) return false;
+	if (boardSize_ <= 0) return false;
 
 	int newRow = row_;
 	int newCol = col_;
 	switch (direction) {
-	case 0: newRow--; break;
-	case 1: newRow++; break;
-	case 2: newCol--; break;
-	case 3: newCol++; break;
+	case 0: newRow = (row_ - 1 + boardSize_) % boardSize_; break;
+	case 1: newRow = (row_ + 1) % boardSize_; break;
+	case 2: newCol = (col_ - 1 + boardSize_) % boardSize_; break;
+	case 3: newCol = (col_ + 1) % boardSize_; break;
 	default: return false;
 	}
 
-	newRow = std::clamp(newRow, 0, boardSize_ - 1);
-	newCol = std::clamp(newCol, 0, boardSize_ - 1);
 	if (newRow == row_ && newCol == col_) return false;
 
 	startRow_ = currentRow_;

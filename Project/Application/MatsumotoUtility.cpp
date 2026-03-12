@@ -178,6 +178,20 @@ void Application::MatsumotoUtility::ChangeSpriteColorRGB(KashipanEngine::Sprite*
 	}
 }
 
+Vector3 Application::MatsumotoUtility::GetTextureSizeFromSprite(KashipanEngine::Sprite* sprite)
+{
+	Vector3 result;
+	if (!sprite) return result;
+	if (auto *mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+		auto textureHandle = mat->GetTexture();
+		if (textureHandle == KashipanEngine::TextureManager::kInvalidHandle) return result;
+		auto textureView = KashipanEngine::TextureManager::TextureView(textureHandle);
+		result.x = static_cast<float>(textureView.GetWidth());
+		result.y = static_cast<float>(textureView.GetHeight());
+	}
+	return result;
+}
+
 float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float transitionSpeed)
 {
 	float value = from;

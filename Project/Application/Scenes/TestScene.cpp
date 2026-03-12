@@ -254,6 +254,21 @@ namespace KashipanEngine {
 			Application::MatsumotoUtility::FitSpriteToTexture(gameStartSprite_);
 			Application::MatsumotoUtility::SetTranslateToSprite(gameStartSprite_, Vector2(cx, cy));
 		}
+		{
+			auto obj = std::make_unique<Sprite>();
+			obj->SetName("GameStartGoSprite");
+			obj->SetUniqueBatchKey();
+			obj->SetAnchorPoint(0.5f, 0.5f);
+			if (auto* mat = obj->GetComponent2D<Material2D>()) {
+				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+				mat->SetTexture(TextureManager::GetTextureFromFileName("GameStartGO.png"));
+			}
+			menuSprites.push_back(obj.get());
+			obj->AttachToRenderer(sceneDefaultVariables_->GetMainWindow(), "Object2D.DoubleSidedCulling.BlendNormal");
+			gameStartGoSprite_ = obj.get();
+			AddObject2D(std::move(obj));
+			Application::MatsumotoUtility::SetTranslateToSprite(gameStartGoSprite_, Vector2(cx, cy));
+		}
 
         // ================================================================
         // BGM
@@ -437,6 +452,15 @@ namespace KashipanEngine {
 			startGameSpriteScale.x = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.x, 0.0f, 0.3f);
 			startGameSpriteScale.y = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.y, 0.0f, 0.3f);
 			Application::MatsumotoUtility::SetScaleToSprite(gameStartSprite_, startGameSpriteScale);
+			// GOスプライトは透明にしながら拡大させる
+			Vector3 goSpriteScale = Application::MatsumotoUtility::GetTextureSizeFromSprite(gameStartGoSprite_);
+			Vector4 currentColor = Application::MatsumotoUtility::GetColorFromSprite(gameStartGoSprite_);
+			Vector3 currentScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartGoSprite_);
+			currentColor.w = Application::MatsumotoUtility::SimpleEaseIn(currentColor.w, 0.0f, 0.1f);
+			currentScale.x = Application::MatsumotoUtility::SimpleEaseIn(currentScale.x, goSpriteScale.x, 0.3f);
+			currentScale.y = Application::MatsumotoUtility::SimpleEaseIn(currentScale.y, goSpriteScale.y, 0.3f);
+			Application::MatsumotoUtility::SetColorToSprite(gameStartGoSprite_, currentColor);
+			Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, currentScale);
 
 			// プレイヤー1 更新（キーボード/コントローラー）
 			player1_.Update(deltaTime, GetInputCommand());
@@ -471,6 +495,11 @@ namespace KashipanEngine {
 
 			// 勝敗判定
 			CheckWinCondition();
+		}
+
+		// ゲーム開始前のスプライトモーション
+		if(!gameStartSystem_.IsGameStarted()) {
+			Application::MatsumotoUtility::RotateSprite(gameStartSprite_, Vector3(0.0f, 3.14f * deltaTime,0.0f));
 		}
 
 		// ゲームオーバー後の自動シーン遷移処理

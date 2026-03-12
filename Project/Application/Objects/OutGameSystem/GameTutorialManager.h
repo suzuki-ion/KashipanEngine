@@ -10,6 +10,9 @@ namespace Application {
 
 		void SetPosition(const Vector2& position) { tutorialPosition_ = position; }
 		void SetIsGrip(bool isGrip) { isGrip_ = isGrip; }
+		void SetIsSend(bool isSend) { isSend_ = isSend; }
+		void SetIsMove(bool isMove) { isMove_ = isMove; }
+		void SetIsSwap(bool isSwap) { isSwap_ = isSwap; }
 		void SetIsActiveTutorial(bool isActive) { isTutorialActive_ = isActive; }
 
 	private:
@@ -20,6 +23,9 @@ namespace Application {
 		bool isPlayer_;
 
 		bool isGrip_;
+		bool isSend_;
+		bool isMove_;
+		bool isSwap_;
 
 		std::vector<KashipanEngine::Sprite*> tutorialSprites_;
 		std::vector<Vector2> tutorialSpriteOffsets_;

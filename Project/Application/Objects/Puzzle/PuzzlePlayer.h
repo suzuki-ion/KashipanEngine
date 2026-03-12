@@ -94,6 +94,7 @@ public:
 	const PuzzleGameConfig& GetConfig() const { return config_; }
 	bool IsMoveCursorMode() const { return cursor_.IsHoldingAction(); }
 	bool IsCursorMoving() const { return cursor_.IsMoving(); }
+	bool IsSwapCooldown() const { return swapCooldown_.IsOnCooldown(); }
 	bool MoveCursorOneStepToward(int targetRow, int targetCol);
 	void CountCursorStepForGarbage();
 

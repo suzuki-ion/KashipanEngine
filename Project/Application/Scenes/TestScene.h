@@ -52,6 +52,7 @@ private:
 
 	Application::GameStartSystem gameStartSystem_;
 	Sprite* gameStartSprite_ = nullptr;
+	Sprite* gameStartGoSprite_ = nullptr;
 
     Application::PuzzleGameConfig config_;
 

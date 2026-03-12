@@ -1,5 +1,7 @@
 #include "GameTutorialManager.h"
 using namespace Application;
+#include <MatsumotoUtility.h>
+using namespace MatsumotoUtility;
 
 void Application::GameTutorialManager::Initialize(std::vector<KashipanEngine::Sprite*> tutorialSprite) {
 	tutorialSprites_ = std::move(tutorialSprite);
@@ -34,7 +36,6 @@ void Application::GameTutorialManager::Update() {
 		}
 	}
 
-
 	// グリップしてたら3番を表示、４番を非表示
 	if (isGrip_) {
 		if (auto* mt = tutorialSprites_[2]->GetComponent2D<KashipanEngine::Material2D>()) {
@@ -51,7 +52,33 @@ void Application::GameTutorialManager::Update() {
 			mt->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
 		}
 	}
+
+	// 5番は1番の横に表示
+	if (auto* tr = tutorialSprites_[4]->GetComponent2D<KashipanEngine::Transform2D>()) {
+		tr->SetTranslate(Vector3(tutorialPosition_.x + 256.0f, tutorialPosition_.y, 0.0f));
+	}
 	
+	// すべてのスプライトの色を更新
+	for(auto* sprite : tutorialSprites_) {
+		Vector4 color = GetColorFromSprite(sprite);
+		color.x = SimpleEaseIn(color.x, 1.0f, 0.1f);
+		color.y = SimpleEaseIn(color.y, 1.0f, 0.1f);
+		color.z = SimpleEaseIn(color.z, 1.0f, 0.1f);
+		SetColorToSprite(sprite, color);
+	}
+
+	// グリップしているなら１番を黒くする
+	ChangeSpriteColorRGB(tutorialSprites_[0], isGrip_ ? Vector3(0.3f, 0.3f, 0.3f) : Vector3(1.0f, 1.0f, 1.0f));
+
+	// 送っているなら２番を黒くする
+	ChangeSpriteColorRGB(tutorialSprites_[1], isSend_ ? Vector3(0.3f, 0.3f, 0.3f) : Vector3(1.0f, 1.0f, 1.0f));
+
+	// 動いているなら３番,4番を黒くする
+	ChangeSpriteColorRGB(tutorialSprites_[2], isMove_ ? Vector3(0.3f, 0.3f, 0.3f) : Vector3(1.0f, 1.0f, 1.0f));
+	ChangeSpriteColorRGB(tutorialSprites_[3], isMove_ ? Vector3(0.3f, 0.3f, 0.3f) : Vector3(1.0f, 1.0f, 1.0f));
+
+	// 入れ替わっているなら５番を黒くする
+	ChangeSpriteColorRGB(tutorialSprites_[4], isSwap_ ? Vector3(0.3f, 0.3f, 0.3f) : Vector3(1.0f, 1.0f, 1.0f));
 }
 
 void Application::GameTutorialManager::SpriteVisible(bool visible) {

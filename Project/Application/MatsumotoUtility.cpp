@@ -166,6 +166,18 @@ void Application::MatsumotoUtility::RotateSprite(KashipanEngine::Sprite* sprite,
 	}
 }
 
+void Application::MatsumotoUtility::ChangeSpriteColorRGB(KashipanEngine::Sprite* sprite, const Vector3& rgb)
+{
+	if (!sprite) return;
+	if (auto *mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+		Vector4 color = mat->GetColor();
+		color.x = rgb.x;
+		color.y = rgb.y;
+		color.z = rgb.z;
+		mat->SetColor(color);
+	}
+}
+
 float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float transitionSpeed)
 {
 	float value = from;

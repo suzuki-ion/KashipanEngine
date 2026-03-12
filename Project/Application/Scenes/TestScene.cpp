@@ -453,7 +453,15 @@ namespace KashipanEngine {
 
 			// 操作チュートリアルの更新
 			tutorialManager1P_.SetIsGrip(player1_.IsMoveCursorMode());
+			tutorialManager1P_.SetIsMove(player1_.IsCursorMoving());
+			tutorialManager1P_.SetIsSend(player1_.HasPendingAttack());
+			tutorialManager1P_.SetIsSwap(player1_.IsSwapCooldown());
+
 			tutorialManager2P_.SetIsGrip(player2_.IsMoveCursorMode());
+			tutorialManager2P_.SetIsMove(player2_.IsCursorMoving());
+			tutorialManager2P_.SetIsSend(player2_.HasPendingAttack());
+			tutorialManager2P_.SetIsSwap(player2_.IsSwapCooldown());
+			
 			tutorialManager1P_.Update();
 			tutorialManager2P_.Update();
 

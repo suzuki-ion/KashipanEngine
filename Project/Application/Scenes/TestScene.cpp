@@ -148,7 +148,7 @@ namespace KashipanEngine {
 		// 1P用チュートリアルスプライトの作成
 		{
 			std::vector<KashipanEngine::Sprite*> tutorialSprites;
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < 5; i++) {
 				auto sprite = std::make_unique<Sprite>();
 				sprite->SetName("tutorialSprite" + std::to_string(i));
 				sprite->SetUniqueBatchKey();

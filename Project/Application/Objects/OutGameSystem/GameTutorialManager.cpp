@@ -51,6 +51,11 @@ void Application::GameTutorialManager::Update() {
 			mt->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
 		}
 	}
+
+	// 5番は1番の横に表示
+	if (auto* tr = tutorialSprites_[4]->GetComponent2D<KashipanEngine::Transform2D>()) {
+		tr->SetTranslate(Vector3(tutorialPosition_.x + 256.0f, tutorialPosition_.y, 0.0f));
+	}
 	
 }
 

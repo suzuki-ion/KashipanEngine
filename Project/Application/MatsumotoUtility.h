@@ -40,6 +40,8 @@ namespace Application::MatsumotoUtility
 	void RotateSprite(KashipanEngine::Sprite* sprite, Vector3 deltaRotation);
 	/// @brief スプライトの三原色だけを変更する（alphaは変更しない）
 	void ChangeSpriteColorRGB(KashipanEngine::Sprite* sprite, const Vector3& rgb);
+	/// @brief スプライトのテクスチャの大きさを取得
+	Vector3 GetTextureSizeFromSprite(KashipanEngine::Sprite* sprite);
 
 	/// @brief 簡易イージング関数（イージングなしの線形補間に近い挙動）
 	float SimpleEaseIn(float from, float to, float transitionSpeed);

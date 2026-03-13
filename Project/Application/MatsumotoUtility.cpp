@@ -18,6 +18,11 @@ KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObject(
 		sprite->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
 	}
 
+	if(auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+		KashipanEngine::SamplerManager::SamplerHandle samplerHandle = KashipanEngine::SamplerManager::GetSampler(KashipanEngine::DefaultSampler::LinearWrap);
+		mat->SetSampler(samplerHandle);
+	}
+
 	AddObject(std::move(sprite));
 	return spritePtr;
 }
@@ -190,6 +195,36 @@ Vector3 Application::MatsumotoUtility::GetTextureSizeFromSprite(KashipanEngine::
 		result.y = static_cast<float>(textureView.GetHeight());
 	}
 	return result;
+}
+
+Vector2 Application::MatsumotoUtility::GetTextureUVFromSprite(KashipanEngine::Sprite* sprite) {
+	Vector2 result;
+	if (!sprite) return result;
+	if (auto *mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+		result.x = mat->GetUVTransform().translate.x;
+		result.y = mat->GetUVTransform().translate.y;
+	}
+	return result;
+}
+
+void Application::MatsumotoUtility::SetTextureUVToSprite(KashipanEngine::Sprite* sprite, const Vector2& uv) {
+	if (!sprite) return;
+	if (auto *mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+		auto uvTransform = mat->GetUVTransform();
+		uvTransform.translate.x = uv.x;
+		uvTransform.translate.y = uv.y;
+		mat->SetUVTransform(uvTransform);
+	}
+}
+
+void Application::MatsumotoUtility::MoveTextureUVToSprite(KashipanEngine::Sprite* sprite, const Vector2& deltaUv) {
+	if (!sprite) return;
+	if (auto *mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+		auto uvTransform = mat->GetUVTransform();
+		uvTransform.translate.x += deltaUv.x;
+		uvTransform.translate.y += deltaUv.y;
+		mat->SetUVTransform(uvTransform);
+	}
 }
 
 float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float transitionSpeed)

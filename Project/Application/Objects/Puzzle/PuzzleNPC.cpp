@@ -93,9 +93,7 @@ bool PuzzleNPC::TryProcessPendingMove() {
 
 	auto [curRow, curCol] = player_->GetCursorPosition();
 	if (curRow != pendingMove_.cursorRow || curCol != pendingMove_.cursorCol) {
-		if (player_->MoveCursorOneStepToward(pendingMove_.cursorRow, pendingMove_.cursorCol)) {
-			player_->CountCursorStepForGarbage();
-		}
+		player_->MoveCursorOneStepToward(pendingMove_.cursorRow, pendingMove_.cursorCol);
 		return true;
 	}
 

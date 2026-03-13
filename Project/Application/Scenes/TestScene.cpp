@@ -212,7 +212,6 @@ namespace KashipanEngine {
 			Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, Vector3(0.0f, 0.0f,1.0f));
 			menuActionManager_.SetMenuOpen(false);
 			});
-
 		menuActionManager_.AddMenuAction([this]() {
 			if (auto* out = GetSceneComponent<SceneChangeOut>()) {
 				SetNextSceneName("TitleScene");

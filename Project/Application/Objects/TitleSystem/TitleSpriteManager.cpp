@@ -21,6 +21,12 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	sprites_["Root"] = CreateSpriteFunc_("Root");
 	SetTranslateToSprite(sprites_["Root"], centerPosition_);
 
+	// タイトルの背景スプライト
+	sprites_["TitleBackground"] = CreateSpriteFunc_("TitleBackground");
+	SetTextureToSprite(sprites_["TitleBackground"], "TitleBG.png");
+	FitSpriteToTexture(sprites_["TitleBackground"]);
+	SetTranslateToSprite(sprites_["TitleBackground"], centerPosition_);
+
 	// タイトル画面のスプライト
 	sprites_["TitleScreen"] = CreateSpriteFunc_("TitleScreen");
 	ParentSpriteToSprite(sprites_["TitleScreen"], sprites_["Root"]);
@@ -100,6 +106,9 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 	currentSection_ = currentSection;
 	currentSelectNumber_ = selectNumber;
 	
+	// タイトル背景のUVスクロール
+	MoveTextureUVToSprite(sprites_["TitleBackground"], Vector2(0.0f, deltaTime * 2.0f));
+
 	// 現在のセクションに対応する処理を呼び出す
 	auto it = sectionUpdateFunctions_.find(currentSection_);
 	if (it != sectionUpdateFunctions_.end()) {
@@ -144,6 +153,7 @@ void Application::TitleSpriteManager::UpdateTitleCallSection()
 	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y, 0.3f);
 	SetTranslateToSprite(sprites_["Root"], currentTranslate);
 
+	// 1Pの姿見を初期位置に
 	Vector3 targetTranslateP1(-centerPosition_.x * 2.0f, -centerPosition_.y * 2.0f, 0.0f);
 	Vector3 currentTranslateP1 = GetTranslateFromSprite(sprites_["P1"]);
 	currentTranslateP1.x = SimpleEaseIn(currentTranslateP1.x, targetTranslateP1.x, 0.3f);
@@ -164,13 +174,13 @@ void Application::TitleSpriteManager::UpdateTitleCallSection()
 void Application::TitleSpriteManager::UpdateModeSelectSection()
 {
 	Vector3 currentScales = GetScaleFromSprite(sprites_["Root"]);
-	currentScales.x = SimpleEaseIn(currentScales.x, 0.2f, 0.3f);
-	currentScales.y = SimpleEaseIn(currentScales.y, 0.2f, 0.3f);
+	currentScales.x = SimpleEaseIn(currentScales.x, 0.3f, 0.3f);
+	currentScales.y = SimpleEaseIn(currentScales.y, 0.3f, 0.3f);
 	SetScaleToSprite(sprites_["Root"], currentScales);
 
 	Vector3 currentTranslate = GetTranslateFromSprite(sprites_["Root"]);
-	currentTranslate.x = SimpleEaseIn(currentTranslate.x, centerPosition_.x - (centerPosition_.x * 0.3f), 0.3f);
-	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y, 0.3f);
+	currentTranslate.x = SimpleEaseIn(currentTranslate.x, centerPosition_.x - (centerPosition_.x*0.5f), 0.3f);
+	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y + (centerPosition_.y * 0.2f), 0.3f);
 	SetTranslateToSprite(sprites_["Root"], currentTranslate);
 
 	Vector3 targetTranslateP1(-centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f);
@@ -237,8 +247,8 @@ void Application::TitleSpriteManager::UpdateAISelectSection()
 void Application::TitleSpriteManager::UpdateMultiplayerSelectSection()
 {
 	Vector3 currentScales = GetScaleFromSprite(sprites_["Root"]);
-	currentScales.x = SimpleEaseIn(currentScales.x, 0.15f, 0.2f);
-	currentScales.y = SimpleEaseIn(currentScales.y, 0.15f, 0.2f);
+	currentScales.x = SimpleEaseIn(currentScales.x, 0.2f, 0.2f);
+	currentScales.y = SimpleEaseIn(currentScales.y, 0.2f, 0.2f);
 	SetScaleToSprite(sprites_["Root"], currentScales);
 
 	Vector3 currentTranslate = GetTranslateFromSprite(sprites_["Root"]);

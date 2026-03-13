@@ -171,7 +171,7 @@ namespace KashipanEngine {
 		// 2P用チュートリアルスプライトの作成
 		{
 			std::vector<KashipanEngine::Sprite*> tutorialSprites;
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < 5; i++) {
 				auto sprite = std::make_unique<Sprite>();
 				sprite->SetName("tutorialSprite" + std::to_string(i));
 				sprite->SetUniqueBatchKey();
@@ -203,6 +203,15 @@ namespace KashipanEngine {
 			[this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Up").Triggered(); },
 			[this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Down").Triggered(); }
 		);
+		menuActionManager_.AddMenuAction([this]() {
+			gameStartSystem_.Initialize();
+			gameStartSystem_.StartSequence(1.5f);
+			Application::MatsumotoUtility::SetColorToSprite(gameStartSprite_, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+			Application::MatsumotoUtility::FitSpriteToTexture(gameStartSprite_);
+			Application::MatsumotoUtility::SetColorToSprite(gameStartGoSprite_, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+			Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, Vector3(0.0f, 0.0f,1.0f));
+			menuActionManager_.SetMenuOpen(false);
+			});
 		menuActionManager_.AddMenuAction([this]() {
 			if (auto* out = GetSceneComponent<SceneChangeOut>()) {
 				SetNextSceneName("TitleScene");

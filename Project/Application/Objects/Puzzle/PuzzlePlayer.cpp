@@ -256,6 +256,7 @@ namespace Application {
 					// 1P: ゲージ右側、2P: ゲージ左側
 					float textX = isPlayer2_ ? (-stageWidth * 0.5f - 4.0f) : (stageWidth * 0.5f + 4.0f);
 					tr->SetTranslate(Vector3(textX, yOff, 0.0f));
+                    tr->SetScale(Vector3(0.5f, 0.5f, 0.5f));
 				}
 				text->SetFont("Assets/Application/test.fnt");
 				text->SetText("");

@@ -43,6 +43,13 @@ namespace Application::MatsumotoUtility
 	/// @brief スプライトのテクスチャの大きさを取得
 	Vector3 GetTextureSizeFromSprite(KashipanEngine::Sprite* sprite);
 
+	/// @brief スプライトのテクスチャのUV座標を取得
+	Vector2 GetTextureUVFromSprite(KashipanEngine::Sprite* sprite);
+	/// @brief スプライトのテクスチャのUV座標を設定
+	void SetTextureUVToSprite(KashipanEngine::Sprite* sprite, const Vector2& uv);
+	/// @brief スプライトのテクスチャのUV座標を移動
+	void MoveTextureUVToSprite(KashipanEngine::Sprite* sprite, const Vector2& deltaUv);
+
 	/// @brief 簡易イージング関数（イージングなしの線形補間に近い挙動）
 	float SimpleEaseIn(float from, float to, float transitionSpeed);
 }

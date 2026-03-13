@@ -98,6 +98,12 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	SetTextureToSprite(sprites_["ControllerP2"], "controller.png");
 	SetScaleToSprite(sprites_["ControllerP2"], Vector3(0.3f, 0.5f, 1.0f));
 	SetTranslateToSprite(sprites_["ControllerP2"], Vector3(0.2f, 0.0f, 0.0f));
+
+	// タイトルのオーバーレイ
+	sprites_["TitleOverlay"] = CreateSpriteFunc_("TitleOverlay");
+	SetTextureToSprite(sprites_["TitleOverlay"], "TitleOR.png");
+	FitSpriteToTexture(sprites_["TitleOverlay"]);
+	SetTranslateToSprite(sprites_["TitleOverlay"], centerPosition_);
 }
 
 void Application::TitleSpriteManager::Update(float deltaTime, TitleSection currentSection, int selectNumber)
@@ -105,9 +111,21 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 	deltaTime_ = deltaTime;
 	currentSection_ = currentSection;
 	currentSelectNumber_ = selectNumber;
+
+	timer_ += deltaTime;
 	
 	// タイトル背景のUVスクロール
-	MoveTextureUVToSprite(sprites_["TitleBackground"], Vector2(0.0f, deltaTime * 2.0f));
+	float scrollSpeed = 2.0f; // スクロール速度
+	if (currentSection_ == TitleSection::AISelect || currentSection_ == TitleSection::MultiplayerSelect) {
+		scrollSpeed = 5.0f; // AI選択とマルチプレイヤー選択のセクションではスクロール速度を速くする
+	}
+	MoveTextureUVToSprite(sprites_["TitleBackground"], Vector2(0.0f, deltaTime * scrollSpeed));
+	MoveTextureUVToSprite(sprites_["TitleOverlay"], Vector2(0.0f, deltaTime * scrollSpeed * 1.5f)); // オーバーレイは背景より速くスクロールさせる])
+
+	// 手振れを加えるための更新関数も呼び出す
+	if (currentSection_ != TitleSection::TitleCall) { // タイトルコールのセクションでは手振れを加えない
+		UpdateIdleSection();
+	}
 
 	// 現在のセクションに対応する処理を呼び出す
 	auto it = sectionUpdateFunctions_.find(currentSection_);
@@ -147,6 +165,11 @@ void Application::TitleSpriteManager::UpdateTitleCallSection()
 	currentScales.y = SimpleEaseIn(currentScales.y, 1.0f, 0.3f);
 	SetScaleToSprite(sprites_["Root"], currentScales);
 
+	// 回転を初期位置に
+	Vector3 currentRotation = GetRotationFromSprite(sprites_["Root"]);
+	currentRotation.z = SimpleEaseIn(currentRotation.z, 0.0f, 0.3f);
+	SetRotationToSprite(sprites_["Root"], currentRotation);
+
 	// 位置を初期位置に
 	Vector3 currentTranslate = GetTranslateFromSprite(sprites_["Root"]);
 	currentTranslate.x = SimpleEaseIn(currentTranslate.x, centerPosition_.x, 0.3f);
@@ -180,8 +203,13 @@ void Application::TitleSpriteManager::UpdateModeSelectSection()
 
 	Vector3 currentTranslate = GetTranslateFromSprite(sprites_["Root"]);
 	currentTranslate.x = SimpleEaseIn(currentTranslate.x, centerPosition_.x - (centerPosition_.x*0.5f), 0.3f);
-	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y + (centerPosition_.y * 0.2f), 0.3f);
+	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y, 0.3f);
 	SetTranslateToSprite(sprites_["Root"], currentTranslate);
+
+	// 回転を初期位置に
+	Vector3 currentRotation = GetRotationFromSprite(sprites_["Root"]);
+	currentRotation.z = SimpleEaseIn(currentRotation.z, 0.1f, 0.3f);
+	SetRotationToSprite(sprites_["Root"], currentRotation);
 
 	Vector3 targetTranslateP1(-centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f);
 	Vector3 currentTranslateP1 = GetTranslateFromSprite(sprites_["P1"]);
@@ -218,7 +246,7 @@ void Application::TitleSpriteManager::UpdateModeSelectSection()
 	// 矢印を表示
 	Vector3 currentTranslateArrow = GetTranslateFromSprite(sprites_["SelectArrow"]);
 	currentTranslateArrow.x = SimpleEaseIn(currentTranslateArrow.x, centerPosition_.x, 0.3f);
-	currentTranslateArrow.y = SimpleEaseIn(currentTranslateArrow.y, centerPosition_.y, 0.3f);
+	currentTranslateArrow.y = SimpleEaseIn(currentTranslateArrow.y + sinf(timer_) * 5.0f, centerPosition_.y, 0.3f);
 	SetTranslateToSprite(sprites_["SelectArrow"], currentTranslateArrow);
 }
 
@@ -231,7 +259,7 @@ void Application::TitleSpriteManager::UpdateAISelectSection()
 
 	Vector3 currentTranslate = GetTranslateFromSprite(sprites_["Root"]);
 	currentTranslate.x = SimpleEaseIn(currentTranslate.x, -centerPosition_.x * 1.4f, 0.3f);
-	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y, 0.3f);
+	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y * 0.9f, 0.3f);
 	SetTranslateToSprite(sprites_["Root"], currentTranslate);
 
 	std::string textureName = "ai_" + std::to_string(currentSelectNumber_) + ".png";
@@ -272,4 +300,14 @@ void Application::TitleSpriteManager::UpdateMultiplayerSelectSection()
 	Vector3 currentTranslateArrow = GetTranslateFromSprite(sprites_["SelectArrow"]);
 	currentTranslateArrow.x = SimpleEaseIn(currentTranslateArrow.x, centerPosition_.x - 1920.0f, 0.3f);
 	SetTranslateToSprite(sprites_["SelectArrow"], currentTranslateArrow);
+}
+
+void Application::TitleSpriteManager::UpdateIdleSection() {
+	// 手振れのような微妙な回転を加える
+	float shakeAmount = 0.03f; // 回転の振れ幅
+	Vector3 rotation{0.0f,0.0f,0.0f};
+	rotation.x += shakeAmount * sinf(timer_ * 0.5f);
+	rotation.y += shakeAmount * sinf(timer_ * 0.6f);
+	rotation.z += shakeAmount * sinf(timer_ * 0.4f);
+	SetRotationToSprite(sprites_["Root"], rotation);
 }

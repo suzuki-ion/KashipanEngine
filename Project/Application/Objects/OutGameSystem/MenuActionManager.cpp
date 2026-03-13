@@ -19,7 +19,7 @@ void Application::MenuActionManager::Initialize(
 
 	// メニューを閉じるアクションは常時有効にしておく
 	menuActions_.clear();
-	menuActions_.push_back([this]() { isMenuOpen_ = false; });
+	//menuActions_.push_back([this]() { isMenuOpen_ = false; });
 }
 
 void MenuActionManager::Update()
@@ -32,7 +32,12 @@ void MenuActionManager::Update()
 
 	// メニューの選択アクションを評価
 	if (menuConditions_ && menuConditions_()) {
-		isMenuOpen_ = !isMenuOpen_;
+		if (isMenuOpen_) {
+			menuActions_[0](); // キャンセルアクションは常に最初のアクションとして登録されていると仮定
+			return;
+		} else {
+			isMenuOpen_ = true;
+		}
 	}
 
 	// メニューが未来ていないなら早期リターン
@@ -42,7 +47,7 @@ void MenuActionManager::Update()
 
 	// メニューのキャンセルアクションを評価
 	if (menuCancelAction_ && menuCancelAction_()) {
-		isMenuOpen_ = false;
+		menuActions_[0](); // キャンセルアクションは常に最初のアクションとして登録されていると仮定
 	}
 
 	// メニューの上移動アクションを評価

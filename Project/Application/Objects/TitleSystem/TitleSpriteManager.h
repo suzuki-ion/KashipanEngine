@@ -20,6 +20,7 @@ namespace Application {
 		std::function<KashipanEngine::Sprite* (const std::string&)> CreateSpriteFunc_;
 		std::map<std::string, KashipanEngine::Sprite*> sprites_;
 
+		float timer_;
 		float deltaTime_;
 		TitleSection currentSection_;
 		int currentSelectNumber_;
@@ -32,5 +33,8 @@ namespace Application {
 		void UpdateModeSelectSection();
 		void UpdateAISelectSection();
 		void UpdateMultiplayerSelectSection();
+
+		// 手振れを加えるための更新関数
+		void UpdateIdleSection();
 	};
 }

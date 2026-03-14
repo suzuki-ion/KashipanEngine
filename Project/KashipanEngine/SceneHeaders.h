@@ -7,6 +7,7 @@
 #include "Scene/Components/ScreenBufferKeepRatio.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 #include "Scene/Components/ParticleManager.h"
+#include "Scene/Components/SpriteAnimator.h"
 #include "Scene/Components/ISceneComponent.h"
 #include "Scene/SceneBase.h"
 #include "Scene/SceneContext.h"

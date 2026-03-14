@@ -290,6 +290,14 @@ namespace KashipanEngine {
             audioPlayer_.AddAudio(params);
             audioPlayer_.ChangeAudio(2.0);
         }
+
+        // ================================================================
+		// スプライトアニメーター
+		// ================================================================
+		{
+			auto cmp = std::make_unique<SpriteAnimator>();
+			AddSceneComponent(std::move(cmp));
+		}
 	}
 
 	// ================================================================

@@ -17,7 +17,7 @@ KashipanEngine のゲームオブジェクトは、
 
 auto obj = std::make_unique<KashipanEngine::Sprite>();
 obj->SetName("MySprite");
-obj->SetAnchorPoint(0.5f, 0.5f);
+obj->SetPivotPoint(0.5f, 0.5f);
 ```
 
 ---

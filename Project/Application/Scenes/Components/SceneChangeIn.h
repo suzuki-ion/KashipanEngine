@@ -91,7 +91,7 @@ private:
             auto obj = std::make_unique<Sprite>();
             obj->SetUniqueBatchKey();
             obj->SetName("SceneChangeIn_White");
-            obj->SetAnchorPoint(0.5f, 0.0f);
+            obj->SetPivotPoint(0.5f, 0.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {
                 mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                 mat->SetTexture(whiteTexture);
@@ -112,7 +112,7 @@ private:
             auto obj = std::make_unique<Sprite>();
             obj->SetUniqueBatchKey();
             obj->SetName("SceneChangeIn_Black");
-            obj->SetAnchorPoint(0.5f, 0.0f);
+            obj->SetPivotPoint(0.5f, 0.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {
                 mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 1.0f));
                 mat->SetTexture(whiteTexture);

@@ -115,7 +115,7 @@ namespace Application {
 				auto sprite = std::make_unique<KashipanEngine::Sprite>();
 				sprite->SetUniqueBatchKey();
 				sprite->SetName(playerName_ + "_Stage_" + std::to_string(r) + "_" + std::to_string(c));
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 					mat->SetColor(config_.stageBackgroundColor);
 					mat->SetTexture(whiteTexture);
@@ -139,7 +139,7 @@ namespace Application {
 				auto sprite = std::make_unique<KashipanEngine::Sprite>();
 				sprite->SetUniqueBatchKey();
 				sprite->SetName(playerName_ + "_Panel_" + std::to_string(r) + "_" + std::to_string(c));
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 					mat->SetTexture(whiteTexture);
 				}
@@ -162,7 +162,7 @@ namespace Application {
 				auto sprite = std::make_unique<KashipanEngine::Sprite>();
 				sprite->SetUniqueBatchKey();
 				sprite->SetName(playerName_ + "_GarbWarn_" + std::to_string(r) + "_" + std::to_string(c));
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 					mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 					mat->SetTexture(whiteTexture);
@@ -186,7 +186,7 @@ namespace Application {
 				auto sprite = std::make_unique<KashipanEngine::Sprite>();
 				sprite->SetUniqueBatchKey();
 				sprite->SetName(playerName_ + "_MoveGarbWarn_" + std::to_string(r) + "_" + std::to_string(c));
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 					mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 					mat->SetTexture(whiteTexture);
@@ -212,7 +212,7 @@ namespace Application {
 				auto sprite = std::make_unique<KashipanEngine::Sprite>();
 				sprite->SetUniqueBatchKey();
 				sprite->SetName(playerName_ + "_GarbGaugeBG_" + std::to_string(i));
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 					mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 					mat->SetTexture(whiteTexture);
@@ -232,7 +232,7 @@ namespace Application {
 				sprite->SetUniqueBatchKey();
 				sprite->SetName(playerName_ + "_GarbGaugeFill_" + std::to_string(i));
 				// 1P: 右端アンカー（右から左へ減少）、2P: 左端アンカー（左から右へ減少→右から左に見える）
-				sprite->SetAnchorPoint(isPlayer2_ ? 0.0f : 1.0f, 0.5f);
+				sprite->SetPivotPoint(isPlayer2_ ? 0.0f : 1.0f, 0.5f);
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 					mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 					mat->SetTexture(whiteTexture);
@@ -281,7 +281,7 @@ namespace Application {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_RowLock_" + std::to_string(r));
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 				mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("Lock_Horizontal.png"));
@@ -303,7 +303,7 @@ namespace Application {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_ColLock_" + std::to_string(c));
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 				mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("Lock_Vertical.png"));
@@ -324,7 +324,7 @@ namespace Application {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_Cursor");
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(config_.cursorColor);
 				mat->SetTexture(whiteTexture);
@@ -375,7 +375,7 @@ namespace Application {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_InactivePreviewBG");
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.1f, 0.1f, 0.1f, 0.8f));
 				mat->SetTexture(whiteTexture);
@@ -398,7 +398,7 @@ namespace Application {
 				auto sprite = std::make_unique<KashipanEngine::Sprite>();
 				sprite->SetUniqueBatchKey();
 				sprite->SetName(playerName_ + "_InactivePreview_" + std::to_string(r) + "_" + std::to_string(c));
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 					mat->SetTexture(whiteTexture);
 				}
@@ -421,7 +421,7 @@ namespace Application {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_InactiveRowLock_" + std::to_string(r));
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 				mat->SetTexture(whiteTexture);
@@ -443,7 +443,7 @@ namespace Application {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_InactiveColLock_" + std::to_string(c));
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 				mat->SetTexture(whiteTexture);
@@ -531,7 +531,7 @@ namespace Application {
 			auto bgSprite = std::make_unique<KashipanEngine::Sprite>();
 			bgSprite->SetUniqueBatchKey();
 			bgSprite->SetName(playerName_ + "_SwapCooldownBG");
-			bgSprite->SetAnchorPoint(0.5f, 0.5f);
+			bgSprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = bgSprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.8f));
 				mat->SetTexture(whiteTexture);
@@ -553,7 +553,7 @@ namespace Application {
 			auto sprite = std::make_unique<KashipanEngine::Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName(playerName_ + "_SwapCooldown");
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
 				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 				mat->SetTexture(KashipanEngine::TextureManager::GetTextureFromFileName("loading.png"));

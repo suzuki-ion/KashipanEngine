@@ -28,7 +28,7 @@ void Application::GameTutorialManager::Update() {
 	// チュートリアルの更新処理（例: スプライトの位置を更新）
 	for(int i = 0; i < tutorialSprites_.size(); ++i) {
 		if (i < tutorialSpriteOffsets_.size()) {
-			tutorialSprites_[i]->SetAnchorPoint(0.5f, 0.5f); // アンカーポイントを中央に設定
+			tutorialSprites_[i]->SetPivotPoint(0.5f, 0.5f); // アンカーポイントを中央に設定
 			if (auto* tr = tutorialSprites_[i]->GetComponent2D<KashipanEngine::Transform2D>()) {
 				tr->SetTranslate(Vector3(tutorialPosition_.x + tutorialSpriteOffsets_[i].x,
 					tutorialPosition_.y + tutorialSpriteOffsets_[i].y, 0.0f));

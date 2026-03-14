@@ -53,7 +53,7 @@ namespace KashipanEngine {
 			auto sprite = std::make_unique<Sprite>();
 			sprite->SetUniqueBatchKey();
 			sprite->SetName("PuzzleBackground");
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = sprite->GetComponent2D<Material2D>()) {
 				mat->SetTexture(TextureManager::GetTextureFromFileName("puzzleBackground.png"));
 				mat->SetColor(Vector4(0.5f, 0.5f, 0.5f, 1.0f));
@@ -79,7 +79,7 @@ namespace KashipanEngine {
 		{
 			auto sprite = std::make_unique<Sprite>();
 			sprite->SetName("P1_Parent");
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* tr = sprite->GetComponent2D<Transform2D>()) {
 				tr->SetTranslate(Vector3(cx * 0.5f, cy, 0.0f));
 				tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
@@ -95,7 +95,7 @@ namespace KashipanEngine {
 		{
 			auto sprite = std::make_unique<Sprite>();
 			sprite->SetName("P2_Parent");
-			sprite->SetAnchorPoint(0.5f, 0.5f);
+			sprite->SetPivotPoint(0.5f, 0.5f);
 			if (auto* tr = sprite->GetComponent2D<Transform2D>()) {
 				tr->SetTranslate(Vector3(cx * 1.5f, cy, 0.0f));
 				tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
@@ -152,7 +152,7 @@ namespace KashipanEngine {
 				auto sprite = std::make_unique<Sprite>();
 				sprite->SetName("tutorialSprite" + std::to_string(i));
 				sprite->SetUniqueBatchKey();
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* tr = sprite->GetComponent2D<Transform2D>()) {
 					tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
 					tr->SetScale(Vector3(128.0f + 64.0f, 32.0f + 16.0f, 1.0f));
@@ -175,7 +175,7 @@ namespace KashipanEngine {
 				auto sprite = std::make_unique<Sprite>();
 				sprite->SetName("tutorialSprite" + std::to_string(i));
 				sprite->SetUniqueBatchKey();
-				sprite->SetAnchorPoint(0.5f, 0.5f);
+				sprite->SetPivotPoint(0.5f, 0.5f);
 				if (auto* tr = sprite->GetComponent2D<Transform2D>()) {
 					tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
 					tr->SetScale(Vector3(128.0f + 64.0f, 32.0f + 16.0f, 1.0f));
@@ -250,7 +250,7 @@ namespace KashipanEngine {
 			auto obj = std::make_unique<Sprite>();
 			obj->SetName("GameStartSprite");
 			obj->SetUniqueBatchKey();
-			obj->SetAnchorPoint(0.5f, 0.5f);
+			obj->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = obj->GetComponent2D<Material2D>()) {
 				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 				mat->SetTexture(TextureManager::GetTextureFromFileName("GameStart.png"));
@@ -267,7 +267,7 @@ namespace KashipanEngine {
 			auto obj = std::make_unique<Sprite>();
 			obj->SetName("GameStartGoSprite");
 			obj->SetUniqueBatchKey();
-			obj->SetAnchorPoint(0.5f, 0.5f);
+			obj->SetPivotPoint(0.5f, 0.5f);
 			if (auto* mat = obj->GetComponent2D<Material2D>()) {
 				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 				mat->SetTexture(TextureManager::GetTextureFromFileName("GameStartGO.png"));

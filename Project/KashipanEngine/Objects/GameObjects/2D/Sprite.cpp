@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "Objects/Components/2D/Transform2D.h"
+
 namespace KashipanEngine {
 
 Sprite::Sprite() : Object2DBase("Sprite", sizeof(Vertex), sizeof(Index), 4, 6) {
@@ -21,6 +23,20 @@ Sprite::Sprite() : Object2DBase("Sprite", sizeof(Vertex), sizeof(Index), 4, 6) {
     }
 }
 
+void Sprite::SetPivotPoint(float x, float y) {
+    Vector2 p{ x, y };
+    p.x = std::clamp(p.x, 0.0f, 1.0f);
+    p.y = std::clamp(p.y, 0.0f, 1.0f);
+
+    if (pivotPoint_ == p) return;
+    pivotPoint_ = p;
+    RebuildQuadVertices();
+}
+
+void Sprite::SetPivotPoint(const Vector2 &pivot) {
+    SetPivotPoint(pivot.x, pivot.y);
+}
+
 void Sprite::SetAnchorPoint(float x, float y) {
     Vector2 a{ x, y };
     a.x = std::clamp(a.x, 0.0f, 1.0f);
@@ -28,7 +44,6 @@ void Sprite::SetAnchorPoint(float x, float y) {
 
     if (anchorPoint_ == a) return;
     anchorPoint_ = a;
-    RebuildQuadVertices();
 }
 
 void Sprite::SetAnchorPoint(const Vector2 &anchor) {
@@ -36,8 +51,8 @@ void Sprite::SetAnchorPoint(const Vector2 &anchor) {
 }
 
 void Sprite::RebuildQuadVertices() {
-    const float ox = anchorPoint_.x - 0.5f;
-    const float oy = 0.5f - anchorPoint_.y;
+    const float ox = pivotPoint_.x - 0.5f;
+    const float oy = 0.5f - pivotPoint_.y;
 
     auto v = GetVertexSpan<Vertex>();
     if (v.size() >= 4) {
@@ -53,11 +68,33 @@ void Sprite::RebuildQuadVertices() {
     }
 }
 
+void Sprite::UpdateAnchorOffset() {
+    auto *transform = GetComponent2D<Transform2D>();
+    if (!transform) return;
+
+    Vector3 anchorOffset{ 0.0f, 0.0f, 0.0f };
+    if (auto *parent = transform->GetParentTransform()) {
+        const Vector3 &parentScale = parent->GetScale();
+        anchorOffset.x = (anchorPoint_.x - 0.5f) * parentScale.x;
+        anchorOffset.y = (0.5f - anchorPoint_.y) * parentScale.y;
+    }
+
+    if (anchorOffset == appliedAnchorOffset_) return;
+
+    Vector3 t = transform->GetTranslate();
+    t -= appliedAnchorOffset_;
+    t += anchorOffset;
+    transform->SetTranslate(t);
+    appliedAnchorOffset_ = anchorOffset;
+}
+
 bool Sprite::Render([[maybe_unused]] ShaderVariableBinder &shaderBinder) {
     if (HasComponents2D("Material2D") == 0 ||
         HasComponents2D("Transform2D") == 0) {
         return false;
     }
+
+    UpdateAnchorOffset();
     return true;
 }
 

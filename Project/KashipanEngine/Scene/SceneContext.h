@@ -79,6 +79,24 @@ public:
     /// @brief 3D オブジェクトを削除
     bool RemoveObject3D(Object3DBase *obj);
 
+    /// @brief 名前から一致する2Dオブジェクトを全て取得
+    std::vector<Object2DBase *> GetObjects2D(const std::string &objectName) const;
+
+    /// @brief 名前から一致する最初の2Dオブジェクトを取得
+    Object2DBase *GetObject2D(const std::string &objectName) const;
+
+    /// @brief ポインタから一致する2Dオブジェクトを取得
+    Object2DBase *GetObject2D(Object2DBase *obj) const;
+
+    /// @brief 名前から一致する3Dオブジェクトを全て取得
+    std::vector<Object3DBase *> GetObjects3D(const std::string &objectName) const;
+
+    /// @brief 名前から一致する最初の3Dオブジェクトを取得
+    Object3DBase *GetObject3D(const std::string &objectName) const;
+
+    /// @brief ポインタから一致する3Dオブジェクトを取得
+    Object3DBase *GetObject3D(Object3DBase *obj) const;
+
 private:
     SceneBase *owner_ = nullptr;
 };

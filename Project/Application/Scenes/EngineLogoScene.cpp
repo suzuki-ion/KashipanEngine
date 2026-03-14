@@ -78,7 +78,7 @@ void EngineLogoScene::Initialize() {
         auto sp = std::make_unique<Sprite>();
         sp->SetName("EngineLogoGear");
         sp->SetUniqueBatchKey();
-        sp->SetAnchorPoint(0.5f, 0.5f);
+        sp->SetPivotPoint(0.5f, 0.5f);
         // Transform/Material は既に登録されている前提
         if (auto t = sp->GetComponent2D<Transform2D>("Transform2D")) {
             t->SetScale(Vector3(0.0f, 0.0f, 1.0f));
@@ -102,7 +102,7 @@ void EngineLogoScene::Initialize() {
         auto sp = std::make_unique<Sprite>();
         sp->SetName("EngineLogoBread");
         sp->SetUniqueBatchKey();
-        sp->SetAnchorPoint(0.5f, 0.5f);
+        sp->SetPivotPoint(0.5f, 0.5f);
         if (auto t = sp->GetComponent2D<Transform2D>("Transform2D")) {
             t->SetScale(Vector3(0.0f, 0.0f, 1.0f));
             t->SetTranslate(Vector3(cx, static_cast<float>(srcH) * 0.5f, 0.0f));
@@ -125,7 +125,7 @@ void EngineLogoScene::Initialize() {
         auto sp = std::make_unique<Sprite>();
         sp->SetName("EngineLogoText");
         sp->SetUniqueBatchKey();
-        sp->SetAnchorPoint(0.5f, 0.5f);
+        sp->SetPivotPoint(0.5f, 0.5f);
         if (auto t = sp->GetComponent2D<Transform2D>("Transform2D")) {
             t->SetScale(Vector3(1024.0f, 256.0f, 1.0f));
             t->SetTranslate(Vector3(cx, static_cast<float>(srcH) * 0.2f, 0.0f));

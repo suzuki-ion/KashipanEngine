@@ -23,7 +23,7 @@ public:
         auto sprite = std::make_unique<Sprite>();
         sprite->SetUniqueBatchKey();
         sprite->SetName("BackgroundSprite");
-        sprite->SetAnchorPoint(0.5f, 0.5f);
+        sprite->SetPivotPoint(0.5f, 0.5f);
 
         if (auto* tr = sprite->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3(cx, cy, 0.0f));

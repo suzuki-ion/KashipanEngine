@@ -9,7 +9,7 @@ KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObject(
 	KashipanEngine::Sprite* spritePtr = sprite.get();
 	sprite->SetName(spriteName);
 	sprite->SetUniqueBatchKey();
-	sprite->SetAnchorPoint(0.5f, 0.5f);
+	sprite->SetPivotPoint(0.5f, 0.5f);
 
 	assert(AddObject);
 	assert(screenBuffer2D);

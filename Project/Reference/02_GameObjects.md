@@ -28,7 +28,7 @@ KashipanEngine の「オブジェクト」は、
 auto sprite = std::make_unique<KashipanEngine::Sprite>();
 
 // アンカーポイント（(0,0)=左上、(0.5,0.5)=中央）
-sprite->SetAnchorPoint(0.5f, 0.5f);
+sprite->SetPivotPoint(0.5f, 0.5f);
 ```
 
 ### 3D（`KashipanEngine/Objects/GameObjects/3D/*`）

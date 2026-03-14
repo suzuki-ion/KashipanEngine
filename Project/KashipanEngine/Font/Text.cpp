@@ -27,7 +27,7 @@ Text::Text(uint32_t textCount)
         auto sprite = std::make_unique<Sprite>();
         sprite->SetBatchKey(spriteBatchKey_);
         sprite->SetName(std::string("TextChar_") + std::to_string(i));
-        sprite->SetAnchorPoint(0.0f, 0.0f);
+        sprite->SetPivotPoint(0.0f, 0.0f);
 
         if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
             if (parentTransform_) {

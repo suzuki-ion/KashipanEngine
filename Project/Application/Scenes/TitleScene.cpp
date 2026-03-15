@@ -20,6 +20,34 @@ void TitleScene::Initialize() {
         in->Play();
     }
 
+    // ============================================================
+    // ユーティリティの生成
+    // ============================================================
+    // ゲームにスプライトを生成、追加する関数
+    createSpriteFunction_ =
+        [this](const std::string& name) {
+        return Application::MatsumotoUtility::CreateSpriteObject(
+            sceneDefaultVariables_->GetScreenBuffer2D(),
+            [this](std::unique_ptr<Object2DBase> obj) { return AddObject2D(std::move(obj)); },
+            name);
+        };
+    // ゲームにスプライトを特定のテクスチャで生成、追加する関数
+    createSpriteWithTextureFunction_ =
+        [this](const std::string& name, const std::string& textureName) {
+        KashipanEngine::Sprite* sprite = createSpriteFunction_(name);
+        Application::MatsumotoUtility::SetTextureToSprite(sprite, textureName);
+        Application::MatsumotoUtility::FitSpriteToTexture(sprite);
+        return sprite;
+        };
+    // 画面の中心
+    if (auto* window = sceneDefaultVariables_->GetMainWindow()) {
+        screenCenter_ = Vector2(static_cast<float>(window->GetClientWidth()) * 0.5f, static_cast<float>(window->GetClientHeight()) * 0.5f);
+    }
+
+    // ============================================================
+    // ゲームで使うオブジェクトたちの生成
+    // ============================================================
+
 	transitionStarted_ = false;
 
 	// タイトルセレクトマネージャーの初期化
@@ -32,15 +60,8 @@ void TitleScene::Initialize() {
         [this]() {return GetInputCommand()->Evaluate("P2Cancel").Triggered(); }
     );
 
-	// スプライトの生成関数
-    auto CreateSirite =
-        [this](const std::string& name)
-        { return Application::MatsumotoUtility::CreateSpriteObject(
-            sceneDefaultVariables_->GetScreenBuffer2D(),
-            [this](std::unique_ptr<Object2DBase> obj) { return AddObject2D(std::move(obj)); },
-            name); };
 	// タイトルスプライトマネージャーの初期化
-	titleSpriteManager_.Initialize(CreateSirite);
+	titleSpriteManager_.Initialize(createSpriteFunction_);
     SetNextSceneName("GameScene");
 
     // ================================================================

@@ -255,6 +255,13 @@ void Application::MatsumotoUtility::SimpleEaseSpriteColor(KashipanEngine::Sprite
 	SetColorToSprite(sprite, currentColor);
 }
 
+void Application::MatsumotoUtility::FlipSpriteHorizontal(KashipanEngine::Sprite* sprite)
+{
+	Vector3 currentScale = GetScaleFromSprite(sprite);
+	currentScale.x *= -1.0f;
+	SetScaleToSprite(sprite, currentScale);
+}
+
 
 float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float transitionSpeed)
 {

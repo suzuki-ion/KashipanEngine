@@ -57,6 +57,9 @@ namespace Application::MatsumotoUtility
 	/// @brief 簡易イージング関数を使ってスプライトの色をtargetColorに変化させる
 	void SimpleEaseSpriteColor(KashipanEngine::Sprite* sprite, const Vector4& targetColor, float transitionSpeed);
 
+	/// @brief スケールの左右反転
+	void FlipSpriteHorizontal(KashipanEngine::Sprite* sprite);
+
 	/// @brief 簡易イージング関数（イージングなしの線形補間に近い挙動）
 	float SimpleEaseIn(float from, float to, float transitionSpeed);
 

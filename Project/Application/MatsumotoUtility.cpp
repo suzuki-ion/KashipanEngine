@@ -236,6 +236,15 @@ void Application::MatsumotoUtility::SimpleEaseSpriteMove(KashipanEngine::Sprite*
 	SetTranslateToSprite(sprite, currentPosition);
 }
 
+void Application::MatsumotoUtility::SimpleEaseSpriteScale(KashipanEngine::Sprite* sprite, const Vector3& targetScale, float transitionSpeed)
+{
+	Vector3 currentScale = GetScaleFromSprite(sprite);
+	currentScale.x = SimpleEaseIn(currentScale.x, targetScale.x, transitionSpeed);
+	currentScale.y = SimpleEaseIn(currentScale.y, targetScale.y, transitionSpeed);
+	currentScale.z = SimpleEaseIn(currentScale.z, targetScale.z, transitionSpeed);
+	SetScaleToSprite(sprite, currentScale);
+}
+
 void Application::MatsumotoUtility::SimpleEaseSpriteColor(KashipanEngine::Sprite* sprite, const Vector4& targetColor, float transitionSpeed)
 {
 	Vector4 currentColor = GetColorFromSprite(sprite);

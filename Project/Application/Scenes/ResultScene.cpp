@@ -162,6 +162,11 @@ void ResultScene::OnUpdate() {
 	MoveTextureUVToSprite(spriteMap_["CutInBarUp"], Vector2(cutInBarScrollSpeed * deltaTime, 0.0f));
 	MoveTextureUVToSprite(spriteMap_["CutInBarDown"], Vector2(cutInBarScrollSpeed * deltaTime, 0.0f));
 
+	// 最初の1秒間は何も表示せずに待つ
+    if (timer_ < 1.0f) {
+		return;
+    }
+
     // 勝利プレイヤーのスプライトを出現させる
     SimpleEaseSpriteMove(spriteMap_["WinnerPlayer"], Vector3(screenCenter_.x, screenCenter_.y + sinf(timer_) *10.0f, 0.0f), 0.2f);
 	SetTranslateToSprite(spriteMap_["WinnerHead"], Vector3(0.0f, sinf(timer_) * 5.0f, 0.0f));

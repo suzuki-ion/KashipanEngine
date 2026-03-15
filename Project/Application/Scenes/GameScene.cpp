@@ -159,6 +159,14 @@ void GameScene::OnUpdate() {
 			}
 		}
 	}
+
+	ImGui::Begin("GameScene");
+	if (ImGui::Button("NextScene")) {
+		if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+			out->Play();
+		}
+	}
+	ImGui::End();
 }
 
 // ゲームのメインループ

@@ -26,7 +26,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         
         //sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
         sm->RegisterScene<TitleScene>("TitleScene");
-        sm->RegisterScene<TestScene>("TestScene");
+        sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
         //sm->RegisterScene<GameOverScene>("GameOverScene");
 
@@ -34,7 +34,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
                 sm->RegisterScene<TestScene>("TestScene");
                 context.sceneManager->ChangeScene("TestScene");
         #endif*/
-		context.sceneManager->ChangeScene("TitleScene");
+		context.sceneManager->ChangeScene("GameScene");
     }
 
     if (context.inputCommand) {
@@ -42,6 +42,20 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->Clear();
 
         // * ゲーム外のコマンド * //
+        // コントローラーのボタン
+		ic->RegisterCommand("ControllerA", ControllerButton::A, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerB", ControllerButton::B, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerX", ControllerButton::X, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerY", ControllerButton::Y, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerStart", ControllerButton::Start, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerBack", ControllerButton::Back, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerDPadUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerDPadDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerDPadLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerDPadRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerLeftShoulder", ControllerButton::LeftShoulder, InputCommand::InputState::Trigger);
+		ic->RegisterCommand("ControllerRightShoulder", ControllerButton::RightShoulder, InputCommand::InputState::Trigger);
+        
         // 決定
         ic->RegisterCommand("Submit", Key::Enter, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", Key::Space, InputCommand::InputState::Trigger);

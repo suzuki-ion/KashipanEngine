@@ -1,5 +1,6 @@
 #include "MenuActionManager.h"
 using namespace Application;
+#include <MatsumotoUtility.h>
 
 void Application::MenuActionManager::Initialize(
 	std::function<bool()> menuConditions,
@@ -38,6 +39,7 @@ void MenuActionManager::Update()
 		} else {
 			isMenuOpen_ = true;
 		}
+		Application::MatsumotoUtility::PlaySE("menuDecide.mp3");
 	}
 
 	// メニューが未来ていないなら早期リターン
@@ -48,26 +50,32 @@ void MenuActionManager::Update()
 	// メニューのキャンセルアクションを評価
 	if (menuCancelAction_ && menuCancelAction_()) {
 		menuActions_[0](); // キャンセルアクションは常に最初のアクションとして登録されていると仮定
+		Application::MatsumotoUtility::PlaySE("cursorCancel.mp3");
 	}
 
 	// メニューの上移動アクションを評価
 	if (menuIndexUpAction_ && menuIndexUpAction_()) {
-		selectedIndex_++;
+		selectedIndex_--;
 		if (selectedIndex_ < 0) {
 			selectedIndex_ = static_cast<int>(menuActions_.size()) - 1;
 		}
+
+		Application::MatsumotoUtility::PlaySE("menuSelect.mp3");
 	}
 	if (menuIndexDownAction_ && menuIndexDownAction_()) {
-		selectedIndex_--;
+		selectedIndex_++;
 		if (selectedIndex_ >= static_cast<int>(menuActions_.size())) {
 			selectedIndex_ = 0;
 		}
+
+		Application::MatsumotoUtility::PlaySE("menuSelect.mp3");
 	}
 
 	// メニューの選択アクションを評価
 	if (menuSelectAction_ && menuSelectAction_()) {
 		if (selectedIndex_ >= 0 && selectedIndex_ < static_cast<int>(menuActions_.size())) {
 			menuActions_[selectedIndex_]();
+			Application::MatsumotoUtility::PlaySE("menuDecide.mp3");
 		}
 	}
 }

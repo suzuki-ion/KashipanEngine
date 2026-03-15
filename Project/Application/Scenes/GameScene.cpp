@@ -77,6 +77,18 @@ void GameScene::Initialize() {
 	gameOver_ = false;
 	// ゲームオーバー後の遷移までの時間を初期化
 	autoSceneChangeTimer_ = 3.0f;
+
+	// ================================================================
+	// BGM
+	// ================================================================
+	{
+		AudioManager::PlayParams params;
+		params.sound = AudioManager::GetSoundHandleFromFileName("bgmGame.mp3");
+		params.volume = 0.2f;
+		params.loop = true;
+		audioPlayer_.AddAudio(params);
+		audioPlayer_.ChangeAudio(2.0);
+	}
 }
 
 GameScene::~GameScene() {}
@@ -176,8 +188,8 @@ void GameScene::InitMenu()
         [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Menu").Triggered(); },
         [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Submit").Triggered(); },
         [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Cancel").Triggered(); },
-        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Up").Triggered(); },
-        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Down").Triggered(); }
+        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Down").Triggered(); },
+        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Up").Triggered(); }
     );
     // メニューのアクションを追加
     menuActionManager_.AddMenuAction([this]() {
@@ -189,15 +201,15 @@ void GameScene::InitMenu()
         Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, Vector3(0.0f, 0.0f, 1.0f));
         menuActionManager_.SetMenuOpen(false);
         });
+	menuActionManager_.AddMenuAction([this]() {
+		if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+			SetNextSceneName("GameScene");
+			out->Play();
+		}
+		});
     menuActionManager_.AddMenuAction([this]() {
         if (auto* out = GetSceneComponent<SceneChangeOut>()) {
             SetNextSceneName("TitleScene");
-            out->Play();
-        }
-        });
-    menuActionManager_.AddMenuAction([this]() {
-        if (auto* out = GetSceneComponent<SceneChangeOut>()) {
-            SetNextSceneName("TestScene");
             out->Play();
         }
         });

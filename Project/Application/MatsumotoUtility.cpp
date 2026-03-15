@@ -256,3 +256,11 @@ float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float tr
 	}
 	return value;
 }
+
+void Application::MatsumotoUtility::PlaySE(const std::string& seName, float volume, float pich)
+{
+	auto seHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName(seName);
+	if (seHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+		KashipanEngine::AudioManager::Play(seHandle, volume, pich);
+	}
+}

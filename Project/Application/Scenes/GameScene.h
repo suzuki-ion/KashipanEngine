@@ -45,6 +45,8 @@ private:
 	float autoSceneChangeTimer_ = 0.0f;
 	// ゲームの背景
 	KashipanEngine::Sprite* backgroundSprite_ = nullptr;
+	// BGM
+	AudioPlayer audioPlayer_;
 };
 
 } // namespace KashipanEngine

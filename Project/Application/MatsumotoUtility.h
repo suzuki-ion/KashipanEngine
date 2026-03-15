@@ -50,6 +50,11 @@ namespace Application::MatsumotoUtility
 	/// @brief スプライトのテクスチャのUV座標を移動
 	void MoveTextureUVToSprite(KashipanEngine::Sprite* sprite, const Vector2& deltaUv);
 
+	/// @brief 簡易イージング関数を使ってスプライトをtargetPositionに移動させる
+	void SimpleEaseSpriteMove(KashipanEngine::Sprite* sprite, const Vector3& targetPosition, float transitionSpeed);
+	/// @brief 簡易イージング関数を使ってスプライトの色をtargetColorに変化させる
+	void SimpleEaseSpriteColor(KashipanEngine::Sprite* sprite, const Vector4& targetColor, float transitionSpeed);
+
 	/// @brief 簡易イージング関数（イージングなしの線形補間に近い挙動）
 	float SimpleEaseIn(float from, float to, float transitionSpeed);
 }

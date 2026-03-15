@@ -52,13 +52,13 @@ void MenuActionManager::Update()
 
 	// メニューの上移動アクションを評価
 	if (menuIndexUpAction_ && menuIndexUpAction_()) {
-		selectedIndex_--;
+		selectedIndex_++;
 		if (selectedIndex_ < 0) {
 			selectedIndex_ = static_cast<int>(menuActions_.size()) - 1;
 		}
 	}
 	if (menuIndexDownAction_ && menuIndexDownAction_()) {
-		selectedIndex_++;
+		selectedIndex_--;
 		if (selectedIndex_ >= static_cast<int>(menuActions_.size())) {
 			selectedIndex_ = 0;
 		}

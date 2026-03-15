@@ -41,7 +41,7 @@ void TitleScene::Initialize() {
             name); };
 	// タイトルスプライトマネージャーの初期化
 	titleSpriteManager_.Initialize(CreateSirite);
-    SetNextSceneName("TestScene");
+    SetNextSceneName("GameScene");
 
     // ================================================================
     // BGM

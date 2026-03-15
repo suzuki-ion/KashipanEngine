@@ -153,6 +153,7 @@
     <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameStartSystem.cpp" />
     <ClCompile Include="Application\Objects\ResultSystem\ResultSelector.cpp" />
+    <ClCompile Include="Application\Objects\OutGameSystem\ControllerViewer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Config\GameSceneConfig.h" />
@@ -408,6 +409,7 @@
     <ClInclude Include="Application\Objects\ResultSystem\ResultSelector.h" />
     <ClInclude Include="Application\Scenes\Components\ResultSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\Components\BackgroundSprite.h" />
+    <ClInclude Include="Application\Objects\OutGameSystem\ControllerViewer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

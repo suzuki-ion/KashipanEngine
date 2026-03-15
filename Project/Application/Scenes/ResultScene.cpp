@@ -141,7 +141,7 @@ void ResultScene::OnUpdate() {
             SetNextSceneName("TitleScene");
         }
         else if (selectedNumber == 1) {
-            SetNextSceneName("TestScene");
+            SetNextSceneName("GameScene");
         }
 
         auto decideHandle = AudioManager::GetSoundHandleFromFileName("menuDecide.mp3");

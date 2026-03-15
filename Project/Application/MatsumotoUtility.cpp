@@ -227,6 +227,26 @@ void Application::MatsumotoUtility::MoveTextureUVToSprite(KashipanEngine::Sprite
 	}
 }
 
+void Application::MatsumotoUtility::SimpleEaseSpriteMove(KashipanEngine::Sprite* sprite, const Vector3& targetPosition, float transitionSpeed)
+{
+	Vector3 currentPosition = GetTranslateFromSprite(sprite);
+	currentPosition.x = SimpleEaseIn(currentPosition.x, targetPosition.x, transitionSpeed);
+	currentPosition.y = SimpleEaseIn(currentPosition.y, targetPosition.y, transitionSpeed);
+	currentPosition.z = SimpleEaseIn(currentPosition.z, targetPosition.z, transitionSpeed);
+	SetTranslateToSprite(sprite, currentPosition);
+}
+
+void Application::MatsumotoUtility::SimpleEaseSpriteColor(KashipanEngine::Sprite* sprite, const Vector4& targetColor, float transitionSpeed)
+{
+	Vector4 currentColor = GetColorFromSprite(sprite);
+	currentColor.x = SimpleEaseIn(currentColor.x, targetColor.x, transitionSpeed);
+	currentColor.y = SimpleEaseIn(currentColor.y, targetColor.y, transitionSpeed);
+	currentColor.z = SimpleEaseIn(currentColor.z, targetColor.z, transitionSpeed);
+	currentColor.w = SimpleEaseIn(currentColor.w, targetColor.w, transitionSpeed);
+	SetColorToSprite(sprite, currentColor);
+}
+
+
 float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float transitionSpeed)
 {
 	float value = from;

@@ -57,4 +57,7 @@ namespace Application::MatsumotoUtility
 
 	/// @brief 簡易イージング関数（イージングなしの線形補間に近い挙動）
 	float SimpleEaseIn(float from, float to, float transitionSpeed);
+
+	/// @brief SEを再生する（SEのファイル名を渡す、拡張子も付けること）
+	void PlaySE(const std::string& seName,float volume = 0.5f,float pich = 0.0f);
 }

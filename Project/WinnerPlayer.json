@@ -1,0 +1,213 @@
+{
+    "bindings": {
+        "WinnerPlayer": [
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "TranslateY"
+            },
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Scale.X",
+                "timelineName": "DefaultScale"
+            },
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Scale.Y",
+                "timelineName": "DefaultScale"
+            },
+            {
+                "objectName": "WinnerHead",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "TranslateYHead"
+            },
+            {
+                "objectName": "WinnerArmL",
+                "propertyPath": "Transform.Rotate.Z",
+                "timelineName": "ArmRotateL"
+            },
+            {
+                "objectName": "WinnerArmL",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "TranslateYHead"
+            },
+            {
+                "objectName": "WinnerArmR",
+                "propertyPath": "Transform.Rotate.Z",
+                "timelineName": "ArmRotateL"
+            },
+            {
+                "objectName": "WinnerArmR",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "TranslateYHead"
+            },
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "PLayerInTranlateX"
+            }
+        ]
+    },
+    "presets": {
+        "WinnerPlayer": [
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerPlayer",
+                "parentObjectName": "",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerBody",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerHead",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerArmL",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerArmR",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            }
+        ]
+    },
+    "timelines": {
+        "ArmRotateL": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": 0.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 1.0,
+                    "value": -5.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 2.0,
+                    "value": 0.0
+                }
+            ],
+            "loop": true
+        },
+        "DefaultScale": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 0.8999999761581421
+                }
+            ],
+            "loop": true
+        },
+        "DefaultTranslateX": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 810.0
+                }
+            ],
+            "loop": true
+        },
+        "PLayerInTranlateX": {
+            "keys": [
+                {
+                    "easeType": 30,
+                    "time": 1.0,
+                    "value": -810.0
+                },
+                {
+                    "easeType": 30,
+                    "time": 1.5,
+                    "value": 810.0
+                }
+            ],
+            "loop": false
+        },
+        "TranslateY": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": 540.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 1.0,
+                    "value": 500.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 2.0,
+                    "value": 540.0
+                }
+            ],
+            "loop": true
+        },
+        "TranslateYHead": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": 0.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 1.0,
+                    "value": -16.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 2.0,
+                    "value": 0.0
+                }
+            ],
+            "loop": true
+        }
+    },
+    "version": 2
+}

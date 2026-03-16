@@ -924,6 +924,17 @@ void SpriteAnimator::ShowImGuiWindowTimelines() {
 
     ImGui::InputText("TimelineName", timelineNameBuffer_.data(), timelineNameBuffer_.size());
     ImGui::Checkbox("Loop", &imguiTimelineLoop_);
+    
+    if (ImGui::Button("Add Timeline")) {
+        if (!timelineNameBuffer_[0]) {
+            ImGui::OpenPopup("InvalidTimelineName");
+        } else if (timelines_.contains(timelineNameBuffer_.data())) {
+            ImGui::OpenPopup("TimelineExists");
+        } else {
+            AddTimelineKey(timelineNameBuffer_.data(), 0.0f, 0.0f);
+        }
+    }
+    ImGui::SameLine();
 
     if (ImGui::Button("Apply Loop To Timeline")) {
         SetTimelineLoop(timelineNameBuffer_.data(), imguiTimelineLoop_);

@@ -43,8 +43,8 @@ void GameScene::Initialize() {
         return sprite;
         };
 	// 画面の中心
-	if (auto* window = sceneDefaultVariables_->GetMainWindow()) {
-		screenCenter_ = Vector2(static_cast<float>(window->GetClientWidth()) * 0.5f, static_cast<float>(window->GetClientHeight()) * 0.5f);
+	if (auto* screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D()) {
+		screenCenter_ = Vector2(static_cast<float>(screenBuffer2D->GetWidth()) * 0.5f, static_cast<float>(screenBuffer2D->GetHeight()) * 0.5f);
 	}
 
     // ============================================================
@@ -95,8 +95,8 @@ GameScene::~GameScene() {}
 
 void GameScene::OnUpdate() {
 	// 画面の中心を更新
-	if (auto* window = sceneDefaultVariables_->GetMainWindow()) {
-		screenCenter_ = Vector2(static_cast<float>(window->GetClientWidth()) * 0.5f, static_cast<float>(window->GetClientHeight()) * 0.5f);
+	if (auto *screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D()) {
+		screenCenter_ = Vector2(static_cast<float>(screenBuffer2D->GetWidth()) * 0.5f, static_cast<float>(screenBuffer2D->GetHeight()) * 0.5f);
 	}
 	// デルタタイムの取得
 	float deltaTime = GetDeltaTime();

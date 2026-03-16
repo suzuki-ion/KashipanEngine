@@ -17,10 +17,8 @@ ResultScene::ResultScene()
 void ResultScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
 
-    AddSceneComponent(std::make_unique<BackgroundSprite>());
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
-    AddSceneComponent(std::make_unique<ResultSceneAnimator>());
 
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
@@ -46,9 +44,9 @@ void ResultScene::Initialize() {
         return sprite;
         };
 	// 画面の中心
-	if (auto* window = sceneDefaultVariables_->GetMainWindow()) {
-		screenCenter_ = Vector2(static_cast<float>(window->GetClientWidth()) * 0.5f, static_cast<float>(window->GetClientHeight()) * 0.5f);
-	}
+    if (auto *screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D()) {
+        screenCenter_ = Vector2(static_cast<float>(screenBuffer2D->GetWidth()) * 0.5f, static_cast<float>(screenBuffer2D->GetHeight()) * 0.5f);
+    }
 	// タイマー
 	timer_ = 0.0f;
 
@@ -69,18 +67,18 @@ void ResultScene::Initialize() {
 
     // 勝利プレイヤーの親スプライト
 	spriteMap_["WinnerPlayer"] = createSpriteFunction_("WinnerPlayer");
-	SetTranslateToSprite(spriteMap_["WinnerPlayer"], Vector3(-screenCenter_.x, screenCenter_.y, 0.0f));
-	SetScaleToSprite(spriteMap_["WinnerPlayer"], Vector3(0.9f, 0.9f, 1.0f));
+	//SetTranslateToSprite(spriteMap_["WinnerPlayer"], Vector3(-screenCenter_.x, screenCenter_.y, 0.0f));
+	//SetScaleToSprite(spriteMap_["WinnerPlayer"], Vector3(0.9f, 0.9f, 1.0f));
 
 	// 勝利プレイヤーの頭
 	spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_1.png");
-	ParentSpriteToSprite(spriteMap_["WinnerHead"], spriteMap_["WinnerPlayer"]);
+	//ParentSpriteToSprite(spriteMap_["WinnerHead"], spriteMap_["WinnerPlayer"]);
     // 勝利プレイヤーの胴
 	spriteMap_["WinnerBody"] = createSpriteWithTextureFunction_("WinnerBody", "result_body_1.png");
-	ParentSpriteToSprite(spriteMap_["WinnerBody"], spriteMap_["WinnerPlayer"]);
+	//ParentSpriteToSprite(spriteMap_["WinnerBody"], spriteMap_["WinnerPlayer"]);
     // 勝利プレイヤーの左腕
 	spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_1.png");
-	ParentSpriteToSprite(spriteMap_["WinnerArmL"], spriteMap_["WinnerPlayer"]);
+	//ParentSpriteToSprite(spriteMap_["WinnerArmL"], spriteMap_["WinnerPlayer"]);
 
     // 勝利者の表示
 	spriteMap_["WinnerText"] = createSpriteWithTextureFunction_("WinnerText", "result_Win0.png");
@@ -94,7 +92,7 @@ void ResultScene::Initialize() {
 
     // 勝利プレイヤーの右腕
     spriteMap_["WinnerArmR"] = createSpriteWithTextureFunction_("WinnerArmR", "result_rightArm_1.png");
-	ParentSpriteToSprite(spriteMap_["WinnerArmR"], spriteMap_["WinnerPlayer"]);
+	//ParentSpriteToSprite(spriteMap_["WinnerArmR"], spriteMap_["WinnerPlayer"]);
 
     // 結果セレクタの選択肢スプライトを初期化
     spriteMap_["BackToTitle"] = createSpriteWithTextureFunction_("result", "result_0.png");
@@ -131,6 +129,14 @@ void ResultScene::Initialize() {
         bgmPlayer_.ChangeAudio(0.0, 0);
     }
 
+    // ================================================================
+    // スプライトアニメーター
+    // ================================================================
+    {
+        auto cmp = std::make_unique<SpriteAnimator>();
+        AddSceneComponent(std::move(cmp));
+    }
+
     prevSelectedNumber_ = resultSelector_.GetSelectNumber();
 }
 
@@ -150,9 +156,9 @@ void ResultScene::OnUpdate() {
     }
 
 	// 画面の中心を更新
-	if (auto* window = sceneDefaultVariables_->GetMainWindow()) {
-		screenCenter_ = Vector2(static_cast<float>(window->GetClientWidth()) * 0.5f, static_cast<float>(window->GetClientHeight()) * 0.5f);
-	}
+    if (auto *screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D()) {
+        screenCenter_ = Vector2(static_cast<float>(screenBuffer2D->GetWidth()) * 0.5f, static_cast<float>(screenBuffer2D->GetHeight()) * 0.5f);
+    }
 
 	// 背景のスクロール
 	MoveTextureUVToSprite(spriteMap_["Background"], Vector2(0.0f, deltaTime));
@@ -168,10 +174,10 @@ void ResultScene::OnUpdate() {
     }
 
     // 勝利プレイヤーのスプライトを出現させる
-    SimpleEaseSpriteMove(spriteMap_["WinnerPlayer"], Vector3(screenCenter_.x, screenCenter_.y + sinf(timer_) *10.0f, 0.0f), 0.2f);
-	SetTranslateToSprite(spriteMap_["WinnerHead"], Vector3(0.0f, sinf(timer_) * 5.0f, 0.0f));
-    SetTranslateToSprite(spriteMap_["WinnerArmR"], Vector3(0.0f, sinf(timer_+ 0.8f) * 10.0f, 0.0f));
-    SetRotationToSprite(spriteMap_["WinnerArmL"], Vector3(0.0f,0.0f,sinf(timer_) * 0.05f));
+    //SimpleEaseSpriteMove(spriteMap_["WinnerPlayer"], Vector3(screenCenter_.x, screenCenter_.y + sinf(timer_) *10.0f, 0.0f), 0.2f);
+	//SetTranslateToSprite(spriteMap_["WinnerHead"], Vector3(0.0f, sinf(timer_) * 5.0f, 0.0f));
+    //SetTranslateToSprite(spriteMap_["WinnerArmR"], Vector3(0.0f, sinf(timer_+ 0.8f) * 10.0f, 0.0f));
+    //SetRotationToSprite(spriteMap_["WinnerArmL"], Vector3(0.0f,0.0f,sinf(timer_) * 0.05f));
 
 	// 勝利者の文字を出現させる
 	SimpleEaseSpriteMove(spriteMap_["WinnerText"], Vector3(screenCenter_.x, screenCenter_.y + cosf(timer_) * 5.0f, 0.0f), 0.2f);

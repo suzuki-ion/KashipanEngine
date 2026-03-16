@@ -8,7 +8,6 @@
     <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
-    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
@@ -165,7 +164,6 @@
     <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
-    <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h" />
     <ClInclude Include="Externals\imgui\imgui.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h" />

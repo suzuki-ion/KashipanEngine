@@ -181,6 +181,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
     <ClCompile Include="Application\Objects\Container\MenuSpriteCotainer.cpp" />
+    <ClCompile Include="Application\Objects\OutGameSystem\ControllerViewer.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameStartSystem.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameTutorialManager.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\MenuActionManager.cpp" />
@@ -353,6 +354,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Container\HandBlockContainer.h" />
     <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
     <ClInclude Include="Application\Objects\Container\MenuSpriteCotainer.h" />
+    <ClInclude Include="Application\Objects\OutGameSystem\ControllerViewer.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameStartSystem.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameTutorialManager.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\MenuActionManager.h" />

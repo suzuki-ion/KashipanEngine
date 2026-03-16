@@ -227,6 +227,42 @@ void Application::MatsumotoUtility::MoveTextureUVToSprite(KashipanEngine::Sprite
 	}
 }
 
+void Application::MatsumotoUtility::SimpleEaseSpriteMove(KashipanEngine::Sprite* sprite, const Vector3& targetPosition, float transitionSpeed)
+{
+	Vector3 currentPosition = GetTranslateFromSprite(sprite);
+	currentPosition.x = SimpleEaseIn(currentPosition.x, targetPosition.x, transitionSpeed);
+	currentPosition.y = SimpleEaseIn(currentPosition.y, targetPosition.y, transitionSpeed);
+	currentPosition.z = SimpleEaseIn(currentPosition.z, targetPosition.z, transitionSpeed);
+	SetTranslateToSprite(sprite, currentPosition);
+}
+
+void Application::MatsumotoUtility::SimpleEaseSpriteScale(KashipanEngine::Sprite* sprite, const Vector3& targetScale, float transitionSpeed)
+{
+	Vector3 currentScale = GetScaleFromSprite(sprite);
+	currentScale.x = SimpleEaseIn(currentScale.x, targetScale.x, transitionSpeed);
+	currentScale.y = SimpleEaseIn(currentScale.y, targetScale.y, transitionSpeed);
+	currentScale.z = SimpleEaseIn(currentScale.z, targetScale.z, transitionSpeed);
+	SetScaleToSprite(sprite, currentScale);
+}
+
+void Application::MatsumotoUtility::SimpleEaseSpriteColor(KashipanEngine::Sprite* sprite, const Vector4& targetColor, float transitionSpeed)
+{
+	Vector4 currentColor = GetColorFromSprite(sprite);
+	currentColor.x = SimpleEaseIn(currentColor.x, targetColor.x, transitionSpeed);
+	currentColor.y = SimpleEaseIn(currentColor.y, targetColor.y, transitionSpeed);
+	currentColor.z = SimpleEaseIn(currentColor.z, targetColor.z, transitionSpeed);
+	currentColor.w = SimpleEaseIn(currentColor.w, targetColor.w, transitionSpeed);
+	SetColorToSprite(sprite, currentColor);
+}
+
+void Application::MatsumotoUtility::FlipSpriteHorizontal(KashipanEngine::Sprite* sprite)
+{
+	Vector3 currentScale = GetScaleFromSprite(sprite);
+	currentScale.x *= -1.0f;
+	SetScaleToSprite(sprite, currentScale);
+}
+
+
 float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float transitionSpeed)
 {
 	float value = from;
@@ -235,4 +271,12 @@ float Application::MatsumotoUtility::SimpleEaseIn(float from, float to, float tr
 		return to;
 	}
 	return value;
+}
+
+void Application::MatsumotoUtility::PlaySE(const std::string& seName, float volume, float pich)
+{
+	auto seHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName(seName);
+	if (seHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {
+		KashipanEngine::AudioManager::Play(seHandle, volume, pich);
+	}
 }

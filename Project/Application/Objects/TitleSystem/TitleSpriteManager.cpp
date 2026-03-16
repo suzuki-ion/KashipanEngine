@@ -11,6 +11,8 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	triggered1PTimer_ = 0.0f;
 	triggered2PTimer_ = 0.0f;
 
+	previousSection_ = TitleSection::TitleCall;
+
 	// セクションごとの更新関数を登録しておく
 	sectionUpdateFunctions_[TitleSection::TitleCall] = [this]() { UpdateTitleCallSection(); };
 	sectionUpdateFunctions_[TitleSection::ModeSelect] = [this]() { UpdateModeSelectSection(); };
@@ -45,17 +47,19 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	// 1Pの姿見
 	sprites_["P1"] = CreateSpriteFunc_("Player1Preview");
 	ParentSpriteToSprite(sprites_["P1"], sprites_["Root"]);
-	SetTextureToSprite(sprites_["P1"], "porn.png");
+	SetTextureToSprite(sprites_["P1"], "fall_Porn.png");
 	FitSpriteToTexture(sprites_["P1"]);
-	ScaleSprite(sprites_["P1"], 6.0f);
+	ScaleSprite(sprites_["P1"], 2.0f);
 	SetTranslateToSprite(sprites_["P1"], Vector3(-centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
 	// 2Pの姿見
 	sprites_["P2"] = CreateSpriteFunc_("Player2Preview");
 	ParentSpriteToSprite(sprites_["P2"], sprites_["Root"]);
-	SetTextureToSprite(sprites_["P2"], "porn.png");
+	SetTextureToSprite(sprites_["P2"], "fall_Porn.png");
 	FitSpriteToTexture(sprites_["P2"]);
-	ScaleSprite(sprites_["P2"], 6.0f);
+	ScaleSprite(sprites_["P2"], 2.0f);
+	FlipSpriteHorizontal(sprites_["P2"]);
 	SetTranslateToSprite(sprites_["P2"], Vector3(centerPosition_.x * 3.0f, 0.0f, 0.0f) + Vector3(centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
+	
 	// 2P側AIの姿見
 	sprites_["P2AI"] = CreateSpriteFunc_("Player2AIPreview");
 	ParentSpriteToSprite(sprites_["P2AI"], sprites_["Root"]);
@@ -64,27 +68,12 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	ScaleSprite(sprites_["P2AI"], 6.0f);
 	SetTranslateToSprite(sprites_["P2AI"], Vector3(centerPosition_.x * 3.0f, 0.0f, 0.0f) + Vector3(centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
 
-	// 遊びを選択しているように見せるための矢印
-	sprites_["SelectArrow"] = CreateSpriteFunc_("SelectArrow");
-	SetTextureToSprite(sprites_["SelectArrow"], "Arrow.png");
-	SetTranslateToSprite(sprites_["SelectArrow"], Vector3(centerPosition_.x - windowWidth, centerPosition_.y, centerPosition_.z));
-	FitSpriteToTexture(sprites_["SelectArrow"]);
-	ScaleSprite(sprites_["SelectArrow"], 3.4f);
-
-	// モード選択の操作UIスプライト
-	sprites_["ModeSelectUI"] = CreateSpriteFunc_("ModeSelectUI");
-	ParentSpriteToSprite(sprites_["ModeSelectUI"], sprites_["Root"]);
-	SetTextureToSprite(sprites_["ModeSelectUI"], "ModeSelectUI.png");
-	FitSpriteToTexture(sprites_["ModeSelectUI"]);
-	Vector3 modeSelectUITranslate = Vector3(centerPosition_.x * 3.0f, 0.0f, 0.0f) + Vector3(centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f);
-	SetTranslateToSprite(sprites_["ModeSelectUI"], modeSelectUITranslate + Vector3(0.0f, -1000.0f, 0.0f));
-	ScaleSprite(sprites_["ModeSelectUI"], 6.0f);
-
 	// コントローラー同時押しの案内の背景
 	sprites_["SimultaneousSubmitGuideBG"] = CreateSpriteFunc_("SimultaneousSubmitGuideBG");
 	SetTextureToSprite(sprites_["SimultaneousSubmitGuideBG"], "ControllerBG.png");
 	SetTranslateToSprite(sprites_["SimultaneousSubmitGuideBG"], Vector3(centerPosition_.x,centerPosition_.y + windowHeight,centerPosition_.z));
 	FitSpriteToTexture(sprites_["SimultaneousSubmitGuideBG"]);
+	ScaleSprite(sprites_["SimultaneousSubmitGuideBG"], 0.6f);
 
 	// 1Pのコントローラー
 	sprites_["ControllerP1"] = CreateSpriteFunc_("ControllerP1");
@@ -99,11 +88,22 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	SetScaleToSprite(sprites_["ControllerP2"], Vector3(0.3f, 0.5f, 1.0f));
 	SetTranslateToSprite(sprites_["ControllerP2"], Vector3(0.2f, 0.0f, 0.0f));
 
-	// タイトルのオーバーレイ
-	sprites_["TitleOverlay"] = CreateSpriteFunc_("TitleOverlay");
-	SetTextureToSprite(sprites_["TitleOverlay"], "TitleOR.png");
-	FitSpriteToTexture(sprites_["TitleOverlay"]);
-	SetTranslateToSprite(sprites_["TitleOverlay"], centerPosition_);
+	// タイトルのバー
+	sprites_["TitleBarDown"] = CreateSpriteFunc_("titleBar_Down");
+	SetTextureToSprite(sprites_["TitleBarDown"], "titleBar_Down.png");
+	SetTranslateToSprite(sprites_["TitleBarDown"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f));
+	FitSpriteToTexture(sprites_["TitleBarDown"]);
+
+	sprites_["TitleBarUp"] = CreateSpriteFunc_("titleBar_Up");
+	SetTextureToSprite(sprites_["TitleBarUp"], "titleBar_Up.png");
+	SetTranslateToSprite(sprites_["TitleBarUp"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f));
+	FitSpriteToTexture(sprites_["TitleBarUp"]);
+
+	// タイトルのセクション表示
+	sprites_["TitleCallSection"] = CreateSpriteFunc_("TitleCallSection");
+	SetTextureToSprite(sprites_["TitleCallSection"], "title_Bar_Mode.png");
+	FitSpriteToTexture(sprites_["TitleCallSection"]);
+	SetTranslateToSprite(sprites_["TitleCallSection"], Vector3(-centerPosition_.x, centerPosition_.y, 0.0f));
 }
 
 void Application::TitleSpriteManager::Update(float deltaTime, TitleSection currentSection, int selectNumber)
@@ -113,6 +113,24 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 	currentSelectNumber_ = selectNumber;
 
 	timer_ += deltaTime;
+
+	// セクションが変わった
+	if(previousSection_ != currentSection_) {
+		SetTranslateToSprite(sprites_["TitleCallSection"], Vector3(-centerPosition_.x, centerPosition_.y, 0.0f));
+		if(currentSection_ == TitleSection::ModeSelect) {
+			SetTextureToSprite(sprites_["TitleCallSection"], "title_Bar_Mode.png");
+		}
+		else if(currentSection_ == TitleSection::AISelect) {
+			SetTextureToSprite(sprites_["TitleCallSection"], "title_Bar_Ai.png");
+		}
+		else if(currentSection_ == TitleSection::MultiplayerSelect) {
+			SetTextureToSprite(sprites_["TitleCallSection"], "title_Bar_Friend.png");
+		}
+	}
+
+	// 1pと2pの姿見は揺れ続ける
+	SetRotationToSprite(sprites_["P1"], Vector3(0.0f, 0.0f, sinf(timer_) * 0.1f));
+	SetRotationToSprite(sprites_["P2"], Vector3(0.0f, 0.0f, cosf(timer_) * 0.1f));
 	
 	// タイトル背景のUVスクロール
 	float scrollSpeed = 2.0f; // スクロール速度
@@ -120,11 +138,18 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 		scrollSpeed = 5.0f; // AI選択とマルチプレイヤー選択のセクションではスクロール速度を速くする
 	}
 	MoveTextureUVToSprite(sprites_["TitleBackground"], Vector2(0.0f, deltaTime * scrollSpeed));
-	MoveTextureUVToSprite(sprites_["TitleOverlay"], Vector2(0.0f, deltaTime * scrollSpeed * 1.5f)); // オーバーレイは背景より速くスクロールさせる])
 
 	// 手振れを加えるための更新関数も呼び出す
 	if (currentSection_ != TitleSection::TitleCall) { // タイトルコールのセクションでは手振れを加えない
 		UpdateIdleSection();
+		// タイトル以外だったらタイトルのバーを出す
+		SimpleEaseSpriteMove(sprites_["TitleBarDown"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f), 0.3f);
+		SimpleEaseSpriteMove(sprites_["TitleBarUp"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f), 0.3f);
+		SimpleEaseSpriteMove(sprites_["TitleCallSection"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f), 0.3f);
+	}
+	else {
+		SimpleEaseSpriteMove(sprites_["TitleBarDown"], Vector3(centerPosition_.x, centerPosition_.y - centerPosition_.y, 0.0f), 0.3f);
+		SimpleEaseSpriteMove(sprites_["TitleBarUp"], Vector3(centerPosition_.x, centerPosition_.y + centerPosition_.y, 0.0f), 0.3f);
 	}
 
 	// 現在のセクションに対応する処理を呼び出す
@@ -155,6 +180,8 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 	SetRotationToSprite(sprites_["Root"], titleScreenRotation);
 
 	ImGui::End();
+
+	previousSection_ = currentSection_;
 }
 
 void Application::TitleSpriteManager::UpdateTitleCallSection()
@@ -188,10 +215,6 @@ void Application::TitleSpriteManager::UpdateTitleCallSection()
 	currentTranslateMultiBG.y = SimpleEaseIn(currentTranslateMultiBG.y, centerPosition_.y + centerPosition_.y * 2.0f, 0.3f);
 	SetTranslateToSprite(sprites_["SimultaneousSubmitGuideBG"], currentTranslateMultiBG);
 
-	// 矢印をひっこめる
-	Vector3 currentTranslateArrow = GetTranslateFromSprite(sprites_["SelectArrow"]);
-	currentTranslateArrow.x = SimpleEaseIn(currentTranslateArrow.x, centerPosition_.x - 1920.0f, 0.3f);
-	SetTranslateToSprite(sprites_["SelectArrow"], currentTranslateArrow);
 }
 
 void Application::TitleSpriteManager::UpdateModeSelectSection()
@@ -242,33 +265,22 @@ void Application::TitleSpriteManager::UpdateModeSelectSection()
 	Vector3 currentTranslateMultiBG = GetTranslateFromSprite(sprites_["SimultaneousSubmitGuideBG"]);
 	currentTranslateMultiBG.y = SimpleEaseIn(currentTranslateMultiBG.y, centerPosition_.y + centerPosition_.y * 2.0f, 0.3f);
 	SetTranslateToSprite(sprites_["SimultaneousSubmitGuideBG"], currentTranslateMultiBG);
-
-	// 矢印を表示
-	Vector3 currentTranslateArrow = GetTranslateFromSprite(sprites_["SelectArrow"]);
-	currentTranslateArrow.x = SimpleEaseIn(currentTranslateArrow.x, centerPosition_.x, 0.3f);
-	currentTranslateArrow.y = SimpleEaseIn(currentTranslateArrow.y + sinf(timer_) * 5.0f, centerPosition_.y, 0.3f);
-	SetTranslateToSprite(sprites_["SelectArrow"], currentTranslateArrow);
 }
 
 void Application::TitleSpriteManager::UpdateAISelectSection()
 {
 	Vector3 currentScales = GetScaleFromSprite(sprites_["Root"]);
-	currentScales.x = SimpleEaseIn(currentScales.x, 0.8f, 0.3f);
-	currentScales.y = SimpleEaseIn(currentScales.y, 0.8f, 0.3f);
+	currentScales.x = SimpleEaseIn(currentScales.x, 0.6f, 0.3f);
+	currentScales.y = SimpleEaseIn(currentScales.y, 0.6f, 0.3f);
 	SetScaleToSprite(sprites_["Root"], currentScales);
 
 	Vector3 currentTranslate = GetTranslateFromSprite(sprites_["Root"]);
-	currentTranslate.x = SimpleEaseIn(currentTranslate.x, -centerPosition_.x * 1.4f, 0.3f);
+	currentTranslate.x = SimpleEaseIn(currentTranslate.x, -centerPosition_.x * 0.8f, 0.3f);
 	currentTranslate.y = SimpleEaseIn(currentTranslate.y, centerPosition_.y * 0.9f, 0.3f);
 	SetTranslateToSprite(sprites_["Root"], currentTranslate);
 
 	std::string textureName = "ai_" + std::to_string(currentSelectNumber_) + ".png";
 	SetTextureToSprite(sprites_["TitleScreen2P"], textureName);
-
-	// 矢印をひっこめる
-	Vector3 currentTranslateArrow = GetTranslateFromSprite(sprites_["SelectArrow"]);
-	currentTranslateArrow.x = SimpleEaseIn(currentTranslateArrow.x, centerPosition_.x - 1920.0f, 0.3f);
-	SetTranslateToSprite(sprites_["SelectArrow"], currentTranslateArrow);
 
 }
 
@@ -295,11 +307,6 @@ void Application::TitleSpriteManager::UpdateMultiplayerSelectSection()
 	Vector3 currentControllerP2Translate = GetTranslateFromSprite(sprites_["ControllerP2"]);
 	currentControllerP2Translate.y = SimpleEaseIn(currentControllerP2Translate.y, triggered2PTimer_ * triggered2PTimer_ * 0.1f, 0.3f);
 	SetTranslateToSprite(sprites_["ControllerP2"], currentControllerP2Translate);
-
-	// 矢印をひっこめる
-	Vector3 currentTranslateArrow = GetTranslateFromSprite(sprites_["SelectArrow"]);
-	currentTranslateArrow.x = SimpleEaseIn(currentTranslateArrow.x, centerPosition_.x - 1920.0f, 0.3f);
-	SetTranslateToSprite(sprites_["SelectArrow"], currentTranslateArrow);
 }
 
 void Application::TitleSpriteManager::UpdateIdleSection() {

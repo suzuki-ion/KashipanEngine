@@ -23,6 +23,7 @@ namespace Application {
 		float timer_;
 		float deltaTime_;
 		TitleSection currentSection_;
+		TitleSection previousSection_;
 		int currentSelectNumber_;
 
 		float triggered1PTimer_;

@@ -50,6 +50,19 @@ namespace Application::MatsumotoUtility
 	/// @brief スプライトのテクスチャのUV座標を移動
 	void MoveTextureUVToSprite(KashipanEngine::Sprite* sprite, const Vector2& deltaUv);
 
+	/// @brief 簡易イージング関数を使ってスプライトをtargetPositionに移動させる
+	void SimpleEaseSpriteMove(KashipanEngine::Sprite* sprite, const Vector3& targetPosition, float transitionSpeed);
+	/// @brief 簡易イージング関数を使ってスプライトをtargetScaleに拡大縮小させる
+	void SimpleEaseSpriteScale(KashipanEngine::Sprite* sprite, const Vector3& targetScale, float transitionSpeed);
+	/// @brief 簡易イージング関数を使ってスプライトの色をtargetColorに変化させる
+	void SimpleEaseSpriteColor(KashipanEngine::Sprite* sprite, const Vector4& targetColor, float transitionSpeed);
+
+	/// @brief スケールの左右反転
+	void FlipSpriteHorizontal(KashipanEngine::Sprite* sprite);
+
 	/// @brief 簡易イージング関数（イージングなしの線形補間に近い挙動）
 	float SimpleEaseIn(float from, float to, float transitionSpeed);
+
+	/// @brief SEを再生する（SEのファイル名を渡す、拡張子も付けること）
+	void PlaySE(const std::string& seName,float volume = 0.5f,float pich = 0.0f);
 }

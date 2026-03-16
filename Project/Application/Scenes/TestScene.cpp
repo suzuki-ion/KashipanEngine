@@ -225,7 +225,7 @@ namespace KashipanEngine {
 			}
 			});
 		// メニューのスプライトを初期化
-		menuSpriteContainer_.Initialize();
+		//menuSpriteContainer_.Initialize();
 		menuPosition_ = Vector2(400.0f, 300.0f);
 		menuSpriteContainer_.SetPosition(menuPosition_);
 		std::vector<Sprite*> menuSprites;
@@ -235,8 +235,9 @@ namespace KashipanEngine {
 			obj->SetUniqueBatchKey();
 			if (auto* mat = obj->GetComponent2D<Material2D>()) {
 				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-				mat->SetTexture(TextureManager::GetTextureFromFileName("menu_" + std::to_string(i) + ".png"));
+				mat->SetTexture(TextureManager::GetTextureFromFileName("menu_off_" + std::to_string(i) + ".png"));
 			}
+			Application::MatsumotoUtility::FitSpriteToTexture(obj.get());
 			menuSprites.push_back(obj.get());
 			obj->AttachToRenderer(sceneDefaultVariables_->GetMainWindow(), "Object2D.DoubleSidedCulling.BlendNormal");
 			AddObject2D(std::move(obj));

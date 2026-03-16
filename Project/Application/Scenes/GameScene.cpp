@@ -28,16 +28,17 @@ void GameScene::Initialize() {
     // ============================================================
 	// ゲームにスプライトを生成、追加する関数
     createSpriteFunction_ =
-        [this](const std::string& name) {
+        [this](const std::string& name, KashipanEngine::DefaultSampler defaultSampler) {
             return Application::MatsumotoUtility::CreateSpriteObject(
                 sceneDefaultVariables_->GetScreenBuffer2D(),
                 [this](std::unique_ptr<Object2DBase> obj) { return AddObject2D(std::move(obj)); },
-                name);
+                name,
+                defaultSampler);
 		};
 	// ゲームにスプライトを特定のテクスチャで生成、追加する関数
     createSpriteWithTextureFunction_ =
-        [this](const std::string& name, const std::string& textureName) {
-        KashipanEngine::Sprite* sprite = createSpriteFunction_(name);
+        [this](const std::string& name, const std::string& textureName, KashipanEngine::DefaultSampler defaultSampler) {
+        KashipanEngine::Sprite* sprite = createSpriteFunction_(name, defaultSampler);
         Application::MatsumotoUtility::SetTextureToSprite(sprite, textureName);
 		Application::MatsumotoUtility::FitSpriteToTexture(sprite);
         return sprite;
@@ -51,16 +52,18 @@ void GameScene::Initialize() {
     // ゲームで使うスプライトたちの生成
     // ============================================================
 	// ゲームの背景スプライトを初期化
-	backgroundSprite_ = createSpriteWithTextureFunction_("Background", "TitleBG.png");
+	backgroundSprite_ = createSpriteWithTextureFunction_("Background", "TitleBG.png", KashipanEngine::DefaultSampler::LinearWrap);
 	Application::MatsumotoUtility::SetTranslateToSprite(backgroundSprite_, Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
 	// メニューのスプライトを初期化
-    menuSpriteContainer_.Initialize(createSpriteWithTextureFunction_);
+    menuSpriteContainer_.Initialize([this](const std::string& name, const std::string& textureName) {
+        return createSpriteWithTextureFunction_(name, textureName, KashipanEngine::DefaultSampler::LinearClamp);
+    });
     menuPosition_ = Vector2(400.0f, 250.0f);
     menuSpriteContainer_.SetPosition(menuPosition_);
 
 	// ゲーム開始のスプライトを初期化
-    gameStartSprite_ = createSpriteWithTextureFunction_("GameStart", "GameStart.png");
-    gameStartGoSprite_ = createSpriteWithTextureFunction_("GameStartGo", "GameStartGo.png");
+    gameStartSprite_ = createSpriteWithTextureFunction_("GameStart", "GameStart.png", KashipanEngine::DefaultSampler::LinearClamp);
+    gameStartGoSprite_ = createSpriteWithTextureFunction_("GameStartGo", "GameStartGo.png", KashipanEngine::DefaultSampler::LinearClamp);
 	Application::MatsumotoUtility::SetTranslateToSprite(gameStartSprite_, Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
 	Application::MatsumotoUtility::SetTranslateToSprite(gameStartGoSprite_, Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
 	Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, Vector3(0.0f, 0.0f, 1.0f));

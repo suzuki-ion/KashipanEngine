@@ -2,7 +2,7 @@
 #include <MatsumotoUtility.h>
 using namespace Application::MatsumotoUtility;
 
-void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::Sprite* (const std::string&)> createSpriteFunc)
+void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::Sprite* (const std::string&, KashipanEngine::DefaultSampler)> createSpriteFunc)
 {
 	CreateSpriteFunc_ = createSpriteFunc;
 	float windowWidth = 1920.0f;
@@ -20,24 +20,24 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	sectionUpdateFunctions_[TitleSection::MultiplayerSelect] = [this]() { UpdateMultiplayerSelectSection(); };
 
 	// ここで必要なスプライトを生成しておく
-	sprites_["Root"] = CreateSpriteFunc_("Root");
+	sprites_["Root"] = CreateSpriteFunc_("Root", KashipanEngine::DefaultSampler::LinearClamp);
 	SetTranslateToSprite(sprites_["Root"], centerPosition_);
 
 	// タイトルの背景スプライト
-	sprites_["TitleBackground"] = CreateSpriteFunc_("TitleBackground");
+	sprites_["TitleBackground"] = CreateSpriteFunc_("TitleBackground", KashipanEngine::DefaultSampler::LinearWrap);
 	SetTextureToSprite(sprites_["TitleBackground"], "TitleBG.png");
 	FitSpriteToTexture(sprites_["TitleBackground"]);
 	SetTranslateToSprite(sprites_["TitleBackground"], centerPosition_);
 
 	// タイトル画面のスプライト
-	sprites_["TitleScreen"] = CreateSpriteFunc_("TitleScreen");
+	sprites_["TitleScreen"] = CreateSpriteFunc_("TitleScreen", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["TitleScreen"], sprites_["Root"]);
 	SetTextureToSprite(sprites_["TitleScreen"], "TitleScreen.png");
 	FitSpriteToTexture(sprites_["TitleScreen"]);
 	ScaleSprite(sprites_["TitleScreen"], 3.4f);
 
 	// 2Pの画面スプライト
-	sprites_["TitleScreen2P"] = CreateSpriteFunc_("TitleScreen2P");
+	sprites_["TitleScreen2P"] = CreateSpriteFunc_("TitleScreen2P", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["TitleScreen2P"], sprites_["Root"]);
 	SetTextureToSprite(sprites_["TitleScreen2P"], "TitleScreen.png");
 	FitSpriteToTexture(sprites_["TitleScreen2P"]);
@@ -45,14 +45,14 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	SetTranslateToSprite(sprites_["TitleScreen2P"], Vector3(centerPosition_.x * 3.0f, 0.0f, 0.0f));
 
 	// 1Pの姿見
-	sprites_["P1"] = CreateSpriteFunc_("Player1Preview");
+	sprites_["P1"] = CreateSpriteFunc_("Player1Preview", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["P1"], sprites_["Root"]);
 	SetTextureToSprite(sprites_["P1"], "fall_Porn.png");
 	FitSpriteToTexture(sprites_["P1"]);
 	ScaleSprite(sprites_["P1"], 2.0f);
 	SetTranslateToSprite(sprites_["P1"], Vector3(-centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
 	// 2Pの姿見
-	sprites_["P2"] = CreateSpriteFunc_("Player2Preview");
+	sprites_["P2"] = CreateSpriteFunc_("Player2Preview", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["P2"], sprites_["Root"]);
 	SetTextureToSprite(sprites_["P2"], "fall_Porn.png");
 	FitSpriteToTexture(sprites_["P2"]);
@@ -61,7 +61,7 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	SetTranslateToSprite(sprites_["P2"], Vector3(centerPosition_.x * 3.0f, 0.0f, 0.0f) + Vector3(centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
 	
 	// 2P側AIの姿見
-	sprites_["P2AI"] = CreateSpriteFunc_("Player2AIPreview");
+	sprites_["P2AI"] = CreateSpriteFunc_("Player2AIPreview", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["P2AI"], sprites_["Root"]);
 	SetTextureToSprite(sprites_["P2AI"], "porn_ai.png");
 	FitSpriteToTexture(sprites_["P2AI"]);
@@ -69,38 +69,38 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	SetTranslateToSprite(sprites_["P2AI"], Vector3(centerPosition_.x * 3.0f, 0.0f, 0.0f) + Vector3(centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
 
 	// コントローラー同時押しの案内の背景
-	sprites_["SimultaneousSubmitGuideBG"] = CreateSpriteFunc_("SimultaneousSubmitGuideBG");
+	sprites_["SimultaneousSubmitGuideBG"] = CreateSpriteFunc_("SimultaneousSubmitGuideBG", KashipanEngine::DefaultSampler::LinearClamp);
 	SetTextureToSprite(sprites_["SimultaneousSubmitGuideBG"], "ControllerBG.png");
 	SetTranslateToSprite(sprites_["SimultaneousSubmitGuideBG"], Vector3(centerPosition_.x,centerPosition_.y + windowHeight,centerPosition_.z));
 	FitSpriteToTexture(sprites_["SimultaneousSubmitGuideBG"]);
 	ScaleSprite(sprites_["SimultaneousSubmitGuideBG"], 0.6f);
 
 	// 1Pのコントローラー
-	sprites_["ControllerP1"] = CreateSpriteFunc_("ControllerP1");
+	sprites_["ControllerP1"] = CreateSpriteFunc_("ControllerP1", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["ControllerP1"], sprites_["SimultaneousSubmitGuideBG"]);
 	SetTextureToSprite(sprites_["ControllerP1"], "controller.png");
 	SetScaleToSprite(sprites_["ControllerP1"], Vector3(0.3f, 0.5f, 1.0f));
 	SetTranslateToSprite(sprites_["ControllerP1"], Vector3(-0.2f, 0.0f, 0.0f));
 	// 2Pのコントローラー
-	sprites_["ControllerP2"] = CreateSpriteFunc_("ControllerP2");
+	sprites_["ControllerP2"] = CreateSpriteFunc_("ControllerP2", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["ControllerP2"], sprites_["SimultaneousSubmitGuideBG"]);
 	SetTextureToSprite(sprites_["ControllerP2"], "controller.png");
 	SetScaleToSprite(sprites_["ControllerP2"], Vector3(0.3f, 0.5f, 1.0f));
 	SetTranslateToSprite(sprites_["ControllerP2"], Vector3(0.2f, 0.0f, 0.0f));
 
 	// タイトルのバー
-	sprites_["TitleBarDown"] = CreateSpriteFunc_("titleBar_Down");
+	sprites_["TitleBarDown"] = CreateSpriteFunc_("titleBar_Down", KashipanEngine::DefaultSampler::LinearWrap);
 	SetTextureToSprite(sprites_["TitleBarDown"], "titleBar_Down.png");
 	SetTranslateToSprite(sprites_["TitleBarDown"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f));
 	FitSpriteToTexture(sprites_["TitleBarDown"]);
 
-	sprites_["TitleBarUp"] = CreateSpriteFunc_("titleBar_Up");
+	sprites_["TitleBarUp"] = CreateSpriteFunc_("titleBar_Up", KashipanEngine::DefaultSampler::LinearWrap);
 	SetTextureToSprite(sprites_["TitleBarUp"], "titleBar_Up.png");
 	SetTranslateToSprite(sprites_["TitleBarUp"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f));
 	FitSpriteToTexture(sprites_["TitleBarUp"]);
 
 	// タイトルのセクション表示
-	sprites_["TitleCallSection"] = CreateSpriteFunc_("TitleCallSection");
+	sprites_["TitleCallSection"] = CreateSpriteFunc_("TitleCallSection", KashipanEngine::DefaultSampler::LinearClamp);
 	SetTextureToSprite(sprites_["TitleCallSection"], "title_Bar_Mode.png");
 	FitSpriteToTexture(sprites_["TitleCallSection"]);
 	SetTranslateToSprite(sprites_["TitleCallSection"], Vector3(-centerPosition_.x, centerPosition_.y, 0.0f));

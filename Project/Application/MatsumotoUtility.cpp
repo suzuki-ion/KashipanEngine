@@ -3,7 +3,7 @@
 KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObject(
 	KashipanEngine::ScreenBuffer* screenBuffer2D,
 	std::function<bool(std::unique_ptr<KashipanEngine::Object2DBase>obj)> AddObject, 
-	const std::string& spriteName) {
+	const std::string& spriteName, KashipanEngine::DefaultSampler defaultSampler) {
 
 	std::unique_ptr<KashipanEngine::Sprite> sprite = std::make_unique<KashipanEngine::Sprite>();
 	KashipanEngine::Sprite* spritePtr = sprite.get();
@@ -19,7 +19,7 @@ KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObject(
 	}
 
 	if(auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-		KashipanEngine::SamplerManager::SamplerHandle samplerHandle = KashipanEngine::SamplerManager::GetSampler(KashipanEngine::DefaultSampler::LinearWrap);
+		KashipanEngine::SamplerManager::SamplerHandle samplerHandle = KashipanEngine::SamplerManager::GetSampler(defaultSampler);
 		mat->SetSampler(samplerHandle);
 	}
 

@@ -21,9 +21,9 @@ namespace KashipanEngine {
 
         // * ユーティリティ * //
         // ゲームにスプライトを生成、追加する関数
-        std::function<KashipanEngine::Sprite* (const std::string&)> createSpriteFunction_;
+        std::function<KashipanEngine::Sprite* (const std::string&, KashipanEngine::DefaultSampler)> createSpriteFunction_;
         // ゲームにスプライトを特定のテクスチャで生成、追加する関数
-        std::function<KashipanEngine::Sprite* (const std::string&, const std::string&)> createSpriteWithTextureFunction_;
+        std::function<KashipanEngine::Sprite* (const std::string&, const std::string&, KashipanEngine::DefaultSampler)> createSpriteWithTextureFunction_;
         // 画面の中心
         Vector2 screenCenter_;
         // タイマー

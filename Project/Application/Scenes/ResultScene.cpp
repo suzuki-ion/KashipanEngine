@@ -29,16 +29,17 @@ void ResultScene::Initialize() {
 	// =============================================================
     // ゲームにスプライトを生成、追加する関数
     createSpriteFunction_ =
-        [this](const std::string& name) {
+        [this](const std::string& name, KashipanEngine::DefaultSampler defaultSampler) {
         return Application::MatsumotoUtility::CreateSpriteObject(
             sceneDefaultVariables_->GetScreenBuffer2D(),
             [this](std::unique_ptr<Object2DBase> obj) { return AddObject2D(std::move(obj)); },
-            name);
+            name,
+            defaultSampler);
         };
     // ゲームにスプライトを特定のテクスチャで生成、追加する関数
     createSpriteWithTextureFunction_ =
-        [this](const std::string& name, const std::string& textureName) {
-        KashipanEngine::Sprite* sprite = createSpriteFunction_(name);
+        [this](const std::string& name, const std::string& textureName, KashipanEngine::DefaultSampler defaultSampler) {
+        KashipanEngine::Sprite* sprite = createSpriteFunction_(name, defaultSampler);
         Application::MatsumotoUtility::SetTextureToSprite(sprite, textureName);
         Application::MatsumotoUtility::FitSpriteToTexture(sprite);
         return sprite;
@@ -56,46 +57,46 @@ void ResultScene::Initialize() {
 	float cutinBarOffsetR = 0.05f; // カットインバーの斜めのオフセット 
     
     // リザルト画面の背景
-	spriteMap_["Background"] = createSpriteWithTextureFunction_("Background", "whiteBG.png");
+	spriteMap_["Background"] = createSpriteWithTextureFunction_("Background", "whiteBG.png", KashipanEngine::DefaultSampler::LinearWrap);
     SetTranslateToSprite(spriteMap_["Background"], Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
 
 	// 上のカットインバー
-	spriteMap_["CutInBarUp"] = createSpriteWithTextureFunction_("CutInBar", "cutInBar.png");
+	spriteMap_["CutInBarUp"] = createSpriteWithTextureFunction_("CutInBar", "cutInBar.png", KashipanEngine::DefaultSampler::LinearWrap);
 	SetTranslateToSprite(spriteMap_["CutInBarUp"], Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
 	ScaleSprite(spriteMap_["CutInBarUp"], 1.1f);
 	SetRotationToSprite(spriteMap_["CutInBarUp"], Vector3(0.0f, 0.0f, 3.14f+ cutinBarOffsetR));
 
     // 勝利プレイヤーの親スプライト
-	spriteMap_["WinnerPlayer"] = createSpriteFunction_("WinnerPlayer");
-	//SetTranslateToSprite(spriteMap_["WinnerPlayer"], Vector3(-screenCenter_.x, screenCenter_.y, 0.0f));
-	//SetScaleToSprite(spriteMap_["WinnerPlayer"], Vector3(0.9f, 0.9f, 1.0f));
+	spriteMap_["WinnerPlayer"] = createSpriteFunction_("WinnerPlayer", KashipanEngine::DefaultSampler::LinearClamp);
+	SetTranslateToSprite(spriteMap_["WinnerPlayer"], Vector3(-screenCenter_.x, screenCenter_.y, 0.0f));
+	SetScaleToSprite(spriteMap_["WinnerPlayer"], Vector3(0.9f, 0.9f, 1.0f));
 
 	// 勝利プレイヤーの頭
-	spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_1.png");
-	//ParentSpriteToSprite(spriteMap_["WinnerHead"], spriteMap_["WinnerPlayer"]);
+	spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	ParentSpriteToSprite(spriteMap_["WinnerHead"], spriteMap_["WinnerPlayer"]);
     // 勝利プレイヤーの胴
-	spriteMap_["WinnerBody"] = createSpriteWithTextureFunction_("WinnerBody", "result_body_1.png");
-	//ParentSpriteToSprite(spriteMap_["WinnerBody"], spriteMap_["WinnerPlayer"]);
+	spriteMap_["WinnerBody"] = createSpriteWithTextureFunction_("WinnerBody", "result_body_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	ParentSpriteToSprite(spriteMap_["WinnerBody"], spriteMap_["WinnerPlayer"]);
     // 勝利プレイヤーの左腕
-	spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_1.png");
-	//ParentSpriteToSprite(spriteMap_["WinnerArmL"], spriteMap_["WinnerPlayer"]);
+	spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	ParentSpriteToSprite(spriteMap_["WinnerArmL"], spriteMap_["WinnerPlayer"]);
 
     // 勝利者の表示
-	spriteMap_["WinnerText"] = createSpriteWithTextureFunction_("WinnerText", "result_Win0.png");
+	spriteMap_["WinnerText"] = createSpriteWithTextureFunction_("WinnerText", "result_Win0.png", KashipanEngine::DefaultSampler::LinearClamp);
 	SetTranslateToSprite(spriteMap_["WinnerText"], Vector3(screenCenter_.x * 2.0f, screenCenter_.y , 0.0f));
 
     // 下のカットインバー
-    spriteMap_["CutInBarDown"] = createSpriteWithTextureFunction_("CutInBar", "cutInBar.png");
+    spriteMap_["CutInBarDown"] = createSpriteWithTextureFunction_("CutInBar", "cutInBar.png", KashipanEngine::DefaultSampler::LinearWrap);
     SetTranslateToSprite(spriteMap_["CutInBarDown"], Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
     ScaleSprite(spriteMap_["CutInBarDown"], 1.1f);
     SetRotationToSprite(spriteMap_["CutInBarDown"], Vector3(0.0f, 0.0f, cutinBarOffsetR));
 
     // 勝利プレイヤーの右腕
-    spriteMap_["WinnerArmR"] = createSpriteWithTextureFunction_("WinnerArmR", "result_rightArm_1.png");
-	//ParentSpriteToSprite(spriteMap_["WinnerArmR"], spriteMap_["WinnerPlayer"]);
+    spriteMap_["WinnerArmR"] = createSpriteWithTextureFunction_("WinnerArmR", "result_rightArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	ParentSpriteToSprite(spriteMap_["WinnerArmR"], spriteMap_["WinnerPlayer"]);
 
     // 結果セレクタの選択肢スプライトを初期化
-    spriteMap_["BackToTitle"] = createSpriteWithTextureFunction_("result", "result_0.png");
+    spriteMap_["BackToTitle"] = createSpriteWithTextureFunction_("result", "result_0.png", KashipanEngine::DefaultSampler::LinearClamp);
     SetTranslateToSprite(spriteMap_["BackToTitle"], Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
 	SetScaleToSprite(spriteMap_["BackToTitle"], Vector3(0.0f, 0.0f, 0.0f));
 
@@ -174,10 +175,10 @@ void ResultScene::OnUpdate() {
     }
 
     // 勝利プレイヤーのスプライトを出現させる
-    //SimpleEaseSpriteMove(spriteMap_["WinnerPlayer"], Vector3(screenCenter_.x, screenCenter_.y + sinf(timer_) *10.0f, 0.0f), 0.2f);
-	//SetTranslateToSprite(spriteMap_["WinnerHead"], Vector3(0.0f, sinf(timer_) * 5.0f, 0.0f));
-    //SetTranslateToSprite(spriteMap_["WinnerArmR"], Vector3(0.0f, sinf(timer_+ 0.8f) * 10.0f, 0.0f));
-    //SetRotationToSprite(spriteMap_["WinnerArmL"], Vector3(0.0f,0.0f,sinf(timer_) * 0.05f));
+    SimpleEaseSpriteMove(spriteMap_["WinnerPlayer"], Vector3(screenCenter_.x, screenCenter_.y + sinf(timer_) *10.0f, 0.0f), 0.2f);
+	SetTranslateToSprite(spriteMap_["WinnerHead"], Vector3(0.0f, sinf(timer_) * 5.0f, 0.0f));
+    SetTranslateToSprite(spriteMap_["WinnerArmR"], Vector3(0.0f, sinf(timer_+ 0.8f) * 10.0f, 0.0f));
+    SetRotationToSprite(spriteMap_["WinnerArmL"], Vector3(0.0f,0.0f,sinf(timer_) * 0.05f));
 
 	// 勝利者の文字を出現させる
 	SimpleEaseSpriteMove(spriteMap_["WinnerText"], Vector3(screenCenter_.x, screenCenter_.y + cosf(timer_) * 5.0f, 0.0f), 0.2f);

@@ -15,7 +15,7 @@ public:
 
         auto* defaults = ctx ? ctx->GetComponent<SceneDefaultVariables>() : nullptr;
         auto* screenBuffer2D = defaults ? defaults->GetScreenBuffer2D() : nullptr;
-        auto* window = defaults ? defaults->GetMainWindow() : Window::GetWindow("Main Window");
+        auto* window = defaults ? defaults->GetMainWindow() : Window::GetWindow("3104_Noisend");
 
         float cx = window ? static_cast<float>(window->GetClientWidth()) * 0.5f : 960.0f;
         float cy = window ? static_cast<float>(window->GetClientHeight()) * 0.5f : 540.0f;

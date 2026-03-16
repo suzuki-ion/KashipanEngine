@@ -8,7 +8,7 @@ namespace KashipanEngine {
 
 void SceneDefaultVariables::Initialize() {
     auto *sceneContext = GetOwnerContext();
-    mainWindow_ = Window::GetWindow("Main Window");
+    mainWindow_ = Window::GetWindow("3104_Noisend");
 
     screenBuffer3D_ = ScreenBuffer::Create(1920, 1080);
     screenBuffer2D_ = ScreenBuffer::Create(1920, 1080);

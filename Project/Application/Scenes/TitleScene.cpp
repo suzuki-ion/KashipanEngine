@@ -25,23 +25,23 @@ void TitleScene::Initialize() {
     // ============================================================
     // ゲームにスプライトを生成、追加する関数
     createSpriteFunction_ =
-        [this](const std::string& name) {
+        [this](const std::string &name, KashipanEngine::DefaultSampler defaultSampler) {
         return Application::MatsumotoUtility::CreateSpriteObject(
             sceneDefaultVariables_->GetScreenBuffer2D(),
             [this](std::unique_ptr<Object2DBase> obj) { return AddObject2D(std::move(obj)); },
-            name);
+            name, defaultSampler);
         };
     // ゲームにスプライトを特定のテクスチャで生成、追加する関数
     createSpriteWithTextureFunction_ =
-        [this](const std::string& name, const std::string& textureName) {
-        KashipanEngine::Sprite* sprite = createSpriteFunction_(name);
+        [this](const std::string &name, const std::string &textureName, KashipanEngine::DefaultSampler defaultSampler) {
+        KashipanEngine::Sprite* sprite = createSpriteFunction_(name, defaultSampler);
         Application::MatsumotoUtility::SetTextureToSprite(sprite, textureName);
         Application::MatsumotoUtility::FitSpriteToTexture(sprite);
         return sprite;
         };
     // 画面の中心
-    if (auto* window = sceneDefaultVariables_->GetMainWindow()) {
-        screenCenter_ = Vector2(static_cast<float>(window->GetClientWidth()) * 0.5f, static_cast<float>(window->GetClientHeight()) * 0.5f);
+    if (auto *screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D()) {
+        screenCenter_ = Vector2(static_cast<float>(screenBuffer2D->GetWidth()) * 0.5f, static_cast<float>(screenBuffer2D->GetHeight()) * 0.5f);
     }
 
     // ============================================================

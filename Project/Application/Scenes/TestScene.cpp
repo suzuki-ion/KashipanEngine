@@ -41,7 +41,7 @@ namespace KashipanEngine {
 		config_.LoadFromJSON(kConfigPath);
 
 		auto* screenBuffer2D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer2D() : nullptr;
-		auto* window = Window::GetWindow("Main Window");
+		auto* window = Window::GetWindow("3104_Noisend");
 
 		float cx = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetWidth()) * 0.5f : 960.0f;
 		float cy = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetHeight()) * 0.5f : 540.0f;

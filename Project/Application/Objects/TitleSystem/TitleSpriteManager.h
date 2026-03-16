@@ -6,7 +6,7 @@ namespace Application {
 	// タイトル画面にあるスプライトを管理するクラス
 	class TitleSpriteManager {
 	public:
-		void Initialize(std::function<KashipanEngine::Sprite* (const std::string&)> createSpriteFunc);
+		void Initialize(std::function<KashipanEngine::Sprite* (const std::string&, KashipanEngine::DefaultSampler)> createSpriteFunc);
 
 		void Update(float deltaTime, TitleSection currentSection, int selectNumber);
 
@@ -17,7 +17,7 @@ namespace Application {
 		Vector3 centerPosition_ ;
 
 		std::map<TitleSection, std::function<void()>> sectionUpdateFunctions_;
-		std::function<KashipanEngine::Sprite* (const std::string&)> CreateSpriteFunc_;
+		std::function<KashipanEngine::Sprite* (const std::string&, KashipanEngine::DefaultSampler)> CreateSpriteFunc_;
 		std::map<std::string, KashipanEngine::Sprite*> sprites_;
 
 		float timer_;

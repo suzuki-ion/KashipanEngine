@@ -7,7 +7,7 @@ namespace Application::MatsumotoUtility
 	KashipanEngine::Sprite* CreateSpriteObject(
 		KashipanEngine::ScreenBuffer* screenBuffer2D,
 		std::function<bool(std::unique_ptr<KashipanEngine::Object2DBase> obj)> AddObject,
-		const std::string& spriteName);
+        const std::string &spriteName, KashipanEngine::DefaultSampler defaultSampler);
 	/// @brief スプライトにテクスチャを設定(拡張子を付けること)
 	void SetTextureToSprite(KashipanEngine::Sprite* sprite, const std::string& textureName);
 	/// @brief スプライトの色を設定

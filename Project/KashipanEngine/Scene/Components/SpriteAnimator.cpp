@@ -775,6 +775,7 @@ void SpriteAnimator::ShowImGui() {
     ShowImGuiWindowBindings();
     ShowImGuiWindowPlayers();
     ShowImGuiWindowStorage();
+    ShowImGuiWindowSpritePreview();
 }
 
 void SpriteAnimator::ShowImGuiWindowPresets() {
@@ -789,49 +790,75 @@ void SpriteAnimator::ShowImGuiWindowPresets() {
     ImGui::DragFloat2("Pivot", &imguiPresetPivot_.x, 0.005f, 0.0f, 1.0f, "%.3f");
     ImGui::DragFloat2("Anchor", &imguiPresetAnchor_.x, 0.005f, 0.0f, 1.0f, "%.3f");
 
-    if (ImGui::Button("Add/Update Object")) {
-        AddPresetObject(
-            presetNameBuffer_.data(),
-            objectNameBuffer_.data(),
-            parentObjectNameBuffer_.data(),
-            imguiPresetPivot_,
-            imguiPresetAnchor_);
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Remove Object")) {
-        RemovePresetObject(presetNameBuffer_.data(), objectNameBuffer_.data());
+    if (ImGui::Button("Add Object")) {
+        auto it = presets_.find(presetNameBuffer_.data());
+        bool exists = false;
+        if (it != presets_.end()) {
+            exists = std::any_of(it->second.begin(), it->second.end(), [&](const PresetObject &p) {
+                return p.objectName == objectNameBuffer_.data();
+            });
+        }
+        if (exists) {
+            ImGui::OpenPopup("OverwritePresetObject");
+        } else {
+            AddPresetObject(
+                presetNameBuffer_.data(),
+                objectNameBuffer_.data(),
+                parentObjectNameBuffer_.data(),
+                imguiPresetPivot_,
+                imguiPresetAnchor_);
+        }
     }
 
-    ImGui::SameLine();
-    if (ImGui::Button("Clear Preset")) {
-        ClearPreset(presetNameBuffer_.data());
+    if (ImGui::BeginPopupModal("OverwritePresetObject", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Object '%s' already exists in preset '%s'.\nOverwrite it?", objectNameBuffer_.data(), presetNameBuffer_.data());
+        ImGui::Separator();
+        if (ImGui::Button("Yes", ImVec2(120, 0))) {
+            AddPresetObject(
+                presetNameBuffer_.data(),
+                objectNameBuffer_.data(),
+                parentObjectNameBuffer_.data(),
+                imguiPresetPivot_,
+                imguiPresetAnchor_);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("No", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     ImGui::Separator();
     ImGui::Text("Presets: %d", static_cast<int>(presets_.size()));
 
+    std::string clearPresetName;
     std::string removePresetObject;
-    for (const auto &pair : presets_) {
+    for (auto &pair : presets_) {
         const bool selected = (selectedPresetName_ == pair.first);
         if (ImGui::Selectable(pair.first.c_str(), selected)) {
             selectedPresetName_ = pair.first;
             std::snprintf(presetNameBuffer_.data(), presetNameBuffer_.size(), "%s", pair.first.c_str());
         }
 
+        if (ImGui::BeginPopupContextItem(("PresetCtx_" + pair.first).c_str())) {
+            if (ImGui::MenuItem("Delete Preset")) {
+                clearPresetName = pair.first;
+            }
+            ImGui::EndPopup();
+        }
+
         if (selected) {
             ImGui::Indent();
-            for (const auto &obj : pair.second) {
-                ImGui::PushID(obj.objectName.c_str());
-                ImGui::BulletText(
-                    "%s  (parent: %s)  pivot:(%.2f, %.2f) anchor:(%.2f, %.2f)",
-                    obj.objectName.c_str(),
-                    obj.parentObjectName.empty() ? "<none>" : obj.parentObjectName.c_str(),
-                    obj.pivotPoint.x,
-                    obj.pivotPoint.y,
-                    obj.anchorPoint.x,
-                    obj.anchorPoint.y);
+            for (size_t i = 0; i < pair.second.size(); ++i) {
+                auto &obj = pair.second[i];
+                ImGui::PushID(static_cast<int>(i));
 
-                if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+                std::string label = obj.objectName + "  (parent: " + (obj.parentObjectName.empty() ? "<none>" : obj.parentObjectName) + ")";
+
+                bool isObjSelected = (selectedPresetObjectName_ == obj.objectName);
+                if (ImGui::Selectable(label.c_str(), isObjSelected)) {
+                    selectedPresetObjectName_ = obj.objectName;
                     std::snprintf(objectNameBuffer_.data(), objectNameBuffer_.size(), "%s", obj.objectName.c_str());
                     std::snprintf(parentObjectNameBuffer_.data(), parentObjectNameBuffer_.size(), "%s", obj.parentObjectName.c_str());
                     imguiPresetPivot_ = obj.pivotPoint;
@@ -844,12 +871,26 @@ void SpriteAnimator::ShowImGuiWindowPresets() {
                     }
                     ImGui::EndPopup();
                 }
+
+                if (isObjSelected) {
+                    ImGui::Indent();
+                    if (ImGui::Button("Apply Edit")) {
+                        obj.objectName = objectNameBuffer_.data();
+                        obj.parentObjectName = parentObjectNameBuffer_.data();
+                        obj.pivotPoint = imguiPresetPivot_;
+                        obj.anchorPoint = imguiPresetAnchor_;
+                    }
+                    ImGui::Unindent();
+                }
                 ImGui::PopID();
             }
             ImGui::Unindent();
         }
     }
 
+    if (!clearPresetName.empty()) {
+        ClearPreset(clearPresetName);
+    }
     if (!removePresetObject.empty() && !selectedPresetName_.empty()) {
         RemovePresetObject(selectedPresetName_, removePresetObject);
     }
@@ -939,14 +980,11 @@ void SpriteAnimator::ShowImGuiWindowTimelines() {
     if (ImGui::Button("Apply Loop To Timeline")) {
         SetTimelineLoop(timelineNameBuffer_.data(), imguiTimelineLoop_);
     }
-    ImGui::SameLine();
-    if (ImGui::Button("Clear Timeline")) {
-        ClearTimeline(timelineNameBuffer_.data());
-    }
 
     ImGui::Separator();
     ImGui::Text("Timelines: %d", static_cast<int>(timelines_.size()));
 
+    std::string clearTimelineName;
     for (auto &pair : timelines_) {
         const bool selected = (selectedTimelineName_ == pair.first);
         if (ImGui::Selectable(pair.first.c_str(), selected)) {
@@ -957,12 +995,23 @@ void SpriteAnimator::ShowImGuiWindowTimelines() {
             RefreshTimelineEditorRange();
         }
 
+        if (ImGui::BeginPopupContextItem(("TimelineCtx_" + pair.first).c_str())) {
+            if (ImGui::MenuItem("Delete Timeline")) {
+                clearTimelineName = pair.first;
+            }
+            ImGui::EndPopup();
+        }
+
         if (selected) {
             ImGui::Indent();
             ImGui::Text("Keys: %d", static_cast<int>(pair.second.keys.size()));
             ImGui::Text("Loop: %s", pair.second.loop ? "true" : "false");
             ImGui::Unindent();
         }
+    }
+
+    if (!clearTimelineName.empty()) {
+        ClearTimeline(clearTimelineName);
     }
 
     ImGui::End();
@@ -1106,10 +1155,7 @@ void SpriteAnimator::ShowImGuiWindowTimelineEditor() {
             UpdateTimelineKey(selectedTimelineName_, static_cast<size_t>(selectedTimelineKeyIndex_), k.time, k.value, static_cast<EaseType>(ease));
         }
 
-        if (ImGui::Button("Delete Selected Key")) {
-            RemoveTimelineKey(selectedTimelineName_, static_cast<size_t>(selectedTimelineKeyIndex_));
-            selectedTimelineKeyIndex_ = -1;
-        }
+        ImGui::TextUnformatted("(Right-click key to delete)");
     } else {
         ImGui::TextUnformatted("Click key to edit. Click empty area to add key.");
     }
@@ -1133,18 +1179,24 @@ void SpriteAnimator::ShowImGuiWindowBindings() {
     if (ImGui::Button("Add Binding")) {
         AddBindingByPath(bindingPresetBuffer_.data(), bindingObjectBuffer_.data(), bindingTimelineBuffer_.data(), kPropertyPaths[imguiPropertyPathIndex_]);
     }
-    ImGui::SameLine();
-    if (ImGui::Button("Clear Preset Bindings")) {
-        ClearBindings(bindingPresetBuffer_.data());
-    }
 
     ImGui::Separator();
     ImGui::Text("Binding Map");
 
     int displayIndex = 0;
+    std::string clearPresetBindingsName;
     std::optional<std::pair<std::string, size_t>> removeBinding;
     for (auto &pair : presetBindings_) {
-        if (!ImGui::TreeNode(pair.first.c_str())) continue;
+        const bool treeOpen = ImGui::TreeNode(pair.first.c_str());
+        
+        if (ImGui::BeginPopupContextItem(("BindingsCtx_" + pair.first).c_str())) {
+            if (ImGui::MenuItem("Delete All Bindings for Preset")) {
+                clearPresetBindingsName = pair.first;
+            }
+            ImGui::EndPopup();
+        }
+
+        if (!treeOpen) continue;
 
         for (size_t i = 0; i < pair.second.size(); ++i) {
             auto &b = pair.second[i];
@@ -1190,6 +1242,9 @@ void SpriteAnimator::ShowImGuiWindowBindings() {
         ImGui::TreePop();
     }
 
+    if (!clearPresetBindingsName.empty()) {
+        ClearBindings(clearPresetBindingsName);
+    }
     if (removeBinding.has_value()) {
         auto it = presetBindings_.find(removeBinding->first);
         if (it != presetBindings_.end() && removeBinding->second < it->second.size()) {
@@ -1277,6 +1332,154 @@ void SpriteAnimator::ShowImGuiWindowStorage() {
     ImGui::Text("Property Paths (%d)", static_cast<int>(std::size(kPropertyPaths)));
     for (const auto *p : kPropertyPaths) {
         ImGui::TextUnformatted(p);
+    }
+
+    ImGui::End();
+}
+
+void SpriteAnimator::ShowImGuiWindowSpritePreview() {
+    if (!ImGui::Begin("SpriteAnimator - Sprite Preview")) {
+        ImGui::End();
+        return;
+    }
+
+    if (selectedPresetName_.empty()) {
+        ImGui::TextUnformatted("Select a preset from Presets window.");
+        ImGui::End();
+        return;
+    }
+
+    auto *ctx = GetOwnerContext();
+    if (!ctx) {
+        ImGui::End();
+        return;
+    }
+
+    auto presetIt = presets_.find(selectedPresetName_);
+    if (presetIt == presets_.end() || presetIt->second.empty()) {
+        ImGui::TextUnformatted("Preset is empty or not found.");
+        ImGui::End();
+        return;
+    }
+
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    if (avail.x < 10.0f || avail.y < 10.0f) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::InvisibleButton("SpritePreviewCanvas", avail, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
+
+    if (ImGui::IsItemHovered()) {
+        if (ImGui::GetIO().MouseWheel != 0.0f) {
+            spritePreviewZoom_ += ImGui::GetIO().MouseWheel * 0.1f * spritePreviewZoom_;
+            spritePreviewZoom_ = std::clamp(spritePreviewZoom_, 0.01f, 100.0f);
+        }
+    }
+    if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
+        spritePreviewOffset_.x += ImGui::GetIO().MouseDelta.x / spritePreviewZoom_;
+        spritePreviewOffset_.y -= ImGui::GetIO().MouseDelta.y / spritePreviewZoom_; // Screen Y is down
+    }
+
+    ImVec2 cursorP0 = ImGui::GetItemRectMin();
+    ImDrawList *drawList = ImGui::GetWindowDrawList();
+
+    drawList->AddRectFilled(cursorP0, ImVec2(cursorP0.x + avail.x, cursorP0.y + avail.y), IM_COL32(30, 30, 35, 255));
+    drawList->AddRect(cursorP0, ImVec2(cursorP0.x + avail.x, cursorP0.y + avail.y), IM_COL32(120, 120, 140, 255));
+
+    ImVec2 center(cursorP0.x + avail.x * 0.5f, cursorP0.y + avail.y * 0.5f);
+
+    auto toScreen = [&](const Vector4 &p) -> ImVec2 {
+        return ImVec2(center.x + (p.x + spritePreviewOffset_.x) * spritePreviewZoom_,
+                      center.y - (p.y + spritePreviewOffset_.y) * spritePreviewZoom_);
+    };
+
+    std::unordered_map<std::string, Sprite *> activeSprites;
+    for (const auto &entry : presetIt->second) {
+        auto *obj = ctx->GetObject2D(entry.objectName);
+        if (!obj) continue;
+        auto *sprite = dynamic_cast<Sprite *>(obj);
+        if (!sprite) continue;
+        sprite->SetPivotPoint(entry.pivotPoint);
+        sprite->SetAnchorPoint(entry.anchorPoint);
+        activeSprites[entry.objectName] = sprite;
+    }
+    ApplyPresetHierarchy(presetIt->second, activeSprites);
+
+    for (const auto &entry : presetIt->second) {
+        auto spriteIt = activeSprites.find(entry.objectName);
+        if (spriteIt == activeSprites.end()) continue;
+
+        auto *sprite = spriteIt->second;
+        auto *tr = sprite->GetComponent2D<Transform2D>();
+        auto *mat = sprite->GetComponent2D<Material2D>();
+        if (!tr) continue;
+
+        ImTextureID texID = 0;
+        
+        if (mat) {
+            if (auto *texPtr = mat->GetTexturePtr()) {
+                texID = (ImTextureID)(uintptr_t)texPtr->GetSrvHandle().ptr;
+            } else {
+                auto view = TextureManager::GetTextureView(mat->GetTexture());
+                if (view.GetSrvHandle().ptr != 0) {
+                    texID = (ImTextureID)(uintptr_t)view.GetSrvHandle().ptr;
+                }
+            }
+        }
+
+        Matrix4x4 localWorld = tr->GetWorldMatrix();
+        
+        float ox = sprite->GetPivotPoint().x - 0.5f;
+        float oy = 0.5f - sprite->GetPivotPoint().y;
+
+        Vector4 v1( -0.5f - ox,  0.5f - oy, 0.0f, 1.0f ); // Top-Left
+        Vector4 v2(  0.5f - ox,  0.5f - oy, 0.0f, 1.0f ); // Top-Right
+        Vector4 v3(  0.5f - ox, -0.5f - oy, 0.0f, 1.0f ); // Bottom-Right
+        Vector4 v0( -0.5f - ox, -0.5f - oy, 0.0f, 1.0f ); // Bottom-Left
+
+        v1 = v1 * localWorld;
+        v2 = v2 * localWorld;
+        v3 = v3 * localWorld;
+        v0 = v0 * localWorld;
+
+        ImVec2 p1 = toScreen(v1);
+        ImVec2 p2 = toScreen(v2);
+        ImVec2 p3 = toScreen(v3);
+        ImVec2 p0 = toScreen(v0);
+
+        if (texID) {
+            drawList->AddImageQuad(texID, p1, p2, p3, p0);
+        } else {
+            drawList->AddQuadFilled(p1, p2, p3, p0, IM_COL32(100, 100, 100, 255));
+        }
+
+        if (entry.objectName == selectedPresetObjectName_) {
+            Vector4 pivotLoc = Vector4(0.0f, 0.0f, 0.0f, 1.0f) * localWorld;
+            ImVec2 scrPivot = toScreen(pivotLoc);
+            drawList->AddCircleFilled(scrPivot, 5.0f, IM_COL32(255, 50, 50, 255));
+            drawList->AddText(ImVec2(scrPivot.x + 8, scrPivot.y - 8), IM_COL32(255, 50, 50, 255), "Pivot");
+
+            if (!entry.parentObjectName.empty()) {
+                auto parentIt = activeSprites.find(entry.parentObjectName);
+                if (parentIt != activeSprites.end()) {
+                    auto *ptr = parentIt->second->GetComponent2D<Transform2D>();
+                    if (ptr) {
+                        Matrix4x4 pworld = ptr->GetWorldMatrix();
+                        Vector4 pAnchor(entry.anchorPoint.x - 0.5f, 0.5f - entry.anchorPoint.y, 0.0f, 1.0f);
+                        Vector4 parentAnchorWorld = pAnchor * pworld;
+                        ImVec2 scrAnchor = toScreen(parentAnchorWorld);
+                        drawList->AddCircleFilled(scrAnchor, 5.0f, IM_COL32(50, 255, 50, 255));
+                        drawList->AddText(ImVec2(scrAnchor.x + 8, scrAnchor.y - 8), IM_COL32(50, 255, 50, 255), "Anchor");
+                    }
+                }
+            } else {
+                Vector4 pAnchor(0.0f, 0.0f, 0.0f, 1.0f);
+                ImVec2 scrAnchor = toScreen(pAnchor);
+                drawList->AddCircleFilled(scrAnchor, 5.0f, IM_COL32(50, 255, 50, 255));
+                drawList->AddText(ImVec2(scrAnchor.x + 8, scrAnchor.y - 8), IM_COL32(50, 255, 50, 255), "Anchor");
+            }
+        }
     }
 
     ImGui::End();

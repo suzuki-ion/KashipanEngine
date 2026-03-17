@@ -7,7 +7,6 @@
 #endif
 #include "Scenes/GameScene.h"
 #include "Scenes/ResultScene.h"
-#include "Scenes/GameOverScene.h"
 
 namespace KashipanEngine {
 
@@ -28,7 +27,6 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
-        //sm->RegisterScene<GameOverScene>("GameOverScene");
 
         /*#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
                 sm->RegisterScene<TestScene>("TestScene");

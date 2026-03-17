@@ -100,7 +100,7 @@ void Application::TitleSelectManager::UpdateAISelectSection()
 void Application::TitleSelectManager::UpdateMultiplayerSelectSection()
 {
 	// 同時押し猶予時間の設定
-	float simultaneousSubmitGraceTime = 0.5f;
+	float simultaneousSubmitGraceTime = 0.2f;
 
 	// 入力があった場合、猶予時間を設定
 	if (submitFunc_()) {

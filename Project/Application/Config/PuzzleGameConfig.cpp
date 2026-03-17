@@ -23,6 +23,7 @@ void PuzzleGameConfig::LoadFromJSON(const std::string& filepath) {
 	squareLockTime = KashipanEngine::GetJSONValueOrDefault(json, "squareLockTime", squareLockTime);
 	comboLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "comboLockMultiplier", comboLockMultiplier);
 	breakLockMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "breakLockMultiplier", breakLockMultiplier);
+	attackCooldownPerClearedBlock = KashipanEngine::GetJSONValueOrDefault(json, "attackCooldownPerClearedBlock", attackCooldownPerClearedBlock);
 	movesPerGarbage = KashipanEngine::GetJSONValueOrDefault(json, "movesPerGarbage", movesPerGarbage);
 	attackGarbageMultiplier = KashipanEngine::GetJSONValueOrDefault(json, "attackGarbageMultiplier", attackGarbageMultiplier);
 	inactiveGarbageDecayInterval = KashipanEngine::GetJSONValueOrDefault(json, "inactiveGarbageDecayInterval", inactiveGarbageDecayInterval);
@@ -85,6 +86,7 @@ void PuzzleGameConfig::SaveToJSON(const std::string& filepath) const {
 	json["squareLockTime"] = squareLockTime;
 	json["comboLockMultiplier"] = comboLockMultiplier;
 	json["breakLockMultiplier"] = breakLockMultiplier;
+	json["attackCooldownPerClearedBlock"] = attackCooldownPerClearedBlock;
 	json["movesPerGarbage"] = movesPerGarbage;
 	json["attackGarbageMultiplier"] = attackGarbageMultiplier;
 	json["inactiveGarbageDecayInterval"] = inactiveGarbageDecayInterval;

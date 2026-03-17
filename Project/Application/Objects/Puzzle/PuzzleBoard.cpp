@@ -170,7 +170,6 @@ std::vector<PuzzleBoard::LineSeg> PuzzleBoard::DetectLineMatches(int minCount) c
 
 std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMin, int straightMin) const {
 	std::vector<MatchResult> results;
-	std::vector<std::vector<bool>> consumed(size_, std::vector<bool>(size_, false));
 
 	// --- 1. Square (3x3) ---
 	for (int r = 0; r <= size_ - 3; r++) {
@@ -184,13 +183,6 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 				}
 			}
 			if (!allSame) continue;
-			bool anyConsumed = false;
-			for (int dr = 0; dr < 3 && !anyConsumed; dr++) {
-				for (int dc = 0; dc < 3 && !anyConsumed; dc++) {
-					if (consumed[r + dr][c + dc]) anyConsumed = true;
-				}
-			}
-			if (anyConsumed) continue;
 
 			MatchResult mr;
 			mr.type = MatchType::Square;
@@ -198,7 +190,6 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 			for (int dr = 0; dr < 3; dr++) {
 				for (int dc = 0; dc < 3; dc++) {
 					mr.cells.push_back({ r + dr, c + dc });
-					consumed[r + dr][c + dc] = true;
 				}
 			}
 			results.push_back(std::move(mr));
@@ -215,23 +206,12 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 			if (board_[r][c - 1] != type) continue;
 			if (board_[r][c + 1] != type) continue;
 
-			std::vector<std::pair<int, int>> cells = {
-				{r - 1, c}, {r, c - 1}, {r, c}, {r, c + 1}, {r + 1, c}
-			};
-
-			bool anyConsumed = false;
-			for (auto& [cr, cc] : cells) {
-				if (consumed[cr][cc]) { anyConsumed = true; break; }
-			}
-			if (anyConsumed) continue;
-
 			MatchResult mr;
 			mr.type = MatchType::Cross;
 			mr.panelType = type;
-			mr.cells = std::move(cells);
-			for (auto& [cr, cc] : mr.cells) {
-				consumed[cr][cc] = true;
-			}
+			mr.cells = {
+				{r - 1, c}, {r, c - 1}, {r, c}, {r, c + 1}, {r + 1, c}
+			};
 			results.push_back(std::move(mr));
 		}
 	}
@@ -241,19 +221,15 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 		auto segs = DetectLineMatches(straightMin);
 		for (auto& seg : segs) {
 			std::vector<std::pair<int, int>> cells;
-			bool anyConsumed = false;
 			if (seg.isHorizontal) {
 				for (int i = 0; i < seg.length; i++) {
-					if (consumed[seg.fixedIndex][seg.start + i]) { anyConsumed = true; break; }
 					cells.push_back({ seg.fixedIndex, seg.start + i });
 				}
 			} else {
 				for (int i = 0; i < seg.length; i++) {
-					if (consumed[seg.start + i][seg.fixedIndex]) { anyConsumed = true; break; }
 					cells.push_back({ seg.start + i, seg.fixedIndex });
 				}
 			}
-			if (anyConsumed) continue;
 
 			MatchResult mr;
 			mr.type = MatchType::Straight;
@@ -261,9 +237,6 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 			mr.cells = std::move(cells);
 			mr.isHorizontal = seg.isHorizontal;
 			mr.fixedIndex = seg.fixedIndex;
-			for (auto& [cr, cc] : mr.cells) {
-				consumed[cr][cc] = true;
-			}
 			results.push_back(std::move(mr));
 		}
 	}
@@ -273,19 +246,15 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 		auto segs = DetectLineMatches(normalMin);
 		for (auto& seg : segs) {
 			std::vector<std::pair<int, int>> cells;
-			bool anyConsumed = false;
 			if (seg.isHorizontal) {
 				for (int i = 0; i < seg.length; i++) {
-					if (consumed[seg.fixedIndex][seg.start + i]) { anyConsumed = true; break; }
 					cells.push_back({ seg.fixedIndex, seg.start + i });
 				}
 			} else {
 				for (int i = 0; i < seg.length; i++) {
-					if (consumed[seg.start + i][seg.fixedIndex]) { anyConsumed = true; break; }
 					cells.push_back({ seg.start + i, seg.fixedIndex });
 				}
 			}
-			if (anyConsumed) continue;
 
 			MatchResult mr;
 			mr.type = MatchType::Normal;
@@ -293,9 +262,6 @@ std::vector<PuzzleBoard::MatchResult> PuzzleBoard::DetectAllMatches(int normalMi
 			mr.cells = std::move(cells);
 			mr.isHorizontal = seg.isHorizontal;
 			mr.fixedIndex = seg.fixedIndex;
-			for (auto& [cr, cc] : mr.cells) {
-				consumed[cr][cc] = true;
-			}
 			results.push_back(std::move(mr));
 		}
 	}
@@ -342,9 +308,6 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 	std::vector<std::vector<bool>> cleared(size_, std::vector<bool>(size_, false));
 	int totalCleared = 0;
 
-	std::set<int> hRows;
-	std::set<int> vCols;
-
 	for (const auto& m : matches) {
 		for (auto& [r, c] : m.cells) {
 			if (!cleared[r][c]) {
@@ -352,57 +315,12 @@ int PuzzleBoard::ClearAndFillMatches(const std::vector<MatchResult>& matches) {
 				totalCleared++;
 			}
 		}
-		if (m.panelType == kGarbageType) {
-			// お邪魔パネルのダミーマッチ → セルごとに行に追加
-			for (auto& [r, c] : m.cells) {
-				hRows.insert(r);
-			}
-		} else if (m.type == MatchType::Normal || m.type == MatchType::Straight) {
-			if (m.isHorizontal) {
-				hRows.insert(m.fixedIndex);
-			} else {
-				vCols.insert(m.fixedIndex);
-			}
-		} else {
-			for (auto& [r, c] : m.cells) {
-				hRows.insert(r);
-			}
-		}
 	}
 
-	for (int row : hRows) {
-		std::vector<int> remaining;
+	for (int r = 0; r < size_; r++) {
 		for (int c = 0; c < size_; c++) {
-			if (!cleared[row][c]) {
-				remaining.push_back(board_[row][c]);
-			}
-		}
-		int remainCount = static_cast<int>(remaining.size());
-		int fillCount = size_ - remainCount;
-		for (int c = 0; c < fillCount; c++) {
-			board_[row][c] = GetNextPanelFromTable();
-		}
-		for (int c = 0; c < remainCount; c++) {
-			board_[row][fillCount + c] = remaining[c];
-		}
-		for (int c = 0; c < size_; c++) {
-			cleared[row][c] = false;
-		}
-	}
-
-	for (int col : vCols) {
-		std::vector<int> remaining;
-		for (int r = 0; r < size_; r++) {
-			if (!cleared[r][col]) {
-				remaining.push_back(board_[r][col]);
-			}
-		}
-		int remainCount = static_cast<int>(remaining.size());
-		for (int r = 0; r < remainCount; r++) {
-			board_[r][col] = remaining[r];
-		}
-		for (int r = remainCount; r < size_; r++) {
-			board_[r][col] = GetNextPanelFromTable();
+			if (!cleared[r][c]) continue;
+			board_[r][c] = GetNextPanelFromTable();
 		}
 	}
 

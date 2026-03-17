@@ -2,6 +2,7 @@
 #include "Assets/AudioManager.h"
 #include <algorithm>
 #include <set>
+#include <queue>
 #include <cmath>
 
 #include <MatsumotoUtility.h>
@@ -743,28 +744,16 @@ namespace Application {
 	}
 
 	void PuzzlePlayer::UpdateInactiveLockOverlays() {
-		int n = config_.stageSize;
-		int ib = 1 - activeBoard_;
-		auto& rLocks = rowLocks_[ib];
-		auto& cLocks = colLocks_[ib];
-		for (int r = 0; r < n; r++) {
-			if (r >= static_cast<int>(inactiveRowLockSprites_.size())) break;
-			auto* sprite = inactiveRowLockSprites_[r];
+		for (auto* sprite : inactiveRowLockSprites_) {
 			if (!sprite) continue;
-			MatsumotoUtility::SetTextureToSprite(sprite, "lock.png");
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-				bool locked = rLocks.count(r) > 0;
-				mat->SetColor(locked ? config_.lockColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 			}
 		}
-		for (int c = 0; c < n; c++) {
-			if (c >= static_cast<int>(inactiveColLockSprites_.size())) break;
-			auto* sprite = inactiveColLockSprites_[c];
+		for (auto* sprite : inactiveColLockSprites_) {
 			if (!sprite) continue;
-			MatsumotoUtility::SetTextureToSprite(sprite, "lock.png");
 			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-				bool locked = cLocks.count(c) > 0;
-				mat->SetColor(locked ? config_.lockColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
 			}
 		}
 	}
@@ -848,206 +837,152 @@ namespace Application {
 	}
 
 	void PuzzlePlayer::UpdateInactivePreview(float /*deltaTime*/) {
-		int n = config_.stageSize;
-		const auto& inactiveBoard = GetInactiveBoard();
+		for (auto* sprite : inactivePreviewSprites_) {
+			if (!sprite) continue;
+			if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+			}
+		}
+		if (inactivePreviewBg_) {
+			if (auto* mat = inactivePreviewBg_->GetComponent2D<KashipanEngine::Material2D>()) {
+				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+			}
+		}
+	}
+
+	std::vector<std::vector<std::pair<int, int>>> PuzzlePlayer::BuildAttachedGroups() const {
+		const auto& board = GetActiveBoard();
+		const int n = config_.stageSize;
+		std::vector<std::vector<bool>> seed(n, std::vector<bool>(n, false));
+		for (int r = 0; r < n; r++) {
+			int c = 0;
+			while (c < n) {
+				int type = board.GetPanel(r, c);
+				if (type <= 0) { c++; continue; }
+				int s = c;
+				while (c + 1 < n && board.GetPanel(r, c + 1) == type) c++;
+				if (c - s + 1 >= config_.normalMinCount) for (int i = s; i <= c; i++) seed[r][i] = true;
+				c++;
+			}
+		}
+		for (int c = 0; c < n; c++) {
+			int r = 0;
+			while (r < n) {
+				int type = board.GetPanel(r, c);
+				if (type <= 0) { r++; continue; }
+				int s = r;
+				while (r + 1 < n && board.GetPanel(r + 1, c) == type) r++;
+				if (r - s + 1 >= config_.normalMinCount) for (int i = s; i <= r; i++) seed[i][c] = true;
+				r++;
+			}
+		}
+		std::vector<std::vector<bool>> attached(n, std::vector<bool>(n, false));
+		static const int dr[4] = { -1,1,0,0 };
+		static const int dc[4] = { 0,0,-1,1 };
 		for (int r = 0; r < n; r++) {
 			for (int c = 0; c < n; c++) {
-				int idx = r * n + c;
-				if (idx >= static_cast<int>(inactivePreviewSprites_.size())) continue;
-				auto* sprite = inactivePreviewSprites_[idx];
-				if (!sprite) continue;
-				int type = inactiveBoard.GetPanel(r, c);
-				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-					if (type == PuzzleBoard::kGarbageType) {
-						mat->SetColor(config_.garbageColor);
-					}
-					else if (type > 0 && type <= PuzzleGameConfig::kMaxPanelTypes) {
-						mat->SetColor(config_.panelColors[type - 1]);
-					}
-					else {
-						mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+				if (!seed[r][c]) continue;
+				int type = board.GetPanel(r, c);
+				if (type <= 0) continue;
+				std::queue<std::pair<int, int>> q;
+				std::vector<std::vector<bool>> vis(n, std::vector<bool>(n, false));
+				q.push({ r, c });
+				vis[r][c] = true;
+				while (!q.empty()) {
+					auto [cr, cc] = q.front(); q.pop();
+					attached[cr][cc] = true;
+					for (int i = 0; i < 4; i++) {
+						int nr = cr + dr[i], nc = cc + dc[i];
+						if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
+						if (vis[nr][nc] || board.GetPanel(nr, nc) != type) continue;
+						vis[nr][nc] = true;
+						q.push({ nr, nc });
 					}
 				}
 			}
 		}
-	}
-
-	void PuzzlePlayer::UpdateGarbageWarnings() {
-		int n = config_.stageSize;
-		std::set<std::pair<int, int>> warningSet(pendingGarbagePositions_.begin(), pendingGarbagePositions_.end());
+		std::vector<std::vector<std::pair<int, int>>> groups;
+		std::vector<std::vector<bool>> grouped(n, std::vector<bool>(n, false));
 		for (int r = 0; r < n; r++) {
 			for (int c = 0; c < n; c++) {
-				int idx = r * n + c;
-				if (idx >= static_cast<int>(garbageWarningSprites_.size())) continue;
-				auto* sprite = garbageWarningSprites_[idx];
-				if (!sprite) continue;
-
-				// ゴミ警告位置にスプライトを表示
-				Application::MatsumotoUtility::SetTextureToSprite(sprite, "Reticle.png");
-				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-				 bool warn = warningSet.count({ r, c }) > 0;
-					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-					if (warn) {
-						int a = 30;
-						a = 30 + a;
+				if (!attached[r][c] || grouped[r][c]) continue;
+				int type = board.GetPanel(r, c);
+				std::vector<std::pair<int, int>> g;
+				std::queue<std::pair<int, int>> q;
+				q.push({ r, c });
+				grouped[r][c] = true;
+				while (!q.empty()) {
+					auto [cr, cc] = q.front(); q.pop();
+					g.push_back({ cr, cc });
+					for (int i = 0; i < 4; i++) {
+						int nr = cr + dr[i], nc = cc + dc[i];
+						if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
+						if (grouped[nr][nc] || !attached[nr][nc] || board.GetPanel(nr, nc) != type) continue;
+						grouped[nr][nc] = true;
+						q.push({ nr, nc });
 					}
 				}
-
-				
-
-				// ちょっとずつ回す
-				Application::MatsumotoUtility::RotateSprite(sprite, Vector3(0.0f,0.0f,0.016f * 3.0f));
+				groups.push_back(std::move(g));
 			}
 		}
+		return groups;
 	}
 
-	void PuzzlePlayer::UpdateMoveGarbageWarnings() {
-		int n = config_.stageSize;
-		std::set<std::pair<int, int>> warningSet(nextMoveGarbagePositions_.begin(), nextMoveGarbagePositions_.end());
-		for (int r = 0; r < n; r++) {
-			for (int c = 0; c < n; c++) {
-				int idx = r * n + c;
-				if (idx >= static_cast<int>(moveGarbageWarningSprites_.size())) continue;
-				auto* sprite = moveGarbageWarningSprites_[idx];
-				if (!sprite) continue;
+	std::set<std::pair<int, int>> PuzzlePlayer::BuildAttachedCellSet() const {
+		std::set<std::pair<int, int>> out;
+		for (const auto& g : BuildAttachedGroups()) for (const auto& p : g) out.insert(p);
+		return out;
+	}
 
-				// 警告スプライトは常にレティクルテクスチャで、警告がある場合は色をつける、ない場合は透明にする
-				Application::MatsumotoUtility::SetTextureToSprite(sprite, "Reticle.png");
-				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
-				 bool warn = warningSet.count({ r, c }) > 0;
-					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+	void PuzzlePlayer::BuildPendingMatchesFromAttachments() {
+		pendingMatches_.clear();
+		std::set<std::pair<int, int>> clearedCells;
+		for (const auto& g : BuildAttachedGroups()) {
+			if (g.empty()) continue;
+			PuzzleBoard::MatchResult mr;
+			mr.type = PuzzleBoard::MatchType::Normal;
+			mr.panelType = GetActiveBoard().GetPanel(g.front().first, g.front().second);
+			mr.cells = g;
+			for (const auto& p : g) clearedCells.insert(p);
+			pendingMatches_.push_back(std::move(mr));
+		}
+
+		if (pendingMatches_.empty()) return;
+
+		std::set<std::pair<int, int>> garbageCells;
+		static const int dr[4] = { -1, 1, 0, 0 };
+		static const int dc[4] = { 0, 0, -1, 1 };
+		int n = config_.stageSize;
+		for (const auto& [r, c] : clearedCells) {
+			for (int i = 0; i < 4; i++) {
+				int nr = r + dr[i];
+				int nc = c + dc[i];
+				if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
+				if (GetActiveBoard().GetPanel(nr, nc) == PuzzleBoard::kGarbageType) {
+					garbageCells.insert({ nr, nc });
 				}
-
-				// ちょっとずつ回す
-				Application::MatsumotoUtility::RotateSprite(sprite, Vector3(0.0f, 0.0f, 0.016f * 3.0f));
 			}
+		}
+
+		if (!garbageCells.empty()) {
+			PuzzleBoard::MatchResult garbageMatch;
+			garbageMatch.type = PuzzleBoard::MatchType::Normal;
+			garbageMatch.panelType = PuzzleBoard::kGarbageType;
+			garbageMatch.cells.assign(garbageCells.begin(), garbageCells.end());
+			pendingMatches_.push_back(std::move(garbageMatch));
 		}
 	}
 
-	void PuzzlePlayer::UpdateSwapPanelAnimations(float deltaTime)
-	{
-		deltaTime; // 現状は時間に依存しないイージングで固定しているため未使用
-		if (!activeBoardTransform_ || !inactiveBoardTransform_) return;
-
-		// アクティブボードの現在の位置とスケールを取得
-		Vector3 activeTranslate = activeBoardTransform_->GetTranslate();
-		Vector3 activeScale = activeBoardTransform_->GetScale();
-
-		// 非アクティブボードの現在の位置とスケールを取得
-		Vector3 inactiveTranslate = inactiveBoardTransform_->GetTranslate();
-		Vector3 inactiveScale = inactiveBoardTransform_->GetScale();
-
-		// アクティブボードのターゲット値（中央、等倍）
-		Vector3 activeTargetTranslate(0.0f, 0.0f, 0.0f);
-		Vector3 activeTargetScale(1.0f, 1.0f, 1.0f);
-
-		// 非アクティブボードのターゲット値（画面端、縮小）
-		int n = config_.stageSize;
-		float previewScale = 0.3f;
-		float previewCellSize = (config_.panelScale + config_.panelGap) * previewScale;
-		float previewWidth = static_cast<float>(n) * previewCellSize;
-		float previewHeight = static_cast<float>(n) * previewCellSize;
-		float cellSize = config_.panelScale + config_.panelGap;
-		float stageWidth = static_cast<float>(n) * cellSize;
-		float stageHeight = static_cast<float>(n) * cellSize;
-		float previewX = isPlayer2_ ? (stageWidth * 0.5f + 30.0f + previewWidth * 0.5f)
-			: (-stageWidth * 0.5f - 30.0f - previewWidth * 0.5f);
-		float previewY = -stageHeight * 0.5f + previewHeight * 0.5f;
-
-		Vector3 inactiveTargetTranslate(previewX, previewY, 0.0f);
-		Vector3 inactiveTargetScale(previewScale, previewScale, 1.0f);
-
-		// イージング係数
-		float easingFactor = 0.5f;
-
-		// アクティブボードの位置とスケールを更新
-		float newActiveX = Application::MatsumotoUtility::SimpleEaseIn(activeTranslate.x, activeTargetTranslate.x, easingFactor);
-		float newActiveY = Application::MatsumotoUtility::SimpleEaseIn(activeTranslate.y, activeTargetTranslate.y, easingFactor);
-		float newActiveZ = Application::MatsumotoUtility::SimpleEaseIn(activeTranslate.z, activeTargetTranslate.z, easingFactor);
-
-		float newActiveScaleX = Application::MatsumotoUtility::SimpleEaseIn(activeScale.x, activeTargetScale.x, easingFactor);
-		float newActiveScaleY = Application::MatsumotoUtility::SimpleEaseIn(activeScale.y, activeTargetScale.y, easingFactor);
-		float newActiveScaleZ = Application::MatsumotoUtility::SimpleEaseIn(activeScale.z, activeTargetScale.z, easingFactor);
-
-		activeBoardTransform_->SetTranslate(Vector3(newActiveX, newActiveY, newActiveZ));
-		activeBoardTransform_->SetScale(Vector3(newActiveScaleX, newActiveScaleY, newActiveScaleZ));
-
-		// 非アクティブボードの位置とスケールを更新
-		float newInactiveX = Application::MatsumotoUtility::SimpleEaseIn(inactiveTranslate.x, inactiveTargetTranslate.x, easingFactor);
-		float newInactiveY = Application::MatsumotoUtility::SimpleEaseIn(inactiveTranslate.y, inactiveTargetTranslate.y, easingFactor);
-		float newInactiveZ = Application::MatsumotoUtility::SimpleEaseIn(inactiveTranslate.z, inactiveTargetTranslate.z, easingFactor);
-
-		float newInactiveScaleX = Application::MatsumotoUtility::SimpleEaseIn(inactiveScale.x, inactiveTargetScale.x, easingFactor);
-		float newInactiveScaleY = Application::MatsumotoUtility::SimpleEaseIn(inactiveScale.y, inactiveTargetScale.y, easingFactor);
-		float newInactiveScaleZ = Application::MatsumotoUtility::SimpleEaseIn(inactiveScale.z, inactiveTargetScale.z, easingFactor);
-
-		inactiveBoardTransform_->SetTranslate(Vector3(newInactiveX, newInactiveY, newInactiveZ));
-		inactiveBoardTransform_->SetScale(Vector3(newInactiveScaleX, newInactiveScaleY, newInactiveScaleZ));
-	}
-
-	void PuzzlePlayer::UpdateSwapCoolDownSpriteAnimation(float deltaTime)
-	{
-		if (swapCooldown_.IsOnCooldown()) {
-			if (auto* tr = switchCooldownSprite_->GetComponent2D<KashipanEngine::Transform2D>()) {
-				tr->SetRotate(tr->GetRotate() + Vector3(0.0f, 0.0f, 3.14f * deltaTime));
-			}
-
-			if (auto* mat = switchCooldownSprite_->GetComponent2D<KashipanEngine::Material2D>())
-			{
-				float getAlpha = mat->GetColor().w;
-				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 1.0f, 0.5f);
-				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, getAlpha));
-			}
-			if (auto* mat = switchCooldownBackGroundSprite_->GetComponent2D<KashipanEngine::Material2D>())
-			{
-				float getAlpha = mat->GetColor().w;
-				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 0.8f, 0.5f);
-				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, getAlpha));
+	int PuzzlePlayer::CountCrossShapesInAttachedMatches() const {
+		int crosses = 0;
+		for (const auto& m : pendingMatches_) {
+			std::set<std::pair<int, int>> s(m.cells.begin(), m.cells.end());
+			for (const auto& [r, c] : m.cells) {
+				if (!s.count({ r - 1, c }) || !s.count({ r + 1, c }) || !s.count({ r, c - 1 }) || !s.count({ r, c + 1 })) continue;
+				crosses++;
 			}
 		}
-		else {
-
-			if (auto* mat = switchCooldownSprite_->GetComponent2D<KashipanEngine::Material2D>())
-			{
-				float getAlpha = mat->GetColor().w;
-				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 0.0f, 0.5f);
-				mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, getAlpha));
-			}
-			if (auto* mat = switchCooldownBackGroundSprite_->GetComponent2D<KashipanEngine::Material2D>())
-			{
-				float getAlpha = mat->GetColor().w;
-				getAlpha = Application::MatsumotoUtility::SimpleEaseIn(getAlpha, 0.0f, 0.5f);
-				mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, getAlpha));
-			}
-		}
-	}
-
-	void PuzzlePlayer::UpdateMoveCountText()
-	{
-		if (remainingMoveCount_) {
-			int pct = config_.movesPerGarbage - moveCount_;
-			remainingMoveCount_->SetTextFormat("{}", pct);
-		}
-	}
-
-	void PuzzlePlayer::PreCalculateMoveGarbagePositions() {
-		nextMoveGarbagePositions_.clear();
-		auto& board = GetActiveBoard();
-		int n = config_.stageSize;
-		std::vector<std::pair<int, int>> normalCells;
-		for (int r = 0; r < n; r++) {
-			for (int c = 0; c < n; c++) {
-				if (board.GetPanel(r, c) > 0) normalCells.push_back({ r, c });
-			}
-		}
-		for (int i = static_cast<int>(normalCells.size()) - 1; i > 0; i--) {
-			int j = KashipanEngine::GetRandomInt(0, i);
-			std::swap(normalCells[i], normalCells[j]);
-		}
-		int count = 1; // 1個ずつ出現
-		for (int i = 0; i < count && i < static_cast<int>(normalCells.size()); i++) {
-			nextMoveGarbagePositions_.push_back(normalCells[i]);
-		}
+		return crosses;
 	}
 
 	// ================================================================
@@ -1061,9 +996,7 @@ namespace Application {
 	}
 
 	float PuzzlePlayer::GetInactiveCollapseRatio() const {
-		int total = config_.stageSize * config_.stageSize;
-		if (total <= 0) return 0.0f;
-		return static_cast<float>(GetInactiveBoard().CountGarbage()) / static_cast<float>(total);
+		return 0.0f;
 	}
 
 	bool PuzzlePlayer::IsDefeated() const {
@@ -1075,76 +1008,28 @@ namespace Application {
 	// ロック
 	// ================================================================
 
-	bool PuzzlePlayer::IsRowLocked(int row) const {
-		return rowLocks_[activeBoard_].count(row) > 0;
+	bool PuzzlePlayer::IsRowLocked(int /*row*/) const {
+		return false;
 	}
 
-	bool PuzzlePlayer::IsColLocked(int col) const {
-		return colLocks_[activeBoard_].count(col) > 0;
+	bool PuzzlePlayer::IsColLocked(int /*col*/) const {
+		return false;
 	}
 
-	void PuzzlePlayer::UpdateLocks(float deltaTime) {
-		// アクティブボードのロック
-		for (auto it = rowLocks_[activeBoard_].begin(); it != rowLocks_[activeBoard_].end(); ) {
-			it->second.remainingTime -= deltaTime;
-			if (it->second.remainingTime <= 0.0f) it = rowLocks_[activeBoard_].erase(it);
-			else ++it;
-		}
-		for (auto it = colLocks_[activeBoard_].begin(); it != colLocks_[activeBoard_].end(); ) {
-			it->second.remainingTime -= deltaTime;
-			if (it->second.remainingTime <= 0.0f) it = colLocks_[activeBoard_].erase(it);
-			else ++it;
-		}
-		// 非アクティブボードのロックも時間進行
-		int ib = 1 - activeBoard_;
-		for (auto it = rowLocks_[ib].begin(); it != rowLocks_[ib].end(); ) {
-			it->second.remainingTime -= deltaTime;
-			if (it->second.remainingTime <= 0.0f) it = rowLocks_[ib].erase(it);
-			else ++it;
-		}
-		for (auto it = colLocks_[ib].begin(); it != colLocks_[ib].end(); ) {
-			it->second.remainingTime -= deltaTime;
-			if (it->second.remainingTime <= 0.0f) it = colLocks_[ib].erase(it);
-			else ++it;
-		}
+	void PuzzlePlayer::UpdateLocks(float /*deltaTime*/) {
 	}
 
-	void PuzzlePlayer::EnqueueGarbage(float amount, float delayTime) {
-		if (amount < 1.0f) return;
-		GarbageQueueEntry entry;
-		entry.remainingTime = delayTime;
-		entry.totalTime = delayTime;
-		entry.garbageAmount = amount;
-		garbageQueue_.push_back(entry);
-	}
-
-	void PuzzlePlayer::ApplyLock(bool isRow, int index, float seconds) {
-		auto& rLocks = rowLocks_[activeBoard_];
-		auto& cLocks = colLocks_[activeBoard_];
-		if (isRow) {
-			if (rLocks.count(index)) { rLocks[index].remainingTime += seconds; return; }
-		}
-		else {
-			if (cLocks.count(index)) { cLocks[index].remainingTime += seconds; return; }
-		}
-		if (static_cast<int>(rLocks.size() + cLocks.size()) >= kMaxTotalLocks) return;
-		if (isRow) rLocks[index] = { seconds };
-		else cLocks[index] = { seconds };
-
-		auto h = KashipanEngine::AudioManager::GetSoundHandleFromFileName("lineLock.mp3");
-		if (h != KashipanEngine::AudioManager::kInvalidSoundHandle) {
-			KashipanEngine::AudioManager::Play(h, 0.9f);
-		}
+	void PuzzlePlayer::ApplyLock(bool /*isRow*/, int /*index*/, float /*seconds*/) {
 	}
 
 	void PuzzlePlayer::ClearAllLocks() {
-		rowLocks_[activeBoard_].clear();
-		colLocks_[activeBoard_].clear();
+		rowLocks_[0].clear();
+		colLocks_[0].clear();
+		rowLocks_[1].clear();
+		colLocks_[1].clear();
 	}
 
-	void PuzzlePlayer::AddToExistingLocks(float seconds) {
-		for (auto& [k, v] : rowLocks_[activeBoard_]) v.remainingTime += seconds;
-		for (auto& [k, v] : colLocks_[activeBoard_]) v.remainingTime += seconds;
+	void PuzzlePlayer::AddToExistingLocks(float /*seconds*/) {
 	}
 
 	void PuzzlePlayer::SetCursorPosition(int row, int col) {
@@ -1171,13 +1056,6 @@ namespace Application {
 
 	void PuzzlePlayer::ForceMove(int direction) {
 		if (IsAnimating()) return;
-		auto [row, col] = cursor_.GetPosition();
-		if (direction == 0 || direction == 1) {
-			if (IsColLocked(col)) return;
-		}
-		else {
-			if (IsRowLocked(row)) return;
-		}
 		StartMoveAction(direction);
 	}
 
@@ -1187,18 +1065,9 @@ namespace Application {
 	}
 
 	void PuzzlePlayer::ForceSwitchBoard() {
-		if (IsAnimating()) return;
-		SwitchBoard();
 	}
 
 	void PuzzlePlayer::SwitchBoard() {
-		activeBoard_ = 1 - activeBoard_;
-		inactiveDecayTimer_ = 0.0f;
-		SyncAllPanelVisuals();
-		UpdateCursorSprite();
-
-		StartSwapPanelAnimation();
-		swapCooldown_.SetOnCooldown();
 	}
 
 	void PuzzlePlayer::AutoSwitchBoardIfNeeded() {
@@ -1240,16 +1109,53 @@ namespace Application {
 			KashipanEngine::AudioManager::Play(panelMoveHandle, 0.9f);
 		}
 
-		switch (direction) {
-		case 0: board.ShiftColDown(col);   break;
-		case 1: board.ShiftColUp(col);     break;
-		case 2: board.ShiftRowLeft(row);   break;
-		case 3: board.ShiftRowRight(row);  break;
+		auto groups = BuildAttachedGroups();
+		std::map<std::pair<int, int>, int> cellToGroup;
+		for (int gi = 0; gi < static_cast<int>(groups.size()); gi++) {
+			for (const auto& p : groups[gi]) cellToGroup[p] = gi;
 		}
 
-		// 移動回数カウント
-		AdvanceMoveGarbageCounter();
+		const bool vertical = (direction == 0 || direction == 1);
+		std::set<int> affectedLines;
+		affectedLines.insert(vertical ? col : row);
 
+		// 選択中セル自体がくっつきグループに属している時だけ、グループ連動移動を行う。
+		// それ以外（他ブロック移動に巻き込まれた場合）は通常の1ライン移動として扱う。
+		auto cursorGroupIt = cellToGroup.find({ row, col });
+		if (cursorGroupIt != cellToGroup.end()) {
+			bool expanded = true;
+			while (expanded) {
+				expanded = false;
+				std::set<int> newLines = affectedLines;
+				for (int line : affectedLines) {
+					for (int i = 0; i < n; i++) {
+						int r = vertical ? i : line;
+						int c = vertical ? line : i;
+						auto it = cellToGroup.find({ r, c });
+						if (it == cellToGroup.end()) continue;
+						for (const auto& [gr, gc] : groups[it->second]) {
+							int addLine = vertical ? gc : gr;
+							if (!newLines.count(addLine)) {
+								newLines.insert(addLine);
+								expanded = true;
+							}
+						}
+					}
+				}
+				affectedLines = std::move(newLines);
+			}
+		}
+
+		for (int line : affectedLines) {
+			switch (direction) {
+			case 0: board.ShiftColDown(line); break;
+			case 1: board.ShiftColUp(line); break;
+			case 2: board.ShiftRowLeft(line); break;
+			case 3: board.ShiftRowRight(line); break;
+			}
+		}
+
+		AdvanceMoveGarbageCounter();
 		phaseAnims_.clear();
 
 		auto addAnim = [&](int r, int c, int fromR, int fromC) {
@@ -1269,25 +1175,34 @@ namespace Application {
 			a.startScale = Vector2(scale, scale);
 			a.endScale = Vector2(scale, scale);
 			phaseAnims_.push_back(a);
-			};
+		};
 
-		switch (direction) {
-		case 0: for (int r = 0; r < n; r++) addAnim(r, col, (r == n - 1) ? n : (r + 1), col); break;
-		case 1: for (int r = 0; r < n; r++) addAnim(r, col, (r == 0) ? -1 : (r - 1), col); break;
-		case 2: for (int c = 0; c < n; c++) addAnim(row, c, row, (c == n - 1) ? n : (c + 1)); break;
-		case 3: for (int c = 0; c < n; c++) addAnim(row, c, row, (c == 0) ? -1 : (c - 1)); break;
+		if (vertical) {
+			for (int mvCol : affectedLines) {
+				for (int r = 0; r < n; r++) {
+					if (direction == 0) addAnim(r, mvCol, (r == n - 1) ? n : (r + 1), mvCol);
+					else addAnim(r, mvCol, (r == 0) ? -1 : (r - 1), mvCol);
+				}
+			}
+		} else {
+			for (int mvRow : affectedLines) {
+				for (int c2 = 0; c2 < n; c2++) {
+					if (direction == 2) addAnim(mvRow, c2, mvRow, (c2 == n - 1) ? n : (c2 + 1));
+					else addAnim(mvRow, c2, mvRow, (c2 == 0) ? -1 : (c2 - 1));
+				}
+			}
 		}
 
 		std::set<int> animIndices;
 		for (auto& a : phaseAnims_) animIndices.insert(a.row * n + a.col);
 		for (int r = 0; r < n; r++) {
-			for (int c = 0; c < n; c++) {
-				int idx = r * n + c;
+			for (int c2 = 0; c2 < n; c2++) {
+				int idx = r * n + c2;
 				if (animIndices.count(idx)) continue;
-				ApplyPanelColor(r, c);
+				ApplyPanelColor(r, c2);
 				if (auto* panel = puzzlePanelSprites_[idx]) {
 					if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
-						Vector2 pos = BoardToScreen(r, c);
+						Vector2 pos = BoardToScreen(r, c2);
 						tr->SetTranslate(Vector3(pos.x, pos.y, 0.0f));
 						tr->SetScale(Vector3(scale, scale, 1.0f));
 					}
@@ -1306,16 +1221,15 @@ namespace Application {
 	}
 
 	bool PuzzlePlayer::StartClearingPhase() {
-		pendingMatches_ = GetActiveBoard().DetectAllMatches(config_.normalMinCount, config_.straightMinCount);
+		BuildPendingMatchesFromAttachments();
 		if (pendingMatches_.empty()) return false;
 
-		// コンボチェーン開始時に蓄積をリセット
 		if (combo_.GetCurrentCombo() == 0) {
 			pendingGarbageAccumulator_ = 0.0f;
 			pendingGarbageToSend_ = 0;
 		}
 
-		combo_.AddCombo(static_cast<int>(pendingMatches_.size()));
+		combo_.AddCombo(1);
 
 		int n = config_.stageSize;
 		float scale = config_.panelScale;
@@ -1341,44 +1255,6 @@ namespace Application {
 		}
 
 		CalculateAttackFromMatches();
-
-		const bool hasAnyShapeMatch =
-			(lastMatchSummary_.normalCount > 0) ||
-			(lastMatchSummary_.straightCount > 0) ||
-			(lastMatchSummary_.crossCount > 0) ||
-				(lastMatchSummary_.squareCount > 0);
-		if (hasAnyShapeMatch) {
-			auto comboHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName("combo.mp3");
-			if (comboHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {
-				KashipanEngine::AudioManager::Play(comboHandle, 1.0f, std::clamp(comboSePitch_, -5.0f, 5.0f));
-				comboSePitch_ = std::min(comboSePitch_ + 1.0f, 5.0f);
-			}
-		}
-
-		{
-
-			std::string text;
-			if (lastMatchSummary_.normalCount > 0)
-				text += "Normal x" + std::to_string(lastMatchSummary_.normalCount) + "\n";
-			if (lastMatchSummary_.straightCount > 0)
-				text += "Straight x" + std::to_string(lastMatchSummary_.straightCount) + "\n";
-			if (lastMatchSummary_.crossCount > 0)
-				text += "Cross x" + std::to_string(lastMatchSummary_.crossCount) + "\n";
-			if (lastMatchSummary_.squareCount > 0)
-				text += "Square x" + std::to_string(lastMatchSummary_.squareCount) + "\n";
-			if (lastMatchSummary_.isBreak)
-				text += "Break!\n";
-			if (matchText_) matchText_->SetText(text);
-
-			if (combo_.GetCurrentCombo() > 1) {
-				if (comboText_) comboText_->SetTextFormat("{} Combo!", combo_.GetCurrentCombo());
-			}
-			else {
-				if (comboText_) comboText_->SetText("");
-			}
-			matchTextTimer_ = kMatchTextDuration;
-		}
-
 		phase_ = Phase::Clearing;
 		phaseTimer_ = 0.0f;
 		phaseDuration_ = config_.panelClearEasingDuration;
@@ -1398,95 +1274,53 @@ namespace Application {
 			}
 		}
 		GetActiveBoard().ClearAndFillMatches(pendingMatches_);
+		attackCooldownTimer_ = std::max(attackCooldownTimer_, pendingAttackCooldown_);
+		pendingAttackCooldown_ = 0.0f;
 		StartFillingPhase();
 	}
 
 	void PuzzlePlayer::StartFillingPhase() {
 		int n = config_.stageSize;
-	 float scale = config_.panelScale;
+		float scale = config_.panelScale;
 
-		std::map<int, int> hRowClearCount;
-		std::map<int, int> vColClearCount;
+		std::set<std::pair<int, int>> clearedCells;
 		for (const auto& m : pendingMatches_) {
-			if (m.panelType == PuzzleBoard::kGarbageType) {
-				// お邪魔パネルのダミーマッチ → セルごとに行に追加
-				for (auto& [r, c] : m.cells) hRowClearCount[r]++;
-			}
-			else if (m.isHorizontal) {
-				hRowClearCount[m.fixedIndex] += static_cast<int>(m.cells.size());
-			}
-			else {
-				vColClearCount[m.fixedIndex] += static_cast<int>(m.cells.size());
+			for (auto& cell : m.cells) {
+				clearedCells.insert(cell);
 			}
 		}
-		for (auto& [row, cnt] : hRowClearCount) cnt = std::min(cnt, n);
-		for (auto& [col, cnt] : vColClearCount) cnt = std::min(cnt, n);
 
-		pendingMatches_.clear();
 		phaseAnims_.clear();
-
-		for (int r = 0; r < n; r++)
-			for (int c = 0; c < n; c++)
-				ApplyPanelColor(r, c);
-
-		for (auto& [row, clearCount] : hRowClearCount) {
-			for (int c = 0; c < n; c++) {
-				Vector2 endP = BoardToScreen(row, c);
-				Vector2 startP = BoardToScreen(row, c - clearCount);
-				PanelAnim a;
-				a.row = row; a.col = c;
-				a.startPos = startP; a.endPos = endP;
-				a.startScale = Vector2(scale, scale);
-				a.endScale = Vector2(scale, scale);
-				phaseAnims_.push_back(a);
-				int idx = row * n + c;
-				if (auto* panel = puzzlePanelSprites_[idx]) {
-					if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
-						tr->SetTranslate(Vector3(startP.x, startP.y, 0.0f));
-						tr->SetScale(Vector3(scale, scale, 1.0f));
-					}
-				}
-			}
-		}
-
-		std::set<int> hRowSet;
-		for (auto& [row, cnt] : hRowClearCount) hRowSet.insert(row);
-		for (auto& [col, clearCount] : vColClearCount) {
-			for (int r = 0; r < n; r++) {
-				if (hRowSet.count(r)) continue;
-				Vector2 endP = BoardToScreen(r, col);
-				Vector2 startP = BoardToScreen(r + clearCount, col);
-				PanelAnim a;
-				a.row = r; a.col = col;
-				a.startPos = startP; a.endPos = endP;
-				a.startScale = Vector2(scale, scale);
-				a.endScale = Vector2(scale, scale);
-				phaseAnims_.push_back(a);
-				int idx = r * n + col;
-				if (auto* panel = puzzlePanelSprites_[idx]) {
-					if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
-						tr->SetTranslate(Vector3(startP.x, startP.y, 0.0f));
-						tr->SetScale(Vector3(scale, scale, 1.0f));
-					}
-				}
-			}
-		}
-
-		std::set<int> animSet;
-		for (auto& a : phaseAnims_) animSet.insert(a.row * n + a.col);
 		for (int r = 0; r < n; r++) {
 			for (int c = 0; c < n; c++) {
+				ApplyPanelColor(r, c);
 				int idx = r * n + c;
-				if (animSet.count(idx)) continue;
-				if (auto* panel = puzzlePanelSprites_[idx]) {
-					if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
-						Vector2 pos = BoardToScreen(r, c);
-						tr->SetTranslate(Vector3(pos.x, pos.y, 0.0f));
+				auto* panel = (idx >= 0 && idx < static_cast<int>(puzzlePanelSprites_.size())) ? puzzlePanelSprites_[idx] : nullptr;
+				if (!panel) continue;
+
+				Vector2 pos = BoardToScreen(r, c);
+				if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
+					tr->SetTranslate(Vector3(pos.x, pos.y, 0.0f));
+					if (clearedCells.count({ r, c }) > 0) {
+						tr->SetScale(Vector3(0.0f, 0.0f, 1.0f));
+					}
+					else {
 						tr->SetScale(Vector3(scale, scale, 1.0f));
 					}
 				}
+
+				if (clearedCells.count({ r, c }) > 0) {
+					PanelAnim a;
+					a.row = r; a.col = c;
+					a.startPos = pos; a.endPos = pos;
+					a.startScale = Vector2(0.0f, 0.0f);
+					a.endScale = Vector2(scale, scale);
+					phaseAnims_.push_back(a);
+				}
 			}
 		}
+
+		pendingMatches_.clear();
 
 		if (phaseAnims_.empty()) {
 			SyncAllPanelVisuals();
@@ -1501,125 +1335,46 @@ namespace Application {
 
 	void PuzzlePlayer::OnFillFinished() {
 		SyncAllPanelVisuals();
-		if (!StartClearingPhase()) {
-			// コンボ終了 → 予告お邪魔パネルを実際に配置
-			if (!pendingGarbagePositions_.empty()) {
-				for (auto& [r, c] : pendingGarbagePositions_) {
-					if (GetActiveBoard().GetPanel(r, c) > 0) {
-						GetActiveBoard().SetPanel(r, c, PuzzleBoard::kGarbageType);
-					}
+		if (!pendingGarbagePositions_.empty()) {
+			for (auto& [r, c] : pendingGarbagePositions_) {
+				if (GetActiveBoard().GetPanel(r, c) > 0) {
+					GetActiveBoard().SetPanel(r, c, PuzzleBoard::kGarbageType);
 				}
-				pendingGarbagePositions_.clear();
-				SyncAllPanelVisuals();
 			}
-			combo_.ResetCombo();
-			phase_ = Phase::Idle;
+			pendingGarbagePositions_.clear();
+			SyncAllPanelVisuals();
 		}
+		combo_.ResetCombo();
+		phase_ = Phase::Idle;
 	}
 
-	// ================================================================
-	// 非アクティブボード更新
-	// ================================================================
-
-	void PuzzlePlayer::UpdateInactiveBoard(float deltaTime) {
-		if (config_.inactiveGarbageDecayInterval <= 0.0f) return;
-		inactiveDecayTimer_ += deltaTime;
-		while (inactiveDecayTimer_ >= config_.inactiveGarbageDecayInterval) {
-			inactiveDecayTimer_ -= config_.inactiveGarbageDecayInterval;
-			GetInactiveBoard().RemoveOneGarbageRandom();
+	void PuzzlePlayer::CalculateAttackFromMatches() {
+		lastMatchSummary_ = {};
+		int totalCells = 0;
+		int garbageCells = 0;
+		for (const auto& m : pendingMatches_) {
+			if (m.panelType == PuzzleBoard::kGarbageType) {
+				garbageCells += static_cast<int>(m.cells.size());
+			}
+			totalCells += static_cast<int>(m.cells.size());
 		}
+		lastMatchSummary_.totalClearedCells = totalCells;
+		lastMatchSummary_.garbageClearedCells = garbageCells;
+		lastMatchSummary_.crossCount = CountCrossShapesInAttachedMatches();
+
+		float garbageBase = static_cast<float>(totalCells) * config_.attackGarbageMultiplier;
+		garbageBase += static_cast<float>(garbageCells) * config_.garbageClearedBonus;
+		garbageBase += static_cast<float>(lastMatchSummary_.crossCount) * config_.crossGarbageCount;
+		garbageBase *= GetEscalationMultiplier();
+		pendingGarbageAccumulator_ += garbageBase;
+		pendingGarbageToSend_ = static_cast<int>(pendingGarbageAccumulator_);
+		hasPendingAttack_ = (pendingGarbageToSend_ > 0);
+
+		pendingAttackCooldown_ = static_cast<float>(totalCells) * config_.attackCooldownPerClearedBlock;
 	}
-
-	// ================================================================
-	// お邪魔パネルキューの相殺
-	// ================================================================
-
-	float PuzzlePlayer::OffsetGarbageQueue(float amount) {
-		float remaining = amount;
-		// 出現までの時間が短い順にソート
-		std::sort(garbageQueue_.begin(), garbageQueue_.end(),
-			[](const GarbageQueueEntry& a, const GarbageQueueEntry& b) {
-				return a.remainingTime < b.remainingTime;
-			});
-
-		for (auto it = garbageQueue_.begin(); it != garbageQueue_.end() && remaining > 0.0f; ) {
-			if (remaining >= it->garbageAmount) {
-				remaining -= it->garbageAmount;
-				it = garbageQueue_.erase(it);
-			}
-			else {
-				it->garbageAmount -= remaining;
-				remaining = 0.0f;
-				++it;
-			}
-		}
-		return remaining;
-	}
-
-	// ================================================================
-	// お邪魔パネルキュー更新
-	// ================================================================
-
-	void PuzzlePlayer::UpdateGarbageQueue(float deltaTime) {
-		// 出現量が0以下のエントリを自動削除
-		garbageQueue_.erase(
-			std::remove_if(garbageQueue_.begin(), garbageQueue_.end(),
-				[](const GarbageQueueEntry& e) { return e.garbageAmount <= 0.0f; }),
-			garbageQueue_.end());
-
-		for (auto it = garbageQueue_.begin(); it != garbageQueue_.end(); ) {
-			it->remainingTime -= deltaTime;
-			if (it->remainingTime <= 0.0f) {
-				// お邪魔パネルを実際に配置
-				int count = static_cast<int>(it->garbageAmount);
-				if (count > 0) {
-					auto& board = GetActiveBoard();
-					int n = config_.stageSize;
-					std::vector<std::pair<int, int>> normalCells;
-					for (int r = 0; r < n; r++) {
-						for (int c = 0; c < n; c++) {
-							if (board.GetPanel(r, c) > 0) normalCells.push_back({ r, c });
-						}
-					}
-					for (int i = static_cast<int>(normalCells.size()) - 1; i > 0; i--) {
-						int j = KashipanEngine::GetRandomInt(0, i);
-						std::swap(normalCells[i], normalCells[j]);
-					}
-					for (int i = 0; i < count && i < static_cast<int>(normalCells.size()); i++) {
-						board.SetPanel(normalCells[i].first, normalCells[i].second, PuzzleBoard::kGarbageType);
-					}
-
-					auto spawnHandle = KashipanEngine::AudioManager::GetSoundHandleFromFileName("noiseSpawn.mp3");
-					if (spawnHandle != KashipanEngine::AudioManager::kInvalidSoundHandle) {
-						KashipanEngine::AudioManager::Play(spawnHandle, 0.9f);
-					}
-
-                    shakeTimer_ = shakeDuration_;
-					SyncAllPanelVisuals();
-				}
-				it = garbageQueue_.erase(it);
-			}
-			else {
-				++it;
-			}
-		}
-	}
-
-	// ================================================================
-	// 時間経過倍率
-	// ================================================================
-
-	float PuzzlePlayer::GetEscalationMultiplier() const {
-		if (config_.garbageEscalationInterval <= 0.0f) return 1.0f;
-		int steps = static_cast<int>(gameElapsedTime_ / config_.garbageEscalationInterval);
-		return 1.0f + static_cast<float>(steps) * config_.garbageEscalationIncrement;
-	}
-
-	// ================================================================
-	// 攻撃アクション
-	// ================================================================
 
 	void PuzzlePlayer::OnAttack() {
+		if (attackCooldownTimer_ > 0.0f) return;
 		if (!IsAnimating()) {
 			comboSePitch_ = -5.0f;
 			if (!StartClearingPhase()) {
@@ -1628,172 +1383,22 @@ namespace Application {
 		}
 	}
 
-	// ================================================================
-	// 攻撃計算
-	// ================================================================
-
-	void PuzzlePlayer::CalculateAttackFromMatches() {
-		lastMatchSummary_ = {};
-		int totalCells = 0;
-		int garbageCells = 0;
-
-		for (const auto& m : pendingMatches_) {
-			if (m.panelType == PuzzleBoard::kGarbageType) {
-				garbageCells += static_cast<int>(m.cells.size());
-				totalCells += static_cast<int>(m.cells.size());
-				continue;
-			}
-			switch (m.type) {
-			case PuzzleBoard::MatchType::Normal:   lastMatchSummary_.normalCount++; break;
-			case PuzzleBoard::MatchType::Straight: lastMatchSummary_.straightCount++; break;
-			case PuzzleBoard::MatchType::Cross:    lastMatchSummary_.crossCount++; break;
-			case PuzzleBoard::MatchType::Square:   lastMatchSummary_.squareCount++; break;
-			}
-			totalCells += static_cast<int>(m.cells.size());
-		}
-
-		lastMatchSummary_.comboCount = combo_.GetCurrentCombo();
-		lastMatchSummary_.isBreak = GetActiveBoard().IsEmpty();
-		lastMatchSummary_.totalClearedCells = totalCells;
-		lastMatchSummary_.garbageClearedCells = garbageCells;
-
-		// ロック時間計算
-		float baseLock = 0.0f;
-		baseLock += static_cast<float>(lastMatchSummary_.normalCount) * config_.normalLockTime;
-		baseLock += static_cast<float>(lastMatchSummary_.straightCount) * config_.straightLockTime;
-		baseLock += static_cast<float>(lastMatchSummary_.crossCount) * config_.crossLockTime;
-		baseLock += static_cast<float>(lastMatchSummary_.squareCount) * config_.squareLockTime;
-
-		float lockComboMult = 1.0f;
-		if (lastMatchSummary_.comboCount > 1) {
-			lockComboMult = std::pow(config_.comboLockMultiplier, static_cast<float>(lastMatchSummary_.comboCount - 1));
-		}
-		float lockBreakMult = lastMatchSummary_.isBreak ? config_.breakLockMultiplier : 1.0f;
-		pendingLockTime_ = baseLock * lockComboMult * lockBreakMult;
-
-		// お邪魔パネル数計算（形状ごとのパラメータで算出、floatで蓄積)
-		float garbageBase = 0.0f;
-		garbageBase += static_cast<float>(lastMatchSummary_.normalCount) * config_.normalGarbageCount;
-		garbageBase += static_cast<float>(lastMatchSummary_.straightCount) * config_.straightGarbageCount;
-		garbageBase += static_cast<float>(lastMatchSummary_.crossCount) * config_.crossGarbageCount;
-		garbageBase += static_cast<float>(lastMatchSummary_.squareCount) * config_.squareGarbageCount;
-
-		// お邪魔パネルが消えた分も出現量に加算
-		garbageBase += static_cast<float>(garbageCells) * config_.garbageClearedBonus;
-
-		// コンボ倍率を適用
-		float comboGarbageMult = 1.0f;
-		if (lastMatchSummary_.comboCount > 1) {
-			comboGarbageMult = std::pow(config_.comboGarbageMultiplier, static_cast<float>(lastMatchSummary_.comboCount - 1));
-		}
-		garbageBase *= comboGarbageMult;
-
-		// 時間経過による倍率を適用
-		garbageBase *= GetEscalationMultiplier();
-
-		// 蓄積（コンボチェーン中に加算し続ける）
-		pendingGarbageAccumulator_ += garbageBase;
-		// 小数点以下切り捨てで最終個数を算出
-		pendingGarbageToSend_ = static_cast<int>(pendingGarbageAccumulator_);
-
-		hasPendingAttack_ = (pendingLockTime_ > 0.0f || pendingGarbageToSend_ > 0);
+	void PuzzlePlayer::UpdateInactiveBoard(float /*deltaTime*/) {
 	}
-
-	// ================================================================
-	// フェーズ更新
-	// ================================================================
-
-	void PuzzlePlayer::UpdatePhase(float deltaTime) {
-		if (phase_ == Phase::Idle) return;
-
-		phaseTimer_ += deltaTime;
-		float t = std::clamp(phaseTimer_ / phaseDuration_, 0.0f, 1.0f);
-		float easedT = Apply(t, EaseType::EaseOutCubic);
-
-		int n = config_.stageSize;
-		for (auto& a : phaseAnims_) {
-			int idx = a.row * n + a.col;
-			if (idx < 0 || idx >= static_cast<int>(puzzlePanelSprites_.size())) continue;
-			auto* panel = puzzlePanelSprites_[idx];
-			if (!panel) continue;
-			if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
-				float px = Lerp(a.startPos.x, a.endPos.x, easedT);
-				float py = Lerp(a.startPos.y, a.endPos.y, easedT);
-				tr->SetTranslate(Vector3(px, py, 0.0f));
-				float sx = Lerp(a.startScale.x, a.endScale.x, easedT);
-				float sy = Lerp(a.startScale.y, a.endScale.y, easedT);
-				tr->SetScale(Vector3(sx, sy, 1.0f));
-			}
-			if (phase_ == Phase::Clearing) {
-				if (auto* mat = panel->GetComponent2D<KashipanEngine::Material2D>()) {
-					Vector4 color = mat->GetColor();
-					color.w = 1.0f - easedT;
-					mat->SetColor(color);
-				}
-			}
-		}
-
-		if (t >= 1.0f) {
-			Phase finished = phase_;
-			phaseAnims_.clear();
-			switch (finished) {
-			case Phase::Moving:  OnMoveFinished();  break;
-			case Phase::Clearing: OnClearFinished(); break;
-			case Phase::Filling:  OnFillFinished();  break;
-			default: break;
-			}
-		}
-	}
-
-	// ================================================================
-	// シェイク
-	// ================================================================
-
-	void PuzzlePlayer::UpdateShake(float deltaTime) {
-		if (shakeTimer_ <= 0.0f) return;
-		if (!parentTransform_) return;
-
-		shakeTimer_ -= deltaTime;
-		if (shakeTimer_ <= 0.0f) {
-			shakeTimer_ = 0.0f;
-			parentTransform_->SetTranslate(parentOriginalPos_);
-			return;
-		}
-
-		float t = shakeTimer_ / shakeDuration_;
-		float offsetX = KashipanEngine::GetRandomFloat(-shakeIntensity_, shakeIntensity_) * t;
-		float offsetY = KashipanEngine::GetRandomFloat(-shakeIntensity_, shakeIntensity_) * t;
-		parentTransform_->SetTranslate(Vector3(
-			parentOriginalPos_.x + offsetX,
-			parentOriginalPos_.y + offsetY,
-			parentOriginalPos_.z));
-	}
-
-	// ================================================================
-	// 毎フレーム更新
-	// ================================================================
 
 	void PuzzlePlayer::Update(float deltaTime, KashipanEngine::InputCommand* inputCommand) {
 		swapCooldown_.Update(deltaTime);
 		UpdateLocks(deltaTime);
+		if (attackCooldownTimer_ > 0.0f) {
+			attackCooldownTimer_ = std::max(0.0f, attackCooldownTimer_ - deltaTime);
+		}
 
-		// ゲーム経過時間を更新
 		gameElapsedTime_ += deltaTime;
-
-		// お邪魔パネルキューの時間更新
 		UpdateGarbageQueue(deltaTime);
 
 		if (inputCommand) {
 			if (inputCommand->Evaluate(cmdAttack_).Triggered() && !IsAnimating()) {
 				OnAttack();
-			}
-			if (inputCommand->Evaluate(cmdSwitchBoard_).Triggered() && !IsAnimating()) {
-				if (swapCooldown_.IsOnCooldown()) {
-					// シェイクを入れたいがちょっとわからなすぎるので後回し
-				}
-				else {
-					SwitchBoard();
-				}
 			}
 		}
 
@@ -1830,28 +1435,15 @@ namespace Application {
 
 		if (cursor_.HasMoveAction() && !IsAnimating()) {
 			int dir = cursor_.GetMoveActionDirection();
-			auto [row, col] = cursor_.GetPosition();
-			bool blocked = false;
-			if (dir == 0 || dir == 1) {
-				blocked = IsColLocked(col);
-			}
-			else {
-				blocked = IsRowLocked(row);
-			}
-			if (!blocked) {
-				StartMoveAction(dir);
-			}
+			StartMoveAction(dir);
 		}
 
-		// 非アクティブボード更新
 		UpdateInactiveBoard(deltaTime);
 
-		// 崩壊度による自動ステージ切り替え
 		if (!IsAnimating()) {
 			AutoSwitchBoardIfNeeded();
 		}
 
-		// UI更新
 		UpdateLockOverlays();
 		UpdateGarbageQueueGauges();
 		UpdateCollapseGauge();
@@ -1865,5 +1457,158 @@ namespace Application {
 		UpdateSwapPanelAnimations(deltaTime);
 		UpdateMoveCountText();
 	}
+
+	void PuzzlePlayer::PreCalculateMoveGarbagePositions() {
+		nextMoveGarbagePositions_.clear();
+		auto& board = GetActiveBoard();
+		int n = config_.stageSize;
+		std::vector<std::pair<int, int>> normalCells;
+		for (int r = 0; r < n; r++) {
+			for (int c = 0; c < n; c++) {
+				if (board.GetPanel(r, c) > 0) normalCells.push_back({ r, c });
+			}
+		}
+		for (int i = static_cast<int>(normalCells.size()) - 1; i > 0; i--) {
+			int j = KashipanEngine::GetRandomInt(0, i);
+			std::swap(normalCells[i], normalCells[j]);
+		}
+		if (!normalCells.empty()) nextMoveGarbagePositions_.push_back(normalCells.front());
+	}
+
+	void PuzzlePlayer::UpdateMoveGarbageWarnings() {
+		int n = config_.stageSize;
+		std::set<std::pair<int, int>> warningSet(nextMoveGarbagePositions_.begin(), nextMoveGarbagePositions_.end());
+		for (int r = 0; r < n; r++) {
+			for (int c = 0; c < n; c++) {
+				int idx = r * n + c;
+				if (idx >= static_cast<int>(moveGarbageWarningSprites_.size())) continue;
+				auto* sprite = moveGarbageWarningSprites_[idx];
+				if (!sprite) continue;
+				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+					bool warn = warningSet.count({ r, c }) > 0;
+					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+				}
+			}
+		}
+	}
+
+	void PuzzlePlayer::UpdateGarbageWarnings() {
+		int n = config_.stageSize;
+		std::set<std::pair<int, int>> warningSet(pendingGarbagePositions_.begin(), pendingGarbagePositions_.end());
+		for (int r = 0; r < n; r++) {
+			for (int c = 0; c < n; c++) {
+				int idx = r * n + c;
+				if (idx >= static_cast<int>(garbageWarningSprites_.size())) continue;
+				auto* sprite = garbageWarningSprites_[idx];
+				if (!sprite) continue;
+				if (auto* mat = sprite->GetComponent2D<KashipanEngine::Material2D>()) {
+					bool warn = warningSet.count({ r, c }) > 0;
+					mat->SetColor(warn ? config_.garbageWarningColor : Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+				}
+			}
+		}
+	}
+
+	void PuzzlePlayer::UpdateMoveCountText() {
+		if (remainingMoveCount_) {
+			int pct = config_.movesPerGarbage - moveCount_;
+			remainingMoveCount_->SetTextFormat("{}", pct);
+		}
+	}
+
+	void PuzzlePlayer::EnqueueGarbage(float amount, float delayTime) {
+		if (amount < 1.0f) return;
+		garbageQueue_.push_back({ delayTime, delayTime, amount });
+	}
+
+	float PuzzlePlayer::OffsetGarbageQueue(float amount) {
+		float remaining = amount;
+		for (auto it = garbageQueue_.begin(); it != garbageQueue_.end() && remaining > 0.0f; ) {
+			if (remaining >= it->garbageAmount) {
+				remaining -= it->garbageAmount;
+				it = garbageQueue_.erase(it);
+			}
+			else {
+				it->garbageAmount -= remaining;
+				remaining = 0.0f;
+				++it;
+			}
+		}
+		return remaining;
+	}
+
+	void PuzzlePlayer::UpdateGarbageQueue(float deltaTime) {
+		for (auto it = garbageQueue_.begin(); it != garbageQueue_.end(); ) {
+			it->remainingTime -= deltaTime;
+			if (it->remainingTime <= 0.0f) {
+				int count = static_cast<int>(it->garbageAmount);
+				auto& board = GetActiveBoard();
+				int n = config_.stageSize;
+				std::vector<std::pair<int, int>> normalCells;
+				for (int r = 0; r < n; r++) {
+					for (int c = 0; c < n; c++) {
+						if (board.GetPanel(r, c) > 0) normalCells.push_back({ r, c });
+					}
+				}
+				for (int i = static_cast<int>(normalCells.size()) - 1; i > 0; i--) {
+					int j = KashipanEngine::GetRandomInt(0, i);
+					std::swap(normalCells[i], normalCells[j]);
+				}
+				for (int i = 0; i < count && i < static_cast<int>(normalCells.size()); i++) {
+					board.SetPanel(normalCells[i].first, normalCells[i].second, PuzzleBoard::kGarbageType);
+				}
+				SyncAllPanelVisuals();
+				it = garbageQueue_.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
+	}
+
+	float PuzzlePlayer::GetEscalationMultiplier() const {
+		if (config_.garbageEscalationInterval <= 0.0f) return 1.0f;
+		int steps = static_cast<int>(gameElapsedTime_ / config_.garbageEscalationInterval);
+		return 1.0f + static_cast<float>(steps) * config_.garbageEscalationIncrement;
+	}
+
+	void PuzzlePlayer::UpdatePhase(float deltaTime) {
+		if (phase_ == Phase::Idle) return;
+		phaseTimer_ += deltaTime;
+		float t = std::clamp(phaseTimer_ / phaseDuration_, 0.0f, 1.0f);
+		float easedT = Apply(t, EaseType::EaseOutCubic);
+		int n = config_.stageSize;
+		for (auto& a : phaseAnims_) {
+			int idx = a.row * n + a.col;
+			if (idx < 0 || idx >= static_cast<int>(puzzlePanelSprites_.size())) continue;
+			auto* panel = puzzlePanelSprites_[idx];
+			if (!panel) continue;
+			if (auto* tr = panel->GetComponent2D<KashipanEngine::Transform2D>()) {
+				tr->SetTranslate(Vector3(Lerp(a.startPos.x, a.endPos.x, easedT), Lerp(a.startPos.y, a.endPos.y, easedT), 0.0f));
+				tr->SetScale(Vector3(Lerp(a.startScale.x, a.endScale.x, easedT), Lerp(a.startScale.y, a.endScale.y, easedT), 1.0f));
+			}
+			if (phase_ == Phase::Clearing) {
+				if (auto* mat = panel->GetComponent2D<KashipanEngine::Material2D>()) {
+					Vector4 color = mat->GetColor();
+					color.w = 1.0f - easedT;
+					mat->SetColor(color);
+				}
+			}
+		}
+		if (t >= 1.0f) {
+			Phase finished = phase_;
+			phaseAnims_.clear();
+			switch (finished) {
+			case Phase::Moving: OnMoveFinished(); break;
+			case Phase::Clearing: OnClearFinished(); break;
+			case Phase::Filling: OnFillFinished(); break;
+			default: break;
+			}
+		}
+	}
+
+	void PuzzlePlayer::UpdateShake(float /*deltaTime*/) {}
+	void PuzzlePlayer::UpdateSwapPanelAnimations(float /*deltaTime*/) {}
+	void PuzzlePlayer::UpdateSwapCoolDownSpriteAnimation(float /*deltaTime*/) {}
 
 } // namespace Application

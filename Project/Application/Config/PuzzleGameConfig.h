@@ -66,6 +66,9 @@ struct PuzzleGameConfig {
 	// 『ブレイク』時のロック時間倍数
 	float breakLockMultiplier = 2.0f;
 
+	// 消した個数に対する発火後クールダウン倍率（秒）
+	float attackCooldownPerClearedBlock = 0.1f;
+
 	// お邪魔パネルが出現するまでの移動回数
 	int movesPerGarbage = 5;
 	// 攻撃時に消したパネル数→お邪魔パネル個数の倍率

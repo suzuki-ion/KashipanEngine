@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <functional>
 
 #include <Objects/Puzzle/PuzzleBoard.h>
@@ -160,6 +161,10 @@ private:
 	void UpdateSwapPanelAnimations(float deltaTime);
 	void UpdateSwapCoolDownSpriteAnimation(float deltaTime);
 	void UpdateMoveCountText();
+	std::vector<std::vector<std::pair<int, int>>> BuildAttachedGroups() const;
+	std::set<std::pair<int, int>> BuildAttachedCellSet() const;
+	void BuildPendingMatchesFromAttachments();
+	int CountCrossShapesInAttachedMatches() const;
 
 	// ================================================================
 	// 移動時お邪魔パネル予告位置計算
@@ -251,6 +256,8 @@ private:
 	int pendingGarbageToSend_ = 0;
 	float pendingGarbageAccumulator_ = 0.0f;
 	float pendingLockTime_ = 0.0f;
+	float attackCooldownTimer_ = 0.0f;
+	float pendingAttackCooldown_ = 0.0f;
 
 	// 移動回数カウント（お邪魔パネル出現用）
 	int moveCount_ = 0;

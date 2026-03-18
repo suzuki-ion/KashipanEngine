@@ -24,6 +24,11 @@ namespace Application {
 		/// 移動量分ブロックを移動させる
 		void AddMove(const Vector3& deltaPosition);
 
+		/// ブロックをある角度だけ回転させる（単位はラジアン）
+		void AddRotation(float deltaRotation);
+		/// ブロックをある倍率だけ拡大縮小させる
+		void AddScale(float scaleMultiplier);
+
 	private:
 		KashipanEngine::Sprite* blockSprite_ = nullptr;
 	};

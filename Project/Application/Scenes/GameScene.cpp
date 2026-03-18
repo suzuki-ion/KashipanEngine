@@ -82,7 +82,14 @@ void GameScene::Initialize() {
 	autoSceneChangeTimer_ = 3.0f;
 
 	// パズルゲームのシステムの初期化
-	puzzleGameSystem_.Initialize(createSpriteWithTextureFunction_,GetInputCommand());
+	puzzlePlayer1_.Initialize();
+	puzzlePlayer1_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("PuzzleUp").Triggered(); });
+	puzzlePlayer1_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("PuzzleDown").Triggered(); });
+	puzzlePlayer1_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("PuzzleLeft").Triggered(); });
+	puzzlePlayer1_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("PuzzleRight").Triggered(); });
+	puzzlePlayer1_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("PuzzleActionHold").Triggered(); });
+	puzzlePlayer1_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip").Triggered(); });
+	puzzleGameSystem_.Initialize(createSpriteWithTextureFunction_,&puzzlePlayer1_);
 
 	// ================================================================
 	// BGM

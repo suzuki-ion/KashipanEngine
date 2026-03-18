@@ -255,6 +255,19 @@ void Application::MatsumotoUtility::SimpleEaseSpriteColor(KashipanEngine::Sprite
 	SetColorToSprite(sprite, currentColor);
 }
 
+void Application::MatsumotoUtility::SimpleEaseSpriteRotate(KashipanEngine::Sprite* sprite, const Vector3& targetRotation, float transitionSpeed) {
+	Vector3 currentRotation = GetRotationFromSprite(sprite);
+	currentRotation.x = SimpleEaseIn(currentRotation.x, targetRotation.x, transitionSpeed);
+	currentRotation.y = SimpleEaseIn(currentRotation.y, targetRotation.y, transitionSpeed);
+	currentRotation.z = SimpleEaseIn(currentRotation.z, targetRotation.z, transitionSpeed);
+	SetRotationToSprite(sprite, currentRotation);
+}
+
+void Application::MatsumotoUtility::SimpleEaseSpriteFitToTexture(KashipanEngine::Sprite* sprite, float transitionSpeed) {
+	Vector3 targetScale = GetTextureSizeFromSprite(sprite);
+	SimpleEaseSpriteScale(sprite, targetScale, transitionSpeed);
+}
+
 void Application::MatsumotoUtility::FlipSpriteHorizontal(KashipanEngine::Sprite* sprite)
 {
 	Vector3 currentScale = GetScaleFromSprite(sprite);

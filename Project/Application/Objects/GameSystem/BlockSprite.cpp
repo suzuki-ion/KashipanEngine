@@ -7,7 +7,11 @@ void Application::BlockSprite::Initialize(
 }
 
 void Application::BlockSprite::Update() {
-	// ブロックの状態に応じてスプライトの表示を切り替える処理をここに追加
+	// スプライトの状態を戻す
+	if (blockSprite_) {
+		MatsumotoUtility::SimpleEaseSpriteFitToTexture(blockSprite_, 0.3f);
+		MatsumotoUtility::SimpleEaseSpriteRotate(blockSprite_, Vector3(0.0f, 0.0f, 0.0f), 0.2f);
+	}
 }
 
 void Application::BlockSprite::SetBlockState(int blockType) {
@@ -44,5 +48,21 @@ void Application::BlockSprite::AddMove(const Vector3& deltaPosition) {
 		Vector3 currentPosition = Application::MatsumotoUtility::GetTranslateFromSprite(blockSprite_);
 		Vector3 targetPosition = currentPosition + deltaPosition;
 		Application::MatsumotoUtility::SetTranslateToSprite(blockSprite_, targetPosition);
+	}
+}
+
+void Application::BlockSprite::AddRotation(float deltaRotation) {
+	if (blockSprite_) {
+		Vector3 currentRotation = Application::MatsumotoUtility::GetRotationFromSprite(blockSprite_);
+		Vector3 targetRotation = currentRotation + Vector3(0.0f, 0.0f, deltaRotation);
+		Application::MatsumotoUtility::SetRotationToSprite(blockSprite_, targetRotation);
+	}
+}
+
+void Application::BlockSprite::AddScale(float scaleMultiplier) {
+	if (blockSprite_) {
+		Vector3 currentScale = Application::MatsumotoUtility::GetScaleFromSprite(blockSprite_);
+		Vector3 targetScale = currentScale * scaleMultiplier;
+		Application::MatsumotoUtility::SetScaleToSprite(blockSprite_, targetScale);
 	}
 }

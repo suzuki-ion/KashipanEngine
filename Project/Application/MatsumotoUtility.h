@@ -56,6 +56,10 @@ namespace Application::MatsumotoUtility
 	void SimpleEaseSpriteScale(KashipanEngine::Sprite* sprite, const Vector3& targetScale, float transitionSpeed);
 	/// @brief 簡易イージング関数を使ってスプライトの色をtargetColorに変化させる
 	void SimpleEaseSpriteColor(KashipanEngine::Sprite* sprite, const Vector4& targetColor, float transitionSpeed);
+	/// @brief 簡易イージング関数を使ってスプライトをtargetRotationに回転させる
+	void SimpleEaseSpriteRotate(KashipanEngine::Sprite* sprite, const Vector3& targetRotation, float transitionSpeed);
+	/// @brief 簡易イージング関数を使ってスプライトのテクスチャの大きさに合わせてスケールを変化させる
+	void SimpleEaseSpriteFitToTexture(KashipanEngine::Sprite* sprite, float transitionSpeed);
 
 	/// @brief スケールの左右反転
 	void FlipSpriteHorizontal(KashipanEngine::Sprite* sprite);

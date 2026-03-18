@@ -148,6 +148,9 @@
     <ClCompile Include="Application\Objects\GameSystem\BoardSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\CursorSprite.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\PuzzlePlayer.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\MatchFinder.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Combo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -397,6 +400,9 @@
     <ClInclude Include="Application\Objects\GameSystem\BoardSprite.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockSprite.h" />
     <ClInclude Include="Application\Objects\GameSystem\CursorSprite.h" />
+    <ClInclude Include="Application\Objects\GameSystem\PuzzlePlayer.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Combo.h" />
+    <ClInclude Include="Application\Objects\GameSystem\MatchFinder.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

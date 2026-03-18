@@ -9,7 +9,7 @@ void Application::BlockSprite::Initialize(
 void Application::BlockSprite::Update() {
 	// スプライトの状態を戻す
 	if (blockSprite_) {
-		MatsumotoUtility::SimpleEaseSpriteFitToTexture(blockSprite_, 0.3f);
+		MatsumotoUtility::SimpleEaseSpriteFitToTexture(blockSprite_, 0.1f);
 		MatsumotoUtility::SimpleEaseSpriteRotate(blockSprite_, Vector3(0.0f, 0.0f, 0.0f), 0.2f);
 	}
 }
@@ -17,6 +17,9 @@ void Application::BlockSprite::Update() {
 void Application::BlockSprite::SetBlockState(int blockType) {
 	// blockTypeに応じてスプライトのテクスチャを変更する処理
 	if (!blockSprite_) return;
+
+	if (blockType < 0) blockType = 0;
+	if (blockType > 4) blockType = 4;
 	std::string textureName = "Cell_" + std::to_string(blockType) + ".png";
 	Application::MatsumotoUtility::SetTextureToSprite(blockSprite_, textureName);
 }

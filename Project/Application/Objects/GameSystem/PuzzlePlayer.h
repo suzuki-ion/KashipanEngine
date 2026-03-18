@@ -1,11 +1,13 @@
 #pragma once
 #include <functional>
+#include <algorithm>
 
 namespace Application {
 	class PuzzlePlayer {
 	public:
 		virtual ~PuzzlePlayer() = default;
 		void Initialize();
+		void Update(float delta);
 
 		void SetMoveUpFunction(std::function<bool()> func) { moveUpFunction_ = func; }
 		void SetMoveDownFunction(std::function<bool()> func) { moveDownFunction_ = func; }
@@ -33,6 +35,35 @@ namespace Application {
 			return sendFunction_ ? sendFunction_() : false;
 		}
 
+		void SetHp(int hp) {
+			hp_ = std::clamp(hp, 0, maxHp_);
+		}
+		int GetHp() const { return hp_; }
+
+		void TakeDamage(int damage) {
+			SetHp(hp_ - damage);
+			// ダメージを受けたら回復のクールダウンをリセット
+			healCooldown_ = healCooldownDuration_;
+			// プレイヤーが死んでいるかどうかを更新
+			isAlive_ = hp_ > 0;
+		}
+
+		void SetMaxHp(int maxHp) {
+			maxHp_ = std::max(1, maxHp);
+			if (hp_ > maxHp_) {
+				hp_ = maxHp_;
+			}
+		}
+		int GetMaxHp() const { return maxHp_; }
+
+		int GetDefaultMaxHp() const { return defaultMaxHp_; }
+
+		float GetHealCooldown() const { return healCooldown_; }
+		float GetHealCooldownDuration() const { return healCooldownDuration_; }
+
+		float GetHealTimer() const { return healTimer_; }
+		float GetHealInterval() const { return healInterval_; }
+
 	private:
 		std::function<bool()> moveUpFunction_;
 		std::function<bool()> moveDownFunction_;
@@ -40,5 +71,18 @@ namespace Application {
 		std::function<bool()> moveRightFunction_;
 		std::function<bool()> selectFunction_;
 		std::function<bool()> sendFunction_;
+
+		const int defaultMaxHp_ = 200;
+		int maxHp_ = 200;
+		int hp_ = 200;
+
+		float healCooldown_ = 0.0f;
+		float healCooldownDuration_ = 5.0f; // ダメージを受けてから回復が始まるまでのクールダウン時間
+
+		float healTimer_ = 0.0f;
+		float healInterval_ = 5.0f; // 5秒ごとにHPを回復する例
+		int healAmount_ = 10; // 回復量
+
+		bool isAlive_ = true;
 	};
 }

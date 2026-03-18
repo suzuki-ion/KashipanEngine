@@ -1,4 +1,5 @@
 #include "MatchFinder.h"
+#include <algorithm>
 
 void Application::MatchFinder::Initialize(int width, int height) {
 	width_ = width;
@@ -13,7 +14,7 @@ std::vector<std::vector<std::pair<int, int>>> Application::MatchFinder::FindThre
 	for (int y = 0; y < 6; ++y) {
 		for (int x = 0; x < 6; ) {
 			int currentColor = board[y * 6 + x];
-			if (currentColor == -1) {
+			if (currentColor == 0) {
 				++x; // 空のセルの場合は次へ
 				continue;
 			}
@@ -42,7 +43,77 @@ std::vector<std::vector<std::pair<int, int>>> Application::MatchFinder::FindThre
 	for (int x = 0; x < 6; ++x) {
 		for (int y = 0; y < 6; ) {
 			int currentColor = board[y * 6 + x];
-			if (currentColor == -1) {
+			if (currentColor == 0) {
+				++y; // 空のセルの場合は次へ
+				continue;
+			}
+
+			int matchLength = 1;
+			// 下隣が同じ色である限り長さを伸ばす
+			while (y + matchLength < 6 && board[(y + matchLength) * 6 + x] == currentColor) {
+				matchLength++;
+			}
+
+			// 3つ以上繋がっていたらマッチとして登録
+			if (matchLength >= 3) {
+				std::vector<std::pair<int, int>> currentMatch;
+				for (int i = 0; i < matchLength; ++i) {
+					currentMatch.push_back({ x, y + i });
+				}
+				matches.push_back(currentMatch);
+			}
+
+			// 走査済みのブロックをスキップする
+			y += matchLength;
+		}
+	}
+
+	return matches;
+}
+
+std::vector<std::vector<std::pair<int, int>>> Application::MatchFinder::FindThreeColorMatchExceptRow(int rowIndex, std::vector<int> board)
+{
+	std::vector<std::vector<std::pair<int, int>>> matches;
+
+	// 盤面を走査して、同じ色が3つ以上並んでいる場所を見つける
+	// --- 水平方向のチェック ---
+	for (int y = 0; y < 6; ++y) {
+		for (int x = 0; x < 6; ) {
+			int currentColor = board[y * 6 + x];
+			if (currentColor == 0) {
+				++x; // 空のセルの場合は次へ
+				continue;
+			}
+
+			if(y == rowIndex) {
+				break; // 指定された行はスキップ
+			}
+
+			int matchLength = 1;
+			// 右隣が同じ色である限り長さを伸ばす
+			while (x + matchLength < 6 && board[y * 6 + (x + matchLength)] == currentColor) {
+				matchLength++;
+			}
+
+			// 3つ以上繋がっていたらマッチとして登録
+			if (matchLength >= 3) {
+				std::vector<std::pair<int, int>> currentMatch;
+				for (int i = 0; i < matchLength; ++i) {
+					currentMatch.push_back({ x + i, y });
+				}
+				matches.push_back(currentMatch);
+			}
+
+			// 走査済みのブロックをスキップする
+			x += matchLength;
+		}
+	}
+
+	// --- 垂直方向のチェック ---
+	for (int x = 0; x < 6; ++x) {
+		for (int y = 0; y < 6; ) {
+			int currentColor = board[y * 6 + x];
+			if (currentColor == 0) {
 				++y; // 空のセルの場合は次へ
 				continue;
 			}

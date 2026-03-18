@@ -178,9 +178,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\MatsumotoUtility.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BoardSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\Combo.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\CursorSprite.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\GaugeSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\MatchFinder.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\PuzzlePlayer.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.cpp" />
@@ -345,9 +345,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockSprite.h" />
     <ClInclude Include="Application\Objects\GameSystem\BoardSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\Combo.h" />
     <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
     <ClInclude Include="Application\Objects\GameSystem\CursorSprite.h" />
+    <ClInclude Include="Application\Objects\GameSystem\GaugeSprite.h" />
     <ClInclude Include="Application\Objects\GameSystem\MatchFinder.h" />
     <ClInclude Include="Application\Objects\GameSystem\PuzzlePlayer.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.h" />

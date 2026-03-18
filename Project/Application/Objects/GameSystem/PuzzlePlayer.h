@@ -56,6 +56,10 @@ namespace Application {
 		}
 		int GetMaxHp() const { return maxHp_; }
 
+		float GetHpRatio() const {
+			return maxHp_ > 0 ? static_cast<float>(hp_) / maxHp_ : 0.0f;
+		}
+
 		int GetDefaultMaxHp() const { return defaultMaxHp_; }
 
 		float GetHealCooldown() const { return healCooldown_; }
@@ -63,6 +67,8 @@ namespace Application {
 
 		float GetHealTimer() const { return healTimer_; }
 		float GetHealInterval() const { return healInterval_; }
+
+		bool IsAlive() const { return isAlive_; }
 
 	private:
 		std::function<bool()> moveUpFunction_;

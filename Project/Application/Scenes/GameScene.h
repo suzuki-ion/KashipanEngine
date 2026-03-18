@@ -6,6 +6,7 @@
 #include <Objects/OutGameSystem/GameStartSystem.h>
 
 #include <Objects/GameSystem/PuzzleGameSystem.h>
+#include <Objects/GameSystem/AiPlayer.h>
 
 namespace KashipanEngine {
 
@@ -35,7 +36,11 @@ private:
 	void GameLoop();
 	// パズルゲームのシステム
 	Application::PuzzlePlayer puzzlePlayer1_;
-	Application::PuzzleGameSystem puzzleGameSystem_;
+	Application::PuzzleGameSystem puzzleGameSystem1_;
+
+	Application::PuzzlePlayer puzzlePlayer2_;
+	Application::AiPlayer aiPlayer2_;
+	Application::PuzzleGameSystem puzzleGameSystem2_;
 
 	// メニューとゲームの開始
 	void InitMenu();
@@ -51,6 +56,9 @@ private:
 	float autoSceneChangeTimer_ = 0.0f;
 	// ゲームの背景
 	KashipanEngine::Sprite* backgroundSprite_ = nullptr;
+	// NPCモードかどうか
+	bool isNpcMode_ = false; 
+
 	// BGM
 	AudioPlayer audioPlayer_;
 };

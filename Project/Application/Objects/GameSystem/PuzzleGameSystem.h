@@ -29,6 +29,17 @@ namespace Application {
 		/// @brief アンカースプライトの位置を設定する関数
 		void SetAnchorSpritePosition(const Vector3& position);
 
+		void DeathAnimation();
+
+		int SendDamage(){
+			int damage = board_.GetEraseCount();
+			board_.ResetEraseCount(); // ダメージを送った後に削除カウントをリセット
+			return damage;
+		}
+		void TakeDamage(int damage) {
+			player_->TakeDamage(damage);
+		}
+
 	private:
 		// * ゲームのシステム * //
 		// パズルの操作を管理するプレイヤーオブジェクト

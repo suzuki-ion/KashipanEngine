@@ -5,8 +5,8 @@ void Application::PuzzlePlayer::Initialize() {
 	hp_ = maxHp_;
 
 	healTimer_ = 0.0f;
-	healInterval_ = 5.0f; // 5秒ごとにHPを回復する例
-	healAmount_ = 10; // 回復量
+	healInterval_ = 1.0f; // 1秒ごとにHPを回復する例
+	healAmount_ = 5; // 回復量
 
 	healCooldown_ = 0.0f;
 	healCooldownDuration_ = 3.0f; // ダメージを受けてから回復が始まるまでのクールダウン時間

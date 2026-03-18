@@ -3,6 +3,7 @@
 #include "Scenes/Components/SceneChangeOut.h"
 
 #include <MatsumotoUtility.h>
+#include <Objects/SceneValue.h>
 
 namespace KashipanEngine {
 
@@ -103,9 +104,14 @@ void TitleScene::OnUpdate() {
         if (selectedSection == Application::TitleSection::AISelect) {
             int aiNumber = titleSelectManager_.GetCurrentSelectNumber();
             AddSceneVariable("SelectedAINumber", aiNumber);
+            Application::Value::isNpcMode = true;
+			Application::Value::npcNumber = aiNumber;
+
         } else if (selectedSection == Application::TitleSection::MultiplayerSelect) {
             int multiplayerNumber = titleSelectManager_.GetCurrentSelectNumber();
             AddSceneVariable("SelectedMultiplayerNumber", multiplayerNumber);
+
+			Application::Value::isNpcMode = false;
         }
         AddSceneVariable("SelectedModeSection", selectedSection);
         if (auto* out = GetSceneComponent<SceneChangeOut>()) {

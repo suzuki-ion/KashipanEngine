@@ -9,7 +9,7 @@ void Application::BoardSprite::Initialize(std::function<KashipanEngine::Sprite* 
 	matchAnimationDuration_ = 0.2f;
 	matchAnimationTimer_ = 0.0f;
 
-	backgroundSprite_ = createSpriteFunc("BoardBackground", "white1x1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	backgroundSprite_ = createSpriteFunc("BoardBackground", "puzzleBG.png", KashipanEngine::DefaultSampler::LinearClamp);
 	// セルのスプライトを生成
 	for (int i = 0; i < w * h; ++i) {
 		BlockSprite cellSprite;
@@ -81,6 +81,8 @@ void Application::BoardSprite::Update(const std::vector<int>& board, float delta
 				cellSprites_[index].AddRotation(3.14f * 2.0f); // 回転アニメーションを追加
 			}
 		}
+
+		Application::MatsumotoUtility::PlaySE("combo.mp3");
 	} else {
 		matchAnimationTimer_ -= delta;
 	}

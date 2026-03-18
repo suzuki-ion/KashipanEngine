@@ -11,9 +11,10 @@ void Application::GaugeSprite::Initialize(
 	gaugeFillAnimationSprite_ = createSpriteFunc("GaugeFillAnimation", "white1x1.png", KashipanEngine::DefaultSampler::LinearClamp);
 
 	gaugeAnimationSprite_->SetPivotPoint(0.0f, 0.5f);
-	gaugeFillAnimationSprite_->SetPivotPoint(1.0f, 0.5f);
 	gaugeFillSprite_->SetPivotPoint(0.0f, 0.5f);
 	gaugeSprite_->SetPivotPoint(0.0f, 0.5f);
+
+	gaugeFillAnimationSprite_->SetPivotPoint(0.0f, 0.5f);
 
 	Application::MatsumotoUtility::ParentSpriteToSprite(gaugeFillSprite_, anchorSprite_);
 	Application::MatsumotoUtility::ParentSpriteToSprite(gaugeAnimationSprite_, anchorSprite_);
@@ -34,7 +35,10 @@ void Application::GaugeSprite::Update(float rate, float fillMaxRate)
 {
 	// 現在の最大値のサイズ
 	Vector3 maxFillSize = size_;
-	maxFillSize.x *= fillMaxRate;
+	maxFillSize.x *=fillMaxRate;
+
+	// 現在の最大減少量
+	float maxDecrease = size_.x * (1.0f - fillMaxRate);
 
 	// 現在のゲージサイズ (現在の最大値に対する割合)
 	Vector3 currentSize = maxFillSize;
@@ -52,7 +56,7 @@ void Application::GaugeSprite::Update(float rate, float fillMaxRate)
 
 	// 最大値減少の表現 (グレー：用途に合わせて調整。現在は maxFillSize を負の方向へスケールなど)
 	if (gaugeFillAnimationSprite_) {
-		Application::MatsumotoUtility::SetScaleToSprite(gaugeFillAnimationSprite_, Vector3(-maxFillSize.x, maxFillSize.y, maxFillSize.z));
+		Application::MatsumotoUtility::SetScaleToSprite(gaugeFillAnimationSprite_, Vector3(-maxDecrease, maxFillSize.y, maxFillSize.z));
 	}
 }
 
@@ -71,6 +75,7 @@ void Application::GaugeSprite::SetSize(const Vector3& size)
 	}
 	if (gaugeFillAnimationSprite_) {
 		Application::MatsumotoUtility::SetScaleToSprite(gaugeFillAnimationSprite_, size);
+		Application::MatsumotoUtility::SetTranslateToSprite(gaugeFillAnimationSprite_, Vector3(size.x, 0.0f, 0.0f));
 	}
 }
 
@@ -86,4 +91,10 @@ void Application::GaugeSprite::SetRotation(const Vector3& rotation)
 	if (anchorSprite_) {
 		Application::MatsumotoUtility::SetRotationToSprite(anchorSprite_, rotation);
 	}
-}	
+}
+void Application::GaugeSprite::SetParent(KashipanEngine::Sprite* parent)
+{
+	if (anchorSprite_ && parent) {
+		Application::MatsumotoUtility::ParentSpriteToSprite(anchorSprite_, parent);
+	}
+}

@@ -5,6 +5,7 @@
 #include "Scenes/Components/BackgroundSprite.h"
 
 #include <MatsumotoUtility.h>
+#include <Objects/SceneValue.h>
 
 using namespace Application::MatsumotoUtility;
 
@@ -114,8 +115,8 @@ void ResultScene::Initialize() {
 	isReadyToSelect_ = false;
 
 	// 勝利したプレイヤーの番号（0または1）を管理する変数（-1は未設定）
-	winnerPlayerNumber_ = 0;
-    isNpcMode_ = false;
+	winnerPlayerNumber_ = Application::Value::winnerPlayerNumber;
+	isNpcMode_ = Application::Value::isNpcMode;
     
     // =============================================================
     // BGMの再生

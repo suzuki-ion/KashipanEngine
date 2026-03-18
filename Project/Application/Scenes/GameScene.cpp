@@ -3,6 +3,8 @@
 #include "Scenes/Components/SceneChangeOut.h"
 
 #include <MatsumotoUtility.h>
+#include <Objects/SceneValue.h>
+
 using namespace Application;
 
 namespace KashipanEngine {
@@ -22,6 +24,7 @@ void GameScene::Initialize() {
 
 	// リザルトシーンへの遷移をセット
 	SetNextSceneName("ResultScene");
+	isNpcMode_ = Application::Value::isNpcMode; // NPCモードの設定を取得
 
     // ============================================================
     // ユーティリティの生成
@@ -63,8 +66,33 @@ void GameScene::Initialize() {
 	puzzlePlayer1_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("PuzzleRight").Triggered(); });
 	puzzlePlayer1_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("PuzzleActionHold").Triggered(); });
 	puzzlePlayer1_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip").Triggered(); });
-	puzzleGameSystem_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer1_);
-	puzzleGameSystem_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 0.5f, screenCenter_.y, 0.0f));
+	puzzleGameSystem1_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer1_);
+	puzzleGameSystem1_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 0.5f, screenCenter_.y, 0.0f));
+
+	
+	
+	puzzlePlayer2_.Initialize();
+	aiPlayer2_.Initialize(Application::Value::npcNumber);
+	// 2P用のパズルゲームのシステムの初期化
+	if (isNpcMode_) {
+		puzzlePlayer2_.SetMoveUpFunction([this]() { return aiPlayer2_.GetIsMoveUp(); });
+		puzzlePlayer2_.SetMoveDownFunction([this]() { return aiPlayer2_.GetIsMoveDown(); });
+		puzzlePlayer2_.SetMoveLeftFunction([this]() { return aiPlayer2_.GetIsMoveLeft(); });
+		puzzlePlayer2_.SetMoveRightFunction([this]() { return aiPlayer2_.GetIsMoveRight(); });
+		puzzlePlayer2_.SetSelectFunction([this]() { return aiPlayer2_.GetIsSelecting(); });
+		puzzlePlayer2_.SetSendFunction([this]() { return aiPlayer2_.GetIsSend(); });
+	}
+	else {
+		puzzlePlayer2_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("PuzzleUp2").Triggered(); });
+		puzzlePlayer2_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("PuzzleDown2").Triggered(); });
+		puzzlePlayer2_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("PuzzleLeft2").Triggered(); });
+		puzzlePlayer2_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("PuzzleRight2").Triggered(); });
+		puzzlePlayer2_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("PuzzleActionHold2").Triggered(); });
+		puzzlePlayer2_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip2").Triggered(); });
+	}
+	
+	puzzleGameSystem2_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer2_);
+	puzzleGameSystem2_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 1.5f, screenCenter_.y, 0.0f));
 	
 	// メニューのスプライトを初期化
     menuSpriteContainer_.Initialize([this](const std::string& name, const std::string& textureName) {
@@ -158,6 +186,8 @@ void GameScene::OnUpdate() {
 	if (!gameOver_ && !menuActionManager_.IsMenuOpen() && gameStartSystem_.IsGameStarted()) {
 		GameLoop();
 	}
+	puzzleGameSystem1_.DeathAnimation();
+	puzzleGameSystem2_.DeathAnimation();
 
 	// ゲーム開始前のスプライトモーション
 	if (!gameStartSystem_.IsGameStarted()) {
@@ -183,12 +213,26 @@ void GameScene::OnUpdate() {
 			out->Play();
 		}
 	}
+
+	if (ImGui::Button("1P Take 999Damage")) {
+		puzzlePlayer1_.TakeDamage(999);
+	}
+	if(ImGui::Button("2P Take 999Damage")) {
+		puzzlePlayer2_.TakeDamage(999);
+	}
 	ImGui::End();
 }
 
 // ゲームのメインループ
 void GameScene::GameLoop()
 {
+	if(!puzzlePlayer1_.IsAlive() || !puzzlePlayer2_.IsAlive()) {
+		gameOver_ = true;
+		Application::Value::winnerPlayerNumber = puzzlePlayer1_.IsAlive() ? 0 : 1;
+		Application::Value::isNpcMode = isNpcMode_;
+		return;
+	}
+
 	// ゲーム開始演出の更新
 	Vector3 startGameSpriteScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartSprite_);
 	startGameSpriteScale.x = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.x, 0.0f, 0.3f);
@@ -206,7 +250,16 @@ void GameScene::GameLoop()
 
 	// パズルゲームのシステムの更新
 	puzzlePlayer1_.Update(KashipanEngine::GetDeltaTime());
-	puzzleGameSystem_.Update();
+	puzzleGameSystem1_.Update();
+
+	if (isNpcMode_) {
+		aiPlayer2_.Update(KashipanEngine::GetDeltaTime());
+	}
+	puzzlePlayer2_.Update(KashipanEngine::GetDeltaTime());
+	puzzleGameSystem2_.Update();
+
+	puzzlePlayer1_.TakeDamage(puzzleGameSystem2_.SendDamage());
+	puzzlePlayer2_.TakeDamage(puzzleGameSystem1_.SendDamage());
 }
 
 // メニューで使う入力、アクションの追加＆処理

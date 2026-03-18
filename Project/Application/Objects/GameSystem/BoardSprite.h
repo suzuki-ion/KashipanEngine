@@ -18,6 +18,14 @@ namespace Application {
 		// セルの位置を取得する
 		Vector2 GetCellPosition(int x, int y) const;
 
+		// 指定のセルを小さくする
+		void ShrinkCell(int x, int y, float scaleMultiplier);
+		// 指定のセルを小さくする
+		void ShrinkCells(const std::vector<std::pair<int, int>>& cells, float scaleMultiplier) {
+			for (const auto& cell : cells) {
+				ShrinkCell(cell.first, cell.second, scaleMultiplier);
+			}
+		}
 
 		// マッチしているセルを登録する
 		void RegisterMatchCells(const std::vector<std::vector<std::pair<int, int>>>& matchCells);

@@ -54,6 +54,18 @@ void GameScene::Initialize() {
 	// ゲームの背景スプライトを初期化
 	backgroundSprite_ = createSpriteWithTextureFunction_("Background", "TitleBG.png", KashipanEngine::DefaultSampler::LinearWrap);
 	Application::MatsumotoUtility::SetTranslateToSprite(backgroundSprite_, Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
+	
+	// パズルゲームのシステムの初期化
+	puzzlePlayer1_.Initialize();
+	puzzlePlayer1_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("PuzzleUp").Triggered(); });
+	puzzlePlayer1_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("PuzzleDown").Triggered(); });
+	puzzlePlayer1_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("PuzzleLeft").Triggered(); });
+	puzzlePlayer1_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("PuzzleRight").Triggered(); });
+	puzzlePlayer1_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("PuzzleActionHold").Triggered(); });
+	puzzlePlayer1_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip").Triggered(); });
+	puzzleGameSystem_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer1_);
+	puzzleGameSystem_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 0.5f, screenCenter_.y, 0.0f));
+	
 	// メニューのスプライトを初期化
     menuSpriteContainer_.Initialize([this](const std::string& name, const std::string& textureName) {
         return createSpriteWithTextureFunction_(name, textureName, KashipanEngine::DefaultSampler::LinearClamp);
@@ -81,15 +93,7 @@ void GameScene::Initialize() {
 	// ゲームオーバー後の遷移までの時間を初期化
 	autoSceneChangeTimer_ = 3.0f;
 
-	// パズルゲームのシステムの初期化
-	puzzlePlayer1_.Initialize();
-	puzzlePlayer1_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("PuzzleUp").Triggered(); });
-	puzzlePlayer1_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("PuzzleDown").Triggered(); });
-	puzzlePlayer1_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("PuzzleLeft").Triggered(); });
-	puzzlePlayer1_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("PuzzleRight").Triggered(); });
-	puzzlePlayer1_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("PuzzleActionHold").Triggered(); });
-	puzzlePlayer1_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip").Triggered(); });
-	puzzleGameSystem_.Initialize(createSpriteWithTextureFunction_,&puzzlePlayer1_);
+	
 
 	// ================================================================
 	// BGM
@@ -201,6 +205,7 @@ void GameScene::GameLoop()
 	Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, currentScale);
 
 	// パズルゲームのシステムの更新
+	puzzlePlayer1_.Update(KashipanEngine::GetDeltaTime());
 	puzzleGameSystem_.Update();
 }
 

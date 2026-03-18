@@ -5,10 +5,11 @@
 
 #include "Board.h"
 #include "Cursor.h"
+#include "MatchFinder.h"
 
 #include "BoardSprite.h"
 #include "CursorSprite.h"
-#include "MatchFinder.h"
+#include "GaugeSprite.h"
 
 namespace Application {
 	// パズルゲームのシステムを管理するクラス
@@ -25,6 +26,8 @@ namespace Application {
 		void SystemUpdate();
 		/// @brief ゲームの状態を描画する
 		void VisualUpdate();
+		/// @brief アンカースプライトの位置を設定する関数
+		void SetAnchorSpritePosition(const Vector3& position);
 
 	private:
 		// * ゲームのシステム * //
@@ -43,5 +46,10 @@ namespace Application {
 		BoardSprite boardSprite_;
 		// カーソルをスプライトで描画するオブジェクト
 		CursorSprite cursorSprite_;
+		// HPゲージをスプライトで描画するオブジェクト
+		GaugeSprite hpGaugeSprite_;
+
+		float test = 1.0f;
+		float test2 = 1.0f;
 	};
 }

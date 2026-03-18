@@ -114,6 +114,14 @@ Vector2 Application::BoardSprite::GetCellPosition(int x, int y) const {
 	return Vector2(posX, posY);
 }
 
+void Application::BoardSprite::ShrinkCell(int x, int y, float scaleMultiplier)
+{
+	int index = y * maxWidth_ + x;
+	if (index < cellSprites_.size()) {
+		cellSprites_[index].AddScale(scaleMultiplier);
+	}
+}
+
 void Application::BoardSprite::RegisterMatchCells(const std::vector<std::vector<std::pair<int, int>>>& matchCells) {
 	ongoingMatchAnimations_ = matchCells; // マッチしているセルの位置を保存
 }

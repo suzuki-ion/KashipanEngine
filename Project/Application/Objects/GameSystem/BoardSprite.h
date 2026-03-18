@@ -6,7 +6,7 @@ namespace Application {
 	class BoardSprite {
 	public:
 		void Initialize(std::function<KashipanEngine::Sprite* (const std::string&, const std::string&, KashipanEngine::DefaultSampler)> createSpriteFunc,int w,int h);
-		void Update(const std::vector<int>& board);
+		void Update(const std::vector<int>& board, float delta);
 
 		// ある行のセルをずらす
 		void ShiftRow(int rowIndex, float shiftAmount);
@@ -18,17 +18,29 @@ namespace Application {
 		// セルの位置を取得する
 		Vector2 GetCellPosition(int x, int y) const;
 
+
+		// マッチしているセルを登録する
+		void RegisterMatchCells(const std::vector<std::vector<std::pair<int, int>>>& matchCells);
+
 		// 盤面全体を移動させる
 		KashipanEngine::Sprite* GetAnchorSprite() const { return boardAnchorSprite_; }
+
+		// マッチアニメーションが進行中か
+		bool IsAnimatingMatch() const { return isAnimatingMatch_; }
 
 	private:
 		std::vector<int> oldBoardState_;
 		float cellSize_ = 0.0f;
 		int maxWidth_ = 0;
 		int maxHeight_ = 0;
+		bool isAnimatingMatch_ = false;
 
 		KashipanEngine::Sprite* boardAnchorSprite_ = nullptr;
 		KashipanEngine::Sprite* backgroundSprite_ = nullptr;
 		std::vector<BlockSprite> cellSprites_;
+
+		float matchAnimationDuration_ = 0.5f;
+		float matchAnimationTimer_ = 0.0f;
+		std::vector<std::vector<std::pair<int, int>>> ongoingMatchAnimations_;
 	};
 }

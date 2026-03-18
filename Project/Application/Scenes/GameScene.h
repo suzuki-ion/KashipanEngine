@@ -34,7 +34,9 @@ private:
 	// ゲームのメインループ
 	void GameLoop();
 	// パズルゲームのシステム
+	Application::PuzzlePlayer puzzlePlayer1_;
 	Application::PuzzleGameSystem puzzleGameSystem_;
+
 	// メニューとゲームの開始
 	void InitMenu();
 	Vector2 menuPosition_;

@@ -21,18 +21,18 @@ void Cursor::Update() {
 
 	// カーソルの移動処理
 	if (moveUpFunction_ && moveUpFunction_()) {
-		if (y_ > 0) {
-			--y_;
+		if (y_ < maxY_ - 1) {
+			++y_;
 		} else {
-			y_ = maxY_ - 1;
+			y_ = 0;
 		}
 	}
 	// カーソルの移動処理
 	if (moveDownFunction_ && moveDownFunction_()) {
-		if (y_ < maxY_) {
-			++y_;
+		if (y_ > 0) {
+			--y_;
 		} else {
-			y_ = 0;
+			y_ = maxY_ - 1;
 		}
 	}
 	// カーソルの移動処理
@@ -45,7 +45,7 @@ void Cursor::Update() {
 	}
 	// カーソルの移動処理
 	if (moveRightFunction_ && moveRightFunction_()) {
-		if (x_ < maxX_) {
+		if (x_ < maxX_ - 1) {
 			++x_;
 		} else {
 			x_ = 0;

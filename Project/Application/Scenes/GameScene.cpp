@@ -81,6 +81,9 @@ void GameScene::Initialize() {
 	// ゲームオーバー後の遷移までの時間を初期化
 	autoSceneChangeTimer_ = 3.0f;
 
+	// パズルゲームのシステムの初期化
+	puzzleGameSystem_.Initialize(createSpriteWithTextureFunction_,GetInputCommand());
+
 	// ================================================================
 	// BGM
 	// ================================================================
@@ -175,7 +178,6 @@ void GameScene::OnUpdate() {
 // ゲームのメインループ
 void GameScene::GameLoop()
 {
-
 	// ゲーム開始演出の更新
 	Vector3 startGameSpriteScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartSprite_);
 	startGameSpriteScale.x = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.x, 0.0f, 0.3f);
@@ -190,6 +192,9 @@ void GameScene::GameLoop()
 	currentScale.y = Application::MatsumotoUtility::SimpleEaseIn(currentScale.y, goSpriteScale.y, 0.3f);
 	Application::MatsumotoUtility::SetColorToSprite(gameStartGoSprite_, currentColor);
 	Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, currentScale);
+
+	// パズルゲームのシステムの更新
+	puzzleGameSystem_.Update();
 }
 
 // メニューで使う入力、アクションの追加＆処理

@@ -175,33 +175,26 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Application\Config\PuzzleGameConfig.cpp" />
     <ClCompile Include="Application\MatsumotoUtility.cpp" />
-    <ClCompile Include="Application\Objects\Container\BlockContainer.cpp" />
-    <ClCompile Include="Application\Objects\Container\HandBlockContainer.cpp" />
-    <ClCompile Include="Application\Objects\Container\HandBlockSpriteContainer.cpp" />
-    <ClCompile Include="Application\Objects\Container\MenuSpriteCotainer.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\BlockSprite.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\BoardSprite.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\CursorSprite.cpp" />
+    <ClCompile Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\Board.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\PuzzleGameSystem.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\ControllerViewer.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameStartSystem.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameTutorialManager.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\MenuActionManager.cpp" />
-    <ClCompile Include="Application\Objects\Puzzle\PuzzleBoard.cpp" />
-    <ClCompile Include="Application\Objects\Puzzle\PuzzleCursor.cpp" />
-    <ClCompile Include="Application\Objects\Puzzle\PuzzleGoal.cpp" />
-    <ClCompile Include="Application\Objects\Puzzle\PuzzlePlayer.cpp" />
-    <ClCompile Include="Application\Objects\Puzzle\PuzzleNPC.cpp" />
-    <ClCompile Include="Application\Objects\Puzzle\PuzzleSwapCooldown.cpp" />
     <ClCompile Include="Application\Objects\ResultSystem\ResultSelector.cpp" />
     <ClCompile Include="Application\Objects\TitleSystem\SelectNumderManager.cpp" />
     <ClCompile Include="Application\Objects\TitleSystem\TitleSelectManager.cpp" />
     <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
-    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
-    <ClCompile Include="Application\Scenes\TestScene.cpp" />
     <ClCompile Include="Application\Scenes\TitleScene.cpp" />
-    <ClCompile Include="Application\Objects\Container\BlockSpriteContainer.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -345,25 +338,19 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application\Config\GameSceneConfig.h" />
-    <ClInclude Include="Application\Config\PuzzleGameConfig.h" />
     <ClInclude Include="Application\MatsumotoUtility.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
-    <ClInclude Include="Application\Objects\Container\BlockContainer.h" />
-    <ClInclude Include="Application\Objects\Container\BlockSpriteContainer.h" />
-    <ClInclude Include="Application\Objects\Container\HandBlockContainer.h" />
-    <ClInclude Include="Application\Objects\Container\HandBlockSpriteContainer.h" />
-    <ClInclude Include="Application\Objects\Container\MenuSpriteCotainer.h" />
+    <ClInclude Include="Application\Objects\GameSystem\BlockSprite.h" />
+    <ClInclude Include="Application\Objects\GameSystem\BoardSprite.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
+    <ClInclude Include="Application\Objects\GameSystem\CursorSprite.h" />
+    <ClInclude Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.h" />
+    <ClInclude Include="Application\Objects\GameSystem\Board.h" />
+    <ClInclude Include="Application\Objects\GameSystem\PuzzleGameSystem.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\ControllerViewer.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameStartSystem.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameTutorialManager.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\MenuActionManager.h" />
-    <ClInclude Include="Application\Objects\Puzzle\PuzzleBoard.h" />
-    <ClInclude Include="Application\Objects\Puzzle\PuzzleCursor.h" />
-    <ClInclude Include="Application\Objects\Puzzle\PuzzleGoal.h" />
-    <ClInclude Include="Application\Objects\Puzzle\PuzzlePlayer.h" />
-    <ClInclude Include="Application\Objects\Puzzle\PuzzleNPC.h" />
-    <ClInclude Include="Application\Objects\Puzzle\PuzzleSwapCooldown.h" />
     <ClInclude Include="Application\Objects\ResultSystem\ResultSelector.h" />
     <ClInclude Include="Application\Objects\TitleSystem\SelectNumderManager.h" />
     <ClInclude Include="Application\Objects\TitleSystem\TitleSection.h" />
@@ -373,7 +360,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Scenes\Components\ResultSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
-    <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -430,7 +416,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
     <ClInclude Include="Application\Scenes\GameScene.h" />
     <ClInclude Include="Application\Scenes\ResultScene.h" />
-    <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
@@ -620,7 +605,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   <ItemGroup>
     <None Include=".editorconfig" />
     <None Include=".gitattributes" />
-    <None Include="Application\Config\PuzzleGameConfigGuide.md" />
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />

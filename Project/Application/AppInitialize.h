@@ -2,12 +2,8 @@
 #include <KashipanEngine.h>
 #include "Scenes/EngineLogoScene.h"
 #include "Scenes/TitleScene.h"
-#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
-#include "Scenes/TestScene.h"
-#endif
 #include "Scenes/GameScene.h"
 #include "Scenes/ResultScene.h"
-#include "Scenes/GameOverScene.h"
 
 namespace KashipanEngine {
 
@@ -28,13 +24,8 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
-        //sm->RegisterScene<GameOverScene>("GameOverScene");
 
-        /*#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
-                sm->RegisterScene<TestScene>("TestScene");
-                context.sceneManager->ChangeScene("TestScene");
-        #endif*/
-		context.sceneManager->ChangeScene("TitleScene");
+		context.sceneManager->ChangeScene("GameScene");
     }
 
     if (context.inputCommand) {

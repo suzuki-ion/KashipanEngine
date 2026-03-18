@@ -2,8 +2,10 @@
 #include <KashipanEngine.h>
 
 #include <Objects/OutGameSystem/MenuActionManager.h>
-#include <Objects/Container/MenuSpriteCotainer.h>
+#include <Objects/OutGameSystem/MenuSpriteCotainer.h>
 #include <Objects/OutGameSystem/GameStartSystem.h>
+
+#include <Objects/GameSystem/PuzzleGameSystem.h>
 
 namespace KashipanEngine {
 
@@ -31,6 +33,8 @@ private:
 	// * ゲームで使うオブジェクトたち * //
 	// ゲームのメインループ
 	void GameLoop();
+	// パズルゲームのシステム
+	Application::PuzzleGameSystem puzzleGameSystem_;
 	// メニューとゲームの開始
 	void InitMenu();
 	Vector2 menuPosition_;

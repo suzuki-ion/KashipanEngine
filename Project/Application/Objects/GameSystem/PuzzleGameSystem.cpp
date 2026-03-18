@@ -31,6 +31,10 @@ void Application::PuzzleGameSystem::Initialize(
 	cursorSprite_.SetPosition(boardSprite_.GetCellPosition(cursor_.GetMoveX(), cursor_.GetMoveY()));
 	// HPゲージのスプライトを初期化
 	hpGaugeSprite_.Initialize(createSpriteFunc);
+	hpGaugeSprite_.SetParent(boardSprite_.GetAnchorSprite());
+	hpGaugeSprite_.SetPosition(Vector3(280.0f, -200.0f, 0.0f));
+	hpGaugeSprite_.SetSize(Vector3(300.0f, 100.0f, 1.0f));
+	hpGaugeSprite_.SetRotation(Vector3(0.0f, 0.0f, 3.14f * 0.5f));
 }
 
 void PuzzleGameSystem::Update() {
@@ -39,6 +43,10 @@ void PuzzleGameSystem::Update() {
 }
 
 void Application::PuzzleGameSystem::SystemUpdate() {
+	if (!player_->IsAlive()) {
+		return; // プレイヤーが死んでいる場合は更新をスキップ
+	}
+
 	// カーソルの状態を更新
 	cursor_.Update();
 	// カーソルが起動していたら盤面をずらす動きに変える
@@ -47,6 +55,15 @@ void Application::PuzzleGameSystem::SystemUpdate() {
 		board_.ShiftColumn(cursor_.GetX(), -cursor_.GetMoveY());
 		boardSprite_.ShiftRow(cursor_.GetY(), -cursor_.GetMoveX() * boardSprite_.GetCellSize());
 		boardSprite_.ShiftColumn(cursor_.GetX(), cursor_.GetMoveY() * boardSprite_.GetCellSize());
+
+		if(cursor_.GetMoveX() != 0 || cursor_.GetMoveY() != 0){
+			Application::MatsumotoUtility::PlaySE("panelMove.mp3");
+		}
+	}
+	else {
+		if (cursor_.GetMoveX() != 0 || cursor_.GetMoveY() != 0) {
+			Application::MatsumotoUtility::PlaySE("cursorMove.mp3");
+		}
 	}
 	// プレイヤーが発火したら盤面から同じ色が3つ以上並んでいる場所を探す
 	if (player_->IsSend()) {
@@ -65,8 +82,13 @@ void Application::PuzzleGameSystem::SystemUpdate() {
 				board_.FillEmptyCells();
 
 				// プレイヤーにダメージを与える(ノイズを消した数)
-				int damage = board_.GetNoiseEraseCount(); // ノイズ1つにつき5ダメージ
+				int damage = board_.GetNoiseEraseCount() * 5; // ノイズ1つにつき5ダメージ
 				player_->TakeDamage(damage);
+				board_.ResetNoiseEraseCount();
+
+				if (damage > 0) {
+					Application::MatsumotoUtility::PlaySE("noiseSpawn.mp3");
+				}
 			}
 		}
 	}
@@ -83,47 +105,20 @@ void Application::PuzzleGameSystem::VisualUpdate() {
 	Vector2 cursorPosition = boardSprite_.GetCellPosition(cursor_.GetX(), cursor_.GetY());
 	cursorSprite_.Update(cursorPosition, cursor_.IsSelected());
 	// HPゲージのスプライトを更新
-	hpGaugeSprite_.Update(test,test2);
-
-	ImGui::Begin("Debug Info");
-	ImGui::Text("Cursor Position: (%d, %d)", cursor_.GetX(), cursor_.GetY());
-	ImGui::Text("Cursor Selected: %s", cursor_.IsSelected() ? "Yes" : "No");
-	ImGui::Spacing();
-
-	ImGui::Text("Player HP: %d / %d", player_->GetHp(), player_->GetMaxHp());
-	ImGui::DragFloat("Test Float", &test, 0.01f, 0.0f, 1.0f);
-	ImGui::DragFloat("Test Float 2", &test2, 0.01f, 0.0f, 1.0f);
-
-	// デバッグ用に盤面の状態を表示
-	ImGui::Text("Board State:");
-	const std::vector<int>& boardData = board_.GetBoardData();
-
-	// 幅に合わせてテーブルを作成（枠線付き、サイズ固定）
-	if (ImGui::BeginTable("BoardTable", board_.GetWidth(), ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)) {
-		// ImGuiの描画順に合わせてYを反転（上から下へ描画）
-		for (int y = board_.GetHeight() - 1; y >= 0; --y) {
-			ImGui::TableNextRow();
-			for (int x = 0; x < board_.GetWidth(); ++x) {
-				ImGui::TableNextColumn();
-				int cellValue = boardData[y * board_.GetWidth() + x];
-
-				// 0（空きマス）の場合は目立たない色にするなどの工夫
-				if (cellValue == 0) {
-					ImGui::TextDisabled(" %d ", cellValue);
-				}
-				else {
-					ImGui::Text(" %d ", cellValue);
-				}
-			}
-		}
-		ImGui::EndTable();
-	}
-
-	ImGui::End();
+	hpGaugeSprite_.Update(player_->GetHpRatio(), 1.0f - board_.NoiseRatio());
 }
 
 void Application::PuzzleGameSystem::SetAnchorSpritePosition(const Vector3& position) {
 	if (auto* anchorSprite = boardSprite_.GetAnchorSprite()) {
 		Application::MatsumotoUtility::SetTranslateToSprite(anchorSprite, position);
+	}
+}
+
+void Application::PuzzleGameSystem::DeathAnimation()
+{
+	if (!player_->IsAlive()) {
+		Vector3 currentPos = MatsumotoUtility::GetTranslateFromSprite(boardSprite_.GetAnchorSprite());
+		currentPos.y = -1000.0f; // 画面外に移動させる
+		MatsumotoUtility::SimpleEaseSpriteMove(boardSprite_.GetAnchorSprite(), currentPos, 0.1f);
 	}
 }

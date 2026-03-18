@@ -76,6 +76,7 @@ void Application::Board::EreaseCells()
 				}
 			}
 			eraseCount_ += static_cast<int>(cells.size());
+			eraseCount_ += noiseEreaseCount_ * 2;
 		}
 	}
 	ereaseCells_.clear();

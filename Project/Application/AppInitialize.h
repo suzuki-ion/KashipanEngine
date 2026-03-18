@@ -25,7 +25,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
 
-		context.sceneManager->ChangeScene("GameScene");
+		context.sceneManager->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {

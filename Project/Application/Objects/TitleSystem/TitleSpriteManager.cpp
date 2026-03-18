@@ -36,6 +36,12 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	FitSpriteToTexture(sprites_["TitleScreen"]);
 	ScaleSprite(sprites_["TitleScreen"], 3.4f);
 
+	// タイトルロゴのスプライト
+	sprites_["TitleLogo"] = CreateSpriteFunc_("TitleLogo", KashipanEngine::DefaultSampler::LinearClamp);
+	ParentSpriteToSprite(sprites_["TitleLogo"], sprites_["Root"]);
+	SetTextureToSprite(sprites_["TitleLogo"], "TitleLogo.png");
+	FitSpriteToTexture(sprites_["TitleLogo"]);
+
 	// 2Pの画面スプライト
 	sprites_["TitleScreen2P"] = CreateSpriteFunc_("TitleScreen2P", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["TitleScreen2P"], sprites_["Root"]);
@@ -131,6 +137,7 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 	// 1pと2pの姿見は揺れ続ける
 	SetRotationToSprite(sprites_["P1"], Vector3(0.0f, 0.0f, sinf(timer_) * 0.1f));
 	SetRotationToSprite(sprites_["P2"], Vector3(0.0f, 0.0f, cosf(timer_) * 0.1f));
+	SetRotationToSprite(sprites_["P2AI"], Vector3(0.0f, 0.0f, cosf(timer_ + 1.0f) * 0.1f)); // 2PのAIの姿見は少し位相をずらして揺れるようにする
 	
 	// タイトル背景のUVスクロール
 	float scrollSpeed = 2.0f; // スクロール速度
@@ -148,6 +155,9 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 		SimpleEaseSpriteMove(sprites_["TitleCallSection"], Vector3(centerPosition_.x, centerPosition_.y, 0.0f), 0.3f);
 	}
 	else {
+		// タイトルロゴを揺らす
+		SetRotationToSprite(sprites_["TitleLogo"], Vector3(0.0f, 0.0f, sinf(timer_) * 0.05f));
+
 		SimpleEaseSpriteMove(sprites_["TitleBarDown"], Vector3(centerPosition_.x, centerPosition_.y - centerPosition_.y, 0.0f), 0.3f);
 		SimpleEaseSpriteMove(sprites_["TitleBarUp"], Vector3(centerPosition_.x, centerPosition_.y + centerPosition_.y, 0.0f), 0.3f);
 	}

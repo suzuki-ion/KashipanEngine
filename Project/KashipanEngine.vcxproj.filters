@@ -151,6 +151,7 @@
     <ClCompile Include="Application\Objects\GameSystem\PuzzlePlayer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\MatchFinder.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\GaugeSprite.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -403,6 +404,8 @@
     <ClInclude Include="Application\Objects\GameSystem\PuzzlePlayer.h" />
     <ClInclude Include="Application\Objects\GameSystem\MatchFinder.h" />
     <ClInclude Include="Application\Objects\GameSystem\GaugeSprite.h" />
+    <ClInclude Include="Application\Objects\SceneValue.h" />
+    <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

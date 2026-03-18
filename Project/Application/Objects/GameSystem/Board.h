@@ -49,6 +49,8 @@ namespace Application {
 		int GetEraseCount() const { return eraseCount_; }
 		int GetNoiseEraseCount() const { return noiseEreaseCount_; }
 		void ResetEraseCounts() { eraseCount_ = 0; noiseEreaseCount_ = 0; }
+		void ResetNoiseEraseCount() { noiseEreaseCount_ = 0; }
+		void ResetEraseCount() { eraseCount_ = 0; }
 
 	private:
 		int width_;

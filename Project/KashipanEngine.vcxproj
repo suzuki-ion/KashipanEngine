@@ -176,6 +176,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application\MatsumotoUtility.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BoardSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
@@ -343,6 +344,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   <ItemGroup>
     <ClInclude Include="Application\MatsumotoUtility.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
+    <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockSprite.h" />
     <ClInclude Include="Application\Objects\GameSystem\BoardSprite.h" />
     <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
@@ -358,6 +360,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\OutGameSystem\GameTutorialManager.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\MenuActionManager.h" />
     <ClInclude Include="Application\Objects\ResultSystem\ResultSelector.h" />
+    <ClInclude Include="Application\Objects\SceneValue.h" />
     <ClInclude Include="Application\Objects\TitleSystem\SelectNumderManager.h" />
     <ClInclude Include="Application\Objects\TitleSystem\TitleSection.h" />
     <ClInclude Include="Application\Objects\TitleSystem\TitleSelectManager.h" />

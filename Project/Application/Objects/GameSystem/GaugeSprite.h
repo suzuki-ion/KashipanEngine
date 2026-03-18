@@ -12,6 +12,8 @@ namespace Application {
 		void SetPosition(const Vector3& position);
 		void SetRotation(const Vector3& rotation);
 
+		void SetParent(KashipanEngine::Sprite* parent);
+
 	private:
 		KashipanEngine::Sprite* anchorSprite_ = nullptr;
 

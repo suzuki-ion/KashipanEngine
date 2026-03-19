@@ -83,12 +83,12 @@ void GameScene::Initialize() {
 		puzzlePlayer2_.SetSendFunction([this]() { return aiPlayer2_.GetIsSend(); });
 	}
 	else {
-		puzzlePlayer2_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("PuzzleUp2").Triggered(); });
-		puzzlePlayer2_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("PuzzleDown2").Triggered(); });
-		puzzlePlayer2_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("PuzzleLeft2").Triggered(); });
-		puzzlePlayer2_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("PuzzleRight2").Triggered(); });
-		puzzlePlayer2_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("PuzzleActionHold2").Triggered(); });
-		puzzlePlayer2_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip2").Triggered(); });
+		puzzlePlayer2_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleUp").Triggered(); });
+		puzzlePlayer2_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleDown").Triggered(); });
+		puzzlePlayer2_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleLeft").Triggered(); });
+		puzzlePlayer2_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleRight").Triggered(); });
+		puzzlePlayer2_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleActionHold").Triggered(); });
+		puzzlePlayer2_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleTimeSkip").Triggered(); });
 	}
 	
 	puzzleGameSystem2_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer2_);

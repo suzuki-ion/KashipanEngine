@@ -58,6 +58,8 @@ private:
 	KashipanEngine::Sprite* backgroundSprite_ = nullptr;
 	// NPCモードかどうか
 	bool isNpcMode_ = false; 
+	// ゲームの操作チュートリアル
+	Sprite* tutorialSprite_ = nullptr;
 
 	// BGM
 	AudioPlayer audioPlayer_;

@@ -53,14 +53,14 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	// 1Pの姿見
 	sprites_["P1"] = CreateSpriteFunc_("Player1Preview", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["P1"], sprites_["Root"]);
-	SetTextureToSprite(sprites_["P1"], "fall_Porn.png");
+	SetTextureToSprite(sprites_["P1"], "fall_Porn_0.png");
 	FitSpriteToTexture(sprites_["P1"]);
 	ScaleSprite(sprites_["P1"], 2.0f);
-	SetTranslateToSprite(sprites_["P1"], Vector3(-centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
+	SetTranslateToSprite(sprites_["P1"], Vector3(centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
 	// 2Pの姿見
 	sprites_["P2"] = CreateSpriteFunc_("Player2Preview", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["P2"], sprites_["Root"]);
-	SetTextureToSprite(sprites_["P2"], "fall_Porn.png");
+	SetTextureToSprite(sprites_["P2"], "fall_Porn_1.png");
 	FitSpriteToTexture(sprites_["P2"]);
 	ScaleSprite(sprites_["P2"], 2.0f);
 	FlipSpriteHorizontal(sprites_["P2"]);
@@ -69,9 +69,9 @@ void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::S
 	// 2P側AIの姿見
 	sprites_["P2AI"] = CreateSpriteFunc_("Player2AIPreview", KashipanEngine::DefaultSampler::LinearClamp);
 	ParentSpriteToSprite(sprites_["P2AI"], sprites_["Root"]);
-	SetTextureToSprite(sprites_["P2AI"], "porn_ai.png");
+	SetTextureToSprite(sprites_["P2AI"], "fall_Porn_2.png");
 	FitSpriteToTexture(sprites_["P2AI"]);
-	ScaleSprite(sprites_["P2AI"], 6.0f);
+	ScaleSprite(sprites_["P2AI"], 2.0f);
 	SetTranslateToSprite(sprites_["P2AI"], Vector3(centerPosition_.x * 3.0f, 0.0f, 0.0f) + Vector3(centerPosition_.x * 0.9f, -centerPosition_.y * 0.9f, 0.0f));
 
 	// コントローラー同時押しの案内の背景

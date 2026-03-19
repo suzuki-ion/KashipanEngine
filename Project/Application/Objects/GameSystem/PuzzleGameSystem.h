@@ -37,6 +37,9 @@ namespace Application {
 		int SendDamage();
 		void TakeDamage(int damage);
 
+		void Setup2P();
+		void SetupNpc();
+
 	private:
 		// * ゲームのシステム * //
 		// パズルの操作を管理するプレイヤーオブジェクト

@@ -1012,6 +1012,11 @@ void Renderer::RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandL
     }
 }
 
+void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
+    constantBuffers_.clear();
+    instanceBuffers_.clear();
+}
+
 void Renderer::IssueRenderCommand(ID3D12GraphicsCommandList *commandList, const RenderCommand &renderCommand) {
     if (!commandList) return;
     if (renderCommand.indexCount > 0) {

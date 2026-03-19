@@ -74,7 +74,8 @@ void Application::GaugeSprite::SetSize(const Vector3& size)
 		Application::MatsumotoUtility::SetScaleToSprite(gaugeAnimationSprite_, size);
 	}
 	if (gaugeFillAnimationSprite_) {
-		Application::MatsumotoUtility::SetScaleToSprite(gaugeFillAnimationSprite_, size);
+		// 最大値減少用スプライトの初期サイズは幅0にする
+		Application::MatsumotoUtility::SetScaleToSprite(gaugeFillAnimationSprite_, Vector3(0.0f, size.y, size.z));
 		Application::MatsumotoUtility::SetTranslateToSprite(gaugeFillAnimationSprite_, Vector3(size.x, 0.0f, 0.0f));
 	}
 }

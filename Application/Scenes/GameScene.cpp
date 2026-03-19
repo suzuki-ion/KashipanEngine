@@ -2171,7 +2171,7 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
     // Wave1
     WaveData wave1{};
     wave1.wave = Wave::Wave1;
-    wave1.duration = 107; // Waveの終了拍数
+    wave1.duration = 85; // Waveの終了拍数
     wave1.spawnList = {
        { 6, 4, 0, EnemyType::Basic },
        { 14, 9, 4, EnemyType::Basic },
@@ -2186,17 +2186,6 @@ void GameScene::InitWaveSystem(ScreenBuffer* screenBuffer, Transform3D* transfor
        { 67, 4, 9, EnemyType::Speedy },
        { 73, 0, 4, EnemyType::Speedy },
        { 77, 5, 0, EnemyType::Speedy },
-       { 81, 9, 5, EnemyType::Speedy },
-       { 85, 4, 9, EnemyType::Speedy },
-       { 89, 0, 4, EnemyType::Speedy },
-       { 89, 0, 1, EnemyType::Basic },
-       { 89, 0, 2, EnemyType::Basic },
-       { 95, 9, 8, EnemyType::Basic },
-       { 95, 9, 7, EnemyType::Basic },
-       { 101, 1, 9, EnemyType::Basic },
-       { 101, 2, 9, EnemyType::Basic },
-       { 107, 7, 0, EnemyType::Basic },
-       { 107, 8, 0, EnemyType::Basic },
     };
     waveSystem_->AddWaveData(wave1);
 

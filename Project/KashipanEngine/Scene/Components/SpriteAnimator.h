@@ -198,6 +198,7 @@ private:
     void ShowImGuiWindowBindings();
     void ShowImGuiWindowPlayers();
     void ShowImGuiWindowStorage();
+    void ShowImGuiWindowSpritePreview();
 
     void RefreshTimelineEditorRange();
     size_t FindNearestTimelineKey(const Timeline &timeline, float targetTime, float maxDistance) const;
@@ -222,6 +223,7 @@ private:
     std::array<char, 128> playPresetBuffer_{};
 
     std::string selectedPresetName_;
+    std::string selectedPresetObjectName_;
     std::string selectedTimelineName_;
     int selectedBindingIndex_ = -1;
 
@@ -233,6 +235,9 @@ private:
 
     Vector2 imguiPresetPivot_{0.5f, 0.5f};
     Vector2 imguiPresetAnchor_{0.5f, 0.5f};
+
+    Vector2 spritePreviewOffset_{0.0f, 0.0f};
+    float spritePreviewZoom_ = 1.0f;
 
     float timelineViewStartTime_ = 0.0f;
     float timelineViewDuration_ = 5.0f;

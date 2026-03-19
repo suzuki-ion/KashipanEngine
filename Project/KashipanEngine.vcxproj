@@ -196,7 +196,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\Objects\TitleSystem\TitleSelectManager.cpp" />
     <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
-    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
@@ -373,7 +372,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Scenes\Components\ResultSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
-    <ClInclude Include="Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>

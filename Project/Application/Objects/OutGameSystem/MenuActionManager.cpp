@@ -35,11 +35,11 @@ void MenuActionManager::Update()
 	if (menuConditions_ && menuConditions_()) {
 		if (isMenuOpen_) {
 			menuActions_[0](); // キャンセルアクションは常に最初のアクションとして登録されていると仮定
-			return;
 		} else {
 			isMenuOpen_ = true;
 		}
 		Application::MatsumotoUtility::PlaySE("menuDecide.mp3");
+		return;
 	}
 
 	// メニューが未来ていないなら早期リターン

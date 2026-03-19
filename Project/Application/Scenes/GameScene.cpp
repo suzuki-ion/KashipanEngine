@@ -1,4 +1,4 @@
-#include "Scenes/GameScene.h"
+﻿#include "Scenes/GameScene.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Objects/TitleSystem/TitleSection.h"
@@ -233,8 +233,68 @@ void GameScene::OnUpdate() {
 	if (gameOver_) {
 		autoSceneChangeTimer_ -= deltaTime;
 		if (autoSceneChangeTimer_ <= 0.0f) {
-			if (GetNextSceneName().empty()) SetNextSceneName("MenuScene");
-			if (auto* out = GetSceneComponent<SceneChangeOut>()) out->Play();
+			if (GetNextSceneName().empty()) {
+				SetNextSceneName("MenuScene");
+			}
+			if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+				out->Play();
+			}
+		}
+	}
+
+	ImGui::Begin("GameScene");
+	if (ImGui::Button("NextScene")) {
+		if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+			out->Play();
+		}
+	}
+	ImGui::End();
+}
+
+// ゲームのメインループ
+void GameScene::GameLoop()
+{
+
+	// ゲーム開始演出の更新
+	Vector3 startGameSpriteScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartSprite_);
+	startGameSpriteScale.x = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.x, 0.0f, 0.3f);
+	startGameSpriteScale.y = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.y, 0.0f, 0.3f);
+	Application::MatsumotoUtility::SetScaleToSprite(gameStartSprite_, startGameSpriteScale);
+	// GOスプライトは透明にしながら拡大させる
+	Vector3 goSpriteScale = Application::MatsumotoUtility::GetTextureSizeFromSprite(gameStartGoSprite_);
+	Vector4 currentColor = Application::MatsumotoUtility::GetColorFromSprite(gameStartGoSprite_);
+	Vector3 currentScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartGoSprite_);
+	currentColor.w = Application::MatsumotoUtility::SimpleEaseIn(currentColor.w, 0.0f, 0.05f);
+	currentScale.x = Application::MatsumotoUtility::SimpleEaseIn(currentScale.x, goSpriteScale.x, 0.2f);
+	currentScale.y = Application::MatsumotoUtility::SimpleEaseIn(currentScale.y, goSpriteScale.y, 0.2f);
+	Application::MatsumotoUtility::SetColorToSprite(gameStartGoSprite_, currentColor);
+	Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, currentScale);
+}
+
+// メニューで使う入力、アクションの追加＆処理
+void GameScene::InitMenu()
+{
+    menuActionManager_.Initialize(
+        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Menu").Triggered(); },
+        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Submit").Triggered(); },
+        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Cancel").Triggered(); },
+        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Down").Triggered(); },
+        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Up").Triggered(); }
+    );
+    // メニューのアクションを追加
+    menuActionManager_.AddMenuAction([this]() {
+        gameStartSystem_.Initialize();
+        gameStartSystem_.StartSequence(1.5f);
+        Application::MatsumotoUtility::SetColorToSprite(gameStartSprite_, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        Application::MatsumotoUtility::FitSpriteToTexture(gameStartSprite_);
+        Application::MatsumotoUtility::SetColorToSprite(gameStartGoSprite_, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, Vector3(0.0f, 0.0f, 1.0f));
+        menuActionManager_.SetMenuOpen(false);
+        });
+	menuActionManager_.AddMenuAction([this]() {
+		if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+			SetNextSceneName("GameScene");
+			out->Play();
 		}
 	}
 }

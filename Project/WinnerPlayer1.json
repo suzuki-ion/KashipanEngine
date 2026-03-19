@@ -1,0 +1,310 @@
+{
+    "bindings": {
+        "WinnerPlayer1": [
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "PlayerInTranslateX"
+            },
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Scale.X",
+                "timelineName": "DefaultScale"
+            },
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Scale.Y",
+                "timelineName": "DefaultScale"
+            },
+            {
+                "objectName": "WinnerPlayer",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerUpDown"
+            },
+            {
+                "objectName": "WinnerHead",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "HeadUpDown"
+            },
+            {
+                "objectName": "WinnerHeadBack",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "HeadUpDown"
+            },
+            {
+                "objectName": "WinnerHead",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "HeadDefaultTranslateX"
+            },
+            {
+                "objectName": "WinnerHeadBack",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "HeadDefaultTranslateX"
+            },
+            {
+                "objectName": "WinnerArmR",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "ArmRDefaultTranslateX"
+            },
+            {
+                "objectName": "WinnerArmR",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "ArmRDefaultTranslateY"
+            },
+            {
+                "objectName": "WinnerArmR",
+                "propertyPath": "Transform.Rotate.Z",
+                "timelineName": "ArmRRotate"
+            },
+            {
+                "objectName": "WinnerArmL",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "ArmLDefaultTranslateX"
+            },
+            {
+                "objectName": "WinnerArmL",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "ArmLDefaultTranslateY"
+            },
+            {
+                "objectName": "WinnerArmL",
+                "propertyPath": "Transform.Rotate.Z",
+                "timelineName": "ArmLRotate"
+            }
+        ]
+    },
+    "presets": {
+        "WinnerPlayer1": [
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerPlayer",
+                "parentObjectName": "",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerBody",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerHead",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerHeadBack",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.5,
+                    0.5
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerArmR",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.36500000953674316,
+                    0.4000000059604645
+                ]
+            },
+            {
+                "anchorPoint": [
+                    0.5,
+                    0.5
+                ],
+                "objectName": "WinnerArmL",
+                "parentObjectName": "WinnerPlayer",
+                "pivotPoint": [
+                    0.05000000074505806,
+                    0.550000011920929
+                ]
+            }
+        ]
+    },
+    "timelines": {
+        "ArmLDefaultTranslateX": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 40.0
+                }
+            ],
+            "loop": false
+        },
+        "ArmLDefaultTranslateY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 64.0
+                }
+            ],
+            "loop": false
+        },
+        "ArmLRotate": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": 15.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 1.0,
+                    "value": 10.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 2.0,
+                    "value": 15.0
+                }
+            ],
+            "loop": true
+        },
+        "ArmRDefaultTranslateX": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": -256.0
+                }
+            ],
+            "loop": false
+        },
+        "ArmRDefaultTranslateY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 80.0
+                }
+            ],
+            "loop": false
+        },
+        "ArmRRotate": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": -30.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 1.0,
+                    "value": -20.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 2.0,
+                    "value": -30.0
+                }
+            ],
+            "loop": true
+        },
+        "DefaultScale": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 0.8999999761581421
+                }
+            ],
+            "loop": true
+        },
+        "HeadDefaultTranslateX": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": -64.0
+                }
+            ],
+            "loop": true
+        },
+        "HeadUpDown": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": 540.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 1.0,
+                    "value": 550.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 2.0,
+                    "value": 540.0
+                }
+            ],
+            "loop": true
+        },
+        "PlayerInTranslateX": {
+            "keys": [
+                {
+                    "easeType": 30,
+                    "time": 1.0,
+                    "value": -1024.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 1.5,
+                    "value": 512.0
+                }
+            ],
+            "loop": false
+        },
+        "PlayerUpDown": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": 200.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 1.0,
+                    "value": 250.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 2.0,
+                    "value": 200.0
+                }
+            ],
+            "loop": true
+        }
+    },
+    "version": 2
+}

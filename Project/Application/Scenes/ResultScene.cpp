@@ -68,18 +68,16 @@ void ResultScene::Initialize() {
 
     // 勝利プレイヤーの親スプライト
 	spriteMap_["WinnerPlayer"] = createSpriteFunction_("WinnerPlayer", KashipanEngine::DefaultSampler::LinearClamp);
-	//SetTranslateToSprite(spriteMap_["WinnerPlayer"], Vector3(-screenCenter_.x, screenCenter_.y, 0.0f));
-	//SetScaleToSprite(spriteMap_["WinnerPlayer"], Vector3(0.9f, 0.9f, 1.0f));
 
-	// 勝利プレイヤーの頭
-	spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_1.png", KashipanEngine::DefaultSampler::LinearClamp);
-	//ParentSpriteToSprite(spriteMap_["WinnerHead"], spriteMap_["WinnerPlayer"]);
+    // 勝利プレイヤーの頭後ろ
+    spriteMap_["WinnerHeadBack"] = createSpriteWithTextureFunction_("WinnerHeadBack", "result_headBack_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	
+    // 勝利プレイヤーの左腕
+    spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
     // 勝利プレイヤーの胴
 	spriteMap_["WinnerBody"] = createSpriteWithTextureFunction_("WinnerBody", "result_body_1.png", KashipanEngine::DefaultSampler::LinearClamp);
-	//ParentSpriteToSprite(spriteMap_["WinnerBody"], spriteMap_["WinnerPlayer"]);
-    // 勝利プレイヤーの左腕
-	spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
-	//ParentSpriteToSprite(spriteMap_["WinnerArmL"], spriteMap_["WinnerPlayer"]);
+	// 勝利プレイヤーの頭
+    spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_1.png", KashipanEngine::DefaultSampler::LinearClamp);
 
     // 勝利者の表示
 	spriteMap_["WinnerText"] = createSpriteWithTextureFunction_("WinnerText", "result_Win0.png", KashipanEngine::DefaultSampler::LinearClamp);
@@ -93,8 +91,7 @@ void ResultScene::Initialize() {
 
     // 勝利プレイヤーの右腕
     spriteMap_["WinnerArmR"] = createSpriteWithTextureFunction_("WinnerArmR", "result_rightArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
-	//ParentSpriteToSprite(spriteMap_["WinnerArmR"], spriteMap_["WinnerPlayer"]);
-
+	
     // 結果セレクタの選択肢スプライトを初期化
     spriteMap_["BackToTitle"] = createSpriteWithTextureFunction_("result", "result_0.png", KashipanEngine::DefaultSampler::LinearClamp);
     SetTranslateToSprite(spriteMap_["BackToTitle"], Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
@@ -137,8 +134,8 @@ void ResultScene::Initialize() {
         auto cmp = std::make_unique<SpriteAnimator>();
         auto *cmpP = cmp.get();
         AddSceneComponent(std::move(cmp));
-        cmpP->LoadFromJsonFile("WinnerPlayer.json");
-        cmpP->Play("WinnerPlayer");
+        cmpP->LoadFromJsonFile("WinnerPlayer1.json");
+        cmpP->Play("WinnerPlayer1");
     }
 
     prevSelectedNumber_ = resultSelector_.GetSelectNumber();
@@ -176,12 +173,6 @@ void ResultScene::OnUpdate() {
     if (timer_ < 1.0f) {
 		return;
     }
-
-    // 勝利プレイヤーのスプライトを出現させる
-    //SimpleEaseSpriteMove(spriteMap_["WinnerPlayer"], Vector3(screenCenter_.x, screenCenter_.y + sinf(timer_) *10.0f, 0.0f), 0.2f);
-	//SetTranslateToSprite(spriteMap_["WinnerHead"], Vector3(0.0f, sinf(timer_) * 5.0f, 0.0f));
-    //SetTranslateToSprite(spriteMap_["WinnerArmR"], Vector3(0.0f, sinf(timer_+ 0.8f) * 10.0f, 0.0f));
-    //SetRotationToSprite(spriteMap_["WinnerArmL"], Vector3(0.0f,0.0f,sinf(timer_) * 0.05f));
 
 	// 勝利者の文字を出現させる
 	SimpleEaseSpriteMove(spriteMap_["WinnerText"], Vector3(screenCenter_.x, screenCenter_.y + cosf(timer_) * 5.0f, 0.0f), 0.2f);

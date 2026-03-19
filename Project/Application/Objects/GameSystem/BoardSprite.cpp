@@ -9,6 +9,9 @@ void Application::BoardSprite::Initialize(std::function<KashipanEngine::Sprite* 
 	matchAnimationDuration_ = 0.2f;
 	matchAnimationTimer_ = 0.0f;
 
+	shakeDuration_ = 1.0f;
+	shakeTimer_ = 0.0f;
+
 	backgroundSprite_ = createSpriteFunc("BoardBackground", "puzzleBG.png", KashipanEngine::DefaultSampler::LinearClamp);
 	// セルのスプライトを生成
 	for (int i = 0; i < w * h; ++i) {
@@ -59,6 +62,18 @@ void Application::BoardSprite::Update(const std::vector<int>& board, float delta
 			}
 		}
 	}
+
+	// 盤面全体を揺らすアニメーションの更新
+	if (shakeTimer_ > 0.0f) {
+		shakeTimer_ -= delta;
+	}
+	else {
+		shakeTimer_ = 0.0f;
+	}
+
+	float shakeAmount = (shakeTimer_ / shakeDuration_); // 揺れの強さを時間経過とともに減少させる
+	Vector3 currentRotation = Application::MatsumotoUtility::GetRotationFromSprite(boardAnchorSprite_);
+	Application::MatsumotoUtility::SetRotationToSprite(boardAnchorSprite_, Vector3(currentRotation.x, currentRotation.y, sinf(shakeTimer_ * 10.0f) * shakeAmount));
 
 	// セルの状態を保存
 	oldBoardState_ = board;

@@ -35,6 +35,9 @@ void Application::PuzzleGameSystem::Initialize(
 	hpGaugeSprite_.SetPosition(Vector3(280.0f, -200.0f, 0.0f));
 	hpGaugeSprite_.SetSize(Vector3(300.0f, 100.0f, 1.0f));
 	hpGaugeSprite_.SetRotation(Vector3(0.0f, 0.0f, 3.14f * 0.5f));
+	// 攻撃演出のスプライトを初期化
+	attackSprite_.Initialize(createSpriteFunc);
+	attackSprite_.SetParent(boardSprite_.GetAnchorSprite());
 }
 
 void PuzzleGameSystem::Update() {
@@ -72,6 +75,10 @@ void Application::PuzzleGameSystem::SystemUpdate() {
 
 		boardSprite_.RegisterMatchCells(matches);
 		board_.RegisterEreaseCells(matches);
+
+		if (!matches.empty()) {
+			attackTimer_ = attackCooldown_; // 攻撃のクールダウンをリセット
+		}
 	}
 	else {
 		// マッチアニメーションが進行中でなければ盤面を更新する
@@ -88,7 +95,17 @@ void Application::PuzzleGameSystem::SystemUpdate() {
 
 				if (damage > 0) {
 					Application::MatsumotoUtility::PlaySE("noiseSpawn.mp3");
+					boardSprite_.ShakeBoard(); // 盤面を揺らすアニメーションを開始
 				}
+
+				if (board_.GetEraseCount() > 0 || damage > 0) {
+					attackSprite_.PlayAttackAnimation(); // 攻撃アニメーションを再生
+				}
+			}
+
+			// 攻撃のクールダウンを更新
+			if (attackTimer_ > 0.0f) {
+				attackTimer_ -= KashipanEngine::GetDeltaTime();
 			}
 		}
 	}
@@ -106,11 +123,19 @@ void Application::PuzzleGameSystem::VisualUpdate() {
 	cursorSprite_.Update(cursorPosition, cursor_.IsSelected());
 	// HPゲージのスプライトを更新
 	hpGaugeSprite_.Update(player_->GetHpRatio(), 1.0f - board_.NoiseRatio());
+	// 攻撃演出のスプライトを更新
+	attackSprite_.Update();
 }
 
 void Application::PuzzleGameSystem::SetAnchorSpritePosition(const Vector3& position) {
 	if (auto* anchorSprite = boardSprite_.GetAnchorSprite()) {
 		Application::MatsumotoUtility::SetTranslateToSprite(anchorSprite, position);
+	}
+}
+
+void Application::PuzzleGameSystem::SetAnchorSpriteRotation(const Vector3& rotation) {
+	if (auto* anchorSprite = boardSprite_.GetAnchorSprite()) {
+		Application::MatsumotoUtility::SetRotationToSprite(anchorSprite, rotation);
 	}
 }
 
@@ -120,5 +145,23 @@ void Application::PuzzleGameSystem::DeathAnimation()
 		Vector3 currentPos = MatsumotoUtility::GetTranslateFromSprite(boardSprite_.GetAnchorSprite());
 		currentPos.y = -1000.0f; // 画面外に移動させる
 		MatsumotoUtility::SimpleEaseSpriteMove(boardSprite_.GetAnchorSprite(), currentPos, 0.1f);
+	}
+}
+
+int PuzzleGameSystem::SendDamage() {
+	if (attackTimer_ > 0.0f) {
+		return 0; // クールダウン中はダメージを送らない
+	}
+
+	int damage = board_.GetEraseCount();
+	board_.ResetEraseCount(); // ダメージを送った後に削除カウントをリセット
+	return damage;
+}
+
+void PuzzleGameSystem::TakeDamage(int damage) {
+	player_->TakeDamage(damage);
+	if (damage > 0) {
+		Application::MatsumotoUtility::PlaySE("noiseSpawn.mp3");
+		boardSprite_.ShakeBoard(); // 盤面を揺らすアニメーションを開始
 	}
 }

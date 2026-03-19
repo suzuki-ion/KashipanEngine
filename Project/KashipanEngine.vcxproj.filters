@@ -152,6 +152,7 @@
     <ClCompile Include="Application\Objects\GameSystem\MatchFinder.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\GaugeSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
+    <ClCompile Include="Application\Objects\GameSystem\AttackSprite.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -406,6 +407,7 @@
     <ClInclude Include="Application\Objects\GameSystem\GaugeSprite.h" />
     <ClInclude Include="Application\Objects\SceneValue.h" />
     <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
+    <ClInclude Include="Application\Objects\GameSystem\AttackSprite.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

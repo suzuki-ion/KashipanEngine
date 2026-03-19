@@ -187,8 +187,7 @@ void GameScene::OnUpdate() {
 	if (!gameOver_ && !menuActionManager_.IsMenuOpen() && gameStartSystem_.IsGameStarted()) {
 		GameLoop();
 	}
-	puzzleGameSystem1_.DeathAnimation();
-	puzzleGameSystem2_.DeathAnimation();
+	
 
 	// ゲーム開始前のスプライトモーション
 	if (!gameStartSystem_.IsGameStarted()) {
@@ -197,6 +196,9 @@ void GameScene::OnUpdate() {
 
 	// ゲームオーバー後の自動シーン遷移処理
 	if (gameOver_) {
+		puzzleGameSystem1_.DeathAnimation();
+		puzzleGameSystem2_.DeathAnimation();
+
 		autoSceneChangeTimer_ -= deltaTime;
 		if (autoSceneChangeTimer_ <= 0.0f) {
 			if (GetNextSceneName().empty()) {

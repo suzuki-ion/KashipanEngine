@@ -8,6 +8,7 @@ void Application::PuzzleGameSystem::Initialize(
 
 	// プレイヤーオブジェクトの設定
 	player_ = puzzlePalyer;
+	deathAnimationTimer_ = 0.0f;
 
 	// * ゲームのシステムの初期化 * //
 	// 盤面の初期化
@@ -35,9 +36,18 @@ void Application::PuzzleGameSystem::Initialize(
 	hpGaugeSprite_.SetPosition(Vector3(280.0f, -200.0f, 0.0f));
 	hpGaugeSprite_.SetSize(Vector3(300.0f, 100.0f, 1.0f));
 	hpGaugeSprite_.SetRotation(Vector3(0.0f, 0.0f, 3.14f * 0.5f));
+	// HPゲージのフレームスプライトを初期化
+	hpGaugeFrameSprite_ = createSpriteFunc("HpGaugeFrame", "hpGaugeFrame.png", KashipanEngine::DefaultSampler::LinearClamp);
+	MatsumotoUtility::ParentSpriteToSprite(hpGaugeFrameSprite_, boardSprite_.GetAnchorSprite());
+	MatsumotoUtility::SetTranslateToSprite(hpGaugeFrameSprite_, Vector3(280.0f, -25.0f, 0.0f));
+
 	// 攻撃演出のスプライトを初期化
 	attackSprite_.Initialize(createSpriteFunc);
 	attackSprite_.SetParent(boardSprite_.GetAnchorSprite());
+
+	// 勝敗がついた後の演出用スプライトを初期化
+	resultSprite_ = createSpriteFunc("Result", "Winner.png", KashipanEngine::DefaultSampler::LinearClamp);
+	MatsumotoUtility::SetTranslateToSprite(resultSprite_, Vector3(0.0f, 3000.0f, 0.0f));
 }
 
 void PuzzleGameSystem::Update() {
@@ -130,6 +140,7 @@ void Application::PuzzleGameSystem::VisualUpdate() {
 void Application::PuzzleGameSystem::SetAnchorSpritePosition(const Vector3& position) {
 	if (auto* anchorSprite = boardSprite_.GetAnchorSprite()) {
 		Application::MatsumotoUtility::SetTranslateToSprite(anchorSprite, position);
+		anchorPosition_ = position; // 現在の位置を保存
 	}
 }
 
@@ -141,10 +152,24 @@ void Application::PuzzleGameSystem::SetAnchorSpriteRotation(const Vector3& rotat
 
 void Application::PuzzleGameSystem::DeathAnimation()
 {
+	deathAnimationTimer_ += KashipanEngine::GetDeltaTime();
+
 	if (!player_->IsAlive()) {
 		Vector3 currentPos = MatsumotoUtility::GetTranslateFromSprite(boardSprite_.GetAnchorSprite());
 		currentPos.y = -1000.0f; // 画面外に移動させる
 		MatsumotoUtility::SimpleEaseSpriteMove(boardSprite_.GetAnchorSprite(), currentPos, 0.1f);
+
+		MatsumotoUtility::SetTextureToSprite(resultSprite_, "Loser.png"); // 負けのテクスチャに切り替える
+	}
+
+	attackSprite_.Update(); // 攻撃アニメーションの更新を続ける
+
+	// 勝敗がついた後の演出用スプライトを更新
+	if (resultSprite_) {
+		MatsumotoUtility::SimpleEaseSpriteMove(resultSprite_, anchorPosition_, 0.5f);
+		if (player_->IsAlive()) {
+			MatsumotoUtility::SetRotationToSprite(resultSprite_, Vector3(0.0f, 0.0f, sinf(deathAnimationTimer_ * 3.0f) * 0.1f));
+		}
 	}
 }
 

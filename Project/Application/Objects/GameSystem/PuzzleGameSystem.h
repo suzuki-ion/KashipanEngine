@@ -56,13 +56,19 @@ namespace Application {
 		CursorSprite cursorSprite_;
 		// HPゲージをスプライトで描画するオブジェクト
 		GaugeSprite hpGaugeSprite_;
+		KashipanEngine::Sprite* hpGaugeFrameSprite_ = nullptr;
 		// 攻撃演出をスプライトで描画するオブジェクト
 		AttackSprite attackSprite_;
+		// 勝敗がついた後の演出用スプライト
+		KashipanEngine::Sprite* resultSprite_ = nullptr;
 
 		float test = 1.0f;
 		float test2 = 1.0f;
 
 		float attackTimer_ = 0.0f;
 		float attackCooldown_ = 1.0f;
+
+		Vector3 anchorPosition_ = Vector3(0.0f, 0.0f, 0.0f);
+		float deathAnimationTimer_ = 0.0f;
 	};
 }

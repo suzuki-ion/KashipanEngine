@@ -94,6 +94,12 @@ void GameScene::Initialize() {
 	puzzleGameSystem2_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer2_);
 	puzzleGameSystem2_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 1.5f, screenCenter_.y, 0.0f));
 	puzzleGameSystem2_.SetAnchorSpriteRotation(Vector3(0.0f, 3.14f, 0.0f)); // 2P側の盤面を反転させる
+	if (isNpcMode_) {
+		puzzleGameSystem2_.SetupNpc();
+	}
+	else {
+		puzzleGameSystem2_.Setup2P();
+	}
 	
 	// 
 	tutorialSprite_ = createSpriteWithTextureFunction_("Tutorial", "ControllTutorial.png", KashipanEngine::DefaultSampler::LinearClamp);
@@ -125,8 +131,6 @@ void GameScene::Initialize() {
 	gameOver_ = false;
 	// ゲームオーバー後の遷移までの時間を初期化
 	autoSceneChangeTimer_ = 3.0f;
-
-	
 
 	// ================================================================
 	// BGM

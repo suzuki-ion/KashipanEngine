@@ -13,6 +13,9 @@ namespace Application {
 
 		void PlayAttackAnimation();
 
+		void Setup2P();
+		void SetupNpc();
+
 	private:
 		float animationTimer_ = 0.0f;
 

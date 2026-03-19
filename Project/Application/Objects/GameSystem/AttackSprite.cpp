@@ -6,7 +6,7 @@ void Application::AttackSprite::Initialize(std::function<KashipanEngine::Sprite*
 	velocity_ = Vector3(200.0f, -1.0f, 0.0f);
 	animationTimer_ = 0.0f;
 
-	playerSprite_ = createSpriteFunc("player", "attack_2P.png", KashipanEngine::DefaultSampler::LinearClamp);
+	playerSprite_ = createSpriteFunc("player", "attack_1P.png", KashipanEngine::DefaultSampler::LinearClamp);
 	noiseSprite_ = createSpriteFunc("noise", "noise.png", KashipanEngine::DefaultSampler::LinearClamp);
 	attackSprite_ = createSpriteFunc("hand", "hand.png", KashipanEngine::DefaultSampler::LinearClamp);
 	
@@ -76,4 +76,14 @@ void Application::AttackSprite::PlayAttackAnimation()
 	MatsumotoUtility::SetRotationToSprite(attackSprite_, Vector3(0.0f, 0.0f, 1.14f * 0.5f));
 	MatsumotoUtility::SetTranslateToSprite(attackSprite_, Vector3(-1000.0f, -250.0f, 0.0f));
 	MatsumotoUtility::SetTranslateToSprite(playerSprite_, Vector3(-1000.0f, -250.0f, 0.0f));
+}
+
+void Application::AttackSprite::Setup2P()
+{
+	MatsumotoUtility::SetTextureToSprite(playerSprite_, "attack_2P.png");
+}
+
+void Application::AttackSprite::SetupNpc()
+{
+	MatsumotoUtility::SetTextureToSprite(playerSprite_, "attack_Npc.png");
 }

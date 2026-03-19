@@ -140,4 +140,11 @@ void Application::TitleSelectManager::UpdateMultiplayerSelectSection()
 		currentSection_ = TitleSection::ModeSelect;
 		KashipanEngine::AudioManager::Play(seMap_["SelectCancel"], seVolume_);
 	}
+
+	ImGui::Begin("Debug Info");
+	if (ImGui::Button("Double Push")) {
+		triggered1PTimer_ = 0.5f;
+		triggered2PTimer_ = 0.5f;
+	}
+	ImGui::End();
 }

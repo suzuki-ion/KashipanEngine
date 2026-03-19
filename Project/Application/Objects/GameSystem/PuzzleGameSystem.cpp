@@ -190,3 +190,13 @@ void PuzzleGameSystem::TakeDamage(int damage) {
 		boardSprite_.ShakeBoard(); // 盤面を揺らすアニメーションを開始
 	}
 }
+
+void Application::PuzzleGameSystem::Setup2P()
+{
+	attackSprite_.Setup2P();
+}
+
+void Application::PuzzleGameSystem::SetupNpc()
+{
+	attackSprite_.SetupNpc();
+}

@@ -110,6 +110,13 @@ void ResultScene::Initialize() {
 	// 勝利プレイヤーの右腕
 	SetTextureToSprite(spriteMap_["WinnerArmR"], winnerPlayerNumber_ == 0 ? "result_rightArm_0.png" : "result_rightArm_1.png");
 
+	// NPCモードのときはNPC用のテクスチャに差し替える
+    if (isNpcMode_ && winnerPlayerNumber_ != 0) {
+		SetTextureToSprite(spriteMap_["WinnerHead"],"result_head_ai.png");
+		SetColorToSprite(spriteMap_["WinnerBody"], Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+		SetTextureToSprite(spriteMap_["WinnerArmL"], "result_leftArm_ai.png");
+		SetTextureToSprite(spriteMap_["WinnerArmR"], "result_rightArm_ai.png");
+    }
 	// =============================================================
 	// ゲームで使うオブジェクトたちの生成
     // =============================================================

@@ -10,6 +10,7 @@
 #include "BoardSprite.h"
 #include "CursorSprite.h"
 #include "GaugeSprite.h"
+#include "AttackSprite.h"
 
 namespace Application {
 	// パズルゲームのシステムを管理するクラス
@@ -28,17 +29,13 @@ namespace Application {
 		void VisualUpdate();
 		/// @brief アンカースプライトの位置を設定する関数
 		void SetAnchorSpritePosition(const Vector3& position);
+		/// @brief アンカースプライトの回転を設定する関数
+		void SetAnchorSpriteRotation(const Vector3& rotation);
 
 		void DeathAnimation();
 
-		int SendDamage(){
-			int damage = board_.GetEraseCount();
-			board_.ResetEraseCount(); // ダメージを送った後に削除カウントをリセット
-			return damage;
-		}
-		void TakeDamage(int damage) {
-			player_->TakeDamage(damage);
-		}
+		int SendDamage();
+		void TakeDamage(int damage);
 
 	private:
 		// * ゲームのシステム * //
@@ -59,8 +56,13 @@ namespace Application {
 		CursorSprite cursorSprite_;
 		// HPゲージをスプライトで描画するオブジェクト
 		GaugeSprite hpGaugeSprite_;
+		// 攻撃演出をスプライトで描画するオブジェクト
+		AttackSprite attackSprite_;
 
 		float test = 1.0f;
 		float test2 = 1.0f;
+
+		float attackTimer_ = 0.0f;
+		float attackCooldown_ = 1.0f;
 	};
 }

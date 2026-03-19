@@ -93,6 +93,7 @@ void GameScene::Initialize() {
 	
 	puzzleGameSystem2_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer2_);
 	puzzleGameSystem2_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 1.5f, screenCenter_.y, 0.0f));
+	puzzleGameSystem2_.SetAnchorSpriteRotation(Vector3(0.0f, 3.14f, 0.0f)); // 2P側の盤面を反転させる
 	
 	// メニューのスプライトを初期化
     menuSpriteContainer_.Initialize([this](const std::string& name, const std::string& textureName) {
@@ -258,8 +259,8 @@ void GameScene::GameLoop()
 	puzzlePlayer2_.Update(KashipanEngine::GetDeltaTime());
 	puzzleGameSystem2_.Update();
 
-	puzzlePlayer1_.TakeDamage(puzzleGameSystem2_.SendDamage());
-	puzzlePlayer2_.TakeDamage(puzzleGameSystem1_.SendDamage());
+	puzzleGameSystem1_.TakeDamage(puzzleGameSystem2_.SendDamage());
+	puzzleGameSystem2_.TakeDamage(puzzleGameSystem1_.SendDamage());
 }
 
 // メニューで使う入力、アクションの追加＆処理

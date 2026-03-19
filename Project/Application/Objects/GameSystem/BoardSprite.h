@@ -36,6 +36,10 @@ namespace Application {
 		// マッチアニメーションが進行中か
 		bool IsAnimatingMatch() const { return isAnimatingMatch_; }
 
+		void ShakeBoard() {
+			shakeTimer_ = shakeDuration_; // 揺らすアニメーションを開始
+		}
+
 	private:
 		std::vector<int> oldBoardState_;
 		float cellSize_ = 0.0f;
@@ -50,5 +54,8 @@ namespace Application {
 		float matchAnimationDuration_ = 0.5f;
 		float matchAnimationTimer_ = 0.0f;
 		std::vector<std::vector<std::pair<int, int>>> ongoingMatchAnimations_;
+
+		float shakeDuration_ = 0.5f;
+		float shakeTimer_ = 0.0f;
 	};
 }

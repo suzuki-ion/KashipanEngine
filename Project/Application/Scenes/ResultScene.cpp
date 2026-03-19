@@ -69,18 +69,13 @@ void ResultScene::Initialize() {
 
     // 勝利プレイヤーの親スプライト
 	spriteMap_["WinnerPlayer"] = createSpriteFunction_("WinnerPlayer", KashipanEngine::DefaultSampler::LinearClamp);
-	//SetTranslateToSprite(spriteMap_["WinnerPlayer"], Vector3(-screenCenter_.x, screenCenter_.y, 0.0f));
-	//SetScaleToSprite(spriteMap_["WinnerPlayer"], Vector3(0.9f, 0.9f, 1.0f));
 
 	// 勝利プレイヤーの頭
 	spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_1.png", KashipanEngine::DefaultSampler::LinearClamp);
-	//ParentSpriteToSprite(spriteMap_["WinnerHead"], spriteMap_["WinnerPlayer"]);
     // 勝利プレイヤーの胴
 	spriteMap_["WinnerBody"] = createSpriteWithTextureFunction_("WinnerBody", "result_body_1.png", KashipanEngine::DefaultSampler::LinearClamp);
-	//ParentSpriteToSprite(spriteMap_["WinnerBody"], spriteMap_["WinnerPlayer"]);
     // 勝利プレイヤーの左腕
 	spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
-	//ParentSpriteToSprite(spriteMap_["WinnerArmL"], spriteMap_["WinnerPlayer"]);
 
     // 勝利者の表示
 	spriteMap_["WinnerText"] = createSpriteWithTextureFunction_("WinnerText", "result_Win0.png", KashipanEngine::DefaultSampler::LinearClamp);
@@ -178,12 +173,6 @@ void ResultScene::OnUpdate() {
 		return;
     }
 
-    // 勝利プレイヤーのスプライトを出現させる
-    //SimpleEaseSpriteMove(spriteMap_["WinnerPlayer"], Vector3(screenCenter_.x, screenCenter_.y + sinf(timer_) *10.0f, 0.0f), 0.2f);
-	//SetTranslateToSprite(spriteMap_["WinnerHead"], Vector3(0.0f, sinf(timer_) * 5.0f, 0.0f));
-    //SetTranslateToSprite(spriteMap_["WinnerArmR"], Vector3(0.0f, sinf(timer_+ 0.8f) * 10.0f, 0.0f));
-    //SetRotationToSprite(spriteMap_["WinnerArmL"], Vector3(0.0f,0.0f,sinf(timer_) * 0.05f));
-
 	// 勝利者の文字を出現させる
 	SimpleEaseSpriteMove(spriteMap_["WinnerText"], Vector3(screenCenter_.x, screenCenter_.y + cosf(timer_) * 5.0f, 0.0f), 0.2f);
     // 勝利者のスプライトを変化させる
@@ -232,13 +221,13 @@ void ResultScene::OnUpdate() {
     }
 
     // 30秒経過したらタイトルへ自動遷移
-    /*if (timer_ >= 30.0f && GetNextSceneName().empty()) {
+    if (timer_ >= 30.0f && GetNextSceneName().empty()) {
         SetNextSceneName("TitleScene");
         PlaySE("menuDecide.mp3");
         if (auto* out = GetSceneComponent<SceneChangeOut>()) {
             out->Play();
         }
-    }*/
+    }
 
     if (auto *ic = GetInputCommand()) {
         if (ic->Evaluate("DebugSceneChange").Triggered()) {

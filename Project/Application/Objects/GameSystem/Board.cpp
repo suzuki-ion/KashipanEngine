@@ -5,6 +5,7 @@ void Board::Initialize(int width, int height) {
 	width_ = width;
 	height_ = height;
 	data_.resize(width * height, 0); // 初期値は0
+	Reset();
 }
 
 void Application::Board::ShiftRow(int rowIndex, int shiftAmount) {

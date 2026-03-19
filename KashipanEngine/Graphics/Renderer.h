@@ -304,6 +304,9 @@ public:
     /// @brief Windowの登録
     void RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandList* commandList);
 
+    /// @brief GPUリソースの全開放
+    void ReleaseAllResources(Passkey<GraphicsEngine>);
+
     struct ShadowMapGlobals {
         ShadowMapBuffer* buffer = nullptr;
         D3D12_GPU_DESCRIPTOR_HANDLE sampler{};

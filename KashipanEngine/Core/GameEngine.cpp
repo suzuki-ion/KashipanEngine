@@ -320,7 +320,9 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         GameLoopDraw();
 
         if (sceneManager_) {
-            sceneManager_->CommitPendingSceneChange({});
+            if (sceneManager_->CommitPendingSceneChange({})) {
+                graphicsEngine_->ReleaseRendererResources({});
+            }
         }
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});

@@ -397,7 +397,7 @@ void GameScene::Initialize() {
         }
 
         obj->RegisterComponent<BPMScaling>(playerScaleMin_, playerScaleMax_, EaseType::EaseOutExpo);
-        obj->RegisterComponent<Health>(7, 1.0f);
+        obj->RegisterComponent<Health>(playerMaxHealth_, 1.0f);
 
         // 衝突判定を追加（修正版）
         if (colliderComp && colliderComp->GetCollider()) {
@@ -746,6 +746,18 @@ void GameScene::OnUpdate() {
     DrawObjectStateImGui();
     DrawParticleStateImGui();
 #endif
+
+    if (isGameStarted_ && waveSystem_) {
+        const int currentWaveIndex = static_cast<int>(waveSystem_->GetCurrentWave());
+        if (lastWaveIndexForHeal_ >= 0 && currentWaveIndex > lastWaveIndexForHeal_) {
+            if (player_) {
+                if (auto* health = player_->GetComponent3D<Health>()) {
+                    health->ResetHealth(playerMaxHealth_);
+                }
+            }
+        }
+        lastWaveIndexForHeal_ = currentWaveIndex;
+    }
 
 	// プレイヤーの体力が0になった際の処理
     if (!isGameClearProcCompleted_) {
@@ -1837,11 +1849,12 @@ void GameScene::InGameStart() {
         if (waveSystem_) {
             waveSystem_->StartSystem();
             waveSystem_->Start();
+            lastWaveIndexForHeal_ = static_cast<int>(waveSystem_->GetCurrentWave());
         }
 
         if (player_) {
             if (auto* health = player_->GetComponent3D<Health>()) {
-                health->ResetHealth(7);
+                health->ResetHealth(playerMaxHealth_);
             }
         }
     }
@@ -1918,6 +1931,7 @@ void GameScene::InGameQuit() {
         stageLighting_->ResetLighting();
     }
 
+    lastWaveIndexForHeal_ = -1;
     isGameStarted_ = false;
 }
 

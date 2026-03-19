@@ -148,6 +148,8 @@ private:
 	float playerChainBpmToleranceRange_ = 0.25f;           // プレイヤーがチェインBPMに合わせる±の許容範囲
     float playerMoveDuration_ = 0.1f;                      // プレイヤー移動の所要時間（秒）
 
+	int playerMaxHealth_ = 5;                             // プレイヤーの最大体力
+
 	float playerMoveInputInterval_ = 0.0f;                 // プレイヤー移動入力のインターバル時間（秒）
 	float playerNoneMoveInputInterval_ = 0.4f;             // プレイヤー移動入力のインターバル時間（秒）（BPM外）
 	float playerChainMoveInputInterval_ = 0.25f;             // プレイヤー移動入力のインターバル時間（秒）（チェインBPM外）
@@ -253,6 +255,7 @@ private:
     // スコア保存・読み込み
     ScoreSaveAndLoad *scoreSaveAndLoad_ = nullptr;
     bool isGameClearProcCompleted_ = false;
+    int lastWaveIndexForHeal_ = -1;
 
 protected:
     void OnUpdate() override;

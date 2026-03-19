@@ -95,6 +95,10 @@ void GameScene::Initialize() {
 	puzzleGameSystem2_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 1.5f, screenCenter_.y, 0.0f));
 	puzzleGameSystem2_.SetAnchorSpriteRotation(Vector3(0.0f, 3.14f, 0.0f)); // 2P側の盤面を反転させる
 	
+	// 
+	tutorialSprite_ = createSpriteWithTextureFunction_("Tutorial", "ControllTutorial.png", KashipanEngine::DefaultSampler::LinearClamp);
+	MatsumotoUtility::SetTranslateToSprite(tutorialSprite_, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
+
 	// メニューのスプライトを初期化
     menuSpriteContainer_.Initialize([this](const std::string& name, const std::string& textureName) {
         return createSpriteWithTextureFunction_(name, textureName, KashipanEngine::DefaultSampler::LinearClamp);

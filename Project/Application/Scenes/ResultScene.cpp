@@ -25,6 +25,10 @@ void ResultScene::Initialize() {
         in->Play();
     }
 
+    // 勝利したプレイヤーの番号（0または1）を管理する変数（-1は未設定）
+    winnerPlayerNumber_ = Application::Value::winnerPlayerNumber;
+    isNpcMode_ = Application::Value::isNpcMode;
+
 	// =============================================================
 	// ユーティリティの生成
 	// =============================================================
@@ -71,11 +75,11 @@ void ResultScene::Initialize() {
 	spriteMap_["WinnerPlayer"] = createSpriteFunction_("WinnerPlayer", KashipanEngine::DefaultSampler::LinearClamp);
 
 	// 勝利プレイヤーの頭
-	spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	spriteMap_["WinnerHead"] = createSpriteWithTextureFunction_("WinnerHead", "result_head_0.png", KashipanEngine::DefaultSampler::LinearClamp);
     // 勝利プレイヤーの胴
-	spriteMap_["WinnerBody"] = createSpriteWithTextureFunction_("WinnerBody", "result_body_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	spriteMap_["WinnerBody"] = createSpriteWithTextureFunction_("WinnerBody", "result_body_0.png", KashipanEngine::DefaultSampler::LinearClamp);
     // 勝利プレイヤーの左腕
-	spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+	spriteMap_["WinnerArmL"] = createSpriteWithTextureFunction_("WinnerArmL", "result_leftArm_0.png", KashipanEngine::DefaultSampler::LinearClamp);
 
     // 勝利者の表示
 	spriteMap_["WinnerText"] = createSpriteWithTextureFunction_("WinnerText", "result_Win0.png", KashipanEngine::DefaultSampler::LinearClamp);
@@ -88,13 +92,23 @@ void ResultScene::Initialize() {
     SetRotationToSprite(spriteMap_["CutInBarDown"], Vector3(0.0f, 0.0f, cutinBarOffsetR));
 
     // 勝利プレイヤーの右腕
-    spriteMap_["WinnerArmR"] = createSpriteWithTextureFunction_("WinnerArmR", "result_rightArm_1.png", KashipanEngine::DefaultSampler::LinearClamp);
+    spriteMap_["WinnerArmR"] = createSpriteWithTextureFunction_("WinnerArmR", "result_rightArm_0.png", KashipanEngine::DefaultSampler::LinearClamp);
 	//ParentSpriteToSprite(spriteMap_["WinnerArmR"], spriteMap_["WinnerPlayer"]);
 
     // 結果セレクタの選択肢スプライトを初期化
     spriteMap_["BackToTitle"] = createSpriteWithTextureFunction_("result", "result_0.png", KashipanEngine::DefaultSampler::LinearClamp);
     SetTranslateToSprite(spriteMap_["BackToTitle"], Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
 	SetScaleToSprite(spriteMap_["BackToTitle"], Vector3(0.0f, 0.0f, 0.0f));
+
+    // 勝利したもののテクスチャ
+	// 勝利プレイヤーの頭
+	SetTextureToSprite(spriteMap_["WinnerHead"], winnerPlayerNumber_ == 0 ? "result_head_0.png" : "result_head_1.png");
+	// 勝利プレイヤーの胴
+	SetTextureToSprite(spriteMap_["WinnerBody"], winnerPlayerNumber_ == 0 ? "result_body_0.png" : "result_body_1.png");
+	// 勝利プレイヤーの左腕
+	SetTextureToSprite(spriteMap_["WinnerArmL"], winnerPlayerNumber_ == 0 ? "result_leftArm_0.png" : "result_leftArm_1.png");
+	// 勝利プレイヤーの右腕
+	SetTextureToSprite(spriteMap_["WinnerArmR"], winnerPlayerNumber_ == 0 ? "result_rightArm_0.png" : "result_rightArm_1.png");
 
 	// =============================================================
 	// ゲームで使うオブジェクトたちの生成
@@ -109,10 +123,6 @@ void ResultScene::Initialize() {
 	// 結果の画像から一回ボタンを押させるためのフラグ
 	isReadyToSelect_ = false;
 
-	// 勝利したプレイヤーの番号（0または1）を管理する変数（-1は未設定）
-	winnerPlayerNumber_ = Application::Value::winnerPlayerNumber;
-	isNpcMode_ = Application::Value::isNpcMode;
-    
     // =============================================================
     // BGMの再生
     // =============================================================

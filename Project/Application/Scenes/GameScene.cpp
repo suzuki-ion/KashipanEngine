@@ -105,6 +105,23 @@ void GameScene::Initialize() {
 	tutorialSprite_ = createSpriteWithTextureFunction_("Tutorial", "ControllTutorial.png", KashipanEngine::DefaultSampler::LinearClamp);
 	MatsumotoUtility::SetTranslateToSprite(tutorialSprite_, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
 
+	trSlide1p = createSpriteWithTextureFunction_("CR_Slide_1p", "CR_Slide_1p.png", KashipanEngine::DefaultSampler::LinearClamp);
+	trSlide2p = createSpriteWithTextureFunction_("CR_Slide_2p", "CR_Slide_2p.png", KashipanEngine::DefaultSampler::LinearClamp);
+	trAttack1p = createSpriteWithTextureFunction_("CR_Attack_1p", "CR_Attack_1p.png", KashipanEngine::DefaultSampler::LinearClamp);
+	trAttack2p = createSpriteWithTextureFunction_("CR_Attack_2p", "CR_Attack_2p.png", KashipanEngine::DefaultSampler::LinearClamp);
+	MatsumotoUtility::SetTranslateToSprite(trSlide1p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
+	MatsumotoUtility::SetTranslateToSprite(trSlide2p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
+	MatsumotoUtility::SetTranslateToSprite(trAttack1p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
+	MatsumotoUtility::SetTranslateToSprite(trAttack2p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
+	MatsumotoUtility::SetColorToSprite(trSlide1p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+	MatsumotoUtility::SetColorToSprite(trSlide2p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+	MatsumotoUtility::SetColorToSprite(trAttack1p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+	MatsumotoUtility::SetColorToSprite(trAttack2p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+	trSlideTimer1P_ = 0.0f;
+	trSlideTimer2P_ = 0.0f;
+	trAttackTimer1P_ = 0.0f;
+	trAttackTimer2P_ = 0.0f;
+
 	// メニューのスプライトを初期化
     menuSpriteContainer_.Initialize([this](const std::string& name, const std::string& textureName) {
         return createSpriteWithTextureFunction_(name, textureName, KashipanEngine::DefaultSampler::LinearClamp);
@@ -271,6 +288,32 @@ void GameScene::GameLoop()
 
 	puzzleGameSystem1_.TakeDamage(puzzleGameSystem2_.SendDamage());
 	puzzleGameSystem2_.TakeDamage(puzzleGameSystem1_.SendDamage());
+
+	// チュートリアルの表示
+	if (puzzlePlayer1_.IsSelect() &&
+		(puzzlePlayer1_.IsMoveUp() || puzzlePlayer1_.IsMoveDown() || puzzlePlayer1_.IsMoveLeft() || puzzlePlayer1_.IsMoveRight())) {
+		trSlideTimer1P_ = 1.0f;
+	}
+	if (puzzlePlayer1_.IsSend()) {
+		trAttackTimer1P_ = 1.0f;
+	}
+	if(puzzlePlayer2_.IsSelect() &&
+		(puzzlePlayer2_.IsMoveUp() || puzzlePlayer2_.IsMoveDown() || puzzlePlayer2_.IsMoveLeft() || puzzlePlayer2_.IsMoveRight())) {
+		trSlideTimer2P_ = 1.0f;
+	}
+	if(puzzlePlayer2_.IsSend()) {
+		trAttackTimer2P_ = 1.0f;
+	}
+
+	MatsumotoUtility::SetColorToSprite(trSlide1p, Vector4(1.0f, 1.0f, 1.0f, trSlideTimer1P_));
+	MatsumotoUtility::SetColorToSprite(trSlide2p, Vector4(1.0f, 1.0f, 1.0f, trSlideTimer2P_));
+	MatsumotoUtility::SetColorToSprite(trAttack1p, Vector4(1.0f, 1.0f, 1.0f, trAttackTimer1P_));
+	MatsumotoUtility::SetColorToSprite(trAttack2p, Vector4(1.0f, 1.0f, 1.0f, trAttackTimer2P_));
+
+	trSlideTimer1P_ = MatsumotoUtility::SimpleEaseIn(trSlideTimer1P_, 0.0f, 0.1f);
+	trSlideTimer2P_ = MatsumotoUtility::SimpleEaseIn(trSlideTimer2P_, 0.0f, 0.1f);
+	trAttackTimer1P_ = MatsumotoUtility::SimpleEaseIn(trAttackTimer1P_, 0.0f, 0.1f);
+	trAttackTimer2P_ = MatsumotoUtility::SimpleEaseIn(trAttackTimer2P_, 0.0f, 0.1f);
 }
 
 // メニューで使う入力、アクションの追加＆処理

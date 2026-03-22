@@ -60,6 +60,14 @@ private:
 	bool isNpcMode_ = false; 
 	// ゲームの操作チュートリアル
 	Sprite* tutorialSprite_ = nullptr;
+	Sprite* trSlide1p = nullptr;
+	Sprite* trSlide2p = nullptr;
+	Sprite* trAttack1p = nullptr;
+	Sprite* trAttack2p = nullptr;
+	float trSlideTimer1P_ = 0.0f;
+	float trSlideTimer2P_ = 0.0f;
+	float trAttackTimer1P_ = 0.0f;
+	float trAttackTimer2P_ = 0.0f;
 
 	// BGM
 	AudioPlayer audioPlayer_;

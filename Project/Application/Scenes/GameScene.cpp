@@ -2,6 +2,8 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 
+#include "Scenes/Components/GameMenuComponents.h"
+
 #include <MatsumotoUtility.h>
 #include <Objects/SceneValue.h>
 
@@ -68,8 +70,6 @@ void GameScene::Initialize() {
 	puzzlePlayer1_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip").Triggered(); });
 	puzzleGameSystem1_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer1_);
 	puzzleGameSystem1_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 0.5f, screenCenter_.y, 0.0f));
-
-	
 	
 	puzzlePlayer2_.Initialize();
 	aiPlayer2_.Initialize(Application::Value::npcNumber);
@@ -122,28 +122,11 @@ void GameScene::Initialize() {
 	trAttackTimer1P_ = 0.0f;
 	trAttackTimer2P_ = 0.0f;
 
-	// メニューのスプライトを初期化
-    menuSpriteContainer_.Initialize([this](const std::string& name, const std::string& textureName) {
-        return createSpriteWithTextureFunction_(name, textureName, KashipanEngine::DefaultSampler::LinearClamp);
-    });
-    menuPosition_ = Vector2(400.0f, 250.0f);
-    menuSpriteContainer_.SetPosition(menuPosition_);
-
-	// ゲーム開始のスプライトを初期化
-    gameStartSprite_ = createSpriteWithTextureFunction_("GameStart", "GameStart.png", KashipanEngine::DefaultSampler::LinearClamp);
-    gameStartGoSprite_ = createSpriteWithTextureFunction_("GameStartGo", "GameStartGo.png", KashipanEngine::DefaultSampler::LinearClamp);
-	Application::MatsumotoUtility::SetTranslateToSprite(gameStartSprite_, Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
-	Application::MatsumotoUtility::SetTranslateToSprite(gameStartGoSprite_, Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
-	Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, Vector3(0.0f, 0.0f, 1.0f));
-
     // ============================================================
     // ゲームで使うオブジェクトたちの生成
     // ============================================================
-	// 3.0秒後にゲーム開始のシーケンスを開始するオブジェクト
-	gameStartSystem_.Initialize();
-	gameStartSystem_.SetStartDelay(3.0f);
-	// メニューで使う入力、アクションの追加＆処理
-	InitMenu();
+	// ゲームのメニューコンポーネントを追加
+	AddSceneComponent(std::make_unique<GameMenuComponents>(GetInputCommand()));
 	// ゲームオーバー状態の初期化
 	gameOver_ = false;
 	// ゲームオーバー後の遷移までの時間を初期化
@@ -172,17 +155,6 @@ void GameScene::OnUpdate() {
 	// デルタタイムの取得
 	float deltaTime = GetDeltaTime();
 
-	// メニューの位置を更新
-	menuSpriteContainer_.SetPosition(menuPosition_);
-	// ゲーム開始前はメニューを開けないようにする
-	if (gameStartSystem_.IsGameStarted()) {
-		menuActionManager_.Update();
-	}
-	// メニューのスプライトの状態を更新
-	menuSpriteContainer_.SetSelectedIndex(menuActionManager_.GetSelectedIndex());
-	menuSpriteContainer_.SetMenuOpen(menuActionManager_.IsMenuOpen());
-	menuSpriteContainer_.Update(deltaTime);
-
 	// シーン遷移処理
 	if (auto* ic = GetInputCommand()) {
 		if (ic->Evaluate("DebugSceneChange").Triggered()) {
@@ -206,17 +178,18 @@ void GameScene::OnUpdate() {
 	// 背景画像の更新
 	Application::MatsumotoUtility::MoveTextureUVToSprite(backgroundSprite_, Vector2(0.0f, GetDeltaTime()));
 
-	// ゲーム開始のシーケンスを更新
-	gameStartSystem_.Update(deltaTime);
+	
 	// ゲームオーバーでない、かつメニューが開いていない、かつゲーム開始のシーケンスが終わっている場合はゲームのメインループを回す
-	if (!gameOver_ && !menuActionManager_.IsMenuOpen() && gameStartSystem_.IsGameStarted()) {
+	if (!gameOver_ && GetSceneComponent<GameMenuComponents>()->IsCanLoop()) {
 		GameLoop();
 	}
-	
 
-	// ゲーム開始前のスプライトモーション
-	if (!gameStartSystem_.IsGameStarted()) {
-		Application::MatsumotoUtility::RotateSprite(gameStartSprite_, Vector3(0.0f, 3.14f * deltaTime, 0.0f));
+	// メニューからの遷移の処理
+	if (GetSceneComponent<GameMenuComponents>()->IsRequestSceneChange()) {
+		SetNextSceneName(GetSceneComponent<GameMenuComponents>()->GetNextSceneName());
+		if (auto* out = GetSceneComponent<SceneChangeOut>()) {
+			out->Play();
+		}
 	}
 
 	// ゲームオーバー後の自動シーン遷移処理
@@ -234,21 +207,6 @@ void GameScene::OnUpdate() {
 			}
 		}
 	}
-
-	ImGui::Begin("GameScene");
-	if (ImGui::Button("NextScene")) {
-		if (auto* out = GetSceneComponent<SceneChangeOut>()) {
-			out->Play();
-		}
-	}
-
-	if (ImGui::Button("1P Take 999Damage")) {
-		puzzlePlayer1_.TakeDamage(999);
-	}
-	if(ImGui::Button("2P Take 999Damage")) {
-		puzzlePlayer2_.TakeDamage(999);
-	}
-	ImGui::End();
 }
 
 // ゲームのメインループ
@@ -260,21 +218,6 @@ void GameScene::GameLoop()
 		Application::Value::isNpcMode = isNpcMode_;
 		return;
 	}
-
-	// ゲーム開始演出の更新
-	Vector3 startGameSpriteScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartSprite_);
-	startGameSpriteScale.x = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.x, 0.0f, 0.3f);
-	startGameSpriteScale.y = Application::MatsumotoUtility::SimpleEaseIn(startGameSpriteScale.y, 0.0f, 0.3f);
-	Application::MatsumotoUtility::SetScaleToSprite(gameStartSprite_, startGameSpriteScale);
-	// GOスプライトは透明にしながら拡大させる
-	Vector3 goSpriteScale = Application::MatsumotoUtility::GetTextureSizeFromSprite(gameStartGoSprite_);
-	Vector4 currentColor = Application::MatsumotoUtility::GetColorFromSprite(gameStartGoSprite_);
-	Vector3 currentScale = Application::MatsumotoUtility::GetScaleFromSprite(gameStartGoSprite_);
-	currentColor.w = Application::MatsumotoUtility::SimpleEaseIn(currentColor.w, 0.0f, 0.1f);
-	currentScale.x = Application::MatsumotoUtility::SimpleEaseIn(currentScale.x, goSpriteScale.x, 0.3f);
-	currentScale.y = Application::MatsumotoUtility::SimpleEaseIn(currentScale.y, goSpriteScale.y, 0.3f);
-	Application::MatsumotoUtility::SetColorToSprite(gameStartGoSprite_, currentColor);
-	Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, currentScale);
 
 	// パズルゲームのシステムの更新
 	puzzlePlayer1_.Update(KashipanEngine::GetDeltaTime());
@@ -314,71 +257,6 @@ void GameScene::GameLoop()
 	trSlideTimer2P_ = MatsumotoUtility::SimpleEaseIn(trSlideTimer2P_, 0.0f, 0.1f);
 	trAttackTimer1P_ = MatsumotoUtility::SimpleEaseIn(trAttackTimer1P_, 0.0f, 0.1f);
 	trAttackTimer2P_ = MatsumotoUtility::SimpleEaseIn(trAttackTimer2P_, 0.0f, 0.1f);
-}
-
-// メニューで使う入力、アクションの追加＆処理
-void GameScene::InitMenu()
-{
-    menuActionManager_.Initialize(
-        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Menu").Triggered(); },
-        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Submit").Triggered(); },
-        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Cancel").Triggered(); },
-        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Down").Triggered(); },
-        [this]() { auto* ic = GetInputCommand(); return ic && ic->Evaluate("Up").Triggered(); }
-    );
-    // メニューのアクションを追加
-    menuActionManager_.AddMenuAction([this]() {
-        gameStartSystem_.Initialize();
-        gameStartSystem_.StartSequence(1.5f);
-        Application::MatsumotoUtility::SetColorToSprite(gameStartSprite_, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        Application::MatsumotoUtility::FitSpriteToTexture(gameStartSprite_);
-        Application::MatsumotoUtility::SetColorToSprite(gameStartGoSprite_, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        Application::MatsumotoUtility::SetScaleToSprite(gameStartGoSprite_, Vector3(0.0f, 0.0f, 1.0f));
-        menuActionManager_.SetMenuOpen(false);
-        });
-	menuActionManager_.AddMenuAction([this]() {
-		if (auto* out = GetSceneComponent<SceneChangeOut>()) {
-			SetNextSceneName("GameScene");
-			out->Play();
-		}
-		});
-    menuActionManager_.AddMenuAction([this]() {
-        if (auto* out = GetSceneComponent<SceneChangeOut>()) {
-            SetNextSceneName("TitleScene");
-            out->Play();
-        }
-        });
-
-	// メニューでそうさUI用の関数登録
-	ControllerViewer* controllerViewer = menuSpriteContainer_.GetControllerViewer();
-	controllerViewer->SetInputCheckFunction("move", [this]() {
-		auto* ic = GetInputCommand();
-		return ic && (ic->Evaluate("Up").Triggered() || ic->Evaluate("Down").Triggered() || ic->Evaluate("Left").Triggered() || ic->Evaluate("Right").Triggered());
-		});
-	controllerViewer->SetInputCheckFunction("a", [this]() {
-		auto* ic = GetInputCommand();
-		return ic && ic->Evaluate("ControllerA").Triggered();
-		});
-	controllerViewer->SetInputCheckFunction("b", [this]() {
-		auto* ic = GetInputCommand();
-		return ic && ic->Evaluate("ControllerB").Triggered();
-		});
-	controllerViewer->SetInputCheckFunction("x", [this]() {
-		auto* ic = GetInputCommand();
-		return ic && ic->Evaluate("ControllerX").Triggered();
-		});
-	controllerViewer->SetInputCheckFunction("y", [this]() {
-		auto* ic = GetInputCommand();
-		return ic && ic->Evaluate("ControllerY").Triggered();
-		});
-	controllerViewer->SetInputCheckFunction("lt", [this]() {
-		auto* ic = GetInputCommand();
-		return ic && ic->Evaluate("ControllerLeftShoulder").Triggered();
-		});
-	controllerViewer->SetInputCheckFunction("rt", [this]() {
-		auto* ic = GetInputCommand();
-		return ic && ic->Evaluate("ControllerRightShoulder").Triggered();
-		});
 }
 
 } // namespace KashipanEngine

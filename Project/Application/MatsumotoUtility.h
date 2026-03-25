@@ -3,11 +3,24 @@
 
 namespace Application::MatsumotoUtility
 {
+	/// @brief シーンコンテキストからウィンドウバッファを取得する
+	KashipanEngine::ScreenBuffer* GetWindowScreenBufferFromSceneContext(KashipanEngine::SceneContext* context);
+	/// @brief シーンコンテキストからスプライトオブジェクトを作成する
+	KashipanEngine::Sprite* CreateSpriteObjectFromSceneContext(
+		KashipanEngine::SceneContext* context,
+		const std::string& spriteName, KashipanEngine::DefaultSampler defaultSampler = KashipanEngine::DefaultSampler::LinearClamp);
+
 	/// @brief スプライトオブジェクトの作成
 	KashipanEngine::Sprite* CreateSpriteObject(
 		KashipanEngine::ScreenBuffer* screenBuffer2D,
 		std::function<bool(std::unique_ptr<KashipanEngine::Object2DBase> obj)> AddObject,
         const std::string &spriteName, KashipanEngine::DefaultSampler defaultSampler);
+
+	/// @brief シーンコンテキストからスプライトオブジェクトの作成（テクスチャ付き）
+	KashipanEngine::Sprite* CreateSpriteObjectWithTextureFromSceneContext(
+		KashipanEngine::SceneContext* context,
+		const std::string& spriteName, const std::string& textureName, KashipanEngine::DefaultSampler defaultSampler = KashipanEngine::DefaultSampler::LinearClamp);
+
 	/// @brief スプライトにテクスチャを設定(拡張子を付けること)
 	void SetTextureToSprite(KashipanEngine::Sprite* sprite, const std::string& textureName);
 	/// @brief スプライトの色を設定

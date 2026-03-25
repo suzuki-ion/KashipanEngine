@@ -12,6 +12,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
     const RECT area = monitorInfoOpt ? monitorInfoOpt->WorkArea() : RECT{ 0, 0, 1280, 720 };
 
     auto *mainWIndow = Window::CreateNormal("3104_Noisend", 1280, 720);
+    mainWIndow;
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
     mainWIndow->UnregisterWindowEvent(WM_SYSCOMMAND);
     mainWIndow->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();

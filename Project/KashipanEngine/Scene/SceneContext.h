@@ -96,6 +96,13 @@ public:
 
     /// @brief ポインタから一致する3Dオブジェクトを取得
     Object3DBase *GetObject3D(Object3DBase *obj) const;
+    
+    static AudioManager *GetAudioManager() { return SceneBase::GetAudioManager(); }
+    static ModelManager *GetModelManager() { return SceneBase::GetModelManager(); }
+    static SamplerManager *GetSamplerManager() { return SceneBase::GetSamplerManager(); }
+    static TextureManager *GetTextureManager() { return SceneBase::GetTextureManager(); }
+    static Input *GetInput() { return SceneBase::GetInput(); }
+    static InputCommand *GetInputCommand() { return SceneBase::GetInputCommand(); }
 
 private:
     SceneBase *owner_ = nullptr;

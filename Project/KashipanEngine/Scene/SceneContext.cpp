@@ -43,4 +43,34 @@ bool SceneContext::RemoveObject3D(Object3DBase *obj) {
     return owner_->RemoveObject3D(obj);
 }
 
+std::vector<Object2DBase *> SceneContext::GetObjects2D(const std::string &objectName) const {
+    if (objectName.empty() || !owner_) return {};
+    return owner_->GetObjects2D(objectName);
+}
+
+Object2DBase *SceneContext::GetObject2D(const std::string &objectName) const {
+    if (objectName.empty() || !owner_) return nullptr;
+    return owner_->GetObject2D(objectName);
+}
+
+Object2DBase *SceneContext::GetObject2D(Object2DBase *obj) const {
+    if (!obj || !owner_) return nullptr;
+    return owner_->GetObject2D(obj);
+}
+
+std::vector<Object3DBase *> SceneContext::GetObjects3D(const std::string &objectName) const {
+    if (objectName.empty() || !owner_) return {};
+    return owner_->GetObjects3D(objectName);
+}
+
+Object3DBase *SceneContext::GetObject3D(const std::string &objectName) const {
+    if (objectName.empty() || !owner_) return nullptr;
+    return owner_->GetObject3D(objectName);
+}
+
+Object3DBase *SceneContext::GetObject3D(Object3DBase *obj) const {
+    if (!obj || !owner_) return nullptr;
+    return owner_->GetObject3D(obj);
+}
+
 } // namespace KashipanEngine

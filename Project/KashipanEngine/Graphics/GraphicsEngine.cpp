@@ -45,4 +45,8 @@ void GraphicsEngine::RenderFrame(Passkey<GameEngine>) {
     renderer_->RenderFrame({});
 }
 
+void GraphicsEngine::ReleaseRendererResources(Passkey<GameEngine>) {
+    renderer_->ReleaseAllResources({});
+}
+
 } // namespace KashipanEngine

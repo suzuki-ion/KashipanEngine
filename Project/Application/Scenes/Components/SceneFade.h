@@ -108,7 +108,7 @@ private:
         auto obj = std::make_unique<Sprite>();
         obj->SetUniqueBatchKey();
         obj->SetName("SceneFade_Solid");
-        obj->SetAnchorPoint(0.5f, 0.5f);
+        obj->SetPivotPoint(0.5f, 0.5f);
         if (auto *mat = obj->GetComponent2D<Material2D>()) {
             Vector4 c = color_;
             // start alpha depending on mode

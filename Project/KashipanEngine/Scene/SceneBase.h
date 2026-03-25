@@ -18,7 +18,6 @@
 #include "Objects/Object3DBase.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ISceneComponent.h"
-// #include "Scene/SceneContext.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {

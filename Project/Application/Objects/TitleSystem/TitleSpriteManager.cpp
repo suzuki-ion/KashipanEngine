@@ -168,29 +168,6 @@ void Application::TitleSpriteManager::Update(float deltaTime, TitleSection curre
 		it->second();
 	}
 
-	// デバッグ
-	ImGui::Begin("TitleSpriteManager Debug");
-	Vector3 titleScreenTranslate = GetTranslateFromSprite(sprites_["Root"]);
-	Vector3 titleScreenScale = GetScaleFromSprite(sprites_["Root"]);
-	Vector3 titleScreenRotation = GetRotationFromSprite(sprites_["Root"]);
-
-	ImGui::Text("Delta Time: %.4f", deltaTime_);
-	ImGui::Text("Current Section: %d", static_cast<int>(currentSection_));
-	ImGui::Text("Current Select Number: %d", currentSelectNumber_);
-
-	ImGui::Spacing();
-
-	ImGui::Text("TitleScreen Root Transform");
-	ImGui::DragFloat3("Root Translate", &titleScreenTranslate.x, 1.0f);
-	ImGui::DragFloat3("Root Scale", &titleScreenScale.x, 0.01f);
-	ImGui::DragFloat3("Root Rotation", &titleScreenRotation.x, 0.01f);
-
-	SetTranslateToSprite(sprites_["Root"], titleScreenTranslate);
-	SetScaleToSprite(sprites_["Root"], titleScreenScale);
-	SetRotationToSprite(sprites_["Root"], titleScreenRotation);
-
-	ImGui::End();
-
 	previousSection_ = currentSection_;
 }
 

@@ -42,14 +42,6 @@ private:
 	Application::AiPlayer aiPlayer2_;
 	Application::PuzzleGameSystem puzzleGameSystem2_;
 
-	// メニューとゲームの開始
-	void InitMenu();
-	Vector2 menuPosition_;
-	Application::MenuActionManager menuActionManager_;
-	Application::MenuSpriteContainer menuSpriteContainer_;
-	Application::GameStartSystem gameStartSystem_;
-	Sprite* gameStartSprite_ = nullptr;
-	Sprite* gameStartGoSprite_ = nullptr;
 	// ゲームオーバー
 	bool gameOver_ = false;
 	// ゲームオーバー後の自動シーン遷移用タイマー

@@ -153,6 +153,7 @@
     <ClCompile Include="Application\Objects\GameSystem\GaugeSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\AttackSprite.cpp" />
+    <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -408,6 +409,7 @@
     <ClInclude Include="Application\Objects\SceneValue.h" />
     <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
     <ClInclude Include="Application\Objects\GameSystem\AttackSprite.h" />
+    <ClInclude Include="Application\Scenes\Components\GameMenuComponents.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

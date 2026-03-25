@@ -17,7 +17,7 @@ KashipanEngine のゲームオブジェクトは、
 
 auto obj = std::make_unique<KashipanEngine::Sprite>();
 obj->SetName("MySprite");
-obj->SetAnchorPoint(0.5f, 0.5f);
+obj->SetPivotPoint(0.5f, 0.5f);
 ```
 
 ---
@@ -58,7 +58,7 @@ void MyScene::Initialize() {
 オブジェクトは `AttachToRenderer(...)` で描画先に登録します。
 
 ```cpp
-auto* window = KashipanEngine::Window::GetWindow("Main Window");
+auto* window = KashipanEngine::Window::GetWindow("3104_Noisend");
 if (window) {
     obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
 }

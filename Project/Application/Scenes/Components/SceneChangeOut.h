@@ -47,7 +47,7 @@ public:
         if (dt >= 1.0f) dt = 0.0f;
         elapsed_ = std::min(elapsed_ + dt, kDuration);
 
-        auto *window = Window::GetWindow("Main Window");
+        auto *window = Window::GetWindow("3104_Noisend");
         const float w = window ? static_cast<float>(window->GetClientWidth()) : 0.0f;
         const float h = window ? static_cast<float>(window->GetClientHeight()) : 0.0f;
 
@@ -80,7 +80,7 @@ private:
         auto *scene = GetOwnerScene();
         if (!scene) return;
 
-        auto *window = Window::GetWindow("Main Window");
+        auto *window = Window::GetWindow("3104_Noisend");
         if (!window) return;
 
         const float w = static_cast<float>(window->GetClientWidth());
@@ -91,7 +91,7 @@ private:
             auto obj = std::make_unique<Sprite>();
             obj->SetUniqueBatchKey();
             obj->SetName("SceneChangeOut_White");
-            obj->SetAnchorPoint(0.5f, 1.0f);
+            obj->SetPivotPoint(0.5f, 1.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {
                 mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                 mat->SetTexture(whiteTexture);
@@ -112,7 +112,7 @@ private:
             auto obj = std::make_unique<Sprite>();
             obj->SetUniqueBatchKey();
             obj->SetName("SceneChangeOut_Black");
-            obj->SetAnchorPoint(0.5f, 1.0f);
+            obj->SetPivotPoint(0.5f, 1.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {
                 mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 1.0f));
                 mat->SetTexture(whiteTexture);

@@ -27,7 +27,7 @@ std::ofstream sLogFile;
 const std::string kBuildTypeString =
 #ifdef DEBUG_BUILD
 "[Debug]";
-#elif defined(DEVELOP_BUILD)
+#elif defined(DEVELOPMENT_BUILD)
 "[Develop]";
 #elif defined(RELEASE_BUILD)
 "[Release]";

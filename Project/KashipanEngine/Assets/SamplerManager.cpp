@@ -127,6 +127,25 @@ SamplerManager::SamplerHandle SamplerManager::CreateSampler(const D3D12_SAMPLER_
     return RegisterEntry(std::move(e));
 }
 
+SamplerManager::SamplerHandle SamplerManager::GetSampler(DefaultSampler state) {
+    switch (state) {
+    case DefaultSampler::PointClamp:
+        return 1;
+    case DefaultSampler::PointWrap:
+        return 2;
+    case DefaultSampler::LinearClamp:
+        return 3;
+    case DefaultSampler::LinearWrap:
+        return 4;
+    case DefaultSampler::AnisotropicClamp:
+        return 5;
+    case DefaultSampler::AnisotropicWrap:
+        return 6;
+    default:
+        return kInvalidHandle;
+    }
+}
+
 bool SamplerManager::BindSampler(ShaderVariableBinder* shaderBinder, const std::string& nameKey, SamplerHandle handle) {
     if (!shaderBinder) return false;
     if (handle == kInvalidHandle) return false;

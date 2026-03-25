@@ -283,6 +283,13 @@ void GameEngine::GameLoopDraw() {
             }
         }
 
+        if (input_) {
+            input_->ShowImGui();
+        }
+        if (inputCommand_) {
+            inputCommand_->ShowImGui();
+        }
+
         ScreenBuffer::ShowImGuiScreenBuffersWindow();
         ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow();
 
@@ -319,8 +326,8 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         GameLoopUpdate();
         GameLoopDraw();
 
-        if (sceneManager_) {
-            sceneManager_->CommitPendingSceneChange({});
+        if (sceneManager_ && sceneManager_->CommitPendingSceneChange({})) {
+            graphicsEngine_->ReleaseRendererResources({});
         }
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});

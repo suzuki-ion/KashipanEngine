@@ -1,29 +1,52 @@
 #pragma once
-#include <KashipanEngine.h>
+#include <functional>
 
-namespace Application
-{
-	/// カーソルの位置を管理するクラス
-	class Cursor final
-	{
+namespace Application {
+	// カーソルの操作、状態を管理するクラス
+	class Cursor {
 	public:
-		void Initialize(int32_t rows, int32_t cols,int32_t maxRow,int32_t maxCol);
-		
-		/// カーソルの位置を更新します。行と列は0から始まります。
-		void UpdatePosition(KashipanEngine::InputCommand* Inputcommand);
-		
-		/// カーソルの現在の行と列を取得します。
-		std::pair<int32_t, int32_t> GetPosition() const { return {row_, col_}; }
-		void SetPosition(int32_t row, int32_t col) {
-			row_ = std::clamp(row, 0, maxRows_ - 1);
-			col_ = std::clamp(col, 0, maxCols_ - 1);
-		}
-		
-	private:
-		int32_t row_; // カーソルの行位置
-		int32_t col_; // カーソルの列位置
+		/// @brief カーソルを初期化する
+		void Initialize(int maxX, int maxY);
+		/// @brief カーソルの状態を更新する
+		void Update();
 
-		int32_t maxRows_; // カーソルが移動できる最大行数
-		int32_t maxCols_; // カーソルが移動できる最大列
+		/// @brief カーソルの選択状態を設定する
+		void SetMoveUpFunction(std::function<bool()> func) { moveUpFunction_ = std::move(func); }
+		void SetMoveDownFunction(std::function<bool()> func) { moveDownFunction_ = std::move(func); }
+		void SetMoveLeftFunction(std::function<bool()> func) { moveLeftFunction_ = std::move(func); }
+		void SetMoveRightFunction(std::function<bool()> func) { moveRightFunction_ = std::move(func); }
+
+		/// @brief カーソルの選択関数を設定する
+		void SetSelectFunction(std::function<bool()> func) { selectFunction_ = std::move(func); }
+
+		/// @brief カーソルの位置を取得する
+		int GetX() const { return x_; }
+		int GetY() const { return y_; }
+		/// @brief カーソルの選択状態を取得する
+		bool IsSelected() const { return isSelected_; }
+		/// @brief カーソルの移動量を取得する
+		int GetMoveX();
+		int GetMoveY();
+
+	private:
+		// カーソルの位置
+		int x_ = 0;
+		int y_ = 0;
+
+		// カーソルの移動限界
+		int maxX_ = 0;
+		int maxY_ = 0;
+
+		// カーソルが選択状態かどうか
+		bool isSelected_ = false;
+
+		// カーソルの移動関数
+		std::function<bool()> moveUpFunction_;
+		std::function<bool()> moveDownFunction_;
+		std::function<bool()> moveLeftFunction_;
+		std::function<bool()> moveRightFunction_;
+
+		// カーソルの選択関数
+		std::function<bool()> selectFunction_;
 	};
 }

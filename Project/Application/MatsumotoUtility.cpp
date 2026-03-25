@@ -1,5 +1,31 @@
 #include "MatsumotoUtility.h"
 
+KashipanEngine::ScreenBuffer* Application::MatsumotoUtility::GetWindowScreenBufferFromSceneContext(KashipanEngine::SceneContext* context) {
+	// シーンコンテキストからウィンドウバッファを取得する
+	if (!context) return nullptr;
+	auto* screenBuffer = context->GetComponent<KashipanEngine::SceneDefaultVariables>()->GetScreenBuffer2D();
+	// 取得できなかった場合は nullptr を返す
+	if (!screenBuffer) return nullptr;
+	return screenBuffer;
+}
+
+KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObjectFromSceneContext(KashipanEngine::SceneContext* context, const std::string& spriteName, KashipanEngine::DefaultSampler defaultSampler) {
+	// シーンコンテキストからウィンドウバッファを取得する
+	if (!context) return nullptr;
+	auto* screenBuffer = context->GetComponent<KashipanEngine::SceneDefaultVariables>()->GetScreenBuffer2D();
+	// 取得できなかった場合は nullptr を返す
+	if (!screenBuffer) return nullptr;
+	// スプライトオブジェクトを作成してシーンコンテキストに追加する
+	auto AddObjectFunc = [context](std::unique_ptr<KashipanEngine::Object2DBase> obj) {
+		return context->AddObject2D(std::move(obj));
+		};
+	// スプライトオブジェクトを作成してシーンコンテキストに追加する
+	auto* sprite = CreateSpriteObject(screenBuffer, AddObjectFunc, spriteName, defaultSampler);
+	// 作成できなかった場合は nullptr を返す
+	if (!sprite) return nullptr;
+	return sprite;
+}
+
 KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObject(
 	KashipanEngine::ScreenBuffer* screenBuffer2D,
 	std::function<bool(std::unique_ptr<KashipanEngine::Object2DBase>obj)> AddObject, 
@@ -25,6 +51,32 @@ KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObject(
 
 	AddObject(std::move(sprite));
 	return spritePtr;
+}
+
+KashipanEngine::Sprite* Application::MatsumotoUtility::CreateSpriteObjectWithTextureFromSceneContext(
+	KashipanEngine::SceneContext* context,
+	const std::string& spriteName,
+	const std::string& textureName,
+	KashipanEngine::DefaultSampler defaultSampler) {
+
+	// シーンコンテキストからウィンドウバッファを取得する
+	if (!context) return nullptr;
+	auto* screenBuffer = context->GetComponent<KashipanEngine::SceneDefaultVariables>()->GetScreenBuffer2D();
+	// 取得できなかった場合は nullptr を返す
+	if (!screenBuffer) return nullptr;
+	// スプライトオブジェクトを作成してシーンコンテキストに追加する
+	auto AddObjectFunc = [context](std::unique_ptr<KashipanEngine::Object2DBase> obj) {
+		return context->AddObject2D(std::move(obj));
+	};
+	// スプライトオブジェクトを作成してシーンコンテキストに追加する
+	auto* sprite = CreateSpriteObject(screenBuffer, AddObjectFunc, spriteName, defaultSampler);
+	// 作成できなかった場合は nullptr を返す
+	if (!sprite) return nullptr;
+	// テクスチャをスプライトに設定する
+	SetTextureToSprite(sprite, textureName);
+	// スプライトのサイズをテクスチャに合わせる
+	FitSpriteToTexture(sprite);
+	return sprite;
 }
 
 void Application::MatsumotoUtility::SetTextureToSprite(KashipanEngine::Sprite* sprite, const std::string& textureName)

@@ -31,35 +31,14 @@ private:
 	// 画面の中心
 	Vector2 screenCenter_;
 
-	// * ゲームで使うオブジェクトたち * //
-	// ゲームのメインループ
-	void GameLoop();
-	// パズルゲームのシステム
-	Application::PuzzlePlayer puzzlePlayer1_;
-	Application::PuzzleGameSystem puzzleGameSystem1_;
-
-	Application::PuzzlePlayer puzzlePlayer2_;
-	Application::AiPlayer aiPlayer2_;
-	Application::PuzzleGameSystem puzzleGameSystem2_;
-
 	// ゲームオーバー
-	bool gameOver_ = false;
+	bool isGameOver_ = false;
 	// ゲームオーバー後の自動シーン遷移用タイマー
 	float autoSceneChangeTimer_ = 0.0f;
 	// ゲームの背景
 	KashipanEngine::Sprite* backgroundSprite_ = nullptr;
 	// NPCモードかどうか
 	bool isNpcMode_ = false; 
-	// ゲームの操作チュートリアル
-	Sprite* tutorialSprite_ = nullptr;
-	Sprite* trSlide1p = nullptr;
-	Sprite* trSlide2p = nullptr;
-	Sprite* trAttack1p = nullptr;
-	Sprite* trAttack2p = nullptr;
-	float trSlideTimer1P_ = 0.0f;
-	float trSlideTimer2P_ = 0.0f;
-	float trAttackTimer1P_ = 0.0f;
-	float trAttackTimer2P_ = 0.0f;
 
 	// BGM
 	AudioPlayer audioPlayer_;

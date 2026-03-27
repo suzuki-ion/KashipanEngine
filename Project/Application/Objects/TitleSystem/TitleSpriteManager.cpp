@@ -1,5 +1,7 @@
 #include "TitleSpriteManager.h"
 #include <MatsumotoUtility.h>
+#include "Objects/Components/ApplicationComponents.h"
+
 using namespace Application::MatsumotoUtility;
 
 void Application::TitleSpriteManager::Initialize(std::function<KashipanEngine::Sprite* (const std::string&, KashipanEngine::DefaultSampler)> createSpriteFunc)

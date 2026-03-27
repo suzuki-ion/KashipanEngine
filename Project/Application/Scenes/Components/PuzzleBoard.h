@@ -105,6 +105,8 @@ private:
         const float triangleHeight = 1.5f * kTriangleRadius;
         const float stepX = (triangleWidth * 0.5f) + kTriangleMargin;
         const float stepY = triangleHeight + kTriangleMargin;
+        const float centerX = static_cast<float>(boardWidth_ - 1) * 0.5f;
+        const float centerY = static_cast<float>(boardHeight_ - 1) * 0.5f;
 
         for (int y = 0; y < boardHeight_; ++y) {
             for (int x = 0; x < boardWidth_; ++x) {
@@ -120,8 +122,8 @@ private:
                 }
 
                 if (auto *transform = triangle->GetComponent2D<KashipanEngine::Transform2D>()) {
-                    const float xOffset = static_cast<float>(x) * stepX;
-                    const float yOffset = static_cast<float>(y) * stepY;
+                    const float xOffset = (static_cast<float>(x) - centerX) * stepX;
+                    const float yOffset = (static_cast<float>(y) - centerY) * stepY;
                     transform->SetTranslate(Vector3(xOffset, yOffset, 0.0f));
                     transform->SetScale(Vector3(kTriangleRadius, kTriangleRadius, 1.0f));
                     transform->SetRotate(Vector3(0.0f, 0.0f, ResolveDirection(x, y) == PuzzleBlockDirection::Up ? 0.0f : std::numbers::pi_v<float>));

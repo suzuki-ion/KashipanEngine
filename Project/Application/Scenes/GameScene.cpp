@@ -63,15 +63,18 @@ void GameScene::Initialize() {
     auto puzzleBoards = GetSceneComponents<PuzzleBoard>();
     // 盤面の初期化
 	if (puzzleBoards.size() >= 2) {
-		puzzleBoards[0]->SetBoardSize(8, 6);
-		puzzleBoards[1]->SetBoardSize(8, 6);
+		puzzleBoards[0]->SetBoardSize(17, 6);
+		puzzleBoards[1]->SetBoardSize(17, 6);
 		// 左右で配置
         auto boardTransform1 = puzzleBoards[0]->GetBoardRootTransform();
         auto boardTransform2 = puzzleBoards[1]->GetBoardRootTransform();
 		if (boardTransform1 && boardTransform2) {
-			float boardOffsetX = 200.0f; // 盤面同士の水平距離
-			float boardOffsetY = 50.0f;  // 盤面の垂直位置
-            boardTransform1->SetTranslate(Vector3(screenCenter_.x - boardOffsetX, screenCenter_.y + boardOffsetY, 0.0f));
+			// 盤面同士の水平距離
+            float boardOffsetX = screenCenter_.x * 0.5f;
+			// 盤面の垂直位置
+			float boardOffsetY = 0.0f;
+
+			boardTransform1->SetTranslate(Vector3(screenCenter_.x - boardOffsetX, screenCenter_.y + boardOffsetY, 0.0f));
             boardTransform2->SetTranslate(Vector3(screenCenter_.x + boardOffsetX, screenCenter_.y + boardOffsetY, 0.0f));
         }
     }

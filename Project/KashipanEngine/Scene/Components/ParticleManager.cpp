@@ -754,7 +754,6 @@ void ParticleManager::ShowImGui() {
 
     if (ImGui::Button(Translation("engine.imgui.particle_manager.add_group").c_str())) {
         newGroupConfig_.name = nameBuffer_.data();
-        newGroupConfig_.pipelineName = pipelineBuffer_.data();
         newGroupConfig_.textureName = textureBuffer_.data();
         AddGroup(newGroupConfig_);
     }

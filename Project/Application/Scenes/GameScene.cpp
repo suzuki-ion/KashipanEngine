@@ -3,6 +3,7 @@
 #include "Scenes/Components/SceneChangeOut.h"
 
 #include "Scenes/Components/GameMenuComponents.h"
+#include "Scenes/Components/PuzzleBoard.h"
 
 #include <MatsumotoUtility.h>
 #include <Objects/SceneValue.h>
@@ -16,9 +17,6 @@ GameScene::GameScene()
 
 void GameScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
-
-    AddSceneComponent(std::make_unique<SceneChangeIn>());
-    AddSceneComponent(std::make_unique<SceneChangeOut>());
 
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
@@ -59,68 +57,24 @@ void GameScene::Initialize() {
 	// ゲームの背景スプライトを初期化
 	backgroundSprite_ = createSpriteWithTextureFunction_("Background", "TitleBG.png", KashipanEngine::DefaultSampler::LinearWrap);
 	Application::MatsumotoUtility::SetTranslateToSprite(backgroundSprite_, Vector3(screenCenter_.x, screenCenter_.y, 0.0f));
-	
-	// パズルゲームのシステムの初期化
-	puzzlePlayer1_.Initialize();
-	puzzlePlayer1_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("PuzzleUp").Triggered(); });
-	puzzlePlayer1_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("PuzzleDown").Triggered(); });
-	puzzlePlayer1_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("PuzzleLeft").Triggered(); });
-	puzzlePlayer1_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("PuzzleRight").Triggered(); });
-	puzzlePlayer1_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("PuzzleActionHold").Triggered(); });
-	puzzlePlayer1_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("PuzzleTimeSkip").Triggered(); });
-	puzzleGameSystem1_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer1_);
-	puzzleGameSystem1_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 0.5f, screenCenter_.y, 0.0f));
-	
-	puzzlePlayer2_.Initialize();
-	aiPlayer2_.Initialize(Application::Value::npcNumber);
-	// 2P用のパズルゲームのシステムの初期化
-	if (isNpcMode_) {
-		puzzlePlayer2_.SetMoveUpFunction([this]() { return aiPlayer2_.GetIsMoveUp(); });
-		puzzlePlayer2_.SetMoveDownFunction([this]() { return aiPlayer2_.GetIsMoveDown(); });
-		puzzlePlayer2_.SetMoveLeftFunction([this]() { return aiPlayer2_.GetIsMoveLeft(); });
-		puzzlePlayer2_.SetMoveRightFunction([this]() { return aiPlayer2_.GetIsMoveRight(); });
-		puzzlePlayer2_.SetSelectFunction([this]() { return aiPlayer2_.GetIsSelecting(); });
-		puzzlePlayer2_.SetSendFunction([this]() { return aiPlayer2_.GetIsSend(); });
-	}
-	else {
-		puzzlePlayer2_.SetMoveUpFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleUp").Triggered(); });
-		puzzlePlayer2_.SetMoveDownFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleDown").Triggered(); });
-		puzzlePlayer2_.SetMoveLeftFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleLeft").Triggered(); });
-		puzzlePlayer2_.SetMoveRightFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleRight").Triggered(); });
-		puzzlePlayer2_.SetSelectFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleActionHold").Triggered(); });
-		puzzlePlayer2_.SetSendFunction([this]() { return GetInputCommand()->Evaluate("P2PuzzleTimeSkip").Triggered(); });
-	}
-	
-	puzzleGameSystem2_.Initialize(createSpriteWithTextureFunction_, &puzzlePlayer2_);
-	puzzleGameSystem2_.SetAnchorSpritePosition(Vector3(screenCenter_.x * 1.5f, screenCenter_.y, 0.0f));
-	puzzleGameSystem2_.SetAnchorSpriteRotation(Vector3(0.0f, 3.14f, 0.0f)); // 2P側の盤面を反転させる
-	if (isNpcMode_) {
-		puzzleGameSystem2_.SetupNpc();
-	}
-	else {
-		puzzleGameSystem2_.Setup2P();
-	}
-	
-	// 
-	tutorialSprite_ = createSpriteWithTextureFunction_("Tutorial", "ControllTutorial.png", KashipanEngine::DefaultSampler::LinearClamp);
-	MatsumotoUtility::SetTranslateToSprite(tutorialSprite_, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
 
-	trSlide1p = createSpriteWithTextureFunction_("CR_Slide_1p", "CR_Slide_1p.png", KashipanEngine::DefaultSampler::LinearClamp);
-	trSlide2p = createSpriteWithTextureFunction_("CR_Slide_2p", "CR_Slide_2p.png", KashipanEngine::DefaultSampler::LinearClamp);
-	trAttack1p = createSpriteWithTextureFunction_("CR_Attack_1p", "CR_Attack_1p.png", KashipanEngine::DefaultSampler::LinearClamp);
-	trAttack2p = createSpriteWithTextureFunction_("CR_Attack_2p", "CR_Attack_2p.png", KashipanEngine::DefaultSampler::LinearClamp);
-	MatsumotoUtility::SetTranslateToSprite(trSlide1p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
-	MatsumotoUtility::SetTranslateToSprite(trSlide2p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
-	MatsumotoUtility::SetTranslateToSprite(trAttack1p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
-	MatsumotoUtility::SetTranslateToSprite(trAttack2p, Vector3(screenCenter_.x, screenCenter_.y - 100.0f, 0.0f));
-	MatsumotoUtility::SetColorToSprite(trSlide1p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-	MatsumotoUtility::SetColorToSprite(trSlide2p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-	MatsumotoUtility::SetColorToSprite(trAttack1p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-	MatsumotoUtility::SetColorToSprite(trAttack2p, Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-	trSlideTimer1P_ = 0.0f;
-	trSlideTimer2P_ = 0.0f;
-	trAttackTimer1P_ = 0.0f;
-	trAttackTimer2P_ = 0.0f;
+	AddSceneComponent(std::make_unique<PuzzleBoard>());
+	AddSceneComponent(std::make_unique<PuzzleBoard>());
+    auto puzzleBoards = GetSceneComponents<PuzzleBoard>();
+    // 盤面の初期化
+	if (puzzleBoards.size() >= 2) {
+		puzzleBoards[0]->SetBoardSize(8, 6);
+		puzzleBoards[1]->SetBoardSize(8, 6);
+		// 左右で配置
+        auto boardTransform1 = puzzleBoards[0]->GetBoardRootTransform();
+        auto boardTransform2 = puzzleBoards[1]->GetBoardRootTransform();
+		if (boardTransform1 && boardTransform2) {
+			float boardOffsetX = 200.0f; // 盤面同士の水平距離
+			float boardOffsetY = 50.0f;  // 盤面の垂直位置
+            boardTransform1->SetTranslate(Vector3(screenCenter_.x - boardOffsetX, screenCenter_.y + boardOffsetY, 0.0f));
+            boardTransform2->SetTranslate(Vector3(screenCenter_.x + boardOffsetX, screenCenter_.y + boardOffsetY, 0.0f));
+        }
+    }
 
     // ============================================================
     // ゲームで使うオブジェクトたちの生成
@@ -128,7 +82,7 @@ void GameScene::Initialize() {
 	// ゲームのメニューコンポーネントを追加
 	AddSceneComponent(std::make_unique<GameMenuComponents>(GetInputCommand()));
 	// ゲームオーバー状態の初期化
-	gameOver_ = false;
+	isGameOver_ = false;
 	// ゲームオーバー後の遷移までの時間を初期化
 	autoSceneChangeTimer_ = 3.0f;
 
@@ -143,6 +97,9 @@ void GameScene::Initialize() {
 		audioPlayer_.AddAudio(params);
 		audioPlayer_.ChangeAudio(2.0);
 	}
+
+	AddSceneComponent(std::make_unique<SceneChangeIn>());
+	AddSceneComponent(std::make_unique<SceneChangeOut>());
 }
 
 GameScene::~GameScene() {}
@@ -178,10 +135,9 @@ void GameScene::OnUpdate() {
 	// 背景画像の更新
 	Application::MatsumotoUtility::MoveTextureUVToSprite(backgroundSprite_, Vector2(0.0f, GetDeltaTime()));
 
-	
 	// ゲームオーバーでない、かつメニューが開いていない、かつゲーム開始のシーケンスが終わっている場合はゲームのメインループを回す
-	if (!gameOver_ && GetSceneComponent<GameMenuComponents>()->IsCanLoop()) {
-		GameLoop();
+	if (!isGameOver_ && GetSceneComponent<GameMenuComponents>()->IsCanLoop()) {
+		//GameLoop();
 	}
 
 	// メニューからの遷移の処理
@@ -193,9 +149,7 @@ void GameScene::OnUpdate() {
 	}
 
 	// ゲームオーバー後の自動シーン遷移処理
-	if (gameOver_) {
-		puzzleGameSystem1_.DeathAnimation();
-		puzzleGameSystem2_.DeathAnimation();
+	if (isGameOver_) {
 
 		autoSceneChangeTimer_ -= deltaTime;
 		if (autoSceneChangeTimer_ <= 0.0f) {
@@ -207,56 +161,6 @@ void GameScene::OnUpdate() {
 			}
 		}
 	}
-}
-
-// ゲームのメインループ
-void GameScene::GameLoop()
-{
-	if(!puzzlePlayer1_.IsAlive() || !puzzlePlayer2_.IsAlive()) {
-		gameOver_ = true;
-		Application::Value::winnerPlayerNumber = puzzlePlayer1_.IsAlive() ? 0 : 1;
-		Application::Value::isNpcMode = isNpcMode_;
-		return;
-	}
-
-	// パズルゲームのシステムの更新
-	puzzlePlayer1_.Update(KashipanEngine::GetDeltaTime());
-	puzzleGameSystem1_.Update();
-
-	if (isNpcMode_) {
-		aiPlayer2_.Update(KashipanEngine::GetDeltaTime());
-	}
-	puzzlePlayer2_.Update(KashipanEngine::GetDeltaTime());
-	puzzleGameSystem2_.Update();
-
-	puzzleGameSystem1_.TakeDamage(puzzleGameSystem2_.SendDamage());
-	puzzleGameSystem2_.TakeDamage(puzzleGameSystem1_.SendDamage());
-
-	// チュートリアルの表示
-	if (puzzlePlayer1_.IsSelect() &&
-		(puzzlePlayer1_.IsMoveUp() || puzzlePlayer1_.IsMoveDown() || puzzlePlayer1_.IsMoveLeft() || puzzlePlayer1_.IsMoveRight())) {
-		trSlideTimer1P_ = 1.0f;
-	}
-	if (puzzlePlayer1_.IsSend()) {
-		trAttackTimer1P_ = 1.0f;
-	}
-	if(puzzlePlayer2_.IsSelect() &&
-		(puzzlePlayer2_.IsMoveUp() || puzzlePlayer2_.IsMoveDown() || puzzlePlayer2_.IsMoveLeft() || puzzlePlayer2_.IsMoveRight())) {
-		trSlideTimer2P_ = 1.0f;
-	}
-	if(puzzlePlayer2_.IsSend()) {
-		trAttackTimer2P_ = 1.0f;
-	}
-
-	MatsumotoUtility::SetColorToSprite(trSlide1p, Vector4(1.0f, 1.0f, 1.0f, trSlideTimer1P_));
-	MatsumotoUtility::SetColorToSprite(trSlide2p, Vector4(1.0f, 1.0f, 1.0f, trSlideTimer2P_));
-	MatsumotoUtility::SetColorToSprite(trAttack1p, Vector4(1.0f, 1.0f, 1.0f, trAttackTimer1P_));
-	MatsumotoUtility::SetColorToSprite(trAttack2p, Vector4(1.0f, 1.0f, 1.0f, trAttackTimer2P_));
-
-	trSlideTimer1P_ = MatsumotoUtility::SimpleEaseIn(trSlideTimer1P_, 0.0f, 0.1f);
-	trSlideTimer2P_ = MatsumotoUtility::SimpleEaseIn(trSlideTimer2P_, 0.0f, 0.1f);
-	trAttackTimer1P_ = MatsumotoUtility::SimpleEaseIn(trAttackTimer1P_, 0.0f, 0.1f);
-	trAttackTimer2P_ = MatsumotoUtility::SimpleEaseIn(trAttackTimer2P_, 0.0f, 0.1f);
 }
 
 } // namespace KashipanEngine

@@ -176,6 +176,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application\MatsumotoUtility.cpp" />
+    <ClCompile Include="Application\Objects\Components\SpriteAnimationComponent.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\AttackSprite.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\BlockSprite.cpp" />
@@ -345,7 +346,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\MatsumotoUtility.h" />
+    <ClInclude Include="Application\Objects\Components\ApplicationComponents.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
+    <ClInclude Include="Application\Objects\Components\SpriteAnimationComponent.h" />
     <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
     <ClInclude Include="Application\Objects\GameSystem\AttackSprite.h" />
     <ClInclude Include="Application\Objects\GameSystem\BlockSprite.h" />

@@ -23,6 +23,17 @@ size_t SceneContext::HasComponents(const std::string &componentName) const {
     return owner_->HasSceneComponents(componentName);
 }
 
+void SceneContext::AddSceneVariable(const std::string &key, const std::any &value) {
+    if (key.empty() || !owner_) return;
+    owner_->AddSceneVariable(key, value);
+}
+
+const MyStd::AnyUnorderedMap &SceneContext::GetSceneVariables() const {
+    static const MyStd::AnyUnorderedMap kEmpty;
+    if (!owner_) return kEmpty;
+    return owner_->GetSceneVariables();
+}
+
 bool SceneContext::AddObject2D(std::unique_ptr<Object2DBase> obj) {
     if (!owner_) return false;
     return owner_->AddObject2D(std::move(obj));

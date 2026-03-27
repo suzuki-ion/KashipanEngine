@@ -154,6 +154,7 @@
     <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
     <ClCompile Include="Application\Objects\GameSystem\AttackSprite.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
+    <ClCompile Include="Application\Objects\Components\SpriteAnimationComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -410,6 +411,8 @@
     <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
     <ClInclude Include="Application\Objects\GameSystem\AttackSprite.h" />
     <ClInclude Include="Application\Scenes\Components\GameMenuComponents.h" />
+    <ClInclude Include="Application\Objects\Components\SpriteAnimationComponent.h" />
+    <ClInclude Include="Application\Objects\Components\ApplicationComponents.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

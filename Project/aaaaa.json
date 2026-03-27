@@ -1,0 +1,97 @@
+{
+    "groups": [
+        {
+            "baseScale": [
+                4.0,
+                4.0,
+                4.0
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "count": 2048,
+            "endColor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "endScale": 0.0,
+            "gravity": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "initialRotationMax": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "initialRotationMin": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "initialVelocityMax": [
+                512.0,
+                -256.0,
+                512.0
+            ],
+            "initialVelocityMin": [
+                -512.0,
+                -512.0,
+                -512.0
+            ],
+            "lifeTimeRandomRange": 0.0,
+            "lifeTimeSec": 2.0,
+            "linearDamping": 0.0,
+            "loop": true,
+            "name": "ParticleGroup",
+            "peakScale": 8.0,
+            "pipeline": "Object2D.DoubleSidedCulling.BlendNormal",
+            "resetOnSpawn": true,
+            "rotationSpeed": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "shape2D": "Sprite",
+            "shape3D": "Plane",
+            "spawnBox": {
+                "max": [
+                    5.0,
+                    5.0,
+                    5.0
+                ],
+                "min": [
+                    -5.0,
+                    0.0,
+                    -5.0
+                ]
+            },
+            "spawnCenter": [
+                1024.0,
+                512.0,
+                0.0
+            ],
+            "spawnIntervalSec": 0.0010000000474974513,
+            "spawnOnStart": true,
+            "spawnRadius": 0.0,
+            "speed": 1024.0,
+            "startColor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "startScale": 0.0,
+            "target": "2D",
+            "texture": "white1x1.png",
+            "useSpawnBox": false
+        }
+    ],
+    "version": 1
+}

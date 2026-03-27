@@ -31,6 +31,8 @@ private:
 	// 画面の中心
 	Vector2 screenCenter_;
 
+	// ゲームクリア
+    bool isGameClear_ = false;
 	// ゲームオーバー
 	bool isGameOver_ = false;
 	// ゲームオーバー後の自動シーン遷移用タイマー

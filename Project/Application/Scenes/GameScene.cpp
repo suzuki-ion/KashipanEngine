@@ -103,6 +103,9 @@ void GameScene::Initialize() {
 
 	AddSceneComponent(std::make_unique<SceneChangeIn>());
 	AddSceneComponent(std::make_unique<SceneChangeOut>());
+
+    AddSceneVariable("IsGameClear", false);
+    AddSceneVariable("IsGameOver", false);
 }
 
 GameScene::~GameScene() {}

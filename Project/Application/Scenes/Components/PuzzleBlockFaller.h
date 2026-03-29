@@ -80,7 +80,7 @@ public:
         if (currentBlockData_.empty() || currentBlockData_.front().empty()) return false;
 
         placePositions_->EvaluatePlaceablePositions(currentBlockData_);
-        auto nearest = placePositions_->GetNearestPlaceableIndices(static_cast<size_t>(currentColumn_), 0);
+        auto nearest = placePositions_->GetNearestPlaceableIndices(static_cast<size_t>(currentColumn_), static_cast<size_t>(board_->GetBoardHeight()));
         if (nearest.empty()) {
             return false;
         }
@@ -153,7 +153,7 @@ private:
         ClampColumnByShape();
 
         CreateVisualTriangles(currentBlockData_, placedPreviewTriangles_, 1.0f);
-        CreateVisualTriangles(currentBlockData_, ghostTriangles_, 0.35f);
+        CreateVisualTriangles(currentBlockData_, ghostTriangles_, 0.5f);
         RefreshPlacePreview();
     }
 
@@ -195,7 +195,7 @@ private:
         if (placedPreviewTriangles_.empty() || ghostTriangles_.empty()) return;
 
         placePositions_->EvaluatePlaceablePositions(currentBlockData_);
-        const auto place = placePositions_->GetNearestPlaceableIndices(static_cast<size_t>(currentColumn_), 0);
+        const auto place = placePositions_->GetNearestPlaceableIndices(static_cast<size_t>(currentColumn_), static_cast<size_t>(board_->GetBoardHeight()));
         if (place.empty()) return;
 
         size_t idx = 0;

@@ -198,6 +198,8 @@ private:
         const auto place = placePositions_->GetNearestPlaceableIndices(static_cast<size_t>(currentColumn_), static_cast<size_t>(board_->GetBoardHeight()));
         if (place.empty()) return;
 
+        const int previewBaseY = -static_cast<int>(currentBlockData_.size());
+
         size_t idx = 0;
         for (size_t y = 0; y < currentBlockData_.size(); ++y) {
             for (size_t x = 0; x < currentBlockData_[y].size(); ++x) {
@@ -208,7 +210,7 @@ private:
 
                 if (fallingTr) {
                     const int fx = currentColumn_ + static_cast<int>(x);
-                    const int fy = static_cast<int>(y);
+                    const int fy = previewBaseY + static_cast<int>(y);
                     fallingTr->SetTranslate(board_->GetCellLocalPosition(fx, fy));
                     fallingTr->SetRotate(Vector3(0.0f, 0.0f, currentBlockData_[y][x].direction == PuzzleBlockDirection::Up ? 0.0f : std::numbers::pi_v<float>));
                 }

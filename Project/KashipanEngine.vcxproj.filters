@@ -396,6 +396,7 @@
     <ClInclude Include="Application\Scenes\Components\PuzzleBoard.h" />
     <ClInclude Include="Application\Scenes\Components\PuzzleBlockFaller.h" />
     <ClInclude Include="Application\Scenes\Components\PuzzlePlayerComponent.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

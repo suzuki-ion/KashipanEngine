@@ -4,6 +4,7 @@
 #include "Scenes/Components/PuzzleBlockFaller.h"
 #include "Scenes/Components/PuzzleBlockNextContainer.h"
 #include "Scenes/Components/PuzzleBlockPlacePositions.h"
+#include "Scenes/Components/PuzzleBlockPyramidDetecter.h"
 #include "Scenes/Components/PuzzleBoard.h"
 #include "Scenes/Components/PuzzlePlayerComponent.h"
 #include "Scenes/Components/SceneChangeIn.h"
@@ -111,6 +112,8 @@ void GameScene::Initialize() {
     for (size_t i = 0; i < puzzleBoards.size(); ++i) {
         auto *board = puzzleBoards[i];
         if (!board) continue;
+
+        AddSceneComponent(std::make_unique<PuzzleBlockPyramidDetecter>(board));
 
         auto placeComp = std::make_unique<PuzzleBlockPlacePositions>(board);
         auto *placePtr = placeComp.get();

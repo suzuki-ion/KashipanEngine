@@ -221,7 +221,7 @@ private:
                 ApplyEquilateralTriangleVertices(triangle.get());
 
                 if (auto *material = triangle->GetComponent2D<KashipanEngine::Material2D>()) {
-                    material->SetColor(Vector4(0.5f, 0.5f, 0.5f, 0.5f));
+                    material->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.5f));
                 }
 
                 if (auto *transform = triangle->GetComponent2D<KashipanEngine::Transform2D>()) {

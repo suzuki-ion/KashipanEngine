@@ -144,6 +144,12 @@
     <ClCompile Include="KashipanEngine\Scene\Components\SpriteAnimator.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
     <ClCompile Include="Application\Objects\Components\SpriteAnimationComponent.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBoard.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPlacePositions.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockNextContainer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzlePlayerComponent.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockFaller.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />

@@ -187,6 +187,12 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\Objects\TitleSystem\TitleSelectManager.cpp" />
     <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockFaller.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockNextContainer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPlacePositions.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBoard.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzlePlayerComponent.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />

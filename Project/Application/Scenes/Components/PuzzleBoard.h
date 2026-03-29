@@ -2,15 +2,7 @@
 
 #include <KashipanEngine.h>
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <numbers>
 #include <vector>
-
-#if defined(USE_IMGUI)
-#include <imgui.h>
-#endif
 
 namespace Application {
 
@@ -32,249 +24,41 @@ struct PuzzleBlockData {
 
 class PuzzleBoard final : public KashipanEngine::ISceneComponent {
 public:
-    PuzzleBoard()
-        : ISceneComponent("PuzzleBoard", 2) {}
-    ~PuzzleBoard() override = default;
+    PuzzleBoard();
+    ~PuzzleBoard() override;
 
-    void Initialize() override {
-        ClearBoardObjects();
-        boardData_.clear();
-        boardRootObject_ = nullptr;
-        boardRootTransform_ = nullptr;
-        (void)SetBoardSize(kDefaultBoardWidth, kDefaultBoardHeight);
-    }
-
-    void Finalize() override {
-        ClearBoardObjects();
-        boardData_.clear();
-        boardRootObject_ = nullptr;
-        boardRootTransform_ = nullptr;
-    }
-
-    void Update() override {
-        const auto *ctx = GetOwnerContext();
-        if (!ctx) return;
-        if (ctx->GetSceneVariableOr<bool>("IsPuzzleStop", true)) return;
-    }
+    void Initialize() override;
+    void Finalize() override;
+    void Update() override;
 
 #if defined(USE_IMGUI)
-    void ShowImGui() override {
-        ImGui::SeparatorText("PuzzleBoard Debug Edit");
-        ImGui::Text("Board Size: %d x %d", boardWidth_, boardHeight_);
-
-        const char *typeItems[] = { "Red", "Blue" };
-        int selectedType = static_cast<int>(debugEditType_);
-        if (ImGui::Combo("Edit Block Type", &selectedType, typeItems, IM_ARRAYSIZE(typeItems))) {
-            debugEditType_ = static_cast<PuzzleBlockType>(selectedType);
-        }
-
-        const float tri = 12.0f;
-        const float stepX = tri * 0.8660254f;
-        const float stepY = tri * 0.75f;
-        const ImVec2 canvasPos = ImGui::GetCursorScreenPos();
-        const ImVec2 canvasSize(
-            std::max(64.0f, (static_cast<float>(boardWidth_) + 1.5f) * stepX),
-            std::max(64.0f, (static_cast<float>(boardHeight_) + 1.5f) * stepY));
-
-        ImGui::InvisibleButton("##PuzzleBoardGrid", canvasSize);
-        ImDrawList *drawList = ImGui::GetWindowDrawList();
-        const ImVec2 min = canvasPos;
-        const ImVec2 max = ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y);
-        drawList->AddRect(min, max, IM_COL32(80, 80, 80, 255));
-
-        auto toCanvasCenter = [&](int x, int y) {
-            const float px = (static_cast<float>(x) - static_cast<float>(boardWidth_ - 1) * 0.5f) * stepX;
-            const float py = (static_cast<float>(y) - static_cast<float>(boardHeight_ - 1) * 0.5f) * stepY;
-            return ImVec2(min.x + canvasSize.x * 0.5f + px, min.y + canvasSize.y * 0.5f + py);
-        };
-
-        auto makeTriangle = [&](const ImVec2 &c, PuzzleBlockDirection dir) {
-            const float rot = (dir == PuzzleBlockDirection::Up) ? 0.0f : std::numbers::pi_v<float>;
-            ImVec2 p[3]{};
-            for (int i = 0; i < 3; ++i) {
-                const float angle = std::numbers::pi_v<float> * 0.5f + (2.0f * std::numbers::pi_v<float> / 3.0f) * static_cast<float>(i) + rot;
-                p[i] = ImVec2(c.x + std::cos(angle) * tri, c.y + std::sin(angle) * tri);
-            }
-            return std::array<ImVec2, 3>{ p[0], p[1], p[2] };
-        };
-
-        auto pointInTri = [](const ImVec2 &p, const std::array<ImVec2, 3> &t) {
-            auto sign = [](const ImVec2 &p1, const ImVec2 &p2, const ImVec2 &p3) {
-                return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-            };
-            const float d1 = sign(p, t[0], t[1]);
-            const float d2 = sign(p, t[1], t[2]);
-            const float d3 = sign(p, t[2], t[0]);
-            const bool hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-            const bool hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-            return !(hasNeg && hasPos);
-        };
-
-        const bool clicked = ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-        const ImVec2 mouse = ImGui::GetIO().MousePos;
-
-        for (int y = 0; y < boardHeight_; ++y) {
-            for (int x = 0; x < boardWidth_; ++x) {
-                const PuzzleBlockDirection dir = ResolveDirection(x, y);
-                const auto triPoints = makeTriangle(toCanvasCenter(x, y), dir);
-
-                ImU32 fill = IM_COL32(50, 50, 50, 80);
-                if (!IsCellEmpty(x, y)) {
-                    const PuzzleBlockType type = boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)].type;
-                    fill = (type == PuzzleBlockType::Red) ? IM_COL32(220, 90, 90, 180) : IM_COL32(90, 150, 255, 180);
-                }
-
-                drawList->AddTriangleFilled(triPoints[0], triPoints[1], triPoints[2], fill);
-                drawList->AddTriangle(triPoints[0], triPoints[1], triPoints[2], IM_COL32(220, 220, 220, 200), 1.0f);
-
-                if (clicked && pointInTri(mouse, triPoints)) {
-                    DebugWriteCell(x, y, debugEditType_);
-                }
-            }
-        }
-    }
+    void ShowImGui() override;
 #endif
 
-    bool SetBoardSize(int width, int height) {
-        if (width <= 0 || height <= 0) {
-            return false;
-        }
+    bool SetBoardSize(int width, int height);
+    bool SetBlockData(int x, int y, const PuzzleBlockData &data);
+    void ResetBoardData();
 
-        boardWidth_ = width;
-        boardHeight_ = height;
+    KashipanEngine::Transform2D *GetBoardRootTransform() const;
+    KashipanEngine::ScreenBuffer *GetScreenBuffer2D() const;
 
-        boardData_.assign(static_cast<size_t>(boardHeight_), std::vector<PuzzleBlockData>(static_cast<size_t>(boardWidth_)));
+    int GetBoardWidth() const;
+    int GetBoardHeight() const;
 
-        for (int y = 0; y < boardHeight_; ++y) {
-            for (int x = 0; x < boardWidth_; ++x) {
-                boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)].direction = ResolveDirection(x, y);
-            }
-        }
+    bool IsInside(int x, int y) const;
+    bool IsCellEmpty(int x, int y) const;
+    PuzzleBlockDirection GetCellDirection(int x, int y) const;
+    Vector3 GetCellLocalPosition(int x, int y) const;
 
-        RebuildBoardBackground();
-        return true;
-    }
+    float GetTriangleRadius() const;
+    float GetTriangleMargin() const;
+    float GetStepX() const;
+    float GetStepY() const;
 
-    bool SetBlockData(int x, int y, const PuzzleBlockData &data) {
-        if (!IsInside(x, y)) {
-            return false;
-        }
+    const std::vector<std::vector<PuzzleBlockData>> &GetBoardData() const;
 
-        if (data.direction != boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)].direction) {
-            if (data.triangle) {
-                RemoveObject2D(data.triangle);
-            }
-            return false;
-        }
-
-        if (boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)].triangle != nullptr) {
-            if (data.triangle) {
-                RemoveObject2D(data.triangle);
-            }
-            return false;
-        }
-
-        boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)] = data;
-        return true;
-    }
-
-    void ResetBoardData() {
-        for (auto &row : boardData_) {
-            for (auto &cell : row) {
-                if (cell.triangle) {
-                    RemoveObject2D(cell.triangle);
-                }
-                cell = PuzzleBlockData{};
-            }
-        }
-
-        boardData_.clear();
-        boardWidth_ = 0;
-        boardHeight_ = 0;
-        ClearBoardObjects();
-    }
-
-    KashipanEngine::Transform2D *GetBoardRootTransform() const { return boardRootTransform_; }
-    KashipanEngine::ScreenBuffer *GetScreenBuffer2D() const { return screenBuffer2D_; }
-
-    int GetBoardWidth() const { return boardWidth_; }
-    int GetBoardHeight() const { return boardHeight_; }
-
-    bool IsInside(int x, int y) const {
-        return x >= 0 && y >= 0 && x < boardWidth_ && y < boardHeight_;
-    }
-
-    bool IsCellEmpty(int x, int y) const {
-        if (!IsInside(x, y)) return false;
-        return boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)].triangle == nullptr;
-    }
-
-    PuzzleBlockDirection GetCellDirection(int x, int y) const {
-        if (!IsInside(x, y)) return PuzzleBlockDirection::Up;
-        return boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)].direction;
-    }
-
-    Vector3 GetCellLocalPosition(int x, int y) const {
-        const float centerX = static_cast<float>(boardWidth_ - 1) * 0.5f;
-        const float centerY = static_cast<float>(boardHeight_ - 1) * 0.5f;
-        const float px = (static_cast<float>(x) - centerX) * GetStepX();
-        const float py = (centerY - static_cast<float>(y)) * GetStepY();
-        return Vector3(px, py, 0.0f);
-    }
-
-    float GetTriangleRadius() const { return kTriangleRadius; }
-    float GetTriangleMargin() const { return kTriangleMargin; }
-    float GetStepX() const {
-        const float triangleWidth = std::sqrt(3.0f) * kTriangleRadius;
-        return (triangleWidth * 0.5f) + kTriangleMargin;
-    }
-    float GetStepY() const {
-        const float triangleHeight = 1.5f * kTriangleRadius;
-        return triangleHeight + kTriangleMargin;
-    }
-
-    const std::vector<std::vector<PuzzleBlockData>> &GetBoardData() const { return boardData_; }
-
-    static Vector4 GetColorByType(PuzzleBlockType type, float alpha = 1.0f) {
-        if (type == PuzzleBlockType::Blue) {
-            return Vector4(0.2f, 0.45f, 1.0f, alpha);
-        }
-        return Vector4(1.0f, 0.25f, 0.25f, alpha);
-    }
-
-    static void ApplyEquilateralTriangleVertices(KashipanEngine::Triangle2D *triangle) {
-        if (!triangle) {
-            return;
-        }
-
-        auto vertices = triangle->GetVertexData<KashipanEngine::VertexData2D>();
-        if (vertices.size() < 3) {
-            return;
-        }
-
-        const float baseAngle = std::numbers::pi_v<float> * 0.5f;
-        const float stepAngle = (2.0f * std::numbers::pi_v<float>) / 3.0f;
-
-        for (size_t i = 0; i < 3; ++i) {
-            const float angle = baseAngle + stepAngle * static_cast<float>(i);
-            vertices[i].position = Vector4(std::cos(angle), std::sin(angle), 0.0f, 1.0f);
-        }
-
-        float minY = vertices[0].position.y;
-        float maxY = vertices[0].position.y;
-        for (size_t i = 1; i < 3; ++i) {
-            minY = (std::min)(minY, vertices[i].position.y);
-            maxY = (std::max)(maxY, vertices[i].position.y);
-        }
-
-        const float triangleHeight = maxY - minY;
-        const float targetCenterY = triangleHeight * 0.5f;
-        const float yOffset = targetCenterY - 1.0f;
-
-        for (size_t i = 0; i < 3; ++i) {
-            vertices[i].position.y += yOffset;
-        }
-    }
+    static Vector4 GetColorByType(PuzzleBlockType type, float alpha = 1.0f);
+    static void ApplyEquilateralTriangleVertices(KashipanEngine::Triangle2D *triangle);
 
 private:
     static constexpr int kDefaultBoardWidth = 8;
@@ -282,166 +66,13 @@ private:
     static constexpr float kTriangleRadius = 32.0f;
     static constexpr float kTriangleMargin = kTriangleRadius * 0.1f;
 
-    void RebuildBoardBackground() {
-        auto *ctx = GetOwnerContext();
-        if (!ctx) {
-            return;
-        }
+    void RebuildBoardBackground();
+    void EnsureBoardRoot();
+    void RemoveObject2D(KashipanEngine::Object2DBase *obj);
+    void DebugWriteCell(int x, int y, PuzzleBlockType type);
+    void ClearBoardObjects();
 
-        ClearBoardObjects();
-        EnsureBoardRoot();
-
-        if (!boardRootTransform_ || !screenBuffer2D_) {
-            return;
-        }
-
-        for (int y = 0; y < boardHeight_; ++y) {
-            for (int x = 0; x < boardWidth_; ++x) {
-                auto triangle = std::make_unique<KashipanEngine::Triangle2D>();
-                auto *trianglePtr = triangle.get();
-                triangle->SetName("PuzzleBoardBackground");
-                triangle->SetUniqueBatchKey();
-                triangle->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
-                ApplyEquilateralTriangleVertices(triangle.get());
-
-                if (auto *material = triangle->GetComponent2D<KashipanEngine::Material2D>()) {
-                    material->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.5f));
-                }
-
-                if (auto *transform = triangle->GetComponent2D<KashipanEngine::Transform2D>()) {
-                    transform->SetTranslate(GetCellLocalPosition(x, y));
-                    transform->SetScale(Vector3(kTriangleRadius, kTriangleRadius, 1.0f));
-                    transform->SetRotate(Vector3(0.0f, 0.0f, ResolveDirection(x, y) == PuzzleBlockDirection::Up ? 0.0f : std::numbers::pi_v<float>));
-                    transform->SetParentTransform(boardRootTransform_);
-                }
-
-                if (!ctx->AddObject2D(std::move(triangle))) {
-                    return;
-                }
-
-                boardObjects_.push_back(trianglePtr);
-            }
-        }
-    }
-
-    void EnsureBoardRoot() {
-        if (boardRootTransform_) {
-            return;
-        }
-
-        auto *ctx = GetOwnerContext();
-        if (!ctx) {
-            return;
-        }
-
-        if (!screenBuffer2D_) {
-            if (auto *sceneDefaultVariables = ctx->GetComponent<KashipanEngine::SceneDefaultVariables>()) {
-                screenBuffer2D_ = sceneDefaultVariables->GetScreenBuffer2D();
-            }
-        }
-
-        if (!screenBuffer2D_) {
-            return;
-        }
-
-        auto root = std::make_unique<KashipanEngine::Triangle2D>();
-        auto *rootPtr = root.get();
-        root->SetName("PuzzleBoardRoot");
-        root->SetUniqueBatchKey();
-        root->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
-        ApplyEquilateralTriangleVertices(root.get());
-
-        if (auto *material = root->GetComponent2D<KashipanEngine::Material2D>()) {
-            material->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-        }
-
-        if (auto *transform = root->GetComponent2D<KashipanEngine::Transform2D>()) {
-            transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
-            boardRootTransform_ = transform;
-        }
-
-        if (ctx->AddObject2D(std::move(root))) {
-            boardRootObject_ = rootPtr;
-            boardObjects_.push_back(rootPtr);
-        }
-    }
-
-    void RemoveObject2D(KashipanEngine::Object2DBase *obj) {
-        auto *ctx = GetOwnerContext();
-        if (!ctx || !obj) return;
-        (void)ctx->RemoveObject2D(obj);
-    }
-
-    void DebugWriteCell(int x, int y, PuzzleBlockType type) {
-        if (!IsInside(x, y) || !boardRootTransform_ || !screenBuffer2D_) {
-            return;
-        }
-
-        auto &cell = boardData_[static_cast<size_t>(y)][static_cast<size_t>(x)];
-        cell.type = type;
-        cell.direction = ResolveDirection(x, y);
-
-        if (cell.triangle) {
-            if (auto *mat = cell.triangle->GetComponent2D<KashipanEngine::Material2D>()) {
-                mat->SetColor(GetColorByType(type, 1.0f));
-            }
-            return;
-        }
-
-        auto obj = std::make_unique<KashipanEngine::Triangle2D>();
-        auto *trianglePtr = obj.get();
-        obj->SetName("PuzzleBoardDebugBlock");
-        obj->SetUniqueBatchKey();
-        obj->AttachToRenderer(screenBuffer2D_, "Object2D.DoubleSidedCulling.BlendNormal");
-        ApplyEquilateralTriangleVertices(obj.get());
-
-        if (auto *mat = obj->GetComponent2D<KashipanEngine::Material2D>()) {
-            mat->SetColor(GetColorByType(type, 1.0f));
-        }
-        if (auto *tr = obj->GetComponent2D<KashipanEngine::Transform2D>()) {
-            tr->SetTranslate(GetCellLocalPosition(x, y));
-            tr->SetScale(Vector3(kTriangleRadius, kTriangleRadius, 1.0f));
-            tr->SetRotate(Vector3(0.0f, 0.0f, cell.direction == PuzzleBlockDirection::Up ? 0.0f : std::numbers::pi_v<float>));
-            tr->SetParentTransform(boardRootTransform_);
-        }
-
-        if (auto *ctx = GetOwnerContext()) {
-            if (ctx->AddObject2D(std::move(obj))) {
-                cell.triangle = trianglePtr;
-            }
-        }
-    }
-
-    void ClearBoardObjects() {
-        auto *ctx = GetOwnerContext();
-        if (!ctx) {
-            boardObjects_.clear();
-            return;
-        }
-
-        for (auto &row : boardData_) {
-            for (auto &cell : row) {
-                if (cell.triangle) {
-                    ctx->RemoveObject2D(cell.triangle);
-                    cell.triangle = nullptr;
-                }
-            }
-        }
-
-        for (auto *obj : boardObjects_) {
-            if (obj) {
-                ctx->RemoveObject2D(obj);
-            }
-        }
-
-        boardObjects_.clear();
-        boardRootObject_ = nullptr;
-        boardRootTransform_ = nullptr;
-    }
-
-    static PuzzleBlockDirection ResolveDirection(int x, int y) {
-        return ((x + y) % 2 == 0) ? PuzzleBlockDirection::Up : PuzzleBlockDirection::Down;
-    }
+    static PuzzleBlockDirection ResolveDirection(int x, int y);
 
     std::vector<std::vector<PuzzleBlockData>> boardData_;
     int boardWidth_ = 0;

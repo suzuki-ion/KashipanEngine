@@ -76,6 +76,8 @@ void TitleScene::Initialize() {
         audioPlayer_.AddAudio(params);
         audioPlayer_.ChangeAudio(2.0);
     }
+
+    AddSceneComponent(std::make_unique<ParticleManager>());
 }
 
 TitleScene::~TitleScene() {

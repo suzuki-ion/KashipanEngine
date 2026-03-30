@@ -21,7 +21,9 @@ inline void AppInitialize(const GameEngine::Context &context) {
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
         
-        //sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "");
+#if defined(RELEASE_BUILD)
+        sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "TitleScene");
+#endif
         sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
@@ -84,67 +86,43 @@ inline void AppInitialize(const GameEngine::Context &context) {
         // デバッグ用シーン遷移
         ic->RegisterCommand("DebugSceneChange", Key::F1, InputCommand::InputState::Trigger);
 
-        // パズルゲーム用入力
-        ic->RegisterCommand("PuzzleUp", Key::W, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleUp", Key::Up, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.5f);
+        // パズルゲーム用入力（新仕様 / すべて Trigger）
+        // ------------------------------------------------------------
+        // P1: Horizontal Move
+        ic->RegisterCommand("P1PuzzleBlockMoveHorizontal", Key::A, InputCommand::InputState::Trigger, true);
+        ic->RegisterCommand("P1PuzzleBlockMoveHorizontal", Key::D, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("P1PuzzleBlockMoveHorizontal", Key::Left, InputCommand::InputState::Trigger, true);
+        ic->RegisterCommand("P1PuzzleBlockMoveHorizontal", Key::Right, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("P1PuzzleBlockMoveHorizontal", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("P1PuzzleBlockMoveHorizontal", ControllerButton::DPadLeft, InputCommand::InputState::Trigger, 0, true);
+        ic->RegisterCommand("P1PuzzleBlockMoveHorizontal", ControllerButton::DPadRight, InputCommand::InputState::Trigger, 0);
 
-        ic->RegisterCommand("PuzzleDown", Key::S, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleDown", Key::Down, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.5f);
+        // P1: Rotation
+        ic->RegisterCommand("P1PuzzleBlockRotation", Key::Q, InputCommand::InputState::Trigger, true);
+        ic->RegisterCommand("P1PuzzleBlockRotation", Key::E, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("P1PuzzleBlockRotation", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f, true);
+        ic->RegisterCommand("P1PuzzleBlockRotation", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
+        ic->RegisterCommand("P1PuzzleBlockRotation", ControllerButton::LeftShoulder, InputCommand::InputState::Trigger, 0, true);
+        ic->RegisterCommand("P1PuzzleBlockRotation", ControllerButton::RightShoulder, InputCommand::InputState::Trigger, 0);
 
-        ic->RegisterCommand("PuzzleLeft", Key::A, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleLeft", Key::Left, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.5f);
+        // P1: Place
+        ic->RegisterCommand("P1PuzzleBlockPlace", Key::Space, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("P1PuzzleBlockPlace", Key::Enter, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("P1PuzzleBlockPlace", ControllerButton::A, InputCommand::InputState::Trigger, 0);
 
-        ic->RegisterCommand("PuzzleRight", Key::D, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleRight", Key::Right, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.5f);
+        // P2: Horizontal Move (Controller only)
+        ic->RegisterCommand("P2PuzzleBlockMoveHorizontal", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 1, 0.5f);
+        ic->RegisterCommand("P2PuzzleBlockMoveHorizontal", ControllerButton::DPadLeft, InputCommand::InputState::Trigger, 1, true);
+        ic->RegisterCommand("P2PuzzleBlockMoveHorizontal", ControllerButton::DPadRight, InputCommand::InputState::Trigger, 1);
 
-        ic->RegisterCommand("PuzzleAction", Key::Space, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleAction", ControllerButton::A, InputCommand::InputState::Trigger);
+        // P2: Rotation (Controller only)
+        ic->RegisterCommand("P2PuzzleBlockRotation", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 1, 0.5f, true);
+        ic->RegisterCommand("P2PuzzleBlockRotation", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 1, 0.5f);
+        ic->RegisterCommand("P2PuzzleBlockRotation", ControllerButton::LeftShoulder, InputCommand::InputState::Trigger, 1, true);
+        ic->RegisterCommand("P2PuzzleBlockRotation", ControllerButton::RightShoulder, InputCommand::InputState::Trigger, 1);
 
-        // パズルパネル移動アクション（押しっぱなし判定用）
-        ic->RegisterCommand("PuzzleActionHold", Key::Space, InputCommand::InputState::Down);
-        ic->RegisterCommand("PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down);
-
-        // パズル時間スキップ
-        ic->RegisterCommand("PuzzleTimeSkip", Key::LeftShift, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleTimeSkip", Key::RightShift, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger);
-
-        // パズルステージ切り替え
-        ic->RegisterCommand("PuzzleSwitchBoard", Key::E, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleSwitchBoard", Key::Enter, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
-        ic->RegisterCommand("PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.5f);
-
-        // パズルゲーム用入力（2P用：コントローラー0）
-        // コントローラー1台の場合：1P=キーボード、2P=コントローラー0
-        // コントローラー2台の場合：1P=コントローラー0、2P=コントローラー1
-        // ※ 2P用コマンドはP2Puzzle*という名前で登録
-        ic->RegisterCommand("P2PuzzleUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger, 1);
-        ic->RegisterCommand("P2PuzzleUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 1, 0.5f);
-
-        ic->RegisterCommand("P2PuzzleDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger, 1);
-        ic->RegisterCommand("P2PuzzleDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 1, -0.5f);
-
-        ic->RegisterCommand("P2PuzzleLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger, 1);
-        ic->RegisterCommand("P2PuzzleLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 1, -0.5f);
-
-        ic->RegisterCommand("P2PuzzleRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger, 1);
-        ic->RegisterCommand("P2PuzzleRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 1, 0.5f);
-
-        ic->RegisterCommand("P2PuzzleActionHold", ControllerButton::A, InputCommand::InputState::Down, 1);
-
-        ic->RegisterCommand("P2PuzzleTimeSkip", ControllerButton::Y, InputCommand::InputState::Trigger, 1);
-
-        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 1, 0.5f);
-        ic->RegisterCommand("P2PuzzleSwitchBoard", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 1, 0.5f);
+        // P2: Place (Controller only)
+        ic->RegisterCommand("P2PuzzleBlockPlace", ControllerButton::A, InputCommand::InputState::Trigger, 1);
     }
 }
 

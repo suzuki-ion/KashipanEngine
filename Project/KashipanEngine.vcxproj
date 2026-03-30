@@ -177,18 +177,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   <ItemGroup>
     <ClCompile Include="Application\MatsumotoUtility.cpp" />
     <ClCompile Include="Application\Objects\Components\SpriteAnimationComponent.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\AttackSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\BlockSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\BoardSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\CursorSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\GaugeSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\MatchFinder.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\PuzzlePlayer.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\Board.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\PuzzleGameSystem.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\ControllerViewer.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameStartSystem.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\GameTutorialManager.cpp" />
@@ -198,6 +187,12 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="Application\Objects\TitleSystem\TitleSelectManager.cpp" />
     <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockFaller.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockNextContainer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPlacePositions.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBoard.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzlePlayerComponent.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
@@ -353,18 +348,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Components\ApplicationComponents.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
     <ClInclude Include="Application\Objects\Components\SpriteAnimationComponent.h" />
-    <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
-    <ClInclude Include="Application\Objects\GameSystem\AttackSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\BlockSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\BoardSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
-    <ClInclude Include="Application\Objects\GameSystem\CursorSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\GaugeSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\MatchFinder.h" />
-    <ClInclude Include="Application\Objects\GameSystem\PuzzlePlayer.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.h" />
-    <ClInclude Include="Application\Objects\GameSystem\Board.h" />
-    <ClInclude Include="Application\Objects\GameSystem\PuzzleGameSystem.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\ControllerViewer.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameStartSystem.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\GameTutorialManager.h" />
@@ -377,6 +361,12 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\TitleSystem\TitleSpriteManager.h" />
     <ClInclude Include="Application\Scenes\Components\BackgroundSprite.h" />
     <ClInclude Include="Application\Scenes\Components\GameMenuComponents.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockFaller.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockNextContainer.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockPlacePositions.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBoard.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzlePlayerComponent.h" />
     <ClInclude Include="Application\Scenes\Components\ResultSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
@@ -773,6 +763,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\OneDrive\Pictures\VRChat\2026-03\VRChat_2026-03-27_23-29-45.149_1920x1080.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

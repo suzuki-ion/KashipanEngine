@@ -5,6 +5,8 @@
 #include "Core/DirectX/ResourceLeakChecker.h"
 #include "Core/GameEngine.h"
 
+#include "Utilities/Plugin/Plugins.h"
+
 namespace KashipanEngine {
 int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
     SetUnhandledExceptionFilter(CrashHandler);
@@ -21,6 +23,26 @@ int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
     LoadLogSettings({}, logSettingsPath);
     InitializeLogger({});
     LoadEngineSettings({}, engineSettingsPath);
+
+	// --------- プラグインの初期化 ---------//
+	Plugin::ThreadPool threadPool;
+	Plugin::PriorityTaskDispatcher taskDispatcher(
+		[&threadPool](const std::function<void()>& task) {
+			return threadPool.AddTask(task);
+		},
+		[&threadPool]() {
+			return threadPool.HasIdleThread();
+		}
+	);
+    Plugin::addAsyncTask = [&taskDispatcher](const std::function<void()>& task,int priority) {
+        taskDispatcher.AddTask(task, priority);
+		};
+	Plugin::executeAsyncTasks = [&taskDispatcher]() {
+		taskDispatcher.ExecuteTasks();
+		};
+	Plugin::hasAsyncTasks = [&taskDispatcher]() {
+		return taskDispatcher.HasTasks();
+		};
 
     //--------- エンジン実行 ---------//
 

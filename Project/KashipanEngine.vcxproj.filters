@@ -155,6 +155,10 @@
     <ClCompile Include="Application\Objects\GameSystem\AttackSprite.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
     <ClCompile Include="Application\Objects\Components\SpriteAnimationComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -413,6 +417,11 @@
     <ClInclude Include="Application\Scenes\Components\GameMenuComponents.h" />
     <ClInclude Include="Application\Objects\Components\SpriteAnimationComponent.h" />
     <ClInclude Include="Application\Objects\Components\ApplicationComponents.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Plugins.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

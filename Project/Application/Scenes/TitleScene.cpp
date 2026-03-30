@@ -16,6 +16,7 @@ void TitleScene::Initialize() {
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
+	AddSceneComponent(std::make_unique<ParticleManager>());
 
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
@@ -48,7 +49,6 @@ void TitleScene::Initialize() {
     // ============================================================
     // ゲームで使うオブジェクトたちの生成
     // ============================================================
-
 	transitionStarted_ = false;
 
 	// タイトルセレクトマネージャーの初期化
@@ -130,9 +130,6 @@ void TitleScene::OnUpdate() {
             }
         }
     }
-
-	
-   
 }
 
 } // namespace KashipanEngine

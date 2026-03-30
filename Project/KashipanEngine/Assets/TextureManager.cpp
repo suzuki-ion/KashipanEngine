@@ -13,7 +13,7 @@
 #include <imgui_internal.h>
 #endif
 
-#include <DirectXTex.h>
+
 
 #include <d3d12.h>
 #include <wrl.h>
@@ -23,6 +23,8 @@
 #include <functional>
 #include <unordered_map>
 #include <vector>
+
+#include "Utilities/Plugin/Plugins.h"
 
 namespace KashipanEngine {
 
@@ -177,102 +179,44 @@ void TextureManager::LoadAllFromAssetsFolder() {
     };
     flatten(filtered);
 
+	// ファイルごとに非同期タスクを追加してミップマップの生成をする
     for (const auto& f : files) {
-        LoadTexture(f);
+        Plugin::addAsyncTask([this, f] {
+            mipMapContainer_.AddMipMap(f, LoadTextureFromFile(f));
+			}, 0);
     }
+	// 非同期タスクが残っている場合は完了させる
+    while (Plugin::hasAsyncTasks())
+    {
+		Plugin::executeAsyncTasks();
+    }
+
+	// ミップマップの生成がすべて完了したら、テクスチャの登録を行う
+    for (const auto& f : files) {
+		LoadTexture(f);
+    }
+    
 }
 
 TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& filePath) {
-    LogScope scope;
-    if (filePath.empty()) return kInvalidHandle;
+	// ミップマップの生成
+	const DirectX::ScratchImage* mipChain = mipMapContainer_.GetMipMap(filePath);
+    if(mipChain == nullptr) {
+        Log(Translation("engine.texture.loading.failed.loadfile") + filePath, LogSeverity::Error);
+        return kInvalidHandle;
+	}
 
-    Log(Translation("engine.texture.loading.start") + filePath, LogSeverity::Info);
-
-    {
-        const std::string normalized = NormalizePathSlashes(filePath);
-        auto it = sAssetPathToHandle.find(normalized);
-        if (it != sAssetPathToHandle.end()) {
-            Log(Translation("engine.texture.loading.alreadyloaded") + normalized, LogSeverity::Debug);
-            return it->second;
-        }
-    }
-
+    if(mipChain->GetImageCount() == 0) {
+        Log(Translation("engine.texture.loading.failed.loadfile") + filePath, LogSeverity::Error);
+        return kInvalidHandle;
+	}
     std::filesystem::path p(filePath);
 
-    if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.texture.loading.failed.notfound") + p.string(), LogSeverity::Warning);
-        return kInvalidHandle;
-    }
-    if (!HasSupportedImageExtension(p)) {
-        Log(Translation("engine.texture.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
-        return kInvalidHandle;
-    }
-
-    if (!directXCommon_ || !sDevice || !sSrvHeap) {
-        Log(Translation("engine.texture.loading.failed.notinitialized") + p.string(), LogSeverity::Error);
-        return kInvalidHandle;
-    }
-
-    DirectX::TexMetadata meta{};
-    DirectX::ScratchImage scratch;
-
-    const std::wstring wpath = ConvertString(p.string());
-
-    HRESULT hr = E_FAIL;
-    const std::string ext = ToLower(p.extension().string());
-    if (ext == ".dds") {
-        hr = DirectX::LoadFromDDSFile(wpath.c_str(), DirectX::DDS_FLAGS_NONE, &meta, scratch);
-    } else if (ext == ".tga") {
-        hr = DirectX::LoadFromTGAFile(wpath.c_str(), &meta, scratch);
-    } else if (ext == ".hdr") {
-        hr = DirectX::LoadFromHDRFile(wpath.c_str(), &meta, scratch);
-    } else {
-        hr = DirectX::LoadFromWICFile(wpath.c_str(), DirectX::WIC_FLAGS_FORCE_RGB, &meta, scratch);
-    }
-    if (FAILED(hr)) {
-        Log(Translation("engine.texture.loading.failed.decode") + p.string(), LogSeverity::Warning);
-        return kInvalidHandle;
-    }
-
-    DirectX::ScratchImage converted;
-    DXGI_FORMAT dstFormat;
-    if (ext == ".dds" || ext == ".hdr" || ext == ".tga") {
-        dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-        if (ext == ".hdr") {
-            dstFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        }
-    } else {
-        dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    }
-
-    if (meta.format != dstFormat) {
-        hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
-        if (FAILED(hr)) return kInvalidHandle;
-    }
-    const DirectX::ScratchImage &finalImage = (meta.format == dstFormat) ? scratch : converted;
-
-    // ミップマップ生成
-    DirectX::ScratchImage mipChain;
-    hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
-    if (FAILED(hr)) {
-        // ミップマップ生成に失敗した場合は元画像をそのまま使う
-        const DirectX::Image *baseImg = finalImage.GetImages();
-        if (!baseImg || !baseImg->pixels) {
-            return kInvalidHandle;
-        }
-        hr = mipChain.InitializeFromImage(*baseImg);
-        if (FAILED(hr)) {
-            return kInvalidHandle;
-        }
-    }
-
-    const DirectX::Image *img0 = mipChain.GetImages();
-    if (!img0 || !img0->pixels) {
-        return kInvalidHandle;
-    }
-
-    const auto &mmeta = mipChain.GetMetadata();
+	// メタデータからテクスチャ情報を取得
+    const auto &mmeta = mipChain->GetMetadata();
     UINT mipLevels = static_cast<UINT>(mmeta.mipLevels);
+	// 最初のミップレベルの情報を使用してテクスチャサイズを取得
+    const DirectX::Image* img0 = mipChain->GetImages();
 
     TextureEntry entry{};
     entry.fullPath = NormalizePathSlashes(p.string());
@@ -329,6 +273,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     uploadDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     uploadDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
+    HRESULT hr = E_FAIL;
     hr = sDevice->CreateCommittedResource(
         &uploadHeap,
         D3D12_HEAP_FLAG_NONE,
@@ -352,7 +297,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         }
         uint8_t* dstAll = static_cast<uint8_t*>(mapped);
         for (UINT i = 0; i < subresourceCount; ++i) {
-            const DirectX::Image* img = mipChain.GetImage(i, 0, 0);
+            const DirectX::Image* img = mipChain->GetImage(i, 0, 0);
             if (!img || !img->pixels) continue;
             auto &fp = layouts[i].Footprint;
             uint8_t* dst = dstAll + layouts[i].Offset;
@@ -401,6 +346,98 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
 
     Log(Translation("engine.texture.loading.succeeded") + p.string(), LogSeverity::Info);
     return handle;
+}
+
+DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& filePath) {
+    LogScope scope;
+    if (filePath.empty()) return DirectX::ScratchImage();
+
+    Log(Translation("engine.texture.loading.start") + filePath, LogSeverity::Info);
+
+    {
+        const std::string normalized = NormalizePathSlashes(filePath);
+        auto it = sAssetPathToHandle.find(normalized);
+        if (it != sAssetPathToHandle.end()) {
+            Log(Translation("engine.texture.loading.alreadyloaded") + normalized, LogSeverity::Debug);
+            return DirectX::ScratchImage();
+        }
+    }
+
+    std::filesystem::path p(filePath);
+
+    if (!std::filesystem::exists(p)) {
+        Log(Translation("engine.texture.loading.failed.notfound") + p.string(), LogSeverity::Warning);
+        return DirectX::ScratchImage();
+    }
+    if (!HasSupportedImageExtension(p)) {
+        Log(Translation("engine.texture.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
+        return DirectX::ScratchImage();
+    }
+
+    if (!directXCommon_ || !sDevice || !sSrvHeap) {
+        Log(Translation("engine.texture.loading.failed.notinitialized") + p.string(), LogSeverity::Error);
+        return DirectX::ScratchImage();
+    }
+
+    DirectX::TexMetadata meta{};
+    DirectX::ScratchImage scratch;
+
+    const std::wstring wpath = ConvertString(p.string());
+
+    HRESULT hr = E_FAIL;
+    const std::string ext = ToLower(p.extension().string());
+    if (ext == ".dds") {
+        hr = DirectX::LoadFromDDSFile(wpath.c_str(), DirectX::DDS_FLAGS_NONE, &meta, scratch);
+    } else if (ext == ".tga") {
+        hr = DirectX::LoadFromTGAFile(wpath.c_str(), &meta, scratch);
+    } else if (ext == ".hdr") {
+        hr = DirectX::LoadFromHDRFile(wpath.c_str(), &meta, scratch);
+    } else {
+        hr = DirectX::LoadFromWICFile(wpath.c_str(), DirectX::WIC_FLAGS_FORCE_RGB, &meta, scratch);
+    }
+    if (FAILED(hr)) {
+        Log(Translation("engine.texture.loading.failed.decode") + p.string(), LogSeverity::Warning);
+        return DirectX::ScratchImage();
+    }
+
+    DirectX::ScratchImage converted;
+    DXGI_FORMAT dstFormat;
+    if (ext == ".dds" || ext == ".hdr" || ext == ".tga") {
+        dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+        if (ext == ".hdr") {
+            dstFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        }
+    } else {
+        dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
+
+    if (meta.format != dstFormat) {
+        hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
+        if (FAILED(hr)) return DirectX::ScratchImage();
+    }
+    const DirectX::ScratchImage& finalImage = (meta.format == dstFormat) ? scratch : converted;
+
+    // ミップマップ生成
+    DirectX::ScratchImage mipChain;
+    hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
+    if (FAILED(hr)) {
+        // ミップマップ生成に失敗した場合は元画像をそのまま使う
+        const DirectX::Image* baseImg = finalImage.GetImages();
+        if (!baseImg || !baseImg->pixels) {
+            return DirectX::ScratchImage();
+        }
+        hr = mipChain.InitializeFromImage(*baseImg);
+        if (FAILED(hr)) {
+            return DirectX::ScratchImage();
+        }
+    }
+
+    const DirectX::Image* img0 = mipChain.GetImages();
+    if (!img0 || !img0->pixels) {
+        return DirectX::ScratchImage();
+    }
+
+    return mipChain;
 }
 
 TextureManager::TextureHandle TextureManager::GetTexture(TextureHandle handle) {

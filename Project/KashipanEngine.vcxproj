@@ -329,6 +329,10 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector2.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector4.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\RandomValue.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\SourceLocation.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\TemplateLiteral.cpp" />
@@ -595,6 +599,11 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector3.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector4.h" />
     <ClInclude Include="KashipanEngine\Utilities\Passkeys.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Plugins.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.h" />
     <ClInclude Include="KashipanEngine\Utilities\RandomValue.h" />
     <ClInclude Include="KashipanEngine\Utilities\SourceLocation.h" />
     <ClInclude Include="KashipanEngine\Utilities\TemplateLiteral.h" />

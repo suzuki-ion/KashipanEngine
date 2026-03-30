@@ -3,9 +3,11 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <DirectXTex.h>
 
 #include "Utilities/Passkeys.h"
 #include "Graphics/IShaderTexture.h"
+#include "Utilities/Plugin/Texture/MipMapContainer.h"
 
 namespace KashipanEngine {
 
@@ -58,6 +60,10 @@ public:
     /// @return 読み込んだテクスチャのハンドル（失敗時は `kInvalidHandle`）
     TextureHandle LoadTexture(const std::string& filePath);
 
+	/// @brief 指定ファイルパスのテクスチャを読み込む（Assets ルートからの相対 or フルパス）
+	/// @return 読み込んだテクスチャの `ScratchImage`（失敗時は空の `ScratchImage`）
+	DirectX::ScratchImage LoadTextureFromFile(const std::string& filePath);
+
     /// @brief ハンドルからテクスチャ(SRV index)を取得
     static TextureHandle GetTexture(TextureHandle handle);
     /// @brief ファイル名単体からテクスチャを取得
@@ -90,6 +96,8 @@ private:
 
     DirectXCommon* directXCommon_ = nullptr;
     std::string assetsRootPath_;
+
+	Plugin::MipMapContainer mipMapContainer_;
 };
 
 } // namespace KashipanEngine

@@ -142,23 +142,18 @@
     <ClCompile Include="Application\Objects\ResultSystem\ResultSelector.cpp" />
     <ClCompile Include="Application\Objects\OutGameSystem\ControllerViewer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SpriteAnimator.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\Board.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\PuzzleGameSystem.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\Cursor.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\BoardSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\BlockSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\CursorSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\PuzzlePlayer.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\MatchFinder.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\GaugeSprite.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\AiPlayer.cpp" />
-    <ClCompile Include="Application\Objects\GameSystem\AttackSprite.cpp" />
     <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
     <ClCompile Include="Application\Objects\Components\SpriteAnimationComponent.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBoard.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPlacePositions.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockNextContainer.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzlePlayerComponent.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockFaller.cpp" />
+    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -402,18 +397,7 @@
     <ClInclude Include="Application\Scenes\Components\BackgroundSprite.h" />
     <ClInclude Include="Application\Objects\OutGameSystem\ControllerViewer.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SpriteAnimator.h" />
-    <ClInclude Include="Application\Objects\GameSystem\Board.h" />
-    <ClInclude Include="Application\Objects\GameSystem\PuzzleGameSystem.h" />
-    <ClInclude Include="Application\Objects\GameSystem\Cursor.h" />
-    <ClInclude Include="Application\Objects\GameSystem\BoardSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\BlockSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\CursorSprite.h" />
-    <ClInclude Include="Application\Objects\GameSystem\PuzzlePlayer.h" />
-    <ClInclude Include="Application\Objects\GameSystem\MatchFinder.h" />
-    <ClInclude Include="Application\Objects\GameSystem\GaugeSprite.h" />
     <ClInclude Include="Application\Objects\SceneValue.h" />
-    <ClInclude Include="Application\Objects\GameSystem\AiPlayer.h" />
-    <ClInclude Include="Application\Objects\GameSystem\AttackSprite.h" />
     <ClInclude Include="Application\Scenes\Components\GameMenuComponents.h" />
     <ClInclude Include="Application\Objects\Components\SpriteAnimationComponent.h" />
     <ClInclude Include="Application\Objects\Components\ApplicationComponents.h" />
@@ -422,6 +406,12 @@
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Plugins.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockPlacePositions.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockNextContainer.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBoard.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockFaller.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzlePlayerComponent.h" />
+    <ClInclude Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -537,5 +527,8 @@
     <None Include="Reference\10_Input_Controller.md" />
     <None Include="Reference\10_Input_InputCommand.md" />
     <None Include="Reference\14_BuildMacros.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\OneDrive\Pictures\VRChat\2026-03\VRChat_2026-03-27_23-29-45.149_1920x1080.png" />
   </ItemGroup>
 </Project>

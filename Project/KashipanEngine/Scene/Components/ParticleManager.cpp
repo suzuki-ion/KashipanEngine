@@ -671,7 +671,19 @@ void ParticleManager::ShowImGui() {
 
     ImGui::SeparatorText(Translation("engine.imgui.particle_manager.section.create").c_str());
     ImGui::InputText(Translation("engine.imgui.particle_manager.name").c_str(), nameBuffer_.data(), nameBuffer_.size());
-    ImGui::InputText(Translation("engine.imgui.particle_manager.pipeline").c_str(), pipelineBuffer_.data(), pipelineBuffer_.size());
+
+    const char* pipelines[] = {
+        "Object3D.Solid.BlendNormal",
+        "Object2D.DoubleSidedCulling.BlendNormal"
+    };
+    int pipelineIndex = newGroupConfig_.pipelineName == "Object2D.DoubleSidedCulling.BlendNormal" ? 1 : 0;
+    if (ImGui::Combo(Translation("engine.imgui.particle_manager.pipeline").c_str(), &pipelineIndex, pipelines, 2)) {
+        if (pipelineIndex == 0) {
+            newGroupConfig_.pipelineName = "Object3D.Solid.BlendNormal";
+        } else if (pipelineIndex == 1) {
+            newGroupConfig_.pipelineName = "Object2D.DoubleSidedCulling.BlendNormal";
+        }
+    }
     ImGui::InputText(Translation("engine.imgui.particle_manager.texture").c_str(), textureBuffer_.data(), textureBuffer_.size());
 
     const char* targets[] = {
@@ -742,7 +754,6 @@ void ParticleManager::ShowImGui() {
 
     if (ImGui::Button(Translation("engine.imgui.particle_manager.add_group").c_str())) {
         newGroupConfig_.name = nameBuffer_.data();
-        newGroupConfig_.pipelineName = pipelineBuffer_.data();
         newGroupConfig_.textureName = textureBuffer_.data();
         AddGroup(newGroupConfig_);
     }

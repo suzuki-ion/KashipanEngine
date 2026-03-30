@@ -1,5 +1,5 @@
 #include "Scenes/Components/PuzzleBlockFaller.h"
-
+#include "Objects/Components/AutoSmoothMoveComponent.h"
 #include <numbers>
 
 namespace Application {
@@ -27,7 +27,7 @@ void PuzzleBlockFaller::Update() {
     const auto *ctx = GetOwnerContext();
     if (!ctx) return;
     if (ctx->GetSceneVariableOr<bool>("IsPuzzleStop", true)) return;
-    RefreshPlacePreview();
+    //RefreshPlacePreview();
 }
 
 bool PuzzleBlockFaller::MoveLeft() {
@@ -212,6 +212,9 @@ void PuzzleBlockFaller::RefreshPlacePreview() {
                 ghostTr->SetTranslate(board_->GetCellLocalPosition(static_cast<int>(place[idx].first), static_cast<int>(place[idx].second)));
                 ghostTr->SetRotate(Vector3(0.0f, 0.0f, currentBlockData_[y][x].direction == PuzzleBlockDirection::Up ? 0.0f : std::numbers::pi_v<float>));
             }
+
+            placedPreviewTriangles_[idx]->RegisterComponent<KashipanEngine::AutoSmoothMoveComponent>();
+
             ++idx;
         }
     }

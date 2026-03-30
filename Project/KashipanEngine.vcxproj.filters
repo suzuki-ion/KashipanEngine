@@ -154,6 +154,7 @@
     <ClCompile Include="Application\Scenes\Components\PuzzlePlayerComponent.cpp" />
     <ClCompile Include="Application\Scenes\Components\PuzzleBlockFaller.cpp" />
     <ClCompile Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.cpp" />
+    <ClCompile Include="Application\Objects\Components\AutoSmoothMoveComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
@@ -412,6 +413,7 @@
     <ClInclude Include="Application\Scenes\Components\PuzzleBlockFaller.h" />
     <ClInclude Include="Application\Scenes\Components\PuzzlePlayerComponent.h" />
     <ClInclude Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.h" />
+    <ClInclude Include="Application\Objects\Components\AutoSmoothMoveComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -527,8 +529,5 @@
     <None Include="Reference\10_Input_Controller.md" />
     <None Include="Reference\10_Input_InputCommand.md" />
     <None Include="Reference\14_BuildMacros.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\..\OneDrive\Pictures\VRChat\2026-03\VRChat_2026-03-27_23-29-45.149_1920x1080.png" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
 #pragma once
+#pragma once
 
+#include <array>
 #include <memory>
 #include <string>
 #include <typeindex>
@@ -45,6 +47,9 @@ public:
 #if defined(USE_IMGUI)
     void ShowImGui();
 #endif
+
+    bool SaveObjectsToJson(const std::string &filePath) const;
+    bool LoadObjectsFromJson(const std::string &filePath);
 
     void SetSceneManager(Passkey<SceneManager>, SceneManager *sceneManager) { sceneManager_ = sceneManager; }
 
@@ -251,6 +256,14 @@ private:
 
     std::string nextSceneName_;
     SceneManager *sceneManager_ = nullptr;
+
+#if defined(USE_IMGUI)
+    std::array<char, 260> objectJsonPath_{};
+    std::array<char, 128> objectAddName_{};
+    int objectAddDimension_ = 0;
+    int objectAddType2D_ = 0;
+    int objectAddType3D_ = 0;
+#endif
 };
 
 } // namespace KashipanEngine

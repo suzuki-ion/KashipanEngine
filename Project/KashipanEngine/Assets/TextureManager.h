@@ -71,6 +71,14 @@ public:
     /// @brief Assetsルートからの相対パスからテクスチャを取得
     static TextureHandle GetTextureFromAssetPath(const std::string& assetPath);
 
+    /// @brief ハンドルからテクスチャのファイル名を取得（無効時は空文字）
+    static std::string GetTextureFileName(TextureHandle handle);
+    /// @brief ハンドルからテクスチャのAssets相対パスを取得（無効時は空文字）
+    static std::string GetTextureAssetPath(TextureHandle handle);
+
+    /// @brief 読み込み済みテクスチャ一覧を取得
+    static std::vector<TextureListEntry> GetLoadedTextureListEntries();
+
     /// @brief ハンドルからシェーダー用テクスチャビューを取得（無効ハンドルの場合は空のビュー）
     static TextureView GetTextureView(TextureHandle handle) { return TextureView(GetTexture(handle)); }
 

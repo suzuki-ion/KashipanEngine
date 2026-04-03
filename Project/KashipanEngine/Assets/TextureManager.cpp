@@ -181,9 +181,10 @@ void TextureManager::LoadAllFromAssetsFolder() {
 
 	// ファイルごとに非同期タスクを追加してミップマップの生成をする
     for (const auto& f : files) {
-        Plugin::addAsyncTask([this, f] {
+        mipMapContainer_.AddMipMap(f, LoadTextureFromFile(f));
+        /*Plugin::addAsyncTask([this, f] {
             mipMapContainer_.AddMipMap(f, LoadTextureFromFile(f));
-			}, 0);
+			}, 0);*/
     }
 	// 非同期タスクが残っている場合は完了させる
     while (Plugin::hasAsyncTasks())
@@ -461,6 +462,45 @@ TextureManager::TextureHandle TextureManager::GetTextureFromAssetPath(const std:
     return it->second;
 }
 
+std::string TextureManager::GetTextureFileName(TextureHandle handle) {
+    LogScope scope;
+    if (handle == kInvalidHandle) return {};
+    auto it = sTextures.find(handle);
+    if (it == sTextures.end()) return {};
+    return it->second.fileName;
+}
+
+std::string TextureManager::GetTextureAssetPath(TextureHandle handle) {
+    LogScope scope;
+    if (handle == kInvalidHandle) return {};
+    auto it = sTextures.find(handle);
+    if (it == sTextures.end()) return {};
+    return it->second.assetPath;
+}
+
+std::vector<TextureManager::TextureListEntry> TextureManager::GetLoadedTextureListEntries() {
+    LogScope scope;
+    std::vector<TextureListEntry> out;
+    out.reserve(sTextures.size());
+
+    for (const auto &kv : sTextures) {
+        const auto &t = kv.second;
+        TextureListEntry e;
+        e.handle = kv.first;
+        e.fileName = t.fileName;
+        e.assetPath = t.assetPath;
+        e.width = t.width;
+        e.height = t.height;
+        e.srvGpuPtr = t.srvGpuPtr;
+        out.push_back(std::move(e));
+    }
+
+    std::sort(out.begin(), out.end(), [](const TextureListEntry &a, const TextureListEntry &b) {
+        return a.assetPath < b.assetPath;
+        });
+    return out;
+}
+
 #if defined(USE_IMGUI)
 namespace {
 ImTextureID ToImGuiTextureIdFromGpuPtr(UINT64 gpuPtr) {
@@ -570,26 +610,7 @@ std::vector<TextureManager::TextureHandle> TextureManager::GetAllImGuiTextures()
 }
 
 std::vector<TextureManager::TextureListEntry> TextureManager::GetImGuiTextureListEntries() {
-    LogScope scope;
-    std::vector<TextureListEntry> out;
-    out.reserve(sTextures.size());
-
-    for (const auto &kv : sTextures) {
-        const auto &t = kv.second;
-        TextureListEntry e;
-        e.handle = kv.first;
-        e.fileName = t.fileName;
-        e.assetPath = t.assetPath;
-        e.width = t.width;
-        e.height = t.height;
-        e.srvGpuPtr = t.srvGpuPtr;
-        out.push_back(std::move(e));
-    }
-
-    std::sort(out.begin(), out.end(), [](const TextureListEntry &a, const TextureListEntry &b) {
-        return a.assetPath < b.assetPath;
-        });
-    return out;
+    return GetLoadedTextureListEntries();
 }
 #endif
 

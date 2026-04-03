@@ -175,25 +175,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Application\MatsumotoUtility.cpp" />
-    <ClCompile Include="Application\Objects\Components\AutoSmoothMoveComponent.cpp" />
-    <ClCompile Include="Application\Objects\Components\SpriteAnimationComponent.cpp" />
-    <ClCompile Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.cpp" />
-    <ClCompile Include="Application\Objects\OutGameSystem\ControllerViewer.cpp" />
-    <ClCompile Include="Application\Objects\OutGameSystem\GameStartSystem.cpp" />
-    <ClCompile Include="Application\Objects\OutGameSystem\GameTutorialManager.cpp" />
-    <ClCompile Include="Application\Objects\OutGameSystem\MenuActionManager.cpp" />
-    <ClCompile Include="Application\Objects\ResultSystem\ResultSelector.cpp" />
-    <ClCompile Include="Application\Objects\TitleSystem\SelectNumderManager.cpp" />
-    <ClCompile Include="Application\Objects\TitleSystem\TitleSelectManager.cpp" />
-    <ClCompile Include="Application\Objects\TitleSystem\TitleSpriteManager.cpp" />
-    <ClCompile Include="Application\Scenes\Components\GameMenuComponents.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PuzzleBlockFaller.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PuzzleBlockNextContainer.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPlacePositions.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PuzzleBoard.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PuzzlePlayerComponent.cpp" />
     <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
@@ -345,31 +326,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application\MatsumotoUtility.h" />
-    <ClInclude Include="Application\Objects\Components\ApplicationComponents.h" />
-    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
-    <ClInclude Include="Application\Objects\Components\AutoSmoothMoveComponent.h" />
-    <ClInclude Include="Application\Objects\Components\SpriteAnimationComponent.h" />
-    <ClInclude Include="Application\Objects\OutGameSystem\MenuSpriteCotainer.h" />
-    <ClInclude Include="Application\Objects\OutGameSystem\ControllerViewer.h" />
-    <ClInclude Include="Application\Objects\OutGameSystem\GameStartSystem.h" />
-    <ClInclude Include="Application\Objects\OutGameSystem\GameTutorialManager.h" />
-    <ClInclude Include="Application\Objects\OutGameSystem\MenuActionManager.h" />
-    <ClInclude Include="Application\Objects\ResultSystem\ResultSelector.h" />
-    <ClInclude Include="Application\Objects\SceneValue.h" />
-    <ClInclude Include="Application\Objects\TitleSystem\SelectNumderManager.h" />
-    <ClInclude Include="Application\Objects\TitleSystem\TitleSection.h" />
-    <ClInclude Include="Application\Objects\TitleSystem\TitleSelectManager.h" />
-    <ClInclude Include="Application\Objects\TitleSystem\TitleSpriteManager.h" />
-    <ClInclude Include="Application\Scenes\Components\BackgroundSprite.h" />
-    <ClInclude Include="Application\Scenes\Components\GameMenuComponents.h" />
-    <ClInclude Include="Application\Scenes\Components\PuzzleBlockFaller.h" />
-    <ClInclude Include="Application\Scenes\Components\PuzzleBlockNextContainer.h" />
-    <ClInclude Include="Application\Scenes\Components\PuzzleBlockPlacePositions.h" />
-    <ClInclude Include="Application\Scenes\Components\PuzzleBlockPyramidDetecter.h" />
-    <ClInclude Include="Application\Scenes\Components\PuzzleBoard.h" />
-    <ClInclude Include="Application\Scenes\Components\PuzzlePlayerComponent.h" />
-    <ClInclude Include="Application\Scenes\Components\ResultSceneAnimator.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h">

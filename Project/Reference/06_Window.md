@@ -78,7 +78,7 @@
 ### 例：クリック透過の切り替え（Overlay Window）
 
 ```cpp
-auto* w = Window::GetWindow("3104_Noisend");
+auto* w = Window::GetWindow("3104_グランナー");
 if (w) {
     // WM_NCHITTEST 用の既定イベントを登録
     w->RegisterWindowEvent<KashipanEngine::WindowDefaultEvent::ClickThroughEvent>(true);
@@ -90,7 +90,7 @@ if (w) {
 ## 例：ウィンドウ作成
 
 ```cpp
-Window::CreateOverlay("3104_Noisend", 1280, 720, true);
+Window::CreateOverlay("3104_グランナー", 1280, 720, true);
 Window::CreateNormal("Tool Window", 640, 480);
 ```
 
@@ -99,7 +99,7 @@ Window::CreateNormal("Tool Window", 640, 480);
 ## 例：タイトル変更とフルスクリーン切替
 
 ```cpp
-auto* w = Window::GetWindow("3104_Noisend");
+auto* w = Window::GetWindow("3104_グランナー");
 if (w) {
     w->SetWindowTitle("My Game");
     w->SetWindowMode(WindowMode::FullScreen);

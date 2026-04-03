@@ -1,4 +1,5 @@
 #include "SceneDefaultVariables.h"
+#include "Scene/Components/SceneDefaultVariables.h"
 #include "Scene/SceneContext.h"
 #include "Objects/GameObjects/2D/Sprite.h"
 #include "Objects/Components/2D/Transform2D.h"
@@ -90,10 +91,10 @@ void SceneDefaultVariables::Initialize() {
     }
     // ライト管理用
     {
-        auto obj = std::make_unique<LightManager>();
-        obj->SetName("LightManager");
+        auto obj = std::make_unique<LightCountBinder>();
+        obj->SetName("LightCountBinder");
         obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
-        lightManager_ = obj.get();
+        lightCountBinder_ = obj.get();
         sceneContext->AddObject3D(std::move(obj));
     }
     // シャドウマッピング用ライトカメラ
@@ -164,6 +165,14 @@ void SceneDefaultVariables::SetSceneComponents(std::function<bool(std::unique_pt
             static_cast<float>(screenBuffer3D_ ? screenBuffer3D_->GetWidth() : 0),
             static_cast<float>(screenBuffer3D_ ? screenBuffer3D_->GetHeight() : 0));
         keepRatioComp_ = comp.get();
+        registerFunc(std::move(comp));
+    }
+
+    // シャドウマップカメラ同期コンポーネント
+    {
+        auto comp = std::make_unique<LightManager>();
+        comp->SetLightCountBinder(lightCountBinder_);
+        lightManager_ = comp.get();
         registerFunc(std::move(comp));
     }
 

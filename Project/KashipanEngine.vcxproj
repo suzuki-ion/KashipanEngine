@@ -278,7 +278,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
@@ -374,7 +374,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
@@ -523,6 +523,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ParticleManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />

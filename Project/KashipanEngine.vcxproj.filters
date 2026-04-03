@@ -93,7 +93,6 @@
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
@@ -136,6 +135,7 @@
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -167,7 +167,6 @@
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
@@ -371,6 +370,8 @@
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Plugins.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

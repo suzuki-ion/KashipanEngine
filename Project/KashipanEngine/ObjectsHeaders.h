@@ -33,5 +33,5 @@
 #include "Objects/SystemObjects/DirectionalLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
 #include "Objects/SystemObjects/PointLight.h"
-#include "Objects/SystemObjects/LightManager.h"
+#include "Objects/SystemObjects/LightCountBinder.h"
 #include "Objects/SystemObjects/ShadowMapBinder.h"

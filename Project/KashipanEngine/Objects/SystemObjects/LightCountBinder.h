@@ -1,8 +1,7 @@
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <cstdint>
+#include <vector>
 
 #include "Objects/Object3DBase.h"
 #include "Objects/SystemObjects/PointLight.h"
@@ -10,18 +9,18 @@
 
 namespace KashipanEngine {
 
-class LightManager final : public Object3DBase {
+class LightCountBinder final : public Object3DBase {
 public:
     struct LightCounts {
         std::uint32_t pointLightCount = 0;
         std::uint32_t spotLightCount = 0;
     };
 
-    LightManager();
-    ~LightManager() override = default;
+    LightCountBinder();
+    ~LightCountBinder() override = default;
 
-    void SetPointLights(const std::vector<PointLight*> &lights);
-    void SetSpotLights(const std::vector<SpotLight*> &lights);
+    void SetPointLights(const std::vector<PointLight *> &lights);
+    void SetSpotLights(const std::vector<SpotLight *> &lights);
 
     void AddPointLight(PointLight *light);
     void AddSpotLight(SpotLight *light);
@@ -40,8 +39,8 @@ protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
 
 private:
-    std::vector<PointLight*> pointLights_;
-    std::vector<SpotLight*> spotLights_;
+    std::vector<PointLight *> pointLights_;
+    std::vector<SpotLight *> spotLights_;
 
     LightCounts countsCPU_{};
 };

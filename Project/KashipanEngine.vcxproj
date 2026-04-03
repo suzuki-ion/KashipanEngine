@@ -326,6 +326,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application\Scenes\Components\CameraController.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h">

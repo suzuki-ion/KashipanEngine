@@ -370,6 +370,7 @@
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Plugins.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.h" />
+    <ClInclude Include="Application\Scenes\Components\CameraController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

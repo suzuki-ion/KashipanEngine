@@ -110,11 +110,11 @@ private:
         const Vector3 down = playerMovement_->GetGravityDirection().Normalize();
         const Vector3 up = -down;
 
-        Vector3 right = down.Cross(playerMovement_->GetForwardDirection());
-        if (right.LengthSquared() <= 0.000001f) {
-            right = Vector3{1.0f, 0.0f, 0.0f};
+        Vector3 left = down.Cross(playerMovement_->GetForwardDirection());
+        if (left.LengthSquared() <= 0.000001f) {
+            left = Vector3{1.0f, 0.0f, 0.0f};
         } else {
-            right = right.Normalize();
+            left = left.Normalize();
         }
 
         if (inputCommand_->Evaluate(upCommand_).Triggered()) {
@@ -122,9 +122,9 @@ private:
         } else if (inputCommand_->Evaluate(downCommand_).Triggered()) {
             requestedGravityDirection_ = down;
         } else if (inputCommand_->Evaluate(leftCommand_).Triggered()) {
-            requestedGravityDirection_ = -right;
+            requestedGravityDirection_ = left;
         } else if (inputCommand_->Evaluate(rightCommand_).Triggered()) {
-            requestedGravityDirection_ = right;
+            requestedGravityDirection_ = -left;
         }
     }
 

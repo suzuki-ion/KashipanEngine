@@ -23,15 +23,15 @@ void GameScene::Initialize() {
     directionalLight->SetDirection({ 0.0f, 0.0f, 1.0f });
 
     if (screenBuffer3D) {
-        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>());
-
         BloomEffect::Params p;
-        p.intensity = 0.25f;
-        p.blurRadius = 4.0f;
+        p.intensity = 1.0f;
+        p.blurRadius = 2.0f;
         p.iterations = 4;
-        p.softKnee = 2.5f;
-        p.threshold = 0.2f;
+        p.softKnee = 0.2f;
+        p.threshold = 0.5f;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(p));
+
+        screenBuffer3D->AttachToRenderer("ScreenBuffer3D.Default");
     }
 
     if (sceneDefaultVariables_) {

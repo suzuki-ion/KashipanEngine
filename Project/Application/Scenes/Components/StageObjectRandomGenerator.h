@@ -49,9 +49,9 @@ private:
     void CreateRandomGrounds(SceneContext *ctx, SceneDefaultVariables *defaultVars, Collider *collider) {
         constexpr std::array<Side, 4> kSides = {Side::Top, Side::Bottom, Side::Left, Side::Right};
 
-        float cursorZ = -20.0f;
+        float cursorZ = -50.0f;
         while (cursorZ > -maxStageDepth_) {
-            const float segmentLength = GetRandomValue(8.0f, 24.0f);
+            const float segmentLength = GetRandomValue(50.0f, 100.0f);
             const float nextZ = cursorZ - segmentLength;
 
             const int mask = GetRandomValue(1, 15);
@@ -86,9 +86,9 @@ private:
         const float centerZ = (startZ + endZ) * 0.5f;
         const float length = std::abs(endZ - startZ);
 
-        constexpr float width = 10.0f;
+        constexpr float width = 20.0f;
         constexpr float thickness = 1.0f;
-        constexpr float distanceFromCenter = 5.5f;
+        constexpr float distanceFromCenter = 10.5f;
 
         switch (side) {
         case Side::Top:
@@ -114,7 +114,7 @@ private:
         (void)ctx->AddObject3D(std::move(obj));
     }
 
-    float maxStageDepth_ = 2048.0f;
+    float maxStageDepth_ = 8192.0f;
 };
 
 } // namespace KashipanEngine

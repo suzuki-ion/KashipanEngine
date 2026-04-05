@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
@@ -130,6 +130,7 @@
     <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ParticleManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ModelAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SpriteAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.cpp" />
@@ -363,6 +364,7 @@
     <ClInclude Include="KashipanEngine\Scene\Components\ParticleManager.h" />
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ModelAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SpriteAnimator.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.h" />
@@ -372,6 +374,12 @@
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
+    <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
+    <ClInclude Include="Application\Objects\Components\GroundDefined.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
+    <ClInclude Include="Application\Scenes\Components\CameraToPlayerSync.h" />
+    <ClInclude Include="Application\Scenes\Components\StageObjectRandomGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

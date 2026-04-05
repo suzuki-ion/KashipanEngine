@@ -241,7 +241,7 @@ private:
 
     float lateralInput_ = 0.0f;
 
-    float gravityPower_ = 9.6f;
+    float gravityPower_ = 96.0f;
 
     float forwardSpeed_ = 32.0f;
     float minForwardSpeed_ = 1.0f;
@@ -251,7 +251,7 @@ private:
     float lateralMaxSpeed_ = 16.0f;
     float lateralAcceleration_ = 8.0f;
 
-    float jumpPower_ = 8.0f;
+    float jumpPower_ = 32.0f;
 };
 
 } // namespace KashipanEngine

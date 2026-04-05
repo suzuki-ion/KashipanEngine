@@ -2,6 +2,8 @@
 #include <string>
 #include <span>
 #include <vector>
+#include <memory>
+#include <utility>
 #include <typeindex>
 #include <type_traits>
 
@@ -44,6 +46,26 @@ public:
 
     /// @brief 名前から一致するコンポーネントを取得
     std::vector<IObjectComponent2D *> GetComponents(const std::string &componentName) const;
+
+    /// @brief コンポーネントの登録（生成）
+    /// @tparam T コンポーネント型
+    /// @tparam Args コンストラクタ引数型
+    /// @param args コンストラクタ引数
+    /// @return 登録に成功した場合は true
+    template<typename T, typename... Args>
+    bool RegisterComponent(Args &&... args) {
+        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
+        if (!owner_) return false;
+        return owner_->template RegisterComponent<T>(std::forward<Args>(args)...);
+    }
+
+    /// @brief 既存コンポーネントの登録
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 登録に成功した場合は true
+    bool RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
+        if (!owner_) return false;
+        return owner_->RegisterComponent(std::move(comp));
+    }
 
     /// @brief 名前から一致する最初のコンポーネントを取得
     IObjectComponent2D *GetComponent(const std::string &componentName) const;
@@ -119,6 +141,26 @@ public:
     //==================================================
     // Component getters (similar to Object3DBase)
     //==================================================
+
+    /// @brief コンポーネントの登録（生成）
+    /// @tparam T コンポーネント型
+    /// @tparam Args コンストラクタ引数型
+    /// @param args コンストラクタ引数
+    /// @return 登録に成功した場合は true
+    template<typename T, typename... Args>
+    bool RegisterComponent(Args &&... args) {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        if (!owner_) return false;
+        return owner_->template RegisterComponent<T>(std::forward<Args>(args)...);
+    }
+
+    /// @brief 既存コンポーネントの登録
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 登録に成功した場合は true
+    bool RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
+        if (!owner_) return false;
+        return owner_->RegisterComponent(std::move(comp));
+    }
 
     /// @brief 他コンポーネントの取得（名前）
     std::vector<IObjectComponent3D *> GetComponents(const std::string &componentName) const;

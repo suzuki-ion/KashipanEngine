@@ -14,6 +14,7 @@ public:
             if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
                 targetTranslate_ = tr->GetTranslate();
                 targetRotate_ = tr->GetRotate();
+                targetRotateQuaternion_ = tr->GetRotateQuaternion();
             }
             targetFovY_ = camera_->GetFovY();
         }
@@ -49,10 +50,15 @@ public:
 
         if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
             const Vector3 curT = tr->GetTranslate();
-            const Vector3 curR = tr->GetRotate();
 
             tr->SetTranslate(Vector3::Lerp(curT, desiredTranslate, t));
-            tr->SetRotate(Vector3::Lerp(curR, targetRotate_, t));
+            if (useQuaternionRotation_) {
+                const Quaternion curQ = tr->GetRotateQuaternion();
+                tr->SetRotateQuaternion(Quaternion::Slerp(curQ, targetRotateQuaternion_, t));
+            } else {
+                const Vector3 curR = tr->GetRotate();
+                tr->SetRotate(Vector3::Lerp(curR, targetRotate_, t));
+            }
         }
 
         const float curF = camera_->GetFovY();
@@ -60,7 +66,14 @@ public:
     }
 
     void SetTargetTranslate(const Vector3 &v) { targetTranslate_ = v; }
-    void SetTargetRotate(const Vector3 &v) { targetRotate_ = v; }
+    void SetTargetRotate(const Vector3 &v) {
+        targetRotate_ = v;
+        useQuaternionRotation_ = false;
+    }
+    void SetTargetRotateQuaternion(const Quaternion &q) {
+        targetRotateQuaternion_ = q.Normalize();
+        useQuaternionRotation_ = true;
+    }
     void SetTargetFovY(float v) { targetFovY_ = v; }
 
     void SetLerpFactor(float t) { lerpFactor_ = t; }
@@ -74,6 +87,7 @@ public:
 
     const Vector3 &GetTargetTranslate() const { return targetTranslate_; }
     const Vector3 &GetTargetRotate() const { return targetRotate_; }
+    const Quaternion &GetTargetRotateQuaternion() const { return targetRotateQuaternion_; }
     float GetTargetFovY() const { return targetFovY_; }
 
     void SetIsShakeX(bool v) { isShakeX_ = v; }
@@ -141,7 +155,10 @@ private:
 
     Vector3 targetTranslate_{0.0f, 0.0f, 0.0f};
     Vector3 targetRotate_{0.0f, 0.0f, 0.0f};
+    Quaternion targetRotateQuaternion_ = Quaternion::Identity();
     float targetFovY_ = 0.7f;
+
+    bool useQuaternionRotation_ = false;
 
     float lerpFactor_ = 0.1f;
 

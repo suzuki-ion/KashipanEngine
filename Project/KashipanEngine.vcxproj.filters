@@ -380,6 +380,8 @@
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
     <ClInclude Include="Application\Scenes\Components\CameraToPlayerSync.h" />
     <ClInclude Include="Application\Scenes\Components\StageObjectRandomGenerator.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\RadialBlurEffect.h" />
+    <ClInclude Include="Application\Scenes\Components\PostEffectToPlayerSync.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -495,5 +497,7 @@
     <None Include="Reference\10_Input_Controller.md" />
     <None Include="Reference\10_Input_InputCommand.md" />
     <None Include="Reference\14_BuildMacros.md" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
   </ItemGroup>
 </Project>

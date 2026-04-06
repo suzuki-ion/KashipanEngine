@@ -3,7 +3,8 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/GroundDefined.h"
 
-#include <array>
+#include <cmath>
+#include <vector>
 
 namespace KashipanEngine {
 
@@ -16,105 +17,135 @@ public:
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
 
-        auto *defaultVars = ctx->GetComponent<SceneDefaultVariables>();
-        if (!defaultVars) return;
+        defaultVars_ = ctx->GetComponent<SceneDefaultVariables>();
+        if (!defaultVars_) return;
 
-        auto *colliderComp = defaultVars->GetColliderComp();
+        auto *colliderComp = defaultVars_->GetColliderComp();
         if (!colliderComp) return;
 
-        Collider *collider = colliderComp->GetCollider();
-        if (!collider) return;
+        collider_ = colliderComp->GetCollider();
+        if (!collider_) return;
 
-        CreateInitialGrounds(ctx, defaultVars, collider);
-        CreateRandomGrounds(ctx, defaultVars, collider);
+        CreateGroundPool(ctx);
+    }
+
+    void Update() override {
+        auto *ctx = GetOwnerContext();
+        if (!ctx || grounds_.empty()) return;
+
+        if (!player_) {
+            player_ = ctx->GetObject3D("Player");
+        }
+        if (!player_) return;
+
+        auto *playerTr = player_->GetComponent3D<Transform3D>();
+        if (!playerTr) return;
+
+        const float playerZ = playerTr->GetTranslate().z;
+        for (auto &g : grounds_) {
+            if (!g.object) continue;
+
+            if (g.centerZ > playerZ + recycleBehindDistance_) {
+                RespawnGround(g);
+            }
+        }
     }
 
 private:
-    enum class Side {
-        Top,
-        Bottom,
-        Left,
-        Right,
+    static constexpr float kPi = 3.14159265358979323846f;
+    static constexpr float kTwoPi = kPi * 2.0f;
+
+    struct GroundRuntime {
+        Object3DBase *object = nullptr;
+        float centerZ = 0.0f;
+        float length = 0.0f;
     };
 
-    void CreateInitialGrounds(SceneContext *ctx, SceneDefaultVariables *defaultVars, Collider *collider) {
-        constexpr float initialLength = 50.0f;
-        constexpr std::array<Side, 4> kSides = {Side::Top, Side::Bottom, Side::Left, Side::Right};
+    void CreateGroundPool(SceneContext *ctx) {
+        grounds_.clear();
+        grounds_.reserve(static_cast<std::size_t>(pooledGroundObjectCount_));
 
-        for (const Side side : kSides) {
-            CreateGroundSegment(ctx, defaultVars, collider, side, 0.0f, -initialLength);
-        }
-    }
+        nextSpawnZ_ = initialSpawnStartZ_;
 
-    void CreateRandomGrounds(SceneContext *ctx, SceneDefaultVariables *defaultVars, Collider *collider) {
-        constexpr std::array<Side, 4> kSides = {Side::Top, Side::Bottom, Side::Left, Side::Right};
+        for (int i = 0; i < pooledGroundObjectCount_; ++i) {
+            auto obj = std::make_unique<Box>();
+            obj->SetName("Ground");
 
-        float cursorZ = -50.0f;
-        while (cursorZ > -maxStageDepth_) {
-            const float segmentLength = GetRandomValue(50.0f, 100.0f);
-            const float nextZ = cursorZ - segmentLength;
-
-            const int mask = GetRandomValue(1, 15);
-            for (int i = 0; i < static_cast<int>(kSides.size()); ++i) {
-                if ((mask & (1 << i)) == 0) continue;
-                CreateGroundSegment(ctx, defaultVars, collider, kSides[static_cast<std::size_t>(i)], cursorZ, nextZ);
+            if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
+                obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
             }
 
-            cursorZ = nextZ;
+            obj->RegisterComponent<GroundDefined>(collider_);
+
+            Object3DBase *objPtr = obj.get();
+            if (!ctx->AddObject3D(std::move(obj)) || objPtr == nullptr) {
+                continue;
+            }
+
+            GroundRuntime runtime{};
+            runtime.object = objPtr;
+            RespawnGround(runtime);
+            grounds_.push_back(runtime);
         }
     }
 
-    void CreateGroundSegment(
-        SceneContext *ctx,
-        SceneDefaultVariables *defaultVars,
-        Collider *collider,
-        Side side,
-        float startZ,
-        float endZ) {
-        if (!ctx || !defaultVars) return;
+    void RespawnGround(GroundRuntime &runtime) {
+        if (!runtime.object) return;
 
-        auto obj = std::make_unique<Box>();
-        obj->SetName("Ground");
-
-        if (defaultVars->GetScreenBuffer3D()) {
-            obj->AttachToRenderer(defaultVars->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
-        }
-
-        auto *tr = obj->GetComponent3D<Transform3D>();
+        auto *tr = runtime.object->GetComponent3D<Transform3D>();
         if (!tr) return;
 
-        const float centerZ = (startZ + endZ) * 0.5f;
-        const float length = std::abs(endZ - startZ);
-
-        constexpr float width = 20.0f;
-        constexpr float thickness = 1.0f;
-        constexpr float distanceFromCenter = 10.5f;
-
-        switch (side) {
-        case Side::Top:
-            tr->SetTranslate(Vector3{0.0f, distanceFromCenter, centerZ});
-            tr->SetScale(Vector3{width, thickness, length});
-            break;
-        case Side::Bottom:
-            tr->SetTranslate(Vector3{0.0f, -distanceFromCenter, centerZ});
-            tr->SetScale(Vector3{width, thickness, length});
-            break;
-        case Side::Left:
-            tr->SetTranslate(Vector3{-distanceFromCenter, 0.0f, centerZ});
-            tr->SetScale(Vector3{thickness, width, length});
-            break;
-        case Side::Right:
-            tr->SetTranslate(Vector3{distanceFromCenter, 0.0f, centerZ});
-            tr->SetScale(Vector3{thickness, width, length});
-            break;
+        if (remainingPanelsInCurrentSegment_ <= 0) {
+            currentSegmentLength_ = GetRandomValue(minPanelLength_, maxPanelLength_);
+            currentSegmentCenterZ_ = nextSpawnZ_ - currentSegmentLength_ * 0.5f;
+            nextSpawnZ_ -= currentSegmentLength_;
+            remainingPanelsInCurrentSegment_ = GetRandomValue(minPanelsPerSegment_, maxPanelsPerSegment_);
         }
 
-        obj->RegisterComponent<GroundDefined>(collider);
+        const float length = currentSegmentLength_;
+        const float centerZ = currentSegmentCenterZ_;
+        --remainingPanelsInCurrentSegment_;
 
-        (void)ctx->AddObject3D(std::move(obj));
+        const float radius = GetRandomValue(minRingRadius_, maxRingRadius_);
+        const float angle = GetRandomValue(0.0f, kTwoPi);
+        const float panelWidth = GetRandomValue(minPanelWidth_, maxPanelWidth_);
+
+        const float x = std::cos(angle) * radius;
+        const float y = std::sin(angle) * radius;
+
+        tr->SetTranslate(Vector3{x, y, centerZ});
+        tr->SetRotate(Vector3{0.0f, 0.0f, angle});
+        tr->SetScale(Vector3{panelThickness_, panelWidth, length});
+
+        runtime.centerZ = centerZ;
+        runtime.length = length;
     }
 
-    float maxStageDepth_ = 8192.0f;
+    float panelThickness_ = 1.0f;
+
+    int pooledGroundObjectCount_ = 512;
+    float initialSpawnStartZ_ = 0.0f;
+    float recycleBehindDistance_ = 64.0f;
+
+    float minRingRadius_ = 8.0f;
+    float maxRingRadius_ = 32.0f;
+    float minPanelWidth_ = 8.0f;
+    float maxPanelWidth_ = 32.0f;
+    float minPanelLength_ = 50.0f;
+    float maxPanelLength_ = 100.0f;
+
+    int minPanelsPerSegment_ = 1;
+    int maxPanelsPerSegment_ = 4;
+
+    float nextSpawnZ_ = 0.0f;
+    float currentSegmentCenterZ_ = 0.0f;
+    float currentSegmentLength_ = 0.0f;
+    int remainingPanelsInCurrentSegment_ = 0;
+
+    SceneDefaultVariables *defaultVars_ = nullptr;
+    Collider *collider_ = nullptr;
+    Object3DBase *player_ = nullptr;
+    std::vector<GroundRuntime> grounds_{};
 };
 
 } // namespace KashipanEngine

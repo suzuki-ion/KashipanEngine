@@ -35,9 +35,18 @@ public:
 
         const Vector3 lookDir = (lookAt - cameraPos).Normalize();
 
+        const float minSpeed = playerMovement->GetMinForwardSpeed();
+        const float maxSpeed = playerMovement->GetMaxForwardSpeed();
+        float speedRatio = 0.0f;
+        if (maxSpeed > minSpeed) {
+            speedRatio = (playerMovement->GetForwardSpeed() - minSpeed) / (maxSpeed - minSpeed);
+        }
+        speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
+        const float targetFov = 0.7f + (2.0f - 0.7f) * speedRatio;
+
         cameraController->SetTargetTranslate(cameraPos);
         cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, up));
-        cameraController->SetTargetFovY(1.0f);
+        cameraController->SetTargetFovY(targetFov);
         cameraController->SetLerpFactor(std::clamp(baseLerpFactor_ * GetGameSpeed(), 0.0f, 1.0f));
     }
 

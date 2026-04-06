@@ -146,21 +146,41 @@ private:
                     Math::OBB o = sh;
                     o.center = transformPoint(o.center);
 
-                    const Vector3 ax = transformDir(Vector3{1.0f, 0.0f, 0.0f});
-                    const Vector3 ay = transformDir(Vector3{0.0f, 1.0f, 0.0f});
-                    const Vector3 az = transformDir(Vector3{0.0f, 0.0f, 1.0f});
-                    o.halfSize = Vector3{o.halfSize.x * ax.Length(), o.halfSize.y * ay.Length(), o.halfSize.z * az.Length()};
+                    // ローカル OBB 軸をワールドへ変換
+                    const Vector3 localAxisX{o.orientation.m[0][0], o.orientation.m[0][1], o.orientation.m[0][2]};
+                    const Vector3 localAxisY{o.orientation.m[1][0], o.orientation.m[1][1], o.orientation.m[1][2]};
+                    const Vector3 localAxisZ{o.orientation.m[2][0], o.orientation.m[2][1], o.orientation.m[2][2]};
 
-                    // ローカル orientation にワールドの回転（＋スケール）を合成する
-                    Matrix4x4 wNoT = world;
-                    wNoT.m[3][0] = 0.0f;
-                    wNoT.m[3][1] = 0.0f;
-                    wNoT.m[3][2] = 0.0f;
-                    wNoT.m[0][3] = 0.0f;
-                    wNoT.m[1][3] = 0.0f;
-                    wNoT.m[2][3] = 0.0f;
-                    wNoT.m[3][3] = 1.0f;
-                    o.orientation = wNoT * o.orientation;
+                    Vector3 worldAxisX = transformDir(localAxisX);
+                    Vector3 worldAxisY = transformDir(localAxisY);
+                    Vector3 worldAxisZ = transformDir(localAxisZ);
+
+                    const float lenX = worldAxisX.Length();
+                    const float lenY = worldAxisY.Length();
+                    const float lenZ = worldAxisZ.Length();
+
+                    // スケールは halfSize 側にのみ反映
+                    o.halfSize = Vector3{
+                        o.halfSize.x * lenX,
+                        o.halfSize.y * lenY,
+                        o.halfSize.z * lenZ};
+
+                    // orientation は正規化した回転軸のみ保持（スケールを含めない）
+                    worldAxisX = (lenX > 0.0f) ? (worldAxisX / lenX) : Vector3{1.0f, 0.0f, 0.0f};
+                    worldAxisY = (lenY > 0.0f) ? (worldAxisY / lenY) : Vector3{0.0f, 1.0f, 0.0f};
+                    worldAxisZ = (lenZ > 0.0f) ? (worldAxisZ / lenZ) : Vector3{0.0f, 0.0f, 1.0f};
+
+                    Matrix4x4 orientation = Matrix4x4::Identity();
+                    orientation.m[0][0] = worldAxisX.x;
+                    orientation.m[0][1] = worldAxisX.y;
+                    orientation.m[0][2] = worldAxisX.z;
+                    orientation.m[1][0] = worldAxisY.x;
+                    orientation.m[1][1] = worldAxisY.y;
+                    orientation.m[1][2] = worldAxisY.z;
+                    orientation.m[2][0] = worldAxisZ.x;
+                    orientation.m[2][1] = worldAxisZ.y;
+                    orientation.m[2][2] = worldAxisZ.z;
+                    o.orientation = orientation;
                     return o;
                 } else if constexpr (std::is_same_v<S, Math::Plane>) {
                     // Plane は現状 Transform を反映しない（必要になった段階で対応する）

@@ -47,7 +47,9 @@ public:
         cameraController->SetTargetTranslate(cameraPos);
         cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, up));
         cameraController->SetTargetFovY(targetFov);
-        cameraController->SetLerpFactor(std::clamp(baseLerpFactor_ * GetGameSpeed(), 0.0f, 1.0f));
+        cameraController->SetLerpFactorMove(1.0f);
+        cameraController->SetLerpFactorRotate(0.1f);
+        cameraController->SetLerpFactorFov(0.1f);
     }
 
 private:
@@ -105,7 +107,6 @@ private:
     float followDistance_ = 8.0f;
     float followHeight_ = 2.0f;
     float lookAtHeight_ = 1.0f;
-    float baseLerpFactor_ = 0.2f;
 };
 
 } // namespace KashipanEngine

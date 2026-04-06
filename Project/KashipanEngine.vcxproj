@@ -263,6 +263,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Line2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Rect.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Sprite.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Billboard.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Box.cpp" />
@@ -390,6 +391,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
@@ -650,6 +652,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
     <None Include="exclusion.dic" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
+    <None Include="KashipanEngine\KashipanEngine.vcxproj" />
     <None Include="Reference\00_Index.md" />
     <None Include="Reference\01_AppInitialize.md" />
     <None Include="Reference\02_GameObjects.md" />

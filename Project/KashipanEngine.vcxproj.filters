@@ -137,6 +137,7 @@
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -389,6 +390,7 @@
     <ClInclude Include="Application\Objects\Components\PlayerCollisionBehavior.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovementController.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -506,6 +508,7 @@
     <None Include="Reference\14_BuildMacros.md" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
+    <None Include="KashipanEngine\KashipanEngine.vcxproj" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\OneDrive\ドキュメント\1775464241140.png" />

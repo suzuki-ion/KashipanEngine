@@ -43,7 +43,7 @@ public:
 private:
     float forwardSpeed_ = 32.0f;
     float minForwardSpeed_ = 16.0f;
-    float maxForwardSpeed_ = 256.0f;
+    float maxForwardSpeed_ = 64.0f;
     float forwardAcceleration_ = 8.0f;
     float forwardAccelPerFallSpeed_ = 0.02f;
     float groundDeceleration_ = 8.0f;

@@ -10,6 +10,8 @@
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
 
+#include <algorithm>
+
 namespace KashipanEngine {
 
 GameScene::GameScene()
@@ -22,6 +24,7 @@ void GameScene::Initialize() {
 
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
     auto *screenBuffer3D = sceneDefaultVariables_->GetScreenBuffer3D();
+    auto *screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D();
     auto *directionalLight = sceneDefaultVariables_->GetDirectionalLight();
     directionalLight->SetDirection({ 0.0f, 0.0f, 1.0f });
 
@@ -57,6 +60,7 @@ void GameScene::Initialize() {
         if (auto *colliderComp = sceneDefaultVariables_->GetColliderComp()) {
             auto player = std::make_unique<Box>();
             player->SetName("Player");
+            player->SetUniqueBatchKey();
 
             if (screenBuffer3D) {
                 player->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -81,9 +85,29 @@ void GameScene::Initialize() {
 
             Object3DBase *playerPtr = player.get();
             AddObject3D(std::move(player));
+            player_ = playerPtr;
+            playerMovementController_ = playerPtr->GetComponent3D<PlayerMovementController>();
 
             AddSceneComponent(std::make_unique<CameraToPlayerSync>(playerPtr));
             AddSceneComponent(std::make_unique<PostEffectToPlayerSync>(playerPtr, radialBlurEffect));
+        }
+
+        if (screenBuffer2D) {
+            auto speedBar = std::make_unique<SpriteProressBar>();
+            speedBar->SetName("ForwardSpeedBar");
+            speedBar->SetBarSize(Vector2{512.0f, 256.0f});
+            speedBar->SetFrameThickness(4.0f);
+            speedBar->SetFrameColor(Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+            speedBar->SetBackgroundColor(Vector4{0.1f, 0.1f, 0.1f, 1.0f});
+            speedBar->SetBarColor(Vector4{0.0f, 0.5f, 0.0f, 1.0f});
+            speedBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+
+            if (auto *tr = speedBar->GetComponent2D<Transform2D>()) {
+                tr->SetTranslate(Vector3{240.0f, 80.0f, 0.0f});
+            }
+
+            forwardSpeedBar_ = speedBar.get();
+            AddObject2D(std::move(speedBar));
         }
     }
 
@@ -99,6 +123,22 @@ void GameScene::Initialize() {
 GameScene::~GameScene() {}
 
 void GameScene::OnUpdate() {
+    if (!player_ || !playerMovementController_) {
+        player_ = GetObject3D("Player");
+        if (player_) {
+            playerMovementController_ = player_->GetComponent3D<PlayerMovementController>();
+        }
+    }
+
+    if (forwardSpeedBar_ && playerMovementController_) {
+        const float speed = playerMovementController_->GetForwardSpeed();
+        const float minSpeed = playerMovementController_->GetMinForwardSpeed();
+        const float maxSpeed = playerMovementController_->GetMaxForwardSpeed();
+        const float range = std::max(0.0001f, maxSpeed - minSpeed);
+        const float progress = std::clamp((speed - minSpeed) / range, 0.0f, 1.0f);
+        forwardSpeedBar_->SetProgress(progress);
+    }
+
     if (!GetNextSceneName().empty()) {
         if (auto *out = GetSceneComponent<SceneChangeOut>()) {
             if (out->IsFinished()) {

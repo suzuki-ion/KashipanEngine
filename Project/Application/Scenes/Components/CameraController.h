@@ -24,7 +24,10 @@ public:
     void Update() override {
         if (!camera_) return;
 
-        const float t = std::clamp(lerpFactor_, 0.0f, 1.0f);
+        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        const float tMove = std::clamp(lerpFactorMove_ * dt * 60.0f, 0.0f, 1.0f);
+        const float tRotate = std::clamp(lerpFactorRotate_ * dt * 60.0f, 0.0f, 1.0f);
+        const float tFov = std::clamp(lerpFactorFov_ * dt * 60.0f, 0.0f, 1.0f);
 
         Vector3 desiredTranslate = targetTranslate_;
         if (followTarget_) {
@@ -36,7 +39,6 @@ public:
         }
 
         if (shakeTimeRemaining_ > 0.0f) {
-            const float dt = std::max(0.0f, GetDeltaTime());
             shakeTimeRemaining_ = std::max(0.0f, shakeTimeRemaining_ - dt);
 
             const float tShake = (shakeDuration_ > 0.0f) ? (1.0f - (shakeTimeRemaining_ / shakeDuration_)) : 1.0f;
@@ -51,18 +53,18 @@ public:
         if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
             const Vector3 curT = tr->GetTranslate();
 
-            tr->SetTranslate(Vector3::Lerp(curT, desiredTranslate, t));
+            tr->SetTranslate(Vector3::Lerp(curT, desiredTranslate, tMove));
             if (useQuaternionRotation_) {
                 const Quaternion curQ = tr->GetRotateQuaternion();
-                tr->SetRotateQuaternion(Quaternion::Slerp(curQ, targetRotateQuaternion_, t));
+                tr->SetRotateQuaternion(Quaternion::Slerp(curQ, targetRotateQuaternion_, tRotate));
             } else {
                 const Vector3 curR = tr->GetRotate();
-                tr->SetRotate(Vector3::Lerp(curR, targetRotate_, t));
+                tr->SetRotate(Vector3::Lerp(curR, targetRotate_, tRotate));
             }
         }
 
         const float curF = camera_->GetFovY();
-        camera_->SetFovY(curF + (targetFovY_ - curF) * t);
+        camera_->SetFovY(curF + (targetFovY_ - curF) * tFov);
     }
 
     void SetTargetTranslate(const Vector3 &v) { targetTranslate_ = v; }
@@ -76,8 +78,18 @@ public:
     }
     void SetTargetFovY(float v) { targetFovY_ = v; }
 
-    void SetLerpFactor(float t) { lerpFactor_ = t; }
-    float GetLerpFactor() const { return lerpFactor_; }
+    void SetLerpFactor(float t) {
+        lerpFactorMove_ = t;
+        lerpFactorRotate_ = t;
+        lerpFactorFov_ = t;
+    }
+    void SetLerpFactorMove(float t) { lerpFactorMove_ = t; }
+    void SetLerpFactorRotate(float t) { lerpFactorRotate_ = t; }
+    void SetLerpFactorFov(float t) { lerpFactorFov_ = t; }
+    float GetLerpFactor() const { return lerpFactorMove_; }
+    float GetLerpFactorMove() const { return lerpFactorMove_; }
+    float GetLerpFactorRotate() const { return lerpFactorRotate_; }
+    float GetLerpFactorFov() const { return lerpFactorFov_; }
 
     void SetFollowTarget(Object3DBase *target) { followTarget_ = target; }
     Object3DBase *GetFollowTarget() const { return followTarget_; }
@@ -121,7 +133,9 @@ public:
             ImGui::InputFloat3("Target Rotate", &targetRotate_.x);
             ImGui::InputFloat("Target FovY", &targetFovY_);
             ImGui::Separator();
-            ImGui::InputFloat("Lerp Factor", &lerpFactor_);
+            ImGui::InputFloat("Lerp Move", &lerpFactorMove_);
+            ImGui::InputFloat("Lerp Rotate", &lerpFactorRotate_);
+            ImGui::InputFloat("Lerp Fov", &lerpFactorFov_);
             ImGui::Separator();
             ImGui::InputFloat3("Follow Offset", &followOffset_.x);
             ImGui::Checkbox("Shake X", &isShakeX_);
@@ -160,7 +174,9 @@ private:
 
     bool useQuaternionRotation_ = false;
 
-    float lerpFactor_ = 0.1f;
+    float lerpFactorMove_ = 0.1f;
+    float lerpFactorRotate_ = 0.1f;
+    float lerpFactorFov_ = 0.1f;
 
     float shakeAmplitude_ = 0.0f;
     float shakeDuration_ = 0.0f;

@@ -245,13 +245,27 @@ std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
         for (int z = minZ; z <= maxZ; ++z) {
             for (int y = minY; y <= maxY; ++y) {
                 for (int x = minX; x <= maxX; ++x) {
-                    grid[GridKey3D{x, y, z}].push_back(i);
+                    auto &cell = grid[GridKey3D{x, y, z}];
+                    if (cell.empty()) {
+                        cell.reserve(8);
+                    }
+                    cell.push_back(i);
                 }
             }
         }
     }
 
+    std::size_t estimatedPairs = 0;
+    for (const auto &[_, indices] : grid) {
+        const std::size_t n = indices.size();
+        if (n > 1) {
+            estimatedPairs += (n * (n - 1)) / 2;
+        }
+    }
+    estimatedPairs += global.size() * active.size();
+
     std::unordered_set<IndexPair, IndexPairHash> uniquePairs;
+    uniquePairs.reserve(estimatedPairs);
 
     for (const auto &[_, indices] : grid) {
         for (std::size_t i = 0; i < indices.size(); ++i) {
@@ -271,7 +285,7 @@ std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
 
     std::vector<IndexPair> out;
     out.reserve(uniquePairs.size());
-    for (const auto &p : uniquePairs) out.push_back(p);
+    for (const auto &p : uniquePairs) out.emplace_back(p);
     return out;
 }
 

@@ -26,6 +26,7 @@ public:
         collider_ = colliderComp->GetCollider();
         if (!collider_) return;
 
+        CreateSpawnGround(ctx);
         CreateGroundPool(ctx);
     }
 
@@ -65,7 +66,7 @@ private:
         grounds_.clear();
         grounds_.reserve(static_cast<std::size_t>(pooledGroundObjectCount_));
 
-        nextSpawnZ_ = initialSpawnStartZ_;
+        nextSpawnZ_ = spawnGroundCenterZ_ - spawnGroundDepth_ * 0.5f;
 
         for (int i = 0; i < pooledGroundObjectCount_; ++i) {
             auto obj = std::make_unique<Box>();
@@ -87,6 +88,27 @@ private:
             RespawnGround(runtime);
             grounds_.push_back(runtime);
         }
+    }
+
+    void CreateSpawnGround(SceneContext *ctx) {
+        if (!ctx || !defaultVars_ || !collider_) return;
+
+        auto obj = std::make_unique<Box>();
+        obj->SetName("Ground");
+
+        if (defaultVars_->GetScreenBuffer3D()) {
+            obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+        }
+
+        auto *tr = obj->GetComponent3D<Transform3D>();
+        if (!tr) return;
+
+        tr->SetTranslate(Vector3{spawnGroundCenterX_, spawnGroundCenterY_, spawnGroundCenterZ_});
+        tr->SetRotate(Vector3{0.0f, 0.0f, 0.0f});
+        tr->SetScale(Vector3{spawnGroundWidth_, panelThickness_, spawnGroundDepth_});
+
+        obj->RegisterComponent<GroundDefined>(collider_);
+        (void)ctx->AddObject3D(std::move(obj));
     }
 
     void RespawnGround(GroundRuntime &runtime) {
@@ -126,6 +148,12 @@ private:
     int pooledGroundObjectCount_ = 512;
     float initialSpawnStartZ_ = 0.0f;
     float recycleBehindDistance_ = 64.0f;
+
+    float spawnGroundCenterX_ = 0.0f;
+    float spawnGroundCenterY_ = -1.0f;
+    float spawnGroundCenterZ_ = -2.0f;
+    float spawnGroundWidth_ = 10.0f;
+    float spawnGroundDepth_ = 200.0f;
 
     float minRingRadius_ = 8.0f;
     float maxRingRadius_ = 32.0f;

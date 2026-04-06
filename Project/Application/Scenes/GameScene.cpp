@@ -3,6 +3,7 @@
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/CameraToPlayerSync.h"
+#include "Scenes/Components/PostEffectToPlayerSync.h"
 #include "Scenes/Components/StageObjectRandomGenerator.h"
 
 #include "Objects/GameObjects/3D/Box.h"
@@ -17,19 +18,31 @@ GameScene::GameScene()
 void GameScene::Initialize() {
     SetGameSpeed(1.0f);
 
+    RadialBlurEffect *radialBlurEffect = nullptr;
+
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
     auto *screenBuffer3D = sceneDefaultVariables_->GetScreenBuffer3D();
     auto *directionalLight = sceneDefaultVariables_->GetDirectionalLight();
     directionalLight->SetDirection({ 0.0f, 0.0f, 1.0f });
 
     if (screenBuffer3D) {
-        BloomEffect::Params p;
-        p.intensity = 1.0f;
-        p.blurRadius = 2.0f;
-        p.iterations = 4;
-        p.softKnee = 0.2f;
-        p.threshold = 0.5f;
-        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(p));
+        BloomEffect::Params bp;
+        bp.intensity = 1.0f;
+        bp.blurRadius = 2.0f;
+        bp.iterations = 4;
+        bp.softKnee = 0.2f;
+        bp.threshold = 0.5f;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
+
+        RadialBlurEffect::Params rp;
+        rp.intensity = 0.5f;
+        rp.sampleCount = 16;
+        rp.radialCenter[0] = 0.5f;
+        rp.radialCenter[1] = 0.5f;
+        rp.startRadius = 0.2f;
+        auto radialBlur = std::make_unique<RadialBlurEffect>(rp);
+        radialBlurEffect = radialBlur.get();
+        screenBuffer3D->RegisterPostEffectComponent(std::move(radialBlur));
 
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D.Default");
     }
@@ -70,6 +83,7 @@ void GameScene::Initialize() {
             AddObject3D(std::move(player));
 
             AddSceneComponent(std::make_unique<CameraToPlayerSync>(playerPtr));
+            AddSceneComponent(std::make_unique<PostEffectToPlayerSync>(playerPtr, radialBlurEffect));
         }
     }
 

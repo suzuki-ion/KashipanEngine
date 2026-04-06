@@ -2,7 +2,7 @@
 
 #include <KashipanEngine.h>
 #include "Scenes/Components/CameraController.h"
-#include "Objects/Components/PlayerMovement.h"
+#include "Objects/Components/PlayerMovementController.h"
 
 #include <algorithm>
 #include <cmath>
@@ -20,7 +20,7 @@ public:
         if (!player_) return;
 
         auto *playerTr = player_->GetComponent3D<Transform3D>();
-        auto *playerMovement = player_->GetComponent3D<PlayerMovement>();
+        auto *playerMovement = player_->GetComponent3D<PlayerMovementController>();
         auto *cameraController = GetOwnerContext() ? GetOwnerContext()->GetComponent<CameraController>() : nullptr;
 
         if (!playerTr || !playerMovement || !cameraController) return;

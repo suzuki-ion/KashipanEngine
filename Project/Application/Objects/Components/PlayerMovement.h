@@ -60,7 +60,7 @@ public:
         auto *tr = ctx->GetComponent<Transform3D>();
         if (!tr) return false;
 
-        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        const float dt = std::clamp(GetDeltaTime() * GetGameSpeed(), 0.0f, 0.1f);
         const Vector3 down = gravityDirection_.Normalize();
         const bool isFalling = gravityVelocity_.Dot(down) > 0.0f;
 

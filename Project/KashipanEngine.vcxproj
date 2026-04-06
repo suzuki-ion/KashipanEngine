@@ -327,6 +327,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
     <ClInclude Include="Application\Objects\Components\GroundDefined.h" />
     <ClInclude Include="Application\Objects\Components\PlayerCollisionBehavior.h" />
@@ -741,6 +742,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\OneDrive\ドキュメント\1775464241140.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

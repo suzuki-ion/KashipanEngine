@@ -31,8 +31,13 @@ public:
 
         if (collider_ && !ctx->GetComponent<Collision3D>()) {
             ColliderInfo3D info{};
-            info.shape = Math::AABB{Vector3{-0.5f, -0.5f, -0.5f}, Vector3{0.5f, 0.5f, 0.5f}};
+            Math::OBB obb{};
+            obb.center = Vector3{0.0f, 0.0f, 0.0f};
+            obb.halfSize = Vector3{0.5f, 0.5f, 0.5f};
+            obb.orientation = Matrix4x4::Identity();
+            info.shape = obb;
             info.attribute.set(CollisionAttribute::Player);
+            info.ignoreAttribute.set(CollisionAttribute::Player);
             info.onCollisionEnter = [this](const HitInfo3D &hit) { OnCollisionEnter(hit); };
             info.onCollisionStay = [this](const HitInfo3D &hit) { OnCollisionStay(hit); };
             if (!ctx->RegisterComponent<Collision3D>(collider_, info)) {
@@ -57,7 +62,14 @@ public:
 
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
 
-        forwardSpeed_ = std::min(maxForwardSpeed_, forwardSpeed_ + forwardAcceleration_ * dt);
+        const bool wasGrounded = isGrounded_;
+        isGrounded_ = false;
+
+        if (wasGrounded) {
+            forwardSpeed_ = std::max(minForwardSpeed_, forwardSpeed_ - groundDeceleration_ * dt);
+        } else {
+            forwardSpeed_ = std::min(maxForwardSpeed_, forwardSpeed_ + forwardAcceleration_ * dt);
+        }
 
         const Vector3 down = gravityDirection_.Normalize();
         const Vector3 up = -down;
@@ -108,6 +120,9 @@ public:
 
     const Vector3 &GetGravityDirection() const { return gravityDirection_; }
     const Vector3 &GetForwardDirection() const { return forwardDirection_; }
+    float GetForwardSpeed() const { return forwardSpeed_; }
+    float GetMinForwardSpeed() const { return minForwardSpeed_; }
+    float GetMaxForwardSpeed() const { return maxForwardSpeed_; }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {}
@@ -139,20 +154,6 @@ private:
         return q.Normalize();
     }
 
-    static Vector3 ToAxisNormal(const Vector3 &n) {
-        const float ax = std::abs(n.x);
-        const float ay = std::abs(n.y);
-        const float az = std::abs(n.z);
-
-        if (ax >= ay && ax >= az) {
-            return Vector3{(n.x >= 0.0f) ? 1.0f : -1.0f, 0.0f, 0.0f};
-        }
-        if (ay >= az) {
-            return Vector3{0.0f, (n.y >= 0.0f) ? 1.0f : -1.0f, 0.0f};
-        }
-        return Vector3{0.0f, 0.0f, (n.z >= 0.0f) ? 1.0f : -1.0f};
-    }
-
     bool IsGroundObject(Object3DBase *obj) const {
         if (!obj) return false;
         return obj->GetComponent3D("GroundDefined") != nullptr;
@@ -161,26 +162,22 @@ private:
     void OnCollisionEnter(const HitInfo3D &hit) {
         if (!IsGroundObject(hit.otherObject)) return;
 
-        const Vector3 normal = ToAxisNormal(hit.normal);
+        const Vector3 normal = hit.normal.Normalize();
+        if (normal.LengthSquared() <= 0.000001f) return;
 
-        if (normal == Vector3{0.0f, 0.0f, 1.0f}) {
-            forwardSpeed_ = std::max(minForwardSpeed_, forwardSpeed_ * 0.75f);
-            return;
-        }
+        isGrounded_ = true;
 
-        if (normal == Vector3{1.0f, 0.0f, 0.0f} ||
-            normal == Vector3{-1.0f, 0.0f, 0.0f} ||
-            normal == Vector3{0.0f, 1.0f, 0.0f} ||
-            normal == Vector3{0.0f, -1.0f, 0.0f}) {
-            SetGravityDirection(-normal);
-        }
+        // 触れた面の法線をそのまま重力方向へ反映する
+        SetGravityDirection(-normal);
     }
 
     void OnCollisionStay(const HitInfo3D &hit) {
         if (!IsGroundObject(hit.otherObject)) return;
 
-        const Vector3 normal = ToAxisNormal(hit.normal);
-        if (normal == Vector3{0.0f, 0.0f, 1.0f}) return;
+        const Vector3 normal = hit.normal.Normalize();
+        if (normal.LengthSquared() <= 0.000001f) return;
+
+        isGrounded_ = true;
 
         auto *ctx = GetOwner3DContext();
         if (!ctx) return;
@@ -244,14 +241,17 @@ private:
     float gravityPower_ = 96.0f;
 
     float forwardSpeed_ = 32.0f;
-    float minForwardSpeed_ = 1.0f;
+    float minForwardSpeed_ = 16.0f;
     float maxForwardSpeed_ = 64.0f;
-    float forwardAcceleration_ = 1.2f;
+    float forwardAcceleration_ = 8.0f;
+    float groundDeceleration_ = 2.0f;
 
     float lateralMaxSpeed_ = 16.0f;
     float lateralAcceleration_ = 8.0f;
 
     float jumpPower_ = 32.0f;
+
+    bool isGrounded_ = false;
 };
 
 } // namespace KashipanEngine

@@ -29,8 +29,13 @@ public:
 
         if (collider_ && !ctx->GetComponent<Collision3D>()) {
             ColliderInfo3D info{};
-            info.shape = Math::AABB{Vector3{-0.5f, -0.5f, -0.5f}, Vector3{0.5f, 0.5f, 0.5f}};
+            Math::OBB obb{};
+            obb.center = Vector3{0.0f, 0.0f, 0.0f};
+            obb.halfSize = Vector3{0.5f, 0.5f, 0.5f};
+            obb.orientation = Matrix4x4::Identity();
+            info.shape = obb;
             info.attribute.set(CollisionAttribute::Ground);
+            info.ignoreAttribute.set(CollisionAttribute::Ground);
             if (!ctx->RegisterComponent<Collision3D>(collider_, info)) {
                 return false;
             }

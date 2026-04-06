@@ -388,6 +388,7 @@
     <ClInclude Include="Application\Objects\Components\PlayerJumpBehavior.h" />
     <ClInclude Include="Application\Objects\Components\PlayerCollisionBehavior.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovementController.h" />
+    <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -505,5 +506,8 @@
     <None Include="Reference\14_BuildMacros.md" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\OneDrive\ドキュメント\1775464241140.png" />
   </ItemGroup>
 </Project>

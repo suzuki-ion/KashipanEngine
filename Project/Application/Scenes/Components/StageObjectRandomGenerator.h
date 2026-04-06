@@ -1,6 +1,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
+#include "Objects/Components/AlwaysRotate.h"
 #include "Objects/Components/GroundDefined.h"
 
 #include <cmath>
@@ -28,6 +29,7 @@ public:
 
         CreateSpawnGround(ctx);
         CreateGroundPool(ctx);
+        CreateDecorationPools(ctx);
     }
 
     void Update() override {
@@ -50,6 +52,20 @@ public:
                 RespawnGround(g);
             }
         }
+
+        for (auto &p : decoPlanes_) {
+            if (!p.object) continue;
+            if (p.centerZ > playerZ + recycleBehindDistance_) {
+                RespawnDecoPlane(p);
+            }
+        }
+
+        for (auto &b : decoBoxes_) {
+            if (!b.object) continue;
+            if (b.centerZ > playerZ + recycleBehindDistance_) {
+                RespawnDecoBox(b);
+            }
+        }
     }
 
 private:
@@ -61,6 +77,134 @@ private:
         float centerZ = 0.0f;
         float length = 0.0f;
     };
+
+    struct DecoPlaneRuntime {
+        Object3DBase *object = nullptr;
+        float centerZ = 0.0f;
+    };
+
+    struct DecoBoxRuntime {
+        Object3DBase *object = nullptr;
+        float centerZ = 0.0f;
+    };
+
+    void CreateDecorationPools(SceneContext *ctx) {
+        if (!ctx || !defaultVars_) return;
+
+        const float startFrontZ = spawnGroundCenterZ_ - spawnGroundDepth_ * 0.5f;
+        nextDecoPlaneZ_ = startFrontZ - decoPlaneSpacingZ_;
+        nextDecoBoxZ_ = startFrontZ - decoBoxMinGapZ_;
+
+        decoPlanes_.clear();
+        decoPlanes_.reserve(static_cast<std::size_t>(decoPlaneCount_));
+        for (int i = 0; i < decoPlaneCount_; ++i) {
+            auto obj = std::make_unique<Plane3D>();
+            obj->SetName("DecorationPlane");
+
+            if (auto *mat = obj->GetComponent3D<Material3D>()) {
+                mat->SetEnableLighting(false);
+                mat->SetColor(Vector4{1.0f, 1.0f, 1.0f, 1.0f});
+                mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
+                mat->SetTexture(TextureManager::GetTextureFromFileName("hexagon_alpha.png"));
+            }
+
+            obj->RegisterComponent<AlwaysRotate>(Vector3{0.0f, 0.0f, decoPlaneRotateSpeed_});
+
+            if (defaultVars_->GetScreenBuffer3D()) {
+                obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+            }
+
+            Object3DBase *ptr = obj.get();
+            if (!ctx->AddObject3D(std::move(obj)) || !ptr) continue;
+
+            DecoPlaneRuntime runtime{};
+            runtime.object = ptr;
+            RespawnDecoPlane(runtime);
+            decoPlanes_.push_back(runtime);
+        }
+
+        decoBoxes_.clear();
+        decoBoxes_.reserve(static_cast<std::size_t>(decoBoxCount_));
+        for (int i = 0; i < decoBoxCount_; ++i) {
+            auto obj = std::make_unique<Box>();
+            obj->SetName("DecorationBox");
+
+            if (auto *mat = obj->GetComponent3D<Material3D>()) {
+                mat->SetEnableLighting(false);
+                mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+                mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
+                mat->SetTexture(TextureManager::GetTextureFromFileName("square_alpha.png"));
+            }
+
+            const Vector3 axis = GetRandomRotateAxis();
+            const float speed = GetRandomValue(decoBoxRotateSpeedMin_, decoBoxRotateSpeedMax_);
+            obj->RegisterComponent<AlwaysRotate>(axis * speed);
+
+            if (defaultVars_->GetScreenBuffer3D()) {
+                obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+            }
+
+            Object3DBase *ptr = obj.get();
+            if (!ctx->AddObject3D(std::move(obj)) || !ptr) continue;
+
+            DecoBoxRuntime runtime{};
+            runtime.object = ptr;
+            RespawnDecoBox(runtime);
+            decoBoxes_.push_back(runtime);
+        }
+    }
+
+    Vector3 GetRandomRotateAxis() const {
+        Vector3 axis{
+            GetRandomValue(-1.0f, 1.0f),
+            GetRandomValue(-1.0f, 1.0f),
+            GetRandomValue(-1.0f, 1.0f)};
+        if (axis.LengthSquared() <= 0.000001f) {
+            axis = Vector3{0.0f, 0.0f, 1.0f};
+        } else {
+            axis = axis.Normalize();
+        }
+        return axis;
+    }
+
+    void RespawnDecoPlane(DecoPlaneRuntime &runtime) {
+        if (!runtime.object) return;
+        auto *tr = runtime.object->GetComponent3D<Transform3D>();
+        if (!tr) return;
+
+        const float z = nextDecoPlaneZ_;
+        nextDecoPlaneZ_ -= decoPlaneSpacingZ_;
+
+        const float scale = maxRingRadius_ * 8.0f;
+        tr->SetTranslate(Vector3{0.0f, 0.0f, z});
+        tr->SetRotate(Vector3{0.0f, kPi, 0.0f});
+        tr->SetScale(Vector3{scale, scale, 1.0f});
+
+        runtime.centerZ = z;
+    }
+
+    void RespawnDecoBox(DecoBoxRuntime &runtime) {
+        if (!runtime.object) return;
+        auto *tr = runtime.object->GetComponent3D<Transform3D>();
+        if (!tr) return;
+
+        const float z = nextDecoBoxZ_;
+        nextDecoBoxZ_ -= GetRandomValue(decoBoxMinGapZ_, decoBoxMaxGapZ_);
+
+        const float radius = GetRandomValue(maxRingRadius_ * 2.0f, maxRingRadius_ * 4.0f);
+        const float angle = GetRandomValue(0.0f, kTwoPi);
+        const float x = std::cos(angle) * radius;
+        const float y = std::sin(angle) * radius;
+
+        tr->SetTranslate(Vector3{x, y, z});
+        tr->SetRotate(Vector3{
+            GetRandomValue(0.0f, kTwoPi),
+            GetRandomValue(0.0f, kTwoPi),
+            GetRandomValue(0.0f, kTwoPi)});
+        tr->SetScale(Vector3{decoBoxScale_, decoBoxScale_, decoBoxScale_});
+
+        runtime.centerZ = z;
+    }
 
     void CreateGroundPool(SceneContext *ctx) {
         grounds_.clear();
@@ -149,23 +293,52 @@ private:
     float initialSpawnStartZ_ = 0.0f;
     float recycleBehindDistance_ = 64.0f;
 
+    //==================================================
+    // スポーン時の地面の配置に関するパラメータ
+    //==================================================
+
     float spawnGroundCenterX_ = 0.0f;
     float spawnGroundCenterY_ = -1.0f;
     float spawnGroundCenterZ_ = -2.0f;
-    float spawnGroundWidth_ = 10.0f;
-    float spawnGroundDepth_ = 200.0f;
+    float spawnGroundWidth_ = 30.0f;
+    float spawnGroundDepth_ = 500.0f;
+
+    //==================================================
+    // 地面オブジェクトの配置に関するパラメータ
+    //==================================================
 
     float minRingRadius_ = 8.0f;
-    float maxRingRadius_ = 32.0f;
+    float maxRingRadius_ = 128.0f;
     float minPanelWidth_ = 8.0f;
     float maxPanelWidth_ = 32.0f;
     float minPanelLength_ = 50.0f;
     float maxPanelLength_ = 100.0f;
 
-    int minPanelsPerSegment_ = 1;
-    int maxPanelsPerSegment_ = 4;
+    int minPanelsPerSegment_ = 4;
+    int maxPanelsPerSegment_ = 8;
+
+    //==================================================
+    // 装飾オブジェクトの配置に関するパラメータ
+    //==================================================
+
+    int decoPlaneCount_ = 16;
+    float decoPlaneSpacingZ_ = 1024.0f;
+    float decoPlaneRotateSpeed_ = 0.5f;
+
+    int decoBoxCount_ = 512;
+    float decoBoxScale_ = 32.0f;
+    float decoBoxRotateSpeedMin_ = 0.25f;
+    float decoBoxRotateSpeedMax_ = 1.0f;
+    float decoBoxMinGapZ_ = 16.0f;
+    float decoBoxMaxGapZ_ = 64.0f;
+
+    //==================================================
+    // 内部状態
+    //==================================================
 
     float nextSpawnZ_ = 0.0f;
+    float nextDecoPlaneZ_ = 0.0f;
+    float nextDecoBoxZ_ = 0.0f;
     float currentSegmentCenterZ_ = 0.0f;
     float currentSegmentLength_ = 0.0f;
     int remainingPanelsInCurrentSegment_ = 0;
@@ -174,6 +347,8 @@ private:
     Collider *collider_ = nullptr;
     Object3DBase *player_ = nullptr;
     std::vector<GroundRuntime> grounds_{};
+    std::vector<DecoPlaneRuntime> decoPlanes_{};
+    std::vector<DecoBoxRuntime> decoBoxes_{};
 };
 
 } // namespace KashipanEngine

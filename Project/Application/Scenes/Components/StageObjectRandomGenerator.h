@@ -1,10 +1,12 @@
 #pragma once
+#pragma once
 
 #include <KashipanEngine.h>
 #include "Objects/Components/AlwaysRotate.h"
 #include "Objects/Components/GroundDefined.h"
 
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 namespace KashipanEngine {
@@ -44,6 +46,7 @@ public:
         auto *playerTr = player_->GetComponent3D<Transform3D>();
         if (!playerTr) return;
 
+        const Vector3 playerPos = playerTr->GetTranslate();
         const float playerZ = playerTr->GetTranslate().z;
         for (auto &g : grounds_) {
             if (!g.object) continue;
@@ -55,6 +58,16 @@ public:
 
         for (auto &p : decoPlanes_) {
             if (!p.object) continue;
+
+            if (auto *tr = p.object->GetComponent3D<Transform3D>()) {
+                const float dist = (tr->GetTranslate() - playerPos).Length();
+                const float alphaT = std::clamp((dist - decoPlaneNearFadeDistance_) / std::max(0.0001f, (decoPlaneFarFadeDistance_ - decoPlaneNearFadeDistance_)), 0.0f, 1.0f);
+                const float alpha = 1.0f - alphaT;
+                if (auto *mat = p.object->GetComponent3D<Material3D>()) {
+                    mat->SetColor(Vector4{0.5f, 1.0f, 0.5f, alpha});
+                }
+            }
+
             if (p.centerZ > playerZ + recycleBehindDistance_) {
                 RespawnDecoPlane(p);
             }
@@ -62,6 +75,16 @@ public:
 
         for (auto &b : decoBoxes_) {
             if (!b.object) continue;
+
+            if (auto *tr = b.object->GetComponent3D<Transform3D>()) {
+                const float dist = (tr->GetTranslate() - playerPos).Length();
+                const float alphaT = std::clamp((dist - decoBoxNearFadeDistance_) / std::max(0.0001f, (decoBoxFarFadeDistance_ - decoPlaneNearFadeDistance_)), 0.0f, 1.0f);
+                const float alpha = 1.0f - alphaT;
+                if (auto *mat = b.object->GetComponent3D<Material3D>()) {
+                    mat->SetColor(Vector4{ 0.5f, 1.0f, 0.5f, alpha });
+                }
+            }
+
             if (b.centerZ > playerZ + recycleBehindDistance_) {
                 RespawnDecoBox(b);
             }
@@ -71,6 +94,9 @@ public:
 private:
     static constexpr float kPi = 3.14159265358979323846f;
     static constexpr float kTwoPi = kPi * 2.0f;
+    static constexpr std::uint64_t kGroundBatchKey = 0x1101000000000001ull;
+    static constexpr std::uint64_t kDecoPlaneBatchKey = 0x1101000000000002ull;
+    static constexpr std::uint64_t kDecoBoxBatchKey = 0x1101000000000003ull;
 
     struct GroundRuntime {
         Object3DBase *object = nullptr;
@@ -100,10 +126,10 @@ private:
         for (int i = 0; i < decoPlaneCount_; ++i) {
             auto obj = std::make_unique<Plane3D>();
             obj->SetName("DecorationPlane");
+            obj->SetBatchKey(kDecoPlaneBatchKey, RenderType::Instancing);
 
             if (auto *mat = obj->GetComponent3D<Material3D>()) {
                 mat->SetEnableLighting(false);
-                mat->SetColor(Vector4{1.0f, 1.0f, 1.0f, 1.0f});
                 mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
                 mat->SetTexture(TextureManager::GetTextureFromFileName("hexagon_alpha.png"));
             }
@@ -128,10 +154,10 @@ private:
         for (int i = 0; i < decoBoxCount_; ++i) {
             auto obj = std::make_unique<Box>();
             obj->SetName("DecorationBox");
+            obj->SetBatchKey(kDecoBoxBatchKey, RenderType::Instancing);
 
             if (auto *mat = obj->GetComponent3D<Material3D>()) {
                 mat->SetEnableLighting(false);
-                mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
                 mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
                 mat->SetTexture(TextureManager::GetTextureFromFileName("square_alpha.png"));
             }
@@ -215,6 +241,7 @@ private:
         for (int i = 0; i < pooledGroundObjectCount_; ++i) {
             auto obj = std::make_unique<Box>();
             obj->SetName("Ground");
+            obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
 
             if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
                 obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
@@ -239,6 +266,7 @@ private:
 
         auto obj = std::make_unique<Box>();
         obj->SetName("Ground");
+        obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
 
         if (defaultVars_->GetScreenBuffer3D()) {
             obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
@@ -257,6 +285,9 @@ private:
 
     void RespawnGround(GroundRuntime &runtime) {
         if (!runtime.object) return;
+
+        auto *groundDefined = runtime.object->GetComponent3D<GroundDefined>();
+        groundDefined->ResetTouchColorAnimation();
 
         auto *tr = runtime.object->GetComponent3D<Transform3D>();
         if (!tr) return;
@@ -298,21 +329,21 @@ private:
     //==================================================
 
     float spawnGroundCenterX_ = 0.0f;
-    float spawnGroundCenterY_ = -1.0f;
+    float spawnGroundCenterY_ = -2.0f;
     float spawnGroundCenterZ_ = -2.0f;
-    float spawnGroundWidth_ = 30.0f;
-    float spawnGroundDepth_ = 500.0f;
+    float spawnGroundWidth_ = 16.0f;
+    float spawnGroundDepth_ = 128.0f;
 
     //==================================================
     // 地面オブジェクトの配置に関するパラメータ
     //==================================================
 
     float minRingRadius_ = 8.0f;
-    float maxRingRadius_ = 128.0f;
-    float minPanelWidth_ = 8.0f;
-    float maxPanelWidth_ = 32.0f;
-    float minPanelLength_ = 50.0f;
-    float maxPanelLength_ = 100.0f;
+    float maxRingRadius_ = 64.0f;
+    float minPanelWidth_ = 4.0f;
+    float maxPanelWidth_ = 8.0f;
+    float minPanelLength_ = 16.0f;
+    float maxPanelLength_ = 64.0f;
 
     int minPanelsPerSegment_ = 4;
     int maxPanelsPerSegment_ = 8;
@@ -321,16 +352,20 @@ private:
     // 装飾オブジェクトの配置に関するパラメータ
     //==================================================
 
-    int decoPlaneCount_ = 16;
-    float decoPlaneSpacingZ_ = 1024.0f;
+    int decoPlaneCount_ = 8;
+    float decoPlaneSpacingZ_ = 512.0f;
     float decoPlaneRotateSpeed_ = 0.5f;
+    float decoPlaneNearFadeDistance_ = 128.0f;
+    float decoPlaneFarFadeDistance_ = 2048.0f;
 
-    int decoBoxCount_ = 512;
-    float decoBoxScale_ = 32.0f;
+    int decoBoxCount_ = 256;
+    float decoBoxScale_ = 8.0f;
     float decoBoxRotateSpeedMin_ = 0.25f;
     float decoBoxRotateSpeedMax_ = 1.0f;
     float decoBoxMinGapZ_ = 16.0f;
     float decoBoxMaxGapZ_ = 64.0f;
+    float decoBoxNearFadeDistance_ = 128.0f;
+    float decoBoxFarFadeDistance_ = 2048.0f;
 
     //==================================================
     // 内部状態

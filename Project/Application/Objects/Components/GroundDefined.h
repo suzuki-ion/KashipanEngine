@@ -22,7 +22,7 @@ public:
 
         if (auto *mat = ctx->GetComponent<Material3D>()) {
             mat->SetEnableLighting(false);
-            mat->SetColor(Vector4{ 0.0f, 1.0f, 0.0f, 1.0f });
+            mat->SetColor(defaultColor_);
             mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
             mat->SetTexture(TextureManager::GetTextureFromFileName("square_alpha.png"));
         }
@@ -36,6 +36,7 @@ public:
             info.shape = obb;
             info.attribute.set(CollisionAttribute::Ground);
             info.ignoreAttribute.set(CollisionAttribute::Ground);
+            info.onCollisionEnter = [this](const HitInfo3D &hit) { OnCollisionEnter(hit); };
             if (!ctx->RegisterComponent<Collision3D>(collider_, info)) {
                 return false;
             }
@@ -52,6 +53,18 @@ public:
         auto *mat = ctx->GetComponent<Material3D>();
         if (!tr || !mat) return true;
 
+        if (isTouchColorAnimating_) {
+            const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+            touchColorAnimT_ = Normalize01(touchColorAnimT_ + dt, 0.0f, touchColorAnimDuration_);
+            const Vector4 color = Lerp(touchColorStart_, touchColorEnd_, touchColorAnimT_);
+            mat->SetColor(color);
+
+            if (touchColorAnimT_ >= 1.0f) {
+                isTouchColorAnimating_ = false;
+                mat->SetColor(touchColorEnd_);
+            }
+        }
+
         return true;
     }
 
@@ -59,8 +72,44 @@ public:
     void ShowImGui() override {}
 #endif
 
+    void ResetTouchColorAnimation() {
+        hasPlayedTouchColorAnimation_ = false;
+        isTouchColorAnimating_ = false;
+        touchColorAnimT_ = 0.0f;
+        if (auto *ctx = GetOwner3DContext()) {
+            if (auto *mat = ctx->GetComponent<Material3D>()) {
+                mat->SetColor(defaultColor_);
+            }
+        }
+    }
+
 private:
+    void OnCollisionEnter(const HitInfo3D &hit) {
+        if (hasPlayedTouchColorAnimation_) return;
+        if (!hit.otherObject) return;
+        if (!hit.otherObject->GetComponent3D("PlayerMovementController")) return;
+
+        hasPlayedTouchColorAnimation_ = true;
+        isTouchColorAnimating_ = true;
+        touchColorAnimT_ = 0.0f;
+
+        if (auto *ctx = GetOwner3DContext()) {
+            if (auto *mat = ctx->GetComponent<Material3D>()) {
+                mat->SetColor(touchColorStart_);
+            }
+        }
+    }
+
     Collider *collider_ = nullptr;
+
+    const Vector4 defaultColor_{0.0f, 0.5f, 0.0f, 1.0f};
+    const Vector4 touchColorStart_{1.0f, 1.0f, 1.0f, 1.0f};
+    const Vector4 touchColorEnd_{0.5f, 1.0f, 0.5f, 1.0f};
+
+    bool hasPlayedTouchColorAnimation_ = false;
+    bool isTouchColorAnimating_ = false;
+    float touchColorAnimT_ = 0.0f;
+    float touchColorAnimDuration_ = 1.0f;
 };
 
 } // namespace KashipanEngine

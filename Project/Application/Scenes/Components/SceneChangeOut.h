@@ -47,9 +47,10 @@ public:
         if (dt >= 1.0f) dt = 0.0f;
         elapsed_ = std::min(elapsed_ + dt, kDuration);
 
-        auto *window = Window::GetWindow("3104_グランナー");
-        const float w = window ? static_cast<float>(window->GetClientWidth()) : 0.0f;
-        const float h = window ? static_cast<float>(window->GetClientHeight()) : 0.0f;
+        auto *ctx = GetOwnerContext();
+        auto *screenBuffer2D = ctx ? ctx->GetComponent<SceneDefaultVariables>()->GetScreenBuffer2D() : nullptr;
+        const float w = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetWidth()) : 0.0f;
+        const float h = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetHeight()) : 0.0f;
 
         const float t = (kDuration > 0.0f) ? std::clamp(elapsed_ / kDuration, 0.0f, 1.0f) : 1.0f;
 
@@ -80,11 +81,13 @@ private:
         auto *scene = GetOwnerScene();
         if (!scene) return;
 
-        auto *window = Window::GetWindow("3104_グランナー");
-        if (!window) return;
 
-        const float w = static_cast<float>(window->GetClientWidth());
-        
+        auto *ctx = GetOwnerContext();
+        auto *screenBuffer2D = ctx ? ctx->GetComponent<SceneDefaultVariables>()->GetScreenBuffer2D() : nullptr;
+        if (!screenBuffer2D) return;
+
+        const float w = static_cast<float>(screenBuffer2D->GetWidth());
+
         auto whiteTexture = TextureManager::GetTextureFromFileName("white1x1.png");
         // White
         {
@@ -100,11 +103,9 @@ private:
                 tr->SetTranslate(Vector2(w * 0.5f, 0.0f));
                 tr->SetScale(Vector2(w, -0.0f));
             }
-            obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
+            obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
             whiteSprite_ = obj.get();
-            if (auto *ctx = GetOwnerContext()) {
-                ctx->AddObject2D(std::move(obj));
-            }
+            ctx->AddObject2D(std::move(obj));
         }
 
         // Black
@@ -121,11 +122,9 @@ private:
                 tr->SetTranslate(Vector2(w * 0.5f, 0.0f));
                 tr->SetScale(Vector2(w, -0.0f));
             }
-            obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
+            obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
             blackSprite_ = obj.get();
-            if (auto *ctx = GetOwnerContext()) {
-                ctx->AddObject2D(std::move(obj));
-            }
+            ctx->AddObject2D(std::move(obj));
         }
 
         initialized_ = true;

@@ -13,6 +13,7 @@
 #include "Objects/GameObjects/2D/Line2D.h"
 #include "Objects/GameObjects/2D/Rect.h"
 #include "Objects/GameObjects/2D/Sprite.h"
+#include "Objects/GameObjects/2D/SpriteProressBar.h"
 #include "Objects/GameObjects/2D/Triangle2D.h"
 #include "Objects/GameObjects/2D/VertexData2D.h"
 #include "Objects/GameObjects/3D/Billboard.h"

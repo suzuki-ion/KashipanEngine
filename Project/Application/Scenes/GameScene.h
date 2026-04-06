@@ -3,6 +3,8 @@
 
 namespace KashipanEngine {
 
+class PlayerMovementController;
+
 class GameScene final : public SceneBase {
 public:
     GameScene();
@@ -15,6 +17,9 @@ protected:
 
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
+    Object3DBase *player_ = nullptr;
+    PlayerMovementController *playerMovementController_ = nullptr;
+    SpriteProressBar *forwardSpeedBar_ = nullptr;
 };
 
 } // namespace KashipanEngine

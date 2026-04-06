@@ -17,6 +17,10 @@ public:
     void Apply(float dt, const Vector3 &gravityDirection) {
         const Vector3 down = gravityDirection.Normalize();
         gravityVelocity_ += down * (gravityPower_ * dt);
+        const float gravitySpeed = gravityVelocity_.Length();
+        if (gravitySpeed > maxGravitySpeed_) {
+            gravityVelocity_ = gravityVelocity_ * (maxGravitySpeed_ / gravitySpeed);
+        }
     }
 
     Vector3 &GravityVelocityRef() { return gravityVelocity_; }
@@ -33,6 +37,7 @@ public:
 private:
     Vector3 gravityVelocity_{0.0f, 0.0f, 0.0f};
     float gravityPower_ = 128.0f;
+    float maxGravitySpeed_ = 64.0f;
 };
 
 } // namespace KashipanEngine

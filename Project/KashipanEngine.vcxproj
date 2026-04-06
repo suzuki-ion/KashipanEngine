@@ -329,8 +329,14 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
     <ClInclude Include="Application\Objects\Components\GroundDefined.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerCollisionBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerForwardMoveBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerGravityFallBehavior.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
-    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerJumpBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerLateralMoveBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovementController.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovementControllerAccess.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
     <ClInclude Include="Application\Scenes\Components\CameraToPlayerSync.h" />
     <ClInclude Include="Application\Scenes\Components\PostEffectToPlayerSync.h" />

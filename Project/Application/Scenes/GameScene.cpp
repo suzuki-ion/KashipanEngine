@@ -7,7 +7,7 @@
 #include "Scenes/Components/StageObjectRandomGenerator.h"
 
 #include "Objects/GameObjects/3D/Box.h"
-#include "Objects/Components/PlayerMovement.h"
+#include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
 
 namespace KashipanEngine {
@@ -35,11 +35,11 @@ void GameScene::Initialize() {
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
         RadialBlurEffect::Params rp;
-        rp.intensity = 0.5f;
+        rp.intensity = 0.0f;
         rp.sampleCount = 16;
         rp.radialCenter[0] = 0.5f;
         rp.radialCenter[1] = 0.5f;
-        rp.startRadius = 0.2f;
+        rp.startRadius = 0.1f;
         auto radialBlur = std::make_unique<RadialBlurEffect>(rp);
         radialBlurEffect = radialBlur.get();
         screenBuffer3D->RegisterPostEffectComponent(std::move(radialBlur));
@@ -66,7 +66,7 @@ void GameScene::Initialize() {
                 tr->SetTranslate(Vector3{0.0f, 0.0f, -2.0f});
             }
 
-            player->RegisterComponent<PlayerMovement>(colliderComp->GetCollider());
+            player->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
             player->RegisterComponent<PlayerInputHandler>(
                 GetInputCommand(),
                 "PlayerMoveRight",

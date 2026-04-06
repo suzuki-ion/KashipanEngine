@@ -52,12 +52,6 @@ public:
         auto *mat = ctx->GetComponent<Material3D>();
         if (!tr || !mat) return true;
 
-       /* auto uv = mat->GetUVTransform();
-        const Vector3 scale = tr->GetScale();
-        float scaleX = scale.x > scale.y ? scale.x * 0.05f : scale.z * 0.05f;
-        float scaleY = scale.y > scale.x ? scale.y * 0.05f : scale.z * 0.05f;
-        uv.scale = Vector3{ scaleX, scaleY, 1.0f };
-        mat->SetUVTransform(uv);*/
         return true;
     }
 

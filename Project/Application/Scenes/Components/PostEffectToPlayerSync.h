@@ -1,7 +1,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
-#include "Objects/Components/PlayerMovement.h"
+#include "Objects/Components/PlayerMovementController.h"
 
 namespace KashipanEngine {
 
@@ -17,7 +17,7 @@ public:
     void Update() override {
         if (!player_ || !radialBlur_) return;
 
-        auto *pm = player_->GetComponent3D<PlayerMovement>();
+        auto *pm = player_->GetComponent3D<PlayerMovementController>();
         if (!pm) return;
 
         const float minSpeed = pm->GetMinForwardSpeed();

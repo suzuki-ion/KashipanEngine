@@ -376,12 +376,18 @@
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
     <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
     <ClInclude Include="Application\Objects\Components\GroundDefined.h" />
-    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
     <ClInclude Include="Application\Scenes\Components\CameraToPlayerSync.h" />
     <ClInclude Include="Application\Scenes\Components\StageObjectRandomGenerator.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\RadialBlurEffect.h" />
     <ClInclude Include="Application\Scenes\Components\PostEffectToPlayerSync.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovementControllerAccess.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerGravityFallBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerForwardMoveBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerLateralMoveBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerJumpBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerCollisionBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovementController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

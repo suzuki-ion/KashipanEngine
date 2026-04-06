@@ -1,7 +1,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
-#include "Objects/Components/PlayerMovement.h"
+#include "Objects/Components/PlayerMovementController.h"
 
 #include <cmath>
 #include <optional>
@@ -57,7 +57,7 @@ public:
         auto *ctx = GetOwner3DContext();
         if (!ctx) return false;
 
-        playerMovement_ = ctx->GetComponent<PlayerMovement>();
+        playerMovement_ = ctx->GetComponent<PlayerMovementController>();
         return playerMovement_ != nullptr;
     }
 
@@ -129,7 +129,7 @@ private:
     }
 
     InputCommand *inputCommand_ = nullptr;
-    PlayerMovement *playerMovement_ = nullptr;
+    PlayerMovementController *playerMovement_ = nullptr;
 
     std::string moveRightCommand_;
     std::string moveLeftCommand_;

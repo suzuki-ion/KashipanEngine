@@ -42,7 +42,7 @@ public:
             speedRatio = (playerMovement->GetForwardSpeed() - minSpeed) / (maxSpeed - minSpeed);
         }
         speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
-        const float targetFov = 0.7f + (2.0f - 0.7f) * speedRatio;
+        const float targetFov = 0.7f + (1.5f - 0.7f) * speedRatio;
 
         cameraController->SetTargetTranslate(cameraPos);
         cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, up));

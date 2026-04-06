@@ -61,17 +61,16 @@ public:
         if (!tr) return false;
 
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        const Vector3 down = gravityDirection_.Normalize();
+        const bool isFalling = gravityVelocity_.Dot(down) > 0.0f;
 
-        const bool wasGrounded = isGrounded_;
         isGrounded_ = false;
 
-        if (wasGrounded) {
-            forwardSpeed_ = std::max(minForwardSpeed_, forwardSpeed_ - groundDeceleration_ * dt);
-        } else {
+        if (isFalling) {
             forwardSpeed_ = std::min(maxForwardSpeed_, forwardSpeed_ + forwardAcceleration_ * dt);
+        } else {
+            forwardSpeed_ = std::max(minForwardSpeed_, forwardSpeed_ - groundDeceleration_ * dt);
         }
-
-        const Vector3 down = gravityDirection_.Normalize();
         const Vector3 up = -down;
 
         Vector3 right = down.Cross(forwardDirection_);
@@ -81,7 +80,9 @@ public:
             right = right.Normalize();
         }
 
-        const Vector3 desiredLateral = right * (std::clamp(lateralInput_, -1.0f, 1.0f) * lateralMaxSpeed_);
+        const float boostedLateralMaxSpeed = lateralMaxSpeed_
+            + std::max(0.0f, forwardSpeed_ - minForwardSpeed_) * lateralSpeedPerForward_;
+        const Vector3 desiredLateral = right * (std::clamp(lateralInput_, -1.0f, 1.0f) * boostedLateralMaxSpeed);
         const float lateralLerp = std::clamp(lateralAcceleration_ * dt, 0.0f, 1.0f);
         lateralVelocity_ = Vector3::Lerp(lateralVelocity_, desiredLateral, lateralLerp);
 
@@ -105,7 +106,7 @@ public:
     }
 
     void Jump() {
-        gravityVelocity_ += (-gravityDirection_.Normalize()) * jumpPower_;
+        gravityVelocity_ = (-gravityDirection_.Normalize()) * jumpPower_;
     }
 
     void SetGravityDirection(const Vector3 &direction) {
@@ -166,6 +167,12 @@ private:
         if (normal.LengthSquared() <= 0.000001f) return;
 
         isGrounded_ = true;
+
+        const Vector3 forward = forwardDirection_.Normalize();
+        if ((normal - (-forward)).LengthSquared() <= 0.0001f ||
+            (normal - forward).LengthSquared() <= 0.0001f) {
+            return;
+        }
 
         // 触れた面の法線をそのまま重力方向へ反映する
         SetGravityDirection(-normal);
@@ -238,18 +245,19 @@ private:
 
     float lateralInput_ = 0.0f;
 
-    float gravityPower_ = 96.0f;
+    float gravityPower_ = 128.0f;
 
     float forwardSpeed_ = 32.0f;
     float minForwardSpeed_ = 16.0f;
     float maxForwardSpeed_ = 64.0f;
     float forwardAcceleration_ = 8.0f;
-    float groundDeceleration_ = 2.0f;
+    float groundDeceleration_ = 4.0f;
 
     float lateralMaxSpeed_ = 16.0f;
     float lateralAcceleration_ = 8.0f;
+    float lateralSpeedPerForward_ = 0.25f;
 
-    float jumpPower_ = 32.0f;
+    float jumpPower_ = 64.0f;
 
     bool isGrounded_ = false;
 };

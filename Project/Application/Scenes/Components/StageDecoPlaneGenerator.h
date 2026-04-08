@@ -57,6 +57,7 @@ public:
 
 private:
     static constexpr float kPi = 3.14159265358979323846f;
+    static constexpr float kTiltStepRad = 3.14159265358979323846f / 12.0f; // 15度
     static constexpr std::uint64_t kDecoPlaneBatchKey = 0x1101000000000002ull;
 
     void TryGenerate() {
@@ -110,8 +111,13 @@ private:
 
         const float scale = maxRingRadius_ * 8.0f;
         tr->SetTranslate(Vector3{0.0f, 0.0f, z});
-        tr->SetRotate(Vector3{0.0f, kPi, 0.0f});
+        tr->SetRotate(Vector3{0.0f, kPi, nextTiltAngle_});
         tr->SetScale(Vector3{scale, scale, 1.0f});
+
+        nextTiltAngle_ += kTiltStepRad;
+        if (nextTiltAngle_ > kPi * 2.0f) {
+            nextTiltAngle_ -= kPi * 2.0f;
+        }
 
         runtime.centerZ = z;
     }
@@ -131,6 +137,7 @@ private:
     float spawnGroundDepth_ = 128.0f;
 
     float nextSpawnZ_ = 0.0f;
+    float nextTiltAngle_ = 0.0f;
 
     SceneDefaultVariables *defaultVars_ = nullptr;
     Object3DBase *player_ = nullptr;

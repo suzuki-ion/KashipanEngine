@@ -1,4 +1,5 @@
 #include "Objects/GameObjects/2D/SpriteProressBar.h"
+#include "Objects/GameObjects/2D/SpriteProressBar.h"
 
 #include <algorithm>
 
@@ -24,6 +25,7 @@ SpriteProressBar::SpriteProressBar()
     frameSprite_ = makeChild("SpriteProressBarFrame");
     backgroundSprite_ = makeChild("SpriteProressBarBackground");
     barSprite_ = makeChild("SpriteProressBarBar");
+    SyncSegmentSprites();
 
     if (barSprite_) {
         barSprite_->SetPivotPoint(0.0f, 0.5f);
@@ -78,28 +80,69 @@ void SpriteProressBar::SetBackgroundTexture(TextureManager::TextureHandle textur
     UpdateVisuals();
 }
 
+void SpriteProressBar::SetSegmentLineCount(int count) {
+    segmentLineCount_ = std::max(0, count);
+    SyncSegmentSprites();
+    UpdateVisuals();
+    UpdateLayout();
+}
+
+void SpriteProressBar::SetSegmentLineColor(const Vector4 &color) {
+    segmentLineColor_ = color;
+    UpdateVisuals();
+}
+
+void SpriteProressBar::SetSegmentLineThickness(float thickness) {
+    segmentLineThickness_ = std::max(0.0f, thickness);
+    UpdateLayout();
+}
+
 void SpriteProressBar::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
+    attachedWindow_ = targetWindow;
+    attachedBuffer_ = nullptr;
+    attachedPipelineName_ = pipelineName;
+
     if (frameSprite_) frameSprite_->AttachToRenderer(targetWindow, pipelineName);
     if (backgroundSprite_) backgroundSprite_->AttachToRenderer(targetWindow, pipelineName);
     if (barSprite_) barSprite_->AttachToRenderer(targetWindow, pipelineName);
+    for (auto &s : segmentSprites_) {
+        if (s) s->AttachToRenderer(targetWindow, pipelineName);
+    }
 }
 
 void SpriteProressBar::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
+    attachedWindow_ = nullptr;
+    attachedBuffer_ = targetBuffer;
+    attachedPipelineName_ = pipelineName;
+
     if (frameSprite_) frameSprite_->AttachToRenderer(targetBuffer, pipelineName);
     if (backgroundSprite_) backgroundSprite_->AttachToRenderer(targetBuffer, pipelineName);
     if (barSprite_) barSprite_->AttachToRenderer(targetBuffer, pipelineName);
+    for (auto &s : segmentSprites_) {
+        if (s) s->AttachToRenderer(targetBuffer, pipelineName);
+    }
 }
 
 void SpriteProressBar::DetachFromRenderer() {
     if (frameSprite_) frameSprite_->DetachFromRenderer();
     if (backgroundSprite_) backgroundSprite_->DetachFromRenderer();
     if (barSprite_) barSprite_->DetachFromRenderer();
+    for (auto &s : segmentSprites_) {
+        if (s) s->DetachFromRenderer();
+    }
+
+    attachedWindow_ = nullptr;
+    attachedBuffer_ = nullptr;
+    attachedPipelineName_.clear();
 }
 
 void SpriteProressBar::OnUpdate() {
     if (frameSprite_) frameSprite_->Update();
     if (backgroundSprite_) backgroundSprite_->Update();
     if (barSprite_) barSprite_->Update();
+    for (auto &s : segmentSprites_) {
+        if (s) s->Update();
+    }
 }
 
 void SpriteProressBar::UpdateVisuals() {
@@ -121,6 +164,14 @@ void SpriteProressBar::UpdateVisuals() {
         if (auto *mat = barSprite_->GetComponent2D<Material2D>()) {
             mat->SetColor(barColor_);
             mat->SetTexture(barTexture_);
+        }
+    }
+
+    for (auto &s : segmentSprites_) {
+        if (!s) continue;
+        if (auto *mat = s->GetComponent2D<Material2D>()) {
+            mat->SetColor(segmentLineColor_);
+            mat->SetTexture(TextureManager::kInvalidHandle);
         }
     }
 }
@@ -148,6 +199,45 @@ void SpriteProressBar::UpdateLayout() {
             tr->SetTranslate(Vector3{-barWidth * 0.5f, 0.0f, 0.0f});
             tr->SetScale(Vector3{barWidth * progress_, barHeight, 1.0f});
         }
+    }
+
+    if (!segmentSprites_.empty() && segmentLineCount_ > 0) {
+        const float step = barWidth / static_cast<float>(segmentLineCount_ + 1);
+        for (int i = 0; i < segmentLineCount_; ++i) {
+            auto *sprite = segmentSprites_[static_cast<std::size_t>(i)].get();
+            if (!sprite) continue;
+            if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+                const float x = -barWidth * 0.5f + step * static_cast<float>(i + 1);
+                tr->SetTranslate(Vector3{x, 0.0f, 0.0f});
+                tr->SetScale(Vector3{segmentLineThickness_, barHeight, 1.0f});
+            }
+        }
+    }
+}
+
+void SpriteProressBar::SyncSegmentSprites() {
+    const std::size_t targetCount = static_cast<std::size_t>(segmentLineCount_);
+    if (segmentSprites_.size() > targetCount) {
+        segmentSprites_.resize(targetCount);
+    }
+
+    while (segmentSprites_.size() < targetCount) {
+        auto sprite = std::make_unique<Sprite>();
+        sprite->SetName("SpriteProressBarSegment");
+        sprite->SetUniqueBatchKey();
+        if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+            tr->SetParentTransform(parentTransform_);
+        }
+
+        if (!attachedPipelineName_.empty()) {
+            if (attachedBuffer_) {
+                sprite->AttachToRenderer(attachedBuffer_, attachedPipelineName_);
+            } else if (attachedWindow_) {
+                sprite->AttachToRenderer(attachedWindow_, attachedPipelineName_);
+            }
+        }
+
+        segmentSprites_.push_back(std::move(sprite));
     }
 }
 

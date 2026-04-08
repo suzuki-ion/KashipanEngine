@@ -2,6 +2,7 @@
 
 #include <KashipanEngine.h>
 #include "Objects/Components/CollisionAttributes.h"
+#include "Objects/Components/GroundDefined.h"
 #include "Objects/Components/PlayerMovementControllerAccess.h"
 
 namespace KashipanEngine {
@@ -53,6 +54,12 @@ public:
     }
 
     const Vector3 &GetGroundNormal() const { return lastGroundNormal_; }
+    Object3DBase *GetLastGroundObject() const { return lastGroundObject_; }
+    bool ConsumeLastGroundWasFirstTouch() {
+        const bool v = lastGroundWasFirstTouch_;
+        lastGroundWasFirstTouch_ = false;
+        return v;
+    }
 
     void ResolveStayTranslationAndVelocity(Vector3 &position, Vector3 &gravityVelocity) {
         if (!hasStayCorrection_) return;
@@ -77,6 +84,17 @@ private:
         return obj->GetComponent3D("GroundDefined") != nullptr;
     }
 
+    static bool IsFirstTouchGroundAtCollision(Object3DBase *obj) {
+        if (!obj) return false;
+        auto *ground = obj->GetComponent3D<GroundDefined>();
+        if (!ground) return false;
+
+        // コールバック順の差異を吸収:
+        // - Ground側が先なら playerTouchEvent が true
+        // - Player側が先なら まだ未タッチ状態
+        return ground->HasPlayerTouchEvent() || !ground->HasBeenTouchedByPlayer();
+    }
+
     void OnCollisionEnter(const HitInfo3D &hit) {
         if (!IsGroundObject(hit.otherObject)) return;
 
@@ -85,6 +103,8 @@ private:
 
         grounded_ = true;
         lastGroundNormal_ = normal;
+        lastGroundObject_ = hit.otherObject;
+        lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
 
         auto *ctx = GetOwner3DContext();
         if (!ctx) return;
@@ -109,6 +129,8 @@ private:
 
         grounded_ = true;
         lastGroundNormal_ = normal;
+        lastGroundObject_ = hit.otherObject;
+        lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
         stayCorrection_ += normal * hit.penetration;
         hasStayCorrection_ = true;
     }
@@ -117,6 +139,8 @@ private:
     bool grounded_ = false;
     std::optional<Vector3> requestedGravityDirection_{};
     Vector3 lastGroundNormal_{0.0f, 1.0f, 0.0f};
+    Object3DBase *lastGroundObject_ = nullptr;
+    bool lastGroundWasFirstTouch_ = false;
     Vector3 stayCorrection_{0.0f, 0.0f, 0.0f};
     bool hasStayCorrection_ = false;
 };

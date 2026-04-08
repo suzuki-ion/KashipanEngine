@@ -1,6 +1,9 @@
 #pragma once
 
+#pragma once
+
 #include <string>
+#include <vector>
 
 #include "Assets/TextureManager.h"
 #include "Math/Vector2.h"
@@ -45,6 +48,15 @@ public:
     void SetBackgroundTexture(TextureManager::TextureHandle texture);
     TextureManager::TextureHandle GetBackgroundTexture() const { return backgroundTexture_; }
 
+    void SetSegmentLineCount(int count);
+    int GetSegmentLineCount() const { return segmentLineCount_; }
+
+    void SetSegmentLineColor(const Vector4 &color);
+    const Vector4 &GetSegmentLineColor() const { return segmentLineColor_; }
+
+    void SetSegmentLineThickness(float thickness);
+    float GetSegmentLineThickness() const { return segmentLineThickness_; }
+
     void AttachToRenderer(Window *targetWindow, const std::string &pipelineName);
     void AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
     void DetachFromRenderer();
@@ -55,10 +67,12 @@ protected:
 private:
     void UpdateVisuals();
     void UpdateLayout();
+    void SyncSegmentSprites();
 
     std::unique_ptr<Sprite> frameSprite_;
     std::unique_ptr<Sprite> backgroundSprite_;
     std::unique_ptr<Sprite> barSprite_;
+    std::vector<std::unique_ptr<Sprite>> segmentSprites_;
 
     Transform2D *parentTransform_ = nullptr;
 
@@ -73,6 +87,14 @@ private:
     TextureManager::TextureHandle frameTexture_ = TextureManager::kInvalidHandle;
     TextureManager::TextureHandle barTexture_ = TextureManager::kInvalidHandle;
     TextureManager::TextureHandle backgroundTexture_ = TextureManager::kInvalidHandle;
+
+    int segmentLineCount_ = 0;
+    Vector4 segmentLineColor_ = Vector4{1.0f, 1.0f, 1.0f, 0.6f};
+    float segmentLineThickness_ = 2.0f;
+
+    Window *attachedWindow_ = nullptr;
+    ScreenBuffer *attachedBuffer_ = nullptr;
+    std::string attachedPipelineName_;
 };
 
 } // namespace KashipanEngine

@@ -52,6 +52,9 @@ public:
         return touched;
     }
 
+    bool HasPlayerTouchEvent() const { return playerTouchEvent_; }
+    bool HasBeenTouchedByPlayer() const { return hasPlayedTouchColorAnimation_; }
+
     std::optional<bool> Update() override {
         auto *ctx = GetOwner3DContext();
         if (!ctx) return false;
@@ -95,6 +98,7 @@ public:
     void ResetTouchColorAnimation() {
         hasPlayedTouchColorAnimation_ = false;
         isTouchColorAnimating_ = false;
+        playerTouchEvent_ = false;
         touchColorAnimT_ = 0.0f;
         if (auto *ctx = GetOwner3DContext()) {
             if (auto *mat = ctx->GetComponent<Material3D>()) {

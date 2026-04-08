@@ -84,6 +84,15 @@ private:
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
     static constexpr std::uint64_t kGroundBatchKey = 0x1101000000000001ull;
 
+    static float GetRandomSplitValue(float minValue, float maxValue, int splitCount) {
+        if (splitCount <= 1) {
+            return GetRandomValue(minValue, maxValue);
+        }
+        const int index = GetRandomValue(0, std::max(0, splitCount - 1));
+        const float t = static_cast<float>(index) / static_cast<float>(std::max(1, splitCount - 1));
+        return minValue + (maxValue - minValue) * t;
+    }
+
     struct GroundRuntime {
         Object3DBase *object = nullptr;
         float centerZ = 0.0f;
@@ -163,7 +172,7 @@ private:
         if (!tr) return;
 
         if (remainingPanelsInCurrentSegment_ <= 0) {
-            currentSegmentLength_ = GetRandomValue(minPanelLength_, maxPanelLength_);
+            currentSegmentLength_ = GetRandomSplitValue(minPanelLength_, maxPanelLength_, panelLengthSplitCount_);
             currentSegmentCenterZ_ = nextSpawnZ_ - currentSegmentLength_ * 0.5f;
             nextSpawnZ_ -= currentSegmentLength_;
             remainingPanelsInCurrentSegment_ = GetRandomValue(minPanelsPerSegment_, maxPanelsPerSegment_);
@@ -173,23 +182,17 @@ private:
         const float centerZ = currentSegmentCenterZ_;
         --remainingPanelsInCurrentSegment_;
 
-        float radius = minRingRadius_;
-        if (ringSplitCount_ <= 1) {
-            radius = GetRandomValue(minRingRadius_, maxRingRadius_);
-        } else {
-            const int ringIndex = GetRandomValue(0, std::max(0, ringSplitCount_ - 1));
-            const float t = static_cast<float>(ringIndex) / static_cast<float>(std::max(1, ringSplitCount_ - 1));
-            radius = minRingRadius_ + (maxRingRadius_ - minRingRadius_) * t;
-        }
+        const float radius = GetRandomSplitValue(minRingRadius_, maxRingRadius_, ringSplitCount_);
         const float angle = GetRandomValue(0.0f, kTwoPi);
-        const float panelWidth = GetRandomValue(minPanelWidth_, maxPanelWidth_);
+        const float panelWidth = GetRandomSplitValue(minPanelWidth_, maxPanelWidth_, panelWidthSplitCount_);
+        const float panelThickness = GetRandomSplitValue(minPanelThickness_, maxPanelThickness_, panelThicknessSplitCount_);
 
         const float x = std::cos(angle) * radius;
         const float y = std::sin(angle) * radius;
 
         tr->SetTranslate(Vector3{x, y, centerZ});
         tr->SetRotate(Vector3{0.0f, 0.0f, angle});
-        tr->SetScale(Vector3{panelThickness_, panelWidth, length});
+        tr->SetScale(Vector3{panelThickness, panelWidth, length});
 
         runtime.centerZ = centerZ;
         runtime.length = length;
@@ -209,12 +212,20 @@ private:
     float spawnGroundDepth_ = 128.0f;
 
     float minRingRadius_ = 16.0f;
-    float maxRingRadius_ = 64.0f;
+    float maxRingRadius_ = 96.0f;
+    int ringSplitCount_ = 4;
+
+    float minPanelThickness_ = 1.0f;
+    float maxPanelThickness_ = 4.0f;
+    int panelThicknessSplitCount_ = 2;
+
     float minPanelWidth_ = 16.0f;
     float maxPanelWidth_ = 32.0f;
+    int panelWidthSplitCount_ = 3;
+
     float minPanelLength_ = 16.0f;
     float maxPanelLength_ = 64.0f;
-    int ringSplitCount_ = 3;
+    int panelLengthSplitCount_ = 3;
 
     int minPanelsPerSegment_ = 4;
     int maxPanelsPerSegment_ = 4;

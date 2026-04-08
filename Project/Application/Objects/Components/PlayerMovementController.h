@@ -7,6 +7,7 @@
 #include "Objects/Components/PlayerLateralMoveBehavior.h"
 #include "Objects/Components/PlayerJumpBehavior.h"
 #include "Objects/Components/PlayerCollisionBehavior.h"
+#include "Objects/Components/GroundDefined.h"
 
 #include <algorithm>
 #include <cmath>
@@ -133,14 +134,24 @@ public:
                 jumpBehavior_->ResetJumpCount();
             }
 
-            const float recovered = std::clamp(landingImpact * landingGaugeRecoveryPerDistance_, 0.0f, gravityGaugeMax_);
-            gravityGauge_ = std::clamp(gravityGauge_ + recovered, 0.0f, gravityGaugeMax_);
+            const bool canRecoverGauge = collisionBehavior_ ? collisionBehavior_->ConsumeLastGroundWasFirstTouch() : false;
+
+            if (canRecoverGauge) {
+                const float recovered = std::clamp(
+                    landingGaugeRecoveryBase_ + landingImpact * landingGaugeRecoveryPerDistance_,
+                    0.0f,
+                    gravityGaugeMax_);
+                gravityGauge_ = std::clamp(gravityGauge_ + recovered, 0.0f, gravityGaugeMax_);
+            }
 
             hasLandingImpact_ = true;
             lastLandingImpact_ = landingImpact;
             accumulatedFallDistance_ = 0.0f;
         } else if (!grounded && wasGroundedPrev_) {
             accumulatedFallDistance_ = 0.0f;
+            if (collisionBehavior_) {
+                (void)collisionBehavior_->ConsumeLastGroundWasFirstTouch();
+            }
         }
         wasGroundedPrev_ = grounded;
 
@@ -337,11 +348,12 @@ private:
     bool hasLandingImpact_ = false;
     float lastLandingImpact_ = 0.0f;
 
-    float gravityGaugePerUse_ = 10.0f;
+    float gravityGaugePerUse_ = 16.0f;
     int gravityGaugeUseCountPerFull_ = 4;
     float gravityGaugeMax_ = gravityGaugePerUse_ * static_cast<float>(gravityGaugeUseCountPerFull_);
     float gravityGauge_ = gravityGaugeMax_;
-    float landingGaugeRecoveryPerDistance_ = 5.0f;
+    float landingGaugeRecoveryBase_ = 0.5f;
+    float landingGaugeRecoveryPerDistance_ = 0.05f;
 
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;

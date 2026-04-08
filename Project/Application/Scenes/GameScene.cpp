@@ -4,6 +4,11 @@
 #include "Scenes/Components/CameraController.h"
 #include "Scenes/Components/CameraToPlayerSync.h"
 #include "Scenes/Components/PostEffectToPlayerSync.h"
+#include "Scenes/Components/GameSceneUIController.h"
+#include "Scenes/Components/StageGroundGenerator.h"
+#include "Scenes/Components/StageDecoPlaneGenerator.h"
+#include "Scenes/Components/StageDecoBoxGenerator.h"
+#include "Scenes/Components/StageObjectController.h"
 #include "Scenes/Components/StageObjectRandomGenerator.h"
 
 #include "Objects/GameObjects/3D/Box.h"
@@ -21,10 +26,10 @@ void GameScene::Initialize() {
     SetGameSpeed(1.0f);
 
     RadialBlurEffect *radialBlurEffect = nullptr;
+    VignetteEffect *vignetteEffect = nullptr;
 
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
     auto *screenBuffer3D = sceneDefaultVariables_->GetScreenBuffer3D();
-    auto *screenBuffer2D = sceneDefaultVariables_->GetScreenBuffer2D();
     auto *directionalLight = sceneDefaultVariables_->GetDirectionalLight();
     directionalLight->SetDirection({ 0.0f, 0.0f, 1.0f });
 
@@ -47,6 +52,17 @@ void GameScene::Initialize() {
         radialBlurEffect = radialBlur.get();
         screenBuffer3D->RegisterPostEffectComponent(std::move(radialBlur));
 
+        VignetteEffect::Params vp;
+        vp.center[0] = 0.5f;
+        vp.center[1] = 0.5f;
+        vp.color = Vector4{0.0f, 0.25f, 0.0f, 1.0f};
+        vp.intensity = 0.0f;
+        vp.innerRadius = 0.3f;
+        vp.smoothness = 0.2f;
+        auto vignette = std::make_unique<VignetteEffect>(vp);
+        vignetteEffect = vignette.get();
+        screenBuffer3D->RegisterPostEffectComponent(std::move(vignette));
+
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D.Default");
     }
 
@@ -55,7 +71,12 @@ void GameScene::Initialize() {
             AddSceneComponent(std::make_unique<CameraController>(mainCamera));
         }
 
+        AddSceneComponent(std::make_unique<StageGroundGenerator>());
+        AddSceneComponent(std::make_unique<StageDecoPlaneGenerator>());
+        AddSceneComponent(std::make_unique<StageDecoBoxGenerator>());
+        AddSceneComponent(std::make_unique<StageObjectController>());
         AddSceneComponent(std::make_unique<StageObjectRandomGenerator>());
+        AddSceneComponent(std::make_unique<GameSceneUIController>());
 
         if (auto *colliderComp = sceneDefaultVariables_->GetColliderComp()) {
             auto player = std::make_unique<Box>();
@@ -68,6 +89,9 @@ void GameScene::Initialize() {
 
             if (auto *tr = player->GetComponent3D<Transform3D>()) {
                 tr->SetTranslate(Vector3{0.0f, 0.0f, -2.0f});
+            }
+            if (auto *mat = player->GetComponent3D<Material3D>()) {
+                mat->SetTexture(TextureManager::GetTextureFromFileName("square_alpha.png"));
             }
 
             player->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
@@ -85,30 +109,11 @@ void GameScene::Initialize() {
 
             Object3DBase *playerPtr = player.get();
             AddObject3D(std::move(player));
-            player_ = playerPtr;
-            playerMovementController_ = playerPtr->GetComponent3D<PlayerMovementController>();
 
             AddSceneComponent(std::make_unique<CameraToPlayerSync>(playerPtr));
-            AddSceneComponent(std::make_unique<PostEffectToPlayerSync>(playerPtr, radialBlurEffect));
+            AddSceneComponent(std::make_unique<PostEffectToPlayerSync>(playerPtr, radialBlurEffect, vignetteEffect));
         }
 
-        if (screenBuffer2D) {
-            auto speedBar = std::make_unique<SpriteProressBar>();
-            speedBar->SetName("ForwardSpeedBar");
-            speedBar->SetBarSize(Vector2{512.0f, 256.0f});
-            speedBar->SetFrameThickness(4.0f);
-            speedBar->SetFrameColor(Vector4{1.0f, 1.0f, 1.0f, 1.0f});
-            speedBar->SetBackgroundColor(Vector4{0.1f, 0.1f, 0.1f, 1.0f});
-            speedBar->SetBarColor(Vector4{0.0f, 0.5f, 0.0f, 1.0f});
-            speedBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-
-            if (auto *tr = speedBar->GetComponent2D<Transform2D>()) {
-                tr->SetTranslate(Vector3{240.0f, 80.0f, 0.0f});
-            }
-
-            forwardSpeedBar_ = speedBar.get();
-            AddObject2D(std::move(speedBar));
-        }
     }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
@@ -123,22 +128,6 @@ void GameScene::Initialize() {
 GameScene::~GameScene() {}
 
 void GameScene::OnUpdate() {
-    if (!player_ || !playerMovementController_) {
-        player_ = GetObject3D("Player");
-        if (player_) {
-            playerMovementController_ = player_->GetComponent3D<PlayerMovementController>();
-        }
-    }
-
-    if (forwardSpeedBar_ && playerMovementController_) {
-        const float speed = playerMovementController_->GetForwardSpeed();
-        const float minSpeed = playerMovementController_->GetMinForwardSpeed();
-        const float maxSpeed = playerMovementController_->GetMaxForwardSpeed();
-        const float range = std::max(0.0001f, maxSpeed - minSpeed);
-        const float progress = std::clamp((speed - minSpeed) / range, 0.0f, 1.0f);
-        forwardSpeedBar_->SetProgress(progress);
-    }
-
     if (!GetNextSceneName().empty()) {
         if (auto *out = GetSceneComponent<SceneChangeOut>()) {
             if (out->IsFinished()) {

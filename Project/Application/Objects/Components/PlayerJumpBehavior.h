@@ -15,6 +15,7 @@ public:
     }
 
     void RequestJump() {
+        if (jumpCount_ >= maxJumpCount_) return;
         jumpRequested_ = true;
     }
 
@@ -22,7 +23,16 @@ public:
         if (!jumpRequested_) return;
         gravityVelocity = (-gravityDirection.Normalize()) * jumpPower_;
         jumpRequested_ = false;
+        ++jumpCount_;
     }
+
+    void ResetJumpCount() {
+        jumpRequested_ = false;
+        jumpCount_ = 0;
+    }
+
+    int GetJumpCount() const { return jumpCount_; }
+    int GetMaxJumpCount() const { return maxJumpCount_; }
 
     float GetJumpPower() const { return jumpPower_; }
     void SetJumpPower(float v) { jumpPower_ = v; }
@@ -33,6 +43,8 @@ public:
 
 private:
     float jumpPower_ = 64.0f;
+    int maxJumpCount_ = 2;
+    int jumpCount_ = 0;
     bool jumpRequested_ = false;
 };
 

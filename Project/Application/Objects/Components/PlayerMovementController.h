@@ -70,6 +70,13 @@ public:
 
         const float dt = std::clamp(GetDeltaTime() * GetGameSpeed(), 0.0f, 0.1f);
 
+        groundedThisFrame_ = false;
+        hasLandingImpact_ = false;
+        lastLandingImpact_ = 0.0f;
+
+        // 着地イベント算出用に、重力変更前の落下蓄積量を保持
+        const float fallDistanceBeforeGravityChange = accumulatedFallDistance_;
+
         if (collisionBehavior_) {
             if (auto requestedGravity = collisionBehavior_->ConsumeRequestedGravityDirection(); requestedGravity.has_value()) {
                 SetGravityDirection(*requestedGravity);
@@ -77,6 +84,15 @@ public:
         }
 
         const bool grounded = collisionBehavior_ ? collisionBehavior_->ConsumeGrounded() : false;
+        groundedThisFrame_ = grounded;
+
+        if (!grounded) {
+            const Vector3 down = gravityDirection_.Normalize();
+            const float fallSpeed = gravityBehavior_ ? gravityBehavior_->GetGravityVelocity().Dot(down) : 0.0f;
+            if (fallSpeed > 0.0f) {
+                accumulatedFallDistance_ += fallSpeed * dt;
+            }
+        }
 
         if (jumpBehavior_ && gravityBehavior_) {
             jumpBehavior_->Apply(gravityDirection_, gravityBehavior_->GravityVelocityRef());
@@ -109,6 +125,27 @@ public:
 
         const Vector3 totalVelocity = forwardDirection_ * forwardSpeed + lateralVelocity + gravityVelocity;
         tr->SetTranslate(tr->GetTranslate() + totalVelocity * dt);
+
+        if (grounded && !wasGroundedPrev_) {
+            const float landingImpact = std::max(accumulatedFallDistance_, fallDistanceBeforeGravityChange);
+
+            if (jumpBehavior_) {
+                jumpBehavior_->ResetJumpCount();
+            }
+
+            const float recovered = std::clamp(landingImpact * landingGaugeRecoveryPerDistance_, 0.0f, gravityGaugeMax_);
+            gravityGauge_ = std::clamp(gravityGauge_ + recovered, 0.0f, gravityGaugeMax_);
+
+            hasLandingImpact_ = true;
+            lastLandingImpact_ = landingImpact;
+            accumulatedFallDistance_ = 0.0f;
+        } else if (!grounded && wasGroundedPrev_) {
+            accumulatedFallDistance_ = 0.0f;
+        }
+        wasGroundedPrev_ = grounded;
+
+        gravityChangeBlend_ = std::max(0.0f, gravityChangeBlend_ - dt / std::max(0.0001f, gravityChangeBlendDuration_));
+
         UpdateRotation();
         return true;
     }
@@ -128,12 +165,46 @@ public:
     void Jump() {
         if (jumpBehavior_) {
             jumpBehavior_->RequestJump();
+            // ジャンプ開始時は落下距離計測をリセット
+            accumulatedFallDistance_ = 0.0f;
         }
+    }
+
+    bool TryUseGravityGaugeAndSetGravityDirection(const Vector3 &direction) {
+        if (!CanUseGravityChange()) return false;
+        const Vector3 dir = direction.Normalize();
+        if (dir.LengthSquared() <= 0.000001f) return false;
+        if (dir == gravityDirection_) return false;
+
+        gravityGauge_ = std::max(0.0f, gravityGauge_ - gravityGaugePerUse_);
+        // プレイヤー操作による重力変更時は落下距離計測をリセット
+        accumulatedFallDistance_ = 0.0f;
+        SetGravityDirection(direction);
+        gravityChangeBlend_ = 1.0f;
+        return true;
+    }
+
+    bool CanUseGravityChange() const {
+        return gravityGauge_ >= gravityGaugePerUse_;
     }
 
     const Vector3 &GetGravityDirection() const { return gravityDirection_; }
     const Vector3 &GetForwardDirection() const { return forwardDirection_; }
     float GetForwardSpeed() const { return forwardBehavior_ ? forwardBehavior_->GetForwardSpeed() : 0.0f; }
+    float GetGravityGauge() const { return gravityGauge_; }
+    float GetGravityGaugePerUse() const { return gravityGaugePerUse_; }
+    float GetGravityGaugeMax() const { return gravityGaugeMax_; }
+    float GetGravityGaugeNormalized() const {
+        if (gravityGaugeMax_ <= 0.000001f) return 0.0f;
+        return std::clamp(gravityGauge_ / gravityGaugeMax_, 0.0f, 1.0f);
+    }
+    float GetGravityChangeBlend() const { return gravityChangeBlend_; }
+    float GetAccumulatedFallDistance() const { return accumulatedFallDistance_; }
+    bool ConsumeLandingImpact(float &outImpact) {
+        if (!hasLandingImpact_) return false;
+        outImpact = lastLandingImpact_;
+        return true;
+    }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {}
@@ -152,6 +223,10 @@ public:
         if (gravityBehavior_) {
             gravityBehavior_->SetGravityVelocity(Vector3{0.0f, 0.0f, 0.0f});
         }
+        if (jumpBehavior_) {
+            jumpBehavior_->ResetJumpCount();
+        }
+        accumulatedFallDistance_ = 0.0f;
         UpdateRotation();
     }
 
@@ -183,7 +258,7 @@ public:
     float GetJumpPower() const override { return jumpBehavior_ ? jumpBehavior_->GetJumpPower() : 0.0f; }
 
     void MarkGrounded() override { /* collision behavior manages grounded state */ }
-    bool ConsumeGrounded() override { return collisionBehavior_ ? collisionBehavior_->ConsumeGrounded() : false; }
+    bool ConsumeGrounded() override { return groundedThisFrame_; }
 
 private:
     static constexpr float kPi = 3.14159265358979323846f;
@@ -255,6 +330,21 @@ private:
     PlayerForwardMoveBehavior *forwardBehavior_ = nullptr;
     PlayerLateralMoveBehavior *lateralBehavior_ = nullptr;
     PlayerJumpBehavior *jumpBehavior_ = nullptr;
+
+    bool wasGroundedPrev_ = false;
+    bool groundedThisFrame_ = false;
+    float accumulatedFallDistance_ = 0.0f;
+    bool hasLandingImpact_ = false;
+    float lastLandingImpact_ = 0.0f;
+
+    float gravityGaugePerUse_ = 10.0f;
+    int gravityGaugeUseCountPerFull_ = 4;
+    float gravityGaugeMax_ = gravityGaugePerUse_ * static_cast<float>(gravityGaugeUseCountPerFull_);
+    float gravityGauge_ = gravityGaugeMax_;
+    float landingGaugeRecoveryPerDistance_ = 5.0f;
+
+    float gravityChangeBlend_ = 0.0f;
+    float gravityChangeBlendDuration_ = 0.35f;
 };
 
 } // namespace KashipanEngine

@@ -3,6 +3,8 @@
 struct Material {
 	float4 color;
 	float4x4 uvTransform;
+  float useTexture;
+	float3 padding;
 };
 #endif
 
@@ -82,12 +84,16 @@ PSOutput main(VSOutput input) {
 	PSOutput output;
 	Material mat = gMaterials[input.instanceId];
 	float4 transformedUV = mul(float4(input.texcoord, 0.0f, 1.0f), mat.uvTransform);
-	float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 #ifdef Object2D
+    float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	if (mat.useTexture > 0.5f) {
+		textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+	}
 	output.color = mat.color * textureColor;
 #endif
 
 #ifdef Object3D
+    float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 	float4 baseColor = mat.color * textureColor;
 	float4 lightingColor = float4(0,0,0,0);
 	if (!mat.enableLighting) {

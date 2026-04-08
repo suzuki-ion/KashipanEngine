@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #include <KashipanEngine.h>
 #include "Objects/Components/CollisionAttributes.h"
@@ -45,6 +46,12 @@ public:
         return true;
     }
 
+    bool ConsumePlayerTouchEvent() {
+        const bool touched = playerTouchEvent_;
+        playerTouchEvent_ = false;
+        return touched;
+    }
+
     std::optional<bool> Update() override {
         auto *ctx = GetOwner3DContext();
         if (!ctx) return false;
@@ -64,8 +71,21 @@ public:
                 mat->SetColor(touchColorEnd_);
             }
         }
-
         return true;
+    }
+
+    void TriggerTouchColorAnimation() {
+        if (hasPlayedTouchColorAnimation_) return;
+
+        playerTouchEvent_ = true;
+        hasPlayedTouchColorAnimation_ = true;
+        isTouchColorAnimating_ = true;
+        touchColorAnimT_ = 0.0f;
+        if (auto *ctx = GetOwner3DContext()) {
+            if (auto *mat = ctx->GetComponent<Material3D>()) {
+                mat->SetColor(touchColorStart_);
+            }
+        }
     }
 
 #if defined(USE_IMGUI)
@@ -89,6 +109,7 @@ private:
         if (!hit.otherObject) return;
         if (!hit.otherObject->GetComponent3D("PlayerMovementController")) return;
 
+        playerTouchEvent_ = true;
         hasPlayedTouchColorAnimation_ = true;
         isTouchColorAnimating_ = true;
         touchColorAnimT_ = 0.0f;
@@ -108,6 +129,7 @@ private:
 
     bool hasPlayedTouchColorAnimation_ = false;
     bool isTouchColorAnimating_ = false;
+    bool playerTouchEvent_ = false;
     float touchColorAnimT_ = 0.0f;
     float touchColorAnimDuration_ = 1.0f;
 };

@@ -2,7 +2,9 @@
 
 #include <KashipanEngine.h>
 #include "Scenes/Components/CameraController.h"
+#include "Scenes/Components/StageGroundGenerator.h"
 #include "Objects/Components/PlayerMovementController.h"
+#include "Objects/Components/PlayerInputHandler.h"
 
 #include <algorithm>
 #include <cmath>
@@ -30,10 +32,8 @@ public:
         const Vector3 up = -gravity;
         const Vector3 forward = playerMovement->GetForwardDirection().Normalize();
 
-        const Vector3 cameraPos = playerPos - forward * followDistance_ + up * followHeight_;
-        const Vector3 lookAt = playerPos + up * lookAtHeight_;
-
-        const Vector3 lookDir = (lookAt - cameraPos).Normalize();
+        Vector3 cameraPos = playerPos - forward * followDistance_ + up * followHeight_;
+        Vector3 lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
 
         const float minSpeed = playerMovement->GetMinForwardSpeed();
         const float maxSpeed = playerMovement->GetMaxForwardSpeed();
@@ -42,7 +42,36 @@ public:
             speedRatio = (playerMovement->GetForwardSpeed() - minSpeed) / (maxSpeed - minSpeed);
         }
         speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
-        const float targetFov = 0.7f + (2.0f - 0.7f) * speedRatio;
+        float targetFov = 0.7f + (2.0f - 0.7f) * speedRatio;
+
+        auto *inputHandler = player_->GetComponent3D<PlayerInputHandler>();
+        if (inputHandler && inputHandler->IsGravitySwitching()) {
+            cameraPos = playerPos - forward * gravitySwitchFollowDistance_;
+            targetFov = 0.7f;
+
+            if (const auto &requested = inputHandler->GetRequestedGravityDirection();
+                requested.has_value() && requested->LengthSquared() > 0.000001f) {
+                const Vector3 gravityAim = requested->Normalize();
+                lookDir = (forward + gravityAim).Normalize();
+            } else {
+                // 重力変更入力が未確定の間は、重力方向へは向けずプレイヤー注視を維持
+                lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
+            }
+        }
+
+        float landingImpact = 0.0f;
+        if (playerMovement->ConsumeLandingImpact(landingImpact) && landingImpact > landingImpactThreshold_) {
+            const float t = std::clamp((landingImpact - landingImpactThreshold_) / std::max(0.0001f, landingImpactForMaxShake_ - landingImpactThreshold_), 0.0f, 1.0f);
+            const float shakeScale = std::pow(t, 0.6f);
+            cameraController->Shake(maxShakeAmplitude_ * shakeScale, maxShakeDuration_ * shakeScale);
+
+            if (auto *ctx = GetOwnerContext()) {
+                if (auto *groundGenerator = ctx->GetComponent<StageGroundGenerator>()) {
+                const float radius = groundReactionBaseRadius_ + landingImpact * groundReactionRadiusPerImpact_;
+                groundGenerator->TriggerGroundReaction(playerPos, radius);
+                }
+            }
+        }
 
         cameraController->SetTargetTranslate(cameraPos);
         cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, up));
@@ -107,6 +136,15 @@ private:
     float followDistance_ = 8.0f;
     float followHeight_ = 2.0f;
     float lookAtHeight_ = 1.0f;
+    float gravitySwitchFollowDistance_ = 10.0f;
+
+    float landingImpactThreshold_ = 6.0f;
+    float landingImpactForMaxShake_ = 64.0f;
+    float maxShakeAmplitude_ = 1.4f;
+    float maxShakeDuration_ = 0.5f;
+
+    float groundReactionBaseRadius_ = 8.0f;
+    float groundReactionRadiusPerImpact_ = 0.6f;
 };
 
 } // namespace KashipanEngine

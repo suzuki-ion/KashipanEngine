@@ -341,8 +341,13 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Components\PlayerMovementControllerAccess.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
     <ClInclude Include="Application\Scenes\Components\CameraToPlayerSync.h" />
+    <ClInclude Include="Application\Scenes\Components\GameSceneUIController.h" />
     <ClInclude Include="Application\Scenes\Components\PostEffectToPlayerSync.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
+    <ClInclude Include="Application\Scenes\Components\StageDecoBoxGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageDecoPlaneGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageGroundGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageObjectController.h" />
     <ClInclude Include="Application\Scenes\Components\StageObjectRandomGenerator.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h">
@@ -385,6 +390,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\RadialBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\VignetteEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
     <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
@@ -607,6 +613,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Exclusion.json" />
@@ -650,6 +657,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />
     <None Include="exclusion.dic" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
     <None Include="KashipanEngine\KashipanEngine.vcxproj" />

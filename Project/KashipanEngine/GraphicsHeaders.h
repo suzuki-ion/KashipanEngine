@@ -9,6 +9,7 @@
 #include "Graphics/PostEffectComponents/MotionBlurEffect.h"
 #include "Graphics/PostEffectComponents/FXAAEffect.h"
 #include "Graphics/PostEffectComponents/RadialBlurEffect.h"
+#include "Graphics/PostEffectComponents/VignetteEffect.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/DefineMaps.h"

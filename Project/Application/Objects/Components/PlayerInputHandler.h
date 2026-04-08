@@ -64,7 +64,7 @@ public:
     std::optional<bool> Update() override {
         if (!inputCommand_ || !playerMovement_) return false;
 
-        if (inputCommand_->Evaluate(gravitySwitchTriggerCommand_).Triggered()) {
+        if (inputCommand_->Evaluate(gravitySwitchTriggerCommand_).Triggered() && playerMovement_->CanUseGravityChange()) {
             isGravitySwitching_ = true;
             requestedGravityDirection_ = std::nullopt;
             SetGameSpeed(0.2f);
@@ -75,7 +75,7 @@ public:
 
             if (inputCommand_->Evaluate(gravitySwitchReleaseCommand_).Triggered()) {
                 if (requestedGravityDirection_.has_value()) {
-                    playerMovement_->SetGravityDirection(*requestedGravityDirection_);
+                    (void)playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
                 }
                 isGravitySwitching_ = false;
                 requestedGravityDirection_ = std::nullopt;
@@ -105,6 +105,9 @@ public:
     void ShowImGui() override {}
 #endif
 
+    bool IsGravitySwitching() const { return isGravitySwitching_; }
+    const std::optional<Vector3> &GetRequestedGravityDirection() const { return requestedGravityDirection_; }
+
 private:
     void UpdateGravitySwitchDirection() {
         const Vector3 down = playerMovement_->GetGravityDirection().Normalize();
@@ -117,14 +120,33 @@ private:
             left = left.Normalize();
         }
 
-        if (inputCommand_->Evaluate(upCommand_).Triggered()) {
-            requestedGravityDirection_ = up;
-        } else if (inputCommand_->Evaluate(downCommand_).Triggered()) {
-            requestedGravityDirection_ = down;
-        } else if (inputCommand_->Evaluate(leftCommand_).Triggered()) {
-            requestedGravityDirection_ = left;
-        } else if (inputCommand_->Evaluate(rightCommand_).Triggered()) {
-            requestedGravityDirection_ = -left;
+        Vector3 requested{0.0f, 0.0f, 0.0f};
+
+        const auto upInput = inputCommand_->Evaluate(upCommand_);
+        const auto downInput = inputCommand_->Evaluate(downCommand_);
+        const auto leftInput = inputCommand_->Evaluate(leftCommand_);
+        const auto rightInput = inputCommand_->Evaluate(rightCommand_);
+
+        const auto normalizeInputValue = [](float v) {
+            const float a = std::abs(v);
+            return (a > 0.0001f) ? a : 1.0f;
+        };
+
+        if (upInput.Triggered()) {
+            requested += up * normalizeInputValue(upInput.Value());
+        }
+        if (downInput.Triggered()) {
+            requested += down * normalizeInputValue(downInput.Value());
+        }
+        if (leftInput.Triggered()) {
+            requested += left * normalizeInputValue(leftInput.Value());
+        }
+        if (rightInput.Triggered()) {
+            requested += (-left) * normalizeInputValue(rightInput.Value());
+        }
+
+        if (requested.LengthSquared() > 0.000001f) {
+            requestedGravityDirection_ = requested.Normalize();
         }
     }
 

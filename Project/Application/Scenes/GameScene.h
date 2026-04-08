@@ -1,9 +1,9 @@
 #pragma once
+#pragma once
+
 #include <KashipanEngine.h>
 
 namespace KashipanEngine {
-
-class PlayerMovementController;
 
 class GameScene final : public SceneBase {
 public:
@@ -17,9 +17,6 @@ protected:
 
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
-    Object3DBase *player_ = nullptr;
-    PlayerMovementController *playerMovementController_ = nullptr;
-    SpriteProressBar *forwardSpeedBar_ = nullptr;
 };
 
 } // namespace KashipanEngine

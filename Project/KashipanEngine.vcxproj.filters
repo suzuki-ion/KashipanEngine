@@ -391,6 +391,12 @@
     <ClInclude Include="Application\Objects\Components\PlayerMovementController.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
+    <ClInclude Include="Application\Scenes\Components\StageGroundGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageDecoPlaneGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageDecoBoxGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageObjectController.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\VignetteEffect.h" />
+    <ClInclude Include="Application\Scenes\Components\GameSceneUIController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -509,6 +515,8 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
     <None Include="KashipanEngine\KashipanEngine.vcxproj" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\OneDrive\ドキュメント\1775464241140.png" />

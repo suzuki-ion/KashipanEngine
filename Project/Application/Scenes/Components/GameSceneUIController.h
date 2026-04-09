@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #include <KashipanEngine.h>
 #include "Scenes/Components/StageGroundGenerator.h"
@@ -13,6 +14,27 @@ class GameSceneUIController final : public ISceneComponent {
 public:
     GameSceneUIController() : ISceneComponent("GameSceneUIController", 1) {}
     ~GameSceneUIController() override = default;
+
+    void StartClearPresentation(int touchedGroundCount) {
+        clearTouchedGroundCount_ = touchedGroundCount;
+        clearPresentationActive_ = true;
+        clearPresentationElapsed_ = 0.0f;
+        clearReturnRequested_ = false;
+
+        if (clearResultText_) {
+            clearResultText_->SetText(" ");
+        }
+    }
+
+    bool IsClearPresentationFinished() const {
+        return clearPresentationActive_ && clearPresentationElapsed_ >= clearPresentationDuration_;
+    }
+
+    bool ConsumeRequestedReturnToTitle() {
+        const bool requested = clearReturnRequested_;
+        clearReturnRequested_ = false;
+        return requested;
+    }
 
     void Initialize() override {
         auto *ctx = GetOwnerContext();
@@ -49,9 +71,9 @@ public:
         gravityBar->SetFrameColor(Vector4{0.35f, 0.35f, 0.55f, 1.0f});
         gravityBar->SetBackgroundColor(Vector4{0.08f, 0.08f, 0.1f, 1.0f});
         gravityBar->SetBarColor(Vector4{0.2f, 0.6f, 1.0f, 1.0f});
-        gravityBar->SetSegmentLineCount(3);
-        gravityBar->SetSegmentLineColor(Vector4{1.0f, 1.0f, 1.0f, 0.35f});
-        gravityBar->SetSegmentLineThickness(2.0f);
+        gravityBar->SetSegmentLineCount(1);
+        gravityBar->SetSegmentLineColor(Vector4{0.5f, 0.5f, 0.5f, 1.0f});
+        gravityBar->SetSegmentLineThickness(4.0f);
         gravityBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = gravityBar->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3{320.0f, 70.0f, 0.0f});
@@ -97,6 +119,39 @@ public:
         }
         fallDistanceText_ = fallDistanceText.get();
         (void)ctx->AddObject2D(std::move(fallDistanceText));
+
+        auto clearFade = std::make_unique<Sprite>();
+        clearFade->SetName("ClearFadeSprite");
+        clearFade->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = clearFade->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f});
+            tr->SetScale(Vector3{screenWidth_, screenHeight_, 1.0f});
+        }
+        if (auto *mat = clearFade->GetComponent2D<Material2D>()) {
+            mat->SetTexture(TextureManager::kInvalidHandle);
+            mat->SetColor(Vector4{1.0f, 1.0f, 1.0f, 0.0f});
+        }
+        clearFadeSprite_ = clearFade.get();
+        (void)ctx->AddObject2D(std::move(clearFade));
+
+        auto clearText = std::make_unique<Text>(128);
+        clearText->SetName("ClearTouchedGroundText");
+        clearText->SetFont("Assets/Application/Image/test.fnt");
+        clearText->SetText(" ");
+        clearText->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        clearText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = clearText->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f});
+        }
+        for (size_t i = 0; i < 128; ++i) {
+            if (auto *sprite = (*clearText)[i]) {
+                if (auto *mat = sprite->GetComponent2D<Material2D>()) {
+                    mat->SetColor(Vector4{0.0f, 0.0f, 0.0f, 0.0f});
+                }
+            }
+        }
+        clearResultText_ = clearText.get();
+        (void)ctx->AddObject2D(std::move(clearText));
     }
 
     void Update() override {
@@ -187,6 +242,42 @@ public:
         if (fallDistanceText_ && playerMovementController_) {
             fallDistanceText_->SetTextFormat("Fall Distance: {0:.2f}", playerMovementController_->GetAccumulatedFallDistance());
         }
+
+        if (clearPresentationActive_) {
+            clearPresentationElapsed_ += dt;
+            const float fadeT = std::clamp(clearPresentationElapsed_ / std::max(0.0001f, clearPresentationDuration_), 0.0f, 1.0f);
+
+            if (clearFadeSprite_) {
+                if (auto *mat = clearFadeSprite_->GetComponent2D<Material2D>()) {
+                    mat->SetColor(Vector4{1.0f, 1.0f, 1.0f, fadeT});
+                }
+            }
+
+            if (clearResultText_) {
+                if (clearPresentationElapsed_ >= clearPresentationDuration_) {
+                    clearResultText_->SetTextFormat("Touched Ground: {0}", clearTouchedGroundCount_);
+                    SetTextAlpha(clearResultText_, 1.0f);
+                    if (auto *ic = ctx->GetInputCommand()) {
+                        if (ic->Evaluate("Submit").Triggered()) {
+                            clearReturnRequested_ = true;
+                        }
+                    }
+                } else {
+                    clearResultText_->SetText(" ");
+                    SetTextAlpha(clearResultText_, 0.0f);
+                }
+            }
+        } else {
+            if (clearFadeSprite_) {
+                if (auto *mat = clearFadeSprite_->GetComponent2D<Material2D>()) {
+                    mat->SetColor(Vector4{1.0f, 1.0f, 1.0f, 0.0f});
+                }
+            }
+            if (clearResultText_) {
+                clearResultText_->SetText(" ");
+                SetTextAlpha(clearResultText_, 0.0f);
+            }
+        }
     }
 
 private:
@@ -230,6 +321,8 @@ private:
     Text *touchedGroundCountText_ = nullptr;
     Text *fallDistanceText_ = nullptr;
     Text *landingTouchedGroundCountText_ = nullptr;
+    Sprite *clearFadeSprite_ = nullptr;
+    Text *clearResultText_ = nullptr;
 
     int previousTouchedGroundCount_ = 0;
     int landingTouchedGroundCount_ = 0;
@@ -241,6 +334,12 @@ private:
     float landingPopupShowDuration_ = 2.0f;
     float landingPopupRequestDuration_ = 0.25f;
     float touchedGroundPopupYOffset_ = 128.0f;
+
+    bool clearPresentationActive_ = false;
+    bool clearReturnRequested_ = false;
+    int clearTouchedGroundCount_ = 0;
+    float clearPresentationElapsed_ = 0.0f;
+    float clearPresentationDuration_ = 1.0f;
 
     float screenWidth_ = 0.0f;
     float screenHeight_ = 0.0f;

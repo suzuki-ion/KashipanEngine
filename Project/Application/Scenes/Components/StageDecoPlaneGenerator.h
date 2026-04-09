@@ -125,12 +125,12 @@ private:
     bool requested_ = false;
     bool generated_ = false;
 
-    int count_ = 8;
+    int count_ = 32;
     float spacingZ_ = 512.0f;
     float rotateSpeed_ = 0.5f;
     float nearFadeDistance_ = 128.0f;
     float farFadeDistance_ = 2048.0f;
-    float recycleBehindDistance_ = 64.0f;
+    float recycleBehindDistance_ = 512.0f;
 
     float maxRingRadius_ = 64.0f;
     float spawnGroundCenterZ_ = -2.0f;

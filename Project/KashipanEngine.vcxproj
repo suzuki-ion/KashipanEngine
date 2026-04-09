@@ -346,7 +346,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\Components\StageDecoBoxGenerator.h" />
     <ClInclude Include="Application\Scenes\Components\StageDecoPlaneGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageGoalPlaneController.h" />
     <ClInclude Include="Application\Scenes\Components\StageGroundGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageNoiseWallController.h" />
     <ClInclude Include="Application\Scenes\Components\StageObjectController.h" />
     <ClInclude Include="Application\Scenes\Components\StageObjectRandomGenerator.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />

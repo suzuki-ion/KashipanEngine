@@ -397,6 +397,8 @@
     <ClInclude Include="Application\Scenes\Components\StageObjectController.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\VignetteEffect.h" />
     <ClInclude Include="Application\Scenes\Components\GameSceneUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\StageNoiseWallController.h" />
+    <ClInclude Include="Application\Scenes\Components\StageGoalPlaneController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

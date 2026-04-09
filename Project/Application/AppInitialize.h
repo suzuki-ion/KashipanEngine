@@ -24,7 +24,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
 
-		context.sceneManager->ChangeScene("GameScene");
+		context.sceneManager->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {
@@ -40,6 +40,21 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Cancel", Key::Escape, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Cancel", ControllerButton::B, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Cancel", ControllerButton::Back, InputCommand::InputState::Trigger);
+
+        // タイトル選択（上下）
+        ic->RegisterCommand("SelectUp", Key::W, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectUp", Key::Up, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.2f);
+
+        ic->RegisterCommand("SelectDown", Key::S, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectDown", Key::Down, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.2f, true);
+
+        // カメラ後方確認
+        ic->RegisterCommand("CameraRearConfirm", Key::E, InputCommand::InputState::Down);
+        ic->RegisterCommand("CameraRearConfirm", ControllerButton::X, InputCommand::InputState::Down);
 
         // プレイヤー移動（左右）
         ic->RegisterCommand("PlayerMoveLeft", Key::A, InputCommand::InputState::Down);

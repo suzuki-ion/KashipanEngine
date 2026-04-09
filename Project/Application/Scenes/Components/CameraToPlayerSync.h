@@ -59,6 +59,10 @@ public:
             }
         }
 
+        if (inputHandler && inputHandler->IsRearConfirming()) {
+            lookDir = -forward;
+        }
+
         float landingImpact = 0.0f;
         if (playerMovement->ConsumeLandingImpact(landingImpact) && landingImpact > landingImpactThreshold_) {
             const float t = std::clamp((landingImpact - landingImpactThreshold_) / std::max(0.0001f, landingImpactForMaxShake_ - landingImpactThreshold_), 0.0f, 1.0f);

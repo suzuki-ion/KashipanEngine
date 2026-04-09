@@ -75,6 +75,20 @@ public:
         hasLandingImpact_ = false;
         lastLandingImpact_ = 0.0f;
 
+        if (movementLocked_) {
+            if (forwardBehavior_) {
+                forwardBehavior_->ForwardSpeedRef() = 0.0f;
+            }
+            if (lateralBehavior_) {
+                lateralBehavior_->LateralVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                lateralBehavior_->ClearLateralInput();
+            }
+            if (gravityBehavior_) {
+                gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+            }
+            return true;
+        }
+
         // 着地イベント算出用に、重力変更前の落下蓄積量を保持
         const float fallDistanceBeforeGravityChange = accumulatedFallDistance_;
 
@@ -162,18 +176,21 @@ public:
     }
 
     void MoveRight(float value = 1.0f) {
+        if (movementLocked_) return;
         if (lateralBehavior_) {
             lateralBehavior_->MoveRight(value);
         }
     }
 
     void MoveLeft(float value = 1.0f) {
+        if (movementLocked_) return;
         if (lateralBehavior_) {
             lateralBehavior_->MoveLeft(value);
         }
     }
 
     void Jump() {
+        if (movementLocked_) return;
         if (jumpBehavior_) {
             jumpBehavior_->RequestJump();
             // ジャンプ開始時は落下距離計測をリセット
@@ -182,6 +199,7 @@ public:
     }
 
     bool TryUseGravityGaugeAndSetGravityDirection(const Vector3 &direction) {
+        if (movementLocked_) return false;
         if (!CanUseGravityChange()) return false;
         const Vector3 dir = direction.Normalize();
         if (dir.LengthSquared() <= 0.000001f) return false;
@@ -196,8 +214,26 @@ public:
     }
 
     bool CanUseGravityChange() const {
+        if (movementLocked_) return false;
         return gravityGauge_ >= gravityGaugePerUse_;
     }
+
+    void SetMovementLocked(bool locked) {
+        movementLocked_ = locked;
+        if (movementLocked_) {
+            if (forwardBehavior_) {
+                forwardBehavior_->ForwardSpeedRef() = 0.0f;
+            }
+            if (lateralBehavior_) {
+                lateralBehavior_->LateralVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                lateralBehavior_->ClearLateralInput();
+            }
+            if (gravityBehavior_) {
+                gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+            }
+        }
+    }
+    bool IsMovementLocked() const { return movementLocked_; }
 
     const Vector3 &GetGravityDirection() const { return gravityDirection_; }
     const Vector3 &GetForwardDirection() const { return forwardDirection_; }
@@ -349,14 +385,15 @@ private:
     float lastLandingImpact_ = 0.0f;
 
     float gravityGaugePerUse_ = 16.0f;
-    int gravityGaugeUseCountPerFull_ = 4;
+    int gravityGaugeUseCountPerFull_ = 2;
     float gravityGaugeMax_ = gravityGaugePerUse_ * static_cast<float>(gravityGaugeUseCountPerFull_);
     float gravityGauge_ = gravityGaugeMax_;
-    float landingGaugeRecoveryBase_ = 0.5f;
+    float landingGaugeRecoveryBase_ = 0.75f;
     float landingGaugeRecoveryPerDistance_ = 0.05f;
 
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;
+    bool movementLocked_ = false;
 };
 
 } // namespace KashipanEngine

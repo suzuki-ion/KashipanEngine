@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #include <KashipanEngine.h>
 #include "Objects/Components/GroundDefined.h"
@@ -203,7 +204,7 @@ private:
 
     float panelThickness_ = 2.0f;
     int pooledGroundObjectCount_ = 512;
-    float recycleBehindDistance_ = 64.0f;
+    float recycleBehindDistance_ = 512.0f;
 
     float spawnGroundCenterX_ = 0.0f;
     float spawnGroundCenterY_ = -panelThickness_;
@@ -216,7 +217,7 @@ private:
     int ringSplitCount_ = 4;
 
     float minPanelThickness_ = 1.0f;
-    float maxPanelThickness_ = 4.0f;
+    float maxPanelThickness_ = 8.0f;
     int panelThicknessSplitCount_ = 2;
 
     float minPanelWidth_ = 16.0f;
@@ -228,7 +229,7 @@ private:
     int panelLengthSplitCount_ = 3;
 
     int minPanelsPerSegment_ = 4;
-    int maxPanelsPerSegment_ = 4;
+    int maxPanelsPerSegment_ = 8;
 
     float nextSpawnZ_ = 0.0f;
     float currentSegmentCenterZ_ = 0.0f;

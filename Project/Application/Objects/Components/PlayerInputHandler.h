@@ -16,6 +16,7 @@ public:
         std::string moveRightCommand,
         std::string moveLeftCommand,
         std::string jumpCommand,
+        std::string cameraRearConfirmCommand,
         std::string gravitySwitchTriggerCommand,
         std::string gravitySwitchReleaseCommand,
         std::string upCommand,
@@ -27,6 +28,7 @@ public:
           moveRightCommand_(std::move(moveRightCommand)),
           moveLeftCommand_(std::move(moveLeftCommand)),
           jumpCommand_(std::move(jumpCommand)),
+          cameraRearConfirmCommand_(std::move(cameraRearConfirmCommand)),
           gravitySwitchTriggerCommand_(std::move(gravitySwitchTriggerCommand)),
           gravitySwitchReleaseCommand_(std::move(gravitySwitchReleaseCommand)),
           upCommand_(std::move(upCommand)),
@@ -42,6 +44,7 @@ public:
             moveRightCommand_,
             moveLeftCommand_,
             jumpCommand_,
+            cameraRearConfirmCommand_,
             gravitySwitchTriggerCommand_,
             gravitySwitchReleaseCommand_,
             upCommand_,
@@ -49,6 +52,7 @@ public:
             leftCommand_,
             rightCommand_);
         ptr->isGravitySwitching_ = isGravitySwitching_;
+        ptr->isRearConfirming_ = isRearConfirming_;
         ptr->requestedGravityDirection_ = requestedGravityDirection_;
         return ptr;
     }
@@ -63,6 +67,8 @@ public:
 
     std::optional<bool> Update() override {
         if (!inputCommand_ || !playerMovement_) return false;
+
+        isRearConfirming_ = inputCommand_->Evaluate(cameraRearConfirmCommand_).Triggered();
 
         if (inputCommand_->Evaluate(gravitySwitchTriggerCommand_).Triggered() && playerMovement_->CanUseGravityChange()) {
             isGravitySwitching_ = true;
@@ -106,6 +112,7 @@ public:
 #endif
 
     bool IsGravitySwitching() const { return isGravitySwitching_; }
+    bool IsRearConfirming() const { return isRearConfirming_; }
     const std::optional<Vector3> &GetRequestedGravityDirection() const { return requestedGravityDirection_; }
 
 private:
@@ -156,6 +163,7 @@ private:
     std::string moveRightCommand_;
     std::string moveLeftCommand_;
     std::string jumpCommand_;
+    std::string cameraRearConfirmCommand_;
     std::string gravitySwitchTriggerCommand_;
     std::string gravitySwitchReleaseCommand_;
     std::string upCommand_;
@@ -164,6 +172,7 @@ private:
     std::string rightCommand_;
 
     bool isGravitySwitching_ = false;
+    bool isRearConfirming_ = false;
     std::optional<Vector3> requestedGravityDirection_{};
 };
 

@@ -219,7 +219,7 @@ private:
 
     float panelThickness_ = 2.0f;
     int pooledGroundObjectCount_ = 512;
-    float recycleBehindDistance_ = 512.0f;
+    float recycleBehindDistance_ = 1024.0f;
 
     float spawnGroundCenterX_ = 0.0f;
     float spawnGroundCenterY_ = -panelThickness_;

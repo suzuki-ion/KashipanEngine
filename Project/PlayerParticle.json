@@ -1,4 +1,4 @@
-{
+﻿{
     "groups": [
         {
             "baseScale": [
@@ -48,7 +48,7 @@
             "lifeTimeRandomRange": 0.0,
             "lifeTimeSec": 1.0,
             "linearDamping": 0.0,
-            "loop": false,
+            "loop": true,
             "name": "PlayerRun",
             "peakScale": 0.5,
             "pipeline": "Object3D.Solid.BlendNormal",
@@ -138,11 +138,11 @@
                 -2.0
             ],
             "lifeTimeRandomRange": 0.0,
-            "lifeTimeSec": 1.0,
+            "lifeTimeSec": 0.5,
             "linearDamping": 0.0,
             "loop": false,
             "name": "PlayerLanding",
-            "peakScale": 0.5,
+            "peakScale": 1.0,
             "pipeline": "Object3D.Solid.BlendNormal",
             "resetOnSpawn": true,
             "rotationSpeed": [
@@ -172,7 +172,7 @@
             "spawnIntervalSec": 0.0,
             "spawnOnStart": true,
             "spawnRadius": 0.0,
-            "speed": 4.0,
+            "speed": 8.0,
             "startColor": [
                 1.0,
                 1.0,

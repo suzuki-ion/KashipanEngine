@@ -41,16 +41,21 @@ public:
             const float fadeRange = std::max(0.0001f, farFade - nearFade);
 
             for (const auto &runtime : decoPlaneGenerator_->GetRuntimes()) {
-                if (!runtime.object) continue;
-                auto *tr = runtime.object->GetComponent3D<Transform3D>();
-                if (!tr) continue;
+                auto applyFade = [&](Object3DBase *obj) {
+                    if (!obj) return;
+                    auto *tr = obj->GetComponent3D<Transform3D>();
+                    if (!tr) return;
 
-                const float dist = (tr->GetTranslate() - playerPos).Length();
-                const float alphaT = std::clamp((dist - nearFade) / fadeRange, 0.0f, 1.0f);
-                const float alpha = 1.0f - alphaT;
-                if (auto *mat = runtime.object->GetComponent3D<Material3D>()) {
-                    mat->SetColor(Vector4{0.5f, 1.0f, 0.5f, alpha});
-                }
+                    const float dist = (tr->GetTranslate() - playerPos).Length();
+                    const float alphaT = std::clamp((dist - nearFade) / fadeRange, 0.0f, 1.0f);
+                    const float alpha = 1.0f - alphaT;
+                    if (auto *mat = obj->GetComponent3D<Material3D>()) {
+                        mat->SetColor(Vector4{0.5f, 1.0f, 0.5f, alpha});
+                    }
+                };
+
+                applyFade(runtime.frontObject);
+                applyFade(runtime.backObject);
             }
         }
 

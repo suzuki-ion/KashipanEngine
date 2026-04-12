@@ -406,6 +406,8 @@
     <ClInclude Include="Application\Scenes\Components\GameOverUIController.h" />
     <ClInclude Include="Application\Scenes\Components\GameClearUIController.h" />
     <ClInclude Include="Application\Scenes\Components\PauseUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\ClearScoreBoard.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleSceneUIController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

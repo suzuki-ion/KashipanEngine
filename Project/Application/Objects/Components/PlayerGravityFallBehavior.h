@@ -3,6 +3,8 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/PlayerMovementControllerAccess.h"
 
+#include <algorithm>
+
 namespace KashipanEngine {
 
 class PlayerGravityFallBehavior final : public IObjectComponent3D {
@@ -15,6 +17,7 @@ public:
     }
 
     void Apply(float dt, const Vector3 &gravityDirection) {
+        dt = std::clamp(dt, 0.0f, 0.1f);
         const Vector3 down = gravityDirection.Normalize();
         gravityVelocity_ += down * (gravityPower_ * dt);
         const float gravitySpeed = gravityVelocity_.Length();

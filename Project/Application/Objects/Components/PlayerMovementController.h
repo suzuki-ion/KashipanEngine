@@ -238,6 +238,23 @@ public:
     const Vector3 &GetGravityDirection() const { return gravityDirection_; }
     const Vector3 &GetForwardDirection() const { return forwardDirection_; }
     float GetForwardSpeed() const { return forwardBehavior_ ? forwardBehavior_->GetForwardSpeed() : 0.0f; }
+    Vector3 GetLateralVelocity() const { return lateralBehavior_ ? lateralBehavior_->GetLateralVelocity() : Vector3{0.0f, 0.0f, 0.0f}; }
+    Vector3 GetGravityVelocity() const { return gravityBehavior_ ? gravityBehavior_->GetGravityVelocity() : Vector3{0.0f, 0.0f, 0.0f}; }
+    void SetForwardSpeed(float v) {
+        if (forwardBehavior_) {
+            forwardBehavior_->ForwardSpeedRef() = std::max(0.0f, v);
+        }
+    }
+    void SetLateralVelocity(const Vector3 &v) {
+        if (lateralBehavior_) {
+            lateralBehavior_->LateralVelocityRef() = v;
+        }
+    }
+    void SetGravityVelocity(const Vector3 &v) {
+        if (gravityBehavior_) {
+            gravityBehavior_->GravityVelocityRef() = v;
+        }
+    }
     float GetGravityGauge() const { return gravityGauge_; }
     float GetGravityGaugePerUse() const { return gravityGaugePerUse_; }
     float GetGravityGaugeMax() const { return gravityGaugeMax_; }

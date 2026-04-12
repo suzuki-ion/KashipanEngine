@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #include <KashipanEngine.h>
 #include "Scenes/Components/CameraController.h"
@@ -38,14 +39,15 @@ public:
         Vector3 lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
 
         if (clearViewEnabled_) {
-            Vector3 right = forward.Cross(up);
+            Vector3 right = up.Cross(forward);
             if (right.LengthSquared() <= 0.000001f) {
                 right = Vector3{1.0f, 0.0f, 0.0f};
             } else {
                 right = right.Normalize();
             }
             cameraPos = playerPos + right * clearViewRightDistance_ + forward * clearViewForwardDistance_ + up * clearViewHeight_;
-            lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
+            const Vector3 lookTarget = playerPos - right * clearViewLookOffsetRight_ + up * lookAtHeight_;
+            lookDir = (lookTarget - cameraPos).Normalize();
         }
 
         const float minSpeed = playerMovement->GetMinForwardSpeed();
@@ -164,9 +166,10 @@ private:
     float groundReactionRadiusPerImpact_ = 0.6f;
 
     bool clearViewEnabled_ = false;
-    float clearViewRightDistance_ = 4.0f;
-    float clearViewForwardDistance_ = 5.0f;
+    float clearViewRightDistance_ = 2.0f;
+    float clearViewForwardDistance_ = 6.0f;
     float clearViewHeight_ = 2.0f;
+    float clearViewLookOffsetRight_ = -1.5f;
 };
 
 } // namespace KashipanEngine

@@ -8,11 +8,12 @@
 #include "Scenes/Components/StageObjectController.h"
 #include "Scenes/Components/StageObjectRandomGenerator.h"
 #include "Scenes/Components/TitleSceneAudioPlayer.h"
+#include "Scenes/Components/TitleSceneUIController.h"
+#include "Scenes/Components/ClearScoreBoard.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 
 #include <algorithm>
-#include <cmath>
 
 namespace KashipanEngine {
 
@@ -28,7 +29,6 @@ void TitleScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
 
     auto *screenBuffer3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer3D() : nullptr;
-    auto *screenBuffer2D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer2D() : nullptr;
     mainCamera_ = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainCamera3D() : nullptr;
 
     if (screenBuffer3D) {
@@ -72,45 +72,14 @@ void TitleScene::Initialize() {
     if (mainCamera_) {
         if (auto *tr = mainCamera_->GetComponent3D<Transform3D>()) {
             tr->SetTranslate(Vector3{0.0f, 0.0f, 6.0f});
-            tr->SetRotate(Vector3{0.0f, kPi, 0.0f});
+            tr->SetRotate(Vector3{0.0f, 3.14159265358979323846f, 0.0f});
         }
         mainCamera_->SetFovY(1.0f);
     }
 
-    if (screenBuffer2D) {
-        auto title = std::make_unique<Text>(64);
-        title->SetName("TitleText");
-        title->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        title->SetText("グランナー");
-        title->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = title->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{560.0f, 600.0f, 0.0f});
-        }
-        titleText_ = title.get();
-        AddObject2D(std::move(title));
-
-        auto start = std::make_unique<Text>(64);
-        start->SetName("StartText");
-        start->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        start->SetText("＞ スタート");
-        start->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = start->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{560.0f, 500.0f, 0.0f});
-        }
-        startText_ = start.get();
-        AddObject2D(std::move(start));
-
-        auto quit = std::make_unique<Text>(64);
-        quit->SetName("QuitText");
-        quit->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        quit->SetText("  おわる");
-        quit->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = quit->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{560.0f, 430.0f, 0.0f});
-        }
-        quitText_ = quit.get();
-        AddObject2D(std::move(quit));
-    }
+    AddSceneComponent(std::make_unique<ClearScoreBoard>());
+    AddSceneComponent(std::make_unique<TitleSceneUIController>());
+    titleSceneUIController_ = GetSceneComponent<TitleSceneUIController>();
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -154,35 +123,23 @@ void TitleScene::OnUpdate() {
         }
     }
 
-    if (auto *ic = GetInputCommand()) {
-        if (ic->Evaluate("SelectUp").Triggered()) {
-            selectionIndex_ = 0;
-        }
-        if (ic->Evaluate("SelectDown").Triggered()) {
-            selectionIndex_ = 1;
-        }
-
-        if (startText_) {
-            startText_->SetText(selectionIndex_ == 0 ? "＞ スタート" : "  スタート");
-        }
-        if (quitText_) {
-            quitText_->SetText(selectionIndex_ == 1 ? "＞ おわる" : "  おわる");
-        }
-
-        if (ic->Evaluate("Submit").Triggered()) {
-            if (selectionIndex_ == 0) {
-                if (GetNextSceneName().empty()) {
-                    SetNextSceneName("GameScene");
-                }
-                if (auto *out = GetSceneComponent<SceneChangeOut>()) {
-                    out->Play();
-                }
-            } else {
-                if (sceneDefaultVariables_ && sceneDefaultVariables_->GetMainWindow()) {
-                    sceneDefaultVariables_->GetMainWindow()->DestroyNotify();
-                }
+    if (titleSceneUIController_) {
+        const auto action = titleSceneUIController_->ConsumeRequestedAction();
+        if (action == TitleSceneUIController::RequestAction::StartGame) {
+            if (GetNextSceneName().empty()) {
+                SetNextSceneName("GameScene");
+            }
+            if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                out->Play();
+            }
+        } else if (action == TitleSceneUIController::RequestAction::Quit) {
+            if (sceneDefaultVariables_ && sceneDefaultVariables_->GetMainWindow()) {
+                sceneDefaultVariables_->GetMainWindow()->DestroyNotify();
             }
         }
+    }
+
+    if (auto *ic = GetInputCommand()) {
 
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
         if (ic->Evaluate("DebugSceneChange").Triggered()) {

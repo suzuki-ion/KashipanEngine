@@ -3,6 +3,8 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/PlayerMovementControllerAccess.h"
 
+#include <algorithm>
+
 namespace KashipanEngine {
 
 class PlayerForwardMoveBehavior final : public IObjectComponent3D {
@@ -15,6 +17,7 @@ public:
     }
 
     void Apply(float dt, bool grounded, const Vector3 &gravityVelocity, const Vector3 &gravityDirection) {
+        dt = std::clamp(dt, 0.0f, 0.1f);
         if (grounded) {
             forwardSpeed_ = std::max(minForwardSpeed_, forwardSpeed_ - groundDeceleration_ * dt);
             return;
@@ -46,7 +49,7 @@ private:
     float maxForwardSpeed_ = 96.0f;
     float forwardAcceleration_ = 1.1f;
     float forwardAccelPerFallSpeed_ = 0.1f;
-    float groundDeceleration_ = 16.0f;
+    float groundDeceleration_ = 24.0f;
 };
 
 } // namespace KashipanEngine

@@ -69,8 +69,9 @@ public:
 
     void Update() override {
         if (!rootObject_) return;
+        if (!movementEnabled_) return;
 
-        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        const float dt = std::clamp(std::max(0.0f, GetDeltaTime() * GetGameSpeed()), 0.0f, 0.1f);
         if (auto *rootTr = rootObject_->GetComponent3D<Transform3D>()) {
             Vector3 pos = rootTr->GetTranslate();
             pos.z -= moveSpeedZ_ * dt;

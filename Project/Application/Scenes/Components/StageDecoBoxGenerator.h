@@ -150,7 +150,7 @@ private:
     float maxGapZ_ = 64.0f;
     float nearFadeDistance_ = 128.0f;
     float farFadeDistance_ = 2048.0f;
-    float recycleBehindDistance_ = 512.0f;
+    float recycleBehindDistance_ = 2048.0f;
 
     float maxRingRadius_ = 64.0f;
     float spawnGroundCenterZ_ = -2.0f;

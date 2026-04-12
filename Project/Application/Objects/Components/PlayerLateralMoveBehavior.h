@@ -3,6 +3,8 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/PlayerMovementControllerAccess.h"
 
+#include <algorithm>
+
 namespace KashipanEngine {
 
 class PlayerLateralMoveBehavior final : public IObjectComponent3D {
@@ -23,6 +25,7 @@ public:
     }
 
     void Apply(float dt, const Vector3 &gravityDirection, const Vector3 &forwardDirection, float forwardSpeed, float minForwardSpeed) {
+        dt = std::clamp(dt, 0.0f, 0.1f);
         const Vector3 down = gravityDirection.Normalize();
         Vector3 right = down.Cross(forwardDirection);
         if (right.LengthSquared() <= 0.000001f) {

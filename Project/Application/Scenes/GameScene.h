@@ -61,7 +61,9 @@ private:
     bool clearSlowdownActive_ = false;
     float clearSlowdownElapsed_ = 0.0f;
     float clearSlowdownDuration_ = 1.0f;
-    float clearSlowdownStartGameSpeed_ = 1.0f;
+    float clearSlowdownStartForwardSpeed_ = 0.0f;
+    Vector3 clearSlowdownStartLateralVelocity_{0.0f, 0.0f, 0.0f};
+    Vector3 clearSlowdownStartGravityVelocity_{0.0f, 0.0f, 0.0f};
 
     PlayState playState_ = PlayState::Playing;
 };

@@ -11,7 +11,8 @@ namespace KashipanEngine {
 class StageDecoPlaneGenerator final : public ISceneComponent {
 public:
     struct Runtime {
-        Object3DBase *object = nullptr;
+        Object3DBase *frontObject = nullptr;
+        Object3DBase *backObject = nullptr;
         float centerZ = 0.0f;
     };
 
@@ -39,7 +40,7 @@ public:
 
         const float playerZ = playerTr->GetTranslate().z;
         for (auto &p : runtimes_) {
-            if (!p.object) continue;
+            if (!p.frontObject && !p.backObject) continue;
             if (p.centerZ > playerZ + recycleBehindDistance_) {
                 Respawn(p);
             }
@@ -60,6 +61,30 @@ private:
     static constexpr float kTiltStepRad = 3.14159265358979323846f / 12.0f; // 15度
     static constexpr std::uint64_t kDecoPlaneBatchKey = 0x1101000000000002ull;
 
+    Object3DBase *CreatePlane(SceneContext *ctx) {
+        if (!ctx) return nullptr;
+
+        auto obj = std::make_unique<Plane3D>();
+        obj->SetName("DecorationPlane");
+        obj->SetBatchKey(kDecoPlaneBatchKey, RenderType::Instancing);
+
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetEnableLighting(false);
+            mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
+            mat->SetTexture(TextureManager::GetTextureFromFileName("hexagon_alpha.png"));
+        }
+
+        obj->RegisterComponent<AlwaysRotate>(Vector3{0.0f, 0.0f, rotateSpeed_});
+
+        if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
+            obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+        }
+
+        Object3DBase *ptr = obj.get();
+        if (!ctx->AddObject3D(std::move(obj))) return nullptr;
+        return ptr;
+    }
+
     void TryGenerate() {
         if (generated_ || !requested_) return;
 
@@ -73,27 +98,13 @@ private:
         runtimes_.reserve(static_cast<std::size_t>(count_));
 
         for (int i = 0; i < count_; ++i) {
-            auto obj = std::make_unique<Plane3D>();
-            obj->SetName("DecorationPlane");
-            obj->SetBatchKey(kDecoPlaneBatchKey, RenderType::Instancing);
-
-            if (auto *mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetEnableLighting(false);
-                mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
-                mat->SetTexture(TextureManager::GetTextureFromFileName("hexagon_alpha.png"));
-            }
-
-            obj->RegisterComponent<AlwaysRotate>(Vector3{0.0f, 0.0f, rotateSpeed_});
-
-            if (defaultVars_->GetScreenBuffer3D()) {
-                obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
-            }
-
-            Object3DBase *ptr = obj.get();
-            if (!ctx->AddObject3D(std::move(obj)) || !ptr) continue;
+            Object3DBase *front = CreatePlane(ctx);
+            Object3DBase *back = CreatePlane(ctx);
+            if (!front || !back) continue;
 
             Runtime runtime{};
-            runtime.object = ptr;
+            runtime.frontObject = front;
+            runtime.backObject = back;
             Respawn(runtime);
             runtimes_.push_back(runtime);
         }
@@ -102,17 +113,25 @@ private:
     }
 
     void Respawn(Runtime &runtime) {
-        if (!runtime.object) return;
-        auto *tr = runtime.object->GetComponent3D<Transform3D>();
-        if (!tr) return;
+        if (!runtime.frontObject || !runtime.backObject) return;
+
+        auto *frontTr = runtime.frontObject->GetComponent3D<Transform3D>();
+        auto *backTr = runtime.backObject->GetComponent3D<Transform3D>();
+        if (!frontTr || !backTr) return;
 
         const float z = nextSpawnZ_;
         nextSpawnZ_ -= spacingZ_;
 
         const float scale = maxRingRadius_ * 8.0f;
-        tr->SetTranslate(Vector3{0.0f, 0.0f, z});
-        tr->SetRotate(Vector3{0.0f, kPi, nextTiltAngle_});
-        tr->SetScale(Vector3{scale, scale, 1.0f});
+        const Vector3 t{0.0f, 0.0f, z};
+        const Vector3 s{scale, scale, 1.0f};
+        frontTr->SetTranslate(t);
+        frontTr->SetRotate(Vector3{0.0f, kPi, nextTiltAngle_});
+        frontTr->SetScale(s);
+
+        backTr->SetTranslate(t);
+        backTr->SetRotate(Vector3{0.0f, 0.0f, nextTiltAngle_});
+        backTr->SetScale(s);
 
         nextTiltAngle_ += kTiltStepRad;
         if (nextTiltAngle_ > kPi * 2.0f) {
@@ -130,7 +149,7 @@ private:
     float rotateSpeed_ = 0.5f;
     float nearFadeDistance_ = 128.0f;
     float farFadeDistance_ = 2048.0f;
-    float recycleBehindDistance_ = 512.0f;
+    float recycleBehindDistance_ = 2048.0f;
 
     float maxRingRadius_ = 64.0f;
     float spawnGroundCenterZ_ = -2.0f;

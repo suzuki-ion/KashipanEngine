@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #include <KashipanEngine.h>
 
@@ -53,14 +54,19 @@ public:
         backgroundSprite_ = bg.get();
         (void)ctx->AddObject2D(std::move(bg));
 
-        auto logo = std::make_unique<Text>(64);
+        const float logoY = cy + 160.0f;
+        const float retryY = logoY - 160.0f;
+        const float backY = retryY - 80.0f;
+        const float quitY = backY - 80.0f;
+
+        auto logo = std::make_unique<Text>(128);
         logo->SetName("GameOverLogoText");
-        logo->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+        logo->SetFont("Assets/Application/Image/KaqookanV2_Logo.fnt");
         logo->SetText(" ");
         logo->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
         logo->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = logo->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy + 120.0f, 0.0f});
+            tr->SetTranslate(Vector3{cx, logoY, 0.0f});
         }
         logoText_ = logo.get();
         (void)ctx->AddObject2D(std::move(logo));
@@ -72,7 +78,7 @@ public:
         retry->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
         retry->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = retry->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy + 10.0f, 0.0f});
+            tr->SetTranslate(Vector3{cx, retryY, 0.0f});
         }
         retryText_ = retry.get();
         (void)ctx->AddObject2D(std::move(retry));
@@ -84,7 +90,7 @@ public:
         backTitle->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
         backTitle->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = backTitle->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy - 50.0f, 0.0f});
+            tr->SetTranslate(Vector3{cx, backY, 0.0f});
         }
         backToTitleText_ = backTitle.get();
         (void)ctx->AddObject2D(std::move(backTitle));
@@ -96,7 +102,7 @@ public:
         quit->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
         quit->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = quit->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy - 110.0f, 0.0f});
+            tr->SetTranslate(Vector3{cx, quitY, 0.0f});
         }
         quitText_ = quit.get();
         (void)ctx->AddObject2D(std::move(quit));
@@ -107,6 +113,7 @@ public:
     void Activate() {
         isActive_ = true;
         selectionIndex_ = 0;
+        previousSelectionIndex_ = 0;
         introElapsed_ = 0.0f;
         setTextAlpha(logoText_, 0.0f);
         setTextAlpha(retryText_, 0.0f);
@@ -117,6 +124,8 @@ public:
                 mat->SetColor(Vector4{0.0f, 0.0f, 0.0f, 0.5f});
             }
         }
+        optionAnimElapsed_.fill(optionAnimDuration_);
+        optionAnimElapsed_[0] = 0.0f;
         RefreshTexts();
     }
 
@@ -139,15 +148,20 @@ public:
 
         introElapsed_ += std::max(0.0f, GetDeltaTime());
         updateEntranceAnimation();
-        updateVerticalBobbing();
+        updateLogoBobbing();
+        updateOptionSelectionAnimation(std::max(0.0f, GetDeltaTime()));
 
         if (ic->Evaluate("SelectUp").Triggered()) {
+            const int old = selectionIndex_;
             selectionIndex_ = (selectionIndex_ + 2) % 3;
             RefreshTexts();
+            onSelectionChanged(old, selectionIndex_);
         }
         if (ic->Evaluate("SelectDown").Triggered()) {
+            const int old = selectionIndex_;
             selectionIndex_ = (selectionIndex_ + 1) % 3;
             RefreshTexts();
+            onSelectionChanged(old, selectionIndex_);
         }
 
         if (!ic->Evaluate("Submit").Triggered()) return;
@@ -170,6 +184,17 @@ private:
     void RefreshTexts() {
         if (logoText_) {
             logoText_->SetText("ゲームオーバー");
+            for (size_t i = 0; i < 128; ++i) {
+                auto *sp = (*logoText_)[i];
+                if (!sp) continue;
+                auto *mat = sp->GetComponent2D<Material2D>();
+                if (!mat) continue;
+                auto c = mat->GetColor();
+                c.x = 1.0f;
+                c.y = 0.5f;
+                c.z = 0.5f;
+                mat->SetColor(c);
+            }
         }
         if (retryText_) {
             retryText_->SetText(selectionIndex_ == 0 ? "＞ やりなおす" : "  やりなおす");
@@ -207,21 +232,47 @@ private:
         }
     }
 
-    void updateVerticalBobbing() {
+    void updateLogoBobbing() {
         const float t = introElapsed_ * bobSpeed_;
-        auto apply = [&](Text *text, size_t index, bool enabled) {
-            if (!text) return;
-            auto *tr = text->GetComponent2D<Transform2D>();
-            if (!tr) return;
-            auto pos = tr->GetTranslate();
-            pos.y = basePositions_[index].y + (enabled ? std::sin(t) * bobAmplitude_ : 0.0f);
-            tr->SetTranslate(pos);
-        };
+        if (!logoText_) return;
+        auto *tr = logoText_->GetComponent2D<Transform2D>();
+        if (!tr) return;
+        auto pos = tr->GetTranslate();
+        pos.y = basePositions_[0].y + std::sin(t) * bobAmplitude_;
+        tr->SetTranslate(pos);
+    }
 
-        apply(logoText_, 0, true);
-        apply(retryText_, 1, selectionIndex_ == 0);
-        apply(backToTitleText_, 2, selectionIndex_ == 1);
-        apply(quitText_, 3, selectionIndex_ == 2);
+    void onSelectionChanged(int oldIndex, int newIndex) {
+        if (oldIndex >= 0 && oldIndex < 3) {
+            optionAnimElapsed_[static_cast<size_t>(oldIndex)] = optionAnimDuration_;
+        }
+        if (newIndex >= 0 && newIndex < 3) {
+            optionAnimElapsed_[static_cast<size_t>(newIndex)] = 0.0f;
+        }
+        previousSelectionIndex_ = newIndex;
+    }
+
+    void updateOptionSelectionAnimation(float dt) {
+        std::array<Text *, 3> options = {retryText_, backToTitleText_, quitText_};
+        for (size_t i = 0; i < options.size(); ++i) {
+            if (!options[i]) continue;
+            auto *tr = options[i]->GetComponent2D<Transform2D>();
+            if (!tr) continue;
+
+            const size_t baseIndex = i + 1;
+            float y = basePositions_[baseIndex].y;
+            if (selectionIndex_ == static_cast<int>(i)) {
+                optionAnimElapsed_[i] = std::min(optionAnimDuration_, optionAnimElapsed_[i] + dt);
+                const float t = std::clamp(optionAnimElapsed_[i] / std::max(0.0001f, optionAnimDuration_), 0.0f, 1.0f);
+                y = EaseOutCubic(basePositions_[baseIndex].y + optionLiftHeight_, basePositions_[baseIndex].y, t);
+            } else {
+                optionAnimElapsed_[i] = optionAnimDuration_;
+            }
+
+            auto pos = tr->GetTranslate();
+            pos.y = y;
+            tr->SetTranslate(pos);
+        }
     }
 
     void setTextAlpha(Text *text, float alpha) {
@@ -248,6 +299,7 @@ private:
 
     bool isActive_ = false;
     int selectionIndex_ = 0;
+    int previousSelectionIndex_ = -1;
     RequestAction requestedAction_ = RequestAction::None;
     float introElapsed_ = 0.0f;
     float introDelaySec_ = 0.08f;
@@ -255,6 +307,9 @@ private:
     float introFromRightOffset_ = 420.0f;
     float bobAmplitude_ = 6.0f;
     float bobSpeed_ = 6.0f;
+    float optionLiftHeight_ = 16.0f;
+    float optionAnimDuration_ = 0.25f;
+    std::array<float, 3> optionAnimElapsed_{};
     std::array<Vector3, 4> basePositions_{};
     std::array<Vector3, 4> startPositions_{};
 };

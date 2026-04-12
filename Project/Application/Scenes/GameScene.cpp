@@ -8,6 +8,7 @@
 #include "Scenes/Components/GameOverUIController.h"
 #include "Scenes/Components/GameClearUIController.h"
 #include "Scenes/Components/PauseUIController.h"
+#include "Scenes/Components/ClearScoreBoard.h"
 #include "Scenes/Components/StageGroundGenerator.h"
 #include "Scenes/Components/StageNoiseWallController.h"
 #include "Scenes/Components/StageGoalPlaneController.h"
@@ -37,7 +38,9 @@ void GameScene::Initialize() {
     groundSpawnLimitConfigured_ = false;
     clearSlowdownActive_ = false;
     clearSlowdownElapsed_ = 0.0f;
-    clearSlowdownStartGameSpeed_ = 1.0f;
+    clearSlowdownStartForwardSpeed_ = 0.0f;
+    clearSlowdownStartLateralVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
+    clearSlowdownStartGravityVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
 
     RadialBlurEffect *radialBlurEffect = nullptr;
     VignetteEffect *vignetteEffect = nullptr;
@@ -94,6 +97,7 @@ void GameScene::Initialize() {
         AddSceneComponent(std::make_unique<StageNoiseWallController>());
         AddSceneComponent(std::make_unique<StageGoalPlaneController>());
         AddSceneComponent(std::make_unique<GameSceneUIController>());
+        AddSceneComponent(std::make_unique<ClearScoreBoard>());
         AddSceneComponent(std::make_unique<GameOverUIController>());
         AddSceneComponent(std::make_unique<GameClearUIController>());
         AddSceneComponent(std::make_unique<PauseUIController>());
@@ -237,6 +241,12 @@ void GameScene::OnUpdate() {
         }
     };
 
+    auto queueSceneChange = [&](const std::string &sceneName) {
+        if (!GetNextSceneName().empty()) return;
+        SetGameSpeed(1.0f);
+        SetNextSceneName(sceneName);
+    };
+
     float gameOverDanger = 0.0f;
     if (playState_ == PlayState::Playing && player_) {
         auto *playerTr = player_->GetComponent3D<Transform3D>();
@@ -249,6 +259,9 @@ void GameScene::OnUpdate() {
                 gameOverDanger = std::max(gameOverDanger, std::clamp(1.0f - ((-dz) / std::max(0.0001f, gameOverWallDangerDistance_)), 0.0f, 1.0f));
                 if (dz >= 0.0f) {
                     playState_ = PlayState::GameOver;
+                    if (noiseWallController_) {
+                        noiseWallController_->SetMovementEnabled(false);
+                    }
                     if (playerMovementController_) {
                         playerMovementController_->SetMovementLocked(true);
                     }
@@ -264,6 +277,9 @@ void GameScene::OnUpdate() {
             gameOverDanger = std::max(gameOverDanger, std::clamp((radial - boundaryStart) / std::max(0.0001f, stageBoundaryRadius_ - boundaryStart), 0.0f, 1.0f));
             if (radial >= stageBoundaryRadius_) {
                 playState_ = PlayState::GameOver;
+                if (noiseWallController_) {
+                    noiseWallController_->SetMovementEnabled(false);
+                }
                 if (playerMovementController_) {
                     playerMovementController_->SetMovementLocked(true);
                 }
@@ -278,7 +294,11 @@ void GameScene::OnUpdate() {
                 if (!clearSlowdownActive_) {
                     clearSlowdownActive_ = true;
                     clearSlowdownElapsed_ = 0.0f;
-                    clearSlowdownStartGameSpeed_ = std::max(0.0f, GetGameSpeed());
+                    if (playerMovementController_) {
+                        clearSlowdownStartForwardSpeed_ = std::max(0.0f, playerMovementController_->GetForwardSpeed());
+                        clearSlowdownStartLateralVelocity_ = playerMovementController_->GetLateralVelocity();
+                        clearSlowdownStartGravityVelocity_ = playerMovementController_->GetGravityVelocity();
+                    }
                 }
                 if (noiseWallController_) {
                     noiseWallController_->SetMovementEnabled(false);
@@ -309,15 +329,20 @@ void GameScene::OnUpdate() {
     if (playState_ == PlayState::Cleared && clearSlowdownActive_) {
         clearSlowdownElapsed_ += std::max(0.0f, GetDeltaTime());
         const float t = std::clamp(clearSlowdownElapsed_ / std::max(0.0001f, clearSlowdownDuration_), 0.0f, 1.0f);
-        const float speed = (1.0f - t) * clearSlowdownStartGameSpeed_;
-        SetGameSpeed(speed);
+        const float inv = 1.0f - t;
+        if (playerMovementController_) {
+            playerMovementController_->SetForwardSpeed(clearSlowdownStartForwardSpeed_ * inv);
+            playerMovementController_->SetLateralVelocity(clearSlowdownStartLateralVelocity_ * inv);
+            playerMovementController_->SetGravityVelocity(clearSlowdownStartGravityVelocity_ * inv);
+        }
         if (t >= 1.0f) {
             clearSlowdownActive_ = false;
-            SetGameSpeed(0.0f);
             if (playerMovementController_) {
+                playerMovementController_->SetForwardSpeed(0.0f);
+                playerMovementController_->SetLateralVelocity(Vector3{0.0f, 0.0f, 0.0f});
+                playerMovementController_->SetGravityVelocity(Vector3{0.0f, 0.0f, 0.0f});
                 playerMovementController_->SetMovementLocked(true);
             }
-            hidePlayerVisuals();
         }
     }
 
@@ -347,7 +372,14 @@ void GameScene::OnUpdate() {
         if (playerMovementController_) {
             playerMovementController_->SetMovementLocked(true);
         }
-        hidePlayerVisuals();
+    }
+
+    if (playState_ == PlayState::GameOver && noiseWallController_) {
+        noiseWallController_->SetMovementEnabled(false);
+    }
+
+    if (playState_ == PlayState::Cleared && noiseWallController_) {
+        noiseWallController_->SetMovementEnabled(false);
     }
 
     if (particleManager_ && player_) {
@@ -388,19 +420,19 @@ void GameScene::OnUpdate() {
 
     if (gameOverUIController_) {
         const auto action = gameOverUIController_->ConsumeRequestedAction();
-        if (action == GameOverUIController::RequestAction::Retry && GetNextSceneName().empty()) {
-            SetNextSceneName("GameScene");
-        } else if (action == GameOverUIController::RequestAction::BackToTitle && GetNextSceneName().empty()) {
-            SetNextSceneName("TitleScene");
+        if (action == GameOverUIController::RequestAction::Retry) {
+            queueSceneChange("GameScene");
+        } else if (action == GameOverUIController::RequestAction::BackToTitle) {
+            queueSceneChange("TitleScene");
         }
     }
 
     if (gameClearUIController_) {
         const auto action = gameClearUIController_->ConsumeRequestedAction();
-        if (action == GameClearUIController::RequestAction::Retry && GetNextSceneName().empty()) {
-            SetNextSceneName("GameScene");
-        } else if (action == GameClearUIController::RequestAction::BackToTitle && GetNextSceneName().empty()) {
-            SetNextSceneName("TitleScene");
+        if (action == GameClearUIController::RequestAction::Retry) {
+            queueSceneChange("GameScene");
+        } else if (action == GameClearUIController::RequestAction::BackToTitle) {
+            queueSceneChange("TitleScene");
         }
     }
 
@@ -408,10 +440,10 @@ void GameScene::OnUpdate() {
         const auto action = pauseUIController_->ConsumeRequestedAction();
         if (action == PauseUIController::RequestAction::Continue) {
             pauseUIController_->Deactivate();
-        } else if (action == PauseUIController::RequestAction::Retry && GetNextSceneName().empty()) {
-            SetNextSceneName("GameScene");
-        } else if (action == PauseUIController::RequestAction::BackToTitle && GetNextSceneName().empty()) {
-            SetNextSceneName("TitleScene");
+        } else if (action == PauseUIController::RequestAction::Retry) {
+            queueSceneChange("GameScene");
+        } else if (action == PauseUIController::RequestAction::BackToTitle) {
+            queueSceneChange("TitleScene");
         }
     }
 
@@ -427,9 +459,7 @@ void GameScene::OnUpdate() {
     if (auto *ic = GetInputCommand()) {
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
         if (ic->Evaluate("DebugSceneChange").Triggered()) {
-            if (GetNextSceneName().empty()) {
-                SetNextSceneName("TitleScene");
-            }
+            queueSceneChange("TitleScene");
             if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                 out->Play();
             }

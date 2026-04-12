@@ -1,8 +1,10 @@
 #pragma once
+#pragma once
 
 #include <KashipanEngine.h>
 
 #include "Scenes/Components/SceneChangeOut.h"
+#include "Scenes/Components/ClearScoreBoard.h"
 
 #include <array>
 #include <algorithm>
@@ -33,10 +35,19 @@ public:
         auto *screenBuffer2D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer2D() : nullptr;
         if (!screenBuffer2D) return;
 
+        scoreboard_ = ctx->GetComponent<ClearScoreBoard>();
+
         const float screenW = static_cast<float>(screenBuffer2D->GetWidth());
         const float screenH = static_cast<float>(screenBuffer2D->GetHeight());
         const float cx = screenW * 0.5f;
         const float cy = screenH * 0.5f;
+        const float leftX = std::max(48.0f, screenW * 0.08f);
+        const float logoY = cy + 392.0f;
+        const float touchedY = logoY - 160.0f;
+        const float rankingStartY = touchedY - 96.0f;
+        const float retryY = cy - 168.0f;
+        const float backY = retryY - 80.0f;
+        const float quitY = backY - 80.0f;
 
         auto bg = std::make_unique<Sprite>();
         bg->SetName("GameClearBackground");
@@ -53,14 +64,14 @@ public:
         backgroundSprite_ = bg.get();
         (void)ctx->AddObject2D(std::move(bg));
 
-        auto logo = std::make_unique<Text>(64);
+        auto logo = std::make_unique<Text>(128);
         logo->SetName("GameClearLogoText");
-        logo->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+        logo->SetFont("Assets/Application/Image/KaqookanV2_Logo.fnt");
         logo->SetText(" ");
-        logo->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        logo->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
         logo->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = logo->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy + 140.0f, 0.0f});
+            tr->SetTranslate(Vector3{leftX, logoY, 0.0f});
         }
         logoText_ = logo.get();
         (void)ctx->AddObject2D(std::move(logo));
@@ -69,22 +80,36 @@ public:
         touched->SetName("GameClearTouchedGroundText");
         touched->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         touched->SetText(" ");
-        touched->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        touched->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
         touched->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = touched->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy + 80.0f, 0.0f});
+            tr->SetTranslate(Vector3{leftX, touchedY, 0.0f});
         }
         touchedGroundText_ = touched.get();
         (void)ctx->AddObject2D(std::move(touched));
+
+        for (size_t i = 0; i < rankingTextLines_.size(); ++i) {
+            auto rank = std::make_unique<Text>(64);
+            rank->SetName("GameClearRankingLine");
+            rank->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+            rank->SetText(" ");
+            rank->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
+            rank->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+            if (auto *tr = rank->GetComponent2D<Transform2D>()) {
+                tr->SetTranslate(Vector3{leftX, rankingStartY - static_cast<float>(i) * 56.0f, 0.0f});
+            }
+            rankingTextLines_[i] = rank.get();
+            (void)ctx->AddObject2D(std::move(rank));
+        }
 
         auto retry = std::make_unique<Text>(64);
         retry->SetName("GameClearRetryText");
         retry->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         retry->SetText(" ");
-        retry->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        retry->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
         retry->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = retry->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy + 10.0f, 0.0f});
+            tr->SetTranslate(Vector3{leftX, retryY, 0.0f});
         }
         retryText_ = retry.get();
         (void)ctx->AddObject2D(std::move(retry));
@@ -93,10 +118,10 @@ public:
         backTitle->SetName("GameClearBackToTitleText");
         backTitle->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         backTitle->SetText(" ");
-        backTitle->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        backTitle->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
         backTitle->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = backTitle->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy - 50.0f, 0.0f});
+            tr->SetTranslate(Vector3{leftX, backY, 0.0f});
         }
         backToTitleText_ = backTitle.get();
         (void)ctx->AddObject2D(std::move(backTitle));
@@ -105,10 +130,10 @@ public:
         quit->SetName("GameClearQuitText");
         quit->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         quit->SetText(" ");
-        quit->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+        quit->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
         quit->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = quit->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy - 110.0f, 0.0f});
+            tr->SetTranslate(Vector3{leftX, quitY, 0.0f});
         }
         quitText_ = quit.get();
         (void)ctx->AddObject2D(std::move(quit));
@@ -119,7 +144,21 @@ public:
     void Activate(int touchedGroundCount) {
         isActive_ = true;
         selectionIndex_ = 0;
+        previousSelectionIndex_ = 0;
         touchedGroundCount_ = touchedGroundCount;
+        highlightedRankIndex_ = -1;
+        if (scoreboard_) {
+            scoreboard_->AddScore(touchedGroundCount_);
+            if (touchedGroundCount_ > 0) {
+                auto top = scoreboard_->GetTopScores(5);
+                for (size_t i = 0; i < top.size(); ++i) {
+                    if (top[i] == touchedGroundCount_) {
+                        highlightedRankIndex_ = static_cast<int>(i);
+                        break;
+                    }
+                }
+            }
+        }
         introElapsed_ = 0.0f;
         setTextAlpha(logoText_, 0.0f);
         setTextAlpha(touchedGroundText_, 0.0f);
@@ -131,7 +170,10 @@ public:
                 mat->SetColor(Vector4{0.0f, 0.0f, 0.0f, 0.5f});
             }
         }
+        optionAnimElapsed_.fill(optionAnimDuration_);
+        optionAnimElapsed_[0] = 0.0f;
         RefreshTexts();
+        RefreshRankingTexts();
     }
 
     bool IsActive() const { return isActive_; }
@@ -153,15 +195,20 @@ public:
 
         introElapsed_ += std::max(0.0f, GetDeltaTime());
         updateEntranceAnimation();
-        updateVerticalBobbing();
+        updateLogoBobbing();
+        updateOptionSelectionAnimation(std::max(0.0f, GetDeltaTime()));
 
         if (ic->Evaluate("SelectUp").Triggered()) {
+            const int old = selectionIndex_;
             selectionIndex_ = (selectionIndex_ + 2) % 3;
             RefreshTexts();
+            onSelectionChanged(old, selectionIndex_);
         }
         if (ic->Evaluate("SelectDown").Triggered()) {
+            const int old = selectionIndex_;
             selectionIndex_ = (selectionIndex_ + 1) % 3;
             RefreshTexts();
+            onSelectionChanged(old, selectionIndex_);
         }
 
         if (!ic->Evaluate("Submit").Triggered()) return;
@@ -184,6 +231,17 @@ private:
     void RefreshTexts() {
         if (logoText_) {
             logoText_->SetText("ゲームクリア");
+            for (size_t i = 0; i < 128; ++i) {
+                auto *sp = (*logoText_)[i];
+                if (!sp) continue;
+                auto *mat = sp->GetComponent2D<Material2D>();
+                if (!mat) continue;
+                auto c = mat->GetColor();
+                c.x = 0.5f;
+                c.y = 1.0f;
+                c.z = 0.5f;
+                mat->SetColor(c);
+            }
         }
         if (touchedGroundText_) {
             touchedGroundText_->SetTextFormat("Touched Ground: {0}", touchedGroundCount_);
@@ -199,6 +257,26 @@ private:
         }
     }
 
+    void RefreshRankingTexts() {
+        std::array<int, 5> scores{};
+        if (scoreboard_) {
+            const auto top = scoreboard_->GetTopScores(5);
+            for (size_t i = 0; i < top.size() && i < scores.size(); ++i) {
+                scores[i] = top[i];
+            }
+        }
+
+        for (size_t i = 0; i < rankingTextLines_.size(); ++i) {
+            auto *text = rankingTextLines_[i];
+            if (!text) continue;
+            text->SetTextFormat("{0}. {1}", static_cast<int>(i + 1), scores[i]);
+            const Vector4 color = (highlightedRankIndex_ == static_cast<int>(i))
+                ? Vector4{1.0f, 1.0f, 0.0f, 1.0f}
+                : Vector4{1.0f, 1.0f, 1.0f, 1.0f};
+            ApplyTextColor(text, color);
+        }
+    }
+
     void cacheTextTransforms() {
         std::array<Text *, 5> texts = {logoText_, touchedGroundText_, retryText_, backToTitleText_, quitText_};
         for (size_t i = 0; i < texts.size(); ++i) {
@@ -207,6 +285,22 @@ private:
             if (!tr) continue;
             basePositions_[i] = tr->GetTranslate();
             startPositions_[i] = Vector3{basePositions_[i].x + introFromRightOffset_, basePositions_[i].y, basePositions_[i].z};
+        }
+    }
+
+    void ApplyTextColor(Text *text, const Vector4 &color) {
+        if (!text) return;
+        for (size_t i = 0; i < 128; ++i) {
+            auto *sprite = (*text)[i];
+            if (!sprite) continue;
+            auto *mat = sprite->GetComponent2D<Material2D>();
+            if (!mat) continue;
+            Vector4 c = mat->GetColor();
+            c.x = color.x;
+            c.y = color.y;
+            c.z = color.z;
+            c.w = color.w;
+            mat->SetColor(c);
         }
     }
 
@@ -224,22 +318,47 @@ private:
         }
     }
 
-    void updateVerticalBobbing() {
+    void updateLogoBobbing() {
         const float t = introElapsed_ * bobSpeed_;
-        auto apply = [&](Text *text, size_t index, bool enabled) {
-            if (!text) return;
-            auto *tr = text->GetComponent2D<Transform2D>();
-            if (!tr) return;
-            auto pos = tr->GetTranslate();
-            pos.y = basePositions_[index].y + (enabled ? std::sin(t) * bobAmplitude_ : 0.0f);
-            tr->SetTranslate(pos);
-        };
+        if (!logoText_) return;
+        auto *tr = logoText_->GetComponent2D<Transform2D>();
+        if (!tr) return;
+        auto pos = tr->GetTranslate();
+        pos.y = basePositions_[0].y + std::sin(t) * bobAmplitude_;
+        tr->SetTranslate(pos);
+    }
 
-        apply(logoText_, 0, true);
-        apply(touchedGroundText_, 1, false);
-        apply(retryText_, 2, selectionIndex_ == 0);
-        apply(backToTitleText_, 3, selectionIndex_ == 1);
-        apply(quitText_, 4, selectionIndex_ == 2);
+    void onSelectionChanged(int oldIndex, int newIndex) {
+        if (oldIndex >= 0 && oldIndex < 3) {
+            optionAnimElapsed_[static_cast<size_t>(oldIndex)] = optionAnimDuration_;
+        }
+        if (newIndex >= 0 && newIndex < 3) {
+            optionAnimElapsed_[static_cast<size_t>(newIndex)] = 0.0f;
+        }
+        previousSelectionIndex_ = newIndex;
+    }
+
+    void updateOptionSelectionAnimation(float dt) {
+        std::array<Text *, 3> options = {retryText_, backToTitleText_, quitText_};
+        for (size_t i = 0; i < options.size(); ++i) {
+            if (!options[i]) continue;
+            auto *tr = options[i]->GetComponent2D<Transform2D>();
+            if (!tr) continue;
+
+            const size_t baseIndex = i + 2;
+            float y = basePositions_[baseIndex].y;
+            if (selectionIndex_ == static_cast<int>(i)) {
+                optionAnimElapsed_[i] = std::min(optionAnimDuration_, optionAnimElapsed_[i] + dt);
+                const float t = std::clamp(optionAnimElapsed_[i] / std::max(0.0001f, optionAnimDuration_), 0.0f, 1.0f);
+                y = EaseOutCubic(basePositions_[baseIndex].y + optionLiftHeight_, basePositions_[baseIndex].y, t);
+            } else {
+                optionAnimElapsed_[i] = optionAnimDuration_;
+            }
+
+            auto pos = tr->GetTranslate();
+            pos.y = y;
+            tr->SetTranslate(pos);
+        }
     }
 
     void setTextAlpha(Text *text, float alpha) {
@@ -257,17 +376,21 @@ private:
 
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
+    ClearScoreBoard *scoreboard_ = nullptr;
 
     Text *logoText_ = nullptr;
     Text *touchedGroundText_ = nullptr;
     Text *retryText_ = nullptr;
     Text *backToTitleText_ = nullptr;
     Text *quitText_ = nullptr;
+    std::array<Text *, 5> rankingTextLines_{};
     Sprite *backgroundSprite_ = nullptr;
 
     bool isActive_ = false;
     int selectionIndex_ = 0;
+    int previousSelectionIndex_ = -1;
     int touchedGroundCount_ = 0;
+    int highlightedRankIndex_ = -1;
     RequestAction requestedAction_ = RequestAction::None;
     float introElapsed_ = 0.0f;
     float introDelaySec_ = 0.08f;
@@ -275,6 +398,9 @@ private:
     float introFromRightOffset_ = 420.0f;
     float bobAmplitude_ = 6.0f;
     float bobSpeed_ = 6.0f;
+    float optionLiftHeight_ = 16.0f;
+    float optionAnimDuration_ = 0.25f;
+    std::array<float, 3> optionAnimElapsed_{};
     std::array<Vector3, 5> basePositions_{};
     std::array<Vector3, 5> startPositions_{};
 };

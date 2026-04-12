@@ -86,6 +86,7 @@ public:
         gravityBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = gravityBar->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3{320.0f, 70.0f, 0.0f});
+            gravityGaugeBarBasePosition_ = tr->GetTranslate();
         }
         gravityGaugeBar_ = gravityBar.get();
         (void)ctx->AddObject2D(std::move(gravityBar));
@@ -206,6 +207,13 @@ public:
             stageGoalPlaneController_ = ctx->GetComponent<StageGoalPlaneController>();
         }
 
+        if (auto *ic = ctx->GetInputCommand()) {
+            if (playerMovementController_ && ic->Evaluate("PlayerGravitySwitchTrigger").Triggered() && !playerMovementController_->CanUseGravityChange()) {
+                gravityGaugeShakeActive_ = true;
+                gravityGaugeShakeElapsed_ = 0.0f;
+            }
+        }
+
         const int touchedCount = stageGroundGenerator_ ? stageGroundGenerator_->GetTouchedGroundCount() : 0;
         const int touchedDelta = std::max(0, touchedCount - previousTouchedGroundCount_);
         previousTouchedGroundCount_ = touchedCount;
@@ -249,6 +257,25 @@ public:
 
         if (gravityGaugeBar_ && playerMovementController_) {
             gravityGaugeBar_->SetProgress(playerMovementController_->GetGravityGaugeNormalized());
+        }
+
+        if (gravityGaugeBar_) {
+            if (auto *tr = gravityGaugeBar_->GetComponent2D<Transform2D>()) {
+                float shakeOffsetX = 0.0f;
+                if (gravityGaugeShakeActive_) {
+                    gravityGaugeShakeElapsed_ += dt;
+                    const float t = std::clamp(gravityGaugeShakeElapsed_ / std::max(0.0001f, gravityGaugeShakeDuration_), 0.0f, 1.0f);
+                    if (t >= 1.0f) {
+                        gravityGaugeShakeActive_ = false;
+                    } else {
+                        shakeOffsetX = std::sin(gravityGaugeShakeElapsed_ * gravityGaugeShakeAngularSpeed_) * gravityGaugeShakeAmplitude_ * (1.0f - t);
+                    }
+                }
+
+                auto pos = gravityGaugeBarBasePosition_;
+                pos.x += shakeOffsetX;
+                tr->SetTranslate(pos);
+            }
         }
 
         if (goalDistanceBar_ && player_ && stageGoalPlaneController_) {
@@ -359,6 +386,14 @@ private:
         applyBarAlpha(gravityGaugeBar_, gravityFrameColorBase_, gravityBackgroundColorBase_, gravityBarColorBase_, gravitySegmentColorBase_);
         applyBarAlpha(goalDistanceBar_, goalFrameColorBase_, goalBackgroundColorBase_, goalBarColorBase_, goalSegmentColorBase_);
 
+        if (!isVisible_ && gravityGaugeBar_) {
+            if (auto *tr = gravityGaugeBar_->GetComponent2D<Transform2D>()) {
+                tr->SetTranslate(gravityGaugeBarBasePosition_);
+            }
+            gravityGaugeShakeActive_ = false;
+            gravityGaugeShakeElapsed_ = 0.0f;
+        }
+
         SetTextAlpha(forwardSpeedText_, alpha);
         SetTextAlpha(touchedGroundCountText_, alpha);
         SetTextAlpha(fallDistanceText_, alpha);
@@ -446,6 +481,13 @@ private:
     bool goalDistanceInitialized_ = false;
     float goalDistanceStartZ_ = 0.0f;
     float goalDistanceProgressDenominator_ = -1.0f;
+
+    Vector3 gravityGaugeBarBasePosition_{320.0f, 70.0f, 0.0f};
+    bool gravityGaugeShakeActive_ = false;
+    float gravityGaugeShakeElapsed_ = 0.0f;
+    float gravityGaugeShakeDuration_ = 0.25f;
+    float gravityGaugeShakeAmplitude_ = 20.0f;
+    float gravityGaugeShakeAngularSpeed_ = 80.0f;
 
     bool isVisible_ = true;
 

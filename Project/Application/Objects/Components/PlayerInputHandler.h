@@ -68,6 +68,8 @@ public:
     std::optional<bool> Update() override {
         if (!inputCommand_ || !playerMovement_) return false;
 
+        gravityChangedByInputThisFrame_ = false;
+
         isRearConfirming_ = inputCommand_->Evaluate(cameraRearConfirmCommand_).Triggered();
 
         if (inputCommand_->Evaluate(gravitySwitchTriggerCommand_).Triggered() && playerMovement_->CanUseGravityChange()) {
@@ -81,7 +83,7 @@ public:
 
             if (inputCommand_->Evaluate(gravitySwitchReleaseCommand_).Triggered()) {
                 if (requestedGravityDirection_.has_value()) {
-                    (void)playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
+                    gravityChangedByInputThisFrame_ = playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
                 }
                 isGravitySwitching_ = false;
                 requestedGravityDirection_ = std::nullopt;
@@ -114,6 +116,11 @@ public:
     bool IsGravitySwitching() const { return isGravitySwitching_; }
     bool IsRearConfirming() const { return isRearConfirming_; }
     const std::optional<Vector3> &GetRequestedGravityDirection() const { return requestedGravityDirection_; }
+    bool ConsumeGravityChangedByInputEvent() {
+        const bool changed = gravityChangedByInputThisFrame_;
+        gravityChangedByInputThisFrame_ = false;
+        return changed;
+    }
 
 private:
     void UpdateGravitySwitchDirection() {
@@ -173,6 +180,7 @@ private:
 
     bool isGravitySwitching_ = false;
     bool isRearConfirming_ = false;
+    bool gravityChangedByInputThisFrame_ = false;
     std::optional<Vector3> requestedGravityDirection_{};
 };
 

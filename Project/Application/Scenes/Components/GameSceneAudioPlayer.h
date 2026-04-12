@@ -26,21 +26,20 @@ public:
 
     void Initialize() override {
         bgmSoundHandle_ = AudioManager::GetSoundHandleFromFileName("bgmGameScene.mp3");
-        jumpSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        softLandingSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        hardLandingSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        gravityModeEnterSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        gravityChangedSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        gravityGaugeLackSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        gameOverSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        clearSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-
-        gameOverUiSelectSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        gameOverUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        gameClearUiSelectSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        gameClearUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        pauseUiSelectSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
-        pauseUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seTest.mp3");
+        jumpSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seJump.mp3");
+        softLandingSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seSoftLanding.mp3");
+        hardLandingSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seHardLanding.mp3");
+        gravityModeEnterSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGravityModeEnter.mp3");
+        gravityChangedSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGravityChanged.mp3");
+        gravityGaugeLackSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGravityGaugeLack.mp3");
+        gameOverSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGameOver.mp3");
+        clearSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGameClear.mp3");
+        gameOverUiSelectSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISelect.mp3");
+        gameOverUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
+        gameClearUiSelectSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISelect.mp3");
+        gameClearUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
+        pauseUiSelectSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISelect.mp3");
+        pauseUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
 
         if (bgmSoundHandle_ != AudioManager::kInvalidSoundHandle) {
             bgmPlayHandle_ = AudioManager::Play(bgmSoundHandle_, 1.0f, 0.0f, true);
@@ -114,6 +113,15 @@ public:
         }
 
         if (inputCommand && playerMovement_) {
+            const bool isAnyBlockingUiActive =
+                (gameOverUIController_ && gameOverUIController_->IsActive()) ||
+                (gameClearUIController_ && gameClearUIController_->IsActive()) ||
+                (pauseUIController_ && pauseUIController_->IsActive());
+            const bool canOperatePlayer =
+                !playerMovement_->IsMovementLocked() &&
+                (!gameScene_ || (!gameScene_->IsGameOver() && !gameScene_->IsCleared())) &&
+                !isAnyBlockingUiActive;
+
             const bool canJumpNow = !playerMovement_->IsMovementLocked()
                 && (!playerInputHandler_ || !playerInputHandler_->IsGravitySwitching())
                 && (playerMovement_->GetJumpCount() < playerMovement_->GetMaxJumpCount());
@@ -121,7 +129,7 @@ public:
                 PlaySE(jumpSeSoundHandle_);
             }
 
-            if (inputCommand->Evaluate("PlayerGravitySwitchTrigger").Triggered() && !playerMovement_->CanUseGravityChange()) {
+            if (inputCommand->Evaluate("PlayerGravitySwitchTrigger").Triggered() && canOperatePlayer && !playerMovement_->CanUseGravityChange()) {
                 PlaySE(gravityGaugeLackSeSoundHandle_);
             }
         }
@@ -130,6 +138,9 @@ public:
             const bool gravitySwitching = playerInputHandler_->IsGravitySwitching();
             if (gravitySwitching && !prevGravitySwitching_) {
                 PlaySE(gravityModeEnterSeSoundHandle_);
+            }
+            if (playerInputHandler_->ConsumeGravityChangedByInputEvent()) {
+                PlaySE(gravityChangedSeSoundHandle_);
             }
             prevGravitySwitching_ = gravitySwitching;
         }
@@ -144,17 +155,14 @@ public:
             landingSeCooldownSec_ = std::max(0.0f, landingSeCooldownSec_ - std::max(0.0f, GetDeltaTime()));
             if (grounded && !wasGroundedPrevFrame_ && landingSeCooldownSec_ <= 0.0f && airborneDurationSec_ >= minAirborneDurationForLandingSe_) {
                 const float landingImpact = maxAirborneFallDistance_;
-                if (landingImpact > landingImpactThreshold_) {
-                    const float t = std::clamp((landingImpact - landingImpactThreshold_) /
-                            std::max(0.0001f, landingImpactForMaxShake_ - landingImpactThreshold_),
-                        0.0f,
-                        1.0f);
-                    const float shakeScale = std::pow(t, 0.6f);
-                    const float volume = 0.2f + (1.0f - 0.2f) * shakeScale;
-                    PlaySE(hardLandingSeSoundHandle_, volume);
-                } else {
-                    PlaySE(softLandingSeSoundHandle_);
-                }
+                const float t = std::clamp((landingImpact - landingImpactThreshold_) /
+                        std::max(0.0001f, landingImpactForMaxShake_ - landingImpactThreshold_),
+                    0.0f,
+                    1.0f);
+                const float hardVolume = std::pow(t, 0.6f);
+                const float softVolume = 1.0f - hardVolume;
+                PlaySE(softLandingSeSoundHandle_, softVolume);
+                PlaySE(hardLandingSeSoundHandle_, hardVolume);
                 landingSeCooldownSec_ = landingSeCooldownDurationSec_;
             }
 
@@ -165,9 +173,6 @@ public:
             wasGroundedPrevFrame_ = grounded;
 
             const Vector3 currentGravityDirection = playerMovement_->GetGravityDirection();
-            if (hasPrevGravityDirection_ && currentGravityDirection != prevGravityDirection_) {
-                PlaySE(gravityChangedSeSoundHandle_);
-            }
             prevGravityDirection_ = currentGravityDirection;
             hasPrevGravityDirection_ = true;
         }

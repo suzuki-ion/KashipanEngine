@@ -27,10 +27,6 @@ SpriteProressBar::SpriteProressBar()
     barSprite_ = makeChild("SpriteProressBarBar");
     SyncSegmentSprites();
 
-    if (barSprite_) {
-        barSprite_->SetPivotPoint(0.0f, 0.5f);
-    }
-
     UpdateVisuals();
     UpdateLayout();
 }
@@ -42,6 +38,11 @@ void SpriteProressBar::SetProgress(float progress) {
 
 void SpriteProressBar::SetBarSize(const Vector2 &barSize) {
     barSize_ = Vector2{std::max(0.0f, barSize.x), std::max(0.0f, barSize.y)};
+    UpdateLayout();
+}
+
+void SpriteProressBar::SetFillDirection(FillDirection direction) {
+    fillDirection_ = direction;
     UpdateLayout();
 }
 
@@ -196,20 +197,61 @@ void SpriteProressBar::UpdateLayout() {
 
     if (barSprite_) {
         if (auto *tr = barSprite_->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{-barWidth * 0.5f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{barWidth * progress_, barHeight, 1.0f});
+            float barPosX = 0.0f;
+            float barPosY = 0.0f;
+            float barScaleX = barWidth;
+            float barScaleY = barHeight;
+
+            switch (fillDirection_) {
+            case FillDirection::LeftToRight:
+                barSprite_->SetPivotPoint(0.0f, 0.5f);
+                barPosX = -barWidth * 0.5f;
+                barScaleX = barWidth * progress_;
+                break;
+            case FillDirection::RightToLeft:
+                barSprite_->SetPivotPoint(1.0f, 0.5f);
+                barPosX = barWidth * 0.5f;
+                barScaleX = barWidth * progress_;
+                break;
+            case FillDirection::BottomToTop:
+                barSprite_->SetPivotPoint(0.5f, 1.0f);
+                barPosY = -barHeight * 0.5f;
+                barScaleY = barHeight * progress_;
+                break;
+            case FillDirection::TopToBottom:
+                barSprite_->SetPivotPoint(0.5f, 0.0f);
+                barPosY = barHeight * 0.5f;
+                barScaleY = barHeight * progress_;
+                break;
+            }
+
+            tr->SetTranslate(Vector3{barPosX, barPosY, 0.0f});
+            tr->SetScale(Vector3{barScaleX, barScaleY, 1.0f});
         }
     }
 
     if (!segmentSprites_.empty() && segmentLineCount_ > 0) {
-        const float step = barWidth / static_cast<float>(segmentLineCount_ + 1);
-        for (int i = 0; i < segmentLineCount_; ++i) {
-            auto *sprite = segmentSprites_[static_cast<std::size_t>(i)].get();
-            if (!sprite) continue;
-            if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
-                const float x = -barWidth * 0.5f + step * static_cast<float>(i + 1);
-                tr->SetTranslate(Vector3{x, 0.0f, 0.0f});
-                tr->SetScale(Vector3{segmentLineThickness_, barHeight, 1.0f});
+        if (fillDirection_ == FillDirection::LeftToRight || fillDirection_ == FillDirection::RightToLeft) {
+            const float step = barWidth / static_cast<float>(segmentLineCount_ + 1);
+            for (int i = 0; i < segmentLineCount_; ++i) {
+                auto *sprite = segmentSprites_[static_cast<std::size_t>(i)].get();
+                if (!sprite) continue;
+                if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+                    const float x = -barWidth * 0.5f + step * static_cast<float>(i + 1);
+                    tr->SetTranslate(Vector3{x, 0.0f, 0.0f});
+                    tr->SetScale(Vector3{segmentLineThickness_, barHeight, 1.0f});
+                }
+            }
+        } else {
+            const float step = barHeight / static_cast<float>(segmentLineCount_ + 1);
+            for (int i = 0; i < segmentLineCount_; ++i) {
+                auto *sprite = segmentSprites_[static_cast<std::size_t>(i)].get();
+                if (!sprite) continue;
+                if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+                    const float y = -barHeight * 0.5f + step * static_cast<float>(i + 1);
+                    tr->SetTranslate(Vector3{0.0f, y, 0.0f});
+                    tr->SetScale(Vector3{barWidth, segmentLineThickness_, 1.0f});
+                }
             }
         }
     }

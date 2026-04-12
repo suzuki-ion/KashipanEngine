@@ -33,7 +33,7 @@ const auto& data = KashipanEngine::ModelManager::GetModelDataFromAssetPath("Mode
 
 const auto& data = KashipanEngine::ModelManager::GetModelDataFromFileName("player.obj");
 auto obj = std::make_unique<KashipanEngine::Model>(data);
-obj->SetName("Player");
+obj->SetName("PlayerRoot");
 ```
 
 ---

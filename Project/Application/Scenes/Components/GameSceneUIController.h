@@ -3,6 +3,7 @@
 
 #include <KashipanEngine.h>
 #include "Scenes/Components/StageGroundGenerator.h"
+#include "Scenes/Components/StageGoalPlaneController.h"
 #include "Objects/Components/PlayerMovementController.h"
 
 #include <algorithm>
@@ -35,6 +36,14 @@ public:
         clearReturnRequested_ = false;
         return requested;
     }
+
+    void SetVisible(bool visible) {
+        if (isVisible_ == visible) return;
+        isVisible_ = visible;
+        ApplyVisibility();
+    }
+
+    bool IsVisible() const { return isVisible_; }
 
     void Initialize() override {
         auto *ctx = GetOwnerContext();
@@ -81,9 +90,28 @@ public:
         gravityGaugeBar_ = gravityBar.get();
         (void)ctx->AddObject2D(std::move(gravityBar));
 
+        auto goalDistanceBar = std::make_unique<SpriteProressBar>();
+        goalDistanceBar->SetName("GoalDistanceBar");
+        goalDistanceBar->SetBarSize(Vector2{28.0f, 320.0f});
+        goalDistanceBar->SetFillDirection(SpriteProressBar::FillDirection::BottomToTop);
+        goalDistanceBar->SetFrameThickness(6.0f);
+        goalDistanceBar->SetFrameColor(Vector4{0.4f, 0.4f, 0.4f, 1.0f});
+        goalDistanceBar->SetBackgroundColor(Vector4{0.08f, 0.08f, 0.08f, 1.0f});
+        goalDistanceBar->SetBarColor(Vector4{0.95f, 0.85f, 0.2f, 1.0f});
+        goalDistanceBar->SetSegmentLineCount(3);
+        goalDistanceBar->SetSegmentLineColor(Vector4{0.6f, 0.6f, 0.6f, 1.0f});
+        goalDistanceBar->SetSegmentLineThickness(3.0f);
+        goalDistanceBar->SetProgress(0.0f);
+        goalDistanceBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = goalDistanceBar->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{std::max(32.0f, screenWidth_ - 48.0f), screenHeight_ * 0.5f, 0.0f});
+        }
+        goalDistanceBar_ = goalDistanceBar.get();
+        (void)ctx->AddObject2D(std::move(goalDistanceBar));
+
         auto speedText = std::make_unique<Text>(128);
         speedText->SetName("ForwardSpeedText");
-        speedText->SetFont("Assets/Application/Image/test.fnt");
+        speedText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         speedText->SetTextFormat("Speed: {0:.2f}", 0.0f);
         speedText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         forwardSpeedText_ = speedText.get();
@@ -91,7 +119,7 @@ public:
 
         auto touchedGroundText = std::make_unique<Text>(128);
         touchedGroundText->SetName("TouchedGroundCountText");
-        touchedGroundText->SetFont("Assets/Application/Image/test.fnt");
+        touchedGroundText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         touchedGroundText->SetTextFormat("Touched Ground: {0}", 0);
         touchedGroundText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = touchedGroundText->GetComponent2D<Transform2D>()) {
@@ -102,7 +130,7 @@ public:
 
         auto landingTouchedGroundText = std::make_unique<Text>(64);
         landingTouchedGroundText->SetName("LandingTouchedGroundCountText");
-        landingTouchedGroundText->SetFont("Assets/Application/Image/test.fnt");
+        landingTouchedGroundText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         landingTouchedGroundText->SetText(" ");
         landingTouchedGroundText->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
         landingTouchedGroundText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
@@ -111,7 +139,7 @@ public:
 
         auto fallDistanceText = std::make_unique<Text>(128);
         fallDistanceText->SetName("FallDistanceText");
-        fallDistanceText->SetFont("Assets/Application/Image/test.fnt");
+        fallDistanceText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         fallDistanceText->SetTextFormat("Fall Distance: {0:.2f}", 0.0f);
         fallDistanceText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = fallDistanceText->GetComponent2D<Transform2D>()) {
@@ -122,6 +150,7 @@ public:
 
         auto clearFade = std::make_unique<Sprite>();
         clearFade->SetName("ClearFadeSprite");
+        clearFade->SetUniqueBatchKey();
         clearFade->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = clearFade->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3{screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f});
@@ -136,7 +165,7 @@ public:
 
         auto clearText = std::make_unique<Text>(128);
         clearText->SetName("ClearTouchedGroundText");
-        clearText->SetFont("Assets/Application/Image/test.fnt");
+        clearText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         clearText->SetText(" ");
         clearText->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
         clearText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
@@ -152,20 +181,29 @@ public:
         }
         clearResultText_ = clearText.get();
         (void)ctx->AddObject2D(std::move(clearText));
+
+        ApplyVisibility();
     }
 
     void Update() override {
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
 
+        if (!isVisible_) {
+            return;
+        }
+
         if (!player_) {
-            player_ = ctx->GetObject3D("Player");
+            player_ = ctx->GetObject3D("PlayerRoot");
         }
         if (player_ && !playerMovementController_) {
             playerMovementController_ = player_->GetComponent3D<PlayerMovementController>();
         }
         if (!stageGroundGenerator_) {
             stageGroundGenerator_ = ctx->GetComponent<StageGroundGenerator>();
+        }
+        if (!stageGoalPlaneController_) {
+            stageGoalPlaneController_ = ctx->GetComponent<StageGoalPlaneController>();
         }
 
         const int touchedCount = stageGroundGenerator_ ? stageGroundGenerator_->GetTouchedGroundCount() : 0;
@@ -211,6 +249,23 @@ public:
 
         if (gravityGaugeBar_ && playerMovementController_) {
             gravityGaugeBar_->SetProgress(playerMovementController_->GetGravityGaugeNormalized());
+        }
+
+        if (goalDistanceBar_ && player_ && stageGoalPlaneController_) {
+            if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
+                const float playerZ = playerTr->GetTranslate().z;
+                const float goalZ = stageGoalPlaneController_->GetGoalZ();
+
+                if (!goalDistanceInitialized_) {
+                    goalDistanceStartZ_ = playerZ;
+                    const float denom = goalZ - goalDistanceStartZ_;
+                    goalDistanceProgressDenominator_ = (std::abs(denom) > 0.0001f) ? denom : ((denom >= 0.0f) ? 0.0001f : -0.0001f);
+                    goalDistanceInitialized_ = true;
+                }
+
+                const float rawProgress = (playerZ - goalDistanceStartZ_) / goalDistanceProgressDenominator_;
+                goalDistanceBar_->SetProgress(std::clamp(rawProgress, 0.0f, 1.0f));
+            }
         }
 
         if (touchedGroundCountText_) {
@@ -281,6 +336,48 @@ public:
     }
 
 private:
+    void ApplyVisibility() {
+        const float alpha = isVisible_ ? 1.0f : 0.0f;
+
+        auto applyBarAlpha = [&](SpriteProressBar *bar, const Vector4 &frameBase, const Vector4 &bgBase, const Vector4 &fillBase, const Vector4 &segmentBase) {
+            if (!bar) return;
+            Vector4 c = frameBase;
+            c.w *= alpha;
+            bar->SetFrameColor(c);
+            c = bgBase;
+            c.w *= alpha;
+            bar->SetBackgroundColor(c);
+            c = fillBase;
+            c.w *= alpha;
+            bar->SetBarColor(c);
+            c = segmentBase;
+            c.w *= alpha;
+            bar->SetSegmentLineColor(c);
+        };
+
+        applyBarAlpha(forwardSpeedBar_, forwardFrameColorBase_, forwardBackgroundColorBase_, forwardBarColorBase_, forwardSegmentColorBase_);
+        applyBarAlpha(gravityGaugeBar_, gravityFrameColorBase_, gravityBackgroundColorBase_, gravityBarColorBase_, gravitySegmentColorBase_);
+        applyBarAlpha(goalDistanceBar_, goalFrameColorBase_, goalBackgroundColorBase_, goalBarColorBase_, goalSegmentColorBase_);
+
+        SetTextAlpha(forwardSpeedText_, alpha);
+        SetTextAlpha(touchedGroundCountText_, alpha);
+        SetTextAlpha(fallDistanceText_, alpha);
+        SetTextAlpha(landingTouchedGroundCountText_, alpha);
+
+        if (clearFadeSprite_) {
+            if (auto *mat = clearFadeSprite_->GetComponent2D<Material2D>()) {
+                auto color = mat->GetColor();
+                color.w = isVisible_ ? color.w : 0.0f;
+                mat->SetColor(color);
+            }
+        }
+
+        if (!isVisible_ && clearResultText_) {
+            clearResultText_->SetText(" ");
+            SetTextAlpha(clearResultText_, 0.0f);
+        }
+    }
+
     bool ProjectWorldTo2DWorld(const Vector3 &world, Vector2 &out) const {
         if (!mainCamera_ || screenWidth_ <= 0.0f || screenHeight_ <= 0.0f) return false;
 
@@ -313,10 +410,12 @@ private:
     Object3DBase *player_ = nullptr;
     PlayerMovementController *playerMovementController_ = nullptr;
     StageGroundGenerator *stageGroundGenerator_ = nullptr;
+    StageGoalPlaneController *stageGoalPlaneController_ = nullptr;
     Camera3D *mainCamera_ = nullptr;
 
     SpriteProressBar *forwardSpeedBar_ = nullptr;
     SpriteProressBar *gravityGaugeBar_ = nullptr;
+    SpriteProressBar *goalDistanceBar_ = nullptr;
     Text *forwardSpeedText_ = nullptr;
     Text *touchedGroundCountText_ = nullptr;
     Text *fallDistanceText_ = nullptr;
@@ -343,6 +442,27 @@ private:
 
     float screenWidth_ = 0.0f;
     float screenHeight_ = 0.0f;
+
+    bool goalDistanceInitialized_ = false;
+    float goalDistanceStartZ_ = 0.0f;
+    float goalDistanceProgressDenominator_ = -1.0f;
+
+    bool isVisible_ = true;
+
+    Vector4 forwardFrameColorBase_{0.5f, 0.5f, 0.5f, 1.0f};
+    Vector4 forwardBackgroundColorBase_{0.1f, 0.1f, 0.1f, 1.0f};
+    Vector4 forwardBarColorBase_{0.0f, 0.5f, 0.0f, 1.0f};
+    Vector4 forwardSegmentColorBase_{1.0f, 1.0f, 1.0f, 0.6f};
+
+    Vector4 gravityFrameColorBase_{0.35f, 0.35f, 0.55f, 1.0f};
+    Vector4 gravityBackgroundColorBase_{0.08f, 0.08f, 0.1f, 1.0f};
+    Vector4 gravityBarColorBase_{0.2f, 0.6f, 1.0f, 1.0f};
+    Vector4 gravitySegmentColorBase_{0.5f, 0.5f, 0.5f, 1.0f};
+
+    Vector4 goalFrameColorBase_{0.4f, 0.4f, 0.4f, 1.0f};
+    Vector4 goalBackgroundColorBase_{0.08f, 0.08f, 0.08f, 1.0f};
+    Vector4 goalBarColorBase_{0.95f, 0.85f, 0.2f, 1.0f};
+    Vector4 goalSegmentColorBase_{0.6f, 0.6f, 0.6f, 1.0f};
 };
 
 } // namespace KashipanEngine

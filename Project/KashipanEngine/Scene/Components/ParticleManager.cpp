@@ -503,6 +503,50 @@ bool ParticleManager::Spawn(const std::string& groupName, std::optional<Vector3>
     return false;
 }
 
+bool ParticleManager::SetEmitCenter(const std::string& groupName, const Vector3& center, bool respawnExisting) {
+    for (auto& group : groups_) {
+        if (group.config.name != groupName) continue;
+
+        group.emitCenter = center;
+        if (respawnExisting) {
+            for (auto& particle : group.particles) {
+                RespawnParticle(group, particle);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool ParticleManager::SetEmitting(const std::string& groupName, bool isEmitting) {
+    for (auto& group : groups_) {
+        if (group.config.name != groupName) continue;
+        group.isEmitting = isEmitting;
+        if (isEmitting) {
+            group.spawnTimer = 0.0f;
+            group.spawnedCount = group.particles.size();
+        }
+        return true;
+    }
+    return false;
+}
+
+bool ParticleManager::SetParentTransform(const std::string& groupName, Transform3D* parentTransform) {
+    for (auto& group : groups_) {
+        if (group.config.name != groupName) continue;
+
+        group.parentTransform = parentTransform;
+        for (auto& particle : group.particles) {
+            if (particle.kind != ParticleKind::D3D || !particle.object3D) continue;
+            if (auto* tr = particle.object3D->GetComponent3D<Transform3D>()) {
+                tr->SetParentTransform(parentTransform);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 JSON ParticleManager::SerializeGroup(const ParticleGroup& group) {
     JSON j = JSON::object();
     const auto& cfg = group.config;

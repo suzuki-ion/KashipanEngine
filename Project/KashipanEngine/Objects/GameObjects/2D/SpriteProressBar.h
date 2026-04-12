@@ -18,6 +18,13 @@ class Window;
 
 class SpriteProressBar final : public Object2DBase {
 public:
+    enum class FillDirection {
+        LeftToRight,
+        RightToLeft,
+        BottomToTop,
+        TopToBottom,
+    };
+
     SpriteProressBar();
     ~SpriteProressBar() override = default;
 
@@ -26,6 +33,9 @@ public:
 
     void SetBarSize(const Vector2 &barSize);
     const Vector2 &GetBarSize() const { return barSize_; }
+
+    void SetFillDirection(FillDirection direction);
+    FillDirection GetFillDirection() const { return fillDirection_; }
 
     void SetFrameThickness(float frameThickness);
     float GetFrameThickness() const { return frameThickness_; }
@@ -78,6 +88,7 @@ private:
 
     float progress_ = 0.0f;
     Vector2 barSize_ = Vector2{256.0f, 24.0f};
+    FillDirection fillDirection_ = FillDirection::LeftToRight;
     float frameThickness_ = 4.0f;
 
     Vector4 frameColor_ = Vector4{1.0f, 1.0f, 1.0f, 1.0f};

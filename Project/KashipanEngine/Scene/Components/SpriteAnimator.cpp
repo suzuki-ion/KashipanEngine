@@ -84,8 +84,8 @@ void SpriteAnimator::Update() {
             playback.elapsedTime += dt;
         }
 
-        auto presetIt = presets_.find(playback.presetName);
-        auto bindingsIt = presetBindings_.find(playback.presetName);
+        auto presetIt = presets_.find(playback.objectPresetName);
+        auto bindingsIt = presetBindings_.find(playback.bindingPresetName);
         if (presetIt == presets_.end() || bindingsIt == presetBindings_.end()) {
             it = playbacks_.erase(it);
             continue;
@@ -158,7 +158,6 @@ bool SpriteAnimator::RemovePresetObject(const std::string &presetName, const std
 
 void SpriteAnimator::ClearPreset(const std::string &presetName) {
     presets_.erase(presetName);
-    presetBindings_.erase(presetName);
     Stop(presetName);
 }
 
@@ -270,17 +269,23 @@ void SpriteAnimator::ClearBindings(const std::string &presetName) {
     presetBindings_.erase(presetName);
 }
 
-bool SpriteAnimator::Play(const std::string &presetName) {
-    auto presetIt = presets_.find(presetName);
+bool SpriteAnimator::Play(const std::string &objectPresetName, const std::string &bindingPresetName) {
+    if (objectPresetName.empty() || bindingPresetName.empty()) return false;
+
+    auto presetIt = presets_.find(objectPresetName);
     if (presetIt == presets_.end()) return false;
 
+    auto bindingIt = presetBindings_.find(bindingPresetName);
+    if (bindingIt == presetBindings_.end()) return false;
+
     std::unordered_map<std::string, Sprite *> activeSprites;
-    if (!ResolveActiveSprites(presetName, activeSprites)) return false;
+    if (!ResolveActiveSprites(objectPresetName, activeSprites)) return false;
 
     ApplyPresetHierarchy(presetIt->second, activeSprites);
 
     auto it = std::find_if(playbacks_.begin(), playbacks_.end(), [&](const PlaybackState &p) {
-        return p.presetName == presetName;
+        return p.objectPresetName == objectPresetName
+            && p.bindingPresetName == bindingPresetName;
     });
 
     if (it != playbacks_.end()) {
@@ -291,12 +296,17 @@ bool SpriteAnimator::Play(const std::string &presetName) {
     }
 
     PlaybackState state;
-    state.presetName = presetName;
+    state.objectPresetName = objectPresetName;
+    state.bindingPresetName = bindingPresetName;
     state.elapsedTime = 0.0f;
     state.paused = false;
     state.activeSprites = std::move(activeSprites);
     playbacks_.push_back(std::move(state));
     return true;
+}
+
+bool SpriteAnimator::Play(const std::string &presetName) {
+    return Play(presetName, presetName);
 }
 
 void SpriteAnimator::Stop() {
@@ -306,7 +316,16 @@ void SpriteAnimator::Stop() {
 bool SpriteAnimator::Stop(const std::string &presetName) {
     const auto before = playbacks_.size();
     std::erase_if(playbacks_, [&](const PlaybackState &p) {
-        return p.presetName == presetName;
+        return p.objectPresetName == presetName;
+    });
+    return before != playbacks_.size();
+}
+
+bool SpriteAnimator::Stop(const std::string &objectPresetName, const std::string &bindingPresetName) {
+    const auto before = playbacks_.size();
+    std::erase_if(playbacks_, [&](const PlaybackState &p) {
+        return p.objectPresetName == objectPresetName
+            && p.bindingPresetName == bindingPresetName;
     });
     return before != playbacks_.size();
 }
@@ -1207,8 +1226,11 @@ void SpriteAnimator::ShowImGuiWindowPlayers() {
     }
 
     ImGui::InputText("PlayPreset", playPresetBuffer_.data(), playPresetBuffer_.size());
+    ImGui::InputText("PlayBindingPreset", playBindingPresetBuffer_.data(), playBindingPresetBuffer_.size());
     if (ImGui::Button("Play")) {
-        Play(playPresetBuffer_.data());
+        const std::string objectPreset = playPresetBuffer_.data();
+        const std::string bindingPreset = playBindingPresetBuffer_[0] ? playBindingPresetBuffer_.data() : objectPreset;
+        Play(objectPreset, bindingPreset);
     }
     ImGui::SameLine();
     if (ImGui::Button("Stop All")) {
@@ -1227,11 +1249,12 @@ void SpriteAnimator::ShowImGuiWindowPlayers() {
     ImGui::Text("Active Playbacks: %d", static_cast<int>(playbacks_.size()));
 
     for (auto &p : playbacks_) {
-        ImGui::PushID(p.presetName.c_str());
-        ImGui::Text("%s  time=%.3f  state=%s", p.presetName.c_str(), p.elapsedTime, p.paused ? "Paused" : "Playing");
+        const std::string playbackId = p.objectPresetName + "::" + p.bindingPresetName;
+        ImGui::PushID(playbackId.c_str());
+        ImGui::Text("obj:%s  bind:%s  time=%.3f  state=%s", p.objectPresetName.c_str(), p.bindingPresetName.c_str(), p.elapsedTime, p.paused ? "Paused" : "Playing");
         ImGui::SameLine();
         if (ImGui::SmallButton("Stop")) {
-            Stop(p.presetName);
+            Stop(p.objectPresetName, p.bindingPresetName);
             ImGui::PopID();
             break;
         }

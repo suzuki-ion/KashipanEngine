@@ -7,6 +7,7 @@
 #include "Scenes/Components/StageDecoBoxGenerator.h"
 #include "Scenes/Components/StageObjectController.h"
 #include "Scenes/Components/StageObjectRandomGenerator.h"
+#include "Scenes/Components/TitleSceneAudioPlayer.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 
@@ -49,7 +50,7 @@ void TitleScene::Initialize() {
 
     if (sceneDefaultVariables_ && sceneDefaultVariables_->GetColliderComp()) {
         auto player = std::make_unique<Box>();
-        player->SetName("Player");
+        player->SetName("PlayerRoot");
         player->SetUniqueBatchKey();
 
         if (screenBuffer3D) {
@@ -79,7 +80,7 @@ void TitleScene::Initialize() {
     if (screenBuffer2D) {
         auto title = std::make_unique<Text>(64);
         title->SetName("TitleText");
-        title->SetFont("Assets/Application/Image/test.fnt");
+        title->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         title->SetText("グランナー");
         title->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = title->GetComponent2D<Transform2D>()) {
@@ -90,7 +91,7 @@ void TitleScene::Initialize() {
 
         auto start = std::make_unique<Text>(64);
         start->SetName("StartText");
-        start->SetFont("Assets/Application/Image/test.fnt");
+        start->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         start->SetText("＞ スタート");
         start->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = start->GetComponent2D<Transform2D>()) {
@@ -101,7 +102,7 @@ void TitleScene::Initialize() {
 
         auto quit = std::make_unique<Text>(64);
         quit->SetName("QuitText");
-        quit->SetFont("Assets/Application/Image/test.fnt");
+        quit->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         quit->SetText("  おわる");
         quit->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = quit->GetComponent2D<Transform2D>()) {
@@ -114,6 +115,7 @@ void TitleScene::Initialize() {
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
     AddSceneComponent(std::make_unique<ParticleManager>());
+    AddSceneComponent(std::make_unique<TitleSceneAudioPlayer>());
 
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();

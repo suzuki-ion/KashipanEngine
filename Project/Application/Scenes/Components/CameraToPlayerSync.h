@@ -18,6 +18,8 @@ public:
 
     ~CameraToPlayerSync() override = default;
 
+    void SetClearViewEnabled(bool enabled) { clearViewEnabled_ = enabled; }
+
     void Update() override {
         if (!player_) return;
 
@@ -34,6 +36,17 @@ public:
 
         Vector3 cameraPos = playerPos - forward * followDistance_ + up * followHeight_;
         Vector3 lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
+
+        if (clearViewEnabled_) {
+            Vector3 right = forward.Cross(up);
+            if (right.LengthSquared() <= 0.000001f) {
+                right = Vector3{1.0f, 0.0f, 0.0f};
+            } else {
+                right = right.Normalize();
+            }
+            cameraPos = playerPos + right * clearViewRightDistance_ + forward * clearViewForwardDistance_ + up * clearViewHeight_;
+            lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
+        }
 
         const float minSpeed = playerMovement->GetMinForwardSpeed();
         const float maxSpeed = playerMovement->GetMaxForwardSpeed();
@@ -149,6 +162,11 @@ private:
 
     float groundReactionBaseRadius_ = 8.0f;
     float groundReactionRadiusPerImpact_ = 0.6f;
+
+    bool clearViewEnabled_ = false;
+    float clearViewRightDistance_ = 4.0f;
+    float clearViewForwardDistance_ = 5.0f;
+    float clearViewHeight_ = 2.0f;
 };
 
 } // namespace KashipanEngine

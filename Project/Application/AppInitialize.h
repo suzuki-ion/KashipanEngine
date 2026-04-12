@@ -4,6 +4,9 @@
 #include "Scenes/TitleScene.h"
 #include "Scenes/GameScene.h"
 #include "Scenes/ResultScene.h"
+#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
+#include "Scenes/TestScene.h"
+#endif
 
 namespace KashipanEngine {
 
@@ -20,11 +23,14 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #if defined(RELEASE_BUILD)
         sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "TitleScene");
 #endif
+#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
+        sm->RegisterScene<TestScene>("TestScene");
+#endif
         sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
 
-		context.sceneManager->ChangeScene("TitleScene");
+		sm->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {
@@ -54,6 +60,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
         // カメラ後方確認
         ic->RegisterCommand("CameraRearConfirm", Key::E, InputCommand::InputState::Down);
+        ic->RegisterCommand("CameraRearConfirm", Key::L, InputCommand::InputState::Down);
         ic->RegisterCommand("CameraRearConfirm", ControllerButton::X, InputCommand::InputState::Down);
 
         // プレイヤー移動（左右）

@@ -54,7 +54,7 @@ public:
         if (!ctx) return;
 
         if (!player_) {
-            player_ = ctx->GetObject3D("Player");
+            player_ = ctx->GetObject3D("PlayerRoot");
         }
         if (!player_) return;
 
@@ -66,7 +66,7 @@ public:
         const float dist = (goalTr->GetTranslate() - playerTr->GetTranslate()).Length();
         const float fadeRange = std::max(0.0001f, farFadeDistance_ - nearFadeDistance_);
         const float alpha = 1.0f - std::clamp((dist - nearFadeDistance_) / fadeRange, 0.0f, 1.0f);
-        goalMat->SetColor(Vector4{0.25f, 0.25f, 0.25f, alpha});
+        goalMat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, alpha * alpha_ });
     }
 
     float GetGoalZ() const { return goalZ_; }
@@ -78,11 +78,12 @@ private:
     Object3DBase *goalPlane_ = nullptr;
     Object3DBase *player_ = nullptr;
 
-    float goalZ_ = -1024.0f;
+    float goalZ_ = -8192.0f;
     float goalScale_ = 64.0f * 8.0f * 1.5f;
     float rotateSpeed_ = 0.5f;
     float nearFadeDistance_ = 128.0f;
     float farFadeDistance_ = 2048.0f;
+    float alpha_ = 0.3f;
 };
 
 } // namespace KashipanEngine

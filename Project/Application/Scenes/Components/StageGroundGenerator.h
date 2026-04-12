@@ -37,7 +37,7 @@ public:
         if (!ctx) return;
 
         if (!player_) {
-            player_ = ctx->GetObject3D("Player");
+            player_ = ctx->GetObject3D("PlayerRoot");
         }
         if (!player_) return;
 
@@ -80,6 +80,11 @@ public:
     }
 
     int GetTouchedGroundCount() const { return touchedGroundCount_; }
+
+    void SetMinSpawnZ(float minSpawnZ) {
+        minSpawnZ_ = minSpawnZ;
+        hasMinSpawnZ_ = true;
+    }
 
 private:
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
@@ -175,6 +180,16 @@ private:
         if (remainingPanelsInCurrentSegment_ <= 0) {
             currentSegmentLength_ = GetRandomSplitValue(minPanelLength_, maxPanelLength_, panelLengthSplitCount_);
             currentSegmentCenterZ_ = nextSpawnZ_ - currentSegmentLength_ * 0.5f;
+
+            if (hasMinSpawnZ_ && currentSegmentCenterZ_ < minSpawnZ_) {
+                if (auto *tr2 = runtime.object->GetComponent3D<Transform3D>()) {
+                    tr2->SetScale(Vector3{0.0f, 0.0f, 0.0f});
+                }
+                runtime.centerZ = -1000000000.0f;
+                runtime.length = 0.0f;
+                return;
+            }
+
             nextSpawnZ_ -= currentSegmentLength_;
             remainingPanelsInCurrentSegment_ = GetRandomValue(minPanelsPerSegment_, maxPanelsPerSegment_);
         }
@@ -210,7 +225,7 @@ private:
     float spawnGroundCenterY_ = -panelThickness_;
     float spawnGroundCenterZ_ = -2.0f;
     float spawnGroundWidth_ = 16.0f;
-    float spawnGroundDepth_ = 128.0f;
+    float spawnGroundDepth_ = 256.0f;
 
     float minRingRadius_ = 16.0f;
     float maxRingRadius_ = 96.0f;
@@ -241,6 +256,8 @@ private:
     Object3DBase *player_ = nullptr;
     std::vector<GroundRuntime> grounds_{};
     int touchedGroundCount_ = 0;
+    bool hasMinSpawnZ_ = false;
+    float minSpawnZ_ = -1000000000.0f;
 };
 
 } // namespace KashipanEngine

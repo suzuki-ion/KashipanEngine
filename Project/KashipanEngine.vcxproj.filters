@@ -138,6 +138,7 @@
     <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
+    <ClCompile Include="Application\Scenes\TestScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -399,6 +400,12 @@
     <ClInclude Include="Application\Scenes\Components\GameSceneUIController.h" />
     <ClInclude Include="Application\Scenes\Components\StageNoiseWallController.h" />
     <ClInclude Include="Application\Scenes\Components\StageGoalPlaneController.h" />
+    <ClInclude Include="Application\Scenes\TestScene.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleSceneAudioPlayer.h" />
+    <ClInclude Include="Application\Scenes\Components\GameSceneAudioPlayer.h" />
+    <ClInclude Include="Application\Scenes\Components\GameOverUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\GameClearUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\PauseUIController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

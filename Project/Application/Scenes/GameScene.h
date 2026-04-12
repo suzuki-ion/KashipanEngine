@@ -9,8 +9,12 @@ class StageGroundGenerator;
 class StageNoiseWallController;
 class StageGoalPlaneController;
 class GameSceneUIController;
+class GameOverUIController;
+class GameClearUIController;
+class PauseUIController;
 class PlayerMovementController;
 class VignetteEffect;
+class ParticleManager;
 
 class GameScene final : public SceneBase {
 public:
@@ -18,6 +22,9 @@ public:
     ~GameScene() override;
 
     void Initialize() override;
+
+    bool IsGameOver() const { return playState_ == PlayState::GameOver; }
+    bool IsCleared() const { return playState_ == PlayState::Cleared; }
 
 protected:
     void OnUpdate() override;
@@ -36,12 +43,25 @@ private:
     StageNoiseWallController *noiseWallController_ = nullptr;
     StageGoalPlaneController *goalPlaneController_ = nullptr;
     GameSceneUIController *gameSceneUIController_ = nullptr;
+    GameOverUIController *gameOverUIController_ = nullptr;
+    GameClearUIController *gameClearUIController_ = nullptr;
+    PauseUIController *pauseUIController_ = nullptr;
+    ParticleManager *particleManager_ = nullptr;
 
     VignetteEffect *vignetteEffect_ = nullptr;
     Vector4 baseVignetteColor_{0.0f, 0.25f, 0.0f, 1.0f};
 
     float gameOverWallDangerDistance_ = 32.0f;
-    float stageBoundaryRadius_ = 64.0f * 8.0f;
+    float stageBoundaryRadius_ = 64.0f * 6.0f;
+    bool wasGameOverPrevFrame_ = false;
+    bool wasPlayerGroundedPrevFrame_ = false;
+    bool isPlayerRunParticleActive_ = false;
+    bool groundSpawnLimitConfigured_ = false;
+
+    bool clearSlowdownActive_ = false;
+    float clearSlowdownElapsed_ = 0.0f;
+    float clearSlowdownDuration_ = 1.0f;
+    float clearSlowdownStartGameSpeed_ = 1.0f;
 
     PlayState playState_ = PlayState::Playing;
 };

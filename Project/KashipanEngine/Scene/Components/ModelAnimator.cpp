@@ -80,8 +80,8 @@ void ModelAnimator::Update() {
             playback.elapsedTime += dt;
         }
 
-        auto presetIt = presets_.find(playback.presetName);
-        auto bindingsIt = presetBindings_.find(playback.presetName);
+        auto presetIt = presets_.find(playback.objectPresetName);
+        auto bindingsIt = presetBindings_.find(playback.bindingPresetName);
         if (presetIt == presets_.end() || bindingsIt == presetBindings_.end()) {
             it = playbacks_.erase(it);
             continue;
@@ -152,7 +152,6 @@ bool ModelAnimator::RemovePresetObject(const std::string &presetName, const std:
 
 void ModelAnimator::ClearPreset(const std::string &presetName) {
     presets_.erase(presetName);
-    presetBindings_.erase(presetName);
     Stop(presetName);
 }
 
@@ -264,17 +263,23 @@ void ModelAnimator::ClearBindings(const std::string &presetName) {
     presetBindings_.erase(presetName);
 }
 
-bool ModelAnimator::Play(const std::string &presetName) {
-    auto presetIt = presets_.find(presetName);
+bool ModelAnimator::Play(const std::string &objectPresetName, const std::string &bindingPresetName) {
+    if (objectPresetName.empty() || bindingPresetName.empty()) return false;
+
+    auto presetIt = presets_.find(objectPresetName);
     if (presetIt == presets_.end()) return false;
 
+    auto bindingIt = presetBindings_.find(bindingPresetName);
+    if (bindingIt == presetBindings_.end()) return false;
+
     std::unordered_map<std::string, Model *> activeModels;
-    if (!ResolveActiveModels(presetName, activeModels)) return false;
+    if (!ResolveActiveModels(objectPresetName, activeModels)) return false;
 
     ApplyPresetHierarchy(presetIt->second, activeModels);
 
     auto it = std::find_if(playbacks_.begin(), playbacks_.end(), [&](const PlaybackState &p) {
-        return p.presetName == presetName;
+        return p.objectPresetName == objectPresetName
+            && p.bindingPresetName == bindingPresetName;
     });
 
     if (it != playbacks_.end()) {
@@ -285,12 +290,17 @@ bool ModelAnimator::Play(const std::string &presetName) {
     }
 
     PlaybackState state;
-    state.presetName = presetName;
+    state.objectPresetName = objectPresetName;
+    state.bindingPresetName = bindingPresetName;
     state.elapsedTime = 0.0f;
     state.paused = false;
     state.activeModels = std::move(activeModels);
     playbacks_.push_back(std::move(state));
     return true;
+}
+
+bool ModelAnimator::Play(const std::string &presetName) {
+    return Play(presetName, presetName);
 }
 
 void ModelAnimator::Stop() {
@@ -300,7 +310,16 @@ void ModelAnimator::Stop() {
 bool ModelAnimator::Stop(const std::string &presetName) {
     const auto before = playbacks_.size();
     std::erase_if(playbacks_, [&](const PlaybackState &p) {
-        return p.presetName == presetName;
+        return p.objectPresetName == presetName;
+    });
+    return before != playbacks_.size();
+}
+
+bool ModelAnimator::Stop(const std::string &objectPresetName, const std::string &bindingPresetName) {
+    const auto before = playbacks_.size();
+    std::erase_if(playbacks_, [&](const PlaybackState &p) {
+        return p.objectPresetName == objectPresetName
+            && p.bindingPresetName == bindingPresetName;
     });
     return before != playbacks_.size();
 }
@@ -1146,8 +1165,11 @@ void ModelAnimator::ShowImGuiWindowPlayers() {
     }
 
     ImGui::InputText("PlayPreset", playPresetBuffer_.data(), playPresetBuffer_.size());
+    ImGui::InputText("PlayBindingPreset", playBindingPresetBuffer_.data(), playBindingPresetBuffer_.size());
     if (ImGui::Button("Play")) {
-        Play(playPresetBuffer_.data());
+        const std::string objectPreset = playPresetBuffer_.data();
+        const std::string bindingPreset = playBindingPresetBuffer_[0] ? playBindingPresetBuffer_.data() : objectPreset;
+        Play(objectPreset, bindingPreset);
     }
     ImGui::SameLine();
     if (ImGui::Button("Stop All")) {
@@ -1166,11 +1188,12 @@ void ModelAnimator::ShowImGuiWindowPlayers() {
     ImGui::Text("Active Playbacks: %d", static_cast<int>(playbacks_.size()));
 
     for (auto &p : playbacks_) {
-        ImGui::PushID(p.presetName.c_str());
-        ImGui::Text("%s  time=%.3f  state=%s", p.presetName.c_str(), p.elapsedTime, p.paused ? "Paused" : "Playing");
+        const std::string playbackId = p.objectPresetName + "::" + p.bindingPresetName;
+        ImGui::PushID(playbackId.c_str());
+        ImGui::Text("obj:%s  bind:%s  time=%.3f  state=%s", p.objectPresetName.c_str(), p.bindingPresetName.c_str(), p.elapsedTime, p.paused ? "Paused" : "Playing");
         ImGui::SameLine();
         if (ImGui::SmallButton("Stop")) {
-            Stop(p.presetName);
+            Stop(p.objectPresetName, p.bindingPresetName);
             ImGui::PopID();
             break;
         }

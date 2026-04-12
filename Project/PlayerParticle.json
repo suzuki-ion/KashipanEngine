@@ -1,0 +1,281 @@
+{
+    "groups": [
+        {
+            "baseScale": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "count": 8,
+            "endColor": [
+                1.0,
+                1.0,
+                1.0,
+                0.0
+            ],
+            "endScale": 0.0,
+            "gravity": [
+                0.0,
+                -4.0,
+                8.0
+            ],
+            "initialRotationMax": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "initialRotationMin": [
+                -0.5,
+                -0.5,
+                -0.5
+            ],
+            "initialVelocityMax": [
+                1.0,
+                1.0,
+                0.5
+            ],
+            "initialVelocityMin": [
+                -1.0,
+                0.20000000298023224,
+                0.0
+            ],
+            "lifeTimeRandomRange": 0.0,
+            "lifeTimeSec": 1.0,
+            "linearDamping": 0.0,
+            "loop": false,
+            "name": "PlayerRun",
+            "peakScale": 0.5,
+            "pipeline": "Object3D.Solid.BlendNormal",
+            "resetOnSpawn": true,
+            "rotationSpeed": [
+                0.10000000149011612,
+                0.10000000149011612,
+                0.10000000149011612
+            ],
+            "shape2D": "Sprite",
+            "shape3D": "Box",
+            "spawnBox": {
+                "max": [
+                    5.0,
+                    5.0,
+                    5.0
+                ],
+                "min": [
+                    -5.0,
+                    0.0,
+                    -5.0
+                ]
+            },
+            "spawnCenter": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "spawnIntervalSec": 0.20000000298023224,
+            "spawnOnStart": true,
+            "spawnRadius": 0.0,
+            "speed": 2.0,
+            "startColor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "startScale": 1.0,
+            "target": "3D",
+            "texture": "square_alpha.png",
+            "useSpawnBox": false
+        },
+        {
+            "baseScale": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "count": 8,
+            "endColor": [
+                1.0,
+                1.0,
+                1.0,
+                0.0
+            ],
+            "endScale": 0.0,
+            "gravity": [
+                0.0,
+                -2.0,
+                0.0
+            ],
+            "initialRotationMax": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "initialRotationMin": [
+                -0.5,
+                -0.5,
+                -0.5
+            ],
+            "initialVelocityMax": [
+                2.0,
+                1.0,
+                2.0
+            ],
+            "initialVelocityMin": [
+                -2.0,
+                1.0,
+                -2.0
+            ],
+            "lifeTimeRandomRange": 0.0,
+            "lifeTimeSec": 1.0,
+            "linearDamping": 0.0,
+            "loop": false,
+            "name": "PlayerLanding",
+            "peakScale": 0.5,
+            "pipeline": "Object3D.Solid.BlendNormal",
+            "resetOnSpawn": true,
+            "rotationSpeed": [
+                0.10000000149011612,
+                0.10000000149011612,
+                0.10000000149011612
+            ],
+            "shape2D": "Sprite",
+            "shape3D": "Box",
+            "spawnBox": {
+                "max": [
+                    5.0,
+                    5.0,
+                    5.0
+                ],
+                "min": [
+                    -5.0,
+                    0.0,
+                    -5.0
+                ]
+            },
+            "spawnCenter": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "spawnIntervalSec": 0.0,
+            "spawnOnStart": true,
+            "spawnRadius": 0.0,
+            "speed": 4.0,
+            "startColor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "startScale": 1.0,
+            "target": "3D",
+            "texture": "square_alpha.png",
+            "useSpawnBox": false
+        },
+        {
+            "baseScale": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "count": 16,
+            "endColor": [
+                1.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "endScale": 0.0,
+            "gravity": [
+                0.0,
+                -2.0,
+                0.0
+            ],
+            "initialRotationMax": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "initialRotationMin": [
+                -0.5,
+                -0.5,
+                -0.5
+            ],
+            "initialVelocityMax": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "initialVelocityMin": [
+                -1.0,
+                0.5,
+                -1.0
+            ],
+            "lifeTimeRandomRange": 0.0,
+            "lifeTimeSec": 1.0,
+            "linearDamping": 0.0,
+            "loop": false,
+            "name": "PlayerDeath",
+            "peakScale": 1.0,
+            "pipeline": "Object3D.Solid.BlendNormal",
+            "resetOnSpawn": true,
+            "rotationSpeed": [
+                0.20000000298023224,
+                0.20000000298023224,
+                0.20000000298023224
+            ],
+            "shape2D": "Sprite",
+            "shape3D": "Box",
+            "spawnBox": {
+                "max": [
+                    5.0,
+                    5.0,
+                    5.0
+                ],
+                "min": [
+                    -5.0,
+                    0.0,
+                    -5.0
+                ]
+            },
+            "spawnCenter": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "spawnIntervalSec": 0.0,
+            "spawnOnStart": true,
+            "spawnRadius": 0.0,
+            "speed": 8.0,
+            "startColor": [
+                1.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "startScale": 1.0,
+            "target": "3D",
+            "texture": "square_alpha.png",
+            "useSpawnBox": false
+        }
+    ],
+    "version": 1
+}

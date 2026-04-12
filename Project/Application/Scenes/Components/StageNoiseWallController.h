@@ -2,6 +2,7 @@
 
 #include <KashipanEngine.h>
 
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -94,14 +95,22 @@ public:
         return initialWallPosition_.z;
     }
 
+    void SetMovementEnabled(bool enabled) { movementEnabled_ = enabled; }
+    bool IsMovementEnabled() const { return movementEnabled_; }
+
 private:
     void RespawnNoiseBox(Object3DBase *box) {
         if (!box) return;
         auto *tr = box->GetComponent3D<Transform3D>();
         if (!tr) return;
 
-        const float x = GetRandomValue(-spawnRangeX_, spawnRangeX_);
-        const float y = GetRandomValue(-spawnRangeY_, spawnRangeY_);
+        float x = 0.0f;
+        float y = 0.0f;
+        const float radiusSq = spawnRadius_ * spawnRadius_;
+        do {
+            x = GetRandomValue(-spawnRadius_, spawnRadius_);
+            y = GetRandomValue(-spawnRadius_, spawnRadius_);
+        } while ((x * x + y * y) > radiusSq);
         const float z = GetRandomValue(-spawnDepth_ * 0.5f, spawnDepth_ * 0.5f);
 
         const float sx = GetRandomValue(minScale_, maxScale_);
@@ -119,18 +128,18 @@ private:
     Object3DBase *rootObject_ = nullptr;
     std::vector<Object3DBase *> noiseBoxes_{};
 
-    int boxCount_ = 160;
-    float moveSpeedZ_ = 32.0f;
+    int boxCount_ = 2048;
+    float moveSpeedZ_ = 64.0f;
     float respawnInterval_ = 0.03f;
     float spawnTimer_ = 0.0f;
 
-    float spawnRangeX_ = 96.0f;
-    float spawnRangeY_ = 96.0f;
-    float spawnDepth_ = 24.0f;
-    float minScale_ = 1.0f;
-    float maxScale_ = 4.0f;
+    float spawnRadius_ = 512.0f;
+    float spawnDepth_ = 16.0f;
+    float minScale_ = 4.0f;
+    float maxScale_ = 8.0f;
+    bool movementEnabled_ = true;
 
-    Vector3 initialWallPosition_{0.0f, 0.0f, 64.0f};
+    Vector3 initialWallPosition_{0.0f, 0.0f, 256.0f};
 };
 
 } // namespace KashipanEngine

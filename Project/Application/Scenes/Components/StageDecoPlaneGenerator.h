@@ -30,7 +30,7 @@ public:
         if (!ctx) return;
 
         if (!player_) {
-            player_ = ctx->GetObject3D("Player");
+            player_ = ctx->GetObject3D("PlayerRoot");
         }
         if (!player_) return;
 
@@ -134,7 +134,7 @@ private:
 
     float maxRingRadius_ = 64.0f;
     float spawnGroundCenterZ_ = -2.0f;
-    float spawnGroundDepth_ = 128.0f;
+    float spawnGroundDepth_ = 0.0f;
 
     float nextSpawnZ_ = 0.0f;
     float nextTiltAngle_ = 0.0f;

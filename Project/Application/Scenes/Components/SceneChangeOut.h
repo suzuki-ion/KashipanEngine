@@ -76,6 +76,7 @@ public:
 
 private:
     static constexpr float kDuration = 1.0f;
+    static constexpr std::uint64_t kSpriteBatchKey = 0x1102000000000002ull;
 
     void InitializeSprites() {
         auto *scene = GetOwnerScene();
@@ -92,7 +93,7 @@ private:
         // White
         {
             auto obj = std::make_unique<Sprite>();
-            obj->SetUniqueBatchKey();
+            obj->SetBatchKey(kSpriteBatchKey);
             obj->SetName("SceneChangeOut_White");
             obj->SetPivotPoint(0.5f, 1.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {
@@ -111,7 +112,7 @@ private:
         // Black
         {
             auto obj = std::make_unique<Sprite>();
-            obj->SetUniqueBatchKey();
+            obj->SetBatchKey(kSpriteBatchKey);
             obj->SetName("SceneChangeOut_Black");
             obj->SetPivotPoint(0.5f, 1.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {

@@ -227,19 +227,19 @@ private:
     float spawnGroundWidth_ = 16.0f;
     float spawnGroundDepth_ = 256.0f;
 
-    float minRingRadius_ = 16.0f;
-    float maxRingRadius_ = 96.0f;
-    int ringSplitCount_ = 4;
+    float minRingRadius_ = 32.0f;
+    float maxRingRadius_ = 92.0f;
+    int ringSplitCount_ = 3;
 
-    float minPanelThickness_ = 1.0f;
-    float maxPanelThickness_ = 8.0f;
+    float minPanelThickness_ = 2.0f;
+    float maxPanelThickness_ = 2.0f;
     int panelThicknessSplitCount_ = 2;
 
-    float minPanelWidth_ = 16.0f;
+    float minPanelWidth_ = 32.0f;
     float maxPanelWidth_ = 32.0f;
     int panelWidthSplitCount_ = 3;
 
-    float minPanelLength_ = 16.0f;
+    float minPanelLength_ = 64.0f;
     float maxPanelLength_ = 64.0f;
     int panelLengthSplitCount_ = 3;
 

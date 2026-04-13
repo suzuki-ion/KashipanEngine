@@ -44,12 +44,12 @@ public:
 #endif
 
 private:
-    float forwardSpeed_ = 96.0f;
+    float forwardSpeed_ = 32.0f;
     float minForwardSpeed_ = 16.0f;
     float maxForwardSpeed_ = 96.0f;
-    float forwardAcceleration_ = 1.1f;
-    float forwardAccelPerFallSpeed_ = 0.1f;
-    float groundDeceleration_ = 24.0f;
+    float forwardAcceleration_ = -1.0f;
+    float forwardAccelPerFallSpeed_ = 0.2f;
+    float groundDeceleration_ = -32.0f;
 };
 
 } // namespace KashipanEngine

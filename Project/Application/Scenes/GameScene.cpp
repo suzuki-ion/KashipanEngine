@@ -64,7 +64,7 @@ void GameScene::Initialize() {
         rp.sampleCount = 16;
         rp.radialCenter[0] = 0.5f;
         rp.radialCenter[1] = 0.5f;
-        rp.startRadius = 0.1f;
+        rp.startRadius = 0.05f;
         auto radialBlur = std::make_unique<RadialBlurEffect>(rp);
         radialBlurEffect = radialBlur.get();
         screenBuffer3D->RegisterPostEffectComponent(std::move(radialBlur));
@@ -354,7 +354,7 @@ void GameScene::OnUpdate() {
     }
 
     if (auto *ic = GetInputCommand()) {
-        if (playState_ == PlayState::Playing && !modalVisible && ic->Evaluate("Cancel").Triggered()) {
+        if (playState_ == PlayState::Playing && !modalVisible && ic->Evaluate("Pause").Triggered()) {
             if (pauseUIController_) {
                 pauseUIController_->Activate();
             }

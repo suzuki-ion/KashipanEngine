@@ -57,7 +57,7 @@ public:
             speedRatio = (playerMovement->GetForwardSpeed() - minSpeed) / (maxSpeed - minSpeed);
         }
         speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
-        float targetFov = 0.7f + (2.0f - 0.7f) * speedRatio;
+        float targetFov = 0.95f + (2.25f - 0.95f) * speedRatio;
 
         auto *inputHandler = player_->GetComponent3D<PlayerInputHandler>();
         if (inputHandler && inputHandler->IsGravitySwitching()) {

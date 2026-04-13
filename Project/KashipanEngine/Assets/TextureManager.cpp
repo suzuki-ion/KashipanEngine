@@ -256,7 +256,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             nullptr,
             D3D12_RESOURCE_STATE_COPY_DEST,
             mipLevels);
-    }
+    } 
 
     {
         auto *desc = entry.texture->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});

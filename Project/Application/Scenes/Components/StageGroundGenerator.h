@@ -243,8 +243,8 @@ private:
     float maxPanelLength_ = 64.0f;
     int panelLengthSplitCount_ = 3;
 
-    int minPanelsPerSegment_ = 4;
-    int maxPanelsPerSegment_ = 8;
+    int minPanelsPerSegment_ = 6;
+    int maxPanelsPerSegment_ = 6;
 
     float nextSpawnZ_ = 0.0f;
     float currentSegmentCenterZ_ = 0.0f;

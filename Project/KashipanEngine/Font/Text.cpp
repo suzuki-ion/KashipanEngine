@@ -25,8 +25,7 @@ Text::Text(uint32_t textCount)
 
     for (uint32_t i = 0; i < textCount; ++i) {
         auto sprite = std::make_unique<Sprite>();
-        //sprite->SetBatchKey(spriteBatchKey_);
-        sprite->SetUniqueBatchKey();
+        sprite->SetBatchKey(spriteBatchKey_);
         sprite->SetName(std::string("TextChar_") + std::to_string(i));
         sprite->SetPivotPoint(0.0f, 0.0f);
 

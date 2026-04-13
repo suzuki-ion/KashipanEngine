@@ -403,11 +403,13 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
 
     DirectX::ScratchImage converted;
     DXGI_FORMAT dstFormat;
-    if (ext == ".dds" || ext == ".hdr" || ext == ".tga") {
+    if (ext == ".hdr" || ext == ".tga") {
         dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
         if (ext == ".hdr") {
             dstFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
         }
+    } else if (ext == ".dds") {
+        dstFormat = meta.format;
     } else {
         dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     }
@@ -420,16 +422,24 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
 
     // ミップマップ生成
     DirectX::ScratchImage mipChain;
-    hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
-    if (FAILED(hr)) {
-        // ミップマップ生成に失敗した場合は元画像をそのまま使う
-        const DirectX::Image* baseImg = finalImage.GetImages();
-        if (!baseImg || !baseImg->pixels) {
-            return DirectX::ScratchImage();
-        }
-        hr = mipChain.InitializeFromImage(*baseImg);
+    if (DirectX::IsCompressed(finalImage.GetMetadata().format)) {
+        // 圧縮形式の場合はミップマップ生成をスキップ
+        hr = mipChain.InitializeFromImage(*finalImage.GetImages());
         if (FAILED(hr)) {
             return DirectX::ScratchImage();
+        }
+    } else {
+        hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
+        if (FAILED(hr)) {
+            // ミップマップ生成に失敗した場合は元画像をそのまま使う
+            const DirectX::Image *baseImg = finalImage.GetImages();
+            if (!baseImg || !baseImg->pixels) {
+                return DirectX::ScratchImage();
+            }
+            hr = mipChain.InitializeFromImage(*baseImg);
+            if (FAILED(hr)) {
+                return DirectX::ScratchImage();
+            }
         }
     }
 

@@ -60,8 +60,8 @@ private:
     RadialBlurEffect *radialBlur_ = nullptr;
     VignetteEffect *vignette_ = nullptr;
 
-    float minIntensity_ = 0.0f;
-    float maxIntensity_ = 0.5f;
+    float minIntensity_ = 0.5f;
+    float maxIntensity_ = 1.0f;
     float vignetteIntensity_ = 0.0f;
     float vignetteLerpSpeed_ = 0.15f;
 };

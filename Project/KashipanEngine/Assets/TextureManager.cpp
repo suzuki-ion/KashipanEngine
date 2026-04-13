@@ -229,14 +229,34 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     entry.mipLevels = static_cast<UINT>(mmeta.mipLevels);
 
     // GPU側テクスチャ + SRV を Resources 経由で作成（COPY_DEST から開始してこの後のコピーに備える）
-    entry.texture = std::make_unique<ShaderResourceResource>(
-        entry.width,
-        entry.height,
-        entry.format,
-        D3D12_RESOURCE_FLAG_NONE,
-        nullptr,
-        D3D12_RESOURCE_STATE_COPY_DEST,
-        mipLevels);
+    if (mmeta.IsCubemap()) {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.Format = entry.format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.TextureCube.MipLevels = entry.mipLevels;
+        srvDesc.TextureCube.MostDetailedMip = 0;
+        srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
+        entry.texture = std::make_unique<ShaderResourceResource>(
+            entry.width,
+            entry.height,
+            entry.format,
+            D3D12_RESOURCE_FLAG_NONE,
+            nullptr,
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            mipLevels,
+            &srvDesc);
+        
+    } else {
+        entry.texture = std::make_unique<ShaderResourceResource>(
+            entry.width,
+            entry.height,
+            entry.format,
+            D3D12_RESOURCE_FLAG_NONE,
+            nullptr,
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            mipLevels);
+    }
 
     {
         auto *desc = entry.texture->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});

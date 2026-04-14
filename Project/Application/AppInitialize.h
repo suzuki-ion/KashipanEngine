@@ -15,6 +15,8 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
     mainWindow->UnregisterWindowEvent(WM_SYSCOMMAND);
     mainWindow->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();
+#else
+    static_cast<void>(mainWindow); // リリースビルドで未使用の変数警告回避
 #endif
 
     if (context.sceneManager) {

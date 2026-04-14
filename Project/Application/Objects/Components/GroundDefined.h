@@ -107,6 +107,17 @@ public:
         }
     }
 
+    void SetDefaultColor(const Vector4 &color) {
+        defaultColor_ = color;
+        if (auto *ctx = GetOwner3DContext()) {
+            if (auto *mat = ctx->GetComponent<Material3D>()) {
+                mat->SetColor(defaultColor_);
+            }
+        }
+	}
+
+	Vector4 GetDefaultColor() const { return defaultColor_; }
+
 private:
     void OnCollisionEnter(const HitInfo3D &hit) {
         if (hasPlayedTouchColorAnimation_) return;
@@ -127,7 +138,7 @@ private:
 
     Collider *collider_ = nullptr;
 
-    const Vector4 defaultColor_{0.0f, 1.0f, 0.0f, 1.0f};
+    Vector4 defaultColor_{0.0f, 1.0f, 0.0f, 1.0f};
     const Vector4 touchColorStart_{1.0f, 1.0f, 1.0f, 1.0f};
     const Vector4 touchColorEnd_{0.5f, 1.0f, 0.5f, 1.0f};
 

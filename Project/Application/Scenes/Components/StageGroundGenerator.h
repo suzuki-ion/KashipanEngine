@@ -3,6 +3,7 @@
 
 #include <KashipanEngine.h>
 #include "Objects/Components/GroundDefined.h"
+#include "Objects/Components/SlowGroundDefined.h"
 
 #include <algorithm>
 #include <cmath>
@@ -132,6 +133,11 @@ private:
             }
 
             obj->RegisterComponent<GroundDefined>(collider_);
+
+			// 一部の地面にスロー効果を付与
+            if (rand() % 5 == 0) {
+                obj->RegisterComponent<SlowGroundDefined>();
+            }
 
             Object3DBase *objPtr = obj.get();
             if (!ctx->AddObject3D(std::move(obj)) || objPtr == nullptr) {

@@ -349,6 +349,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Scenes\Components\GameSceneAudioPlayer.h" />
     <ClInclude Include="Application\Scenes\Components\GameSceneUIController.h" />
     <ClInclude Include="Application\Scenes\Components\PauseUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerClearController.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerRespawnController.h" />
     <ClInclude Include="Application\Scenes\Components\PostEffectToPlayerSync.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\Components\StageDecoBoxGenerator.h" />

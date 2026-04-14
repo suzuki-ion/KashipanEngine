@@ -3,6 +3,7 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/CollisionAttributes.h"
 #include "Objects/Components/GroundDefined.h"
+#include "Objects/Components/SlowGroundDefined.h"
 #include "Objects/Components/PlayerMovementControllerAccess.h"
 
 namespace KashipanEngine {
@@ -78,6 +79,8 @@ public:
     void ShowImGui() override {}
 #endif
 
+	bool IsOnSlowGround() const { return isSlowGround_; }
+
 private:
     static bool IsGroundObject(Object3DBase *obj) {
         if (!obj) return false;
@@ -119,6 +122,12 @@ private:
         }
 
         requestedGravityDirection_ = -normal;
+
+        if(auto *slowGround = hit.otherObject->GetComponent3D<SlowGroundDefined>()) {
+            isSlowGround_ = true;
+        } else {
+            isSlowGround_ = false;
+		}
     }
 
     void OnCollisionStay(const HitInfo3D &hit) {
@@ -143,6 +152,7 @@ private:
     bool lastGroundWasFirstTouch_ = false;
     Vector3 stayCorrection_{0.0f, 0.0f, 0.0f};
     bool hasStayCorrection_ = false;
+	bool isSlowGround_ = false;
 };
 
 } // namespace KashipanEngine

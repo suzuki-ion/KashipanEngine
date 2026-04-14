@@ -408,6 +408,7 @@
     <ClInclude Include="Application\Scenes\Components\PauseUIController.h" />
     <ClInclude Include="Application\Scenes\Components\ClearScoreBoard.h" />
     <ClInclude Include="Application\Scenes\Components\TitleSceneUIController.h" />
+    <ClInclude Include="Application\Objects\Components\SlowGroundDefined.h" />
     <ClInclude Include="Application\Scenes\Components\PlayerRespawnController.h" />
     <ClInclude Include="Application\Scenes\Components\PlayerClearController.h" />
   </ItemGroup>

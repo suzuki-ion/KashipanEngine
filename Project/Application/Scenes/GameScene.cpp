@@ -138,6 +138,7 @@ void GameScene::Initialize() {
                 "PlayerMoveRight",
                 "PlayerMoveLeft",
                 "PlayerJump",
+                "PlayerForwardSpeedDown",
                 "CameraRearConfirm",
                 "PlayerGravitySwitchTrigger",
                 "PlayerGravitySwitchRelease",

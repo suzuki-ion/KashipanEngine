@@ -16,6 +16,7 @@ public:
         std::string moveRightCommand,
         std::string moveLeftCommand,
         std::string jumpCommand,
+        std::string forwardSpeedDownCommand,
         std::string cameraRearConfirmCommand,
         std::string gravitySwitchTriggerCommand,
         std::string gravitySwitchReleaseCommand,
@@ -28,6 +29,7 @@ public:
           moveRightCommand_(std::move(moveRightCommand)),
           moveLeftCommand_(std::move(moveLeftCommand)),
           jumpCommand_(std::move(jumpCommand)),
+          forwardSpeedDownCommand_(std::move(forwardSpeedDownCommand)),
           cameraRearConfirmCommand_(std::move(cameraRearConfirmCommand)),
           gravitySwitchTriggerCommand_(std::move(gravitySwitchTriggerCommand)),
           gravitySwitchReleaseCommand_(std::move(gravitySwitchReleaseCommand)),
@@ -44,6 +46,7 @@ public:
             moveRightCommand_,
             moveLeftCommand_,
             jumpCommand_,
+            forwardSpeedDownCommand_,
             cameraRearConfirmCommand_,
             gravitySwitchTriggerCommand_,
             gravitySwitchReleaseCommand_,
@@ -54,6 +57,7 @@ public:
         ptr->isGravitySwitching_ = isGravitySwitching_;
         ptr->isRearConfirming_ = isRearConfirming_;
         ptr->requestedGravityDirection_ = requestedGravityDirection_;
+        ptr->isFastFalling_ = isFastFalling_;
         return ptr;
     }
 
@@ -77,6 +81,9 @@ public:
             requestedGravityDirection_ = std::nullopt;
             SetGameSpeed(0.2f);
         }
+
+        isFastFalling_ = inputCommand_->Evaluate(forwardSpeedDownCommand_).Triggered();
+        playerMovement_->SetFastFallEnabled(isFastFalling_);
 
         if (isGravitySwitching_) {
             UpdateGravitySwitchDirection();
@@ -115,6 +122,7 @@ public:
 
     bool IsGravitySwitching() const { return isGravitySwitching_; }
     bool IsRearConfirming() const { return isRearConfirming_; }
+    bool IsFastFalling() const { return isFastFalling_; }
     const std::optional<Vector3> &GetRequestedGravityDirection() const { return requestedGravityDirection_; }
     bool ConsumeGravityChangedByInputEvent() {
         const bool changed = gravityChangedByInputThisFrame_;
@@ -170,6 +178,7 @@ private:
     std::string moveRightCommand_;
     std::string moveLeftCommand_;
     std::string jumpCommand_;
+    std::string forwardSpeedDownCommand_;
     std::string cameraRearConfirmCommand_;
     std::string gravitySwitchTriggerCommand_;
     std::string gravitySwitchReleaseCommand_;
@@ -180,6 +189,7 @@ private:
 
     bool isGravitySwitching_ = false;
     bool isRearConfirming_ = false;
+    bool isFastFalling_ = false;
     bool gravityChangedByInputThisFrame_ = false;
     std::optional<Vector3> requestedGravityDirection_{};
 };

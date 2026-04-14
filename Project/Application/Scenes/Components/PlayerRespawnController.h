@@ -20,9 +20,6 @@ public:
 
     void Initialize() override {
         CachePlayerComponents();
-        if (playerMovementController_) {
-            initialForwardSpeed_ = std::max(0.0f, playerMovementController_->GetForwardSpeed());
-        }
     }
 
     void Update() override {
@@ -62,9 +59,6 @@ private:
 
         if (!playerMovementController_) {
             playerMovementController_ = player_->GetComponent3D<PlayerMovementController>();
-            if (playerMovementController_) {
-                initialForwardSpeed_ = std::max(0.0f, playerMovementController_->GetForwardSpeed());
-            }
         }
         if (!noiseWallController_) {
             noiseWallController_ = GetOwnerContext() ? GetOwnerContext()->GetComponent<StageNoiseWallController>() : nullptr;
@@ -182,7 +176,7 @@ private:
     float respawnElapsed_ = 0.0f;
     float respawnDelay_ = 2.0f;
     float respawnZ_ = 0.0f;
-    float initialForwardSpeed_ = 32.0f;
+    float initialForwardSpeed_ = 80.0f;
     Vector3 respawnWallPosition_{0.0f, 0.0f, 256.0f};
     float stageBoundaryRadius_ = 64.0f * 6.0f;
 };

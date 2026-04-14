@@ -233,7 +233,7 @@ private:
     float spawnGroundWidth_ = 16.0f;
     float spawnGroundDepth_ = 256.0f;
 
-    float minRingRadius_ = 32.0f;
+    float minRingRadius_ = 16.0f;
     float maxRingRadius_ = 92.0f;
     int ringSplitCount_ = 3;
 

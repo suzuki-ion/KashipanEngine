@@ -152,9 +152,9 @@ private:
 
     Object3DBase *player_ = nullptr;
 
-    float followDistance_ = 8.0f;
-    float followHeight_ = 2.0f;
-    float lookAtHeight_ = 1.0f;
+    float followDistance_ = 4.0f;
+    float followHeight_ = 4.0f;
+    float lookAtHeight_ = 4.0f;
     float gravitySwitchFollowDistance_ = 10.0f;
 
     float landingImpactThreshold_ = 6.0f;

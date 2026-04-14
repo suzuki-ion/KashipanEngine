@@ -92,15 +92,18 @@ public:
         // 着地イベント算出用に、重力変更前の落下蓄積量を保持
         const float fallDistanceBeforeGravityChange = accumulatedFallDistance_;
 
+		// プレイヤー操作による重力変更は、着地イベント算出のために落下距離計測をリセットする必要があるため、Updateの最初の方で処理する
         if (collisionBehavior_) {
             if (auto requestedGravity = collisionBehavior_->ConsumeRequestedGravityDirection(); requestedGravity.has_value()) {
                 SetGravityDirection(*requestedGravity);
             }
         }
 
+		// 着地判定と落下距離の計測
         const bool grounded = collisionBehavior_ ? collisionBehavior_->ConsumeGrounded() : false;
         groundedThisFrame_ = grounded;
 
+		// 地面にいない場合は落下距離を蓄積
         if (!grounded) {
             const Vector3 down = gravityDirection_.Normalize();
             const float fallSpeed = gravityBehavior_ ? gravityBehavior_->GetGravityVelocity().Dot(down) : 0.0f;
@@ -109,20 +112,27 @@ public:
             }
         }
 
+		// ジャンプ処理は重力変更前の落下距離計測を正しく行うために、重力変更処理の前に行う必要がある
         if (jumpBehavior_ && gravityBehavior_) {
             jumpBehavior_->Apply(gravityDirection_, gravityBehavior_->GravityVelocityRef());
         }
 
+		// 前方移動と横移動は重力変更前の落下距離計測を正しく行うために、重力変更処理の前に行う必要がある
         if (forwardBehavior_ && gravityBehavior_) {
             forwardBehavior_->Apply(dt, grounded, gravityBehavior_->GetGravityVelocity(), gravityDirection_);
         }
+
+		// 横移動は前方移動の速度に応じて最大速度が変化するため、前方移動の更新後に行う必要がある
         if (lateralBehavior_ && forwardBehavior_) {
             lateralBehavior_->Apply(dt, gravityDirection_, forwardDirection_, forwardBehavior_->GetForwardSpeed(), forwardBehavior_->GetMinForwardSpeed());
         }
+
+		// 重力処理は最後に行う必要がある。これにより、重力変更前の落下距離計測や、ジャンプ・前方移動・横移動の更新が重力変更の影響を受けないようになる
         if (gravityBehavior_) {
             gravityBehavior_->Apply(dt, gravityDirection_);
         }
 
+		// 移動処理
         Vector3 gravityVelocity{0.0f, 0.0f, 0.0f};
         Vector3 lateralVelocity{0.0f, 0.0f, 0.0f};
         float forwardSpeed = 0.0f;
@@ -130,6 +140,7 @@ public:
         if (lateralBehavior_) lateralVelocity = lateralBehavior_->GetLateralVelocity();
         if (forwardBehavior_) forwardSpeed = forwardBehavior_->GetForwardSpeed();
 
+		// 衝突による位置修正と、修正後の速度の計算
         if (collisionBehavior_ && gravityBehavior_) {
             Vector3 correctedPos = tr->GetTranslate();
             auto &gvRef = gravityBehavior_->GravityVelocityRef();
@@ -138,18 +149,23 @@ public:
             gravityVelocity = gvRef;
         }
 
+		// 前方移動、横移動、重力の合成速度で位置を更新
         const Vector3 totalVelocity = forwardDirection_ * forwardSpeed + lateralVelocity + gravityVelocity;
         tr->SetTranslate(tr->GetTranslate() + totalVelocity * dt);
 
+		// 着地イベントの算出
         if (grounded && !wasGroundedPrev_) {
             const float landingImpact = std::max(accumulatedFallDistance_, fallDistanceBeforeGravityChange);
 
+			// ジャンプカウントのリセットは着地イベント算出後に行う必要がある
             if (jumpBehavior_) {
                 jumpBehavior_->ResetJumpCount();
             }
 
+			// 着地イベントの算出のために、着地前の落下距離と重力変更前の落下距離の大きい方を着地衝撃とする
             const bool canRecoverGauge = collisionBehavior_ ? collisionBehavior_->ConsumeLastGroundWasFirstTouch() : false;
 
+			// 着地衝撃に応じて重力ゲージを回復。着地イベントが発生したフレームでのみ回復可能とするため、着地イベントの算出後に行う
             if (canRecoverGauge) {
                 const float recovered = std::clamp(
                     landingGaugeRecoveryBase_ + landingImpact * landingGaugeRecoveryPerDistance_,
@@ -158,10 +174,22 @@ public:
                 gravityGauge_ = std::clamp(gravityGauge_ + recovered, 0.0f, gravityGaugeMax_);
             }
 
+			// 着地イベントの算出のために、着地衝撃を保存
             hasLandingImpact_ = true;
             lastLandingImpact_ = landingImpact;
             accumulatedFallDistance_ = 0.0f;
-        } else if (!grounded && wasGroundedPrev_) {
+
+            // 着地した地面がSlowGroundだった場合は減速する
+            if (collisionBehavior_ && collisionBehavior_->IsOnSlowGround()) {
+                if (forwardBehavior_) {
+                    forwardBehavior_->ForwardSpeedRef() *= slowGroundSpeedMultiplier_;
+                }
+                if (lateralBehavior_) {
+                    lateralBehavior_->LateralVelocityRef() *= slowGroundSpeedMultiplier_;
+                }
+			}
+
+		} else if (!grounded && wasGroundedPrev_) {// 離地したフレームで落下距離計測をリセット
             accumulatedFallDistance_ = 0.0f;
             if (collisionBehavior_) {
                 (void)collisionBehavior_->ConsumeLastGroundWasFirstTouch();
@@ -409,6 +437,7 @@ private:
     float gravityGauge_ = gravityGaugeMax_;
     float landingGaugeRecoveryBase_ = 0.75f;
     float landingGaugeRecoveryPerDistance_ = 0.05f;
+	float slowGroundSpeedMultiplier_ = 0.7f;
 
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;

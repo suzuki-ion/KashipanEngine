@@ -35,8 +35,20 @@ public:
         const Vector3 up = -gravity;
         const Vector3 forward = playerMovement->GetForwardDirection().Normalize();
 
-        Vector3 cameraPos = playerPos - forward * followDistance_ + up * followHeight_;
-        Vector3 lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
+        const float minSpeed = playerMovement->GetMinForwardSpeed();
+        const float maxSpeed = playerMovement->GetMaxForwardSpeed();
+        float speedRatio = 0.0f;
+        if (maxSpeed > minSpeed) {
+            speedRatio = (playerMovement->GetForwardSpeed() - minSpeed) / (maxSpeed - minSpeed);
+        }
+        speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
+
+        const float followDistance = std::lerp(followDistanceMin_, followDistanceMax_, speedRatio);
+        const float followHeight = std::lerp(followHeightMin_, followHeightMax_, speedRatio);
+        const float lookAtHeight = std::lerp(lookAtHeightMin_, lookAtHeightMax_, speedRatio);
+
+        Vector3 cameraPos = playerPos - forward * followDistance + up * followHeight;
+        Vector3 lookDir = (playerPos + up * lookAtHeight - cameraPos).Normalize();
 
         if (clearViewEnabled_) {
             Vector3 right = up.Cross(forward);
@@ -46,17 +58,10 @@ public:
                 right = right.Normalize();
             }
             cameraPos = playerPos + right * clearViewRightDistance_ + forward * clearViewForwardDistance_ + up * clearViewHeight_;
-            const Vector3 lookTarget = playerPos - right * clearViewLookOffsetRight_ + up * lookAtHeight_;
+            const Vector3 lookTarget = playerPos - right * clearViewLookOffsetRight_ + up * lookAtHeight;
             lookDir = (lookTarget - cameraPos).Normalize();
         }
 
-        const float minSpeed = playerMovement->GetMinForwardSpeed();
-        const float maxSpeed = playerMovement->GetMaxForwardSpeed();
-        float speedRatio = 0.0f;
-        if (maxSpeed > minSpeed) {
-            speedRatio = (playerMovement->GetForwardSpeed() - minSpeed) / (maxSpeed - minSpeed);
-        }
-        speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
         float targetFov = 0.95f + (2.25f - 0.95f) * speedRatio;
 
         auto *inputHandler = player_->GetComponent3D<PlayerInputHandler>();
@@ -70,7 +75,7 @@ public:
                 lookDir = (forward + gravityAim).Normalize();
             } else {
                 // 重力変更入力が未確定の間は、重力方向へは向けずプレイヤー注視を維持
-                lookDir = (playerPos + up * lookAtHeight_ - cameraPos).Normalize();
+                lookDir = (playerPos + up * lookAtHeight - cameraPos).Normalize();
             }
         }
 
@@ -152,9 +157,12 @@ private:
 
     Object3DBase *player_ = nullptr;
 
-    float followDistance_ = 4.0f;
-    float followHeight_ = 4.0f;
-    float lookAtHeight_ = 4.0f;
+    float followDistanceMin_ = 4.0f;
+    float followDistanceMax_ = 4.0f;
+    float followHeightMin_ = 2.0f;
+    float followHeightMax_ = 4.0f;
+    float lookAtHeightMin_ = 2.0f;
+    float lookAtHeightMax_ = 4.0f;
     float gravitySwitchFollowDistance_ = 10.0f;
 
     float landingImpactThreshold_ = 6.0f;

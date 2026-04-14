@@ -85,6 +85,7 @@ public:
             }
             if (gravityBehavior_) {
                 gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                gravityBehavior_->SetFastFallEnabled(false);
             }
             return true;
         }
@@ -129,6 +130,7 @@ public:
 
 		// 重力処理は最後に行う必要がある。これにより、重力変更前の落下距離計測や、ジャンプ・前方移動・横移動の更新が重力変更の影響を受けないようになる
         if (gravityBehavior_) {
+            gravityBehavior_->SetFastFallEnabled(fastFallEnabled_ && !grounded);
             gravityBehavior_->Apply(dt, gravityDirection_);
         }
 
@@ -258,6 +260,7 @@ public:
             }
             if (gravityBehavior_) {
                 gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                gravityBehavior_->SetFastFallEnabled(false);
             }
         }
     }
@@ -281,6 +284,12 @@ public:
     void SetGravityVelocity(const Vector3 &v) {
         if (gravityBehavior_) {
             gravityBehavior_->GravityVelocityRef() = v;
+        }
+    }
+    void SetFastFallEnabled(bool enabled) {
+        fastFallEnabled_ = enabled;
+        if (!enabled && gravityBehavior_) {
+            gravityBehavior_->SetFastFallEnabled(false);
         }
     }
     float GetGravityGauge() const { return gravityGauge_; }
@@ -442,6 +451,7 @@ private:
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;
     bool movementLocked_ = false;
+    bool fastFallEnabled_ = false;
 };
 
 } // namespace KashipanEngine

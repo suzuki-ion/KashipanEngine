@@ -17,6 +17,8 @@
 #include "Scenes/Components/StageObjectController.h"
 #include "Scenes/Components/StageObjectRandomGenerator.h"
 #include "Scenes/Components/GameSceneAudioPlayer.h"
+#include "Scenes/Components/PlayerRespawnController.h"
+#include "Scenes/Components/PlayerClearController.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 #include "Objects/Components/PlayerMovementController.h"
@@ -31,7 +33,6 @@ GameScene::GameScene()
 
 void GameScene::Initialize() {
     SetGameSpeed(1.0f);
-    wasGameOverPrevFrame_ = false;
     wasPlayerGroundedPrevFrame_ = false;
     isPlayerRunParticleActive_ = false;
     particleManager_ = nullptr;
@@ -41,6 +42,8 @@ void GameScene::Initialize() {
     clearSlowdownStartForwardSpeed_ = 0.0f;
     clearSlowdownStartLateralVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
     clearSlowdownStartGravityVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
+    respawnElapsed_ = 0.0f;
+    respawnInitialForwardSpeed_ = 32.0f;
 
     RadialBlurEffect *radialBlurEffect = nullptr;
     VignetteEffect *vignetteEffect = nullptr;
@@ -122,7 +125,7 @@ void GameScene::Initialize() {
             }
 
             if (auto *tr = player->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3{0.0f, 0.0f, -2.0f});
+                tr->SetTranslate(respawnPosition_);
                 playerRootTr = tr;
             }
             if (auto *mat = player->GetComponent3D<Material3D>()) {
@@ -147,6 +150,9 @@ void GameScene::Initialize() {
             AddObject3D(std::move(player));
             player_ = playerPtr;
             playerMovementController_ = playerPtr->GetComponent3D<PlayerMovementController>();
+            if (playerMovementController_) {
+                respawnInitialForwardSpeed_ = std::max(0.0f, playerMovementController_->GetForwardSpeed());
+            }
 
             auto addPlayerModel = [&](const char *objectName, const char *modelFileName) {
                 auto modelHandle = ModelManager::GetModelHandleFromFileName(modelFileName);
@@ -181,11 +187,12 @@ void GameScene::Initialize() {
             }
 
             AddSceneComponent(std::make_unique<GameSceneAudioPlayer>(this, playerPtr));
+            AddSceneComponent(std::make_unique<PlayerRespawnController>(this, playerPtr));
+            AddSceneComponent(std::make_unique<PlayerClearController>(this, playerPtr));
 
             AddSceneComponent(std::make_unique<CameraToPlayerSync>(playerPtr));
             AddSceneComponent(std::make_unique<PostEffectToPlayerSync>(playerPtr, radialBlurEffect, vignetteEffect));
         }
-
     }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
@@ -220,131 +227,11 @@ void GameScene::OnUpdate() {
         groundSpawnLimitConfigured_ = true;
     }
 
-    auto hidePlayerVisuals = [&]() {
-        if (!player_) return;
-        if (auto *mat = player_->GetComponent3D<Material3D>()) {
-            auto c = mat->GetColor();
-            c.w = 0.0f;
-            mat->SetColor(c);
-        }
-        static constexpr const char *kPlayerParts[] = {
-            "PlayerBody", "PlayerHead", "PlayerArmL", "PlayerArmR"
-        };
-        for (const char *name : kPlayerParts) {
-            auto *obj = GetObject3D(name);
-            if (!obj) continue;
-            auto *mat = obj->GetComponent3D<Material3D>();
-            if (!mat) continue;
-            auto c = mat->GetColor();
-            c.w = 0.0f;
-            mat->SetColor(c);
-        }
-    };
-
     auto queueSceneChange = [&](const std::string &sceneName) {
         if (!GetNextSceneName().empty()) return;
         SetGameSpeed(1.0f);
         SetNextSceneName(sceneName);
     };
-
-    float gameOverDanger = 0.0f;
-    if (playState_ == PlayState::Playing && player_) {
-        auto *playerTr = player_->GetComponent3D<Transform3D>();
-        if (playerTr) {
-            const Vector3 playerPos = playerTr->GetTranslate();
-
-            if (noiseWallController_) {
-                const float wallZ = noiseWallController_->GetWallPositionZ();
-                const float dz = playerPos.z - wallZ;
-                gameOverDanger = std::max(gameOverDanger, std::clamp(1.0f - ((-dz) / std::max(0.0001f, gameOverWallDangerDistance_)), 0.0f, 1.0f));
-                if (dz >= 0.0f) {
-                    playState_ = PlayState::GameOver;
-                    if (noiseWallController_) {
-                        noiseWallController_->SetMovementEnabled(false);
-                    }
-                    if (playerMovementController_) {
-                        playerMovementController_->SetMovementLocked(true);
-                    }
-                    hidePlayerVisuals();
-                    if (gameOverUIController_ && !gameOverUIController_->IsActive()) {
-                        gameOverUIController_->Activate();
-                    }
-                }
-            }
-
-            const float radial = std::sqrt(playerPos.x * playerPos.x + playerPos.y * playerPos.y);
-            const float boundaryStart = stageBoundaryRadius_ * 0.7f;
-            gameOverDanger = std::max(gameOverDanger, std::clamp((radial - boundaryStart) / std::max(0.0001f, stageBoundaryRadius_ - boundaryStart), 0.0f, 1.0f));
-            if (radial >= stageBoundaryRadius_) {
-                playState_ = PlayState::GameOver;
-                if (noiseWallController_) {
-                    noiseWallController_->SetMovementEnabled(false);
-                }
-                if (playerMovementController_) {
-                    playerMovementController_->SetMovementLocked(true);
-                }
-                hidePlayerVisuals();
-                if (gameOverUIController_ && !gameOverUIController_->IsActive()) {
-                    gameOverUIController_->Activate();
-                }
-            }
-
-            if (goalPlaneController_ && playerPos.z < goalPlaneController_->GetGoalZ()) {
-                playState_ = PlayState::Cleared;
-                if (!clearSlowdownActive_) {
-                    clearSlowdownActive_ = true;
-                    clearSlowdownElapsed_ = 0.0f;
-                    if (playerMovementController_) {
-                        clearSlowdownStartForwardSpeed_ = std::max(0.0f, playerMovementController_->GetForwardSpeed());
-                        clearSlowdownStartLateralVelocity_ = playerMovementController_->GetLateralVelocity();
-                        clearSlowdownStartGravityVelocity_ = playerMovementController_->GetGravityVelocity();
-                    }
-                }
-                if (noiseWallController_) {
-                    noiseWallController_->SetMovementEnabled(false);
-                }
-                if (auto *camSync = GetSceneComponent<CameraToPlayerSync>()) {
-                    camSync->SetClearViewEnabled(true);
-                }
-                const int touched = stageGroundGenerator_ ? stageGroundGenerator_->GetTouchedGroundCount() : 0;
-                if (gameClearUIController_ && !gameClearUIController_->IsActive()) {
-                    gameClearUIController_->Activate(touched);
-                }
-            }
-        }
-    }
-
-    if (vignetteEffect_) {
-        auto v = vignetteEffect_->GetParams();
-        const Vector4 red{1.0f, 0.0f, 0.0f, 1.0f};
-        v.color = Vector4::Lerp(baseVignetteColor_, red, gameOverDanger);
-        v.intensity = std::max(v.intensity, gameOverDanger * 0.8f);
-        if (playState_ == PlayState::GameOver) {
-            v.intensity = std::max(v.intensity, 0.8f);
-            v.color = red;
-        }
-        vignetteEffect_->SetParams(v);
-    }
-
-    if (playState_ == PlayState::Cleared && clearSlowdownActive_) {
-        clearSlowdownElapsed_ += std::max(0.0f, GetDeltaTime());
-        const float t = std::clamp(clearSlowdownElapsed_ / std::max(0.0001f, clearSlowdownDuration_), 0.0f, 1.0f);
-        const float inv = 1.0f - t;
-        if (playerMovementController_) {
-            playerMovementController_->SetForwardSpeed(clearSlowdownStartForwardSpeed_ * inv);
-            playerMovementController_->SetLateralVelocity(clearSlowdownStartLateralVelocity_ * inv);
-            playerMovementController_->SetGravityVelocity(clearSlowdownStartGravityVelocity_ * inv);
-        }
-        if (t >= 1.0f) {
-            clearSlowdownActive_ = false;
-            if (playerMovementController_) {
-                playerMovementController_->SetForwardSpeed(0.0f);
-                playerMovementController_->SetLateralVelocity(Vector3{0.0f, 0.0f, 0.0f});
-                playerMovementController_->SetGravityVelocity(Vector3{0.0f, 0.0f, 0.0f});
-                playerMovementController_->SetMovementLocked(true);
-            }
-        }
-    }
 
     const bool modalVisible = (gameOverUIController_ && gameOverUIController_->IsActive())
         || (gameClearUIController_ && gameClearUIController_->IsActive())
@@ -354,32 +241,11 @@ void GameScene::OnUpdate() {
     }
 
     if (auto *ic = GetInputCommand()) {
-        if (playState_ == PlayState::Playing && !modalVisible && ic->Evaluate("Pause").Triggered()) {
+        if (IsPlaying() && !modalVisible && ic->Evaluate("Pause").Triggered()) {
             if (pauseUIController_) {
                 pauseUIController_->Activate();
             }
         }
-    }
-
-    if (playState_ == PlayState::GameOver) {
-        if (playerMovementController_) {
-            playerMovementController_->SetMovementLocked(true);
-        }
-        hidePlayerVisuals();
-    }
-
-    if (playState_ == PlayState::Cleared && !clearSlowdownActive_) {
-        if (playerMovementController_) {
-            playerMovementController_->SetMovementLocked(true);
-        }
-    }
-
-    if (playState_ == PlayState::GameOver && noiseWallController_) {
-        noiseWallController_->SetMovementEnabled(false);
-    }
-
-    if (playState_ == PlayState::Cleared && noiseWallController_) {
-        noiseWallController_->SetMovementEnabled(false);
     }
 
     if (particleManager_ && player_) {
@@ -388,7 +254,6 @@ void GameScene::OnUpdate() {
 
         if (playerMovementController_) {
             const bool grounded = playerMovementController_->ConsumeGrounded();
-
             const bool landedThisFrame = (grounded && !wasPlayerGroundedPrevFrame_);
             if (landedThisFrame) {
                 particleManager_->SetParentTransform("PlayerLanding", playerTr);
@@ -409,13 +274,6 @@ void GameScene::OnUpdate() {
 
             wasPlayerGroundedPrevFrame_ = grounded;
         }
-
-        const bool isGameOverNow = (playState_ == PlayState::GameOver);
-        if (isGameOverNow && !wasGameOverPrevFrame_) {
-            particleManager_->SetParentTransform("PlayerDeath", playerTr);
-            particleManager_->Spawn("PlayerDeath", Vector3(0.0f, 0.0f, 0.0f));
-        }
-        wasGameOverPrevFrame_ = isGameOverNow;
     }
 
     if (gameOverUIController_) {
@@ -446,7 +304,6 @@ void GameScene::OnUpdate() {
             queueSceneChange("TitleScene");
         }
     }
-
 
     if (!GetNextSceneName().empty()) {
         if (auto *out = GetSceneComponent<SceneChangeOut>()) {

@@ -23,8 +23,12 @@ public:
 
     void Initialize() override;
 
+    bool IsPlaying() const { return playState_ == PlayState::Playing; }
     bool IsGameOver() const { return playState_ == PlayState::GameOver; }
     bool IsCleared() const { return playState_ == PlayState::Cleared; }
+    void SetPlayingState() { playState_ = PlayState::Playing; }
+    void SetGameOverState() { playState_ = PlayState::GameOver; }
+    void SetClearedState() { playState_ = PlayState::Cleared; }
 
 protected:
     void OnUpdate() override;
@@ -53,7 +57,6 @@ private:
 
     float gameOverWallDangerDistance_ = 32.0f;
     float stageBoundaryRadius_ = 64.0f * 6.0f;
-    bool wasGameOverPrevFrame_ = false;
     bool wasPlayerGroundedPrevFrame_ = false;
     bool isPlayerRunParticleActive_ = false;
     bool groundSpawnLimitConfigured_ = false;
@@ -64,6 +67,12 @@ private:
     float clearSlowdownStartForwardSpeed_ = 0.0f;
     Vector3 clearSlowdownStartLateralVelocity_{0.0f, 0.0f, 0.0f};
     Vector3 clearSlowdownStartGravityVelocity_{0.0f, 0.0f, 0.0f};
+
+    float respawnElapsed_ = 0.0f;
+    float respawnDelay_ = 2.0f;
+    Vector3 respawnPosition_{0.0f, 0.0f, -2.0f};
+    Vector3 respawnWallPosition_{0.0f, 0.0f, 256.0f};
+    float respawnInitialForwardSpeed_ = 32.0f;
 
     PlayState playState_ = PlayState::Playing;
 };

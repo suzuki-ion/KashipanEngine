@@ -204,17 +204,28 @@ private:
         const float centerZ = currentSegmentCenterZ_;
         --remainingPanelsInCurrentSegment_;
 
+        const float waveAmplitude_ = twistAmplitude_; // カーブの振れ幅（大きくするほど激しく曲がる）
+        const float waveRate_ = twistPhase_;     // カーブの周期（小さくするほど緩やかなカーブ）
+
+        // --- RespawnGround 内の計算箇所 ---
         const float radius = GetRandomSplitValue(minRingRadius_, maxRingRadius_, ringSplitCount_);
-        const float angle = GetRandomValue(0.0f, kTwoPi);
+        const float angle = GetRandomValue(0.0f, kTwoPi); // 元のランダム角度に戻す
         const float panelWidth = GetRandomSplitValue(minPanelWidth_, maxPanelWidth_, panelWidthSplitCount_);
         const float panelThickness = GetRandomSplitValue(minPanelThickness_, maxPanelThickness_, panelThicknessSplitCount_);
 
-        const float x = std::cos(angle) * radius;
-        const float y = std::sin(angle) * radius;
+        // 1. 各パネルのローカルでの円筒状の配置座標
+        const float localX = std::cos(angle) * radius;
+        const float localY = std::sin(angle) * radius;
 
-        tr->SetTranslate(Vector3{x, y, centerZ});
+        // 2. トンネル全体の「中心のうねり（カーブ）」をZ座標から計算
+        // XとYで少し係数（0.8fなど）をずらすと、単純な斜め移動ではなくキレイな円弧を描いて蛇行します
+        const float offsetX = std::sin(centerZ * waveRate_) * waveAmplitude_;
+        const float offsetY = std::cos(centerZ * waveRate_ * 0.8f) * waveAmplitude_;
+
+        // 3. ローカル座標系にうねりのオフセットを足して配置
+        tr->SetTranslate(Vector3{localX + offsetX, localY + offsetY, centerZ});
         tr->SetRotate(Vector3{0.0f, 0.0f, angle});
-        tr->SetScale(Vector3{panelThickness, panelWidth, length});
+        tr->SetScale(Vector3{panelThickness, panelWidth, length}); // ★ ここはそのまま残す
 
         runtime.centerZ = centerZ;
         runtime.length = length;
@@ -256,6 +267,9 @@ private:
     float currentSegmentCenterZ_ = 0.0f;
     float currentSegmentLength_ = 0.0f;
     int remainingPanelsInCurrentSegment_ = 0;
+
+	float twistAmplitude_ = 50.0f;
+	float twistPhase_ = 0.003f;
 
     SceneDefaultVariables *defaultVars_ = nullptr;
     Collider *collider_ = nullptr;

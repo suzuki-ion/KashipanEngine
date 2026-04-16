@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include <KashipanEngine.h>
 #include "Scenes/Components/CameraController.h"
@@ -79,6 +78,13 @@ public:
             }
         }
 
+        const float fallSpeed = std::max(0.0f, playerMovement->GetGravityVelocity().Dot(gravity));
+        const float fallTiltRatio = std::clamp(fallSpeed / std::max(0.0001f, fallSpeedForMaxTilt_), 0.0f, 1.0f);
+        if (fallTiltRatio > 0.0f) {
+            const Vector3 lookTarget = playerPos + up * lookAtHeight + gravity * (maxLookDownOffset_ * fallTiltRatio);
+            lookDir = (lookTarget - cameraPos).Normalize();
+        }
+
         if (inputHandler && inputHandler->IsRearConfirming()) {
             lookDir = -forward;
         }
@@ -91,8 +97,8 @@ public:
 
             if (auto *ctx = GetOwnerContext()) {
                 if (auto *groundGenerator = ctx->GetComponent<StageGroundGenerator>()) {
-                const float radius = groundReactionBaseRadius_ + landingImpact * groundReactionRadiusPerImpact_;
-                groundGenerator->TriggerGroundReaction(playerPos, radius);
+                    const float radius = groundReactionBaseRadius_ + landingImpact * groundReactionRadiusPerImpact_;
+                    groundGenerator->TriggerGroundReaction(playerPos, radius);
                 }
             }
         }
@@ -164,6 +170,8 @@ private:
     float lookAtHeightMin_ = 2.0f;
     float lookAtHeightMax_ = 4.0f;
     float gravitySwitchFollowDistance_ = 10.0f;
+    float fallSpeedForMaxTilt_ = 128.0f;
+    float maxLookDownOffset_ = 4.0f;
 
     float landingImpactThreshold_ = 6.0f;
     float landingImpactForMaxShake_ = 64.0f;

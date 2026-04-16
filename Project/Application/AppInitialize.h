@@ -82,13 +82,13 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("PlayerMoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, 0.2f);
 
         // プレイヤージャンプ
-        ic->RegisterCommand("PlayerJump", Key::W, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PlayerJump", Key::Up, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PlayerJump", ControllerButton::A, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PlayerJump", Key::W, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerJump", Key::Up, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerJump", ControllerButton::A, InputCommand::InputState::Down);
 
         // 下降加速
         ic->RegisterCommand("PlayerForwardSpeedDown", Key::S, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerForwardSpeedDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, -0.2f);
+        ic->RegisterCommand("PlayerForwardSpeedDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, -0.5f);
         ic->RegisterCommand("PlayerForwardSpeedDown", ControllerButton::DPadDown, InputCommand::InputState::Down);
         
         // 重力方向切り替え（トリガー/リリース）

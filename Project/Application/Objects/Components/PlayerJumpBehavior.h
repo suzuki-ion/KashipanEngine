@@ -3,6 +3,8 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/PlayerMovementControllerAccess.h"
 
+#include <algorithm>
+
 namespace KashipanEngine {
 
 class PlayerJumpBehavior final : public IObjectComponent3D {
@@ -19,15 +21,43 @@ public:
         jumpRequested_ = true;
     }
 
-    void Apply(const Vector3 &gravityDirection, Vector3 &gravityVelocity) {
-        if (!jumpRequested_) return;
-        gravityVelocity = (-gravityDirection.Normalize()) * jumpPower_;
-        jumpRequested_ = false;
-        ++jumpCount_;
+    void SetJumpInputHeld(bool held) {
+        jumpInputHeld_ = held;
+        if (!jumpInputHeld_) {
+            jumpSustainActive_ = false;
+        }
+    }
+
+    void Apply(float dt, const Vector3 &gravityDirection, Vector3 &gravityVelocity) {
+        dt = std::clamp(dt, 0.0f, 0.1f);
+        const Vector3 up = (-gravityDirection).Normalize();
+
+        if (jumpRequested_) {
+            gravityVelocity = up * jumpPower_;
+            jumpRequested_ = false;
+            jumpSustainActive_ = true;
+            jumpSustainElapsed_ = 0.0f;
+            ++jumpCount_;
+        }
+
+        if (!jumpSustainActive_ || !jumpInputHeld_) {
+            return;
+        }
+
+        if (jumpSustainElapsed_ >= maxJumpInputHoldTime_) {
+            jumpSustainActive_ = false;
+            return;
+        }
+
+        gravityVelocity = up * jumpPower_;
+        jumpSustainElapsed_ = std::min(maxJumpInputHoldTime_, jumpSustainElapsed_ + dt);
     }
 
     void ResetJumpCount() {
         jumpRequested_ = false;
+        jumpSustainActive_ = false;
+        jumpInputHeld_ = false;
+        jumpSustainElapsed_ = 0.0f;
         jumpCount_ = 0;
     }
 
@@ -36,6 +66,8 @@ public:
 
     float GetJumpPower() const { return jumpPower_; }
     void SetJumpPower(float v) { jumpPower_ = v; }
+    float GetMaxJumpInputHoldTime() const { return maxJumpInputHoldTime_; }
+    void SetMaxJumpInputHoldTime(float v) { maxJumpInputHoldTime_ = std::max(0.0f, v); }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {}
@@ -43,9 +75,13 @@ public:
 
 private:
     float jumpPower_ = 64.0f;
+    float maxJumpInputHoldTime_ = 0.5f;
     int maxJumpCount_ = 2;
     int jumpCount_ = 0;
     bool jumpRequested_ = false;
+    bool jumpInputHeld_ = false;
+    bool jumpSustainActive_ = false;
+    float jumpSustainElapsed_ = 0.0f;
 };
 
 } // namespace KashipanEngine

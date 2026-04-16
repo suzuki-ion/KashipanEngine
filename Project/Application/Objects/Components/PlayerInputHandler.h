@@ -56,8 +56,9 @@ public:
             rightCommand_);
         ptr->isGravitySwitching_ = isGravitySwitching_;
         ptr->isRearConfirming_ = isRearConfirming_;
-        ptr->requestedGravityDirection_ = requestedGravityDirection_;
         ptr->isFastFalling_ = isFastFalling_;
+        ptr->wasJumpPressedPrevFrame_ = wasJumpPressedPrevFrame_;
+        ptr->requestedGravityDirection_ = requestedGravityDirection_;
         return ptr;
     }
 
@@ -75,6 +76,9 @@ public:
         gravityChangedByInputThisFrame_ = false;
 
         isRearConfirming_ = inputCommand_->Evaluate(cameraRearConfirmCommand_).Triggered();
+
+        const bool jumpPressed = inputCommand_->Evaluate(jumpCommand_).Triggered();
+        playerMovement_->SetJumpInputHeld(jumpPressed);
 
         if (inputCommand_->Evaluate(gravitySwitchTriggerCommand_).Triggered() && playerMovement_->CanUseGravityChange()) {
             isGravitySwitching_ = true;
@@ -96,6 +100,7 @@ public:
                 requestedGravityDirection_ = std::nullopt;
                 SetGameSpeed(1.0f);
             }
+            wasJumpPressedPrevFrame_ = jumpPressed;
             return true;
         }
 
@@ -109,10 +114,11 @@ public:
             playerMovement_->MoveLeft(std::abs(left.Value()));
         }
 
-        if (inputCommand_->Evaluate(jumpCommand_).Triggered()) {
+        if (jumpPressed && !wasJumpPressedPrevFrame_) {
             playerMovement_->Jump();
         }
 
+        wasJumpPressedPrevFrame_ = jumpPressed;
         return true;
     }
 
@@ -191,6 +197,7 @@ private:
     bool isRearConfirming_ = false;
     bool isFastFalling_ = false;
     bool gravityChangedByInputThisFrame_ = false;
+    bool wasJumpPressedPrevFrame_ = false;
     std::optional<Vector3> requestedGravityDirection_{};
 };
 

@@ -87,6 +87,9 @@ public:
                 gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
                 gravityBehavior_->SetFastFallEnabled(false);
             }
+            if (jumpBehavior_) {
+                jumpBehavior_->SetJumpInputHeld(false);
+            }
             return true;
         }
 
@@ -115,7 +118,7 @@ public:
 
 		// ジャンプ処理は重力変更前の落下距離計測を正しく行うために、重力変更処理の前に行う必要がある
         if (jumpBehavior_ && gravityBehavior_) {
-            jumpBehavior_->Apply(gravityDirection_, gravityBehavior_->GravityVelocityRef());
+            jumpBehavior_->Apply(dt, gravityDirection_, gravityBehavior_->GravityVelocityRef());
         }
 
 		// 前方移動と横移動は重力変更前の落下距離計測を正しく行うために、重力変更処理の前に行う必要がある
@@ -228,6 +231,12 @@ public:
         }
     }
 
+    void SetJumpInputHeld(bool held) {
+        if (jumpBehavior_) {
+            jumpBehavior_->SetJumpInputHeld(held);
+        }
+    }
+
     bool TryUseGravityGaugeAndSetGravityDirection(const Vector3 &direction) {
         if (movementLocked_) return false;
         if (!CanUseGravityChange()) return false;
@@ -261,6 +270,9 @@ public:
             if (gravityBehavior_) {
                 gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
                 gravityBehavior_->SetFastFallEnabled(false);
+            }
+            if (jumpBehavior_) {
+                jumpBehavior_->SetJumpInputHeld(false);
             }
         }
     }

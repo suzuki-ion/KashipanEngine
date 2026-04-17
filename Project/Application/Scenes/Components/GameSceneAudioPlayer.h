@@ -122,16 +122,21 @@ public:
                 (!gameScene_ || (!gameScene_->IsGameOver() && !gameScene_->IsCleared())) &&
                 !isAnyBlockingUiActive;
 
+            const bool jumpPressed = inputCommand->Evaluate("PlayerJump").Triggered();
+            const bool jumpPressedThisFrame = jumpPressed && !prevJumpPressed_;
             const bool canJumpNow = !playerMovement_->IsMovementLocked()
                 && (!playerInputHandler_ || !playerInputHandler_->IsGravitySwitching())
                 && (playerMovement_->GetJumpCount() < playerMovement_->GetMaxJumpCount());
-            if (inputCommand->Evaluate("PlayerJump").Triggered() && canJumpNow) {
+            if (jumpPressedThisFrame && canJumpNow) {
                 PlaySE(jumpSeSoundHandle_);
             }
+            prevJumpPressed_ = jumpPressed;
 
             if (inputCommand->Evaluate("PlayerGravitySwitchTrigger").Triggered() && canOperatePlayer && !playerMovement_->CanUseGravityChange()) {
                 PlaySE(gravityGaugeLackSeSoundHandle_);
             }
+        } else {
+            prevJumpPressed_ = false;
         }
 
         if (playerInputHandler_) {
@@ -226,6 +231,7 @@ private:
     AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
 
     bool prevGravitySwitching_ = false;
+    bool prevJumpPressed_ = false;
     bool prevGameOver_ = false;
     bool prevCleared_ = false;
 

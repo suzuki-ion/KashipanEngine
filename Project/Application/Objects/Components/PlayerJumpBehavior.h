@@ -49,7 +49,7 @@ public:
             return;
         }
 
-        gravityVelocity = up * jumpPower_;
+        gravityVelocity = up * jumpPower_ * (1.0f - (Normalize01(jumpSustainElapsed_, 0.0f, maxJumpInputHoldTime_) * jumpHoldSpeedScale_));
         jumpSustainElapsed_ = std::min(maxJumpInputHoldTime_, jumpSustainElapsed_ + dt);
     }
 
@@ -74,8 +74,9 @@ public:
 #endif
 
 private:
-    float jumpPower_ = 64.0f;
+    float jumpPower_ = 48.0f;
     float maxJumpInputHoldTime_ = 0.5f;
+    float jumpHoldSpeedScale_ = 0.5f;
     int maxJumpCount_ = 2;
     int jumpCount_ = 0;
     bool jumpRequested_ = false;

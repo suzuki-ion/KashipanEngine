@@ -18,6 +18,7 @@
 #include "Scenes/Components/StageObjectRandomGenerator.h"
 #include "Scenes/Components/GameSceneAudioPlayer.h"
 #include "Scenes/Components/PlayerRespawnController.h"
+#include "Scenes/Components/PlayerGameOverController.h"
 #include "Scenes/Components/PlayerClearController.h"
 
 #include "Objects/GameObjects/3D/Box.h"
@@ -42,8 +43,6 @@ void GameScene::Initialize() {
     clearSlowdownStartForwardSpeed_ = 0.0f;
     clearSlowdownStartLateralVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
     clearSlowdownStartGravityVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
-    respawnElapsed_ = 0.0f;
-    respawnInitialForwardSpeed_ = 32.0f;
 
     RadialBlurEffect *radialBlurEffect = nullptr;
     VignetteEffect *vignetteEffect = nullptr;
@@ -125,7 +124,7 @@ void GameScene::Initialize() {
             }
 
             if (auto *tr = player->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(respawnPosition_);
+                tr->SetTranslate(playerSpawnPosition_);
                 playerRootTr = tr;
             }
             if (auto *mat = player->GetComponent3D<Material3D>()) {
@@ -151,9 +150,6 @@ void GameScene::Initialize() {
             AddObject3D(std::move(player));
             player_ = playerPtr;
             playerMovementController_ = playerPtr->GetComponent3D<PlayerMovementController>();
-            if (playerMovementController_) {
-                respawnInitialForwardSpeed_ = std::max(0.0f, playerMovementController_->GetForwardSpeed());
-            }
 
             auto addPlayerModel = [&](const char *objectName, const char *modelFileName) {
                 auto modelHandle = ModelManager::GetModelHandleFromFileName(modelFileName);
@@ -189,7 +185,11 @@ void GameScene::Initialize() {
 
             AddSceneComponent(std::make_unique<GameSceneAudioPlayer>(this, playerPtr));
             AddSceneComponent(std::make_unique<PlayerRespawnController>(this, playerPtr));
+            AddSceneComponent(std::make_unique<PlayerGameOverController>(this, playerPtr));
             AddSceneComponent(std::make_unique<PlayerClearController>(this, playerPtr));
+
+            playerRespawnController_ = GetSceneComponent<PlayerRespawnController>();
+            playerGameOverController_ = GetSceneComponent<PlayerGameOverController>();
 
             AddSceneComponent(std::make_unique<CameraToPlayerSync>(playerPtr));
             AddSceneComponent(std::make_unique<PostEffectToPlayerSync>(playerPtr, radialBlurEffect, vignetteEffect));
@@ -222,6 +222,12 @@ void GameScene::OnUpdate() {
     if (!particleManager_) {
         particleManager_ = GetSceneComponent<ParticleManager>();
     }
+    if (!playerRespawnController_) {
+        playerRespawnController_ = GetSceneComponent<PlayerRespawnController>();
+    }
+    if (!playerGameOverController_) {
+        playerGameOverController_ = GetSceneComponent<PlayerGameOverController>();
+    }
 
     if (!groundSpawnLimitConfigured_ && stageGroundGenerator_ && goalPlaneController_) {
         stageGroundGenerator_->SetMinSpawnZ(goalPlaneController_->GetGoalZ());
@@ -242,11 +248,31 @@ void GameScene::OnUpdate() {
     }
 
     if (auto *ic = GetInputCommand()) {
-        if (IsPlaying() && !modalVisible && ic->Evaluate("Pause").Triggered()) {
+        const bool canPause = IsPlaying() || (playerRespawnController_ && playerRespawnController_->IsRespawning());
+        if (canPause && !modalVisible && ic->Evaluate("Pause").Triggered()) {
             if (pauseUIController_) {
                 pauseUIController_->Activate();
             }
         }
+    }
+
+    if (vignetteEffect_) {
+        auto v = vignetteEffect_->GetParams();
+        const Vector4 red{1.0f, 0.0f, 0.0f, 1.0f};
+        float danger = playerRespawnController_ ? playerRespawnController_->GetDanger() : 0.0f;
+        if (playerGameOverController_) {
+            danger = std::max(danger, playerGameOverController_->GetDanger());
+        }
+        if (IsGameOver()) {
+            danger = std::max(danger, 1.0f);
+        }
+        v.color = Vector4::Lerp(baseVignetteColor_, red, std::clamp(danger, 0.0f, 1.0f));
+        v.intensity = std::max(v.intensity, std::clamp(danger, 0.0f, 1.0f) * 0.8f);
+        if (IsGameOver()) {
+            v.intensity = std::max(v.intensity, 0.8f);
+            v.color = red;
+        }
+        vignetteEffect_->SetParams(v);
     }
 
     if (particleManager_ && player_) {

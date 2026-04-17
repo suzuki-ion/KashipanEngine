@@ -13,6 +13,8 @@ class GameOverUIController;
 class GameClearUIController;
 class PauseUIController;
 class PlayerMovementController;
+class PlayerRespawnController;
+class PlayerGameOverController;
 class VignetteEffect;
 class ParticleManager;
 
@@ -51,6 +53,8 @@ private:
     GameClearUIController *gameClearUIController_ = nullptr;
     PauseUIController *pauseUIController_ = nullptr;
     ParticleManager *particleManager_ = nullptr;
+    PlayerRespawnController *playerRespawnController_ = nullptr;
+    PlayerGameOverController *playerGameOverController_ = nullptr;
 
     VignetteEffect *vignetteEffect_ = nullptr;
     Vector4 baseVignetteColor_{0.0f, 0.25f, 0.0f, 1.0f};
@@ -67,12 +71,8 @@ private:
     float clearSlowdownStartForwardSpeed_ = 0.0f;
     Vector3 clearSlowdownStartLateralVelocity_{0.0f, 0.0f, 0.0f};
     Vector3 clearSlowdownStartGravityVelocity_{0.0f, 0.0f, 0.0f};
-
-    float respawnElapsed_ = 0.0f;
-    float respawnDelay_ = 2.0f;
-    Vector3 respawnPosition_{0.0f, 0.0f, -2.0f};
-    Vector3 respawnWallPosition_{0.0f, 0.0f, 256.0f};
-    float respawnInitialForwardSpeed_ = 32.0f;
+    
+    Vector3 playerSpawnPosition_{0.0f, 0.0f, -2.0f};
 
     PlayState playState_ = PlayState::Playing;
 };

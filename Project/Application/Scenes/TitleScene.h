@@ -1,11 +1,8 @@
 #pragma once
-#pragma once
 
 #include <KashipanEngine.h>
 
 namespace KashipanEngine {
-
-class TitleSceneUIController;
 
 class TitleScene final : public SceneBase {
 public:
@@ -19,12 +16,6 @@ protected:
 
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
-    Object3DBase *dummyPlayer_ = nullptr;
-    Camera3D *mainCamera_ = nullptr;
-    TitleSceneUIController *titleSceneUIController_ = nullptr;
-
-    float moveSpeedZ_ = 24.0f;
-    float cameraPlayerOffsetZ_ = 8.0f;
 };
 
 } // namespace KashipanEngine

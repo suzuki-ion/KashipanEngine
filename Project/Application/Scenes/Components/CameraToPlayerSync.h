@@ -108,7 +108,7 @@ public:
         cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, up));
         cameraController->SetTargetFovY(targetFov);
         cameraController->SetLerpFactorMove(1.0f);
-        cameraController->SetLerpFactorRotate(0.1f);
+        cameraController->SetLerpFactorRotate(0.05f);
         cameraController->SetLerpFactorFov(0.1f);
     }
 

@@ -531,6 +531,7 @@
     <None Include="KashipanEngine\KashipanEngine.vcxproj" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
+    <None Include="Assets\Application\StageData\stage.json" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\OneDrive\ドキュメント\1775464241140.png" />

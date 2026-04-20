@@ -1,0 +1,1533 @@
+{
+  "stageLength": 100.0,
+  "spawn_reqests": [
+    {
+      "stageProgress": 0.4413,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 0.4413,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 0.4413,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 0.4413,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 0.4413,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 0.4413,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 0.4413,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 0.4413,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 1.4483,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 2.4434,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 5.4417,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 4.4466,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 3.4396,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 9.4462,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 10.4532,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 11.4483,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 8.4499,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 7.4548,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 6.4478,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 18.4536,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 19.4606,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 20.4557,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 23.4541,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 22.459,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 21.452,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 15.4454,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 16.4524,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 17.4475,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 14.4492,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 35.4643,
+      "angle": 0.0,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 13.4541,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 12.4471,
+      "radius": 38.4474,
+      "angle": 0.9049,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 12.4471,
+      "radius": 33.922,
+      "angle": -0.4812,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 12.4471,
+      "radius": 40.9931,
+      "angle": 2.3558,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 12.4471,
+      "radius": 32.3086,
+      "angle": -2.2034,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 12.4471,
+      "radius": 35.2819,
+      "angle": 3.1416,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 12.4471,
+      "radius": 41.2833,
+      "angle": 1.5092,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    },
+    {
+      "stageProgress": 12.4471,
+      "radius": 32.9648,
+      "angle": -1.4874,
+      "panelWidth": 20.0,
+      "panelThickness": 1.0,
+      "panelLength": 100.0
+    }
+  ]
+}

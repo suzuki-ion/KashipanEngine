@@ -203,9 +203,18 @@ public:
 
     int GetTouchedGroundCount() const { return touchedGroundCount_; }
 
-    void SetMinSpawnZ(float minSpawnZ) {
-        minSpawnZ_ = minSpawnZ;
-        hasMinSpawnZ_ = true;
+    /// @brief スポーン時の地面をプレイヤーの下に再配置する
+    void RespawnStartGroundUnderPlayer() {
+        if (!player_) return;
+        if (!spawnGround_) return;
+
+        auto *tr = spawnGround_->GetComponent3D<Transform3D>();
+        if (!tr) return;
+
+        auto *playerTr = player_->GetComponent3D<Transform3D>();
+        if (!playerTr) return;
+
+        tr->SetTranslate(Vector3{ playerTr->GetTranslate().x, playerTr->GetTranslate().y - panelThickness_, playerTr->GetTranslate().z });
     }
 
 private:
@@ -322,6 +331,7 @@ private:
         tr->SetScale(Vector3{spawnGroundWidth_, panelThickness_, spawnGroundDepth_});
 		// このオブジェクトを地面として定義するコンポーネントを登録
         obj->RegisterComponent<GroundDefined>(collider_);
+        spawnGround_ = obj.get();
         (void)ctx->AddObject3D(std::move(obj));
     }
 
@@ -342,7 +352,6 @@ private:
     int panelLengthSplitCount_ = 3;
 
     int minPanelsPerSegment_ = 6;
-    float minSpawnZ_ = 1000000000.0f;
 
 	std::vector<SpawnRequest> spawnRequests_; // JSONから読み込んだすべてのスポーンリクエスト
 	const std::string stageDataFilePath_ = "Assets/Application/StageData/stage.json";
@@ -359,7 +368,6 @@ private:
     std::vector<GroundRuntime> grounds_{};
     int touchedGroundCount_ = 0;
     bool hasMinSpawnZ_ = false;
-    float minSpawnZ_ = -1000000000.0f;
 };
 
 } // namespace KashipanEngine

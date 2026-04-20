@@ -230,7 +230,7 @@ void GameScene::OnUpdate() {
     }
 
     if (!groundSpawnLimitConfigured_ && stageGroundGenerator_ && goalPlaneController_) {
-        stageGroundGenerator_->SetMinSpawnZ(goalPlaneController_->GetGoalZ());
+        //stageGroundGenerator_->SetMinSpawnZ(goalPlaneController_->GetGoalZ());
         groundSpawnLimitConfigured_ = true;
     }
 

@@ -132,7 +132,7 @@ private:
             playerMovementController_->SetMovementLocked(false);
         }
         if (stageGroundGenerator_ && playerTr) {
-            stageGroundGenerator_->SpawnStartGroundUnderPlayer(playerTr->GetTranslate());
+            stageGroundGenerator_->RespawnStartGroundUnderPlayer();
         }
         if (noiseWallController_) {
             noiseWallController_->SetMovementEnabled(true);

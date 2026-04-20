@@ -5,6 +5,7 @@
 #include "Objects/Components/GroundDefined.h"
 #include "Objects/Components/SlowGroundDefined.h"
 #include "Objects/Components/PlayerMovementControllerAccess.h"
+#include <algorithm>
 
 namespace KashipanEngine {
 
@@ -140,8 +141,22 @@ private:
         lastGroundNormal_ = normal;
         lastGroundObject_ = hit.otherObject;
         lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
-        stayCorrection_ += normal * hit.penetration;
-        hasStayCorrection_ = true;
+
+        const float penetration = std::clamp(hit.penetration, 0.0f, maxStayPenetrationPerHit_);
+        if (penetration <= 0.0f) return;
+
+        const float currentAlongNormal = stayCorrection_.Dot(normal);
+        if (penetration > currentAlongNormal) {
+            stayCorrection_ += normal * (penetration - currentAlongNormal);
+        }
+
+        const float correctionLengthSq = stayCorrection_.LengthSquared();
+        const float maxCorrectionSq = maxStayCorrectionPerFrame_ * maxStayCorrectionPerFrame_;
+        if (correctionLengthSq > maxCorrectionSq) {
+            stayCorrection_ = stayCorrection_.Normalize() * maxStayCorrectionPerFrame_;
+        }
+
+        hasStayCorrection_ = stayCorrection_.LengthSquared() > 0.000001f;
     }
 
     Collider *collider_ = nullptr;
@@ -153,6 +168,8 @@ private:
     Vector3 stayCorrection_{0.0f, 0.0f, 0.0f};
     bool hasStayCorrection_ = false;
 	bool isSlowGround_ = false;
+    float maxStayPenetrationPerHit_ = 0.2f;
+    float maxStayCorrectionPerFrame_ = 0.3f;
 };
 
 } // namespace KashipanEngine

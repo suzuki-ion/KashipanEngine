@@ -64,7 +64,8 @@ public:
         float targetFov = 0.95f + (2.25f - 0.95f) * speedRatio;
 
         auto *inputHandler = player_->GetComponent3D<PlayerInputHandler>();
-        if (inputHandler && inputHandler->IsGravitySwitching()) {
+        const bool isGravitySwitching = inputHandler && inputHandler->IsGravitySwitching();
+        if (isGravitySwitching) {
             cameraPos = playerPos - forward * gravitySwitchFollowDistance_;
             targetFov = 0.7f;
 
@@ -80,7 +81,7 @@ public:
 
         const float fallSpeed = std::max(0.0f, playerMovement->GetGravityVelocity().Dot(gravity));
         const float fallTiltRatio = std::clamp(fallSpeed / std::max(0.0001f, fallSpeedForMaxTilt_), 0.0f, 1.0f);
-        if (fallTiltRatio > 0.0f) {
+        if (!isGravitySwitching && fallTiltRatio > 0.0f) {
             const Vector3 lookTarget = playerPos + up * lookAtHeight + gravity * (maxLookDownOffset_ * fallTiltRatio);
             lookDir = (lookTarget - cameraPos).Normalize();
         }

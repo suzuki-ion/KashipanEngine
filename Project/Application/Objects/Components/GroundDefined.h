@@ -115,6 +115,8 @@ public:
             }
         }
 	}
+    void SetTouchColorStart(const Vector4 &color) { touchColorStart_ = color; }
+    void SetTouchColorEnd(const Vector4 &color) { touchColorEnd_ = color; }
 
 	Vector4 GetDefaultColor() const { return defaultColor_; }
 
@@ -139,8 +141,8 @@ private:
     Collider *collider_ = nullptr;
 
     Vector4 defaultColor_{0.0f, 1.0f, 0.0f, 1.0f};
-    const Vector4 touchColorStart_{1.0f, 1.0f, 1.0f, 1.0f};
-    const Vector4 touchColorEnd_{0.5f, 1.0f, 0.5f, 1.0f};
+    Vector4 touchColorStart_{1.0f, 1.0f, 1.0f, 1.0f};
+    Vector4 touchColorEnd_{0.5f, 1.0f, 0.5f, 1.0f};
 
     bool hasPlayedTouchColorAnimation_ = false;
     bool isTouchColorAnimating_ = false;

@@ -63,7 +63,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("SelectDown", Key::S, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectDown", Key::Down, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("SelectDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.2f, true);
+        ic->RegisterCommand("SelectDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.2f);
 
         // カメラ後方確認
         ic->RegisterCommand("CameraRearConfirm", Key::E, InputCommand::InputState::Down);

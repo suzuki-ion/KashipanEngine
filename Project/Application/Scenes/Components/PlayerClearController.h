@@ -31,6 +31,7 @@ public:
         auto *playerTr = player_->GetComponent3D<Transform3D>();
         if (!playerTr) return;
 
+		// プレイヤーの位置がゴール面を超えたらクリア開始
         const Vector3 playerPos = playerTr->GetTranslate();
         if (!clearActive_ && playerPos.z < goalPlaneController_->GetGoalZ()) {
             StartClear();

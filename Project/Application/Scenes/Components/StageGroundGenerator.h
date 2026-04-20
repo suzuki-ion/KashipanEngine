@@ -3,23 +3,38 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/GroundDefined.h"
 #include "Objects/Components/SlowGroundDefined.h"
+#include "StageGoalPlaneController.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <vector>
+#include <fstream>
 
 namespace KashipanEngine {
 
+// スポーンリクエスト構造体。
+struct SpawnRequest {
+    float stageProgress = 0.0f;// 0.0f～1.0fの範囲で、ステージのどのあたりにスポーンするか（0.0fが最初、1.0fがゴール）
+    float radius = 0.0f;// スポーン位置の半径（中心からの距離）
+    float angle = 0.0f;// スポーン位置の角度（ラジアン）
+    float panelWidth = 0.0f;// パネルの幅
+    float panelThickness = 0.0f;// パネルの厚み
+    float panelLength = 0.0f;// パネルの長さ
+};
+
+/// ステージの地面を生成・管理するコンポーネント。JSONデータを元に一括で地面オブジェクトを生成します。
 class StageGroundGenerator final : public ISceneComponent {
 public:
     StageGroundGenerator() : ISceneComponent("StageGroundGenerator", 1) {}
     ~StageGroundGenerator() override = default;
 
     void Initialize() override {
+		// 初期化
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
 
+		// シーンに含まれるSceneDefaultVariablesコンポーネントを取得し、コライダーを初期化
         defaultVars_ = ctx->GetComponent<SceneDefaultVariables>();
         if (!defaultVars_) return;
 
@@ -27,36 +42,142 @@ public:
         if (!colliderComp) return;
 
         collider_ = colliderComp->GetCollider();
-        PreparePresets();
+
+        // リクエストリストを初期化
+        spawnRequests_.clear();
+
+        // ステージの読み込み
+        nlohmann::json j;
+        std::ifstream ifs(stageDataFilePath_);
+        if (ifs.is_open()) {
+            try {
+                ifs >> j;
+            }
+            catch (const nlohmann::json::parse_error& e) {
+                e;
+                assert(false && "JSONファイルのパースに失敗しました。フォーマットを確認してください。");
+            }
+        } else {
+            assert(false && "Failed to open stage data file.");
+        }
+
+        // jsonから制作時に想定したステージの長さを格納
+        if (j.contains("stageLength")) {
+            editStageLengthData = j["stageLength"].get<float>();
+        }
+
+        // jsonから配置リクエストを積む
+		float maxStageProgress = 0.0f;
+        if (j.contains("spawn_reqests") && j["spawn_reqests"].is_array()) {
+            for (const auto &groundData : j["spawn_reqests"]) {
+				SpawnRequest req{};
+                if (groundData.contains("stageProgress") && groundData["stageProgress"].is_number()) {
+                    req.stageProgress = groundData["stageProgress"].get<float>();
+					if (req.stageProgress > maxStageProgress) {
+						maxStageProgress = req.stageProgress;
+					}
+                } else {
+					assert(false && "spawn_reqestsの各要素にはstageProgressが必要です。");
+					throw std::runtime_error("spawn_reqestsの各要素にはstageProgressが必要です。");
+                }
+                if (groundData.contains("radius") && groundData["radius"].is_number()) {
+                    req.radius = groundData["radius"].get<float>();
+                } else {
+					assert(false && "spawn_reqestsの各要素にはradiusが必要です。");
+					throw std::runtime_error("spawn_reqestsの各要素にはradiusが必要です。");
+                }
+                if (groundData.contains("angle") && groundData["angle"].is_number()) {
+					req.angle = groundData["angle"].get<float>();
+                } else {
+					assert(false && "spawn_reqestsの各要素にはangleが必要です。");
+					throw std::runtime_error("spawn_reqestsの各要素にはangleが必要です。");
+                }
+                if (groundData.contains("panelWidth") && groundData["panelWidth"].is_number()) {
+                    req.panelWidth = groundData["panelWidth"].get<float>();
+                } else {
+					assert(false && "spawn_reqestsの各要素にはpanelWidthが必要です。");
+					throw std::runtime_error("spawn_reqestsの各要素にはpanelWidthが必要です。");
+                }
+                if (groundData.contains("panelThickness") && groundData["panelThickness"].is_number()) {
+                    req.panelThickness = groundData["panelThickness"].get<float>();
+				} else {
+					assert(false && "spawn_reqestsの各要素にはpanelThicknessが必要です。");
+					throw std::runtime_error("spawn_reqestsの各要素にはpanelThicknessが必要です。");
+				}
+                if (groundData.contains("panelLength") && groundData["panelLength"].is_number()) {
+                    req.panelLength = groundData["panelLength"].get<float>();
+                } else {
+					assert(false && "spawn_reqestsの各要素にはpanelLengthが必要です。");
+					throw std::runtime_error("spawn_reqestsの各要素にはpanelLengthが必要です。");
+                }
+                spawnRequests_.push_back(req);
+            }
+		}
+
+        // ステージの進み具合が1.0fを超えている場合、壊れたデータとして修正する
+        if(maxStageProgress > 1.0f) {
+            // すべてのリクエストのstageProgressをmaxStageProgressで割って正規化する
+            for (auto &req : spawnRequests_) {
+				// stageProgressをmaxStageProgressで割って正規化する
+                req.stageProgress /= maxStageProgress;
+
+				// radiusもmaxStageProgressで割って正規化する
+				req.radius /= maxStageProgress;
+
+				// パネルもmaxStageProgressで割って正規化する
+                req.panelLength /= maxStageProgress;
+				req.panelThickness /= maxStageProgress;
+				req.panelWidth /= maxStageProgress;
+			}
+
+            // 修正版を出力する
+			nlohmann::json outputJson;
+            outputJson["stageLength"] = editStageLengthData;
+            outputJson["spawn_reqests"] = nlohmann::json::array();
+            for (const auto &req : spawnRequests_) {
+                nlohmann::json reqJson;
+                reqJson["stageProgress"] = req.stageProgress;
+                reqJson["radius"] = req.radius;
+                reqJson["angle"] = req.angle;
+                reqJson["panelWidth"] = req.panelWidth;
+                reqJson["panelThickness"] = req.panelThickness;
+                reqJson["panelLength"] = req.panelLength;
+                outputJson["spawn_reqests"].push_back(reqJson);
+            }
+            std::ofstream ofs("Assets/Application/StageData/corrected_stage_data.json");
+            if (ofs.is_open()) {
+                ofs << outputJson.dump(4); // インデント幅4で整形して出力
+            } else {
+                assert(false && "Failed to open file for writing corrected stage data.");
+			}
+        }
+
+        // 生成要求
         TryGenerate();
     }
 
     void Update() override {
+		// 生成されていない、または地面が存在しない場合は何もしない
         if (!generated_ || grounds_.empty()) return;
 
+        // シーンコンテキストを取得
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
 
+		// プレイヤーオブジェクトを取得
         if (!player_) {
             player_ = ctx->GetObject3D("PlayerRoot");
         }
         if (!player_) return;
 
-        auto *playerTr = player_->GetComponent3D<Transform3D>();
-        if (!playerTr) return;
-
-        const float playerZ = playerTr->GetTranslate().z;
+        // 再スポーン処理を削除し、タッチ判定だけを残す
         for (auto &g : grounds_) {
             if (!g.object) continue;
-
+			// プレイヤーが地面に触れたかどうかを判定し、触れていればカウントを増やす
             if (auto *ground = g.object->GetComponent3D<GroundDefined>()) {
                 if (ground->ConsumePlayerTouchEvent()) {
                     ++touchedGroundCount_;
                 }
-            }
-
-            if (g.centerZ > playerZ + recycleBehindDistance_) {
-                RespawnGround(g);
             }
         }
     }
@@ -64,20 +185,6 @@ public:
     void RequestGenerate() {
         requested_ = true;
         TryGenerate();
-    }
-
-    void SpawnStartGroundUnderPlayer(const Vector3 &playerPos) {
-        if (!spawnGround_) return;
-        auto *tr = spawnGround_->GetComponent3D<Transform3D>();
-        if (!tr) return;
-
-        tr->SetTranslate(Vector3{playerPos.x, playerPos.y - panelThickness_, playerPos.z});
-        tr->SetRotate(Vector3{0.0f, 0.0f, 0.0f});
-        tr->SetScale(Vector3{spawnGroundWidth_, panelThickness_, spawnGroundDepth_});
-
-        if (auto *groundDefined = spawnGround_->GetComponent3D<GroundDefined>()) {
-            groundDefined->ResetTouchColorAnimation();
-        }
     }
 
     void TriggerGroundReaction(const Vector3 &center, float radius) {
@@ -105,163 +212,81 @@ private:
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
     static constexpr std::uint64_t kGroundBatchKey = 0x1101000000000001ull;
 
-    struct GenerationPreset {
-        float useProbability = 1.0f;
-
-        float minRingRadius = 64.0f;
-        float maxRingRadius = 64.0f;
-        int ringSplitCount = 3;
-
-        int angleSplitCount = 16;
-
-        float minPanelThickness = 2.0f;
-        float maxPanelThickness = 2.0f;
-        int panelThicknessSplitCount = 2;
-
-        float minPanelWidth = 32.0f;
-        float maxPanelWidth = 32.0f;
-        int panelWidthSplitCount = 3;
-
-        int minPanelsPerSegment = 12;
-        int maxPanelsPerSegment = 16;
-    };
-
-    static float GetRandomSplitValue(float minValue, float maxValue, int splitCount) {
-        if (splitCount <= 1) {
-            return GetRandomValue(minValue, maxValue);
-        }
-        const int index = GetRandomValue(0, std::max(0, splitCount - 1));
-        const float t = static_cast<float>(index) / static_cast<float>(std::max(1, splitCount - 1));
-        return minValue + (maxValue - minValue) * t;
-    }
-
     struct GroundRuntime {
         Object3DBase *object = nullptr;
         float centerZ = 0.0f;
         float length = 0.0f;
     };
 
-    void PreparePresets() {
-        generationPresets_.clear();
-
-        GenerationPreset base;
-        base.useProbability = 1.0f;
-        base.minRingRadius = 64.0f;
-        base.maxRingRadius = 64.0f;
-        base.ringSplitCount = 1;
-        base.angleSplitCount = 16;
-        base.minPanelThickness = 2.0f;
-        base.maxPanelThickness = 2.0f;
-        base.panelThicknessSplitCount = 2;
-        base.minPanelWidth = 32.0f;
-        base.maxPanelWidth = 32.0f;
-        base.panelWidthSplitCount = 3;
-        base.minPanelsPerSegment = 15;
-        base.maxPanelsPerSegment = 16;
-        generationPresets_.push_back(base);
-
-        GenerationPreset center = base;
-        center.useProbability = 1.0f;
-        center.minRingRadius = 16.0f;
-        center.maxRingRadius = 32.0f;
-        center.ringSplitCount = 2;
-        center.angleSplitCount = 8;
-        center.minPanelWidth = 16.0f;
-        center.maxPanelWidth = 32.0f;
-        center.panelWidthSplitCount = 2;
-        center.minPanelsPerSegment = 4;
-        center.maxPanelsPerSegment = 8;
-        generationPresets_.push_back(center);
-    }
-
-    bool SelectPresetBatch() {
-        activePresets_.clear();
-        activePresetIndex_ = 0;
-        currentBatchPositionInitialized_ = false;
-
-        if (generationPresets_.empty()) return false;
-
-        for (const auto &preset : generationPresets_) {
-            const float probability = std::clamp(preset.useProbability, 0.0f, 1.0f);
-            if (probability <= 0.0f) continue;
-            if (GetRandomValue(0.0f, 1.0f) <= probability) {
-                activePresets_.push_back(preset);
-            }
-        }
-
-        if (activePresets_.empty()) {
-            activePresets_.push_back(generationPresets_.front());
-        }
-
-        return true;
-    }
-
-    bool AdvanceToNextPreset() {
-        if (generationPresets_.empty()) return false;
-
-        if (activePresets_.empty() || activePresetIndex_ >= activePresets_.size()) {
-            if (!SelectPresetBatch()) return false;
-        }
-
-        currentPreset_ = activePresets_[activePresetIndex_++];
-        return true;
-    }
-
-    void ResetAngleSlotsForSegment(int angleSplitCount) {
-        segmentAvailableAngleIndices_.clear();
-        segmentAvailableAngleIndices_.reserve(static_cast<std::size_t>(std::max(0, angleSplitCount)));
-        for (int i = 0; i < angleSplitCount; ++i) {
-            segmentAvailableAngleIndices_.push_back(i);
-        }
-    }
-
-    float ConsumeRandomUniqueSegmentAngle() {
-        const int splitCount = std::max(1, currentPreset_.angleSplitCount);
-        if (segmentAvailableAngleIndices_.empty()) {
-            ResetAngleSlotsForSegment(splitCount);
-        }
-
-        const int pick = GetRandomValue(0, static_cast<int>(segmentAvailableAngleIndices_.size()) - 1);
-        const int angleIndex = segmentAvailableAngleIndices_[static_cast<std::size_t>(pick)];
-        segmentAvailableAngleIndices_.erase(segmentAvailableAngleIndices_.begin() + pick);
-
-        const float t = static_cast<float>(angleIndex) / static_cast<float>(std::max(1, splitCount - 1));
-        return 0.0f + (kTwoPi - 0.0f) * t;
-    }
-
     void TryGenerate() {
+		// すでに生成されているか、生成要求がない場合は何もしない
         if (generated_ || !requested_) return;
 
+		// 必要なコンポーネントや変数が揃っているか確認し、足りない場合は生成を開始しない
         auto *ctx = GetOwnerContext();
         if (!ctx || !defaultVars_ || !collider_) return;
 
+		// スポーン用の地面を生成
         CreateSpawnGround(ctx);
-        CreateGroundPool(ctx);
+
+		// 全地面オブジェクトを一括生成
+        CreateAllGrounds(ctx);
+
         generated_ = true;
     }
 
-    void CreateGroundPool(SceneContext *ctx) {
+	/// @brief JSONから読み込んだすべての地面オブジェクトを一気に生成・配置します。
+    void CreateAllGrounds(SceneContext *ctx) {
         grounds_.clear();
-        grounds_.reserve(static_cast<std::size_t>(pooledGroundObjectCount_));
+        grounds_.reserve(spawnRequests_.size());
 
-        nextSpawnZ_ = spawnGroundCenterZ_ - spawnGroundDepth_ * 0.5f;
+        // 0.0(スタート)と1.0(ゴール)のZ座標を取得
+        const float startZ = spawnGroundCenterZ_;
+		float goalZ = -8192.0f;
+        if (auto* gpc = GetOwnerContext()->GetComponent<StageGoalPlaneController>()) {
+			goalZ = gpc->GetGoalZ();
+        }
+        const float endZ = goalZ;
 
-        for (int i = 0; i < pooledGroundObjectCount_; ++i) {
+        // 全てのリクエストを処理してオブジェクトを生成
+        for (const auto& req : spawnRequests_) {
+			// Boxオブジェクトを生成し、名前とバッチキーを設定
             auto obj = std::make_unique<Box>();
             obj->SetName("Ground");
             obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
 
+			// スクリーンバッファがあれば描画に登録
             if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
                 obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
             }
-
+            // 地面としての定義
             obj->RegisterComponent<GroundDefined>(collider_);
 
 			// 一部の地面にスロー効果を付与
-            if (rand() % 5 == 0) {
+            /*if (rand() % 5 == 0) {
                 obj->RegisterComponent<SlowGroundDefined>();
+            }*/
+
+            // トランスフォームの適用(配置)
+            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                float stageLengthRate = 1.0f;
+                if (editStageLengthData != 0.0f) {
+                    stageLengthRate = std::fabsf(endZ - startZ)/ editStageLengthData;
+                } else {
+                    assert(false);
+                }
+                const float centerZ = startZ + (endZ - startZ) * req.stageProgress;
+                
+                // 角度と半径からXY座標を計算
+                const float x = std::cos(req.angle) * req.radius * stageLengthRate;
+                const float y = std::sin(req.angle) * req.radius * stageLengthRate;
+
+                tr->SetTranslate(Vector3{x, y, centerZ});
+                tr->SetRotate(Vector3{0.0f, 0.0f, req.angle});
+                tr->SetScale(Vector3{req.panelThickness * stageLengthRate, req.panelWidth * stageLengthRate, req.panelLength * stageLengthRate});
             }
 
+            // シーンの追加と管理リストへの登録
             Object3DBase *objPtr = obj.get();
             if (!ctx->AddObject3D(std::move(obj)) || objPtr == nullptr) {
                 continue;
@@ -269,131 +294,63 @@ private:
 
             GroundRuntime runtime{};
             runtime.object = objPtr;
-            RespawnGround(runtime);
+            if (auto *tr = objPtr->GetComponent3D<Transform3D>()) {
+                runtime.centerZ = tr->GetTranslate().z;
+                runtime.length = req.panelLength;
+            }
             grounds_.push_back(runtime);
         }
     }
 
+	/// @brief プレイヤーのスポーン位置に地面を生成する。これは通常の地面と同じ見た目・当たり判定だが、スポーン位置に固定され、ステージの進行に応じて再利用されない。
     void CreateSpawnGround(SceneContext *ctx) {
         if (!ctx || !defaultVars_ || !collider_) return;
-
+		// プレイヤーが最初に立つための地面を生成
         auto obj = std::make_unique<Box>();
         obj->SetName("Ground");
         obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
-
+		// スクリーンバッファがあれば描画に登録
         if (defaultVars_->GetScreenBuffer3D()) {
             obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
         }
-
+		// トランスフォームを設定
         auto *tr = obj->GetComponent3D<Transform3D>();
         if (!tr) return;
-
+		// スポーン位置に配置
         tr->SetTranslate(Vector3{spawnGroundCenterX_, spawnGroundCenterY_, spawnGroundCenterZ_});
         tr->SetRotate(Vector3{0.0f, 0.0f, 0.0f});
         tr->SetScale(Vector3{spawnGroundWidth_, panelThickness_, spawnGroundDepth_});
-
+		// このオブジェクトを地面として定義するコンポーネントを登録
         obj->RegisterComponent<GroundDefined>(collider_);
-        spawnGround_ = obj.get();
         (void)ctx->AddObject3D(std::move(obj));
-    }
-
-    bool StartNextPreset(GroundRuntime &runtime) {
-        if (!AdvanceToNextPreset()) return false;
-
-        if (!currentBatchPositionInitialized_) {
-            currentSegmentLength_ = GetRandomSplitValue(
-                minPanelLength_,
-                maxPanelLength_,
-                panelLengthSplitCount_);
-            currentSegmentCenterZ_ = nextSpawnZ_ - currentSegmentLength_ * 0.5f;
-            nextSpawnZ_ -= currentSegmentLength_;
-            currentBatchPositionInitialized_ = true;
-        }
-
-        if (hasMinSpawnZ_ && currentSegmentCenterZ_ < minSpawnZ_) {
-            if (auto *tr2 = runtime.object->GetComponent3D<Transform3D>()) {
-                tr2->SetScale(Vector3{0.0f, 0.0f, 0.0f});
-            }
-            runtime.centerZ = -1000000000.0f;
-            runtime.length = 0.0f;
-            return false;
-        }
-
-        const int angleSlots = std::max(1, currentPreset_.angleSplitCount);
-        int panelCount = GetRandomValue(currentPreset_.minPanelsPerSegment, currentPreset_.maxPanelsPerSegment);
-        panelCount = std::clamp(panelCount, 1, angleSlots);
-        remainingPanelsInCurrentSegment_ = panelCount;
-        ResetAngleSlotsForSegment(angleSlots);
-        return true;
-    }
-
-    void RespawnGround(GroundRuntime &runtime) {
-        if (!runtime.object) return;
-
-        if (auto *groundDefined = runtime.object->GetComponent3D<GroundDefined>()) {
-            groundDefined->ResetTouchColorAnimation();
-        }
-
-        auto *tr = runtime.object->GetComponent3D<Transform3D>();
-        if (!tr) return;
-
-        if (remainingPanelsInCurrentSegment_ <= 0) {
-            if (!StartNextPreset(runtime) || remainingPanelsInCurrentSegment_ <= 0) {
-                return;
-            }
-        }
-
-        const float length = currentSegmentLength_;
-        const float centerZ = currentSegmentCenterZ_;
-        --remainingPanelsInCurrentSegment_;
-
-        const float radius = GetRandomSplitValue(
-            currentPreset_.minRingRadius,
-            currentPreset_.maxRingRadius,
-            currentPreset_.ringSplitCount);
-        const float angle = ConsumeRandomUniqueSegmentAngle();
-        const float panelWidth = GetRandomSplitValue(
-            currentPreset_.minPanelWidth,
-            currentPreset_.maxPanelWidth,
-            currentPreset_.panelWidthSplitCount);
-        const float panelThickness = GetRandomSplitValue(
-            currentPreset_.minPanelThickness,
-            currentPreset_.maxPanelThickness,
-            currentPreset_.panelThicknessSplitCount);
-
-        const float x = std::cos(angle) * radius;
-        const float y = std::sin(angle) * radius;
-
-        tr->SetTranslate(Vector3{x, y, centerZ});
-        tr->SetRotate(Vector3{0.0f, 0.0f, angle});
-        tr->SetScale(Vector3{panelThickness, panelWidth, length});
-
-        runtime.centerZ = centerZ;
-        runtime.length = length;
     }
 
     bool requested_ = false;
     bool generated_ = false;
 
+    float editStageLengthData = 100.0f;
     float panelThickness_ = 2.0f;
-    int pooledGroundObjectCount_ = 512;
-    float recycleBehindDistance_ = 1024.0f;
-
     float spawnGroundCenterX_ = 0.0f;
     float spawnGroundCenterY_ = -panelThickness_;
     float spawnGroundCenterZ_ = -2.0f;
     float spawnGroundWidth_ = 16.0f;
-    float spawnGroundDepth_ = 512.0f;
+    float spawnGroundDepth_ = 256.0f;
 
-    float minPanelLength_ = 128.0f;
-    float maxPanelLength_ = 128.0f;
-    int panelLengthSplitCount_ = 1;
+    int panelWidthSplitCount_ = 3;
+
+    float minPanelLength_ = 64.0f;
+    int panelLengthSplitCount_ = 3;
+
+    int minPanelsPerSegment_ = 6;
+    float minSpawnZ_ = 1000000000.0f;
+
+	std::vector<SpawnRequest> spawnRequests_; // JSONから読み込んだすべてのスポーンリクエスト
+	const std::string stageDataFilePath_ = "Assets/Application/StageData/stage.json";
 
     float nextSpawnZ_ = 0.0f;
     float currentSegmentCenterZ_ = 0.0f;
     float currentSegmentLength_ = 0.0f;
     int remainingPanelsInCurrentSegment_ = 0;
-    bool currentBatchPositionInitialized_ = false;
 
     SceneDefaultVariables *defaultVars_ = nullptr;
     Collider *collider_ = nullptr;
@@ -403,12 +360,6 @@ private:
     int touchedGroundCount_ = 0;
     bool hasMinSpawnZ_ = false;
     float minSpawnZ_ = -1000000000.0f;
-
-    std::vector<GenerationPreset> generationPresets_{};
-    std::vector<GenerationPreset> activePresets_{};
-    std::size_t activePresetIndex_ = 0;
-    GenerationPreset currentPreset_{};
-    std::vector<int> segmentAvailableAngleIndices_{};
 };
 
 } // namespace KashipanEngine

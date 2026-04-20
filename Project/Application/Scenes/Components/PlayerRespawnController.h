@@ -182,10 +182,10 @@ private:
 
     bool isRespawning_ = false;
     float respawnElapsed_ = 0.0f;
-    float respawnDelay_ = 2.0f;
+    float respawnDelay_ = 1.0f;
     float respawnZ_ = 0.0f;
     float initialForwardSpeed_ = 64.0f;
-    float stageBoundaryRadius_ = 64.0f * 2.0f;
+    float stageBoundaryRadius_ = 32.0f * 6.0f;
     float stageBoundaryDangerStartRatio_ = 0.7f;
     float danger_ = 0.0f;
 };

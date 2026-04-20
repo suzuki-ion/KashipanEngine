@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include <KashipanEngine.h>
 #include "Scenes/Components/StageGroundGenerator.h"
@@ -182,6 +181,38 @@ public:
         }
         clearResultText_ = clearText.get();
         (void)ctx->AddObject2D(std::move(clearText));
+
+        auto operationUI = std::make_unique<Sprite>();
+        operationUI->SetName("OperationUISprite");
+        operationUI->SetUniqueBatchKey();
+        operationUI->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+
+        TextureManager::TextureHandle operationTexture = TextureManager::GetTextureFromFileName("uiOperation.png");
+        if (auto *mat = operationUI->GetComponent2D<Material2D>()) {
+            if (operationTexture == TextureManager::kInvalidHandle) {
+                operationTexture = TextureManager::GetTextureFromAssetPath("Application/Image/uiOperation.png");
+            }
+            mat->SetTexture(operationTexture);
+            mat->SetColor(operationUIBaseColor_);
+        }
+
+        float operationWidth = operationUIFallbackSize_.x;
+        float operationHeight = operationUIFallbackSize_.y;
+        if (operationTexture != TextureManager::kInvalidHandle) {
+            const auto view = TextureManager::GetTextureView(operationTexture);
+            operationWidth = std::max(1.0f, static_cast<float>(view.GetWidth()));
+            operationHeight = std::max(1.0f, static_cast<float>(view.GetHeight()));
+        }
+
+        if (auto *tr = operationUI->GetComponent2D<Transform2D>()) {
+            tr->SetScale(Vector3{operationWidth, operationHeight, 1.0f});
+            tr->SetTranslate(Vector3{
+                screenWidth_ - operationUIMarginRight_ - operationWidth * 0.5f,
+                operationUIMarginBottom_ + operationHeight * 0.5f,
+                0.0f});
+        }
+        operationUISprite_ = operationUI.get();
+        (void)ctx->AddObject2D(std::move(operationUI));
 
         ApplyVisibility();
     }
@@ -407,6 +438,14 @@ private:
             }
         }
 
+        if (operationUISprite_) {
+            if (auto *mat = operationUISprite_->GetComponent2D<Material2D>()) {
+                Vector4 color = operationUIBaseColor_;
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+        }
+
         if (!isVisible_ && clearResultText_) {
             clearResultText_->SetText(" ");
             SetTextAlpha(clearResultText_, 0.0f);
@@ -457,6 +496,7 @@ private:
     Text *landingTouchedGroundCountText_ = nullptr;
     Sprite *clearFadeSprite_ = nullptr;
     Text *clearResultText_ = nullptr;
+    Sprite *operationUISprite_ = nullptr;
 
     int previousTouchedGroundCount_ = 0;
     int landingTouchedGroundCount_ = 0;
@@ -505,6 +545,11 @@ private:
     Vector4 goalBackgroundColorBase_{0.08f, 0.08f, 0.08f, 1.0f};
     Vector4 goalBarColorBase_{0.95f, 0.85f, 0.2f, 1.0f};
     Vector4 goalSegmentColorBase_{0.6f, 0.6f, 0.6f, 1.0f};
+
+    Vector2 operationUIFallbackSize_{512.0f, 256.0f};
+    float operationUIMarginRight_ = 32.0f;
+    float operationUIMarginBottom_ = 24.0f;
+    Vector4 operationUIBaseColor_{1.0f, 1.0f, 1.0f, 1.0f};
 };
 
 } // namespace KashipanEngine

@@ -25,7 +25,7 @@ public:
             mat->SetEnableLighting(false);
             mat->SetColor(defaultColor_);
             mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
-            mat->SetTexture(TextureManager::GetTextureFromFileName("square_grid_alpha.png"));
+            mat->SetTexture(TextureManager::GetTextureFromFileName("square_grid.png"));
         }
 
         if (collider_ && !ctx->GetComponent<Collision3D>()) {

@@ -82,7 +82,11 @@ public:
 
         if (inputCommand_->Evaluate(gravitySwitchTriggerCommand_).Triggered() && playerMovement_->CanUseGravityChange()) {
             isGravitySwitching_ = true;
-            requestedGravityDirection_ = std::nullopt;
+            Vector3 defaultDirection = -playerMovement_->GetGravityDirection().Normalize();
+            if (defaultDirection.LengthSquared() <= 0.000001f) {
+                defaultDirection = Vector3{0.0f, 1.0f, 0.0f};
+            }
+            requestedGravityDirection_ = defaultDirection;
             SetGameSpeed(0.2f);
         }
 

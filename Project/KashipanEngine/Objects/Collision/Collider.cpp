@@ -203,17 +203,63 @@ std::vector<IndexPair> BuildCandidatePairs2D(const TColliders &colliders) {
     return out;
 }
 
+inline std::uint64_t MakeCellKey3D(int x, int y, int z) {
+    const std::uint64_t ux = static_cast<std::uint32_t>(x);
+    const std::uint64_t uy = static_cast<std::uint32_t>(y);
+    const std::uint64_t uz = static_cast<std::uint32_t>(z);
+
+    std::uint64_t h = 0x9e3779b97f4a7c15ull;
+    h ^= ux + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
+    h ^= uy + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
+    h ^= uz + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
+    return h;
+}
+
+inline std::uint64_t MakeIndexPairKey(std::size_t a, std::size_t b) {
+    if (a > b) std::swap(a, b);
+    return (static_cast<std::uint64_t>(static_cast<std::uint32_t>(a)) << 32)
+         | static_cast<std::uint32_t>(b);
+}
+
 template<typename TColliders>
-std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
+const std::vector<IndexPair> &BuildCandidatePairs3D(const TColliders &colliders) {
     constexpr float kCellSize = 16.0f;
     constexpr int kMaxCellsPerShape = 512;
 
-    std::unordered_map<GridKey3D, std::vector<std::size_t>, GridKey3DHash> grid;
-    std::vector<std::size_t> active;
-    std::vector<std::size_t> global;
+    struct BuildCache3D {
+        std::unordered_map<std::uint64_t, std::vector<std::size_t>> grid;
+        std::vector<std::uint64_t> usedCells;
+        std::vector<std::size_t> active;
+        std::vector<std::size_t> global;
+        std::unordered_set<std::uint64_t> uniquePairKeys;
+        std::vector<IndexPair> pairs;
+    };
 
-    active.reserve(colliders.size());
-    global.reserve(colliders.size());
+    thread_local BuildCache3D cache;
+
+    auto &grid = cache.grid;
+    auto &usedCells = cache.usedCells;
+    auto &active = cache.active;
+    auto &global = cache.global;
+    auto &uniquePairKeys = cache.uniquePairKeys;
+    auto &pairs = cache.pairs;
+
+    for (auto &it : grid) {
+        it.second.clear();
+    }
+
+    usedCells.clear();
+    active.clear();
+    global.clear();
+    uniquePairKeys.clear();
+    pairs.clear();
+
+    if (active.capacity() < colliders.size()) {
+        active.reserve(colliders.size());
+    }
+    if (global.capacity() < colliders.size()) {
+        global.reserve(colliders.size());
+    }
 
     for (std::size_t i = 0; i < colliders.size(); ++i) {
         const auto &c = colliders[i];
@@ -236,7 +282,8 @@ std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
         const int cellsX = (maxX - minX + 1);
         const int cellsY = (maxY - minY + 1);
         const int cellsZ = (maxZ - minZ + 1);
-        const int cellCount = cellsX * cellsY * cellsZ;
+
+        const std::int64_t cellCount = static_cast<std::int64_t>(cellsX) * static_cast<std::int64_t>(cellsY) * static_cast<std::int64_t>(cellsZ);
         if (cellsX <= 0 || cellsY <= 0 || cellsZ <= 0 || cellsX > kMaxCellsPerShape || cellsY > kMaxCellsPerShape || cellsZ > kMaxCellsPerShape || cellCount > kMaxCellsPerShape) {
             global.push_back(i);
             continue;
@@ -245,9 +292,10 @@ std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
         for (int z = minZ; z <= maxZ; ++z) {
             for (int y = minY; y <= maxY; ++y) {
                 for (int x = minX; x <= maxX; ++x) {
-                    auto &cell = grid[GridKey3D{x, y, z}];
+                    const std::uint64_t key = MakeCellKey3D(x, y, z);
+                    auto &cell = grid[key];
                     if (cell.empty()) {
-                        cell.reserve(8);
+                        usedCells.push_back(key);
                     }
                     cell.push_back(i);
                 }
@@ -255,38 +303,35 @@ std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
         }
     }
 
-    std::size_t estimatedPairs = 0;
-    for (const auto &[_, indices] : grid) {
-        const std::size_t n = indices.size();
-        if (n > 1) {
-            estimatedPairs += (n * (n - 1)) / 2;
-        }
-    }
-    estimatedPairs += global.size() * active.size();
+    uniquePairKeys.reserve((usedCells.size() * 2) + (global.size() * active.size()));
 
-    std::unordered_set<IndexPair, IndexPairHash> uniquePairs;
-    uniquePairs.reserve(estimatedPairs);
+    for (std::uint64_t cellKey : usedCells) {
+        const auto it = grid.find(cellKey);
+        if (it == grid.end()) continue;
 
-    for (const auto &[_, indices] : grid) {
+        const auto &indices = it->second;
         for (std::size_t i = 0; i < indices.size(); ++i) {
             for (std::size_t j = i + 1; j < indices.size(); ++j) {
-                uniquePairs.insert(MakeIndexPair(indices[i], indices[j]));
+                uniquePairKeys.insert(MakeIndexPairKey(indices[i], indices[j]));
             }
         }
     }
 
-    for (std::size_t gi = 0; gi < global.size(); ++gi) {
-        const std::size_t g = global[gi];
+    for (std::size_t g : global) {
         for (std::size_t a : active) {
             if (a == g) continue;
-            uniquePairs.insert(MakeIndexPair(g, a));
+            uniquePairKeys.insert(MakeIndexPairKey(g, a));
         }
     }
 
-    std::vector<IndexPair> out;
-    out.reserve(uniquePairs.size());
-    for (const auto &p : uniquePairs) out.emplace_back(p);
-    return out;
+    pairs.reserve(uniquePairKeys.size());
+    for (std::uint64_t k : uniquePairKeys) {
+        pairs.push_back(IndexPair{
+            static_cast<std::size_t>(static_cast<std::uint32_t>(k >> 32)),
+            static_cast<std::size_t>(static_cast<std::uint32_t>(k & 0xffffffffull))});
+    }
+
+    return pairs;
 }
 
 inline bool ShouldTest(
@@ -439,7 +484,7 @@ std::vector<Collider::HitPair2D> Collider::CheckAll2D() const {
 
 std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
     std::vector<HitPair3D> hits;
-    const auto pairs = BuildCandidatePairs3D(colliders3D_);
+    const auto &pairs = BuildCandidatePairs3D(colliders3D_);
     hits.reserve(pairs.size());
 
     for (const auto &pair : pairs) {
@@ -584,7 +629,7 @@ void Collider::Update2D() {
 void Collider::Update3D() {
     std::vector<std::uint64_t> cur;
 
-    const auto pairs = BuildCandidatePairs3D(colliders3D_);
+    const auto &pairs = BuildCandidatePairs3D(colliders3D_);
     cur.reserve(pairs.size());
 
     for (const auto &pair : pairs) {

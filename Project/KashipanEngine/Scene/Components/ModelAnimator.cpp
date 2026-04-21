@@ -1082,15 +1082,92 @@ void ModelAnimator::ShowImGuiWindowBindings() {
     }
 
     ImGui::InputText("BindingPreset", bindingPresetBuffer_.data(), bindingPresetBuffer_.size());
-    ImGui::InputText("BindingObject", bindingObjectBuffer_.data(), bindingObjectBuffer_.size());
-    ImGui::InputText("BindingTimeline", bindingTimelineBuffer_.data(), bindingTimelineBuffer_.size());
+
+    std::vector<std::string> objectNames;
+    objectNames.reserve(64);
+    std::unordered_set<std::string> objectNameSet;
+    for (const auto &presetPair : presets_) {
+        for (const auto &obj : presetPair.second) {
+            if (objectNameSet.insert(obj.objectName).second) {
+                objectNames.push_back(obj.objectName);
+            }
+        }
+    }
+    std::sort(objectNames.begin(), objectNames.end());
+
+    std::vector<std::string> timelineNames;
+    timelineNames.reserve(timelines_.size());
+    for (const auto &timelinePair : timelines_) {
+        timelineNames.push_back(timelinePair.first);
+    }
+    std::sort(timelineNames.begin(), timelineNames.end());
+
+    auto syncSelection = [](const std::vector<std::string> &items, std::string &selectedName, int &selectedIndex) {
+        if (items.empty()) {
+            selectedName.clear();
+            selectedIndex = -1;
+            return;
+        }
+
+        auto it = std::find(items.begin(), items.end(), selectedName);
+        if (it != items.end()) {
+            selectedIndex = static_cast<int>(std::distance(items.begin(), it));
+            return;
+        }
+
+        if (selectedIndex >= 0 && selectedIndex < static_cast<int>(items.size())) {
+            selectedName = items[static_cast<size_t>(selectedIndex)];
+            return;
+        }
+
+        selectedIndex = 0;
+        selectedName = items.front();
+    };
+
+    syncSelection(objectNames, imguiBindingObjectName_, imguiBindingObjectIndex_);
+    syncSelection(timelineNames, imguiBindingTimelineName_, imguiBindingTimelineIndex_);
+
+    std::vector<const char *> objectNameItems;
+    objectNameItems.reserve(objectNames.size());
+    for (const auto &name : objectNames) {
+        objectNameItems.push_back(name.c_str());
+    }
+
+    std::vector<const char *> timelineNameItems;
+    timelineNameItems.reserve(timelineNames.size());
+    for (const auto &name : timelineNames) {
+        timelineNameItems.push_back(name.c_str());
+    }
+
+    if (!objectNameItems.empty()) {
+        if (ImGui::Combo("BindingObject", &imguiBindingObjectIndex_, objectNameItems.data(), static_cast<int>(objectNameItems.size()))) {
+            imguiBindingObjectName_ = objectNames[static_cast<size_t>(imguiBindingObjectIndex_)];
+        }
+    } else {
+        ImGui::TextUnformatted("BindingObject: <no registered objects>");
+    }
+
+    if (!timelineNameItems.empty()) {
+        if (ImGui::Combo("BindingTimeline", &imguiBindingTimelineIndex_, timelineNameItems.data(), static_cast<int>(timelineNameItems.size()))) {
+            imguiBindingTimelineName_ = timelineNames[static_cast<size_t>(imguiBindingTimelineIndex_)];
+        }
+    } else {
+        ImGui::TextUnformatted("BindingTimeline: <no registered timelines>");
+    }
 
     imguiPropertyPathIndex_ = std::clamp(imguiPropertyPathIndex_, 0, static_cast<int>(std::size(kPropertyPaths)) - 1);
     ImGui::Combo("PropertyPath", &imguiPropertyPathIndex_, kPropertyPaths, static_cast<int>(std::size(kPropertyPaths)));
 
+    const bool canAddBinding = bindingPresetBuffer_[0] != '\0'
+        && !imguiBindingObjectName_.empty()
+        && !imguiBindingTimelineName_.empty();
+
+    if (!canAddBinding) ImGui::BeginDisabled();
     if (ImGui::Button("Add Binding")) {
-        AddBindingByPath(bindingPresetBuffer_.data(), bindingObjectBuffer_.data(), bindingTimelineBuffer_.data(), kPropertyPaths[imguiPropertyPathIndex_]);
+        AddBindingByPath(bindingPresetBuffer_.data(), imguiBindingObjectName_, imguiBindingTimelineName_, kPropertyPaths[imguiPropertyPathIndex_]);
     }
+    if (!canAddBinding) ImGui::EndDisabled();
+
     ImGui::SameLine();
     if (ImGui::Button("Clear Preset Bindings")) {
         ClearBindings(bindingPresetBuffer_.data());
@@ -1114,8 +1191,10 @@ void ModelAnimator::ShowImGuiWindowBindings() {
             if (ImGui::Selectable(label.c_str(), selected)) {
                 selectedBindingIndex_ = currentIndex;
                 std::snprintf(bindingPresetBuffer_.data(), bindingPresetBuffer_.size(), "%s", pair.first.c_str());
-                std::snprintf(bindingObjectBuffer_.data(), bindingObjectBuffer_.size(), "%s", b.objectName.c_str());
-                std::snprintf(bindingTimelineBuffer_.data(), bindingTimelineBuffer_.size(), "%s", b.timelineName.c_str());
+                imguiBindingObjectName_ = b.objectName;
+                imguiBindingTimelineName_ = b.timelineName;
+                syncSelection(objectNames, imguiBindingObjectName_, imguiBindingObjectIndex_);
+                syncSelection(timelineNames, imguiBindingTimelineName_, imguiBindingTimelineIndex_);
                 for (int p = 0; p < static_cast<int>(std::size(kPropertyPaths)); ++p) {
                     if (b.propertyPath == kPropertyPaths[p]) {
                         imguiPropertyPathIndex_ = p;
@@ -1133,12 +1212,15 @@ void ModelAnimator::ShowImGuiWindowBindings() {
 
             if (selected) {
                 ImGui::Indent();
+                const bool canApplyEdit = !imguiBindingObjectName_.empty() && !imguiBindingTimelineName_.empty();
+                if (!canApplyEdit) ImGui::BeginDisabled();
                 if (ImGui::Button("Apply Edit")) {
-                    b.objectName = bindingObjectBuffer_.data();
-                    b.timelineName = bindingTimelineBuffer_.data();
+                    b.objectName = imguiBindingObjectName_;
+                    b.timelineName = imguiBindingTimelineName_;
                     b.propertyPath = kPropertyPaths[imguiPropertyPathIndex_];
                     RebuildBindingFunction(b);
                 }
+                if (!canApplyEdit) ImGui::EndDisabled();
                 ImGui::Unindent();
             }
 
@@ -1164,13 +1246,89 @@ void ModelAnimator::ShowImGuiWindowPlayers() {
         return;
     }
 
-    ImGui::InputText("PlayPreset", playPresetBuffer_.data(), playPresetBuffer_.size());
-    ImGui::InputText("PlayBindingPreset", playBindingPresetBuffer_.data(), playBindingPresetBuffer_.size());
+    std::vector<std::string> objectPresetNames;
+    objectPresetNames.reserve(presets_.size());
+    for (const auto &pair : presets_) {
+        objectPresetNames.push_back(pair.first);
+    }
+    std::sort(objectPresetNames.begin(), objectPresetNames.end());
+
+    std::vector<std::string> bindingPresetNames;
+    bindingPresetNames.reserve(presetBindings_.size());
+    for (const auto &pair : presetBindings_) {
+        bindingPresetNames.push_back(pair.first);
+    }
+    std::sort(bindingPresetNames.begin(), bindingPresetNames.end());
+
+    auto syncSelection = [](const std::vector<std::string> &items, std::string &selectedName, int &selectedIndex) {
+        if (items.empty()) {
+            selectedName.clear();
+            selectedIndex = -1;
+            return;
+        }
+
+        auto it = std::find(items.begin(), items.end(), selectedName);
+        if (it != items.end()) {
+            selectedIndex = static_cast<int>(std::distance(items.begin(), it));
+            return;
+        }
+
+        if (selectedIndex >= 0 && selectedIndex < static_cast<int>(items.size())) {
+            selectedName = items[static_cast<size_t>(selectedIndex)];
+            return;
+        }
+
+        selectedIndex = 0;
+        selectedName = items.front();
+    };
+
+    syncSelection(objectPresetNames, imguiPlayObjectPresetName_, imguiPlayObjectPresetIndex_);
+    syncSelection(bindingPresetNames, imguiPlayBindingPresetName_, imguiPlayBindingPresetIndex_);
+
+    std::vector<const char *> objectPresetItems;
+    objectPresetItems.reserve(objectPresetNames.size());
+    for (const auto &name : objectPresetNames) {
+        objectPresetItems.push_back(name.c_str());
+    }
+
+    std::vector<const char *> bindingPresetItems;
+    bindingPresetItems.reserve(bindingPresetNames.size());
+    for (const auto &name : bindingPresetNames) {
+        bindingPresetItems.push_back(name.c_str());
+    }
+
+    if (!objectPresetItems.empty()) {
+        if (ImGui::Combo("PlayPreset", &imguiPlayObjectPresetIndex_, objectPresetItems.data(), static_cast<int>(objectPresetItems.size()))) {
+            imguiPlayObjectPresetName_ = objectPresetNames[static_cast<size_t>(imguiPlayObjectPresetIndex_)];
+        }
+    } else {
+        ImGui::TextUnformatted("PlayPreset: <no object presets>");
+    }
+
+    ImGui::Checkbox("Use Same Preset For Binding", &imguiUseSameBindingPreset_);
+
+    if (!imguiUseSameBindingPreset_) {
+        if (!bindingPresetItems.empty()) {
+            if (ImGui::Combo("PlayBindingPreset", &imguiPlayBindingPresetIndex_, bindingPresetItems.data(), static_cast<int>(bindingPresetItems.size()))) {
+                imguiPlayBindingPresetName_ = bindingPresetNames[static_cast<size_t>(imguiPlayBindingPresetIndex_)];
+            }
+        } else {
+            ImGui::TextUnformatted("PlayBindingPreset: <no binding presets>");
+        }
+    }
+
+    const bool hasObjectPreset = !imguiPlayObjectPresetName_.empty();
+    const bool hasBindingPreset = imguiUseSameBindingPreset_ || !imguiPlayBindingPresetName_.empty();
+    const bool canPlay = hasObjectPreset && hasBindingPreset;
+
+    if (!canPlay) ImGui::BeginDisabled();
     if (ImGui::Button("Play")) {
-        const std::string objectPreset = playPresetBuffer_.data();
-        const std::string bindingPreset = playBindingPresetBuffer_[0] ? playBindingPresetBuffer_.data() : objectPreset;
+        const std::string objectPreset = imguiPlayObjectPresetName_;
+        const std::string bindingPreset = imguiUseSameBindingPreset_ ? objectPreset : imguiPlayBindingPresetName_;
         Play(objectPreset, bindingPreset);
     }
+    if (!canPlay) ImGui::EndDisabled();
+
     ImGui::SameLine();
     if (ImGui::Button("Stop All")) {
         Stop();

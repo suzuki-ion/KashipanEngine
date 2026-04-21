@@ -244,6 +244,16 @@ private:
     int imguiEaseTypeIndex_ = 0;
     bool imguiTimelineLoop_ = false;
     int imguiPropertyPathIndex_ = 0;
+    int imguiBindingObjectIndex_ = -1;
+    int imguiBindingTimelineIndex_ = -1;
+    int imguiPlayObjectPresetIndex_ = -1;
+    int imguiPlayBindingPresetIndex_ = -1;
+
+    std::string imguiBindingObjectName_;
+    std::string imguiBindingTimelineName_;
+    std::string imguiPlayObjectPresetName_;
+    std::string imguiPlayBindingPresetName_;
+    bool imguiUseSameBindingPreset_ = true;
 
     Vector2 imguiPresetPivot_{0.5f, 0.5f};
     Vector2 imguiPresetAnchor_{0.5f, 0.5f};

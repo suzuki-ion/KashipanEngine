@@ -1,5 +1,32 @@
-﻿{
+{
     "bindings": {
+        "PlayerJump": [
+            {
+                "objectName": "PlayerBody",
+                "propertyPath": "Transform.Rotate.Y",
+                "timelineName": "PlayerBodyRotateY"
+            },
+            {
+                "objectName": "PlayerBody",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerJumpBodyPosY"
+            },
+            {
+                "objectName": "PlayerArmL",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerArmPosY"
+            },
+            {
+                "objectName": "PlayerArmR",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerArmPosY"
+            },
+            {
+                "objectName": "PlayerHead",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerHeadPosY"
+            }
+        ],
         "PlayerRun": [
             {
                 "objectName": "PlayerBody",
@@ -143,6 +170,16 @@
             ],
             "loop": true
         },
+        "PlayerBodyRotateY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 180.0
+                }
+            ],
+            "loop": true
+        },
         "PlayerHeadPosY": {
             "keys": [
                 {
@@ -153,15 +190,15 @@
             ],
             "loop": true
         },
-        "PlayerBodyRotateY": {
+        "PlayerJumpBodyPosY": {
             "keys": [
                 {
                     "easeType": 0,
                     "time": 0.0,
-                    "value": 180.0
+                    "value": -0.4000000059604645
                 }
             ],
-            "loop": true
+            "loop": false
         }
     },
     "version": 2

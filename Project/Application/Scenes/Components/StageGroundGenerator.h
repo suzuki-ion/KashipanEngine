@@ -379,18 +379,16 @@ private:
         }
         const float centerZ = startZ + (endZ - startZ) * req.stageProgress;
         // 角度と半径からXY座標を計算
-        const float x = std::cos(req.angle) * req.radius * stageLengthRate;
-		const float y = std::sin(req.angle) * req.radius * stageLengthRate;
+        const float x = -std::sin(req.angle) * req.radius * stageLengthRate;
+        const float y = -std::cos(req.angle) * req.radius * stageLengthRate;
 
         // 地面オブジェクトを配置
         SpawnGround(
             Vector3{ x, y, centerZ },
             Vector3{ 0.0f, 0.0f, req.angle },
-            Vector3{ req.panelThickness * stageLengthRate, req.panelWidth * stageLengthRate, req.panelLength * stageLengthRate });
+            Vector3{ req.panelWidth * stageLengthRate, req.panelThickness * stageLengthRate, req.panelLength * stageLengthRate });
 		++currentSpawnRequestIndex_;
     }
-
-
 
     bool requested_ = false;
     bool generated_ = false;

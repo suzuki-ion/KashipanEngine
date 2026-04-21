@@ -4,6 +4,7 @@
 #include "Scenes/Components/StageGroundGenerator.h"
 #include "Scenes/Components/StageGoalPlaneController.h"
 #include "Objects/Components/PlayerMovementController.h"
+#include "Objects/Components/PlayerInputHandler.h"
 
 #include <algorithm>
 #include <cmath>
@@ -182,37 +183,106 @@ public:
         clearResultText_ = clearText.get();
         (void)ctx->AddObject2D(std::move(clearText));
 
-        auto operationUI = std::make_unique<Sprite>();
-        operationUI->SetName("OperationUISprite");
-        operationUI->SetUniqueBatchKey();
-        operationUI->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        TextureManager::TextureHandle jumpTexture = TextureManager::GetTextureFromFileName("uiOperationJump.png");
+        if (jumpTexture == TextureManager::kInvalidHandle) {
+            jumpTexture = TextureManager::GetTextureFromAssetPath("Application/Image/uiOperationJump.png");
+        }
 
-        TextureManager::TextureHandle operationTexture = TextureManager::GetTextureFromFileName("uiOperation.png");
-        if (auto *mat = operationUI->GetComponent2D<Material2D>()) {
-            if (operationTexture == TextureManager::kInvalidHandle) {
-                operationTexture = TextureManager::GetTextureFromAssetPath("Application/Image/uiOperation.png");
-            }
-            mat->SetTexture(operationTexture);
+        TextureManager::TextureHandle gravityTexture = TextureManager::GetTextureFromFileName("uiOperationGravity.png");
+        if (gravityTexture == TextureManager::kInvalidHandle) {
+            gravityTexture = TextureManager::GetTextureFromAssetPath("Application/Image/uiOperationGravity.png");
+        }
+
+        TextureManager::TextureHandle gravityDirectionAllowTexture = TextureManager::GetTextureFromFileName("gravityChangeDirectionAllow.png");
+        if (gravityDirectionAllowTexture == TextureManager::kInvalidHandle) {
+            gravityDirectionAllowTexture = TextureManager::GetTextureFromAssetPath("Application/Image/gravityChangeDirectionAllow.png");
+        }
+
+        float jumpWidth = operationUIFallbackSize_.x;
+        float jumpHeight = operationUIFallbackSize_.y;
+        if (jumpTexture != TextureManager::kInvalidHandle) {
+            const auto view = TextureManager::GetTextureView(jumpTexture);
+            jumpWidth = std::max(1.0f, static_cast<float>(view.GetWidth()));
+            jumpHeight = std::max(1.0f, static_cast<float>(view.GetHeight()));
+        }
+
+        float gravityWidth = operationUIFallbackSize_.x;
+        float gravityHeight = operationUIFallbackSize_.y;
+        if (gravityTexture != TextureManager::kInvalidHandle) {
+            const auto view = TextureManager::GetTextureView(gravityTexture);
+            gravityWidth = std::max(1.0f, static_cast<float>(view.GetWidth()));
+            gravityHeight = std::max(1.0f, static_cast<float>(view.GetHeight()));
+        }
+
+        float gravityDirectionAllowWidth = gravityDirectionAllowFallbackSize_.x;
+        float gravityDirectionAllowHeight = gravityDirectionAllowFallbackSize_.y;
+        if (gravityDirectionAllowTexture != TextureManager::kInvalidHandle) {
+            const auto view = TextureManager::GetTextureView(gravityDirectionAllowTexture);
+            gravityDirectionAllowWidth = std::max(1.0f, static_cast<float>(view.GetWidth()));
+            gravityDirectionAllowHeight = std::max(1.0f, static_cast<float>(view.GetHeight()));
+        }
+
+        auto gravityUI = std::make_unique<Sprite>();
+        gravityUI->SetName("OperationGravityUISprite");
+        gravityUI->SetUniqueBatchKey();
+        gravityUI->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *mat = gravityUI->GetComponent2D<Material2D>()) {
+            mat->SetTexture(gravityTexture);
             mat->SetColor(operationUIBaseColor_);
         }
-
-        float operationWidth = operationUIFallbackSize_.x;
-        float operationHeight = operationUIFallbackSize_.y;
-        if (operationTexture != TextureManager::kInvalidHandle) {
-            const auto view = TextureManager::GetTextureView(operationTexture);
-            operationWidth = std::max(1.0f, static_cast<float>(view.GetWidth()));
-            operationHeight = std::max(1.0f, static_cast<float>(view.GetHeight()));
+        if (auto *tr = gravityUI->GetComponent2D<Transform2D>()) {
+            tr->SetScale(Vector3{gravityWidth, gravityHeight, 1.0f});
+            const Vector3 basePos{
+                screenWidth_ - operationUIMarginRight_ - gravityWidth * 0.5f,
+                operationUIMarginBottom_ + gravityHeight * 0.5f,
+                0.0f};
+            tr->SetTranslate(basePos);
+            operationGravityUIBasePosition_ = basePos;
         }
+        operationGravityUISprite_ = gravityUI.get();
+        (void)ctx->AddObject2D(std::move(gravityUI));
 
-        if (auto *tr = operationUI->GetComponent2D<Transform2D>()) {
-            tr->SetScale(Vector3{operationWidth, operationHeight, 1.0f});
-            tr->SetTranslate(Vector3{
-                screenWidth_ - operationUIMarginRight_ - operationWidth * 0.5f,
-                operationUIMarginBottom_ + operationHeight * 0.5f,
-                0.0f});
+        auto jumpUI = std::make_unique<Sprite>();
+        jumpUI->SetName("OperationJumpUISprite");
+        jumpUI->SetUniqueBatchKey();
+        jumpUI->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *mat = jumpUI->GetComponent2D<Material2D>()) {
+            mat->SetTexture(jumpTexture);
+            mat->SetColor(operationUIBaseColor_);
         }
-        operationUISprite_ = operationUI.get();
-        (void)ctx->AddObject2D(std::move(operationUI));
+        if (auto *tr = jumpUI->GetComponent2D<Transform2D>()) {
+            tr->SetScale(Vector3{jumpWidth, jumpHeight, 1.0f});
+            const Vector3 basePos{
+                screenWidth_ - operationUIMarginRight_ - jumpWidth * 0.5f,
+                operationUIMarginBottom_ + gravityHeight + operationUIVerticalSpacing_ + jumpHeight * 0.5f,
+                0.0f};
+            tr->SetTranslate(basePos);
+            operationJumpUIBasePosition_ = basePos;
+        }
+        operationJumpUISprite_ = jumpUI.get();
+        (void)ctx->AddObject2D(std::move(jumpUI));
+
+        auto gravityDirectionAllowUI = std::make_unique<Sprite>();
+        gravityDirectionAllowUI->SetName("GravityChangeDirectionAllowUISprite");
+        gravityDirectionAllowUI->SetUniqueBatchKey();
+        gravityDirectionAllowUI->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *mat = gravityDirectionAllowUI->GetComponent2D<Material2D>()) {
+            mat->SetTexture(gravityDirectionAllowTexture);
+            Vector4 color = gravityDirectionAllowBaseColor_;
+            color.w = 0.0f;
+            mat->SetColor(color);
+        }
+        if (auto *tr = gravityDirectionAllowUI->GetComponent2D<Transform2D>()) {
+            tr->SetScale(Vector3{gravityDirectionAllowWidth, gravityDirectionAllowHeight, 1.0f});
+            const Vector3 basePos{
+                operationGravityUIBasePosition_.x - (gravityWidth * 0.5f + gravityDirectionAllowWidth * 0.5f + gravityDirectionAllowMargin_),
+                operationGravityUIBasePosition_.y,
+                0.0f};
+            tr->SetTranslate(basePos);
+            gravityDirectionAllowUIBasePosition_ = basePos;
+        }
+        gravityDirectionAllowUISprite_ = gravityDirectionAllowUI.get();
+        (void)ctx->AddObject2D(std::move(gravityDirectionAllowUI));
 
         ApplyVisibility();
     }
@@ -231,6 +301,9 @@ public:
         if (player_ && !playerMovementController_) {
             playerMovementController_ = player_->GetComponent3D<PlayerMovementController>();
         }
+        if (player_ && !playerInputHandler_) {
+            playerInputHandler_ = player_->GetComponent3D<PlayerInputHandler>();
+        }
         if (!stageGroundGenerator_) {
             stageGroundGenerator_ = ctx->GetComponent<StageGroundGenerator>();
         }
@@ -238,11 +311,23 @@ public:
             stageGoalPlaneController_ = ctx->GetComponent<StageGoalPlaneController>();
         }
 
-        if (auto *ic = ctx->GetInputCommand()) {
+        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+
+        auto *ic = ctx->GetInputCommand();
+        operationJumpUIActive_ = !(playerInputHandler_ && playerInputHandler_->IsGravitySwitching());
+        operationGravityUIActive_ = !playerMovementController_ || playerMovementController_->CanUseGravityChange();
+
+        if (ic) {
             if (playerMovementController_ && ic->Evaluate("PlayerGravitySwitchTrigger").Triggered() && !playerMovementController_->CanUseGravityChange()) {
                 gravityGaugeShakeActive_ = true;
                 gravityGaugeShakeElapsed_ = 0.0f;
             }
+
+            UpdateOperationInputUISprite(operationJumpUISprite_, operationJumpUIBasePosition_, ic->Evaluate("PlayerJump").Triggered(), operationJumpUIActive_, operationJumpUIPressed_, operationJumpUIReleaseElapsed_, dt);
+            UpdateOperationInputUISprite(operationGravityUISprite_, operationGravityUIBasePosition_, ic->Evaluate("PlayerGravitySwitchTrigger").Triggered(), operationGravityUIActive_, operationGravityUIPressed_, operationGravityUIReleaseElapsed_, dt);
+        } else {
+            UpdateOperationInputUISprite(operationJumpUISprite_, operationJumpUIBasePosition_, false, operationJumpUIActive_, operationJumpUIPressed_, operationJumpUIReleaseElapsed_, dt);
+            UpdateOperationInputUISprite(operationGravityUISprite_, operationGravityUIBasePosition_, false, operationGravityUIActive_, operationGravityUIPressed_, operationGravityUIReleaseElapsed_, dt);
         }
 
         const int touchedCount = stageGroundGenerator_ ? stageGroundGenerator_->GetTouchedGroundCount() : 0;
@@ -256,7 +341,6 @@ public:
             landingPopupPendingStartTouchedCount_ = touchedCount;
         }
 
-        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
         landingPopupRequestTimer_ = std::max(0.0f, landingPopupRequestTimer_ - dt);
         landingPopupRemainTime_ = std::max(0.0f, landingPopupRemainTime_ - dt);
 
@@ -356,6 +440,8 @@ public:
             fallDistanceText_->SetTextFormat("Fall Distance: {0:.2f}", playerMovementController_->GetAccumulatedFallDistance());
         }
 
+        UpdateGravityDirectionAllowUI();
+
         if (clearPresentationActive_) {
             clearPresentationElapsed_ += dt;
             const float fadeT = std::clamp(clearPresentationElapsed_ / std::max(0.0001f, clearPresentationDuration_), 0.0f, 1.0f);
@@ -370,8 +456,8 @@ public:
                 if (clearPresentationElapsed_ >= clearPresentationDuration_) {
                     clearResultText_->SetTextFormat("Touched Ground: {0}", clearTouchedGroundCount_);
                     SetTextAlpha(clearResultText_, 1.0f);
-                    if (auto *ic = ctx->GetInputCommand()) {
-                        if (ic->Evaluate("Submit").Triggered()) {
+                    if (auto *ic2 = ctx->GetInputCommand()) {
+                        if (ic2->Evaluate("Submit").Triggered()) {
                             clearReturnRequested_ = true;
                         }
                     }
@@ -438,11 +524,45 @@ private:
             }
         }
 
-        if (operationUISprite_) {
-            if (auto *mat = operationUISprite_->GetComponent2D<Material2D>()) {
+        if (operationJumpUISprite_) {
+            if (auto *mat = operationJumpUISprite_->GetComponent2D<Material2D>()) {
                 Vector4 color = operationUIBaseColor_;
                 color.w *= alpha;
                 mat->SetColor(color);
+            }
+            if (!isVisible_) {
+                if (auto *tr = operationJumpUISprite_->GetComponent2D<Transform2D>()) {
+                    tr->SetTranslate(operationJumpUIBasePosition_);
+                }
+                operationJumpUIPressed_ = false;
+                operationJumpUIReleaseElapsed_ = 0.0f;
+            }
+        }
+
+        if (operationGravityUISprite_) {
+            if (auto *mat = operationGravityUISprite_->GetComponent2D<Material2D>()) {
+                Vector4 color = operationUIBaseColor_;
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+            if (!isVisible_) {
+                if (auto *tr = operationGravityUISprite_->GetComponent2D<Transform2D>()) {
+                    tr->SetTranslate(operationGravityUIBasePosition_);
+                }
+                operationGravityUIPressed_ = false;
+                operationGravityUIReleaseElapsed_ = 0.0f;
+            }
+        }
+
+        if (gravityDirectionAllowUISprite_) {
+            if (auto *mat = gravityDirectionAllowUISprite_->GetComponent2D<Material2D>()) {
+                Vector4 color = gravityDirectionAllowBaseColor_;
+                color.w *= 0.0f;
+                mat->SetColor(color);
+            }
+            if (auto *tr = gravityDirectionAllowUISprite_->GetComponent2D<Transform2D>()) {
+                tr->SetTranslate(gravityDirectionAllowUIBasePosition_);
+                tr->SetRotate(Vector3{0.0f, 0.0f, 0.0f});
             }
         }
 
@@ -450,6 +570,150 @@ private:
             clearResultText_->SetText(" ");
             SetTextAlpha(clearResultText_, 0.0f);
         }
+    }
+
+    void UpdateOperationInputUISprite(
+        Sprite *sprite,
+        const Vector3 &basePosition,
+        bool inputTriggered,
+        bool isActive,
+        bool &pressedState,
+        float &releaseElapsed,
+        float dt) {
+        if (!sprite) return;
+
+        auto *tr = sprite->GetComponent2D<Transform2D>();
+        auto *mat = sprite->GetComponent2D<Material2D>();
+        if (!tr || !mat) return;
+
+        if (!isActive) {
+            pressedState = false;
+            releaseElapsed = 0.0f;
+            tr->SetTranslate(basePosition);
+            Vector4 color = operationUIInactiveColor_;
+            color.w *= (isVisible_ ? 1.0f : 0.0f);
+            mat->SetColor(color);
+            return;
+        }
+
+        if (inputTriggered) {
+            pressedState = true;
+            releaseElapsed = 0.0f;
+            Vector3 pos = basePosition;
+            pos.x += operationUIPressedOffsetX_;
+            tr->SetTranslate(pos);
+
+            Vector4 color = operationUIActiveColor_;
+            color.w *= (isVisible_ ? 1.0f : 0.0f);
+            mat->SetColor(color);
+            return;
+        }
+
+        Vector3 pos = basePosition;
+        if (pressedState) {
+            releaseElapsed += dt;
+            const float t = std::clamp(releaseElapsed / std::max(0.0001f, operationUIReleaseDuration_), 0.0f, 1.0f);
+            const float eased = 1.0f - std::pow(1.0f - t, 3.0f);
+            pos.x += operationUIPressedOffsetX_ * (1.0f - eased);
+            if (t >= 1.0f) {
+                pressedState = false;
+            }
+        }
+        tr->SetTranslate(pos);
+
+        Vector4 color = operationUIBaseColor_;
+        color.w *= (isVisible_ ? 1.0f : 0.0f);
+        mat->SetColor(color);
+    }
+
+    void UpdateGravityDirectionAllowUI() {
+        if (!gravityDirectionAllowUISprite_) return;
+
+        auto *tr = gravityDirectionAllowUISprite_->GetComponent2D<Transform2D>();
+        auto *mat = gravityDirectionAllowUISprite_->GetComponent2D<Material2D>();
+        if (!tr || !mat) return;
+
+        bool visible = false;
+        Vector3 direction{0.0f, 1.0f, 0.0f};
+
+        if (playerInputHandler_ && playerInputHandler_->IsGravitySwitching()) {
+            visible = true;
+            if (auto requested = playerInputHandler_->GetRequestedGravityDirection(); requested.has_value()) {
+                direction = *requested;
+            } else if (playerMovementController_) {
+                direction = -playerMovementController_->GetGravityDirection();
+            }
+        }
+
+        Vector4 color = gravityDirectionAllowBaseColor_;
+        color.w *= (visible && isVisible_) ? 1.0f : 0.0f;
+        mat->SetColor(color);
+
+        if (!visible) {
+            tr->SetTranslate(gravityDirectionAllowUIBasePosition_);
+            tr->SetRotate(Vector3{0.0f, 0.0f, 0.0f});
+            return;
+        }
+
+        Vector2 screenDirection;
+        if (!GetGravityDirectionScreenVector(direction, screenDirection)) {
+            screenDirection = Vector2{0.0f, 1.0f};
+        }
+
+        Vector3 uiPosition = gravityDirectionAllowUIBasePosition_;
+        if (player_) {
+            if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
+                Vector2 playerScreen;
+                if (ProjectWorldTo2DWorld(playerTr->GetTranslate(), playerScreen)) {
+                    uiPosition = Vector3{
+                        playerScreen.x + screenDirection.x * gravityDirectionAllowRadius_,
+                        playerScreen.y + screenDirection.y * gravityDirectionAllowRadius_,
+                        0.0f};
+                }
+            }
+        }
+
+        const float angle = GetGravityDirectionArrowAngleFromScreenDirection(screenDirection);
+        tr->SetTranslate(uiPosition);
+        tr->SetRotate(Vector3{0.0f, 0.0f, angle});
+    }
+
+    bool GetGravityDirectionScreenVector(const Vector3 &direction, Vector2 &outScreenDirection) const {
+        outScreenDirection = Vector2{direction.x, direction.y};
+
+        if (player_ && mainCamera_) {
+            if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
+                const Vector3 base = playerTr->GetTranslate();
+                const Vector3 dir = direction.Normalize();
+                Vector2 p0;
+                Vector2 p1;
+                if (ProjectWorldTo2DWorld(base, p0) && ProjectWorldTo2DWorld(base + dir * 5.0f, p1)) {
+                    outScreenDirection = p1 - p0;
+                }
+            }
+        }
+
+        const float lenSq = outScreenDirection.x * outScreenDirection.x + outScreenDirection.y * outScreenDirection.y;
+        if (lenSq <= 0.000001f) {
+            return false;
+        }
+
+        const float invLen = 1.0f / std::sqrt(lenSq);
+        outScreenDirection.x *= invLen;
+        outScreenDirection.y *= invLen;
+        return true;
+    }
+
+    float GetGravityDirectionArrowAngleFromScreenDirection(const Vector2 &screenDirection) const {
+        return std::atan2(-screenDirection.x, screenDirection.y);
+    }
+
+    float GetGravityDirectionArrowAngle(const Vector3 &direction) const {
+        Vector2 screenDirection;
+        if (!GetGravityDirectionScreenVector(direction, screenDirection)) {
+            return 0.0f;
+        }
+        return GetGravityDirectionArrowAngleFromScreenDirection(screenDirection);
     }
 
     bool ProjectWorldTo2DWorld(const Vector3 &world, Vector2 &out) const {
@@ -483,6 +747,7 @@ private:
 
     Object3DBase *player_ = nullptr;
     PlayerMovementController *playerMovementController_ = nullptr;
+    PlayerInputHandler *playerInputHandler_ = nullptr;
     StageGroundGenerator *stageGroundGenerator_ = nullptr;
     StageGoalPlaneController *stageGoalPlaneController_ = nullptr;
     Camera3D *mainCamera_ = nullptr;
@@ -496,7 +761,9 @@ private:
     Text *landingTouchedGroundCountText_ = nullptr;
     Sprite *clearFadeSprite_ = nullptr;
     Text *clearResultText_ = nullptr;
-    Sprite *operationUISprite_ = nullptr;
+    Sprite *operationJumpUISprite_ = nullptr;
+    Sprite *operationGravityUISprite_ = nullptr;
+    Sprite *gravityDirectionAllowUISprite_ = nullptr;
 
     int previousTouchedGroundCount_ = 0;
     int landingTouchedGroundCount_ = 0;
@@ -547,9 +814,27 @@ private:
     Vector4 goalSegmentColorBase_{0.6f, 0.6f, 0.6f, 1.0f};
 
     Vector2 operationUIFallbackSize_{512.0f, 256.0f};
+    Vector2 gravityDirectionAllowFallbackSize_{96.0f, 96.0f};
     float operationUIMarginRight_ = 32.0f;
     float operationUIMarginBottom_ = 24.0f;
+    float operationUIVerticalSpacing_ = 12.0f;
+    float gravityDirectionAllowMargin_ = 24.0f;
+    float operationUIPressedOffsetX_ = -128.0f;
+    float operationUIReleaseDuration_ = 0.2f;
+    Vector3 operationJumpUIBasePosition_{0.0f, 0.0f, 0.0f};
+    Vector3 operationGravityUIBasePosition_{0.0f, 0.0f, 0.0f};
+    Vector3 gravityDirectionAllowUIBasePosition_{0.0f, 0.0f, 0.0f};
+    bool operationJumpUIPressed_ = false;
+    bool operationGravityUIPressed_ = false;
+    bool operationJumpUIActive_ = true;
+    bool operationGravityUIActive_ = true;
+    float operationJumpUIReleaseElapsed_ = 0.0f;
+    float operationGravityUIReleaseElapsed_ = 0.0f;
     Vector4 operationUIBaseColor_{1.0f, 1.0f, 1.0f, 1.0f};
+    Vector4 operationUIActiveColor_{1.0f, 1.0f, 0.0f, 1.0f};
+    Vector4 operationUIInactiveColor_{0.5f, 0.5f, 0.5f, 1.0f};
+    Vector4 gravityDirectionAllowBaseColor_{1.0f, 1.0f, 1.0f, 1.0f};
+    float gravityDirectionAllowRadius_ = 128.0f;
 };
 
 } // namespace KashipanEngine

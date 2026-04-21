@@ -152,6 +152,11 @@ public:
 			}
         }
 
+		// スポーン要求の順番をstageProgressの昇順にソートする
+        std::sort(spawnRequests_.begin(), spawnRequests_.end(), [](const SpawnRequest &a, const SpawnRequest &b) {
+            return a.stageProgress < b.stageProgress;
+			});
+
         // 生成要求
         TryGenerate();
     }
@@ -179,7 +184,19 @@ public:
                     ++touchedGroundCount_;
                 }
             }
+
+			// プレイヤーより後ろの地面オブジェクトを非アクティブにする
+            auto *tr = g.object->GetComponent3D<Transform3D>();
+            if (!tr) continue;
+            if ((tr->GetTranslate().z - g.length) > player_->GetComponent3D<Transform3D>()->GetTranslate().z) {
+                g.isActive = false;
+			}
         }
+
+		// スポーン要求のインデックスがまだリクエストの数より少ない場合、次のスポーン要求を処理して地面を生成する
+        if (spawnRequests_.size() > currentSpawnRequestIndex_) {
+            SpawnGroundFromStageData();
+		}  
     }
 
     void RequestGenerate() {
@@ -225,6 +242,7 @@ private:
         Object3DBase *object = nullptr;
         float centerZ = 0.0f;
         float length = 0.0f;
+		bool isActive = false;
     };
 
     void TryGenerate() {
@@ -244,71 +262,23 @@ private:
         generated_ = true;
     }
 
-	/// @brief JSONから読み込んだすべての地面オブジェクトを一気に生成・配置します。
+	/// @brief JSONから読み込んだらプールの限界まで地面オブジェクトを生成する。
     void CreateAllGrounds(SceneContext *ctx) {
-        grounds_.clear();
-        grounds_.reserve(spawnRequests_.size());
+		// 地面オブジェクトのプールを生成
+		CreateGroundPool(ctx);
 
-        // 0.0(スタート)と1.0(ゴール)のZ座標を取得
-        const float startZ = spawnGroundCenterZ_;
-		float goalZ = -8192.0f;
-        if (auto* gpc = GetOwnerContext()->GetComponent<StageGoalPlaneController>()) {
-			goalZ = gpc->GetGoalZ();
-        }
-        const float endZ = goalZ;
+        // 今のスポーンリクエストインデックスをリセット
+		currentSpawnRequestIndex_ = 0;
+		// プールの容量すべて使って生成できるところまで生成する
+        for(auto &g : grounds_) {
+            if (!g.object) continue;
+            if (!g.isActive) {
+                g.isActive = true;
 
-        // 全てのリクエストを処理してオブジェクトを生成
-        for (const auto& req : spawnRequests_) {
-			// Boxオブジェクトを生成し、名前とバッチキーを設定
-            auto obj = std::make_unique<Box>();
-            obj->SetName("Ground");
-            obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
-
-			// スクリーンバッファがあれば描画に登録
-            if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
-                obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+				// 最初から最後まで生成できるスポーンリクエストがあれば生成する
+				SpawnGroundFromStageData();
             }
-            // 地面としての定義
-            obj->RegisterComponent<GroundDefined>(collider_);
-
-			// 一部の地面にスロー効果を付与
-            /*if (rand() % 5 == 0) {
-                obj->RegisterComponent<SlowGroundDefined>();
-            }*/
-
-            // トランスフォームの適用(配置)
-            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                float stageLengthRate = 1.0f;
-                if (editStageLengthData != 0.0f) {
-                    stageLengthRate = std::fabsf(endZ - startZ)/ editStageLengthData;
-                } else {
-                    assert(false);
-                }
-                const float centerZ = startZ + (endZ - startZ) * req.stageProgress;
-                
-                // 角度と半径からXY座標を計算
-                const float x = std::cos(req.angle) * req.radius * stageLengthRate;
-                const float y = std::sin(req.angle) * req.radius * stageLengthRate;
-
-                tr->SetTranslate(Vector3{x, y, centerZ});
-                tr->SetRotate(Vector3{0.0f, 0.0f, req.angle});
-                tr->SetScale(Vector3{req.panelThickness * stageLengthRate, req.panelWidth * stageLengthRate, req.panelLength * stageLengthRate});
-            }
-
-            // シーンの追加と管理リストへの登録
-            Object3DBase *objPtr = obj.get();
-            if (!ctx->AddObject3D(std::move(obj)) || objPtr == nullptr) {
-                continue;
-            }
-
-            GroundRuntime runtime{};
-            runtime.object = objPtr;
-            if (auto *tr = objPtr->GetComponent3D<Transform3D>()) {
-                runtime.centerZ = tr->GetTranslate().z;
-                runtime.length = req.panelLength;
-            }
-            grounds_.push_back(runtime);
-        }
+		}
     }
 
 	/// @brief プレイヤーのスポーン位置に地面を生成する。これは通常の地面と同じ見た目・当たり判定だが、スポーン位置に固定され、ステージの進行に応じて再利用されない。
@@ -335,6 +305,91 @@ private:
         (void)ctx->AddObject3D(std::move(obj));
     }
 
+    /// @brief 地面のプールを生成する
+    void CreateGroundPool(SceneContext *ctx) {
+        grounds_.clear();
+        for(int i = 0; i < poolSize_; ++i) {
+			// Boxオブジェクトを生成し、名前とバッチキーを設定
+            auto obj = std::make_unique<Box>();
+            obj->SetName("GroundPool");
+            obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
+            if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
+                obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+            }
+			// 地面としての定義
+            obj->RegisterComponent<GroundDefined>(collider_);
+            Object3DBase *objPtr = obj.get();
+            if (ctx->AddObject3D(std::move(obj)) && objPtr) {
+                GroundRuntime runtime{};
+                runtime.object = objPtr;
+                grounds_.push_back(runtime);
+            }
+		}
+	}
+
+	/// @brief 地面をスポーン位置に生成する。プールの空きがない場合は何もしない
+    void SpawnGround(const Vector3& pos, const Vector3& rot, const Vector3& scale) {
+        for(auto &g : grounds_) {
+            if (!g.object) continue;
+            if (g.isActive) continue;
+            if (auto *tr = g.object->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(pos);
+                tr->SetRotate(rot);
+                tr->SetScale(scale);
+                g.isActive = true;
+
+				g.length = scale.z; // 長さを保存しておく（Z方向のスケールを長さとみなす）
+                break;
+            }
+		}
+	}
+
+	/// @brief 地面プールの空きがあるかどうか
+    bool HasGroundPoolSpace() const {
+        for (const auto &g : grounds_) {
+            if (!g.object) continue;
+            if (!g.isActive) {
+                return true;
+            }
+        }
+        return false;
+	}
+
+    void SpawnGroundFromStageData() {
+        if (!HasGroundPoolSpace()) return;
+
+        // 現在のスポーンリクエストを取得
+        if (currentSpawnRequestIndex_ >= spawnRequests_.size()) return;
+        const auto& req = spawnRequests_[currentSpawnRequestIndex_];
+
+        // 0.0(スタート)と1.0(ゴール)のZ座標を取得
+        const float startZ = spawnGroundCenterZ_;
+        float goalZ = -8192.0f;
+        if (auto* gpc = GetOwnerContext()->GetComponent<StageGoalPlaneController>()) {
+            goalZ = gpc->GetGoalZ();
+        }
+        const float endZ = goalZ;
+
+		// JSONデータ上のstageProgressを元に、ステージのZ方向の位置を計算
+        float stageLengthRate = 1.0f;
+        if (editStageLengthData != 0.0f) {
+            stageLengthRate = std::fabsf(endZ - startZ) / editStageLengthData;
+        } else {
+            assert(false);
+        }
+        const float centerZ = startZ + (endZ - startZ) * req.stageProgress;
+        // 角度と半径からXY座標を計算
+        const float x = -std::sin(req.angle) * req.radius * stageLengthRate;
+        const float y = -std::cos(req.angle) * req.radius * stageLengthRate;
+
+        // 地面オブジェクトを配置
+        SpawnGround(
+            Vector3{ x, y, centerZ },
+            Vector3{ 0.0f, 0.0f, req.angle },
+            Vector3{ req.panelWidth * stageLengthRate, req.panelThickness * stageLengthRate, req.panelLength * stageLengthRate });
+		++currentSpawnRequestIndex_;
+    }
+
     bool requested_ = false;
     bool generated_ = false;
 
@@ -354,6 +409,7 @@ private:
     int minPanelsPerSegment_ = 6;
 
 	std::vector<SpawnRequest> spawnRequests_; // JSONから読み込んだすべてのスポーンリクエスト
+	int currentSpawnRequestIndex_ = 0; // 次にスポーンすべきリクエストのインデックス
 	const std::string stageDataFilePath_ = "Assets/Application/StageData/stage.json";
 
     float nextSpawnZ_ = 0.0f;
@@ -366,6 +422,7 @@ private:
     Object3DBase *player_ = nullptr;
     Object3DBase *spawnGround_ = nullptr;
     std::vector<GroundRuntime> grounds_{};
+	const int poolSize_ = 20;
     int touchedGroundCount_ = 0;
     bool hasMinSpawnZ_ = false;
 };

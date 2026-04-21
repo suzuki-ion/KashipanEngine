@@ -385,7 +385,7 @@ private:
         // 地面オブジェクトを配置
         SpawnGround(
             Vector3{ x, y, centerZ },
-            Vector3{ 0.0f, 0.0f, req.angle },
+            Vector3{ 0.0f, 0.0f, -req.angle },
             Vector3{ req.panelWidth * stageLengthRate, req.panelThickness * stageLengthRate, req.panelLength * stageLengthRate });
 		++currentSpawnRequestIndex_;
     }

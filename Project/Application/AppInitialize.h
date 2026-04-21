@@ -32,7 +32,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
 
-		sm->ChangeScene("TestScene");
+		sm->ChangeScene("TitleScene");
     }
 
     if (context.inputCommand) {

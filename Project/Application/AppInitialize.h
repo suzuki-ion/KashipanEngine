@@ -11,7 +11,7 @@
 namespace KashipanEngine {
 
 inline void AppInitialize(const GameEngine::Context &context) {
-    auto *mainWindow = Window::CreateNormal("3104_グランナー", 1280, 720);
+    auto *mainWindow = Window::CreateNormal("Main Window", 1280, 720);
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
     mainWindow->UnregisterWindowEvent(WM_SYSCOMMAND);
     mainWindow->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();

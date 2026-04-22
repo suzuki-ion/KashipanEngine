@@ -41,7 +41,7 @@
 namespace KashipanEngine {
 
 inline void AppInitialize(const GameEngine::Context &context) {
-    Window::CreateOverlay("3104_グランナー", 1280, 720, true);
+    Window::CreateOverlay("Main Window", 1280, 720, true);
 
     if (context.sceneManager) {
         auto *sm = context.sceneManager;

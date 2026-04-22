@@ -57,7 +57,7 @@ namespace KashipanEngine {
 
 inline void AppInitialize(const GameEngine::Context &context) {
     // 1) ウィンドウ生成（このプロジェクトでも AppInitialize 内で作っている）
-    Window::CreateNormal("3104_グランナー", 1280, 720);
+    Window::CreateNormal("Main Window", 1280, 720);
 
     // 2) シーン登録と初期シーン設定
     if (context.sceneManager) {

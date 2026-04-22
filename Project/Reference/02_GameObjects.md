@@ -175,7 +175,7 @@ private:
 
 ```cpp
 auto h = obj->AttachToRenderer(
-    Window::GetWindow("3104_グランナー"),
+    Window::GetWindow("Main Window"),
     "Object2D.Solid.BlendNormal" // 例：パイプライン名（json/asset 側と一致させる）
 );
 

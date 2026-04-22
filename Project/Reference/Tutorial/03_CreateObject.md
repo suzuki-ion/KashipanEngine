@@ -58,7 +58,7 @@ void MyScene::Initialize() {
 オブジェクトは `AttachToRenderer(...)` で描画先に登録します。
 
 ```cpp
-auto* window = KashipanEngine::Window::GetWindow("3104_グランナー");
+auto* window = KashipanEngine::Window::GetWindow("Main Window");
 if (window) {
     obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
 }

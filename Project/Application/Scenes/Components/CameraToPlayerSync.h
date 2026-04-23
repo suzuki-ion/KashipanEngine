@@ -107,7 +107,7 @@ public:
         cameraController->SetTargetTranslate(cameraPos);
         cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, up));
         cameraController->SetTargetFovY(targetFov);
-        cameraController->SetLerpFactorMove(1.0f);
+        cameraController->SetLerpFactorMove(0.9f);
         cameraController->SetLerpFactorRotate(0.05f);
         cameraController->SetLerpFactorFov(0.1f);
     }
@@ -164,17 +164,17 @@ private:
 
     Object3DBase *player_ = nullptr;
 
-    float followDistanceMin_ = 4.0f;
+    float followDistanceMin_ = 1.0f;
     float followDistanceMax_ = 2.0f;
     float followHeightMin_ = 2.0f;
     float followHeightMax_ = 6.0f;
     float lookAtHeightMin_ = 2.0f;
-    float lookAtHeightMax_ = 5.0f;
+    float lookAtHeightMax_ = 6.0f;
     float fovMin_ = 0.8f;
-    float fovMax_ = 2.25f;
+    float fovMax_ = 2.5f;
     float gravitySwitchFollowDistance_ = 10.0f;
     float fallSpeedForMaxTilt_ = 128.0f;
-    float maxLookDownOffset_ = 6.0f;
+    float maxLookDownOffset_ = 4.0f;
 
     float landingImpactThreshold_ = 6.0f;
     float landingImpactForMaxShake_ = 64.0f;

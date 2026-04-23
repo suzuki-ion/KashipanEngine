@@ -341,6 +341,11 @@ private:
 				g.length = scale.z; // 長さを保存しておく（Z方向のスケールを長さとみなす）
                 break;
             }
+
+			// 地面オブジェクトをスポーン位置に配置した後、タッチ状態をリセットする
+            if(auto *ground = g.object->GetComponent3D<GroundDefined>()) {
+                ground->ResetTouchState();
+			}
 		}
 	}
 

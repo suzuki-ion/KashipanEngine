@@ -61,7 +61,7 @@ public:
             lookDir = (lookTarget - cameraPos).Normalize();
         }
 
-        float targetFov = 0.95f + (2.25f - 0.95f) * speedRatio;
+        float targetFov = Lerp(fovMin_, fovMax_, speedRatio);
 
         auto *inputHandler = player_->GetComponent3D<PlayerInputHandler>();
         const bool isGravitySwitching = inputHandler && inputHandler->IsGravitySwitching();
@@ -165,14 +165,16 @@ private:
     Object3DBase *player_ = nullptr;
 
     float followDistanceMin_ = 4.0f;
-    float followDistanceMax_ = 4.0f;
+    float followDistanceMax_ = 2.0f;
     float followHeightMin_ = 2.0f;
-    float followHeightMax_ = 4.0f;
+    float followHeightMax_ = 6.0f;
     float lookAtHeightMin_ = 2.0f;
-    float lookAtHeightMax_ = 4.0f;
+    float lookAtHeightMax_ = 5.0f;
+    float fovMin_ = 0.8f;
+    float fovMax_ = 2.25f;
     float gravitySwitchFollowDistance_ = 10.0f;
     float fallSpeedForMaxTilt_ = 128.0f;
-    float maxLookDownOffset_ = 4.0f;
+    float maxLookDownOffset_ = 6.0f;
 
     float landingImpactThreshold_ = 6.0f;
     float landingImpactForMaxShake_ = 64.0f;

@@ -311,6 +311,9 @@ public:
         if (gravityGaugeMax_ <= 0.000001f) return 0.0f;
         return std::clamp(gravityGauge_ / gravityGaugeMax_, 0.0f, 1.0f);
     }
+    void SetGravityGauge(float value) {
+        gravityGauge_ = std::clamp(value, 0.0f, gravityGaugeMax_);
+    }
     float GetGravityChangeBlend() const { return gravityChangeBlend_; }
     float GetAccumulatedFallDistance() const { return accumulatedFallDistance_; }
     bool ConsumeLandingImpact(float &outImpact) {

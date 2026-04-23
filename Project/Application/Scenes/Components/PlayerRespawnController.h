@@ -130,6 +130,12 @@ private:
             playerMovementController_->SetLateralVelocity(Vector3{0.0f, 0.0f, 0.0f});
             playerMovementController_->SetGravityVelocity(Vector3{0.0f, 0.0f, 0.0f});
             playerMovementController_->SetMovementLocked(false);
+
+            float gravityGauge = playerMovementController_->GetGravityGauge();
+            float gravityGaugePerUse = playerMovementController_->GetGravityGaugePerUse();
+            if (gravityGauge < gravityGaugePerUse) {
+                playerMovementController_->SetGravityGauge(gravityGaugePerUse);
+            }
         }
         if (stageGroundGenerator_ && playerTr) {
             stageGroundGenerator_->RespawnStartGroundUnderPlayer();

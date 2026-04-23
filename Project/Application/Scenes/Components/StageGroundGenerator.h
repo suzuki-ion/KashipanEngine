@@ -422,7 +422,7 @@ private:
     Object3DBase *player_ = nullptr;
     Object3DBase *spawnGround_ = nullptr;
     std::vector<GroundRuntime> grounds_{};
-	const int poolSize_ = 20;
+	const int poolSize_ = 200;
     int touchedGroundCount_ = 0;
     bool hasMinSpawnZ_ = false;
 };

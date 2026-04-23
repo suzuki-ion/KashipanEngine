@@ -58,7 +58,7 @@ public:
 private:
     Vector3 lateralVelocity_{0.0f, 0.0f, 0.0f};
     float lateralInput_ = 0.0f;
-    float lateralMaxSpeed_ = 16.0f;
+    float lateralMaxSpeed_ = 32.0f;
     float lateralAcceleration_ = 8.0f;
     float lateralSpeedPerForward_ = 0.25f;
 };

@@ -3,39 +3,7 @@
   "spawn_reqests": [
     {
       "stageProgress": 0.0,
-      "radius": 9.5483,
-      "angle": 0.0,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 0.25,
-      "radius": 9.6587,
-      "angle": 0.0,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 0.5,
-      "radius": 9.5483,
-      "angle": 0.0,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 0.6812,
-      "radius": 9.7157,
-      "angle": 0.0,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 0.0,
-      "radius": 0.8,
+      "radius": 0.6202,
       "angle": 0.0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -155,7 +123,7 @@
     },
     {
       "stageProgress": 0.01,
-      "radius": 0.8,
+      "radius": 0.6202,
       "angle": 0.0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -163,7 +131,7 @@
     },
     {
       "stageProgress": 0.03,
-      "radius": 0.8,
+      "radius": 0.6202,
       "angle": 0.0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -283,7 +251,7 @@
     },
     {
       "stageProgress": 0.02,
-      "radius": 0.8,
+      "radius": 0.6202,
       "angle": 0.0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -523,7 +491,7 @@
     },
     {
       "stageProgress": 0.04,
-      "radius": 0.8,
+      "radius": 0.6202,
       "angle": 0.0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -1626,7 +1594,7 @@
       "panelLength": 1.0
     },
     {
-      "stageProgress": 0.5256,
+      "stageProgress": 0.5279,
       "radius": 0.3604,
       "angle": -0.4636,
       "panelWidth": 0.5,
@@ -1771,8 +1739,8 @@
     },
     {
       "stageProgress": 0.4466,
-      "radius": 0.5898,
-      "angle": 2.9553,
+      "radius": 0.6385,
+      "angle": 2.5516,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -1850,7 +1818,7 @@
       "panelLength": 1.0
     },
     {
-      "stageProgress": 0.6042,
+      "stageProgress": 0.606,
       "radius": 1.2185,
       "angle": -0.8594,
       "panelWidth": 0.5,
@@ -1963,8 +1931,8 @@
     },
     {
       "stageProgress": 0.8614,
-      "radius": 0.5175,
-      "angle": 0.9724,
+      "radius": 0.585,
+      "angle": 1.2907,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -1995,14 +1963,14 @@
     },
     {
       "stageProgress": 0.8898,
-      "radius": 0.2688,
-      "angle": -2.9756,
+      "radius": 0.658,
+      "angle": -3.0741,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
-      "stageProgress": 0.8711,
+      "stageProgress": 0.8935,
       "radius": 0.8091,
       "angle": 0.0737,
       "panelWidth": 0.5,
@@ -2011,24 +1979,24 @@
     },
     {
       "stageProgress": 0.8841,
-      "radius": 0.3331,
-      "angle": -1.9643,
+      "radius": 0.6035,
+      "angle": -2.6066,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.8765,
-      "radius": 0.3883,
-      "angle": -3.0237,
+      "radius": 0.7783,
+      "angle": -3.0829,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.8611,
-      "radius": 0.5749,
-      "angle": 1.9294,
+      "radius": 0.7503,
+      "angle": 2.0285,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2043,16 +2011,16 @@
     },
     {
       "stageProgress": 0.7998,
-      "radius": 0.8009,
-      "angle": 2.3628,
+      "radius": 0.8952,
+      "angle": 2.4072,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.8098,
-      "radius": 0.7969,
-      "angle": 1.5742,
+      "radius": 0.9408,
+      "angle": 1.5737,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2083,8 +2051,8 @@
     },
     {
       "stageProgress": 0.8311,
-      "radius": 0.4844,
-      "angle": 0.7383,
+      "radius": 0.7178,
+      "angle": 0.4715,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2171,64 +2139,56 @@
     },
     {
       "stageProgress": 0.9999,
-      "radius": 0.0441,
-      "angle": 2.2037,
+      "radius": 0.3176,
+      "angle": 3.0293,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.9999,
-      "radius": 0.2884,
-      "angle": 0.2863,
+      "radius": 0.6354,
+      "angle": 0.556,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.9999,
-      "radius": 0.6265,
-      "angle": -2.1509,
+      "radius": 1.0512,
+      "angle": -1.9036,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.9999,
-      "radius": 0.6986,
-      "angle": -1.196,
+      "radius": 1.212,
+      "angle": -1.1778,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.9629,
-      "radius": 0.7859,
-      "angle": 2.454,
+      "radius": 0.9882,
+      "angle": 2.5165,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.9586,
-      "radius": 0.7315,
-      "angle": -2.1475,
+      "radius": 0.8529,
+      "angle": -2.3393,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
       "stageProgress": 0.9486,
-      "radius": 0.7404,
-      "angle": -3.0035,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 1.0099,
-      "radius": 0.5901,
-      "angle": 1.8405,
+      "radius": 0.933,
+      "angle": -3.0322,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2243,8 +2203,8 @@
     },
     {
       "stageProgress": 0.9438,
-      "radius": 0.2156,
-      "angle": -1.0503,
+      "radius": 1.0081,
+      "angle": -0.1867,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2259,8 +2219,8 @@
     },
     {
       "stageProgress": 0.8678,
-      "radius": 0.6164,
-      "angle": -1.7476,
+      "radius": 0.8889,
+      "angle": -2.0739,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2275,16 +2235,16 @@
     },
     {
       "stageProgress": 0.86,
-      "radius": 0.7111,
-      "angle": 2.9844,
+      "radius": 1.0243,
+      "angle": -3.0823,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
     },
     {
-      "stageProgress": 0.9025,
-      "radius": 0.4197,
-      "angle": 3.0157,
+      "stageProgress": 0.9125,
+      "radius": 0.9733,
+      "angle": 3.0874,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2307,8 +2267,8 @@
     },
     {
       "stageProgress": 0.8174,
-      "radius": 0.8593,
-      "angle": 1.5723,
+      "radius": 1.0032,
+      "angle": 1.5721,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
@@ -2323,8 +2283,8 @@
     },
     {
       "stageProgress": 0.8344,
-      "radius": 0.5706,
-      "angle": -1.0222,
+      "radius": 0.7564,
+      "angle": -0.6994,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0

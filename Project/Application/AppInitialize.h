@@ -54,73 +54,53 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Pause", Key::P, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Pause", ControllerButton::Start, InputCommand::InputState::Trigger);
 
-        // タイトル選択（上下）
+        // 選択（上）
         ic->RegisterCommand("SelectUp", Key::W, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectUp", Key::Up, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectUp", ControllerButton::DPadUp, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.2f);
 
+        // 選択（下）
         ic->RegisterCommand("SelectDown", Key::S, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectDown", Key::Down, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.2f, true);
 
-        // カメラ後方確認
-        ic->RegisterCommand("CameraRearConfirm", Key::E, InputCommand::InputState::Down);
-        ic->RegisterCommand("CameraRearConfirm", Key::L, InputCommand::InputState::Down);
-        ic->RegisterCommand("CameraRearConfirm", ControllerButton::Y, InputCommand::InputState::Down);
+        // 選択（左）
+        ic->RegisterCommand("SelectLeft", Key::A, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectLeft", Key::Left, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.2f);
 
-        // プレイヤー移動（左右）
+        // 選択（右）
+        ic->RegisterCommand("SelectRight", Key::D, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectRight", Key::Right, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectRight", ControllerButton::DPadRight, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("SelectRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, 0.2f);
+
+        // プレイヤー移動（上）
+        ic->RegisterCommand("PlayerMoveUp", Key::W, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerMoveUp", Key::Up, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerMoveUp", ControllerButton::DPadUp, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerMoveUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, 0.2f);
+
+        // プレイヤー移動（下）
+        ic->RegisterCommand("PlayerMoveDown", Key::S, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerMoveDown", Key::Down, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerMoveDown", ControllerButton::DPadDown, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerMoveDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, 0.2f, true);
+
+        // プレイヤー移動（左）
         ic->RegisterCommand("PlayerMoveLeft", Key::A, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveLeft", Key::Left, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveLeft", ControllerButton::DPadLeft, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, -0.2f);
 
+        // プレイヤー移動（右）
         ic->RegisterCommand("PlayerMoveRight", Key::D, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveRight", Key::Right, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveRight", ControllerButton::DPadRight, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, 0.2f);
-
-        // プレイヤージャンプ
-        ic->RegisterCommand("PlayerJump", Key::W, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerJump", Key::Up, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerJump", ControllerButton::A, InputCommand::InputState::Down);
-
-        // 下降加速
-        ic->RegisterCommand("PlayerForwardSpeedDown", Key::S, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerForwardSpeedDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, -0.5f);
-        ic->RegisterCommand("PlayerForwardSpeedDown", ControllerButton::DPadDown, InputCommand::InputState::Down);
-        
-        // 重力方向切り替え（トリガー/リリース）
-        ic->RegisterCommand("PlayerGravitySwitchTrigger", Key::Space, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PlayerGravitySwitchTrigger", ControllerButton::X, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("PlayerGravitySwitchTrigger", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Trigger, 0, 0.2f);
-        ic->RegisterCommand("PlayerGravitySwitchTrigger", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Trigger, 0, 0.2f);
-        ic->RegisterCommand("PlayerGravitySwitchRelease", Key::Space, InputCommand::InputState::Release);
-        ic->RegisterCommand("PlayerGravitySwitchRelease", ControllerButton::X, InputCommand::InputState::Release);
-        ic->RegisterCommand("PlayerGravitySwitchRelease", InputCommand::ControllerAnalog::LeftTrigger, InputCommand::InputState::Release, 0, 0.2f);
-        ic->RegisterCommand("PlayerGravitySwitchRelease", InputCommand::ControllerAnalog::RightTrigger, InputCommand::InputState::Release, 0, 0.2f);
-
-        // 重力方向入力（上下左右）
-        ic->RegisterCommand("PlayerGravityUp", Key::W, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityUp", Key::Up, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityUp", ControllerButton::DPadUp, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityUp", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, 0.2f);
-
-        ic->RegisterCommand("PlayerGravityDown", Key::S, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityDown", Key::Down, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityDown", ControllerButton::DPadDown, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, -0.2f);
-
-        ic->RegisterCommand("PlayerGravityLeft", Key::A, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityLeft", Key::Left, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityLeft", ControllerButton::DPadLeft, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, -0.2f);
-
-        ic->RegisterCommand("PlayerGravityRight", Key::D, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityRight", Key::Right, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityRight", ControllerButton::DPadRight, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerGravityRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, 0.2f);
 
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
         // デバッグ用シーン遷移

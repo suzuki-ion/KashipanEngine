@@ -1,12 +1,12 @@
-﻿# Blender 4.4.1 MTL File: 'particle.blend'
+# Blender 5.1.1 MTL File: 'House_4.blend'
 # www.blender.org
 
-newmtl Material
+newmtl House_4_Cube.037_Merged_Mat
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
-Ni 1.450000
+Ni 1.500000
 d 1.000000
 illum 2
-map_Kd cube.png
+map_Kd House_4_Cube.037_Baked_Color.png

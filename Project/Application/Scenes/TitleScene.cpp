@@ -9,6 +9,7 @@ TitleScene::TitleScene()
 
 void TitleScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
+    auto *mainCamera3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainCamera3D() : nullptr;
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -19,6 +20,11 @@ void TitleScene::Initialize() {
     }
 
     AddSceneComponent(std::make_unique<ParticleManager>());
+    if (mainCamera3D) {
+        auto debugCameraMovement = std::make_unique<DebugCameraMovement>(mainCamera3D);
+        debugCameraMovement->SetEnable(true);
+        AddSceneComponent(std::move(debugCameraMovement));
+    }
 }
 
 TitleScene::~TitleScene() {}

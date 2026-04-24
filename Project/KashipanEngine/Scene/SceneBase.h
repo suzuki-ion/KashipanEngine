@@ -263,6 +263,7 @@ private:
     int objectAddDimension_ = 0;
     int objectAddType2D_ = 0;
     int objectAddType3D_ = 0;
+    ModelManager::ModelHandle objectAddModelHandle_ = ModelManager::kInvalidHandle;
 #endif
 };
 

@@ -91,6 +91,9 @@ public:
     static const ModelData &GetModelDataFromAssetPath(const std::string& assetPath);
 
 #if defined(USE_IMGUI)
+    /// @brief デバッグ用: 読み込まれたモデル一覧を取得する
+    static std::vector<ModelListEntry> GetLoadedModelListEntries();
+
     /// @brief デバッグ用: 読み込まれたモデル一覧の ImGui ウィンドウを描画
     static void ShowImGuiLoadedModelsWindow();
 #endif

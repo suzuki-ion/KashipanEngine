@@ -174,9 +174,14 @@ public:
         Vector3 t = translate_;
         Vector3 r = rotate_;
         Vector3 s = scale_;
+        Vector3 rDeg{r.x * 180.0f / 3.14159265f, r.y * 180.0f / 3.14159265f, r.z * 180.0f / 3.14159265f};
 
         ImGui::DragFloat3(Translation("engine.imgui.transform.translate").c_str(), &t.x, 0.01f);
-        ImGui::DragFloat3(Translation("engine.imgui.transform.rotate").c_str(), &r.x, 0.01f, -3.14f, 3.14f);
+        if (ImGui::DragFloat3(Translation("engine.imgui.transform.rotate").c_str(), &rDeg.x, 0.01f, -180.0f, 180.0f)) {
+            r.x = rDeg.x * 3.14159265f / 180.0f;
+            r.y = rDeg.y * 3.14159265f / 180.0f;
+            r.z = rDeg.z * 3.14159265f / 180.0f;
+        }
         ImGui::DragFloat3(Translation("engine.imgui.transform.scale").c_str(), &s.x, 0.01f);
 
         SetTranslate(t);

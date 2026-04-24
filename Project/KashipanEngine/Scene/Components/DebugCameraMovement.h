@@ -14,7 +14,7 @@ class SceneContext;
 
 class DebugCameraMovement : public ISceneComponent {
 public:
-    DebugCameraMovement(Camera3D *camera, Input *input);
+    DebugCameraMovement(Camera3D *camera);
     void Update() override;
     void SetOwnerContext(SceneContext *context) { ownerContext_ = context; }
 

@@ -16,8 +16,8 @@
 
 namespace KashipanEngine {
 
-DebugCameraMovement::DebugCameraMovement(Camera3D* camera, Input* input)
-    : ISceneComponent("DebugCameraMovement", 1), camera_(camera), input_(input) {
+DebugCameraMovement::DebugCameraMovement(Camera3D* camera)
+    : ISceneComponent("DebugCameraMovement", 1), camera_(camera) {
     spherical_.radius = 10.0f;
     spherical_.theta = 0.0f;
     spherical_.phi = M_PI / 2.0f;
@@ -48,6 +48,9 @@ void DebugCameraMovement::HandleInput() {
     if (ImGui::IsAnyItemActive() || ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) || ImGui::IsAnyItemHovered()) return;
 #endif
     auto *ownerContext = GetOwnerContext();
+    if (!input_ && ownerContext) {
+        input_ = ownerContext->GetInput();
+    }
     if (!input_ || !ownerContext) return;
     
     auto* sceneVars = ownerContext->GetComponent<SceneDefaultVariables>("SceneDefaultVariables");

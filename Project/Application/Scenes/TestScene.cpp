@@ -112,9 +112,11 @@ void TestScene::Initialize() {
 
     AddSceneComponent(std::make_unique<ParticleManager>());
     AddSceneComponent(std::make_unique<ModelAnimator>());
-    auto debugCameraMovement = std::make_unique<DebugCameraMovement>(mainCamera3D, GetInput());
-    debugCameraMovement->SetEnable(true);
-    AddSceneComponent(std::move(debugCameraMovement));
+    if (mainCamera3D) {
+        auto debugCameraMovement = std::make_unique<DebugCameraMovement>(mainCamera3D);
+        debugCameraMovement->SetEnable(true);
+        AddSceneComponent(std::move(debugCameraMovement));
+    }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());

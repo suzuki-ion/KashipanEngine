@@ -1,0 +1,356 @@
+{
+    "objects2D": [
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "samplerHandle": 1,
+                "texture": "",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Sprite_ScreenBuffer3D",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1763.0,
+                    "y": 991.6875,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 881.5,
+                    "y": 611.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "samplerHandle": 1,
+                "texture": "",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Sprite_ScreenBuffer2D",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1763.0,
+                    "y": 991.6875,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 881.5,
+                    "y": 611.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "samplerHandle": 1,
+                "texture": "KashipanEngine/white1x1.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "SceneChangeIn_White",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1920.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 960.0,
+                    "y": 1080.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "samplerHandle": 1,
+                "texture": "KashipanEngine/white1x1.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "SceneChangeIn_Black",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1920.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 960.0,
+                    "y": 1080.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        }
+    ],
+    "objects3D": [
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 0.6000000238418579,
+                    "y": 0.6000000238418579,
+                    "z": 0.6000000238418579
+                },
+                "enableLighting": true,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Model/Bell_Tower_Cube.296_Baked_Color.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Bell_Tower",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "translate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Model"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 0.6000000238418579,
+                    "y": 0.6000000238418579,
+                    "z": 0.6000000238418579
+                },
+                "enableLighting": true,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Model/Blacksmith_Cube.000_Baked_Color.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Blacksmith",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "translate": {
+                    "x": 4.070000171661377,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Model"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": true,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "KashipanEngine/uvChecker.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Ground",
+            "transform": {
+                "rotate": {
+                    "x": 1.559999942779541,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 64.0,
+                    "y": 64.0,
+                    "z": 1.0
+                },
+                "translate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        }
+    ],
+    "scene": "TitleScene"
+}

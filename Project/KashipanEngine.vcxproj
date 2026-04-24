@@ -739,9 +739,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\..\OneDrive\ドキュメント\1775464241140.png" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

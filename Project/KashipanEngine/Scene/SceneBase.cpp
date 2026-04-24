@@ -15,6 +15,7 @@
 #include "Objects/GameObjects/2D/Triangle2D.h"
 #include "Objects/GameObjects/3D/Box.h"
 #include "Objects/GameObjects/3D/Line3D.h"
+#include "Objects/GameObjects/3D/Model.h"
 #include "Objects/GameObjects/3D/Plane3D.h"
 #include "Objects/GameObjects/3D/Sphere.h"
 #include "Objects/GameObjects/3D/Triangle3D.h"
@@ -70,6 +71,7 @@ const char *GetObject3DTypeName(const Object3DBase *obj) {
     if (dynamic_cast<const Plane3D *>(obj)) return "Plane3D";
     if (dynamic_cast<const Triangle3D *>(obj)) return "Triangle3D";
     if (dynamic_cast<const Line3D *>(obj)) return "Line3D";
+    if (dynamic_cast<const Model *>(obj)) return "Model";
     return nullptr;
 }
 
@@ -110,6 +112,25 @@ void ShowTextureSelectorForMaterial3D(Material3D *mat) {
             const bool selected = (e.assetPath == currentPath);
             if (ImGui::Selectable(e.assetPath.c_str(), selected)) {
                 mat->SetTexture(e.handle);
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
+
+void ShowModelSelectorForObjectCreation(ModelManager::ModelHandle &selectedHandle) {
+    const auto entries = ModelManager::GetLoadedModelListEntries();
+    const auto current = std::find_if(entries.begin(), entries.end(), [&](const auto &e) { return e.handle == selectedHandle; });
+    const char *preview = (current != entries.end()) ? current->assetPath.c_str() : "(none)";
+
+    if (ImGui::BeginCombo("Model##ObjectAdd", preview)) {
+        if (ImGui::Selectable("(none)", selectedHandle == ModelManager::kInvalidHandle)) {
+            selectedHandle = ModelManager::kInvalidHandle;
+        }
+        for (const auto &e : entries) {
+            const bool selected = (e.handle == selectedHandle);
+            if (ImGui::Selectable(e.assetPath.c_str(), selected)) {
+                selectedHandle = e.handle;
             }
         }
         ImGui::EndCombo();
@@ -168,7 +189,9 @@ void SceneBase::Update() {
     {
         std::vector<ISceneComponent *> sorted;
         sorted.reserve(sceneComponents_.size());
-        for (auto &c : sceneComponents_) if (c) sorted.push_back(c.get());
+        for (auto &c : sceneComponents_) {
+            if (c) sorted.push_back(c.get());
+        }
         std::stable_sort(sorted.begin(), sorted.end(), [](const ISceneComponent *a, const ISceneComponent *b) {
             return a->GetUpdatePriority() < b->GetUpdatePriority();
         });
@@ -229,7 +252,7 @@ void SceneBase::ShowImGui() {
     if (ImGui::CollapsingHeader("Object Operations", ImGuiTreeNodeFlags_DefaultOpen)) {
         constexpr const char *kDimensionItems[] = { "2D", "3D" };
         constexpr const char *kType2DItems[] = { "Sprite", "Rect", "Triangle2D", "Ellipse", "Line2D" };
-        constexpr const char *kType3DItems[] = { "Box", "Sphere", "Plane3D", "Triangle3D", "Line3D" };
+        constexpr const char *kType3DItems[] = { "Box", "Sphere", "Plane3D", "Triangle3D", "Line3D", "Model" };
 
         ImGui::InputText("JSON Path", objectJsonPath_.data(), objectJsonPath_.size());
         if (ImGui::Button("Save Objects")) {
@@ -271,6 +294,10 @@ void SceneBase::ShowImGui() {
             }
         } else {
             ImGui::Combo("3D Type", &objectAddType3D_, kType3DItems, static_cast<int>(std::size(kType3DItems)));
+            if (objectAddType3D_ == 5) {
+                ShowModelSelectorForObjectCreation(objectAddModelHandle_);
+            }
+
             if (ImGui::Button("Add 3D Object")) {
                 std::unique_ptr<Object3DBase> obj;
                 switch (objectAddType3D_) {
@@ -279,14 +306,26 @@ void SceneBase::ShowImGui() {
                 case 2: obj = std::make_unique<Plane3D>(); break;
                 case 3: obj = std::make_unique<Triangle3D>(); break;
                 case 4: obj = std::make_unique<Line3D>(1); break;
+                case 5:
+                    if (objectAddModelHandle_ != ModelManager::kInvalidHandle) {
+                        obj = std::make_unique<Model>(objectAddModelHandle_);
+                    }
+                    break;
                 default: break;
                 }
                 if (obj) {
                     if (objectAddName_[0] != '\0') {
                         obj->SetName(objectAddName_.data());
                     }
-                    if (auto *vars = GetSceneComponent<SceneDefaultVariables>(); vars && vars->GetScreenBuffer3D()) {
-                        obj->AttachToRenderer(vars->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+                    if (auto *vars = GetSceneComponent<SceneDefaultVariables>()) {
+                        auto *screenBuffer3D = vars->GetScreenBuffer3D();
+                        if (screenBuffer3D) {
+                            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                        }
+                        auto *shadowMapBuffer = vars->GetShadowMapBuffer();
+                        if (shadowMapBuffer) {
+                            obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
+                        }
                     }
                     (void)AddObject3D(std::move(obj));
                 }

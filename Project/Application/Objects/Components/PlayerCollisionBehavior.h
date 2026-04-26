@@ -28,7 +28,7 @@ public:
             ColliderInfo3D info{};
             Math::OBB obb{};
             obb.center = Vector3{0.0f, 0.0f, 0.0f};
-            obb.halfSize = Vector3{0.5f, 0.5f, 0.5f};
+            obb.halfSize = Vector3{0.5f, 1.0f, 0.5f};
             obb.orientation = Matrix4x4::Identity();
             info.shape = obb;
             info.attribute.set(CollisionAttribute::Player);

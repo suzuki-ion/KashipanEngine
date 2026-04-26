@@ -383,6 +383,7 @@ public:
     float GetJumpPower() const override { return jumpBehavior_ ? jumpBehavior_->GetJumpPower() : 0.0f; }
     int GetJumpCount() const { return jumpBehavior_ ? jumpBehavior_->GetJumpCount() : 0; }
     int GetMaxJumpCount() const { return jumpBehavior_ ? jumpBehavior_->GetMaxJumpCount() : 0; }
+    float GetMaxJumpInputHoldTime() const { return jumpBehavior_ ? jumpBehavior_->GetMaxJumpInputHoldTime() : 0.0f; }
 
     void MarkGrounded() override { /* collision behavior manages grounded state */ }
     bool ConsumeGrounded() override { return groundedThisFrame_; }

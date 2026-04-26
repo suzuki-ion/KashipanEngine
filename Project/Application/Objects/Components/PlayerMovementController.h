@@ -278,6 +278,15 @@ public:
     }
     bool IsMovementLocked() const { return movementLocked_; }
 
+    void SetCollisionResponseEnabled(bool enabled) {
+        if (collisionBehavior_) {
+            collisionBehavior_->SetCollisionResponseEnabled(enabled);
+        }
+    }
+    bool IsCollisionResponseEnabled() const {
+        return collisionBehavior_ ? collisionBehavior_->IsCollisionResponseEnabled() : true;
+    }
+
     const Vector3 &GetGravityDirection() const { return gravityDirection_; }
     const Vector3 &GetForwardDirection() const { return forwardDirection_; }
     float GetForwardSpeed() const { return forwardBehavior_ ? forwardBehavior_->GetForwardSpeed() : 0.0f; }

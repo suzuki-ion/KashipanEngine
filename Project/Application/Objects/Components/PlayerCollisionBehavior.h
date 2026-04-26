@@ -44,12 +44,20 @@ public:
     }
 
     bool ConsumeGrounded() {
+        if (!collisionResponseEnabled_) {
+            grounded_ = false;
+            return false;
+        }
         const bool v = grounded_;
         grounded_ = false;
         return v;
     }
 
     std::optional<Vector3> ConsumeRequestedGravityDirection() {
+        if (!collisionResponseEnabled_) {
+            requestedGravityDirection_.reset();
+            return std::nullopt;
+        }
         auto out = requestedGravityDirection_;
         requestedGravityDirection_.reset();
         return out;
@@ -58,12 +66,29 @@ public:
     const Vector3 &GetGroundNormal() const { return lastGroundNormal_; }
     Object3DBase *GetLastGroundObject() const { return lastGroundObject_; }
     bool ConsumeLastGroundWasFirstTouch() {
+        if (!collisionResponseEnabled_) {
+            lastGroundWasFirstTouch_ = false;
+            return false;
+        }
         const bool v = lastGroundWasFirstTouch_;
         lastGroundWasFirstTouch_ = false;
         return v;
     }
 
+    void SetCollisionResponseEnabled(bool enabled) {
+        collisionResponseEnabled_ = enabled;
+        if (!collisionResponseEnabled_) {
+            ResetTransientCollisionState();
+        }
+    }
+    bool IsCollisionResponseEnabled() const { return collisionResponseEnabled_; }
+
     void ResolveStayTranslationAndVelocity(Vector3 &position, Vector3 &gravityVelocity) {
+        if (!collisionResponseEnabled_) {
+            hasStayCorrection_ = false;
+            stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
+            return;
+        }
         if (!hasStayCorrection_) return;
 
         position += stayCorrection_;
@@ -83,6 +108,15 @@ public:
 	bool IsOnSlowGround() const { return isSlowGround_; }
 
 private:
+    void ResetTransientCollisionState() {
+        grounded_ = false;
+        requestedGravityDirection_.reset();
+        lastGroundWasFirstTouch_ = false;
+        stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
+        hasStayCorrection_ = false;
+        isSlowGround_ = false;
+    }
+
     static bool IsGroundObject(Object3DBase *obj) {
         if (!obj) return false;
         return obj->GetComponent3D("GroundDefined") != nullptr;
@@ -100,6 +134,7 @@ private:
     }
 
     void OnCollisionEnter(const HitInfo3D &hit) {
+        if (!collisionResponseEnabled_) return;
         if (!IsGroundObject(hit.otherObject)) return;
 
         const Vector3 normal = hit.normal.Normalize();
@@ -132,6 +167,7 @@ private:
     }
 
     void OnCollisionStay(const HitInfo3D &hit) {
+        if (!collisionResponseEnabled_) return;
         if (!IsGroundObject(hit.otherObject)) return;
 
         const Vector3 normal = hit.normal.Normalize();
@@ -168,6 +204,7 @@ private:
     Vector3 stayCorrection_{0.0f, 0.0f, 0.0f};
     bool hasStayCorrection_ = false;
 	bool isSlowGround_ = false;
+    bool collisionResponseEnabled_ = true;
     float maxStayPenetrationPerHit_ = 0.2f;
     float maxStayCorrectionPerFrame_ = 0.3f;
 };

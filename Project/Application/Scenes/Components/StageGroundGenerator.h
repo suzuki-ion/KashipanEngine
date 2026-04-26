@@ -3,6 +3,7 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/GroundDefined.h"
 #include "Objects/Components/SlowGroundDefined.h"
+#include "Objects/Components/PlayerMovementController.h"
 #include "StageGoalPlaneController.h"
 
 #include <algorithm>
@@ -225,16 +226,75 @@ public:
         if (!player_) return;
         if (!spawnGround_) return;
 
-        auto *tr = spawnGround_->GetComponent3D<Transform3D>();
-        if (!tr) return;
+        auto *groundTr = spawnGround_->GetComponent3D<Transform3D>();
+        if (!groundTr) return;
 
         auto *playerTr = player_->GetComponent3D<Transform3D>();
         if (!playerTr) return;
 
-        tr->SetTranslate(Vector3{ playerTr->GetTranslate().x, playerTr->GetTranslate().y - panelThickness_, playerTr->GetTranslate().z });
+        Vector3 gravityDir{0.0f, -1.0f, 0.0f};
+        if (auto *movementController = player_->GetComponent3D<PlayerMovementController>()) {
+            gravityDir = movementController->GetGravityDirection();
+        }
+
+        const Vector3 groundDown = (-gravityDir).Normalize();
+        const Vector3 referenceForward{0.0f, 0.0f, 1.0f};
+        Vector3 forward = referenceForward - groundDown * referenceForward.Dot(groundDown);
+        if (forward.LengthSquared() <= 0.000001f) {
+            forward = Vector3{1.0f, 0.0f, 0.0f} - groundDown * Vector3{1.0f, 0.0f, 0.0f}.Dot(groundDown);
+        }
+        forward = forward.Normalize();
+
+        Vector3 right = forward.Cross(groundDown);
+        if (right.LengthSquared() <= 0.000001f) {
+            right = Vector3{0.0f, 1.0f, 0.0f}.Cross(groundDown);
+        }
+        right = right.Normalize();
+        forward = groundDown.Cross(right).Normalize();
+
+        const Quaternion qDown = MakeFromToQuaternion(Vector3{0.0f, -1.0f, 0.0f}, groundDown);
+        const Vector3 defaultForward = qDown.RotateVector(Vector3{0.0f, 0.0f, 1.0f});
+        const Vector3 up = -groundDown;
+        const Vector3 defaultForwardProjected = defaultForward - up * defaultForward.Dot(up);
+        Vector3 targetForward = forward - up * forward.Dot(up);
+        if (defaultForwardProjected.LengthSquared() <= 0.000001f) {
+            targetForward = forward;
+        }
+        if (targetForward.LengthSquared() <= 0.000001f) {
+            targetForward = Vector3{0.0f, 0.0f, 1.0f};
+        }
+        targetForward = targetForward.Normalize();
+        const Vector3 currentForward = defaultForwardProjected.LengthSquared() <= 0.000001f ? targetForward : defaultForwardProjected.Normalize();
+        const Vector3 cross = currentForward.Cross(targetForward);
+        const float dot = std::clamp(currentForward.Dot(targetForward), -1.0f, 1.0f);
+        const float signedAngle = std::atan2(cross.Dot(up), dot);
+        const Quaternion qTwist = Quaternion().MakeRotateAxisAngle(up, signedAngle);
+
+        groundTr->SetTranslate(playerTr->GetTranslate() - groundDown * spawnGroundOffset_);
+        groundTr->SetRotateQuaternion((qTwist * qDown).Normalize());
     }
 
 private:
+    static Quaternion MakeFromToQuaternion(const Vector3 &from, const Vector3 &to) {
+        const Vector3 f = from.Normalize();
+        const Vector3 t = to.Normalize();
+        const float dot = std::clamp(f.Dot(t), -1.0f, 1.0f);
+        if (dot > 0.9999f) {
+            return Quaternion::Identity();
+        }
+        if (dot < -0.9999f) {
+            Vector3 axis = f.Cross(Vector3{1.0f, 0.0f, 0.0f});
+            if (axis.LengthSquared() <= 0.000001f) {
+                axis = f.Cross(Vector3{0.0f, 1.0f, 0.0f});
+            }
+            axis = axis.Normalize();
+            return Quaternion().MakeRotateAxisAngle(axis, 3.14159265358979323846f);
+        }
+        Vector3 axis = f.Cross(t);
+        Quaternion q(axis.x, axis.y, axis.z, 1.0f + dot);
+        return q.Normalize();
+    }
+
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
     static constexpr std::uint64_t kGroundBatchKey = 0x1101000000000001ull;
 
@@ -404,6 +464,7 @@ private:
     float spawnGroundCenterZ_ = -2.0f;
     float spawnGroundWidth_ = 16.0f;
     float spawnGroundDepth_ = 256.0f;
+    float spawnGroundOffset_ = 4.0f;
 
     int panelWidthSplitCount_ = 3;
 

@@ -10,6 +10,7 @@
 #include "Scenes/Components/TitleSceneAudioPlayer.h"
 #include "Scenes/Components/TitleSceneUIController.h"
 #include "Scenes/Components/ClearScoreBoard.h"
+#include "Scenes/Components/StageSelectUIController.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 
@@ -80,6 +81,11 @@ void TitleScene::Initialize() {
     AddSceneComponent(std::make_unique<ClearScoreBoard>());
     AddSceneComponent(std::make_unique<TitleSceneUIController>());
     titleSceneUIController_ = GetSceneComponent<TitleSceneUIController>();
+    AddSceneComponent(std::make_unique<StageSelectUIController>());
+    stageSelectUIController_ = GetSceneComponent<StageSelectUIController>();
+
+    titleSceneUIController_->SetEnableUpdating(true);
+    stageSelectUIController_->SetEnableUpdating(false);
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -126,15 +132,37 @@ void TitleScene::OnUpdate() {
     if (titleSceneUIController_) {
         const auto action = titleSceneUIController_->ConsumeRequestedAction();
         if (action == TitleSceneUIController::RequestAction::StartGame) {
+            titleSceneUIController_->SetEnableUpdating(false);
+            if (stageSelectUIController_) {
+                stageSelectUIController_->SetEnableUpdating(true);
+            } else {
+                if (GetNextSceneName().empty()) {
+                    SetNextSceneName("GameScene");
+                }
+                if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                    out->Play();
+                }
+            }
+        } else if (action == TitleSceneUIController::RequestAction::Quit) {
+            if (sceneDefaultVariables_ && sceneDefaultVariables_->GetMainWindow()) {
+                sceneDefaultVariables_->GetMainWindow()->DestroyNotify();
+            }
+        }
+    }
+
+    if (stageSelectUIController_ && stageSelectUIController_->IsUpdating()) {
+        const auto action = stageSelectUIController_->ConsumeRequestedAction();
+        if (action == StageSelectUIController::RequestAction::StageSelected) {
             if (GetNextSceneName().empty()) {
                 SetNextSceneName("GameScene");
             }
             if (auto *out = GetSceneComponent<SceneChangeOut>()) {
                 out->Play();
             }
-        } else if (action == TitleSceneUIController::RequestAction::Quit) {
-            if (sceneDefaultVariables_ && sceneDefaultVariables_->GetMainWindow()) {
-                sceneDefaultVariables_->GetMainWindow()->DestroyNotify();
+        } else if (action == StageSelectUIController::RequestAction::Canceled) {
+            stageSelectUIController_->SetEnableUpdating(false);
+            if (titleSceneUIController_) {
+                titleSceneUIController_->SetEnableUpdating(true);
             }
         }
     }

@@ -35,6 +35,7 @@ public:
             info.ignoreAttribute.set(CollisionAttribute::Player);
             info.onCollisionEnter = [this](const HitInfo3D &hit) { OnCollisionEnter(hit); };
             info.onCollisionStay = [this](const HitInfo3D &hit) { OnCollisionStay(hit); };
+            info.ccdEnabled = true;
             if (!ctx->RegisterComponent<Collision3D>(collider_, info)) {
                 return false;
             }
@@ -178,7 +179,7 @@ private:
         lastGroundObject_ = hit.otherObject;
         lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
 
-        const float penetration = std::clamp(hit.penetration, 0.0f, maxStayPenetrationPerHit_);
+        const float penetration = hit.penetration; //std::clamp(hit.penetration, 0.0f, maxStayPenetrationPerHit_);
         if (penetration <= 0.0f) return;
 
         const float currentAlongNormal = stayCorrection_.Dot(normal);

@@ -49,7 +49,8 @@ public:
 
         // ステージの読み込み
         nlohmann::json j;
-        std::ifstream ifs(stageDataFilePath_);
+        std::string stageDataFilePath = ctx->GetSceneVariableOr<std::string>("TargetStageFilePath", "Assets/Application/StageData/stage.json");
+        std::ifstream ifs(stageDataFilePath);
         if (ifs.is_open()) {
             try {
                 ifs >> j;
@@ -475,8 +476,7 @@ private:
 
 	std::vector<SpawnRequest> spawnRequests_; // JSONから読み込んだすべてのスポーンリクエスト
 	int currentSpawnRequestIndex_ = 0; // 次にスポーンすべきリクエストのインデックス
-	const std::string stageDataFilePath_ = "Assets/Application/StageData/stage.json";
-
+	
     float nextSpawnZ_ = 0.0f;
     float currentSegmentCenterZ_ = 0.0f;
     float currentSegmentLength_ = 0.0f;

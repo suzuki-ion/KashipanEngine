@@ -25,6 +25,48 @@ struct Bounds3D {
     Vector3 max{0.0f, 0.0f, 0.0f};
 };
 
+inline Bounds2D MergeBounds2D(const Bounds2D &a, const Bounds2D &b) {
+    return Bounds2D{
+        std::min(a.minX, b.minX),
+        std::min(a.minY, b.minY),
+        std::max(a.maxX, b.maxX),
+        std::max(a.maxY, b.maxY)};
+}
+
+inline Vector2 BoundsCenter2D(const Bounds2D &b) {
+    return Vector2{(b.minX + b.maxX) * 0.5f, (b.minY + b.maxY) * 0.5f};
+}
+
+inline Vector3 BoundsCenter3D(const Bounds3D &b) {
+    return Vector3{
+        (b.min.x + b.max.x) * 0.5f,
+        (b.min.y + b.max.y) * 0.5f,
+        (b.min.z + b.max.z) * 0.5f};
+}
+
+inline float BoundsMaxSize2D(const Bounds2D &b) {
+    return std::max(b.maxX - b.minX, b.maxY - b.minY);
+}
+
+inline float BoundsMaxSize3D(const Bounds3D &b) {
+    const float sx = b.max.x - b.min.x;
+    const float sy = b.max.y - b.min.y;
+    const float sz = b.max.z - b.min.z;
+    return std::max({sx, sy, sz});
+}
+
+inline Bounds3D MergeBounds3D(const Bounds3D &a, const Bounds3D &b) {
+    return Bounds3D{
+        Vector3{
+            std::min(a.min.x, b.min.x),
+            std::min(a.min.y, b.min.y),
+            std::min(a.min.z, b.min.z)},
+        Vector3{
+            std::max(a.max.x, b.max.x),
+            std::max(a.max.y, b.max.y),
+            std::max(a.max.z, b.max.z)}};
+}
+
 struct IndexPair {
     std::size_t a = 0;
     std::size_t b = 0;
@@ -152,7 +194,17 @@ std::vector<IndexPair> BuildCandidatePairs2D(const TColliders &colliders) {
         if (!c.info.enabled) continue;
         active.push_back(i);
 
-        const auto bounds = ComputeBounds2D(c.info.shape);
+        std::optional<Bounds2D> bounds = ComputeBounds2D(c.info.shape);
+
+        if (c.info.ccdEnabled && c.hasPrevShape) {
+            const auto prevBounds = ComputeBounds2D(c.prevShape);
+            if (bounds.has_value() && prevBounds.has_value()) {
+                bounds = MergeBounds2D(*bounds, *prevBounds);
+            } else if (!bounds.has_value() && prevBounds.has_value()) {
+                bounds = prevBounds;
+            }
+        }
+
         if (!bounds.has_value()) {
             global.push_back(i);
             continue;
@@ -266,7 +318,17 @@ const std::vector<IndexPair> &BuildCandidatePairs3D(const TColliders &colliders)
         if (!c.info.enabled) continue;
         active.push_back(i);
 
-        const auto bounds = ComputeBounds3D(c.info.shape);
+        std::optional<Bounds3D> bounds = ComputeBounds3D(c.info.shape);
+
+        if (c.info.ccdEnabled && c.hasPrevShape) {
+            const auto prevBounds = ComputeBounds3D(c.prevShape);
+            if (bounds.has_value() && prevBounds.has_value()) {
+                bounds = MergeBounds3D(*bounds, *prevBounds);
+            } else if (!bounds.has_value() && prevBounds.has_value()) {
+                bounds = prevBounds;
+            }
+        }
+
         if (!bounds.has_value()) {
             global.push_back(i);
             continue;
@@ -354,6 +416,84 @@ inline bool Intersects2D(const ColliderInfo2D::ShapeVariant &a, const ColliderIn
         a, b);
 }
 
+inline int ComputeAdaptiveSamples2D(
+    const ColliderInfo2D::ShapeVariant &currentA,
+    const ColliderInfo2D::ShapeVariant *prevA,
+    bool ccdA,
+    const ColliderInfo2D::ShapeVariant &currentB,
+    const ColliderInfo2D::ShapeVariant *prevB,
+    bool ccdB) {
+    float maxTravel = 0.0f;
+    float minFeature = std::numeric_limits<float>::max();
+
+    const auto accumulate = [&](const ColliderInfo2D::ShapeVariant &current,
+                                const ColliderInfo2D::ShapeVariant *prev,
+                                bool ccd) {
+        const auto curBounds = ComputeBounds2D(current);
+        if (curBounds.has_value()) {
+            minFeature = std::min(minFeature, std::max(0.001f, BoundsMaxSize2D(*curBounds)));
+        }
+
+        if (!ccd || !prev) return;
+
+        const auto prevBounds = ComputeBounds2D(*prev);
+        if (!curBounds.has_value() || !prevBounds.has_value()) return;
+
+        const float travel = BoundsCenter2D(*curBounds).Distance(BoundsCenter2D(*prevBounds));
+        maxTravel = std::max(maxTravel, travel);
+    };
+
+    accumulate(currentA, prevA, ccdA);
+    accumulate(currentB, prevB, ccdB);
+
+    if (!std::isfinite(minFeature) || minFeature <= 0.0f) {
+        minFeature = 1.0f;
+    }
+
+    const float stepDistance = std::max(0.05f, minFeature * 0.5f);
+    const int travelSteps = static_cast<int>(std::ceil(maxTravel / stepDistance));
+    return std::clamp(4 + travelSteps, 8, 96);
+}
+
+inline int ComputeAdaptiveSamples3D(
+    const ColliderInfo3D::ShapeVariant &currentA,
+    const ColliderInfo3D::ShapeVariant *prevA,
+    bool ccdA,
+    const ColliderInfo3D::ShapeVariant &currentB,
+    const ColliderInfo3D::ShapeVariant *prevB,
+    bool ccdB) {
+    float maxTravel = 0.0f;
+    float minFeature = std::numeric_limits<float>::max();
+
+    const auto accumulate = [&](const ColliderInfo3D::ShapeVariant &current,
+                                const ColliderInfo3D::ShapeVariant *prev,
+                                bool ccd) {
+        const auto curBounds = ComputeBounds3D(current);
+        if (curBounds.has_value()) {
+            minFeature = std::min(minFeature, std::max(0.001f, BoundsMaxSize3D(*curBounds)));
+        }
+
+        if (!ccd || !prev) return;
+
+        const auto prevBounds = ComputeBounds3D(*prev);
+        if (!curBounds.has_value() || !prevBounds.has_value()) return;
+
+        const float travel = BoundsCenter3D(*curBounds).Distance(BoundsCenter3D(*prevBounds));
+        maxTravel = std::max(maxTravel, travel);
+    };
+
+    accumulate(currentA, prevA, ccdA);
+    accumulate(currentB, prevB, ccdB);
+
+    if (!std::isfinite(minFeature) || minFeature <= 0.0f) {
+        minFeature = 1.0f;
+    }
+
+    const float stepDistance = std::max(0.05f, minFeature * 0.5f);
+    const int travelSteps = static_cast<int>(std::ceil(maxTravel / stepDistance));
+    return std::clamp(4 + travelSteps, 8, 96);
+}
+
 inline bool Intersects3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
     return std::visit(
         [](const auto &lhs, const auto &rhs) {
@@ -408,17 +548,235 @@ inline HitInfo3D ComputeHit3D(const ColliderInfo3D::ShapeVariant &a, const Colli
         a, b);
 }
 
+inline float LerpFloat(float a, float b, float t) {
+    return a + (b - a) * t;
+}
+
+inline Vector2 LerpVec2(const Vector2 &a, const Vector2 &b, float t) {
+    return a + (b - a) * t;
+}
+
+inline Vector3 LerpVec3(const Vector3 &a, const Vector3 &b, float t) {
+    return a + (b - a) * t;
+}
+
+inline ColliderInfo2D::ShapeVariant InterpolateShape2D(
+    const ColliderInfo2D::ShapeVariant &from,
+    const ColliderInfo2D::ShapeVariant &to,
+    float t) {
+    if (from.index() != to.index()) {
+        return to;
+    }
+
+    return std::visit(
+        [t](const auto &a, const auto &b) -> ColliderInfo2D::ShapeVariant {
+            using A = std::decay_t<decltype(a)>;
+            using B = std::decay_t<decltype(b)>;
+
+            if constexpr (!std::is_same_v<A, B>) {
+                return b;
+            } else if constexpr (std::is_same_v<A, Math::Point2D>) {
+                Math::Point2D out = b;
+                out.position = LerpVec2(a.position, b.position, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::Circle>) {
+                Math::Circle out = b;
+                out.center = LerpVec2(a.center, b.center, t);
+                out.radius = LerpFloat(a.radius, b.radius, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::Rect>) {
+                Math::Rect out = b;
+                out.center = LerpVec2(a.center, b.center, t);
+                out.halfSize = LerpVec2(a.halfSize, b.halfSize, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::Segment2D>) {
+                Math::Segment2D out = b;
+                out.start = LerpVec2(a.start, b.start, t);
+                out.end = LerpVec2(a.end, b.end, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::Capsule2D>) {
+                Math::Capsule2D out = b;
+                out.start = LerpVec2(a.start, b.start, t);
+                out.end = LerpVec2(a.end, b.end, t);
+                out.radius = LerpFloat(a.radius, b.radius, t);
+                return out;
+            } else {
+                return b;
+            }
+        },
+        from, to);
+}
+
+inline ColliderInfo3D::ShapeVariant InterpolateShape3D(
+    const ColliderInfo3D::ShapeVariant &from,
+    const ColliderInfo3D::ShapeVariant &to,
+    float t) {
+    if (from.index() != to.index()) {
+        return to;
+    }
+
+    return std::visit(
+        [t](const auto &a, const auto &b) -> ColliderInfo3D::ShapeVariant {
+            using A = std::decay_t<decltype(a)>;
+            using B = std::decay_t<decltype(b)>;
+
+            if constexpr (!std::is_same_v<A, B>) {
+                return b;
+            } else if constexpr (std::is_same_v<A, Math::Point3D>) {
+                Math::Point3D out = b;
+                out.position = LerpVec3(a.position, b.position, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::Sphere>) {
+                Math::Sphere out = b;
+                out.center = LerpVec3(a.center, b.center, t);
+                out.radius = LerpFloat(a.radius, b.radius, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::AABB>) {
+                Math::AABB out = b;
+                out.min = LerpVec3(a.min, b.min, t);
+                out.max = LerpVec3(a.max, b.max, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::OBB>) {
+                Math::OBB out = b;
+                out.center = LerpVec3(a.center, b.center, t);
+                out.halfSize = LerpVec3(a.halfSize, b.halfSize, t);
+                return out;
+            } else if constexpr (std::is_same_v<A, Math::Plane>) {
+                return b;
+            } else {
+                return b;
+            }
+        },
+        from, to);
+}
+
+inline bool Intersects2DCCD(
+    const ColliderInfo2D::ShapeVariant &currentA,
+    const ColliderInfo2D::ShapeVariant *prevA,
+    bool ccdA,
+    const ColliderInfo2D::ShapeVariant &currentB,
+    const ColliderInfo2D::ShapeVariant *prevB,
+    bool ccdB) {
+    if (!ccdA && !ccdB) {
+        return Intersects2D(currentA, currentB);
+    }
+
+    const int samples = ComputeAdaptiveSamples2D(currentA, prevA, ccdA, currentB, prevB, ccdB);
+    for (int i = 0; i <= samples; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(samples);
+
+        const auto shapeA = (ccdA && prevA) ? InterpolateShape2D(*prevA, currentA, t) : currentA;
+        const auto shapeB = (ccdB && prevB) ? InterpolateShape2D(*prevB, currentB, t) : currentB;
+
+        if (Intersects2D(shapeA, shapeB)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+inline bool Intersects3DCCD(
+    const ColliderInfo3D::ShapeVariant &currentA,
+    const ColliderInfo3D::ShapeVariant *prevA,
+    bool ccdA,
+    const ColliderInfo3D::ShapeVariant &currentB,
+    const ColliderInfo3D::ShapeVariant *prevB,
+    bool ccdB) {
+    if (!ccdA && !ccdB) {
+        return Intersects3D(currentA, currentB);
+    }
+
+    const int samples = ComputeAdaptiveSamples3D(currentA, prevA, ccdA, currentB, prevB, ccdB);
+    for (int i = 0; i <= samples; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(samples);
+
+        const auto shapeA = (ccdA && prevA) ? InterpolateShape3D(*prevA, currentA, t) : currentA;
+        const auto shapeB = (ccdB && prevB) ? InterpolateShape3D(*prevB, currentB, t) : currentB;
+
+        if (Intersects3D(shapeA, shapeB)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+inline HitInfo2D ComputeHit2DCCD(
+    const ColliderInfo2D::ShapeVariant &currentA,
+    const ColliderInfo2D::ShapeVariant *prevA,
+    bool ccdA,
+    const ColliderInfo2D::ShapeVariant &currentB,
+    const ColliderInfo2D::ShapeVariant *prevB,
+    bool ccdB) {
+    if (!ccdA && !ccdB) {
+        return ComputeHit2D(currentA, currentB);
+    }
+
+    const int samples = ComputeAdaptiveSamples2D(currentA, prevA, ccdA, currentB, prevB, ccdB);
+    for (int i = 0; i <= samples; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(samples);
+
+        const auto shapeA = (ccdA && prevA) ? InterpolateShape2D(*prevA, currentA, t) : currentA;
+        const auto shapeB = (ccdB && prevB) ? InterpolateShape2D(*prevB, currentB, t) : currentB;
+
+        const HitInfo2D hi = ComputeHit2D(shapeA, shapeB);
+        if (hi.isHit) {
+            return hi;
+        }
+    }
+
+    return ComputeHit2D(currentA, currentB);
+}
+
+inline HitInfo3D ComputeHit3DCCD(
+    const ColliderInfo3D::ShapeVariant &currentA,
+    const ColliderInfo3D::ShapeVariant *prevA,
+    bool ccdA,
+    const ColliderInfo3D::ShapeVariant &currentB,
+    const ColliderInfo3D::ShapeVariant *prevB,
+    bool ccdB) {
+    if (!ccdA && !ccdB) {
+        return ComputeHit3D(currentA, currentB);
+    }
+
+    const int samples = ComputeAdaptiveSamples3D(currentA, prevA, ccdA, currentB, prevB, ccdB);
+    for (int i = 0; i <= samples; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(samples);
+
+        const auto shapeA = (ccdA && prevA) ? InterpolateShape3D(*prevA, currentA, t) : currentA;
+        const auto shapeB = (ccdB && prevB) ? InterpolateShape3D(*prevB, currentB, t) : currentB;
+
+        const HitInfo3D hi = ComputeHit3D(shapeA, shapeB);
+        if (hi.isHit) {
+            return hi;
+        }
+    }
+
+    return ComputeHit3D(currentA, currentB);
+}
+
 } // namespace
 
 Collider::ColliderID Collider::Add(const ColliderInfo2D &info) {
     const ColliderID id = nextId_++;
-    colliders2D_.push_back({id, info});
+    Entry<ColliderInfo2D> e;
+    e.id = id;
+    e.info = info;
+    e.prevShape = info.shape;
+    e.hasPrevShape = true;
+    colliders2D_.push_back(std::move(e));
     return id;
 }
 
 Collider::ColliderID Collider::Add(const ColliderInfo3D &info) {
     const ColliderID id = nextId_++;
-    colliders3D_.push_back({id, info});
+    Entry<ColliderInfo3D> e;
+    e.id = id;
+    e.info = info;
+    e.prevShape = info.shape;
+    e.hasPrevShape = true;
+    colliders3D_.push_back(std::move(e));
     return id;
 }
 
@@ -433,6 +791,8 @@ bool Collider::Remove3D(ColliderID id) {
 bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
     for (auto &e : colliders2D_) {
         if (e.id == id) {
+            e.prevShape = e.info.shape;
+            e.hasPrevShape = true;
             e.info = info;
             return true;
         }
@@ -443,6 +803,8 @@ bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
 bool Collider::UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info) {
     for (auto &e : colliders3D_) {
         if (e.id == id) {
+            e.prevShape = e.info.shape;
+            e.hasPrevShape = true;
             e.info = info;
             return true;
         }
@@ -475,7 +837,9 @@ std::vector<Collider::HitPair2D> Collider::CheckAll2D() const {
             continue;
         }
 
-        if (Intersects2D(ai.info.shape, bi.info.shape)) {
+        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
+        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
+        if (Intersects2DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled)) {
             hits.push_back({ai.id, bi.id});
         }
     }
@@ -497,7 +861,9 @@ std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
             continue;
         }
 
-        if (Intersects3D(ai.info.shape, bi.info.shape)) {
+        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
+        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
+        if (Intersects3DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled)) {
             hits.push_back({ai.id, bi.id});
         }
     }
@@ -515,7 +881,9 @@ bool Collider::Check2D(ColliderID a, ColliderID b) const {
         return false;
     }
 
-    return Intersects2D(pa->info.shape, pb->info.shape);
+    const auto *prevA = pa->hasPrevShape ? &pa->prevShape : nullptr;
+    const auto *prevB = pb->hasPrevShape ? &pb->prevShape : nullptr;
+    return Intersects2DCCD(pa->info.shape, prevA, pa->info.ccdEnabled, pb->info.shape, prevB, pb->info.ccdEnabled);
 }
 
 bool Collider::Check3D(ColliderID a, ColliderID b) const {
@@ -529,7 +897,9 @@ bool Collider::Check3D(ColliderID a, ColliderID b) const {
         return false;
     }
 
-    return Intersects3D(pa->info.shape, pb->info.shape);
+    const auto *prevA = pa->hasPrevShape ? &pa->prevShape : nullptr;
+    const auto *prevB = pb->hasPrevShape ? &pb->prevShape : nullptr;
+    return Intersects3DCCD(pa->info.shape, prevA, pa->info.ccdEnabled, pb->info.shape, prevB, pb->info.ccdEnabled);
 }
 
 std::uint64_t Collider::MakePairKey(ColliderID a, ColliderID b) {
@@ -613,7 +983,9 @@ void Collider::Update2D() {
             continue;
         }
 
-        const HitInfo2D hi = ComputeHit2D(ai.info.shape, bi.info.shape);
+        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
+        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
+        const HitInfo2D hi = ComputeHit2DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled);
         const std::uint64_t key = MakePairKey(ai.id, bi.id);
 
         const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
@@ -624,6 +996,11 @@ void Collider::Update2D() {
 
     std::sort(cur.begin(), cur.end());
     prevPairs2D_ = std::move(cur);
+
+    for (auto &e : colliders2D_) {
+        e.prevShape = e.info.shape;
+        e.hasPrevShape = true;
+    }
 }
 
 void Collider::Update3D() {
@@ -642,7 +1019,9 @@ void Collider::Update3D() {
             continue;
         }
 
-        const HitInfo3D hi = ComputeHit3D(ai.info.shape, bi.info.shape);
+        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
+        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
+        const HitInfo3D hi = ComputeHit3DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled);
         const std::uint64_t key = MakePairKey(ai.id, bi.id);
 
         const bool wasHit = std::binary_search(prevPairs3D_.begin(), prevPairs3D_.end(), key);
@@ -653,6 +1032,11 @@ void Collider::Update3D() {
 
     std::sort(cur.begin(), cur.end());
     prevPairs3D_ = std::move(cur);
+
+    for (auto &e : colliders3D_) {
+        e.prevShape = e.info.shape;
+        e.hasPrevShape = true;
+    }
 }
 
 const Collider::Entry<ColliderInfo2D> *Collider::Find2D(ColliderID id) const {

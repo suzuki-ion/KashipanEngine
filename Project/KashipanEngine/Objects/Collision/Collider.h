@@ -71,6 +71,7 @@ struct ColliderInfo2D final {
     std::function<void(const HitInfo2D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
+    bool ccdEnabled = false;
 };
 
 struct ColliderInfo3D final {
@@ -94,6 +95,7 @@ struct ColliderInfo3D final {
     std::function<void(const HitInfo3D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
+    bool ccdEnabled = false;
 };
 
 class Collider final {
@@ -138,6 +140,8 @@ private:
     struct Entry {
         ColliderID id;
         Info info;
+        typename Info::ShapeVariant prevShape{};
+        bool hasPrevShape = false;
     };
 
     template<typename TEntry>

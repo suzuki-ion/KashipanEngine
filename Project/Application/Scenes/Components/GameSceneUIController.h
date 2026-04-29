@@ -105,7 +105,7 @@ public:
         goalDistanceBar->SetProgress(0.0f);
         goalDistanceBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = goalDistanceBar->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{std::max(32.0f, screenWidth_ - 48.0f), screenHeight_ * 0.5f, 0.0f});
+            tr->SetTranslate(Vector3{std::max(32.0f, screenWidth_ - 48.0f), screenHeight_ * 0.7f, 0.0f});
         }
         goalDistanceBar_ = goalDistanceBar.get();
         (void)ctx->AddObject2D(std::move(goalDistanceBar));
@@ -1084,9 +1084,9 @@ private:
     Vector2 operationUIFallbackSize_{512.0f, 256.0f};
     Vector2 gravityDirectionAllowFallbackSize_{96.0f, 96.0f};
     float operationUIMarginRight_ = 32.0f;
-    float operationUIMarginBottom_ = 24.0f;
-    float operationUIVerticalSpacing_ = 12.0f;
-    float operationUIStackOffsetY_ = 96.0f;
+    float operationUIMarginBottom_ = 32.0f;
+    float operationUIVerticalSpacing_ = 8.0f;
+    float operationUIStackOffsetY_ = 0.0f;
     float gravityDirectionAllowMargin_ = 24.0f;
     float operationUIPressedOffsetX_ = -128.0f;
     float operationUIReleaseDuration_ = 0.2f;

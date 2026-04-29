@@ -362,7 +362,6 @@ inline bool GetOverlapOnAxisSAT(const Math::OBB &a, const Math::OBB &b, const Ve
     float &outPenetration) {
     const float len2 = MathUtils::LengthSquared(axis);
     if (len2 == 0.0f) {
-        outPenetration = std::numeric_limits<float>::infinity();
         return true;
     }
 
@@ -372,10 +371,10 @@ inline bool GetOverlapOnAxisSAT(const Math::OBB &a, const Math::OBB &b, const Ve
     const float dist = std::abs(MathUtils::Dot(t, nAxis));
     const float ra = ProjectRadius(a, nAxis);
     const float rb = ProjectRadius(b, nAxis);
+
     const float overlap = (ra + rb) - dist;
 
     if (overlap < 0.0f) {
-        outPenetration = overlap;
         return false;
     }
 
@@ -396,8 +395,10 @@ inline HitInfo ComputeHit(const Math::OBB &a, const Math::OBB &b) {
 
     auto consider = [&](const Vector3 &axis) {
         float pen = 0.0f;
+        const float len2 = MathUtils::LengthSquared(axis);
+        if (len2 == 0.0f) return true; // 退化している軸はスキップ
+
         if (!GetOverlapOnAxisSAT(a, b, axis, t, pen)) {
-            bestPen = pen;
             return false;
         }
         if (pen < bestPen) {

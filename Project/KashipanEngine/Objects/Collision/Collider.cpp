@@ -710,7 +710,9 @@ inline HitInfo2D ComputeHit2DCCD(
     const ColliderInfo2D::ShapeVariant *prevB,
     bool ccdB) {
     if (!ccdA && !ccdB) {
-        return ComputeHit2D(currentA, currentB);
+        HitInfo2D hi = ComputeHit2D(currentA, currentB);
+        hi.time = 1.0f;
+        return hi;
     }
 
     const int samples = ComputeAdaptiveSamples2D(currentA, prevA, ccdA, currentB, prevB, ccdB);
@@ -720,13 +722,34 @@ inline HitInfo2D ComputeHit2DCCD(
         const auto shapeA = (ccdA && prevA) ? InterpolateShape2D(*prevA, currentA, t) : currentA;
         const auto shapeB = (ccdB && prevB) ? InterpolateShape2D(*prevB, currentB, t) : currentB;
 
-        const HitInfo2D hi = ComputeHit2D(shapeA, shapeB);
+        HitInfo2D hi = ComputeHit2D(shapeA, shapeB);
         if (hi.isHit) {
+            float t0 = (i == 0) ? 0.0f : static_cast<float>(i - 1) / static_cast<float>(samples);
+            float t1 = t;
+            const int binarySearchIterations = 8;
+
+            for (int j = 0; j < binarySearchIterations; ++j) {
+                float midT = t0 + (t1 - t0) * 0.5f;
+                auto midShapeA = (ccdA && prevA) ? InterpolateShape2D(*prevA, currentA, midT) : currentA;
+                auto midShapeB = (ccdB && prevB) ? InterpolateShape2D(*prevB, currentB, midT) : currentB;
+
+                HitInfo2D midHi = ComputeHit2D(midShapeA, midShapeB);
+                if (midHi.isHit) {
+                    t1 = midT;
+                    hi = midHi;
+                } else {
+                    t0 = midT;
+                }
+            }
+
+            hi.time = t1;
             return hi;
         }
     }
 
-    return ComputeHit2D(currentA, currentB);
+    HitInfo2D hi = ComputeHit2D(currentA, currentB);
+    hi.time = 1.0f;
+    return hi;
 }
 
 inline HitInfo3D ComputeHit3DCCD(
@@ -737,7 +760,9 @@ inline HitInfo3D ComputeHit3DCCD(
     const ColliderInfo3D::ShapeVariant *prevB,
     bool ccdB) {
     if (!ccdA && !ccdB) {
-        return ComputeHit3D(currentA, currentB);
+        HitInfo3D hi = ComputeHit3D(currentA, currentB);
+        hi.time = 1.0f;
+        return hi;
     }
 
     const int samples = ComputeAdaptiveSamples3D(currentA, prevA, ccdA, currentB, prevB, ccdB);
@@ -747,13 +772,34 @@ inline HitInfo3D ComputeHit3DCCD(
         const auto shapeA = (ccdA && prevA) ? InterpolateShape3D(*prevA, currentA, t) : currentA;
         const auto shapeB = (ccdB && prevB) ? InterpolateShape3D(*prevB, currentB, t) : currentB;
 
-        const HitInfo3D hi = ComputeHit3D(shapeA, shapeB);
+        HitInfo3D hi = ComputeHit3D(shapeA, shapeB);
         if (hi.isHit) {
+            float t0 = (i == 0) ? 0.0f : static_cast<float>(i - 1) / static_cast<float>(samples);
+            float t1 = t;
+            const int binarySearchIterations = 8;
+
+            for (int j = 0; j < binarySearchIterations; ++j) {
+                float midT = t0 + (t1 - t0) * 0.5f;
+                auto midShapeA = (ccdA && prevA) ? InterpolateShape3D(*prevA, currentA, midT) : currentA;
+                auto midShapeB = (ccdB && prevB) ? InterpolateShape3D(*prevB, currentB, midT) : currentB;
+
+                HitInfo3D midHi = ComputeHit3D(midShapeA, midShapeB);
+                if (midHi.isHit) {
+                    t1 = midT;
+                    hi = midHi;
+                } else {
+                    t0 = midT;
+                }
+            }
+
+            hi.time = t1;
             return hi;
         }
     }
 
-    return ComputeHit3D(currentA, currentB);
+    HitInfo3D hi = ComputeHit3D(currentA, currentB);
+    hi.time = 1.0f;
+    return hi;
 }
 
 } // namespace

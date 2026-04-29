@@ -36,6 +36,7 @@ struct HitInfo2D final {
     bool isHit = false;
     Vector3 normal{0.0f, 0.0f, 0.0f};
     float penetration = 0.0f;
+    float time = 0.0f;
 
     Object2DBase* selfObject = nullptr;
     Object2DBase* otherObject = nullptr;
@@ -45,6 +46,7 @@ struct HitInfo3D final {
     bool isHit = false;
     Vector3 normal{0.0f, 0.0f, 0.0f};
     float penetration = 0.0f;
+    float time = 0.0f;
 
     Object3DBase* selfObject = nullptr;
     Object3DBase* otherObject = nullptr;

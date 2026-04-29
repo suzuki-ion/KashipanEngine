@@ -93,6 +93,8 @@ public:
             return true;
         }
 
+        const Vector3 prevFramePosition = tr->GetTranslate();
+
         // 着地イベント算出用に、重力変更前の落下蓄積量を保持
         const float fallDistanceBeforeGravityChange = accumulatedFallDistance_;
 
@@ -116,47 +118,73 @@ public:
             }
         }
 
-		// ジャンプ処理は重力変更前の落下距離計測を正しく行うために、重力変更処理の前に行う必要がある
+        // ジャンプ処理は重力変更前の落下距離計測を正しく行うために、重力変更処理の前に行う必要がある
         if (jumpBehavior_ && gravityBehavior_) {
             jumpBehavior_->Apply(dt, gravityDirection_, gravityBehavior_->GravityVelocityRef());
         }
 
-		// 前方移動と横移動は重力変更前の落下距離計測を正しく行うために、重力変更処理の前に行う必要がある
-        if (forwardBehavior_ && gravityBehavior_) {
-            forwardBehavior_->Apply(dt, grounded, gravityBehavior_->GetGravityVelocity(), gravityDirection_);
-        }
-
-		// 横移動は前方移動の速度に応じて最大速度が変化するため、前方移動の更新後に行う必要がある
-        if (lateralBehavior_ && forwardBehavior_) {
-            lateralBehavior_->Apply(dt, gravityDirection_, forwardDirection_, forwardBehavior_->GetForwardSpeed(), forwardBehavior_->GetMinForwardSpeed());
-        }
-
-		// 重力処理は最後に行う必要がある。これにより、重力変更前の落下距離計測や、ジャンプ・前方移動・横移動の更新が重力変更の影響を受けないようになる
+        // 重力処理は落下処理として最初に行う
         if (gravityBehavior_) {
             gravityBehavior_->SetFastFallEnabled(fastFallEnabled_ && !grounded);
             gravityBehavior_->Apply(dt, gravityDirection_);
         }
 
-		// 移動処理
         Vector3 gravityVelocity{0.0f, 0.0f, 0.0f};
+        if (gravityBehavior_) gravityVelocity = gravityBehavior_->GetGravityVelocity();
+
+        const Vector3 gravityFramePosition = tr->GetTranslate() + gravityVelocity * dt;
+        tr->SetTranslate(gravityFramePosition);
+
+        // まず重力による移動後の突き抜けを押し戻す（落下処理の押し戻し）
+        if (collisionBehavior_ && gravityBehavior_) {
+            Vector3 pos = tr->GetTranslate();
+            auto &gvRef = gravityBehavior_->GravityVelocityRef();
+            collisionBehavior_->ResolveStayTranslationAndVelocity(pos, gvRef);
+            tr->SetTranslate(pos);
+            gravityVelocity = gvRef;
+        }
+
+        // 前方移動と横移動は落下処理と押し戻しの後に行う
+        if (forwardBehavior_ && gravityBehavior_) {
+            forwardBehavior_->Apply(dt, grounded, gravityBehavior_->GetGravityVelocity(), gravityDirection_);
+        }
+
+        // 横移動は前方移動の速度に応じて最大速度が変化するため、前方移動の更新後に行う必要がある
+        if (lateralBehavior_ && forwardBehavior_) {
+            lateralBehavior_->Apply(dt, gravityDirection_, forwardDirection_, forwardBehavior_->GetForwardSpeed(), forwardBehavior_->GetMinForwardSpeed());
+        }
+
+        // 移動処理
         Vector3 lateralVelocity{0.0f, 0.0f, 0.0f};
         float forwardSpeed = 0.0f;
-        if (gravityBehavior_) gravityVelocity = gravityBehavior_->GetGravityVelocity();
         if (lateralBehavior_) lateralVelocity = lateralBehavior_->GetLateralVelocity();
         if (forwardBehavior_) forwardSpeed = forwardBehavior_->GetForwardSpeed();
 
-		// 衝突による位置修正と、修正後の速度の計算
+        // 前方移動、横移動の合成速度で位置を更新
+        Vector3 totalVelocity = forwardDirection_ * forwardSpeed + lateralVelocity;
+        if (grounded && collisionBehavior_) {
+            const Vector3 groundNormal = collisionBehavior_->GetGroundNormal().Normalize();
+            const float intoGround = totalVelocity.Dot(groundNormal);
+            if (intoGround < 0.0f) {
+                totalVelocity -= groundNormal * intoGround;
+            }
+        }
+        const Vector3 currentFramePosition = tr->GetTranslate() + totalVelocity * dt;
+        tr->SetTranslate(currentFramePosition);
+
+        // 前方/横移動による衝突の補正。ここで lastCollisionTime を使ってヒット時刻に沿って補正。
         if (collisionBehavior_ && gravityBehavior_) {
             Vector3 correctedPos = tr->GetTranslate();
+            if (auto hitTime = collisionBehavior_->ConsumeLastCollisionTime(); hitTime.has_value()) {
+                const float t = std::clamp(*hitTime, 0.0f, 1.0f);
+                correctedPos = Lerp(currentFramePosition, prevFramePosition, t);
+                correctedPos.z = currentFramePosition.z;
+            }
             auto &gvRef = gravityBehavior_->GravityVelocityRef();
             collisionBehavior_->ResolveStayTranslationAndVelocity(correctedPos, gvRef);
             tr->SetTranslate(correctedPos);
             gravityVelocity = gvRef;
         }
-
-		// 前方移動、横移動、重力の合成速度で位置を更新
-        const Vector3 totalVelocity = forwardDirection_ * forwardSpeed + lateralVelocity + gravityVelocity;
-        tr->SetTranslate(tr->GetTranslate() + totalVelocity * dt);
 
 		// 着地イベントの算出
         if (grounded && !wasGroundedPrev_) {

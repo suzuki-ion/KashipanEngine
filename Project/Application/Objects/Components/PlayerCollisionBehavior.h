@@ -76,6 +76,16 @@ public:
         return v;
     }
 
+    std::optional<float> ConsumeLastCollisionTime() {
+        if (!collisionResponseEnabled_) {
+            lastCollisionTime_.reset();
+            return std::nullopt;
+        }
+        auto out = lastCollisionTime_;
+        lastCollisionTime_.reset();
+        return out;
+    }
+
     void SetCollisionResponseEnabled(bool enabled) {
         collisionResponseEnabled_ = enabled;
         if (!collisionResponseEnabled_) {
@@ -88,18 +98,36 @@ public:
         if (!collisionResponseEnabled_) {
             hasStayCorrection_ = false;
             stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
+            needsVelocityCorrection_ = false;
             return;
         }
-        if (!hasStayCorrection_) return;
 
-        position += stayCorrection_;
-        const float vn = gravityVelocity.Dot(lastGroundNormal_);
-        if (vn < 0.0f) {
-            gravityVelocity -= lastGroundNormal_ * vn;
+        if (needsVelocityCorrection_) {
+            const float vn = gravityVelocity.Dot(lastGroundNormal_);
+            if (vn < 0.0f) {
+                gravityVelocity -= lastGroundNormal_ * vn;
+            }
+            needsVelocityCorrection_ = false;
         }
 
-        hasStayCorrection_ = false;
-        stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
+        if (hasStayCorrection_) {
+            // Apply at most maxStayCorrectionPerFrame_ this frame to avoid overshooting when penetration is large
+            Vector3 correctionToApply = stayCorrection_;
+            const float len = correctionToApply.Length();
+            if (len > maxStayCorrectionPerFrame_) {
+                correctionToApply = correctionToApply.Normalize() * maxStayCorrectionPerFrame_;
+            }
+
+            position += correctionToApply;
+
+            // Remove applied portion from accumulated stayCorrection_
+            stayCorrection_ -= correctionToApply;
+            // If the remaining correction is very small, clear it
+            hasStayCorrection_ = stayCorrection_.LengthSquared() > 0.000001f;
+            if (!hasStayCorrection_) {
+                stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
+            }
+        }
     }
 
 #if defined(USE_IMGUI)
@@ -113,8 +141,10 @@ private:
         grounded_ = false;
         requestedGravityDirection_.reset();
         lastGroundWasFirstTouch_ = false;
+        lastCollisionTime_.reset();
         stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
         hasStayCorrection_ = false;
+        needsVelocityCorrection_ = false;
         isSlowGround_ = false;
     }
 
@@ -142,9 +172,27 @@ private:
         if (normal.LengthSquared() <= 0.000001f) return;
 
         grounded_ = true;
+        needsVelocityCorrection_ = true;
         lastGroundNormal_ = normal;
         lastGroundObject_ = hit.otherObject;
         lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
+
+        if (hit.time >= 0.0f) {
+            if (!lastCollisionTime_.has_value() || hit.time < *lastCollisionTime_) {
+                lastCollisionTime_ = hit.time;
+            }
+        }
+
+        const float penetration = hit.penetration;
+        if (penetration > 0.0f) {
+            const float currentAlongNormal = stayCorrection_.Dot(normal);
+            // Limit how much penetration we add per hit to avoid huge instantaneous corrections
+            const float addPen = std::min(penetration - currentAlongNormal, maxStayPenetrationPerHit_);
+            if (addPen > 0.0f) {
+                stayCorrection_ += normal * addPen;
+                hasStayCorrection_ = stayCorrection_.LengthSquared() > 0.000001f;
+            }
+        }
 
         auto *ctx = GetOwner3DContext();
         if (!ctx) return;
@@ -175,22 +223,25 @@ private:
         if (normal.LengthSquared() <= 0.000001f) return;
 
         grounded_ = true;
+        needsVelocityCorrection_ = true;
         lastGroundNormal_ = normal;
         lastGroundObject_ = hit.otherObject;
         lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
 
-        const float penetration = hit.penetration; //std::clamp(hit.penetration, 0.0f, maxStayPenetrationPerHit_);
+        if (hit.time >= 0.0f) {
+            if (!lastCollisionTime_.has_value() || hit.time < *lastCollisionTime_) {
+                lastCollisionTime_ = hit.time;
+            }
+        }
+
+        const float penetration = hit.penetration;
         if (penetration <= 0.0f) return;
 
         const float currentAlongNormal = stayCorrection_.Dot(normal);
-        if (penetration > currentAlongNormal) {
-            stayCorrection_ += normal * (penetration - currentAlongNormal);
-        }
-
-        const float correctionLengthSq = stayCorrection_.LengthSquared();
-        const float maxCorrectionSq = maxStayCorrectionPerFrame_ * maxStayCorrectionPerFrame_;
-        if (correctionLengthSq > maxCorrectionSq) {
-            stayCorrection_ = stayCorrection_.Normalize() * maxStayCorrectionPerFrame_;
+        // Limit addition per hit to avoid huge spike when velocity is large
+        const float addPen = std::min(penetration - currentAlongNormal, maxStayPenetrationPerHit_);
+        if (addPen > 0.0f) {
+            stayCorrection_ += normal * addPen;
         }
 
         hasStayCorrection_ = stayCorrection_.LengthSquared() > 0.000001f;
@@ -202,8 +253,10 @@ private:
     Vector3 lastGroundNormal_{0.0f, 1.0f, 0.0f};
     Object3DBase *lastGroundObject_ = nullptr;
     bool lastGroundWasFirstTouch_ = false;
-    Vector3 stayCorrection_{0.0f, 0.0f, 0.0f};
-    bool hasStayCorrection_ = false;
+    std::optional<float> lastCollisionTime_{};
+	Vector3 stayCorrection_{0.0f, 0.0f, 0.0f};
+	bool hasStayCorrection_ = false;
+	bool needsVelocityCorrection_ = false;
 	bool isSlowGround_ = false;
     bool collisionResponseEnabled_ = true;
     float maxStayPenetrationPerHit_ = 0.2f;

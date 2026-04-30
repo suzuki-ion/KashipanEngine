@@ -413,6 +413,7 @@
     <ClInclude Include="Application\Scenes\Components\PlayerClearController.h" />
     <ClInclude Include="Application\Scenes\Components\PlayerGameOverController.h" />
     <ClInclude Include="Application\Scenes\Components\StageSelectUIController.h" />
+    <ClInclude Include="Application\Objects\Components\CoinDefined.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -2,2331 +2,2227 @@
     "spawn_reqests": [
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 9.45469856262207,
-            "stageProgress": 0.0
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 9.564016342163086,
-            "stageProgress": 0.24754926562309265
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 9.45469856262207,
-            "stageProgress": 0.4950985312461853
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 9.620457649230957,
-            "stageProgress": 0.6745222806930542
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
             "stageProgress": 0.0
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
             "stageProgress": 0.0
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
             "stageProgress": 0.0
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
             "stageProgress": 0.0
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
             "stageProgress": 0.0
         },
         {
             "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
             "stageProgress": 0.0
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.0
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
             "stageProgress": 0.0
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.009901970624923706
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.029705911874771118
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": -1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": 1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": 0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
+            "stageProgress": 0.009963136166334152
+        },
+        {
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
+            "stageProgress": 0.029889408499002457
+        },
+        {
+            "angle": 0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.029889408499002457
+        },
+        {
+            "angle": 1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.029889408499002457
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.029889408499002457
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.029889408499002457
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.029889408499002457
+        },
+        {
+            "angle": -1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.029889408499002457
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.019803941249847412
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.029889408499002457
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.059411823749542236
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.019926272332668304
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.06931379437446594
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.019926272332668304
         },
         {
             "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.06931379437446594
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.019926272332668304
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.06931379437446594
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.019926272332668304
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.06931379437446594
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.019926272332668304
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.06931379437446594
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.019926272332668304
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.06931379437446594
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.019926272332668304
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.06931379437446594
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
+            "stageProgress": 0.019926272332668304
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.04950985312461853
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.05977881699800491
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.04950985312461853
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.05977881699800491
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.04950985312461853
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.05977881699800491
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.04950985312461853
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.05977881699800491
         },
         {
             "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.04950985312461853
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.05977881699800491
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.04950985312461853
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.05977881699800491
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.04950985312461853
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.05977881699800491
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.06974195688962936
         },
         {
             "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.06974195688962936
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.06974195688962936
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.06974195688962936
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.06974195688962936
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.039607882499694824
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.11872462928295135
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.06974195688962936
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.11872462928295135
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.04981568083167076
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.11872462928295135
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.04981568083167076
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.11872462928295135
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.04981568083167076
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.11872462928295135
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.11872462928295135
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.11872462928295135
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.04981568083167076
         },
         {
             "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.04981568083167076
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
+            "angle": -1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.04981568083167076
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.04981568083167076
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.03985254466533661
+        },
+        {
+            "angle": -1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.03985254466533661
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.03985254466533661
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.03985254466533661
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.03985254466533661
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.03985254466533661
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.03985254466533661
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.12862659990787506
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
+            "stageProgress": 0.03985254466533661
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.14843054115772247
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.13852857053279877
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.12942112982273102
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.13852857053279877
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.13852857053279877
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.13852857053279877
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.12942112982273102
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.13852857053279877
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.12942112982273102
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.13852857053279877
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.12942112982273102
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.13852857053279877
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.12942112982273102
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.09892068803310394
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.14934740960597992
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.09892068803310394
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.14934740960597992
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.09892068803310394
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.09892068803310394
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.09892068803310394
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.09892068803310394
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.14934740960597992
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.09892068803310394
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.14934740960597992
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.14934740960597992
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.13938426971435547
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.13938426971435547
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.13938426971435547
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.13938426971435547
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.10882265865802765
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.13938426971435547
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.08901871740818024
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.08901871740818024
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.08901871740818024
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.08901871740818024
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.08901871740818024
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.08901871740818024
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.08901871740818024
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.07911673933267593
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.15833251178264618
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.15833251178264618
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.15833251178264618
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.15833251178264618
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.15833251178264618
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.15833251178264618
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.15833251178264618
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.16823448240756989
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
-        },
-        {
-            "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
         },
         {
             "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1880384236574173
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1781364530324936
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1781364530324936
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
             "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1781364530324936
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1781364530324936
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1781364530324936
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1781364530324936
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.1781364530324936
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.21774433553218842
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.10949486494064331
         },
         {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.21774433553218842
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.21774433553218842
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.22764630615711212
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.22764630615711212
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.22764630615711212
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.2078423798084259
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.2078423798084259
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.2078423798084259
-        },
-        {
-            "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.197940394282341
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.197940394282341
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.197940394282341
-        },
-        {
-            "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.197940394282341
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
         },
         {
             "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.197940394282341
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.197940394282341
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.24745024740695953
-        },
-        {
-            "angle": -2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.23754827678203583
-        },
-        {
-            "angle": 3.1415998935699463,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.23754827678203583
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
         },
         {
             "angle": 2.3561999797821045,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.23754827678203583
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
+        },
+        {
+            "angle": -1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.611545741558075,
-            "stageProgress": 0.04842063784599304
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.15931054949760437
         },
         {
-            "angle": -0.6014000177383423,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.455787718296051,
-            "stageProgress": 0.06713536381721497
+            "angle": 0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.15931054949760437
         },
         {
-            "angle": 0.64410001039505,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.360332727432251,
-            "stageProgress": 0.08307753503322601
+            "angle": -1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.15931054949760437
         },
         {
-            "angle": -1.1380000114440918,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.24537083506584167,
-            "stageProgress": 0.10248539596796036
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.15931054949760437
         },
         {
-            "angle": -2.4333999156951904,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.4759877324104309,
-            "stageProgress": 0.12080404162406921
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.16927368938922882
         },
         {
-            "angle": 3.0947999954223633,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.36191704869270325,
-            "stageProgress": 0.14060798287391663
+            "angle": 0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.16927368938922882
         },
         {
-            "angle": 1.7720999717712402,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.41637787222862244,
-            "stageProgress": 0.15862956643104553
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.16927368938922882
         },
         {
-            "angle": 0.16840000450611115,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.32656699419021606,
-            "stageProgress": 0.17803743481636047
+            "angle": 0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.18919995427131653
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.18919995427131653
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.18919995427131653
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.18919995427131653
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.18919995427131653
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.17923682928085327
+        },
+        {
+            "angle": 0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.17923682928085327
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2190893590450287
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2190893590450287
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2190893590450287
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.22905249893665314
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.22905249893665314
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.22905249893665314
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.20912623405456543
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.20912623405456543
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.20912623405456543
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.19916309416294098
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.19916309416294098
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.19916309416294098
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.24897877871990204
+        },
+        {
+            "angle": -2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2390156239271164
+        },
+        {
+            "angle": -3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2390156239271164
+        },
+        {
+            "angle": 2.3561999797821045,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2390156239271164
         },
         {
             "angle": -3.1064000129699707,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8207743167877197,
-            "stageProgress": 0.3123081624507904
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8258443474769592,
+            "stageProgress": 0.3142373263835907
         },
         {
             "angle": -2.3466999530792236,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8143380284309387,
-            "stageProgress": 0.3023071587085724
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.819368302822113,
+            "stageProgress": 0.304174542427063
         },
         {
             "angle": 2.4154000282287598,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8109714388847351,
-            "stageProgress": 0.32240816950798035
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.815980851650238,
+            "stageProgress": 0.3243997097015381
         },
         {
             "angle": 2.4154000282287598,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8109714388847351,
-            "stageProgress": 0.33231014013290405
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.815980851650238,
+            "stageProgress": 0.33436283469200134
         },
         {
             "angle": 1.63919997215271,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.790276288986206,
-            "stageProgress": 0.3419150412082672
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7951579093933105,
+            "stageProgress": 0.3440270721912384
         },
         {
             "angle": -1.5744999647140503,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7951282262802124,
-            "stageProgress": 0.301118940114975
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8000398278236389,
+            "stageProgress": 0.30796054005622864
         },
         {
             "angle": -2.3466999530792236,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8143380284309387,
-            "stageProgress": 0.3122091293334961
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.819368302822113,
+            "stageProgress": 0.31413766741752625
         },
         {
             "angle": -3.1064000129699707,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8207743167877197,
-            "stageProgress": 0.3222101330757141
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8258443474769592,
+            "stageProgress": 0.32420045137405396
         },
         {
             "angle": 2.4154000282287598,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8109714388847351,
-            "stageProgress": 0.34221211075782776
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.815980851650238,
+            "stageProgress": 0.344325989484787
         },
         {
             "angle": 1.63919997215271,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.790276288986206,
-            "stageProgress": 0.351718008518219
-        },
-        {
-            "angle": -1.5744999647140503,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7951282262802124,
-            "stageProgress": 0.3110209107398987
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7951579093933105,
+            "stageProgress": 0.353890597820282
         },
         {
             "angle": -2.3466999530792236,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8143380284309387,
-            "stageProgress": 0.3220120668411255
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.819368302822113,
+            "stageProgress": 0.3240011930465698
         },
         {
             "angle": -3.1064000129699707,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8207743167877197,
-            "stageProgress": 0.33211207389831543
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8258443474769592,
+            "stageProgress": 0.3341635763645172
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.29111793637275696
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.29789775609970093
         },
         {
             "angle": -1.5744999647140503,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7951282262802124,
-            "stageProgress": 0.3814239203929901
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8000398278236389,
+            "stageProgress": 0.38378000259399414
         },
         {
             "angle": -1.5744999647140503,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7951282262802124,
-            "stageProgress": 0.3715219497680664
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8000398278236389,
+            "stageProgress": 0.3738168776035309
         },
         {
-            "angle": -1.57669997215271,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.5005446672439575,
-            "stageProgress": 0.3848896026611328
-        },
-        {
-            "angle": -1.57669997215271,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.5005446672439575,
-            "stageProgress": 0.3947915732860565
+            "angle": -1.5771000385284424,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4692637026309967,
+            "stageProgress": 0.3956361413002014
         },
         {
             "angle": -0.4950000047683716,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6809585094451904,
-            "stageProgress": 0.47341322898864746
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6851648688316345,
+            "stageProgress": 0.47693535685539246
         },
         {
             "angle": -0.4950000047683716,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6809585094451904,
-            "stageProgress": 0.4833151698112488
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6851648688316345,
+            "stageProgress": 0.4868984818458557
         },
         {
-            "angle": -0.4636000096797943,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.3568670153617859,
-            "stageProgress": 0.5204476118087769
+            "angle": -0.40790000557899475,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4047025740146637,
+            "stageProgress": 0.5198764204978943
         },
         {
-            "angle": -0.4636000096797943,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.3568670153617859,
-            "stageProgress": 0.48678088188171387
+            "angle": -0.4399999976158142,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4119756817817688,
+            "stageProgress": 0.4903855621814728
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.28121596574783325
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.28793463110923767
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.28121596574783325
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.28121596574783325
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.28793463110923767
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.28121596574783325
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.28793463110923767
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.28121596574783325
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.28793463110923767
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.27131399512290955
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2779715061187744
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.27131399512290955
-        },
-        {
-            "angle": 1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.27131399512290955
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2779715061187744
         },
         {
             "angle": -1.5707999467849731,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.27131399512290955
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2779715061187744
         },
         {
             "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.27131399512290955
-        },
-        {
-            "angle": -0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.26141202449798584
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2779715061187744
         },
         {
             "angle": 0.7853999733924866,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.26141202449798584
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.26800835132598877
         },
         {
             "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7921576499938965,
-            "stageProgress": 0.26141202449798584
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.26800835132598877
         },
         {
             "angle": 1.5755000114440918,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6287751197814941,
-            "stageProgress": 0.4197445511817932
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6326591372489929,
+            "stageProgress": 0.4363853633403778
         },
         {
             "angle": 1.5755000114440918,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6287751197814941,
-            "stageProgress": 0.4098425507545471
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6326591372489929,
+            "stageProgress": 0.42642223834991455
         },
         {
             "angle": 1.8920999765396118,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6232300400733948,
-            "stageProgress": 0.4311318099498749
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6270797848701477,
+            "stageProgress": 0.44784295558929443
         },
         {
-            "angle": 2.9553000926971436,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.5840182304382324,
-            "stageProgress": 0.442221999168396
-        },
-        {
-            "angle": -0.8495000004768372,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2624021768569946,
-            "stageProgress": 0.5544113516807556
-        },
-        {
-            "angle": -0.4830999970436096,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2614121437072754,
-            "stageProgress": 0.5544113516807556
-        },
-        {
-            "angle": -1.2515000104904175,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2591346502304077,
-            "stageProgress": 0.5544113516807556
-        },
-        {
-            "angle": -1.2515000104904175,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2591346502304077,
-            "stageProgress": 0.5643132925033569
-        },
-        {
-            "angle": -0.4830999970436096,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2614121437072754,
-            "stageProgress": 0.5643132925033569
+            "angle": 2.5,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6399322748184204,
+            "stageProgress": 0.46049612760543823
         },
         {
             "angle": -0.8495000004768372,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2624021768569946,
-            "stageProgress": 0.5643132925033569
-        },
-        {
-            "angle": -1.2515000104904175,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2591346502304077,
-            "stageProgress": 0.574215292930603
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.270200252532959,
+            "stageProgress": 0.5578359961509705
         },
         {
             "angle": -0.4830999970436096,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2614121437072754,
-            "stageProgress": 0.574215292930603
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2692039012908936,
+            "stageProgress": 0.5578359961509705
+        },
+        {
+            "angle": -1.2515000104904175,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2669124603271484,
+            "stageProgress": 0.5578359961509705
+        },
+        {
+            "angle": -1.2515000104904175,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2669124603271484,
+            "stageProgress": 0.5677990913391113
+        },
+        {
+            "angle": -0.4830999970436096,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2692039012908936,
+            "stageProgress": 0.5677990913391113
         },
         {
             "angle": -0.8495000004768372,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2624021768569946,
-            "stageProgress": 0.574215292930603
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.270200252532959,
+            "stageProgress": 0.5677990913391113
+        },
+        {
+            "angle": -1.2515000104904175,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2669124603271484,
+            "stageProgress": 0.5777623057365417
+        },
+        {
+            "angle": -0.4830999970436096,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2692039012908936,
+            "stageProgress": 0.5777623057365417
+        },
+        {
+            "angle": -0.8495000004768372,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.270200252532959,
+            "stageProgress": 0.5777623057365417
         },
         {
             "angle": -0.8593999743461609,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 1.2065551280975342,
-            "stageProgress": 0.5982770919799805
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2140082120895386,
+            "stageProgress": 0.6037660837173462
         },
         {
-            "angle": -0.4636000096797943,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.3568670153617859,
-            "stageProgress": 0.49668288230895996
+            "angle": -0.4399999976158142,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4119756817817688,
+            "stageProgress": 0.500348687171936
         },
         {
             "angle": 2.253499984741211,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8674126267433167,
-            "stageProgress": 0.6483810544013977
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8727707266807556,
+            "stageProgress": 0.6523861289024353
         },
         {
             "angle": 1.6816999912261963,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.891573429107666,
-            "stageProgress": 0.6483810544013977
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8970807790756226,
+            "stageProgress": 0.6523861289024353
         },
         {
             "angle": 2.8427999019622803,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8760273456573486,
-            "stageProgress": 0.6483810544013977
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.881438672542572,
+            "stageProgress": 0.6523861289024353
         },
         {
             "angle": 2.253499984741211,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8674126267433167,
-            "stageProgress": 0.6384790539741516
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8727707266807556,
+            "stageProgress": 0.6424230337142944
         },
         {
             "angle": 1.6816999912261963,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.891573429107666,
-            "stageProgress": 0.6384790539741516
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8970807790756226,
+            "stageProgress": 0.6424230337142944
         },
         {
             "angle": 2.8427999019622803,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8760273456573486,
-            "stageProgress": 0.6384790539741516
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.881438672542572,
+            "stageProgress": 0.6424230337142944
         },
         {
             "angle": 2.8427999019622803,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8760273456573486,
-            "stageProgress": 0.6285771131515503
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.881438672542572,
+            "stageProgress": 0.6324598789215088
         },
         {
             "angle": 1.6816999912261963,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.891573429107666,
-            "stageProgress": 0.6285771131515503
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8970807790756226,
+            "stageProgress": 0.6324598789215088
         },
         {
             "angle": 2.253499984741211,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8674126267433167,
-            "stageProgress": 0.6285771131515503
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8727707266807556,
+            "stageProgress": 0.6324598789215088
         },
         {
             "angle": 2.253499984741211,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8674126267433167,
-            "stageProgress": 0.6745222806930542
-        },
-        {
-            "angle": 0.0,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 8.522130966186523,
-            "stageProgress": 0.9901970624923706
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8727707266807556,
+            "stageProgress": 0.6786888837814331
         },
         {
             "angle": 2.253499984741211,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8674126267433167,
-            "stageProgress": 0.6935340166091919
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8727707266807556,
+            "stageProgress": 0.6978180408477783
         },
         {
-            "angle": 0.9724000096321106,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.5124269723892212,
-            "stageProgress": 0.8529557585716248
+            "angle": 1.2906999588012695,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.5828434228897095,
+            "stageProgress": 0.8582245707511902
         },
         {
             "angle": -0.009100000374019146,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.9304881691932678,
-            "stageProgress": 0.76175856590271
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.9362359046936035,
+            "stageProgress": 0.7664640545845032
         },
         {
             "angle": -1.6629999876022339,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.5969898700714111,
-            "stageProgress": 0.8925637006759644
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.600677490234375,
+            "stageProgress": 0.898077130317688
         },
         {
-            "angle": -2.2486000061035156,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7865135669708252,
-            "stageProgress": 0.9206852316856384
+            "angle": -1.9888999462127686,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 2.0849854946136475,
+            "stageProgress": 0.9263724088668823
         },
         {
-            "angle": -2.975600004196167,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.26616495847702026,
-            "stageProgress": 0.8810773491859436
+            "angle": -3.0741000175476074,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.655574381351471,
+            "stageProgress": 0.8865198493003845
         },
         {
-            "angle": 0.07370000332593918,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8011684417724609,
-            "stageProgress": 0.8625606894493103
+            "angle": 0.03660000115633011,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.6208029985427856,
+            "stageProgress": 0.8902062177658081
         },
         {
-            "angle": -1.9643000364303589,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.32983464002609253,
-            "stageProgress": 0.8754332661628723
+            "angle": -2.606600046157837,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6012752652168274,
+            "stageProgress": 0.8808408975601196
         },
         {
-            "angle": -3.023699998855591,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.38449352979660034,
-            "stageProgress": 0.8679077625274658
+            "angle": -3.1080000400543213,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.354986548423767,
+            "stageProgress": 0.8732689023017883
         },
         {
-            "angle": 1.9293999671936035,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.56926429271698,
-            "stageProgress": 0.852658748626709
+            "angle": 2.3503000736236572,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.9428116083145142,
+            "stageProgress": 0.8579256534576416
         },
         {
             "angle": -2.359100103378296,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8000792860984802,
-            "stageProgress": 0.7820576429367065
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8050214052200317,
+            "stageProgress": 0.7868884801864624
         },
         {
-            "angle": 2.362799882888794,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7930487990379333,
-            "stageProgress": 0.7919595837593079
+            "angle": 2.8129000663757324,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.8514496088027954,
+            "stageProgress": 0.796851634979248
         },
         {
-            "angle": 1.5742000341415405,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7890880107879639,
-            "stageProgress": 0.8018616437911987
+            "angle": 0.6000000238418579,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.660057783126831,
+            "stageProgress": 0.8068147897720337
         },
         {
-            "angle": -2.261399984359741,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7238340973854065,
-            "stageProgress": 0.8427567481994629
+            "angle": -2.8271000385284424,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.8150840997695923,
+            "stageProgress": 0.8421839475631714
         },
         {
             "angle": 3.0383999347686768,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.21507079899311066,
-            "stageProgress": 0.8427567481994629
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.21639931201934814,
+            "stageProgress": 0.8479625582695007
         },
         {
             "angle": -0.8420000076293945,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.22378453612327576,
-            "stageProgress": 0.8427567481994629
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.22516687214374542,
+            "stageProgress": 0.8479625582695007
         },
         {
-            "angle": 0.7383000254631042,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.47965148091316223,
-            "stageProgress": 0.8229527473449707
+            "angle": 0.4715000092983246,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7151539325714111,
+            "stageProgress": 0.8280362486839294
         },
         {
             "angle": 0.6654999852180481,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.4055847227573395,
-            "stageProgress": 0.7529458403587341
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4080900549888611,
+            "stageProgress": 0.7575968503952026
         },
         {
-            "angle": -3.128499984741211,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.4731161594390869,
-            "stageProgress": 0.7692841291427612
+            "angle": 2.7888998985290527,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.3929460942745209,
+            "stageProgress": 0.7740360498428345
         },
         {
-            "angle": 2.1092000007629395,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.4684622287750244,
-            "stageProgress": 0.7769086360931396
+            "angle": 2.1215999126434326,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4220384359359741,
+            "stageProgress": 0.77393639087677
         },
         {
             "angle": 1.1025999784469604,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7096742391586304,
-            "stageProgress": 0.7692841291427612
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.714057981967926,
+            "stageProgress": 0.7740360498428345
         },
         {
             "angle": 2.3757998943328857,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7949302196502686,
-            "stageProgress": 0.7227448225021362
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7998405694961548,
+            "stageProgress": 0.7272093296051025
         },
         {
             "angle": -3.1305999755859375,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8059213757514954,
-            "stageProgress": 0.7227448225021362
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8108996748924255,
+            "stageProgress": 0.7272093296051025
         },
         {
             "angle": -2.360599994659424,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.80750572681427,
-            "stageProgress": 0.7430438995361328
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8124938011169434,
+            "stageProgress": 0.7476337552070618
         },
         {
             "angle": -3.131700038909912,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.804733157157898,
-            "stageProgress": 0.7326468229293823
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.809704065322876,
+            "stageProgress": 0.7371724247932434
         },
         {
             "angle": -0.04780000075697899,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6596692800521851,
-            "stageProgress": 0.9702941179275513
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6637440919876099,
+            "stageProgress": 0.9762877225875854
         },
         {
             "angle": 1.5987999439239502,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.5266858339309692,
-            "stageProgress": 0.9702941179275513
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.5299391746520996,
+            "stageProgress": 0.9762877225875854
         },
         {
-            "angle": 2.203700065612793,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.04366769269108772,
-            "stageProgress": 0.9900980591773987
+            "angle": 3.1415998935699463,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.0,
+            "stageProgress": 0.996213972568512
         },
         {
-            "angle": 0.28630000352859497,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.2855728268623352,
-            "stageProgress": 0.9900980591773987
+            "angle": 2.5164999961853027,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.9845571517944336,
+            "stageProgress": 0.9593503475189209
         },
         {
-            "angle": -2.150899887084961,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6203584671020508,
-            "stageProgress": 0.9900980591773987
+            "angle": -2.3392999172210693,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8497559428215027,
+            "stageProgress": 0.9550662040710449
         },
         {
-            "angle": -1.1959999799728394,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6917516589164734,
-            "stageProgress": 0.9900980591773987
-        },
-        {
-            "angle": 2.4539999961853027,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.778195858001709,
-            "stageProgress": 0.9534607529640198
-        },
-        {
-            "angle": -2.1475000381469727,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7243291735649109,
-            "stageProgress": 0.9492028951644897
-        },
-        {
-            "angle": -3.003499984741211,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7331419587135315,
-            "stageProgress": 0.9393009543418884
-        },
-        {
-            "angle": 1.840499997138977,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.584315299987793,
-            "stageProgress": 1.0
+            "angle": -3.0322000980377197,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.929560661315918,
+            "stageProgress": 0.945103108882904
         },
         {
             "angle": 0.021400000900030136,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.29448461532592773,
-            "stageProgress": 0.9570254683494568
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.2963036596775055,
+            "stageProgress": 0.9629371166229248
         },
         {
-            "angle": -1.0503000020980835,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.21348649263381958,
-            "stageProgress": 0.9345479607582092
+            "angle": -0.1867000013589859,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.0043838024139404,
+            "stageProgress": 0.9403207898139954
         },
         {
-            "angle": 2.8508999347686768,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7279928922653198,
-            "stageProgress": 0.8230518102645874
+            "angle": 2.990999937057495,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.399521827697754,
+            "stageProgress": 0.8281359076499939
         },
         {
-            "angle": -1.7475999593734741,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.6103574633598328,
-            "stageProgress": 0.8592930436134338
+            "angle": -2.437000036239624,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.1977683305740356,
+            "stageProgress": 0.8646009564399719
         },
         {
             "angle": -0.9739000201225281,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.5081691145896912,
-            "stageProgress": 0.8964254260063171
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.5113081336021423,
+            "stageProgress": 0.9019627571105957
         },
         {
-            "angle": 2.9844000339508057,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7041290998458862,
-            "stageProgress": 0.8515694737434387
+            "angle": -3.103800058364868,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.599980115890503,
+            "stageProgress": 0.8568297028541565
         },
         {
-            "angle": 3.015700101852417,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.4155856966972351,
-            "stageProgress": 0.8936528563499451
+            "angle": 3.087399959564209,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.9697120189666748,
+            "stageProgress": 0.909136176109314
         },
         {
             "angle": -0.9513999819755554,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.19932666420936584,
-            "stageProgress": 0.8129518032073975
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.20055793225765228,
+            "stageProgress": 0.8179734349250793
         },
         {
-            "angle": 3.0801000595092773,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7842360734939575,
-            "stageProgress": 0.8051292300224304
+            "angle": 3.115799903869629,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.87844979763031,
+            "stageProgress": 0.8101025819778442
         },
         {
-            "angle": 1.5722999572753906,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.8508763909339905,
-            "stageProgress": 0.8093870878219604
+            "angle": 1.572100043296814,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.9995018839836121,
+            "stageProgress": 0.8143867254257202
         },
         {
             "angle": 0.4277999997138977,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.7770076394081116,
-            "stageProgress": 0.8460243344306946
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7818073034286499,
+            "stageProgress": 0.8512503504753113
         },
         {
-            "angle": -1.0221999883651733,
-            "panelLength": 0.9901970624923706,
-            "panelThickness": 0.04950985312461853,
-            "panelWidth": 0.4950985312461853,
-            "radius": 0.56500643491745,
-            "stageProgress": 0.8262204527854919
+            "angle": -0.699400007724762,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7536116242408752,
+            "stageProgress": 0.8313241004943848
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.2979974150657654
+        },
+        {
+            "angle": -2.3466999530792236,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.819368302822113,
+            "stageProgress": 0.29421141743659973
+        },
+        {
+            "angle": 1.63919997215271,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7951579093933105,
+            "stageProgress": 0.33396434783935547
+        },
+        {
+            "angle": 2.623800039291382,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6354488134384155,
+            "stageProgress": 0.44784295558929443
+        },
+        {
+            "angle": -3.044100046157837,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6518879532814026,
+            "stageProgress": 0.46049612760543823
+        },
+        {
+            "angle": -1.5744999647140503,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.8000398278236389,
+            "stageProgress": 0.3937431573867798
+        },
+        {
+            "angle": -2.524600028991699,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 1.3169273138046265,
+            "stageProgress": 0.9297598600387573
+        },
+        {
+            "angle": 0.15629999339580536,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.3332669138908386,
+            "stageProgress": 0.9210919141769409
+        },
+        {
+            "angle": 1.2858999967575073,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.9515791535377502,
+            "stageProgress": 0.9069443345069885
+        },
+        {
+            "angle": -2.5341999530792236,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.9218890070915222,
+            "stageProgress": 0.9024608731269836
+        },
+        {
+            "angle": -1.659999966621399,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.8501543998718262,
+            "stageProgress": 0.9505828619003296
+        },
+        {
+            "angle": -0.4242999851703644,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.9716050624847412,
+            "stageProgress": 0.916309654712677
+        },
+        {
+            "angle": -1.6261999607086182,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 1.1837202310562134,
+            "stageProgress": 0.916309654712677
+        },
+        {
+            "angle": -2.2899999618530273,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7353790998458862,
+            "stageProgress": 0.9263724088668823
+        },
+        {
+            "angle": 2.668800115585327,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 1.283949375152588,
+            "stageProgress": 0.9297598600387573
+        },
+        {
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
+            "stageProgress": 0.05977881699800491
+        },
+        {
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
+            "stageProgress": 0.04981568083167076
+        },
+        {
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.805419921875,
+            "stageProgress": 0.0696423202753067
+        },
+        {
+            "angle": 0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0895686000585556
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.0696423202753067
+        },
+        {
+            "angle": -0.7853999733924866,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.09953173249959946
+        },
+        {
+            "angle": 1.5707999467849731,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.15931054949760437
+        },
+        {
+            "angle": 0.0,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.7970508933067322,
+            "stageProgress": 0.17923682928085327
+        },
+        {
+            "angle": -0.40790000557899475,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4047025740146637,
+            "stageProgress": 0.5298395752906799
+        },
+        {
+            "angle": -0.8593999743461609,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2140082120895386,
+            "stageProgress": 0.6108399033546448
+        },
+        {
+            "angle": -0.8758999705314636,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.9759888648986816,
+            "stageProgress": 0.6148251295089722
+        },
+        {
+            "angle": -0.2964000105857849,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.706884503364563,
+            "stageProgress": 0.5362160205841064
+        },
+        {
+            "angle": -0.2964000105857849,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.706884503364563,
+            "stageProgress": 0.526252806186676
+        },
+        {
+            "angle": 0.8145999908447266,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.5732789039611816,
+            "stageProgress": 0.7371724247932434
+        },
+        {
+            "angle": 0.4165000021457672,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.4347912073135376,
+            "stageProgress": 0.7476337552070618
+        },
+        {
+            "angle": -0.5067999958992004,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.2334363460540771,
+            "stageProgress": 0.7272093296051025
+        },
+        {
+            "angle": -0.027000000700354576,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.3131413459777832,
+            "stageProgress": 0.7272093296051025
+        },
+        {
+            "angle": -2.5341999530792236,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.9218890070915222,
+            "stageProgress": 0.8377004861831665
+        },
+        {
+            "angle": -2.437000036239624,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.1977683305740356,
+            "stageProgress": 0.7999402284622192
+        },
+        {
+            "angle": -2.606600046157837,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.6012752652168274,
+            "stageProgress": 0.8161801099777222
+        },
+        {
+            "angle": -3.0741000175476074,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.655574381351471,
+            "stageProgress": 0.8218590617179871
+        },
+        {
+            "angle": -2.033799886703491,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.25874266028404236,
+            "stageProgress": 0.7925674915313721
+        },
+        {
+            "angle": -0.8187999725341797,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.20484207570552826,
+            "stageProgress": 0.7925674915313721
+        },
+        {
+            "angle": -0.09929999709129333,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.9244794249534607,
+            "stageProgress": 0.8706784844398499
+        },
+        {
+            "angle": -3.103800058364868,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.599980115890503,
+            "stageProgress": 0.9835608005523682
+        },
+        {
+            "angle": 2.990999937057495,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.399521827697754,
+            "stageProgress": 0.9548670053482056
+        },
+        {
+            "angle": -2.8271000385284424,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.8150840997695923,
+            "stageProgress": 0.9688153862953186
+        },
+        {
+            "angle": -3.1080000400543213,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.354986548423767,
+            "stageProgress": 1.0
+        },
+        {
+            "angle": 1.9722000360488892,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.9080402255058289,
+            "stageProgress": 0.9772840142250061
+        },
+        {
+            "angle": -0.24740000069141388,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.37311944365501404,
+            "stageProgress": 0.9705091118812561
+        },
+        {
+            "angle": -0.5515999794006348,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.796851634979248,
+            "stageProgress": 0.9587525725364685
+        },
+        {
+            "angle": -1.4627000093460083,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.4573079347610474,
+            "stageProgress": 0.9677194356918335
+        },
+        {
+            "angle": -1.8651000261306763,
+            "panelLength": 1.204742431640625,
+            "panelThickness": 0.060276973992586136,
+            "panelWidth": 0.6023712158203125,
+            "radius": 0.47364750504493713,
+            "stageProgress": 0.9739961624145508
+        },
+        {
+            "angle": -1.601199984550476,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.384975552558899,
+            "stageProgress": 0.8951877951622009
+        },
+        {
+            "angle": -1.2731000185012817,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 2.196373224258423,
+            "stageProgress": 0.9029590487480164
+        },
+        {
+            "angle": -1.4239000082015991,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 1.3842781782150269,
+            "stageProgress": 0.9116269946098328
+        },
+        {
+            "angle": 2.1215999126434326,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.4220384359359741,
+            "stageProgress": 0.77393639087677
+        },
+        {
+            "angle": 2.7888998985290527,
+            "panelLength": 0.9963136315345764,
+            "panelThickness": 0.04981568083167076,
+            "panelWidth": 0.4981568157672882,
+            "radius": 0.3929460942745209,
+            "stageProgress": 0.7740360498428345
         }
     ],
     "stageLength": 100.0

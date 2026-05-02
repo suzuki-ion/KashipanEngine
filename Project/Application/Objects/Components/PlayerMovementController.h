@@ -497,7 +497,7 @@ private:
     int gravityGaugeUseCountPerFull_ = 2;
     float gravityGaugeMax_ = gravityGaugePerUse_ * static_cast<float>(gravityGaugeUseCountPerFull_);
     float gravityGauge_ = gravityGaugeMax_;
-    float landingGaugeRecoveryBase_ = 0.75f;
+    float landingGaugeRecoveryBase_ = 1.0f;
     float landingGaugeRecoveryPerDistance_ = 0.05f;
 	float slowGroundSpeedMultiplier_ = 0.7f;
 

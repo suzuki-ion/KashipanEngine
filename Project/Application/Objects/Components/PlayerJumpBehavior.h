@@ -74,7 +74,7 @@ public:
 #endif
 
 private:
-    float jumpPower_ = 48.0f;
+    float jumpPower_ = 50.0f;
     float maxJumpInputHoldTime_ = 0.5f;
     float jumpHoldSpeedScale_ = 0.5f;
     int maxJumpCount_ = 2;

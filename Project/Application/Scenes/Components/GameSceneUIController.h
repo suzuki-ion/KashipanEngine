@@ -1061,7 +1061,7 @@ private:
     Vector4 jumpRemainSegmentColorBase_{0.85f, 0.85f, 0.85f, 1.0f};
 
     Vector3 jumpRemainGaugeBasePosition_{0.0f, 0.0f, 0.0f};
-    float jumpRemainGaugeYOffset_ = 176.0f;
+    float jumpRemainGaugeYOffset_ = -50.0f;
     bool jumpRemainGaugeVisible_ = false;
     float jumpRemainGaugeAlpha_ = 0.0f;
     bool jumpRemainGaugeFadeOutActive_ = false;

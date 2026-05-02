@@ -75,8 +75,8 @@ public:
 
 private:
     float jumpPower_ = 50.0f;
-    float maxJumpInputHoldTime_ = 0.5f;
-    float jumpHoldSpeedScale_ = 0.5f;
+    float maxJumpInputHoldTime_ = 0.3f;
+    float jumpHoldSpeedScale_ = 0.3f;
     int maxJumpCount_ = 2;
     int jumpCount_ = 0;
     bool jumpRequested_ = false;

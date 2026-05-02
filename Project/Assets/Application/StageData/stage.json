@@ -1748,9 +1748,9 @@
       "panelLength": 1.0
     },
     {
-      "stageProgress": 0.4123,
-      "radius": 0.5055,
-      "angle": -1.5767,
+      "stageProgress": 0.3971,
+      "radius": 0.471,
+      "angle": -1.5771,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -1785,8 +1785,8 @@
     },
     {
       "stageProgress": 0.4916,
-      "radius": 0.3604,
-      "angle": -0.4636,
+      "radius": 0.4158,
+      "angle": -0.398,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2010,8 +2010,8 @@
     },
     {
       "stageProgress": 0.5016,
-      "radius": 0.3604,
-      "angle": -0.4636,
+      "radius": 0.4158,
+      "angle": -0.398,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2154,8 +2154,8 @@
     },
     {
       "stageProgress": 0.9298,
-      "radius": 0.7943,
-      "angle": -2.2486,
+      "radius": 2.0927,
+      "angle": -1.9889,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2172,8 +2172,8 @@
     },
     {
       "stageProgress": 0.8935,
-      "radius": 0.8091,
-      "angle": 0.0737,
+      "radius": 1.6268,
+      "angle": 0.0366,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2190,8 +2190,8 @@
     },
     {
       "stageProgress": 0.8765,
-      "radius": 0.7783,
-      "angle": -3.0829,
+      "radius": 1.36,
+      "angle": -3.108,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2199,8 +2199,8 @@
     },
     {
       "stageProgress": 0.8611,
-      "radius": 0.7503,
-      "angle": 2.0285,
+      "radius": 0.9463,
+      "angle": 2.3503,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2217,8 +2217,8 @@
     },
     {
       "stageProgress": 0.7998,
-      "radius": 0.8952,
-      "angle": 2.4072,
+      "radius": 1.2304,
+      "angle": 2.6323,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2226,8 +2226,8 @@
     },
     {
       "stageProgress": 0.8098,
-      "radius": 0.9408,
-      "angle": 1.5737,
+      "radius": 1.6662,
+      "angle": 0.6,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2235,8 +2235,8 @@
     },
     {
       "stageProgress": 0.8511,
-      "radius": 0.731,
-      "angle": -2.2614,
+      "radius": 1.1898,
+      "angle": -2.6482,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2361,35 +2361,8 @@
     },
     {
       "stageProgress": 0.9999,
-      "radius": 0.3176,
-      "angle": 3.0293,
-      "blockType": 0,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 0.9999,
-      "radius": 0.6354,
-      "angle": 0.556,
-      "blockType": 0,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 0.9999,
-      "radius": 1.0512,
-      "angle": -1.9036,
-      "blockType": 0,
-      "panelWidth": 0.5,
-      "panelThickness": 0.05,
-      "panelLength": 1.0
-    },
-    {
-      "stageProgress": 0.9999,
-      "radius": 1.212,
-      "angle": -1.1778,
+      "radius": 0.0,
+      "angle": 3.1416,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2451,8 +2424,8 @@
     },
     {
       "stageProgress": 0.8678,
-      "radius": 0.8889,
-      "angle": -2.0739,
+      "radius": 1.2022,
+      "angle": -2.437,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2469,8 +2442,8 @@
     },
     {
       "stageProgress": 0.86,
-      "radius": 1.0243,
-      "angle": -3.0823,
+      "radius": 1.6059,
+      "angle": -3.1038,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2496,8 +2469,8 @@
     },
     {
       "stageProgress": 0.8131,
-      "radius": 0.792,
-      "angle": 3.0801,
+      "radius": 1.2013,
+      "angle": 3.1011,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
@@ -2594,13 +2567,85 @@
       "panelLength": 1.0
     },
     {
-      "stageProgress": 0.4052,
-      "radius": 0.803,
-      "angle": -1.5745,
+      "stageProgress": 0.9332,
+      "radius": 1.3218,
+      "angle": -2.5246,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
+    },
+    {
+      "stageProgress": 0.9245,
+      "radius": 0.3345,
+      "angle": 0.1563,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
+    },
+    {
+      "stageProgress": 0.9103,
+      "radius": 0.9551,
+      "angle": 1.2859,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
+    },
+    {
+      "stageProgress": 0.9058,
+      "radius": 0.9253,
+      "angle": -2.5342,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
+    },
+    {
+      "stageProgress": 0.9541,
+      "radius": 0.8533,
+      "angle": -1.66,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
+    },
+    {
+      "stageProgress": 0.9197,
+      "radius": 0.9752,
+      "angle": -0.4243,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
+    },
+    {
+      "stageProgress": 0.9197,
+      "radius": 1.1881,
+      "angle": -1.6262,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
+    },
+    {
+      "stageProgress": 0.9298,
+      "radius": 0.7381,
+      "angle": -2.29,
       "blockType": 0,
       "panelWidth": 0.5,
       "panelThickness": 0.05,
       "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.9332,
+      "radius": 1.2887,
+      "angle": 2.6688,
+      "blockType": 0,
+      "panelWidth": 0.6046,
+      "panelThickness": 0.0605,
+      "panelLength": 1.2092
     }
   ]
 }

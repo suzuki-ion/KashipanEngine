@@ -119,9 +119,9 @@ public:
             (void)ctx->AddObject2D(std::move(line));
         }
 
-        cacheEntranceBasePositions();
-        setRankingVisible(false);
-        beginTitleEntrance();
+        CacheEntranceBasePositions();
+        SetRankingVisible(false);
+        BeginTitleEntrance();
     }
 
     RequestAction ConsumeRequestedAction() {
@@ -130,7 +130,24 @@ public:
         return action;
     }
 
+    void SetEnableUpdating(bool enable) {
+        if (isUpdating_ != enable) {
+            isUpdating_ = enable;
+            if (enable) {
+                BeginTitleEntrance();
+            } else {
+                SetRankingVisible(false);
+                if (titleText_) titleText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
+                if (startText_) startText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
+                if (rankingText_) rankingText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
+                if (quitText_) quitText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
+            }
+        }
+    }
+
     void Update() override {
+        if (!isUpdating_) return;
+
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
         auto *ic = ctx->GetInputCommand();
@@ -138,16 +155,16 @@ public:
 
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
 
-        updateEntranceAnimation(dt);
-        updateSelectionAnimation(dt);
+        UpdateEntranceAnimation(dt);
+        UpdateSelectionAnimation(dt);
 
         if (showRanking_) {
             if (ic->Evaluate("Submit").Triggered() || ic->Evaluate("Cancel").Triggered()) {
                 showRanking_ = false;
                 rankingEntranceActive_ = false;
-                setRankingVisible(false);
-                refreshOptionTexts();
-                beginTitleEntrance();
+                SetRankingVisible(false);
+                RefreshOptionTexts();
+                BeginTitleEntrance();
             }
             return;
         }
@@ -163,7 +180,7 @@ public:
             selectionAnimElapsed_ = 0.0f;
         }
 
-        refreshOptionTexts();
+        RefreshOptionTexts();
 
         if (!ic->Evaluate("Submit").Triggered()) return;
 
@@ -171,23 +188,23 @@ public:
             requestedAction_ = RequestAction::StartGame;
         } else if (selectionIndex_ == 1) {
             showRanking_ = true;
-            updateRankingTexts();
-            setRankingVisible(true);
+            UpdateRankingTexts();
+            SetRankingVisible(true);
             titleEntranceActive_ = false;
-            beginRankingEntrance();
+            BeginRankingEntrance();
         } else {
             requestedAction_ = RequestAction::Quit;
         }
     }
 
 private:
-    void refreshOptionTexts() {
+    void RefreshOptionTexts() {
         if (startText_) startText_->SetText(selectionIndex_ == 0 ? "＞ スタート" : "  スタート");
         if (rankingText_) rankingText_->SetText(selectionIndex_ == 1 ? "＞ ランキング" : "  ランキング");
         if (quitText_) quitText_->SetText(selectionIndex_ == 2 ? "＞ おわる" : "  おわる");
     }
 
-    void updateSelectionAnimation(float dt) {
+    void UpdateSelectionAnimation(float dt) {
         selectionAnimElapsed_ = std::min(selectionAnimDuration_, selectionAnimElapsed_ + dt);
         const float t = std::clamp(selectionAnimElapsed_ / std::max(0.0001f, selectionAnimDuration_), 0.0f, 1.0f);
 
@@ -209,7 +226,7 @@ private:
         apply(quitText_, quitTextBaseY_, 2);
     }
 
-    void cacheEntranceBasePositions() {
+    void CacheEntranceBasePositions() {
         std::array<Text *, 4> titleTexts = {titleText_, startText_, rankingText_, quitText_};
         for (size_t i = 0; i < titleTexts.size(); ++i) {
             if (!titleTexts[i]) continue;
@@ -229,7 +246,7 @@ private:
         }
     }
 
-    void beginTitleEntrance() {
+    void BeginTitleEntrance() {
         titleEntranceActive_ = true;
         titleEntranceElapsed_ = 0.0f;
 
@@ -243,7 +260,9 @@ private:
             pos.x = titleBasePositions_[i].x + introFromRightOffset_;
             pos.y = titleBasePositions_[i].y;
             tr->SetTranslate(pos);
-            setTextAlpha(text, 0.0f);
+            SetTextAlpha(text, 0.0f);
+
+            tr->SetScale(Vector3{ 1.0f, 1.0f, 1.0f });
         }
 
         if (titleTexts[0]) {
@@ -252,12 +271,14 @@ private:
                 pos.x = titleBasePositions_[0].x;
                 pos.y = titleBasePositions_[0].y;
                 tr->SetTranslate(pos);
+
+                tr->SetScale(Vector3{ 1.0f, 1.0f, 1.0f });
             }
-            setTextAlpha(titleTexts[0], 1.0f);
+            SetTextAlpha(titleTexts[0], 1.0f);
         }
     }
 
-    void beginRankingEntrance() {
+    void BeginRankingEntrance() {
         rankingEntranceActive_ = true;
         rankingEntranceElapsed_ = 0.0f;
 
@@ -268,7 +289,7 @@ private:
                 pos.y = rankingBasePositions_[0].y;
                 tr->SetTranslate(pos);
             }
-            setTextAlpha(rankingHeaderText_, 0.0f);
+            SetTextAlpha(rankingHeaderText_, 0.0f);
         }
         for (size_t i = 0; i < rankingLineTexts_.size(); ++i) {
             auto *text = rankingLineTexts_[i];
@@ -279,11 +300,11 @@ private:
                 pos.y = rankingBasePositions_[i + 1].y;
                 tr->SetTranslate(pos);
             }
-            setTextAlpha(text, 0.0f);
+            SetTextAlpha(text, 0.0f);
         }
     }
 
-    void updateEntranceAnimation(float dt) {
+    void UpdateEntranceAnimation(float dt) {
         if (titleEntranceActive_) {
             titleEntranceElapsed_ += dt;
             std::array<Text *, 4> titleTexts = {titleText_, startText_, rankingText_, quitText_};
@@ -297,7 +318,7 @@ private:
                 auto pos = tr->GetTranslate();
                 pos.x = EaseOutCubic(titleBasePositions_[i].x + introFromRightOffset_, titleBasePositions_[i].x, local);
                 tr->SetTranslate(pos);
-                setTextAlpha(text, local);
+                SetTextAlpha(text, local);
                 if (local < 1.0f) allDone = false;
             }
 
@@ -308,7 +329,7 @@ private:
                     pos.y = titleBasePositions_[0].y;
                     tr->SetTranslate(pos);
                 }
-                setTextAlpha(titleTexts[0], 1.0f);
+                SetTextAlpha(titleTexts[0], 1.0f);
             }
             if (allDone) titleEntranceActive_ = false;
         }
@@ -324,7 +345,7 @@ private:
                     auto pos = tr->GetTranslate();
                     pos.x = EaseOutCubic(rankingBasePositions_[0].x + introFromRightOffset_, rankingBasePositions_[0].x, local);
                     tr->SetTranslate(pos);
-                    setTextAlpha(rankingHeaderText_, local);
+                    SetTextAlpha(rankingHeaderText_, local);
                     if (local < 1.0f) allDone = false;
                 }
             }
@@ -338,7 +359,7 @@ private:
                 auto pos = tr->GetTranslate();
                 pos.x = EaseOutCubic(rankingBasePositions_[i + 1].x + introFromRightOffset_, rankingBasePositions_[i + 1].x, local);
                 tr->SetTranslate(pos);
-                setTextAlpha(text, local);
+                SetTextAlpha(text, local);
                 if (local < 1.0f) allDone = false;
             }
 
@@ -346,22 +367,22 @@ private:
         }
     }
 
-    void setRankingVisible(bool visible) {
+    void SetRankingVisible(bool visible) {
         if (rankingHeaderText_) {
-            setTextAlpha(rankingHeaderText_, visible ? 1.0f : 0.0f);
+            SetTextAlpha(rankingHeaderText_, visible ? 1.0f : 0.0f);
         }
         for (auto *line : rankingLineTexts_) {
             if (!line) continue;
-            setTextAlpha(line, visible ? 1.0f : 0.0f);
+            SetTextAlpha(line, visible ? 1.0f : 0.0f);
         }
 
         const float optionsAlpha = visible ? 0.0f : 1.0f;
-        setTextAlpha(startText_, optionsAlpha);
-        setTextAlpha(rankingText_, optionsAlpha);
-        setTextAlpha(quitText_, optionsAlpha);
+        SetTextAlpha(startText_, optionsAlpha);
+        SetTextAlpha(rankingText_, optionsAlpha);
+        SetTextAlpha(quitText_, optionsAlpha);
     }
 
-    void updateRankingTexts() {
+    void UpdateRankingTexts() {
         std::array<int, 10> top{};
         if (scoreboard_) {
             auto scores = scoreboard_->GetTopScores(10);
@@ -376,7 +397,7 @@ private:
         }
     }
 
-    void setTextAlpha(Text *text, float alpha) {
+    void SetTextAlpha(Text *text, float alpha) {
         if (!text) return;
         for (size_t i = 0; i < 128; ++i) {
             auto *sp = (*text)[i];
@@ -422,6 +443,8 @@ private:
 
     std::array<Vector3, 4> titleBasePositions_{};
     std::array<Vector3, 11> rankingBasePositions_{};
+
+    bool isUpdating_ = false;
 };
 
 } // namespace KashipanEngine

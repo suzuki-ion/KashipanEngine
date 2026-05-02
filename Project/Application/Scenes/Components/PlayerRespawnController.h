@@ -45,19 +45,28 @@ public:
             return;
         }
 
-        const Vector3 playerPos = playerTr->GetTranslate();
-        danger_ = ComputeDanger(playerPos);
+        if (isRespawning_) {
+            respawnElapsed_ += std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+            if (respawnElapsed_ < respawnWaitDuration_) {
+                return;
+            }
 
-        if (!isRespawning_) {
-            if (ShouldStartRespawn(playerPos)) {
-                StartRespawn(playerPos);
+            float t = std::clamp((respawnElapsed_ - respawnWaitDuration_) / respawnEaseDuration_, 0.0f, 1.0f);
+            const Vector3 easedPos = Eased(respawnStartPos_, respawnTargetPos_, t, EaseType::EaseOutCubic);
+            playerTr->SetTranslate(easedPos);
+            danger_ = ComputeDanger(playerTr->GetTranslate());
+
+            if (respawnElapsed_ >= respawnWaitDuration_ + respawnEaseDuration_) {
+                FinishRespawn();
             }
             return;
         }
 
-        respawnElapsed_ += std::max(0.0f, GetDeltaTime() * GetGameSpeed());
-        if (respawnElapsed_ >= respawnDelay_) {
-            FinishRespawn();
+        const Vector3 playerPos = playerTr->GetTranslate();
+        danger_ = ComputeDanger(playerPos);
+
+        if (ShouldStartRespawn(playerPos)) {
+            StartRespawn(playerPos);
         }
     }
 
@@ -102,10 +111,12 @@ private:
     void StartRespawn(const Vector3 &playerPos) {
         isRespawning_ = true;
         respawnElapsed_ = 0.0f;
-        respawnZ_ = playerPos.z;
+        respawnStartPos_ = playerPos;
+        respawnTargetPos_ = Vector3{0.0f, 0.0f, playerPos.z};
 
         if (playerMovementController_) {
             playerMovementController_->SetMovementLocked(true);
+            playerMovementController_->SetCollisionResponseEnabled(false);
         }
         HidePlayerVisuals();
 
@@ -121,14 +132,14 @@ private:
 
         auto *playerTr = player_->GetComponent3D<Transform3D>();
         if (playerTr) {
-            playerTr->SetTranslate(Vector3{0.0f, 0.0f, respawnZ_});
+            playerTr->SetTranslate(respawnTargetPos_);
         }
 
         if (playerMovementController_) {
-            playerMovementController_->SetGravityDirection(Vector3{0.0f, -1.0f, 0.0f});
             playerMovementController_->SetForwardSpeed(initialForwardSpeed_);
             playerMovementController_->SetLateralVelocity(Vector3{0.0f, 0.0f, 0.0f});
             playerMovementController_->SetGravityVelocity(Vector3{0.0f, 0.0f, 0.0f});
+            playerMovementController_->SetCollisionResponseEnabled(true);
             playerMovementController_->SetMovementLocked(false);
 
             float gravityGauge = playerMovementController_->GetGravityGauge();
@@ -188,8 +199,10 @@ private:
 
     bool isRespawning_ = false;
     float respawnElapsed_ = 0.0f;
-    float respawnDelay_ = 1.0f;
-    float respawnZ_ = 0.0f;
+    float respawnWaitDuration_ = 0.5f;
+    float respawnEaseDuration_ = 1.0f;
+    Vector3 respawnStartPos_{};
+    Vector3 respawnTargetPos_{};
     float initialForwardSpeed_ = 64.0f;
     float stageBoundaryRadius_ = 32.0f * 6.0f;
     float stageBoundaryDangerStartRatio_ = 0.7f;

@@ -5,9 +5,12 @@
 #include "Scenes/Components/StageGroundGenerator.h"
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
+#include "Utilities/FileIO/JSON.h"
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <cstdio>
 
 namespace KashipanEngine {
 
@@ -17,6 +20,12 @@ public:
         : ISceneComponent("CameraToPlayerSync", 1), player_(player) {}
 
     ~CameraToPlayerSync() override = default;
+
+    void Initialize() override {
+        if (loadParamsOnInitialize_) {
+            (void)LoadParametersFromJson(paramJsonFilePath_);
+        }
+    }
 
     void SetClearViewEnabled(bool enabled) { clearViewEnabled_ = enabled; }
 
@@ -34,6 +43,13 @@ public:
         const Vector3 up = -gravity;
         const Vector3 forward = playerMovement->GetForwardDirection().Normalize();
 
+        Vector3 right = up.Cross(forward);
+        if (right.LengthSquared() <= 0.000001f) {
+            right = Vector3{1.0f, 0.0f, 0.0f};
+        } else {
+            right = right.Normalize();
+        }
+
         const float minSpeed = playerMovement->GetMinForwardSpeed();
         const float maxSpeed = playerMovement->GetMaxForwardSpeed();
         float speedRatio = 0.0f;
@@ -50,18 +66,12 @@ public:
         Vector3 lookDir = (playerPos + up * lookAtHeight - cameraPos).Normalize();
 
         if (clearViewEnabled_) {
-            Vector3 right = up.Cross(forward);
-            if (right.LengthSquared() <= 0.000001f) {
-                right = Vector3{1.0f, 0.0f, 0.0f};
-            } else {
-                right = right.Normalize();
-            }
             cameraPos = playerPos + right * clearViewRightDistance_ + forward * clearViewForwardDistance_ + up * clearViewHeight_;
             const Vector3 lookTarget = playerPos - right * clearViewLookOffsetRight_ + up * lookAtHeight;
             lookDir = (lookTarget - cameraPos).Normalize();
         }
 
-        float targetFov = 0.95f + (2.25f - 0.95f) * speedRatio;
+        float targetFov = Lerp(fovMin_, fovMax_, speedRatio);
 
         auto *inputHandler = player_->GetComponent3D<PlayerInputHandler>();
         const bool isGravitySwitching = inputHandler && inputHandler->IsGravitySwitching();
@@ -104,13 +114,91 @@ public:
             }
         }
 
+        const Vector3 lateralVelocity = playerMovement->GetLateralVelocity();
+        const float lateralSpeed = lateralVelocity.Dot(right);
+        const float lateralMax = std::max(0.0001f, playerMovement->GetLateralMaxSpeed());
+        const float lateralRatio = std::clamp(lateralSpeed / lateralMax, -1.0f, 1.0f);
+
+        if (!isGravitySwitching && !(inputHandler && inputHandler->IsRearConfirming())) {
+            const float lateralLookAmount = lateralLookMaxOffset_ * lateralRatio;
+            if (std::abs(lateralLookAmount) > 0.000001f) {
+                lookDir = (lookDir + right * lateralLookAmount).Normalize();
+            }
+        }
+
+        const float lateralTiltAngle = lateralTiltMaxAngleRad_ * lateralRatio;
+        Vector3 tiltedUp = up;
+        if (std::abs(lateralTiltAngle) > 0.000001f && lookDir.LengthSquared() > 0.000001f) {
+            const Quaternion qTilt = Quaternion().MakeRotateAxisAngle(lookDir.Normalize(), lateralTiltAngle);
+            tiltedUp = qTilt.RotateVector(up).Normalize();
+        }
+
         cameraController->SetTargetTranslate(cameraPos);
-        cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, up));
+        cameraController->SetTargetRotateQuaternion(ComputeQuaternionFromForwardUp(lookDir, tiltedUp));
         cameraController->SetTargetFovY(targetFov);
-        cameraController->SetLerpFactorMove(1.0f);
-        cameraController->SetLerpFactorRotate(0.05f);
-        cameraController->SetLerpFactorFov(0.1f);
+        cameraController->SetLerpFactorMove(cameraLerpMove_);
+        cameraController->SetLerpFactorRotate(cameraLerpRotate_);
+        cameraController->SetLerpFactorFov(cameraLerpFov_);
     }
+
+#if defined(USE_IMGUI)
+    void ShowImGui() override {
+        if (!ImGui::CollapsingHeader("CameraToPlayerSync")) return;
+
+        ImGui::InputFloat("Follow Distance Min", &followDistanceMin_);
+        ImGui::InputFloat("Follow Distance Max", &followDistanceMax_);
+        ImGui::InputFloat("Follow Height Min", &followHeightMin_);
+        ImGui::InputFloat("Follow Height Max", &followHeightMax_);
+        ImGui::InputFloat("LookAt Height Min", &lookAtHeightMin_);
+        ImGui::InputFloat("LookAt Height Max", &lookAtHeightMax_);
+        ImGui::InputFloat("Fov Min", &fovMin_);
+        ImGui::InputFloat("Fov Max", &fovMax_);
+        ImGui::InputFloat("Gravity Switch Follow Distance", &gravitySwitchFollowDistance_);
+        ImGui::InputFloat("Fall Speed For Max Tilt", &fallSpeedForMaxTilt_);
+        ImGui::InputFloat("Max Look Down Offset", &maxLookDownOffset_);
+
+        ImGui::Separator();
+        ImGui::InputFloat("Landing Impact Threshold", &landingImpactThreshold_);
+        ImGui::InputFloat("Landing Impact For Max Shake", &landingImpactForMaxShake_);
+        ImGui::InputFloat("Max Shake Amplitude", &maxShakeAmplitude_);
+        ImGui::InputFloat("Max Shake Duration", &maxShakeDuration_);
+        ImGui::InputFloat("Ground Reaction Base Radius", &groundReactionBaseRadius_);
+        ImGui::InputFloat("Ground Reaction Radius Per Impact", &groundReactionRadiusPerImpact_);
+
+        ImGui::Separator();
+        ImGui::Checkbox("Clear View Enabled", &clearViewEnabled_);
+        ImGui::InputFloat("Clear View Right Distance", &clearViewRightDistance_);
+        ImGui::InputFloat("Clear View Forward Distance", &clearViewForwardDistance_);
+        ImGui::InputFloat("Clear View Height", &clearViewHeight_);
+        ImGui::InputFloat("Clear View Look Offset Right", &clearViewLookOffsetRight_);
+
+        ImGui::Separator();
+        ImGui::InputFloat("Lateral Look Max Offset", &lateralLookMaxOffset_);
+        ImGui::InputFloat("Lateral Tilt Max Angle Rad", &lateralTiltMaxAngleRad_);
+
+        ImGui::Separator();
+        ImGui::InputFloat("Camera Lerp Move", &cameraLerpMove_);
+        ImGui::InputFloat("Camera Lerp Rotate", &cameraLerpRotate_);
+        ImGui::InputFloat("Camera Lerp Fov", &cameraLerpFov_);
+
+        ImGui::Separator();
+        char paramJsonPathBuffer[512]{};
+        std::snprintf(paramJsonPathBuffer, sizeof(paramJsonPathBuffer), "%s", paramJsonFilePath_.c_str());
+        if (ImGui::InputText("Param Json Path", paramJsonPathBuffer, sizeof(paramJsonPathBuffer))) {
+            paramJsonFilePath_ = paramJsonPathBuffer;
+        }
+        ImGui::Checkbox("Load Params On Initialize", &loadParamsOnInitialize_);
+
+        if (ImGui::Button("Load CameraToPlayerSync Params")) {
+            lastParamIoSucceeded_ = LoadParametersFromJson(paramJsonFilePath_);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Save CameraToPlayerSync Params")) {
+            lastParamIoSucceeded_ = SaveParametersToJson(paramJsonFilePath_);
+        }
+        ImGui::Text("Last Param I/O: %s", lastParamIoSucceeded_ ? "Success" : "Failed");
+    }
+#endif
 
 private:
     static constexpr float kPi = 3.14159265358979323846f;
@@ -162,14 +250,103 @@ private:
         return qForward;
     }
 
+    JSON BuildParamsJson() const {
+        JSON j;
+        j["followDistanceMin"] = followDistanceMin_;
+        j["followDistanceMax"] = followDistanceMax_;
+        j["followHeightMin"] = followHeightMin_;
+        j["followHeightMax"] = followHeightMax_;
+        j["lookAtHeightMin"] = lookAtHeightMin_;
+        j["lookAtHeightMax"] = lookAtHeightMax_;
+        j["fovMin"] = fovMin_;
+        j["fovMax"] = fovMax_;
+        j["gravitySwitchFollowDistance"] = gravitySwitchFollowDistance_;
+        j["fallSpeedForMaxTilt"] = fallSpeedForMaxTilt_;
+        j["maxLookDownOffset"] = maxLookDownOffset_;
+        j["landingImpactThreshold"] = landingImpactThreshold_;
+        j["landingImpactForMaxShake"] = landingImpactForMaxShake_;
+        j["maxShakeAmplitude"] = maxShakeAmplitude_;
+        j["maxShakeDuration"] = maxShakeDuration_;
+        j["groundReactionBaseRadius"] = groundReactionBaseRadius_;
+        j["groundReactionRadiusPerImpact"] = groundReactionRadiusPerImpact_;
+        j["clearViewEnabled"] = clearViewEnabled_;
+        j["clearViewRightDistance"] = clearViewRightDistance_;
+        j["clearViewForwardDistance"] = clearViewForwardDistance_;
+        j["clearViewHeight"] = clearViewHeight_;
+        j["clearViewLookOffsetRight"] = clearViewLookOffsetRight_;
+        j["lateralLookMaxOffset"] = lateralLookMaxOffset_;
+        j["lateralTiltMaxAngleRad"] = lateralTiltMaxAngleRad_;
+        j["cameraLerpMove"] = cameraLerpMove_;
+        j["cameraLerpRotate"] = cameraLerpRotate_;
+        j["cameraLerpFov"] = cameraLerpFov_;
+        return j;
+    }
+
+    void ApplyParamsJson(const JSON &j) {
+        followDistanceMin_ = j.value("followDistanceMin", followDistanceMin_);
+        followDistanceMax_ = j.value("followDistanceMax", followDistanceMax_);
+        followHeightMin_ = j.value("followHeightMin", followHeightMin_);
+        followHeightMax_ = j.value("followHeightMax", followHeightMax_);
+        lookAtHeightMin_ = j.value("lookAtHeightMin", lookAtHeightMin_);
+        lookAtHeightMax_ = j.value("lookAtHeightMax", lookAtHeightMax_);
+        fovMin_ = j.value("fovMin", fovMin_);
+        fovMax_ = j.value("fovMax", fovMax_);
+        gravitySwitchFollowDistance_ = j.value("gravitySwitchFollowDistance", gravitySwitchFollowDistance_);
+        fallSpeedForMaxTilt_ = j.value("fallSpeedForMaxTilt", fallSpeedForMaxTilt_);
+        maxLookDownOffset_ = j.value("maxLookDownOffset", maxLookDownOffset_);
+        landingImpactThreshold_ = j.value("landingImpactThreshold", landingImpactThreshold_);
+        landingImpactForMaxShake_ = j.value("landingImpactForMaxShake", landingImpactForMaxShake_);
+        maxShakeAmplitude_ = j.value("maxShakeAmplitude", maxShakeAmplitude_);
+        maxShakeDuration_ = j.value("maxShakeDuration", maxShakeDuration_);
+        groundReactionBaseRadius_ = j.value("groundReactionBaseRadius", groundReactionBaseRadius_);
+        groundReactionRadiusPerImpact_ = j.value("groundReactionRadiusPerImpact", groundReactionRadiusPerImpact_);
+        clearViewEnabled_ = j.value("clearViewEnabled", clearViewEnabled_);
+        clearViewRightDistance_ = j.value("clearViewRightDistance", clearViewRightDistance_);
+        clearViewForwardDistance_ = j.value("clearViewForwardDistance", clearViewForwardDistance_);
+        clearViewHeight_ = j.value("clearViewHeight", clearViewHeight_);
+        clearViewLookOffsetRight_ = j.value("clearViewLookOffsetRight", clearViewLookOffsetRight_);
+        lateralLookMaxOffset_ = j.value("lateralLookMaxOffset", lateralLookMaxOffset_);
+        lateralTiltMaxAngleRad_ = j.value("lateralTiltMaxAngleRad", lateralTiltMaxAngleRad_);
+        cameraLerpMove_ = j.value("cameraLerpMove", cameraLerpMove_);
+        cameraLerpRotate_ = j.value("cameraLerpRotate", cameraLerpRotate_);
+        cameraLerpFov_ = j.value("cameraLerpFov", cameraLerpFov_);
+    }
+
+    bool SaveParametersToJson(const std::string &path) const {
+        try {
+            const std::filesystem::path p(path);
+            if (p.has_parent_path()) {
+                std::filesystem::create_directories(p.parent_path());
+            }
+            return SaveJSON(BuildParamsJson(), path, 4);
+        } catch (...) {
+            return false;
+        }
+    }
+
+    bool LoadParametersFromJson(const std::string &path) {
+        try {
+            const JSON j = LoadJSON(path);
+            if (j.is_discarded() || !j.is_object()) {
+                return false;
+            }
+            ApplyParamsJson(j);
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+
     Object3DBase *player_ = nullptr;
 
-    float followDistanceMin_ = 4.0f;
-    float followDistanceMax_ = 4.0f;
+    float followDistanceMin_ = 1.0f;
+    float followDistanceMax_ = 2.0f;
     float followHeightMin_ = 2.0f;
-    float followHeightMax_ = 4.0f;
+    float followHeightMax_ = 6.0f;
     float lookAtHeightMin_ = 2.0f;
-    float lookAtHeightMax_ = 4.0f;
+    float lookAtHeightMax_ = 6.0f;
+    float fovMin_ = 0.8f;
+    float fovMax_ = 2.5f;
     float gravitySwitchFollowDistance_ = 10.0f;
     float fallSpeedForMaxTilt_ = 128.0f;
     float maxLookDownOffset_ = 4.0f;
@@ -187,6 +364,17 @@ private:
     float clearViewForwardDistance_ = 6.0f;
     float clearViewHeight_ = 2.0f;
     float clearViewLookOffsetRight_ = -1.5f;
+
+    float lateralLookMaxOffset_ = 0.25f;
+    float lateralTiltMaxAngleRad_ = 0.25f;
+
+    float cameraLerpMove_ = 0.9f;
+    float cameraLerpRotate_ = 0.05f;
+    float cameraLerpFov_ = 0.1f;
+
+    std::string paramJsonFilePath_ = "Assets/Application/CameraToPlayerSyncParam.json";
+    bool loadParamsOnInitialize_ = true;
+    bool lastParamIoSucceeded_ = true;
 };
 
 } // namespace KashipanEngine

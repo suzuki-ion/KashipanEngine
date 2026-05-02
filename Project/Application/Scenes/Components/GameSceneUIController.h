@@ -105,7 +105,7 @@ public:
         goalDistanceBar->SetProgress(0.0f);
         goalDistanceBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = goalDistanceBar->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{std::max(32.0f, screenWidth_ - 48.0f), screenHeight_ * 0.5f, 0.0f});
+            tr->SetTranslate(Vector3{std::max(32.0f, screenWidth_ - 48.0f), screenHeight_ * 0.7f, 0.0f});
         }
         goalDistanceBar_ = goalDistanceBar.get();
         (void)ctx->AddObject2D(std::move(goalDistanceBar));
@@ -148,6 +148,24 @@ public:
         }
         fallDistanceText_ = fallDistanceText.get();
         (void)ctx->AddObject2D(std::move(fallDistanceText));
+
+        auto jumpRemainGaugeBar = std::make_unique<SpriteProressBar>();
+        jumpRemainGaugeBar->SetName("JumpRemainGaugeBar");
+        jumpRemainGaugeBar->SetBarSize(Vector2{160.0f, 16.0f});
+        jumpRemainGaugeBar->SetFrameThickness(4.0f);
+        jumpRemainGaugeBar->SetFrameColor(jumpRemainFrameColorBase_);
+        jumpRemainGaugeBar->SetBackgroundColor(jumpRemainBackgroundColorBase_);
+        jumpRemainGaugeBar->SetBarColor(jumpRemainBarColorBase_);
+        jumpRemainGaugeBar->SetSegmentLineCount(1);
+        jumpRemainGaugeBar->SetSegmentLineColor(jumpRemainSegmentColorBase_);
+        jumpRemainGaugeBar->SetSegmentLineThickness(2.0f);
+        jumpRemainGaugeBar->SetProgress(1.0f);
+        jumpRemainGaugeBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = jumpRemainGaugeBar->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(jumpRemainGaugeBasePosition_);
+        }
+        jumpRemainGaugeBar_ = jumpRemainGaugeBar.get();
+        (void)ctx->AddObject2D(std::move(jumpRemainGaugeBar));
 
         auto clearFade = std::make_unique<Sprite>();
         clearFade->SetName("ClearFadeSprite");
@@ -198,6 +216,11 @@ public:
             gravityDirectionAllowTexture = TextureManager::GetTextureFromAssetPath("Application/Image/gravityChangeDirectionAllow.png");
         }
 
+        TextureManager::TextureHandle fastFallTexture = TextureManager::GetTextureFromFileName("uiOperationFastFalling.png");
+        if (fastFallTexture == TextureManager::kInvalidHandle) {
+            fastFallTexture = TextureManager::GetTextureFromAssetPath("Application/Image/uiOperationFastFalling.png");
+        }
+
         float jumpWidth = operationUIFallbackSize_.x;
         float jumpHeight = operationUIFallbackSize_.y;
         if (jumpTexture != TextureManager::kInvalidHandle) {
@@ -222,6 +245,36 @@ public:
             gravityDirectionAllowHeight = std::max(1.0f, static_cast<float>(view.GetHeight()));
         }
 
+        float fastFallWidth = operationUIFallbackSize_.x;
+        float fastFallHeight = operationUIFallbackSize_.y;
+        if (fastFallTexture != TextureManager::kInvalidHandle) {
+            const auto view = TextureManager::GetTextureView(fastFallTexture);
+            fastFallWidth = std::max(1.0f, static_cast<float>(view.GetWidth()));
+            fastFallHeight = std::max(1.0f, static_cast<float>(view.GetHeight()));
+        }
+
+        const float operationUIBaseY = operationUIMarginBottom_ + operationUIStackOffsetY_;
+
+        auto fastFallUI = std::make_unique<Sprite>();
+        fastFallUI->SetName("OperationFastFallUISprite");
+        fastFallUI->SetUniqueBatchKey();
+        fastFallUI->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *mat = fastFallUI->GetComponent2D<Material2D>()) {
+            mat->SetTexture(fastFallTexture);
+            mat->SetColor(operationUIBaseColor_);
+        }
+        if (auto *tr = fastFallUI->GetComponent2D<Transform2D>()) {
+            tr->SetScale(Vector3{fastFallWidth, fastFallHeight, 1.0f});
+            const Vector3 basePos{
+                screenWidth_ - operationUIMarginRight_ - fastFallWidth * 0.5f,
+                operationUIBaseY + fastFallHeight * 0.5f,
+                0.0f};
+            tr->SetTranslate(basePos);
+            operationFastFallUIBasePosition_ = basePos;
+        }
+        operationFastFallUISprite_ = fastFallUI.get();
+        (void)ctx->AddObject2D(std::move(fastFallUI));
+
         auto gravityUI = std::make_unique<Sprite>();
         gravityUI->SetName("OperationGravityUISprite");
         gravityUI->SetUniqueBatchKey();
@@ -234,7 +287,7 @@ public:
             tr->SetScale(Vector3{gravityWidth, gravityHeight, 1.0f});
             const Vector3 basePos{
                 screenWidth_ - operationUIMarginRight_ - gravityWidth * 0.5f,
-                operationUIMarginBottom_ + gravityHeight * 0.5f,
+                operationUIBaseY + fastFallHeight + operationUIVerticalSpacing_ + gravityHeight * 0.5f,
                 0.0f};
             tr->SetTranslate(basePos);
             operationGravityUIBasePosition_ = basePos;
@@ -254,7 +307,7 @@ public:
             tr->SetScale(Vector3{jumpWidth, jumpHeight, 1.0f});
             const Vector3 basePos{
                 screenWidth_ - operationUIMarginRight_ - jumpWidth * 0.5f,
-                operationUIMarginBottom_ + gravityHeight + operationUIVerticalSpacing_ + jumpHeight * 0.5f,
+                operationUIBaseY + fastFallHeight + operationUIVerticalSpacing_ + gravityHeight + operationUIVerticalSpacing_ + jumpHeight * 0.5f,
                 0.0f};
             tr->SetTranslate(basePos);
             operationJumpUIBasePosition_ = basePos;
@@ -312,22 +365,142 @@ public:
         }
 
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        bool jumpTriggered = false;
+        bool gravitySwitchTriggered = false;
+        bool fastFallTriggered = false;
 
         auto *ic = ctx->GetInputCommand();
         operationJumpUIActive_ = !(playerInputHandler_ && playerInputHandler_->IsGravitySwitching());
         operationGravityUIActive_ = !playerMovementController_ || playerMovementController_->CanUseGravityChange();
+        if (playerMovementController_) {
+            const Vector3 down = playerMovementController_->GetGravityDirection().Normalize();
+            const float fallSpeed = playerMovementController_->GetGravityVelocity().Dot(down);
+            operationFastFallUIActive_ = fallSpeed > 0.0f;
+        } else {
+            operationFastFallUIActive_ = false;
+        }
 
         if (ic) {
-            if (playerMovementController_ && ic->Evaluate("PlayerGravitySwitchTrigger").Triggered() && !playerMovementController_->CanUseGravityChange()) {
+            jumpTriggered = ic->Evaluate("PlayerJump").Triggered();
+            gravitySwitchTriggered = ic->Evaluate("PlayerGravitySwitchTrigger").Triggered();
+            fastFallTriggered = ic->Evaluate("PlayerForwardSpeedDown").Triggered();
+            if (playerMovementController_ && gravitySwitchTriggered && !playerMovementController_->CanUseGravityChange()) {
                 gravityGaugeShakeActive_ = true;
                 gravityGaugeShakeElapsed_ = 0.0f;
             }
 
-            UpdateOperationInputUISprite(operationJumpUISprite_, operationJumpUIBasePosition_, ic->Evaluate("PlayerJump").Triggered(), operationJumpUIActive_, operationJumpUIPressed_, operationJumpUIReleaseElapsed_, dt);
-            UpdateOperationInputUISprite(operationGravityUISprite_, operationGravityUIBasePosition_, ic->Evaluate("PlayerGravitySwitchTrigger").Triggered(), operationGravityUIActive_, operationGravityUIPressed_, operationGravityUIReleaseElapsed_, dt);
+            UpdateOperationInputUISprite(operationJumpUISprite_, operationJumpUIBasePosition_, jumpTriggered, operationJumpUIActive_, operationJumpUIPressed_, operationJumpUIReleaseElapsed_, dt);
+            UpdateOperationInputUISprite(operationGravityUISprite_, operationGravityUIBasePosition_, gravitySwitchTriggered, operationGravityUIActive_, operationGravityUIPressed_, operationGravityUIReleaseElapsed_, dt);
+            UpdateOperationInputUISprite(operationFastFallUISprite_, operationFastFallUIBasePosition_, fastFallTriggered, operationFastFallUIActive_, operationFastFallUIPressed_, operationFastFallUIReleaseElapsed_, dt);
         } else {
             UpdateOperationInputUISprite(operationJumpUISprite_, operationJumpUIBasePosition_, false, operationJumpUIActive_, operationJumpUIPressed_, operationJumpUIReleaseElapsed_, dt);
             UpdateOperationInputUISprite(operationGravityUISprite_, operationGravityUIBasePosition_, false, operationGravityUIActive_, operationGravityUIPressed_, operationGravityUIReleaseElapsed_, dt);
+            UpdateOperationInputUISprite(operationFastFallUISprite_, operationFastFallUIBasePosition_, false, operationFastFallUIActive_, operationFastFallUIPressed_, operationFastFallUIReleaseElapsed_, dt);
+        }
+
+        int jumpCount = 0;
+        int maxJumpCount = 0;
+        int remainingJumpCount = 0;
+        float remainingJumpProgress = 0.0f;
+        if (playerMovementController_) {
+            jumpCount = std::max(0, playerMovementController_->GetJumpCount());
+            maxJumpCount = std::max(0, playerMovementController_->GetMaxJumpCount());
+            remainingJumpCount = std::max(0, maxJumpCount - jumpCount);
+            remainingJumpProgress = (maxJumpCount > 0) ? std::clamp(static_cast<float>(remainingJumpCount) / static_cast<float>(maxJumpCount), 0.0f, 1.0f) : 0.0f;
+
+            if (previousJumpCount_ < 0) {
+                previousJumpCount_ = jumpCount;
+                previousMaxJumpCount_ = maxJumpCount;
+            }
+
+            const bool jumpConsumedThisFrame = jumpCount > previousJumpCount_;
+            if (jumpConsumedThisFrame) {
+                jumpRemainGaugeAnimActive_ = true;
+                jumpRemainGaugeAnimElapsed_ = 0.0f;
+                jumpRemainGaugeAnimDuration_ = std::max(0.0001f, playerMovementController_->GetMaxJumpInputHoldTime());
+                jumpRemainGaugeAnimStartProgress_ = std::clamp(jumpRemainGaugeDisplayProgress_, 0.0f, 1.0f);
+                jumpRemainGaugeAnimTargetProgress_ = remainingJumpProgress;
+                jumpRemainGaugeVisible_ = true;
+                jumpRemainGaugeFadeOutActive_ = false;
+                jumpRemainGaugeFadeOutElapsed_ = 0.0f;
+                jumpRemainGaugeAlpha_ = 1.0f;
+            } else if (!jumpRemainGaugeAnimActive_) {
+                jumpRemainGaugeDisplayProgress_ = remainingJumpProgress;
+            }
+
+            if (jumpTriggered && remainingJumpCount <= 0) {
+                jumpRemainGaugeVisible_ = true;
+                jumpRemainGaugeFadeOutActive_ = false;
+                jumpRemainGaugeFadeOutElapsed_ = 0.0f;
+                jumpRemainGaugeAlpha_ = 1.0f;
+                jumpRemainGaugeShakeActive_ = true;
+                jumpRemainGaugeShakeElapsed_ = 0.0f;
+            }
+
+            if (jumpRemainGaugeVisible_) {
+                if (remainingJumpCount >= maxJumpCount && maxJumpCount > 0) {
+                    if (!jumpRemainGaugeFadeOutActive_) {
+                        jumpRemainGaugeFadeOutActive_ = true;
+                        jumpRemainGaugeFadeOutElapsed_ = 0.0f;
+                    }
+                } else {
+                    jumpRemainGaugeFadeOutActive_ = false;
+                    jumpRemainGaugeFadeOutElapsed_ = 0.0f;
+                    jumpRemainGaugeAlpha_ = 1.0f;
+                }
+
+                if (jumpRemainGaugeFadeOutActive_) {
+                    jumpRemainGaugeFadeOutElapsed_ += dt;
+                    const float t = std::clamp(jumpRemainGaugeFadeOutElapsed_ / std::max(0.0001f, jumpRemainGaugeFadeOutDuration_), 0.0f, 1.0f);
+                    jumpRemainGaugeAlpha_ = 1.0f - t;
+                    if (t >= 1.0f) {
+                        jumpRemainGaugeVisible_ = false;
+                        jumpRemainGaugeFadeOutActive_ = false;
+                        jumpRemainGaugeFadeOutElapsed_ = 0.0f;
+                        jumpRemainGaugeAlpha_ = 0.0f;
+                        jumpRemainGaugeShakeActive_ = false;
+                        jumpRemainGaugeShakeElapsed_ = 0.0f;
+                    }
+                }
+            }
+
+            if (jumpRemainGaugeAnimActive_) {
+                if (!jumpTriggered) {
+                    jumpRemainGaugeAnimActive_ = false;
+                    jumpRemainGaugeAnimElapsed_ = 0.0f;
+                    jumpRemainGaugeDisplayProgress_ = std::clamp(jumpRemainGaugeAnimTargetProgress_, 0.0f, 1.0f);
+                }
+            }
+
+            if (jumpRemainGaugeAnimActive_) {
+                jumpRemainGaugeAnimElapsed_ += dt;
+                const float t = std::clamp(jumpRemainGaugeAnimElapsed_ / std::max(0.0001f, jumpRemainGaugeAnimDuration_), 0.0f, 1.0f);
+                const float eased = 1.0f - std::pow(1.0f - t, 3.0f);
+                jumpRemainGaugeDisplayProgress_ = std::clamp(
+                    jumpRemainGaugeAnimStartProgress_ + (jumpRemainGaugeAnimTargetProgress_ - jumpRemainGaugeAnimStartProgress_) * eased,
+                    0.0f,
+                    1.0f);
+                if (t >= 1.0f) {
+                    jumpRemainGaugeAnimActive_ = false;
+                    jumpRemainGaugeAnimElapsed_ = 0.0f;
+                    jumpRemainGaugeDisplayProgress_ = std::clamp(jumpRemainGaugeAnimTargetProgress_, 0.0f, 1.0f);
+                }
+            }
+
+            previousJumpCount_ = jumpCount;
+            previousMaxJumpCount_ = maxJumpCount;
+        } else {
+            previousJumpCount_ = -1;
+            previousMaxJumpCount_ = -1;
+            jumpRemainGaugeVisible_ = false;
+            jumpRemainGaugeFadeOutActive_ = false;
+            jumpRemainGaugeFadeOutElapsed_ = 0.0f;
+            jumpRemainGaugeAlpha_ = 0.0f;
+            jumpRemainGaugeDisplayProgress_ = 0.0f;
+            jumpRemainGaugeAnimActive_ = false;
+            jumpRemainGaugeAnimElapsed_ = 0.0f;
+            jumpRemainGaugeShakeActive_ = false;
+            jumpRemainGaugeShakeElapsed_ = 0.0f;
         }
 
         const int touchedCount = stageGroundGenerator_ ? stageGroundGenerator_->GetTouchedGroundCount() : 0;
@@ -440,6 +613,49 @@ public:
             fallDistanceText_->SetTextFormat("Fall Distance: {0:.2f}", playerMovementController_->GetAccumulatedFallDistance());
         }
 
+        if (jumpRemainGaugeBar_) {
+            jumpRemainGaugeBar_->SetProgress(std::clamp(jumpRemainGaugeDisplayProgress_, 0.0f, 1.0f));
+            jumpRemainGaugeBar_->SetSegmentLineCount(std::max(0, maxJumpCount - 1));
+
+            if (auto *tr = jumpRemainGaugeBar_->GetComponent2D<Transform2D>()) {
+                Vector3 pos = jumpRemainGaugeBasePosition_;
+                if (player_) {
+                    if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
+                        Vector2 playerScreen;
+                        if (ProjectWorldTo2DWorld(playerTr->GetTranslate(), playerScreen)) {
+                            pos = Vector3{playerScreen.x, playerScreen.y + jumpRemainGaugeYOffset_, 0.0f};
+                        }
+                    }
+                }
+
+                float shakeOffsetX = 0.0f;
+                if (jumpRemainGaugeShakeActive_) {
+                    jumpRemainGaugeShakeElapsed_ += dt;
+                    const float t = std::clamp(jumpRemainGaugeShakeElapsed_ / std::max(0.0001f, jumpRemainGaugeShakeDuration_), 0.0f, 1.0f);
+                    if (t >= 1.0f) {
+                        jumpRemainGaugeShakeActive_ = false;
+                        jumpRemainGaugeShakeElapsed_ = 0.0f;
+                    } else {
+                        shakeOffsetX = std::sin(jumpRemainGaugeShakeElapsed_ * jumpRemainGaugeShakeAngularSpeed_) * jumpRemainGaugeShakeAmplitude_ * (1.0f - t);
+                    }
+                }
+
+                pos.x += shakeOffsetX;
+                tr->SetTranslate(pos);
+            }
+
+            const float alpha = (jumpRemainGaugeVisible_ && isVisible_) ? std::clamp(jumpRemainGaugeAlpha_, 0.0f, 1.0f) : 0.0f;
+            auto applyJumpGaugeColor = [&](const Vector4 &base, auto setter) {
+                Vector4 c = base;
+                c.w *= alpha;
+                (jumpRemainGaugeBar_->*setter)(c);
+            };
+            applyJumpGaugeColor(jumpRemainFrameColorBase_, &SpriteProressBar::SetFrameColor);
+            applyJumpGaugeColor(jumpRemainBackgroundColorBase_, &SpriteProressBar::SetBackgroundColor);
+            applyJumpGaugeColor(jumpRemainBarColorBase_, &SpriteProressBar::SetBarColor);
+            applyJumpGaugeColor(jumpRemainSegmentColorBase_, &SpriteProressBar::SetSegmentLineColor);
+        }
+
         UpdateGravityDirectionAllowUI();
 
         if (clearPresentationActive_) {
@@ -502,6 +718,7 @@ private:
         applyBarAlpha(forwardSpeedBar_, forwardFrameColorBase_, forwardBackgroundColorBase_, forwardBarColorBase_, forwardSegmentColorBase_);
         applyBarAlpha(gravityGaugeBar_, gravityFrameColorBase_, gravityBackgroundColorBase_, gravityBarColorBase_, gravitySegmentColorBase_);
         applyBarAlpha(goalDistanceBar_, goalFrameColorBase_, goalBackgroundColorBase_, goalBarColorBase_, goalSegmentColorBase_);
+        applyBarAlpha(jumpRemainGaugeBar_, jumpRemainFrameColorBase_, jumpRemainBackgroundColorBase_, jumpRemainBarColorBase_, jumpRemainSegmentColorBase_);
 
         if (!isVisible_ && gravityGaugeBar_) {
             if (auto *tr = gravityGaugeBar_->GetComponent2D<Transform2D>()) {
@@ -509,6 +726,14 @@ private:
             }
             gravityGaugeShakeActive_ = false;
             gravityGaugeShakeElapsed_ = 0.0f;
+        }
+
+        if (!isVisible_ && jumpRemainGaugeBar_) {
+            if (auto *tr = jumpRemainGaugeBar_->GetComponent2D<Transform2D>()) {
+                tr->SetTranslate(jumpRemainGaugeBasePosition_);
+            }
+            jumpRemainGaugeShakeActive_ = false;
+            jumpRemainGaugeShakeElapsed_ = 0.0f;
         }
 
         SetTextAlpha(forwardSpeedText_, alpha);
@@ -551,6 +776,21 @@ private:
                 }
                 operationGravityUIPressed_ = false;
                 operationGravityUIReleaseElapsed_ = 0.0f;
+            }
+        }
+
+        if (operationFastFallUISprite_) {
+            if (auto *mat = operationFastFallUISprite_->GetComponent2D<Material2D>()) {
+                Vector4 color = operationUIBaseColor_;
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+            if (!isVisible_) {
+                if (auto *tr = operationFastFallUISprite_->GetComponent2D<Transform2D>()) {
+                    tr->SetTranslate(operationFastFallUIBasePosition_);
+                }
+                operationFastFallUIPressed_ = false;
+                operationFastFallUIReleaseElapsed_ = 0.0f;
             }
         }
 
@@ -755,6 +995,7 @@ private:
     SpriteProressBar *forwardSpeedBar_ = nullptr;
     SpriteProressBar *gravityGaugeBar_ = nullptr;
     SpriteProressBar *goalDistanceBar_ = nullptr;
+    SpriteProressBar *jumpRemainGaugeBar_ = nullptr;
     Text *forwardSpeedText_ = nullptr;
     Text *touchedGroundCountText_ = nullptr;
     Text *fallDistanceText_ = nullptr;
@@ -764,6 +1005,7 @@ private:
     Sprite *operationJumpUISprite_ = nullptr;
     Sprite *operationGravityUISprite_ = nullptr;
     Sprite *gravityDirectionAllowUISprite_ = nullptr;
+    Sprite *operationFastFallUISprite_ = nullptr;
 
     int previousTouchedGroundCount_ = 0;
     int landingTouchedGroundCount_ = 0;
@@ -813,23 +1055,54 @@ private:
     Vector4 goalBarColorBase_{0.95f, 0.85f, 0.2f, 1.0f};
     Vector4 goalSegmentColorBase_{0.6f, 0.6f, 0.6f, 1.0f};
 
+    Vector4 jumpRemainFrameColorBase_{0.75f, 0.75f, 0.75f, 1.0f};
+    Vector4 jumpRemainBackgroundColorBase_{0.1f, 0.1f, 0.12f, 1.0f};
+    Vector4 jumpRemainBarColorBase_{0.45f, 0.95f, 0.45f, 1.0f};
+    Vector4 jumpRemainSegmentColorBase_{0.85f, 0.85f, 0.85f, 1.0f};
+
+    Vector3 jumpRemainGaugeBasePosition_{0.0f, 0.0f, 0.0f};
+    float jumpRemainGaugeYOffset_ = 176.0f;
+    bool jumpRemainGaugeVisible_ = false;
+    float jumpRemainGaugeAlpha_ = 0.0f;
+    bool jumpRemainGaugeFadeOutActive_ = false;
+    float jumpRemainGaugeFadeOutElapsed_ = 0.0f;
+    float jumpRemainGaugeFadeOutDuration_ = 1.0f;
+    float jumpRemainGaugeDisplayProgress_ = 0.0f;
+    bool jumpRemainGaugeAnimActive_ = false;
+    float jumpRemainGaugeAnimElapsed_ = 0.0f;
+    float jumpRemainGaugeAnimDuration_ = 0.5f;
+    float jumpRemainGaugeAnimStartProgress_ = 0.0f;
+    float jumpRemainGaugeAnimTargetProgress_ = 0.0f;
+    int previousJumpCount_ = -1;
+    int previousMaxJumpCount_ = -1;
+    bool jumpRemainGaugeShakeActive_ = false;
+    float jumpRemainGaugeShakeElapsed_ = 0.0f;
+    float jumpRemainGaugeShakeDuration_ = 0.25f;
+    float jumpRemainGaugeShakeAmplitude_ = 16.0f;
+    float jumpRemainGaugeShakeAngularSpeed_ = 80.0f;
+
     Vector2 operationUIFallbackSize_{512.0f, 256.0f};
     Vector2 gravityDirectionAllowFallbackSize_{96.0f, 96.0f};
     float operationUIMarginRight_ = 32.0f;
-    float operationUIMarginBottom_ = 24.0f;
-    float operationUIVerticalSpacing_ = 12.0f;
+    float operationUIMarginBottom_ = 32.0f;
+    float operationUIVerticalSpacing_ = 8.0f;
+    float operationUIStackOffsetY_ = 0.0f;
     float gravityDirectionAllowMargin_ = 24.0f;
     float operationUIPressedOffsetX_ = -128.0f;
     float operationUIReleaseDuration_ = 0.2f;
     Vector3 operationJumpUIBasePosition_{0.0f, 0.0f, 0.0f};
     Vector3 operationGravityUIBasePosition_{0.0f, 0.0f, 0.0f};
+    Vector3 operationFastFallUIBasePosition_{0.0f, 0.0f, 0.0f};
     Vector3 gravityDirectionAllowUIBasePosition_{0.0f, 0.0f, 0.0f};
     bool operationJumpUIPressed_ = false;
     bool operationGravityUIPressed_ = false;
+    bool operationFastFallUIPressed_ = false;
     bool operationJumpUIActive_ = true;
     bool operationGravityUIActive_ = true;
+    bool operationFastFallUIActive_ = false;
     float operationJumpUIReleaseElapsed_ = 0.0f;
     float operationGravityUIReleaseElapsed_ = 0.0f;
+    float operationFastFallUIReleaseElapsed_ = 0.0f;
     Vector4 operationUIBaseColor_{1.0f, 1.0f, 1.0f, 1.0f};
     Vector4 operationUIActiveColor_{1.0f, 1.0f, 0.0f, 1.0f};
     Vector4 operationUIInactiveColor_{0.5f, 0.5f, 0.5f, 1.0f};

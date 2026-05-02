@@ -9,6 +9,7 @@
 #include "Scenes/Components/GameClearUIController.h"
 #include "Scenes/Components/PauseUIController.h"
 #include "Scenes/Components/ClearScoreBoard.h"
+#include "Scenes/Components/ClearTimeBoard.h"
 #include "Scenes/Components/StageGroundGenerator.h"
 #include "Scenes/Components/StageNoiseWallController.h"
 #include "Scenes/Components/StageGoalPlaneController.h"
@@ -208,6 +209,13 @@ void GameScene::Initialize() {
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
     }
+
+    AddSceneComponent(std::make_unique<ClearTimeBoard>());
+    clearTimeBoard_ = GetSceneComponent<ClearTimeBoard>();
+    if (clearTimeBoard_) {
+        clearTimeBoard_->ResetMeasurement();
+        clearTimeBoard_->StartMeasurement();
+    }
 }
 
 GameScene::~GameScene() {}
@@ -228,6 +236,9 @@ void GameScene::OnUpdate() {
     if (!playerGameOverController_) {
         playerGameOverController_ = GetSceneComponent<PlayerGameOverController>();
     }
+    if (!clearTimeBoard_) {
+        clearTimeBoard_ = GetSceneComponent<ClearTimeBoard>();
+    }
 
     if (!groundSpawnLimitConfigured_ && stageGroundGenerator_ && goalPlaneController_) {
         groundSpawnLimitConfigured_ = true;
@@ -244,6 +255,15 @@ void GameScene::OnUpdate() {
         || (pauseUIController_ && pauseUIController_->IsActive());
     if (gameSceneUIController_) {
         gameSceneUIController_->SetVisible(!modalVisible);
+    }
+
+    if (clearTimeBoard_) {
+        const bool shouldMeasure = IsPlaying() && !modalVisible;
+        if (shouldMeasure) {
+            clearTimeBoard_->StartMeasurement();
+        } else {
+            clearTimeBoard_->PauseMeasurement();
+        }
     }
 
     if (auto *ic = GetInputCommand()) {

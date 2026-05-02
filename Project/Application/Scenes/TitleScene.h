@@ -6,6 +6,7 @@ namespace KashipanEngine {
 
 class TitleSceneUIController;
 class StageSelectUIController;
+class StageSelectRankingUIController;
 
 class TitleScene final : public SceneBase {
 public:
@@ -23,6 +24,7 @@ private:
     Camera3D *mainCamera_ = nullptr;
     TitleSceneUIController *titleSceneUIController_ = nullptr;
     StageSelectUIController *stageSelectUIController_ = nullptr;
+    StageSelectRankingUIController *stageSelectRankingUIController_ = nullptr;
 
     float moveSpeedZ_ = 24.0f;
     float cameraPlayerOffsetZ_ = 8.0f;

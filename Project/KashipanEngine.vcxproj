@@ -345,6 +345,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
     <ClInclude Include="Application\Scenes\Components\CameraToPlayerSync.h" />
     <ClInclude Include="Application\Scenes\Components\ClearScoreBoard.h" />
+    <ClInclude Include="Application\Scenes\Components\ClearTimeBoard.h" />
     <ClInclude Include="Application\Scenes\Components\GameClearUIController.h" />
     <ClInclude Include="Application\Scenes\Components\GameOverUIController.h" />
     <ClInclude Include="Application\Scenes\Components\GameSceneAudioPlayer.h" />

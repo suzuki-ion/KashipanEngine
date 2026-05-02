@@ -5,6 +5,7 @@
 
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/ClearScoreBoard.h"
+#include "Scenes/Components/ClearTimeBoard.h"
 
 #include <array>
 #include <algorithm>
@@ -22,8 +23,9 @@ public:
         Quit,
     };
 
-    GameClearUIController()
-        : ISceneComponent("GameClearUIController", 1) {}
+    GameClearUIController(bool enableTouchGroundUi = false)
+        : ISceneComponent("GameClearUIController", 1),
+          isTouchGroundUiEnabled_(enableTouchGroundUi) {}
 
     ~GameClearUIController() override = default;
 
@@ -35,7 +37,10 @@ public:
         auto *screenBuffer2D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer2D() : nullptr;
         if (!screenBuffer2D) return;
 
-        scoreboard_ = ctx->GetComponent<ClearScoreBoard>();
+        if (isTouchGroundUiEnabled_) {
+            scoreboard_ = ctx->GetComponent<ClearScoreBoard>();
+        }
+        clearTimeBoard_ = ctx->GetComponent<ClearTimeBoard>();
 
         const float screenW = static_cast<float>(screenBuffer2D->GetWidth());
         const float screenH = static_cast<float>(screenBuffer2D->GetHeight());
@@ -76,21 +81,35 @@ public:
         logoText_ = logo.get();
         (void)ctx->AddObject2D(std::move(logo));
 
-        auto touched = std::make_unique<Text>(64);
-        touched->SetName("GameClearTouchedGroundText");
-        touched->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        touched->SetText(" ");
-        touched->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
-        touched->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = touched->GetComponent2D<Transform2D>()) {
+        if (isTouchGroundUiEnabled_) {
+            auto touched = std::make_unique<Text>(64);
+            touched->SetName("GameClearTouchedGroundText");
+            touched->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+            touched->SetText(" ");
+            touched->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
+            touched->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+            if (auto *tr = touched->GetComponent2D<Transform2D>()) {
+                tr->SetTranslate(Vector3{leftX, touchedY, 0.0f});
+            }
+            touchedGroundText_ = touched.get();
+            (void)ctx->AddObject2D(std::move(touched));
+        }
+
+        auto clearTime = std::make_unique<Text>(64);
+        clearTime->SetName("GameClearClearTimeText");
+        clearTime->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+        clearTime->SetText(" ");
+        clearTime->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
+        clearTime->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = clearTime->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3{leftX, touchedY, 0.0f});
         }
-        touchedGroundText_ = touched.get();
-        (void)ctx->AddObject2D(std::move(touched));
+        clearTimeText_ = clearTime.get();
+        (void)ctx->AddObject2D(std::move(clearTime));
 
         for (size_t i = 0; i < rankingTextLines_.size(); ++i) {
             auto rank = std::make_unique<Text>(64);
-            rank->SetName("GameClearRankingLine");
+            rank->SetName("GameClearClearTimeRankingLine");
             rank->SetFont("Assets/Application/Image/KaqookanV2.fnt");
             rank->SetText(" ");
             rank->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
@@ -142,26 +161,27 @@ public:
     }
 
     void Activate(int touchedGroundCount) {
+        auto *ctx = GetOwnerContext();
+        if (!clearTimeBoard_ && ctx) {
+            clearTimeBoard_ = ctx->GetComponent<ClearTimeBoard>();
+        }
+
         isActive_ = true;
         selectionIndex_ = 0;
         previousSelectionIndex_ = 0;
         touchedGroundCount_ = touchedGroundCount;
         highlightedRankIndex_ = -1;
-        if (scoreboard_) {
-            scoreboard_->AddScore(touchedGroundCount_);
-            if (touchedGroundCount_ > 0) {
-                auto top = scoreboard_->GetTopScores(5);
-                for (size_t i = 0; i < top.size(); ++i) {
-                    if (top[i] == touchedGroundCount_) {
-                        highlightedRankIndex_ = static_cast<int>(i);
-                        break;
-                    }
-                }
-            }
+        clearTimeMilliseconds_ = 0;
+        if (clearTimeBoard_) {
+            clearTimeBoard_->PauseMeasurement();
+            clearTimeMilliseconds_ = clearTimeBoard_->RegisterCurrentTime();
+            const int rank = clearTimeBoard_->FindBestRank(clearTimeMilliseconds_);
+            highlightedRankIndex_ = (rank > 0) ? (rank - 1) : -1;
         }
         introElapsed_ = 0.0f;
         setTextAlpha(logoText_, 0.0f);
         setTextAlpha(touchedGroundText_, 0.0f);
+        setTextAlpha(clearTimeText_, 0.0f);
         setTextAlpha(retryText_, 0.0f);
         setTextAlpha(backToTitleText_, 0.0f);
         setTextAlpha(quitText_, 0.0f);
@@ -246,6 +266,9 @@ private:
         if (touchedGroundText_) {
             touchedGroundText_->SetTextFormat("Touched Ground: {0}", touchedGroundCount_);
         }
+        if (clearTimeText_) {
+            clearTimeText_->SetTextFormat("Clear Time: {0:.2f}s", static_cast<double>(clearTimeMilliseconds_) / 1000.0);
+        }
         if (retryText_) {
             retryText_->SetText(selectionIndex_ == 0 ? "＞ やりなおす" : "  やりなおす");
         }
@@ -258,18 +281,24 @@ private:
     }
 
     void RefreshRankingTexts() {
-        std::array<int, 5> scores{};
-        if (scoreboard_) {
-            const auto top = scoreboard_->GetTopScores(5);
-            for (size_t i = 0; i < top.size() && i < scores.size(); ++i) {
-                scores[i] = top[i];
+        std::array<ClearTimeBoard::TimeValue, 5> times{};
+        size_t timeCount = 0;
+        if (clearTimeBoard_) {
+            const auto top = clearTimeBoard_->GetTopTimes(5);
+            timeCount = top.size();
+            for (size_t i = 0; i < top.size() && i < times.size(); ++i) {
+                times[i] = top[i];
             }
         }
 
         for (size_t i = 0; i < rankingTextLines_.size(); ++i) {
             auto *text = rankingTextLines_[i];
             if (!text) continue;
-            text->SetTextFormat("{0}. {1}", static_cast<int>(i + 1), scores[i]);
+            if (i < timeCount) {
+                text->SetTextFormat("{0}. {1:.2f}s", static_cast<int>(i + 1), static_cast<double>(times[i]) / 1000.0);
+            } else {
+                text->SetText(" ");
+            }
             const Vector4 color = (highlightedRankIndex_ == static_cast<int>(i))
                 ? Vector4{1.0f, 1.0f, 0.0f, 1.0f}
                 : Vector4{1.0f, 1.0f, 1.0f, 1.0f};
@@ -278,7 +307,7 @@ private:
     }
 
     void cacheTextTransforms() {
-        std::array<Text *, 5> texts = {logoText_, touchedGroundText_, retryText_, backToTitleText_, quitText_};
+        std::array<Text *, 5> texts = {logoText_, clearTimeText_, retryText_, backToTitleText_, quitText_};
         for (size_t i = 0; i < texts.size(); ++i) {
             if (!texts[i]) continue;
             auto *tr = texts[i]->GetComponent2D<Transform2D>();
@@ -305,7 +334,7 @@ private:
     }
 
     void updateEntranceAnimation() {
-        std::array<Text *, 5> texts = {logoText_, touchedGroundText_, retryText_, backToTitleText_, quitText_};
+        std::array<Text *, 5> texts = {logoText_, clearTimeText_, retryText_, backToTitleText_, quitText_};
         for (size_t i = 0; i < texts.size(); ++i) {
             if (!texts[i]) continue;
             auto *tr = texts[i]->GetComponent2D<Transform2D>();
@@ -377,9 +406,11 @@ private:
 private:
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
     ClearScoreBoard *scoreboard_ = nullptr;
+    ClearTimeBoard *clearTimeBoard_ = nullptr;
 
     Text *logoText_ = nullptr;
     Text *touchedGroundText_ = nullptr;
+    Text *clearTimeText_ = nullptr;
     Text *retryText_ = nullptr;
     Text *backToTitleText_ = nullptr;
     Text *quitText_ = nullptr;
@@ -387,10 +418,12 @@ private:
     Sprite *backgroundSprite_ = nullptr;
 
     bool isActive_ = false;
+    const bool isTouchGroundUiEnabled_ = false;
     int selectionIndex_ = 0;
     int previousSelectionIndex_ = -1;
     int touchedGroundCount_ = 0;
     int highlightedRankIndex_ = -1;
+    ClearTimeBoard::TimeValue clearTimeMilliseconds_ = 0;
     RequestAction requestedAction_ = RequestAction::None;
     float introElapsed_ = 0.0f;
     float introDelaySec_ = 0.08f;

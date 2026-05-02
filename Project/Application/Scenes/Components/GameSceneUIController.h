@@ -3,6 +3,7 @@
 #include <KashipanEngine.h>
 #include "Scenes/Components/StageGroundGenerator.h"
 #include "Scenes/Components/StageGoalPlaneController.h"
+#include "Scenes/Components/ClearTimeBoard.h"
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
 
@@ -13,7 +14,9 @@ namespace KashipanEngine {
 
 class GameSceneUIController final : public ISceneComponent {
 public:
-    GameSceneUIController() : ISceneComponent("GameSceneUIController", 1) {}
+    GameSceneUIController(bool enableTouchGroundUi = false)
+        : ISceneComponent("GameSceneUIController", 1),
+          isTouchGroundUiEnabled_(enableTouchGroundUi) {}
     ~GameSceneUIController() override = default;
 
     void StartClearPresentation(int touchedGroundCount) {
@@ -118,25 +121,41 @@ public:
         forwardSpeedText_ = speedText.get();
         (void)ctx->AddObject2D(std::move(speedText));
 
-        auto touchedGroundText = std::make_unique<Text>(128);
-        touchedGroundText->SetName("TouchedGroundCountText");
-        touchedGroundText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        touchedGroundText->SetTextFormat("Touched Ground: {0}", 0);
-        touchedGroundText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = touchedGroundText->GetComponent2D<Transform2D>()) {
+        if (isTouchGroundUiEnabled_) {
+            auto touchedGroundText = std::make_unique<Text>(128);
+            touchedGroundText->SetName("TouchedGroundCountText");
+            touchedGroundText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+            touchedGroundText->SetTextFormat("Touched Ground: {0}", 0);
+            touchedGroundText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+            if (auto *tr = touchedGroundText->GetComponent2D<Transform2D>()) {
+                tr->SetTranslate(Vector3{32.0f, std::max(32.0f, screenHeight_ - 48.0f), 0.0f});
+            }
+            touchedGroundCountText_ = touchedGroundText.get();
+            (void)ctx->AddObject2D(std::move(touchedGroundText));
+        }
+
+        if (isTouchGroundUiEnabled_) {
+            auto landingTouchedGroundText = std::make_unique<Text>(64);
+            landingTouchedGroundText->SetName("LandingTouchedGroundCountText");
+            landingTouchedGroundText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+            landingTouchedGroundText->SetText(" ");
+            landingTouchedGroundText->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+            landingTouchedGroundText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+            landingTouchedGroundCountText_ = landingTouchedGroundText.get();
+            (void)ctx->AddObject2D(std::move(landingTouchedGroundText));
+        }
+
+        auto clearTimeText = std::make_unique<Text>(128);
+        clearTimeText->SetName("ClearTimeText");
+        clearTimeText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+        clearTimeText->SetText("Clear Time: --");
+        clearTimeText->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
+        clearTimeText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = clearTimeText->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3{32.0f, std::max(32.0f, screenHeight_ - 48.0f), 0.0f});
         }
-        touchedGroundCountText_ = touchedGroundText.get();
-        (void)ctx->AddObject2D(std::move(touchedGroundText));
-
-        auto landingTouchedGroundText = std::make_unique<Text>(64);
-        landingTouchedGroundText->SetName("LandingTouchedGroundCountText");
-        landingTouchedGroundText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        landingTouchedGroundText->SetText(" ");
-        landingTouchedGroundText->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
-        landingTouchedGroundText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        landingTouchedGroundCountText_ = landingTouchedGroundText.get();
-        (void)ctx->AddObject2D(std::move(landingTouchedGroundText));
+        clearTimeText_ = clearTimeText.get();
+        (void)ctx->AddObject2D(std::move(clearTimeText));
 
         auto fallDistanceText = std::make_unique<Text>(128);
         fallDistanceText->SetName("FallDistanceText");
@@ -343,6 +362,10 @@ public:
     void Update() override {
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
+
+        if (!clearTimeBoard_) {
+            clearTimeBoard_ = ctx->GetComponent<ClearTimeBoard>();
+        }
 
         if (!isVisible_) {
             return;
@@ -587,6 +610,14 @@ public:
             touchedGroundCountText_->SetTextFormat("Touched Ground: {0}", touchedCount);
         }
 
+        if (clearTimeText_) {
+            if (clearTimeBoard_) {
+                clearTimeText_->SetTextFormat("Clear Time: {0:.2f}", clearTimeBoard_->GetCurrentTimeSeconds());
+            } else {
+                clearTimeText_->SetText("Clear Time: --");
+            }
+        }
+
         if (landingTouchedGroundCountText_) {
             if (landingPopupRemainTime_ > 0.0f) {
                 landingTouchedGroundCountText_->SetTextFormat("+{0}", landingTouchedGroundCount_);
@@ -738,6 +769,7 @@ private:
 
         SetTextAlpha(forwardSpeedText_, alpha);
         SetTextAlpha(touchedGroundCountText_, alpha);
+        SetTextAlpha(clearTimeText_, alpha);
         SetTextAlpha(fallDistanceText_, alpha);
         SetTextAlpha(landingTouchedGroundCountText_, alpha);
 
@@ -998,6 +1030,7 @@ private:
     SpriteProressBar *jumpRemainGaugeBar_ = nullptr;
     Text *forwardSpeedText_ = nullptr;
     Text *touchedGroundCountText_ = nullptr;
+    Text *clearTimeText_ = nullptr;
     Text *fallDistanceText_ = nullptr;
     Text *landingTouchedGroundCountText_ = nullptr;
     Sprite *clearFadeSprite_ = nullptr;
@@ -1039,6 +1072,8 @@ private:
     float gravityGaugeShakeAngularSpeed_ = 80.0f;
 
     bool isVisible_ = true;
+    const bool isTouchGroundUiEnabled_ = false;
+    ClearTimeBoard *clearTimeBoard_ = nullptr;
 
     Vector4 forwardFrameColorBase_{0.5f, 0.5f, 0.5f, 1.0f};
     Vector4 forwardBackgroundColorBase_{0.1f, 0.1f, 0.1f, 1.0f};

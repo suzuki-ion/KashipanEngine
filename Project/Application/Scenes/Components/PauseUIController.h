@@ -126,6 +126,7 @@ public:
     void Activate() {
         if (isActive_) return;
         isActive_ = true;
+        continueClosePending_ = false;
         selectionIndex_ = 0;
         previousSelectionIndex_ = 0;
         introElapsed_ = 0.0f;
@@ -152,6 +153,7 @@ public:
     void Deactivate() {
         if (!isActive_) return;
         isActive_ = false;
+        continueClosePending_ = false;
         SetGameSpeed(resumeGameSpeed_);
         if (backgroundSprite_) {
             if (auto *mat = backgroundSprite_->GetComponent2D<Material2D>()) {
@@ -182,6 +184,14 @@ public:
         auto *ic = ctx->GetInputCommand();
         if (!ic) return;
 
+        if (continueClosePending_) {
+            if (!ic->Evaluate("Submit").Triggered()) {
+                continueClosePending_ = false;
+                requestedAction_ = RequestAction::Continue;
+            }
+            return;
+        }
+
         introElapsed_ += std::max(0.0f, GetDeltaTime());
         updateEntranceAnimation();
         updateLogoBobbing();
@@ -203,8 +213,7 @@ public:
         if (!ic->Evaluate("Submit").Triggered()) return;
 
         if (selectionIndex_ == 0) {
-            requestedAction_ = RequestAction::Continue;
-            Deactivate();
+            continueClosePending_ = true;
             return;
         }
 
@@ -335,6 +344,7 @@ private:
     Sprite *backgroundSprite_ = nullptr;
 
     bool isActive_ = false;
+    bool continueClosePending_ = false;
     int selectionIndex_ = 0;
     int previousSelectionIndex_ = -1;
     RequestAction requestedAction_ = RequestAction::None;

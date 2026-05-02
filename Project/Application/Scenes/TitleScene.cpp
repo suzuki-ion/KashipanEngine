@@ -9,8 +9,8 @@
 #include "Scenes/Components/StageObjectRandomGenerator.h"
 #include "Scenes/Components/TitleSceneAudioPlayer.h"
 #include "Scenes/Components/TitleSceneUIController.h"
-#include "Scenes/Components/ClearScoreBoard.h"
 #include "Scenes/Components/StageSelectUIController.h"
+#include "Scenes/Components/StageSelectRankingUIController.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 
@@ -78,14 +78,21 @@ void TitleScene::Initialize() {
         mainCamera_->SetFovY(1.0f);
     }
 
-    AddSceneComponent(std::make_unique<ClearScoreBoard>());
     AddSceneComponent(std::make_unique<TitleSceneUIController>());
     titleSceneUIController_ = GetSceneComponent<TitleSceneUIController>();
     AddSceneComponent(std::make_unique<StageSelectUIController>());
     stageSelectUIController_ = GetSceneComponent<StageSelectUIController>();
+    AddSceneComponent(std::make_unique<StageSelectRankingUIController>());
+    stageSelectRankingUIController_ = GetSceneComponent<StageSelectRankingUIController>();
+    if (stageSelectRankingUIController_) {
+        stageSelectRankingUIController_->SetStageSelectUIController(stageSelectUIController_);
+    }
 
     titleSceneUIController_->SetEnableUpdating(true);
     stageSelectUIController_->SetEnableUpdating(false);
+    if (stageSelectRankingUIController_) {
+        stageSelectRankingUIController_->SetEnableUpdating(false);
+    }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -135,6 +142,9 @@ void TitleScene::OnUpdate() {
             titleSceneUIController_->SetEnableUpdating(false);
             if (stageSelectUIController_) {
                 stageSelectUIController_->SetEnableUpdating(true);
+                if (stageSelectRankingUIController_) {
+                    stageSelectRankingUIController_->SetEnableUpdating(true);
+                }
             } else {
                 if (GetNextSceneName().empty()) {
                     SetNextSceneName("GameScene");
@@ -161,6 +171,9 @@ void TitleScene::OnUpdate() {
             }
         } else if (action == StageSelectUIController::RequestAction::Canceled) {
             stageSelectUIController_->SetEnableUpdating(false);
+            if (stageSelectRankingUIController_) {
+                stageSelectRankingUIController_->SetEnableUpdating(false);
+            }
             if (titleSceneUIController_) {
                 titleSceneUIController_->SetEnableUpdating(true);
             }

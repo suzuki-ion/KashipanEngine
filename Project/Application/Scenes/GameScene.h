@@ -12,6 +12,7 @@ class GameSceneUIController;
 class GameOverUIController;
 class GameClearUIController;
 class PauseUIController;
+class ClearTimeBoard;
 class PlayerMovementController;
 class PlayerRespawnController;
 class PlayerGameOverController;
@@ -52,6 +53,7 @@ private:
     GameOverUIController *gameOverUIController_ = nullptr;
     GameClearUIController *gameClearUIController_ = nullptr;
     PauseUIController *pauseUIController_ = nullptr;
+    ClearTimeBoard *clearTimeBoard_ = nullptr;
     ParticleManager *particleManager_ = nullptr;
     PlayerRespawnController *playerRespawnController_ = nullptr;
     PlayerGameOverController *playerGameOverController_ = nullptr;

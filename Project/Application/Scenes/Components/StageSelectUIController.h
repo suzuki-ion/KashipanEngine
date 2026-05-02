@@ -31,7 +31,7 @@ public:
 
         const float screenW = static_cast<float>(screenBuffer2D->GetWidth());
         const float screenH = static_cast<float>(screenBuffer2D->GetHeight());
-        cx_ = screenW * 0.5f;
+        cx_ = screenW * 0.75f;
         cy_ = screenH * 0.5f;
 
         // Load stage list

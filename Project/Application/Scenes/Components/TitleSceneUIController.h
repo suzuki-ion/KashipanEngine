@@ -2,8 +2,6 @@
 
 #include <KashipanEngine.h>
 
-#include "Scenes/Components/ClearScoreBoard.h"
-
 #include <algorithm>
 #include <array>
 
@@ -30,8 +28,6 @@ public:
         auto *screenBuffer2D = defaults ? defaults->GetScreenBuffer2D() : nullptr;
         if (!screenBuffer2D) return;
 
-        scoreboard_ = ctx->GetComponent<ClearScoreBoard>();
-
         const float screenW = static_cast<float>(screenBuffer2D->GetWidth());
         const float screenH = static_cast<float>(screenBuffer2D->GetHeight());
         const float cx = screenW * 0.5f;
@@ -39,8 +35,7 @@ public:
 
         const float logoY = cy + 308.0f;
         const float startY = logoY - 160.0f - 128.0f;
-        const float rankingY = startY - 80.0f;
-        const float quitY = rankingY - 80.0f;
+        const float quitY = startY - 80.0f;
 
         auto title = std::make_unique<Text>(128);
         title->SetName("TitleText");
@@ -67,19 +62,6 @@ public:
         startTextBaseY_ = startY;
         (void)ctx->AddObject2D(std::move(start));
 
-        auto ranking = std::make_unique<Text>(64);
-        ranking->SetName("RankingText");
-        ranking->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        ranking->SetText("  ランキング");
-        ranking->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
-        ranking->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = ranking->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, rankingY, 0.0f});
-        }
-        rankingText_ = ranking.get();
-        rankingTextBaseY_ = rankingY;
-        (void)ctx->AddObject2D(std::move(ranking));
-
         auto quit = std::make_unique<Text>(64);
         quit->SetName("QuitText");
         quit->SetFont("Assets/Application/Image/KaqookanV2.fnt");
@@ -93,34 +75,7 @@ public:
         quitTextBaseY_ = quitY;
         (void)ctx->AddObject2D(std::move(quit));
 
-        auto rankingTitle = std::make_unique<Text>(64);
-        rankingTitle->SetName("TitleRankingHeader");
-        rankingTitle->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        rankingTitle->SetText("TOP 10");
-        rankingTitle->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
-        rankingTitle->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = rankingTitle->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{cx, cy + 120.0f, 0.0f});
-        }
-        rankingHeaderText_ = rankingTitle.get();
-        (void)ctx->AddObject2D(std::move(rankingTitle));
-
-        for (size_t i = 0; i < rankingLineTexts_.size(); ++i) {
-            auto line = std::make_unique<Text>(64);
-            line->SetName("TitleRankingLine");
-            line->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-            line->SetText(" ");
-            line->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
-            line->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-            if (auto *tr = line->GetComponent2D<Transform2D>()) {
-                tr->SetTranslate(Vector3{cx, cy + 40.0f - static_cast<float>(i) * 56.0f, 0.0f});
-            }
-            rankingLineTexts_[i] = line.get();
-            (void)ctx->AddObject2D(std::move(line));
-        }
-
         CacheEntranceBasePositions();
-        SetRankingVisible(false);
         BeginTitleEntrance();
     }
 
@@ -136,10 +91,8 @@ public:
             if (enable) {
                 BeginTitleEntrance();
             } else {
-                SetRankingVisible(false);
                 if (titleText_) titleText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
                 if (startText_) startText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
-                if (rankingText_) rankingText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
                 if (quitText_) quitText_->GetComponent2D<Transform2D>()->SetScale(Vector3{0.0f, 0.0f, 0.0f});
             }
         }
@@ -158,23 +111,12 @@ public:
         UpdateEntranceAnimation(dt);
         UpdateSelectionAnimation(dt);
 
-        if (showRanking_) {
-            if (ic->Evaluate("Submit").Triggered() || ic->Evaluate("Cancel").Triggered()) {
-                showRanking_ = false;
-                rankingEntranceActive_ = false;
-                SetRankingVisible(false);
-                RefreshOptionTexts();
-                BeginTitleEntrance();
-            }
-            return;
-        }
-
         int old = selectionIndex_;
         if (ic->Evaluate("SelectUp").Triggered()) {
-            selectionIndex_ = (selectionIndex_ + 2) % 3;
+            selectionIndex_ = (selectionIndex_ + 1) % 2;
         }
         if (ic->Evaluate("SelectDown").Triggered()) {
-            selectionIndex_ = (selectionIndex_ + 1) % 3;
+            selectionIndex_ = (selectionIndex_ + 1) % 2;
         }
         if (old != selectionIndex_) {
             selectionAnimElapsed_ = 0.0f;
@@ -186,12 +128,6 @@ public:
 
         if (selectionIndex_ == 0) {
             requestedAction_ = RequestAction::StartGame;
-        } else if (selectionIndex_ == 1) {
-            showRanking_ = true;
-            UpdateRankingTexts();
-            SetRankingVisible(true);
-            titleEntranceActive_ = false;
-            BeginRankingEntrance();
         } else {
             requestedAction_ = RequestAction::Quit;
         }
@@ -200,8 +136,7 @@ public:
 private:
     void RefreshOptionTexts() {
         if (startText_) startText_->SetText(selectionIndex_ == 0 ? "＞ スタート" : "  スタート");
-        if (rankingText_) rankingText_->SetText(selectionIndex_ == 1 ? "＞ ランキング" : "  ランキング");
-        if (quitText_) quitText_->SetText(selectionIndex_ == 2 ? "＞ おわる" : "  おわる");
+        if (quitText_) quitText_->SetText(selectionIndex_ == 1 ? "＞ おわる" : "  おわる");
     }
 
     void UpdateSelectionAnimation(float dt) {
@@ -222,27 +157,16 @@ private:
         };
 
         apply(startText_, startTextBaseY_, 0);
-        apply(rankingText_, rankingTextBaseY_, 1);
-        apply(quitText_, quitTextBaseY_, 2);
+        apply(quitText_, quitTextBaseY_, 1);
     }
 
     void CacheEntranceBasePositions() {
-        std::array<Text *, 4> titleTexts = {titleText_, startText_, rankingText_, quitText_};
+        std::array<Text *, 3> titleTexts = {titleText_, startText_, quitText_};
         for (size_t i = 0; i < titleTexts.size(); ++i) {
             if (!titleTexts[i]) continue;
             auto *tr = titleTexts[i]->GetComponent2D<Transform2D>();
             if (!tr) continue;
             titleBasePositions_[i] = tr->GetTranslate();
-        }
-
-        rankingBasePositions_[0] = rankingHeaderText_ && rankingHeaderText_->GetComponent2D<Transform2D>()
-            ? rankingHeaderText_->GetComponent2D<Transform2D>()->GetTranslate()
-            : Vector3{};
-        for (size_t i = 0; i < rankingLineTexts_.size(); ++i) {
-            if (!rankingLineTexts_[i]) continue;
-            auto *tr = rankingLineTexts_[i]->GetComponent2D<Transform2D>();
-            if (!tr) continue;
-            rankingBasePositions_[i + 1] = tr->GetTranslate();
         }
     }
 
@@ -250,7 +174,7 @@ private:
         titleEntranceActive_ = true;
         titleEntranceElapsed_ = 0.0f;
 
-        std::array<Text *, 4> titleTexts = {titleText_, startText_, rankingText_, quitText_};
+        std::array<Text *, 3> titleTexts = {titleText_, startText_, quitText_};
         for (size_t i = 1; i < titleTexts.size(); ++i) {
             auto *text = titleTexts[i];
             if (!text) continue;
@@ -261,8 +185,7 @@ private:
             pos.y = titleBasePositions_[i].y;
             tr->SetTranslate(pos);
             SetTextAlpha(text, 0.0f);
-
-            tr->SetScale(Vector3{ 1.0f, 1.0f, 1.0f });
+            tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
         }
 
         if (titleTexts[0]) {
@@ -271,43 +194,16 @@ private:
                 pos.x = titleBasePositions_[0].x;
                 pos.y = titleBasePositions_[0].y;
                 tr->SetTranslate(pos);
-
-                tr->SetScale(Vector3{ 1.0f, 1.0f, 1.0f });
+                tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
             }
             SetTextAlpha(titleTexts[0], 1.0f);
-        }
-    }
-
-    void BeginRankingEntrance() {
-        rankingEntranceActive_ = true;
-        rankingEntranceElapsed_ = 0.0f;
-
-        if (rankingHeaderText_) {
-            if (auto *tr = rankingHeaderText_->GetComponent2D<Transform2D>()) {
-                auto pos = tr->GetTranslate();
-                pos.x = rankingBasePositions_[0].x + introFromRightOffset_;
-                pos.y = rankingBasePositions_[0].y;
-                tr->SetTranslate(pos);
-            }
-            SetTextAlpha(rankingHeaderText_, 0.0f);
-        }
-        for (size_t i = 0; i < rankingLineTexts_.size(); ++i) {
-            auto *text = rankingLineTexts_[i];
-            if (!text) continue;
-            if (auto *tr = text->GetComponent2D<Transform2D>()) {
-                auto pos = tr->GetTranslate();
-                pos.x = rankingBasePositions_[i + 1].x + introFromRightOffset_;
-                pos.y = rankingBasePositions_[i + 1].y;
-                tr->SetTranslate(pos);
-            }
-            SetTextAlpha(text, 0.0f);
         }
     }
 
     void UpdateEntranceAnimation(float dt) {
         if (titleEntranceActive_) {
             titleEntranceElapsed_ += dt;
-            std::array<Text *, 4> titleTexts = {titleText_, startText_, rankingText_, quitText_};
+            std::array<Text *, 3> titleTexts = {titleText_, startText_, quitText_};
             bool allDone = true;
             for (size_t i = 1; i < titleTexts.size(); ++i) {
                 auto *text = titleTexts[i];
@@ -333,68 +229,6 @@ private:
             }
             if (allDone) titleEntranceActive_ = false;
         }
-
-        if (rankingEntranceActive_) {
-            rankingEntranceElapsed_ += dt;
-            bool allDone = true;
-
-            if (rankingHeaderText_) {
-                auto *tr = rankingHeaderText_->GetComponent2D<Transform2D>();
-                if (tr) {
-                    const float local = std::clamp(rankingEntranceElapsed_ / rankingIntroDurationSec_, 0.0f, 1.0f);
-                    auto pos = tr->GetTranslate();
-                    pos.x = EaseOutCubic(rankingBasePositions_[0].x + introFromRightOffset_, rankingBasePositions_[0].x, local);
-                    tr->SetTranslate(pos);
-                    SetTextAlpha(rankingHeaderText_, local);
-                    if (local < 1.0f) allDone = false;
-                }
-            }
-
-            for (size_t i = 0; i < rankingLineTexts_.size(); ++i) {
-                auto *text = rankingLineTexts_[i];
-                if (!text) continue;
-                auto *tr = text->GetComponent2D<Transform2D>();
-                if (!tr) continue;
-                const float local = std::clamp((rankingEntranceElapsed_ - rankingIntroDelaySec_ * static_cast<float>(i + 1)) / rankingIntroDurationSec_, 0.0f, 1.0f);
-                auto pos = tr->GetTranslate();
-                pos.x = EaseOutCubic(rankingBasePositions_[i + 1].x + introFromRightOffset_, rankingBasePositions_[i + 1].x, local);
-                tr->SetTranslate(pos);
-                SetTextAlpha(text, local);
-                if (local < 1.0f) allDone = false;
-            }
-
-            if (allDone) rankingEntranceActive_ = false;
-        }
-    }
-
-    void SetRankingVisible(bool visible) {
-        if (rankingHeaderText_) {
-            SetTextAlpha(rankingHeaderText_, visible ? 1.0f : 0.0f);
-        }
-        for (auto *line : rankingLineTexts_) {
-            if (!line) continue;
-            SetTextAlpha(line, visible ? 1.0f : 0.0f);
-        }
-
-        const float optionsAlpha = visible ? 0.0f : 1.0f;
-        SetTextAlpha(startText_, optionsAlpha);
-        SetTextAlpha(rankingText_, optionsAlpha);
-        SetTextAlpha(quitText_, optionsAlpha);
-    }
-
-    void UpdateRankingTexts() {
-        std::array<int, 10> top{};
-        if (scoreboard_) {
-            auto scores = scoreboard_->GetTopScores(10);
-            for (size_t i = 0; i < scores.size() && i < top.size(); ++i) {
-                top[i] = scores[i];
-            }
-        }
-
-        for (size_t i = 0; i < rankingLineTexts_.size(); ++i) {
-            if (!rankingLineTexts_[i]) continue;
-            rankingLineTexts_[i]->SetTextFormat("{0:>2}. {1}", static_cast<int>(i + 1), top[i]);
-        }
     }
 
     void SetTextAlpha(Text *text, float alpha) {
@@ -411,38 +245,26 @@ private:
     }
 
 private:
-    ClearScoreBoard *scoreboard_ = nullptr;
-
     Text *titleText_ = nullptr;
     Text *startText_ = nullptr;
-    Text *rankingText_ = nullptr;
     Text *quitText_ = nullptr;
-    Text *rankingHeaderText_ = nullptr;
-    std::array<Text *, 10> rankingLineTexts_{};
 
     int selectionIndex_ = 0;
     float selectionAnimElapsed_ = 0.25f;
     float selectionAnimDuration_ = 0.25f;
     float selectionLift_ = 16.0f;
     float startTextBaseY_ = 0.0f;
-    float rankingTextBaseY_ = 0.0f;
     float quitTextBaseY_ = 0.0f;
 
-    bool showRanking_ = false;
     RequestAction requestedAction_ = RequestAction::None;
 
     float introDelaySec_ = 0.08f;
     float introDurationSec_ = 0.35f;
     float introFromRightOffset_ = 420.0f;
-    float rankingIntroDelaySec_ = 0.05f;
-    float rankingIntroDurationSec_ = 0.2f;
     bool titleEntranceActive_ = false;
     float titleEntranceElapsed_ = 0.0f;
-    bool rankingEntranceActive_ = false;
-    float rankingEntranceElapsed_ = 0.0f;
 
-    std::array<Vector3, 4> titleBasePositions_{};
-    std::array<Vector3, 11> rankingBasePositions_{};
+    std::array<Vector3, 3> titleBasePositions_{};
 
     bool isUpdating_ = false;
 };

@@ -60,7 +60,8 @@ public:
         selectionIndex_ = 0;
         currentAnimElapsed_ = selectionAnimDuration_;
         startScrollIndex_ = 0.0f;
-        isUpdating_ = false; // Default to off until enabled by TitleScene
+        isUpdating_ = true;
+        SetEnableUpdating(false);
         UpdatePositions();
     }
 

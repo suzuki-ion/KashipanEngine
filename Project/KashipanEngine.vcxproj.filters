@@ -415,6 +415,7 @@
     <ClInclude Include="Application\Scenes\Components\StageSelectUIController.h" />
     <ClInclude Include="Application\Objects\Components\CoinDefined.h" />
     <ClInclude Include="Application\Scenes\Components\ClearTimeBoard.h" />
+    <ClInclude Include="Application\Scenes\Components\StageSelectRankingUIController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

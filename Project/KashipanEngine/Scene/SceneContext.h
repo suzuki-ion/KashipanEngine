@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -67,6 +68,26 @@ public:
     /// @brief コンポーネントの存在チェック
     size_t HasComponents(const std::string &componentName) const;
 
+    /// @brief シーン変数を追加または上書き
+    void AddSceneVariable(const std::string &key, const std::any &value);
+
+    /// @brief シーン変数一覧を取得
+    const MyStd::AnyUnorderedMap &GetSceneVariables() const;
+
+    template<typename T>
+    bool TryGetSceneVariable(const std::string &key, T &out) const {
+        const auto &vars = GetSceneVariables();
+        if (!vars.contains(key)) return false;
+        return vars.at(key).TryGetValue(out);
+    }
+
+    template<typename T>
+    T GetSceneVariableOr(const std::string &key, const T &defaultValue) const {
+        T v = defaultValue;
+        (void)TryGetSceneVariable<T>(key, v);
+        return v;
+    }
+
     /// @brief 2D オブジェクトを追加
     bool AddObject2D(std::unique_ptr<Object2DBase> obj);
 
@@ -78,6 +99,31 @@ public:
 
     /// @brief 3D オブジェクトを削除
     bool RemoveObject3D(Object3DBase *obj);
+
+    /// @brief 名前から一致する2Dオブジェクトを全て取得
+    std::vector<Object2DBase *> GetObjects2D(const std::string &objectName) const;
+
+    /// @brief 名前から一致する最初の2Dオブジェクトを取得
+    Object2DBase *GetObject2D(const std::string &objectName) const;
+
+    /// @brief ポインタから一致する2Dオブジェクトを取得
+    Object2DBase *GetObject2D(Object2DBase *obj) const;
+
+    /// @brief 名前から一致する3Dオブジェクトを全て取得
+    std::vector<Object3DBase *> GetObjects3D(const std::string &objectName) const;
+
+    /// @brief 名前から一致する最初の3Dオブジェクトを取得
+    Object3DBase *GetObject3D(const std::string &objectName) const;
+
+    /// @brief ポインタから一致する3Dオブジェクトを取得
+    Object3DBase *GetObject3D(Object3DBase *obj) const;
+    
+    AudioManager *GetAudioManager() { return SceneBase::GetAudioManager(); }
+    ModelManager *GetModelManager() { return SceneBase::GetModelManager(); }
+    SamplerManager *GetSamplerManager() { return SceneBase::GetSamplerManager(); }
+    TextureManager *GetTextureManager() { return SceneBase::GetTextureManager(); }
+    Input *GetInput() { return SceneBase::GetInput(); }
+    InputCommand *GetInputCommand() { return SceneBase::GetInputCommand(); }
 
 private:
     SceneBase *owner_ = nullptr;

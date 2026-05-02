@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -83,7 +83,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -97,8 +97,8 @@
       <AdditionalDependencies>assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
-copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+      <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
+copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -117,7 +117,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -130,8 +130,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
-copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+      <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
+copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -150,7 +150,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -167,21 +167,15 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       </LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
-copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+      <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
+copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Application\Scenes\Components\AttackBase.cpp" />
-    <ClCompile Include="Application\Scenes\Components\BreakParticleGenerator.cpp" />
-    <ClCompile Include="Application\Scenes\Components\GameIntroLogoAnimation.cpp" />
-    <ClCompile Include="Application\Scenes\Components\JustAvoidParticle.cpp" />
-    <ClCompile Include="Application\Scenes\Components\PlayerHealthUI.cpp" />
-    <ClCompile Include="Application\Scenes\Components\ResultUI.cpp" />
-    <ClCompile Include="Application\Scenes\GameOverScene.cpp" />
+    <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
     <ClCompile Include="Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Application\Scenes\ResultScene.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
@@ -208,8 +202,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Font\FontLoader.cpp" />
+    <ClCompile Include="KashipanEngine\Font\Text.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
@@ -266,6 +264,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Line2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Rect.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Sprite.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Billboard.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Box.cpp" />
@@ -281,14 +280,19 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightManager.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ModelAnimator.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ParticleManager.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\SpriteAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
@@ -301,6 +305,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Utilities\FileIO\JSON.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\RawFile.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\TextFile.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\FractalNoise.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Matrix3x3.cpp" />
@@ -309,6 +314,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector2.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector4.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\RandomValue.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\SourceLocation.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\TemplateLiteral.cpp" />
@@ -321,24 +330,43 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
-    <ClInclude Include="Application\Objects\Components\Health.h" />
-    <ClInclude Include="Application\Objects\Components\MovementController.h" />
-    <ClInclude Include="Application\Objects\Components\ParticleMovement.h" />
-    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
-    <ClInclude Include="Application\Objects\Components\RailMovement.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackBase.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearCircularOutside.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearCircularInside.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallForward.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallLeftSide.h" />
-    <ClInclude Include="Application\Scenes\Components\AttackGearWallRightSide.h" />
-    <ClInclude Include="Application\Scenes\Components\BreakParticleGenerator.h" />
+    <ClInclude Include="Application\Objects\Components\CoinDefined.h" />
+    <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
+    <ClInclude Include="Application\Objects\Components\GroundDefined.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerCollisionBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerForwardMoveBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerGravityFallBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerJumpBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerLateralMoveBehavior.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovementController.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovementControllerAccess.h" />
+    <ClInclude Include="Application\Objects\Components\SlowGroundDefined.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
-    <ClInclude Include="Application\Scenes\Components\GameIntroLogoAnimation.h" />
-    <ClInclude Include="Application\Scenes\Components\JustAvoidParticle.h" />
-    <ClInclude Include="Application\Scenes\Components\PlayerHealthUI.h" />
-    <ClInclude Include="Application\Scenes\Components\ResultUI.h" />
-    <ClInclude Include="Application\Scenes\GameOverScene.h" />
+    <ClInclude Include="Application\Scenes\Components\CameraToPlayerSync.h" />
+    <ClInclude Include="Application\Scenes\Components\ClearScoreBoard.h" />
+    <ClInclude Include="Application\Scenes\Components\GameClearUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\GameOverUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\GameSceneAudioPlayer.h" />
+    <ClInclude Include="Application\Scenes\Components\GameSceneUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\PauseUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerClearController.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerGameOverController.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerRespawnController.h" />
+    <ClInclude Include="Application\Scenes\Components\PostEffectToPlayerSync.h" />
+    <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
+    <ClInclude Include="Application\Scenes\Components\StageDecoBoxGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageDecoPlaneGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageGoalPlaneController.h" />
+    <ClInclude Include="Application\Scenes\Components\StageGroundGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageNoiseWallController.h" />
+    <ClInclude Include="Application\Scenes\Components\StageObjectController.h" />
+    <ClInclude Include="Application\Scenes\Components\StageObjectRandomGenerator.h" />
+    <ClInclude Include="Application\Scenes\Components\StageSelectUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleSceneAudioPlayer.h" />
+    <ClInclude Include="Application\Scenes\Components\TitleSceneUIController.h" />
+    <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
+    <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -364,6 +392,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\AssetsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
+    <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\FontHeaders.h" />
+    <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
+    <ClInclude Include="KashipanEngine\Font\FontStructs.h" />
+    <ClInclude Include="KashipanEngine\Font\Text.h" />
+    <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
@@ -371,23 +406,26 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\RadialBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\VignetteEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
+    <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
+    <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightManager.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
+    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
-    <ClInclude Include="Application\Scenes\Components\GameProgressController.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
     <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
     <ClInclude Include="Application\Scenes\GameScene.h" />
     <ClInclude Include="Application\Scenes\ResultScene.h" />
-    <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
@@ -523,10 +561,16 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ModelAnimator.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\ParticleManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\SpriteAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
@@ -545,16 +589,23 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="KashipanEngine\Utilities\FileIO\RawFile.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\JSON.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\TextFile.h" />
+    <ClInclude Include="KashipanEngine\Utilities\GameTimer.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Easings.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\FractalNoise.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Matrix3x3.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Matrix4x4.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\PerlinNoise.h" />
+    <ClInclude Include="KashipanEngine\Utilities\MathUtils\SphericalCoordinates.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector2.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector3.h" />
     <ClInclude Include="KashipanEngine\Utilities\MathUtils\Vector4.h" />
     <ClInclude Include="KashipanEngine\Utilities\Passkeys.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Plugins.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.h" />
+    <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.h" />
     <ClInclude Include="KashipanEngine\Utilities\RandomValue.h" />
     <ClInclude Include="KashipanEngine\Utilities\SourceLocation.h" />
     <ClInclude Include="KashipanEngine\Utilities\TemplateLiteral.h" />
@@ -569,6 +620,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="MyStd\VectorMap.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".editorconfig" />
+    <None Include=".gitattributes" />
+    <None Include="Assets\Application\StageData\stage.json" />
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
     <None Include="Assets\KashipanEngine\Locales\ja-JP.json" />
     <None Include="Assets\KashipanEngine\LogSettings.json" />
@@ -576,6 +630,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Exclusion.json" />
@@ -618,7 +674,62 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object2D.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />
+    <None Include="exclusion.dic" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
+    <None Include="KashipanEngine\KashipanEngine.vcxproj" />
+    <None Include="Reference\00_Index.md" />
+    <None Include="Reference\01_AppInitialize.md" />
+    <None Include="Reference\02_GameObjects.md" />
+    <None Include="Reference\03_ObjectComponents.md" />
+    <None Include="Reference\04_Scenes.md" />
+    <None Include="Reference\05_SceneComponents.md" />
+    <None Include="Reference\06_Window.md" />
+    <None Include="Reference\07_Offscreen.md" />
+    <None Include="Reference\08_Rendering.md" />
+    <None Include="Reference\09_Utilities.md" />
+    <None Include="Reference\09_Utilities_Conversion.md" />
+    <None Include="Reference\09_Utilities_Dialogs.md" />
+    <None Include="Reference\09_Utilities_FileIO.md" />
+    <None Include="Reference\09_Utilities_Index.md" />
+    <None Include="Reference\09_Utilities_Math.md" />
+    <None Include="Reference\09_Utilities_Passkeys.md" />
+    <None Include="Reference\09_Utilities_Random.md" />
+    <None Include="Reference\09_Utilities_SourceLocation.md" />
+    <None Include="Reference\09_Utilities_TemplateLiteral.md" />
+    <None Include="Reference\09_Utilities_Time.md" />
+    <None Include="Reference\09_Utilities_Translation.md" />
+    <None Include="Reference\10_Input.md" />
+    <None Include="Reference\10_Input_Controller.md" />
+    <None Include="Reference\10_Input_InputCommand.md" />
+    <None Include="Reference\10_Input_Keyboard.md" />
+    <None Include="Reference\10_Input_Mouse.md" />
+    <None Include="Reference\11_Assets.md" />
+    <None Include="Reference\11_Assets_AudioManager.md" />
+    <None Include="Reference\11_Assets_AudioPlayer.md" />
+    <None Include="Reference\11_Assets_Index.md" />
+    <None Include="Reference\11_Assets_ModelManager.md" />
+    <None Include="Reference\11_Assets_SamplerManager.md" />
+    <None Include="Reference\11_Assets_SoundBeat.md" />
+    <None Include="Reference\11_Assets_TextureManager.md" />
+    <None Include="Reference\12_PostEffects.md" />
+    <None Include="Reference\13_Font.md" />
+    <None Include="Reference\14_BuildMacros.md" />
+    <None Include="Reference\README.md" />
+    <None Include="Reference\reference.css" />
+    <None Include="Reference\Tutorial\00_Index.md" />
+    <None Include="Reference\Tutorial\01_CreateScene.md" />
+    <None Include="Reference\Tutorial\02_RegisterScene.md" />
+    <None Include="Reference\Tutorial\03_CreateObject.md" />
+    <None Include="Reference\Tutorial\04_AddObjectComponent.md" />
+    <None Include="Reference\Tutorial\05_AddSceneComponent.md" />
+    <None Include="Reference\Tutorial\06_TextureHandle.md" />
+    <None Include="Reference\Tutorial\07_AudioHandle.md" />
+    <None Include="Reference\Tutorial\08_ModelHandle.md" />
+    <None Include="Reference\Tutorial\09_ChangeScene.md" />
+    <None Include="Reference\Tutorial\README.md" />
+    <None Include="Tools\convert_reference_to_html.py" />
     <None Include="tools\sync_filters.py" />
   </ItemGroup>
   <ItemGroup>
@@ -657,6 +768,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ProjectReference Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
       <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="DpiAwarenessPerMonitor.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\OneDrive\ドキュメント\1775464241140.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

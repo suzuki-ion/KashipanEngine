@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ゲームオブジェクト用コンポーネント（`IObjectComponent2D` / `IObjectComponent3D`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>ゲームオブジェクト用コンポーネント（<code>IObjectComponent2D</code> / <code>IObjectComponent3D</code>）</h1>
+<p>オブジェクトの振る舞いは <code>IObjectComponent</code> 派生として実装し、<code>Object2DBase</code> / <code>Object3DBase</code> に登録して利用します。</p>
+<ul>
+<li>基底：<code>KashipanEngine/Objects/IObjectComponent.h</code></li>
+<li>コンポーネントは <code>Initialize</code> / <code>Update</code> / <code>Finalize</code> を持ち、必要ならシェーダ変数バインドにも参加できます。</li>
+</ul>
+<hr />
+<h2>公開API（<code>IObjectComponent</code>）</h2>
+<ul>
+<li>メタ情報</li>
+<ul>
+<li><code>const std::string&amp; GetComponentType() const</code></li>
+<li><code>size_t GetMaxComponentCountPerObject() const</code></li>
+</ul>
+<li>ライフサイクル（戻り値：<code>std::optional&lt;bool&gt;</code>）</li>
+<ul>
+<li><code>virtual std::optional&lt;bool&gt; Initialize()</code></li>
+<li><code>virtual std::optional&lt;bool&gt; Update()</code></li>
+<li><code>virtual std::optional&lt;bool&gt; Finalize()</code></li>
+</ul>
+<li>描画連携（任意）</li>
+<ul>
+<li><code>virtual std::optional&lt;bool&gt; BindShaderVariables(ShaderVariableBinder* binder)</code></li>
+<li><code>virtual std::optional&lt;bool&gt; BindInstancingResources(ShaderVariableBinder* binder, std::uint32_t instanceCount)</code></li>
+<li><code>virtual std::optional&lt;bool&gt; SubmitInstance(void* instanceMap, std::uint32_t instanceIndex)</code></li>
+</ul>
+<li>所属コンテキスト</li>
+<ul>
+<li><code>void SetOwnerContext(IObjectContext* context)</code>（エンジンが登録時に呼ぶ）</li>
+<li><code>IObjectContext* GetOwnerContext() const</code>（protected）</li>
+</ul>
+<li>複製</li>
+<ul>
+<li><code>virtual std::unique_ptr&lt;IObjectComponent&gt; Clone() const = 0</code></li>
+</ul>
+</ul>
+<h3>2D/3D</h3>
+<ul>
+<li><code>class IObjectComponent2D : public IObjectComponent</code></li>
+<ul>
+<li><code>Object2DContext* GetOwner2DContext() const</code>（protected）</li>
+</ul>
+<li><code>class IObjectComponent3D : public IObjectComponent</code></li>
+<ul>
+<li><code>Object3DContext* GetOwner3DContext() const</code>（protected）</li>
+</ul>
+</ul>
+<hr />
+<h2>例：2D コンポーネント（Update のみ）</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">class</span> AlwaysRotate2D <span class="kw">final</span> : <span class="kw">public</span> KashipanEngine::IObjectComponent2D {
+<span class="kw">public</span>:
+    AlwaysRotate2D() : IObjectComponent2D(<span class="str">&quot;AlwaysRotate2D&quot;</span>, <span class="num">1</span>) {}
+
+    std::optional&lt;<span class="type">bool</span>&gt; Update() <span class="kw">override</span> {
+        <span class="kw">auto</span>* ctx = GetOwner2DContext();
+        <span class="kw">if</span> (!ctx) <span class="kw">return</span> <span class="kw">false</span>;
+
+        <span class="com">// ctx-&gt;GetComponent(&quot;Transform2D&quot;) などで別コンポーネントにアクセスする想定</span>
+        <span class="com">// （実際の Transform2D API は該当ヘッダに合わせて実装）</span>
+        <span class="kw">return</span> <span class="kw">true</span>;
+    }
+
+    std::unique_ptr&lt;IObjectComponent&gt; Clone() <span class="kw">const</span> <span class="kw">override</span> {
+        <span class="kw">return</span> std::make_unique&lt;AlwaysRotate2D&gt;(*this);
+    }
+
+#<span class="kw">if</span> defined(USE_IMGUI)
+    <span class="type">void</span> ShowImGui() <span class="kw">override</span> {
+        <span class="com">// 任意</span>
+    }
+#endif
+};
+</code></pre>
+<blockquote>
+<p><code>GetOwner2DContext()</code> / <code>GetOwner3DContext()</code> を使うと、所有オブジェクト名や他コンポーネント取得（<code>GetComponent</code> 等）にアクセスできます。</p>
+</blockquote>
+<hr />
+<h2>コンポーネント間参照（<code>ObjectContext</code>）</h2>
+<p><code>Object2DContext</code> / <code>Object3DContext</code> は、所有者（<code>Object*Base</code>）の</p>
+<ul>
+<li><code>GetComponent*</code></li>
+<li><code>GetComponents*</code></li>
+<li><code>HasComponents*</code></li>
+</ul>
+<p>を委譲して提供します。</p>
+<p>関連：<code>KashipanEngine/Objects/ObjectContext.cpp</code></p>
+<p>（例）</p>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* c = ctx-&gt;GetComponent(<span class="str">&quot;Health&quot;</span>);
+<span class="kw">auto</span> n = ctx-&gt;HasComponents(<span class="str">&quot;Collider&quot;</span>);
+</code></pre>
+<p>※ 取得できるコンポーネント名は各コンポーネントの <code>GetComponentType()</code>（= コンストラクタで渡す文字列）です。</p>
+</body>
+</html>

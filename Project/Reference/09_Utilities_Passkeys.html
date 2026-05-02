@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：パスキー（アクセス制御）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：パスキー（アクセス制御）</h1>
+<p>対象ヘッダ：<code>Utilities/Passkeys.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p>「特定のクラス/関数からしか呼べないAPI」を、C++ の型システムだけで実現するための仕組みです。</p>
+<ul>
+<li>コンストラクタの呼び出し元制限</li>
+<li>静的関数の呼び出し元制限</li>
+</ul>
+<p>などで使われます。</p>
+<hr />
+<h2>2. 公開API</h2>
+<h3>2.1 <code>Passkey&lt;T&gt;</code></h3>
+<pre><code class="language-cpp">
+<span class="kw">template</span> &lt;<span class="kw">typename</span> T&gt;
+<span class="kw">class</span> Passkey <span class="kw">final</span> {
+    <span class="kw">friend</span> T;
+    Passkey() = default;
+};
+</code></pre>
+<ul>
+<li><code>Passkey&lt;T&gt;</code> のコンストラクタは private 相当で、<code>friend T;</code> により <code>T</code> のみが生成できます。</li>
+<li>生成できる側（<code>T</code>）が、そのパスキーを引数に取るAPIへアクセスできる、という構造です。</li>
+</ul>
+<h3>2.2 特殊パスキー</h3>
+<ul>
+<li><code>PasskeyForWinMain</code>：<code>WinMain</code> のみが生成可能</li>
+<li><code>PasskeyForGameEngineMain</code>：<code>Execute(PasskeyForWinMain, ...)</code> のみが生成可能</li>
+<li><code>PasskeyForCrashHandler</code>：<code>CrashHandler(...)</code> のみが生成可能</li>
+</ul>
+<hr />
+<h2>3. 使用例（コンストラクタを特定クラス限定にする）</h2>
+<pre><code class="language-cpp">
+<span class="kw">class</span> Owner {
+<span class="kw">public</span>:
+    <span class="type">void</span> Create() {
+        Restricted r(Passkey&lt;Owner&gt;{});
+        (<span class="type">void</span>)r;
+    }
+};
+
+<span class="kw">class</span> Restricted {
+<span class="kw">public</span>:
+    <span class="kw">explicit</span> Restricted(KashipanEngine::Passkey&lt;Owner&gt;) {}
+};
+</code></pre>
+<p>この構造により、<code>Owner</code> 以外の場所から <code>Restricted</code> を構築できません。</p>
+<hr />
+<h2>4. エンジン内での例</h2>
+<p>例：<code>Window::Update(Passkey&lt;GameEngine&gt;)</code> のように</p>
+<ul>
+<li><code>GameEngine</code> 以外から <code>Update</code> を呼べない</li>
+</ul>
+<p>といった「責務の境界」を表現する用途で多用されます。</p>
+</body>
+</html>

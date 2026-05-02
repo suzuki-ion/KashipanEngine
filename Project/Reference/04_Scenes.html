@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>シーン（`SceneBase` / `SceneManager`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>シーン（<code>SceneBase</code> / <code>SceneManager</code>）</h1>
+<p>シーンは「ゲームの状態（Title / Game / Result 等）」を表す単位で、<code>SceneBase</code> を継承して作ります。 シーンの生成・切替は <code>SceneManager</code> が担当します。</p>
+<hr />
+<h2>公開API：<code>SceneManager</code>（<code>KashipanEngine/Scene/SceneManager.h</code>）</h2>
+<ul>
+<li><code>template&lt;typename TScene, typename... Args&gt; void RegisterScene(const std::string&amp; sceneName, Args&amp;&amp;... args)</code></li>
+<ul>
+<li><code>TScene</code> は <code>SceneBase</code> 派生である必要があります。</li>
+<li><code>args...</code> はシーン生成時に <code>TScene</code> のコンストラクタへ転送されます。</li>
+</ul>
+<li><code>SceneBase* GetCurrentScene() const</code></li>
+<li><code>bool ChangeScene(const std::string&amp; sceneName)</code></li>
+<ul>
+<li>即時に切り替えず **保留**をセットします。</li>
+</ul>
+<li><code>void CommitPendingSceneChange(Passkey&lt;GameEngine&gt;)</code></li>
+<ul>
+<li><code>GameEngine</code> がフレーム終端で呼び出して保留を反映します。</li>
+</ul>
+<li>シーン変数</li>
+<ul>
+<li><code>void AddSceneVariable(const std::string&amp; key, const std::any&amp; value)</code></li>
+<li><code>const MyStd::AnyUnorderedMap&amp; GetSceneVariables()</code></li>
+</ul>
+</ul>
+<hr />
+<h2>公開API：<code>SceneBase</code>（<code>KashipanEngine/Scene/SceneBase.h</code>）</h2>
+<ul>
+<li>ライフサイクル</li>
+<ul>
+<li><code>virtual void Initialize()</code>（<code>SceneManager</code> から呼ばれる）</li>
+<li><code>virtual void Finalize()</code>（<code>SceneManager</code> から呼ばれる）</li>
+<li><code>void Update()</code>（内部で <code>OnUpdate()</code> / オブジェクト更新 / コンポーネント更新等を行う）</li>
+</ul>
+<li>オーバーライドポイント</li>
+<ul>
+<li><code>virtual void OnUpdate()</code></li>
+</ul>
+<li>オブジェクト管理</li>
+<ul>
+<li><code>bool AddObject2D(std::unique_ptr&lt;Object2DBase&gt; obj)</code></li>
+<li><code>bool AddObject3D(std::unique_ptr&lt;Object3DBase&gt; obj)</code></li>
+<li><code>bool RemoveObject2D(Object2DBase* obj)</code> / <code>bool RemoveObject3D(Object3DBase* obj)</code></li>
+<li><code>void ClearObjects2D()</code> / <code>void ClearObjects3D()</code></li>
+</ul>
+<li>シーンコンポーネント</li>
+<ul>
+<li><code>bool AddSceneComponent(std::unique_ptr&lt;ISceneComponent&gt; comp)</code></li>
+<li><code>bool RemoveSceneComponent(ISceneComponent* comp)</code></li>
+<li><code>void ClearSceneComponents()</code></li>
+<li><code>template&lt;typename T&gt; T* GetSceneComponent() const</code></li>
+<li><code>std::vector&lt;ISceneComponent*&gt; GetSceneComponents(const std::string&amp; componentName) const</code></li>
+</ul>
+<li>次シーン遷移</li>
+<ul>
+<li><code>void SetNextSceneName(const std::string&amp;)</code></li>
+<li><code>void ChangeToNextScene()</code></li>
+<li><code>void ClearNextSceneName()</code></li>
+</ul>
+<li>シーン変数読み取り</li>
+<ul>
+<li><code>template&lt;typename T&gt; bool TryGetSceneVariable(const std::string&amp; key, T&amp; out) const</code></li>
+<li><code>template&lt;typename T&gt; T GetSceneVariableOr(const std::string&amp; key, const T&amp; defaultValue) const</code></li>
+</ul>
+<li>エンジン資産へのアクセス（静的）</li>
+<ul>
+<li><code>static AudioManager* GetAudioManager()</code></li>
+<li><code>static ModelManager* GetModelManager()</code></li>
+<li><code>static SamplerManager* GetSamplerManager()</code></li>
+<li><code>static TextureManager* GetTextureManager()</code></li>
+<li><code>static Input* GetInput()</code></li>
+<li><code>static InputCommand* GetInputCommand()</code></li>
+</ul>
+</ul>
+<hr />
+<h2>例：シーン最小スケルトン</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">class</span> MyScene <span class="kw">final</span> : <span class="kw">public</span> KashipanEngine::SceneBase {
+<span class="kw">public</span>:
+    MyScene() : SceneBase(<span class="str">&quot;MyScene&quot;</span>) {}
+
+    <span class="type">void</span> Initialize() <span class="kw">override</span> {
+        <span class="com">// オブジェクト/シーンコンポーネント追加</span>
+    }
+
+    <span class="type">void</span> Finalize() <span class="kw">override</span> {
+        <span class="com">// 必要なら解放</span>
+    }
+
+<span class="kw">private</span>:
+    <span class="type">void</span> OnUpdate() <span class="kw">override</span> {
+        <span class="com">// 毎フレーム処理</span>
+    }
+};
+</code></pre>
+<hr />
+<h2>例：シーン切替（次シーン名をセットして遷移）</h2>
+<pre><code class="language-cpp">
+<span class="type">void</span> MyScene::OnUpdate() {
+    <span class="com">// 例：条件を満たしたら</span>
+    SetNextSceneName(<span class="str">&quot;TitleScene&quot;</span>);
+    ChangeToNextScene();
+}
+</code></pre>
+<hr />
+<h2>例：シーン変数を読む</h2>
+<pre><code class="language-cpp">
+<span class="type">void</span> MyScene::OnUpdate() {
+    <span class="type">int</span> difficulty = GetSceneVariableOr&lt;<span class="type">int</span>&gt;(<span class="str">&quot;Difficulty&quot;</span>, <span class="num">0</span>);
+    (<span class="type">void</span>)difficulty;
+}
+</code></pre>
+</body>
+</html>

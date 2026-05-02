@@ -49,7 +49,7 @@ public:
     }
 
     bool ChangeScene(const std::string &sceneName);
-    void CommitPendingSceneChange(Passkey<GameEngine>);
+    bool CommitPendingSceneChange(Passkey<GameEngine>);
     void AddSceneVariable(const std::string &key, const std::any &value) {
         sceneVariables_[key] = value;
     }

@@ -304,6 +304,9 @@ public:
     /// @brief Windowの登録
     void RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandList* commandList);
 
+    /// @brief GPUリソースの全開放
+    void ReleaseAllResources(Passkey<GraphicsEngine>);
+
     struct ShadowMapGlobals {
         ShadowMapBuffer* buffer = nullptr;
         D3D12_GPU_DESCRIPTOR_HANDLE sampler{};
@@ -438,9 +441,9 @@ private:
     void RenderShadowMapPasses();
 
     void Render2DStandard(std::vector<const RenderPass *> renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
-    void Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
+    void Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, const std::vector<BatchKey> &batchOrder, std::function<void *(const RenderPass *)> getTargetKeyFunc);
     void Render3DStandard(std::vector<const RenderPass *> renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
-    void Render3DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, std::function<void *(const RenderPass *)> getTargetKeyFunc);
+    void Render3DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses, const std::vector<BatchKey> &batchOrder, std::function<void *(const RenderPass *)> getTargetKeyFunc);
     
     /// @brief 描画コマンド発行処理
     void IssueRenderCommand(ID3D12GraphicsCommandList *commandList, const RenderCommand &renderCommand);
@@ -466,33 +469,45 @@ private:
     std::vector<const RenderPass*> persistent2DStandard_;
     std::vector<const RenderPass*> persistent3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistent2DInstancing_;
+    std::vector<BatchKey> persistent2DInstancingOrder_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistent3DInstancing_;
+    std::vector<BatchKey> persistent3DInstancingOrder_;
 
     std::vector<const RenderPass*> offscreen2DStandard_;
     std::vector<const RenderPass*> offscreen3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreen2DInstancing_;
+    std::vector<BatchKey> offscreen2DInstancingOrder_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreen3DInstancing_;
+    std::vector<BatchKey> offscreen3DInstancingOrder_;
 
     std::vector<const RenderPass*> shadowMap2DStandard_;
     std::vector<const RenderPass*> shadowMap3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMap2DInstancing_;
+    std::vector<BatchKey> shadowMap2DInstancingOrder_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMap3DInstancing_;
+    std::vector<BatchKey> shadowMap3DInstancingOrder_;
 
     // SystemObject passes
     std::vector<const RenderPass*> persistentSys2DStandard_;
     std::vector<const RenderPass*> persistentSys3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistentSys2DInstancing_;
+    std::vector<BatchKey> persistentSys2DInstancingOrder_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> persistentSys3DInstancing_;
+    std::vector<BatchKey> persistentSys3DInstancingOrder_;
 
     std::vector<const RenderPass*> offscreenSys2DStandard_;
     std::vector<const RenderPass*> offscreenSys3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreenSys2DInstancing_;
+    std::vector<BatchKey> offscreenSys2DInstancingOrder_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> offscreenSys3DInstancing_;
+    std::vector<BatchKey> offscreenSys3DInstancingOrder_;
 
     std::vector<const RenderPass*> shadowMapSys2DStandard_;
     std::vector<const RenderPass*> shadowMapSys3DStandard_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMapSys2DInstancing_;
+    std::vector<BatchKey> shadowMapSys2DInstancingOrder_;
     std::unordered_map<BatchKey, std::vector<const RenderPass*>, BatchKeyHasher> shadowMapSys3DInstancing_;
+    std::vector<BatchKey> shadowMapSys3DInstancingOrder_;
 
     /// @brief ウィンドウごとのPipelineBinder
     std::unordered_map<HWND, PipelineBinder> windowBinders_;

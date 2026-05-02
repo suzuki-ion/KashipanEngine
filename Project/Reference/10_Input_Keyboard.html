@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>キーボード入力（`Keyboard` / `Key`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>キーボード入力（<code>Keyboard</code> / <code>Key</code>）</h1>
+<p>キーボード入力は <code>Keyboard</code> クラスで管理されます。<code>Input::GetKeyboard()</code> で取得できます。</p>
+<p>関連ヘッダ：</p>
+<ul>
+<li><code>KashipanEngine/Input/Keyboard.h</code></li>
+<li><code>KashipanEngine/Input/Key.h</code></li>
+</ul>
+<hr />
+<h2>公開API：<code>Keyboard</code>（<code>KashipanEngine/Input/Keyboard.h</code>）</h2>
+<ul>
+<li><code>bool IsDown(Key key) const</code> — 指定キーが押されているか</li>
+<li><code>bool IsTrigger(Key key) const</code> — 指定キーが押された瞬間か（トリガー）</li>
+<li><code>bool IsRelease(Key key) const</code> — 指定キーが離された瞬間か（リリース）</li>
+<li><code>bool WasDown(Key key) const</code> — 前フレームで指定キーが押されていたか</li>
+</ul>
+<hr />
+<h2><code>Key</code> 列挙型（<code>KashipanEngine/Input/Key.h</code>）</h2>
+<p>キーボードのキーを表す列挙型です。</p>
+<h3>アルファベット</h3>
+<ul>
+<li><code>Key::A</code> ～ <code>Key::Z</code></li>
+</ul>
+<h3>数字</h3>
+<ul>
+<li><code>Key::D0</code> ～ <code>Key::D9</code></li>
+</ul>
+<h3>矢印キー</h3>
+<ul>
+<li><code>Key::Left</code>, <code>Key::Right</code>, <code>Key::Up</code>, <code>Key::Down</code></li>
+</ul>
+<h3>修飾キー（個別）</h3>
+<ul>
+<li><code>Key::LeftShift</code>, <code>Key::RightShift</code></li>
+<li><code>Key::LeftControl</code>, <code>Key::RightControl</code></li>
+<li><code>Key::LeftAlt</code>, <code>Key::RightAlt</code></li>
+</ul>
+<h3>修飾キー（汎用）</h3>
+<p>左右を区別しない汎用修飾キーです。</p>
+<ul>
+<li><code>Key::Shift</code>, <code>Key::Control</code>, <code>Key::Alt</code></li>
+</ul>
+<h3>共通キー</h3>
+<ul>
+<li><code>Key::Space</code>, <code>Key::Enter</code>, <code>Key::Escape</code>, <code>Key::Tab</code>, <code>Key::Backspace</code></li>
+</ul>
+<h3>ファンクションキー</h3>
+<ul>
+<li><code>Key::F1</code> ～ <code>Key::F12</code></li>
+</ul>
+<h3>その他</h3>
+<ul>
+<li><code>Key::Unknown</code> — 不明なキー（デフォルト値）</li>
+</ul>
+<hr />
+<h2>例：キーボード入力の直接取得</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* input = KashipanEngine::SceneBase::GetInput();
+<span class="kw">if</span> (!input) <span class="kw">return</span>;
+
+<span class="kw">const</span> <span class="kw">auto</span>&amp; kb = input-&gt;GetKeyboard();
+
+<span class="kw">if</span> (kb.IsTrigger(Key::Space)) {
+    <span class="com">// スペースキーが押された瞬間</span>
+}
+
+<span class="kw">if</span> (kb.IsDown(Key::W)) {
+    <span class="com">// Wキーが押されている間</span>
+}
+</code></pre>
+<hr />
+<h2>例：<code>InputCommand</code> でのキーボード登録</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = context.inputCommand;
+ic-&gt;RegisterCommand(<span class="str">&quot;Jump&quot;</span>, Key::Space, InputCommand::InputState::Trigger);
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveUp&quot;</span>, Key::W, InputCommand::InputState::Down);
+</code></pre>
+<blockquote>
+<p>詳しくは <a href="10_Input_InputCommand.html"><code>10_Input_InputCommand.md</code></a> を参照してください。</p>
+</blockquote>
+</body>
+</html>

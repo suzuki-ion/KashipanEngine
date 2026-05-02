@@ -1,57 +1,80 @@
 #pragma once
+#pragma once
+
 #include <KashipanEngine.h>
 
 namespace KashipanEngine {
 
-class Camera2D;
-class Sprite;
-class Camera3D;
-class Billboard;
-class Sphere;
-class Model;
-class Plane3D;
-class CameraController;
-class DirectionalLight;
-class SpotLight;
+class StageGroundGenerator;
+class StageNoiseWallController;
+class StageGoalPlaneController;
+class GameSceneUIController;
+class GameOverUIController;
+class GameClearUIController;
+class PauseUIController;
+class PlayerMovementController;
+class PlayerRespawnController;
+class PlayerGameOverController;
+class VignetteEffect;
+class ParticleManager;
 
 class GameScene final : public SceneBase {
 public:
     GameScene();
     ~GameScene() override;
 
+    void Initialize() override;
+
+    bool IsPlaying() const { return playState_ == PlayState::Playing; }
+    bool IsGameOver() const { return playState_ == PlayState::GameOver; }
+    bool IsCleared() const { return playState_ == PlayState::Cleared; }
+    void SetPlayingState() { playState_ = PlayState::Playing; }
+    void SetGameOverState() { playState_ = PlayState::GameOver; }
+    void SetClearedState() { playState_ = PlayState::Cleared; }
+
 protected:
     void OnUpdate() override;
 
 private:
-    SceneDefaultVariables *sceneDefault_ = nullptr;
+    enum class PlayState {
+        Playing,
+        GameOver,
+        Cleared,
+    };
 
-    // MainCamera3D を制御するシーンコンポーネント
-    CameraController *cameraController_ = nullptr;
+    SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
+    Object3DBase *player_ = nullptr;
+    PlayerMovementController *playerMovementController_ = nullptr;
+    StageGroundGenerator *stageGroundGenerator_ = nullptr;
+    StageNoiseWallController *noiseWallController_ = nullptr;
+    StageGoalPlaneController *goalPlaneController_ = nullptr;
+    GameSceneUIController *gameSceneUIController_ = nullptr;
+    GameOverUIController *gameOverUIController_ = nullptr;
+    GameClearUIController *gameClearUIController_ = nullptr;
+    PauseUIController *pauseUIController_ = nullptr;
+    ParticleManager *particleManager_ = nullptr;
+    PlayerRespawnController *playerRespawnController_ = nullptr;
+    PlayerGameOverController *playerGameOverController_ = nullptr;
 
-    // 移動用の親オブジェクト（RailMovement を登録する Sphere）
-    Sphere *mover_ = nullptr;
-    // 移動床
-    Plane3D *floorPlane_ = nullptr;
+    VignetteEffect *vignetteEffect_ = nullptr;
+    Vector4 baseVignetteColor_{0.0f, 0.25f, 0.0f, 1.0f};
 
-    Sphere *player_ = nullptr;
-    Model *skySphere_ = nullptr;
-    std::vector<Billboard *> particleBillboards_;
+    float gameOverWallDangerDistance_ = 32.0f;
+    float stageBoundaryRadius_ = 64.0f * 6.0f;
+    bool wasPlayerGroundedPrevFrame_ = false;
+    bool isPlayerRunParticleActive_ = false;
+    bool groundSpawnLimitConfigured_ = false;
 
-    bool prevDamagedThisCooldown_ = false;
-    bool prevGameProgressFinished_ = false;
+    bool clearSlowdownActive_ = false;
+    float clearSlowdownElapsed_ = 0.0f;
+    float clearSlowdownDuration_ = 1.0f;
+    float clearSlowdownStartForwardSpeed_ = 0.0f;
+    Vector3 clearSlowdownStartLateralVelocity_{0.0f, 0.0f, 0.0f};
+    Vector3 clearSlowdownStartGravityVelocity_{0.0f, 0.0f, 0.0f};
+    
+    Vector3 playerSpawnPosition_{0.0f, 0.0f, -2.0f};
 
-    int justDodgeCount_ = 0;
-    bool prevJustDodging_ = false;
-    bool justDodgeCountedThisDash_ = false;
-
-    bool prevDashTriggered_ = false;
-
-    std::vector<SpotLight *> rotatingSpotLights_;
-
-    AudioManager::PlayHandle bgmPlay_ = AudioManager::kInvalidPlayHandle;
-    AudioManager::PlayHandle avoidPlay_ = AudioManager::kInvalidPlayHandle;
-    AudioManager::PlayHandle avoidJustPlay_ = AudioManager::kInvalidPlayHandle;
-    AudioManager::PlayHandle damagePlay_ = AudioManager::kInvalidPlayHandle;
+    PlayState playState_ = PlayState::Playing;
 };
 
 } // namespace KashipanEngine

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：数学（`MathUtils`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：数学（<code>MathUtils</code>）</h1>
+<p>対象ヘッダ：<code>Utilities/MathUtils.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p><code>MathUtils</code> は、</p>
+<ul>
+<li>ベクトル/行列の補助関数</li>
+<li>イージング</li>
+<li>ノイズ</li>
+<li>球面座標系など</li>
+</ul>
+<p>をまとめた「数学ユーティリティ」です。</p>
+<p><code>Utilities/MathUtils.h</code> は集約ヘッダであり、以下を取り込みます。</p>
+<ul>
+<li><code>MathUtils/Easings.h</code></li>
+<li><code>MathUtils/Vector2.h</code></li>
+<li><code>MathUtils/Vector3.h</code></li>
+<li><code>MathUtils/Vector4.h</code></li>
+<li><code>MathUtils/Matrix3x3.h</code></li>
+<li><code>MathUtils/Matrix4x4.h</code></li>
+<li><code>MathUtils/PerlinNoise.h</code></li>
+<li><code>MathUtils/FractalNoise.h</code></li>
+<li><code>MathUtils/SphericalCoordinates.h</code></li>
+</ul>
+<p>加えて <code>M_PI</code> を定義します。</p>
+<hr />
+<h2>2. 名前空間</h2>
+<p>関数群は <code>KashipanEngine::MathUtils</code> に定義されます。</p>
+<p>例：<code>Vector2</code> の補間/内積など（<code>Utilities/MathUtils/Vector2.h</code>）</p>
+<ul>
+<li><code>Vector2 Lerp(const Vector2&amp;, const Vector2&amp;, float) noexcept;</code></li>
+<li><code>Vector2 Slerp(const Vector2&amp;, const Vector2&amp;, float) noexcept;</code></li>
+<li><code>constexpr float Dot(const Vector2&amp;, const Vector2&amp;) noexcept;</code></li>
+<li><code>float Length(const Vector2&amp;) noexcept;</code></li>
+<li><code>Vector2 Normalize(const Vector2&amp;);</code></li>
+</ul>
+<p><code>Vector3</code> も同様に <code>Lerp/Slerp/Dot/Cross/Transform</code> 等を提供します。</p>
+<hr />
+<h2>3. 使用例（Vector の補助）</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+Vector3 a{<span class="num">0.0f</span>, <span class="num">0.0f</span>, <span class="num">0.0f</span>};
+Vector3 b{<span class="num">10.0f</span>, <span class="num">0.0f</span>, <span class="num">0.0f</span>};
+
+Vector3 mid = KashipanEngine::MathUtils::Lerp(a, b, <span class="num">0.5f</span>);
+<span class="type">float</span> len = KashipanEngine::MathUtils::Length(mid);
+(<span class="type">void</span>)len;
+</code></pre>
+<h2>4. 使用例（Catmull-Rom）</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+std::vector&lt;Vector2&gt; points = {
+    {<span class="num">0.0f</span>, <span class="num">0.0f</span>},
+    {<span class="num">1.0f</span>, <span class="num">2.0f</span>},
+    {<span class="num">3.0f</span>, <span class="num">3.0f</span>},
+    {<span class="num">4.0f</span>, <span class="num">0.0f</span>},
+};
+
+Vector2 p = KashipanEngine::MathUtils::CatmullRomPosition(points, <span class="num">0.25f</span>, <span class="kw">false</span>);
+</code></pre>
+<hr />
+<h2>5. 注意点</h2>
+<ul>
+<li>ここでの <code>Vector2/Vector3/Vector4/Matrix*</code> は「数学型そのもの」ではなく、あくまで補助関数群です。</li>
+<ul>
+<li>型定義側（例：<code>KashipanEngine/Math/Vector3.h</code>）と併用します。</li>
+</ul>
+<li><code>M_PI</code> を定義するため、他ライブラリとマクロ衝突する可能性があります。</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,16 @@
+﻿{
+    "PipelineType": "Render",
+    "Name": "PostEffect.RadialBlur",
+    "Shader": {
+        "AutoTopologyFromShaders": true,
+        "AutoInputLayoutFromVS": true,
+        "AutoRTCountFromPS": true,
+        "AutoRootDescriptorFromShader": true,
+        "Vertex": { "UsePreset": "RadialBlur.Vertex" },
+        "Pixel": { "UsePreset": "RadialBlur.Pixel" }
+    },
+    "RasterizerState": { "UsePreset": "Solid" },
+    "BlendState": { "UsePreset": "Normal" },
+    "DepthStencilState": { "UsePreset": "DepthDisable" },
+    "PipelineState": { "UsePreset": "Triangle" }
+}

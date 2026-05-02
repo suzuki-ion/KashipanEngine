@@ -1,588 +1,354 @@
 #include "Scenes/GameScene.h"
-
-#include "Core/Window.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/CameraController.h"
-#include "Scenes/Components/GameProgressController.h"
-#include "Scenes/Components/AttackGearWallForward.h"
-#include "Scenes/Components/AttackGearWallLeftSide.h"
-#include "Scenes/Components/AttackGearWallRightSide.h"
-#include "Scenes/Components/AttackGearCircularOutside.h"
-#include "Scenes/Components/AttackGearCircularInside.h"
-#include "Scenes/Components/BreakParticleGenerator.h"
-#include "Scenes/Components/PlayerHealthUI.h"
-#include "Scenes/Components/ResultUI.h"
-#include "Scenes/Components/JustAvoidParticle.h"
-#include "Scenes/Components/GameIntroLogoAnimation.h"
-#include "Scene/Components/ColliderComponent.h"
+#include "Scenes/Components/CameraToPlayerSync.h"
+#include "Scenes/Components/PostEffectToPlayerSync.h"
+#include "Scenes/Components/GameSceneUIController.h"
+#include "Scenes/Components/GameOverUIController.h"
+#include "Scenes/Components/GameClearUIController.h"
+#include "Scenes/Components/PauseUIController.h"
+#include "Scenes/Components/ClearScoreBoard.h"
+#include "Scenes/Components/StageGroundGenerator.h"
+#include "Scenes/Components/StageNoiseWallController.h"
+#include "Scenes/Components/StageGoalPlaneController.h"
+#include "Scenes/Components/StageDecoPlaneGenerator.h"
+#include "Scenes/Components/StageDecoBoxGenerator.h"
+#include "Scenes/Components/StageObjectController.h"
+#include "Scenes/Components/StageObjectRandomGenerator.h"
+#include "Scenes/Components/GameSceneAudioPlayer.h"
+#include "Scenes/Components/PlayerRespawnController.h"
+#include "Scenes/Components/PlayerGameOverController.h"
+#include "Scenes/Components/PlayerClearController.h"
 
-#include "Objects/SystemObjects/Camera2D.h"
-#include "Objects/SystemObjects/Camera3D.h"
-#include "Objects/SystemObjects/DirectionalLight.h"
-#include "Objects/SystemObjects/LightManager.h"
-#include "Objects/SystemObjects/ShadowMapBinder.h"
+#include "Objects/GameObjects/3D/Box.h"
+#include "Objects/Components/PlayerMovementController.h"
+#include "Objects/Components/PlayerInputHandler.h"
 
-#include "Scene/Components/ShadowMapCameraSync.h"
-
-#include "Objects/Components/2D/Transform2D.h"
-#include "Objects/Components/2D/Material2D.h"
-#include "Objects/GameObjects/2D/Sprite.h"
-
-#include "Objects/Components/3D/Transform3D.h"
-#include "Objects/Components/3D/Material3D.h"
-#include "Objects/Components/3D/Collision3D.h"
-#include "Objects/Components/ParticleMovement.h"
-#include "Objects/Components/PlayerMovement.h"
-#include "Objects/Components/AlwaysRotate.h"
-#include "Objects/Components/Health.h"
-#include "Objects/MathObjects/3D/Sphere.h"
-
-#include "Objects/GameObjects/3D/Plane3D.h"
-#include "Objects/GameObjects/3D/Billboard.h"
-#include "Objects/GameObjects/3D/Sphere.h"
-#include "Objects/GameObjects/3D/Model.h"
-
-#include "Assets/AudioManager.h"
-
-#include <cmath>
-#include <random>
+#include <algorithm>
 
 namespace KashipanEngine {
 
 GameScene::GameScene()
-    : SceneBase("GameScene") {
+    : SceneBase("GameScene") {}
 
-    {
-        const auto sound = AudioManager::GetSoundHandleFromFileName("gameBGM.mp3");
-        bgmPlay_ = AudioManager::Play(sound, 1.0f, 0.0f, true);
-    }
+void GameScene::Initialize() {
+    SetGameSpeed(1.0f);
+    wasPlayerGroundedPrevFrame_ = false;
+    isPlayerRunParticleActive_ = false;
+    particleManager_ = nullptr;
+    groundSpawnLimitConfigured_ = false;
+    clearSlowdownActive_ = false;
+    clearSlowdownElapsed_ = 0.0f;
+    clearSlowdownStartForwardSpeed_ = 0.0f;
+    clearSlowdownStartLateralVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
+    clearSlowdownStartGravityVelocity_ = Vector3{0.0f, 0.0f, 0.0f};
 
-    std::vector<Object3DBase *> rotatingPlanes;
+    RadialBlurEffect *radialBlurEffect = nullptr;
+    VignetteEffect *vignetteEffect = nullptr;
 
-    // SceneDefaultVariables からポインタを取得して使用
-    sceneDefault_ = GetSceneComponent<SceneDefaultVariables>();
-    auto *screenBuffer3D = sceneDefault_ ? sceneDefault_->GetScreenBuffer3D() : nullptr;
-    auto *screenBuffer2D = sceneDefault_ ? sceneDefault_->GetScreenBuffer2D() : nullptr;
-    auto *mainCamera3D = sceneDefault_ ? sceneDefault_->GetMainCamera3D() : nullptr;
-    auto *shadowMapBuffer = sceneDefault_ ? sceneDefault_->GetShadowMapBuffer() : nullptr;
-    auto *directionalLight = sceneDefault_ ? sceneDefault_->GetDirectionalLight() : nullptr;
-    auto *screen3DSprite = sceneDefault_ ? sceneDefault_->GetScreenBuffer3DSprite() : nullptr;
+    sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
+    auto *screenBuffer3D = sceneDefaultVariables_->GetScreenBuffer3D();
+    auto *directionalLight = sceneDefaultVariables_->GetDirectionalLight();
+    directionalLight->SetDirection({ 0.0f, 0.0f, 1.0f });
 
     if (screenBuffer3D) {
-        ChromaticAberrationEffect::Params p{};
-        p.directionX = 1.0f;
-        p.directionY = 0.0f;
-        p.strength = 0.001f;
-        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ChromaticAberrationEffect>(p));
-
-        BloomEffect::Params bp{};
-        bp.threshold = 1.0f;
-        bp.softKnee = 0.25f;
-        bp.intensity = 0.5f;
-        bp.blurRadius = 1.0f;
+        BloomEffect::Params bp;
+        bp.intensity = 1.0f;
+        bp.blurRadius = 2.0f;
         bp.iterations = 4;
+        bp.softKnee = 0.2f;
+        bp.threshold = 0.5f;
         screenBuffer3D->RegisterPostEffectComponent(std::make_unique<BloomEffect>(bp));
 
-        screenBuffer3D->AttachToRenderer("ScreenBuffer3D_GameScene");
+        RadialBlurEffect::Params rp;
+        rp.intensity = 0.0f;
+        rp.sampleCount = 16;
+        rp.radialCenter[0] = 0.5f;
+        rp.radialCenter[1] = 0.5f;
+        rp.startRadius = 0.05f;
+        auto radialBlur = std::make_unique<RadialBlurEffect>(rp);
+        radialBlurEffect = radialBlur.get();
+        screenBuffer3D->RegisterPostEffectComponent(std::move(radialBlur));
+
+        VignetteEffect::Params vp;
+        vp.center[0] = 0.5f;
+        vp.center[1] = 0.5f;
+        vp.color = Vector4{0.0f, 0.25f, 0.0f, 1.0f};
+        vp.intensity = 0.0f;
+        vp.innerRadius = 0.3f;
+        vp.smoothness = 0.2f;
+        auto vignette = std::make_unique<VignetteEffect>(vp);
+        vignetteEffect = vignette.get();
+        vignetteEffect_ = vignetteEffect;
+        screenBuffer3D->RegisterPostEffectComponent(std::move(vignette));
+
+        screenBuffer3D->AttachToRenderer("ScreenBuffer3D.Default");
     }
 
-    const auto whiteTex = TextureManager::GetTextureFromFileName("white1x1.png");
-
-    // デフォルトからメインカメラを設定
-    if (mainCamera3D) {
-        if (auto *tr = mainCamera3D->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 5.0f, -16.0f));
-            tr->SetRotate(Vector3(M_PI * (14.0f / 180.0f), 0.0f, 0.0f));
+    if (sceneDefaultVariables_) {
+        if (auto *mainCamera = sceneDefaultVariables_->GetMainCamera3D()) {
+            AddSceneComponent(std::make_unique<CameraController>(mainCamera));
         }
-        if (screenBuffer3D) {
-            const float w = static_cast<float>(screenBuffer3D->GetWidth());
-            const float h = static_cast<float>(screenBuffer3D->GetHeight());
-            mainCamera3D->SetAspectRatio(h != 0.0f ? (w / h) : 1.0f);
-        }
-        mainCamera3D->SetFovY(0.7f);
 
-        auto camCtrl = std::make_unique<CameraController>(mainCamera3D);
-        camCtrl->SetTargetRotate(Vector3(M_PI * (14.0f / 180.0f), 0.0f, 0.0f));
-        camCtrl->SetTargetFovY(1.0f);
-        camCtrl->SetLerpFactor(0.2f);
+        AddSceneComponent(std::make_unique<StageGroundGenerator>());
+        AddSceneComponent(std::make_unique<StageDecoPlaneGenerator>());
+        AddSceneComponent(std::make_unique<StageDecoBoxGenerator>());
+        AddSceneComponent(std::make_unique<StageObjectController>());
+        AddSceneComponent(std::make_unique<StageObjectRandomGenerator>());
+        AddSceneComponent(std::make_unique<StageNoiseWallController>());
+        AddSceneComponent(std::make_unique<StageGoalPlaneController>());
+        AddSceneComponent(std::make_unique<GameSceneUIController>());
+        AddSceneComponent(std::make_unique<ClearScoreBoard>());
+        AddSceneComponent(std::make_unique<GameOverUIController>());
+        AddSceneComponent(std::make_unique<GameClearUIController>());
+        AddSceneComponent(std::make_unique<PauseUIController>());
 
-        cameraController_ = camCtrl.get();
-        AddSceneComponent(std::move(camCtrl));
-    }
+        stageGroundGenerator_ = GetSceneComponent<StageGroundGenerator>();
+        noiseWallController_ = GetSceneComponent<StageNoiseWallController>();
+        goalPlaneController_ = GetSceneComponent<StageGoalPlaneController>();
+        gameSceneUIController_ = GetSceneComponent<GameSceneUIController>();
+        gameOverUIController_ = GetSceneComponent<GameOverUIController>();
+        gameClearUIController_ = GetSceneComponent<GameClearUIController>();
+        pauseUIController_ = GetSceneComponent<PauseUIController>();
 
-    // デフォルトから平行光源を設定
-    if (directionalLight) {
-        directionalLight->SetEnabled(true);
-        directionalLight->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        directionalLight->SetDirection(Vector3(4.0f, -2.0f, 3.0f));
-        directionalLight->SetIntensity(1.0f);
-    }
+        if (auto *colliderComp = sceneDefaultVariables_->GetColliderComp()) {
+            auto player = std::make_unique<Box>();
+            player->SetName("PlayerRoot");
+            player->SetUniqueBatchKey();
 
-    // Mover Sphere（移動の親となるオブジェクト、レンダラーへのアタッチはしない）
-    {
-        auto obj = std::make_unique<Sphere>();
-        obj->SetName("MoverSphere");
-        mover_ = obj.get();
-        AddObject3D(std::move(obj));
-    }
+            Transform3D *playerRootTr = nullptr;
 
-    // Floor Plane (XZ)
-    {
-        auto obj = std::make_unique<Plane3D>();
-        obj->SetUniqueBatchKey();
-        obj->SetName("FloorPlane");
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
-            tr->SetRotate(Vector3(M_PI * 0.5f, 0.0f, 0.0f));
-            tr->SetScale(Vector3(10.0f, 10.0f, 1.0f));
-            if (mover_) {
-                if (auto *moverTr = mover_->GetComponent3D<Transform3D>()) {
-                    tr->SetParentTransform(moverTr);
-                }
+            if (screenBuffer3D) {
+                player->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
             }
-        }
-        if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            auto floorTex = TextureManager::GetTextureFromFileName("floor.png");
-            mat->SetTexture(floorTex);
-        }
 
-        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-        floorPlane_ = obj.get();
-        AddObject3D(std::move(obj));
-    }
-
-    // Player Sphere
-    {
-        auto obj = std::make_unique<Sphere>();
-        obj->SetName("Player");
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 0.5f, 0.0f));
-            tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
-            if (mover_) {
-                if (auto *moverTr = mover_->GetComponent3D<Transform3D>()) {
-                    tr->SetParentTransform(moverTr);
-                }
+            if (auto *tr = player->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(playerSpawnPosition_);
+                playerRootTr = tr;
             }
-        }
-        if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(whiteTex);
-        }
-        obj->RegisterComponent<PlayerMovement>(GetInputCommand());
+            if (auto *mat = player->GetComponent3D<Material3D>()) {
+                mat->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+            }
 
-        int health = 15;
-#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
-        health = 15;
-#endif
-        obj->RegisterComponent<Health>(health);
+            player->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
+            player->RegisterComponent<PlayerInputHandler>(
+                GetInputCommand(),
+                "PlayerMoveRight",
+                "PlayerMoveLeft",
+                "PlayerJump",
+                "PlayerForwardSpeedDown",
+                "CameraRearConfirm",
+                "PlayerGravitySwitchTrigger",
+                "PlayerGravitySwitchRelease",
+                "PlayerGravityUp",
+                "PlayerGravityDown",
+                "PlayerGravityLeft",
+                "PlayerGravityRight");
 
-        if (auto *collComp = GetSceneComponent<ColliderComponent>()) {
-            ColliderInfo3D info;
-            Math::Sphere sp;
-            sp.center = Vector3{0.0f, 0.0f, 0.0f};
-            sp.radius = 0.5f;
-            info.shape = sp;
+            Object3DBase *playerPtr = player.get();
+            AddObject3D(std::move(player));
+            player_ = playerPtr;
+            playerMovementController_ = playerPtr->GetComponent3D<PlayerMovementController>();
 
-            info.onCollisionEnter = [](const HitInfo3D &hit) {
-                if (!hit.selfObject || !hit.otherObject) return;
-                auto *health = hit.selfObject->GetComponent3D<Health>();
-                if (!health) return;
-                auto *pm = hit.selfObject->GetComponent3D<PlayerMovement>();
-                if (pm && pm->IsDashing()) return;
-                health->Damage(1);
-            };
-
-            info.onCollisionStay = [this](const HitInfo3D &hit) {
-                if (!hit.selfObject || !hit.otherObject) return;
-
-                if (hit.otherObject->HasComponents3D("MovementController") == 0) return;
-
-                auto *health = hit.selfObject->GetComponent3D<Health>();
-                if (!health) return;
-
-                if (auto *pm = hit.selfObject->GetComponent3D<PlayerMovement>()) {
-                    if (pm->IsJustDodging() && !health->WasDamagedThisCooldown()) {
-                        if (!justDodgeCountedThisDash_) {
-                            ++justDodgeCount_;
-                            justDodgeCountedThisDash_ = true;
-
-                            auto *playerTr = player_->GetComponent3D<Transform3D>();
-                            auto *playerMovement = player_->GetComponent3D<PlayerMovement>();
-                            if (playerTr && playerMovement) {
-                                const Vector3 p = playerTr->GetTranslate();
-                                const Vector3 dashDir = playerMovement->GetVelocity().Normalize() * -1.0f;
-
-                                if (auto *jp = GetSceneComponent<JustAvoidParticle>()) {
-                                    jp->Spawn(p, dashDir);
-                                }
-                            }
-
-                            auto soundHandle = AudioManager::GetSoundHandleFromFileName("avoidJust.mp3");
-                            AudioManager::Play(soundHandle, 1.0f, 0.0f, false);
-                        }
-                        return;
+            auto addPlayerModel = [&](const char *objectName, const char *modelFileName) {
+                auto modelHandle = ModelManager::GetModelHandleFromFileName(modelFileName);
+                auto obj = std::make_unique<Model>(modelHandle);
+                obj->SetName(objectName);
+                if (screenBuffer3D) {
+                    obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                }
+                if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                    if (playerRootTr) {
+                        tr->SetParentTransform(playerRootTr);
                     }
-
-                    if (pm->IsDashing()) return;
+                    tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
+                    tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
                 }
+                if (auto *mat = obj->GetComponent3D<Material3D>()) {
+                    mat->SetEnableLighting(false);
+                    mat->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+                }
+                AddObject3D(std::move(obj));
             };
 
-            obj->RegisterComponent<Collision3D>(collComp->GetCollider(), info);
-        }
+            addPlayerModel("PlayerBody", "float_Body.obj");
+            addPlayerModel("PlayerHead", "float_Head.obj");
+            addPlayerModel("PlayerArmL", "float_L_arm.obj");
+            addPlayerModel("PlayerArmR", "float_R_arm.obj");
 
-        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-        player_ = obj.get();
-
-        AddObject3D(std::move(obj));
-
-        if (cameraController_ && player_) {
-            cameraController_->SetFollowTarget(player_);
-            cameraController_->RecalculateOffsetFromCurrentCamera();
-        }
-    }
-
-    // Rotating Planes
-    {
-        std::mt19937 rng{12345u};
-        std::uniform_real_distribution<float> angleDist(0.0f, M_PI * 2.0f);
-        std::uniform_real_distribution<float> scaleDist(6.0f, 10.0f);
-        std::uniform_real_distribution<float> radiusDist(10.0f, 32.0f);
-
-        constexpr std::uint32_t kCount = 512;
-        for (std::uint32_t i = 0; i < kCount; ++i) {
-            auto obj = std::make_unique<Plane3D>();
-            obj->SetName(std::string("RotatingPlane_") + std::to_string(i));
-
-            const float theta = angleDist(rng);
-            const float r = radiusDist(rng);
-
-            float x = std::cos(theta) * r;
-            float y = std::sin(theta) * r;
-
-            const float z = static_cast<float>(i) * 1.0f;
-            const float rz = angleDist(rng);
-            float scale = scaleDist(rng);
-
-            if (i != 0 && (i % 64) == 0) {
-                x = 0.0f;
-                y = 0.0f;
-                scale = 64.0f;
+            AddSceneComponent(std::make_unique<ModelAnimator>());
+            if (auto *modelAnimator = GetSceneComponent<ModelAnimator>()) {
+                modelAnimator->LoadFromJsonFile("PlayerAnimation.json");
+                modelAnimator->Play("Player", "PlayerRun");
             }
 
-            y += -10000.0f;
+            AddSceneComponent(std::make_unique<GameSceneAudioPlayer>(this, playerPtr));
+            AddSceneComponent(std::make_unique<PlayerRespawnController>(this, playerPtr));
+            AddSceneComponent(std::make_unique<PlayerGameOverController>(this, playerPtr));
+            AddSceneComponent(std::make_unique<PlayerClearController>(this, playerPtr));
 
-            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3(x, y, z));
-                tr->SetRotate(Vector3(0.0f, 0.0f, rz));
-                tr->SetScale(Vector3(scale, scale, 1.0f));
-            }
-            if (auto *mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetTexture(TextureManager::GetTextureFromFileName("gears.png"));
-                Material3D::UVTransform uvTrans;
-                uvTrans.scale = Vector3(0.25f, 1.0f, 1.0f);
-                uvTrans.translate = Vector3(static_cast<float>(i % 4) * 0.25f, 0.0f, 0.0f);
-                mat->SetUVTransform(uvTrans);
-            }
+            playerRespawnController_ = GetSceneComponent<PlayerRespawnController>();
+            playerGameOverController_ = GetSceneComponent<PlayerGameOverController>();
 
-            obj->RegisterComponent<AlwaysRotate>(Vector3{0.0f, 0.0f, -1.0f});
-
-            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-            rotatingPlanes.push_back(obj.get());
-            AddObject3D(std::move(obj));
+            AddSceneComponent(std::make_unique<CameraToPlayerSync>(playerPtr));
+            AddSceneComponent(std::make_unique<PostEffectToPlayerSync>(playerPtr, radialBlurEffect, vignetteEffect));
         }
-    }
-
-    // Y >= 8.0f かつ i % 64 != 0 の回転Planeをランダムに最大64個選んでスポットライトを設置
-    rotatingSpotLights_.clear();
-    if (sceneDefault_) {
-        std::mt19937 rng{ 67890u };
-        std::vector<std::uint32_t> candidates;
-        for (std::uint32_t i = 0; i < rotatingPlanes.size(); ++i) {
-            if ((i % 64) == 0) continue;
-            auto *p = rotatingPlanes[i];
-            if (!p) continue;
-            if (auto *tr = p->GetComponent3D<Transform3D>()) {
-                if (tr->GetTranslate().y + 10000.0f >= 8.0f) {
-                    candidates.push_back(i);
-                }
-            }
-        }
-
-        std::shuffle(candidates.begin(), candidates.end(), rng);
-        size_t take = std::min<size_t>(64, candidates.size());
-        for (size_t ci = 0; ci < take; ++ci) {
-            const std::uint32_t idx = candidates[ci];
-            auto *p = rotatingPlanes[idx];
-            if (!p) continue;
-
-            auto light = std::make_unique<SpotLight>();
-            light->SetName(std::string("RotPlaneSpot_") + std::to_string(idx));
-            light->SetEnabled(false);
-            light->SetColor(Vector4{1.0f, 0.9f, 0.8f, 1.0f});
-            light->SetIntensity(2.5f);
-            light->SetRange(30.0f);
-            light->SetDecay(2.0f);
-            light->SetInnerAngle(0.6f);
-            light->SetOuterAngle(0.9f);
-
-            // position = plane world position
-            if (auto *tr = p->GetComponent3D<Transform3D>()) {
-                const Matrix4x4 wm = tr->GetWorldMatrix();
-                const Vector3 pos = Vector3{ wm.m[3][0], wm.m[3][1] + 10000.0f, wm.m[3][2] };
-                light->SetPosition(pos);
-                const Vector3 target{ 0.0f, 0.0f, pos.z };
-                Vector3 dir = (target - pos).Normalize();
-                light->SetDirection(dir);
-            }
-
-            SpotLight *lightPtr = light.get();
-            if (screenBuffer3D) light->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            AddObject3D(std::move(light));
-            rotatingSpotLights_.push_back(lightPtr);
-            if (auto *lm = sceneDefault_->GetLightManager()) {
-                lm->AddSpotLight(lightPtr);
-            }
-        }
-        while (rotatingSpotLights_.size() < 64) rotatingSpotLights_.push_back(nullptr);
-    }
-
-    // Particle Billboards
-    {
-        particleBillboards_.clear();
-        constexpr std::uint32_t kParticleCount = 256;
-        for (std::uint32_t i = 0; i < kParticleCount; ++i) {
-            auto obj = std::make_unique<Billboard>();
-            obj->SetName(std::string("ParticleBillboard_") + std::to_string(i));
-            obj->SetCamera(mainCamera3D);
-            obj->SetFacingMode(Billboard::FacingMode::LookAtCamera);
-
-            obj->RegisterComponent<ParticleMovement>(
-                ParticleMovement::SpawnBox{
-                    Vector3{-32.0f, 0.0f, -32.0f},
-                    Vector3{32.0f, 10.0f, 32.0f}},
-                0.5f,
-                5.0f,
-                Vector3{0.2f, 0.2f, 0.2f});
-
-            if (auto *mat = obj->GetComponent3D<Material3D>()) {
-                mat->SetTexture(whiteTex);
-            }
-            if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-            if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-            particleBillboards_.push_back(obj.get());
-            AddObject3D(std::move(obj));
-        }
-    }
-
-    // Sky Sphere
-    {
-        auto modelData = ModelManager::GetModelDataFromFileName("skySphere.obj");
-        auto obj = std::make_unique<Model>(modelData);
-        obj->SetName("SkySphere");
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetScale(Vector3(128.0f, 128.0f, 128.0f));
-        }
-        if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(whiteTex);
-            mat->SetColor(Vector4(0.2f, 0.2f, 0.2f, 1.0f));
-        }
-        if (screenBuffer3D) obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        if (shadowMapBuffer) obj->AttachToRenderer(shadowMapBuffer, "Object3D.ShadowMap.DepthOnly");
-        skySphere_ = obj.get();
-        AddObject3D(std::move(obj));
-    }
-
-    // Avoid command sprite
-    {
-        auto obj = std::make_unique<Sprite>();
-        obj->SetUniqueBatchKey();
-        obj->SetName("AvoidCommandText");
-
-        if (auto *mat = obj->GetComponent2D<Material2D>()) {
-            mat->SetTexture(TextureManager::GetTextureFromFileName("avoidCommandText.png"));
-        }
-        if (auto *tr = obj->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector2{256.0f, 128.0f});
-            tr->SetScale(Vector2{512.0f, 256.0f});
-        }
-
-        if (screenBuffer2D) obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        AddObject2D(std::move(obj));
     }
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
+    AddSceneComponent(std::make_unique<ParticleManager>());
 
-    // 攻撃ギア系コンポーネントを登録（mover を保持させる）
-    AddSceneComponent(std::make_unique<AttackGearWallForward>(mover_, screenBuffer3D));
-    AddSceneComponent(std::make_unique<AttackGearWallLeftSide>(mover_, screenBuffer3D));
-    AddSceneComponent(std::make_unique<AttackGearWallRightSide>(mover_, screenBuffer3D));
-    AddSceneComponent(std::make_unique<AttackGearCircularOutside>(mover_, screenBuffer3D));
-    AddSceneComponent(std::make_unique<AttackGearCircularInside>(mover_, screenBuffer3D));
-
-    // ゲーム開始ロゴ
-    AddSceneComponent(std::make_unique<GameIntroLogoAnimation>(screenBuffer2D));
-
-    // ブレイクパーティクル
-    AddSceneComponent(std::make_unique<BreakParticleGenerator>(screenBuffer3D, mover_));
-
-    // ジャスト回避パーティクル
-    AddSceneComponent(std::make_unique<JustAvoidParticle>(screenBuffer3D, mainCamera3D, mover_));
-
-    // プレイヤー体力 UI
-    auto playerHealthUI = std::make_unique<PlayerHealthUI>(screenBuffer2D);
-    if (player_) {
-        playerHealthUI->SetHealth(player_->GetComponent3D<Health>());
+    particleManager_ = GetSceneComponent<ParticleManager>();
+    if (particleManager_) {
+        particleManager_->LoadFromJsonFile("PlayerParticle.json");
     }
-    AddSceneComponent(std::move(playerHealthUI));
-    // リザルト UI
-    AddSceneComponent(std::make_unique<ResultUI>(screenBuffer2D, player_->GetComponent3D<Health>()));
 
-    // ゲーム進行管理
-    AddSceneComponent(std::make_unique<GameProgressController>(sceneDefault_, mover_, screen3DSprite, rotatingPlanes, rotatingSpotLights_));
-
-    if (auto *sceneChangeIn = GetSceneComponent<SceneChangeIn>()) {
-        sceneChangeIn->Play();
+    if (auto *in = GetSceneComponent<SceneChangeIn>()) {
+        in->Play();
     }
 }
 
-GameScene::~GameScene() {
-    if (bgmPlay_ != AudioManager::kInvalidPlayHandle) {
-        AudioManager::Stop(bgmPlay_);
-        bgmPlay_ = AudioManager::kInvalidPlayHandle;
-    }
-}
+GameScene::~GameScene() {}
 
 void GameScene::OnUpdate() {
-    if (auto *gp = GetSceneComponent<GameProgressController>()) {
-        if (gp->IsFinished() && !prevGameProgressFinished_) {
-            if (auto *resultUI = GetSceneComponent<ResultUI>()) {
-                resultUI->ShowStart();
+    if (!player_) {
+        player_ = GetObject3D("PlayerRoot");
+    }
+    if (player_ && !playerMovementController_) {
+        playerMovementController_ = player_->GetComponent3D<PlayerMovementController>();
+    }
+    if (!particleManager_) {
+        particleManager_ = GetSceneComponent<ParticleManager>();
+    }
+    if (!playerRespawnController_) {
+        playerRespawnController_ = GetSceneComponent<PlayerRespawnController>();
+    }
+    if (!playerGameOverController_) {
+        playerGameOverController_ = GetSceneComponent<PlayerGameOverController>();
+    }
+
+    if (!groundSpawnLimitConfigured_ && stageGroundGenerator_ && goalPlaneController_) {
+        groundSpawnLimitConfigured_ = true;
+    }
+
+    auto queueSceneChange = [&](const std::string &sceneName) {
+        if (!GetNextSceneName().empty()) return;
+        SetGameSpeed(1.0f);
+        SetNextSceneName(sceneName);
+    };
+
+    const bool modalVisible = (gameOverUIController_ && gameOverUIController_->IsActive())
+        || (gameClearUIController_ && gameClearUIController_->IsActive())
+        || (pauseUIController_ && pauseUIController_->IsActive());
+    if (gameSceneUIController_) {
+        gameSceneUIController_->SetVisible(!modalVisible);
+    }
+
+    if (auto *ic = GetInputCommand()) {
+        const bool canPause = IsPlaying() || (playerRespawnController_ && playerRespawnController_->IsRespawning());
+        if (canPause && !modalVisible && ic->Evaluate("Pause").Triggered()) {
+            if (pauseUIController_) {
+                pauseUIController_->Activate();
             }
         }
-        prevGameProgressFinished_ = gp->IsFinished();
     }
 
-    // ResultUI アニメーション終了後、Submit で TitleScene へ
-    if (auto *gp = GetSceneComponent<GameProgressController>()) {
-        if (gp->IsFinished()) {
-            if (auto *resultUI = GetSceneComponent<ResultUI>()) {
-                if (resultUI->IsAnimationFinished()) {
-                    if (GetNextSceneName().empty() && GetInputCommand()) {
-                        const auto submit = GetInputCommand()->Evaluate("Submit");
-                        if (submit.Triggered()) {
-                            SetNextSceneName("TitleScene");
-                            if (auto *sceneChangeOut = GetSceneComponent<SceneChangeOut>()) {
-                                sceneChangeOut->Play();
-                            }
-                        }
-                    }
-                }
-            }
+    if (vignetteEffect_) {
+        auto v = vignetteEffect_->GetParams();
+        const Vector4 red{1.0f, 0.0f, 0.0f, 1.0f};
+        float danger = playerRespawnController_ ? playerRespawnController_->GetDanger() : 0.0f;
+        if (playerGameOverController_) {
+            danger = std::max(danger, playerGameOverController_->GetDanger());
         }
-    }
-
-    // ジャスト回避のカウント制御（1回の回避入力で多重加算しない）
-    if (player_) {
-        if (auto *pm = player_->GetComponent3D<PlayerMovement>()) {
-            const bool justDodging = pm->IsJustDodging();
-            if (!justDodging && prevJustDodging_) {
-                justDodgeCountedThisDash_ = false;
-            }
-            prevJustDodging_ = justDodging;
+        if (IsGameOver()) {
+            danger = std::max(danger, 1.0f);
         }
-    }
-    if (auto *ui = GetSceneComponent<ResultUI>()) {
-        ui->SetJustDodgeCount(justDodgeCount_);
-    }
-
-    if (player_) {
-        if (auto *health = player_->GetComponent3D<Health>()) {
-            const bool damaged = health->WasDamagedThisCooldown();
-            if (damaged && !prevDamagedThisCooldown_) {
-                {
-                    const auto se = AudioManager::GetSoundHandleFromFileName("damage.mp3");
-                    if (se != AudioManager::kInvalidSoundHandle) {
-                        damagePlay_ = AudioManager::Play(se, 1.0f, 0.0f, false);
-                    }
-                }
-
-                if (auto *tr = player_->GetComponent3D<Transform3D>()) {
-                    if (auto *bp = GetSceneComponent<BreakParticleGenerator>()) {
-                        bp->Generate(tr->GetTranslate());
-                    }
-                    if (cameraController_) {
-                        cameraController_->Shake(2.0f, 0.5f);
-                    }
-                }
-
-                if (health->GetHp() <= 0) {
-                    SetNextSceneName("GameOverScene");
-                    if (auto *sceneChangeOut = GetSceneComponent<SceneChangeOut>()) {
-                        sceneChangeOut->Play();
-                    }
-                }
-            }
-            prevDamagedThisCooldown_ = damaged;
+        v.color = Vector4::Lerp(baseVignetteColor_, red, std::clamp(danger, 0.0f, 1.0f));
+        v.intensity = std::max(v.intensity, std::clamp(danger, 0.0f, 1.0f) * 0.8f);
+        if (IsGameOver()) {
+            v.intensity = std::max(v.intensity, 0.8f);
+            v.color = red;
         }
+        vignetteEffect_->SetParams(v);
     }
 
-    if (floorPlane_ && player_) {
-        auto *floorTr = floorPlane_->GetComponent3D<Transform3D>();
+    if (particleManager_ && player_) {
         auto *playerTr = player_->GetComponent3D<Transform3D>();
-        if (floorTr && playerTr) {
-            const Vector3 floorScale = floorTr->GetScale();
+        const Vector3 playerPos = playerTr ? playerTr->GetTranslate() : Vector3{0.0f, 0.0f, 0.0f};
 
-            const Vector3 half{floorScale.x * 0.5f, 0.0f, floorScale.y * 0.5f};
-            const Vector3 minB{ -half.x, 0.0f, -half.z };
-            const Vector3 maxB{ half.x, 0.0f, half.z };
+        if (playerMovementController_) {
+            const bool grounded = playerMovementController_->ConsumeGrounded();
+            const bool landedThisFrame = (grounded && !wasPlayerGroundedPrevFrame_);
+            if (landedThisFrame) {
+                particleManager_->SetParentTransform("PlayerLanding", playerTr);
+                particleManager_->Spawn("PlayerLanding", Vector3(0.0f, 0.0f, 0.0f));
 
-            if (auto *pm = player_->GetComponent3D<PlayerMovement>()) {
-                pm->SetBoundsXZ(minB, maxB);
+                particleManager_->Spawn("PlayerRun", playerPos);
+                particleManager_->SetEmitting("PlayerRun", true);
+                isPlayerRunParticleActive_ = true;
             }
+
+            if (isPlayerRunParticleActive_ && grounded) {
+                particleManager_->SetEmitCenter("PlayerRun", playerPos);
+            }
+            if (isPlayerRunParticleActive_ && !grounded) {
+                particleManager_->SetEmitting("PlayerRun", false);
+                isPlayerRunParticleActive_ = false;
+            }
+
+            wasPlayerGroundedPrevFrame_ = grounded;
         }
     }
 
-    if (player_) {
-        if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
-            const Matrix4x4 playerWorldMat = playerTr->GetWorldMatrix();
-            const Vector3 p = Vector3(
-                playerWorldMat.m[3][0],
-                playerWorldMat.m[3][1],
-                playerWorldMat.m[3][2]);
-            const Vector3 half{32.0f, 10.0f, 32.0f};
-
-            ParticleMovement::SpawnBox box;
-            box.min = p - Vector3{half.x, 0.0f, half.z};
-            box.max = p + half;
-            box.min.y = 0.0f;
-
-            for (auto *bb : particleBillboards_) {
-                if (!bb) continue;
-                if (auto *pm = bb->GetComponent3D<ParticleMovement>()) {
-                    pm->SetSpawnBox(box);
-                }
-            }
-
-            if (skySphere_) {
-                if (auto *skyTr = skySphere_->GetComponent3D<Transform3D>()) {
-                    skyTr->SetTranslate(Vector3{ p.x, p.y, p.z });
-                }
-            }
+    if (gameOverUIController_) {
+        const auto action = gameOverUIController_->ConsumeRequestedAction();
+        if (action == GameOverUIController::RequestAction::Retry) {
+            queueSceneChange("GameScene");
+        } else if (action == GameOverUIController::RequestAction::BackToTitle) {
+            queueSceneChange("TitleScene");
         }
     }
 
-    // SceneChangeOut 完了で次シーンへ
+    if (gameClearUIController_) {
+        const auto action = gameClearUIController_->ConsumeRequestedAction();
+        if (action == GameClearUIController::RequestAction::Retry) {
+            queueSceneChange("GameScene");
+        } else if (action == GameClearUIController::RequestAction::BackToTitle) {
+            queueSceneChange("TitleScene");
+        }
+    }
+
+    if (pauseUIController_) {
+        const auto action = pauseUIController_->ConsumeRequestedAction();
+        if (action == PauseUIController::RequestAction::Continue) {
+            pauseUIController_->Deactivate();
+        } else if (action == PauseUIController::RequestAction::Retry) {
+            queueSceneChange("GameScene");
+        } else if (action == PauseUIController::RequestAction::BackToTitle) {
+            queueSceneChange("TitleScene");
+        }
+    }
+
     if (!GetNextSceneName().empty()) {
-        if (auto *sceneChangeOut = GetSceneComponent<SceneChangeOut>()) {
-            if (sceneChangeOut->IsFinished()) {
+        if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+            if (out->IsFinished()) {
                 ChangeToNextScene();
             }
         }
     }
+
+    if (auto *ic = GetInputCommand()) {
+#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
+        if (ic->Evaluate("DebugSceneChange").Triggered()) {
+            queueSceneChange("TitleScene");
+            if (auto *out = GetSceneComponent<SceneChangeOut>()) {
+                out->Play();
+            }
+        }
+#endif
+    }
 }
 
-}  // namespace KashipanEngine
+} // namespace KashipanEngine

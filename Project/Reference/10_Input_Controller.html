@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>コントローラー入力（`Controller` / `ControllerButton`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>コントローラー入力（<code>Controller</code> / <code>ControllerButton</code>）</h1>
+<p>コントローラー入力は <code>Controller</code> クラスで管理されます。<code>Input::GetController()</code> で取得できます。 GameInput API を使用しており、XInput 互換のゲームパッドに対応しています。</p>
+<p>関連ヘッダ：</p>
+<ul>
+<li><code>KashipanEngine/Input/Controller.h</code></li>
+<li><code>KashipanEngine/Input/ControllerButton.h</code></li>
+</ul>
+<hr />
+<h2>公開API：<code>Controller</code>（<code>KashipanEngine/Input/Controller.h</code>）</h2>
+<h3>接続状態</h3>
+<ul>
+<li><code>int GetPadCount() const noexcept</code> — 把握しているゲームパッド数を取得</li>
+<li><code>bool IsConnected(int index) const</code> — 指定インデックスのコントローラーが接続されているか</li>
+<li><code>bool WasConnected(int index) const</code> — 前フレームで接続されていたか</li>
+</ul>
+<h3>ボタン入力</h3>
+<ul>
+<li><code>bool IsButtonDown(ControllerButton button, int index) const</code> — 指定ボタンが押されているか</li>
+<li><code>bool IsButtonTrigger(ControllerButton button, int index) const</code> — 指定ボタンが押された瞬間か（トリガー）</li>
+<li><code>bool IsButtonRelease(ControllerButton button, int index) const</code> — 指定ボタンが離された瞬間か（リリース）</li>
+<li><code>bool WasButtonDown(ControllerButton button, int index) const</code> — 前フレームで押されていたか</li>
+</ul>
+<h3>アナログ入力（現在フレーム）</h3>
+<ul>
+<li><code>int GetLeftTrigger(int index) const</code> — 左トリガー押し込み量（0-255）</li>
+<li><code>int GetRightTrigger(int index) const</code> — 右トリガー押し込み量（0-255）</li>
+<li><code>int GetLeftStickX(int index) const</code> — 左スティックX（-32767 ～ 32767）</li>
+<li><code>int GetLeftStickY(int index) const</code> — 左スティックY（-32767 ～ 32767）</li>
+<li><code>int GetRightStickX(int index) const</code> — 右スティックX（-32767 ～ 32767）</li>
+<li><code>int GetRightStickY(int index) const</code> — 右スティックY（-32767 ～ 32767）</li>
+</ul>
+<h3>アナログ入力（前フレーム）</h3>
+<ul>
+<li><code>int GetPrevLeftTrigger(int index) const</code></li>
+<li><code>int GetPrevRightTrigger(int index) const</code></li>
+<li><code>int GetPrevLeftStickX(int index) const</code></li>
+<li><code>int GetPrevLeftStickY(int index) const</code></li>
+<li><code>int GetPrevRightStickX(int index) const</code></li>
+<li><code>int GetPrevRightStickY(int index) const</code></li>
+</ul>
+<h3>アナログ入力（フレーム差分）</h3>
+<ul>
+<li><code>int GetDeltaLeftTrigger(int index) const</code> — 左トリガーのフレーム差分（current - previous）</li>
+<li><code>int GetDeltaRightTrigger(int index) const</code> — 右トリガーのフレーム差分</li>
+<li><code>int GetDeltaLeftStickX(int index) const</code> — 左スティックXのフレーム差分</li>
+<li><code>int GetDeltaLeftStickY(int index) const</code> — 左スティックYのフレーム差分</li>
+<li><code>int GetDeltaRightStickX(int index) const</code> — 右スティックXのフレーム差分</li>
+<li><code>int GetDeltaRightStickY(int index) const</code> — 右スティックYのフレーム差分</li>
+</ul>
+<h3>振動</h3>
+<ul>
+<li><code>void SetVibration(int index, int leftMotor, int rightMotor)</code> — 振動を設定（0 ～ 65535）</li>
+<li><code>void StopVibration(int index)</code> — 振動を停止</li>
+</ul>
+<h3>パッド状態の直接取得</h3>
+<ul>
+<li><code>std::span&lt;const PadState&gt; GetPads() const noexcept</code> — 現在フレームのパッド状態一覧</li>
+<li><code>std::span&lt;const PadState&gt; GetPrevPads() const noexcept</code> — 前フレームのパッド状態一覧</li>
+</ul>
+<h4><code>PadState</code> 構造体</h4>
+<pre><code class="language-cpp">
+<span class="kw">struct</span> PadState {
+    std::<span class="type">uint16_t</span> buttons = <span class="num">0</span>;       <span class="com">// XINPUT_GAMEPAD 互換のボタンマスク</span>
+    std::<span class="type">uint8_t</span>  leftTrigger = <span class="num">0</span>;   <span class="com">// 0-255</span>
+    std::<span class="type">uint8_t</span>  rightTrigger = <span class="num">0</span>;  <span class="com">// 0-255</span>
+    std::<span class="type">int16_t</span>  leftX = <span class="num">0</span>;         <span class="com">// -32767 ～ 32767</span>
+    std::<span class="type">int16_t</span>  leftY = <span class="num">0</span>;
+    std::<span class="type">int16_t</span>  rightX = <span class="num">0</span>;
+    std::<span class="type">int16_t</span>  rightY = <span class="num">0</span>;
+};
+</code></pre>
+<hr />
+<h2><code>ControllerButton</code> 列挙型（<code>KashipanEngine/Input/ControllerButton.h</code>）</h2>
+<p>XInput 互換のボタンマスク値を持つ列挙型です。</p>
+<h3>方向パッド</h3>
+<ul>
+<li><code>ControllerButton::DPadUp</code> — 十字キー上（0x0001）</li>
+<li><code>ControllerButton::DPadDown</code> — 十字キー下（0x0002）</li>
+<li><code>ControllerButton::DPadLeft</code> — 十字キー左（0x0004）</li>
+<li><code>ControllerButton::DPadRight</code> — 十字キー右（0x0008）</li>
+</ul>
+<h3>システムボタン</h3>
+<ul>
+<li><code>ControllerButton::Start</code> — スタートボタン（0x0010）</li>
+<li><code>ControllerButton::Back</code> — バックボタン（0x0020）</li>
+</ul>
+<h3>スティック押し込み</h3>
+<ul>
+<li><code>ControllerButton::LeftThumb</code> — 左スティック押し込み（0x0040）</li>
+<li><code>ControllerButton::RightThumb</code> — 右スティック押し込み（0x0080）</li>
+</ul>
+<h3>ショルダーボタン</h3>
+<ul>
+<li><code>ControllerButton::LeftShoulder</code> — 左ショルダー / LB（0x0100）</li>
+<li><code>ControllerButton::RightShoulder</code> — 右ショルダー / RB（0x0200）</li>
+</ul>
+<h3>フェイスボタン</h3>
+<ul>
+<li><code>ControllerButton::A</code> — Aボタン（0x1000）</li>
+<li><code>ControllerButton::B</code> — Bボタン（0x2000）</li>
+<li><code>ControllerButton::X</code> — Xボタン（0x4000）</li>
+<li><code>ControllerButton::Y</code> — Yボタン（0x8000）</li>
+</ul>
+<h3>ユーティリティ関数</h3>
+<ul>
+<li><code>constexpr std::uint16_t ToMask(ControllerButton b) noexcept</code> — ボタンをマスク値に変換</li>
+</ul>
+<hr />
+<h2>例：コントローラー入力の直接取得</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* input = KashipanEngine::SceneBase::GetInput();
+<span class="kw">if</span> (!input) <span class="kw">return</span>;
+
+<span class="kw">const</span> <span class="kw">auto</span>&amp; ct = input-&gt;GetController();
+
+<span class="kw">if</span> (!ct.IsConnected(<span class="num">0</span>)) <span class="kw">return</span>; <span class="com">// パッド0が未接続</span>
+
+<span class="com">// Aボタンのトリガー判定</span>
+<span class="kw">if</span> (ct.IsButtonTrigger(ControllerButton::A, <span class="num">0</span>)) {
+    <span class="com">// Aボタンが押された瞬間</span>
+}
+
+<span class="com">// 左スティックの値を正規化して取得</span>
+<span class="type">float</span> lx = static_cast&lt;<span class="type">float</span>&gt;(ct.GetLeftStickX(<span class="num">0</span>)) / <span class="num">32767.0f</span>;
+<span class="type">float</span> ly = static_cast&lt;<span class="type">float</span>&gt;(ct.GetLeftStickY(<span class="num">0</span>)) / <span class="num">32767.0f</span>;
+
+<span class="com">// 右トリガーの値を正規化して取得</span>
+<span class="type">float</span> rt = static_cast&lt;<span class="type">float</span>&gt;(ct.GetRightTrigger(<span class="num">0</span>)) / <span class="num">255.0f</span>;
+
+<span class="com">// 振動</span>
+ct.SetVibration(<span class="num">0</span>, <span class="num">30000</span>, <span class="num">30000</span>);
+</code></pre>
+<hr />
+<h2>例：<code>InputCommand</code> でのコントローラー登録</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* ic = context.inputCommand;
+
+<span class="com">// ボタン</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;Jump&quot;</span>, ControllerButton::A, InputCommand::InputState::Trigger);
+ic-&gt;RegisterCommand(<span class="str">&quot;Start&quot;</span>, ControllerButton::Start, InputCommand::InputState::Trigger);
+
+<span class="com">// アナログ（スティック）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;MoveX&quot;</span>,
+    InputCommand::ControllerAnalog::LeftStickX,
+    InputCommand::InputState::Down);
+
+<span class="com">// アナログ（トリガー）閾値付き</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;Accelerate&quot;</span>,
+    InputCommand::ControllerAnalog::RightTrigger,
+    InputCommand::InputState::Down, <span class="num">0</span>, <span class="num">0.1f</span>);
+
+<span class="com">// アナログ差分（スティックの変化量）</span>
+ic-&gt;RegisterCommand(<span class="str">&quot;LookDeltaX&quot;</span>,
+    InputCommand::ControllerAnalog::RightStickX,
+    <span class="num">0</span>, <span class="num">0.05f</span>);
+</code></pre>
+<blockquote>
+<p>詳しくは <a href="10_Input_InputCommand.html"><code>10_Input_InputCommand.md</code></a> を参照してください。</p>
+</blockquote>
+</body>
+</html>

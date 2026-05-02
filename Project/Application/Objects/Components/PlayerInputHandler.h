@@ -1,0 +1,208 @@
+#pragma once
+
+#include <KashipanEngine.h>
+#include "Objects/Components/PlayerMovementController.h"
+
+#include <cmath>
+#include <optional>
+#include <string>
+
+namespace KashipanEngine {
+
+class PlayerInputHandler final : public IObjectComponent3D {
+public:
+    PlayerInputHandler(
+        InputCommand *inputCommand,
+        std::string moveRightCommand,
+        std::string moveLeftCommand,
+        std::string jumpCommand,
+        std::string forwardSpeedDownCommand,
+        std::string cameraRearConfirmCommand,
+        std::string gravitySwitchTriggerCommand,
+        std::string gravitySwitchReleaseCommand,
+        std::string upCommand,
+        std::string downCommand,
+        std::string leftCommand,
+        std::string rightCommand)
+        : IObjectComponent3D("PlayerInputHandler", 1),
+          inputCommand_(inputCommand),
+          moveRightCommand_(std::move(moveRightCommand)),
+          moveLeftCommand_(std::move(moveLeftCommand)),
+          jumpCommand_(std::move(jumpCommand)),
+          forwardSpeedDownCommand_(std::move(forwardSpeedDownCommand)),
+          cameraRearConfirmCommand_(std::move(cameraRearConfirmCommand)),
+          gravitySwitchTriggerCommand_(std::move(gravitySwitchTriggerCommand)),
+          gravitySwitchReleaseCommand_(std::move(gravitySwitchReleaseCommand)),
+          upCommand_(std::move(upCommand)),
+          downCommand_(std::move(downCommand)),
+          leftCommand_(std::move(leftCommand)),
+          rightCommand_(std::move(rightCommand)) {}
+
+    ~PlayerInputHandler() override = default;
+
+    std::unique_ptr<IObjectComponent> Clone() const override {
+        auto ptr = std::make_unique<PlayerInputHandler>(
+            inputCommand_,
+            moveRightCommand_,
+            moveLeftCommand_,
+            jumpCommand_,
+            forwardSpeedDownCommand_,
+            cameraRearConfirmCommand_,
+            gravitySwitchTriggerCommand_,
+            gravitySwitchReleaseCommand_,
+            upCommand_,
+            downCommand_,
+            leftCommand_,
+            rightCommand_);
+        ptr->isGravitySwitching_ = isGravitySwitching_;
+        ptr->isRearConfirming_ = isRearConfirming_;
+        ptr->isFastFalling_ = isFastFalling_;
+        ptr->wasJumpPressedPrevFrame_ = wasJumpPressedPrevFrame_;
+        ptr->requestedGravityDirection_ = requestedGravityDirection_;
+        return ptr;
+    }
+
+    std::optional<bool> Initialize() override {
+        auto *ctx = GetOwner3DContext();
+        if (!ctx) return false;
+
+        playerMovement_ = ctx->GetComponent<PlayerMovementController>();
+        return playerMovement_ != nullptr;
+    }
+
+    std::optional<bool> Update() override {
+        if (!inputCommand_ || !playerMovement_) return false;
+
+        gravityChangedByInputThisFrame_ = false;
+
+        isRearConfirming_ = inputCommand_->Evaluate(cameraRearConfirmCommand_).Triggered();
+
+        const bool jumpPressed = inputCommand_->Evaluate(jumpCommand_).Triggered();
+        playerMovement_->SetJumpInputHeld(jumpPressed);
+
+        if (inputCommand_->Evaluate(gravitySwitchTriggerCommand_).Triggered() && playerMovement_->CanUseGravityChange()) {
+            isGravitySwitching_ = true;
+            Vector3 defaultDirection = -playerMovement_->GetGravityDirection().Normalize();
+            if (defaultDirection.LengthSquared() <= 0.000001f) {
+                defaultDirection = Vector3{0.0f, 1.0f, 0.0f};
+            }
+            requestedGravityDirection_ = defaultDirection;
+            SetGameSpeed(0.2f);
+        }
+
+        isFastFalling_ = inputCommand_->Evaluate(forwardSpeedDownCommand_).Triggered();
+        playerMovement_->SetFastFallEnabled(isFastFalling_);
+
+        if (isGravitySwitching_) {
+            UpdateGravitySwitchDirection();
+
+            if (inputCommand_->Evaluate(gravitySwitchReleaseCommand_).Triggered()) {
+                if (requestedGravityDirection_.has_value()) {
+                    gravityChangedByInputThisFrame_ = playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
+                }
+                isGravitySwitching_ = false;
+                requestedGravityDirection_ = std::nullopt;
+                SetGameSpeed(1.0f);
+            }
+            wasJumpPressedPrevFrame_ = jumpPressed;
+            return true;
+        }
+
+        const auto right = inputCommand_->Evaluate(moveRightCommand_);
+        if (right.Triggered()) {
+            playerMovement_->MoveRight(std::abs(right.Value()));
+        }
+
+        const auto left = inputCommand_->Evaluate(moveLeftCommand_);
+        if (left.Triggered()) {
+            playerMovement_->MoveLeft(std::abs(left.Value()));
+        }
+
+        if (jumpPressed && !wasJumpPressedPrevFrame_) {
+            playerMovement_->Jump();
+        }
+
+        wasJumpPressedPrevFrame_ = jumpPressed;
+        return true;
+    }
+
+#if defined(USE_IMGUI)
+    void ShowImGui() override {}
+#endif
+
+    bool IsGravitySwitching() const { return isGravitySwitching_; }
+    bool IsRearConfirming() const { return isRearConfirming_; }
+    bool IsFastFalling() const { return isFastFalling_; }
+    const std::optional<Vector3> &GetRequestedGravityDirection() const { return requestedGravityDirection_; }
+    bool ConsumeGravityChangedByInputEvent() {
+        const bool changed = gravityChangedByInputThisFrame_;
+        gravityChangedByInputThisFrame_ = false;
+        return changed;
+    }
+
+private:
+    void UpdateGravitySwitchDirection() {
+        const Vector3 down = playerMovement_->GetGravityDirection().Normalize();
+        const Vector3 up = -down;
+
+        Vector3 left = down.Cross(playerMovement_->GetForwardDirection());
+        if (left.LengthSquared() <= 0.000001f) {
+            left = Vector3{1.0f, 0.0f, 0.0f};
+        } else {
+            left = left.Normalize();
+        }
+
+        Vector3 requested{0.0f, 0.0f, 0.0f};
+
+        const auto upInput = inputCommand_->Evaluate(upCommand_);
+        const auto downInput = inputCommand_->Evaluate(downCommand_);
+        const auto leftInput = inputCommand_->Evaluate(leftCommand_);
+        const auto rightInput = inputCommand_->Evaluate(rightCommand_);
+
+        const auto normalizeInputValue = [](float v) {
+            const float a = std::abs(v);
+            return (a > 0.0001f) ? a : 1.0f;
+        };
+
+        if (upInput.Triggered()) {
+            requested += up * normalizeInputValue(upInput.Value());
+        }
+        if (downInput.Triggered()) {
+            requested += down * normalizeInputValue(downInput.Value());
+        }
+        if (leftInput.Triggered()) {
+            requested += left * normalizeInputValue(leftInput.Value());
+        }
+        if (rightInput.Triggered()) {
+            requested += (-left) * normalizeInputValue(rightInput.Value());
+        }
+
+        if (requested.LengthSquared() > 0.000001f) {
+            requestedGravityDirection_ = requested.Normalize();
+        }
+    }
+
+    InputCommand *inputCommand_ = nullptr;
+    PlayerMovementController *playerMovement_ = nullptr;
+
+    std::string moveRightCommand_;
+    std::string moveLeftCommand_;
+    std::string jumpCommand_;
+    std::string forwardSpeedDownCommand_;
+    std::string cameraRearConfirmCommand_;
+    std::string gravitySwitchTriggerCommand_;
+    std::string gravitySwitchReleaseCommand_;
+    std::string upCommand_;
+    std::string downCommand_;
+    std::string leftCommand_;
+    std::string rightCommand_;
+
+    bool isGravitySwitching_ = false;
+    bool isRearConfirming_ = false;
+    bool isFastFalling_ = false;
+    bool gravityChangedByInputThisFrame_ = false;
+    bool wasJumpPressedPrevFrame_ = false;
+    std::optional<Vector3> requestedGravityDirection_{};
+};
+
+} // namespace KashipanEngine

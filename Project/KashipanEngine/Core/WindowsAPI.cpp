@@ -22,81 +22,83 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 namespace KashipanEngine {
 
 namespace {
-    // ウィンドウインスタンスのマップ
-    std::unordered_map<HWND, Window*> sWindowMap;
+// ウィンドウインスタンスのマップ
+std::unordered_map<HWND, Window *> sWindowMap;
 
-    // タスクバーの辺を判定
-    UINT DetermineTaskbarEdge(const RECT &tb, const RECT &mon) {
-        int monW = mon.right - mon.left;
-        int monH = mon.bottom - mon.top;
-        int tbW = tb.right - tb.left;
-        int tbH = tb.bottom - tb.top;
-        if (tbW >= monW && tbH < monH) {
-            return (tb.top <= mon.top) ? ABE_TOP : ABE_BOTTOM;
-        }
-        if (tbH >= monH && tbW < monW) {
-            return (tb.left <= mon.left) ? ABE_LEFT : ABE_RIGHT;
-        }
-        // 距離で近い辺
-        int distTop = abs(tb.top - mon.top);
-        int distBottom = abs(mon.bottom - tb.bottom);
-        int distLeft = abs(tb.left - mon.left);
-        int distRight = abs(mon.right - tb.right);
-        int m = std::min(std::min(distTop, distBottom), std::min(distLeft, distRight));
-        if (m == distTop) return ABE_TOP;
-        if (m == distBottom) return ABE_BOTTOM;
-        if (m == distLeft) return ABE_LEFT;
-        return ABE_RIGHT;
+// タスクバーの辺を判定
+UINT DetermineTaskbarEdge(const RECT &tb, const RECT &mon) {
+    int monW = mon.right - mon.left;
+    int monH = mon.bottom - mon.top;
+    int tbW = tb.right - tb.left;
+    int tbH = tb.bottom - tb.top;
+    if (tbW >= monW && tbH < monH) {
+        return (tb.top <= mon.top) ? ABE_TOP : ABE_BOTTOM;
     }
+    if (tbH >= monH && tbW < monW) {
+        return (tb.left <= mon.left) ? ABE_LEFT : ABE_RIGHT;
+    }
+    // 距離で近い辺
+    int distTop = abs(tb.top - mon.top);
+    int distBottom = abs(mon.bottom - tb.bottom);
+    int distLeft = abs(tb.left - mon.left);
+    int distRight = abs(mon.right - tb.right);
+    int m = std::min(std::min(distTop, distBottom), std::min(distLeft, distRight));
+    if (m == distTop) return ABE_TOP;
+    if (m == distBottom) return ABE_BOTTOM;
+    if (m == distLeft) return ABE_LEFT;
+    return ABE_RIGHT;
+}
 
-    // DPI取得（失敗時は 96 を返す）
-    void FetchMonitorDpi(HMONITOR mon, UINT &dpiX, UINT &dpiY) {
-        dpiX = dpiY = 96;
-        if (!mon) return;
-        UINT x = 0, y = 0;
-        if (SUCCEEDED(GetDpiForMonitor(mon, MDT_EFFECTIVE_DPI, &x, &y))) {
-            dpiX = x; dpiY = y; return; }
-        // フォールバック: デバイスコンテキストから推定
-        HDC hdc = GetDC(nullptr);
-        if (hdc) {
-            dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
-            dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
-            ReleaseDC(nullptr, hdc);
-        }
+// DPI取得（失敗時は 96 を返す）
+void FetchMonitorDpi(HMONITOR mon, UINT &dpiX, UINT &dpiY) {
+    dpiX = dpiY = 96;
+    if (!mon) return;
+    UINT x = 0, y = 0;
+    if (SUCCEEDED(GetDpiForMonitor(mon, MDT_EFFECTIVE_DPI, &x, &y))) {
+        dpiX = x; dpiY = y; return;
     }
+    // フォールバック: デバイスコンテキストから推定
+    HDC hdc = GetDC(nullptr);
+    if (hdc) {
+        dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
+        dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
+        ReleaseDC(nullptr, hdc);
+    }
+}
 
-    // リフレッシュレート取得（Hz）
-    float FetchMonitorRefreshRate(const MONITORINFOEXW &mi) {
-        DEVMODEW dm{}; dm.dmSize = sizeof(dm);
-        if (EnumDisplaySettingsExW(mi.szDevice, ENUM_CURRENT_SETTINGS, &dm, 0)) {
-            if (dm.dmDisplayFrequency > 1) return static_cast<float>(dm.dmDisplayFrequency);
-        }
-        return 0.0f;
+// リフレッシュレート取得（Hz）
+float FetchMonitorRefreshRate(const MONITORINFOEXW &mi) {
+    DEVMODEW dm{}; dm.dmSize = sizeof(dm);
+    if (EnumDisplaySettingsExW(mi.szDevice, ENUM_CURRENT_SETTINGS, &dm, 0)) {
+        if (dm.dmDisplayFrequency > 1) return static_cast<float>(dm.dmDisplayFrequency);
     }
+    return 0.0f;
+}
 
-    // タスクバー候補を列挙
-    struct TaskbarWindow { HWND hwnd; RECT rect; HMONITOR monitor; UINT edge; };
-    std::vector<TaskbarWindow> EnumerateTaskbars() {
-        std::vector<TaskbarWindow> result;
-        // プライマリ
-        if (HWND primary = FindWindowW(L"Shell_TrayWnd", nullptr)) {
-            RECT rc{}; GetWindowRect(primary, &rc);
-            HMONITOR mon = MonitorFromWindow(primary, MONITOR_DEFAULTTOPRIMARY);
-            UINT edge = (UINT)-1;
-            APPBARDATA abd{}; abd.cbSize = sizeof(abd); abd.hWnd = primary;
-            if (SHAppBarMessage(ABM_GETTASKBARPOS, &abd)) {
-                rc = abd.rc; edge = abd.uEdge; }
-            result.push_back({ primary, rc, mon, edge });
+// タスクバー候補を列挙
+struct TaskbarWindow { HWND hwnd; RECT rect; HMONITOR monitor; UINT edge; };
+std::vector<TaskbarWindow> EnumerateTaskbars() {
+    std::vector<TaskbarWindow> result;
+    // プライマリ
+    if (HWND primary = FindWindowW(L"Shell_TrayWnd", nullptr)) {
+        RECT rc{}; GetWindowRect(primary, &rc);
+        HMONITOR mon = MonitorFromWindow(primary, MONITOR_DEFAULTTOPRIMARY);
+        UINT edge = (UINT)-1;
+        APPBARDATA abd{}; abd.cbSize = sizeof(abd); abd.hWnd = primary;
+        if (SHAppBarMessage(ABM_GETTASKBARPOS, &abd)) {
+            rc = abd.rc; edge = abd.uEdge;
         }
-        // セカンダリ
-        HWND h = nullptr;
-        while ((h = FindWindowExW(nullptr, h, L"Shell_SecondaryTrayWnd", nullptr)) != nullptr) {
-            RECT rc{}; if (!GetWindowRect(h, &rc)) continue;
-            HMONITOR mon = MonitorFromWindow(h, MONITOR_DEFAULTTONEAREST);
-            result.push_back({ h, rc, mon, (UINT)-1 });
-        }
-        return result;
+        result.push_back({ primary, rc, mon, edge });
     }
+    // セカンダリ
+    HWND h = nullptr;
+    while ((h = FindWindowExW(nullptr, h, L"Shell_SecondaryTrayWnd", nullptr)) != nullptr) {
+        RECT rc{}; if (!GetWindowRect(h, &rc)) continue;
+        HMONITOR mon = MonitorFromWindow(h, MONITOR_DEFAULTTONEAREST);
+        result.push_back({ h, rc, mon, (UINT)-1 });
+    }
+    return result;
+}
 
 } // namespace
 

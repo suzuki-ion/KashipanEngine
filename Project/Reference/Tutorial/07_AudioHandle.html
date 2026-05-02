@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>7. 音声のハンドルを取得し、再生や停止をしたいとき</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>7. 音声のハンドルを取得し、再生や停止をしたいとき</h1>
+<p>音声は <code>AudioManager</code> が管理し、</p>
+<ul>
+<li>音声リソース：<code>AudioManager::SoundHandle</code>（<code>uint32_t</code>）</li>
+<li>再生インスタンス：<code>AudioManager::PlayHandle</code>（<code>uint32_t</code>）</li>
+</ul>
+<p>で扱います。</p>
+<ul>
+<li>ヘッダ：<code>KashipanEngine/Assets/AudioManager.h</code></li>
+</ul>
+<hr />
+<h2>7.1 ハンドル型と無効値</h2>
+<ul>
+<li><code>AudioManager::SoundHandle</code>：<code>uint32_t</code></li>
+<ul>
+<li>無効値：<code>AudioManager::kInvalidSoundHandle</code>（0）</li>
+</ul>
+<li><code>AudioManager::PlayHandle</code>：<code>uint32_t</code></li>
+<ul>
+<li>無効値：<code>AudioManager::kInvalidPlayHandle</code>（0）</li>
+</ul>
+</ul>
+<hr />
+<h2>7.2 音声ハンドルの取得（既にロード済みの前提）</h2>
+<ul>
+<li>ファイル名単体から取得：</li>
+</ul>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> se = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;se_shot.wav&quot;</span>);
+</code></pre>
+<ul>
+<li>Assets ルート相対パスから取得：</li>
+</ul>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> se = KashipanEngine::AudioManager::GetSoundHandleFromAssetPath(<span class="str">&quot;Sounds/se_shot.wav&quot;</span>);
+</code></pre>
+<hr />
+<h2>7.3 再生/停止（実API）</h2>
+<p><code>Play(...)</code> の実シグネチャは以下です。</p>
+<ul>
+<li><code>static PlayHandle Play(SoundHandle sound, float volume = 1.0f, float pitch = 0.0f, bool loop = false);</code></li>
+</ul>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> se = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;se_shot.wav&quot;</span>);
+
+<span class="com">// 再生（volume: 0..1, pitch: 半音単位, loop: ループ）</span>
+<span class="kw">auto</span> play = KashipanEngine::AudioManager::Play(se, <span class="num">0.8f</span>, <span class="num">0.0f</span>, <span class="kw">false</span>);
+
+<span class="com">// 停止（成功時 true）</span>
+KashipanEngine::AudioManager::Stop(play);
+</code></pre>
+<hr />
+<h2>7.4 一時停止/再開（成功時 true）</h2>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> play = KashipanEngine::AudioManager::Play(se);
+KashipanEngine::AudioManager::Pause(play);
+KashipanEngine::AudioManager::Resume(play);
+</code></pre>
+<hr />
+<h2>7.5 再生中パラメータ</h2>
+<pre><code class="language-cpp">
+KashipanEngine::AudioManager::SetVolume(play, <span class="num">0.5f</span>);
+KashipanEngine::AudioManager::SetPitch(play, +<span class="num">1.0f</span>); <span class="com">// +1.0f で半音上</span>
+
+<span class="type">bool</span> playing = KashipanEngine::AudioManager::IsPlaying(play);
+<span class="type">bool</span> paused = KashipanEngine::AudioManager::IsPaused(play);
+(<span class="type">void</span>)playing;
+(<span class="type">void</span>)paused;
+</code></pre>
+<hr />
+<h2>7.6 再生位置（秒）の取得</h2>
+<pre><code class="language-cpp">
+<span class="type">double</span> sec = <span class="num">0.0</span>;
+<span class="kw">if</span> (KashipanEngine::AudioManager::GetPlayPositionSeconds(play, sec)) {
+    <span class="com">// sec に秒数が入る</span>
+}
+</code></pre>
+<hr />
+<h2>注意点（厳密）</h2>
+<ul>
+<li>取得/読み込み/再生に失敗した場合は無効ハンドル（0）が返ります。</li>
+<li>事前ロード対象/対応拡張子/ストリーミング等の扱いは <code>AudioManager</code> 実装に従います。</li>
+</ul>
+</body>
+</html>

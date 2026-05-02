@@ -119,8 +119,12 @@ public:
     TextureManager::TextureHandle GetTexture() const { return textureHandle_; }
     IShaderTexture* GetTexturePtr() const { return texture_; }
     SamplerManager::SamplerHandle GetSampler() const { return samplerHandle_; }
+    bool IsLightingEnabled() const { return instanceData_.enableLighting != 0.0f; }
+    bool IsShadowMapProjectionEnabled() const { return instanceData_.enableShadowMapProjection != 0.0f; }
     const Vector4 &GetColor() const { return instanceData_.color; }
     const UVTransform &GetUVTransform() const { return uvTransform_; }
+    float GetShininess() const { return instanceData_.shininess; }
+    const Vector4 &GetSpecularColor() const { return instanceData_.specularColor; }
     Matrix4x4 GetUVTransformMatrix() const {
         return instanceData_.uvTransform;
     }

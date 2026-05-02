@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>描画に必要なオブジェクト（`Renderer` / RenderPass / Pipeline）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>描画に必要なオブジェクト（<code>Renderer</code> / RenderPass / Pipeline）</h1>
+<p>KashipanEngine の描画は <code>Renderer</code> が中心で、オブジェクトやオフスクリーンが **永続レンダーパス** を登録することでフレームごとに描画されます。</p>
+<ul>
+<li><code>GameEngine</code> → <code>GraphicsEngine</code> → <code>Renderer::RenderFrame(...)</code></li>
+<li><code>Object2DBase</code> / <code>Object3DBase</code> → <code>AttachToRenderer(...)</code> で <code>Renderer</code> にパス登録</li>
+<li><code>ScreenBuffer</code> も Renderer に登録し、オフスクリーン描画＋ポストエフェクトを駆動</li>
+</ul>
+<p>関連：<code>KashipanEngine/Graphics/Renderer.h</code></p>
+<hr />
+<h2>描画をする上で必ず必要になるオブジェクト</h2>
+<p>エンジン内部（<code>GameEngine</code>）で生成・接続され、ユーザーコードは通常「使うだけ」の前提になっている依存関係です。</p>
+<ul>
+<li><code>WindowsAPI</code>：ウィンドウ生成/イベント配送</li>
+<li><code>DirectXCommon</code>：device / command queue / swap chain など DirectX 共通</li>
+<li><code>GraphicsEngine</code>：描画サブシステムの統括</li>
+<li><code>Renderer</code>：フレーム描画（パスのスケジューリング、バッファ確保、Draw 発行）</li>
+<li><code>PipelineManager</code>：<code>pipelineName</code> に対応するパイプラインを解決</li>
+<li><code>Window</code>：最終的な出力先（swap chain）</li>
+<li>オフスクリーン：<code>ScreenBuffer</code> / <code>ShadowMapBuffer</code></li>
+</ul>
+<p>また、<code>GameEngine</code> 初期化時に以下が行われます。</p>
+<ul>
+<li><code>Object2DBase::SetRenderer(Passkey&lt;GameEngine&gt;, Renderer*)</code></li>
+<li><code>Object3DBase::SetRenderer(Passkey&lt;GameEngine&gt;, Renderer*)</code></li>
+<li><code>ScreenBuffer::SetDirectXCommon(Passkey&lt;GameEngine&gt;, DirectXCommon*)</code></li>
+<li><code>ScreenBuffer::SetRenderer(Passkey&lt;GameEngine&gt;, Renderer*)</code></li>
+<li><code>ShadowMapBuffer::SetDirectXCommon(Passkey&lt;GameEngine&gt;, DirectXCommon*)</code></li>
+</ul>
+<p>これにより、利用側は <code>Object*::AttachToRenderer(...)</code> や <code>ScreenBuffer::Create(...)</code> を呼ぶだけで描画に参加できます。</p>
+<hr />
+<h2>公開API（<code>Renderer</code>）</h2>
+<h3>永続パス登録/解除</h3>
+<ul>
+<li><code>PersistentPassHandle RegisterPersistentRenderPass(RenderPass&amp;&amp; pass)</code></li>
+<li><code>bool UnregisterPersistentRenderPass(PersistentPassHandle handle)</code></li>
+</ul>
+<h3>ScreenBuffer 向け</h3>
+<ul>
+<li><code>PersistentScreenPassHandle RegisterPersistentScreenPass(ScreenBufferPass&amp;&amp; pass)</code></li>
+<li><code>bool UnregisterPersistentScreenPass(PersistentScreenPassHandle handle)</code></li>
+</ul>
+<h3>ScreenBuffer 宛て RenderPass</h3>
+<ul>
+<li><code>PersistentOffscreenPassHandle RegisterPersistentOffscreenRenderPass(RenderPass&amp;&amp; pass)</code></li>
+<li><code>bool UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHandle handle)</code></li>
+</ul>
+<h3>ShadowMapBuffer 宛て RenderPass</h3>
+<ul>
+<li><code>PersistentShadowMapPassHandle RegisterPersistentShadowMapRenderPass(RenderPass&amp;&amp; pass)</code></li>
+<li><code>bool UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHandle handle)</code></li>
+</ul>
+<h3>フレーム描画</h3>
+<ul>
+<li><code>void RenderFrame(Passkey&lt;GraphicsEngine&gt;)</code></li>
+</ul>
+<hr />
+<h2><code>RenderPass</code>（オブジェクトが登録する描画単位）</h2>
+<p><code>RenderPass</code> は内部構造体ですが、<code>Object*Base</code> から登録される内容として以下が重要です。</p>
+<ul>
+<li>描画先：<code>Window*</code> / <code>ScreenBuffer*</code> / <code>ShadowMapBuffer*</code></li>
+<li><code>pipelineName</code>：使用するパイプライン名</li>
+<li><code>renderType</code>：<code>RenderType::Standard</code> or <code>RenderType::Instancing</code></li>
+<li><code>batchKey</code>：インスタンシングのバッチング識別</li>
+<li>定数/インスタンスバッファ要件</li>
+<ul>
+<li><code>ConstantBufferRequirement { shaderNameKey, byteSize }</code></li>
+<li><code>InstanceBufferRequirement { shaderNameKey, elementStride }</code></li>
+</ul>
+<li>コールバック</li>
+<ul>
+<li><code>updateConstantBuffersFunction</code></li>
+<li><code>submitInstanceFunction</code></li>
+<li><code>batchedRenderFunction</code>（共通バインド）</li>
+<li><code>renderCommandFunction</code>（DrawCall を生成）</li>
+</ul>
+</ul>
+<hr />
+<h2>利用者が普段触る入口：<code>Object2DBase</code> / <code>Object3DBase</code></h2>
+<p>通常、利用者は <code>Renderer</code> を直接触るのではなく、</p>
+<ul>
+<li><code>Object2DBase::AttachToRenderer(...)</code></li>
+<li><code>Object3DBase::AttachToRenderer(...)</code></li>
+</ul>
+<p>でパス登録します。</p>
+<h3>例：2D を Window に描画</h3>
+<pre><code class="language-cpp">
+obj2d-&gt;AttachToRenderer(Window::GetWindow(<span class="str">&quot;Main Window&quot;</span>), <span class="str">&quot;Object2D.Solid.BlendNormal&quot;</span>);
+</code></pre>
+<h3>例：3D を ScreenBuffer に描画</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* sb3d = ScreenBuffer::Create(<span class="num">1280</span>, <span class="num">720</span>);
+obj3d-&gt;AttachToRenderer(sb3d, <span class="str">&quot;Object3D.Solid.BlendNormal&quot;</span>);
+</code></pre>
+<hr />
+<h2>ImGui（プロファイル）</h2>
+<p><code>USE_IMGUI</code> 有効時、<code>Renderer</code> は CPU timer 統計を保持し、デバッグウィンドウを表示できます。</p>
+<ul>
+<li><code>const CpuTimerStats&amp; GetCpuTimerStats() const noexcept</code></li>
+<li><code>void SetCpuTimerAverageWindow(std::uint32_t frames) noexcept</code></li>
+<li><code>void ShowImGuiCpuTimersWindow()</code></li>
+</ul>
+<p>また <code>GameEngine</code> 側でも Update/Draw/FPS のプロファイル UI が表示されます。</p>
+</body>
+</html>

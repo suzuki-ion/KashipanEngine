@@ -1,32 +1,31 @@
 #pragma once
+
 #include <KashipanEngine.h>
 
 namespace KashipanEngine {
 
-class Camera2D;
-class Sprite;
-
-class Camera3D;
-class Plane3D;
-class Sphere;
+class TitleSceneUIController;
+class StageSelectUIController;
 
 class TitleScene final : public SceneBase {
 public:
     TitleScene();
     ~TitleScene() override;
 
+    void Initialize() override;
+
 protected:
     void OnUpdate() override;
 
 private:
-    // プレイヤー
-    Sphere *player_ = nullptr;
+    SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
+    Object3DBase *dummyPlayer_ = nullptr;
+    Camera3D *mainCamera_ = nullptr;
+    TitleSceneUIController *titleSceneUIController_ = nullptr;
+    StageSelectUIController *stageSelectUIController_ = nullptr;
 
-    // プレイヤー移動範囲
-    Vector3 playerMoveMin_ = Vector3{-5.0f, 0.0f, -2.0f};
-    Vector3 playerMoveMax_ = Vector3{5.0f, 0.0f, 3.0f};
-
-    AudioManager::PlayHandle bgmPlay_ = AudioManager::kInvalidPlayHandle;
+    float moveSpeedZ_ = 24.0f;
+    float cameraPlayerOffsetZ_ = 8.0f;
 };
 
 } // namespace KashipanEngine

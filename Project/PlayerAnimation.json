@@ -1,0 +1,205 @@
+{
+    "bindings": {
+        "PlayerJump": [
+            {
+                "objectName": "PlayerBody",
+                "propertyPath": "Transform.Rotate.Y",
+                "timelineName": "PlayerBodyRotateY"
+            },
+            {
+                "objectName": "PlayerBody",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerJumpBodyPosY"
+            },
+            {
+                "objectName": "PlayerArmL",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerArmPosY"
+            },
+            {
+                "objectName": "PlayerArmR",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerArmPosY"
+            },
+            {
+                "objectName": "PlayerHead",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerHeadPosY"
+            }
+        ],
+        "PlayerRun": [
+            {
+                "objectName": "PlayerBody",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerBodyFloating"
+            },
+            {
+                "objectName": "PlayerBody",
+                "propertyPath": "Transform.Rotate.Y",
+                "timelineName": "PlayerBodyRotateY"
+            },
+            {
+                "objectName": "PlayerHead",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerHeadPosY"
+            },
+            {
+                "objectName": "PlayerArmL",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "PlayerArmLPosX"
+            },
+            {
+                "objectName": "PlayerArmR",
+                "propertyPath": "Transform.Translate.X",
+                "timelineName": "PlayerArmRPosX"
+            },
+            {
+                "objectName": "PlayerArmL",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerArmPosY"
+            },
+            {
+                "objectName": "PlayerArmR",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerArmPosY"
+            },
+            {
+                "objectName": "PlayerArmL",
+                "propertyPath": "Transform.Rotate.X",
+                "timelineName": "PlayerArmRotateX"
+            },
+            {
+                "objectName": "PlayerArmR",
+                "propertyPath": "Transform.Rotate.X",
+                "timelineName": "PlayerArmRotateX"
+            }
+        ]
+    },
+    "presets": {
+        "Player": [
+            {
+                "objectName": "PlayerRoot",
+                "parentObjectName": ""
+            },
+            {
+                "objectName": "PlayerBody",
+                "parentObjectName": "PlayerRoot"
+            },
+            {
+                "objectName": "PlayerHead",
+                "parentObjectName": "PlayerBody"
+            },
+            {
+                "objectName": "PlayerArmL",
+                "parentObjectName": "PlayerBody"
+            },
+            {
+                "objectName": "PlayerArmR",
+                "parentObjectName": "PlayerBody"
+            }
+        ]
+    },
+    "timelines": {
+        "PlayerArmLPosX": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 0.6000000238418579
+                }
+            ],
+            "loop": true
+        },
+        "PlayerArmPosY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 1.2999999523162842
+                }
+            ],
+            "loop": true
+        },
+        "PlayerArmRPosX": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": -0.6000000238418579
+                }
+            ],
+            "loop": true
+        },
+        "PlayerArmRotateX": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": -45.0
+                },
+                {
+                    "easeType": 19,
+                    "time": 0.5,
+                    "value": -70.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 1.0,
+                    "value": -45.0
+                }
+            ],
+            "loop": true
+        },
+        "PlayerBodyFloating": {
+            "keys": [
+                {
+                    "easeType": 19,
+                    "time": 0.0,
+                    "value": -0.6000000238418579
+                },
+                {
+                    "easeType": 19,
+                    "time": 0.5,
+                    "value": -0.5
+                },
+                {
+                    "easeType": 0,
+                    "time": 1.0,
+                    "value": -0.6000000238418579
+                }
+            ],
+            "loop": true
+        },
+        "PlayerBodyRotateY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 180.0
+                }
+            ],
+            "loop": true
+        },
+        "PlayerHeadPosY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 1.5
+                }
+            ],
+            "loop": true
+        },
+        "PlayerJumpBodyPosY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": -0.4000000059604645
+                }
+            ],
+            "loop": false
+        }
+    },
+    "version": 2
+}

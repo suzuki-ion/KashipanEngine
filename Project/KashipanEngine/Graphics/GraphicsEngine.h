@@ -21,6 +21,9 @@ public:
     /// @brief フレーム描画処理
     void RenderFrame(Passkey<GameEngine>);
 
+    /// @brief レンダラーのGPUリソース全開放
+    void ReleaseRendererResources(Passkey<GameEngine>);
+
 private:
     GraphicsEngine(const GraphicsEngine&) = delete;
     GraphicsEngine& operator=(const GraphicsEngine&) = delete;

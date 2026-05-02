@@ -17,6 +17,8 @@ public:
     struct InstanceData {
         Vector4 color;
         Matrix4x4 uvTransform;
+        float useTexture;
+        float padding[3];
     };
 
     struct UVTransform {
@@ -69,6 +71,10 @@ public:
         auto *arr = static_cast<InstanceData *>(instanceMap);
         arr[instanceIndex].color = color_;
         arr[instanceIndex].uvTransform = GetUVTransformMatrix();
+        arr[instanceIndex].useTexture = (texture_ != nullptr || textureHandle_ != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+        arr[instanceIndex].padding[0] = 0.0f;
+        arr[instanceIndex].padding[1] = 0.0f;
+        arr[instanceIndex].padding[2] = 0.0f;
         return true;
     }
 

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ビルド時マクロ</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>ビルド時マクロ</h1>
+<p>KashipanEngine では、ビルド構成（Configuration）に応じてプリプロセッサマクロが定義されます。 これらのマクロを使用して、ビルド構成ごとに処理を切り替えることができます。</p>
+<hr />
+<h2>ビルド構成マクロ</h2>
+<p>各ビルド構成で、以下のマクロが 1 つだけ定義されます。</p>
+<ul>
+<li><code>DEBUG_BUILD</code> — Debug ビルド時に定義される</li>
+<li><code>DEVELOPMENT_BUILD</code> — Development ビルド時に定義される</li>
+<li><code>RELEASE_BUILD</code> — Release ビルド時に定義される</li>
+</ul>
+<p>これらのマクロは排他的で、同時に複数が定義されることはありません。</p>
+<h3>例：ビルド構成による処理の切り替え</h3>
+<pre><code class="language-cpp">
+#<span class="kw">if</span> defined(DEBUG_BUILD)
+    <span class="com">// Debug ビルド専用の処理</span>
+    Log(<span class="str">&quot;デバッグモードです&quot;</span>, LogSeverity::Debug);
+#elif defined(DEVELOPMENT_BUILD)
+    <span class="com">// Development ビルド専用の処理</span>
+    Log(<span class="str">&quot;開発モードです&quot;</span>, LogSeverity::Info);
+#elif defined(RELEASE_BUILD)
+    <span class="com">// Release ビルド専用の処理</span>
+#endif
+</code></pre>
+<hr />
+<h2><code>USE_IMGUI</code> マクロ</h2>
+<p><code>USE_IMGUI</code> は **Debug ビルドおよび Development ビルドのときのみ** 定義されます。 Release ビルドでは定義されません。</p>
+<p>このマクロは、ImGui を使用したデバッグ UI を有効化するために使用します。</p>
+<ul>
+<li><code>DEBUG_BUILD</code> — <code>USE_IMGUI</code> が定義される</li>
+<li><code>DEVELOPMENT_BUILD</code> — <code>USE_IMGUI</code> が定義される</li>
+<li><code>RELEASE_BUILD</code> — <code>USE_IMGUI</code> は **定義されない**</li>
+</ul>
+<h3>例：ImGui によるデバッグ表示</h3>
+<pre><code class="language-cpp">
+#<span class="kw">if</span> defined(USE_IMGUI)
+#include &lt;imgui.h&gt;
+#endif
+
+<span class="type">void</span> MyComponent::Update() {
+    <span class="com">// 通常の更新処理</span>
+}
+
+#<span class="kw">if</span> defined(USE_IMGUI)
+<span class="type">void</span> MyComponent::ShowImGui() {
+    ImGui::Text(<span class="str">&quot;デバッグ情報を表示&quot;</span>);
+    ImGui::DragFloat(<span class="str">&quot;Speed&quot;</span>, &amp;speed_, <span class="num">0.1f</span>);
+}
+#endif
+</code></pre>
+<h3>例：Debug / Development ビルドでのみテストシーンを登録</h3>
+<pre><code class="language-cpp">
+#<span class="kw">if</span> defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+#include <span class="str">&quot;Scenes/TestScene.h&quot;</span>
+#endif
+
+<span class="type">void</span> AppInitialize(<span class="kw">const</span> GameEngine::Context&amp; context) {
+    <span class="kw">auto</span>* sm = context.sceneManager;
+
+    sm-&gt;RegisterScene&lt;GameScene&gt;(<span class="str">&quot;GameScene&quot;</span>);
+
+#<span class="kw">if</span> defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+    sm-&gt;RegisterScene&lt;TestScene&gt;(<span class="str">&quot;TestScene&quot;</span>);
+#endif
+}
+</code></pre>
+<hr />
+<h2>各ビルド構成の特徴まとめ</h2>
+<ul>
+<li>**Debug** — デバッグ機能がすべて有効。ImGui 利用可能。最適化なし。開発中の主要ビルド構成。</li>
+<li>**Development** — ImGui 利用可能。ある程度の最適化あり。テストや調整に適したビルド構成。</li>
+<li>**Release** — デバッグ機能なし。ImGui 利用不可。最大限の最適化。配布用ビルド構成。</li>
+</ul>
+<hr />
+<h2>注意事項</h2>
+<ul>
+<li><code>USE_IMGUI</code> が定義されていない環境で ImGui のヘッダやAPIを使用するとコンパイルエラーになります。必ず <code>#if defined(USE_IMGUI)</code> で囲んでください。</li>
+<li><code>ShowImGui()</code> などのデバッグ用メンバ関数は <code>#if defined(USE_IMGUI)</code> で宣言・定義を囲むのが慣例です。</li>
+<li>ビルド構成マクロはプロジェクト設定で自動的に定義されるため、手動で定義する必要はありません。</li>
+</ul>
+</body>
+</html>

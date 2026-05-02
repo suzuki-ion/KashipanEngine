@@ -3,12 +3,12 @@
 
 namespace KashipanEngine {
 
-ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels)
+ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc)
     : IGraphicsResource(ResourceViewType::SRV) {
-    Initialize(width, height, format, flags, existingResource, initialState, mipLevels);
+    Initialize(width, height, format, flags, existingResource, initialState, mipLevels, externalSrvDesc);
 }
 
-ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarget, D3D12_RESOURCE_STATES initialState, UINT mipLevels)
+ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarget, D3D12_RESOURCE_STATES initialState, UINT mipLevels, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc)
     : IGraphicsResource(ResourceViewType::SRV) {
     if (!renderTarget) {
         return;
@@ -21,16 +21,17 @@ ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarge
         D3D12_RESOURCE_FLAG_NONE,
         renderTarget->GetResource(),
         initialState,
-        mipLevels
+        mipLevels,
+        externalSrvDesc
     );
 }
 
-bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels) {
+bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc) {
     ResetResourceForRecreate();
-    return Initialize(width, height, format, flags, existingResource, initialState, mipLevels);
+    return Initialize(width, height, format, flags, existingResource, initialState, mipLevels, externalSrvDesc);
 }
 
-bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels) {
+bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc) {
     LogScope scope;
     auto *srvHeap = GetSRVHeap();
     if (!GetDevice() || !srvHeap) {
@@ -72,13 +73,14 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
 
     auto handle = srvHeap->AllocateDescriptorHandle();
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = format_;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Texture2D.MipLevels = mipLevels_;
+    D3D12_SHADER_RESOURCE_VIEW_DESC defaultSrvDesc = {};
+    defaultSrvDesc.Format = format_;
+    defaultSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    defaultSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    defaultSrvDesc.Texture2D.MipLevels = mipLevels_;
 
-    GetDevice()->CreateShaderResourceView(GetResource(), &srvDesc, handle->cpuHandle);
+    const D3D12_SHADER_RESOURCE_VIEW_DESC *srvDesc = externalSrvDesc ? externalSrvDesc : &defaultSrvDesc;
+    GetDevice()->CreateShaderResourceView(GetResource(), srvDesc, handle->cpuHandle);
 
     SetDescriptorHandleInfo(std::move(handle));
     return true;

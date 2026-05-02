@@ -3,6 +3,7 @@
 #include "AssetsHeaders.h"
 #include "CoreHeaders.h"
 #include "EngineSettings.h"
+#include "FontHeaders.h"
 #include "GraphicsHeaders.h"
 #include "InputHeaders.h"
 #include "MathHeaders.h"

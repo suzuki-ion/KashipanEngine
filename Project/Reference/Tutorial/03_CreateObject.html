@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>3. オブジェクトの作成</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>3. オブジェクトの作成</h1>
+<p>KashipanEngine のゲームオブジェクトは、</p>
+<ul>
+<li>2D：<code>Object2DBase</code> 派生</li>
+<li>3D：<code>Object3DBase</code> 派生</li>
+</ul>
+<p>または、エンジン標準のプリミティブ/既定オブジェクト（<code>Sprite</code>, <code>Box</code>, <code>Model</code> など）を使って作成します。</p>
+<hr />
+<h2>3.1 例：2D の <code>Sprite</code> を作る</h2>
+<p><code>Sprite</code> は <code>Object2DBase</code> の派生クラスです。</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Sprite&gt;();
+obj-&gt;SetName(<span class="str">&quot;MySprite&quot;</span>);
+obj-&gt;SetAnchorPoint(<span class="num">0.5f</span>, <span class="num">0.5f</span>);
+</code></pre>
+<hr />
+<h2>3.2 例：3D の <code>Box</code> を作る</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Box&gt;();
+obj-&gt;SetName(<span class="str">&quot;MyBox&quot;</span>);
+
+<span class="kw">if</span> (<span class="kw">auto</span>* tr = obj-&gt;GetComponent3D&lt;KashipanEngine::Transform3D&gt;()) {
+    tr-&gt;SetTranslate(KashipanEngine::Vector3(<span class="num">0.0f</span>, <span class="num">0.0f</span>, <span class="num">0.0f</span>));
+    tr-&gt;SetScale(KashipanEngine::Vector3(<span class="num">1.0f</span>));
+}
+</code></pre>
+<hr />
+<h2>3.3 シーンに追加する</h2>
+<p><code>SceneBase</code> 派生クラスの中で <code>AddObject2D</code> / <code>AddObject3D</code> を使ってシーンに所有させます。</p>
+<pre><code class="language-cpp">
+<span class="type">void</span> MyScene::Initialize() {
+    <span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Sprite&gt;();
+    obj-&gt;SetName(<span class="str">&quot;HUD&quot;</span>);
+
+    AddObject2D(std::move(obj));
+}
+</code></pre>
+<hr />
+<h2>3.4 描画先に登録する（Window / ScreenBuffer）</h2>
+<p>オブジェクトは <code>AttachToRenderer(...)</code> で描画先に登録します。</p>
+<pre><code class="language-cpp">
+<span class="kw">auto</span>* window = KashipanEngine::Window::GetWindow(<span class="str">&quot;Main Window&quot;</span>);
+<span class="kw">if</span> (window) {
+    obj-&gt;AttachToRenderer(window, <span class="str">&quot;Object2D.DoubleSidedCulling.BlendNormal&quot;</span>);
+}
+</code></pre>
+<blockquote>
+<p><code>pipelineName</code> は Assets のパイプライン定義と一致している必要があります。</p>
+</blockquote>
+</body>
+</html>

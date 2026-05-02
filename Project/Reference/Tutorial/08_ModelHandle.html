@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>8. モデルのハンドルを取得し、モデルオブジェクトを作成したいとき</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>8. モデルのハンドルを取得し、モデルオブジェクトを作成したいとき</h1>
+<p>モデルは <code>ModelManager</code> が管理し、<code>ModelHandle</code>（<code>uint32_t</code>）で識別します。</p>
+<ul>
+<li>ヘッダ：<code>KashipanEngine/Assets/ModelManager.h</code></li>
+</ul>
+<p><code>Model</code> オブジェクトは <code>ModelData</code>（頂点/インデックス/マテリアル等）を元に生成します。</p>
+<ul>
+<li>ヘッダ：<code>KashipanEngine/Objects/GameObjects/3D/Model.h</code></li>
+</ul>
+<hr />
+<h2>8.1 <code>ModelData</code> を取得する</h2>
+<p>ファイル名から <code>ModelData</code> を取得できます。</p>
+<pre><code class="language-cpp">
+<span class="kw">const</span> <span class="kw">auto</span>&amp; data = KashipanEngine::ModelManager::GetModelDataFromFileName(<span class="str">&quot;player.obj&quot;</span>);
+</code></pre>
+<p>相対パスから取得したい場合：</p>
+<pre><code class="language-cpp">
+<span class="kw">const</span> <span class="kw">auto</span>&amp; data = KashipanEngine::ModelManager::GetModelDataFromAssetPath(<span class="str">&quot;Models/player.obj&quot;</span>);
+</code></pre>
+<hr />
+<h2>8.2 <code>Model</code> オブジェクトを作成する</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">const</span> <span class="kw">auto</span>&amp; data = KashipanEngine::ModelManager::GetModelDataFromFileName(<span class="str">&quot;player.obj&quot;</span>);
+<span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Model&gt;(data);
+obj-&gt;SetName(<span class="str">&quot;Player&quot;</span>);
+</code></pre>
+<hr />
+<h2>8.3 描画先に登録する</h2>
+<pre><code class="language-cpp">
+<span class="kw">if</span> (<span class="kw">auto</span>* sb = screenBuffer3D) {
+    obj-&gt;AttachToRenderer(sb, <span class="str">&quot;Object3D.Solid.BlendNormal&quot;</span>);
+}
+</code></pre>
+<hr />
+<h2>注意点（厳密）</h2>
+<ul>
+<li><code>GetModelDataFromFileName</code> はファイル名単体で検索します。</li>
+<ul>
+<li>同名ファイルが複数ある場合、どれが返るかは <code>ModelManager</code> 実装に依存します。</li>
+</ul>
+<li>取得に失敗した場合は「空データ（empty data）」が返る設計になっています（<code>ModelManager</code> ヘッダに <code>sEmptyData</code> が存在）。</li>
+</ul>
+</body>
+</html>

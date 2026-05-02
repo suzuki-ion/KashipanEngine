@@ -172,22 +172,30 @@ Renderer::PersistentShadowMapPassHandle Renderer::RegisterPersistentShadowMapRen
     const void *targetKey = static_cast<const void*>(p->shadowMapBuffer);
 
     const bool isSystem = (p->objectType == ObjectType::SystemObject);
+    auto addToInstancingBatch = [&](auto &map, auto &order, const BatchKey &key, const RenderPass *passPtr) {
+        auto itBatch = map.find(key);
+        if (itBatch == map.end()) {
+            order.push_back(key);
+            itBatch = map.emplace(key, std::vector<const RenderPass*>{}).first;
+        }
+        itBatch->second.push_back(passPtr);
+    };
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
             (isSystem ? shadowMapSys2DStandard_ : shadowMap2DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            if (isSystem) shadowMapSys2DInstancing_[key].push_back(p);
-            else shadowMap2DInstancing_[key].push_back(p);
+            if (isSystem) addToInstancingBatch(shadowMapSys2DInstancing_, shadowMapSys2DInstancingOrder_, key, p);
+            else addToInstancingBatch(shadowMap2DInstancing_, shadowMap2DInstancingOrder_, key, p);
         }
     } else {
         if (p->renderType == RenderType::Standard) {
             (isSystem ? shadowMapSys3DStandard_ : shadowMap3DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            if (isSystem) shadowMapSys3DInstancing_[key].push_back(p);
-            else shadowMap3DInstancing_[key].push_back(p);
+            if (isSystem) addToInstancingBatch(shadowMapSys3DInstancing_, shadowMapSys3DInstancingOrder_, key, p);
+            else addToInstancingBatch(shadowMap3DInstancing_, shadowMap3DInstancingOrder_, key, p);
         }
     }
 
@@ -201,10 +209,26 @@ bool Renderer::UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHa
 
     const RenderPass *p = &it->second.pass;
     const bool isSystem = (p->objectType == ObjectType::SystemObject);
+    auto addToInstancingBatch = [&](auto &map, auto &order, const BatchKey &key, const RenderPass *passPtr) {
+        auto itBatch = map.find(key);
+        if (itBatch == map.end()) {
+            order.push_back(key);
+            itBatch = map.emplace(key, std::vector<const RenderPass*>{}).first;
+        }
+        itBatch->second.push_back(passPtr);
+    };
 
     auto eraseFromVector = [&](std::vector<const RenderPass*> &v) {
         for (auto vit = v.begin(); vit != v.end(); ++vit) {
             if (*vit == p) { v.erase(vit); break; }
+        }
+    };
+    auto removeFromOrder = [](std::vector<BatchKey> &order, const BatchKey &key) {
+        for (auto itOrder = order.begin(); itOrder != order.end(); ++itOrder) {
+            if (*itOrder == key) {
+                order.erase(itOrder);
+                break;
+            }
         }
     };
 
@@ -216,13 +240,17 @@ bool Renderer::UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHa
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
             auto &map = isSystem ? shadowMapSys2DInstancing_ : shadowMap2DInstancing_;
+            auto &order = isSystem ? shadowMapSys2DInstancingOrder_ : shadowMap2DInstancingOrder_;
             auto itB = map.find(key);
             if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) map.erase(itB);
+                if (vec.empty()) {
+                    map.erase(itB);
+                    removeFromOrder(order, key);
+                }
             }
         }
     } else {
@@ -231,13 +259,17 @@ bool Renderer::UnregisterPersistentShadowMapRenderPass(PersistentShadowMapPassHa
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
             auto &map = isSystem ? shadowMapSys3DInstancing_ : shadowMap3DInstancing_;
+            auto &order = isSystem ? shadowMapSys3DInstancingOrder_ : shadowMap3DInstancingOrder_;
             auto itB = map.find(key);
             if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) map.erase(itB);
+                if (vec.empty()) {
+                    map.erase(itB);
+                    removeFromOrder(order, key);
+                }
             }
         }
     }
@@ -592,12 +624,15 @@ void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
 }
 
 void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses,
+     const std::vector<BatchKey> &batchOrder,
      std::function<void *(const RenderPass *)> /*getTargetKeyFunc*/) {
     RendererCpuTimerScope tTotal(*this, CpuTimerStats::Scope::Instancing_Total);
 
-    for (auto &kv : renderPasses) {
-        const auto &key = kv.first;
-        auto &itemsPtrs = kv.second;
+    for (const auto &key : batchOrder) {
+        auto itBatch = renderPasses.find(key);
+        if (itBatch == renderPasses.end()) continue;
+
+        auto &itemsPtrs = itBatch->second;
         if (itemsPtrs.empty()) continue;
 
         const RenderPass *first = itemsPtrs.front();
@@ -805,8 +840,9 @@ void Renderer::Render3DStandard(std::vector<const RenderPass *> renderPasses,
 }
 
 void Renderer::Render3DInstancing(std::unordered_map<BatchKey, std::vector<const RenderPass *>, BatchKeyHasher> &renderPasses,
+    const std::vector<BatchKey> &batchOrder,
     std::function<void *(const RenderPass *)> getTargetKeyFunc) {
-    Render2DInstancing(renderPasses, std::move(getTargetKeyFunc));
+    Render2DInstancing(renderPasses, batchOrder, std::move(getTargetKeyFunc));
 }
 
 Renderer::PersistentPassHandle Renderer::RegisterPersistentRenderPass(RenderPass &&pass) {
@@ -818,22 +854,30 @@ Renderer::PersistentPassHandle Renderer::RegisterPersistentRenderPass(RenderPass
 
     const RenderPass *p = &it->second.pass;
     const bool isSystem = (p->objectType == ObjectType::SystemObject);
+    auto addToInstancingBatch = [&](auto &map, auto &order, const BatchKey &key, const RenderPass *passPtr) {
+        auto itBatch = map.find(key);
+        if (itBatch == map.end()) {
+            order.push_back(key);
+            itBatch = map.emplace(key, std::vector<const RenderPass*>{}).first;
+        }
+        itBatch->second.push_back(passPtr);
+    };
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
             (isSystem ? persistentSys2DStandard_ : persistent2DStandard_).push_back(p);
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
-            if (isSystem) persistentSys2DInstancing_[key].push_back(p);
-            else persistent2DInstancing_[key].push_back(p);
+            if (isSystem) addToInstancingBatch(persistentSys2DInstancing_, persistentSys2DInstancingOrder_, key, p);
+            else addToInstancingBatch(persistent2DInstancing_, persistent2DInstancingOrder_, key, p);
         }
     } else {
         if (p->renderType == RenderType::Standard) {
             (isSystem ? persistentSys3DStandard_ : persistent3DStandard_).push_back(p);
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
-            if (isSystem) persistentSys3DInstancing_[key].push_back(p);
-            else persistent3DInstancing_[key].push_back(p);
+            if (isSystem) addToInstancingBatch(persistentSys3DInstancing_, persistentSys3DInstancingOrder_, key, p);
+            else addToInstancingBatch(persistent3DInstancing_, persistent3DInstancingOrder_, key, p);
         }
     }
     return handle;
@@ -852,6 +896,14 @@ bool Renderer::UnregisterPersistentRenderPass(PersistentPassHandle handle) {
             if (*vit == p) { v.erase(vit); break; }
         }
     };
+    auto removeFromOrder = [](std::vector<BatchKey> &order, const BatchKey &key) {
+        for (auto itOrder = order.begin(); itOrder != order.end(); ++itOrder) {
+            if (*itOrder == key) {
+                order.erase(itOrder);
+                break;
+            }
+        }
+    };
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
@@ -859,13 +911,17 @@ bool Renderer::UnregisterPersistentRenderPass(PersistentPassHandle handle) {
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
             auto &map = isSystem ? persistentSys2DInstancing_ : persistent2DInstancing_;
+            auto &order = isSystem ? persistentSys2DInstancingOrder_ : persistent2DInstancingOrder_;
             auto itB = map.find(key);
             if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) map.erase(itB);
+                if (vec.empty()) {
+                    map.erase(itB);
+                    removeFromOrder(order, key);
+                }
             }
         }
     } else {
@@ -874,13 +930,17 @@ bool Renderer::UnregisterPersistentRenderPass(PersistentPassHandle handle) {
         } else {
             BatchKey key{ static_cast<const void*>(p->window->GetWindowHandle()), p->pipelineName, p->batchKey };
             auto &map = isSystem ? persistentSys3DInstancing_ : persistent3DInstancing_;
+            auto &order = isSystem ? persistentSys3DInstancingOrder_ : persistent3DInstancingOrder_;
             auto itB = map.find(key);
             if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) map.erase(itB);
+                if (vec.empty()) {
+                    map.erase(itB);
+                    removeFromOrder(order, key);
+                }
             }
         }
     }
@@ -926,22 +986,30 @@ Renderer::PersistentOffscreenPassHandle Renderer::RegisterPersistentOffscreenRen
     const RenderPass *p = &it->second.pass;
     const void *targetKey = static_cast<const void*>(p->screenBuffer);
     const bool isSystem = (p->objectType == ObjectType::SystemObject);
+    auto addToInstancingBatch = [&](auto &map, auto &order, const BatchKey &key, const RenderPass *passPtr) {
+        auto itBatch = map.find(key);
+        if (itBatch == map.end()) {
+            order.push_back(key);
+            itBatch = map.emplace(key, std::vector<const RenderPass*>{}).first;
+        }
+        itBatch->second.push_back(passPtr);
+    };
 
     if (p->dimension == RenderDimension::D2) {
         if (p->renderType == RenderType::Standard) {
             (isSystem ? offscreenSys2DStandard_ : offscreen2DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            if (isSystem) offscreenSys2DInstancing_[key].push_back(p);
-            else offscreen2DInstancing_[key].push_back(p);
+            if (isSystem) addToInstancingBatch(offscreenSys2DInstancing_, offscreenSys2DInstancingOrder_, key, p);
+            else addToInstancingBatch(offscreen2DInstancing_, offscreen2DInstancingOrder_, key, p);
         }
     } else {
         if (p->renderType == RenderType::Standard) {
             (isSystem ? offscreenSys3DStandard_ : offscreen3DStandard_).push_back(p);
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
-            if (isSystem) offscreenSys3DInstancing_[key].push_back(p);
-            else offscreen3DInstancing_[key].push_back(p);
+            if (isSystem) addToInstancingBatch(offscreenSys3DInstancing_, offscreenSys3DInstancingOrder_, key, p);
+            else addToInstancingBatch(offscreen3DInstancing_, offscreen3DInstancingOrder_, key, p);
         }
     }
 
@@ -961,6 +1029,14 @@ bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHa
             if (*vit == p) { v.erase(vit); break; }
         }
     };
+    auto removeFromOrder = [](std::vector<BatchKey> &order, const BatchKey &key) {
+        for (auto itOrder = order.begin(); itOrder != order.end(); ++itOrder) {
+            if (*itOrder == key) {
+                order.erase(itOrder);
+                break;
+            }
+        }
+    };
 
     const void *targetKey = static_cast<const void*>(p->screenBuffer);
 
@@ -970,13 +1046,17 @@ bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHa
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
             auto &map = isSystem ? offscreenSys2DInstancing_ : offscreen2DInstancing_;
+            auto &order = isSystem ? offscreenSys2DInstancingOrder_ : offscreen2DInstancingOrder_;
             auto itB = map.find(key);
             if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) map.erase(itB);
+                if (vec.empty()) {
+                    map.erase(itB);
+                    removeFromOrder(order, key);
+                }
             }
         }
     } else {
@@ -985,13 +1065,17 @@ bool Renderer::UnregisterPersistentOffscreenRenderPass(PersistentOffscreenPassHa
         } else {
             BatchKey key{ targetKey, p->pipelineName, p->batchKey };
             auto &map = isSystem ? offscreenSys3DInstancing_ : offscreen3DInstancing_;
+            auto &order = isSystem ? offscreenSys3DInstancingOrder_ : offscreen3DInstancingOrder_;
             auto itB = map.find(key);
             if (itB != map.end()) {
                 auto &vec = itB->second;
                 for (auto vit = vec.begin(); vit != vec.end(); ++vit) {
                     if (*vit == p) { vec.erase(vit); break; }
                 }
-                if (vec.empty()) map.erase(itB);
+                if (vec.empty()) {
+                    map.erase(itB);
+                    removeFromOrder(order, key);
+                }
             }
         }
     }
@@ -1010,6 +1094,11 @@ void Renderer::RegisterWindow(Passkey<Window>, HWND hwnd, ID3D12GraphicsCommandL
         binder.Invalidate();
         windowBinders_.emplace(hwnd, std::move(binder));
     }
+}
+
+void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
+    constantBuffers_.clear();
+    instanceBuffers_.clear();
 }
 
 void Renderer::IssueRenderCommand(ID3D12GraphicsCommandList *commandList, const RenderCommand &renderCommand) {
@@ -1047,14 +1136,14 @@ void Renderer::RenderShadowMapPasses() {
 
     // SystemObject -> GameObject (3D then 2D)
     Render3DStandard(shadowMapSys3DStandard_, getTargetKey);
-    Render3DInstancing(shadowMapSys3DInstancing_, getTargetKey);
+    Render3DInstancing(shadowMapSys3DInstancing_, shadowMapSys3DInstancingOrder_, getTargetKey);
     Render3DStandard(shadowMap3DStandard_, getTargetKey);
-    Render3DInstancing(shadowMap3DInstancing_, getTargetKey);
+    Render3DInstancing(shadowMap3DInstancing_, shadowMap3DInstancingOrder_, getTargetKey);
 
     Render2DStandard(shadowMapSys2DStandard_, getTargetKey);
-    Render2DInstancing(shadowMapSys2DInstancing_, getTargetKey);
+    Render2DInstancing(shadowMapSys2DInstancing_, shadowMapSys2DInstancingOrder_, getTargetKey);
     Render2DStandard(shadowMap2DStandard_, getTargetKey);
-    Render2DInstancing(shadowMap2DInstancing_, getTargetKey);
+    Render2DInstancing(shadowMap2DInstancing_, shadowMap2DInstancingOrder_, getTargetKey);
 }
 
 void Renderer::RenderOffscreenPasses() {
@@ -1072,14 +1161,14 @@ void Renderer::RenderOffscreenPasses() {
 
     // SystemObject -> GameObject (3D then 2D)
     Render3DStandard(offscreenSys3DStandard_, getTargetKey);
-    Render3DInstancing(offscreenSys3DInstancing_, getTargetKey);
+    Render3DInstancing(offscreenSys3DInstancing_, offscreenSys3DInstancingOrder_, getTargetKey);
     Render3DStandard(offscreen3DStandard_, getTargetKey);
-    Render3DInstancing(offscreen3DInstancing_, getTargetKey);
+    Render3DInstancing(offscreen3DInstancing_, offscreen3DInstancingOrder_, getTargetKey);
 
     Render2DStandard(offscreenSys2DStandard_, getTargetKey);
-    Render2DInstancing(offscreenSys2DInstancing_, getTargetKey);
+    Render2DInstancing(offscreenSys2DInstancing_, offscreenSys2DInstancingOrder_, getTargetKey);
     Render2DStandard(offscreen2DStandard_, getTargetKey);
-    Render2DInstancing(offscreen2DInstancing_, getTargetKey);
+    Render2DInstancing(offscreen2DInstancing_, offscreen2DInstancingOrder_, getTargetKey);
 }
 
 void Renderer::RenderPersistentPasses() {
@@ -1091,14 +1180,14 @@ void Renderer::RenderPersistentPasses() {
 
     // SystemObject -> GameObject (3D then 2D)
     Render3DStandard(persistentSys3DStandard_, getTargetKey);
-    Render3DInstancing(persistentSys3DInstancing_, getTargetKey);
+    Render3DInstancing(persistentSys3DInstancing_, persistentSys3DInstancingOrder_, getTargetKey);
     Render3DStandard(persistent3DStandard_, getTargetKey);
-    Render3DInstancing(persistent3DInstancing_, getTargetKey);
+    Render3DInstancing(persistent3DInstancing_, persistent3DInstancingOrder_, getTargetKey);
 
     Render2DStandard(persistentSys2DStandard_, getTargetKey);
-    Render2DInstancing(persistentSys2DInstancing_, getTargetKey);
+    Render2DInstancing(persistentSys2DInstancing_, persistentSys2DInstancingOrder_, getTargetKey);
     Render2DStandard(persistent2DStandard_, getTargetKey);
-    Render2DInstancing(persistent2DInstancing_, getTargetKey);
+    Render2DInstancing(persistent2DInstancing_, persistent2DInstancingOrder_, getTargetKey);
 }
 
 #if defined(USE_IMGUI)

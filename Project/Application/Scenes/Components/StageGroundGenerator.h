@@ -5,6 +5,7 @@
 #include "Objects/Components/SlowGroundDefined.h"
 #include "Objects/Components/PlayerMovementController.h"
 #include "StageGoalPlaneController.h"
+#include "Objects/Components/CoinDefined.h"
 
 #include <algorithm>
 #include <cmath>
@@ -22,6 +23,17 @@ struct SpawnRequest {
     float panelWidth = 0.0f;// パネルの幅
     float panelThickness = 0.0f;// パネルの厚み
     float panelLength = 0.0f;// パネルの長さ
+};
+
+// コイン用のスポーンリクエスト構造体を追加
+struct CoinSpawnRequest {
+    float stageProgress = 0.0f;
+    float radius = 0.0f;
+    float angle = 0.0f;
+    int blockType = 0;
+    float panelWidth = 0.0f;
+    float panelThickness = 0.0f;
+    float panelLength = 0.0f;
 };
 
 /// ステージの地面を生成・管理するコンポーネント。JSONデータを元に一括で地面オブジェクトを生成します。
@@ -46,6 +58,7 @@ public:
 
         // リクエストリストを初期化
         spawnRequests_.clear();
+        coinSpawnRequests_.clear();
 
         // ステージの読み込み
         nlohmann::json j;
@@ -89,7 +102,7 @@ public:
 					throw std::runtime_error("spawn_reqestsの各要素にはradiusが必要です。");
                 }
                 if (groundData.contains("angle") && groundData["angle"].is_number()) {
-					req.angle = groundData["angle"].get<float>();
+				req.angle = groundData["angle"].get<float>();
                 } else {
 					assert(false && "spawn_reqestsの各要素にはangleが必要です。");
 					throw std::runtime_error("spawn_reqestsの各要素にはangleが必要です。");
@@ -116,21 +129,46 @@ public:
             }
 		}
 
-        // ステージの進み具合が1.0fを超えている場合、壊れたデータとして修正する
+        // コインのスポーンリクエスト読み込みを追加
+        if (j.contains("coin_reqests") && j["coin_reqests"].is_array()) {
+            for (const auto &coinData : j["coin_reqests"]) {
+                CoinSpawnRequest req{};
+                if (coinData.contains("stageProgress") && coinData["stageProgress"].is_number()) {
+                    req.stageProgress = coinData["stageProgress"].get<float>();
+                    if (req.stageProgress > maxStageProgress) {
+                        maxStageProgress = req.stageProgress;
+                    }
+                }
+                if (coinData.contains("radius") && coinData["radius"].is_number()) req.radius = coinData["radius"].get<float>();
+                if (coinData.contains("angle") && coinData["angle"].is_number()) req.angle = coinData["angle"].get<float>();
+                if (coinData.contains("blockType") && coinData["blockType"].is_number()) req.blockType = coinData["blockType"].get<int>();
+                if (coinData.contains("panelWidth") && coinData["panelWidth"].is_number()) req.panelWidth = coinData["panelWidth"].get<float>();
+                if (coinData.contains("panelThickness") && coinData["panelThickness"].is_number()) req.panelThickness = coinData["panelThickness"].get<float>();
+                if (coinData.contains("panelLength") && coinData["panelLength"].is_number()) req.panelLength = coinData["panelLength"].get<float>();
+                
+                coinSpawnRequests_.push_back(req);
+            }
+        }
+
+        // 正規化処理の拡張
         if(maxStageProgress > 1.0f) {
             // すべてのリクエストのstageProgressをmaxStageProgressで割って正規化する
             for (auto &req : spawnRequests_) {
-				// stageProgressをmaxStageProgressで割って正規化する
                 req.stageProgress /= maxStageProgress;
-
-				// radiusもmaxStageProgressで割って正規化する
 				req.radius /= maxStageProgress;
-
-				// パネルもmaxStageProgressで割って正規化する
                 req.panelLength /= maxStageProgress;
 				req.panelThickness /= maxStageProgress;
 				req.panelWidth /= maxStageProgress;
 			}
+
+            // コインの正規化を追加
+            for (auto &req : coinSpawnRequests_) {
+                req.stageProgress /= maxStageProgress;
+                req.radius /= maxStageProgress;
+                req.panelLength /= maxStageProgress;
+                req.panelThickness /= maxStageProgress;
+                req.panelWidth /= maxStageProgress;
+            }
 
             // 修正版を出力する
 			nlohmann::json outputJson;
@@ -146,6 +184,18 @@ public:
                 reqJson["panelLength"] = req.panelLength;
                 outputJson["spawn_reqests"].push_back(reqJson);
             }
+            outputJson["coin_reqests"] = nlohmann::json::array();
+            for (const auto &req : coinSpawnRequests_) {
+                nlohmann::json reqJson;
+                reqJson["stageProgress"] = req.stageProgress;
+                reqJson["radius"] = req.radius;
+                reqJson["angle"] = req.angle;
+                reqJson["blockType"] = req.blockType;
+                reqJson["panelWidth"] = req.panelWidth;
+                reqJson["panelThickness"] = req.panelThickness;
+                reqJson["panelLength"] = req.panelLength;
+                outputJson["coin_reqests"].push_back(reqJson);
+            }
             std::ofstream ofs("Assets/Application/StageData/corrected_stage_data.json");
             if (ofs.is_open()) {
                 ofs << outputJson.dump(4); // インデント幅4で整形して出力
@@ -158,6 +208,9 @@ public:
         std::sort(spawnRequests_.begin(), spawnRequests_.end(), [](const SpawnRequest &a, const SpawnRequest &b) {
             return a.stageProgress < b.stageProgress;
 			});
+        std::sort(coinSpawnRequests_.begin(), coinSpawnRequests_.end(), [](const CoinSpawnRequest &a, const CoinSpawnRequest &b) {
+            return a.stageProgress < b.stageProgress;
+        });
 
         // 生成要求
         TryGenerate();
@@ -199,6 +252,23 @@ public:
         if (spawnRequests_.size() > currentSpawnRequestIndex_) {
             SpawnGroundFromStageData();
 		}  
+
+        // コインの非アクティブ化処理等を追加
+        for (auto &c : coins_) {
+            if (!c.object || !c.isActive) continue;
+            auto *tr = c.object->GetComponent3D<Transform3D>();
+            if (!tr) continue;
+            
+            // プレイヤーより後ろに行ったら非アクティブにする
+            if ((tr->GetTranslate().z - c.length) > player_->GetComponent3D<Transform3D>()->GetTranslate().z) {
+                c.isActive = false;
+            }
+        }
+
+        // 床と同様にコインもスポーン
+        if (coinSpawnRequests_.size() > currentCoinSpawnRequestIndex_) {
+            SpawnCoinFromStageData();
+        }
     }
 
     void RequestGenerate() {
@@ -306,6 +376,13 @@ private:
 		bool isActive = false;
     };
 
+    struct CoinRuntime {
+        Object3DBase *object = nullptr;
+        float centerZ = 0.0f;
+        float length = 0.0f;
+        bool isActive = false;
+    };
+
     void TryGenerate() {
 		// すでに生成されているか、生成要求がない場合は何もしない
         if (generated_ || !requested_) return;
@@ -319,6 +396,12 @@ private:
 
 		// 全地面オブジェクトを一括生成
         CreateAllGrounds(ctx);
+
+        // コインプールの生成
+        CreateCoinPool(ctx);
+
+		// 全コインオブジェクトを一括生成
+		CreateAllCoins(ctx);
 
         generated_ = true;
     }
@@ -341,6 +424,18 @@ private:
             }
 		}
     }
+
+    void CreateAllCoins(SceneContext *ctx) {
+        CreateCoinPool(ctx);
+        currentCoinSpawnRequestIndex_ = 0;
+        for (auto &c : coins_) {
+            if (!c.object) continue;
+            if (!c.isActive) {
+                c.isActive = true;
+                SpawnCoinFromStageData();
+            }
+        }
+	}
 
 	/// @brief プレイヤーのスポーン位置に地面を生成する。これは通常の地面と同じ見た目・当たり判定だが、スポーン位置に固定され、ステージの進行に応じて再利用されない。
     void CreateSpawnGround(SceneContext *ctx) {
@@ -387,6 +482,28 @@ private:
             }
 		}
 	}
+
+    /// @brief コインのプールを生成する
+    void CreateCoinPool(SceneContext *ctx) {
+        coins_.clear();
+        for(int i = 0; i < coinPoolSize_; ++i) {
+            auto obj = std::make_unique<Box>();
+            obj->SetName("CoinPool");
+            // バッチキー等はGroundと同じ、あるいはコイン用があれば変更してください
+            obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
+            if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
+                obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
+            }
+            // コインとしての定義
+            obj->RegisterComponent<CoinDefined>(collider_);
+            Object3DBase *objPtr = obj.get();
+            if (ctx->AddObject3D(std::move(obj)) && objPtr) {
+                CoinRuntime runtime{};
+                runtime.object = objPtr;
+                coins_.push_back(runtime);
+            }
+        }
+    }
 
 	/// @brief 地面をスポーン位置に生成する。プールの空きがない場合は何もしない
     void SpawnGround(const Vector3& pos, const Vector3& rot, const Vector3& scale) {
@@ -455,6 +572,40 @@ private:
 		++currentSpawnRequestIndex_;
     }
 
+    void SpawnCoinFromStageData() {
+        if (currentCoinSpawnRequestIndex_ >= coinSpawnRequests_.size()) return;
+        const auto& req = coinSpawnRequests_[currentCoinSpawnRequestIndex_];
+
+        // 進行度に応じたZ, XY計算
+        const float startZ = spawnGroundCenterZ_;
+        float goalZ = -8192.0f;
+        if (auto* gpc = GetOwnerContext()->GetComponent<StageGoalPlaneController>()) {
+            goalZ = gpc->GetGoalZ();
+        }
+        float stageLengthRate = 1.0f;
+        if (editStageLengthData != 0.0f) {
+            stageLengthRate = std::fabsf(goalZ - startZ) / editStageLengthData;
+        }
+
+        const float centerZ = startZ + (goalZ - startZ) * req.stageProgress;
+        const float x = -std::sin(req.angle) * req.radius * stageLengthRate;
+        const float y = -std::cos(req.angle) * req.radius * stageLengthRate;
+
+        // プールから空いているオブジェクトを探して配置
+        for (auto &c : coins_) {
+            if (!c.object || c.isActive) continue;
+            if (auto *tr = c.object->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(Vector3{ x, y, centerZ });
+                tr->SetRotate(Vector3{ 0.0f, 0.0f, -req.angle });
+                tr->SetScale(Vector3{ req.panelWidth * stageLengthRate, req.panelThickness * stageLengthRate, req.panelLength * stageLengthRate });
+                c.isActive = true;
+                c.length = req.panelLength * stageLengthRate;
+                break;
+            }
+        }
+        ++currentCoinSpawnRequestIndex_;
+    }
+
     bool requested_ = false;
     bool generated_ = false;
 
@@ -468,15 +619,17 @@ private:
     float spawnGroundOffset_ = 4.0f;
 
     int panelWidthSplitCount_ = 3;
-
     float minPanelLength_ = 64.0f;
     int panelLengthSplitCount_ = 3;
-
     int minPanelsPerSegment_ = 6;
 
-	std::vector<SpawnRequest> spawnRequests_; // JSONから読み込んだすべてのスポーンリクエスト
-	int currentSpawnRequestIndex_ = 0; // 次にスポーンすべきリクエストのインデックス
-	
+    std::vector<SpawnRequest> spawnRequests_;
+    int currentSpawnRequestIndex_ = 0;
+
+    std::vector<CoinSpawnRequest> coinSpawnRequests_;
+    int currentCoinSpawnRequestIndex_ = 0;
+    std::vector<CoinRuntime> coins_{};
+
     float nextSpawnZ_ = 0.0f;
     float currentSegmentCenterZ_ = 0.0f;
     float currentSegmentLength_ = 0.0f;
@@ -486,8 +639,11 @@ private:
     Collider *collider_ = nullptr;
     Object3DBase *player_ = nullptr;
     Object3DBase *spawnGround_ = nullptr;
+    
     std::vector<GroundRuntime> grounds_{};
-	const int poolSize_ = 200;
+    const int poolSize_ = 200;
+    const int coinPoolSize_ = 200; // コインの最大プール数
+    
     int touchedGroundCount_ = 0;
     bool hasMinSpawnZ_ = false;
 };

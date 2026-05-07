@@ -173,16 +173,16 @@ void GameScene::Initialize() {
                 AddObject3D(std::move(obj));
             };
 
-            addPlayerModel("PlayerBody", "float_Body.obj");
-            addPlayerModel("PlayerHead", "float_Head.obj");
+            addPlayerModel("tama", "tama.obj");
+            /*addPlayerModel("PlayerHead", "float_Head.obj");
             addPlayerModel("PlayerArmL", "float_L_arm.obj");
-            addPlayerModel("PlayerArmR", "float_R_arm.obj");
+            addPlayerModel("PlayerArmR", "float_R_arm.obj");*/
 
-            AddSceneComponent(std::make_unique<ModelAnimator>());
+            /*AddSceneComponent(std::make_unique<ModelAnimator>());
             if (auto *modelAnimator = GetSceneComponent<ModelAnimator>()) {
                 modelAnimator->LoadFromJsonFile("PlayerAnimation.json");
                 modelAnimator->Play("Player", "PlayerRun");
-            }
+            }*/
 
             AddSceneComponent(std::make_unique<GameSceneAudioPlayer>(this, playerPtr));
             AddSceneComponent(std::make_unique<PlayerRespawnController>(this, playerPtr));

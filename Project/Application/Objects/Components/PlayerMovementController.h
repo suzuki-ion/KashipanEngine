@@ -493,8 +493,8 @@ private:
     bool hasLandingImpact_ = false;
     float lastLandingImpact_ = 0.0f;
 
-    float gravityGaugePerUse_ = 16.0f;
-    int gravityGaugeUseCountPerFull_ = 2;
+    float gravityGaugePerUse_ = 12.0f;
+    int gravityGaugeUseCountPerFull_ = 3;
     float gravityGaugeMax_ = gravityGaugePerUse_ * static_cast<float>(gravityGaugeUseCountPerFull_);
     float gravityGauge_ = gravityGaugeMax_;
     float landingGaugeRecoveryBase_ = 1.0f;

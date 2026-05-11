@@ -416,6 +416,7 @@
     <ClInclude Include="Application\Objects\Components\CoinDefined.h" />
     <ClInclude Include="Application\Scenes\Components\ClearTimeBoard.h" />
     <ClInclude Include="Application\Scenes\Components\StageSelectRankingUIController.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerLogCollector.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

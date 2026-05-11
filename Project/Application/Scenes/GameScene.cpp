@@ -21,6 +21,7 @@
 #include "Scenes/Components/PlayerRespawnController.h"
 #include "Scenes/Components/PlayerGameOverController.h"
 #include "Scenes/Components/PlayerClearController.h"
+#include "Scenes/Components/PlayerLogCollector.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 #include "Objects/Components/PlayerMovementController.h"
@@ -197,6 +198,7 @@ void GameScene::Initialize() {
         }
     }
 
+	AddSceneComponent(std::make_unique<PlayerLogCollector>(player_));
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
     AddSceneComponent(std::make_unique<ParticleManager>());

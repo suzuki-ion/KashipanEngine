@@ -2506,8 +2506,8 @@
   ],
   "coin_reqests": [
     {
-      "stageProgress": 0.0499,
-      "radius": 0.7119,
+      "stageProgress": 0.15,
+      "radius": 0.5,
       "angle": 0.0,
       "blockType": 0,
       "panelWidth": 0.1,
@@ -2515,8 +2515,44 @@
       "panelLength": 0.1
     },
     {
-      "stageProgress": 0.068,
-      "radius": 0.7119,
+      "stageProgress": 0.1297,
+      "radius": 0.5,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.1,
+      "panelThickness": 0.1,
+      "panelLength": 0.1
+    },
+    {
+      "stageProgress": 0.1151,
+      "radius": 0.5,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.1,
+      "panelThickness": 0.1,
+      "panelLength": 0.1
+    },
+    {
+      "stageProgress": 0.0979,
+      "radius": 0.5,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.1,
+      "panelThickness": 0.1,
+      "panelLength": 0.1
+    },
+    {
+      "stageProgress": 0.0648,
+      "radius": 0.5,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.1,
+      "panelThickness": 0.1,
+      "panelLength": 0.1
+    },
+    {
+      "stageProgress": 0.0445,
+      "radius": 0.5,
       "angle": 0.0,
       "blockType": 0,
       "panelWidth": 0.1,

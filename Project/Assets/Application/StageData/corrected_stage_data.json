@@ -1,4 +1,60 @@
 {
+    "coin_reqests": [
+        {
+            "angle": 0.0,
+            "blockType": 0,
+            "panelLength": 0.09963136166334152,
+            "panelThickness": 0.09963136166334152,
+            "panelWidth": 0.09963136166334152,
+            "radius": 0.4981568157672882,
+            "stageProgress": 0.14944705367088318
+        },
+        {
+            "angle": 0.0,
+            "blockType": 0,
+            "panelLength": 0.09963136166334152,
+            "panelThickness": 0.09963136166334152,
+            "panelWidth": 0.09963136166334152,
+            "radius": 0.4981568157672882,
+            "stageProgress": 0.12922188639640808
+        },
+        {
+            "angle": 0.0,
+            "blockType": 0,
+            "panelLength": 0.09963136166334152,
+            "panelThickness": 0.09963136166334152,
+            "panelWidth": 0.09963136166334152,
+            "radius": 0.4981568157672882,
+            "stageProgress": 0.11467569321393967
+        },
+        {
+            "angle": 0.0,
+            "blockType": 0,
+            "panelLength": 0.09963136166334152,
+            "panelThickness": 0.09963136166334152,
+            "panelWidth": 0.09963136166334152,
+            "radius": 0.4981568157672882,
+            "stageProgress": 0.09753910452127457
+        },
+        {
+            "angle": 0.0,
+            "blockType": 0,
+            "panelLength": 0.09963136166334152,
+            "panelThickness": 0.09963136166334152,
+            "panelWidth": 0.09963136166334152,
+            "radius": 0.4981568157672882,
+            "stageProgress": 0.06456112116575241
+        },
+        {
+            "angle": 0.0,
+            "blockType": 0,
+            "panelLength": 0.09963136166334152,
+            "panelThickness": 0.09963136166334152,
+            "panelWidth": 0.09963136166334152,
+            "radius": 0.4981568157672882,
+            "stageProgress": 0.04433595761656761
+        }
+    ],
     "spawn_reqests": [
         {
             "angle": 0.0,

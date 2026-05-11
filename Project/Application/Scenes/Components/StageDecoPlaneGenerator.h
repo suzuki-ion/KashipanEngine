@@ -1,6 +1,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
+#include "ObjectBatchKeys.h"
 #include "Objects/Components/AlwaysRotate.h"
 
 #include <cstdint>
@@ -59,14 +60,13 @@ public:
 private:
     static constexpr float kPi = 3.14159265358979323846f;
     static constexpr float kTiltStepRad = 3.14159265358979323846f / 12.0f; // 15度
-    static constexpr std::uint64_t kDecoPlaneBatchKey = 0x1101000000000002ull;
 
     Object3DBase *CreatePlane(SceneContext *ctx) {
         if (!ctx) return nullptr;
 
         auto obj = std::make_unique<Plane3D>();
         obj->SetName("DecorationPlane");
-        obj->SetBatchKey(kDecoPlaneBatchKey, RenderType::Instancing);
+        obj->SetBatchKey(ObjectBatchKeys::DecoPlane, RenderType::Instancing);
 
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
             mat->SetEnableLighting(false);

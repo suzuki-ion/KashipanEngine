@@ -1,6 +1,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
+#include "ObjectBatchKeys.h"
 #include "Objects/Components/AlwaysRotate.h"
 
 #include <cmath>
@@ -58,7 +59,6 @@ public:
 
 private:
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
-    static constexpr std::uint64_t kDecoBoxBatchKey = 0x1101000000000003ull;
 
     void TryGenerate() {
         if (generated_ || !requested_) return;
@@ -75,7 +75,7 @@ private:
         for (int i = 0; i < count_; ++i) {
             auto obj = std::make_unique<Box>();
             obj->SetName("DecorationBox");
-            obj->SetBatchKey(kDecoBoxBatchKey, RenderType::Instancing);
+            obj->SetBatchKey(ObjectBatchKeys::DecoBox, RenderType::Instancing);
 
             if (auto *mat = obj->GetComponent3D<Material3D>()) {
                 mat->SetEnableLighting(false);

@@ -23,7 +23,9 @@ public:
         if (!ctx) return false;
 
         if (auto *mat = ctx->GetComponent<Material3D>()) {
+            mat->SetEnableLighting(false);
             mat->SetColor(defaultColor_);
+            mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
         }
 
         if (auto *tr = ctx->GetComponent<Transform3D>()) {
@@ -35,10 +37,11 @@ public:
 
         if (collider_ && !ctx->GetComponent<Collision3D>()) {
             ColliderInfo3D info{};
-            Math::Sphere sphere{};
-            sphere.center = Vector3{0.0f, 0.0f, 0.0f};
-            sphere.radius = collisionRadius_;
-            info.shape = sphere;
+            Math::OBB obb{};
+            obb.center = Vector3{0.0f, 0.0f, 0.0f};
+            obb.halfSize = Vector3{1.0f, 1.0f, 1.0f};
+            obb.orientation = Matrix4x4::Identity();
+            info.shape = obb;
             info.attribute.set(CollisionAttribute::Coin);
             info.ignoreAttribute.set(CollisionAttribute::Ground);
             info.ignoreAttribute.set(CollisionAttribute::Coin);
@@ -178,7 +181,6 @@ private:
     Collider *collider_ = nullptr;
     Transform3D *playerTransform_ = nullptr;
 
-    const float collisionRadius_ = 2.0f;
     const float idleRotationSpeed_ = 4.0f;
 
     const float raiseDuration_ = 0.5f;

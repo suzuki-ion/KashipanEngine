@@ -1,6 +1,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
+#include "ObjectBatchKeys.h"
 #include "Objects/Components/GroundDefined.h"
 #include "Objects/Components/SlowGroundDefined.h"
 #include "Objects/Components/PlayerMovementController.h"
@@ -9,7 +10,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <vector>
 #include <fstream>
 
@@ -367,7 +367,6 @@ private:
     }
 
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
-    static constexpr std::uint64_t kGroundBatchKey = 0x1101000000000001ull;
 
     struct GroundRuntime {
         Object3DBase *object = nullptr;
@@ -443,7 +442,7 @@ private:
 		// プレイヤーが最初に立つための地面を生成
         auto obj = std::make_unique<Box>();
         obj->SetName("Ground");
-        obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
+        obj->SetBatchKey(ObjectBatchKeys::Ground, RenderType::Instancing);
 		// スクリーンバッファがあれば描画に登録
         if (defaultVars_->GetScreenBuffer3D()) {
             obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
@@ -468,7 +467,7 @@ private:
 			// Boxオブジェクトを生成し、名前とバッチキーを設定
             auto obj = std::make_unique<Box>();
             obj->SetName("GroundPool");
-            obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
+            obj->SetBatchKey(ObjectBatchKeys::Ground, RenderType::Instancing);
             if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
                 obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
             }
@@ -487,10 +486,10 @@ private:
     void CreateCoinPool(SceneContext *ctx) {
         coins_.clear();
         for(int i = 0; i < coinPoolSize_; ++i) {
-            auto obj = std::make_unique<Box>();
+            auto modelHandle = ModelManager::GetModelHandleFromFileName("coin.obj");
+            auto obj = std::make_unique<Model>(modelHandle);
             obj->SetName("CoinPool");
-            // バッチキー等はGroundと同じ、あるいはコイン用があれば変更してください
-            obj->SetBatchKey(kGroundBatchKey, RenderType::Instancing);
+            obj->SetBatchKey(ObjectBatchKeys::Coin, RenderType::Instancing);
             if (defaultVars_ && defaultVars_->GetScreenBuffer3D()) {
                 obj->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
             }
@@ -641,8 +640,8 @@ private:
     Object3DBase *spawnGround_ = nullptr;
     
     std::vector<GroundRuntime> grounds_{};
-    const int poolSize_ = 200;
-    const int coinPoolSize_ = 200; // コインの最大プール数
+    const int poolSize_ = 128;
+    const int coinPoolSize_ = 64; // コインの最大プール数
     
     int touchedGroundCount_ = 0;
     bool hasMinSpawnZ_ = false;

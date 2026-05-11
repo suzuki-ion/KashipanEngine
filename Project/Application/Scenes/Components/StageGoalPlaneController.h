@@ -1,6 +1,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
+#include "ObjectBatchKeys.h"
 #include "Objects/Components/AlwaysRotate.h"
 
 #include <algorithm>
@@ -22,7 +23,7 @@ public:
 
         auto goal = std::make_unique<Plane3D>();
         goal->SetName("GoalPlane");
-        goal->SetBatchKey(kGoalPlaneBatchKey, RenderType::Instancing);
+        goal->SetBatchKey(ObjectBatchKeys::GoalPlane, RenderType::Instancing);
 
         if (defaultVars_->GetScreenBuffer3D()) {
             goal->AttachToRenderer(defaultVars_->GetScreenBuffer3D(), "Object3D.Solid.BlendNormal");
@@ -72,8 +73,6 @@ public:
     float GetGoalZ() const { return goalZ_; }
 
 private:
-    static constexpr std::uint64_t kGoalPlaneBatchKey = 0x1101000000000011ull;
-
     SceneDefaultVariables *defaultVars_ = nullptr;
     Object3DBase *goalPlane_ = nullptr;
     Object3DBase *player_ = nullptr;

@@ -83,7 +83,7 @@ public:
         gravityBar->SetFrameColor(Vector4{0.35f, 0.35f, 0.55f, 1.0f});
         gravityBar->SetBackgroundColor(Vector4{0.08f, 0.08f, 0.1f, 1.0f});
         gravityBar->SetBarColor(Vector4{0.2f, 0.6f, 1.0f, 1.0f});
-        gravityBar->SetSegmentLineCount(1);
+        gravityBar->SetSegmentLineCount(2);
         gravityBar->SetSegmentLineColor(Vector4{0.5f, 0.5f, 0.5f, 1.0f});
         gravityBar->SetSegmentLineThickness(4.0f);
         gravityBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");

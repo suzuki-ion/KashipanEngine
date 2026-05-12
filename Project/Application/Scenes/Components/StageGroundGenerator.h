@@ -537,7 +537,7 @@ private:
                         }
 					break;
                     case 1:
-                        if(g.object->HasComponents3D<SlowGroundDefined>()) {
+                        if(!g.object->HasComponents3D<SlowGroundDefined>()) {
                             g.object->RegisterComponent<SlowGroundDefined>();
 						}
 					break;

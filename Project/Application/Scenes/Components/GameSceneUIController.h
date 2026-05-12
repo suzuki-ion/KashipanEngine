@@ -78,8 +78,8 @@ public:
 
         auto gravityBar = std::make_unique<SpriteProressBar>();
         gravityBar->SetName("GravityGaugeBar");
-        gravityBar->SetBarSize(Vector2{512.0f, 20.0f});
-        gravityBar->SetFrameThickness(6.0f);
+        gravityBar->SetBarSize(Vector2{512.0f, 16.0f});
+        gravityBar->SetFrameThickness(4.0f);
         gravityBar->SetFrameColor(Vector4{0.35f, 0.35f, 0.55f, 1.0f});
         gravityBar->SetBackgroundColor(Vector4{0.08f, 0.08f, 0.1f, 1.0f});
         gravityBar->SetBarColor(Vector4{0.2f, 0.6f, 1.0f, 1.0f});
@@ -88,7 +88,7 @@ public:
         gravityBar->SetSegmentLineThickness(4.0f);
         gravityBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = gravityBar->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{320.0f, 70.0f, 0.0f});
+            tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.15f, 0.0f });
             gravityGaugeBarBasePosition_ = tr->GetTranslate();
         }
         gravityGaugeBar_ = gravityBar.get();
@@ -168,7 +168,7 @@ public:
         fallDistanceText_ = fallDistanceText.get();
         (void)ctx->AddObject2D(std::move(fallDistanceText));
 
-        auto jumpRemainGaugeBar = std::make_unique<SpriteProressBar>();
+        /*auto jumpRemainGaugeBar = std::make_unique<SpriteProressBar>();
         jumpRemainGaugeBar->SetName("JumpRemainGaugeBar");
         jumpRemainGaugeBar->SetBarSize(Vector2{160.0f, 16.0f});
         jumpRemainGaugeBar->SetFrameThickness(4.0f);
@@ -184,7 +184,7 @@ public:
             tr->SetTranslate(jumpRemainGaugeBasePosition_);
         }
         jumpRemainGaugeBar_ = jumpRemainGaugeBar.get();
-        (void)ctx->AddObject2D(std::move(jumpRemainGaugeBar));
+        (void)ctx->AddObject2D(std::move(jumpRemainGaugeBar));*/
 
         auto clearFade = std::make_unique<Sprite>();
         clearFade->SetName("ClearFadeSprite");

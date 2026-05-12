@@ -70,6 +70,8 @@ public:
         if (!tr) return false;
 
         const float dt = std::clamp(GetDeltaTime() * GetGameSpeed(), 0.0f, 0.1f);
+        collisionDisableTimer_ = std::max(0.0f, collisionDisableTimer_ - dt);
+        const bool collisionEnabled = (collisionDisableTimer_ <= 0.0f);
 
         groundedThisFrame_ = false;
         hasLandingImpact_ = false;
@@ -99,14 +101,14 @@ public:
         const float fallDistanceBeforeGravityChange = accumulatedFallDistance_;
 
 		// プレイヤー操作による重力変更は、着地イベント算出のために落下距離計測をリセットする必要があるため、Updateの最初の方で処理する
-        if (collisionBehavior_) {
+        if (collisionBehavior_ && collisionEnabled) {
             if (auto requestedGravity = collisionBehavior_->ConsumeRequestedGravityDirection(); requestedGravity.has_value()) {
                 SetGravityDirection(*requestedGravity);
             }
         }
 
 		// 着地判定と落下距離の計測
-        const bool grounded = collisionBehavior_ ? collisionBehavior_->ConsumeGrounded() : false;
+        const bool grounded = (collisionBehavior_ && collisionEnabled) ? collisionBehavior_->ConsumeGrounded() : false;
         groundedThisFrame_ = grounded;
 
 		// 地面にいない場合は落下距離を蓄積
@@ -136,7 +138,7 @@ public:
         tr->SetTranslate(gravityFramePosition);
 
         // まず重力による移動後の突き抜けを押し戻す（落下処理の押し戻し）
-        if (collisionBehavior_ && gravityBehavior_) {
+        if (collisionBehavior_ && gravityBehavior_ && collisionEnabled) {
             Vector3 pos = tr->GetTranslate();
             auto &gvRef = gravityBehavior_->GravityVelocityRef();
             collisionBehavior_->ResolveStayTranslationAndVelocity(pos, gvRef);
@@ -162,7 +164,7 @@ public:
 
         // 前方移動、横移動の合成速度で位置を更新
         Vector3 totalVelocity = forwardDirection_ * forwardSpeed + lateralVelocity;
-        if (grounded && collisionBehavior_) {
+        if (grounded && collisionBehavior_ && collisionEnabled) {
             const Vector3 groundNormal = collisionBehavior_->GetGroundNormal().Normalize();
             const float intoGround = totalVelocity.Dot(groundNormal);
             if (intoGround < 0.0f) {
@@ -173,7 +175,7 @@ public:
         tr->SetTranslate(currentFramePosition);
 
         // 前方/横移動による衝突の補正。ここで lastCollisionTime を使ってヒット時刻に沿って補正。
-        if (collisionBehavior_ && gravityBehavior_) {
+        if (collisionBehavior_ && gravityBehavior_ && collisionEnabled) {
             Vector3 correctedPos = tr->GetTranslate();
             if (auto hitTime = collisionBehavior_->ConsumeLastCollisionTime(); hitTime.has_value()) {
                 const float t = std::clamp(*hitTime, 0.0f, 1.0f);
@@ -196,7 +198,7 @@ public:
             }
 
 			// 着地イベントの算出のために、着地前の落下距離と重力変更前の落下距離の大きい方を着地衝撃とする
-            const bool canRecoverGauge = collisionBehavior_ ? collisionBehavior_->ConsumeLastGroundWasFirstTouch() : false;
+            const bool canRecoverGauge = (collisionBehavior_ && collisionEnabled) ? collisionBehavior_->ConsumeLastGroundWasFirstTouch() : false;
 
 			// 着地衝撃に応じて重力ゲージを回復。着地イベントが発生したフレームでのみ回復可能とするため、着地イベントの算出後に行う
             if (canRecoverGauge) {
@@ -213,7 +215,7 @@ public:
             accumulatedFallDistance_ = 0.0f;
 
             // 着地した地面がSlowGroundだった場合は減速する
-            if (collisionBehavior_ && collisionBehavior_->IsOnSlowGround()) {
+            if (collisionBehavior_ && collisionEnabled && collisionBehavior_->IsOnSlowGround()) {
                 if (forwardBehavior_) {
                     forwardBehavior_->ForwardSpeedRef() *= slowGroundSpeedMultiplier_;
                 }
@@ -222,9 +224,9 @@ public:
                 }
 			}
 
-		} else if (!grounded && wasGroundedPrev_) {// 離地したフレームで落下距離計測をリセット
+      } else if (!grounded && wasGroundedPrev_) {// 離地したフレームで落下距離計測をリセット
             accumulatedFallDistance_ = 0.0f;
-            if (collisionBehavior_) {
+            if (collisionBehavior_ && collisionEnabled) {
                 (void)collisionBehavior_->ConsumeLastGroundWasFirstTouch();
             }
         }
@@ -275,6 +277,7 @@ public:
         gravityGauge_ = std::max(0.0f, gravityGauge_ - gravityGaugePerUse_);
         // プレイヤー操作による重力変更時は落下距離計測をリセット
         accumulatedFallDistance_ = 0.0f;
+        collisionDisableTimer_ = kCollisionDisableDuration;
         SetGravityDirection(direction);
         gravityChangeBlend_ = 1.0f;
         return true;
@@ -418,6 +421,7 @@ public:
 
 private:
     static constexpr float kPi = 3.14159265358979323846f;
+    static constexpr float kCollisionDisableDuration = 0.05f;
 
     static Quaternion MakeFromToQuaternion(const Vector3 &from, const Vector3 &to) {
         const Vector3 f = from.Normalize();
@@ -503,6 +507,7 @@ private:
 
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;
+    float collisionDisableTimer_ = 0.0f;
     bool movementLocked_ = false;
     bool fastFallEnabled_ = false;
 };

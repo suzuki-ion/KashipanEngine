@@ -339,13 +339,13 @@ private:
 
     Object3DBase *player_ = nullptr;
 
-    float followDistanceMin_ = 1.0f;
+    float followDistanceMin_ = 8.0f;
     float followDistanceMax_ = 2.0f;
     float followHeightMin_ = 2.0f;
     float followHeightMax_ = 6.0f;
     float lookAtHeightMin_ = 2.0f;
     float lookAtHeightMax_ = 6.0f;
-    float fovMin_ = 0.8f;
+    float fovMin_ = 0.6f;
     float fovMax_ = 2.5f;
     float gravitySwitchFollowDistance_ = 10.0f;
     float fallSpeedForMaxTilt_ = 128.0f;

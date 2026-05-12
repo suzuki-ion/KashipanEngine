@@ -157,7 +157,7 @@ public:
         clearTimeText_ = clearTimeText.get();
         (void)ctx->AddObject2D(std::move(clearTimeText));
 
-        auto fallDistanceText = std::make_unique<Text>(128);
+        /*auto fallDistanceText = std::make_unique<Text>(128);
         fallDistanceText->SetName("FallDistanceText");
         fallDistanceText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         fallDistanceText->SetTextFormat("Fall Distance: {0:.2f}", 0.0f);
@@ -166,7 +166,7 @@ public:
             tr->SetTranslate(Vector3{32.0f, 150.0f, 0.0f});
         }
         fallDistanceText_ = fallDistanceText.get();
-        (void)ctx->AddObject2D(std::move(fallDistanceText));
+        (void)ctx->AddObject2D(std::move(fallDistanceText));*/
 
         /*auto jumpRemainGaugeBar = std::make_unique<SpriteProressBar>();
         jumpRemainGaugeBar->SetName("JumpRemainGaugeBar");

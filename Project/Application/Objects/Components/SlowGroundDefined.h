@@ -18,12 +18,28 @@ namespace KashipanEngine {
 			if (!ctx) return false;
 
 			if (auto* gd = ctx->GetComponent<GroundDefined>()) {
+                originalDefaultColor_ = gd->GetDefaultColor();
+                originalTouchColorStart_ = gd->GetTouchColorStart();
+                originalTouchColorEnd_ = gd->GetTouchColorEnd();
+
 				gd->SetDefaultColor(defaultColor_);
                 gd->SetTouchColorStart(touchColorStart_);
                 gd->SetTouchColorEnd(touchColorEnd_);
 			}
 			return true;
 		};
+
+		std::optional<bool> Finalize() override {
+			auto *ctx = GetOwner3DContext();
+			if (!ctx) return false;
+
+			if (auto *gd = ctx->GetComponent<GroundDefined>()) {
+				gd->SetDefaultColor(originalDefaultColor_);
+				gd->SetTouchColorStart(originalTouchColorStart_);
+                gd->SetTouchColorEnd(originalTouchColorEnd_);
+			}
+			return true;
+        };
 
 		std::optional<bool> Update() override {
 			return true;
@@ -37,5 +53,9 @@ namespace KashipanEngine {
 		const Vector4 defaultColor_{ 1.0f, 0.0f, 0.0f, 1.0f };
         const Vector4 touchColorStart_{ 1.0f, 1.0f, 1.0f, 1.0f };
         const Vector4 touchColorEnd_{ 1.0f, 0.5f, 0.5f, 1.0f };
+
+		Vector4 originalDefaultColor_;
+		Vector4 originalTouchColorStart_;
+        Vector4 originalTouchColorEnd_;
 	};
 }

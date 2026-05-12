@@ -118,7 +118,9 @@ public:
     void SetTouchColorStart(const Vector4 &color) { touchColorStart_ = color; }
     void SetTouchColorEnd(const Vector4 &color) { touchColorEnd_ = color; }
 
-	Vector4 GetDefaultColor() const { return defaultColor_; }
+	const Vector4 &GetDefaultColor() const { return defaultColor_; }
+    const Vector4 &GetTouchColorStart() const { return touchColorStart_; }
+    const Vector4 &GetTouchColorEnd() const { return touchColorEnd_; }
 
 private:
     void OnCollisionEnter(const HitInfo3D &hit) {

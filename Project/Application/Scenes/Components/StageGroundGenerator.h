@@ -23,6 +23,7 @@ struct SpawnRequest {
     float panelWidth = 0.0f;// パネルの幅
     float panelThickness = 0.0f;// パネルの厚み
     float panelLength = 0.0f;// パネルの長さ
+	int blockType = 0;// ブロックの種類
 };
 
 // コイン用のスポーンリクエスト構造体を追加
@@ -125,6 +126,13 @@ public:
 					assert(false && "spawn_reqestsの各要素にはpanelLengthが必要です。");
 					throw std::runtime_error("spawn_reqestsの各要素にはpanelLengthが必要です。");
                 }
+
+                if(groundData.contains("blockType") && groundData["blockType"].is_number()) {
+                    req.blockType = groundData["blockType"].get<int>();
+				} else {
+					assert(false && "spawn_reqestsの各要素にはblockTypeが必要です。");
+					throw std::runtime_error("spawn_reqestsの各要素にはblockTypeが必要です。");
+				}
                 spawnRequests_.push_back(req);
             }
 		}
@@ -505,7 +513,7 @@ private:
     }
 
 	/// @brief 地面をスポーン位置に生成する。プールの空きがない場合は何もしない
-    void SpawnGround(const Vector3& pos, const Vector3& rot, const Vector3& scale) {
+    void SpawnGround(const Vector3& pos, const Vector3& rot, const Vector3& scale,int groundType) {
         for(auto &g : grounds_) {
             if (!g.object) continue;
             if (g.isActive) continue;
@@ -520,6 +528,24 @@ private:
                 if (auto *ground = g.object->GetComponent3D<GroundDefined>()) {
                     ground->ResetTouchColorAnimation();
                 }
+
+                switch (groundType)
+                {
+                    case 0:
+                        if (g.object->HasComponents3D<SlowGroundDefined>()) {
+                            g.object->RemoveComponent3D("SlowGroundDefined",0);
+                        }
+					break;
+                    case 1:
+                        if(g.object->HasComponents3D<SlowGroundDefined>()) {
+                            g.object->RegisterComponent<SlowGroundDefined>();
+						}
+					break;
+
+                default:
+                    break;
+                }
+
                 break;
             }
 		}
@@ -567,7 +593,8 @@ private:
         SpawnGround(
             Vector3{ x, y, centerZ },
             Vector3{ 0.0f, 0.0f, -req.angle },
-            Vector3{ req.panelWidth * stageLengthRate, req.panelThickness * stageLengthRate, req.panelLength * stageLengthRate });
+            Vector3{ req.panelWidth * stageLengthRate, req.panelThickness * stageLengthRate, req.panelLength * stageLengthRate },
+            req.blockType);
 		++currentSpawnRequestIndex_;
     }
 

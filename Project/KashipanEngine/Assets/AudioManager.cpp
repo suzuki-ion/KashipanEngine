@@ -17,6 +17,8 @@
 #include <mfreadwrite.h>
 
 #include <xaudio2.h>
+#include <xaudio2fx.h>
+#include <xapofx.h>
 #include <wrl.h>
 
 #include <algorithm>
@@ -58,6 +60,10 @@ struct SoundEntry final {
 struct PlayEntry final {
     SoundHandle sound = AudioManager::kInvalidSoundHandle;
     IXAudio2SourceVoice* voice = nullptr;
+    IXAudio2SubmixVoice* effectVoice = nullptr;
+    Microsoft::WRL::ComPtr<IUnknown> reverbEffect;
+    Microsoft::WRL::ComPtr<IUnknown> eqEffect;
+    Microsoft::WRL::ComPtr<IUnknown> echoEffect;
     bool paused = false;
     bool loop = false;
     double startTimeSec = 0.0;
@@ -195,6 +201,13 @@ void StopVoice(PlayEntry& p) {
     p.voice->FlushSourceBuffers();
     p.voice->DestroyVoice();
     p.voice = nullptr;
+    if (p.effectVoice) {
+        p.effectVoice->DestroyVoice();
+        p.effectVoice = nullptr;
+    }
+    p.reverbEffect.Reset();
+    p.eqEffect.Reset();
+    p.echoEffect.Reset();
     p.sound = AudioManager::kInvalidSoundHandle;
     p.paused = false;
     p.startTimeSec = 0.0;
@@ -543,13 +556,90 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     playEntry.loop = params.loop;
     playEntry.startTimeSec = startSec;
 
-    HRESULT hr = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex);
+    Microsoft::WRL::ComPtr<IUnknown> reverb;
+    HRESULT hr = XAudio2CreateReverb(&reverb, 0);
+    if (FAILED(hr) || !reverb) {
+        playEntry.sound = kInvalidSoundHandle;
+        ReleasePlayIndex(idx);
+        Log(Translation("engine.audio.play.failed.createeffect"), LogSeverity::Error);
+        return kInvalidPlayHandle;
+    }
+
+    Microsoft::WRL::ComPtr<IUnknown> eq;
+    Microsoft::WRL::ComPtr<IUnknown> echo;
+    hr = CreateFX(__uuidof(FXEQ), &eq, 0);
+    if (FAILED(hr) || !eq) {
+        playEntry.sound = kInvalidSoundHandle;
+        ReleasePlayIndex(idx);
+        Log(Translation("engine.audio.play.failed.createeffect"), LogSeverity::Error);
+        return kInvalidPlayHandle;
+    }
+
+    hr = CreateFX(__uuidof(FXEcho), &echo, 0);
+    if (FAILED(hr) || !echo) {
+        playEntry.sound = kInvalidSoundHandle;
+        ReleasePlayIndex(idx);
+        Log(Translation("engine.audio.play.failed.createeffect"), LogSeverity::Error);
+        return kInvalidPlayHandle;
+    }
+
+    IXAudio2SubmixVoice* effectVoice = nullptr;
+    hr = sXaudio2->CreateSubmixVoice(&effectVoice, it->second.wfex.nChannels, it->second.wfex.nSamplesPerSec, 0, 0, nullptr, nullptr);
+    if (FAILED(hr) || !effectVoice) {
+        playEntry.sound = kInvalidSoundHandle;
+        ReleasePlayIndex(idx);
+        Log(Translation("engine.audio.play.failed.createsubmix"), LogSeverity::Error);
+        return kInvalidPlayHandle;
+    }
+
+    XAUDIO2_EFFECT_DESCRIPTOR effectDescs[3]{};
+    effectDescs[0].pEffect = reverb.Get();
+    effectDescs[0].InitialState = FALSE;
+    effectDescs[0].OutputChannels = it->second.wfex.nChannels;
+
+    effectDescs[1].pEffect = eq.Get();
+    effectDescs[1].InitialState = FALSE;
+    effectDescs[1].OutputChannels = it->second.wfex.nChannels;
+
+    effectDescs[2].pEffect = echo.Get();
+    effectDescs[2].InitialState = FALSE;
+    effectDescs[2].OutputChannels = it->second.wfex.nChannels;
+
+    XAUDIO2_EFFECT_CHAIN effectChain{};
+    effectChain.EffectCount = 3;
+    effectChain.pEffectDescriptors = effectDescs;
+
+    hr = effectVoice->SetEffectChain(&effectChain);
+    if (FAILED(hr)) {
+        effectVoice->DestroyVoice();
+        playEntry.sound = kInvalidSoundHandle;
+        ReleasePlayIndex(idx);
+        Log(Translation("engine.audio.play.failed.seteffectchain"), LogSeverity::Error);
+        return kInvalidPlayHandle;
+    }
+
+    XAUDIO2_SEND_DESCRIPTOR sendDesc{};
+    sendDesc.Flags = 0;
+    sendDesc.pOutputVoice = effectVoice;
+
+    XAUDIO2_VOICE_SENDS sends{};
+    sends.SendCount = 1;
+    sends.pSends = &sendDesc;
+
+    HRESULT hrSource = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex, 0, XAUDIO2_DEFAULT_FREQ_RATIO, nullptr, &sends, nullptr);
+    hr = hrSource;
     if (FAILED(hr) || !playEntry.voice) {
+        effectVoice->DestroyVoice();
         playEntry.sound = kInvalidSoundHandle;
         ReleasePlayIndex(idx);
         Log(Translation("engine.audio.play.failed.createsourcevoice"), LogSeverity::Error);
         return kInvalidPlayHandle;
     }
+
+    playEntry.effectVoice = effectVoice;
+    playEntry.reverbEffect = reverb;
+    playEntry.eqEffect = eq;
+    playEntry.echoEffect = echo;
 
     XAUDIO2_BUFFER buffer{};
     buffer.AudioBytes = static_cast<UINT32>(it->second.buffer.size());
@@ -721,6 +811,95 @@ bool AudioManager::SetPitch(PlayHandle play, float pitch) {
     p.voice->SetFrequencyRatio(ratio);
     return true;
 }
+
+bool AudioManager::SetReverbParameters(PlayHandle play, const XAUDIO2FX_REVERB_PARAMETERS& params) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.effectVoice) return false;
+
+    HRESULT hr = p.effectVoice->SetEffectParameters(0, &params, sizeof(params));
+    return SUCCEEDED(hr);
+}
+
+bool AudioManager::EnableReverb(PlayHandle play, bool enable) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.effectVoice) return false;
+
+    HRESULT hr = enable ? p.effectVoice->EnableEffect(0, XAUDIO2_COMMIT_NOW)
+                        : p.effectVoice->DisableEffect(0, XAUDIO2_COMMIT_NOW);
+    return SUCCEEDED(hr);
+}
+
+#if defined(KASHIPANENGINE_ENABLE_XAPOFX)
+bool AudioManager::SetEqParameters(PlayHandle play, const FXEQ_PARAMETERS& params) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.effectVoice) return false;
+
+    HRESULT hr = p.effectVoice->SetEffectParameters(1, &params, sizeof(params));
+    return SUCCEEDED(hr);
+}
+
+bool AudioManager::EnableEq(PlayHandle play, bool enable) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.effectVoice) return false;
+
+    HRESULT hr = enable ? p.effectVoice->EnableEffect(1, XAUDIO2_COMMIT_NOW)
+                        : p.effectVoice->DisableEffect(1, XAUDIO2_COMMIT_NOW);
+    return SUCCEEDED(hr);
+}
+
+bool AudioManager::SetEchoParameters(PlayHandle play, const FXECHO_PARAMETERS& params) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.effectVoice) return false;
+
+    HRESULT hr = p.effectVoice->SetEffectParameters(2, &params, sizeof(params));
+    return SUCCEEDED(hr);
+}
+
+bool AudioManager::EnableEcho(PlayHandle play, bool enable) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.effectVoice) return false;
+
+    HRESULT hr = enable ? p.effectVoice->EnableEffect(2, XAUDIO2_COMMIT_NOW)
+                        : p.effectVoice->DisableEffect(2, XAUDIO2_COMMIT_NOW);
+    return SUCCEEDED(hr);
+}
+#endif
 
 bool AudioManager::IsPlaying(PlayHandle play) {
     LogScope scope;

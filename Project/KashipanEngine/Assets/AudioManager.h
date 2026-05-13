@@ -9,6 +9,12 @@
 
 #include "Utilities/Passkeys.h"
 
+struct XAUDIO2FX_REVERB_PARAMETERS;
+#if defined(KASHIPANENGINE_ENABLE_XAPOFX)
+struct FXEQ_PARAMETERS;
+struct FXECHO_PARAMETERS;
+#endif
+
 namespace KashipanEngine {
 
 class GameEngine;
@@ -91,6 +97,44 @@ public:
     /// @param pitch ピッチ（半音単位。+1.0f で半音上がる）
     /// @return 成功した場合 true
     static bool SetPitch(PlayHandle play, float pitch);
+
+    /// @brief 再生中の音声にリバーブを設定する
+    /// @param play 再生ハンドル
+    /// @param params リバーブパラメータ
+    /// @return 成功した場合 true
+    static bool SetReverbParameters(PlayHandle play, const ::XAUDIO2FX_REVERB_PARAMETERS& params);
+
+    /// @brief 再生中の音声のリバーブ有効/無効
+    /// @param play 再生ハンドル
+    /// @param enable trueで有効化
+    /// @return 成功した場合 true
+    static bool EnableReverb(PlayHandle play, bool enable);
+
+#if defined(KASHIPANENGINE_ENABLE_XAPOFX)
+    /// @brief 再生中の音声にEQを設定する
+    /// @param play 再生ハンドル
+    /// @param params EQパラメータ
+    /// @return 成功した場合 true
+    static bool SetEqParameters(PlayHandle play, const ::FXEQ_PARAMETERS& params);
+
+    /// @brief 再生中の音声のEQ有効/無効
+    /// @param play 再生ハンドル
+    /// @param enable trueで有効化
+    /// @return 成功した場合 true
+    static bool EnableEq(PlayHandle play, bool enable);
+
+    /// @brief 再生中の音声にDelay(Echo)を設定する
+    /// @param play 再生ハンドル
+    /// @param params Echoパラメータ
+    /// @return 成功した場合 true
+    static bool SetEchoParameters(PlayHandle play, const ::FXECHO_PARAMETERS& params);
+
+    /// @brief 再生中の音声のDelay(Echo)有効/無効
+    /// @param play 再生ハンドル
+    /// @param enable trueで有効化
+    /// @return 成功した場合 true
+    static bool EnableEcho(PlayHandle play, bool enable);
+#endif
 
     /// @brief 再生中かどうか
     static bool IsPlaying(PlayHandle play);

@@ -59,11 +59,6 @@ void TestScene::Initialize() {
         if (auto *mat = obj->GetComponent3D<Material3D>()) {
             mat->SetTexture(TextureManager::GetTextureFromFileName("square_alpha.png"));
         }
-        if (auto *colliderComp = sceneDefaultVariables_ ? sceneDefaultVariables_->GetColliderComp() : nullptr) {
-            if (auto *collider = colliderComp->GetCollider()) {
-                (void)obj->RegisterComponent<PlayerMovementController>(collider);
-            }
-        }
         AddObject3D(std::move(obj));
     }
     {
@@ -119,24 +114,6 @@ void TestScene::Initialize() {
             tr->SetParentTransform(playerRootTr);
             tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
             tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
-        }
-        AddObject3D(std::move(obj));
-    }
-
-    {
-        auto modelHandle = ModelManager::GetModelHandleFromFileName("coin.obj");
-        auto obj = std::make_unique<Model>(modelHandle);
-        obj->SetName("Coin");
-        if (screenBuffer3D) {
-            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        }
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3{0.0f, 2.0f, 0.0f});
-        }
-        if (auto *colliderComp = sceneDefaultVariables_ ? sceneDefaultVariables_->GetColliderComp() : nullptr) {
-            if (auto *collider = colliderComp->GetCollider()) {
-                (void)obj->RegisterComponent<CoinDefined>(collider);
-            }
         }
         AddObject3D(std::move(obj));
     }

@@ -16,11 +16,13 @@ class Material3D : public IObjectComponent3D {
 public:
     struct InstanceData {
         float enableLighting = 1.0f;
+        float enableEnvironmentMapping = 0.0f;
         float enableShadowMapProjection = 1.0f;
         Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
         Matrix4x4 uvTransform = Matrix4x4::Identity();
         float shininess = 32.0f;
         Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+        float environmentCoefficient = 1.0f;
     };
 
     struct UVTransform {
@@ -56,6 +58,13 @@ public:
                 ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gTexture", textureHandle_);
             }
         }
+        if (shaderBinder->GetNameMap().Contains("Pixel:gEnvironmentMap")) {
+            if (environmentTexture_ != nullptr) {
+                ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gEnvironmentMap", *environmentTexture_);
+            } else if (environmentTextureHandle_ != TextureManager::kInvalidHandle) {
+                ok = ok && TextureManager::BindTexture(shaderBinder, "Pixel:gEnvironmentMap", environmentTextureHandle_);
+            }
+        }
         if (shaderBinder->GetNameMap().Contains("Pixel:gSampler")) {
             if (samplerHandle_ != SamplerManager::kInvalidHandle) {
                 ok = ok && SamplerManager::BindSampler(shaderBinder, "Pixel:gSampler", samplerHandle_);
@@ -74,6 +83,8 @@ public:
     std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
         if (!instanceMap) return false;
 
+        instanceData_.enableEnvironmentMapping = (environmentTexture_ != nullptr || environmentTextureHandle_ != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+
         auto *arr = static_cast<InstanceData*>(instanceMap);
         std::memcpy(&arr[instanceIndex], &instanceData_, sizeof(InstanceData));
         return true;
@@ -86,6 +97,15 @@ public:
     void SetTexture(IShaderTexture* texture) {
         texture_ = texture;
         textureHandle_ = TextureManager::kInvalidHandle;
+    }
+
+    void SetEnvironmentTexture(TextureManager::TextureHandle texture) {
+        environmentTexture_ = nullptr;
+        environmentTextureHandle_ = texture;
+    }
+    void SetEnvironmentTexture(IShaderTexture* texture) {
+        environmentTexture_ = texture;
+        environmentTextureHandle_ = TextureManager::kInvalidHandle;
     }
 
     void SetSampler(SamplerManager::SamplerHandle sampler) { samplerHandle_ = sampler; }
@@ -113,6 +133,10 @@ public:
     }
     void SetSpecularColor(const Vector4 &specularColor) {
         instanceData_.specularColor = specularColor;
+        isBufferDirty_ = true;
+    }
+    void SetEnvironmentCoefficient(float coeff) {
+        instanceData_.environmentCoefficient = coeff;
         isBufferDirty_ = true;
     }
 
@@ -161,6 +185,10 @@ public:
             SetSpecularColor(specColor);
         }
 
+        if (ImGui::DragFloat(Translation("engine.imgui.material.environment_coefficient").c_str(), &instanceData_.environmentCoefficient, 0.01f, 0.0f, 1.0f)) {
+            SetEnvironmentCoefficient(instanceData_.environmentCoefficient);
+        }
+
         ImGui::TextUnformatted(Translation("engine.imgui.material.texture_handle").c_str());
         ImGui::SameLine();
         ImGui::Text("%u", static_cast<unsigned>(textureHandle_));
@@ -176,7 +204,9 @@ private:
     InstanceData instanceData_{};
 
     TextureManager::TextureHandle textureHandle_ = TextureManager::kInvalidHandle;
+    TextureManager::TextureHandle environmentTextureHandle_ = TextureManager::kInvalidHandle;
     IShaderTexture* texture_ = nullptr;
+    IShaderTexture* environmentTexture_ = nullptr;
     SamplerManager::SamplerHandle samplerHandle_ = SamplerManager::kInvalidHandle;
 
     bool isBufferDirty_ = true;

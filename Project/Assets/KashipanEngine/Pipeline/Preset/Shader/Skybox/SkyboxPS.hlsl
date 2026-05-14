@@ -3,6 +3,7 @@
 
 struct Material {
 	float enableLighting;
+    float enableEnvironmentMapping;
 	float enableShadowMapProjection;
 	float4 color;
 	float4x4 uvTransform;

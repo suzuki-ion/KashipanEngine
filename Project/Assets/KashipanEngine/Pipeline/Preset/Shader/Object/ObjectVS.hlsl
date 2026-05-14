@@ -8,7 +8,6 @@ struct VSInput {
 #endif
 
 #ifdef Object3D
-#include "../Common/Camera3D.hlsli"
 #include "Object3D.hlsli"
 struct VSInput {
 	float4 position : POSITION0;
@@ -32,6 +31,7 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
 #ifdef Object3D
 	output.normal = normalize(mul(input.normal, (float3x3)world));
 	output.worldPosition = mul(input.position, world).xyz;
+	output.camera = gCamera;
 #endif
 	output.instanceId = instanceId;
 	return output;

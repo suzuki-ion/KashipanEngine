@@ -1,4 +1,3 @@
-#include "../Common/Camera3D.hlsli"
 #include "../Object/Object3D.hlsli"
 
 struct VSInput {

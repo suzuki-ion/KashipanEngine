@@ -28,12 +28,14 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
-        auto sphere = std::make_unique<Sphere>();
+        auto sphere = std::make_unique<Sphere>(512, 1024);
         sphere->SetName("TestSphere");
 
         if (auto *material = sphere->GetComponent3D<Material3D>()) {
             auto texture = TextureManager::GetTextureFromFileName("uvChecker.png");
+            auto envTexture = TextureManager::GetTextureFromFileName("rostock_laage_airport_4k.dds");
             material->SetTexture(texture);
+            material->SetEnvironmentTexture(envTexture);
         }
 
         if (auto *transform = sphere->GetComponent3D<Transform3D>()) {

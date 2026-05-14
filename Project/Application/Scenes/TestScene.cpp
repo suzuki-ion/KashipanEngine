@@ -2,8 +2,6 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 
-#include <array>
-
 namespace KashipanEngine {
 
 TestScene::TestScene()
@@ -11,118 +9,57 @@ TestScene::TestScene()
 
 void TestScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
-    auto *screenBuffer3D = sceneDefaultVariables_->GetScreenBuffer3D();
-    auto *mainCamera3D = sceneDefaultVariables_->GetMainCamera3D();
+    auto *mainCamera3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainCamera3D() : nullptr;
+    auto *screenBuffer3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer3D() : nullptr;
 
-    Transform3D *playerRootTr = nullptr;
-    
-    {
-        auto obj = std::make_unique<Plane3D>();
-        obj->SetName("Ground");
-        obj->SetUniqueBatchKey();
-        if (screenBuffer3D) {
-            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        }
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{32.0f, 32.0f, 32.0f});
-            tr->SetRotate(Vector3{ 1.57079632679f, 0.0f, 0.0f });
-        }
-        if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetEnableLighting(true);
-            mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
-            mat->SetTexture(TextureManager::GetTextureFromFileName("white1x1.png"));
-            mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
-        }
-        AddObject3D(std::move(obj));
-    }
-    {
-        auto obj = std::make_unique<Box>();
-        obj->SetName("PlayerRoot");
-        obj->SetUniqueBatchKey();
-        if (screenBuffer3D) {
-            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        }
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
-            playerRootTr = tr;
-        }
-        if (auto *mat = obj->GetComponent3D<Material3D>()) {
-            mat->SetTexture(TextureManager::GetTextureFromFileName("square_alpha.png"));
-        }
-        AddObject3D(std::move(obj));
-    }
-    {
-        auto modelHandle = ModelManager::GetModelHandleFromFileName("float_Body.obj");
-        auto obj = std::make_unique<Model>(modelHandle);
-        obj->SetName("PlayerBody");
-        if (screenBuffer3D) {
-            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        }
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
-            tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
-        }
-        AddObject3D(std::move(obj));
-    }
-    {
-        auto modelHandle = ModelManager::GetModelHandleFromFileName("float_Head.obj");
-        auto obj = std::make_unique<Model>(modelHandle);
-        obj->SetName("PlayerHead");
-        if (screenBuffer3D) {
-            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        }
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
-            tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
-        }
-        AddObject3D(std::move(obj));
-    }
-    {
-        auto modelHandle = ModelManager::GetModelHandleFromFileName("float_L_arm.obj");
-        auto obj = std::make_unique<Model>(modelHandle);
-        obj->SetName("PlayerArmL");
-        if (screenBuffer3D) {
-            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        }
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
-            tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
-        }
-        AddObject3D(std::move(obj));
-    }
-    {
-        auto modelHandle = ModelManager::GetModelHandleFromFileName("float_R_arm.obj");
-        auto obj = std::make_unique<Model>(modelHandle);
-        obj->SetName("PlayerArmR");
-        if (screenBuffer3D) {
-            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        }
-        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
-            tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
-        }
-        AddObject3D(std::move(obj));
+    AddSceneComponent(std::make_unique<SceneChangeIn>());
+    AddSceneComponent(std::make_unique<SceneChangeOut>());
+    AddSceneComponent(std::make_unique<ParticleManager>());
+
+    if (auto *in = GetSceneComponent<SceneChangeIn>()) {
+        in->Play();
     }
 
     AddSceneComponent(std::make_unique<ParticleManager>());
-    AddSceneComponent(std::make_unique<ModelAnimator>());
     if (mainCamera3D) {
         auto debugCameraMovement = std::make_unique<DebugCameraMovement>(mainCamera3D);
         debugCameraMovement->SetEnable(true);
         AddSceneComponent(std::move(debugCameraMovement));
     }
 
-    AddSceneComponent(std::make_unique<SceneChangeIn>());
-    AddSceneComponent(std::make_unique<SceneChangeOut>());
+    if (screenBuffer3D) {
+        auto sphere = std::make_unique<Sphere>();
+        sphere->SetName("TestSphere");
 
-    if (auto *in = GetSceneComponent<SceneChangeIn>()) {
-        in->Play();
+        if (auto *material = sphere->GetComponent3D<Material3D>()) {
+            auto texture = TextureManager::GetTextureFromFileName("uvChecker.png");
+            material->SetTexture(texture);
+        }
+
+        if (auto *transform = sphere->GetComponent3D<Transform3D>()) {
+            transform->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+            transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+
+        sphere->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(sphere));
+    }
+
+    if (screenBuffer3D) {
+        auto skybox = std::make_unique<Skybox>();
+        skybox->SetName("TestSkybox");
+
+        if (auto *material = skybox->GetComponent3D<Material3D>()) {
+            auto cubemapTexture = TextureManager::GetTextureFromFileName("rostock_laage_airport_4k.dds");
+            material->SetTexture(cubemapTexture);
+        }
+
+        if (auto *transform = skybox->GetComponent3D<Transform3D>()) {
+            transform->SetScale(Vector3(100.0f, 100.0f, 100.0f));
+        }
+
+        skybox->AttachToRenderer(screenBuffer3D, "Skybox.Solid.BlendNormal");
+        AddObject3D(std::move(skybox));
     }
 }
 

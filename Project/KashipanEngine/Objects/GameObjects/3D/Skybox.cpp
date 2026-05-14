@@ -43,11 +43,11 @@ Skybox::Skybox() : Object3DBase("Skybox", sizeof(Vertex), sizeof(Index), 24, 36)
         const Index baseV = static_cast<Index>(f * 4);
         const size_t baseI = f * 6;
         i[baseI + 0] = baseV + 0;
-        i[baseI + 1] = baseV + 1;
-        i[baseI + 2] = baseV + 2;
+        i[baseI + 1] = baseV + 2;
+        i[baseI + 2] = baseV + 1;
         i[baseI + 3] = baseV + 0;
-        i[baseI + 4] = baseV + 2;
-        i[baseI + 5] = baseV + 3;
+        i[baseI + 4] = baseV + 3;
+        i[baseI + 5] = baseV + 2;
     }
 }
 

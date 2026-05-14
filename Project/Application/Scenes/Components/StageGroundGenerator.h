@@ -573,7 +573,7 @@ private:
         const float startZ = spawnGroundCenterZ_;
         float goalZ = -8192.0f;
         if (auto* gpc = GetOwnerContext()->GetComponent<StageGoalPlaneController>()) {
-            goalZ = gpc->GetGoalZ();
+            goalZ = gpc->GetConstGoalZ();
         }
         const float endZ = goalZ;
 
@@ -606,7 +606,7 @@ private:
         const float startZ = spawnGroundCenterZ_;
         float goalZ = -8192.0f;
         if (auto* gpc = GetOwnerContext()->GetComponent<StageGoalPlaneController>()) {
-            goalZ = gpc->GetGoalZ();
+            goalZ = gpc->GetConstGoalZ();
         }
         float stageLengthRate = 1.0f;
         if (editStageLengthData != 0.0f) {

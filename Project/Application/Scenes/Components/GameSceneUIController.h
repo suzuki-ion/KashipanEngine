@@ -157,35 +157,6 @@ public:
         clearTimeText_ = clearTimeText.get();
         (void)ctx->AddObject2D(std::move(clearTimeText));
 
-        /*auto fallDistanceText = std::make_unique<Text>(128);
-        fallDistanceText->SetName("FallDistanceText");
-        fallDistanceText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        fallDistanceText->SetTextFormat("Fall Distance: {0:.2f}", 0.0f);
-        fallDistanceText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = fallDistanceText->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{32.0f, 150.0f, 0.0f});
-        }
-        fallDistanceText_ = fallDistanceText.get();
-        (void)ctx->AddObject2D(std::move(fallDistanceText));*/
-
-        /*auto jumpRemainGaugeBar = std::make_unique<SpriteProressBar>();
-        jumpRemainGaugeBar->SetName("JumpRemainGaugeBar");
-        jumpRemainGaugeBar->SetBarSize(Vector2{160.0f, 16.0f});
-        jumpRemainGaugeBar->SetFrameThickness(4.0f);
-        jumpRemainGaugeBar->SetFrameColor(jumpRemainFrameColorBase_);
-        jumpRemainGaugeBar->SetBackgroundColor(jumpRemainBackgroundColorBase_);
-        jumpRemainGaugeBar->SetBarColor(jumpRemainBarColorBase_);
-        jumpRemainGaugeBar->SetSegmentLineCount(1);
-        jumpRemainGaugeBar->SetSegmentLineColor(jumpRemainSegmentColorBase_);
-        jumpRemainGaugeBar->SetSegmentLineThickness(2.0f);
-        jumpRemainGaugeBar->SetProgress(1.0f);
-        jumpRemainGaugeBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = jumpRemainGaugeBar->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(jumpRemainGaugeBasePosition_);
-        }
-        jumpRemainGaugeBar_ = jumpRemainGaugeBar.get();
-        (void)ctx->AddObject2D(std::move(jumpRemainGaugeBar));*/
-
         auto clearFade = std::make_unique<Sprite>();
         clearFade->SetName("ClearFadeSprite");
         clearFade->SetUniqueBatchKey();
@@ -355,6 +326,67 @@ public:
         }
         gravityDirectionAllowUISprite_ = gravityDirectionAllowUI.get();
         (void)ctx->AddObject2D(std::move(gravityDirectionAllowUI));
+
+        // ゲージの背景
+		auto gageBackImage = std::make_unique<Sprite>();
+		gageBackImage->SetName("GageBackImage");
+		gageBackImage->SetUniqueBatchKey();
+		gageBackImage->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+		if (auto* mat = gageBackImage->GetComponent2D<Material2D>()) {
+			mat->SetTexture(TextureManager::GetTextureFromAssetPath("Application/Image/GageBack.png"));
+			mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+		}
+		if (auto* tr = gageBackImage_->GetComponent2D<Transform2D>()) {
+			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
+			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+		}
+		gageBackImage_ = gageBackImage.get();
+		(void)ctx->AddObject2D(std::move(gageBackImage));
+		// ゲージのプログレスバー
+		auto gageProgressBar = std::make_unique<Sprite>();
+		gageProgressBar->SetName("GageProgressBar");
+		gageProgressBar->SetUniqueBatchKey();
+		gageProgressBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+		if (auto* mat = gageProgressBar->GetComponent2D<Material2D>()) {
+			mat->SetTexture(TextureManager::GetTextureFromAssetPath("Application/Image/GageGage.png"));
+			mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+		}
+		if (auto* tr = gageProgressBar->GetComponent2D<Transform2D>()) {
+			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
+			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+		}
+		gagegageImage_ = gageProgressBar.get();
+		(void)ctx->AddObject2D(std::move(gageProgressBar));
+		// ゲージのフレーム
+		auto gageFrameImage = std::make_unique<Sprite>();
+		gageFrameImage->SetName("GageFrameImage");
+		gageFrameImage->SetUniqueBatchKey();
+		gageFrameImage->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+		if (auto* mat = gageFrameImage->GetComponent2D<Material2D>()) {
+			mat->SetTexture(TextureManager::GetTextureFromAssetPath("Application/Image/GageFront.png"));
+			mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+		}
+		if (auto* tr = gageFrameImage->GetComponent2D<Transform2D>()) {
+			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
+			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+		}
+		gageFrontImage_ = gageFrameImage.get();
+		(void)ctx->AddObject2D(std::move(gageFrameImage));
+        // ゲージの指針
+		auto gageNeedleImage = std::make_unique<Sprite>();
+		gageNeedleImage->SetName("GageNeedleImage");
+		gageNeedleImage->SetUniqueBatchKey();
+		gageNeedleImage->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+		if (auto* mat = gageNeedleImage->GetComponent2D<Material2D>()) {
+			mat->SetTexture(TextureManager::GetTextureFromAssetPath("Application/Image/GagePin.png"));
+			mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+		}
+		if (auto* tr = gageNeedleImage->GetComponent2D<Transform2D>()) {
+			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
+			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+		}
+        gagePointerImage_ = gageNeedleImage.get();
+		(void)ctx->AddObject2D(std::move(gageNeedleImage));
 
         ApplyVisibility();
     }
@@ -1039,6 +1071,12 @@ private:
     Sprite *operationGravityUISprite_ = nullptr;
     Sprite *gravityDirectionAllowUISprite_ = nullptr;
     Sprite *operationFastFallUISprite_ = nullptr;
+
+
+	Sprite* gagegageImage_ = nullptr;
+	Sprite* gageFrontImage_ = nullptr;
+	Sprite* gageBackImage_ = nullptr;
+	Sprite* gagePointerImage_ = nullptr;
 
     int previousTouchedGroundCount_ = 0;
     int landingTouchedGroundCount_ = 0;

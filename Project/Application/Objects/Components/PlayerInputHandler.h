@@ -105,16 +105,26 @@ public:
         if (isGravitySwitching_) {
             UpdateGravitySwitchDirection();
 
-            if (inputCommand_->Evaluate(gravitySwitchReleaseCommand_).Triggered()) {
-                if (requestedGravityDirection_.has_value()) {
-                    gravityChangedByInputThisFrame_ = playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
-                }
+            // If the player presses jump while selecting gravity, cancel the gravity switch
+            // and allow the jump input to be processed normally (do not apply gravity change).
+            if (jumpPressed && !wasJumpPressedPrevFrame_) {
                 isGravitySwitching_ = false;
                 requestedGravityDirection_ = std::nullopt;
                 SetGameSpeed(1.0f);
+                // Do not set wasJumpPressedPrevFrame_ here so the jump will be handled below.
+                // fall through to normal input handling to perform the jump.
+            } else {
+                if (inputCommand_->Evaluate(gravitySwitchReleaseCommand_).Triggered()) {
+                    if (requestedGravityDirection_.has_value()) {
+                        gravityChangedByInputThisFrame_ = playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
+                    }
+                    isGravitySwitching_ = false;
+                    requestedGravityDirection_ = std::nullopt;
+                    SetGameSpeed(1.0f);
+                }
+                wasJumpPressedPrevFrame_ = jumpPressed;
+                return true;
             }
-            wasJumpPressedPrevFrame_ = jumpPressed;
-            return true;
         }
 
         const auto right = inputCommand_->Evaluate(moveRightCommand_);

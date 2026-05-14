@@ -2,6 +2,7 @@
 
 #include <KashipanEngine.h>
 #include "Objects/Components/PlayerMovementController.h"
+#include "Scenes/Components/PauseUIController.h"
 
 #include <cmath>
 #include <optional>
@@ -13,6 +14,7 @@ class PlayerInputHandler final : public IObjectComponent3D {
 public:
     PlayerInputHandler(
         InputCommand *inputCommand,
+        PauseUIController *pauseUIController,
         std::string moveRightCommand,
         std::string moveLeftCommand,
         std::string jumpCommand,
@@ -26,6 +28,7 @@ public:
         std::string rightCommand)
         : IObjectComponent3D("PlayerInputHandler", 1),
           inputCommand_(inputCommand),
+          pauseUIController_(pauseUIController),
           moveRightCommand_(std::move(moveRightCommand)),
           moveLeftCommand_(std::move(moveLeftCommand)),
           jumpCommand_(std::move(jumpCommand)),
@@ -43,6 +46,7 @@ public:
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<PlayerInputHandler>(
             inputCommand_,
+            pauseUIController_,
             moveRightCommand_,
             moveLeftCommand_,
             jumpCommand_,
@@ -54,6 +58,7 @@ public:
             downCommand_,
             leftCommand_,
             rightCommand_);
+        ptr->pauseUIController_ = pauseUIController_;
         ptr->isGravitySwitching_ = isGravitySwitching_;
         ptr->isRearConfirming_ = isRearConfirming_;
         ptr->isFastFalling_ = isFastFalling_;
@@ -72,6 +77,10 @@ public:
 
     std::optional<bool> Update() override {
         if (!inputCommand_ || !playerMovement_) return false;
+        if (pauseUIController_ && pauseUIController_->IsActive()) {
+            // Pause UI がアクティブな場合は入力を処理しない
+            return true;
+        }
 
         gravityChangedByInputThisFrame_ = false;
 
@@ -184,6 +193,7 @@ private:
 
     InputCommand *inputCommand_ = nullptr;
     PlayerMovementController *playerMovement_ = nullptr;
+    PauseUIController *pauseUIController_ = nullptr;
 
     std::string moveRightCommand_;
     std::string moveLeftCommand_;

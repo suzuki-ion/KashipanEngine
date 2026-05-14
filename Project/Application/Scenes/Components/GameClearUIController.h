@@ -167,6 +167,7 @@ public:
         }
 
         isActive_ = true;
+        waitInputElapsed_ = 0.0f;
         selectionIndex_ = 0;
         previousSelectionIndex_ = 0;
         touchedGroundCount_ = touchedGroundCount;
@@ -217,6 +218,11 @@ public:
         updateEntranceAnimation();
         updateLogoBobbing();
         updateOptionSelectionAnimation(std::max(0.0f, GetDeltaTime()));
+
+        if (waitInputElapsed_ < waitInputDuration_) {
+            waitInputElapsed_ += GetDeltaTime();
+            return;
+        }
 
         if (ic->Evaluate("SelectUp").Triggered()) {
             const int old = selectionIndex_;
@@ -433,6 +439,8 @@ private:
     float bobSpeed_ = 6.0f;
     float optionLiftHeight_ = 16.0f;
     float optionAnimDuration_ = 0.25f;
+    const float waitInputDuration_ = 1.0f;
+    float waitInputElapsed_ = 0.0f;
     std::array<float, 3> optionAnimElapsed_{};
     std::array<Vector3, 5> basePositions_{};
     std::array<Vector3, 5> startPositions_{};

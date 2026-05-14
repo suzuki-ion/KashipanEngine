@@ -64,6 +64,12 @@ struct PlayEntry final {
     Microsoft::WRL::ComPtr<IUnknown> reverbEffect;
     Microsoft::WRL::ComPtr<IUnknown> eqEffect;
     Microsoft::WRL::ComPtr<IUnknown> echoEffect;
+    XAUDIO2FX_REVERB_PARAMETERS reverbParams;
+    FXEQ_PARAMETERS eqParams;
+    FXECHO_PARAMETERS echoParams;
+    bool reverbEnabled = false;
+    bool eqEnabled = false;
+    bool echoEnabled = false;
     bool paused = false;
     bool loop = false;
     double startTimeSec = 0.0;
@@ -84,6 +90,9 @@ std::vector<size_t> sFreePlayIndices;
 
 std::unordered_map<PlayHandle, size_t> sPlayHandleToIndex;
 std::unordered_set<PlayHandle> sUsedPlayHandles;
+
+// Currently selected play handle for ImGui effects window
+PlayHandle sSelectedPlayHandle = AudioManager::kInvalidPlayHandle;
 
 std::unordered_set<SoundBeat*> sRegisteredSoundBeats;
 std::unordered_set<AudioPlayer*> sRegisteredAudioPlayers;
@@ -208,6 +217,12 @@ void StopVoice(PlayEntry& p) {
     p.reverbEffect.Reset();
     p.eqEffect.Reset();
     p.echoEffect.Reset();
+    p.reverbParams;
+    p.eqParams;
+    p.echoParams;
+    p.reverbEnabled = false;
+    p.eqEnabled = false;
+    p.echoEnabled = false;
     p.sound = AudioManager::kInvalidSoundHandle;
     p.paused = false;
     p.startTimeSec = 0.0;
@@ -555,6 +570,12 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     playEntry.paused = false;
     playEntry.loop = params.loop;
     playEntry.startTimeSec = startSec;
+    playEntry.reverbParams;
+    playEntry.eqParams;
+    playEntry.echoParams;
+    playEntry.reverbEnabled = false;
+    playEntry.eqEnabled = false;
+    playEntry.echoEnabled = false;
 
     Microsoft::WRL::ComPtr<IUnknown> reverb;
     HRESULT hr = XAudio2CreateReverb(&reverb, 0);
@@ -617,6 +638,10 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
         Log(Translation("engine.audio.play.failed.seteffectchain"), LogSeverity::Error);
         return kInvalidPlayHandle;
     }
+
+    effectVoice->SetEffectParameters(0, &playEntry.reverbParams, sizeof(playEntry.reverbParams));
+    effectVoice->SetEffectParameters(1, &playEntry.eqParams, sizeof(playEntry.eqParams));
+    effectVoice->SetEffectParameters(2, &playEntry.echoParams, sizeof(playEntry.echoParams));
 
     XAUDIO2_SEND_DESCRIPTOR sendDesc{};
     sendDesc.Flags = 0;
@@ -823,6 +848,9 @@ bool AudioManager::SetReverbParameters(PlayHandle play, const XAUDIO2FX_REVERB_P
     if (!p.effectVoice) return false;
 
     HRESULT hr = p.effectVoice->SetEffectParameters(0, &params, sizeof(params));
+    if (SUCCEEDED(hr)) {
+        p.reverbParams = params;
+    }
     return SUCCEEDED(hr);
 }
 
@@ -838,10 +866,12 @@ bool AudioManager::EnableReverb(PlayHandle play, bool enable) {
 
     HRESULT hr = enable ? p.effectVoice->EnableEffect(0, XAUDIO2_COMMIT_NOW)
                         : p.effectVoice->DisableEffect(0, XAUDIO2_COMMIT_NOW);
+    if (SUCCEEDED(hr)) {
+        p.reverbEnabled = enable;
+    }
     return SUCCEEDED(hr);
 }
 
-#if defined(KASHIPANENGINE_ENABLE_XAPOFX)
 bool AudioManager::SetEqParameters(PlayHandle play, const FXEQ_PARAMETERS& params) {
     LogScope scope;
     size_t idx = static_cast<size_t>(-1);
@@ -853,6 +883,9 @@ bool AudioManager::SetEqParameters(PlayHandle play, const FXEQ_PARAMETERS& param
     if (!p.effectVoice) return false;
 
     HRESULT hr = p.effectVoice->SetEffectParameters(1, &params, sizeof(params));
+    if (SUCCEEDED(hr)) {
+        p.eqParams = params;
+    }
     return SUCCEEDED(hr);
 }
 
@@ -868,6 +901,9 @@ bool AudioManager::EnableEq(PlayHandle play, bool enable) {
 
     HRESULT hr = enable ? p.effectVoice->EnableEffect(1, XAUDIO2_COMMIT_NOW)
                         : p.effectVoice->DisableEffect(1, XAUDIO2_COMMIT_NOW);
+    if (SUCCEEDED(hr)) {
+        p.eqEnabled = enable;
+    }
     return SUCCEEDED(hr);
 }
 
@@ -882,6 +918,9 @@ bool AudioManager::SetEchoParameters(PlayHandle play, const FXECHO_PARAMETERS& p
     if (!p.effectVoice) return false;
 
     HRESULT hr = p.effectVoice->SetEffectParameters(2, &params, sizeof(params));
+    if (SUCCEEDED(hr)) {
+        p.echoParams = params;
+    }
     return SUCCEEDED(hr);
 }
 
@@ -897,9 +936,11 @@ bool AudioManager::EnableEcho(PlayHandle play, bool enable) {
 
     HRESULT hr = enable ? p.effectVoice->EnableEffect(2, XAUDIO2_COMMIT_NOW)
                         : p.effectVoice->DisableEffect(2, XAUDIO2_COMMIT_NOW);
+    if (SUCCEEDED(hr)) {
+        p.echoEnabled = enable;
+    }
     return SUCCEEDED(hr);
 }
-#endif
 
 bool AudioManager::IsPlaying(PlayHandle play) {
     LogScope scope;
@@ -1076,9 +1117,10 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
 
     ImGui::Separator();
 
-    if (ImGui::BeginTable("##PlayingList", 8,
+    if (ImGui::BeginTable("##PlayingList", 9,
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
             ImVec2(0, 300))) {
+        ImGui::TableSetupColumn("Select", ImGuiTableColumnFlags_WidthFixed, 70);
         ImGui::TableSetupColumn("PlayHandle", ImGuiTableColumnFlags_WidthFixed, 90);
         ImGui::TableSetupColumn("SoundHandle", ImGuiTableColumnFlags_WidthFixed, 90);
         ImGui::TableSetupColumn("FileName");
@@ -1099,18 +1141,25 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%u", e.playHandle);
+            ImGui::PushID(static_cast<int>(e.playHandle));
+            if (ImGui::Button("Select")) {
+                sSelectedPlayHandle = e.playHandle;
+            }
+            ImGui::PopID();
 
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text("%u", e.soundHandle);
+            ImGui::Text("%u", e.playHandle);
 
             ImGui::TableSetColumnIndex(2);
-            ImGui::TextUnformatted(e.fileName.c_str());
+            ImGui::Text("%u", e.soundHandle);
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::TextUnformatted(e.assetPath.c_str());
+            ImGui::TextUnformatted(e.fileName.c_str());
 
             ImGui::TableSetColumnIndex(4);
+            ImGui::TextUnformatted(e.assetPath.c_str());
+
+            ImGui::TableSetColumnIndex(5);
             if (e.isPaused) {
                 ImGui::TextUnformatted("Paused");
             } else if (e.isPlaying) {
@@ -1121,17 +1170,17 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
 
             ImGui::PushID(static_cast<int>(e.playHandle));
 
-            ImGui::TableSetColumnIndex(5);
+            ImGui::TableSetColumnIndex(6);
             if (ImGui::Button("Stop")) {
                 Stop(e.playHandle);
             }
 
-            ImGui::TableSetColumnIndex(6);
+            ImGui::TableSetColumnIndex(7);
             if (ImGui::Button("Pause")) {
                 Pause(e.playHandle);
             }
 
-            ImGui::TableSetColumnIndex(7);
+            ImGui::TableSetColumnIndex(8);
             if (ImGui::Button("Resume")) {
                 Resume(e.playHandle);
             }
@@ -1140,6 +1189,265 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
         }
 
         ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+#endif
+
+#if defined(USE_IMGUI)
+void AudioManager::ShowImGuiEffectWindow() {
+    ImGui::Begin("AudioManager - Effects");
+
+    if (sSelectedPlayHandle == kInvalidPlayHandle) {
+        ImGui::TextUnformatted("No play selected. Select a play in 'Playing Sounds' window.");
+        ImGui::End();
+        return;
+    }
+
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(sSelectedPlayHandle, idx) || idx >= sPlays.size() || !sPlays[idx]) {
+        ImGui::TextUnformatted("Selected play is not available.");
+        if (ImGui::Button("Clear Selection")) {
+            sSelectedPlayHandle = kInvalidPlayHandle;
+        }
+        ImGui::End();
+        return;
+    }
+
+    PlayEntry& p = *sPlays[idx];
+
+    ImGui::Text("Play: %u  Sound: %u", sSelectedPlayHandle, p.sound);
+    const char* items[] = { "Reverb", "EQ", "Echo" };
+    static int currentEffect = 0;
+    ImGui::Combo("Effect", &currentEffect, items, IM_ARRAYSIZE(items));
+
+    // Enabled toggle
+    if (currentEffect == 0) {
+        bool enabled = p.reverbEnabled;
+        if (ImGui::Checkbox("Enabled", &enabled)) {
+            EnableReverb(sSelectedPlayHandle, enabled);
+        }
+    } else if (currentEffect == 1) {
+        bool enabled = p.eqEnabled;
+        if (ImGui::Checkbox("Enabled", &enabled)) {
+            EnableEq(sSelectedPlayHandle, enabled);
+        }
+    } else if (currentEffect == 2) {
+        bool enabled = p.echoEnabled;
+        if (ImGui::Checkbox("Enabled", &enabled)) {
+            EnableEcho(sSelectedPlayHandle, enabled);
+        }
+    }
+
+    ImGui::Separator();
+
+    // Generic parameter editor: treat parameter structs as float arrays and allow editing first few floats.
+    // Use typed persistent edit copies per-play so UI widgets map to real member names and persist across frames.
+    struct ReverbEdit {
+        float WetDryMix;
+        int ReflectionsDelay;
+        int ReverbDelay;
+        int RearDelay;
+        int PositionLeft;
+        int PositionRight;
+        int PositionMatrixLeft;
+        int PositionMatrixRight;
+        int EarlyDiffusion;
+        int LateDiffusion;
+        int LowEQGain;
+        int LowEQCutoff;
+        int HighEQGain;
+        int HighEQCutoff;
+        float RoomFilterFreq;
+        float RoomFilterMain;
+        float RoomFilterHF;
+        float ReflectionsGain;
+        float ReverbGain;
+        float DecayTime;
+        float Density;
+        float RoomSize;
+        bool DisableLateField;
+    };
+
+    struct EqEdit {
+        float FrequencyCenter0; float Gain0; float Bandwidth0;
+        float FrequencyCenter1; float Gain1; float Bandwidth1;
+        float FrequencyCenter2; float Gain2; float Bandwidth2;
+        float FrequencyCenter3; float Gain3; float Bandwidth3;
+    };
+
+    struct EchoEdit {
+        float WetDryMix;
+        float Feedback;
+        float Delay;
+    };
+
+    static std::unordered_map<PlayHandle, ReverbEdit> sReverbEdits;
+    static std::unordered_map<PlayHandle, EqEdit> sEqEdits;
+    static std::unordered_map<PlayHandle, EchoEdit> sEchoEdits;
+
+    if (currentEffect == 0) {
+        // Ensure edit exists
+        auto it = sReverbEdits.find(sSelectedPlayHandle);
+        if (it == sReverbEdits.end()) {
+            ReverbEdit ed{};
+            ed.WetDryMix = p.reverbParams.WetDryMix;
+            ed.ReflectionsDelay = static_cast<int>(p.reverbParams.ReflectionsDelay);
+            ed.ReverbDelay = static_cast<int>(p.reverbParams.ReverbDelay);
+            ed.RearDelay = static_cast<int>(p.reverbParams.RearDelay);
+#if defined(XAUDIO2FX_REVERB_MIN_7POINT1_SIDE_DELAY)
+            // SideDelay exists on newer SDKs
+            // We'll ignore SideDelay here (not exposed)
+#endif
+            ed.PositionLeft = static_cast<int>(p.reverbParams.PositionLeft);
+            ed.PositionRight = static_cast<int>(p.reverbParams.PositionRight);
+            ed.PositionMatrixLeft = static_cast<int>(p.reverbParams.PositionMatrixLeft);
+            ed.PositionMatrixRight = static_cast<int>(p.reverbParams.PositionMatrixRight);
+            ed.EarlyDiffusion = static_cast<int>(p.reverbParams.EarlyDiffusion);
+            ed.LateDiffusion = static_cast<int>(p.reverbParams.LateDiffusion);
+            ed.LowEQGain = static_cast<int>(p.reverbParams.LowEQGain);
+            ed.LowEQCutoff = static_cast<int>(p.reverbParams.LowEQCutoff);
+            ed.HighEQGain = static_cast<int>(p.reverbParams.HighEQGain);
+            ed.HighEQCutoff = static_cast<int>(p.reverbParams.HighEQCutoff);
+            ed.RoomFilterFreq = p.reverbParams.RoomFilterFreq;
+            ed.RoomFilterMain = p.reverbParams.RoomFilterMain;
+            ed.RoomFilterHF = p.reverbParams.RoomFilterHF;
+            ed.ReflectionsGain = p.reverbParams.ReflectionsGain;
+            ed.ReverbGain = p.reverbParams.ReverbGain;
+            ed.DecayTime = p.reverbParams.DecayTime;
+            ed.Density = p.reverbParams.Density;
+            ed.RoomSize = p.reverbParams.RoomSize;
+            ed.DisableLateField = (p.reverbParams.DisableLateField != FALSE);
+            it = sReverbEdits.emplace(sSelectedPlayHandle, std::move(ed)).first;
+        }
+
+        ReverbEdit& ed = it->second;
+
+        ImGui::DragFloat("WetDryMix", &ed.WetDryMix, 0.1f, 0.0f, 100.0f);
+        ImGui::DragInt("ReflectionsDelay (ms)", &ed.ReflectionsDelay, 1, 0, 300);
+        ImGui::DragInt("ReverbDelay (ms)", &ed.ReverbDelay, 1, 0, 85);
+        ImGui::DragInt("RearDelay (ms)", &ed.RearDelay, 1, 0, 20);
+        ImGui::DragInt("PositionLeft", &ed.PositionLeft, 1, 0, 30);
+        ImGui::DragInt("PositionRight", &ed.PositionRight, 1, 0, 30);
+        ImGui::DragInt("PositionMatrixLeft", &ed.PositionMatrixLeft, 1, 0, 30);
+        ImGui::DragInt("PositionMatrixRight", &ed.PositionMatrixRight, 1, 0, 30);
+        ImGui::DragInt("EarlyDiffusion", &ed.EarlyDiffusion, 1, 0, 15);
+        ImGui::DragInt("LateDiffusion", &ed.LateDiffusion, 1, 0, 15);
+        ImGui::DragInt("LowEQGain", &ed.LowEQGain, 1, 0, 12);
+        ImGui::DragInt("LowEQCutoff", &ed.LowEQCutoff, 1, 0, 9);
+        ImGui::DragInt("HighEQGain", &ed.HighEQGain, 1, 0, 8);
+        ImGui::DragInt("HighEQCutoff", &ed.HighEQCutoff, 1, 0, 14);
+        ImGui::DragFloat("RoomFilterFreq", &ed.RoomFilterFreq, 1.0f, 20.0f, 20000.0f);
+        ImGui::DragFloat("RoomFilterMain (dB)", &ed.RoomFilterMain, 0.1f, -100.0f, 0.0f);
+        ImGui::DragFloat("RoomFilterHF (dB)", &ed.RoomFilterHF, 0.1f, -100.0f, 0.0f);
+        ImGui::DragFloat("ReflectionsGain (dB)", &ed.ReflectionsGain, 0.1f, -100.0f, 20.0f);
+        ImGui::DragFloat("ReverbGain (dB)", &ed.ReverbGain, 0.1f, -100.0f, 20.0f);
+        ImGui::DragFloat("DecayTime (s)", &ed.DecayTime, 0.01f, 0.1f, 10.0f);
+        ImGui::DragFloat("Density", &ed.Density, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("RoomSize (ft)", &ed.RoomSize, 0.1f, 1.0f, 100.0f);
+        ImGui::Checkbox("DisableLateField", &ed.DisableLateField);
+
+        if (ImGui::Button("Apply")) {
+            XAUDIO2FX_REVERB_PARAMETERS newParams = p.reverbParams;
+            newParams.WetDryMix = ed.WetDryMix;
+            newParams.ReflectionsDelay = static_cast<UINT32>(std::clamp(ed.ReflectionsDelay, 0, 300));
+            newParams.ReverbDelay = static_cast<BYTE>(std::clamp(ed.ReverbDelay, 0, 85));
+            newParams.RearDelay = static_cast<BYTE>(std::clamp(ed.RearDelay, 0, 20));
+            newParams.PositionLeft = static_cast<BYTE>(std::clamp(ed.PositionLeft, 0, 30));
+            newParams.PositionRight = static_cast<BYTE>(std::clamp(ed.PositionRight, 0, 30));
+            newParams.PositionMatrixLeft = static_cast<BYTE>(std::clamp(ed.PositionMatrixLeft, 0, 30));
+            newParams.PositionMatrixRight = static_cast<BYTE>(std::clamp(ed.PositionMatrixRight, 0, 30));
+            newParams.EarlyDiffusion = static_cast<BYTE>(std::clamp(ed.EarlyDiffusion, 0, 15));
+            newParams.LateDiffusion = static_cast<BYTE>(std::clamp(ed.LateDiffusion, 0, 15));
+            newParams.LowEQGain = static_cast<BYTE>(std::clamp(ed.LowEQGain, 0, 12));
+            newParams.LowEQCutoff = static_cast<BYTE>(std::clamp(ed.LowEQCutoff, 0, 9));
+            newParams.HighEQGain = static_cast<BYTE>(std::clamp(ed.HighEQGain, 0, 8));
+            newParams.HighEQCutoff = static_cast<BYTE>(std::clamp(ed.HighEQCutoff, 0, 14));
+            newParams.RoomFilterFreq = ed.RoomFilterFreq;
+            newParams.RoomFilterMain = ed.RoomFilterMain;
+            newParams.RoomFilterHF = ed.RoomFilterHF;
+            newParams.ReflectionsGain = ed.ReflectionsGain;
+            newParams.ReverbGain = ed.ReverbGain;
+            newParams.DecayTime = ed.DecayTime;
+            newParams.Density = ed.Density;
+            newParams.RoomSize = ed.RoomSize;
+            newParams.DisableLateField = ed.DisableLateField ? TRUE : FALSE;
+
+            SetReverbParameters(sSelectedPlayHandle, newParams);
+        }
+
+    } else if (currentEffect == 1) {
+        auto it = sEqEdits.find(sSelectedPlayHandle);
+        if (it == sEqEdits.end()) {
+            EqEdit ed{};
+            ed.FrequencyCenter0 = p.eqParams.FrequencyCenter0;
+            ed.Gain0 = p.eqParams.Gain0;
+            ed.Bandwidth0 = p.eqParams.Bandwidth0;
+            ed.FrequencyCenter1 = p.eqParams.FrequencyCenter1;
+            ed.Gain1 = p.eqParams.Gain1;
+            ed.Bandwidth1 = p.eqParams.Bandwidth1;
+            ed.FrequencyCenter2 = p.eqParams.FrequencyCenter2;
+            ed.Gain2 = p.eqParams.Gain2;
+            ed.Bandwidth2 = p.eqParams.Bandwidth2;
+            ed.FrequencyCenter3 = p.eqParams.FrequencyCenter3;
+            ed.Gain3 = p.eqParams.Gain3;
+            ed.Bandwidth3 = p.eqParams.Bandwidth3;
+            it = sEqEdits.emplace(sSelectedPlayHandle, std::move(ed)).first;
+        }
+
+        EqEdit& ed = it->second;
+        ImGui::DragFloat("FrequencyCenter0 (Hz)", &ed.FrequencyCenter0, 1.0f, 20.0f, 20000.0f);
+        ImGui::DragFloat("Gain0", &ed.Gain0, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+        ImGui::DragFloat("Bandwidth0", &ed.Bandwidth0, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+        ImGui::Separator();
+        ImGui::DragFloat("FrequencyCenter1 (Hz)", &ed.FrequencyCenter1, 1.0f, 20.0f, 20000.0f);
+        ImGui::DragFloat("Gain1", &ed.Gain1, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+        ImGui::DragFloat("Bandwidth1", &ed.Bandwidth1, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+        ImGui::Separator();
+        ImGui::DragFloat("FrequencyCenter2 (Hz)", &ed.FrequencyCenter2, 1.0f, 20.0f, 20000.0f);
+        ImGui::DragFloat("Gain2", &ed.Gain2, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+        ImGui::DragFloat("Bandwidth2", &ed.Bandwidth2, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+        ImGui::Separator();
+        ImGui::DragFloat("FrequencyCenter3 (Hz)", &ed.FrequencyCenter3, 1.0f, 20.0f, 20000.0f);
+        ImGui::DragFloat("Gain3", &ed.Gain3, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+        ImGui::DragFloat("Bandwidth3", &ed.Bandwidth3, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+
+        if (ImGui::Button("Apply")) {
+            FXEQ_PARAMETERS newParams;
+            newParams.FrequencyCenter0 = ed.FrequencyCenter0; newParams.Gain0 = ed.Gain0; newParams.Bandwidth0 = ed.Bandwidth0;
+            newParams.FrequencyCenter1 = ed.FrequencyCenter1; newParams.Gain1 = ed.Gain1; newParams.Bandwidth1 = ed.Bandwidth1;
+            newParams.FrequencyCenter2 = ed.FrequencyCenter2; newParams.Gain2 = ed.Gain2; newParams.Bandwidth2 = ed.Bandwidth2;
+            newParams.FrequencyCenter3 = ed.FrequencyCenter3; newParams.Gain3 = ed.Gain3; newParams.Bandwidth3 = ed.Bandwidth3;
+            SetEqParameters(sSelectedPlayHandle, newParams);
+        }
+
+    } else if (currentEffect == 2) {
+        auto it = sEchoEdits.find(sSelectedPlayHandle);
+        if (it == sEchoEdits.end()) {
+            EchoEdit ed{};
+            ed.WetDryMix = p.echoParams.WetDryMix;
+            ed.Feedback = p.echoParams.Feedback;
+            ed.Delay = p.echoParams.Delay;
+            it = sEchoEdits.emplace(sSelectedPlayHandle, std::move(ed)).first;
+        }
+
+        EchoEdit& ed = it->second;
+        ImGui::DragFloat("WetDryMix", &ed.WetDryMix, 0.01f, FXECHO_MIN_WETDRYMIX, FXECHO_MAX_WETDRYMIX);
+        ImGui::DragFloat("Feedback", &ed.Feedback, 0.01f, FXECHO_MIN_FEEDBACK, FXECHO_MAX_FEEDBACK);
+        ImGui::DragFloat("Delay (ms)", &ed.Delay, 1.0f, FXECHO_MIN_DELAY, FXECHO_MAX_DELAY);
+
+        if (ImGui::Button("Apply")) {
+            FXECHO_PARAMETERS newParams;
+            newParams.WetDryMix = ed.WetDryMix;
+            newParams.Feedback = ed.Feedback;
+            newParams.Delay = ed.Delay;
+            SetEchoParameters(sSelectedPlayHandle, newParams);
+        }
+    }
+
+    if (ImGui::Button("Clear Selection")) {
+        sSelectedPlayHandle = kInvalidPlayHandle;
     }
 
     ImGui::End();

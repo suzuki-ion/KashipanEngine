@@ -36,12 +36,12 @@ public:
 
         if (radialBlur_) {
             auto p = radialBlur_->GetParams();
-            p.intensity = minIntensity_ + (maxIntensity_ - minIntensity_) * t;
+            p.intensity = Lerp(minIntensity_, maxIntensity_, t);
             radialBlur_->SetParams(p);
         }
 
         const float targetVignette = (inputHandler && inputHandler->IsGravitySwitching()) ? 0.5f : 0.0f;
-        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        const float dt = std::max(0.0f, GetDeltaTime());
         vignetteIntensity_ += (targetVignette - vignetteIntensity_) * std::clamp(vignetteLerpSpeed_ * dt * 60.0f, 0.0f, 1.0f);
 
         if (vignette_) {
@@ -64,6 +64,11 @@ private:
     float maxIntensity_ = 1.0f;
     float vignetteIntensity_ = 0.0f;
     float vignetteLerpSpeed_ = 0.15f;
+
+    float gravitySwitchVignetteIntensity_ = 0.5f;
+    float gravitySwitchVignetteLerpSpeed_ = 0.15f;
+    float gravitySwitchRadialBlurIntensity_ = 0.75f;
+    float gravitySwitchRadialBlurLerpSpeed_ = 0.15f;
 };
 
 } // namespace KashipanEngine

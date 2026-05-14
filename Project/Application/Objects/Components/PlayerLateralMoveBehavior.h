@@ -58,9 +58,9 @@ public:
 private:
     Vector3 lateralVelocity_{0.0f, 0.0f, 0.0f};
     float lateralInput_ = 0.0f;
-    float lateralMaxSpeed_ = 32.0f;
+    float lateralMaxSpeed_ = 64.0f;
     float lateralAcceleration_ = 4.0f;
-    float lateralSpeedPerForward_ = 1.0f;
+    float lateralSpeedPerForward_ = 0.5f;
 };
 
 } // namespace KashipanEngine

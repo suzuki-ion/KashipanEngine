@@ -327,6 +327,16 @@ public:
         gravityDirectionAllowUISprite_ = gravityDirectionAllowUI.get();
         (void)ctx->AddObject2D(std::move(gravityDirectionAllowUI));
 
+        // ゲージアンカー
+        auto gageAnc = std::make_unique<Sprite>();
+        gageAnc->SetName("GageAnchor");
+		gageAnc->SetUniqueBatchKey();
+		gageAnchor_ = gageAnc.get();
+        if (auto* tr = gageAnc->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{ -750.0f, -350.0f, 0.0f });
+        }
+		(void)ctx->AddObject2D(std::move(gageAnc));
+
         // ゲージの背景
 		auto gageBackImage = std::make_unique<Sprite>();
 		gageBackImage->SetName("GageBackImage");
@@ -336,9 +346,10 @@ public:
 			mat->SetTexture(TextureManager::GetTextureFromAssetPath("Application/Image/GageBack.png"));
 			mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 1.0f });
 		}
-		if (auto* tr = gageBackImage_->GetComponent2D<Transform2D>()) {
+		if (auto* tr = gageBackImage->GetComponent2D<Transform2D>()) {
 			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
 			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+			tr->SetParentTransform(gageAnchor_->GetComponent2D<Transform2D>());
 		}
 		gageBackImage_ = gageBackImage.get();
 		(void)ctx->AddObject2D(std::move(gageBackImage));
@@ -354,6 +365,7 @@ public:
 		if (auto* tr = gageProgressBar->GetComponent2D<Transform2D>()) {
 			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
 			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+			tr->SetParentTransform(gageAnchor_->GetComponent2D<Transform2D>());
 		}
 		gagegageImage_ = gageProgressBar.get();
 		(void)ctx->AddObject2D(std::move(gageProgressBar));
@@ -369,6 +381,7 @@ public:
 		if (auto* tr = gageFrameImage->GetComponent2D<Transform2D>()) {
 			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
 			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+            tr->SetParentTransform(gageAnchor_->GetComponent2D<Transform2D>());
 		}
 		gageFrontImage_ = gageFrameImage.get();
 		(void)ctx->AddObject2D(std::move(gageFrameImage));
@@ -384,6 +397,7 @@ public:
 		if (auto* tr = gageNeedleImage->GetComponent2D<Transform2D>()) {
 			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
 			tr->SetScale(Vector3{ 256.0f, 256.0f, 1.0f });
+            tr->SetParentTransform(gageAnchor_->GetComponent2D<Transform2D>());
 		}
         gagePointerImage_ = gageNeedleImage.get();
 		(void)ctx->AddObject2D(std::move(gageNeedleImage));
@@ -392,6 +406,8 @@ public:
     }
 
     void Update() override {
+		timer_ += GetDeltaTime() * GetGameSpeed();
+
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
 
@@ -586,7 +602,7 @@ public:
             landingPopupRequestTimer_ = 0.0f;
         }
 
-        if (forwardSpeedBar_ && playerMovementController_) {
+        if (forwardSpeedBar_ && gagePointerImage_ && gagegageImage_ && playerMovementController_) {
             const float speed = playerMovementController_->GetForwardSpeed();
             const float minSpeed = playerMovementController_->GetMinForwardSpeed();
             const float maxSpeed = playerMovementController_->GetMaxForwardSpeed();
@@ -595,6 +611,29 @@ public:
             forwardSpeedBar_->SetProgress(progress);
             if (forwardSpeedText_) {
                 forwardSpeedText_->SetTextFormat("Speed: {0:.2f}", speed);
+            }
+
+			// ゲージの指針の回転
+			float needleAngle = std::lerp(0.0f, 3.14f * 0.6f, progress);
+            if (auto* tr = gagePointerImage_->GetComponent2D<Transform2D>()) {
+                // ちょっと揺らす
+				float pinAngle = needleAngle;
+                if (progress >= 0.95f) {
+                    pinAngle += std::sin(timer_ * 80.0f) * 0.1f;
+                }
+				tr->SetRotate(Vector3{ 0.0f, 0.0f, pinAngle });
+            }
+			// ゲージのプログレスバーの表示範囲の調整
+            if (auto* tr = gagegageImage_->GetComponent2D<Transform2D>()) {
+                tr->SetRotate(Vector3{ 0.0f, 0.0f, needleAngle });
+                
+
+            }
+            if (auto* mat = gagegageImage_->GetComponent2D<Material2D>()) {
+                float r = std::lerp(1.0f, 0.0f, progress); // Rは1.0のまま
+                float g = std::lerp(0.0f, 1.0f, progress); // Gは1.0から0.0に減少
+                float b = std::lerp(0.0f, 0.0f, progress); // Bも1.0から0.0に減少
+                mat->SetColor(Vector4{ r, g, b, 1.0f });
             }
         }
 
@@ -1072,11 +1111,13 @@ private:
     Sprite *gravityDirectionAllowUISprite_ = nullptr;
     Sprite *operationFastFallUISprite_ = nullptr;
 
-
+    Sprite* gageAnchor_ = nullptr;
 	Sprite* gagegageImage_ = nullptr;
 	Sprite* gageFrontImage_ = nullptr;
 	Sprite* gageBackImage_ = nullptr;
 	Sprite* gagePointerImage_ = nullptr;
+
+	float timer_ = 0.0f;
 
     int previousTouchedGroundCount_ = 0;
     int landingTouchedGroundCount_ = 0;

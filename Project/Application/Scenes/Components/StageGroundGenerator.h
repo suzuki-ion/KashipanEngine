@@ -638,7 +638,7 @@ private:
     float editStageLengthData = 100.0f;
     float panelThickness_ = 2.0f;
     float spawnGroundCenterX_ = 0.0f;
-    float spawnGroundCenterY_ = -panelThickness_;
+    float spawnGroundCenterY_ = -16.0f;
     float spawnGroundCenterZ_ = -2.0f;
     float spawnGroundWidth_ = 16.0f;
     float spawnGroundDepth_ = 256.0f;

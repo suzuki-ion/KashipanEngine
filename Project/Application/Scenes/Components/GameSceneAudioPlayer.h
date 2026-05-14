@@ -2,6 +2,7 @@
 #pragma once
 
 #include <KashipanEngine.h>
+#include <xapofx.h>
 
 #include "Scenes/GameScene.h"
 #include "Scenes/Components/GameOverUIController.h"
@@ -112,6 +113,7 @@ public:
             }
         }
 
+        bool gravitySwitching = false;
         if (inputCommand && playerMovement_) {
             const bool isAnyBlockingUiActive =
                 (gameOverUIController_ && gameOverUIController_->IsActive()) ||
@@ -140,7 +142,7 @@ public:
         }
 
         if (playerInputHandler_) {
-            const bool gravitySwitching = playerInputHandler_->IsGravitySwitching();
+            gravitySwitching = playerInputHandler_->IsGravitySwitching();
             if (gravitySwitching && !prevGravitySwitching_) {
                 PlaySE(gravityModeEnterSeSoundHandle_);
             }
@@ -195,6 +197,29 @@ public:
             }
             prevCleared_ = currentCleared;
         }
+
+        // Apply EQ to BGM while gravity switching
+        if (bgmPlayHandle_ != AudioManager::kInvalidPlayHandle) {
+            if (gravitySwitching) {
+                if (!bgmEqEnabled_) {
+                    FXEQ_PARAMETERS eqParams{};
+                    // Keep low bands neutral, attenuate higher bands to give a muffled sound
+                    eqParams.FrequencyCenter0 = 100.0f; eqParams.Gain0 = 1.0f; eqParams.Bandwidth0 = 1.0f;
+                    eqParams.FrequencyCenter1 = 800.0f; eqParams.Gain1 = 1.0f; eqParams.Bandwidth1 = 1.0f;
+                    eqParams.FrequencyCenter2 = 2000.0f; eqParams.Gain2 = 0.45f; eqParams.Bandwidth2 = 1.0f;
+                    eqParams.FrequencyCenter3 = 10000.0f; eqParams.Gain3 = 0.35f; eqParams.Bandwidth3 = 1.0f;
+
+                    AudioManager::SetEqParameters(bgmPlayHandle_, eqParams);
+                    AudioManager::EnableEq(bgmPlayHandle_, true);
+                    bgmEqEnabled_ = true;
+                }
+            } else {
+                if (bgmEqEnabled_) {
+                    AudioManager::EnableEq(bgmPlayHandle_, false);
+                    bgmEqEnabled_ = false;
+                }
+            }
+        }
     }
 
 private:
@@ -229,6 +254,7 @@ private:
     AudioManager::SoundHandle pauseUiSubmitSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
 
     AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
+    bool bgmEqEnabled_ = false;
 
     bool prevGravitySwitching_ = false;
     bool prevJumpPressed_ = false;

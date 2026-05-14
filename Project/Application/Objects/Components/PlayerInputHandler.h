@@ -2,6 +2,7 @@
 
 #include <KashipanEngine.h>
 #include "Objects/Components/PlayerMovementController.h"
+#include "Scenes/Components/PauseUIController.h"
 
 #include <cmath>
 #include <optional>
@@ -13,6 +14,7 @@ class PlayerInputHandler final : public IObjectComponent3D {
 public:
     PlayerInputHandler(
         InputCommand *inputCommand,
+        PauseUIController *pauseUIController,
         std::string moveRightCommand,
         std::string moveLeftCommand,
         std::string jumpCommand,
@@ -26,6 +28,7 @@ public:
         std::string rightCommand)
         : IObjectComponent3D("PlayerInputHandler", 1),
           inputCommand_(inputCommand),
+          pauseUIController_(pauseUIController),
           moveRightCommand_(std::move(moveRightCommand)),
           moveLeftCommand_(std::move(moveLeftCommand)),
           jumpCommand_(std::move(jumpCommand)),
@@ -43,6 +46,7 @@ public:
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<PlayerInputHandler>(
             inputCommand_,
+            pauseUIController_,
             moveRightCommand_,
             moveLeftCommand_,
             jumpCommand_,
@@ -54,6 +58,7 @@ public:
             downCommand_,
             leftCommand_,
             rightCommand_);
+        ptr->pauseUIController_ = pauseUIController_;
         ptr->isGravitySwitching_ = isGravitySwitching_;
         ptr->isRearConfirming_ = isRearConfirming_;
         ptr->isFastFalling_ = isFastFalling_;
@@ -72,6 +77,10 @@ public:
 
     std::optional<bool> Update() override {
         if (!inputCommand_ || !playerMovement_) return false;
+        if (pauseUIController_ && pauseUIController_->IsActive()) {
+            // Pause UI がアクティブな場合は入力を処理しない
+            return true;
+        }
 
         gravityChangedByInputThisFrame_ = false;
 
@@ -96,16 +105,26 @@ public:
         if (isGravitySwitching_) {
             UpdateGravitySwitchDirection();
 
-            if (inputCommand_->Evaluate(gravitySwitchReleaseCommand_).Triggered()) {
-                if (requestedGravityDirection_.has_value()) {
-                    gravityChangedByInputThisFrame_ = playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
-                }
+            // If the player presses jump while selecting gravity, cancel the gravity switch
+            // and allow the jump input to be processed normally (do not apply gravity change).
+            if (jumpPressed && !wasJumpPressedPrevFrame_) {
                 isGravitySwitching_ = false;
                 requestedGravityDirection_ = std::nullopt;
                 SetGameSpeed(1.0f);
+                // Do not set wasJumpPressedPrevFrame_ here so the jump will be handled below.
+                // fall through to normal input handling to perform the jump.
+            } else {
+                if (inputCommand_->Evaluate(gravitySwitchReleaseCommand_).Triggered()) {
+                    if (requestedGravityDirection_.has_value()) {
+                        gravityChangedByInputThisFrame_ = playerMovement_->TryUseGravityGaugeAndSetGravityDirection(*requestedGravityDirection_);
+                    }
+                    isGravitySwitching_ = false;
+                    requestedGravityDirection_ = std::nullopt;
+                    SetGameSpeed(1.0f);
+                }
+                wasJumpPressedPrevFrame_ = jumpPressed;
+                return true;
             }
-            wasJumpPressedPrevFrame_ = jumpPressed;
-            return true;
         }
 
         const auto right = inputCommand_->Evaluate(moveRightCommand_);
@@ -184,6 +203,7 @@ private:
 
     InputCommand *inputCommand_ = nullptr;
     PlayerMovementController *playerMovement_ = nullptr;
+    PauseUIController *pauseUIController_ = nullptr;
 
     std::string moveRightCommand_;
     std::string moveLeftCommand_;

@@ -136,6 +136,7 @@ void GameScene::Initialize() {
             player->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
             player->RegisterComponent<PlayerInputHandler>(
                 GetInputCommand(),
+                pauseUIController_,
                 "PlayerMoveRight",
                 "PlayerMoveLeft",
                 "PlayerJump",
@@ -273,6 +274,7 @@ void GameScene::OnUpdate() {
         if (canPause && !modalVisible && ic->Evaluate("Pause").Triggered()) {
             if (pauseUIController_) {
                 pauseUIController_->Activate();
+                AddSceneVariable("IsPaused", true);
             }
         }
     }

@@ -36,23 +36,47 @@ public:
 
         if (radialBlur_) {
             auto p = radialBlur_->GetParams();
-            p.intensity = minIntensity_ + (maxIntensity_ - minIntensity_) * t;
+            p.intensity = Lerp(minIntensity_, maxIntensity_, t);
             radialBlur_->SetParams(p);
         }
 
-        const float targetVignette = (inputHandler && inputHandler->IsGravitySwitching()) ? 0.5f : 0.0f;
-        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        const bool gravitySwitching = (inputHandler && inputHandler->IsGravitySwitching());
+
+        const float targetVignette = gravitySwitching ? gravitySwitchVignetteIntensity_ : 0.0f;
+        const float dt = std::max(0.0f, GetDeltaTime());
         vignetteIntensity_ += (targetVignette - vignetteIntensity_) * std::clamp(vignetteLerpSpeed_ * dt * 60.0f, 0.0f, 1.0f);
 
         if (vignette_) {
             auto v = vignette_->GetParams();
-            v.intensity = std::clamp(vignetteIntensity_, 0.0f, 0.5f);
+            v.intensity = std::clamp(vignetteIntensity_, 0.0f, 1.0f);
             vignette_->SetParams(v);
+        }
+
+        // Apply gravity-switch radial blur intensity override
+        if (radialBlur_) {
+            auto p = radialBlur_->GetParams();
+            const float targetRadial = gravitySwitching ? gravitySwitchRadialBlurIntensity_ : Lerp(minIntensity_, maxIntensity_, t);
+            p.intensity = std::clamp(targetRadial, 0.0f, 1.0f);
+            radialBlur_->SetParams(p);
         }
     }
 
 #if defined(USE_IMGUI)
-    void ShowImGui() override {}
+    void ShowImGui() override {
+        ImGui::Begin("PostEffectToPlayerSync");
+
+        ImGui::Text("Vignette (gravity switch)");
+        ImGui::SliderFloat("Vignette Intensity", &gravitySwitchVignetteIntensity_, 0.0f, 1.0f);
+        ImGui::SliderFloat("Vignette Lerp Speed", &gravitySwitchVignetteLerpSpeed_, 0.0f, 1.0f);
+
+        ImGui::Separator();
+
+        ImGui::Text("Radial Blur (gravity switch)");
+        ImGui::SliderFloat("RadialBlur Intensity", &gravitySwitchRadialBlurIntensity_, 0.0f, 1.0f);
+        ImGui::SliderFloat("RadialBlur Lerp Speed", &gravitySwitchRadialBlurLerpSpeed_, 0.0f, 1.0f);
+
+        ImGui::End();
+    }
 #endif
 
 private:
@@ -64,6 +88,11 @@ private:
     float maxIntensity_ = 1.0f;
     float vignetteIntensity_ = 0.0f;
     float vignetteLerpSpeed_ = 0.15f;
+
+    float gravitySwitchVignetteIntensity_ = 0.5f;
+    float gravitySwitchVignetteLerpSpeed_ = 0.15f;
+    float gravitySwitchRadialBlurIntensity_ = 0.75f;
+    float gravitySwitchRadialBlurLerpSpeed_ = 0.15f;
 };
 
 } // namespace KashipanEngine

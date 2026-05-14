@@ -10,10 +10,8 @@
 #include "Utilities/Passkeys.h"
 
 struct XAUDIO2FX_REVERB_PARAMETERS;
-#if defined(KASHIPANENGINE_ENABLE_XAPOFX)
 struct FXEQ_PARAMETERS;
 struct FXECHO_PARAMETERS;
-#endif
 
 namespace KashipanEngine {
 
@@ -110,7 +108,6 @@ public:
     /// @return 成功した場合 true
     static bool EnableReverb(PlayHandle play, bool enable);
 
-#if defined(KASHIPANENGINE_ENABLE_XAPOFX)
     /// @brief 再生中の音声にEQを設定する
     /// @param play 再生ハンドル
     /// @param params EQパラメータ
@@ -134,7 +131,6 @@ public:
     /// @param enable trueで有効化
     /// @return 成功した場合 true
     static bool EnableEcho(PlayHandle play, bool enable);
-#endif
 
     /// @brief 再生中かどうか
     static bool IsPlaying(PlayHandle play);
@@ -150,6 +146,8 @@ public:
     static void ShowImGuiLoadedSoundsWindow();
     /// @brief デバッグ用: 再生中/保持中の音声一覧の ImGui ウィンドウを描画
     static void ShowImGuiPlayingSoundsWindow();
+    /// @brief デバッグ用: エフェクト設定の ImGui ウィンドウを描画
+    static void ShowImGuiEffectWindow();
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }

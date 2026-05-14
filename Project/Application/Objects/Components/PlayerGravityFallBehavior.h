@@ -45,7 +45,7 @@ private:
     Vector3 gravityVelocity_{0.0f, 0.0f, 0.0f};
     float gravityPower_ = 160.0f;
     float maxGravitySpeed_ = 64.0f;
-    float fastFallMultiplier_ = 2.0f;
+    float fastFallMultiplier_ = 3.0f;
     bool fastFallEnabled_ = false;
 };
 

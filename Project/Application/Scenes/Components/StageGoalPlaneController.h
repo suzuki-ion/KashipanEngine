@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 namespace KashipanEngine {
 
@@ -46,6 +48,31 @@ public:
 
         goalPlane_ = goal.get();
         (void)ctx->AddObject3D(std::move(goal));
+
+        // ステージの読み込み
+        nlohmann::json j;
+        std::string stageDataFilePath = ctx->GetSceneVariableOr<std::string>("TargetStageFilePath", "Assets/Application/StageData/stage.json");
+        std::ifstream ifs(stageDataFilePath);
+        if (ifs.is_open()) {
+            try {
+                ifs >> j;
+            }
+            catch (const nlohmann::json::parse_error& e) {
+                e;
+                assert(false && "JSONファイルのパースに失敗しました。フォーマットを確認してください。");
+            }
+        } else {
+            assert(false && "Failed to open stage data file.");
+        }
+
+		// ステージデータからゴールの位置を調整
+        if (j.contains("GoalRate")) {
+             goalZ_ = goalZ_ * j["GoalRate"].get<float>();
+             if (auto* tr = goalPlane_->GetComponent3D<Transform3D>()) {
+                 tr->SetTranslate(Vector3{ 0.0f, 0.0f, goalZ_ });
+             }
+        }
+
     }
 
     void Update() override {
@@ -71,6 +98,7 @@ public:
     }
 
     float GetGoalZ() const { return goalZ_; }
+	float GetConstGoalZ() const { return -8192.0f; }
 
 private:
     SceneDefaultVariables *defaultVars_ = nullptr;

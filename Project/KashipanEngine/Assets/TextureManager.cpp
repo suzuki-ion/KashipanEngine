@@ -16,6 +16,7 @@
 
 
 #include <d3d12.h>
+#include <d3dx12.h>
 #include <wrl.h>
 
 #include <algorithm>
@@ -40,12 +41,17 @@ struct TextureEntry final {
     std::unique_ptr<ShaderResourceResource> texture;
     Microsoft::WRL::ComPtr<ID3D12Resource> upload;
 
+    std::vector<std::unique_ptr<ShaderResourceResource>> frameViews;
+    std::vector<UINT64> frameSrvGpuPtrs;
+    std::vector<UINT> frameSrvIndices;
+
     UINT width = 0;
     UINT height = 0;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     UINT64 srvGpuPtr = 0;
     UINT srvIndex = 0;
     UINT mipLevels = 1;
+    UINT frameCount = 1;
 };
 
 std::unordered_map<Handle, TextureEntry> sTextures;
@@ -228,13 +234,22 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     entry.format = mmeta.format;
     entry.mipLevels = static_cast<UINT>(mmeta.mipLevels);
 
+    const bool isCube = mmeta.IsCubemap();
+    UINT arraySize = 1;
+    if (isCube) {
+        arraySize = 6;
+    } else if (mmeta.arraySize > 1) {
+        arraySize = static_cast<UINT>(mmeta.arraySize);
+    }
+    entry.frameCount = arraySize;
+
     // GPU側テクスチャ + SRV を Resources 経由で作成（COPY_DEST から開始してこの後のコピーに備える）
-    if (mmeta.IsCubemap()) {
+    if (isCube) {
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
         srvDesc.Format = entry.format;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.TextureCube.MipLevels = entry.mipLevels;
+        srvDesc.TextureCube.MipLevels = UINT_MAX;
         srvDesc.TextureCube.MostDetailedMip = 0;
         srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
         entry.texture = std::make_unique<ShaderResourceResource>(
@@ -245,8 +260,29 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             nullptr,
             D3D12_RESOURCE_STATE_COPY_DEST,
             mipLevels,
+            arraySize,
             &srvDesc);
-        
+
+    } else if (arraySize > 1) {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.Format = entry.format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Texture2DArray.MipLevels = entry.mipLevels;
+        srvDesc.Texture2DArray.MostDetailedMip = 0;
+        srvDesc.Texture2DArray.FirstArraySlice = 0;
+        srvDesc.Texture2DArray.ArraySize = arraySize;
+        srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+        entry.texture = std::make_unique<ShaderResourceResource>(
+            entry.width,
+            entry.height,
+            entry.format,
+            D3D12_RESOURCE_FLAG_NONE,
+            nullptr,
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            mipLevels,
+            arraySize,
+            &srvDesc);
     } else {
         entry.texture = std::make_unique<ShaderResourceResource>(
             entry.width,
@@ -255,7 +291,8 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             D3D12_RESOURCE_FLAG_NONE,
             nullptr,
             D3D12_RESOURCE_STATE_COPY_DEST,
-            mipLevels);
+            mipLevels,
+            arraySize);
     } 
 
     {
@@ -266,6 +303,47 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         }
         entry.srvGpuPtr = desc->gpuHandle.ptr;
         entry.srvIndex = desc->index;
+        entry.frameViews.clear();
+        entry.frameSrvGpuPtrs.clear();
+        entry.frameSrvIndices.clear();
+        entry.frameViews.reserve(arraySize);
+        entry.frameSrvGpuPtrs.reserve(arraySize);
+        entry.frameSrvIndices.reserve(arraySize);
+    }
+
+    if (arraySize > 1) {
+        for (UINT slice = 0; slice < arraySize; ++slice) {
+            D3D12_SHADER_RESOURCE_VIEW_DESC sliceDesc{};
+            sliceDesc.Format = entry.format;
+            sliceDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+            sliceDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            sliceDesc.Texture2DArray.MipLevels = entry.mipLevels;
+            sliceDesc.Texture2DArray.MostDetailedMip = 0;
+            sliceDesc.Texture2DArray.FirstArraySlice = slice;
+            sliceDesc.Texture2DArray.ArraySize = 1;
+            sliceDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+
+            auto sliceView = std::make_unique<ShaderResourceResource>(
+                entry.width,
+                entry.height,
+                entry.format,
+                D3D12_RESOURCE_FLAG_NONE,
+                entry.texture->GetResource(),
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                mipLevels,
+                arraySize,
+                &sliceDesc);
+            auto *sliceDescInfo = sliceView->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});
+            if (!sliceDescInfo) {
+                continue;
+            }
+            entry.frameSrvGpuPtrs.push_back(sliceDescInfo->gpuHandle.ptr);
+            entry.frameSrvIndices.push_back(sliceDescInfo->index);
+            entry.frameViews.push_back(std::move(sliceView));
+        }
+    } else {
+        entry.frameSrvGpuPtrs.push_back(entry.srvGpuPtr);
+        entry.frameSrvIndices.push_back(entry.srvIndex);
     }
 
     // 各サブリソースのフットプリント情報を取得
@@ -317,13 +395,18 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             return kInvalidHandle;
         }
         uint8_t* dstAll = static_cast<uint8_t*>(mapped);
-        for (UINT i = 0; i < subresourceCount; ++i) {
-            const DirectX::Image* img = mipChain->GetImage(i, 0, 0);
-            if (!img || !img->pixels) continue;
-            auto &fp = layouts[i].Footprint;
-            uint8_t* dst = dstAll + layouts[i].Offset;
-            for (UINT y = 0; y < numRows[i]; ++y) {
-                memcpy(dst + static_cast<size_t>(y) * fp.RowPitch, img->pixels + static_cast<size_t>(y) * img->rowPitch, img->rowPitch);
+        const UINT arrayCount = texDesc.DepthOrArraySize;
+        const UINT mipCount = texDesc.MipLevels;
+        for (UINT arraySlice = 0; arraySlice < arrayCount; ++arraySlice) {
+            for (UINT mip = 0; mip < mipCount; ++mip) {
+                const UINT subresource = D3D12CalcSubresource(mip, arraySlice, 0, mipCount, arrayCount);
+                const DirectX::Image* img = mipChain->GetImage(mip, arraySlice, 0);
+                if (!img || !img->pixels) continue;
+                auto &fp = layouts[subresource].Footprint;
+                uint8_t* dst = dstAll + layouts[subresource].Offset;
+                for (UINT y = 0; y < numRows[subresource]; ++y) {
+                    memcpy(dst + static_cast<size_t>(y) * fp.RowPitch, img->pixels + static_cast<size_t>(y) * img->rowPitch, img->rowPitch);
+                }
             }
         }
         entry.upload->Unmap(0, nullptr);
@@ -438,16 +521,13 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
         if (FAILED(hr)) return DirectX::ScratchImage();
     }
-    const DirectX::ScratchImage& finalImage = (meta.format == dstFormat) ? scratch : converted;
+    DirectX::ScratchImage finalImage = (meta.format == dstFormat) ? std::move(scratch) : std::move(converted);
 
     // ミップマップ生成
     DirectX::ScratchImage mipChain;
     if (DirectX::IsCompressed(finalImage.GetMetadata().format)) {
         // 圧縮形式の場合はミップマップ生成をスキップ
-        hr = mipChain.InitializeFromImage(*finalImage.GetImages());
-        if (FAILED(hr)) {
-            return DirectX::ScratchImage();
-        }
+        mipChain = std::move(finalImage);
     } else {
         hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
         if (FAILED(hr)) {
@@ -609,18 +689,66 @@ void TextureManager::ShowImGuiLoadedTexturesWindow() {
                 ImGui::TextUnformatted(sSelectedTexture.assetPath.c_str());
                 ImGui::Separator();
 
-                ImVec2 avail = ImGui::GetContentRegionAvail();
-                const float w = static_cast<float>(sSelectedTexture.width);
-                const float h = static_cast<float>(sSelectedTexture.height);
-                ImVec2 drawSize = avail;
-                if (w > 0.0f && h > 0.0f) {
-                    const float sx = avail.x / w;
-                    const float sy = avail.y / h;
-                    const float s = (sx < sy) ? sx : sy;
-                    drawSize = ImVec2(w * s, h * s);
-                }
+                int selectedFrame = 0;
+                auto it = sTextures.find(sSelectedTexture.handle);
+                if (it != sTextures.end()) {
+                    auto &entry = it->second;
+                    static TextureManager::TextureHandle sLastHandle = TextureManager::kInvalidHandle;
+                    static int sSelectedFrame = 0;
+                    if (sLastHandle != sSelectedTexture.handle) {
+                        sSelectedFrame = 0;
+                        sLastHandle = sSelectedTexture.handle;
+                    }
 
-                ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+                    if (entry.frameCount > 1) {
+                        std::vector<std::string> labels;
+                        labels.reserve(entry.frameCount);
+                        std::vector<const char*> labelPtrs;
+                        labelPtrs.reserve(entry.frameCount);
+                        for (UINT i = 0; i < entry.frameCount; ++i) {
+                            labels.push_back(std::to_string(i));
+                        }
+                        for (const auto &label : labels) {
+                            labelPtrs.push_back(label.c_str());
+                        }
+                        ImGui::Combo("Frame", &sSelectedFrame, labelPtrs.data(), static_cast<int>(labelPtrs.size()));
+                    }
+
+                    if (sSelectedFrame < 0) sSelectedFrame = 0;
+                    if (static_cast<size_t>(sSelectedFrame) >= entry.frameSrvGpuPtrs.size()) sSelectedFrame = 0;
+                    selectedFrame = sSelectedFrame;
+
+                    ImVec2 avail = ImGui::GetContentRegionAvail();
+                    const float w = static_cast<float>(sSelectedTexture.width);
+                    const float h = static_cast<float>(sSelectedTexture.height);
+                    ImVec2 drawSize = avail;
+                    if (w > 0.0f && h > 0.0f) {
+                        const float sx = avail.x / w;
+                        const float sy = avail.y / h;
+                        const float s = (sx < sy) ? sx : sy;
+                        drawSize = ImVec2(w * s, h * s);
+                    }
+
+                    if (!entry.frameSrvGpuPtrs.empty()) {
+                        const UINT64 gpuPtr = entry.frameSrvGpuPtrs[static_cast<size_t>(selectedFrame)];
+                        ImGui::Image(ToImGuiTextureIdFromGpuPtr(gpuPtr), drawSize);
+                    } else {
+                        ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+                    }
+                } else {
+                    ImVec2 avail = ImGui::GetContentRegionAvail();
+                    const float w = static_cast<float>(sSelectedTexture.width);
+                    const float h = static_cast<float>(sSelectedTexture.height);
+                    ImVec2 drawSize = avail;
+                    if (w > 0.0f && h > 0.0f) {
+                        const float sx = avail.x / w;
+                        const float sy = avail.y / h;
+                        const float s = (sx < sy) ? sx : sy;
+                        drawSize = ImVec2(w * s, h * s);
+                    }
+
+                    ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+                }
             } else {
                 ImGui::TextUnformatted("No texture selected.");
             }

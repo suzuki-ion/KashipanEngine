@@ -271,6 +271,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Line3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Model.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
@@ -383,6 +384,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
@@ -599,6 +602,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Skybox.Solid.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Exclusion.json" />
@@ -611,6 +615,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\ComputePipelineState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthDisable.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnable.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnableToMaskZero.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DescriptorRange\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\GraphicsPipelineState\Triangle.json" />
@@ -642,6 +647,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skybox.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />
     <None Include="exclusion.dic" />
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
@@ -720,14 +726,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest\Compute.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectPS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

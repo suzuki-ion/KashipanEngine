@@ -139,6 +139,7 @@
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -382,6 +383,8 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\VignetteEffect.h" />
     <ClInclude Include="Application\Scenes\TestScene.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -489,8 +492,6 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Pixel.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Vertex.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest\Compute.hlsl" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectPS.hlsl" />
-    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\ObjectVS.hlsl" />
     <None Include="Reference\13_Font.md" />
     <None Include="Reference\10_Input_Keyboard.md" />
     <None Include="Reference\10_Input_Mouse.md" />
@@ -502,5 +503,8 @@
     <None Include="KashipanEngine\KashipanEngine.vcxproj" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skybox.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Skybox.Solid.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnableToMaskZero.json" />
   </ItemGroup>
 </Project>

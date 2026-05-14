@@ -1,9 +1,12 @@
+#include "../Common/Camera3D.hlsli"
+
 struct VSOutput {
 	float4 position : SV_POSITION;
 	float2 texcoord : TEXCOORD;
 	float3 normal : NORMAL;
 	float3 worldPosition : WORLDPOSITION;
 	uint instanceId : INSTANCEID;
+    Camera3D camera : CAMERA;
 };
 
 struct DirectionalLight {

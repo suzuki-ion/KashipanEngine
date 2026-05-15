@@ -127,7 +127,7 @@ public:
     /// @brief すべてのシステムを更新
     /// @param deltaTime 経過時間
     void UpdateAllSystems(float deltaTime) {
-        systemManager_.UpdateAllSystems(componentStorage_, deltaTime);
+        systemManager_.UpdateAllSystems(entityManager_, componentStorage_, deltaTime);
     }
 
     /// @brief エンティティ容量の予約

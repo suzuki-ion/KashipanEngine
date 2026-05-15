@@ -3,6 +3,7 @@
 #include <memory>
 #include <algorithm>
 #include "EntityDefinition.h"
+#include "EntityManager.h"
 #include "ComponentStrage.h"
 
 namespace KashipanEngine {
@@ -11,7 +12,7 @@ namespace KashipanEngine {
 class ISystem {
 public:
     virtual ~ISystem() = default;
-    virtual void Update(ComponentStorage &componentStorage, float deltaTime) = 0;
+    virtual void Update(EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) = 0;
 };
 
 /// @brief 指定したコンポーネントを持つエンティティごとの処理を行う基底 System
@@ -22,20 +23,23 @@ public:
     ~ComponentSystem() override = default;
 
     /// @brief エンティティごとの更新処理
+    /// @param entityManager エンティティマネージャー
     /// @param componentStorage コンポーネントストレージ
     /// @param deltaTime 経過時間
-    void Update(ComponentStorage &componentStorage, float deltaTime) override {
+    void Update(EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) override {
         const auto &entities = componentStorage.GetEntitiesWithComponents<ComponentTypes...>();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
         for (int i = 0; i < static_cast<int>(entities.size()); ++i) {
-            UpdateEntity(entities[i], componentStorage, deltaTime);
+            if (entityManager.IsEntityAlive(entities[i])) {
+                UpdateEntity(entities[i], componentStorage, deltaTime);
+            }
         }
     }
 
 protected:
-    // 1 エンティティ分の処理を派生クラスで実装する
+    // 1エンティティ分の処理を派生クラスで実装する
     virtual void UpdateEntity(const Entity &entity, ComponentStorage &componentStorage, float deltaTime) = 0;
 };
 
@@ -51,7 +55,16 @@ private:
 public:
     SystemManager() = default;
     ~SystemManager() = default;
-    
+
+    /// @brief システムの存在チェック
+    /// @tparam SystemType システムの型
+    /// @return システムが存在するかどうか
+    template <typename SystemType>
+    bool HasSystem() const {
+        const size_t &systemIndex = GetSystemIndex<SystemType>();
+        return systemIndex < systemEntries_.size() && systemEntries_[systemIndex];
+    }
+
     /// @brief システムの追加
     /// @tparam SystemType システムの型
     /// @param args システムのコンストラクタ引数
@@ -76,8 +89,8 @@ public:
     /// @return 削除に成功したかどうか
     template <typename SystemType>
     bool RemoveSystem() {
-        const size_t &systemIndex = GetSystemIndex<SystemType>();
-        if (systemIndex < systemEntries_.size() && systemEntries_[systemIndex]) {
+        if (HasSystem<SystemType>()) {
+            const size_t &systemIndex = GetSystemIndex<SystemType>();
             systemEntries_[systemIndex].reset();
             isDirty_ = true;
             return true;
@@ -90,20 +103,11 @@ public:
     /// @return システムへのポインタ（存在しない場合はnullptr）
     template <typename SystemType>
     SystemType* GetSystem() {
-        const size_t &systemIndex = GetSystemIndex<SystemType>();
-        if (systemIndex < systemEntries_.size() && systemEntries_[systemIndex]) {
+        if (HasSystem<SystemType>()) {
+            const size_t &systemIndex = GetSystemIndex<SystemType>();
             return static_cast<SystemType*>(systemEntries_[systemIndex]->system.get());
         }
         return nullptr;
-    }
-
-    /// @brief システムの存在チェック
-    /// @tparam SystemType システムの型
-    /// @return システムが存在するかどうか
-    template <typename SystemType>
-    bool HasSystem() const {
-        const size_t &systemIndex = GetSystemIndex<SystemType>();
-        return systemIndex < systemEntries_.size() && systemEntries_[systemIndex];
     }
 
     /// @brief システムの優先度設定
@@ -111,8 +115,8 @@ public:
     /// @param priority 優先度
     template <typename SystemType>
     void SetSystemPriority(size_t priority) {
-        const size_t &systemIndex = GetSystemIndex<SystemType>();
-        if (systemIndex < systemEntries_.size() && systemEntries_[systemIndex]) {
+        if (HasSystem<SystemType>()) {
+            const size_t &systemIndex = GetSystemIndex<SystemType>();
             systemEntries_[systemIndex]->priority = priority;
             isDirty_ = true;
         }
@@ -123,8 +127,8 @@ public:
     /// @return 優先度（存在しない場合は-1）
     template <typename SystemType>
     int GetSystemPriority() const {
-        const size_t &systemIndex = GetSystemIndex<SystemType>();
-        if (systemIndex < systemEntries_.size() && systemEntries_[systemIndex]) {
+        if (HasSystem<SystemType>()) {
+            const size_t &systemIndex = GetSystemIndex<SystemType>();
             return static_cast<int>(systemEntries_[systemIndex]->priority);
         }
         return -1;
@@ -133,7 +137,7 @@ public:
     /// @brief すべてのシステムを更新
     /// @param componentStorage コンポーネントストレージ
     /// @param deltaTime 経過時間
-    void UpdateAllSystems(ComponentStorage &componentStorage, float deltaTime) {
+    void UpdateAllSystems(EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) {
         static std::vector<SystemEntry *> sortedSystems;
         if (isDirty_) {
             sortedSystems.clear();
@@ -149,7 +153,7 @@ public:
             isDirty_ = false;
         }
         for (int i = 0; i < static_cast<int>(sortedSystems.size()); ++i) {
-            sortedSystems[i]->system->Update(componentStorage, deltaTime);
+            sortedSystems[i]->system->Update(entityManager, componentStorage, deltaTime);
         }
     }
 

@@ -7,6 +7,7 @@
 #include "Utilities/Dialogs/FileDialog.h"
 #include "Utilities/Dialogs/FolderDialog.h"
 #include "Utilities/Dialogs/MessageDialog.h"
+#include "Utilities/EntityComponentSystem.h"
 #include "Utilities/FileIO.h"
 #include "Utilities/MathUtils.h"
 #include "Utilities/Passkeys.h"

@@ -28,16 +28,25 @@ private:
         ComponentArray() = default;
         ~ComponentArray() = default;
 
+        /// @brief コンポーネントデータの存在チェック
+        /// @param entity 対象のエンティティ
+        /// @return コンポーネントデータが存在するかどうか
+        bool HasData(const Entity &entity) const {
+            if (entity.id >= entityToIndex_.size()) return false;
+            size_t index = entityToIndex_[entity.id];
+            return index != Entity(-1, 0) && index < size_;
+        }
+
         /// @brief コンポーネントデータの挿入
         /// @param entity 対象のエンティティ
         /// @param component 追加するコンポーネントデータ
         void InsertData(const Entity &entity, const ComponentType &component) {
-            if (entityToIndex_.size() <= entity) {
-                entityToIndex_.resize(entity + 1, Entity(-1));
+            if (entityToIndex_.size() <= entity.id) {
+                entityToIndex_.resize(entity.id + 1, Entity(-1, 0));
             }
             size_t index = size_;
             componentData_.push_back(component);
-            entityToIndex_[entity] = index;
+            entityToIndex_[entity.id] = index;
             indexToEntity_.push_back(entity);
             size_++;
         }
@@ -45,17 +54,18 @@ private:
         /// @brief コンポーネントデータの削除
         /// @param entity 対象のエンティティ
         void RemoveData(const Entity &entity) override {
-            if (entity >= entityToIndex_.size()) return;
-            size_t index = entityToIndex_[entity];
-            if (index == Entity(-1) || index >= size_) return;
+            if (!HasData(entity)) {
+                return;
+            }
+            size_t index = entityToIndex_[entity.id];
             size_t lastIndex = size_ - 1;
             if (index != lastIndex) {
                 componentData_[index] = componentData_[lastIndex];
                 Entity lastEntity = indexToEntity_[lastIndex];
-                entityToIndex_[lastEntity] = index;
+                entityToIndex_[lastEntity.id] = index;
                 indexToEntity_[index] = lastEntity;
             }
-            entityToIndex_[entity] = Entity(-1);
+            entityToIndex_[entity.id] = Entity(-1, 0);
             if (size_ > 0) {
                 componentData_.pop_back();
                 indexToEntity_.pop_back();
@@ -67,21 +77,11 @@ private:
         /// @param entity 対象のエンティティ
         /// @return コンポーネントデータへのポインタ（存在しない場合はnullptr）
         ComponentType *GetData(const Entity &entity) {
-            if (entity >= entityToIndex_.size()) return nullptr;
-            size_t index = entityToIndex_[entity];
-            if (index != Entity(-1) && index < size_) {
-                return &componentData_[index];
+            if (!HasData(entity)) {
+                return nullptr;
             }
-            return nullptr;
-        }
-
-        /// @brief コンポーネントデータの存在チェック
-        /// @param entity 対象のエンティティ
-        /// @return コンポーネントデータが存在するかどうか
-        bool HasData(const Entity &entity) const {
-            if (entity >= entityToIndex_.size()) return false;
-            size_t index = entityToIndex_[entity];
-            return index != Entity(-1) && index < size_;
+            size_t index = entityToIndex_[entity.id];
+            return &componentData_[index];
         }
 
         /// @brief コンポーネントを持つエンティティのリストを取得
@@ -99,7 +99,7 @@ private:
         /// @param size 予約する容量
         void ReserveEntityCapacity(size_t size) override {
             if (entityToIndex_.size() < size) {
-                entityToIndex_.resize(size, Entity(-1));
+                entityToIndex_.resize(size, Entity(-1, 0));
             }
             if (componentData_.capacity() < size) {
                 componentData_.reserve(size);
@@ -111,7 +111,7 @@ private:
 
     private:
         std::vector<ComponentType> componentData_;
-        std::vector<Entity> entityToIndex_;
+        std::vector<size_t> entityToIndex_;
         std::vector<Entity> indexToEntity_;
         size_t size_ = 0;
     };

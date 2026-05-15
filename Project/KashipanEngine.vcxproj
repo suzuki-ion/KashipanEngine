@@ -433,6 +433,12 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Utilities\Dialogs\FileDialog.h" />
     <ClInclude Include="KashipanEngine\Utilities\Dialogs\FolderDialog.h" />
     <ClInclude Include="KashipanEngine\Utilities\Dialogs\MessageDialog.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\ComponentStrage.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\EntityDefinition.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\EntityManager.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\SystemManager.h" />
+    <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\WorldECS.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\CSV.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\Directory.h" />

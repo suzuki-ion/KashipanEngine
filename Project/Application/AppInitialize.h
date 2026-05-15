@@ -1,12 +1,5 @@
 #pragma once
 #include <KashipanEngine.h>
-#include "Scenes/EngineLogoScene.h"
-#include "Scenes/TitleScene.h"
-#include "Scenes/GameScene.h"
-#include "Scenes/ResultScene.h"
-#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
-#include "Scenes/TestScene.h"
-#endif
 
 namespace KashipanEngine {
 
@@ -19,21 +12,6 @@ inline void AppInitialize(const GameEngine::Context &context) {
     static_cast<void>(mainWindow); // リリースビルドで未使用の変数警告回避
 #endif
 
-    if (context.sceneManager) {
-        auto *sm = context.sceneManager;
-        
-#if defined(RELEASE_BUILD)
-        sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "TitleScene");
-#endif
-#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
-        sm->RegisterScene<TestScene>("TestScene");
-#endif
-        sm->RegisterScene<TitleScene>("TitleScene");
-        sm->RegisterScene<GameScene>("GameScene");
-        sm->RegisterScene<ResultScene>("ResultScene");
-
-		sm->ChangeScene("TestScene");
-    }
 
     if (context.inputCommand) {
         auto *ic = context.inputCommand;

@@ -26,8 +26,11 @@ public:
     SceneManager &operator=(SceneManager &&) = delete;
 
     template<typename TScene, typename... Args>
-    void RegisterScene(const std::string &sceneName, Args &&...args) {
+    void RegisterScene(Args &&...args) {
         static_assert(std::is_base_of_v<SceneBase, TScene>, "TScene must derive from SceneBase");
+        auto scene = std::make_unique<TScene>(std::forward<Args>(args)...);
+        std::string sceneName = scene->GetName();
+        scene.reset(); // 一時的に作成したシーンを破棄
         factoriesByName_[sceneName] =
             [captured = std::make_tuple(std::forward<Args>(args)...)](SceneManager *sm) mutable -> std::unique_ptr<SceneBase> {
                 auto scene = std::apply(

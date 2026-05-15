@@ -175,11 +175,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Application\Scenes\EngineLogoScene.cpp" />
-    <ClCompile Include="Application\Scenes\GameScene.cpp" />
-    <ClCompile Include="Application\Scenes\ResultScene.cpp" />
-    <ClCompile Include="Application\Scenes\TestScene.cpp" />
-    <ClCompile Include="Application\Scenes\TitleScene.cpp" />
     <ClCompile Include="Externals\imgui\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -204,7 +199,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Font\FontLoader.cpp" />
-    <ClCompile Include="KashipanEngine\Font\Text.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
@@ -259,41 +253,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Math\Vector2.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Collision\Collider.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Line2D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Rect.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Sprite.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Billboard.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Box.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Line3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Model.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object3DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\ObjectContext.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\PointLight.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\SpotLight.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\ModelAnimator.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\ParticleManager.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\SceneDefaultVariables.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\SpriteAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneBase.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneContext.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
@@ -330,12 +289,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
-    <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
-    <ClInclude Include="Application\Scenes\Components\CameraController.h" />
-    <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
-    <ClInclude Include="Application\Scenes\EngineLogoScene.h" />
-    <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="Externals\imgui\imconfig.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -366,7 +319,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\FontHeaders.h" />
     <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
     <ClInclude Include="KashipanEngine\Font\FontStructs.h" />
-    <ClInclude Include="KashipanEngine\Font\Text.h" />
     <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
@@ -383,21 +335,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\ShadowMapBinder.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\SpotLight.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
-    <ClInclude Include="Application\Scenes\Components\SceneChangeIn.h" />
-    <ClInclude Include="Application\Scenes\Components\SceneChangeOut.h" />
-    <ClInclude Include="Application\Scenes\GameScene.h" />
-    <ClInclude Include="Application\Scenes\ResultScene.h" />
-    <ClInclude Include="Application\Scenes\TitleScene.h" />
     <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
@@ -484,64 +422,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Math\Vector2.h" />
     <ClInclude Include="KashipanEngine\Math\Vector3.h" />
     <ClInclude Include="KashipanEngine\Math\Vector4.h" />
-    <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h" />
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\2D\Collision2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\2D\Material2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\2D\Transform2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\3D\Collision3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\3D\Material3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\3D\Transform3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\VertexData2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Billboard.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\FaceNormal3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexData3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Line2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Rect.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Sprite.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Box.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Line3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Model.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Sphere.h" />
-    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Line.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Ray.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Segment.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Line.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\OBB.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Plane.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Ray.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Segment.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Triangle.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object2DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object3DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Point2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Rect.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\AABB.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Capsule3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Point3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Sphere.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera2D.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\Camera3D.h" />
-    <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ModelAnimator.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ParticleManager.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\SceneDefaultVariables.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ScreenBufferKeepRatio.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ShadowMapCameraSync.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\SpriteAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />

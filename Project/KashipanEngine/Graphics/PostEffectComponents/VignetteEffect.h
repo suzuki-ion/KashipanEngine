@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include "Math/Vector4.h"
 #include "Graphics/PostEffectComponents/IPostEffectComponent.h"
 #include "Assets/SamplerManager.h"
 

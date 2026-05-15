@@ -11,8 +11,6 @@
 #include "Assets/SamplerManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/AudioManager.h"
-#include "Objects/Object2DBase.h"
-#include "Objects/Object3DBase.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Graphics/ScreenBuffer.h"

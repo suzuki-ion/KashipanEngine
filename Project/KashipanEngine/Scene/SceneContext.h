@@ -2,7 +2,6 @@
 
 #include <any>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 #include "Scene/SceneBase.h"
@@ -24,50 +23,6 @@ public:
 
     const std::string &GetName() const;
 
-    /// @brief 名前から一致するコンポーネントを取得
-    std::vector<ISceneComponent *> GetComponents(const std::string &componentName) const;
-
-    /// @brief 名前から一致する最初のコンポーネントを取得
-    ISceneComponent *GetComponent(const std::string &componentName) const;
-
-    /// @brief 名前から一致する最初のコンポーネントを取得（型付き）
-    template<typename T>
-    T *GetComponent(const std::string &componentName) const {
-        static_assert(std::is_base_of_v<ISceneComponent, T>, "T must derive from ISceneComponent");
-        auto *base = GetComponent(componentName);
-        return base ? static_cast<T *>(base) : nullptr;
-    }
-
-    /// @brief 型から一致するコンポーネントを取得
-    template<typename T>
-    std::vector<T *> GetComponents() const {
-        static_assert(std::is_base_of_v<ISceneComponent, T>, "T must derive from ISceneComponent");
-        if (!owner_) return {};
-        return owner_->template GetSceneComponents<T>();
-    }
-
-    /// @brief 名前から一致するコンポーネントを取得（型付き）
-    template<typename T>
-    std::vector<T *> GetComponents(const std::string &componentName) const {
-        static_assert(std::is_base_of_v<ISceneComponent, T>, "T must derive from ISceneComponent");
-        auto baseList = GetComponents(componentName);
-        std::vector<T *> result;
-        result.reserve(baseList.size());
-        for (auto *c : baseList) result.push_back(static_cast<T *>(c));
-        return result;
-    }
-
-    /// @brief 型から一致する最初のコンポーネントを取得
-    template<typename T>
-    T *GetComponent() const {
-        static_assert(std::is_base_of_v<ISceneComponent, T>, "T must derive from ISceneComponent");
-        if (!owner_) return nullptr;
-        return owner_->template GetSceneComponent<T>();
-    }
-
-    /// @brief コンポーネントの存在チェック
-    size_t HasComponents(const std::string &componentName) const;
-
     /// @brief シーン変数を追加または上書き
     void AddSceneVariable(const std::string &key, const std::any &value);
 
@@ -88,36 +43,6 @@ public:
         return v;
     }
 
-    /// @brief 2D オブジェクトを追加
-    bool AddObject2D(std::unique_ptr<Object2DBase> obj);
-
-    /// @brief 3D オブジェクトを追加
-    bool AddObject3D(std::unique_ptr<Object3DBase> obj);
-
-    /// @brief 2D オブジェクトを削除
-    bool RemoveObject2D(Object2DBase *obj);
-
-    /// @brief 3D オブジェクトを削除
-    bool RemoveObject3D(Object3DBase *obj);
-
-    /// @brief 名前から一致する2Dオブジェクトを全て取得
-    std::vector<Object2DBase *> GetObjects2D(const std::string &objectName) const;
-
-    /// @brief 名前から一致する最初の2Dオブジェクトを取得
-    Object2DBase *GetObject2D(const std::string &objectName) const;
-
-    /// @brief ポインタから一致する2Dオブジェクトを取得
-    Object2DBase *GetObject2D(Object2DBase *obj) const;
-
-    /// @brief 名前から一致する3Dオブジェクトを全て取得
-    std::vector<Object3DBase *> GetObjects3D(const std::string &objectName) const;
-
-    /// @brief 名前から一致する最初の3Dオブジェクトを取得
-    Object3DBase *GetObject3D(const std::string &objectName) const;
-
-    /// @brief ポインタから一致する3Dオブジェクトを取得
-    Object3DBase *GetObject3D(Object3DBase *obj) const;
-    
     AudioManager *GetAudioManager() { return SceneBase::GetAudioManager(); }
     ModelManager *GetModelManager() { return SceneBase::GetModelManager(); }
     SamplerManager *GetSamplerManager() { return SceneBase::GetSamplerManager(); }

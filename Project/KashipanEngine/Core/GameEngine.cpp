@@ -5,7 +5,6 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
-#include "Objects/GameObjects/3D/Model.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
 #include "AppInitialize.h"
@@ -119,15 +118,12 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     if (graphicsEngine_) {
         auto* renderer = graphicsEngine_->GetRenderer(Passkey<GameEngine>{});
         ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, renderer);
-        Object2DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
-        Object3DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
     }
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
-    Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
 #if defined(USE_IMGUI)
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
 #endif
@@ -194,8 +190,6 @@ GameEngine::~GameEngine() {
     textureManager_.reset();
 
     ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    Object2DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    Object3DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
 
     graphicsEngine_.reset();
     directXCommon_.reset();

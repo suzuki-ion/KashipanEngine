@@ -12,10 +12,11 @@ namespace KashipanEngine {
 class ISystem {
 public:
     virtual ~ISystem() = default;
-    virtual void Update(EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) = 0;
+    virtual void Update(const EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) = 0;
 };
 
 /// @brief 指定したコンポーネントを持つエンティティごとの処理を行う基底 System
+/// @tparam ComponentTypes 対象のコンポーネントの型リスト
 template <typename... ComponentTypes>
 class ComponentSystem : public ISystem {
 public:
@@ -26,21 +27,21 @@ public:
     /// @param entityManager エンティティマネージャー
     /// @param componentStorage コンポーネントストレージ
     /// @param deltaTime 経過時間
-    void Update(EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) override {
+    void Update(const EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) override {
         const auto &entities = componentStorage.GetEntitiesWithComponents<ComponentTypes...>();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
         for (int i = 0; i < static_cast<int>(entities.size()); ++i) {
             if (entityManager.IsEntityAlive(entities[i])) {
-                UpdateEntity(entities[i], componentStorage, deltaTime);
+                UpdateEntity(entities[i], entityManager, componentStorage, deltaTime);
             }
         }
     }
 
 protected:
     // 1エンティティ分の処理を派生クラスで実装する
-    virtual void UpdateEntity(const Entity &entity, ComponentStorage &componentStorage, float deltaTime) = 0;
+    virtual void UpdateEntity(const Entity &entity, const EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) = 0;
 };
 
 /// @brief システムマネージャークラス
@@ -137,7 +138,7 @@ public:
     /// @brief すべてのシステムを更新
     /// @param componentStorage コンポーネントストレージ
     /// @param deltaTime 経過時間
-    void UpdateAllSystems(EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) {
+    void UpdateAllSystems(const EntityManager &entityManager, ComponentStorage &componentStorage, float deltaTime) {
         static std::vector<SystemEntry *> sortedSystems;
         if (isDirty_) {
             sortedSystems.clear();

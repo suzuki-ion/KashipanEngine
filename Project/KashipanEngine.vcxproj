@@ -335,6 +335,10 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Material.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Mesh.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
+    <ClInclude Include="KashipanEngine\Objects\System\TransformSystem.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />

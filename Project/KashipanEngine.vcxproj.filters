@@ -271,6 +271,10 @@
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\SystemManager.h" />
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem\WorldECS.h" />
     <ClInclude Include="KashipanEngine\Utilities\EntityComponentSystem.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Material.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Mesh.h" />
+    <ClInclude Include="KashipanEngine\Objects\System\TransformSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

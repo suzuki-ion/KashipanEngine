@@ -385,6 +385,7 @@
     <ClInclude Include="Application\Scenes\TestScene.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GrayscaleEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -506,5 +507,7 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skybox.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Skybox.Solid.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnableToMaskZero.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Grayscale.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Grayscale.json" />
   </ItemGroup>
 </Project>

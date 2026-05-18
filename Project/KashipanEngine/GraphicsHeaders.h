@@ -8,6 +8,7 @@
 #include "Graphics/PostEffectComponents/DotMatrixEffect.h"
 #include "Graphics/PostEffectComponents/MotionBlurEffect.h"
 #include "Graphics/PostEffectComponents/FXAAEffect.h"
+#include "Graphics/PostEffectComponents/GrayscaleEffect.h"
 #include "Graphics/PostEffectComponents/RadialBlurEffect.h"
 #include "Graphics/PostEffectComponents/VignetteEffect.h"
 #include "Graphics/IShaderTexture.h"

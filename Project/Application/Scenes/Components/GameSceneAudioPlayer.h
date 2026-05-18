@@ -43,7 +43,7 @@ public:
         pauseUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
 
         if (bgmSoundHandle_ != AudioManager::kInvalidSoundHandle) {
-            bgmPlayHandle_ = AudioManager::Play(bgmSoundHandle_, 1.0f, 0.0f, true);
+            bgmPlayHandle_ = AudioManager::Play(bgmSoundHandle_, 0.25f, 0.0f, true);
         }
 
         prevGameOver_ = gameScene_ ? gameScene_->IsGameOver() : false;
@@ -166,7 +166,7 @@ public:
                         std::max(0.0001f, landingImpactForMaxShake_ - landingImpactThreshold_),
                     0.0f,
                     1.0f);
-                const float hardVolume = std::pow(t, 0.6f);
+                const float hardVolume = std::pow(t, 1.0f);
                 const float softVolume = 1.0f - hardVolume;
                 PlaySE(softLandingSeSoundHandle_, softVolume);
                 PlaySE(hardLandingSeSoundHandle_, hardVolume);

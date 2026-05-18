@@ -17,7 +17,7 @@ public:
         submitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
 
         if (bgmSoundHandle_ != AudioManager::kInvalidSoundHandle) {
-            bgmPlayHandle_ = AudioManager::Play(bgmSoundHandle_, 1.0f, 0.0f, true);
+            bgmPlayHandle_ = AudioManager::Play(bgmSoundHandle_, 0.5f, 0.0f, true);
         }
     }
 

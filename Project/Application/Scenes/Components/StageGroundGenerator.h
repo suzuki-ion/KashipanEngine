@@ -7,6 +7,8 @@
 #include "Objects/Components/PlayerMovementController.h"
 #include "StageGoalPlaneController.h"
 #include "Objects/Components/CoinDefined.h"
+#include "Objects/Components/RotateGroundDefined.h"
+#include "Objects/Components/GravityGroundDefined.h"
 
 #include <algorithm>
 #include <cmath>
@@ -237,6 +239,13 @@ public:
             player_ = ctx->GetObject3D("PlayerRoot");
         }
         if (!player_) return;
+
+		// プレイヤーの重力方向を取得
+		Vector3 gravityDir{ 0.0f, -1.0f, 0.0f };
+        if (auto *movementController = player_->GetComponent3D<PlayerMovementController>()) {
+            gravityDir = movementController->GetGravityDirection();
+		}
+		defaultGravityDirection_ = gravityDir;
 
         // 再スポーン処理を削除し、タッチ判定だけを残す
         for (auto &g : grounds_) {
@@ -514,6 +523,11 @@ private:
 
 	/// @brief 地面をスポーン位置に生成する。プールの空きがない場合は何もしない
     void SpawnGround(const Vector3& pos, const Vector3& rot, const Vector3& scale,int groundType) {
+		auto* ctx = GetOwnerContext();
+        if (!player_) {
+            player_ = ctx->GetObject3D("PlayerRoot");
+        }
+
         for(auto &g : grounds_) {
             if (!g.object) continue;
             if (g.isActive) continue;
@@ -535,10 +549,51 @@ private:
                         if (g.object->HasComponents3D<SlowGroundDefined>()) {
                             g.object->RemoveComponent3D("SlowGroundDefined",0);
                         }
+                        if(g.object->HasComponents3D<RotateGroundDefined>()) {
+                            g.object->RemoveComponent3D("RotateGroundDefined",0);
+						}
+                        if (g.object->HasComponents3D<GravityGroundDefined>()) {
+                            g.object->RemoveComponent3D("GravityGroundDefined", 0);
+                        }
 					break;
+
                     case 1:
                         if(!g.object->HasComponents3D<SlowGroundDefined>()) {
                             g.object->RegisterComponent<SlowGroundDefined>();
+						}
+                        if(g.object->HasComponents3D<RotateGroundDefined>()) {
+                            g.object->RemoveComponent3D("RotateGroundDefined",0);
+                        }
+                        if(g.object->HasComponents3D<GravityGroundDefined>()) {
+                            g.object->RemoveComponent3D("GravityGroundDefined",0);
+						}
+                    break;
+
+                    case 2:
+                        if(!g.object->HasComponents3D<RotateGroundDefined>()) {
+                            g.object->RegisterComponent<RotateGroundDefined>();
+                        }
+                        if (g.object->HasComponents3D<SlowGroundDefined>()) {
+                            g.object->RemoveComponent3D("SlowGroundDefined",0);
+						}
+                        if (g.object->HasComponents3D<GravityGroundDefined>()) {
+                            g.object->RemoveComponent3D("GravityGroundDefined",0);
+						}
+					break;
+
+                    case 3:
+                        if (!g.object->HasComponents3D<GravityGroundDefined>()) {
+                            if (player_ && player_->GetComponent3D<PlayerMovementController>()) {
+                                g.object->RegisterComponent<GravityGroundDefined>(player_->GetComponent3D<PlayerMovementController>()->GetGravityDirection());
+                            } else {
+                                g.object->RegisterComponent<GravityGroundDefined>(defaultGravityDirection_);
+                            }
+                        }
+                        if (g.object->HasComponents3D<SlowGroundDefined>()) {
+                            g.object->RemoveComponent3D("SlowGroundDefined",0);
+                        }
+                        if(g.object->HasComponents3D<RotateGroundDefined>()) {
+                            g.object->RemoveComponent3D("RotateGroundDefined",0);
 						}
 					break;
 
@@ -669,6 +724,8 @@ private:
     std::vector<GroundRuntime> grounds_{};
     const int poolSize_ = 128;
     const int coinPoolSize_ = 64; // コインの最大プール数
+
+	Vector3 defaultGravityDirection_{ 0.0f, -1.0f, 0.0f };
     
     int touchedGroundCount_ = 0;
     bool hasMinSpawnZ_ = false;

@@ -28,6 +28,13 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
+        auto postEffectComponent = std::make_unique<GrayscaleEffect>();
+        screenBuffer3D->RegisterPostEffectComponent(std::move(postEffectComponent));
+
+        screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
+    }
+
+    if (screenBuffer3D) {
         auto sphere = std::make_unique<Sphere>(512, 1024);
         sphere->SetName("TestSphere");
 

@@ -69,7 +69,7 @@ namespace KashipanEngine {
 			// 目標角度に向けて回転させる
 			float step = rotationSpeed_ * GetDeltaTime();
 			if (std::abs(diff) <= step) {
-				rotateAcceleration_ *= 0.7f; // 目標に近づいたら減速
+				rotateAcceleration_ *= 0.5f; // 目標に近づいたら減速
 			} else {
 				rotateAcceleration_ += (diff > 0.0f) ? step : -step; // 近い方向へ回る
 			}

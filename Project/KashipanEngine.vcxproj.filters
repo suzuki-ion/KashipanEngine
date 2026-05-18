@@ -418,6 +418,8 @@
     <ClInclude Include="Application\Scenes\Components\StageSelectRankingUIController.h" />
     <ClInclude Include="Application\Scenes\Components\PlayerLogCollector.h" />
     <ClInclude Include="Application\ObjectBatchKeys.h" />
+    <ClInclude Include="Application\Objects\Components\RotateGroundDefined.h" />
+    <ClInclude Include="Application\Objects\Components\GravityGroundDefined.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

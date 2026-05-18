@@ -26,7 +26,8 @@ public:
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         ID3D12Resource *existingResource = nullptr,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-        UINT mipLevels = 1);
+        UINT mipLevels = 1,
+        const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc = nullptr);
 
     /// @brief RenderTargetResource の描画結果を SRV として参照するためのコンストラクタ
     /// @param renderTarget 参照元レンダーターゲット（内部リソースを共有）
@@ -35,7 +36,8 @@ public:
     explicit ShaderResourceResource(
         RenderTargetResource* renderTarget,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-        UINT mipLevels = 1);
+        UINT mipLevels = 1,
+        const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc = nullptr);
 
     /// @brief リソース再生成
     /// @param width 横幅
@@ -53,7 +55,8 @@ public:
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         ID3D12Resource *existingResource = nullptr,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-        UINT mipLevels = 1);
+        UINT mipLevels = 1,
+        const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc = nullptr);
 
     /// @brief デスクリプタ情報取得
     DescriptorHandleInfo *GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>) const { return GetDescriptorHandleInfo(); }
@@ -66,7 +69,8 @@ private:
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         ID3D12Resource *existingResource = nullptr,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-        UINT mipLevels = 1);
+        UINT mipLevels = 1,
+        const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc = nullptr);
 
     UINT width_ = 0;
     UINT height_ = 0;

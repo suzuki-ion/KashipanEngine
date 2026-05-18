@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：ファイル I/O（CSV / Directory / INI / JSON / RawFile / TextFile）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：ファイル I/O（CSV / Directory / INI / JSON / RawFile / TextFile）</h1>
+<p>対象ヘッダ：</p>
+<ul>
+<li><code>Utilities/FileIO.h</code>（窓口）</li>
+<li><code>Utilities/FileIO/CSV.h</code></li>
+<li><code>Utilities/FileIO/Directory.h</code></li>
+<li><code>Utilities/FileIO/INI.h</code></li>
+<li><code>Utilities/FileIO/JSON.h</code></li>
+<li><code>Utilities/FileIO/RawFile.h</code></li>
+<li><code>Utilities/FileIO/TextFile.h</code></li>
+</ul>
+<hr />
+<h2>0. 全体像（例外方針の違い）</h2>
+<p>ファイル系は **例外を投げるもの** と **失敗時に空データを返すもの** が混在します。</p>
+<ul>
+<li>例外あり（<code>std::runtime_error</code>）</li>
+<ul>
+<li><code>CSV</code>：読み込み/保存</li>
+<li><code>RawFile</code>：読み込み/保存/判定</li>
+</ul>
+<li>例外なし（失敗時に空データ）</li>
+<ul>
+<li><code>INI</code>：読み込み/保存（保存は失敗しても return）</li>
+<li><code>TextFile</code>：読み込み/保存</li>
+</ul>
+</ul>
+<blockquote>
+<p>JSON は <code>LoadJSON()</code> 自体は例外を投げないパース設定を使いますが、入力ファイルの打开可否など呼び出し側の前提に依存します。</p>
+</blockquote>
+<hr />
+<h2>1. CSV（<code>Utilities/FileIO/CSV.h</code>）</h2>
+<h3>目的</h3>
+<p>CSV の読み書き。</p>
+<h3>公開API</h3>
+<ul>
+<li><code>struct CSVData</code></li>
+<ul>
+<li><code>std::string filePath;</code></li>
+<li><code>std::vector&lt;std::string&gt; headers;</code></li>
+<li><code>std::vector&lt;std::vector&lt;std::string&gt;&gt; rows;</code></li>
+</ul>
+<li><code>CSVData LoadCSV(const std::string &amp;filePath, bool hasHeader = true);</code></li>
+<li><code>void SaveCSV(const std::string &amp;filePath, const CSVData &amp;data);</code></li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> data = KashipanEngine::LoadCSV(<span class="str">&quot;Assets/table.csv&quot;</span>, <span class="kw">true</span>);
+
+<span class="com">// 1行目（headers）を使わない形式なら hasHeader = false</span>
+<span class="com">// auto data2 = KashipanEngine::LoadCSV(&quot;Assets/table_no_header.csv&quot;, false);</span>
+
+KashipanEngine::CSVData out;
+out.headers = {<span class="str">&quot;A&quot;</span>,<span class="str">&quot;B&quot;</span>};
+out.rows = {{<span class="str">&quot;1&quot;</span>,<span class="str">&quot;2&quot;</span>},{<span class="str">&quot;3&quot;</span>,<span class="str">&quot;4&quot;</span>}};
+KashipanEngine::SaveCSV(<span class="str">&quot;Assets/out.csv&quot;</span>, out);
+</code></pre>
+<h3>注意点（実装から分かる仕様）</h3>
+<ul>
+<li>カンマ <code>,</code> の単純分割で、クォートやエスケープには対応しません。</li>
+<li><code>LoadCSV</code> はファイルが開けない場合 <code>std::runtime_error</code> を投げます。</li>
+</ul>
+<hr />
+<h2>2. Directory（<code>Utilities/FileIO/Directory.h</code>）</h2>
+<h3>目的</h3>
+<p>ディレクトリ走査結果を <code>DirectoryData</code> として取得し、必要なら拡張子でフィルタします。</p>
+<h3>公開API</h3>
+<ul>
+<li><code>struct DirectoryData</code></li>
+<ul>
+<li><code>std::string directoryName;</code></li>
+<li><code>std::vector&lt;std::string&gt; files;</code></li>
+<li><code>std::vector&lt;DirectoryData&gt; subdirectories;</code></li>
+</ul>
+</ul>
+<ul>
+<li><code>bool IsDirectoryExist(const std::string &amp;directoryPath);</code></li>
+<li><code>DirectoryData GetDirectoryData(const std::string &amp;directoryPath, bool isRecursive = false, bool isFullPath = true);</code></li>
+<li><code>DirectoryData GetDirectoryDataByExtension(const DirectoryData &amp;directoryData, const std::vector&lt;std::string&gt; &amp;extensions);</code></li>
+<li><code>DirectoryData GetDirectoryDataByExtension(const std::string &amp;directoryPath, const std::vector&lt;std::string&gt; &amp;extensions, bool isRecursive = false, bool isFullPath = true);</code></li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">if</span> (KashipanEngine::IsDirectoryExist(<span class="str">&quot;Assets&quot;</span>)) {
+    <span class="com">// 再帰的に Assets を走査し、フルパスで返す</span>
+    <span class="kw">auto</span> dir = KashipanEngine::GetDirectoryData(<span class="str">&quot;Assets&quot;</span>, <span class="kw">true</span>, <span class="kw">true</span>);
+
+    <span class="com">// png と jpg のみ抽出</span>
+    <span class="kw">auto</span> images = KashipanEngine::GetDirectoryDataByExtension(dir, {<span class="str">&quot;.png&quot;</span>, <span class="str">&quot;.jpg&quot;</span>});
+}
+</code></pre>
+<h3>注意点</h3>
+<ul>
+<li><code>isFullPath=false</code> の場合、結果は「ファイル名のみ」になるため、後続処理で元ディレクトリと結合する必要があります。</li>
+</ul>
+<hr />
+<h2>3. INI（<code>Utilities/FileIO/INI.h</code>）</h2>
+<h3>目的</h3>
+<p>INI の読み込みと、<code>INIData</code> 構造体としての保持・保存。</p>
+<h3>公開API</h3>
+<ul>
+<li><code>struct INIData</code></li>
+<ul>
+<li><code>std::string filePath;</code></li>
+<li><code>std::unordered_map&lt;std::string, std::unordered_map&lt;std::string, std::string&gt;&gt; sections;</code></li>
+</ul>
+</ul>
+<ul>
+<li><code>INIData LoadINIFile(const std::string &amp;filePath);</code></li>
+<li><code>void SaveINIFile(const INIData &amp;iniData);</code></li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> ini = KashipanEngine::LoadINIFile(<span class="str">&quot;Assets/config.ini&quot;</span>);
+
+<span class="com">// 値参照（存在チェックは呼び出し側で）</span>
+<span class="com">// auto value = ini.sections[&quot;Graphics&quot;][&quot;VSync&quot;]; </span>
+
+<span class="com">// 保存</span>
+ini.filePath = <span class="str">&quot;Assets/config_out.ini&quot;</span>;
+KashipanEngine::SaveINIFile(ini);
+</code></pre>
+<h3>実装上の仕様</h3>
+<ul>
+<li>行頭の <code>;</code> / <code>#</code> はコメント扱い。</li>
+<li><code>LoadINIFile</code> はファイルを開けない場合、空の <code>INIData</code> を返します（例外なし）。</li>
+</ul>
+<hr />
+<h2>4. JSON（<code>Utilities/FileIO/JSON.h</code>）</h2>
+<h3>目的</h3>
+<p><code>nlohmann::json</code> の読み書きと、キー取得・パス指定アクセス・マージ・配列操作など。</p>
+<h3>公開API（主要）</h3>
+<ul>
+<li>型エイリアス：<code>using JSON = nlohmann::json;</code>（<code>Json</code> / <code>json</code> も同義）</li>
+</ul>
+<ul>
+<li><code>JSON LoadJSON(const std::string &amp;filepath);</code></li>
+<li><code>bool SaveJSON(const JSON &amp;jsonData, const std::string &amp;filepath, int indent = 4);</code></li>
+</ul>
+<ul>
+<li><code>template&lt;typename T&gt; std::optional&lt;T&gt; GetJSONValue(const JSON &amp;json, const std::string &amp;key);</code></li>
+<li><code>template&lt;typename T&gt; T GetJSONValueOrDefault(const JSON &amp;json, const std::string &amp;key, const T &amp;defaultValue);</code></li>
+</ul>
+<ul>
+<li><code>std::optional&lt;JSON&gt; GetNestedJSONValue(const JSON &amp;json, const std::string &amp;path);</code></li>
+</ul>
+<ul>
+<li><code>bool ValidateJSONStructure(const JSON &amp;json, const std::vector&lt;std::string&gt; &amp;requiredKeys);</code></li>
+<li><code>bool IsJSONFileValid(const std::string &amp;filepath);</code></li>
+</ul>
+<ul>
+<li><code>JSON MergeJSON(const JSON &amp;base, const JSON &amp;overlay, bool deepMerge = true);</code></li>
+</ul>
+<ul>
+<li><code>bool AppendToJSONArray(JSON &amp;json, const std::string &amp;arrayKey, const JSON &amp;value);</code></li>
+<li><code>bool RemoveFromJSONArray(JSON &amp;json, const std::string &amp;arrayKey, size_t index);</code></li>
+</ul>
+<ul>
+<li><code>std::string JSONToFormattedString(const JSON &amp;json, int indent = 4);</code></li>
+<li><code>void PrintJSON(const JSON &amp;json, const std::string &amp;title = &quot;JSON Data&quot;);</code></li>
+</ul>
+<h3>使用例：安全にキー取得</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+KashipanEngine::JSON j = KashipanEngine::LoadJSON(<span class="str">&quot;Assets/config.json&quot;</span>);
+
+<span class="com">// optional で受け取る</span>
+<span class="kw">if</span> (<span class="kw">auto</span> v = KashipanEngine::GetJSONValue&lt;<span class="type">int</span>&gt;(j, <span class="str">&quot;maxFPS&quot;</span>)) {
+    <span class="type">int</span> maxFps = *v;
+    (<span class="type">void</span>)maxFps;
+}
+
+<span class="com">// default 付き</span>
+<span class="type">int</span> maxFps = KashipanEngine::GetJSONValueOrDefault&lt;<span class="type">int</span>&gt;(j, <span class="str">&quot;maxFPS&quot;</span>, <span class="num">60</span>);
+</code></pre>
+<h3>使用例：ネストパス</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> j = KashipanEngine::LoadJSON(<span class="str">&quot;Assets/config.json&quot;</span>);
+
+<span class="com">// 例: &quot;render.targets[0].name&quot;</span>
+<span class="kw">if</span> (<span class="kw">auto</span> v = KashipanEngine::GetNestedJSONValue(j, <span class="str">&quot;render.targets[0].name&quot;</span>)) {
+    <span class="com">// *v は JSON</span>
+}
+</code></pre>
+<h3>実装上の仕様</h3>
+<ul>
+<li><code>LoadJSON()</code> は allow_exceptions=false 相当でパースしており、JSON 不正でも例外にしない設定です。</li>
+<ul>
+<li>ただし戻り値 <code>JSON</code> が「破損」状態になり得るため、利用側での検証が必要です。</li>
+</ul>
+</ul>
+<hr />
+<h2>5. RawFile（<code>Utilities/FileIO/RawFile.h</code>）</h2>
+<h3>目的</h3>
+<p>ファイルをバイト列として読み込み、先頭バイト列からファイル種別を推測します（拡張子に依存しない）。</p>
+<h3>公開API</h3>
+<ul>
+<li><code>enum class FileType</code>（<code>txt/json/xml/html/png/jpg/.../bin/unknown</code>）</li>
+<li><code>struct RawFileData</code></li>
+<ul>
+<li><code>std::string filePath;</code></li>
+<li><code>std::vector&lt;uint8_t&gt; data;</code></li>
+<li><code>size_t size;</code></li>
+<li><code>FileType fileType;</code></li>
+</ul>
+</ul>
+<ul>
+<li><code>bool IsFileExist(const std::string &amp;filePath);</code></li>
+<li><code>RawFileData LoadFile(const std::string &amp;filePath, size_t detectBytes = 64 * 1024);</code></li>
+<li><code>void SaveFile(const RawFileData &amp;fileData);</code></li>
+<li><code>FileType DetectFileTypeFromFile(const std::string &amp;filePath, size_t detectBytes = 64 * 1024);</code></li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">if</span> (KashipanEngine::IsFileExist(<span class="str">&quot;Assets/anyfile&quot;</span>)) {
+    <span class="kw">auto</span> raw = KashipanEngine::LoadFile(<span class="str">&quot;Assets/anyfile&quot;</span>);
+
+    <span class="com">// 推測された fileType を参照</span>
+    <span class="kw">auto</span> t = raw.fileType;
+    (<span class="type">void</span>)t;
+}
+</code></pre>
+<h3>実装上の仕様</h3>
+<ul>
+<li><code>LoadFile</code> / <code>SaveFile</code> / <code>DetectFileTypeFromFile</code> は、失敗時に <code>std::runtime_error</code> を投げます。</li>
+<li><code>detectBytes</code> は「種別推定に使う先頭の最大バイト数」です。</li>
+</ul>
+<hr />
+<h2>6. TextFile（<code>Utilities/FileIO/TextFile.h</code>）</h2>
+<h3>目的</h3>
+<p>テキストを「行配列」として読み書きします。</p>
+<h3>公開API</h3>
+<ul>
+<li><code>struct TextFileData</code></li>
+<ul>
+<li><code>std::string filePath;</code></li>
+<li><code>std::vector&lt;std::string&gt; lines;</code></li>
+</ul>
+</ul>
+<ul>
+<li><code>TextFileData LoadTextFile(const std::string &amp;filePath);</code></li>
+<li><code>void SaveTextFile(const TextFileData &amp;textFileData);</code></li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> txt = KashipanEngine::LoadTextFile(<span class="str">&quot;Assets/readme.txt&quot;</span>);
+<span class="kw">for</span> (<span class="kw">const</span> <span class="kw">auto</span>&amp; line : txt.lines) {
+    <span class="com">// ...</span>
+}
+
+KashipanEngine::TextFileData out;
+out.filePath = <span class="str">&quot;Assets/out.txt&quot;</span>;
+out.lines = {<span class="str">&quot;line1&quot;</span>, <span class="str">&quot;line2&quot;</span>};
+KashipanEngine::SaveTextFile(out);
+</code></pre>
+<h3>実装上の仕様</h3>
+<ul>
+<li><code>LoadTextFile</code> は失敗しても例外を投げず、空データを返します。</li>
+</ul>
+</body>
+</html>

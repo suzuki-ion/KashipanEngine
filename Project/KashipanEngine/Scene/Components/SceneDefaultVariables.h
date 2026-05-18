@@ -1,7 +1,10 @@
 #pragma once
+#pragma once
+
 #include "Core/Window.h"
 #include "Scene/Components/ISceneComponent.h"
 #include "Scene/Components/ColliderComponent.h"
+#include "Scene/Components/LightManager.h"
 #include "Scene/Components/ScreenBufferKeepRatio.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 #include "Graphics/ScreenBuffer.h"
@@ -10,7 +13,7 @@
 #include "Objects/SystemObjects/Camera2D.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Objects/SystemObjects/DirectionalLight.h"
-#include "Objects/SystemObjects/LightManager.h"
+#include "Objects/SystemObjects/LightCountBinder.h"
 #include "Objects/SystemObjects/ShadowMapBinder.h"
 #include "Objects/GameObjects/2D/Sprite.h"
 
@@ -51,6 +54,8 @@ public:
     DirectionalLight *GetDirectionalLight() const { return directionalLight_; }
     /// @brief ライト管理用取得
     LightManager *GetLightManager() const { return lightManager_; }
+    /// @brief ライトカウントバインダー取得
+    LightCountBinder *GetLightCountBinder() const { return lightCountBinder_; }
     /// @brief シャドウマッピング用バッファ取得
     ShadowMapBuffer *GetShadowMapBuffer() const { return shadowMapBuffer_; }
     /// @brief シャドウマッピング用バインダー取得
@@ -86,6 +91,7 @@ private:
 
     // ライト管理用
     LightManager *lightManager_ = nullptr;
+    LightCountBinder *lightCountBinder_ = nullptr;
 
     // シャドウマッピング用
     ShadowMapBuffer *shadowMapBuffer_ = nullptr;

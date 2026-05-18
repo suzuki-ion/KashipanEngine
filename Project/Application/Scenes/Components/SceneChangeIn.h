@@ -13,11 +13,8 @@ public:
     SceneChangeIn(const SceneChangeIn &) = delete;
     SceneChangeIn &operator=(const SceneChangeIn &) = delete;
 
-    /// @brief トランジションが完了しているかを取得する
-    /// @return 完了していれば true
     bool IsFinished() const noexcept { return finished_; }
 
-    /// @brief トランジション再生を開始する
     void Play() {
         if (playing_) return;
         playing_ = true;
@@ -25,7 +22,6 @@ public:
         elapsed_ = 0.0f;
     }
 
-    /// @brief コンポーネント初期化処理
     void Initialize() override {
         elapsed_ = 0.0f;
         initialized_ = false;
@@ -33,7 +29,6 @@ public:
         finished_ = false;
     }
 
-    /// @brief コンポーネント終了処理
     void Finalize() override {
         blackSprite_ = nullptr;
         whiteSprite_ = nullptr;
@@ -41,7 +36,6 @@ public:
         finished_ = false;
     }
 
-    /// @brief 毎フレーム更新処理
     void Update() override {
         if (!playing_) return;
 
@@ -53,9 +47,10 @@ public:
         if (dt >= 1.0f) dt = 0.0f;
         elapsed_ = std::min(elapsed_ + dt, kDuration);
 
-        auto *window = Window::GetWindow("Main Window");
-        const float w = window ? static_cast<float>(window->GetClientWidth()) : 0.0f;
-        const float h = window ? static_cast<float>(window->GetClientHeight()) : 0.0f;
+        auto *ctx = GetOwnerContext();
+        auto *screenBuffer2D = ctx ? ctx->GetComponent<SceneDefaultVariables>()->GetScreenBuffer2D() : nullptr;
+        const float w = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetWidth()) : 0.0f;
+        const float h = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetHeight()) : 0.0f;
 
         const float t = (kDuration > 0.0f) ? std::clamp(elapsed_ / kDuration, 0.0f, 1.0f) : 1.0f;
 
@@ -81,23 +76,25 @@ public:
 
 private:
     static constexpr float kDuration = 1.0f;
+    static constexpr std::uint64_t kSpriteBatchKey = 0x1102000000000001ull;
 
     void InitializeSprites() {
         if (!GetOwnerScene()) return;
 
-        auto *window = Window::GetWindow("Main Window");
-        if (!window) return;
+        auto *ctx = GetOwnerContext();
+        auto *screenBuffer2D = ctx ? ctx->GetComponent<SceneDefaultVariables>()->GetScreenBuffer2D() : nullptr;
+        if (!screenBuffer2D) return;
 
-        const float w = static_cast<float>(window->GetClientWidth());
-        const float h = static_cast<float>(window->GetClientHeight());
+        const float w = static_cast<float>(screenBuffer2D->GetWidth());
+        const float h = static_cast<float>(screenBuffer2D->GetHeight());
 
         auto whiteTexture = TextureManager::GetTextureFromFileName("white1x1.png");
         // White
         {
             auto obj = std::make_unique<Sprite>();
-            obj->SetUniqueBatchKey();
+            obj->SetBatchKey(kSpriteBatchKey);
             obj->SetName("SceneChangeIn_White");
-            obj->SetAnchorPoint(0.5f, 0.0f);
+            obj->SetPivotPoint(0.5f, 0.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {
                 mat->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                 mat->SetTexture(whiteTexture);
@@ -106,19 +103,17 @@ private:
                 tr->SetTranslate(Vector2(w * 0.5f, h));
                 tr->SetScale(Vector2(w, 0.0f));
             }
-            obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
+            obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
             whiteSprite_ = obj.get();
-            if (auto *ctx = GetOwnerContext()) {
-                ctx->AddObject2D(std::move(obj));
-            }
+            ctx->AddObject2D(std::move(obj));
         }
 
         // Black
         {
             auto obj = std::make_unique<Sprite>();
-            obj->SetUniqueBatchKey();
+            obj->SetBatchKey(kSpriteBatchKey);
             obj->SetName("SceneChangeIn_Black");
-            obj->SetAnchorPoint(0.5f, 0.0f);
+            obj->SetPivotPoint(0.5f, 0.0f);
             if (auto *mat = obj->GetComponent2D<Material2D>()) {
                 mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 1.0f));
                 mat->SetTexture(whiteTexture);
@@ -127,11 +122,9 @@ private:
                 tr->SetTranslate(Vector2(w * 0.5f, h));
                 tr->SetScale(Vector2(w, 0.0f));
             }
-            obj->AttachToRenderer(window, "Object2D.DoubleSidedCulling.BlendNormal");
+            obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
             blackSprite_ = obj.get();
-            if (auto *ctx = GetOwnerContext()) {
-                ctx->AddObject2D(std::move(obj));
-            }
+            ctx->AddObject2D(std::move(obj));
         }
 
         initialized_ = true;

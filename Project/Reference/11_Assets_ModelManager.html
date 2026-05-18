@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>アセット管理：モデル（`ModelManager`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="11_Assets_Index.html">目次へ</a></nav>
+<h1>アセット管理：モデル（<code>ModelManager</code>）</h1>
+<p>対象ヘッダ：<code>KashipanEngine/Assets/ModelManager.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p>3Dモデルファイルの読み込み・管理を行うクラスです。 Assimp ライブラリを使用して多様なモデル形式をサポートし、頂点・インデックス・マテリアル情報を <code>ModelData</code> として保持します。</p>
+<hr />
+<h2>2. 設計概要</h2>
+<ul>
+<li>モデルは <code>ModelHandle</code>（<code>uint32_t</code>）で管理します。</li>
+<li>無効ハンドルは <code>ModelManager::kInvalidHandle</code>（<code>0</code>）です。</li>
+<li><code>Assets/</code> 配下のファイルはエンジン起動時に <code>LoadAllFromAssetsFolder()</code> で自動ロードされます。</li>
+<li>ファイル名・アセットパスでの検索は大文字小文字を区別しません。</li>
+</ul>
+<h3>対応モデル形式</h3>
+<p><code>.fbx</code> / <code>.obj</code> / <code>.gltf</code> / <code>.glb</code> / <code>.dae</code> / <code>.3ds</code> / <code>.blend</code> / <code>.ply</code> / <code>.stl</code> / <code>.x</code></p>
+<hr />
+<h2>3. 公開API</h2>
+<h3>3.1 型定義・定数</h3>
+<pre><code class="language-cpp">
+<span class="kw">using</span> ModelHandle = <span class="type">uint32_t</span>;
+<span class="kw">static</span> <span class="kw">constexpr</span> ModelHandle kInvalidHandle = <span class="num">0</span>;
+</code></pre>
+<h3>3.2 コンストラクタ（<code>GameEngine</code> からのみ生成可能）</h3>
+<pre><code class="language-cpp">
+ModelManager(Passkey&lt;GameEngine&gt;, <span class="kw">const</span> std::string&amp; assetsRootPath = <span class="str">&quot;Assets&quot;</span>);
+</code></pre>
+<h3>3.3 読み込み</h3>
+<pre><code class="language-cpp">
+ModelHandle LoadModel(<span class="kw">const</span> std::string&amp; filePath);
+</code></pre>
+<ul>
+<li><code>Assets</code> ルート相対パス or フルパスでモデルをロードします。</li>
+<li>既にロード済みのパスが指定された場合は既存のハンドルを返します。</li>
+<li>失敗時は <code>kInvalidHandle</code> を返します。</li>
+</ul>
+<h3>3.4 ハンドル取得</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> ModelHandle GetModelHandleFromFileName(<span class="kw">const</span> std::string&amp; fileName);
+<span class="kw">static</span> ModelHandle GetModelHandleFromAssetPath(<span class="kw">const</span> std::string&amp; assetPath);
+</code></pre>
+<ul>
+<li><code>GetModelHandleFromFileName</code>: ファイル名単体から検索します。</li>
+<li><code>GetModelHandleFromAssetPath</code>: Assets ルートからの相対パスから検索します。</li>
+</ul>
+<h3>3.5 モデルデータ取得</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> <span class="kw">const</span> ModelData&amp; GetModelData(ModelHandle handle);
+<span class="kw">static</span> <span class="kw">const</span> ModelData&amp; GetModelDataFromFileName(<span class="kw">const</span> std::string&amp; fileName);
+<span class="kw">static</span> <span class="kw">const</span> ModelData&amp; GetModelDataFromAssetPath(<span class="kw">const</span> std::string&amp; assetPath);
+</code></pre>
+<ul>
+<li>ハンドル、ファイル名、アセットパスのいずれかから <code>ModelData</code> の const 参照を返します。</li>
+<li>見つからない場合は空の <code>ModelData</code>（頂点数・インデックス数 0）を返します。</li>
+</ul>
+<hr />
+<h2>4. <code>ModelData</code>（モデルデータ構造体）</h2>
+<pre><code class="language-cpp">
+<span class="kw">struct</span> ModelData <span class="kw">final</span> {
+    <span class="com">// public</span>
+    <span class="type">uint32_t</span> GetVertexCount() <span class="kw">const</span> noexcept;
+    <span class="type">uint32_t</span> GetIndexCount() <span class="kw">const</span> noexcept;
+    <span class="kw">const</span> std::string&amp; GetAssetRelativePath() <span class="kw">const</span> noexcept;
+    <span class="type">uint32_t</span> GetMaterialCount() <span class="kw">const</span> noexcept;
+    <span class="kw">const</span> MaterialData* GetMaterial(<span class="type">uint32_t</span> idx) <span class="kw">const</span> noexcept;
+};
+</code></pre>
+<ul>
+<li><code>ModelData</code> は <code>ModelManager</code> と <code>Model</code> の <code>friend</code> としてのみ構築可能です（コンストラクタは private）。</li>
+<li>内部に頂点データ（<code>Vertex</code>）、インデックスデータ（<code>uint32_t</code>）、マテリアルデータ（<code>MaterialData</code>）を保持します。</li>
+</ul>
+<h3>4.1 <code>ModelData::Vertex</code></h3>
+<pre><code class="language-cpp">
+<span class="kw">struct</span> Vertex <span class="kw">final</span> {
+    <span class="type">float</span> px, py, pz;   <span class="com">// 位置</span>
+    <span class="type">float</span> nx, ny, nz;   <span class="com">// 法線</span>
+    <span class="type">float</span> u, v;          <span class="com">// テクスチャ座標（UV0）</span>
+};
+</code></pre>
+<h3>4.2 <code>ModelData::MaterialData</code></h3>
+<pre><code class="language-cpp">
+<span class="kw">struct</span> MaterialData <span class="kw">final</span> {
+    <span class="type">float</span> baseColor[<span class="num">4</span>];               <span class="com">// ベースカラー（RGBA、デフォルトは白）</span>
+    std::string diffuseTexturePath;   <span class="com">// ディフューズテクスチャの Assets 相対パス</span>
+};
+</code></pre>
+<ul>
+<li><code>baseColor</code> はモデルファイルから取得した Diffuse カラーです。</li>
+<li><code>diffuseTexturePath</code> はテクスチャが存在する場合、Assets ルートからの相対パスが格納されます。</li>
+</ul>
+<h3>4.3 公開メソッド一覧</h3>
+<ul>
+<li><code>GetVertexCount()</code> - 頂点数を返します。</li>
+<li><code>GetIndexCount()</code> - インデックス数を返します。</li>
+<li><code>GetAssetRelativePath()</code> - Assets ルートからの相対パスを返します。</li>
+<li><code>GetMaterialCount()</code> - マテリアル数を返します。</li>
+<li><code>GetMaterial(idx)</code> - 指定インデックスのマテリアルを返します（範囲外は <code>nullptr</code>）。</li>
+</ul>
+<hr />
+<h2>5. 読み込み処理の詳細</h2>
+<p>モデル読み込み時には Assimp に以下のポストプロセスフラグを適用しています。</p>
+<ul>
+<li><code>aiProcess_MakeLeftHanded</code> - 左手座標系への変換</li>
+<li><code>aiProcess_FlipWindingOrder</code> - ワインディング順の反転</li>
+<li><code>aiProcess_Triangulate</code> - ポリゴンの三角形化</li>
+<li><code>aiProcess_JoinIdenticalVertices</code> - 同一頂点の結合</li>
+<li><code>aiProcess_ImproveCacheLocality</code> - キャッシュ効率の改善</li>
+<li><code>aiProcess_RemoveRedundantMaterials</code> - 冗長マテリアルの除去</li>
+<li><code>aiProcess_FindInvalidData</code> - 不正データの検出</li>
+<li><code>aiProcess_TransformUVCoords</code> - UV座標の変換</li>
+<li><code>aiProcess_SortByPType</code> - プリミティブタイプでのソート</li>
+<li><code>aiProcess_FlipUVs</code> - UV座標のY軸反転</li>
+</ul>
+<hr />
+<h2>6. 使用例</h2>
+<h3>ファイル名からモデルデータを参照</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> h = KashipanEngine::ModelManager::GetModelHandleFromFileName(<span class="str">&quot;enemy.fbx&quot;</span>);
+<span class="kw">const</span> <span class="kw">auto</span>&amp; data = KashipanEngine::ModelManager::GetModelData(h);
+
+<span class="type">uint32_t</span> vtx = data.GetVertexCount();
+<span class="type">uint32_t</span> idx = data.GetIndexCount();
+(<span class="type">void</span>)vtx;
+(<span class="type">void</span>)idx;
+</code></pre>
+<h3>マテリアル情報を参照</h3>
+<pre><code class="language-cpp">
+<span class="kw">const</span> <span class="kw">auto</span>&amp; data = KashipanEngine::ModelManager::GetModelDataFromFileName(<span class="str">&quot;enemy.fbx&quot;</span>);
+<span class="kw">for</span> (<span class="type">uint32_t</span> i = <span class="num">0</span>; i &lt; data.GetMaterialCount(); ++i) {
+    <span class="kw">const</span> <span class="kw">auto</span>* mat = data.GetMaterial(i);
+    <span class="kw">if</span> (!mat) <span class="kw">continue</span>;
+    <span class="com">// mat-&gt;baseColor[0..3] でベースカラー参照</span>
+    <span class="com">// mat-&gt;diffuseTexturePath でテクスチャパス参照</span>
+}
+</code></pre>
+<h3>Assets パスから直接モデルデータを取得</h3>
+<pre><code class="language-cpp">
+<span class="kw">const</span> <span class="kw">auto</span>&amp; data = KashipanEngine::ModelManager::GetModelDataFromAssetPath(<span class="str">&quot;Models/player.fbx&quot;</span>);
+</code></pre>
+</body>
+</html>

@@ -3,12 +3,21 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <functional>
+#include <limits>
+#include <chrono>
 
 #include "Utilities/Passkeys.h"
+
+struct XAUDIO2FX_REVERB_PARAMETERS;
+struct FXEQ_PARAMETERS;
+struct FXECHO_PARAMETERS;
 
 namespace KashipanEngine {
 
 class GameEngine;
+class AudioPlayer;
+class SoundBeat;
 
 /// @brief 音声管理クラス
 class AudioManager final {
@@ -18,6 +27,15 @@ public:
 
     using PlayHandle = uint32_t;
     static constexpr PlayHandle kInvalidPlayHandle = 0;
+
+    struct PlayParams final {
+        SoundHandle sound = kInvalidSoundHandle;
+        float volume = 1.0f;
+        float pitch = 0.0f;
+        bool loop = false;
+        double startTimeSec = 0.0;
+        double endTimeSec = 0.0;
+    };
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
     /// @param assetsRootPath Assets フォルダのルートパス
@@ -43,8 +61,16 @@ public:
     /// @param volume ボリューム (0.0f ~ 1.0f)
     /// @param pitch ピッチ（半音単位。+1.0f で半音上がる）
     /// @param loop ループ再生
+    /// @param startTimeSec 再生開始時間（秒）
+    /// @param endTimeSec 再生終了時間（秒。0以下は末尾まで）
     /// @return 再生ハンドル（失敗時は `kInvalidPlayHandle`）
-    static PlayHandle Play(SoundHandle sound, float volume = 1.0f, float pitch = 0.0f, bool loop = false);
+    static PlayHandle Play(SoundHandle sound, float volume = 1.0f, float pitch = 0.0f,
+        bool loop = false, double startTimeSec = 0.0, double endTimeSec = 0.0);
+
+    /// @brief 再生パラメータをまとめた構造体から再生する
+    /// @param params 再生パラメータ
+    /// @return 再生ハンドル（失敗時は `kInvalidPlayHandle`）
+    static PlayHandle Play(const PlayParams& params);
 
     /// @brief 再生停止
     /// @return 成功した場合 true
@@ -70,6 +96,42 @@ public:
     /// @return 成功した場合 true
     static bool SetPitch(PlayHandle play, float pitch);
 
+    /// @brief 再生中の音声にリバーブを設定する
+    /// @param play 再生ハンドル
+    /// @param params リバーブパラメータ
+    /// @return 成功した場合 true
+    static bool SetReverbParameters(PlayHandle play, const ::XAUDIO2FX_REVERB_PARAMETERS& params);
+
+    /// @brief 再生中の音声のリバーブ有効/無効
+    /// @param play 再生ハンドル
+    /// @param enable trueで有効化
+    /// @return 成功した場合 true
+    static bool EnableReverb(PlayHandle play, bool enable);
+
+    /// @brief 再生中の音声にEQを設定する
+    /// @param play 再生ハンドル
+    /// @param params EQパラメータ
+    /// @return 成功した場合 true
+    static bool SetEqParameters(PlayHandle play, const ::FXEQ_PARAMETERS& params);
+
+    /// @brief 再生中の音声のEQ有効/無効
+    /// @param play 再生ハンドル
+    /// @param enable trueで有効化
+    /// @return 成功した場合 true
+    static bool EnableEq(PlayHandle play, bool enable);
+
+    /// @brief 再生中の音声にDelay(Echo)を設定する
+    /// @param play 再生ハンドル
+    /// @param params Echoパラメータ
+    /// @return 成功した場合 true
+    static bool SetEchoParameters(PlayHandle play, const ::FXECHO_PARAMETERS& params);
+
+    /// @brief 再生中の音声のDelay(Echo)有効/無効
+    /// @param play 再生ハンドル
+    /// @param enable trueで有効化
+    /// @return 成功した場合 true
+    static bool EnableEcho(PlayHandle play, bool enable);
+
     /// @brief 再生中かどうか
     static bool IsPlaying(PlayHandle play);
 
@@ -84,9 +146,23 @@ public:
     static void ShowImGuiLoadedSoundsWindow();
     /// @brief デバッグ用: 再生中/保持中の音声一覧の ImGui ウィンドウを描画
     static void ShowImGuiPlayingSoundsWindow();
+    /// @brief デバッグ用: エフェクト設定の ImGui ウィンドウを描画
+    static void ShowImGuiEffectWindow();
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }
+
+    /// @brief 再生中の音声の現在位置を秒単位で取得する
+    /// @param play 再生ハンドル
+    /// @param outSeconds 取得した秒数の出力先
+    /// @return 成功した場合 true
+    static bool GetPlayPositionSeconds(PlayHandle play, double& outSeconds);
+
+    static void RegisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat);
+    static void UnregisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat);
+
+    static void RegisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player);
+    static void UnregisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player);
 
 private:
 #if defined(USE_IMGUI)

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：ダイアログ（Dialogs）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：ダイアログ（Dialogs）</h1>
+<p>対象ヘッダ：</p>
+<ul>
+<li><code>Utilities/Dialogs/MessageDialog.h</code></li>
+<li><code>Utilities/Dialogs/DialogBase.h</code></li>
+<li><code>Utilities/Dialogs/ConfirmDialog.h</code></li>
+<li><code>Utilities/Dialogs/FileDialog.h</code></li>
+<li><code>Utilities/Dialogs/FolderDialog.h</code></li>
+</ul>
+<hr />
+<h2>1. <code>MessageDialog</code>（実装あり）</h2>
+<h3>目的</h3>
+<p>簡易なメッセージ表示（情報/エラー）を行います。</p>
+<h3>公開API</h3>
+<p>名前空間：<code>KashipanEngine::Dialogs</code></p>
+<ul>
+<li><code>bool ShowMessageDialog(const char *title, const char *message, bool isError = false);</code></li>
+</ul>
+<p>返り値：</p>
+<ul>
+<li><code>true</code>：ユーザーが OK を押した</li>
+<li><code>false</code>：ユーザーがキャンセルを押した</li>
+</ul>
+<h3>使用例</h3>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+KashipanEngine::Dialogs::ShowMessageDialog(<span class="str">&quot;Info&quot;</span>, <span class="str">&quot;Hello&quot;</span>);
+KashipanEngine::Dialogs::ShowMessageDialog(<span class="str">&quot;Error&quot;</span>, <span class="str">&quot;Failed to load asset&quot;</span>, <span class="kw">true</span>);
+</code></pre>
+<hr />
+<h2>2. それ以外（現状はプレースホルダ）</h2>
+<p>以下のヘッダは現状、公開API（クラス/関数）が宣言されていません（空の名前空間宣言のみ）。</p>
+<ul>
+<li><code>DialogBase.h</code></li>
+<li><code>ConfirmDialog.h</code></li>
+<li><code>FileDialog.h</code></li>
+<li><code>FolderDialog.h</code></li>
+</ul>
+<p>そのため、現時点ではドキュメント化できる「厳密なAPI仕様」が存在しません。</p>
+<blockquote>
+<p>今後 API が追加された場合、このページに追記します。</p>
+</blockquote>
+</body>
+</html>

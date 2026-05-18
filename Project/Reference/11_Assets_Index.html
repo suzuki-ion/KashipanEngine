@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>アセット管理（カテゴリ別インデックス）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>アセット管理（カテゴリ別インデックス）</h1>
+<p>エンジン側で用意しているアセット管理クラスは <code>KashipanEngine/AssetsHeaders.h</code> で一括インクルードできます。</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+<span class="com">// もしくは</span>
+#include <span class="str">&quot;KashipanEngine/AssetsHeaders.h&quot;</span>
+</code></pre>
+<p>この章はアセット管理をカテゴリごとに分割し、各カテゴリの目的・設計・具体的な使い方を記述します。</p>
+<hr />
+<h2>カテゴリ一覧</h2>
+<ul>
+<li><a href="11_Assets_TextureManager.html"><code>11_Assets_TextureManager.md</code></a>：テクスチャ管理（<code>TextureManager</code> / <code>TextureView</code> / <code>IShaderTexture</code>）</li>
+<li><a href="11_Assets_ModelManager.html"><code>11_Assets_ModelManager.md</code></a>：モデル管理（<code>ModelManager</code> / <code>ModelData</code>）</li>
+<li><a href="11_Assets_AudioManager.html"><code>11_Assets_AudioManager.md</code></a>：音声管理（<code>AudioManager</code>）</li>
+<li><a href="11_Assets_AudioPlayer.html"><code>11_Assets_AudioPlayer.md</code></a>：音声プレイヤー（<code>AudioPlayer</code>）</li>
+<li><a href="11_Assets_SoundBeat.html"><code>11_Assets_SoundBeat.md</code></a>：ビート検出（<code>SoundBeat</code>）</li>
+<li><a href="11_Assets_SamplerManager.html"><code>11_Assets_SamplerManager.md</code></a>：サンプラー管理（<code>SamplerManager</code> / <code>DefaultSampler</code>）</li>
+</ul>
+<hr />
+<h2>共通設計</h2>
+<h3><code>Assets</code> 配下のファイルは「起動時に読み込まれる」</h3>
+<p>各マネージャ（<code>TextureManager</code> / <code>ModelManager</code> / <code>AudioManager</code>）は内部に <code>LoadAllFromAssetsFolder()</code> を持ち、 **Assets ルート以下を起動時に走査して事前ロード**する設計になっています。</p>
+<p>そのため、基本運用は以下です。</p>
+<ul>
+<li>ゲームで使うファイルを <code>Assets/</code> 配下へ配置しておく</li>
+<li>実行時は「ファイル名」または「Assets ルートからの相対パス」でハンドルを取得して使う</li>
+</ul>
+<blockquote>
+<p>事前ロードの対象拡張子や探索ルールは各 <code>*Manager.cpp</code> の実装に従います。</p>
+</blockquote>
+<h3><code>SceneBase</code>（エンジン資産への静的アクセサ）</h3>
+<ul>
+<li><code>static AudioManager* GetAudioManager()</code></li>
+<li><code>static ModelManager* GetModelManager()</code></li>
+<li><code>static SamplerManager* GetSamplerManager()</code></li>
+<li><code>static TextureManager* GetTextureManager()</code></li>
+</ul>
+<p>これらのポインタは <code>GameEngine</code> が <code>SceneBase::SetEnginePointers(...)</code> で設定します。</p>
+<h3><code>Assets</code> の配置（実務上のルール）</h3>
+<ul>
+<li><code>Assets/</code> 直下〜配下に配置したファイルがロード対象</li>
+<li>engine 付属のデータ（パイプライン定義、エンジンロゴ等）は <code>Assets/KashipanEngine/...</code> に配置されている想定</li>
+</ul>
+<p>例：</p>
+<ul>
+<li><code>Assets/KashipanEngine/EngineSettings.json</code></li>
+<li><code>Assets/KashipanEngine/Pipeline/...</code>（パイプライン定義やプリセット）</li>
+</ul>
+<blockquote>
+<p><code>EngineSettings.json</code> の内容は <code>GameEngine</code> 起動時に読み込まれ、ウィンドウ初期パラメータ等に反映されます。</p>
+</blockquote>
+<h3>ファイル名指定時について</h3>
+<blockquote>
+<p>ファイル名指定時の文字の大文字小文字は、Windowsの仕様に則って関係しないようにしています。</p>
+</blockquote>
+<p>内部ではファイル名・アセットパスの検索に大文字小文字を区別しない <code>FileMap</code>（<code>CaseInsensitiveHash</code> / <code>CaseInsensitiveEqual</code>）を使用しています。</p>
+<hr />
+<h2>旧ページについて</h2>
+<p>従来の <a href="11_Assets.html"><code>11_Assets.md</code></a> は「全アセットマネージャの単一ページ列挙」でしたが、 説明の厳密化と使用例の拡充のためカテゴリ別ページへ分割しました。</p>
+<ul>
+<li>旧：<a href="11_Assets.html"><code>11_Assets.md</code></a></li>
+<li>新：本インデックス＋カテゴリ別ページ群</li>
+</ul>
+</body>
+</html>

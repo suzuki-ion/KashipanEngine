@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>フォント / テキスト描画（`Font`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>フォント / テキスト描画（<code>Font</code>）</h1>
+<p>フォント関連は <code>KashipanEngine/FontHeaders.h</code> で一括インクルードできます。</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+<span class="com">// もしくは</span>
+#include <span class="str">&quot;KashipanEngine/FontHeaders.h&quot;</span>
+</code></pre>
+<hr />
+<h2>構成</h2>
+<ul>
+<li><code>FontLoader</code>：<code>.fnt</code>（BMFont形式）を読み込み <code>FontData</code> を生成</li>
+<li><code>Text</code>：<code>Sprite</code> を文字単位で内部生成し、フォント情報に基づいてレイアウトして描画</li>
+</ul>
+<hr />
+<h2><code>Text</code> の基本的な使い方</h2>
+<h3>生成と描画登録</h3>
+<p><code>Text</code> は内部的に文字数分の <code>Sprite</code> を持つため、コンストラクタで最大文字数（確保数）を指定します。</p>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> text = std::make_unique&lt;Text&gt;(<span class="num">128</span>);
+text-&gt;SetName(<span class="str">&quot;UI_Text&quot;</span>);
+
+<span class="kw">if</span> (<span class="kw">auto</span>* tr = text-&gt;GetComponent2D&lt;Transform2D&gt;()) {
+    tr-&gt;SetTranslate(Vector2(<span class="num">120.0f</span>, <span class="num">120.0f</span>));
+}
+
+text-&gt;SetFont(<span class="str">&quot;Assets/Fonts/TestFont.fnt&quot;</span>);
+text-&gt;SetText(u8<span class="str">&quot;Hello, KashipanEngine!\nText Rendering Test&quot;</span>);
+text-&gt;SetTextAlign(TextAlignX::Left, TextAlignY::Top);
+
+text-&gt;AttachToRenderer(screenBuffer2D, <span class="str">&quot;Object2D.DoubleSidedCulling.BlendNormal&quot;</span>);
+AddObject2D(std::move(text));
+</code></pre>
+<h3>テキスト更新</h3>
+<p><code>SetText(...)</code> を呼ぶと、内部レイアウトを再構築します。</p>
+<pre><code class="language-cpp">
+text-&gt;SetText(u8<span class="str">&quot;Score: 100&quot;</span>);
+<span class="com">// u8string型でなくても通常のstring型も受け付けます。</span>
+text-&gt;SetText(<span class="str">&quot;Time: 12.34&quot;</span>);
+</code></pre>
+<h3>テキスト更新（<code>std::format</code> スタイル）</h3>
+<p><code>SetTextFormat(...)</code> で <code>std::format</code> と同様に <code>{}</code> プレースホルダーへ値を埋め込めます。</p>
+<pre><code class="language-cpp">
+<span class="type">int</span> score = <span class="num">100</span>;
+<span class="type">float</span> time = <span class="num">12.34f</span>;
+text-&gt;SetTextFormat(<span class="str">&quot;Score: {}  Time: {:.2f}&quot;</span>, score, time);
+</code></pre>
+<blockquote>
+<p><code>SetTextFormat(...)</code> の format は <code>std::format_string&lt;...&gt;</code> のため、</p>
+<p>文字列リテラル（またはコンパイル時に妥当性が取れる形式）での使用を推奨します。</p>
+</blockquote>
+<hr />
+<h2>文字ごとの <code>Sprite</code> へのアクセス（<code>operator[]</code>）</h2>
+<p><code>Text</code> は内部的に文字単位の <code>Sprite</code> を保持しており、<code>operator[]</code> でアクセスできます。</p>
+<ul>
+<li><code>text[i]</code> は i 番目の文字スプライト（<code>Sprite*</code>）を返します</li>
+<li>範囲外の場合は <code>nullptr</code> を返します</li>
+</ul>
+<p>これにより、文字ごとに色・座標・拡大率などを個別に調整できます。</p>
+<p>例：先頭の1文字だけ色を変える</p>
+<pre><code class="language-cpp">
+<span class="kw">if</span> (<span class="kw">auto</span>* s = (*text)[<span class="num">0</span>]) {
+    <span class="kw">if</span> (<span class="kw">auto</span>* mat = s-&gt;GetComponent2D&lt;Material2D&gt;()) {
+        mat-&gt;SetColor(Vector4(<span class="num">1.0f</span>, <span class="num">0.2f</span>, <span class="num">0.2f</span>, <span class="num">1.0f</span>));
+    }
+}
+</code></pre>
+<hr />
+<h2>揃え（アライン）</h2>
+<ul>
+<li><code>SetTextAlign(TextAlignX, TextAlignY)</code> で行単位の揃えを指定します。</li>
+</ul>
+<pre><code class="language-cpp">
+text-&gt;SetTextAlign(TextAlignX::Center, TextAlignY::Center);
+</code></pre>
+<hr />
+<h2>参照（関連）</h2>
+<ul>
+<li><a href="02_GameObjects.html"><code>02_GameObjects.md</code></a>（<code>Object2DBase</code> / <code>Sprite</code>）</li>
+<li><a href="11_Assets_TextureManager.html"><code>11_Assets_TextureManager.md</code></a>（テクスチャ管理：フォントページの解決で利用）</li>
+</ul>
+</body>
+</html>

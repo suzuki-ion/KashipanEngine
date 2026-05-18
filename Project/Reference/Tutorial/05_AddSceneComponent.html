@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>5. シーンにコンポーネントを付与</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>5. シーンにコンポーネントを付与</h1>
+<p>シーン全体の振る舞い（UI管理、ゲーム進行、スポナーなど）は「シーンコンポーネント」として追加します。</p>
+<ul>
+<li>インターフェース：<code>ISceneComponent</code></li>
+<li>追加先：<code>SceneBase</code>（<code>AddSceneComponent(...)</code>）</li>
+</ul>
+<hr />
+<h2>例：シーンコンポーネントを追加する</h2>
+<p>既存コードでは <code>TitleScene</code> / <code>TestScene</code> 内で多くのシーンコンポーネントが追加されています。</p>
+<p>（例：<code>TestScene</code> では <code>EnemyManager</code>, <code>BombManager</code> などを <code>AddSceneComponent(...)</code> しています。）</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="type">void</span> MyScene::Initialize() {
+    <span class="kw">auto</span> comp = std::make_unique&lt;MySceneComponent&gt;();
+    AddSceneComponent(std::move(comp));
+}
+</code></pre>
+<hr />
+<h2>ポイント（厳密）</h2>
+<ul>
+<li><code>SceneBase::Update()</code> の中で</li>
+<ul>
+<li>シーンコンポーネントが更新され</li>
+<li>その後に <code>OnUpdate()</code> が呼ばれる</li>
+</ul>
+</ul>
+<p>といった順序になります（詳細は <code>SceneBase.cpp</code> を参照）。</p>
+<ul>
+<li>シーンコンポーネント側からシーンへアクセスする場合は、</li>
+<ul>
+<li><code>GetOwnerScene()</code></li>
+<li><code>GetOwnerContext()</code></li>
+</ul>
+</ul>
+<p>などの <code>ISceneComponent</code> API を用います。</p>
+<blockquote>
+<p><code>ISceneComponent</code> の厳密なAPIは <a href="../05_SceneComponents.html"><code>Reference/05_SceneComponents.md</code></a> を参照してください。</p>
+</blockquote>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>アセット管理：音声（`AudioManager`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="11_Assets_Index.html">目次へ</a></nav>
+<h1>アセット管理：音声（<code>AudioManager</code>）</h1>
+<p>対象ヘッダ：<code>KashipanEngine/Assets/AudioManager.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p>音声ファイルの読み込み・再生・制御を行うクラスです。 XAudio2 と Media Foundation を使用して多様な音声形式を PCM にデコードし、再生します。</p>
+<hr />
+<h2>2. 設計概要</h2>
+<ul>
+<li>音声リソースは <code>SoundHandle</code>（<code>uint32_t</code>）で管理します。</li>
+<li>再生インスタンスは <code>PlayHandle</code>（<code>uint32_t</code>）で管理します。</li>
+<li>無効ハンドルはそれぞれ <code>kInvalidSoundHandle</code>（<code>0</code>）、<code>kInvalidPlayHandle</code>（<code>0</code>）です。</li>
+<li><code>Assets/</code> 配下のファイルはエンジン起動時に <code>LoadAllFromAssetsFolder()</code> で自動ロードされます。</li>
+<li>ファイル名・アセットパスでの検索は大文字小文字を区別しません。</li>
+<li>同時再生数は最大 64 です。</li>
+</ul>
+<h3>対応音声形式</h3>
+<p><code>.wav</code> / <code>.mp3</code> / <code>.ogg</code> / <code>.flac</code> / <code>.aac</code> / <code>.m4a</code> / <code>.wma</code></p>
+<hr />
+<h2>3. 公開API</h2>
+<h3>3.1 型定義・定数</h3>
+<pre><code class="language-cpp">
+<span class="kw">using</span> SoundHandle = <span class="type">uint32_t</span>;
+<span class="kw">static</span> <span class="kw">constexpr</span> SoundHandle kInvalidSoundHandle = <span class="num">0</span>;
+
+<span class="kw">using</span> PlayHandle = <span class="type">uint32_t</span>;
+<span class="kw">static</span> <span class="kw">constexpr</span> PlayHandle kInvalidPlayHandle = <span class="num">0</span>;
+</code></pre>
+<h3>3.2 <code>PlayParams</code>（再生パラメータ構造体）</h3>
+<pre><code class="language-cpp">
+<span class="kw">struct</span> PlayParams <span class="kw">final</span> {
+    SoundHandle sound = kInvalidSoundHandle;
+    <span class="type">float</span> volume = <span class="num">1.0f</span>;       <span class="com">// 0.0f ~ 1.0f</span>
+    <span class="type">float</span> pitch = <span class="num">0.0f</span>;        <span class="com">// 半音単位（+1.0f で半音上がる）</span>
+    <span class="type">bool</span> loop = <span class="kw">false</span>;
+    <span class="type">double</span> startTimeSec = <span class="num">0.0</span>; <span class="com">// 再生開始時間（秒）</span>
+    <span class="type">double</span> endTimeSec = <span class="num">0.0</span>;   <span class="com">// 再生終了時間（秒。0以下は末尾まで）</span>
+};
+</code></pre>
+<h3>3.3 コンストラクタ（<code>GameEngine</code> からのみ生成可能）</h3>
+<pre><code class="language-cpp">
+AudioManager(Passkey&lt;GameEngine&gt;, <span class="kw">const</span> std::string&amp; assetsRootPath = <span class="str">&quot;Assets&quot;</span>);
+</code></pre>
+<h3>3.4 読み込み</h3>
+<pre><code class="language-cpp">
+SoundHandle Load(<span class="kw">const</span> std::string&amp; filePath);
+</code></pre>
+<ul>
+<li><code>Assets</code> ルート相対パス or フルパスで音声をロードします。</li>
+<li>Media Foundation を使用して PCM にデコードします。</li>
+<li>既にロード済みのパスが指定された場合は既存のハンドルを返します。</li>
+<li>失敗時は <code>kInvalidSoundHandle</code> を返します。</li>
+</ul>
+<h3>3.5 ハンドル取得</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> SoundHandle GetSoundHandleFromFileName(<span class="kw">const</span> std::string&amp; fileName);
+<span class="kw">static</span> SoundHandle GetSoundHandleFromAssetPath(<span class="kw">const</span> std::string&amp; assetPath);
+</code></pre>
+<h3>3.6 再生</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> PlayHandle Play(SoundHandle sound, <span class="type">float</span> volume = <span class="num">1.0f</span>, <span class="type">float</span> pitch = <span class="num">0.0f</span>,
+    <span class="type">bool</span> loop = <span class="kw">false</span>, <span class="type">double</span> startTimeSec = <span class="num">0.0</span>, <span class="type">double</span> endTimeSec = <span class="num">0.0</span>);
+<span class="kw">static</span> PlayHandle Play(<span class="kw">const</span> PlayParams&amp; params);
+</code></pre>
+<ul>
+<li>指定した音声を再生し、再生ハンドルを返します。</li>
+<li><code>pitch</code> は半音単位で指定します（<code>+1.0f</code> で半音上がる、<code>-12.0f</code> で1オクターブ下がる）。</li>
+<li><code>startTimeSec</code> / <code>endTimeSec</code> で再生範囲を指定できます。<code>endTimeSec</code> が <code>0</code> 以下の場合は末尾まで再生します。</li>
+<li>失敗時は <code>kInvalidPlayHandle</code> を返します。</li>
+</ul>
+<h3>3.7 停止・一時停止・再開</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> <span class="type">bool</span> Stop(PlayHandle play);
+<span class="kw">static</span> <span class="type">bool</span> Pause(PlayHandle play);
+<span class="kw">static</span> <span class="type">bool</span> Resume(PlayHandle play);
+</code></pre>
+<ul>
+<li><code>Stop</code>: 再生を完全に停止し、再生ハンドルを解放します。</li>
+<li><code>Pause</code>: 再生を一時停止します。</li>
+<li><code>Resume</code>: 一時停止を解除し、再生を再開します。</li>
+<li>いずれも成功時に <code>true</code> を返します。</li>
+</ul>
+<h3>3.8 パラメータ変更</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> <span class="type">bool</span> SetVolume(PlayHandle play, <span class="type">float</span> volume);
+<span class="kw">static</span> <span class="type">bool</span> SetPitch(PlayHandle play, <span class="type">float</span> pitch);
+</code></pre>
+<ul>
+<li>再生中の音量・ピッチをリアルタイムに変更できます。</li>
+<li><code>volume</code> は <code>0.0f</code> ～ <code>1.0f</code> にクランプされます。</li>
+</ul>
+<h3>3.9 状態問い合わせ</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> <span class="type">bool</span> IsPlaying(PlayHandle play);
+<span class="kw">static</span> <span class="type">bool</span> IsPaused(PlayHandle play);
+</code></pre>
+<ul>
+<li><code>IsPlaying</code>: 再生中かどうかを返します（一時停止中は <code>false</code>）。</li>
+<li><code>IsPaused</code>: 一時停止中かどうかを返します。</li>
+</ul>
+<h3>3.10 再生位置取得</h3>
+<pre><code class="language-cpp">
+<span class="kw">static</span> <span class="type">bool</span> GetPlayPositionSeconds(PlayHandle play, <span class="type">double</span>&amp; outSeconds);
+</code></pre>
+<ul>
+<li>再生中の音声の現在位置を秒単位で取得します。</li>
+<li><code>SoundBeat</code> のビート検出に使用されます。</li>
+</ul>
+<h3>3.11 更新処理</h3>
+<pre><code class="language-cpp">
+<span class="type">void</span> Update();
+</code></pre>
+<ul>
+<li>エンジンのメインループから毎フレーム呼び出されます。</li>
+<li>再生終了した非ループ音声の自動クリーンアップを行います。</li>
+<li>登録された <code>SoundBeat</code> と <code>AudioPlayer</code> の更新処理を呼び出します。</li>
+</ul>
+<hr />
+<h2>4. 使用例</h2>
+<h3>ファイル名で音声を取得して再生</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> se = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;se_shot.wav&quot;</span>);
+<span class="kw">auto</span> play = KashipanEngine::AudioManager::Play(se, <span class="num">0.8f</span>);
+
+<span class="com">// 後で停止</span>
+KashipanEngine::AudioManager::Stop(play);
+</code></pre>
+<h3>PlayParams を使用した詳細な再生</h3>
+<pre><code class="language-cpp">
+KashipanEngine::AudioManager::PlayParams params;
+params.sound = KashipanEngine::AudioManager::GetSoundHandleFromFileName(<span class="str">&quot;bgm.mp3&quot;</span>);
+params.volume = <span class="num">0.5f</span>;
+params.pitch = <span class="num">0.0f</span>;
+params.loop = <span class="kw">true</span>;
+params.startTimeSec = <span class="num">10.0</span>;  <span class="com">// 10秒目から再生開始</span>
+
+<span class="kw">auto</span> play = KashipanEngine::AudioManager::Play(params);
+</code></pre>
+<h3>再生状態の確認と操作</h3>
+<pre><code class="language-cpp">
+<span class="kw">auto</span> play = KashipanEngine::AudioManager::Play(soundHandle);
+
+<span class="kw">if</span> (KashipanEngine::AudioManager::IsPlaying(play)) {
+    KashipanEngine::AudioManager::Pause(play);
+}
+
+<span class="kw">if</span> (KashipanEngine::AudioManager::IsPaused(play)) {
+    KashipanEngine::AudioManager::Resume(play);
+}
+
+<span class="com">// 音量を徐々に下げる</span>
+KashipanEngine::AudioManager::SetVolume(play, <span class="num">0.3f</span>);
+</code></pre>
+</body>
+</html>

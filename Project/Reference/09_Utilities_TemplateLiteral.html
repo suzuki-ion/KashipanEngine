@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：文字列テンプレート（`TemplateLiteral`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：文字列テンプレート（<code>TemplateLiteral</code>）</h1>
+<p>対象ヘッダ：<code>Utilities/TemplateLiteral.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p>テンプレート文字列中の <code>${name}</code> プレースホルダーへ値を差し込み、完成した文字列を生成します。</p>
+<ul>
+<li>UI 文言</li>
+<li>ログ文言</li>
+<li>デバッグ用の整形文字列</li>
+</ul>
+<p>など、簡易なテンプレート用途を想定しています。</p>
+<hr />
+<h2>2. 公開API（主要）</h2>
+<ul>
+<li><code>TemplateLiteral()</code></li>
+<li><code>explicit TemplateLiteral(std::string_view templ)</code></li>
+<li><code>const std::string &amp;Template() const noexcept</code></li>
+<li><code>void SetTemplate(std::string_view templ)</code></li>
+<li><code>const std::vector&lt;std::string&gt; &amp;Placeholders() const noexcept</code></li>
+<li><code>const std::string &amp;Get(std::string_view key) const</code></li>
+<li><code>bool HasPlaceholder(std::string_view key) const noexcept</code></li>
+<li><code>template &lt;class T&gt; void Set(std::string_view key, T &amp;&amp;value)</code></li>
+<li><code>std::string Render() const</code></li>
+</ul>
+<p>代入用：</p>
+<ul>
+<li><code>Slot operator[](std::string_view key)</code></li>
+</ul>
+<hr />
+<h2>3. 値型の厳密な条件</h2>
+<p><code>Set(key, value)</code> で受け付ける型はヘッダ実装で以下に分類されます。</p>
+<ul>
+<li>**文字列ライク**：<code>std::string</code>, <code>std::string_view</code>, <code>const char*</code>, <code>char*</code></li>
+<li>**ストリーム出力可能**：<code>operator&lt;&lt;(std::ostream&amp;, const T&amp;)</code> が定義されている型</li>
+<li>**コンテナライク**：<code>begin/end</code> があり、かつ文字列ライクではない型</li>
+<ul>
+<li>要素は文字列ライク、またはストリーム出力可能である必要があります</li>
+</ul>
+</ul>
+<p>コンテナを渡した場合は</p>
+<ul>
+<li>内部に各要素の文字列配列を保持し</li>
+<li>既定では <code>&quot;, &quot;</code> で join した文字列も <code>${name}</code> の値として設定</li>
+</ul>
+<p>します。</p>
+<p>サポート外型を渡すと <code>static_assert</code> でコンパイルエラーになります。</p>
+<hr />
+<h2>4. 使用例（スカラー値）</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+KashipanEngine::TemplateLiteral t(<span class="str">&quot;HP=${hp}, Score=${score}&quot;</span>);
+
+t[<span class="str">&quot;hp&quot;</span>] = <span class="num">120</span>;
+t[<span class="str">&quot;score&quot;</span>] = <span class="num">3450</span>;
+
+std::string s = t.Render();
+</code></pre>
+<hr />
+<h2>5. 使用例（コンテナ）</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+KashipanEngine::TemplateLiteral t(<span class="str">&quot;Loaded: ${files}&quot;</span>);
+
+t.Set(<span class="str">&quot;files&quot;</span>, std::vector&lt;std::string&gt;{<span class="str">&quot;a.png&quot;</span>, <span class="str">&quot;b.png&quot;</span>});
+
+<span class="com">// ${files} は &quot;a.png, b.png&quot; として展開される</span>
+<span class="kw">auto</span> s = t.Render();
+</code></pre>
+<hr />
+<h2>6. 注意点</h2>
+<ul>
+<li><code>${name}</code> の解析はテンプレート文字列に対して行われ、<code>SetTemplate()</code> で再解析されます。</li>
+<li>プレースホルダー名の有効範囲・文法は実装（<code>TemplateLiteral.cpp</code>）に従います。</li>
+</ul>
+</body>
+</html>

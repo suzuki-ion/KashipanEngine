@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：ソースロケーション / 関数シグネチャ解析</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：ソースロケーション / 関数シグネチャ解析</h1>
+<p>対象ヘッダ：<code>Utilities/SourceLocation.h</code></p>
+<hr />
+<h2>1. 目的</h2>
+<p><code>std::source_location</code> を利用して、</p>
+<ul>
+<li>どのファイルの何行か</li>
+<li>どの関数から呼ばれたか</li>
+</ul>
+<p>を取得し、さらに関数シグネチャ文字列をパースして「スコープ」「関数名」「引数」「戻り値型」等を構造化します。</p>
+<p>ログ/アサート/デバッグ出力で、人間が読める形のメタ情報を付与する用途を想定しています。</p>
+<hr />
+<h2>2. 公開API</h2>
+<h3>2.1 関数シグネチャ</h3>
+<ul>
+<li><code>struct FunctionSignatureInfo</code></li>
+<ul>
+<li><code>std::vector&lt;std::string&gt; scopes;</code></li>
+<li><code>std::string functionName;</code></li>
+<li><code>std::vector&lt;std::string&gt; arguments;</code></li>
+<li><code>std::string returnType;</code></li>
+<li><code>std::string rawSignature;</code></li>
+<li><code>std::string trailingQualifiers;</code></li>
+</ul>
+</ul>
+<ul>
+<li><code>FunctionSignatureInfo ParseFunctionSignature(std::string sig);</code></li>
+<li><code>FunctionSignatureInfo ParseFunctionSignature(const std::source_location &amp;loc);</code></li>
+</ul>
+<h3>2.2 ソースロケーション包括情報</h3>
+<ul>
+<li><code>struct SourceLocationInfo</code></li>
+<ul>
+<li><code>std::string filePath;</code></li>
+<li><code>std::uint_least32_t line;</code></li>
+<li><code>std::uint_least32_t column;</code></li>
+<li><code>FunctionSignatureInfo signature;</code></li>
+<li><code>std::source_location raw;</code></li>
+</ul>
+</ul>
+<ul>
+<li><code>SourceLocationInfo MakeSourceLocationInfo(const std::source_location &amp;loc = std::source_location::current());</code></li>
+</ul>
+<hr />
+<h2>3. 使用例</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+#include &lt;iostream&gt;
+
+<span class="type">void</span> Foo() {
+    <span class="kw">auto</span> info = KashipanEngine::MakeSourceLocationInfo();
+
+    std::cout &lt;&lt; info.filePath &lt;&lt; <span class="str">&quot;:&quot;</span> &lt;&lt; info.line &lt;&lt; <span class="str">&quot;\n&quot;</span>;
+    std::cout &lt;&lt; info.signature.functionName &lt;&lt; <span class="str">&quot;\n&quot;</span>;
+
+    <span class="com">// rawSignature はコンパイラ依存の文字列</span>
+    std::cout &lt;&lt; info.signature.rawSignature &lt;&lt; <span class="str">&quot;\n&quot;</span>;
+}
+</code></pre>
+<hr />
+<h2>4. 注意点（厳密仕様として）</h2>
+<ul>
+<li><code>std::source_location::function_name()</code> の形式はコンパイラ依存です。</li>
+<ul>
+<li>そのため <code>ParseFunctionSignature(...)</code> の解析結果も、コンパイラ/標準ライブラリの実装差の影響を受けます。</li>
+</ul>
+<li>解析が失敗した場合のフィールド内容は、実装（<code>SourceLocation.cpp</code> 相当）に従います。</li>
+</ul>
+</body>
+</html>

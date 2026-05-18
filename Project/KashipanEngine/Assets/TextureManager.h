@@ -3,9 +3,11 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <DirectXTex.h>
 
 #include "Utilities/Passkeys.h"
 #include "Graphics/IShaderTexture.h"
+#include "Utilities/Plugin/Texture/MipMapContainer.h"
 
 namespace KashipanEngine {
 
@@ -58,12 +60,24 @@ public:
     /// @return 読み込んだテクスチャのハンドル（失敗時は `kInvalidHandle`）
     TextureHandle LoadTexture(const std::string& filePath);
 
+	/// @brief 指定ファイルパスのテクスチャを読み込む（Assets ルートからの相対 or フルパス）
+	/// @return 読み込んだテクスチャの `ScratchImage`（失敗時は空の `ScratchImage`）
+	DirectX::ScratchImage LoadTextureFromFile(const std::string& filePath);
+
     /// @brief ハンドルからテクスチャ(SRV index)を取得
     static TextureHandle GetTexture(TextureHandle handle);
     /// @brief ファイル名単体からテクスチャを取得
     static TextureHandle GetTextureFromFileName(const std::string& fileName);
     /// @brief Assetsルートからの相対パスからテクスチャを取得
     static TextureHandle GetTextureFromAssetPath(const std::string& assetPath);
+
+    /// @brief ハンドルからテクスチャのファイル名を取得（無効時は空文字）
+    static std::string GetTextureFileName(TextureHandle handle);
+    /// @brief ハンドルからテクスチャのAssets相対パスを取得（無効時は空文字）
+    static std::string GetTextureAssetPath(TextureHandle handle);
+
+    /// @brief 読み込み済みテクスチャ一覧を取得
+    static std::vector<TextureListEntry> GetLoadedTextureListEntries();
 
     /// @brief ハンドルからシェーダー用テクスチャビューを取得（無効ハンドルの場合は空のビュー）
     static TextureView GetTextureView(TextureHandle handle) { return TextureView(GetTexture(handle)); }
@@ -90,6 +104,8 @@ private:
 
     DirectXCommon* directXCommon_ = nullptr;
     std::string assetsRootPath_;
+
+	Plugin::MipMapContainer mipMapContainer_;
 };
 
 } // namespace KashipanEngine

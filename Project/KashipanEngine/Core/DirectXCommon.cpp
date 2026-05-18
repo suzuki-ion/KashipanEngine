@@ -28,7 +28,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     LogScope scope;
     Log(Translation("engine.directx.initialize.start"), LogSeverity::Debug);
 
-#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+#if defined(DEBUG_BUILD)
     Log(enableDebugLayer ?
         Translation("engine.directx.debuglayer.enabled") :
         Translation("engine.directx.debuglayer.disabled"),
@@ -58,7 +58,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
     RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.rtvDescriptorHeapSize);
     DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.dsvDescriptorHeapSize);
     SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.srvDescriptorHeapSize);
-    SamplerHeap_ = std::make_unique<SamplerHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.srvDescriptorHeapSize);
+    SamplerHeap_ = std::make_unique<SamplerHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 512);
 
     // グローバルヒープポインタ設定
     IGraphicsResource::SetDescriptorHeaps({},

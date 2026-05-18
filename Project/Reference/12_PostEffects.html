@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ポストエフェクト（`IPostEffectComponent`）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>ポストエフェクト（<code>IPostEffectComponent</code>）</h1>
+<p>ポストエフェクトは <code>ScreenBuffer</code> に登録する「コンポーネント」です。 コンポーネントが <code>PostEffectPass</code>（パイプライン名、定数/インスタンス要件、描画コマンド生成など）を構築し、 <code>Renderer</code> がそれらを実行します。</p>
+<p>関連：</p>
+<ul>
+<li><code>KashipanEngine/Graphics/ScreenBuffer.h</code></li>
+<li><code>KashipanEngine/Graphics/PostEffectComponents/IPostEffectComponent.h</code></li>
+<li><code>KashipanEngine/Graphics/PostEffectComponents/*Effect.h</code></li>
+</ul>
+<hr />
+<h2>公開API：<code>IPostEffectComponent</code>（抜粋）</h2>
+<ul>
+<li><code>const std::string&amp; GetComponentType() const</code></li>
+<li><code>size_t GetMaxComponentCountPerBuffer() const</code></li>
+<li><code>virtual std::optional&lt;bool&gt; Initialize()</code> / <code>Finalize()</code></li>
+<li><code>virtual std::vector&lt;PostEffectPass&gt; BuildPostEffectPasses() const</code></li>
+<li><code>virtual std::unique_ptr&lt;IPostEffectComponent&gt; Clone() const = 0</code></li>
+</ul>
+<hr />
+<h2>エンジン標準の実装</h2>
+<p><code>KashipanEngine/Graphics/PostEffectComponents/</code> に以下が存在します（代表例）。</p>
+<ul>
+<li><code>BloomEffect</code></li>
+<li><code>FXAAEffect</code></li>
+<li><code>MotionBlurEffect</code></li>
+<li><code>ChromaticAberrationEffect</code></li>
+<li><code>DitherEffect</code></li>
+<li><code>DotMatrixEffect</code></li>
+</ul>
+<p>各エフェクトのパラメータや使用する <code>pipelineName</code> は各 <code>*Effect.h/.cpp</code> を参照してください。</p>
+<hr />
+<h2>例：ScreenBuffer に登録する</h2>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span>* sb = KashipanEngine::ScreenBuffer::Create(<span class="num">1280</span>, <span class="num">720</span>);
+
+<span class="com">// 例：エフェクト追加（実際のコンストラクタ引数は各クラス定義に従う）</span>
+<span class="com">// sb-&gt;RegisterPostEffectComponent(std::make_unique&lt;KashipanEngine::BloomEffect&gt;());</span>
+<span class="com">// sb-&gt;RegisterPostEffectComponent(std::make_unique&lt;KashipanEngine::FXAAEffect&gt;());</span>
+
+<span class="com">// パスキャッシュを無効化（動的に構成を変える場合）</span>
+sb-&gt;InvalidatePostEffectPasses();
+</code></pre>
+<hr />
+<h2>補足：パスの実行タイミング</h2>
+<ul>
+<li><code>Renderer::RenderFrame(...)</code> の中で</li>
+<ul>
+<li>offscreen 記録</li>
+<li>post effect 記録</li>
+<li>window への persistent pass</li>
+</ul>
+</ul>
+<p>の順で処理されます（詳細は <code>Renderer.cpp</code> を参照）。</p>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>ユーティリティ：時間（デルタタイム / 計測 / タイマー）</title>
+  <link rel="stylesheet" href="reference.css" />
+</head>
+<body>
+<nav><a href="09_Utilities_Index.html">目次へ</a></nav>
+<h1>ユーティリティ：時間（デルタタイム / 計測 / タイマー）</h1>
+<p>対象ヘッダ：</p>
+<ul>
+<li><code>Utilities/TimeUtils.h</code></li>
+<li><code>Utilities/GameTimer.h</code></li>
+</ul>
+<hr />
+<h2>1. TimeUtils（<code>Utilities/TimeUtils.h</code>）</h2>
+<h3>1.1 目的</h3>
+<ul>
+<li><code>GameEngine</code> が更新するデルタタイム（秒）</li>
+<li>現在時刻（ローカルタイム）</li>
+<li>実行開始からの経過時間</li>
+<li>ラベル付き簡易計測</li>
+<li>ゲームスピード（倍率）の保持</li>
+</ul>
+<p>を提供します。</p>
+<h3>1.2 デルタタイム</h3>
+<p>公開API：</p>
+<ul>
+<li><code>void UpdateDeltaTime(Passkey&lt;GameEngine&gt;);</code></li>
+<li><code>float GetDeltaTime();</code></li>
+</ul>
+<p>厳密な仕様：</p>
+<ul>
+<li><code>UpdateDeltaTime(...)</code> は <code>GameEngine</code> からのみ呼ばれます（パスキー）。</li>
+<li>初回呼び出し時のデルタタイムは <code>0.0f</code> です（実装に <code>sIsFirstDeltaTimeCall</code> が存在）。</li>
+</ul>
+<p>使用例（アプリ側・参照のみ）：</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="type">float</span> dt = KashipanEngine::GetDeltaTime();
+</code></pre>
+<h3>1.3 ゲームスピード</h3>
+<p>公開API：</p>
+<ul>
+<li><code>void SetGameSpeed(float speed);</code></li>
+<li><code>float GetGameSpeed();</code></li>
+</ul>
+<blockquote>
+<p><code>GetDeltaTime()</code> 自体に倍率が掛かるかどうかは実装契約に依存します。現状 <code>TimeUtils.cpp</code> には倍率変数があり、利用側がどう適用するかは呼び出し側設計になります。</p>
+</blockquote>
+<h3>1.4 現在時刻</h3>
+<p>公開API：</p>
+<ul>
+<li><code>int GetNowTimeYear()</code> / <code>GetNowTimeMonth()</code> / <code>GetNowTimeDay()</code></li>
+<li><code>int GetNowTimeHour()</code> / <code>GetNowTimeMinute()</code></li>
+<li><code>long long GetNowTimeSecond()</code> / <code>GetNowTimeMillisecond()</code></li>
+<li><code>TimeRecord GetNowTime()</code></li>
+<li><code>std::string GetNowTimeString(const std::string &amp;format = &quot;%Y-%m-%d %H:%M:%S&quot;);</code></li>
+</ul>
+<p>厳密な仕様：</p>
+<ul>
+<li>実装は <code>std::chrono::zoned_time</code> と <code>current_zone()</code> を使い、ローカルタイムとして扱います。</li>
+</ul>
+<p>使用例：</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="kw">auto</span> s = KashipanEngine::GetNowTimeString(<span class="str">&quot;%Y-%m-%d_%H-%M-%S&quot;</span>);
+</code></pre>
+<h3>1.5 実行時間（プログラム開始から）</h3>
+<p>公開API：</p>
+<ul>
+<li><code>GetGameRuntimeYear/Month/Day/Hour/Minute/Second/Millisecond</code></li>
+<li><code>TimeRecord GetGameRuntime()</code></li>
+</ul>
+<p>厳密な仕様：</p>
+<ul>
+<li>実装は起動時刻を <code>kProgramStartTime</code> として保持し、現在時刻との差で計算します。</li>
+</ul>
+<h3>1.6 簡易計測（ラベル）</h3>
+<p>公開API：</p>
+<ul>
+<li><code>void StartTimeMeasurement(const std::string &amp;label);</code></li>
+<li><code>TimeRecord EndTimeMeasurement(const std::string &amp;label);</code></li>
+</ul>
+<p>厳密な仕様（実装より）：</p>
+<ul>
+<li><code>label -&gt; time_point</code> のマップを内部に保持します。</li>
+<li><code>EndTimeMeasurement</code> は、該当ラベルが無い場合は 0 初期化の <code>TimeRecord</code> を返します。</li>
+</ul>
+<p>使用例：</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+KashipanEngine::StartTimeMeasurement(<span class="str">&quot;phase1&quot;</span>);
+<span class="com">// ... heavy work ...</span>
+<span class="kw">auto</span> rec = KashipanEngine::EndTimeMeasurement(<span class="str">&quot;phase1&quot;</span>);
+</code></pre>
+<h3>1.7 <code>KashipanEngine::GameTimer</code>（<code>TimeUtils.h</code> 版）</h3>
+<p><code>TimeUtils.h</code> 内に <code>KashipanEngine::GameTimer</code> が定義されています。</p>
+<p>特徴：</p>
+<ul>
+<li><code>Update()</code> は内部で <code>GetDeltaTime()</code> を参照します（＝エンジンのデルタタイムと結びつく）。</li>
+</ul>
+<p>主要API：</p>
+<ul>
+<li><code>GameTimer(float duration, bool loop=false)</code></li>
+<li><code>void Update()</code></li>
+<li><code>void Start(float duration, bool loop=false)</code></li>
+<li><code>Stop/Reset/Pause/Resume</code></li>
+<li><code>IsActive/IsFinished</code></li>
+<li><code>GetProgress/GetReverseProgress/GetRemainingTime/GetElapsedTime</code></li>
+</ul>
+<p>使用例：</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+KashipanEngine::GameTimer t(<span class="num">2.0f</span>, <span class="kw">false</span>);
+t.Start(<span class="num">2.0f</span>);
+
+<span class="com">// 毎フレーム</span>
+<span class="com">// t.Update();</span>
+<span class="com">// if (t.IsFinished()) { ... }</span>
+</code></pre>
+<hr />
+<h2>2. もう一つの <code>GameTimer</code>（<code>Utilities/GameTimer.h</code>）</h2>
+<p><code>Utilities/GameTimer.h</code> の <code>GameTimer</code> は **グローバル名前空間**に定義されています。</p>
+<p>特徴：</p>
+<ul>
+<li><code>Update(float deltaTime = 1.0f / 60.0f)</code> の形で、呼び出し側がデルタタイムを与える設計です。</li>
+</ul>
+<p>使用例：</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+::GameTimer t(<span class="num">1.0f</span>);
+
+t.Start(<span class="num">1.0f</span>);
+
+<span class="com">// 毎フレーム</span>
+<span class="type">float</span> dt = KashipanEngine::GetDeltaTime();
+t.Update(dt);
+</code></pre>
+<h3>注意点（厳密に）</h3>
+<ul>
+<li><code>KashipanEngine::GameTimer</code> と <code>::GameTimer</code> が同名で共存するため、</li>
+<ul>
+<li><code>KashipanEngine::GameTimer</code> と明示する</li>
+<li><code>::GameTimer</code> と明示する</li>
+</ul>
+</ul>
+<p>など、曖昧性を避けてください。</p>
+</body>
+</html>

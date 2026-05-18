@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>9. 次のシーンに遷移したいとき</title>
+  <link rel="stylesheet" href="../reference.css" />
+</head>
+<body>
+<nav><a href="00_Index.html">目次へ</a></nav>
+<h1>9. 次のシーンに遷移したいとき</h1>
+<p>シーン遷移は、<code>SceneBase</code> が持つ</p>
+<ul>
+<li><code>SetNextSceneName(...)</code></li>
+<li><code>ChangeToNextScene()</code></li>
+</ul>
+<p>を使用して行います。</p>
+<ul>
+<li>ヘッダ：<code>KashipanEngine/Scene/SceneBase.h</code></li>
+</ul>
+<hr />
+<h2>9.1 基本：次のシーン名をセットして切り替える</h2>
+<p><code>SceneBase</code> 派生クラスの中から、条件を満たしたフレームで次を設定し、切り替えます。</p>
+<pre><code class="language-cpp">
+#include &lt;KashipanEngine.h&gt;
+
+<span class="type">void</span> MyScene::OnUpdate() {
+    <span class="kw">if</span> (GetInputCommand() &amp;&amp; GetInputCommand()-&gt;Evaluate(<span class="str">&quot;Submit&quot;</span>).Triggered()) {
+        <span class="kw">if</span> (GetNextSceneName().empty()) {
+            SetNextSceneName(<span class="str">&quot;GameScene&quot;</span>);
+        }
+        ChangeToNextScene();
+    }
+}
+</code></pre>
+<hr />
+<h2>9.2 既存実装の例：演出完了後に遷移</h2>
+<p><code>TitleScene</code> の <code>OnUpdate()</code> では、</p>
+<ul>
+<li>入力 or アニメ終了で <code>SetNextSceneName(...)</code></li>
+<li><code>SceneChangeOut</code> などの演出コンポーネントが完了したら <code>ChangeToNextScene()</code></li>
+</ul>
+<p>という流れになっています。</p>
+<ul>
+<li>参照：<code>Application/Scenes/TitleScene.cpp</code></li>
+</ul>
+<p>この方式により、単純即時遷移ではなく</p>
+<ul>
+<li>フェード</li>
+<li>ワイプ</li>
+</ul>
+<p>などの演出を「シーンコンポーネント」として挟めます。</p>
+<hr />
+<h2>9.3 厳密な注意点</h2>
+<ul>
+<li><code>ChangeToNextScene()</code> は、<code>SetNextSceneName(...)</code> で次がセットされているときにのみ意味を持ちます。</li>
+<li>実際の切り替えタイミング（即時か、フレーム終端コミットか）は <code>SceneManager</code> 実装に従います。</li>
+<ul>
+<li><code>GameEngine</code> のメインループでは、フレーム末尾で <code>sceneManager_-&gt;CommitPendingSceneChange(...)</code> が呼ばれます。</li>
+</ul>
+</ul>
+</body>
+</html>

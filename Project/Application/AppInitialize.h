@@ -88,6 +88,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 
         // 下降加速
         ic->RegisterCommand("PlayerForwardSpeedDown", Key::S, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerForwardSpeedDown", Key::Down, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerForwardSpeedDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, -0.5f);
         ic->RegisterCommand("PlayerForwardSpeedDown", ControllerButton::DPadDown, InputCommand::InputState::Down);
         

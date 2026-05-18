@@ -22,6 +22,7 @@
 #include "Scenes/Components/PlayerGameOverController.h"
 #include "Scenes/Components/PlayerClearController.h"
 #include "Scenes/Components/PlayerLogCollector.h"
+#include "Scenes/Components/PlayerAnimationController.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 #include "Objects/Components/PlayerMovementController.h"
@@ -115,26 +116,25 @@ void GameScene::Initialize() {
         pauseUIController_ = GetSceneComponent<PauseUIController>();
 
         if (auto *colliderComp = sceneDefaultVariables_->GetColliderComp()) {
-            auto player = std::make_unique<Box>();
-            player->SetName("PlayerRoot");
-            player->SetUniqueBatchKey();
+            auto playerRoot = std::make_unique<Box>();
+            playerRoot->SetName("PlayerRoot");
+            playerRoot->SetUniqueBatchKey();
 
             Transform3D *playerRootTr = nullptr;
 
             if (screenBuffer3D) {
-                player->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+                playerRoot->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
             }
-
-            if (auto *tr = player->GetComponent3D<Transform3D>()) {
+            if (auto *tr = playerRoot->GetComponent3D<Transform3D>()) {
                 tr->SetTranslate(playerSpawnPosition_);
                 playerRootTr = tr;
             }
-            if (auto *mat = player->GetComponent3D<Material3D>()) {
+            if (auto *mat = playerRoot->GetComponent3D<Material3D>()) {
                 mat->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
             }
 
-            player->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
-            player->RegisterComponent<PlayerInputHandler>(
+            playerRoot->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
+            playerRoot->RegisterComponent<PlayerInputHandler>(
                 GetInputCommand(),
                 pauseUIController_,
                 "PlayerMoveRight",
@@ -149,8 +149,24 @@ void GameScene::Initialize() {
                 "PlayerGravityLeft",
                 "PlayerGravityRight");
 
-            Object3DBase *playerPtr = player.get();
-            AddObject3D(std::move(player));
+            auto playerCenter = std::make_unique<Box>();
+            playerCenter->SetName("PlayerCenter");
+            playerCenter->SetUniqueBatchKey();
+            Transform3D *playerCenterTr = nullptr;
+            if (screenBuffer3D) {
+                playerRoot->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+            }
+            if (auto *tr = playerCenter->GetComponent3D<Transform3D>()) {
+                tr->SetParentTransform(playerRootTr);
+                playerCenterTr = tr;
+            }
+            if (auto *mat = playerCenter->GetComponent3D<Material3D>()) {
+                mat->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+            }
+            AddObject3D(std::move(playerCenter));
+
+            Object3DBase *playerPtr = playerRoot.get();
+            AddObject3D(std::move(playerRoot));
             player_ = playerPtr;
             playerMovementController_ = playerPtr->GetComponent3D<PlayerMovementController>();
 
@@ -162,8 +178,8 @@ void GameScene::Initialize() {
                     obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
                 }
                 if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                    if (playerRootTr) {
-                        tr->SetParentTransform(playerRootTr);
+                    if (playerCenterTr) {
+                        tr->SetParentTransform(playerCenterTr);
                     }
                     tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
                     tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
@@ -190,6 +206,7 @@ void GameScene::Initialize() {
             AddSceneComponent(std::make_unique<PlayerRespawnController>(this, playerPtr));
             AddSceneComponent(std::make_unique<PlayerGameOverController>(this, playerPtr));
             AddSceneComponent(std::make_unique<PlayerClearController>(this, playerPtr));
+            AddSceneComponent(std::make_unique<PlayerAnimationController>(playerPtr));
 
             playerRespawnController_ = GetSceneComponent<PlayerRespawnController>();
             playerGameOverController_ = GetSceneComponent<PlayerGameOverController>();

@@ -72,7 +72,7 @@ void ModelAnimator::Finalize() {
 void ModelAnimator::Update() {
     if (playbacks_.empty()) return;
 
-    const float dt = std::max(0.0f, GetDeltaTime());
+    const float dt = std::max(0.0f, GetDeltaTime()) * GetGameSpeed();
 
     for (auto it = playbacks_.begin(); it != playbacks_.end();) {
         auto &playback = *it;
@@ -338,6 +338,15 @@ void ModelAnimator::Resume() {
 
 bool ModelAnimator::IsPlaying() const {
     return !playbacks_.empty();
+}
+
+bool ModelAnimator::IsPlaying(const std::string &objectPresetName, const std::string &bindingPresetName) const {
+    if (objectPresetName.empty() || bindingPresetName.empty()) return false;
+    auto it = std::find_if(playbacks_.begin(), playbacks_.end(), [&](const PlaybackState &p) {
+        return p.objectPresetName == objectPresetName
+            && p.bindingPresetName == bindingPresetName;
+        });
+    return it != playbacks_.end();
 }
 
 bool ModelAnimator::IsPaused() const {

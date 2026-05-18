@@ -255,7 +255,7 @@ public:
     void Jump() {
         if (movementLocked_) return;
         if (jumpBehavior_) {
-            jumpBehavior_->RequestJump();
+            jumpTriggeredThisFrame_ = jumpBehavior_->RequestJump();
             // ジャンプ開始時は落下距離計測をリセット
             accumulatedFallDistance_ = 0.0f;
         }
@@ -360,6 +360,12 @@ public:
         if (!hasLandingImpact_) return false;
         outImpact = lastLandingImpact_;
         return true;
+    }
+
+    bool ConsumeJumpTriggered() {
+        const bool triggered = jumpTriggeredThisFrame_;
+        jumpTriggeredThisFrame_ = false;
+        return triggered;
     }
 
 #if defined(USE_IMGUI)
@@ -496,6 +502,8 @@ private:
     float accumulatedFallDistance_ = 0.0f;
     bool hasLandingImpact_ = false;
     float lastLandingImpact_ = 0.0f;
+
+    bool jumpTriggeredThisFrame_ = false;
 
     float gravityGaugePerUse_ = 12.0f;
     int gravityGaugeUseCountPerFull_ = 3;

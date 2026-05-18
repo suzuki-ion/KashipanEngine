@@ -16,9 +16,10 @@ public:
         return std::make_unique<PlayerJumpBehavior>();
     }
 
-    void RequestJump() {
-        if (jumpCount_ >= maxJumpCount_) return;
+    bool RequestJump() {
+        if (jumpCount_ >= maxJumpCount_) return false;
         jumpRequested_ = true;
+        return true;
     }
 
     void SetJumpInputHeld(bool held) {

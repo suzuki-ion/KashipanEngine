@@ -420,6 +420,7 @@
     <ClInclude Include="Application\ObjectBatchKeys.h" />
     <ClInclude Include="Application\Objects\Components\RotateGroundDefined.h" />
     <ClInclude Include="Application\Objects\Components\GravityGroundDefined.h" />
+    <ClInclude Include="Application\Scenes\Components\PlayerAnimationController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

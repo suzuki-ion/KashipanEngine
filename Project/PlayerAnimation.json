@@ -57,6 +57,11 @@
                 "objectName": "PlayerCenter",
                 "propertyPath": "Transform.Translate.Y",
                 "timelineName": "PlayerCenterPosY"
+            },
+            {
+                "objectName": "PlayerCenter",
+                "propertyPath": "Transform.Rotate.X",
+                "timelineName": "PlayerCenterRotateX"
             }
         ],
         "PlayerRun": [
@@ -109,6 +114,11 @@
                 "objectName": "PlayerCenter",
                 "propertyPath": "Transform.Translate.Y",
                 "timelineName": "PlayerCenterPosY"
+            },
+            {
+                "objectName": "PlayerCenter",
+                "propertyPath": "Transform.Rotate.X",
+                "timelineName": "PlayerCenterRotateX"
             }
         ]
     },
@@ -227,6 +237,16 @@
                     "easeType": 0,
                     "time": 0.0,
                     "value": 1.5
+                }
+            ],
+            "loop": true
+        },
+        "PlayerCenterRotateX": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 0.0
                 }
             ],
             "loop": true

@@ -155,6 +155,12 @@ public:
     /// @return 1つでも再生中なら `true`
     bool IsPlaying() const;
 
+    /// @brief 指定のオブジェクトプリセットとバインディングプリセットの組み合わせが再生中かどうかを取得する
+    /// @param objectPresetName オブジェクトプリセット名
+    /// @param bindingPresetName バインディングプリセット名
+    /// @return 組み合わせが再生中なら `true`
+    bool IsPlaying(const std::string &objectPresetName, const std::string &bindingPresetName) const;
+
     /// @brief 現在一時停止中かどうかを取得する
     /// @return 1つでも一時停止中なら `true`
     bool IsPaused() const;
@@ -218,7 +224,7 @@ private:
     std::unordered_map<std::string, Timeline> timelines_;
     std::unordered_map<std::string, std::vector<Binding>> presetBindings_;
     std::vector<PlaybackState> playbacks_;
-
+    
 #if defined(USE_IMGUI)
     std::array<char, 128> presetNameBuffer_{};
     std::array<char, 128> objectNameBuffer_{};

@@ -1,5 +1,17 @@
 {
     "bindings": {
+        "PlayerFalling": [
+            {
+                "objectName": "PlayerCenter",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerCenterPosY"
+            },
+            {
+                "objectName": "PlayerCenter",
+                "propertyPath": "Transform.Rotate.X",
+                "timelineName": "PlayerFallingBodyRotateX"
+            }
+        ],
         "PlayerJump": [
             {
                 "objectName": "PlayerBody",
@@ -40,6 +52,11 @@
                 "objectName": "PlayerBody",
                 "propertyPath": "Transform.Rotate.Y",
                 "timelineName": "PlayerJumpJumpRotateX"
+            },
+            {
+                "objectName": "PlayerCenter",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerCenterPosY"
             }
         ],
         "PlayerRun": [
@@ -87,6 +104,11 @@
                 "objectName": "PlayerArmR",
                 "propertyPath": "Transform.Rotate.X",
                 "timelineName": "PlayerArmRotateX"
+            },
+            {
+                "objectName": "PlayerCenter",
+                "propertyPath": "Transform.Translate.Y",
+                "timelineName": "PlayerCenterPosY"
             }
         ]
     },
@@ -97,8 +119,12 @@
                 "parentObjectName": ""
             },
             {
-                "objectName": "PlayerBody",
+                "objectName": "PlayerCenter",
                 "parentObjectName": "PlayerRoot"
+            },
+            {
+                "objectName": "PlayerBody",
+                "parentObjectName": "PlayerCenter"
             },
             {
                 "objectName": "PlayerHead",
@@ -170,17 +196,17 @@
                 {
                     "easeType": 19,
                     "time": 0.0,
-                    "value": -0.6000000238418579
+                    "value": -1.600000023841858
                 },
                 {
                     "easeType": 19,
                     "time": 0.5,
-                    "value": -0.5
+                    "value": -1.5
                 },
                 {
                     "easeType": 0,
                     "time": 1.0,
-                    "value": -0.6000000238418579
+                    "value": -1.600000023841858
                 }
             ],
             "loop": true
@@ -194,6 +220,31 @@
                 }
             ],
             "loop": true
+        },
+        "PlayerCenterPosY": {
+            "keys": [
+                {
+                    "easeType": 0,
+                    "time": 0.0,
+                    "value": 1.5
+                }
+            ],
+            "loop": true
+        },
+        "PlayerFallingBodyRotateX": {
+            "keys": [
+                {
+                    "easeType": 6,
+                    "time": 0.0,
+                    "value": 0.0
+                },
+                {
+                    "easeType": 0,
+                    "time": 0.5,
+                    "value": 405.0
+                }
+            ],
+            "loop": false
         },
         "PlayerHeadPosY": {
             "keys": [
@@ -225,7 +276,7 @@
                 {
                     "easeType": 0,
                     "time": 0.0,
-                    "value": -0.4000000059604645
+                    "value": -1.399999976158142
                 }
             ],
             "loop": false

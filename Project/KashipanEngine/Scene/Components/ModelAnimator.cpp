@@ -272,7 +272,7 @@ bool ModelAnimator::Play(const std::string &objectPresetName, const std::string 
     auto bindingIt = presetBindings_.find(bindingPresetName);
     if (bindingIt == presetBindings_.end()) return false;
 
-    std::unordered_map<std::string, Model *> activeModels;
+    std::unordered_map<std::string, Object3DBase *> activeModels;
     if (!ResolveActiveModels(objectPresetName, activeModels)) return false;
 
     ApplyPresetHierarchy(presetIt->second, activeModels);
@@ -501,7 +501,7 @@ bool ModelAnimator::HasAnyLoopingTimeline(const std::vector<Binding> &bindings) 
     return false;
 }
 
-bool ModelAnimator::ResolveActiveModels(const std::string &presetName, std::unordered_map<std::string, Model *> &outModels) const {
+bool ModelAnimator::ResolveActiveModels(const std::string &presetName, std::unordered_map<std::string, Object3DBase *> &outModels) const {
     outModels.clear();
 
     auto *ctx = GetOwnerContext();
@@ -513,15 +513,13 @@ bool ModelAnimator::ResolveActiveModels(const std::string &presetName, std::unor
     for (const auto &entry : presetIt->second) {
         auto *obj = ctx->GetObject3D(entry.objectName);
         if (!obj) continue;
-        auto *model = dynamic_cast<Model *>(obj);
-        if (!model) continue;
-        outModels[entry.objectName] = model;
+        outModels[entry.objectName] = obj;
     }
 
     return true;
 }
 
-void ModelAnimator::ApplyPresetHierarchy(const std::vector<PresetObject> &preset, const std::unordered_map<std::string, Model *> &activeModels) {
+void ModelAnimator::ApplyPresetHierarchy(const std::vector<PresetObject> &preset, const std::unordered_map<std::string, Object3DBase *> &activeModels) {
     for (const auto &entry : preset) {
         if (entry.parentObjectName.empty()) continue;
 
@@ -554,7 +552,7 @@ bool ModelAnimator::IsColorPath(const std::string &propertyPath) {
 
 ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string &propertyPath) {
     if (propertyPath == "Transform.Translate.X") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -564,7 +562,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Translate.Y") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -574,7 +572,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Translate.Z") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -584,7 +582,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Scale.X") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -594,7 +592,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Scale.Y") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -604,7 +602,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Scale.Z") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -614,7 +612,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Rotate.X") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -624,7 +622,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Rotate.Y") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -634,7 +632,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Transform.Rotate.Z") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *tr = s->GetComponent3D<Transform3D>();
             if (!tr) return;
@@ -644,7 +642,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Material.Color.R") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *mat = s->GetComponent3D<Material3D>();
             if (!mat) return;
@@ -654,7 +652,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Material.Color.G") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *mat = s->GetComponent3D<Material3D>();
             if (!mat) return;
@@ -664,7 +662,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Material.Color.B") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *mat = s->GetComponent3D<Material3D>();
             if (!mat) return;
@@ -674,7 +672,7 @@ ModelAnimator::ApplyFunction ModelAnimator::MakeApplyFunction(const std::string 
         };
     }
     if (propertyPath == "Material.Color.A") {
-        return [](Model *s, float v) {
+        return [](Object3DBase *s, float v) {
             if (!s) return;
             auto *mat = s->GetComponent3D<Material3D>();
             if (!mat) return;

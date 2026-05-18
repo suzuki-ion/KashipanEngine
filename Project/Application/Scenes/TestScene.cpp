@@ -18,6 +18,7 @@ void TestScene::Initialize() {
     auto *mainCamera3D = sceneDefaultVariables_->GetMainCamera3D();
 
     Transform3D *playerRootTr = nullptr;
+    Transform3D *playerCenterTr = nullptr;
     
     {
         auto obj = std::make_unique<Plane3D>();
@@ -62,6 +63,24 @@ void TestScene::Initialize() {
         AddObject3D(std::move(obj));
     }
     {
+        auto obj = std::make_unique<Box>();
+        obj->SetName("PlayerCenter");
+        obj->SetUniqueBatchKey();
+        if (screenBuffer3D) {
+            obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        }
+        if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+            tr->SetParentTransform(playerRootTr);
+            tr->SetTranslate(Vector3{ 0.0f, 1.5f, 0.0f });
+            tr->SetScale(Vector3{ 1.0f, 1.0f, 1.0f });
+            playerCenterTr = tr;
+        }
+        if (auto *mat = obj->GetComponent3D<Material3D>()) {
+            mat->SetTexture(TextureManager::GetTextureFromFileName("square_alpha.png"));
+        }
+        AddObject3D(std::move(obj));
+    }
+    {
         auto modelHandle = ModelManager::GetModelHandleFromFileName("float_Body.obj");
         auto obj = std::make_unique<Model>(modelHandle);
         obj->SetName("PlayerBody");
@@ -69,7 +88,7 @@ void TestScene::Initialize() {
             obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         }
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
+            tr->SetParentTransform(playerCenterTr);
             tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
             tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
         }
@@ -83,7 +102,7 @@ void TestScene::Initialize() {
             obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         }
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
+            tr->SetParentTransform(playerCenterTr);
             tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
             tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
         }
@@ -97,7 +116,7 @@ void TestScene::Initialize() {
             obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         }
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
+            tr->SetParentTransform(playerCenterTr);
             tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
             tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
         }
@@ -111,7 +130,7 @@ void TestScene::Initialize() {
             obj->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         }
         if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-            tr->SetParentTransform(playerRootTr);
+            tr->SetParentTransform(playerCenterTr);
             tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
             tr->SetScale(Vector3{1.0f, 1.0f, 1.0f});
         }

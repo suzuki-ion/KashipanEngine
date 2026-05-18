@@ -32,7 +32,7 @@ public:
         std::string parentObjectName;
     };
 
-    using ApplyFunction = std::function<void(Model *, float)>;
+    using ApplyFunction = std::function<void(Object3DBase *, float)>;
 
     /// @brief `ModelAnimator` を生成する
     ModelAnimator();
@@ -187,7 +187,7 @@ private:
         std::string bindingPresetName;
         float elapsedTime = 0.0f;
         bool paused = false;
-        std::unordered_map<std::string, Model *> activeModels;
+        std::unordered_map<std::string, Object3DBase *> activeModels;
     };
 
     static float EvaluateTimeline(const Timeline &timeline, float time);
@@ -195,8 +195,8 @@ private:
     static bool IsColorPath(const std::string &propertyPath);
 
     bool HasAnyLoopingTimeline(const std::vector<Binding> &bindings) const;
-    bool ResolveActiveModels(const std::string &presetName, std::unordered_map<std::string, Model *> &outModels) const;
-    void ApplyPresetHierarchy(const std::vector<PresetObject> &preset, const std::unordered_map<std::string, Model *> &activeModels);
+    bool ResolveActiveModels(const std::string &presetName, std::unordered_map<std::string, Object3DBase *> &outModels) const;
+    void ApplyPresetHierarchy(const std::vector<PresetObject> &preset, const std::unordered_map<std::string, Object3DBase *> &activeModels);
     bool RebuildBindingFunction(Binding &binding);
 
 #if defined(USE_IMGUI)

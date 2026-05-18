@@ -42,13 +42,13 @@ public:
         if (inputCommand->Evaluate("Submit").Triggered()) {
             PlaySE(submitSeSoundHandle_, currentPitch_);
             currentPitch_ += 1.0f;
+			currentPitchResetTime_ = pitchResetTime_;
         }
 
         if(currentPitchResetTime_ > 0.0f) {
             currentPitchResetTime_ -= GetDeltaTime();
-            if(currentPitchResetTime_ <= 0.0f) {
-                currentPitch_ = 0.0f;
-            }
+        } else {
+			currentPitch_ = 0.0f;
         }
     }
 
@@ -65,7 +65,7 @@ private:
 
     AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
 
-	float pitchResetTime_ = 1.0f;
+	float pitchResetTime_ = 0.3f;
 	float currentPitchResetTime_ = 0.0f;
 	float currentPitch_ = 0.0f;
 };

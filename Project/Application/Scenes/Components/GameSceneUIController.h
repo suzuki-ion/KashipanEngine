@@ -331,9 +331,11 @@ public:
         auto gageAnc = std::make_unique<Sprite>();
         gageAnc->SetName("GageAnchor");
 		gageAnc->SetUniqueBatchKey();
+        gageAnc->SetPivotPoint( 0.5f, 0.5f );
 		gageAnchor_ = gageAnc.get();
         if (auto* tr = gageAnc->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{ -750.0f, -350.0f, 0.0f });
+            tr->SetTranslate(Vector3{ -2200.0f, -1550.0f, 0.0f });
+            tr->SetScale(Vector3{ 3.0f, 3.0f, 1.0f });
         }
 		(void)ctx->AddObject2D(std::move(gageAnc));
 

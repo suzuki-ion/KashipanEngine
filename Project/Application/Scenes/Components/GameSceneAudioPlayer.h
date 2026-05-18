@@ -8,6 +8,7 @@
 #include "Scenes/Components/GameOverUIController.h"
 #include "Scenes/Components/GameClearUIController.h"
 #include "Scenes/Components/PauseUIController.h"
+#include "Scenes/Components/PlayerRespawnController.h"
 #include "Objects/Components/PlayerInputHandler.h"
 #include "Objects/Components/PlayerMovementController.h"
 
@@ -33,6 +34,7 @@ public:
         gravityModeEnterSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGravityModeEnter.mp3");
         gravityChangedSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGravityChanged.mp3");
         gravityGaugeLackSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGravityGaugeLack.mp3");
+        deathSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seDeath.mp3");
         gameOverSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGameOver.mp3");
         clearSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seGameClear.mp3");
         gameOverUiSelectSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISelect.mp3");
@@ -43,7 +45,7 @@ public:
         pauseUiSubmitSeSoundHandle_ = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
 
         if (bgmSoundHandle_ != AudioManager::kInvalidSoundHandle) {
-            bgmPlayHandle_ = AudioManager::Play(bgmSoundHandle_, 0.25f, 0.0f, true);
+            bgmPlayHandle_ = AudioManager::Play(bgmSoundHandle_, 0.5f, 0.0f, true);
         }
 
         prevGameOver_ = gameScene_ ? gameScene_->IsGameOver() : false;
@@ -71,6 +73,9 @@ public:
         }
         if (!playerInputHandler_) {
             playerInputHandler_ = player_->GetComponent3D<PlayerInputHandler>();
+        }
+        if (!playerRespawnController_) {
+            playerRespawnController_ = ctx->GetComponent<PlayerRespawnController>();
         }
 
         auto *inputCommand = ctx->GetInputCommand();
@@ -184,6 +189,12 @@ public:
             hasPrevGravityDirection_ = true;
         }
 
+        const bool isRespawning = playerRespawnController_ && playerRespawnController_->IsRespawning();
+        if (isRespawning && !prevRespawning_) {
+            PlaySE(deathSeSoundHandle_);
+        }
+        prevRespawning_ = isRespawning;
+
         if (gameScene_) {
             const bool currentGameOver = gameScene_->IsGameOver();
             if (currentGameOver && !prevGameOver_) {
@@ -233,6 +244,7 @@ private:
     Object3DBase *player_ = nullptr;
     PlayerMovementController *playerMovement_ = nullptr;
     PlayerInputHandler *playerInputHandler_ = nullptr;
+    PlayerRespawnController *playerRespawnController_ = nullptr;
     GameOverUIController *gameOverUIController_ = nullptr;
     GameClearUIController *gameClearUIController_ = nullptr;
     PauseUIController *pauseUIController_ = nullptr;
@@ -244,6 +256,7 @@ private:
     AudioManager::SoundHandle gravityModeEnterSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
     AudioManager::SoundHandle gravityChangedSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
     AudioManager::SoundHandle gravityGaugeLackSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
+    AudioManager::SoundHandle deathSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
     AudioManager::SoundHandle gameOverSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
     AudioManager::SoundHandle clearSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
     AudioManager::SoundHandle gameOverUiSelectSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
@@ -260,6 +273,7 @@ private:
     bool prevJumpPressed_ = false;
     bool prevGameOver_ = false;
     bool prevCleared_ = false;
+    bool prevRespawning_ = false;
 
     bool hasPrevGravityDirection_ = false;
     Vector3 prevGravityDirection_{0.0f, 1.0f, 0.0f};

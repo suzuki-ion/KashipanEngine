@@ -40,14 +40,22 @@ public:
         }
 
         if (inputCommand->Evaluate("Submit").Triggered()) {
-            PlaySE(submitSeSoundHandle_);
+            PlaySE(submitSeSoundHandle_, currentPitch_);
+            currentPitch_ += 1.0f;
+        }
+
+        if(currentPitchResetTime_ > 0.0f) {
+            currentPitchResetTime_ -= GetDeltaTime();
+            if(currentPitchResetTime_ <= 0.0f) {
+                currentPitch_ = 0.0f;
+            }
         }
     }
 
 private:
-    static void PlaySE(AudioManager::SoundHandle handle, float volume = 1.0f) {
+    static void PlaySE(AudioManager::SoundHandle handle, float pitch = 0.0f, float volume = 1.0f) {
         if (handle == AudioManager::kInvalidSoundHandle) return;
-        (void)AudioManager::Play(handle, volume, 0.0f, false);
+        (void)AudioManager::Play(handle, volume, pitch, false);
     }
 
 private:
@@ -56,6 +64,10 @@ private:
     AudioManager::SoundHandle submitSeSoundHandle_ = AudioManager::kInvalidSoundHandle;
 
     AudioManager::PlayHandle bgmPlayHandle_ = AudioManager::kInvalidPlayHandle;
+
+	float pitchResetTime_ = 1.0f;
+	float currentPitchResetTime_ = 0.0f;
+	float currentPitch_ = 0.0f;
 };
 
 } // namespace KashipanEngine

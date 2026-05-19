@@ -4,4 +4,4 @@ struct Camera2D {
     float4x4 viewProjection;
 };
 
-ConstantBuffer<Camera2D> gCamera : register(b0);
+ConstantBuffer<Camera2D> gCamera2D : register(b0);

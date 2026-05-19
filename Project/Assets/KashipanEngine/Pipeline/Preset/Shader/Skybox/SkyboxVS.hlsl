@@ -20,7 +20,7 @@ StructuredBuffer<TransformationMatrix> gTransformationMatrices : register(t0);
 VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
     VSOutput output;
     float4x4 world = gTransformationMatrices[instanceId].world;
-    float4x4 wvp = mul(world, gCamera.viewProjection);
+    float4x4 wvp = mul(world, gCamera3D.viewProjection);
     output.position = mul(input.position, wvp).xyww;
     output.texcoord = input.position.xyz;
     return output;

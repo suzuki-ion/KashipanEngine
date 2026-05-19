@@ -6,4 +6,4 @@ struct Camera3D {
 	float fov;
 };
 
-ConstantBuffer<Camera3D> gCamera : register(b0);
+ConstantBuffer<Camera3D> gCamera3D : register(b0);

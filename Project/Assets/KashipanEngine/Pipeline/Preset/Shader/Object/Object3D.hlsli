@@ -6,7 +6,6 @@ struct VSOutput {
 	float3 normal : NORMAL;
 	float3 worldPosition : WORLDPOSITION;
 	uint instanceId : INSTANCEID;
-    Camera3D camera : CAMERA;
 };
 
 struct DirectionalLight {

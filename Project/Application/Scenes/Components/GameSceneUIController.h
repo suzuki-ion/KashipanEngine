@@ -950,6 +950,46 @@ private:
             clearResultText_->SetText(" ");
             SetTextAlpha(clearResultText_, 0.0f);
         }
+
+        if (gageBackImage_) {
+            if (auto *mat = gageBackImage_->GetComponent2D<Material2D>()) {
+                Vector4 color = mat->GetColor();
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+        }
+
+        if (gagegageImage_) {
+            if (auto *mat = gagegageImage_->GetComponent2D<Material2D>()) {
+                Vector4 color = mat->GetColor();
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+        }
+
+        if (gageFrontImage_) {
+            if (auto *mat = gageFrontImage_->GetComponent2D<Material2D>()) {
+                Vector4 color = mat->GetColor();
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+        }
+
+        if (gagePointerImage_) {
+            if (auto *mat = gagePointerImage_->GetComponent2D<Material2D>()) {
+                Vector4 color = mat->GetColor();
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+        }
+
+        if (concentrationLineSprite_) {
+            if (auto *mat = concentrationLineSprite_->GetComponent2D<Material2D>()) {
+                Vector4 color = mat->GetColor();
+                color.w *= alpha;
+                mat->SetColor(color);
+            }
+        }
     }
 
     void UpdateOperationInputUISprite(

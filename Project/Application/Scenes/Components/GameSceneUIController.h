@@ -404,11 +404,28 @@ public:
         gagePointerImage_ = gageNeedleImage.get();
 		(void)ctx->AddObject2D(std::move(gageNeedleImage));
 
+		auto concentrationLine = std::make_unique<Sprite>();
+		concentrationLine->SetName("ConcentrationLine");
+		concentrationLine->SetUniqueBatchKey();
+		concentrationLine->SetPivotPoint(0.5f, 0.5f);
+		concentrationLine->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+		if (auto* mat = concentrationLine->GetComponent2D<Material2D>()) {
+			mat->SetTexture(TextureManager::GetTextureFromAssetPath("Application/Image/ConcentrationLine1.png"));
+			mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 0.0f });
+		}
+		if (auto* tr = concentrationLine->GetComponent2D<Transform2D>()) {
+			tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.5f, 0.0f });
+            tr->SetScale(Vector3{ screenWidth_,screenHeight_, 1.0f });
+		}
+        concentrationLineSprite_ = concentrationLine.get();
+		(void)ctx->AddObject2D(std::move(concentrationLine));
+
         ApplyVisibility();
     }
 
     void Update() override {
 		timer_ += GetDeltaTime() * GetGameSpeed();
+        frameCount_++;
 
         auto *ctx = GetOwnerContext();
         if (!ctx) return;
@@ -435,6 +452,24 @@ public:
         }
         if (!stageGoalPlaneController_) {
             stageGoalPlaneController_ = ctx->GetComponent<StageGoalPlaneController>();
+        }
+
+		// 集中線の表示とアルファ値の更新
+		float forwardSpeed = player_->GetComponent3D<PlayerForwardMoveBehavior>()->GetForwardSpeed();
+        float maxForwardSpeed = player_->GetComponent3D<PlayerForwardMoveBehavior>()->GetMaxForwardSpeed();
+		float minForwardSpeed = player_->GetComponent3D<PlayerForwardMoveBehavior>()->GetMinForwardSpeed();
+        if (concentrationLineSprite_) {
+            if (auto* mat = concentrationLineSprite_->GetComponent2D<Material2D>()) {
+				std::string lineTexturePath = "Application/Image/ConcentrationLine";
+                mat->SetTexture(TextureManager::GetTextureFromAssetPath(lineTexturePath + std::to_string(frameCount_ % 3 + 1) + ".png"));
+                
+                if ((maxForwardSpeed - minForwardSpeed) > 0.0f) {
+                    const float speedRatio = std::clamp((forwardSpeed - minForwardSpeed) / (maxForwardSpeed - minForwardSpeed), 0.0f, 1.0f);
+                    mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, speedRatio * speedRatio });
+                } else {
+                    mat->SetColor(Vector4{ 1.0f, 1.0f, 1.0f, 0.0f });
+                }
+            }
         }
 
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
@@ -1119,6 +1154,8 @@ private:
 	Sprite* gageBackImage_ = nullptr;
 	Sprite* gagePointerImage_ = nullptr;
 
+	Sprite* concentrationLineSprite_ = nullptr;
+
 	float timer_ = 0.0f;
 
     int previousTouchedGroundCount_ = 0;
@@ -1224,6 +1261,8 @@ private:
     Vector4 operationUIInactiveColor_{0.5f, 0.5f, 0.5f, 1.0f};
     Vector4 gravityDirectionAllowBaseColor_{1.0f, 1.0f, 1.0f, 1.0f};
     float gravityDirectionAllowRadius_ = 128.0f;
+
+	int frameCount_ = 0;
 };
 
 } // namespace KashipanEngine

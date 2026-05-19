@@ -62,7 +62,7 @@ public:
         screenWidth_ = static_cast<float>(screenBuffer2D->GetWidth());
         screenHeight_ = static_cast<float>(screenBuffer2D->GetHeight());
 
-        auto speedBar = std::make_unique<SpriteProressBar>();
+        /*auto speedBar = std::make_unique<SpriteProressBar>();
         speedBar->SetName("ForwardSpeedBar");
         speedBar->SetBarSize(Vector2{512.0f, 32.0f});
         speedBar->SetFrameThickness(8.0f);
@@ -74,7 +74,7 @@ public:
             tr->SetTranslate(Vector3{320.0f, 32.0f, 0.0f});
         }
         forwardSpeedBar_ = speedBar.get();
-        (void)ctx->AddObject2D(std::move(speedBar));
+        (void)ctx->AddObject2D(std::move(speedBar));*/
 
         auto gravityBar = std::make_unique<SpriteProressBar>();
         gravityBar->SetName("GravityGaugeBar");
@@ -639,16 +639,16 @@ public:
             landingPopupRequestTimer_ = 0.0f;
         }
 
-        if (forwardSpeedBar_ && gagePointerImage_ && gagegageImage_ && playerMovementController_) {
+        if (gagePointerImage_ && gagegageImage_ && playerMovementController_) {
             const float speed = playerMovementController_->GetForwardSpeed();
             const float minSpeed = playerMovementController_->GetMinForwardSpeed();
             const float maxSpeed = playerMovementController_->GetMaxForwardSpeed();
             const float range = std::max(0.0001f, maxSpeed - minSpeed);
             const float progress = std::clamp((speed - minSpeed) / range, 0.0f, 1.0f);
-            forwardSpeedBar_->SetProgress(progress);
+            /*forwardSpeedBar_->SetProgress(progress);
             if (forwardSpeedText_) {
                 forwardSpeedText_->SetTextFormat("Speed: {0:.2f}", speed);
-            }
+            }*/
 
 			// ゲージの指針の回転
 			float needleAngle = std::lerp(0.0f, 3.14f * 0.6f, progress);

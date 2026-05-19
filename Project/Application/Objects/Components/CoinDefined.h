@@ -212,7 +212,7 @@ private:
 
     const Vector4 defaultColor_{1.0f, 1.0f, 1.0f, 1.0f};
     const Vector4 touchColorStart_{1.0f, 1.0f, 1.0f, 1.0f};
-    const Vector4 touchColorEnd_{0.5f, 1.0f, 0.5f, 1.0f};
+    const Vector4 touchColorEnd_{1.0f, 1.0f, 0.5f, 1.0f};
 
     Vector3 initialTranslate_{0.0f, 0.0f, 0.0f};
     Vector3 initialRotate_{0.0f, 0.0f, 0.0f};

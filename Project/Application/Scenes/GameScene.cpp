@@ -286,6 +286,12 @@ void GameScene::OnUpdate() {
         }
     }
 
+    /*if (particleManager_) {
+        auto *playerRoot = GetObject3D("PlayerRoot");
+        auto *playerRootTr = playerRoot ? playerRoot->GetComponent3D<Transform3D>() : nullptr;
+        particleManager_->SetParentTransform("PlayerRun", playerRootTr);
+    }*/
+
     if (auto *ic = GetInputCommand()) {
         const bool canPause = IsPlaying() || (playerRespawnController_ && playerRespawnController_->IsRespawning());
         if (canPause && !modalVisible && ic->Evaluate("Pause").Triggered()) {
@@ -313,34 +319,6 @@ void GameScene::OnUpdate() {
             v.color = red;
         }
         vignetteEffect_->SetParams(v);
-    }
-
-    if (particleManager_ && player_) {
-        auto *playerTr = player_->GetComponent3D<Transform3D>();
-        const Vector3 playerPos = playerTr ? playerTr->GetTranslate() : Vector3{0.0f, 0.0f, 0.0f};
-
-        if (playerMovementController_) {
-            const bool grounded = playerMovementController_->ConsumeGrounded();
-            const bool landedThisFrame = (grounded && !wasPlayerGroundedPrevFrame_);
-            if (landedThisFrame) {
-                particleManager_->SetParentTransform("PlayerLanding", playerTr);
-                particleManager_->Spawn("PlayerLanding", Vector3(0.0f, 0.0f, 0.0f));
-
-                particleManager_->Spawn("PlayerRun", playerPos);
-                particleManager_->SetEmitting("PlayerRun", true);
-                isPlayerRunParticleActive_ = true;
-            }
-
-            if (isPlayerRunParticleActive_ && grounded) {
-                particleManager_->SetEmitCenter("PlayerRun", playerPos);
-            }
-            if (isPlayerRunParticleActive_ && !grounded) {
-                particleManager_->SetEmitting("PlayerRun", false);
-                isPlayerRunParticleActive_ = false;
-            }
-
-            wasPlayerGroundedPrevFrame_ = grounded;
-        }
     }
 
     if (gameOverUIController_) {

@@ -28,14 +28,19 @@ public:
         const Vector3 gravityDir = playerMovementController_->GetGravityDirection().Normalize();
         const float fallSpeed = playerMovementController_->GetGravityVelocity().Dot(gravityDir);
         const bool falling = (!grounded) && (fallSpeed > 0.0f);
+        auto *playerTr = player_->GetComponent3D<Transform3D>();
         if (grounded && !wasGroundedPrev_) {
-            modelAnimator_->Stop("Player", "PlayerFalling");
-            modelAnimator_->Stop("Player", "PlayerJump");
+            StopAnimation("Player", "PlayerFalling");
+            StopAnimation("Player", "PlayerJump");
             if (!modelAnimator_->IsPlaying("Player", "PlayerRun")) {
+                particleManager_->Spawn("PlayerLanding", Vector3(0.0f, 0.0f, 0.0f));
+                particleManager_->SetParentTransform("PlayerLanding", playerTr);
+
                 PlayAnimation("Player", "PlayerRun");
             }
         }
         if (playerMovementController_->ConsumeJumpTriggered()) {
+            StopAnimation("Player", "PlayerRun");
             PlayAnimation("Player", "PlayerJump");
         }
 
@@ -61,6 +66,10 @@ private:
             auto *ctx = GetOwnerContext();
             modelAnimator_ = ctx ? ctx->GetComponent<ModelAnimator>() : nullptr;
         }
+        if (!particleManager_) {
+            auto *ctx = GetOwnerContext();
+            particleManager_ = ctx ? ctx->GetComponent<ParticleManager>() : nullptr;
+        }
     }
 
     void PlayAnimation(const char *objectPreset, const char *bindingPreset) {
@@ -68,11 +77,17 @@ private:
         modelAnimator_->Play(objectPreset, bindingPreset);
     }
 
+    void StopAnimation(const char *objectPreset, const char *bindingPreset) {
+        if (!modelAnimator_) return;
+        modelAnimator_->Stop(objectPreset, bindingPreset);
+    }
+
     void UpdateFallingAnimation(bool falling, float fallSpeed) {
         if (!falling) return;
         fallDistance_ += std::max(0.0f, fallSpeed * std::max(0.0f, GetDeltaTime() * GetGameSpeed()));
         if (hasPlayedFalling_) return;
         if (fallDistance_ < fallStartDistance_) return;
+        StopAnimation("Player", "PlayerRun");
         PlayAnimation("Player", "PlayerFalling");
         hasPlayedFalling_ = true;
     }
@@ -80,6 +95,7 @@ private:
     Object3DBase *player_ = nullptr;
     PlayerMovementController *playerMovementController_ = nullptr;
     ModelAnimator *modelAnimator_ = nullptr;
+    ParticleManager *particleManager_ = nullptr;
 
     bool wasGroundedPrev_ = false;
     bool hasPlayedFalling_ = false;

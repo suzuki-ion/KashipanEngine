@@ -147,6 +147,17 @@ void ParticleManager::Initialize() {
     for (auto& group : groups_) {
         group.emitCenter = group.config.spawnCenter;
         group.isEmitting = group.config.spawnOnStart;
+        group.spawnTimer = 0.0f;
+        group.spawnedCount = group.particles.size();
+
+        if (group.config.spawnIntervalSec > 0.0f) {
+            for (auto& particle : group.particles) {
+                particle.spawnDelay = group.spawnTimer;
+                particle.active = false;
+                HideParticle(particle);
+                group.spawnTimer += group.config.spawnIntervalSec;
+            }
+        }
     }
 }
 
@@ -162,21 +173,24 @@ void ParticleManager::Update() {
         auto& cfg = group.config;
         if (cfg.lifeTimeSec <= 0.0f) continue;
 
-        if (group.isEmitting && group.spawnedCount < cfg.count) {
-            if (cfg.spawnIntervalSec <= 0.0f) {
-                while (group.spawnedCount < cfg.count) {
-                    CreateParticleInstance(group);
-                }
-            } else {
-                group.spawnTimer += dt;
-                while (group.spawnTimer >= cfg.spawnIntervalSec && group.spawnedCount < cfg.count) {
-                    group.spawnTimer -= cfg.spawnIntervalSec;
-                    CreateParticleInstance(group);
-                }
+        if (group.isEmitting && cfg.spawnIntervalSec <= 0.0f && group.spawnedCount < cfg.count) {
+            while (group.spawnedCount < cfg.count) {
+                CreateParticleInstance(group);
             }
         }
 
+        if (group.isEmitting && cfg.spawnIntervalSec > 0.0f) {
+            group.spawnTimer += dt;
+        }
+
         for (auto& particle : group.particles) {
+            if (group.isEmitting && cfg.spawnIntervalSec > 0.0f && particle.spawnDelay >= 0.0f) {
+                if (group.spawnTimer >= particle.spawnDelay) {
+                    particle.spawnDelay = -1.0f;
+                    RespawnParticle(group, particle);
+                }
+            }
+
             if (!particle.active) continue;
 
             particle.elapsed += dt;
@@ -224,7 +238,13 @@ void ParticleManager::Update() {
 
             if (particle.elapsed >= particle.lifeTimeSec) {
                 if (cfg.loop) {
-                    RespawnParticle(group, particle);
+                    if (cfg.spawnIntervalSec > 0.0f) {
+                        particle.active = false;
+                        particle.spawnDelay = group.spawnTimer + cfg.spawnIntervalSec;
+                        HideParticle(particle);
+                    } else {
+                        RespawnParticle(group, particle);
+                    }
                 } else {
                     particle.active = false;
                     HideParticle(particle);
@@ -296,6 +316,7 @@ void ParticleManager::RespawnParticle(ParticleGroup& group, ParticleInstance& pa
     particle.velocity = NormalizeSafe(RandomVector3(cfg.initialVelocityMin, cfg.initialVelocityMax));
     particle.elapsed = 0.0f;
     particle.lifeTimeSec = std::max(0.01f, cfg.lifeTimeSec + GetRandomFloat(-cfg.lifeTimeRandomRange, cfg.lifeTimeRandomRange));
+    particle.spawnDelay = -1.0f;
     particle.active = true;
 }
 
@@ -382,7 +403,15 @@ void ParticleManager::CreateParticleInstance(ParticleGroup& group) {
         instance.kind = ParticleKind::D2D;
         instance.object2D = obj.get();
         group.particles.push_back(instance);
-        RespawnParticle(group, group.particles.back());
+
+        if (group.config.spawnIntervalSec > 0.0f) {
+            group.particles.back().spawnDelay = group.spawnTimer;
+            group.particles.back().active = false;
+            HideParticle(group.particles.back());
+            group.spawnTimer += group.config.spawnIntervalSec;
+        } else {
+            RespawnParticle(group, group.particles.back());
+        }
 
         ctx->AddObject2D(std::move(obj));
     } else {
@@ -400,7 +429,15 @@ void ParticleManager::CreateParticleInstance(ParticleGroup& group) {
         instance.kind = ParticleKind::D3D;
         instance.object3D = obj.get();
         group.particles.push_back(instance);
-        RespawnParticle(group, group.particles.back());
+
+        if (group.config.spawnIntervalSec > 0.0f) {
+            group.particles.back().spawnDelay = group.spawnTimer;
+            group.particles.back().active = false;
+            HideParticle(group.particles.back());
+            group.spawnTimer += group.config.spawnIntervalSec;
+        } else {
+            RespawnParticle(group, group.particles.back());
+        }
 
         ctx->AddObject3D(std::move(obj));
     }
@@ -420,6 +457,7 @@ bool ParticleManager::AddGroup(const ParticleGroupConfig& config) {
     group.batchKey = MakeRandomBatchKey();
     group.emitCenter = config.spawnCenter;
     group.isEmitting = config.spawnOnStart;
+    group.spawnTimer = 0.0f;
 
     if (group.config.startColor == Vector4{ 1.0f, 1.0f, 1.0f, 1.0f } &&
         group.config.endColor == Vector4{ 1.0f, 1.0f, 1.0f, 1.0f } &&
@@ -428,7 +466,7 @@ bool ParticleManager::AddGroup(const ParticleGroupConfig& config) {
         group.config.endColor = group.config.color;
     }
 
-    if (group.isEmitting && config.spawnIntervalSec <= 0.0f) {
+    if (group.isEmitting) {
         while (group.spawnedCount < config.count) {
             CreateParticleInstance(group);
         }
@@ -485,7 +523,16 @@ bool ParticleManager::Spawn(const std::string& groupName, std::optional<Vector3>
         group.spawnTimer = 0.0f;
         group.spawnedCount = group.particles.size();
 
-        if (group.config.resetOnSpawn) {
+        if (group.config.spawnIntervalSec > 0.0f) {
+            float delay = 0.0f;
+            for (auto& particle : group.particles) {
+                particle.spawnDelay = delay;
+                particle.active = false;
+                HideParticle(particle);
+                delay += group.config.spawnIntervalSec;
+            }
+            group.spawnTimer = 0.0f;
+        } else if (group.config.resetOnSpawn) {
             for (auto& particle : group.particles) {
                 RespawnParticle(group, particle);
             }
@@ -525,6 +572,15 @@ bool ParticleManager::SetEmitting(const std::string& groupName, bool isEmitting)
         if (isEmitting) {
             group.spawnTimer = 0.0f;
             group.spawnedCount = group.particles.size();
+            if (group.config.spawnIntervalSec > 0.0f) {
+                float delay = 0.0f;
+                for (auto& particle : group.particles) {
+                    particle.spawnDelay = delay;
+                    particle.active = false;
+                    HideParticle(particle);
+                    delay += group.config.spawnIntervalSec;
+                }
+            }
         }
         return true;
     }

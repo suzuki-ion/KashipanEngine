@@ -131,6 +131,7 @@ private:
         Vector3 velocity{ 0.0f, 1.0f, 0.0f };
         float elapsed = 0.0f;
         float lifeTimeSec = 0.0f;
+        float spawnDelay = -1.0f;
         bool active = true;
     };
 

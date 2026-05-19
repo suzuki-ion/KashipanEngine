@@ -149,11 +149,23 @@ void TestScene::Initialize() {
     if (auto *in = GetSceneComponent<SceneChangeIn>()) {
         in->Play();
     }
+
+    if (auto *particleManager = GetSceneComponent<ParticleManager>()) {
+        particleManager->LoadFromJsonFile("PlayerParticle.json");
+        particleManager->Spawn("PlayerRun", Vector3(0.0f, 0.0f, 0.0f));
+        particleManager->SetParentTransform("PlayerRun", playerRootTr);
+    }
 }
 
 TestScene::~TestScene() {}
 
 void TestScene::OnUpdate() {
+    if (auto *particleManager = GetSceneComponent<ParticleManager>()) {
+        auto *playerRoot = GetObject3D("PlayerRoot");
+        auto *playerRootTr = playerRoot ? playerRoot->GetComponent3D<Transform3D>() : nullptr;
+        particleManager->SetParentTransform("PlayerRun", playerRootTr);
+    }
+
     if (!GetNextSceneName().empty()) {
         if (auto *out = GetSceneComponent<SceneChangeOut>()) {
             if (out->IsFinished()) {

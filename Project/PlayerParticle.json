@@ -2,9 +2,9 @@
     "groups": [
         {
             "baseScale": [
-                0.5,
-                0.5,
-                0.5
+                1.5,
+                1.5,
+                1.5
             ],
             "color": [
                 1.0,
@@ -23,7 +23,7 @@
             "gravity": [
                 0.0,
                 -4.0,
-                8.0
+                -8.0
             ],
             "initialRotationMax": [
                 0.5,
@@ -36,23 +36,23 @@
                 -0.5
             ],
             "initialVelocityMax": [
-                1.0,
-                1.0,
-                0.5
+                2.0,
+                2.0,
+                -8.0
             ],
             "initialVelocityMin": [
-                -1.0,
-                0.20000000298023224,
-                0.0
+                -2.0,
+                0.5,
+                -8.0
             ],
             "lifeTimeRandomRange": 0.0,
             "lifeTimeSec": 1.0,
             "linearDamping": 0.0,
             "loop": true,
             "name": "PlayerRun",
-            "peakScale": 0.5,
+            "peakScale": 1.5,
             "pipeline": "Object3D.Solid.BlendNormal",
-            "resetOnSpawn": true,
+            "resetOnSpawn": false,
             "rotationSpeed": [
                 0.10000000149011612,
                 0.10000000149011612,
@@ -77,7 +77,7 @@
                 0.0,
                 0.0
             ],
-            "spawnIntervalSec": 0.20000000298023224,
+            "spawnIntervalSec": 1.0,
             "spawnOnStart": true,
             "spawnRadius": 0.0,
             "speed": 2.0,
@@ -94,9 +94,9 @@
         },
         {
             "baseScale": [
-                0.5,
-                0.5,
-                0.5
+                1.5,
+                1.5,
+                1.5
             ],
             "color": [
                 1.0,
@@ -128,14 +128,14 @@
                 -0.5
             ],
             "initialVelocityMax": [
-                2.0,
+                8.0,
                 1.0,
-                2.0
+                8.0
             ],
             "initialVelocityMin": [
-                -2.0,
-                1.0,
-                -2.0
+                -8.0,
+                4.0,
+                -8.0
             ],
             "lifeTimeRandomRange": 0.0,
             "lifeTimeSec": 0.5,

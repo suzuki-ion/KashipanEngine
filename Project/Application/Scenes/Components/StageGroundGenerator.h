@@ -679,6 +679,7 @@ private:
                 tr->SetTranslate(Vector3{ x, y, centerZ });
                 tr->SetRotate(Vector3{ 0.0f, 0.0f, -req.angle });
                 //tr->SetScale(Vector3{ req.panelWidth * stageLengthRate, req.panelThickness * stageLengthRate, req.panelLength * stageLengthRate });
+                tr->SetScale(Vector3{ 3.5f, 3.5f, 3.5f });
                 c.isActive = true;
                 c.length = req.panelLength * stageLengthRate;
                 break;

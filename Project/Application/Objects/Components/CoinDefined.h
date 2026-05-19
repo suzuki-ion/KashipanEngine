@@ -37,11 +37,10 @@ public:
 
         if (collider_ && !ctx->GetComponent<Collision3D>()) {
             ColliderInfo3D info{};
-            Math::OBB obb{};
-            obb.center = Vector3{0.0f, 0.0f, 0.0f};
-            obb.halfSize = Vector3{1.0f, 1.0f, 1.0f};
-            obb.orientation = Matrix4x4::Identity();
-            info.shape = obb;
+            Math::Sphere sphere{};
+            sphere.center = Vector3{0.0f, 0.0f, 0.0f};
+            sphere.radius = 3.0f;
+            info.shape = sphere;
             info.attribute.set(CollisionAttribute::Coin);
             info.ignoreAttribute.set(CollisionAttribute::Ground);
             info.ignoreAttribute.set(CollisionAttribute::Coin);
@@ -69,6 +68,29 @@ public:
             Vector3 rot = tr->GetRotate();
             rot.y += idleRotationSpeed_ * dt;
             tr->SetRotate(rot);
+        }
+
+        if (isApproaching_) {
+            approachElapsed_ = std::min(approachElapsed_ + dt, approachDuration_);
+            const float t = std::clamp(approachElapsed_ / approachDuration_, 0.0f, 1.0f);
+            auto playerTr = playerTransform_ ? playerTransform_->GetTranslate() : approachStartTranslate_;
+            tr->SetTranslate(Lerp(approachStartTranslate_, playerTr, t));
+            if (approachElapsed_ >= approachDuration_) {
+                hasCollected_ = true;
+                isApproaching_ = false;
+                isAnimating_ = true;
+                elapsed_ = 0.0f;
+
+                tr->SetParentTransform(playerTransform_);
+                tr->SetTranslate(startTranslate_);
+                tr->SetScale(startScale_);
+
+                Vector3 rot = tr->GetRotate();
+                rot.y = 0.0f;
+                tr->SetRotate(rot);
+                startRotateY_ = 0.0f;
+                mat->SetColor(touchColorStart_);
+            }
             return true;
         }
 
@@ -131,7 +153,9 @@ public:
 
         hasCollected_ = false;
         isAnimating_ = false;
+        isApproaching_ = false;
         elapsed_ = 0.0f;
+        approachElapsed_ = 0.0f;
         playerTransform_ = nullptr;
 
         tr->SetParentTransform(initialParent_);
@@ -163,19 +187,11 @@ private:
         playerTransform_ = hit.otherObject->GetComponent3D<Transform3D>();
         if (!playerTransform_) return;
 
-        hasCollected_ = true;
-        isAnimating_ = true;
+        isApproaching_ = true;
+        isAnimating_ = false;
         elapsed_ = 0.0f;
-
-        tr->SetParentTransform(playerTransform_);
-        tr->SetTranslate(startTranslate_);
-        tr->SetScale(startScale_);
-
-        Vector3 rot = tr->GetRotate();
-        rot.y = 0.0f;
-        tr->SetRotate(rot);
-        startRotateY_ = 0.0f;
-        mat->SetColor(touchColorStart_);
+        approachElapsed_ = 0.0f;
+        approachStartTranslate_ = tr->GetTranslate();
     }
 
     Collider *collider_ = nullptr;
@@ -183,12 +199,12 @@ private:
 
     const float idleRotationSpeed_ = 4.0f;
 
-    const float raiseDuration_ = 0.5f;
-    const float fallDuration_ = 0.5f;
-    const float totalDuration_ = 1.0f;
+    const float raiseDuration_ = 0.25f;
+    const float fallDuration_ = 0.25f;
+    const float totalDuration_ = 0.5f;
 
     const Vector3 startTranslate_{0.0f, 2.0f, 0.0f};
-    const Vector3 raiseTranslate_{0.0f, 3.0f, 0.0f};
+    const Vector3 raiseTranslate_{0.0f, 4.0f, 0.0f};
     const Vector3 endTranslate_{0.0f, 2.0f, 0.0f};
 
     const Vector3 startScale_{1.0f, 1.0f, 1.0f};
@@ -209,6 +225,11 @@ private:
 
     bool hasCollected_ = false;
     bool isAnimating_ = false;
+    bool isApproaching_ = false;
+
+    float approachElapsed_ = 0.0f;
+    const float approachDuration_ = 0.25f;
+    Vector3 approachStartTranslate_{ 0.0f, 0.0f, 0.0f };
 };
 
 } // namespace KashipanEngine

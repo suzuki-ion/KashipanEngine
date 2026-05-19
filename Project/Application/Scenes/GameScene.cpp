@@ -23,6 +23,7 @@
 #include "Scenes/Components/PlayerClearController.h"
 #include "Scenes/Components/PlayerLogCollector.h"
 #include "Scenes/Components/PlayerAnimationController.h"
+#include "Scenes/Components/DustGenerator.h"
 
 #include "Objects/GameObjects/3D/Box.h"
 #include "Objects/Components/PlayerMovementController.h"
@@ -97,6 +98,7 @@ void GameScene::Initialize() {
         AddSceneComponent(std::make_unique<StageGroundGenerator>());
         AddSceneComponent(std::make_unique<StageDecoPlaneGenerator>());
         AddSceneComponent(std::make_unique<StageDecoBoxGenerator>());
+		AddSceneComponent(std::make_unique<DustGenerator>());
         AddSceneComponent(std::make_unique<StageObjectController>());
         AddSceneComponent(std::make_unique<StageObjectRandomGenerator>());
         AddSceneComponent(std::make_unique<StageNoiseWallController>());

@@ -96,25 +96,38 @@ public:
 
             if (gameOverUIController_ && gameOverUIController_->IsActive()) {
                 if (selectTriggered) {
-                    PlaySE(gameOverUiSelectSeSoundHandle_);
+                    PlaySE(gameOverUiSelectSeSoundHandle_, 1.0f, static_cast<float>(rand() % 20) * 0.1f);
                 }
                 if (submitTriggered) {
-                    PlaySE(gameOverUiSubmitSeSoundHandle_);
+                    PlaySE(gameOverUiSubmitSeSoundHandle_, 1.0f, currentPitch_);
+                    currentPitch_ += 1.0f;
+					currentPitchResetTime_ = pitchResetTime_;
                 }
             } else if (gameClearUIController_ && gameClearUIController_->IsActive()) {
                 if (selectTriggered) {
-                    PlaySE(gameClearUiSelectSeSoundHandle_);
+                    PlaySE(gameClearUiSelectSeSoundHandle_, 1.0f, static_cast<float>(rand() % 20) * 0.1f);
                 }
                 if (submitTriggered) {
-                    PlaySE(gameClearUiSubmitSeSoundHandle_);
+                    PlaySE(gameClearUiSubmitSeSoundHandle_, 1.0f, currentPitch_);
+                    currentPitch_ += 1.0f;
+                    currentPitchResetTime_ = pitchResetTime_;
                 }
             } else if (pauseUIController_ && pauseUIController_->IsActive()) {
                 if (selectTriggered) {
-                    PlaySE(pauseUiSelectSeSoundHandle_);
+                    PlaySE(pauseUiSelectSeSoundHandle_, 1.0f, static_cast<float>(rand() % 20) * 0.1f);
                 }
                 if (submitTriggered) {
-                    PlaySE(pauseUiSubmitSeSoundHandle_);
+                    PlaySE(pauseUiSubmitSeSoundHandle_, 1.0f, currentPitch_);
+                    currentPitch_ += 1.0f;
+                    currentPitchResetTime_ = pitchResetTime_;
                 }
+            }
+
+            // ピッチリセット
+            if (currentPitchResetTime_ > 0.0f) {
+                currentPitchResetTime_ -= GetDeltaTime();
+            } else {
+                currentPitch_ = 0.0f;
             }
         }
 
@@ -234,9 +247,9 @@ public:
     }
 
 private:
-    static void PlaySE(AudioManager::SoundHandle handle, float volume = 1.0f) {
+    static void PlaySE(AudioManager::SoundHandle handle, float volume = 1.0f,float pitch = 0.0f) {
         if (handle == AudioManager::kInvalidSoundHandle) return;
-        (void)AudioManager::Play(handle, std::clamp(volume, 0.0f, 1.0f), 0.0f, false);
+        (void)AudioManager::Play(handle, std::clamp(volume, 0.0f, 1.0f), pitch, false);
     }
 
 private:
@@ -286,6 +299,11 @@ private:
     float landingSeCooldownSec_ = 0.0f;
     float landingSeCooldownDurationSec_ = 0.12f;
     float minAirborneDurationForLandingSe_ = 0.03f;
+
+	float currentPitch_ = 0.0f;
+	float pitchResetTime_ = 0.2f;
+	float currentPitchResetTime_ = 0.0f;
+
 };
 
 } // namespace KashipanEngine

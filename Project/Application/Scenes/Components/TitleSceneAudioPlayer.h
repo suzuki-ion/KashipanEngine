@@ -36,7 +36,7 @@ public:
         if (!inputCommand) return;
 
         if (inputCommand->Evaluate("SelectUp").Triggered() || inputCommand->Evaluate("SelectDown").Triggered()) {
-            PlaySE(selectSeSoundHandle_);
+            PlaySE(selectSeSoundHandle_, static_cast<float>(rand() % 20) * 0.1f);
         }
 
         if (inputCommand->Evaluate("Submit").Triggered()) {

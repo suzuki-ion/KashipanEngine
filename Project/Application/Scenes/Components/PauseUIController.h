@@ -147,6 +147,11 @@ public:
         optionAnimElapsed_.fill(optionAnimDuration_);
         optionAnimElapsed_[0] = 0.0f;
 
+        auto *ctx = GetOwnerContext();
+        if (ctx) {
+            ctx->AddSceneVariable("IsPaused", true);
+        }
+
         RefreshTexts();
     }
 
@@ -188,6 +193,7 @@ public:
             if (!ic->Evaluate("Submit").Triggered()) {
                 continueClosePending_ = false;
                 requestedAction_ = RequestAction::Continue;
+                ctx->AddSceneVariable("IsPaused", false);
             }
             return;
         }

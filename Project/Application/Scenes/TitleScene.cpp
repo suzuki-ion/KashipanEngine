@@ -1,5 +1,4 @@
 #include "Scenes/TitleScene.h"
-#include "Scenes/TitleScene.h"
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/StageGroundGenerator.h"

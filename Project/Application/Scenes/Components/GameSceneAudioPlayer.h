@@ -146,7 +146,8 @@ public:
             const bool jumpPressedThisFrame = jumpPressed && !prevJumpPressed_;
             const bool canJumpNow = !playerMovement_->IsMovementLocked()
                 && (!playerInputHandler_ || !playerInputHandler_->IsGravitySwitching())
-                && (playerMovement_->GetJumpCount() < playerMovement_->GetMaxJumpCount());
+                && (playerMovement_->GetJumpCount() < playerMovement_->GetMaxJumpCount()
+                && ctx->GetSceneVariableOr("IsPaused", false) == false);
             if (jumpPressedThisFrame && canJumpNow) {
                 PlaySE(jumpSeSoundHandle_);
             }

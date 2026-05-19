@@ -46,7 +46,7 @@ float HalfLambert(float3 normal, float3 lightDir) {
 }
 
 float PhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
-	float3 viewDir = normalize(gCamera.eyePosition.xyz - worldPos);
+	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - worldPos);
 	float3 reflectDir = reflect(lightDir, normal);
 	float RdotE = dot(reflectDir, viewDir);
 	float spec = pow(saturate(RdotE), shininess);
@@ -54,7 +54,7 @@ float PhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shi
 }
 
 float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
-	float3 viewDir = normalize(gCamera.eyePosition.xyz - worldPos);
+	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - worldPos);
 	float3 halfDir = normalize(-lightDir + viewDir);
 	float NdotH = dot(normal, halfDir);
 	float spec = pow(saturate(NdotH), shininess);
@@ -87,7 +87,6 @@ PSOutput main(VSOutput input) {
 #endif
 
 #ifdef Object3D
-	Camera3D camera = input.camera;
     float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 	float4 baseColor = mat.color * textureColor;
 	float4 lightingColor = float4(0,0,0,0);
@@ -159,7 +158,7 @@ PSOutput main(VSOutput input) {
 	
 	// Environment map
 	if (mat.enableEnvironmentMapping) {
-		float3 cameraToPosition = input.worldPosition - camera.eyePosition.xyz;
+		float3 cameraToPosition = input.worldPosition - gCamera3D.eyePosition.xyz;
 		float3 reflectDir = reflect(cameraToPosition, input.normal);
 		envColor = gEnvironmentMap.Sample(gSampler, reflectDir);
 		envColor *= mat.environmentCoefficient;

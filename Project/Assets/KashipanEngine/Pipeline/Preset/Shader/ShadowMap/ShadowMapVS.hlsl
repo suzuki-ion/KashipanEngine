@@ -16,7 +16,7 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
     VSOutput output;
 
     float4x4 world = gTransformationMatrices[instanceId].world;
-    float4x4 worldLightVP = mul(world, gCamera.viewProjection);
+    float4x4 worldLightVP = mul(world, gCamera3D.viewProjection);
 
     output.position = mul(input.position, worldLightVP);
     

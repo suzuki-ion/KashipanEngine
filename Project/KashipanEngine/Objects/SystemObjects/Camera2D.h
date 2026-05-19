@@ -48,13 +48,13 @@ public:
 
     void SetViewportParams(float left, float top, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
 
-    struct CameraBuffer {
+    struct CameraBuffer2D {
         Matrix4x4 view{};
         Matrix4x4 projection{};
         Matrix4x4 viewProjection{};
     };
 
-    const CameraBuffer &GetCameraBufferCPU() const { return cameraBufferCPU_; }
+    const CameraBuffer2D &GetCameraBufferCPU() const { return cameraBufferCPU_; }
 
 protected:
     bool Render(ShaderVariableBinder &shaderBinder) override;
@@ -130,7 +130,7 @@ private:
     mutable bool isViewProjectionMatrixCalculated_ = false;
     mutable bool isViewportMatrixCalculated_ = false;
 
-    mutable CameraBuffer cameraBufferCPU_;
+    mutable CameraBuffer2D cameraBufferCPU_;
 
     // Transformキャッシュ（カメラの view 再計算のため）
     mutable Vector3 lastTransformTranslate_{0.0f, 0.0f, 0.0f};

@@ -24,15 +24,16 @@ Camera2D::Camera2D()
     viewportMaxDepth_ = 1.0f;
 
     SetConstantBufferRequirements({
-        { "Vertex:gCamera", sizeof(CameraBuffer) },
-        { "Pixel:gCamera", sizeof(CameraBuffer) }
+        { "Vertex:gCamera2D", sizeof(CameraBuffer2D) },
+        { "Pixel:gCamera2D", sizeof(CameraBuffer2D) }
     });
     SetUpdateConstantBuffersFunction(
         [this](void *constantBufferMaps, std::uint32_t /*instanceCount*/) -> bool {
             if (!constantBufferMaps) return false;
             UpdateCameraBufferCPU();
             auto **maps = static_cast<void **>(constantBufferMaps);
-            std::memcpy(maps[0], &cameraBufferCPU_, sizeof(CameraBuffer));
+            std::memcpy(maps[0], &cameraBufferCPU_, sizeof(CameraBuffer2D));
+            std::memcpy(maps[1], &cameraBufferCPU_, sizeof(CameraBuffer2D));
             return true;
         });
 }

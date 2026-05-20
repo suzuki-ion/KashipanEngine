@@ -28,8 +28,17 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
-        auto postEffectComponent = std::make_unique<GrayscaleEffect>();
+        auto gp = GrayscaleEffect::Params{};
+        gp.intensity = 0.5f;
+        auto postEffectComponent = std::make_unique<GrayscaleEffect>(gp);
         screenBuffer3D->RegisterPostEffectComponent(std::move(postEffectComponent));
+
+        auto vp = VignetteEffect::Params{};
+        vp.intensity = 1.0f;
+        vp.innerRadius = 0.2f;
+        vp.smoothness = 0.5f;
+        auto vignetteEffect = std::make_unique<VignetteEffect>(vp);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(vignetteEffect));
 
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
     }

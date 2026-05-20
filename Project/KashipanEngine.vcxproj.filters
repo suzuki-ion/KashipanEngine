@@ -388,6 +388,7 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GrayscaleEffect.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BoxFilter5x5Effect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -511,5 +512,7 @@
     <None Include="Assets\KashipanEngine\Pipeline\Preset\DepthStencilState\DepthEnableToMaskZero.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Grayscale.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Grayscale.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\BoxFilter5x5.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.BoxFilter5x5.json" />
   </ItemGroup>
 </Project>

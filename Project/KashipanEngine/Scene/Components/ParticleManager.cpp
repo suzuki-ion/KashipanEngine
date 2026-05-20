@@ -142,6 +142,7 @@ void ParticleManager::Initialize() {
     std::snprintf(nameBuffer_.data(), nameBuffer_.size(), "%s", newGroupConfig_.name.c_str());
     std::snprintf(pipelineBuffer_.data(), pipelineBuffer_.size(), "%s", newGroupConfig_.pipelineName.c_str());
     std::snprintf(textureBuffer_.data(), textureBuffer_.size(), "%s", newGroupConfig_.textureName.c_str());
+
 #endif
 
     for (auto& group : groups_) {
@@ -164,14 +165,26 @@ void ParticleManager::Update() {
 
         if (group.isEmitting && group.spawnedCount < cfg.count) {
             if (cfg.spawnIntervalSec <= 0.0f) {
-                while (group.spawnedCount < cfg.count) {
+            while (group.spawnedCount < cfg.count) {
+                const std::size_t remaining = cfg.count - group.spawnedCount;
+                std::size_t spawnCount = GetRandomValue<std::size_t>(cfg.spawnCountMin, cfg.spawnCountMax);
+                if (spawnCount < 1) spawnCount = 1;
+                spawnCount = std::min(spawnCount, remaining);
+                for (std::size_t i = 0; i < spawnCount; ++i) {
                     CreateParticleInstance(group);
                 }
+            }
             } else {
                 group.spawnTimer += dt;
-                while (group.spawnTimer >= cfg.spawnIntervalSec && group.spawnedCount < cfg.count) {
+            while (group.spawnTimer >= cfg.spawnIntervalSec && group.spawnedCount < cfg.count) {
                     group.spawnTimer -= cfg.spawnIntervalSec;
+                const std::size_t remaining = cfg.count - group.spawnedCount;
+                std::size_t spawnCount = GetRandomValue<std::size_t>(cfg.spawnCountMin, cfg.spawnCountMax);
+                if (spawnCount < 1) spawnCount = 1;
+                spawnCount = std::min(spawnCount, remaining);
+                for (std::size_t i = 0; i < spawnCount; ++i) {
                     CreateParticleInstance(group);
+                }
                 }
             }
         }
@@ -430,7 +443,13 @@ bool ParticleManager::AddGroup(const ParticleGroupConfig& config) {
 
     if (group.isEmitting && config.spawnIntervalSec <= 0.0f) {
         while (group.spawnedCount < config.count) {
-            CreateParticleInstance(group);
+            const std::size_t remaining = config.count - group.spawnedCount;
+            std::size_t spawnCount = GetRandomValue<std::size_t>(config.spawnCountMin, config.spawnCountMax);
+            if (spawnCount < 1) spawnCount = 1;
+            spawnCount = std::min(spawnCount, remaining);
+            for (std::size_t i = 0; i < spawnCount; ++i) {
+                CreateParticleInstance(group);
+            }
         }
     }
 
@@ -493,7 +512,13 @@ bool ParticleManager::Spawn(const std::string& groupName, std::optional<Vector3>
 
         if (group.config.spawnIntervalSec <= 0.0f) {
             while (group.spawnedCount < group.config.count) {
-                CreateParticleInstance(group);
+                const std::size_t remaining = group.config.count - group.spawnedCount;
+                std::size_t spawnCount = GetRandomValue<std::size_t>(group.config.spawnCountMin, group.config.spawnCountMax);
+                if (spawnCount < 1) spawnCount = 1;
+                spawnCount = std::min(spawnCount, remaining);
+                for (std::size_t i = 0; i < spawnCount; ++i) {
+                    CreateParticleInstance(group);
+                }
             }
         }
 
@@ -558,6 +583,8 @@ JSON ParticleManager::SerializeGroup(const ParticleGroup& group) {
     j["shape2D"] = ToString(cfg.shape2D);
     j["shape3D"] = ToString(cfg.shape3D);
     j["count"] = cfg.count;
+    j["spawnCountMin"] = cfg.spawnCountMin;
+    j["spawnCountMax"] = cfg.spawnCountMax;
     j["speed"] = cfg.speed;
     j["lifeTimeSec"] = cfg.lifeTimeSec;
     j["lifeTimeRandomRange"] = cfg.lifeTimeRandomRange;
@@ -606,6 +633,11 @@ ParticleManager::ParticleGroupConfig ParticleManager::DeserializeGroupConfig(con
         cfg.shape3D = ParseShape3D(json.value("shape3D", std::string{}), cfg.shape3D);
     }
     cfg.count = static_cast<std::size_t>(std::max(0, json.value("count", static_cast<int>(cfg.count))));
+    cfg.spawnCountMin = static_cast<std::size_t>(std::max(0, json.value("spawnCountMin", static_cast<int>(cfg.spawnCountMin))));
+    cfg.spawnCountMax = static_cast<std::size_t>(std::max(0, json.value("spawnCountMax", static_cast<int>(cfg.spawnCountMax))));
+    if (cfg.spawnCountMin > cfg.spawnCountMax) {
+        std::swap(cfg.spawnCountMin, cfg.spawnCountMax);
+    }
     cfg.speed = json.value("speed", cfg.speed);
     cfg.lifeTimeSec = json.value("lifeTimeSec", cfg.lifeTimeSec);
     cfg.lifeTimeRandomRange = json.value("lifeTimeRandomRange", cfg.lifeTimeRandomRange);
@@ -724,8 +756,10 @@ void ParticleManager::ShowImGui() {
     if (ImGui::Combo(Translation("engine.imgui.particle_manager.pipeline").c_str(), &pipelineIndex, pipelines, 2)) {
         if (pipelineIndex == 0) {
             newGroupConfig_.pipelineName = "Object3D.Solid.BlendNormal";
+            newGroupConfig_.target = "3D";
         } else if (pipelineIndex == 1) {
             newGroupConfig_.pipelineName = "Object2D.DoubleSidedCulling.BlendNormal";
+            newGroupConfig_.target = "2D";
         }
     }
     ImGui::InputText(Translation("engine.imgui.particle_manager.texture").c_str(), textureBuffer_.data(), textureBuffer_.size());
@@ -739,31 +773,49 @@ void ParticleManager::ShowImGui() {
         newGroupConfig_.target = (targetIndex == 1) ? "2D" : "3D";
     }
 
-    const char* shapes2D[] = {
-        Translation("engine.imgui.particle_manager.shape2d.sprite").c_str(),
-        Translation("engine.imgui.particle_manager.shape2d.ellipse").c_str(),
-        Translation("engine.imgui.particle_manager.shape2d.triangle").c_str(),
-        Translation("engine.imgui.particle_manager.shape2d.rect").c_str()
-    };
-    int shape2DIndex = static_cast<int>(newGroupConfig_.shape2D);
-    if (ImGui::Combo(Translation("engine.imgui.particle_manager.shape2d").c_str(), &shape2DIndex, shapes2D, 4)) {
-        newGroupConfig_.shape2D = static_cast<ParticleShape2D>(shape2DIndex);
-    }
-
-    const char* shapes3D[] = {
-        Translation("engine.imgui.particle_manager.shape3d.plane").c_str(),
-        Translation("engine.imgui.particle_manager.shape3d.box").c_str(),
-        Translation("engine.imgui.particle_manager.shape3d.sphere").c_str(),
-        Translation("engine.imgui.particle_manager.shape3d.triangle").c_str()
-    };
-    int shape3DIndex = static_cast<int>(newGroupConfig_.shape3D);
-    if (ImGui::Combo(Translation("engine.imgui.particle_manager.shape3d").c_str(), &shape3DIndex, shapes3D, 4)) {
-        newGroupConfig_.shape3D = static_cast<ParticleShape3D>(shape3DIndex);
+    const bool is2DTarget = (newGroupConfig_.target == "2D");
+    if (is2DTarget) {
+        const char* shapes2D[] = {
+            Translation("engine.imgui.particle_manager.shape2d.sprite").c_str(),
+            Translation("engine.imgui.particle_manager.shape2d.ellipse").c_str(),
+            Translation("engine.imgui.particle_manager.shape2d.triangle").c_str(),
+            Translation("engine.imgui.particle_manager.shape2d.rect").c_str()
+        };
+        int shape2DIndex = static_cast<int>(newGroupConfig_.shape2D);
+        if (ImGui::Combo(Translation("engine.imgui.particle_manager.shape2d").c_str(), &shape2DIndex, shapes2D, 4)) {
+            newGroupConfig_.shape2D = static_cast<ParticleShape2D>(shape2DIndex);
+        }
+    } else {
+        const char* shapes3D[] = {
+            Translation("engine.imgui.particle_manager.shape3d.plane").c_str(),
+            Translation("engine.imgui.particle_manager.shape3d.box").c_str(),
+            Translation("engine.imgui.particle_manager.shape3d.sphere").c_str(),
+            Translation("engine.imgui.particle_manager.shape3d.triangle").c_str()
+        };
+        int shape3DIndex = static_cast<int>(newGroupConfig_.shape3D);
+        if (ImGui::Combo(Translation("engine.imgui.particle_manager.shape3d").c_str(), &shape3DIndex, shapes3D, 4)) {
+            newGroupConfig_.shape3D = static_cast<ParticleShape3D>(shape3DIndex);
+        }
     }
 
     int count = static_cast<int>(newGroupConfig_.count);
     if (ImGui::DragInt(Translation("engine.imgui.particle_manager.count").c_str(), &count, 1.0f, 1, 10000)) {
         newGroupConfig_.count = static_cast<std::size_t>(std::max(1, count));
+    }
+
+    int spawnCountMin = static_cast<int>(newGroupConfig_.spawnCountMin);
+    int spawnCountMax = static_cast<int>(newGroupConfig_.spawnCountMax);
+    if (ImGui::DragInt(Translation("engine.imgui.particle_manager.spawn_count_min").c_str(), &spawnCountMin, 1.0f, 1, 10000)) {
+        newGroupConfig_.spawnCountMin = static_cast<std::size_t>(std::max(1, spawnCountMin));
+        if (newGroupConfig_.spawnCountMin > newGroupConfig_.spawnCountMax) {
+            newGroupConfig_.spawnCountMax = newGroupConfig_.spawnCountMin;
+        }
+    }
+    if (ImGui::DragInt(Translation("engine.imgui.particle_manager.spawn_count_max").c_str(), &spawnCountMax, 1.0f, 1, 10000)) {
+        newGroupConfig_.spawnCountMax = static_cast<std::size_t>(std::max(1, spawnCountMax));
+        if (newGroupConfig_.spawnCountMax < newGroupConfig_.spawnCountMin) {
+            newGroupConfig_.spawnCountMin = newGroupConfig_.spawnCountMax;
+        }
     }
 
     ImGui::DragFloat(Translation("engine.imgui.particle_manager.speed").c_str(), &newGroupConfig_.speed, 0.1f, 0.0f, 100.0f);
@@ -780,9 +832,13 @@ void ParticleManager::ShowImGui() {
     ImGui::SeparatorText(Translation("engine.imgui.particle_manager.section.spawn").c_str());
     ImGui::Checkbox(Translation("engine.imgui.particle_manager.use_spawn_box").c_str(), &newGroupConfig_.useSpawnBox);
     ImGui::DragFloat3(Translation("engine.imgui.particle_manager.spawn_center").c_str(), &newGroupConfig_.spawnCenter.x, 0.1f, -10000.0f, 10000.0f);
-    ImGui::DragFloat(Translation("engine.imgui.particle_manager.spawn_radius").c_str(), &newGroupConfig_.spawnRadius, 0.1f, 0.0f, 10000.0f);
-    ImGui::DragFloat3(Translation("engine.imgui.particle_manager.spawn_box_min").c_str(), &newGroupConfig_.spawnBox.min.x, 0.1f, -10000.0f, 10000.0f);
-    ImGui::DragFloat3(Translation("engine.imgui.particle_manager.spawn_box_max").c_str(), &newGroupConfig_.spawnBox.max.x, 0.1f, -10000.0f, 10000.0f);
+    if (!newGroupConfig_.useSpawnBox) {
+        ImGui::DragFloat(Translation("engine.imgui.particle_manager.spawn_radius").c_str(), &newGroupConfig_.spawnRadius, 0.1f, 0.0f, 10000.0f);
+    }
+    if (newGroupConfig_.useSpawnBox) {
+        ImGui::DragFloat3(Translation("engine.imgui.particle_manager.spawn_box_min").c_str(), &newGroupConfig_.spawnBox.min.x, 0.1f, -10000.0f, 10000.0f);
+        ImGui::DragFloat3(Translation("engine.imgui.particle_manager.spawn_box_max").c_str(), &newGroupConfig_.spawnBox.max.x, 0.1f, -10000.0f, 10000.0f);
+    }
     ImGui::DragFloat(Translation("engine.imgui.particle_manager.spawn_interval").c_str(), &newGroupConfig_.spawnIntervalSec, 0.1f, 0.0f, 60.0f);
     ImGui::Checkbox(Translation("engine.imgui.particle_manager.spawn_on_start").c_str(), &newGroupConfig_.spawnOnStart);
     ImGui::Checkbox(Translation("engine.imgui.particle_manager.reset_on_spawn").c_str(), &newGroupConfig_.resetOnSpawn);
@@ -799,7 +855,28 @@ void ParticleManager::ShowImGui() {
     if (ImGui::Button(Translation("engine.imgui.particle_manager.add_group").c_str())) {
         newGroupConfig_.name = nameBuffer_.data();
         newGroupConfig_.textureName = textureBuffer_.data();
-        AddGroup(newGroupConfig_);
+        if (editingGroupIndex_.has_value() && editingGroupIndex_.value() < groups_.size()) {
+            const std::size_t index = editingGroupIndex_.value();
+            DestroyGroupObjects(groups_[index]);
+            groups_[index].config = newGroupConfig_;
+            groups_[index].batchKey = MakeRandomBatchKey();
+            groups_[index].emitCenter = newGroupConfig_.spawnCenter;
+            groups_[index].isEmitting = newGroupConfig_.spawnOnStart;
+            if (groups_[index].isEmitting && newGroupConfig_.spawnIntervalSec <= 0.0f) {
+                while (groups_[index].spawnedCount < newGroupConfig_.count) {
+                    const std::size_t remaining = newGroupConfig_.count - groups_[index].spawnedCount;
+                    std::size_t spawnCount = GetRandomValue<std::size_t>(newGroupConfig_.spawnCountMin, newGroupConfig_.spawnCountMax);
+                    if (spawnCount < 1) spawnCount = 1;
+                    spawnCount = std::min(spawnCount, remaining);
+                    for (std::size_t i = 0; i < spawnCount; ++i) {
+                        CreateParticleInstance(groups_[index]);
+                    }
+                }
+            }
+        } else {
+            AddGroup(newGroupConfig_);
+        }
+        editingGroupIndex_.reset();
     }
 
     ImGui::SeparatorText(Translation("engine.imgui.particle_manager.section.json").c_str());
@@ -827,6 +904,13 @@ void ParticleManager::ShowImGui() {
                 ImGui::Text("%s: %s", Translation("engine.imgui.particle_manager.texture").c_str(), group.config.textureName.c_str());
                 ImGui::Text("%s: 0x%llX", Translation("engine.imgui.particle_manager.batch_key").c_str(), static_cast<unsigned long long>(group.batchKey));
                 ImGui::Text("%s: %zu", Translation("engine.imgui.particle_manager.spawned").c_str(), group.spawnedCount);
+                if (ImGui::SmallButton(Translation("engine.imgui.particle_manager.edit").c_str())) {
+                    newGroupConfig_ = group.config;
+                    std::snprintf(nameBuffer_.data(), nameBuffer_.size(), "%s", newGroupConfig_.name.c_str());
+                    std::snprintf(pipelineBuffer_.data(), pipelineBuffer_.size(), "%s", newGroupConfig_.pipelineName.c_str());
+                    std::snprintf(textureBuffer_.data(), textureBuffer_.size(), "%s", newGroupConfig_.textureName.c_str());
+                    editingGroupIndex_ = i;
+                }
                 if (ImGui::SmallButton(Translation("engine.imgui.particle_manager.spawn").c_str())) {
                     Spawn(group.config.name, std::nullopt);
                 }

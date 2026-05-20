@@ -21,6 +21,9 @@ void TestScene::Initialize() {
     }
 
     AddSceneComponent(std::make_unique<ParticleManager>());
+    if (auto *pm = GetSceneComponent<ParticleManager>()) {
+        pm->LoadFromJsonFile("HitEffect.json");
+    }
     if (mainCamera3D) {
         auto debugCameraMovement = std::make_unique<DebugCameraMovement>(mainCamera3D);
         debugCameraMovement->SetEnable(true);
@@ -49,23 +52,23 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
-        auto sphere = std::make_unique<Sphere>(512, 1024);
-        sphere->SetName("TestSphere");
+        auto box = std::make_unique<Box>();
+        box->SetName("TestBox");
 
-        if (auto *material = sphere->GetComponent3D<Material3D>()) {
+        if (auto *material = box->GetComponent3D<Material3D>()) {
             auto texture = TextureManager::GetTextureFromFileName("uvChecker.png");
             auto envTexture = TextureManager::GetTextureFromFileName("rostock_laage_airport_4k.dds");
             material->SetTexture(texture);
             material->SetEnvironmentTexture(envTexture);
         }
 
-        if (auto *transform = sphere->GetComponent3D<Transform3D>()) {
+        if (auto *transform = box->GetComponent3D<Transform3D>()) {
             transform->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
         }
 
-        sphere->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(sphere));
+        box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(box));
     }
 
     if (screenBuffer3D) {

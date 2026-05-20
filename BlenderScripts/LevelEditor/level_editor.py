@@ -272,21 +272,21 @@ class DrawCollider:
                 # 頂点データリストに座標を追加
                 vertices["pos"].append(pos)
 
-                # 前面を構成する辺の頂点インデックス
-                indices.append([start + 0, start + 1])
-                indices.append([start + 2, start + 3])
-                indices.append([start + 0, start + 2])
-                indices.append([start + 1, start + 3])
-                # 奥面を構成する辺の頂点インデックス
-                indices.append([start + 4, start + 5])
-                indices.append([start + 6, start + 7])
-                indices.append([start + 4, start + 6])
-                indices.append([start + 5, start + 7])
-                # 手前と奥を繋ぐ辺の頂点インデックス
-                indices.append([start + 0, start + 4])
-                indices.append([start + 1, start + 5])
-                indices.append([start + 2, start + 6])
-                indices.append([start + 3, start + 7])
+            # 前面を構成する辺の頂点インデックス
+            indices.append([start + 0, start + 1])
+            indices.append([start + 2, start + 3])
+            indices.append([start + 0, start + 2])
+            indices.append([start + 1, start + 3])
+            # 奥面を構成する辺の頂点インデックス
+            indices.append([start + 4, start + 5])
+            indices.append([start + 6, start + 7])
+            indices.append([start + 4, start + 6])
+            indices.append([start + 5, start + 7])
+            # 手前と奥を繋ぐ辺の頂点インデックス
+            indices.append([start + 0, start + 4])
+            indices.append([start + 1, start + 5])
+            indices.append([start + 2, start + 6])
+            indices.append([start + 3, start + 7])
 
         # ビルトインのシェーダーを取得
         shader = gpu.shader.from_builtin("UNIFORM_COLOR")

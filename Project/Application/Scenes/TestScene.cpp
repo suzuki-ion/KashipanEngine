@@ -40,6 +40,11 @@ void TestScene::Initialize() {
         auto vignetteEffect = std::make_unique<VignetteEffect>(vp);
         screenBuffer3D->RegisterPostEffectComponent(std::move(vignetteEffect));
 
+        auto bfp = BoxFilter5x5Effect::Params{};
+        bfp.intensity = 0.5f;
+        auto boxFilterEffect = std::make_unique<BoxFilter5x5Effect>(bfp);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(boxFilterEffect));
+
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
     }
 

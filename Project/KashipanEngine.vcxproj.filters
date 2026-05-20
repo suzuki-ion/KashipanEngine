@@ -140,7 +140,6 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -387,7 +386,6 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GrayscaleEffect.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BoxFilter5x5Effect.h" />
   </ItemGroup>
   <ItemGroup>

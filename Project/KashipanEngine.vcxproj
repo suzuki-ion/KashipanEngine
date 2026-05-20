@@ -288,7 +288,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ModelAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ParticleManager.cpp" />
@@ -537,7 +536,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ModelAnimator.h" />

@@ -371,6 +371,8 @@
 		"engine.imgui.particle_manager.shape3d.sphere": "球体",
 		"engine.imgui.particle_manager.shape3d.triangle": "三角形",
 		"engine.imgui.particle_manager.count": "個数",
+		"engine.imgui.particle_manager.spawn_count_min": "スポーン数最小",
+		"engine.imgui.particle_manager.spawn_count_max": "スポーン数最大",
 		"engine.imgui.particle_manager.speed": "速度",
 		"engine.imgui.particle_manager.lifetime": "寿命",
 		"engine.imgui.particle_manager.lifetime_rand": "寿命ランダム",
@@ -404,6 +406,7 @@
 		"engine.imgui.particle_manager.batch_key": "バッチキー",
 		"engine.imgui.particle_manager.spawned": "生成済み",
 		"engine.imgui.particle_manager.spawn": "スポーン",
+		"engine.imgui.particle_manager.edit": "編集",
 		"engine.imgui.particle_manager.remove": "削除",
 
 		//--------- 設定 ---------//

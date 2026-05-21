@@ -114,13 +114,13 @@ public:
         goalDistanceBar_ = goalDistanceBar.get();
         (void)ctx->AddObject2D(std::move(goalDistanceBar));
 
-        auto speedText = std::make_unique<Text>(128);
+        /*auto speedText = std::make_unique<Text>(128);
         speedText->SetName("ForwardSpeedText");
         speedText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
         speedText->SetTextFormat("Speed: {0:.2f}", 0.0f);
         speedText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         forwardSpeedText_ = speedText.get();
-        (void)ctx->AddObject2D(std::move(speedText));
+        (void)ctx->AddObject2D(std::move(speedText));*/
 
         if (isTouchGroundUiEnabled_) {
             auto touchedGroundText = std::make_unique<Text>(128);
@@ -192,17 +192,33 @@ public:
         clearResultText_ = clearText.get();
         (void)ctx->AddObject2D(std::move(clearText));
 
-        auto coinCountText = std::make_unique<Text>(128);
+        auto coinCountText = std::make_unique<Text>(2);
         coinCountText->SetName("CoinCountText");
         coinCountText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        coinCountText->SetTextFormat("Coins: {0}/{1}", 0, 0);
+        coinCountText->SetTextFormat("{:02}", 0);
         coinCountText->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
         coinCountText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *tr = coinCountText->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{ 32.0f, std::max(32.0f, screenHeight_ - 128.0f), 0.0f });
+            tr->SetTranslate(Vector3{ 112.0f, std::max(32.0f, screenHeight_ - 128.0f), 0.0f });
+            coinCountBasePosition_ = tr->GetTranslate();
         }
         coinCountText_ = coinCountText.get();
         (void)ctx->AddObject2D(std::move(coinCountText));
+
+        auto coinIconSprite = std::make_unique<Sprite>();
+        coinIconSprite->SetName("CoinIconSprite");
+        coinIconSprite->SetUniqueBatchKey();
+        coinIconSprite->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *mat = coinIconSprite->GetComponent2D<Material2D>()) {
+            auto texture = TextureManager::GetTextureFromFileName("coinIcon.png");
+            mat->SetTexture(texture);
+        }
+        if (auto *tr = coinIconSprite->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{ coinCountBasePosition_.x + coinIconPositionOffset_.x, coinCountBasePosition_.y + coinIconPositionOffset_.y, 0.0f });
+            tr->SetScale(Vector3{ 64.0f, 64.0f, 1.0f });
+        }
+        coinIconSprite_ = coinIconSprite.get();
+        (void)ctx->AddObject2D(std::move(coinIconSprite));
 
         TextureManager::TextureHandle jumpTexture = TextureManager::GetTextureFromFileName("uiOperationJump.png");
         if (jumpTexture == TextureManager::kInvalidHandle) {
@@ -632,9 +648,118 @@ public:
         previousTouchedGroundCount_ = touchedCount;
 
         if (coinCountText_) {
-            const int coinCount = playerGetCoinCounter_ ? playerGetCoinCounter_->GetCount() : 0;
+            const int targetCoinCount = playerGetCoinCounter_ ? playerGetCoinCounter_->GetCount() : 0;
             const int maxCount = playerGetCoinCounter_ ? playerGetCoinCounter_->GetMaxCount() : 0;
-            coinCountText_->SetTextFormat("Coin: {0}/{1}", coinCount, maxCount);
+            if (coinCountDisplay_ < 0) {
+                coinCountDisplay_ = targetCoinCount;
+            }
+
+            const int prevDisplay = coinCountDisplay_;
+            if (targetCoinCount > coinCountDisplay_) {
+                coinCountDisplay_ = targetCoinCount;
+                const int prevTens = prevDisplay / 10;
+                const int prevOnes = prevDisplay % 10;
+                const int newTens = coinCountDisplay_ / 10;
+                const int newOnes = coinCountDisplay_ % 10;
+                if (newTens != prevTens) {
+                    coinCountTensBounceActive_ = true;
+                    coinCountTensBounceElapsed_ = 0.0f;
+                }
+                if (newOnes != prevOnes) {
+                    coinCountOnesBounceActive_ = true;
+                    coinCountOnesBounceElapsed_ = 0.0f;
+                }
+            } else if (targetCoinCount < coinCountDisplay_) {
+                if (!coinCountDisplayLerpActive_) {
+                    coinCountDisplayLerpStart_ = coinCountDisplay_;
+                    coinCountDisplayLerpElapsed_ = 0.0f;
+                }
+                coinCountDisplayLerpActive_ = true;
+                coinCountDisplayLerpTarget_ = targetCoinCount;
+            }
+
+            float coinCountColorLerpT = 1.0f;
+            if (coinCountDisplayLerpActive_) {
+                coinCountDisplayLerpElapsed_ += dt;
+                const float t = Normalize01(coinCountDisplayLerpElapsed_, 0.0f, std::max(0.0001f, coinCountDisplayLerpDuration_));
+                const float lerped = Lerp(static_cast<float>(coinCountDisplayLerpStart_), static_cast<float>(coinCountDisplayLerpTarget_), t);
+                coinCountDisplay_ = static_cast<int>(lerped);
+                coinCountColorLerpT = t;
+                if (t >= 1.0f) {
+                    coinCountDisplayLerpActive_ = false;
+                }
+            }
+
+            coinCountText_->SetTextFormat("{:02}", coinCountDisplay_);
+
+            const Vector4 normalColor{1.0f, 1.0f, 1.0f, 1.0f};
+            const Vector4 maxColor{1.0f, 1.0f, 0.2f, 1.0f};
+            Vector4 baseColor = (maxCount > 0 && coinCountDisplay_ >= maxCount) ? maxColor : normalColor;
+            if (coinCountDisplayLerpActive_) {
+                const Vector4 lerpStart{1.0f, 0.5f, 0.5f, 1.0f};
+                baseColor = Lerp(lerpStart, baseColor, coinCountColorLerpT);
+            }
+            for (size_t i = 0; i < 2; ++i) {
+                if (auto *sprite = (*coinCountText_)[i]) {
+                    if (auto *mat = sprite->GetComponent2D<Material2D>()) {
+                        mat->SetColor(baseColor);
+                    }
+                }
+            }
+
+            if (!coinCountTensBounceActive_) {
+                if (auto *sprite = (*coinCountText_)[0]) {
+                    if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+                        Vector3 base = tr->GetTranslate();
+                        base.y = 0.0f;
+                        tr->SetTranslate(base);
+                    }
+                }
+            }
+
+            if (coinCountTensBounceActive_) {
+                coinCountTensBounceElapsed_ += dt;
+                const float t = std::clamp(coinCountTensBounceElapsed_ / std::max(0.0001f, coinCountBounceDuration_), 0.0f, 1.0f);
+                const float eased = 1.0f - std::pow(1.0f - t, 3.0f);
+                const float offset = std::lerp(coinCountBounceOffset_, 0.0f, eased);
+                if (auto *sprite = (*coinCountText_)[0]) {
+                    if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+                        Vector3 base = tr->GetTranslate();
+                        base.y = offset;
+                        tr->SetTranslate(base);
+                    }
+                }
+                if (t >= 1.0f) {
+                    coinCountTensBounceActive_ = false;
+                }
+            }
+
+            if (!coinCountOnesBounceActive_) {
+                if (auto *sprite = (*coinCountText_)[1]) {
+                    if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+                        Vector3 base = tr->GetTranslate();
+                        base.y = 0.0f;
+                        tr->SetTranslate(base);
+                    }
+                }
+            }
+
+            if (coinCountOnesBounceActive_) {
+                coinCountOnesBounceElapsed_ += dt;
+                const float t = std::clamp(coinCountOnesBounceElapsed_ / std::max(0.0001f, coinCountBounceDuration_), 0.0f, 1.0f);
+                const float eased = 1.0f - std::pow(1.0f - t, 3.0f);
+                const float offset = std::lerp(coinCountBounceOffset_, 0.0f, eased);
+                if (auto *sprite = (*coinCountText_)[1]) {
+                    if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
+                        Vector3 base = tr->GetTranslate();
+                        base.y = offset;
+                        tr->SetTranslate(base);
+                    }
+                }
+                if (t >= 1.0f) {
+                    coinCountOnesBounceActive_ = false;
+                }
+            }
         }
 
         float landingImpact = 0.0f;
@@ -959,7 +1084,7 @@ private:
         if (gravityDirectionAllowUISprite_) {
             if (auto *mat = gravityDirectionAllowUISprite_->GetComponent2D<Material2D>()) {
                 Vector4 color = gravityDirectionAllowBaseColor_;
-                color.w *= 0.0f;
+                color.w = 0.0f;
                 mat->SetColor(color);
             }
             if (auto *tr = gravityDirectionAllowUISprite_->GetComponent2D<Transform2D>()) {
@@ -978,10 +1103,18 @@ private:
             SetTextAlpha(coinCountText_, 0.0f);
         }
 
+        if (coinIconSprite_) {
+            if (auto *mat = coinIconSprite_->GetComponent2D<Material2D>()) {
+                Vector4 color = mat->GetColor();
+                color.w = alpha;
+                mat->SetColor(color);
+            }
+        }
+
         if (gageBackImage_) {
             if (auto *mat = gageBackImage_->GetComponent2D<Material2D>()) {
                 Vector4 color = mat->GetColor();
-                color.w *= alpha;
+                color.w = alpha;
                 mat->SetColor(color);
             }
         }
@@ -989,7 +1122,7 @@ private:
         if (gagegageImage_) {
             if (auto *mat = gagegageImage_->GetComponent2D<Material2D>()) {
                 Vector4 color = mat->GetColor();
-                color.w *= alpha;
+                color.w = alpha;
                 mat->SetColor(color);
             }
         }
@@ -997,7 +1130,7 @@ private:
         if (gageFrontImage_) {
             if (auto *mat = gageFrontImage_->GetComponent2D<Material2D>()) {
                 Vector4 color = mat->GetColor();
-                color.w *= alpha;
+                color.w = alpha;
                 mat->SetColor(color);
             }
         }
@@ -1005,7 +1138,7 @@ private:
         if (gagePointerImage_) {
             if (auto *mat = gagePointerImage_->GetComponent2D<Material2D>()) {
                 Vector4 color = mat->GetColor();
-                color.w *= alpha;
+                color.w = alpha;
                 mat->SetColor(color);
             }
         }
@@ -1013,7 +1146,7 @@ private:
         if (concentrationLineSprite_) {
             if (auto *mat = concentrationLineSprite_->GetComponent2D<Material2D>()) {
                 Vector4 color = mat->GetColor();
-                color.w *= alpha;
+                color.w = alpha;
                 mat->SetColor(color);
             }
         }
@@ -1207,6 +1340,7 @@ private:
     Text *forwardSpeedText_ = nullptr;
     Text *touchedGroundCountText_ = nullptr;
     Text *coinCountText_ = nullptr;
+    Sprite *coinIconSprite_ = nullptr;
     Text *clearTimeText_ = nullptr;
     Text *fallDistanceText_ = nullptr;
     Text *landingTouchedGroundCountText_ = nullptr;
@@ -1246,6 +1380,22 @@ private:
 
     float screenWidth_ = 0.0f;
     float screenHeight_ = 0.0f;
+    Vector3 coinCountBasePosition_{0.0f, 0.0f, 0.0f};
+    int coinCountDisplay_ = -1;
+    bool coinCountDisplayLerpActive_ = false;
+    float coinCountDisplayLerpElapsed_ = 0.0f;
+    float coinCountDisplayLerpDuration_ = 0.5f;
+    int coinCountDisplayLerpStart_ = 0;
+    int coinCountDisplayLerpTarget_ = 0;
+
+    bool coinCountTensBounceActive_ = false;
+    float coinCountTensBounceElapsed_ = 0.0f;
+    bool coinCountOnesBounceActive_ = false;
+    float coinCountOnesBounceElapsed_ = 0.0f;
+    float coinCountBounceDuration_ = 0.5f;
+    float coinCountBounceOffset_ = 32.0f;
+
+    Vector3 coinIconPositionOffset_{ -48.0f, -24.0f, 0.0f };
 
     bool goalDistanceInitialized_ = false;
     float goalDistanceStartZ_ = 0.0f;

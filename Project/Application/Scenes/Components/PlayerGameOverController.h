@@ -5,6 +5,7 @@
 #include "Scenes/Components/StageNoiseWallController.h"
 #include "Scenes/Components/GameOverUIController.h"
 #include "Objects/Components/PlayerMovementController.h"
+#include "Objects/Components/PlayerActionGamepadVibrator.h"
 
 #include <algorithm>
 
@@ -110,6 +111,10 @@ private:
             auto *playerTr = player_->GetComponent3D<Transform3D>();
             particleManager_->SetParentTransform("PlayerDeath", playerTr);
             particleManager_->Spawn("PlayerDeath", Vector3{0.0f, 0.0f, 0.0f});
+        }
+
+        if (auto *vibrator = player_ ? player_->GetComponent3D<PlayerActionGamepadVibrator>() : nullptr) {
+            vibrator->RequestDeath();
         }
     }
 

@@ -512,6 +512,9 @@ private:
             }
             // コインとしての定義
             obj->RegisterComponent<CoinDefined>(collider_);
+            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(Vector3{ 0.0f, -100.0f, 0.0f }); // 最初は見えない場所に配置
+            }
             Object3DBase *objPtr = obj.get();
             if (ctx->AddObject3D(std::move(obj)) && objPtr) {
                 CoinRuntime runtime{};

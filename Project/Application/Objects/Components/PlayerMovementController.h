@@ -7,6 +7,7 @@
 #include "Objects/Components/PlayerLateralMoveBehavior.h"
 #include "Objects/Components/PlayerJumpBehavior.h"
 #include "Objects/Components/PlayerCollisionBehavior.h"
+#include "Objects/Components/PlayerActionGamepadVibrator.h"
 #include "Objects/Components/GroundDefined.h"
 
 #include <algorithm>
@@ -213,6 +214,10 @@ public:
             hasLandingImpact_ = true;
             lastLandingImpact_ = landingImpact;
             accumulatedFallDistance_ = 0.0f;
+
+            if (auto *vibrator = ctx->GetComponent<PlayerActionGamepadVibrator>()) {
+                vibrator->RequestLanding(landingImpact);
+            }
 
             // 着地した地面がSlowGroundだった場合は減速する
             if (collisionBehavior_ && collisionEnabled && collisionBehavior_->IsOnSlowGround()) {

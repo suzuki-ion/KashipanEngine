@@ -28,6 +28,7 @@
 #include "Objects/GameObjects/3D/Box.h"
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
+#include "Objects/Components/PlayerActionGamepadVibrator.h"
 
 #include <algorithm>
 
@@ -136,6 +137,7 @@ void GameScene::Initialize() {
             }
 
             playerRoot->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
+            playerRoot->RegisterComponent<PlayerActionGamepadVibrator>();
             playerRoot->RegisterComponent<PlayerInputHandler>(
                 GetInputCommand(),
                 pauseUIController_,
@@ -171,6 +173,12 @@ void GameScene::Initialize() {
             AddObject3D(std::move(playerRoot));
             player_ = playerPtr;
             playerMovementController_ = playerPtr->GetComponent3D<PlayerMovementController>();
+
+            if (auto *vibrator = playerPtr->GetComponent3D<PlayerActionGamepadVibrator>()) {
+                if (auto *input = GetInput()) {
+                    vibrator->SetController(&input->GetController());
+                }
+            }
 
             auto addPlayerModel = [&](const char *objectName, const char *modelFileName) {
                 auto modelHandle = ModelManager::GetModelHandleFromFileName(modelFileName);

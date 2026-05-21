@@ -2,6 +2,7 @@
 
 #include <KashipanEngine.h>
 #include "Objects/Components/CollisionAttributes.h"
+#include "Objects/Components/PlayerActionGamepadVibrator.h"
 
 #include <algorithm>
 
@@ -176,6 +177,10 @@ private:
         if (hasCollected_) return;
         if (!hit.otherObject) return;
         if (!hit.otherObject->GetComponent3D("PlayerMovementController")) return;
+
+        if (auto *vibrator = hit.otherObject->GetComponent3D<PlayerActionGamepadVibrator>()) {
+            vibrator->RequestCoin();
+        }
 
         auto *ctx = GetOwner3DContext();
         if (!ctx) return;

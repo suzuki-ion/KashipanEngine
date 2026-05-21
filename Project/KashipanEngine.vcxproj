@@ -335,6 +335,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
     <ClInclude Include="Application\Objects\Components\GravityGroundDefined.h" />
     <ClInclude Include="Application\Objects\Components\GroundDefined.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerActionGamepadVibrator.h" />
     <ClInclude Include="Application\Objects\Components\PlayerCollisionBehavior.h" />
     <ClInclude Include="Application\Objects\Components\PlayerForwardMoveBehavior.h" />
     <ClInclude Include="Application\Objects\Components\PlayerGravityFallBehavior.h" />

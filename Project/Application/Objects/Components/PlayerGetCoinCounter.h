@@ -21,7 +21,8 @@ public:
     }
 
     void ApplyRespawnPenalty() {
-        AddCount(-2);
+        const int penalty = GetCount() / 2; // 現在のコイン数の半分をペナルティとして減らす
+        AddCount(-penalty);
     }
 
     void AddCount(int delta) {

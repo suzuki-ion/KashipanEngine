@@ -21,8 +21,11 @@ public:
 
     void RequestLanding(float fallDistance) {
         const float t = Normalize01(fallDistance, landingMinImpact_, landingMaxImpact_);
+        if (t <= 0.0f) return;
         const float strength = std::clamp(Lerp(landingMinStrength_, landingMaxStrength_, t), 0.0f, 1.0f);
+        if (strength <= 0.0f) return;
         const float landingDuration = std::clamp(Lerp(landingMinDuration_, landingMaxDuration_, t), 0.0f, 5.0f);
+        if (landingDuration <= 0.0f) return;
         StartLerpVibration(strength, landingDuration);
     }
 
@@ -142,24 +145,29 @@ private:
     float startStrength_ = 0.0f;
     float constantStrength_ = 0.0f;
 
+    // 着地時の振動パラメーター
     float landingMinDuration_ = 0.25f;
     float landingMaxDuration_ = 1.0f;
-    float landingMinImpact_ = 8.0f;
-    float landingMaxImpact_ = 64.0f;
+    float landingMinImpact_ = 16.0f;
+    float landingMaxImpact_ = 128.0f;
     float landingMinStrength_ = 0.2f;
     float landingMaxStrength_ = 1.0f;
 
+    // リスポーン時の振動パラメーター
     float respawnDuration_ = 0.5f;
     float respawnStrength_ = 0.8f;
 
+    // 死亡時の振動パラメーター
     float deathDuration_ = 0.5f;
     float deathStrength_ = 1.0f;
 
+    // コイン取得時の振動パラメーター
     float coinDuration_ = 0.0f;
     float coinStrength_ = 0.0f;
 
+    // ジャンプ時の振動パラメーター
     float jumpDuration_ = 0.25f;
-    float jumpStrength_ = 0.5f;
+    float jumpStrength_ = 0.4f;
 };
 
 } // namespace KashipanEngine

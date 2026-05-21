@@ -6,6 +6,7 @@
 #include "Scenes/Components/StageGroundGenerator.h"
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerActionGamepadVibrator.h"
+#include "Objects/Components/PlayerGetCoinCounter.h"
 
 #include <algorithm>
 
@@ -129,6 +130,10 @@ private:
 
         if (auto *vibrator = player_ ? player_->GetComponent3D<PlayerActionGamepadVibrator>() : nullptr) {
             vibrator->RequestRespawn();
+        }
+
+        if (auto *coinCounter = player_ ? player_->GetComponent3D<PlayerGetCoinCounter>() : nullptr) {
+            coinCounter->ApplyRespawnPenalty();
         }
     }
 

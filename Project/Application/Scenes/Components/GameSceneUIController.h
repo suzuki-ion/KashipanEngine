@@ -6,6 +6,7 @@
 #include "Scenes/Components/ClearTimeBoard.h"
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
+#include "Objects/Components/PlayerGetCoinCounter.h"
 
 #include <algorithm>
 #include <cmath>
@@ -190,6 +191,18 @@ public:
         }
         clearResultText_ = clearText.get();
         (void)ctx->AddObject2D(std::move(clearText));
+
+        auto coinCountText = std::make_unique<Text>(128);
+        coinCountText->SetName("CoinCountText");
+        coinCountText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+        coinCountText->SetTextFormat("Coins: {0}/{1}", 0, 0);
+        coinCountText->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
+        coinCountText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = coinCountText->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{ 32.0f, std::max(32.0f, screenHeight_ - 128.0f), 0.0f });
+        }
+        coinCountText_ = coinCountText.get();
+        (void)ctx->AddObject2D(std::move(coinCountText));
 
         TextureManager::TextureHandle jumpTexture = TextureManager::GetTextureFromFileName("uiOperationJump.png");
         if (jumpTexture == TextureManager::kInvalidHandle) {
@@ -447,6 +460,9 @@ public:
         if (player_ && !playerInputHandler_) {
             playerInputHandler_ = player_->GetComponent3D<PlayerInputHandler>();
         }
+        if (player_ && !playerGetCoinCounter_) {
+            playerGetCoinCounter_ = player_->GetComponent3D<PlayerGetCoinCounter>();
+        }
         if (!stageGroundGenerator_) {
             stageGroundGenerator_ = ctx->GetComponent<StageGroundGenerator>();
         }
@@ -614,6 +630,12 @@ public:
         const int touchedCount = stageGroundGenerator_ ? stageGroundGenerator_->GetTouchedGroundCount() : 0;
         const int touchedDelta = std::max(0, touchedCount - previousTouchedGroundCount_);
         previousTouchedGroundCount_ = touchedCount;
+
+        if (coinCountText_) {
+            const int coinCount = playerGetCoinCounter_ ? playerGetCoinCounter_->GetCount() : 0;
+            const int maxCount = playerGetCoinCounter_ ? playerGetCoinCounter_->GetMaxCount() : 0;
+            coinCountText_->SetTextFormat("Coin: {0}/{1}", coinCount, maxCount);
+        }
 
         float landingImpact = 0.0f;
         if (playerMovementController_ && playerMovementController_->ConsumeLandingImpact(landingImpact)) {
@@ -951,6 +973,11 @@ private:
             SetTextAlpha(clearResultText_, 0.0f);
         }
 
+        if (!isVisible_ && coinCountText_) {
+            coinCountText_->SetText(" ");
+            SetTextAlpha(coinCountText_, 0.0f);
+        }
+
         if (gageBackImage_) {
             if (auto *mat = gageBackImage_->GetComponent2D<Material2D>()) {
                 Vector4 color = mat->GetColor();
@@ -1168,6 +1195,7 @@ private:
     Object3DBase *player_ = nullptr;
     PlayerMovementController *playerMovementController_ = nullptr;
     PlayerInputHandler *playerInputHandler_ = nullptr;
+    PlayerGetCoinCounter *playerGetCoinCounter_ = nullptr;
     StageGroundGenerator *stageGroundGenerator_ = nullptr;
     StageGoalPlaneController *stageGoalPlaneController_ = nullptr;
     Camera3D *mainCamera_ = nullptr;
@@ -1178,6 +1206,7 @@ private:
     SpriteProressBar *jumpRemainGaugeBar_ = nullptr;
     Text *forwardSpeedText_ = nullptr;
     Text *touchedGroundCountText_ = nullptr;
+    Text *coinCountText_ = nullptr;
     Text *clearTimeText_ = nullptr;
     Text *fallDistanceText_ = nullptr;
     Text *landingTouchedGroundCountText_ = nullptr;

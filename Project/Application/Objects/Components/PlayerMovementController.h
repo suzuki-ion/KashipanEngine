@@ -8,6 +8,7 @@
 #include "Objects/Components/PlayerJumpBehavior.h"
 #include "Objects/Components/PlayerCollisionBehavior.h"
 #include "Objects/Components/PlayerActionGamepadVibrator.h"
+#include "Objects/Components/PlayerActionGamepadVibrator.h"
 #include "Objects/Components/GroundDefined.h"
 
 #include <algorithm>
@@ -263,6 +264,13 @@ public:
             jumpTriggeredThisFrame_ = jumpBehavior_->RequestJump();
             // ジャンプ開始時は落下距離計測をリセット
             accumulatedFallDistance_ = 0.0f;
+        }
+        if (jumpTriggeredThisFrame_) {
+            if (auto *ctx = GetOwner3DContext()) {
+                if (auto *vibrator = ctx->GetComponent<PlayerActionGamepadVibrator>()) {
+                    vibrator->RequestJump();
+                }
+            }
         }
     }
 

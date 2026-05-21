@@ -3,6 +3,7 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/CollisionAttributes.h"
 #include "Objects/Components/PlayerActionGamepadVibrator.h"
+#include "Objects/Components/PlayerGetCoinCounter.h"
 
 #include <algorithm>
 
@@ -182,6 +183,10 @@ private:
             vibrator->RequestCoin();
         }
 
+        if (auto *coinCounter = hit.otherObject->GetComponent3D<PlayerGetCoinCounter>()) {
+            coinCounter->AddCoin();
+        }
+
         auto *ctx = GetOwner3DContext();
         if (!ctx) return;
 
@@ -192,11 +197,13 @@ private:
         playerTransform_ = hit.otherObject->GetComponent3D<Transform3D>();
         if (!playerTransform_) return;
 
-        isApproaching_ = true;
-        isAnimating_ = false;
-        elapsed_ = 0.0f;
-        approachElapsed_ = 0.0f;
-        approachStartTranslate_ = tr->GetTranslate();
+        if (!hasCollected_ && !isApproaching_) {
+            isApproaching_ = true;
+            isAnimating_ = false;
+            elapsed_ = 0.0f;
+            approachElapsed_ = 0.0f;
+            approachStartTranslate_ = tr->GetTranslate();
+        }
     }
 
     Collider *collider_ = nullptr;

@@ -21,7 +21,6 @@ public:
 
     void RequestLanding(float fallDistance) {
         const float t = Normalize01(fallDistance, landingMinImpact_, landingMaxImpact_);
-        if (t <= 0.0f) return;
         const float strength = std::clamp(Lerp(landingMinStrength_, landingMaxStrength_, t), 0.0f, 1.0f);
         const float landingDuration = std::clamp(Lerp(landingMinDuration_, landingMaxDuration_, t), 0.0f, 5.0f);
         StartLerpVibration(strength, landingDuration);
@@ -37,6 +36,10 @@ public:
 
     void RequestCoin() {
         StartConstantVibration(coinStrength_, coinDuration_);
+    }
+
+    void RequestJump() {
+        StartLerpVibration(jumpStrength_, jumpDuration_);
     }
 
     std::optional<bool> Update() override {
@@ -76,6 +79,10 @@ private:
             // すでに強い振動が発生している場合は新しい振動を無視する
             return;
         }
+        if (strength <= 0.0f || duration <= 0.0f) {
+            // 強さまたは時間が無効な場合は振動を開始しない
+            return;
+        }
 
         isActive_ = true;
         isConstant_ = false;
@@ -85,6 +92,15 @@ private:
     }
 
     void StartConstantVibration(float strength, float duration) {
+        if (isActive_ && constantStrength_ > strength) {
+            // すでに強い振動が発生している場合は新しい振動を無視する
+            return;
+        }
+        if (strength <= 0.0f || duration <= 0.0f) {
+            // 強さまたは時間が無効な場合は振動を開始しない
+            return;
+        }
+
         isActive_ = true;
         isConstant_ = true;
         elapsed_ = 0.0f;
@@ -128,7 +144,7 @@ private:
 
     float landingMinDuration_ = 0.25f;
     float landingMaxDuration_ = 1.0f;
-    float landingMinImpact_ = 4.0f;
+    float landingMinImpact_ = 8.0f;
     float landingMaxImpact_ = 64.0f;
     float landingMinStrength_ = 0.2f;
     float landingMaxStrength_ = 1.0f;
@@ -139,8 +155,11 @@ private:
     float deathDuration_ = 0.5f;
     float deathStrength_ = 1.0f;
 
-    float coinDuration_ = 0.5f;
-    float coinStrength_ = 0.5f;
+    float coinDuration_ = 0.0f;
+    float coinStrength_ = 0.0f;
+
+    float jumpDuration_ = 0.25f;
+    float jumpStrength_ = 0.5f;
 };
 
 } // namespace KashipanEngine

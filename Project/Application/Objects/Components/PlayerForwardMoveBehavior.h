@@ -39,6 +39,7 @@ public:
     float GetForwardSpeed() const { return forwardSpeed_; }
     float GetMinForwardSpeed() const { return minForwardSpeed_; }
     float GetMaxForwardSpeed() const { return maxForwardSpeed_; }
+    void SetMaxForwardSpeed(float value) { maxForwardSpeed_ = std::max(0.0f, value); }
     float GetForwardAcceleration() const { return groundAcceleration_; }
     float GetForwardAccelPerFallSpeed() const { return fallDecelerationPerFallSpeed_; }
     float GetGroundDeceleration() const { return groundAcceleration_; }

@@ -423,6 +423,7 @@
     <ClInclude Include="Application\Scenes\Components\PlayerAnimationController.h" />
     <ClInclude Include="Application\Scenes\Components\DustGenerator.h" />
     <ClInclude Include="Application\Objects\Components\PlayerActionGamepadVibrator.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerGetCoinCounter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -29,6 +29,7 @@
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
 #include "Objects/Components/PlayerActionGamepadVibrator.h"
+#include "Objects/Components/PlayerGetCoinCounter.h"
 
 #include <algorithm>
 
@@ -138,6 +139,7 @@ void GameScene::Initialize() {
 
             playerRoot->RegisterComponent<PlayerMovementController>(colliderComp->GetCollider());
             playerRoot->RegisterComponent<PlayerActionGamepadVibrator>();
+            playerRoot->RegisterComponent<PlayerGetCoinCounter>();
             playerRoot->RegisterComponent<PlayerInputHandler>(
                 GetInputCommand(),
                 pauseUIController_,

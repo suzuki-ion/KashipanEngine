@@ -11,6 +11,7 @@ void TestScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
     auto *mainCamera3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainCamera3D() : nullptr;
     auto *screenBuffer3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer3D() : nullptr;
+    auto *screenBuffer2D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer2D() : nullptr;
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -72,6 +73,22 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
+        auto ring = std::make_unique<Ring3D>();
+        ring->SetUvMode(Ring3D::UvMode::Curved);
+        ring->SetName("TestRing");
+        if (auto *material = ring->GetComponent3D<Material3D>()) {
+            auto texture = TextureManager::GetTextureFromFileName("gradationLine.png");
+            material->SetTexture(texture);
+        }
+        if (auto *transform = ring->GetComponent3D<Transform3D>()) {
+            transform->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
+            transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        ring->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(ring));
+    }
+
+    if (screenBuffer3D) {
         auto skybox = std::make_unique<Skybox>();
         skybox->SetName("TestSkybox");
 
@@ -86,6 +103,22 @@ void TestScene::Initialize() {
 
         skybox->AttachToRenderer(screenBuffer3D, "Skybox.Solid.BlendNormal");
         AddObject3D(std::move(skybox));
+    }
+
+    if (screenBuffer2D) {
+        auto ring = std::make_unique<Ring2D>();
+        ring->SetUvMode(Ring2D::UvMode::Curved);
+        ring->SetName("TestRing2D");
+        if (auto *material = ring->GetComponent2D<Material2D>()) {
+            auto texture = TextureManager::GetTextureFromFileName("gradationLine.png");
+            material->SetTexture(texture);
+        }
+        if (auto *transform = ring->GetComponent2D<Transform2D>()) {
+            transform->SetTranslate(Vector2(200.0f, 200.0f));
+            transform->SetScale(Vector2(100.0f, 100.0f));
+        }
+        ring->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        AddObject2D(std::move(ring));
     }
 }
 

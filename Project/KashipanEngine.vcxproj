@@ -263,6 +263,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Ellipse.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Line2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Rect.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Sprite.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.cpp" />
@@ -271,6 +272,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Line3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Model.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
@@ -288,6 +290,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\VelocityBufferCameraBinder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\DebugCameraMovement.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Letterbox.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ModelAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ParticleManager.cpp" />
@@ -374,6 +377,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BoxFilter5x5Effect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GrayscaleEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
@@ -385,7 +391,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
@@ -536,6 +544,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\DebugCameraMovement.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Letterbox.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ModelAnimator.h" />

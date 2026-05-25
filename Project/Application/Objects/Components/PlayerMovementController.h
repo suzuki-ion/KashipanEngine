@@ -188,6 +188,25 @@ public:
             gravityVelocity = gvRef;
         }
 
+        // 反転ゲージの自動回復処理
+        if(gravityChargeCooldownTimer_ > 0.0f) {
+            gravityChargeCooldownTimer_ = std::max(0.0f, gravityChargeCooldownTimer_ - dt);
+        } else {
+			PlayerForwardMoveBehavior* forwardMove = ctx->GetComponent<PlayerForwardMoveBehavior>();
+            float maxForwardSpeed = forwardMove->GetMaxForwardSpeed();
+
+            float speed = 1.0f;
+            if (maxForwardSpeed > 0.0f) {
+                speed = std::clamp(forwardSpeed / maxForwardSpeed, 0.1f, 1.0f);
+            }
+
+            if (!grounded) {
+                speed *= 0.1f;
+            }
+
+			gravityGauge_ += gravityChargeValueParSecond_ * speed * dt;
+		}
+
 		// 着地イベントの算出
         if (grounded && !wasGroundedPrev_) {
             const float landingImpact = std::max(accumulatedFallDistance_, fallDistanceBeforeGravityChange);
@@ -275,6 +294,7 @@ public:
         if (dir == gravityDirection_) return false;
 
         gravityGauge_ = std::max(0.0f, gravityGauge_ - gravityGaugePerUse_);
+		gravityChargeCooldownTimer_ = gravityChargeCooldownDuration_;
         // プレイヤー操作による重力変更時は落下距離計測をリセット
         accumulatedFallDistance_ = 0.0f;
         collisionDisableTimer_ = kCollisionDisableDuration;
@@ -518,6 +538,10 @@ private:
     float collisionDisableTimer_ = 0.0f;
     bool movementLocked_ = false;
     bool fastFallEnabled_ = false;
+
+	float gravityChargeCooldownTimer_ = 0.0f;
+	float gravityChargeCooldownDuration_ = 1.5f;
+	float gravityChargeValueParSecond_ = 6.0f;
 };
 
 } // namespace KashipanEngine

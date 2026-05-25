@@ -62,20 +62,6 @@ public:
         screenWidth_ = static_cast<float>(screenBuffer2D->GetWidth());
         screenHeight_ = static_cast<float>(screenBuffer2D->GetHeight());
 
-        /*auto speedBar = std::make_unique<SpriteProressBar>();
-        speedBar->SetName("ForwardSpeedBar");
-        speedBar->SetBarSize(Vector2{512.0f, 32.0f});
-        speedBar->SetFrameThickness(8.0f);
-        speedBar->SetFrameColor(Vector4{0.5f, 0.5f, 0.5f, 1.0f});
-        speedBar->SetBackgroundColor(Vector4{0.1f, 0.1f, 0.1f, 1.0f});
-        speedBar->SetBarColor(Vector4{0.0f, 0.5f, 0.0f, 1.0f});
-        speedBar->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        if (auto *tr = speedBar->GetComponent2D<Transform2D>()) {
-            tr->SetTranslate(Vector3{320.0f, 32.0f, 0.0f});
-        }
-        forwardSpeedBar_ = speedBar.get();
-        (void)ctx->AddObject2D(std::move(speedBar));*/
-
         auto gravityBar = std::make_unique<SpriteProressBar>();
         gravityBar->SetName("GravityGaugeBar");
         gravityBar->SetBarSize(Vector2{512.0f, 16.0f});

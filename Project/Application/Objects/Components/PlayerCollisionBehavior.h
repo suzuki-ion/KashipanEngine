@@ -234,9 +234,6 @@ private:
         if (!controller) return;
 
         const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
-        /*if ((normal - (-forward)).LengthSquared() <= 0.0001f) {
-            return;
-        }*/
 
         grounded_ = true;
         needsVelocityCorrection_ = true;

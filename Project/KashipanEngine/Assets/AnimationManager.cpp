@@ -73,9 +73,10 @@ Handle RegisterEntry(AnimationEntry &&entry) {
     return handle;
 }
 
-KeyframeTimeline BuildTimeline(const std::string &name, const std::vector<KeyframeNode> &keys, bool loop) {
+KeyframeTimeline BuildTimeline(const std::string &name, KeyframeValueType valueType, const std::vector<KeyframeNode> &keys, bool loop) {
     KeyframeTimeline timeline;
     timeline.name = name;
+    timeline.valueType = valueType;
     timeline.keys = keys;
     timeline.loop = loop;
     if (!timeline.keys.empty()) {
@@ -217,9 +218,9 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
             }
 
             if (!xKeys.empty()) {
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.X", xKeys, false));
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.Y", yKeys, false));
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.Z", zKeys, false));
+                clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.X", KeyframeValueType::Float, xKeys, false));
+                clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.Y", KeyframeValueType::Float, yKeys, false));
+                clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.Z", KeyframeValueType::Float, zKeys, false));
             }
 
             xKeys.clear();
@@ -235,42 +236,27 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
             }
 
             if (!xKeys.empty()) {
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.X", xKeys, false));
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.Y", yKeys, false));
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.Z", zKeys, false));
+                clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.X", KeyframeValueType::Float, xKeys, false));
+                clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.Y", KeyframeValueType::Float, yKeys, false));
+                clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.Z", KeyframeValueType::Float, zKeys, false));
             }
 
             xKeys.clear();
             yKeys.clear();
             zKeys.clear();
 
+            std::vector<KeyframeNode> qKeys;
+            qKeys.reserve(channel->mNumRotationKeys);
+
             for (unsigned int k = 0; k < channel->mNumRotationKeys; ++k) {
                 const auto &rk = channel->mRotationKeys[k];
                 const float t = static_cast<float>(rk.mTime / ticksPerSecond);
                 const auto q = rk.mValue;
-                const float ysqr = static_cast<float>(q.y * q.y);
-
-                float t0 = +2.0f * static_cast<float>(q.w * q.x + q.y * q.z);
-                float t1 = +1.0f - 2.0f * static_cast<float>(q.x * q.x + ysqr);
-                float roll = std::atan2(t0, t1);
-
-                float t2 = +2.0f * static_cast<float>(q.w * q.y - q.z * q.x);
-                t2 = std::clamp(t2, -1.0f, 1.0f);
-                float pitch = std::asin(t2);
-
-                float t3 = +2.0f * static_cast<float>(q.w * q.z + q.x * q.y);
-                float t4 = +1.0f - 2.0f * static_cast<float>(ysqr + q.z * q.z);
-                float yaw = std::atan2(t3, t4);
-
-                xKeys.push_back({ t, roll, EaseType::Linear });
-                yKeys.push_back({ t, pitch, EaseType::Linear });
-                zKeys.push_back({ t, yaw, EaseType::Linear });
+                qKeys.push_back({ t, Quaternion(static_cast<float>(q.x), static_cast<float>(q.y), static_cast<float>(q.z), static_cast<float>(q.w)), EaseType::Linear });
             }
 
-            if (!xKeys.empty()) {
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Rotate.X", xKeys, false));
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Rotate.Y", yKeys, false));
-                clip.timelines.push_back(BuildTimeline(nodeName + ".Rotate.Z", zKeys, false));
+            if (!qKeys.empty()) {
+                clip.timelines.push_back(BuildTimeline(nodeName + ".Rotate", KeyframeValueType::Quaternion, qKeys, false));
             }
         }
 

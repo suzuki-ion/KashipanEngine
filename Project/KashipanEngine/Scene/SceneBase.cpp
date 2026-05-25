@@ -146,12 +146,14 @@ void SceneBase::SetEnginePointers(
     ModelManager *modelManager,
     SamplerManager *samplerManager,
     TextureManager *textureManager,
+    AnimationManager *animationManager,
     Input *input,
     InputCommand *inputCommand) {
     sAudioManager = audioManager;
     sModelManager = modelManager;
     sSamplerManager = samplerManager;
     sTextureManager = textureManager;
+    sAnimationManager = animationManager;
     sInput = input;
     sInputCommand = inputCommand;
 }

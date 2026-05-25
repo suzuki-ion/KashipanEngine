@@ -4,6 +4,11 @@
 #include <cctype>
 #include <cmath>
 
+#include "Assets/AnimationManager.h"
+#include "Scene/SceneContext.h"
+#include "Objects/Components/2D/Transform2D.h"
+#include "Objects/Components/3D/Transform3D.h"
+
 #include "Utilities/TimeUtils.h"
 
 namespace KashipanEngine {
@@ -15,7 +20,7 @@ std::string EnsureJsonExtension(std::string path) {
     auto lowerPath = path;
     std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
-    });
+        });
 
     if (!lowerPath.ends_with(".json")) {
         path += ".json";
@@ -56,7 +61,7 @@ float EvaluateTimeline(const KeyframeTimeline &timeline, float time) {
 void SortTimelineKeys(KeyframeTimeline &timeline) {
     std::sort(timeline.keys.begin(), timeline.keys.end(), [](const KeyframeNode &lhs, const KeyframeNode &rhs) {
         return lhs.time < rhs.time;
-    });
+        });
 
     if (!timeline.keys.empty()) {
         const float maxKeyTime = timeline.keys.back().time;
@@ -65,6 +70,192 @@ void SortTimelineKeys(KeyframeTimeline &timeline) {
         }
     }
 }
+
+} // namespace
+
+bool KeyframeAnimator::PlayFromAnimationHandle(uint32_t handle, const std::string &objectName, bool loop) {
+    if (handle == AnimationManager::kInvalidHandle) return false;
+    if (objectName.empty()) return false;
+
+    auto *ctx = GetOwnerContext();
+    if (!ctx) return false;
+
+    Transform2D *transform2D = nullptr;
+    Transform3D *transform3D = nullptr;
+
+    if (auto *obj2D = ctx->GetObject2D(objectName)) {
+        transform2D = obj2D->GetComponent2D<Transform2D>();
+    }
+    if (!transform2D) {
+        if (auto *obj3D = ctx->GetObject3D(objectName)) {
+            transform3D = obj3D->GetComponent3D<Transform3D>();
+        }
+    }
+
+    if (!transform2D && !transform3D) return false;
+
+    const auto &data = AnimationManager::GetAnimationData(handle);
+    if (data.GetClipCount() == 0) return false;
+
+    const auto *clip = data.GetClip(0);
+    if (!clip) return false;
+
+    timelines_.clear();
+    playbackStates_.clear();
+
+    for (const auto &src : clip->timelines) {
+        KeyframeTimeline timeline;
+        timeline.name = src.name;
+        timeline.duration = src.duration;
+        timeline.keys = src.keys;
+        timeline.loop = loop;
+
+        if (transform2D) {
+            if (timeline.name.ends_with(".Translate.X")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto t = transform2D->GetTranslate();
+                    t.x = v;
+                    transform2D->SetTranslate(t);
+                });
+            } else if (timeline.name.ends_with(".Translate.Y")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto t = transform2D->GetTranslate();
+                    t.y = v;
+                    transform2D->SetTranslate(t);
+                });
+            } else if (timeline.name.ends_with(".Translate.Z")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto t = transform2D->GetTranslate();
+                    t.z = v;
+                    transform2D->SetTranslate(t);
+                });
+            } else if (timeline.name.ends_with(".Scale.X")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto s = transform2D->GetScale();
+                    s.x = v;
+                    transform2D->SetScale(s);
+                });
+            } else if (timeline.name.ends_with(".Scale.Y")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto s = transform2D->GetScale();
+                    s.y = v;
+                    transform2D->SetScale(s);
+                });
+            } else if (timeline.name.ends_with(".Scale.Z")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto s = transform2D->GetScale();
+                    s.z = v;
+                    transform2D->SetScale(s);
+                });
+            } else if (timeline.name.ends_with(".Rotate.X")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto r = transform2D->GetRotate();
+                    r.x = v;
+                    transform2D->SetRotate(r);
+                });
+            } else if (timeline.name.ends_with(".Rotate.Y")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto r = transform2D->GetRotate();
+                    r.y = v;
+                    transform2D->SetRotate(r);
+                });
+            } else if (timeline.name.ends_with(".Rotate.Z")) {
+                timeline.applyFunctions.push_back([transform2D](float v) {
+                    if (!transform2D) return;
+                    auto r = transform2D->GetRotate();
+                    r.z = v;
+                    transform2D->SetRotate(r);
+                });
+            }
+        } else if (transform3D) {
+            if (timeline.name.ends_with(".Translate.X")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto t = transform3D->GetTranslate();
+                    t.x = v;
+                    transform3D->SetTranslate(t);
+                });
+            } else if (timeline.name.ends_with(".Translate.Y")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto t = transform3D->GetTranslate();
+                    t.y = v;
+                    transform3D->SetTranslate(t);
+                });
+            } else if (timeline.name.ends_with(".Translate.Z")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto t = transform3D->GetTranslate();
+                    t.z = v;
+                    transform3D->SetTranslate(t);
+                });
+            } else if (timeline.name.ends_with(".Scale.X")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto s = transform3D->GetScale();
+                    s.x = v;
+                    transform3D->SetScale(s);
+                });
+            } else if (timeline.name.ends_with(".Scale.Y")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto s = transform3D->GetScale();
+                    s.y = v;
+                    transform3D->SetScale(s);
+                });
+            } else if (timeline.name.ends_with(".Scale.Z")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto s = transform3D->GetScale();
+                    s.z = v;
+                    transform3D->SetScale(s);
+                });
+            } else if (timeline.name.ends_with(".Rotate.X")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto r = transform3D->GetRotate();
+                    r.x = v;
+                    transform3D->SetRotate(r);
+                });
+            } else if (timeline.name.ends_with(".Rotate.Y")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto r = transform3D->GetRotate();
+                    r.y = v;
+                    transform3D->SetRotate(r);
+                });
+            } else if (timeline.name.ends_with(".Rotate.Z")) {
+                timeline.applyFunctions.push_back([transform3D](float v) {
+                    if (!transform3D) return;
+                    auto r = transform3D->GetRotate();
+                    r.z = v;
+                    transform3D->SetRotate(r);
+                });
+            }
+        }
+
+        if (timeline.applyFunctions.empty()) continue;
+
+        SortTimelineKeys(timeline);
+        timelines_.emplace(timeline.name, std::move(timeline));
+
+        KeyframePlaybackState state;
+        state.timelineName = src.name;
+        state.elapsedTime = 0.0f;
+        state.playing = true;
+        state.paused = false;
+        playbackStates_.emplace(state.timelineName, std::move(state));
+    }
+
+    return !timelines_.empty();
 }
 
 KeyframeAnimator::KeyframeAnimator()

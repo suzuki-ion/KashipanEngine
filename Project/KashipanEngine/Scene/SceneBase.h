@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Assets/AudioManager.h"
+#include "Assets/AnimationManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
@@ -59,6 +60,7 @@ public:
         ModelManager *modelManager,
         SamplerManager *samplerManager,
         TextureManager *textureManager,
+        AnimationManager *animationManager,
         Input *input,
         InputCommand *inputCommand);
 
@@ -226,6 +228,7 @@ protected:
     static ModelManager *GetModelManager() { return sModelManager; }
     static SamplerManager *GetSamplerManager() { return sSamplerManager; }
     static TextureManager *GetTextureManager() { return sTextureManager; }
+    static AnimationManager *GetAnimationManager() { return sAnimationManager; }
     static Input *GetInput() { return sInput; }
     static InputCommand *GetInputCommand() { return sInputCommand; }
 
@@ -234,6 +237,7 @@ private:
     static inline ModelManager *sModelManager = nullptr;
     static inline SamplerManager *sSamplerManager = nullptr;
     static inline TextureManager *sTextureManager = nullptr;
+    static inline AnimationManager *sAnimationManager = nullptr;
     static inline Input *sInput = nullptr;
     static inline InputCommand *sInputCommand = nullptr;
 

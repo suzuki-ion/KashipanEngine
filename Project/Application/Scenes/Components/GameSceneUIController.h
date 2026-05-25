@@ -5,6 +5,7 @@
 #include "Scenes/Components/StageGoalPlaneController.h"
 #include "Scenes/Components/ClearTimeBoard.h"
 #include "Objects/Components/PlayerMovementController.h"
+#include "Objects/Components/PlayerCollisionBehavior.h"
 #include "Objects/Components/PlayerInputHandler.h"
 #include "Objects/Components/PlayerGetCoinCounter.h"
 
@@ -342,6 +343,25 @@ public:
         gravityDirectionAllowUISprite_ = gravityDirectionAllowUI.get();
         (void)ctx->AddObject2D(std::move(gravityDirectionAllowUI));
 
+        auto reverseSprite = std::make_unique<Sprite>();
+        reverseSprite->SetName("ReverseSprite");
+        reverseSprite->SetUniqueBatchKey();
+        reverseSprite->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *mat = reverseSprite->GetComponent2D<Material2D>()) {
+            auto texture = TextureManager::GetTextureFromFileName("pReverse.png");
+            if (texture == TextureManager::kInvalidHandle) {
+                texture = TextureManager::GetTextureFromAssetPath("Application/Image/pReverse.png");
+            }
+            mat->SetTexture(texture);
+            mat->SetColor(Vector4{1.0f, 1.0f, 1.0f, 0.0f});
+        }
+        if (auto *tr = reverseSprite->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
+            tr->SetScale(Vector3{256.0f, 256.0f, 1.0f});
+        }
+        pReverseSprite_ = reverseSprite.get();
+        (void)ctx->AddObject2D(std::move(reverseSprite));
+
         // ゲージアンカー
         auto gageAnc = std::make_unique<Sprite>();
         gageAnc->SetName("GageAnchor");
@@ -459,6 +479,9 @@ public:
         if (player_ && !playerMovementController_) {
             playerMovementController_ = player_->GetComponent3D<PlayerMovementController>();
         }
+        if (player_ && !playerCollisionBehavior_) {
+            playerCollisionBehavior_ = player_->GetComponent3D<PlayerCollisionBehavior>();
+        }
         if (player_ && !playerInputHandler_) {
             playerInputHandler_ = player_->GetComponent3D<PlayerInputHandler>();
         }
@@ -494,6 +517,65 @@ public:
         bool jumpTriggered = false;
         bool gravitySwitchTriggered = false;
         bool fastFallTriggered = false;
+
+        if (playerCollisionBehavior_) {
+            if (auto angle = playerCollisionBehavior_->ConsumeLastCollisionAngleDegrees(); angle.has_value()) {
+                if (*angle <= reverseAngleMinDegrees_ || *angle >= reverseAngleMaxDegrees_) {
+                    reverseSpriteAnimActive_ = true;
+                    reverseSpriteFadeOutActive_ = false;
+                    reverseSpriteAnimElapsed_ = 0.0f;
+                    reverseSpriteFadeOutElapsed_ = 0.0f;
+                    reverseSpriteAlpha_ = 1.0f;
+
+                    if (player_) {
+                        if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
+                            Vector2 screenPos;
+                            if (ProjectWorldTo2DWorld(playerTr->GetTranslate(), screenPos)) {
+                                reverseSpriteStartPosition_ = Vector3{screenPos.x, screenPos.y + reverseSpriteStartYOffset_, 0.0f};
+                            } else {
+                                reverseSpriteStartPosition_ = Vector3{0.0f, reverseSpriteStartYOffset_, 0.0f};
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (pReverseSprite_) {
+            if (auto *tr = pReverseSprite_->GetComponent2D<Transform2D>()) {
+                if (reverseSpriteAnimActive_) {
+                    reverseSpriteAnimElapsed_ += dt;
+                    const float t = std::clamp(reverseSpriteAnimElapsed_ / std::max(0.0001f, reverseSpriteMoveDuration_), 0.0f, 1.0f);
+                    const float eased = EaseOutCubic(0.0f, 1.0f, t);
+                    const float targetY = reverseSpriteStartPosition_.y + reverseSpriteMoveOffsetY_;
+                    const float y = std::lerp(reverseSpriteStartPosition_.y, targetY, eased);
+                    tr->SetTranslate(Vector3{reverseSpriteStartPosition_.x, y, 0.0f});
+
+                    if (t >= 1.0f) {
+                        reverseSpriteAnimActive_ = false;
+                        reverseSpriteFadeOutActive_ = true;
+                        reverseSpriteFadeOutElapsed_ = 0.0f;
+                    }
+                } else if (!reverseSpriteFadeOutActive_) {
+                    tr->SetTranslate(reverseSpriteStartPosition_);
+                }
+            }
+
+            if (auto *mat = pReverseSprite_->GetComponent2D<Material2D>()) {
+                if (reverseSpriteFadeOutActive_) {
+                    reverseSpriteFadeOutElapsed_ += dt;
+                    const float t = std::clamp(reverseSpriteFadeOutElapsed_ / std::max(0.0001f, reverseSpriteFadeDuration_), 0.0f, 1.0f);
+                    reverseSpriteAlpha_ = std::lerp(1.0f, 0.0f, t);
+                    if (t >= 1.0f) {
+                        reverseSpriteFadeOutActive_ = false;
+                        reverseSpriteAlpha_ = 0.0f;
+                    }
+                }
+                Vector4 color = mat->GetColor();
+                color.w = (isVisible_ ? reverseSpriteAlpha_ : 0.0f);
+                mat->SetColor(color);
+            }
+        }
 
         auto *ic = ctx->GetInputCommand();
         operationJumpUIActive_ = !(playerInputHandler_ && playerInputHandler_->IsGravitySwitching());
@@ -1147,6 +1229,14 @@ private:
                 mat->SetColor(color);
             }
         }
+
+        if (pReverseSprite_) {
+            if (auto *mat = pReverseSprite_->GetComponent2D<Material2D>()) {
+                Vector4 color = mat->GetColor();
+                color.w = isVisible_ ? color.w : 0.0f;
+                mat->SetColor(color);
+            }
+        }
     }
 
     void UpdateOperationInputUISprite(
@@ -1324,6 +1414,7 @@ private:
 
     Object3DBase *player_ = nullptr;
     PlayerMovementController *playerMovementController_ = nullptr;
+    PlayerCollisionBehavior *playerCollisionBehavior_ = nullptr;
     PlayerInputHandler *playerInputHandler_ = nullptr;
     PlayerGetCoinCounter *playerGetCoinCounter_ = nullptr;
     StageGroundGenerator *stageGroundGenerator_ = nullptr;
@@ -1355,6 +1446,20 @@ private:
 	Sprite* gagePointerImage_ = nullptr;
 
 	Sprite* concentrationLineSprite_ = nullptr;
+
+    Sprite *pReverseSprite_ = nullptr;
+    Vector3 reverseSpriteStartPosition_{0.0f, 0.0f, 0.0f};
+    bool reverseSpriteAnimActive_ = false;
+    bool reverseSpriteFadeOutActive_ = false;
+    float reverseSpriteAnimElapsed_ = 0.0f;
+    float reverseSpriteFadeOutElapsed_ = 0.0f;
+    float reverseSpriteAlpha_ = 0.0f;
+    float reverseSpriteMoveDuration_ = 1.0f;
+    float reverseSpriteFadeDuration_ = 1.0f;
+    float reverseSpriteStartYOffset_ = 64.0f;
+    float reverseSpriteMoveOffsetY_ = 64.0f;
+    float reverseAngleMinDegrees_ = -90.0f;
+    float reverseAngleMaxDegrees_ = 90.0f;
 
 	float timer_ = 0.0f;
 

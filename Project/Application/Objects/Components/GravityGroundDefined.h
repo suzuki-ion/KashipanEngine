@@ -73,7 +73,7 @@ namespace KashipanEngine {
 			} else {
 				rotateAcceleration_ += (diff > 0.0f) ? step : -step; // 近い方向へ回る
 			}
-			currentRotation_ += rotateAcceleration_ * GetDeltaTime();
+			currentRotation_ += rotateAcceleration_ * GetDeltaTime() * GetGameSpeed();
 
 			if (auto* tr = ctx->GetComponent<Transform3D>()) {
 				const Vector3 pos = tr->GetTranslate();

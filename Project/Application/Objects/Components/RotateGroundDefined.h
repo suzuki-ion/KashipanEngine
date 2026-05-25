@@ -58,7 +58,7 @@ namespace KashipanEngine {
 		std::optional<bool> Update() override {
 			auto* ctx = GetOwner3DContext();
 
-			currentRotation_ += rotationSpeed_ * GetDeltaTime();
+			currentRotation_ += rotationSpeed_ * GetDeltaTime() * GetGameSpeed();
 
 			if (auto* tr = ctx->GetComponent<Transform3D>()) {
 				const Vector3 pos = tr->GetTranslate();

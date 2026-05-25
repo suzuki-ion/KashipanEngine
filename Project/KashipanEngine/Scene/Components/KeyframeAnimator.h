@@ -1,18 +1,33 @@
 #pragma once
 #include <cstdint>
+#include <variant>
 
+#include "Math/Quaternion.h"
+#include "Math/Vector3.h"
 #include "Scene/Components/ISceneComponent.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/MathUtils/Easings.h"
 
 namespace KashipanEngine {
 
+enum class KeyframeValueType {
+    Float,
+    Vector3,
+    Quaternion
+};
+
+using KeyframeValue = std::variant<float, Vector3, Quaternion>;
+using KeyframeApplyFunction = std::variant<
+    std::function<void(float)>,
+    std::function<void(const Vector3 &)>,
+    std::function<void(const Quaternion &)>>;
+
 /// @brief キーフレームのノード
 struct KeyframeNode {
     /// @brief キーフレームの時間（秒）
     float time = 0.0f;
     /// @brief キーフレームの値
-    float value = 0.0f;
+    KeyframeValue value = 0.0f;
     /// @brief このキーから次のキーまでのイージング種別
     EaseType easeType = EaseType::Linear;
 };
@@ -23,10 +38,12 @@ struct KeyframeTimeline {
     std::string name;
     /// @brief タイムラインの総時間（秒）
     float duration = 0.0f;
+    /// @brief タイムラインの値型
+    KeyframeValueType valueType = KeyframeValueType::Float;
     /// @brief タイムラインのキーフレームノードリスト（バラバラであってもKeyframeAnimatorクラス側で自動ソートされる）
     std::vector<KeyframeNode> keys;
     /// @brief タイムラインの適用関数リスト
-    std::vector<std::function<void(float)>> applyFunctions;
+    std::vector<KeyframeApplyFunction> applyFunctions;
     /// @brief タイムラインがループするかどうか
     bool loop = false;
 };

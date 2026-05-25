@@ -22,6 +22,7 @@ void TestScene::Initialize() {
     }
 
     AddSceneComponent(std::make_unique<ParticleManager>());
+    AddSceneComponent(std::make_unique<KeyframeAnimator>());
     if (auto *pm = GetSceneComponent<ParticleManager>()) {
         pm->LoadFromJsonFile("HitEffect.json");
     }
@@ -66,21 +67,27 @@ void TestScene::Initialize() {
             transform->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
         }
-        box->RegisterComponent(std::make_unique<LookAtConstraint>());
-        if (auto *constraint = box->GetComponent3D<LookAtConstraint>()) {
-            constraint->SetTargetFunc([this, mainCamera3D]() -> const Vector3 & {
-                if (mainCamera3D) {
-                    if (auto *camTr = mainCamera3D->GetComponent3D<Transform3D>()) {
-                        return camTr->GetTranslate();
-                    }
-                }
-                static const Vector3 defaultTarget(0.0f, 0.0f, 0.0f);
-                return defaultTarget;
-                });
-        }
 
         box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(box));
+    }
+
+    if (screenBuffer3D) {
+        auto handle = ModelManager::GetModelHandleFromFileName("AnimatedCube.gltf");
+        auto animatedCube = std::make_unique<Model>(handle);
+        animatedCube->SetName("AnimatedCube");
+        if (auto *transform = animatedCube->GetComponent3D<Transform3D>()) {
+            transform->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
+            transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        animatedCube->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(animatedCube));
+
+        auto *keyframeAnimator = GetSceneComponent<KeyframeAnimator>();
+        if (keyframeAnimator) {
+            auto animationHandle = AnimationManager::GetAnimationHandleFromFileName("AnimatedCube.gltf");
+            keyframeAnimator->PlayFromAnimationHandle(animationHandle, "AnimatedCube", true);
+        }
     }
 
     if (screenBuffer3D) {

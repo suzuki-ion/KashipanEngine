@@ -1,6 +1,9 @@
 #pragma once
 #include <cmath>
 
+#include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
+
 struct Quaternion {
     static Quaternion Identity() noexcept {
         static Quaternion id(0.0f, 0.0f, 0.0f, 1.0f);

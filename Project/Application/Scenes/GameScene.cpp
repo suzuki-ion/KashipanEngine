@@ -228,7 +228,7 @@ void GameScene::Initialize() {
         }
     }
 
-	AddSceneComponent(std::make_unique<PlayerLogCollector>(player_));
+	//AddSceneComponent(std::make_unique<PlayerLogCollector>(player_));
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
     AddSceneComponent(std::make_unique<ParticleManager>());

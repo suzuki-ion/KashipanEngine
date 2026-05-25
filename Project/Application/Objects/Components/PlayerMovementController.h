@@ -208,7 +208,7 @@ public:
             }
 
             if (!grounded) {
-                speed *= 0.1f;
+                speed *= 0.0f;
             }
 
 			gravityGauge_ += gravityChargeValueParSecond_ * speed * dt;
@@ -399,6 +399,7 @@ public:
         outImpact = lastLandingImpact_;
         return true;
     }
+    bool IsGravityCooldown() const { return gravityChargeCooldownTimer_ > 0.0f; }
 
     bool ConsumeJumpTriggered() {
         const bool triggered = jumpTriggeredThisFrame_;

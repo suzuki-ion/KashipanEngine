@@ -71,6 +71,8 @@ public:
     void AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName);
     void DetachFromRenderer();
 
+	Sprite* GetBarSprite() const { return barSprite_.get(); }
+
 protected:
     void OnUpdate() override;
 

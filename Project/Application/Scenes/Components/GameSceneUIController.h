@@ -78,6 +78,14 @@ public:
             tr->SetTranslate(Vector3{ screenWidth_ * 0.5f, screenHeight_ * 0.15f, 0.0f });
             gravityGaugeBarBasePosition_ = tr->GetTranslate();
         }
+        if (Sprite* barSprite = gravityBar->GetBarSprite()) {
+            if(auto* mat = barSprite->GetComponent2D<Material2D>()) {
+				mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));
+			}
+        }
+        auto handle = TextureManager::GetTextureFromFileName("bar.png");
+		gravityBar->SetBarTexture(handle);
+
         gravityGaugeBar_ = gravityBar.get();
         (void)ctx->AddObject2D(std::move(gravityBar));
 
@@ -99,14 +107,6 @@ public:
         }
         goalDistanceBar_ = goalDistanceBar.get();
         (void)ctx->AddObject2D(std::move(goalDistanceBar));
-
-        /*auto speedText = std::make_unique<Text>(128);
-        speedText->SetName("ForwardSpeedText");
-        speedText->SetFont("Assets/Application/Image/KaqookanV2.fnt");
-        speedText->SetTextFormat("Speed: {0:.2f}", 0.0f);
-        speedText->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        forwardSpeedText_ = speedText.get();
-        (void)ctx->AddObject2D(std::move(speedText));*/
 
         if (isTouchGroundUiEnabled_) {
             auto touchedGroundText = std::make_unique<Text>(128);
@@ -778,10 +778,6 @@ public:
             const float maxSpeed = playerMovementController_->GetMaxForwardSpeed();
             const float range = std::max(0.0001f, maxSpeed - minSpeed);
             const float progress = std::clamp((speed - minSpeed) / range, 0.0f, 1.0f);
-            /*forwardSpeedBar_->SetProgress(progress);
-            if (forwardSpeedText_) {
-                forwardSpeedText_->SetTextFormat("Speed: {0:.2f}", speed);
-            }*/
 
 			// ゲージの指針の回転
 			float needleAngle = std::lerp(0.0f, 3.14f * 0.6f, progress);
@@ -807,8 +803,23 @@ public:
             }
         }
 
+        // 反転ゲージの演出
         if (gravityGaugeBar_ && playerMovementController_) {
             gravityGaugeBar_->SetProgress(playerMovementController_->GetGravityGaugeNormalized());
+            if (!playerMovementController_->IsGravityCooldown()) {
+                if (Sprite* sprite = gravityGaugeBar_->GetBarSprite()) {
+                    if (auto* mat = sprite->GetComponent2D<Material2D>()) {
+						float speed = 1.0f;
+						speed = forwardSpeed / std::max(0.0001f, maxForwardSpeed);
+
+                        const Material2D::UVTransform& uv = mat->GetUVTransform();
+                        Material2D::UVTransform newUV = uv;
+                        newUV.translate.x += dt * 10.0f * speed; // UVを右にスクロール
+                        mat->SetUVTransform(newUV);
+                    }
+
+                }
+            }
         }
 
         if (gravityGaugeBar_) {

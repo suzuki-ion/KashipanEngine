@@ -207,10 +207,11 @@ private:
 
         if ((normal - (-forward)).LengthSquared() <= 0.0001f ||
             (normal - forward).LengthSquared() <= 0.0001f) {
-            return;
+            requestedGravityDirection_ = requestedGravityDirection_;
+        } else {
+            requestedGravityDirection_ = -normal;
         }
 
-        requestedGravityDirection_ = -normal;
 
         if(auto *slowGround = hit.otherObject->GetComponent3D<SlowGroundDefined>()) {
             isSlowGround_ = true;
@@ -233,9 +234,9 @@ private:
         if (!controller) return;
 
         const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
-        if ((normal - (-forward)).LengthSquared() <= 0.0001f) {
+        /*if ((normal - (-forward)).LengthSquared() <= 0.0001f) {
             return;
-        }
+        }*/
 
         grounded_ = true;
         needsVelocityCorrection_ = true;

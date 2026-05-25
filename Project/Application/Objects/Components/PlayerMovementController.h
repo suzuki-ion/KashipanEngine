@@ -83,11 +83,11 @@ public:
                 forwardBehavior_->ForwardSpeedRef() = 0.0f;
             }
             if (lateralBehavior_) {
-                lateralBehavior_->LateralVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                lateralBehavior_->LateralVelocityRef() = Vector3{ 0.0f, 0.0f, 0.0f };
                 lateralBehavior_->ClearLateralInput();
             }
             if (gravityBehavior_) {
-                gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                gravityBehavior_->GravityVelocityRef() = Vector3{ 0.0f, 0.0f, 0.0f };
                 gravityBehavior_->SetFastFallEnabled(false);
             }
             if (jumpBehavior_) {
@@ -101,19 +101,25 @@ public:
         // 着地イベント算出用に、重力変更前の落下蓄積量を保持
         const float fallDistanceBeforeGravityChange = accumulatedFallDistance_;
 
-		// プレイヤー操作による重力変更は、着地イベント算出のために落下距離計測をリセットする必要があるため、Updateの最初の方で処理する
+        // プレイヤー操作による重力変更は、着地イベント算出のために落下距離計測をリセットする必要があるため、Updateの最初の方で処理する
         if (collisionBehavior_ && collisionEnabled) {
             if (auto requestedGravity = collisionBehavior_->ConsumeRequestedGravityDirection(); requestedGravity.has_value()) {
                 SetGravityDirection(*requestedGravity);
             }
         }
 
-		// 着地判定と落下距離の計測
+        // 着地判定と落下距離の計測
         const bool grounded = (collisionBehavior_ && collisionEnabled) ? collisionBehavior_->ConsumeGrounded() : false;
+        bool skipLandingProcessing = false;
+        if (grounded && collisionBehavior_ && collisionEnabled) {
+            const Vector3 groundNormal = collisionBehavior_->GetGroundNormal().Normalize();
+            const Vector3 forward = forwardDirection_.Normalize();
+            skipLandingProcessing = (groundNormal - (-forward)).LengthSquared() <= 0.0001f;
+        }
         groundedThisFrame_ = grounded;
 
-		// 地面にいない場合は落下距離を蓄積
-        if (!grounded) {
+        // 地面にいない場合は落下距離を蓄積
+        if (skipLandingProcessing || !grounded) {
             const Vector3 down = gravityDirection_.Normalize();
             const float fallSpeed = gravityBehavior_ ? gravityBehavior_->GetGravityVelocity().Dot(down) : 0.0f;
             if (fallSpeed > 0.0f) {
@@ -128,11 +134,11 @@ public:
 
         // 重力処理は落下処理として最初に行う
         if (gravityBehavior_) {
-            gravityBehavior_->SetFastFallEnabled(fastFallEnabled_ && !grounded);
+            gravityBehavior_->SetFastFallEnabled(fastFallEnabled_ && (skipLandingProcessing || !grounded));
             gravityBehavior_->Apply(dt, gravityDirection_);
         }
 
-        Vector3 gravityVelocity{0.0f, 0.0f, 0.0f};
+        Vector3 gravityVelocity{ 0.0f, 0.0f, 0.0f };
         if (gravityBehavior_) gravityVelocity = gravityBehavior_->GetGravityVelocity();
 
         const Vector3 gravityFramePosition = tr->GetTranslate() + gravityVelocity * dt;
@@ -149,7 +155,7 @@ public:
 
         // 前方移動と横移動は落下処理と押し戻しの後に行う
         if (forwardBehavior_ && gravityBehavior_) {
-            forwardBehavior_->Apply(dt, grounded, gravityBehavior_->GetGravityVelocity(), gravityDirection_);
+            forwardBehavior_->Apply(dt, (!skipLandingProcessing && grounded), gravityBehavior_->GetGravityVelocity(), gravityDirection_);
         }
 
         // 横移動は前方移動の速度に応じて最大速度が変化するため、前方移動の更新後に行う必要がある
@@ -158,7 +164,7 @@ public:
         }
 
         // 移動処理
-        Vector3 lateralVelocity{0.0f, 0.0f, 0.0f};
+        Vector3 lateralVelocity{ 0.0f, 0.0f, 0.0f };
         float forwardSpeed = 0.0f;
         if (lateralBehavior_) lateralVelocity = lateralBehavior_->GetLateralVelocity();
         if (forwardBehavior_) forwardSpeed = forwardBehavior_->GetForwardSpeed();
@@ -208,19 +214,19 @@ public:
 			gravityGauge_ += gravityChargeValueParSecond_ * speed * dt;
 		}
 
-		// 着地イベントの算出
-        if (grounded && !wasGroundedPrev_) {
+        // 着地イベントの算出
+        if ((!skipLandingProcessing && grounded) && !wasGroundedPrev_) {
             const float landingImpact = std::max(accumulatedFallDistance_, fallDistanceBeforeGravityChange);
 
-			// ジャンプカウントのリセットは着地イベント算出後に行う必要がある
+            // ジャンプカウントのリセットは着地イベント算出後に行う必要がある
             if (jumpBehavior_) {
                 jumpBehavior_->ResetJumpCount();
             }
 
-			// 着地イベントの算出のために、着地前の落下距離と重力変更前の落下距離の大きい方を着地衝撃とする
+            // 着地イベントの算出のために、着地前の落下距離と重力変更前の落下距離の大きい方を着地衝撃とする
             const bool canRecoverGauge = (collisionBehavior_ && collisionEnabled) ? collisionBehavior_->ConsumeLastGroundWasFirstTouch() : false;
 
-			// 着地衝撃に応じて重力ゲージを回復。着地イベントが発生したフレームでのみ回復可能とするため、着地イベントの算出後に行う
+            // 着地衝撃に応じて重力ゲージを回復。着地イベントが発生したフレームでのみ回復可能とするため、着地イベントの算出後に行う
             if (canRecoverGauge) {
                 const float recovered = std::clamp(
                     landingGaugeRecoveryBase_ + landingImpact * landingGaugeRecoveryPerDistance_,
@@ -229,7 +235,7 @@ public:
                 gravityGauge_ = std::clamp(gravityGauge_ + recovered, 0.0f, gravityGaugeMax_);
             }
 
-			// 着地イベントの算出のために、着地衝撃を保存
+            // 着地イベントの算出のために、着地衝撃を保存
             hasLandingImpact_ = true;
             lastLandingImpact_ = landingImpact;
             accumulatedFallDistance_ = 0.0f;
@@ -246,9 +252,9 @@ public:
                 if (lateralBehavior_) {
                     lateralBehavior_->LateralVelocityRef() *= slowGroundSpeedMultiplier_;
                 }
-			}
+            }
 
-      } else if (!grounded && wasGroundedPrev_) {// 離地したフレームで落下距離計測をリセット
+        } else if ((skipLandingProcessing || !grounded) && wasGroundedPrev_) {// 離地したフレームで落下距離計測をリセット
             accumulatedFallDistance_ = 0.0f;
             if (collisionBehavior_ && collisionEnabled) {
                 (void)collisionBehavior_->ConsumeLastGroundWasFirstTouch();
@@ -327,11 +333,11 @@ public:
                 forwardBehavior_->ForwardSpeedRef() = 0.0f;
             }
             if (lateralBehavior_) {
-                lateralBehavior_->LateralVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                lateralBehavior_->LateralVelocityRef() = Vector3{ 0.0f, 0.0f, 0.0f };
                 lateralBehavior_->ClearLateralInput();
             }
             if (gravityBehavior_) {
-                gravityBehavior_->GravityVelocityRef() = Vector3{0.0f, 0.0f, 0.0f};
+                gravityBehavior_->GravityVelocityRef() = Vector3{ 0.0f, 0.0f, 0.0f };
                 gravityBehavior_->SetFastFallEnabled(false);
             }
             if (jumpBehavior_) {
@@ -353,8 +359,8 @@ public:
     const Vector3 &GetGravityDirection() const { return gravityDirection_; }
     const Vector3 &GetForwardDirection() const { return forwardDirection_; }
     float GetForwardSpeed() const { return forwardBehavior_ ? forwardBehavior_->GetForwardSpeed() : 0.0f; }
-    Vector3 GetLateralVelocity() const { return lateralBehavior_ ? lateralBehavior_->GetLateralVelocity() : Vector3{0.0f, 0.0f, 0.0f}; }
-    Vector3 GetGravityVelocity() const { return gravityBehavior_ ? gravityBehavior_->GetGravityVelocity() : Vector3{0.0f, 0.0f, 0.0f}; }
+    Vector3 GetLateralVelocity() const { return lateralBehavior_ ? lateralBehavior_->GetLateralVelocity() : Vector3{ 0.0f, 0.0f, 0.0f }; }
+    Vector3 GetGravityVelocity() const { return gravityBehavior_ ? gravityBehavior_->GetGravityVelocity() : Vector3{ 0.0f, 0.0f, 0.0f }; }
     void SetForwardSpeed(float v) {
         if (forwardBehavior_) {
             forwardBehavior_->ForwardSpeedRef() = std::max(0.0f, v);
@@ -415,7 +421,7 @@ public:
 
         gravityDirection_ = newDirection;
         if (gravityBehavior_) {
-            gravityBehavior_->SetGravityVelocity(Vector3{0.0f, 0.0f, 0.0f});
+            gravityBehavior_->SetGravityVelocity(Vector3{ 0.0f, 0.0f, 0.0f });
         }
         if (jumpBehavior_) {
             jumpBehavior_->ResetJumpCount();
@@ -425,11 +431,11 @@ public:
     }
 
     Vector3 &GravityVelocityRef() override {
-        static Vector3 dummy{0.0f, 0.0f, 0.0f};
+        static Vector3 dummy{ 0.0f, 0.0f, 0.0f };
         return gravityBehavior_ ? gravityBehavior_->GravityVelocityRef() : dummy;
     }
     Vector3 &LateralVelocityRef() override {
-        static Vector3 dummy{0.0f, 0.0f, 0.0f};
+        static Vector3 dummy{ 0.0f, 0.0f, 0.0f };
         return lateralBehavior_ ? lateralBehavior_->LateralVelocityRef() : dummy;
     }
     float &ForwardSpeedRef() override {
@@ -471,9 +477,9 @@ private:
         }
 
         if (dot < -0.9999f) {
-            Vector3 axis = f.Cross(Vector3{1.0f, 0.0f, 0.0f});
+            Vector3 axis = f.Cross(Vector3{ 1.0f, 0.0f, 0.0f });
             if (axis.LengthSquared() <= 0.000001f) {
-                axis = f.Cross(Vector3{0.0f, 1.0f, 0.0f});
+                axis = f.Cross(Vector3{ 0.0f, 1.0f, 0.0f });
             }
             axis = axis.Normalize();
             return Quaternion().MakeRotateAxisAngle(axis, kPi);
@@ -491,8 +497,8 @@ private:
         if (!tr) return;
 
         const Vector3 down = gravityDirection_.Normalize();
-        const Vector3 defaultDown{0.0f, -1.0f, 0.0f};
-        const Vector3 defaultForward{0.0f, 0.0f, 1.0f};
+        const Vector3 defaultDown{ 0.0f, -1.0f, 0.0f };
+        const Vector3 defaultForward{ 0.0f, 0.0f, 1.0f };
 
         const Quaternion qDown = MakeFromToQuaternion(defaultDown, down);
         Vector3 currentForward = qDown.RotateVector(defaultForward);
@@ -520,8 +526,8 @@ private:
 
     Collider *collider_ = nullptr;
 
-    Vector3 gravityDirection_{0.0f, -1.0f, 0.0f};
-    Vector3 forwardDirection_{0.0f, 0.0f, -1.0f};
+    Vector3 gravityDirection_{ 0.0f, -1.0f, 0.0f };
+    Vector3 forwardDirection_{ 0.0f, 0.0f, -1.0f };
 
     PlayerCollisionBehavior *collisionBehavior_ = nullptr;
     PlayerGravityFallBehavior *gravityBehavior_ = nullptr;
@@ -543,7 +549,7 @@ private:
     float gravityGauge_ = gravityGaugeMax_;
     float landingGaugeRecoveryBase_ = 1.0f;
     float landingGaugeRecoveryPerDistance_ = 0.05f;
-	float slowGroundSpeedMultiplier_ = 0.7f;
+    float slowGroundSpeedMultiplier_ = 0.7f;
 
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;

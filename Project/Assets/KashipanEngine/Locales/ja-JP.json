@@ -124,6 +124,16 @@
 		"engine.directx.dcomp.setcontent.failed": "DirectCompositionのコンテンツの設定に失敗しました。",
 		"engine.directx.dcomp.commit.failed": "DirectCompositionのコミットに失敗しました。",
 
+		//--------- Animation ---------//
+		"engine.animation.loading.start": "アニメーション読み込み開始：",
+		"engine.animation.loading.alreadyloaded": "既に読み込み済みのアニメーションです：",
+		"engine.animation.loading.failed.notfound": "アニメーションが見つかりません：",
+		"engine.animation.loading.failed.unsupported": "アニメーション形式がサポートされていません：",
+		"engine.animation.loading.failed.assimp": "アニメーションの読み込みに失敗しました：",
+		"engine.animation.loading.failed.noanim": "アニメーションが含まれていません：",
+		"engine.animation.loading.failed.register": "アニメーションの登録に失敗しました：",
+		"engine.animation.loading.succeeded": "アニメーションの読み込みに成功しました：",
+
 		//--------- Graphics ---------//
 		// リソース
 		"engine.graphics.resource.transition.empty": "リソースの状態遷移配列が空です。",

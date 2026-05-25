@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+
 #include "Scene/Components/ISceneComponent.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/MathUtils/Easings.h"
@@ -50,6 +52,13 @@ public:
     void Initialize() override;
     void Finalize() override;
     void Update() override;
+
+    /// @brief AnimationManagerのハンドルとオブジェクト名からアニメーションを再生する
+    /// @param handle AnimationManagerのアニメーションハンドル
+    /// @param objectName 対象オブジェクト名
+    /// @param loop ループ再生する場合は `true`
+    /// @return 再生開始に成功した場合は `true`
+    bool PlayFromAnimationHandle(uint32_t handle, const std::string &objectName, bool loop);
 
     /// @brief タイムラインの追加
     /// @param timelineName タイムライン名

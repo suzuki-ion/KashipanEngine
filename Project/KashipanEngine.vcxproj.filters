@@ -143,6 +143,7 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -397,6 +398,7 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\3D\LookAtConstraint.h" />
+    <ClInclude Include="KashipanEngine\Assets\AnimationManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -62,10 +62,21 @@ void TestScene::Initialize() {
             material->SetTexture(texture);
             material->SetEnvironmentTexture(envTexture);
         }
-
         if (auto *transform = box->GetComponent3D<Transform3D>()) {
             transform->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        box->RegisterComponent(std::make_unique<LookAtConstraint>());
+        if (auto *constraint = box->GetComponent3D<LookAtConstraint>()) {
+            constraint->SetTargetFunc([this, mainCamera3D]() -> const Vector3 & {
+                if (mainCamera3D) {
+                    if (auto *camTr = mainCamera3D->GetComponent3D<Transform3D>()) {
+                        return camTr->GetTranslate();
+                    }
+                }
+                static const Vector3 defaultTarget(0.0f, 0.0f, 0.0f);
+                return defaultTarget;
+                });
         }
 
         box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -83,6 +94,18 @@ void TestScene::Initialize() {
         if (auto *transform = ring->GetComponent3D<Transform3D>()) {
             transform->SetTranslate(Vector3(2.0f, 0.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        ring->RegisterComponent(std::make_unique<LookAtConstraint>());
+        if (auto *constraint = ring->GetComponent3D<LookAtConstraint>()) {
+            constraint->SetTargetFunc([this, mainCamera3D]() -> const Vector3 & {
+                if (mainCamera3D) {
+                    if (auto *camTr = mainCamera3D->GetComponent3D<Transform3D>()) {
+                        return camTr->GetTranslate();
+                    }
+                }
+                static const Vector3 defaultTarget(0.0f, 0.0f, 0.0f);
+                return defaultTarget;
+                });
         }
         ring->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(ring));

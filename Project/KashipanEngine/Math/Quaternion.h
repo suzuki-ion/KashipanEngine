@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <cmath>
 
 struct Quaternion {
@@ -33,6 +33,21 @@ struct Quaternion {
         float s0 = std::cos(theta) - dot * sinTheta / sinTheta0;
         float s1 = sinTheta / sinTheta0;
         return (q1 * s0) + (q2Copy * s1);
+    }
+
+    static Quaternion MakeRotateEuler(const Vector3 &euler) noexcept {
+        Quaternion q;
+        Quaternion qx = q.MakeRotateAxisAngle(Vector3(1.0f, 0.0f, 0.0f), euler.x);
+        Quaternion qy = q.MakeRotateAxisAngle(Vector3(0.0f, 1.0f, 0.0f), euler.y);
+        Quaternion qz = q.MakeRotateAxisAngle(Vector3(0.0f, 0.0f, 1.0f), euler.z);
+        return (qx * qy * qz).Normalize();
+    }
+
+    static Quaternion MakeRotateAxisAngle(const Vector3 &axis, float angleRad) noexcept {
+        float halfAngle = angleRad * 0.5f;
+        float s = std::sin(halfAngle);
+        float c = std::cos(halfAngle);
+        return Quaternion(axis.x * s, axis.y * s, axis.z * s, c);
     }
 
     Quaternion() noexcept = default;
@@ -126,13 +141,6 @@ struct Quaternion {
             return Quaternion::Zero();
         }
         return Conjugate() / normSq;
-    }
-
-    Quaternion MakeRotateAxisAngle(const Vector3 &axis, float angleRad) const noexcept {
-        float halfAngle = angleRad * 0.5f;
-        float s = std::sin(halfAngle);
-        float c = std::cos(halfAngle);
-        return Quaternion(axis.x * s, axis.y * s, axis.z * s, c);
     }
 
     Vector3 RotateVector(const Vector3 &vec) const noexcept {

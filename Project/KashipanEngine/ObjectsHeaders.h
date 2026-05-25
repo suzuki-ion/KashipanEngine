@@ -7,6 +7,7 @@
 #include "Objects/Components/2D/Material2D.h"
 #include "Objects/Components/2D/Transform2D.h"
 #include "Objects/Components/3D/Collision3D.h"
+#include "Objects/Components/3D/LookAtConstraint.h"
 #include "Objects/Components/3D/Material3D.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Objects/GameObjects/2D/Ellipse.h"

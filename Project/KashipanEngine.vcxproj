@@ -391,6 +391,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\MathHeaders.h" />
     <ClInclude Include="KashipanEngine\Math\Quaternion.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\3D\LookAtConstraint.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.h" />

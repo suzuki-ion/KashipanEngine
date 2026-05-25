@@ -8,6 +8,10 @@ struct Vector4;
 struct Matrix4x4;
 
 struct Vector3 final {
+    static const Vector3 &Zero() noexcept {
+        static Vector3 zero(0.0f, 0.0f, 0.0f);
+        return zero;
+    }
     static Vector3 Lerp(const Vector3 &start, const Vector3 &end, float t) noexcept;
     static Vector3 Slerp(const Vector3 &start, const Vector3 &end, float t) noexcept;
     static Vector3 Bezier(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const float t) noexcept;

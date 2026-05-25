@@ -396,6 +396,7 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\3D\LookAtConstraint.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

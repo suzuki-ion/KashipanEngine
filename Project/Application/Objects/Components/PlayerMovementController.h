@@ -8,7 +8,6 @@
 #include "Objects/Components/PlayerJumpBehavior.h"
 #include "Objects/Components/PlayerCollisionBehavior.h"
 #include "Objects/Components/PlayerActionGamepadVibrator.h"
-#include "Objects/Components/PlayerActionGamepadVibrator.h"
 #include "Objects/Components/GroundDefined.h"
 
 #include <algorithm>

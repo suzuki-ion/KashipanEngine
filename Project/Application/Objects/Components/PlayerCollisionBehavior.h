@@ -171,6 +171,17 @@ private:
         const Vector3 normal = hit.normal.Normalize();
         if (normal.LengthSquared() <= 0.000001f) return;
 
+        auto *ctx = GetOwner3DContext();
+        if (!ctx) return;
+        auto *base = ctx->GetComponent("PlayerMovementController");
+        auto *controller = dynamic_cast<IPlayerMovementControllerAccess *>(base);
+        if (!controller) return;
+
+        const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
+        if ((normal - (-forward)).LengthSquared() <= 0.0001f) {
+            return;
+        }
+
         grounded_ = true;
         needsVelocityCorrection_ = true;
         lastGroundNormal_ = normal;
@@ -194,13 +205,6 @@ private:
             }
         }
 
-        auto *ctx = GetOwner3DContext();
-        if (!ctx) return;
-        auto *base = ctx->GetComponent("PlayerMovementController");
-        auto *controller = dynamic_cast<IPlayerMovementControllerAccess *>(base);
-        if (!controller) return;
-
-        const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
         if ((normal - (-forward)).LengthSquared() <= 0.0001f ||
             (normal - forward).LengthSquared() <= 0.0001f) {
             return;
@@ -221,6 +225,17 @@ private:
 
         const Vector3 normal = hit.normal.Normalize();
         if (normal.LengthSquared() <= 0.000001f) return;
+
+        auto *ctx = GetOwner3DContext();
+        if (!ctx) return;
+        auto *base = ctx->GetComponent("PlayerMovementController");
+        auto *controller = dynamic_cast<IPlayerMovementControllerAccess *>(base);
+        if (!controller) return;
+
+        const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
+        if ((normal - (-forward)).LengthSquared() <= 0.0001f) {
+            return;
+        }
 
         grounded_ = true;
         needsVelocityCorrection_ = true;

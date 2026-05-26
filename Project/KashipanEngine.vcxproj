@@ -270,6 +270,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Triangle2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Billboard.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Box.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Line3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Model.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Plane3D.cpp" />
@@ -396,6 +397,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\3D\LookAtConstraint.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />

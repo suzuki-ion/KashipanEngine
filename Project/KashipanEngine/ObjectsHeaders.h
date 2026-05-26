@@ -20,6 +20,7 @@
 #include "Objects/GameObjects/2D/VertexData2D.h"
 #include "Objects/GameObjects/3D/Billboard.h"
 #include "Objects/GameObjects/3D/Box.h"
+#include "Objects/GameObjects/3D/Cylinder3D.h"
 #include "Objects/GameObjects/3D/FaceNormal3D.h"
 #include "Objects/GameObjects/3D/Line3D.h"
 #include "Objects/GameObjects/3D/Model.h"

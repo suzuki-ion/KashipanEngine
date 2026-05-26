@@ -216,7 +216,11 @@ public:
             onSelectionChanged(old, selectionIndex_);
         }
 
-        if (!ic->Evaluate("Submit").Triggered()) return;
+        if (!ic->Evaluate("Submit").Triggered() && !ic->Evaluate("Pause").Triggered()) return;
+
+        if (ic->Evaluate("Pause").Triggered()) {
+			requestedAction_ = RequestAction::Continue;
+        }
 
         if (selectionIndex_ == 0) {
             continueClosePending_ = true;

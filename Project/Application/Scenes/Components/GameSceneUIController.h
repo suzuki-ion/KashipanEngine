@@ -1078,6 +1078,9 @@ private:
             c = segmentBase;
             c.w *= alpha;
             bar->SetSegmentLineColor(c);
+
+			Vector4 tc = { 1.0f, 1.0f, 1.0f, alpha };
+			bar->SetAnimationBarColor(tc);
         };
 
         applyBarAlpha(forwardSpeedBar_, forwardFrameColorBase_, forwardBackgroundColorBase_, forwardBarColorBase_, forwardSegmentColorBase_);

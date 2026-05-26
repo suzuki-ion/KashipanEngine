@@ -9,6 +9,8 @@
 #include "Objects/Components/PlayerCollisionBehavior.h"
 #include "Objects/Components/PlayerActionGamepadVibrator.h"
 #include "Objects/Components/GroundDefined.h"
+#include "Objects/Components/RotateGroundDefined.h"
+#include "Objects/Components/GravityGroundDefined.h"
 
 #include <algorithm>
 #include <cmath>
@@ -193,6 +195,17 @@ public:
             collisionBehavior_->ResolveStayTranslationAndVelocity(correctedPos, gvRef);
             tr->SetTranslate(correctedPos);
             gravityVelocity = gvRef;
+        }
+
+        if (grounded && collisionBehavior_ && collisionEnabled) {
+            if (auto *groundObject = collisionBehavior_->GetLastGroundObject()) {
+                if (auto *rotateGround = groundObject->GetComponent3D<RotateGroundDefined>()) {
+                    tr->SetTranslate(tr->GetTranslate() + rotateGround->GetFrameTranslationDelta());
+                }
+                if (auto *gravityGround = groundObject->GetComponent3D<GravityGroundDefined>()) {
+                    tr->SetTranslate(tr->GetTranslate() + gravityGround->GetFrameTranslationDelta());
+                }
+            }
         }
 
         // 反転ゲージの自動回復処理

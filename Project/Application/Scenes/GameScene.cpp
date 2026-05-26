@@ -77,6 +77,20 @@ void GameScene::Initialize() {
         radialBlurEffect = radialBlur.get();
         screenBuffer3D->RegisterPostEffectComponent(std::move(radialBlur));
 
+        GrayscaleEffect::Params gp;
+        gp.intensity = 0.5f;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<GrayscaleEffect>(gp));
+
+        ColorAdjustEffect::Params cp;
+        cp.brightness = 0.2f;
+        cp.contrast = 1.3f;
+        cp.saturation = 1.3f;
+        cp.temperature = 0.5f;
+        cp.colorBalance[0] = 0.0f;
+        cp.colorBalance[1] = 0.0f;
+        cp.colorBalance[2] = 0.0f;
+        screenBuffer3D->RegisterPostEffectComponent(std::make_unique<ColorAdjustEffect>(cp));
+
         VignetteEffect::Params vp;
         vp.center[0] = 0.5f;
         vp.center[1] = 0.5f;

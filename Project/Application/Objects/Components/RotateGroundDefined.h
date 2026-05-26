@@ -38,6 +38,8 @@ namespace KashipanEngine {
 				Vector3 newPos = 
 					Vector3{ std::cos(currentRotation_) * rotationRadius_, std::sin(currentRotation_) * rotationRadius_, pos.z };
 				tr->SetTranslate(newPos);
+				preTranslate_ = newPos;
+				currentTranslate_ = newPos;
 			}
 
 			return true;
@@ -62,10 +64,12 @@ namespace KashipanEngine {
 
 			if (auto* tr = ctx->GetComponent<Transform3D>()) {
 				const Vector3 pos = tr->GetTranslate();
+				preTranslate_ = pos;
 				Vector3 newPos = 
 					Vector3{ std::cos(currentRotation_) * rotationRadius_, std::sin(currentRotation_) * rotationRadius_, pos.z };
 				tr->SetTranslate(newPos);
 				tr->SetRotate(Vector3{ 0.0f, 0.0f, currentRotation_ + (3.14f * 0.5f) });
+				currentTranslate_ = newPos;
 			}
 			return true;
 		};
@@ -73,6 +77,10 @@ namespace KashipanEngine {
 #if defined(USE_IMGUI)
 		void ShowImGui() override {}
 #endif
+
+		Vector3 GetFrameTranslationDelta() const {
+			return currentTranslate_ - preTranslate_;
+		}
 
 	private:
 		const Vector4 defaultColor_{ 0.0f, 0.6f, 0.8f, 1.0f };
@@ -82,6 +90,9 @@ namespace KashipanEngine {
 		Vector4 originalDefaultColor_;
 		Vector4 originalTouchColorStart_;
 		Vector4 originalTouchColorEnd_;
+
+		Vector3 preTranslate_{ 0.0f, 0.0f, 0.0f };
+		Vector3 currentTranslate_{ 0.0f, 0.0f, 0.0f };
 
 		float rotationSpeed_ = 0.5f;
 		float currentRotation_ = 0.0f;

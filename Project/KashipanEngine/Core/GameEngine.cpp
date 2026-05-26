@@ -126,6 +126,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
+    skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, "Assets");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, "Assets");
     Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
@@ -143,6 +144,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         Passkey<GameEngine>{},
         audioManager_.get(),
         modelManager_.get(),
+        skeletonManager_.get(),
         samplerManager_.get(),
         textureManager_.get(),
         animationManager_.get(),
@@ -192,6 +194,7 @@ GameEngine::~GameEngine() {
 
     audioManager_.reset();
     animationManager_.reset();
+    skeletonManager_.reset();
     modelManager_.reset();
     samplerManager_.reset();
     textureManager_.reset();

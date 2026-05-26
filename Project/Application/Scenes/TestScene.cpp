@@ -133,6 +133,22 @@ void TestScene::Initialize() {
         AddObject3D(std::move(cylinder));
     }
 
+    if (screenBuffer2D) {
+        auto ring = std::make_unique<Ring2D>();
+        ring->SetUvMode(Ring2D::UvMode::Curved);
+        ring->SetName("TestRing2D");
+        if (auto *material = ring->GetComponent2D<Material2D>()) {
+            auto texture = TextureManager::GetTextureFromFileName("gradationLine.png");
+            material->SetTexture(texture);
+        }
+        if (auto *transform = ring->GetComponent2D<Transform2D>()) {
+            transform->SetTranslate(Vector2(200.0f, 200.0f));
+            transform->SetScale(Vector2(100.0f, 100.0f));
+        }
+        ring->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        AddObject2D(std::move(ring));
+    }
+
     if (screenBuffer3D) {
         auto skybox = std::make_unique<Skybox>();
         skybox->SetName("TestSkybox");
@@ -148,22 +164,6 @@ void TestScene::Initialize() {
 
         skybox->AttachToRenderer(screenBuffer3D, "Skybox.Solid.BlendNormal");
         AddObject3D(std::move(skybox));
-    }
-
-    if (screenBuffer2D) {
-        auto ring = std::make_unique<Ring2D>();
-        ring->SetUvMode(Ring2D::UvMode::Curved);
-        ring->SetName("TestRing2D");
-        if (auto *material = ring->GetComponent2D<Material2D>()) {
-            auto texture = TextureManager::GetTextureFromFileName("gradationLine.png");
-            material->SetTexture(texture);
-        }
-        if (auto *transform = ring->GetComponent2D<Transform2D>()) {
-            transform->SetTranslate(Vector2(200.0f, 200.0f));
-            transform->SetScale(Vector2(100.0f, 100.0f));
-        }
-        ring->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-        AddObject2D(std::move(ring));
     }
 }
 

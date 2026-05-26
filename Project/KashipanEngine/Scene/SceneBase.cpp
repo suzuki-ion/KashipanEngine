@@ -144,6 +144,7 @@ void SceneBase::SetEnginePointers(
     Passkey<GameEngine>,
     AudioManager *audioManager,
     ModelManager *modelManager,
+    SkeletonManager *skeletonManager,
     SamplerManager *samplerManager,
     TextureManager *textureManager,
     AnimationManager *animationManager,
@@ -151,6 +152,7 @@ void SceneBase::SetEnginePointers(
     InputCommand *inputCommand) {
     sAudioManager = audioManager;
     sModelManager = modelManager;
+    sSkeletonManager = skeletonManager;
     sSamplerManager = samplerManager;
     sTextureManager = textureManager;
     sAnimationManager = animationManager;

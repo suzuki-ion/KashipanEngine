@@ -1,13 +1,6 @@
 #include "../Object/Object3D.hlsli"
+#include "../Common/Material3D.hlsli"
 
-struct Material {
-	float enableLighting;
-	float enableShadowMapProjection;
-	float4 color;
-	float4x4 uvTransform;
-	float shininess;
-	float4 specularColor;
-};
 Texture2D gTexture : register(t0);
 StructuredBuffer<Material> gMaterials : register(t1);
 SamplerState gSampler : register(s0);

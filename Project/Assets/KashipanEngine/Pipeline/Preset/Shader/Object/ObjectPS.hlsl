@@ -3,27 +3,20 @@
 struct Material {
 	float4 color;
 	float4x4 uvTransform;
-  float useTexture;
+    float useTexture;
 	float3 padding;
 };
 #endif
 
 #ifdef Object3D
-#include "../Common/Camera3D.hlsli"
+#include "../Common/Material3D.hlsli"
 #include "../Common/ShadowMap.hlsli"
 #include "Object3D.hlsli"
-struct Material {
-	float enableLighting;
-	float enableShadowMapProjection;
-	float4 color;
-	float4x4 uvTransform;
-	float shininess;
-	float4 specularColor;
-};
+
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
 
-StructuredBuffer<PointLight> gPointLights : register(t3);
-StructuredBuffer<SpotLight> gSpotLights : register(t4);
+StructuredBuffer<PointLight> gPointLights : register(t4);
+StructuredBuffer<SpotLight> gSpotLights : register(t5);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
@@ -32,7 +25,8 @@ cbuffer LightCounts : register(b3) {
 #endif
 
 Texture2D gTexture : register(t0);
-StructuredBuffer<Material> gMaterials : register(t1);
+TextureCube gEnvironmentMap : register(t1);
+StructuredBuffer<Material> gMaterials : register(t2);
 SamplerState gSampler : register(s0);
 
 struct PSOutput {
@@ -52,7 +46,7 @@ float HalfLambert(float3 normal, float3 lightDir) {
 }
 
 float PhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
-	float3 viewDir = normalize(gCamera.eyePosition.xyz - worldPos);
+	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - worldPos);
 	float3 reflectDir = reflect(lightDir, normal);
 	float RdotE = dot(reflectDir, viewDir);
 	float spec = pow(saturate(RdotE), shininess);
@@ -60,7 +54,7 @@ float PhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shi
 }
 
 float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
-	float3 viewDir = normalize(gCamera.eyePosition.xyz - worldPos);
+	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - worldPos);
 	float3 halfDir = normalize(-lightDir + viewDir);
 	float NdotH = dot(normal, halfDir);
 	float spec = pow(saturate(NdotH), shininess);
@@ -96,6 +90,7 @@ PSOutput main(VSOutput input) {
     float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 	float4 baseColor = mat.color * textureColor;
 	float4 lightingColor = float4(0,0,0,0);
+	float4 envColor = float4(0,0,0,0);
 	if (!mat.enableLighting) {
 		lightingColor = float4(1,1,1,1);
 	}
@@ -160,8 +155,16 @@ PSOutput main(VSOutput input) {
 			lightingColor += diffuse + speculer;
 		}
 	}
+	
+	// Environment map
+	if (mat.enableEnvironmentMapping) {
+		float3 cameraToPosition = input.worldPosition - gCamera3D.eyePosition.xyz;
+		float3 reflectDir = reflect(cameraToPosition, input.normal);
+		envColor = gEnvironmentMap.Sample(gSampler, reflectDir);
+		envColor *= mat.environmentCoefficient;
+	}
 
-	output.color = baseColor * lightingColor;
+	output.color = baseColor * lightingColor + envColor;
 
 	if (mat.enableShadowMapProjection) {
 		float shadow = ComputeShadowFactor(input.worldPosition);

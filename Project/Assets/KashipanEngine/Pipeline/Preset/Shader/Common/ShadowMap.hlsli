@@ -6,7 +6,7 @@ cbuffer ShadowMapConstants : register(b10) {
 	float gLightFar;
 };
 
-Texture2D gShadowMap : register(t2);
+Texture2D gShadowMap : register(t3);
 SamplerComparisonState gShadowSamplerCmp : register(s1);
 
 inline float2 ShadowNdcToUv(float3 ndc) {

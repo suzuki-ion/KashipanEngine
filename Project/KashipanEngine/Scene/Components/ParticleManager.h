@@ -55,6 +55,8 @@ public:
         ParticleShape2D shape2D = ParticleShape2D::Sprite;
         ParticleShape3D shape3D = ParticleShape3D::Plane;
         std::size_t count = 16;
+        std::size_t spawnCountMin = 1;
+        std::size_t spawnCountMax = 1;
         SpawnBox spawnBox{};
         Vector3 spawnCenter{ 0.0f, 0.0f, 0.0f };
         float spawnRadius = 0.0f;
@@ -131,7 +133,6 @@ private:
         Vector3 velocity{ 0.0f, 1.0f, 0.0f };
         float elapsed = 0.0f;
         float lifeTimeSec = 0.0f;
-        float spawnDelay = -1.0f;
         bool active = true;
     };
 
@@ -171,6 +172,7 @@ private:
     std::array<char, 128> pipelineBuffer_{};
     std::array<char, 128> textureBuffer_{};
     std::array<char, 260> jsonPathBuffer_{};
+    std::optional<std::size_t> editingGroupIndex_{};
 #endif
 };
 

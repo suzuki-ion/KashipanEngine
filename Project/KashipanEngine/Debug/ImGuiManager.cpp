@@ -144,7 +144,6 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ModelManager::ShowImGuiLoadedModelsWindow();
     AudioManager::ShowImGuiLoadedSoundsWindow();
     AudioManager::ShowImGuiPlayingSoundsWindow();
-    AudioManager::ShowImGuiEffectWindow();
 }
 
 void ImGuiManager::Render(Passkey<GameEngine>) {

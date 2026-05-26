@@ -10,7 +10,9 @@
 #include <vector>
 
 #include "Assets/AudioManager.h"
+#include "Assets/AnimationManager.h"
 #include "Assets/ModelManager.h"
+#include "Assets/SkeletonManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
 #include "Input/Input.h"
@@ -57,8 +59,10 @@ public:
         Passkey<GameEngine>,
         AudioManager *audioManager,
         ModelManager *modelManager,
+        SkeletonManager *skeletonManager,
         SamplerManager *samplerManager,
         TextureManager *textureManager,
+        AnimationManager *animationManager,
         Input *input,
         InputCommand *inputCommand);
 
@@ -224,16 +228,20 @@ protected:
 
     static AudioManager *GetAudioManager() { return sAudioManager; }
     static ModelManager *GetModelManager() { return sModelManager; }
+    static SkeletonManager *GetSkeletonManager() { return sSkeletonManager; }
     static SamplerManager *GetSamplerManager() { return sSamplerManager; }
     static TextureManager *GetTextureManager() { return sTextureManager; }
+    static AnimationManager *GetAnimationManager() { return sAnimationManager; }
     static Input *GetInput() { return sInput; }
     static InputCommand *GetInputCommand() { return sInputCommand; }
 
 private:
     static inline AudioManager *sAudioManager = nullptr;
     static inline ModelManager *sModelManager = nullptr;
+    static inline SkeletonManager *sSkeletonManager = nullptr;
     static inline SamplerManager *sSamplerManager = nullptr;
     static inline TextureManager *sTextureManager = nullptr;
+    static inline AnimationManager *sAnimationManager = nullptr;
     static inline Input *sInput = nullptr;
     static inline InputCommand *sInputCommand = nullptr;
 
@@ -263,6 +271,7 @@ private:
     int objectAddDimension_ = 0;
     int objectAddType2D_ = 0;
     int objectAddType3D_ = 0;
+    ModelManager::ModelHandle objectAddModelHandle_ = ModelManager::kInvalidHandle;
 #endif
 };
 

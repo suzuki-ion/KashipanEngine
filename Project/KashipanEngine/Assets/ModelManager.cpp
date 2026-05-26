@@ -316,6 +316,10 @@ const ModelData &ModelManager::GetModelDataFromAssetPath(const std::string &asse
 }
 
 #if defined(USE_IMGUI)
+std::vector<ModelManager::ModelListEntry> ModelManager::GetLoadedModelListEntries() {
+    return GetImGuiModelListEntries();
+}
+
 void ModelManager::ShowImGuiLoadedModelsWindow() {
     ImGui::Begin("ModelManager - Loaded Models");
 

@@ -30,7 +30,7 @@ Camera3D::Camera3D()
 
     std::vector<RenderPass::ConstantBufferRequirement> reqs;
     for (const auto &key : constantBufferRequirementKeys_) {
-        reqs.push_back({ key, sizeof(CameraBuffer) });
+        reqs.push_back({ key, sizeof(CameraBuffer3D) });
     }
     SetConstantBufferRequirements(reqs);
     SetUpdateConstantBuffersFunction(
@@ -38,7 +38,9 @@ Camera3D::Camera3D()
             if (!constantBufferMaps) return false;
             UpdateCameraBufferCPU();
             auto **maps = static_cast<void **>(constantBufferMaps);
-            std::memcpy(maps[0], &cameraBufferCPU_, sizeof(CameraBuffer));
+            for (int i = 0; i < constantBufferRequirementKeys_.size(); ++i) {
+                std::memcpy(maps[i], &cameraBufferCPU_, sizeof(CameraBuffer3D));
+            }
             return true;
         });
 }
@@ -249,7 +251,7 @@ void Camera3D::SetConstantBufferRequirementKeys(const std::vector<std::string> &
     constantBufferRequirementKeys_ = keys;
     std::vector<RenderPass::ConstantBufferRequirement> reqs;
     for (const auto &key : constantBufferRequirementKeys_) {
-        reqs.push_back({ key, sizeof(CameraBuffer) });
+        reqs.push_back({ key, sizeof(CameraBuffer3D) });
     }
     SetConstantBufferRequirements(reqs);
 }

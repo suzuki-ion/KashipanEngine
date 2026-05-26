@@ -55,7 +55,7 @@ public:
     void SetPerspectiveParams(float fovY, float aspectRatio, float nearClip, float farClip);
     void SetViewportParams(float left, float top, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
 
-    struct CameraBuffer {
+    struct CameraBuffer3D {
         Matrix4x4 view{};
         Matrix4x4 projection{};
         Matrix4x4 viewProjection{};
@@ -63,7 +63,7 @@ public:
         float fov = 0.0f;
     };
 
-    const CameraBuffer &GetCameraBufferCPU() const { return cameraBufferCPU_; }
+    const CameraBuffer3D &GetCameraBufferCPU() const { return cameraBufferCPU_; }
 
     void SetConstantBufferRequirementKeys(const std::vector<std::string> &keys);
     const std::vector<std::string> &GetConstantBufferRequirementKeys() { return constantBufferRequirementKeys_; }
@@ -173,7 +173,7 @@ private:
     mutable bool isViewProjectionMatrixCalculated_ = false;
     mutable bool isViewportMatrixCalculated_ = false;
 
-    mutable CameraBuffer cameraBufferCPU_;
+    mutable CameraBuffer3D cameraBufferCPU_;
 
     // Transformキャッシュ（カメラの view 再計算のため）
     mutable Vector3 lastTransformTranslate_{0.0f, 0.0f, 0.0f};
@@ -181,8 +181,8 @@ private:
     mutable Vector3 lastTransformScale_{1.0f, 1.0f, 1.0f};
 
     std::vector<std::string> constantBufferRequirementKeys_ = {
-        "Vertex:gCamera",
-        "Pixel:gCamera"
+        "Vertex:gCamera3D",
+        "Pixel:gCamera3D"
     };
 };
 

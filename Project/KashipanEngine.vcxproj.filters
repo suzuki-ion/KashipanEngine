@@ -139,6 +139,13 @@
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.cpp" />
     <ClCompile Include="Application\Scenes\TestScene.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -424,6 +431,21 @@
     <ClInclude Include="Application\Scenes\Components\DustGenerator.h" />
     <ClInclude Include="Application\Objects\Components\PlayerActionGamepadVibrator.h" />
     <ClInclude Include="Application\Objects\Components\PlayerGetCoinCounter.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
+    <ClInclude Include="KashipanEngine\Assets\AnimationManager.h" />
+    <ClInclude Include="KashipanEngine\Assets\SkeletonManager.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BoxFilter5x5Effect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ColorAdjustEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GrayscaleEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\3D\LookAtConstraint.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

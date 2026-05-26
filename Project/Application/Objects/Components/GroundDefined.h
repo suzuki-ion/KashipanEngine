@@ -128,6 +128,14 @@ private:
         if (!hit.otherObject) return;
         if (!hit.otherObject->GetComponent3D("PlayerMovementController")) return;
 
+        Vector3 forward = Vector3{ 0.0f, 0.0f, 1.0f };
+        Vector3 normal = hit.normal.Normalize();
+
+        if ((normal - (-forward)).LengthSquared() <= 0.0001f ||
+            (normal - forward).LengthSquared() <= 0.0001f) {
+            return;
+        }
+
         playerTouchEvent_ = true;
         hasPlayedTouchColorAnimation_ = true;
         isTouchColorAnimating_ = true;

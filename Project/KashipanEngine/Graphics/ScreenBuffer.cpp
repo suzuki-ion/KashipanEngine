@@ -149,10 +149,7 @@ void ScreenBuffer::AllBeginRecord(Passkey<Renderer>) {
         if (IsPendingDestroy(ptr)) continue;
 
         RecordState st;
-        st.list = ptr->dx12Commands_ ? ptr->dx12Commands_->BeginRecord() : nullptr;
-        if (!st.list) {
-            continue;
-        }
+        st.list = nullptr;
         st.discard = false;
         st.started = false;
         sRecordStates.emplace(ptr, st);
@@ -275,9 +272,16 @@ ID3D12GraphicsCommandList* ScreenBuffer::BeginRecord(bool disableDepthWrite) {
     LogScope scope;
     if (!dx12Commands_) return nullptr;
 
+    auto &st = sRecordStates[this];
+    if (!st.started) {
+        st.list = dx12Commands_->BeginRecord();
+        st.started = (st.list != nullptr);
+        if (!st.list) return nullptr;
+    }
+
     isLastBeginDisableDepthWrite_ = disableDepthWrite;
 
-    auto *cmd = dx12Commands_->GetCommandList();
+    auto *cmd = st.list;
     auto* rt = renderTargets_[GetRtvWriteIndex()].get();
     auto* ds = depthStencils_[GetDsvWriteIndex()].get();
     if (!rt) return nullptr;

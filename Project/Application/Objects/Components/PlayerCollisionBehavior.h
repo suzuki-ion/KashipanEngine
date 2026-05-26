@@ -6,6 +6,7 @@
 #include "Objects/Components/SlowGroundDefined.h"
 #include "Objects/Components/PlayerMovementControllerAccess.h"
 #include <algorithm>
+#include <cmath>
 
 namespace KashipanEngine {
 
@@ -86,6 +87,16 @@ public:
         return out;
     }
 
+    std::optional<float> ConsumeLastCollisionAngleDegrees() {
+        if (!collisionResponseEnabled_) {
+            lastCollisionAngleDegrees_.reset();
+            return std::nullopt;
+        }
+        auto out = lastCollisionAngleDegrees_;
+        lastCollisionAngleDegrees_.reset();
+        return out;
+    }
+
     void SetCollisionResponseEnabled(bool enabled) {
         collisionResponseEnabled_ = enabled;
         if (!collisionResponseEnabled_) {
@@ -142,6 +153,7 @@ private:
         requestedGravityDirection_.reset();
         lastGroundWasFirstTouch_ = false;
         lastCollisionTime_.reset();
+        lastCollisionAngleDegrees_.reset();
         stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
         hasStayCorrection_ = false;
         needsVelocityCorrection_ = false;
@@ -171,11 +183,31 @@ private:
         const Vector3 normal = hit.normal.Normalize();
         if (normal.LengthSquared() <= 0.000001f) return;
 
+        auto *ctx = GetOwner3DContext();
+        if (!ctx) return;
+        auto *base = ctx->GetComponent("PlayerMovementController");
+        auto *controller = dynamic_cast<IPlayerMovementControllerAccess *>(base);
+        if (!controller) return;
+
+        const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
+        if ((normal - (-forward)).LengthSquared() <= 0.0001f) {
+            return;
+        }
+
         grounded_ = true;
         needsVelocityCorrection_ = true;
         lastGroundNormal_ = normal;
         lastGroundObject_ = hit.otherObject;
         lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
+
+        const Vector3 gravityDir = controller->GetGravityDirectionValue().Normalize();
+        const Vector3 gravityUp = -gravityDir;
+        const float dot = std::clamp(gravityUp.Dot(normal), -1.0f, 1.0f);
+        const float angleRad = std::acos(dot);
+        const float angleDeg = angleRad * (180.0f / 3.14159265358979323846f);
+        const Vector3 cross = gravityUp.Cross(normal);
+        const float sign = (cross.Dot(forward) >= 0.0f) ? 1.0f : -1.0f;
+        lastCollisionAngleDegrees_ = angleDeg * sign;
 
         if (hit.time >= 0.0f) {
             if (!lastCollisionTime_.has_value() || hit.time < *lastCollisionTime_) {
@@ -194,19 +226,13 @@ private:
             }
         }
 
-        auto *ctx = GetOwner3DContext();
-        if (!ctx) return;
-        auto *base = ctx->GetComponent("PlayerMovementController");
-        auto *controller = dynamic_cast<IPlayerMovementControllerAccess *>(base);
-        if (!controller) return;
-
-        const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
         if ((normal - (-forward)).LengthSquared() <= 0.0001f ||
             (normal - forward).LengthSquared() <= 0.0001f) {
-            return;
+            requestedGravityDirection_ = requestedGravityDirection_;
+        } else {
+            requestedGravityDirection_ = -normal;
         }
 
-        requestedGravityDirection_ = -normal;
 
         if(auto *slowGround = hit.otherObject->GetComponent3D<SlowGroundDefined>()) {
             isSlowGround_ = true;
@@ -221,6 +247,14 @@ private:
 
         const Vector3 normal = hit.normal.Normalize();
         if (normal.LengthSquared() <= 0.000001f) return;
+
+        auto *ctx = GetOwner3DContext();
+        if (!ctx) return;
+        auto *base = ctx->GetComponent("PlayerMovementController");
+        auto *controller = dynamic_cast<IPlayerMovementControllerAccess *>(base);
+        if (!controller) return;
+
+        const Vector3 forward = controller->GetForwardDirectionValue().Normalize();
 
         grounded_ = true;
         needsVelocityCorrection_ = true;
@@ -254,6 +288,7 @@ private:
     Object3DBase *lastGroundObject_ = nullptr;
     bool lastGroundWasFirstTouch_ = false;
     std::optional<float> lastCollisionTime_{};
+    std::optional<float> lastCollisionAngleDegrees_{};
 	Vector3 stayCorrection_{0.0f, 0.0f, 0.0f};
 	bool hasStayCorrection_ = false;
 	bool needsVelocityCorrection_ = false;

@@ -118,6 +118,7 @@ public:
                 }
                 if (groundData.contains("panelThickness") && groundData["panelThickness"].is_number()) {
                     req.panelThickness = groundData["panelThickness"].get<float>();
+
 				} else {
 					assert(false && "spawn_reqestsの各要素にはpanelThicknessが必要です。");
 					throw std::runtime_error("spawn_reqestsの各要素にはpanelThicknessが必要です。");

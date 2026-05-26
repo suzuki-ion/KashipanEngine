@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include <array>
 #include <functional>
@@ -224,7 +223,7 @@ private:
     std::unordered_map<std::string, Timeline> timelines_;
     std::unordered_map<std::string, std::vector<Binding>> presetBindings_;
     std::vector<PlaybackState> playbacks_;
-    
+
 #if defined(USE_IMGUI)
     std::array<char, 128> presetNameBuffer_{};
     std::array<char, 128> objectNameBuffer_{};

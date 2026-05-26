@@ -124,6 +124,26 @@
 		"engine.directx.dcomp.setcontent.failed": "DirectCompositionのコンテンツの設定に失敗しました。",
 		"engine.directx.dcomp.commit.failed": "DirectCompositionのコミットに失敗しました。",
 
+		//--------- Animation ---------//
+		"engine.animation.loading.start": "アニメーション読み込み開始：",
+		"engine.animation.loading.alreadyloaded": "既に読み込み済みのアニメーションです：",
+		"engine.animation.loading.failed.notfound": "アニメーションが見つかりません：",
+		"engine.animation.loading.failed.unsupported": "アニメーション形式がサポートされていません：",
+		"engine.animation.loading.failed.assimp": "アニメーションの読み込みに失敗しました：",
+		"engine.animation.loading.failed.noanim": "アニメーションが含まれていません：",
+		"engine.animation.loading.failed.register": "アニメーションの登録に失敗しました：",
+		"engine.animation.loading.succeeded": "アニメーションの読み込みに成功しました：",
+
+		//--------- Skeleton ---------//
+		"engine.skeleton.loading.start": "スケルトン読み込み開始：",
+		"engine.skeleton.loading.alreadyloaded": "既に読み込み済みのスケルトンです：",
+		"engine.skeleton.loading.failed.notfound": "スケルトンが見つかりません：",
+		"engine.skeleton.loading.failed.unsupported": "スケルトン形式がサポートされていません：",
+		"engine.skeleton.loading.failed.assimp": "スケルトンの読み込みに失敗しました：",
+		"engine.skeleton.loading.failed.noskeleton": "スケルトンが含まれていません：",
+		"engine.skeleton.loading.failed.register": "スケルトンの登録に失敗しました：",
+		"engine.skeleton.loading.succeeded": "スケルトンの読み込みに成功しました：",
+
 		//--------- Graphics ---------//
 		// リソース
 		"engine.graphics.resource.transition.empty": "リソースの状態遷移配列が空です。",
@@ -371,6 +391,8 @@
 		"engine.imgui.particle_manager.shape3d.sphere": "球体",
 		"engine.imgui.particle_manager.shape3d.triangle": "三角形",
 		"engine.imgui.particle_manager.count": "個数",
+		"engine.imgui.particle_manager.spawn_count_min": "スポーン数最小",
+		"engine.imgui.particle_manager.spawn_count_max": "スポーン数最大",
 		"engine.imgui.particle_manager.speed": "速度",
 		"engine.imgui.particle_manager.lifetime": "寿命",
 		"engine.imgui.particle_manager.lifetime_rand": "寿命ランダム",
@@ -404,6 +426,7 @@
 		"engine.imgui.particle_manager.batch_key": "バッチキー",
 		"engine.imgui.particle_manager.spawned": "生成済み",
 		"engine.imgui.particle_manager.spawn": "スポーン",
+		"engine.imgui.particle_manager.edit": "編集",
 		"engine.imgui.particle_manager.remove": "削除",
 
 		//--------- 設定 ---------//

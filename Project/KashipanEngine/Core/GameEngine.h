@@ -10,6 +10,7 @@
 #include "Assets/TextureManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/ModelManager.h"
+#include "Assets/SkeletonManager.h"
 #include "Assets/AudioManager.h"
 #include "Assets/AnimationManager.h"
 #include "Objects/Object2DBase.h"
@@ -122,6 +123,8 @@ private:
     std::unique_ptr<SamplerManager> samplerManager_;
     /// @brief モデル管理クラス
     std::unique_ptr<ModelManager> modelManager_;
+    /// @brief スケルトン管理クラス
+    std::unique_ptr<SkeletonManager> skeletonManager_;
     /// @brief 音声管理クラス
     std::unique_ptr<AudioManager> audioManager_;
     /// @brief アニメーション管理クラス

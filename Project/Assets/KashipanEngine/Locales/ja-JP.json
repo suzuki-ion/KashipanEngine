@@ -134,6 +134,16 @@
 		"engine.animation.loading.failed.register": "アニメーションの登録に失敗しました：",
 		"engine.animation.loading.succeeded": "アニメーションの読み込みに成功しました：",
 
+		//--------- Skeleton ---------//
+		"engine.skeleton.loading.start": "スケルトン読み込み開始：",
+		"engine.skeleton.loading.alreadyloaded": "既に読み込み済みのスケルトンです：",
+		"engine.skeleton.loading.failed.notfound": "スケルトンが見つかりません：",
+		"engine.skeleton.loading.failed.unsupported": "スケルトン形式がサポートされていません：",
+		"engine.skeleton.loading.failed.assimp": "スケルトンの読み込みに失敗しました：",
+		"engine.skeleton.loading.failed.noskeleton": "スケルトンが含まれていません：",
+		"engine.skeleton.loading.failed.register": "スケルトンの登録に失敗しました：",
+		"engine.skeleton.loading.succeeded": "スケルトンの読み込みに成功しました：",
+
 		//--------- Graphics ---------//
 		// リソース
 		"engine.graphics.resource.transition.empty": "リソースの状態遷移配列が空です。",

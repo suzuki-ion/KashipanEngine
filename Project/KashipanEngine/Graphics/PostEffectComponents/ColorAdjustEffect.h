@@ -21,6 +21,7 @@ public:
         float contrast = 1.0f;
         float saturation = 1.0f;
         float temperature = 0.0f;
+        float hue = 0.0f;
         float colorBalance[3] = {0.0f, 0.0f, 0.0f};
     };
 
@@ -40,6 +41,7 @@ public:
         ImGui::DragFloat("Contrast", &params_.contrast, 0.01f, 0.0f, 2.0f, "%.3f");
         ImGui::DragFloat("Saturation", &params_.saturation, 0.01f, 0.0f, 2.0f, "%.3f");
         ImGui::DragFloat("Temperature", &params_.temperature, 0.01f, -1.0f, 1.0f, "%.3f");
+        ImGui::DragFloat("Hue", &params_.hue, 0.1f, -180.0f, 180.0f, "%.2f");
         ImGui::DragFloat3("ColorBalance", params_.colorBalance, 0.01f, -1.0f, 1.0f, "%.3f");
     }
 #endif
@@ -64,10 +66,11 @@ public:
             cb->contrast = std::max(params_.contrast, 0.0f);
             cb->saturation = std::max(params_.saturation, 0.0f);
             cb->temperature = std::clamp(params_.temperature, -1.0f, 1.0f);
+            cb->hue = std::clamp(params_.hue, -180.0f, 180.0f);
             cb->colorBalance[0] = std::clamp(params_.colorBalance[0], -1.0f, 1.0f);
             cb->colorBalance[1] = std::clamp(params_.colorBalance[1], -1.0f, 1.0f);
             cb->colorBalance[2] = std::clamp(params_.colorBalance[2], -1.0f, 1.0f);
-            cb->pad = 0.0f;
+
             return true;
         };
 
@@ -93,7 +96,7 @@ private:
         float saturation;
         float temperature;
         float colorBalance[3];
-        float pad;
+        float hue;
     };
 
     Params params_{};

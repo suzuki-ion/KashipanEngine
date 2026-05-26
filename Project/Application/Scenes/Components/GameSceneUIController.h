@@ -527,6 +527,9 @@ public:
                     reverseSpriteFadeOutElapsed_ = 0.0f;
                     reverseSpriteAlpha_ = 1.0f;
 
+                    auto soundHandle = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
+                    AudioManager::Play(soundHandle, 1.0f);
+
                     if (player_) {
                         if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
                             Vector2 screenPos;

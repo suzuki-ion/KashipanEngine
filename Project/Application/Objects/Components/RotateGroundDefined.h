@@ -81,6 +81,13 @@ namespace KashipanEngine {
 		Vector3 GetFrameTranslationDelta() const {
 			return currentTranslate_ - preTranslate_;
 		}
+		Vector3 GetCurrentRotate() const {
+            auto *ctx = GetOwner3DContext();
+            if (auto *tr = ctx->GetComponent<Transform3D>()) {
+                return tr->GetRotate();
+            }
+            return Vector3{ 0.0f, 0.0f, 0.0f };
+		}
 
 	private:
 		const Vector4 defaultColor_{ 0.0f, 0.1f, 1.0f, 1.0f };

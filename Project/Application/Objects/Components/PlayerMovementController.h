@@ -275,6 +275,13 @@ public:
         }
         wasGroundedPrev_ = grounded;
 
+        lastCollisionAngleDegrees_ = 0.0f;
+        /*if (collisionBehavior_ && collisionEnabled) {
+            if (auto angle = collisionBehavior_->ConsumeLastCollisionAngleDegrees(); angle.has_value()) {
+                lastCollisionAngleDegrees_ = *angle;
+            }
+        }*/
+
         gravityChangeBlend_ = std::max(0.0f, gravityChangeBlend_ - dt / std::max(0.0001f, gravityChangeBlendDuration_));
 
         UpdateRotation();
@@ -477,6 +484,11 @@ public:
     void MarkGrounded() override { /* collision behavior manages grounded state */ }
     bool ConsumeGrounded() override { return groundedThisFrame_; }
 
+    bool IsReverseAngle() {
+        return (lastCollisionAngleDegrees_ <= reverseAngleMinDegrees_)
+            && (lastCollisionAngleDegrees_ >= reverseAngleMaxDegrees_);
+    }
+
 private:
     static constexpr float kPi = 3.14159265358979323846f;
     static constexpr float kCollisionDisableDuration = 0.05f;
@@ -574,6 +586,10 @@ private:
 	float gravityChargeCooldownTimer_ = 0.0f;
 	float gravityChargeCooldownDuration_ = 1.5f;
 	float gravityChargeValueParSecond_ = 6.0f;
+
+    float reverseAngleMinDegrees_ = -90.0f;
+    float reverseAngleMaxDegrees_ = 90.0f;
+    float lastCollisionAngleDegrees_ = 0.0f;
 };
 
 } // namespace KashipanEngine

@@ -534,10 +534,13 @@ public:
                         if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
                             Vector2 screenPos;
                             if (ProjectWorldTo2DWorld(playerTr->GetTranslate(), screenPos)) {
-                                reverseSpriteStartPosition_ = Vector3{screenPos.x, screenPos.y + reverseSpriteStartYOffset_, 0.0f};
+                                reverseSpriteStartPosition_ = Vector3{ screenPos.x, screenPos.y + reverseSpriteStartYOffset_, 0.0f };
                             } else {
-                                reverseSpriteStartPosition_ = Vector3{0.0f, reverseSpriteStartYOffset_, 0.0f};
+                                reverseSpriteStartPosition_ = Vector3{ 0.0f, reverseSpriteStartYOffset_, 0.0f };
                             }
+                        }
+                        if (auto *getCoinCounter = player_->GetComponent3D<PlayerGetCoinCounter>()) {
+                            getCoinCounter->AddCoin();
                         }
                     }
                 }

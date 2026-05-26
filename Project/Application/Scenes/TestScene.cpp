@@ -119,6 +119,21 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
+        auto cylinder = std::make_unique<Cylinder3D>();
+        cylinder->SetName("TestCylinder");
+        if (auto *material = cylinder->GetComponent3D<Material3D>()) {
+            auto texture = TextureManager::GetTextureFromFileName("uvChecker.png");
+            material->SetTexture(texture);
+        }
+        if (auto *transform = cylinder->GetComponent3D<Transform3D>()) {
+            transform->SetTranslate(Vector3(0.0f, 2.0f, 0.0f));
+            transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+        }
+        cylinder->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(cylinder));
+    }
+
+    if (screenBuffer3D) {
         auto skybox = std::make_unique<Skybox>();
         skybox->SetName("TestSkybox");
 

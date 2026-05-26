@@ -1,0 +1,169 @@
+{
+  "stageLength": 100.0,
+  "GoalRate": 0.7,
+  "spawn_reqests": [
+    {
+      "stageProgress": 0.0399,
+      "radius": 0.9869,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0399,
+      "radius": 1.017,
+      "angle": 0.5915,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0099,
+      "radius": 1.017,
+      "angle": 0.5915,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0099,
+      "radius": 0.9869,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0099,
+      "radius": 1.005,
+      "angle": -0.5947,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0199,
+      "radius": 1.005,
+      "angle": -0.5947,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0199,
+      "radius": 0.9869,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0199,
+      "radius": 1.017,
+      "angle": 0.5915,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0,
+      "radius": 1.017,
+      "angle": 0.5915,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0,
+      "radius": 0.9869,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0,
+      "radius": 1.005,
+      "angle": -0.5947,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.067,
+      "radius": 1.0775,
+      "angle": 0.6326,
+      "blockType": 0,
+      "panelWidth": 0.9993,
+      "panelThickness": 0.0658,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0734,
+      "radius": 0.7332,
+      "angle": 0.6253,
+      "blockType": 0,
+      "panelWidth": 0.9817,
+      "panelThickness": 0.0676,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0498,
+      "radius": 1.017,
+      "angle": 0.5915,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.0834,
+      "radius": 0.7332,
+      "angle": 0.6253,
+      "blockType": 0,
+      "panelWidth": 0.9817,
+      "panelThickness": 0.0676,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.03,
+      "radius": 1.005,
+      "angle": -0.5947,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.03,
+      "radius": 0.9869,
+      "angle": 0.0,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    },
+    {
+      "stageProgress": 0.03,
+      "radius": 1.017,
+      "angle": 0.5915,
+      "blockType": 0,
+      "panelWidth": 0.6,
+      "panelThickness": 0.05,
+      "panelLength": 1.0
+    }
+  ],
+  "coin_reqests": []
+}

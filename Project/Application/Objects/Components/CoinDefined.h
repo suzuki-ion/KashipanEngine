@@ -92,6 +92,8 @@ public:
                 tr->SetRotate(rot);
                 startRotateY_ = 0.0f;
                 mat->SetColor(touchColorStart_);
+
+                AudioManager::Play(collectSound_, 1.0f);
             }
             return true;
         }
@@ -242,6 +244,8 @@ private:
     float approachElapsed_ = 0.0f;
     const float approachDuration_ = 0.25f;
     Vector3 approachStartTranslate_{ 0.0f, 0.0f, 0.0f };
+
+    AudioManager::SoundHandle collectSound_ = AudioManager::GetSoundHandleFromFileName("seCoinget.mp3");
 };
 
 } // namespace KashipanEngine

@@ -382,6 +382,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BoxFilter5x5Effect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ColorAdjustEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
@@ -619,6 +620,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.BoxFilter5x5.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ColorAdjust.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Grayscale.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
@@ -655,6 +657,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\RootSignature\Object3d.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Sampler\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\BoxFilter5x5.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ColorAdjust.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />

@@ -50,6 +50,10 @@ void TestScene::Initialize() {
         auto boxFilterEffect = std::make_unique<BoxFilter5x5Effect>(bfp);
         screenBuffer3D->RegisterPostEffectComponent(std::move(boxFilterEffect));
 
+        auto cap = ColorAdjustEffect::Params{};
+        auto colorAdjustEffect = std::make_unique<ColorAdjustEffect>(cap);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(colorAdjustEffect));
+
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
     }
 

@@ -4,5 +4,5 @@ cbuffer ColorAdjustCB : register(b0) {
 	float gSaturation;
 	float gTemperature;
 	float3 gColorBalance;
-	float gPad;
+	float gHue;
 };

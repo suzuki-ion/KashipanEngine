@@ -139,8 +139,8 @@ namespace KashipanEngine {
         bool requested_ = true;
         bool generated_ = false;
 
-        int count_ = 256;
-        float scale_ = 8.0f;
+        int count_ = 128;
+        float scale_ = 4.0f;
         float rotateSpeedMin_ = 0.25f;
         float rotateSpeedMax_ = 1.0f;
         float minGapZ_ = 1.0f;

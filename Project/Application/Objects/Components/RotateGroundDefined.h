@@ -75,7 +75,7 @@ namespace KashipanEngine {
 #endif
 
 	private:
-		const Vector4 defaultColor_{ 0.0f, 0.6f, 0.8f, 1.0f };
+		const Vector4 defaultColor_{ 0.0f, 0.1f, 1.0f, 1.0f };
 		const Vector4 touchColorStart_{ 1.0f, 1.0f, 1.0f, 1.0f };
 		const Vector4 touchColorEnd_{ 1.0f, 0.5f, 0.5f, 1.0f };
 

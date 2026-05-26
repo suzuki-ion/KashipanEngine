@@ -563,7 +563,7 @@ private:
     float gravityGauge_ = gravityGaugeMax_;
     float landingGaugeRecoveryBase_ = 1.0f;
     float landingGaugeRecoveryPerDistance_ = 0.05f;
-    float slowGroundSpeedMultiplier_ = 0.7f;
+    float slowGroundSpeedMultiplier_ = 0.95f;
 
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;

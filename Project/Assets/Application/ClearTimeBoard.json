@@ -3,7 +3,13 @@
         "Assets/Application/StageData/CoinTestStage.json": [
             20638,
             21049,
-            22820
+            22820,
+            23287,
+            27379
+        ],
+        "Assets/Application/StageData/SmallStegeTest.json": [
+            52298,
+            55843
         ],
         "Assets/Application/StageData/stage.json": [
             86082,
@@ -28,12 +34,18 @@
             115176
         ],
         "Assets/Application/StageData/stage_01.json": [
+            45573,
+            46487,
             46960,
             47694,
+            48518,
             48528,
+            48704,
+            48880,
             49426,
             49851,
             50844,
+            51286,
             52402,
             53094
         ]

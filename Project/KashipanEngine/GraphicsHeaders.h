@@ -5,6 +5,7 @@
 #include "Graphics/PostEffectComponents/BloomEffect.h"
 #include "Graphics/PostEffectComponents/BoxFilter5x5Effect.h"
 #include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
+#include "Graphics/PostEffectComponents/ColorAdjustEffect.h"
 #include "Graphics/PostEffectComponents/DitherEffect.h"
 #include "Graphics/PostEffectComponents/DotMatrixEffect.h"
 #include "Graphics/PostEffectComponents/MotionBlurEffect.h"

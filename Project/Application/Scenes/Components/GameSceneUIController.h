@@ -527,7 +527,7 @@ public:
                     reverseSpriteFadeOutElapsed_ = 0.0f;
                     reverseSpriteAlpha_ = 1.0f;
 
-                    auto soundHandle = AudioManager::GetSoundHandleFromFileName("seUISubmit.mp3");
+                    auto soundHandle = AudioManager::GetSoundHandleFromFileName("sePReverse.mp3");
                     AudioManager::Play(soundHandle, 1.0f);
 
                     if (player_) {
@@ -1460,8 +1460,8 @@ private:
     float reverseSpriteAnimElapsed_ = 0.0f;
     float reverseSpriteFadeOutElapsed_ = 0.0f;
     float reverseSpriteAlpha_ = 0.0f;
-    float reverseSpriteMoveDuration_ = 1.0f;
-    float reverseSpriteFadeDuration_ = 1.0f;
+    float reverseSpriteMoveDuration_ = 0.5f;
+    float reverseSpriteFadeDuration_ = 0.5f;
     float reverseSpriteStartYOffset_ = 64.0f;
     float reverseSpriteMoveOffsetY_ = 64.0f;
     float reverseAngleMinDegrees_ = -90.0f;

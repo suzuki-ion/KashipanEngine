@@ -1460,8 +1460,8 @@ private:
     float reverseSpriteAnimElapsed_ = 0.0f;
     float reverseSpriteFadeOutElapsed_ = 0.0f;
     float reverseSpriteAlpha_ = 0.0f;
-    float reverseSpriteMoveDuration_ = 0.5f;
-    float reverseSpriteFadeDuration_ = 0.5f;
+    float reverseSpriteMoveDuration_ = 0.25f;
+    float reverseSpriteFadeDuration_ = 0.25f;
     float reverseSpriteStartYOffset_ = 64.0f;
     float reverseSpriteMoveOffsetY_ = 64.0f;
     float reverseAngleMinDegrees_ = -90.0f;

@@ -122,6 +122,12 @@ public:
     const Vector4 &GetTouchColorStart() const { return touchColorStart_; }
     const Vector4 &GetTouchColorEnd() const { return touchColorEnd_; }
 
+    const Vector4 &GetNearColorScale() const { return nearColorScale_; }
+    const Vector4 &GetFarColorScale() const { return farColorScale_; }
+    float GetNearDistance() const { return nearDistance_; }
+    float GetFarDistance() const { return farDistance_; }
+
+
 private:
     void OnCollisionEnter(const HitInfo3D &hit) {
         if (hasPlayedTouchColorAnimation_) return;
@@ -153,6 +159,12 @@ private:
     Vector4 defaultColor_{0.0f, 0.5f, 0.0f, 1.0f};
     Vector4 touchColorStart_{1.0f, 1.0f, 1.0f, 1.0f};
     Vector4 touchColorEnd_{0.5f, 1.0f, 0.5f, 1.0f};
+
+    Vector4 nearColorScale_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector4 farColorScale_{ 3.0f, 3.0f, 3.0f, 3.0f };
+
+    float nearDistance_ = 32.0f;
+    float farDistance_ = 512.0f;
 
     bool hasPlayedTouchColorAnimation_ = false;
     bool isTouchColorAnimating_ = false;

@@ -42,6 +42,14 @@ struct CoinSpawnRequest {
 /// ステージの地面を生成・管理するコンポーネント。JSONデータを元に一括で地面オブジェクトを生成します。
 class StageGroundGenerator final : public ISceneComponent {
 public:
+
+    struct GroundRuntime {
+        Object3DBase *object = nullptr;
+        float centerZ = 0.0f;
+        float length = 0.0f;
+        bool isActive = false;
+    };
+
     StageGroundGenerator() : ISceneComponent("StageGroundGenerator", 1) {}
     ~StageGroundGenerator() override = default;
 
@@ -308,6 +316,11 @@ public:
         }
     }
 
+    /// @brief 地面オブジェクトの情報を取得
+    const std::vector<GroundRuntime> &GetGrounds() const {
+        return grounds_;
+    }
+
     int GetTouchedGroundCount() const { return touchedGroundCount_; }
 
     /// @brief スポーン時の地面をプレイヤーの下に再配置する
@@ -385,13 +398,6 @@ private:
     }
 
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
-
-    struct GroundRuntime {
-        Object3DBase *object = nullptr;
-        float centerZ = 0.0f;
-        float length = 0.0f;
-		bool isActive = false;
-    };
 
     struct CoinRuntime {
         Object3DBase *object = nullptr;
@@ -611,14 +617,14 @@ private:
 	}
 
 	/// @brief 地面プールの空きがあるかどうか
-    bool HasGroundPoolSpace() const {
-        for (const auto &g : grounds_) {
-            if (!g.object) continue;
-            if (!g.isActive) {
-                return true;
-            }
-        }
-        return false;
+	bool HasGroundPoolSpace() const {
+		for (const auto &g : grounds_) {
+			if (!g.object) continue;
+			if (!g.isActive) {
+				return true;
+			}
+		}
+		return false;
 	}
 
     void SpawnGroundFromStageData() {

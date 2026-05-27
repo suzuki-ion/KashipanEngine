@@ -3,7 +3,7 @@
 #include "Graphics/GraphicsEngine.h"
 #include "Graphics/PostEffectComponents/IPostEffectComponent.h"
 #include "Graphics/PostEffectComponents/BloomEffect.h"
-#include "Graphics/PostEffectComponents/BoxFilter5x5Effect.h"
+#include "Graphics/PostEffectComponents/BoxFilterEffect.h"
 #include "Graphics/PostEffectComponents/ChromaticAberrationEffect.h"
 #include "Graphics/PostEffectComponents/ColorAdjustEffect.h"
 #include "Graphics/PostEffectComponents/DitherEffect.h"

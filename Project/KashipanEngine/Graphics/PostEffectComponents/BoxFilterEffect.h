@@ -14,36 +14,38 @@
 
 namespace KashipanEngine {
 
-class BoxFilter5x5Effect final : public IPostEffectComponent {
+class BoxFilterEffect final : public IPostEffectComponent {
 public:
     struct Params {
         float intensity = 1.0f;
+        int halfSize[2] = { 2, 2 };
     };
 
-    explicit BoxFilter5x5Effect(Params p = {})
-        : IPostEffectComponent("BoxFilter5x5Effect", 1), params_(p) {}
+    explicit BoxFilterEffect(Params p = {})
+        : IPostEffectComponent("BoxFilterEffect", 1), params_(p) {}
 
     void SetParams(const Params &p) { params_ = p; }
     const Params &GetParams() const { return params_; }
 
     std::unique_ptr<IPostEffectComponent> Clone() const override {
-        return std::make_unique<BoxFilter5x5Effect>(params_);
+        return std::make_unique<BoxFilterEffect>(params_);
     }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragInt2("Half Size", params_.halfSize, 1.0f, 1);
     }
 #endif
 
     std::vector<PostEffectPass> BuildPostEffectPasses() const override {
         PostEffectPass pass;
-        pass.pipelineName = "PostEffect.BoxFilter5x5";
-        pass.passName = "BoxFilter5x5";
+        pass.pipelineName = "PostEffect.BoxFilter";
+        pass.passName = "BoxFilter";
         pass.batchKey = 0;
 
         pass.constantBufferRequirements = {
-            {"Pixel:BoxFilter5x5CB", sizeof(CBData)}
+            {"Pixel:BoxFilterCB", sizeof(CBData)}
         };
 
         pass.updateConstantBuffersFunction = [this](void *constantBufferMaps, std::uint32_t) -> bool {
@@ -58,6 +60,8 @@ public:
             cb->invResolution[0] = (owner->GetWidth() > 0) ? (1.0f / static_cast<float>(owner->GetWidth())) : 0.0f;
             cb->invResolution[1] = (owner->GetHeight() > 0) ? (1.0f / static_cast<float>(owner->GetHeight())) : 0.0f;
             cb->intensity = std::clamp(params_.intensity, 0.0f, 1.0f);
+            cb->halfSize[0] = params_.halfSize[0];
+            cb->halfSize[1] = params_.halfSize[1];
             cb->pad = 0.0f;
             return true;
         };
@@ -82,6 +86,7 @@ private:
         float invResolution[2];
         float intensity;
         float pad;
+        int halfSize[2];
     };
 
     Params params_{};

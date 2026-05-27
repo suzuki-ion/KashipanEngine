@@ -1,13 +1,13 @@
 {
 	"PipelineType": "Render",
-	"Name": "PostEffect.BoxFilter5x5",
+	"Name": "PostEffect.BoxFilter",
 	"Shader": {
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
 		"AutoRootDescriptorFromShader": true,
-		"Vertex": { "UsePreset": "BoxFilter5x5.Vertex" },
-		"Pixel": { "UsePreset": "BoxFilter5x5.Pixel" }
+		"Vertex": { "UsePreset": "BoxFilter.Vertex" },
+		"Pixel": { "UsePreset": "BoxFilter.Pixel" }
 	},
 	"RasterizerState": { "UsePreset": "Solid" },
 	"BlendState": { "UsePreset": "Normal" },

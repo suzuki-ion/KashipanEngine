@@ -1,12 +1,12 @@
 {
-	"BaseName": "BoxFilter5x5",
+	"BaseName": "BoxFilter",
 	"Vertex": {
 		"Path": "PostEffect/FullScreenTriangleVS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "vs_6_0"
 	},
 	"Pixel": {
-		"Path": "PostEffect/BoxFilter5x5PS.hlsl",
+		"Path": "PostEffect/BoxFilterPS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "ps_6_0"
 	}

@@ -13,6 +13,7 @@
 #include "Graphics/PostEffectComponents/GrayscaleEffect.h"
 #include "Graphics/PostEffectComponents/RadialBlurEffect.h"
 #include "Graphics/PostEffectComponents/VignetteEffect.h"
+#include "Graphics/PostEffectComponents/GaussianFilterEffect.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/DefineMaps.h"

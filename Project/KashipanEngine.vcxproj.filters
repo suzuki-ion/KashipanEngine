@@ -404,6 +404,7 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.h" />
     <ClInclude Include="KashipanEngine\Assets\SkeletonManager.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ColorAdjustEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GaussianFilterEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -531,5 +532,7 @@
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.BoxFilter.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ColorAdjust.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ColorAdjust.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\GaussianFilter.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.GaussianFilter.json" />
   </ItemGroup>
 </Project>

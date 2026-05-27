@@ -386,6 +386,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GaussianFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GrayscaleEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
@@ -621,6 +622,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.BoxFilter.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.ColorAdjust.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.GaussianFilter.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Grayscale.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
@@ -671,6 +673,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object2D.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Object\Object3D.hlsli" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\GaussianFilter.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skybox.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />

@@ -45,12 +45,11 @@ void TestScene::Initialize() {
         auto vignetteEffect = std::make_unique<VignetteEffect>(vp);
         screenBuffer3D->RegisterPostEffectComponent(std::move(vignetteEffect));
 
-        auto bfp = BoxFilterEffect::Params{};
-        bfp.intensity = 0.5f;
-        bfp.halfSize[0] = 2;
-        bfp.halfSize[1] = 2;
-        auto boxFilterEffect = std::make_unique<BoxFilterEffect>(bfp);
-        screenBuffer3D->RegisterPostEffectComponent(std::move(boxFilterEffect));
+        auto gfp = GaussianFilterEffect::Params{};
+        gfp.radius = 3;
+        gfp.sigma = 1.0f;
+        auto gaussianFilterEffect = std::make_unique<GaussianFilterEffect>(gfp);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(gaussianFilterEffect));
 
         auto cap = ColorAdjustEffect::Params{};
         auto colorAdjustEffect = std::make_unique<ColorAdjustEffect>(cap);

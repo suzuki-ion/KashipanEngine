@@ -13,6 +13,16 @@ class ModelManager;
 
 /// @brief モデルのデータ管理用構造体（Model 生成時のみ利用する想定）
 struct ModelData final {
+public:
+    struct VertexWeightData final {
+        float weight = 0.0f;
+        uint32_t vertexIndex = 0;
+    };
+    struct JointWeightData final {
+        Matrix4x4 inverseBindPoseMatrix;
+        std::vector<VertexWeightData> vertexWeights;
+    };
+
 private:
     friend class ModelManager;
     friend class Model;
@@ -37,6 +47,9 @@ private:
 
     std::vector<Vertex> vertices_;
     std::vector<uint32_t> indices_;
+
+    // ジョイント名からスキンウェイトデータへのマップ
+    std::unordered_map<std::string, JointWeightData> skinClusters_;
 
     std::vector<MaterialData> materials_;
 

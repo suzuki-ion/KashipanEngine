@@ -18,6 +18,8 @@ struct AnimationClip final {
     float duration = 0.0f;
     float ticksPerSecond = 0.0f;
     std::vector<KeyframeTimeline> timelines;
+    std::unordered_map<std::string, uint32_t> timelineNameToIndex;
+    std::unordered_map<std::string, std::vector<uint32_t>> nodeNameToTimelineIndices;
 };
 
 /// @brief アニメーションデータ

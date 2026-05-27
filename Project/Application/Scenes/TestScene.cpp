@@ -95,6 +95,12 @@ void TestScene::Initialize() {
         }
     }
 
+    if (auto *keyframeAnimator = GetSceneComponent<KeyframeAnimator>()) {
+        auto skeletonHandle = SkeletonManager::GetSkeletonHandleFromFileName("walk.gltf");
+        auto animationHandle = AnimationManager::GetAnimationHandleFromFileName("walk.gltf");
+        keyframeAnimator->PlayFromAnimationAndSkeletonHandle(animationHandle, skeletonHandle, true);
+    }
+
     if (screenBuffer3D) {
         auto ring = std::make_unique<Ring3D>();
         ring->SetUvMode(Ring3D::UvMode::Curved);

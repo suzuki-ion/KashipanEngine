@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "Assets/AnimationManager.h"
+#include "Assets/SkeletonManager.h"
 #include "Scene/SceneContext.h"
 #include "Objects/Components/2D/Transform2D.h"
 #include "Objects/Components/3D/Transform3D.h"
@@ -343,6 +344,124 @@ bool KeyframeAnimator::PlayFromAnimationHandle(uint32_t handle, const std::strin
     return !timelines_.empty();
 }
 
+bool KeyframeAnimator::PlayFromAnimationAndSkeletonHandle(uint32_t animationHandle, uint32_t skeletonHandle, bool loop, std::string clipName) {
+    if (animationHandle == AnimationManager::kInvalidHandle) return false;
+    if (skeletonHandle == SkeletonManager::kInvalidHandle) return false;
+
+    const auto &data = AnimationManager::GetAnimationData(animationHandle);
+    if (data.GetClipCount() == 0) return false;
+
+    const auto *clip = !clipName.empty() ? data.FindClipByName(clipName) : data.GetClip(0);
+    if (!clip) return false;
+
+    const auto &skeletonData = SkeletonManager::GetSkeletonData(skeletonHandle);
+    if (skeletonData.GetSkeleton().joints.empty()) return false;
+
+    timelines_.clear();
+    playbackStates_.clear();
+
+    for (auto &joint : skeletonData.GetSkeleton().joints) {
+        auto timelineIndices = clip->nodeNameToTimelineIndices.find(joint.name);
+        if (timelineIndices == clip->nodeNameToTimelineIndices.end()) continue;
+        for (auto timelineIndex : timelineIndices->second) {
+            if (timelineIndex < 0 || timelineIndex >= static_cast<uint32_t>(clip->timelines.size())) continue;
+            const auto &src = clip->timelines[timelineIndex];
+            KeyframeTimeline timeline;
+            timeline.name = src.name;
+            timeline.duration = src.duration;
+            timeline.valueType = src.valueType;
+            timeline.keys = src.keys;
+            timeline.loop = loop;
+
+            auto *transform = joint.transform.get();
+            if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.X")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto t = transform->GetTranslate();
+                    t.x = v;
+                    transform->SetTranslate(t);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.Y")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto t = transform->GetTranslate();
+                    t.y = v;
+                    transform->SetTranslate(t);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.Z")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto t = transform->GetTranslate();
+                    t.z = v;
+                    transform->SetTranslate(t);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.X")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto s = transform->GetScale();
+                    s.x = v;
+                    transform->SetScale(s);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.Y")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto s = transform->GetScale();
+                    s.y = v;
+                    transform->SetScale(s);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.Z")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto s = transform->GetScale();
+                    s.z = v;
+                    transform->SetScale(s);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.X")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto r = transform->GetRotate();
+                    r.x = v;
+                    transform->SetRotate(r);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.Y")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto r = transform->GetRotate();
+                    r.y = v;
+                    transform->SetRotate(r);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.Z")) {
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto r = transform->GetRotate();
+                    r.z = v;
+                    transform->SetRotate(r);
+                    }));
+            } else if (timeline.valueType == KeyframeValueType::Quaternion && (timeline.name.ends_with(".Rotate") || timeline.name.ends_with(".RotateQuat"))) {
+                timeline.applyFunctions.push_back(std::function<void(const Quaternion &)>([transform](const Quaternion &v) {
+                    if (!transform) return;
+                    transform->SetRotateQuaternion(v);
+                    }));
+            }
+
+            if (timeline.applyFunctions.empty()) continue;
+
+            SortTimelineKeys(timeline);
+            timelines_.emplace(timeline.name, std::move(timeline));
+
+            KeyframePlaybackState state;
+            state.timelineName = src.name;
+            state.elapsedTime = 0.0f;
+            state.playing = true;
+            state.paused = false;
+            state.skeletonHandle = skeletonHandle;
+            playbackStates_.emplace(state.timelineName, std::move(state));
+        }
+    }
+
+    return !timelines_.empty();
+}
+
 KeyframeAnimator::KeyframeAnimator()
     : ISceneComponent("KeyframeAnimator", 1) {
 }
@@ -389,6 +508,10 @@ void KeyframeAnimator::Update() {
                     (*fn)(*v);
                 }
             }
+        }
+
+        if (state.skeletonHandle != 0) {
+            SkeletonManager::UpdateSkeletonJointTransforms(state.skeletonHandle);
         }
 
         if (!timeline.loop) {

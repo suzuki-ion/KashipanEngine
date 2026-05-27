@@ -94,18 +94,18 @@ Matrix4x4 ConvertMatrix(const aiMatrix4x4 &m) {
     return out;
 }
 
-SkeletonTransform ConvertTransform(const aiMatrix4x4 &m) {
-    SkeletonTransform transform{};
+std::unique_ptr<Transform3D> ConvertTransform(const aiMatrix4x4 &m) {
+    auto transform = std::make_unique<Transform3D>();
 
     aiVector3D scaling;
     aiQuaternion rotation;
     aiVector3D translation;
     m.Decompose(scaling, rotation, translation);
 
-    transform.scale = Vector3(scaling.x, scaling.y, scaling.z);
-    transform.rotation = Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
-    transform.translation = Vector3(translation.x, translation.y, translation.z);
-    return transform;
+    transform->SetScale(Vector3(scaling.x, scaling.y, scaling.z));
+    transform->SetRotateQuaternion(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+    transform->SetTranslate(Vector3(translation.x, translation.y, translation.z));
+    return std::move(transform);
 }
 
 Node BuildNode(const aiNode *node) {
@@ -140,7 +140,6 @@ void CollectBones(const aiScene *scene, Skeleton &skeleton) {
 
             SkeletonJoint joint{};
             joint.name = boneName;
-            joint.skeletonSpaceMatrix = ConvertMatrix(bone->mOffsetMatrix);
             skeleton.jointNameToIndexMap[boneName] = static_cast<int32_t>(skeleton.joints.size());
             skeleton.joints.push_back(std::move(joint));
         }
@@ -157,6 +156,8 @@ void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
     if (jointIndex >= 0) {
         SkeletonJoint &joint = skeleton.joints[static_cast<size_t>(jointIndex)];
         joint.transform = ConvertTransform(node->mTransformation);
+        joint.skeletonSpaceTransform = std::make_unique<Transform3D>();
+        joint.skeletonSpaceTransform->SetParentTransform(joint.transform.get());
 
         if (node->mParent) {
             const std::string parentName = node->mParent->mName.C_Str();
@@ -164,6 +165,8 @@ void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
             if (parentIt != skeleton.jointNameToIndexMap.end()) {
                 joint.parentIndex = parentIt->second;
                 skeleton.joints[static_cast<size_t>(parentIt->second)].childrenIndices.push_back(jointIndex);
+                auto *parentTransform = skeleton.joints[static_cast<size_t>(parentIt->second)].transform.get();
+                joint.transform->SetParentTransform(parentTransform);
             }
         }
     }
@@ -331,6 +334,23 @@ std::vector<SkeletonManager::SkeletonListEntry> SkeletonManager::GetLoadedSkelet
         list.push_back(std::move(entry));
     }
     return list;
+}
+
+const bool SkeletonManager::UpdateSkeletonJointTransforms(SkeletonHandle handle) {
+    auto it = sSkeletons.find(handle);
+    if (it == sSkeletons.end()) {
+        return false;
+    }
+
+    SkeletonData &data = it->second.data;
+    const Skeleton &skeleton = data.GetSkeleton();
+    for (const auto &joint : skeleton.joints) {
+        if (auto *t = joint.skeletonSpaceTransform.get()) {
+            // ワールド行列取得時の行列更新処理を利用して、全スケルトンの行列を更新する
+            t->GetWorldMatrix();
+        }
+    }
+    return true;
 }
 
 } // namespace KashipanEngine

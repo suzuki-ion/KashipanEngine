@@ -58,6 +58,8 @@ struct KeyframePlaybackState {
     bool playing = false;
     /// @brief 一時停止中かどうか
     bool paused = false;
+    /// @brief 再生中のスケルトンハンドル（スケルトンアニメーションの場合）
+    uint32_t skeletonHandle = 0;
 };
 
 /// @brief キーフレームアニメーターシーンコンポーネント
@@ -76,6 +78,13 @@ public:
     /// @param loop ループ再生する場合は `true`
     /// @return 再生開始に成功した場合は `true`
     bool PlayFromAnimationHandle(uint32_t handle, const std::string &objectName, bool loop);
+
+    /// @brief AnimationManagerとSkeletonManagerのハンドルからアニメーションを再生する
+    /// @param animationHandle AnimationManagerのアニメーションハンドル
+    /// @param skeletonHandle SkeletonManagerのスケルトンハンドル
+    /// @param loop ループ再生する場合は `true`
+    /// @return 再生開始に成功した場合は `true`
+    bool PlayFromAnimationAndSkeletonHandle(uint32_t animationHandle, uint32_t skeletonHandle, bool loop, std::string clipName = "");
 
     /// @brief タイムラインの追加
     /// @param timelineName タイムライン名

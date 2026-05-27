@@ -219,8 +219,14 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
 
             if (!xKeys.empty()) {
                 clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.X", KeyframeValueType::Float, xKeys, false));
+                clip.timelineNameToIndex[nodeName + ".Translate.X"] = static_cast<uint32_t>(clip.timelines.size() - 1);
+                clip.nodeNameToTimelineIndices[nodeName].push_back(clip.timelineNameToIndex[nodeName + ".Translate.X"]);
                 clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.Y", KeyframeValueType::Float, yKeys, false));
+                clip.timelineNameToIndex[nodeName + ".Translate.Y"] = static_cast<uint32_t>(clip.timelines.size() - 1);
+                clip.nodeNameToTimelineIndices[nodeName].push_back(clip.timelineNameToIndex[nodeName + ".Translate.Y"]);
                 clip.timelines.push_back(BuildTimeline(nodeName + ".Translate.Z", KeyframeValueType::Float, zKeys, false));
+                clip.timelineNameToIndex[nodeName + ".Translate.Z"] = static_cast<uint32_t>(clip.timelines.size() - 1);
+                clip.nodeNameToTimelineIndices[nodeName].push_back(clip.timelineNameToIndex[nodeName + ".Translate.Z"]);
             }
 
             xKeys.clear();
@@ -237,8 +243,14 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
 
             if (!xKeys.empty()) {
                 clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.X", KeyframeValueType::Float, xKeys, false));
+                clip.timelineNameToIndex[nodeName + ".Scale.X"] = static_cast<uint32_t>(clip.timelines.size() - 1);
+                clip.nodeNameToTimelineIndices[nodeName].push_back(clip.timelineNameToIndex[nodeName + ".Scale.X"]);
                 clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.Y", KeyframeValueType::Float, yKeys, false));
+                clip.timelineNameToIndex[nodeName + ".Scale.Y"] = static_cast<uint32_t>(clip.timelines.size() - 1);
+                clip.nodeNameToTimelineIndices[nodeName].push_back(clip.timelineNameToIndex[nodeName + ".Scale.Y"]);
                 clip.timelines.push_back(BuildTimeline(nodeName + ".Scale.Z", KeyframeValueType::Float, zKeys, false));
+                clip.timelineNameToIndex[nodeName + ".Scale.Z"] = static_cast<uint32_t>(clip.timelines.size() - 1);
+                clip.nodeNameToTimelineIndices[nodeName].push_back(clip.timelineNameToIndex[nodeName + ".Scale.Z"]);
             }
 
             xKeys.clear();
@@ -257,6 +269,8 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
 
             if (!qKeys.empty()) {
                 clip.timelines.push_back(BuildTimeline(nodeName + ".Rotate", KeyframeValueType::Quaternion, qKeys, false));
+                clip.timelineNameToIndex[nodeName + ".Rotate"] = static_cast<uint32_t>(clip.timelines.size() - 1);
+                clip.nodeNameToTimelineIndices[nodeName].push_back(clip.timelineNameToIndex[nodeName + ".Rotate"]);
             }
         }
 

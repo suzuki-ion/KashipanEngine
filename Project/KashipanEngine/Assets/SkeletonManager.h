@@ -6,32 +6,23 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Math/Matrix4x4.h"
-#include "Math/Quaternion.h"
-#include "Math/Vector3.h"
+#include "Objects/Components/3D/Transform3D.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
-/// @brief スケルトン用トランスフォーム構造体
-struct SkeletonTransform final {
-    Vector3 scale{1.0f, 1.0f, 1.0f};
-    Quaternion rotation{};
-    Vector3 translation{};
-};
-
 /// @brief モデルのノード構造体
 struct Node final {
-    SkeletonTransform transform;
+    std::unique_ptr<Transform3D> transform;
     std::string name;
     std::vector<Node> children;
 };
 
 /// @brief スケルトンのジョイント構造体
 struct SkeletonJoint final {
-    SkeletonTransform transform;
+    std::unique_ptr<Transform3D> transform;
     std::string name;
-    Matrix4x4 skeletonSpaceMatrix; // スケルトン空間での変換表列
+    std::unique_ptr<Transform3D> skeletonSpaceTransform; // スケルトンスペースの変換（ルートジョイントからの累積変換）
     std::vector<int32_t> childrenIndices; // 子ジョイントのインデックス（ModelData のジョイント配列内でのインデックス）
     std::optional<int32_t> parentIndex; // 親ジョイントのインデックス（ModelData のジョイント配列内でのインデックス、ルートジョイントの場合は std::nullopt）
 };
@@ -106,6 +97,11 @@ public:
     static std::vector<SkeletonListEntry> GetLoadedSkeletonListEntries();
 
     const std::string &GetAssetsRootPath() const noexcept { return assetsRootPath_; }
+
+    /// @brief スケルトンのジョイントの変換行列を更新する
+    /// @param handle スケルトンハンドル
+    /// @return 更新に成功した場合はtrue、失敗した場合はfalseを返す
+    static const bool UpdateSkeletonJointTransforms(SkeletonHandle handle);
 
 private:
     void LoadAllFromAssetsFolder();

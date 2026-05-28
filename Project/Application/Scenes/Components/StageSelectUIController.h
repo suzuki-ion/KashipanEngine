@@ -81,18 +81,18 @@ public:
             UpdateEntranceAnimation(dt);
         }
 
-        bool changed = false;
+        changed_ = false;
         size_t oldIndex = selectionIndex_;
         if (ic->Evaluate("SelectUp").Triggered()) {
             selectionIndex_ = (selectionIndex_ - 1 + stagePaths_.size()) % stagePaths_.size();
-            changed = true;
+            changed_ = true;
         }
         if (ic->Evaluate("SelectDown").Triggered()) {
             selectionIndex_ = (selectionIndex_ + 1) % stagePaths_.size();
-            changed = true;
+            changed_ = true;
         }
 
-        if (changed) {
+        if (changed_) {
             float diff = static_cast<float>(selectionIndex_) - static_cast<float>(oldIndex);
             float sizeF = static_cast<float>(stagePaths_.size());
             if (diff > sizeF * 0.5f) diff -= sizeF;
@@ -140,6 +140,16 @@ public:
 
     size_t GetSelectedIndex() const { return selectionIndex_; }
     const std::string& GetSelectedPath() const { return stagePaths_[selectionIndex_]; }
+	bool GetChanged() const { return changed_; }
+
+	/// @brief 選択されたステージを非同期に読み込むための準備（シーン変数にファイルパスをセット）
+    void SyncLoadSelectedStage() {
+        if (stagePaths_.empty()) return;
+        auto *ctx = GetOwnerContext();
+        if (!ctx) return;
+        const std::string &path = stagePaths_[selectionIndex_];
+        ctx->AddSceneVariable("TargetStageFilePath", path);
+	}
 
 private:
     void UpdatePositions(float dt = 0.0f) {
@@ -265,6 +275,8 @@ private:
     float optionMargin_ = 100.0f;
     float selectedScale_ = 1.5f;
     float selectedScalePulse_ = 2.0f;
+
+	bool changed_ = false;
 };
 
 } // namespace KashipanEngine

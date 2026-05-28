@@ -376,6 +376,200 @@ public:
         groundTr->SetRotateQuaternion((qTwist * qDown).Normalize());
     }
 
+	/// @brief ステージをリセットする。今のステージ番号で配置しなおす
+    void StageReset() {
+        // 地面とコインを非アクティブにしてリセット
+        for (auto &g : grounds_) {
+            if (g.object) {
+                g.object->RemoveComponent3D("SlowGroundDefined", 0);
+                g.object->RemoveComponent3D("RotateGroundDefined", 0);
+                g.object->RemoveComponent3D("GravityGroundDefined", 0);
+
+                g.isActive = false;
+                if (auto* ground = g.object->GetComponent3D<GroundDefined>()) {
+                    ground->ResetTouchColorAnimation();
+                }
+            }
+        }
+        for (auto &c : coins_) {
+            if (c.object) {
+                c.isActive = false;
+            }
+        }
+        touchedGroundCount_ = 0;
+
+        // スポーン要求をリセットして再読み込み
+		auto* ctx = GetOwnerContext();
+        // リクエストリストを初期化
+        spawnRequests_.clear();
+        coinSpawnRequests_.clear();
+
+        // ステージの読み込み
+        nlohmann::json j;
+        std::string stageDataFilePath = ctx->GetSceneVariableOr<std::string>("TargetStageFilePath", "Assets/Application/StageData/stage.json");
+        std::ifstream ifs(stageDataFilePath);
+        if (ifs.is_open()) {
+            try {
+                ifs >> j;
+            }
+            catch (const nlohmann::json::parse_error& e) {
+                e;
+                assert(false && "JSONファイルのパースに失敗しました。フォーマットを確認してください。");
+            }
+        } else {
+            assert(false && "Failed to open stage data file.");
+        }
+
+        // jsonから制作時に想定したステージの長さを格納
+        if (j.contains("stageLength")) {
+            editStageLengthData = j["stageLength"].get<float>();
+        }
+
+        // jsonから配置リクエストを積む
+        float maxStageProgress = 0.0f;
+        if (j.contains("spawn_reqests") && j["spawn_reqests"].is_array()) {
+            for (const auto& groundData : j["spawn_reqests"]) {
+                SpawnRequest req{};
+                if (groundData.contains("stageProgress") && groundData["stageProgress"].is_number()) {
+                    req.stageProgress = groundData["stageProgress"].get<float>();
+                    if (req.stageProgress > maxStageProgress) {
+                        maxStageProgress = req.stageProgress;
+                    }
+                } else {
+                    assert(false && "spawn_reqestsの各要素にはstageProgressが必要です。");
+                    throw std::runtime_error("spawn_reqestsの各要素にはstageProgressが必要です。");
+                }
+                if (groundData.contains("radius") && groundData["radius"].is_number()) {
+                    req.radius = groundData["radius"].get<float>();
+                } else {
+                    assert(false && "spawn_reqestsの各要素にはradiusが必要です。");
+                    throw std::runtime_error("spawn_reqestsの各要素にはradiusが必要です。");
+                }
+                if (groundData.contains("angle") && groundData["angle"].is_number()) {
+                    req.angle = groundData["angle"].get<float>();
+                } else {
+                    assert(false && "spawn_reqestsの各要素にはangleが必要です。");
+                    throw std::runtime_error("spawn_reqestsの各要素にはangleが必要です。");
+                }
+                if (groundData.contains("panelWidth") && groundData["panelWidth"].is_number()) {
+                    req.panelWidth = groundData["panelWidth"].get<float>();
+                } else {
+                    assert(false && "spawn_reqestsの各要素にはpanelWidthが必要です。");
+                    throw std::runtime_error("spawn_reqestsの各要素にはpanelWidthが必要です。");
+                }
+                if (groundData.contains("panelThickness") && groundData["panelThickness"].is_number()) {
+                    req.panelThickness = groundData["panelThickness"].get<float>();
+
+                } else {
+                    assert(false && "spawn_reqestsの各要素にはpanelThicknessが必要です。");
+                    throw std::runtime_error("spawn_reqestsの各要素にはpanelThicknessが必要です。");
+                }
+                if (groundData.contains("panelLength") && groundData["panelLength"].is_number()) {
+                    req.panelLength = groundData["panelLength"].get<float>();
+                } else {
+                    assert(false && "spawn_reqestsの各要素にはpanelLengthが必要です。");
+                    throw std::runtime_error("spawn_reqestsの各要素にはpanelLengthが必要です。");
+                }
+
+                if (groundData.contains("blockType") && groundData["blockType"].is_number()) {
+                    req.blockType = groundData["blockType"].get<int>();
+                } else {
+                    assert(false && "spawn_reqestsの各要素にはblockTypeが必要です。");
+                    throw std::runtime_error("spawn_reqestsの各要素にはblockTypeが必要です。");
+                }
+                spawnRequests_.push_back(req);
+            }
+        }
+
+        // コインのスポーンリクエスト読み込みを追加
+        if (j.contains("coin_reqests") && j["coin_reqests"].is_array()) {
+            for (const auto& coinData : j["coin_reqests"]) {
+                CoinSpawnRequest req{};
+                if (coinData.contains("stageProgress") && coinData["stageProgress"].is_number()) {
+                    req.stageProgress = coinData["stageProgress"].get<float>();
+                    if (req.stageProgress > maxStageProgress) {
+                        maxStageProgress = req.stageProgress;
+                    }
+                }
+                if (coinData.contains("radius") && coinData["radius"].is_number()) req.radius = coinData["radius"].get<float>();
+                if (coinData.contains("angle") && coinData["angle"].is_number()) req.angle = coinData["angle"].get<float>();
+                if (coinData.contains("blockType") && coinData["blockType"].is_number()) req.blockType = coinData["blockType"].get<int>();
+                if (coinData.contains("panelWidth") && coinData["panelWidth"].is_number()) req.panelWidth = coinData["panelWidth"].get<float>();
+                if (coinData.contains("panelThickness") && coinData["panelThickness"].is_number()) req.panelThickness = coinData["panelThickness"].get<float>();
+                if (coinData.contains("panelLength") && coinData["panelLength"].is_number()) req.panelLength = coinData["panelLength"].get<float>();
+
+                coinSpawnRequests_.push_back(req);
+            }
+        }
+
+        // 正規化処理の拡張
+        if (maxStageProgress > 1.0f) {
+            // すべてのリクエストのstageProgressをmaxStageProgressで割って正規化する
+            for (auto& req : spawnRequests_) {
+                req.stageProgress /= maxStageProgress;
+                req.radius /= maxStageProgress;
+                req.panelLength /= maxStageProgress;
+                req.panelThickness /= maxStageProgress;
+                req.panelWidth /= maxStageProgress;
+            }
+
+            // コインの正規化を追加
+            for (auto& req : coinSpawnRequests_) {
+                req.stageProgress /= maxStageProgress;
+                req.radius /= maxStageProgress;
+                req.panelLength /= maxStageProgress;
+                req.panelThickness /= maxStageProgress;
+                req.panelWidth /= maxStageProgress;
+            }
+
+            // 修正版を出力する
+            nlohmann::json outputJson;
+            outputJson["stageLength"] = editStageLengthData;
+            outputJson["spawn_reqests"] = nlohmann::json::array();
+            for (const auto& req : spawnRequests_) {
+                nlohmann::json reqJson;
+                reqJson["stageProgress"] = req.stageProgress;
+                reqJson["radius"] = req.radius;
+                reqJson["angle"] = req.angle;
+                reqJson["panelWidth"] = req.panelWidth;
+                reqJson["panelThickness"] = req.panelThickness;
+                reqJson["panelLength"] = req.panelLength;
+                outputJson["spawn_reqests"].push_back(reqJson);
+            }
+            outputJson["coin_reqests"] = nlohmann::json::array();
+            for (const auto& req : coinSpawnRequests_) {
+                nlohmann::json reqJson;
+                reqJson["stageProgress"] = req.stageProgress;
+                reqJson["radius"] = req.radius;
+                reqJson["angle"] = req.angle;
+                reqJson["blockType"] = req.blockType;
+                reqJson["panelWidth"] = req.panelWidth;
+                reqJson["panelThickness"] = req.panelThickness;
+                reqJson["panelLength"] = req.panelLength;
+                outputJson["coin_reqests"].push_back(reqJson);
+            }
+            std::ofstream ofs("Assets/Application/StageData/corrected_stage_data.json");
+            if (ofs.is_open()) {
+                ofs << outputJson.dump(4); // インデント幅4で整形して出力
+            } else {
+                assert(false && "Failed to open file for writing corrected stage data.");
+            }
+        }
+
+        // スポーン要求の順番をstageProgressの昇順にソートする
+        std::sort(spawnRequests_.begin(), spawnRequests_.end(), [](const SpawnRequest& a, const SpawnRequest& b) {
+            return a.stageProgress < b.stageProgress;
+            });
+        std::sort(coinSpawnRequests_.begin(), coinSpawnRequests_.end(), [](const CoinSpawnRequest& a, const CoinSpawnRequest& b) {
+            return a.stageProgress < b.stageProgress;
+            });
+
+		// スポーン要求のインデックスをリセットして再スポーン
+        currentSpawnRequestIndex_ = 0;
+        currentCoinSpawnRequestIndex_ = 0;
+        SpawnReqestFromStageData();
+	}
+
 private:
     static Quaternion MakeFromToQuaternion(const Vector3 &from, const Vector3 &to) {
         const Vector3 f = from.Normalize();
@@ -627,6 +821,7 @@ private:
 		return false;
 	}
 
+	/// @brief 現在のスポーンリクエストに基づいて地面をスポーンする。プールに空きがない場合や、スポーンリクエストがもうない場合は何もしない
     void SpawnGroundFromStageData() {
         if (!HasGroundPoolSpace()) return;
 
@@ -697,6 +892,16 @@ private:
         }
         ++currentCoinSpawnRequestIndex_;
     }
+
+	/// @brief スポーンリクエストに沿ってプールが許す限りステージを生成する
+    void SpawnReqestFromStageData() {
+        while (HasGroundPoolSpace() && spawnRequests_.size() > currentSpawnRequestIndex_) {
+            SpawnGroundFromStageData();
+        }
+        while (HasGroundPoolSpace() && coinSpawnRequests_.size() > currentCoinSpawnRequestIndex_) {
+            SpawnCoinFromStageData();
+		}
+	}
 
     bool requested_ = false;
     bool generated_ = false;

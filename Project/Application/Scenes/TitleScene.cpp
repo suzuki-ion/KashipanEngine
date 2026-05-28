@@ -149,6 +149,29 @@ void TitleScene::OnUpdate() {
                 mainCamera_->SetFovY(1.0f);
             }
         }
+
+		// シーンのUI移動が起きたらプレイヤーを原点に戻す
+        if(auto* ssuc = GetSceneComponent<StageSelectUIController>()) {
+            if (ssuc->GetChanged()) {
+                // カメラの位置を戻す
+                if (auto *tr = dummyPlayer_->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
+
+                    if(mainCamera_) {
+                        if (auto *camTr = mainCamera_->GetComponent3D<Transform3D>()) {
+                            camTr->SetTranslate(Vector3{0.0f, 0.0f, cameraPlayerOffsetZ_});
+                            camTr->SetRotate(Vector3{0.0f, kPi, 0.0f});
+                        }
+                        mainCamera_->SetFovY(1.0f);
+					}
+				}
+                // ステージを更新する
+                if(auto* sgg = GetSceneComponent<StageGroundGenerator>()) {
+					ssuc->SyncLoadSelectedStage();
+                    sgg->StageReset();
+				}
+            }
+		}
     }
 
     if (!GetNextSceneName().empty()) {

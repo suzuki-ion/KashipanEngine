@@ -3,6 +3,7 @@
 
 #include <KashipanEngine.h>
 #include "Objects/Components/CollisionAttributes.h"
+#include "Objects/Components/StageObjectSpawnAnimation.h"
 
 namespace KashipanEngine {
 
@@ -103,6 +104,9 @@ public:
         if (auto *ctx = GetOwner3DContext()) {
             if (auto *mat = ctx->GetComponent<Material3D>()) {
                 mat->SetColor(defaultColor_);
+            }
+            if (auto *spawnAnim = ctx->GetComponent<StageObjectSpawnAnimation>()) {
+                spawnAnim->ResetAnimation();
             }
         }
     }

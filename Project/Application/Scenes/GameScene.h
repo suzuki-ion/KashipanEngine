@@ -74,7 +74,7 @@ private:
     Vector3 clearSlowdownStartLateralVelocity_{0.0f, 0.0f, 0.0f};
     Vector3 clearSlowdownStartGravityVelocity_{0.0f, 0.0f, 0.0f};
     
-    Vector3 playerSpawnPosition_{0.0f, 0.0f, -2.0f};
+    Vector3 playerSpawnPosition_{0.0f, 0.0f, 256.0f};
 
     PlayState playState_ = PlayState::Playing;
 };

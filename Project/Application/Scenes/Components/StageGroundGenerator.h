@@ -691,6 +691,7 @@ private:
             }
 			// 地面としての定義
             obj->RegisterComponent<GroundDefined>(collider_);
+            obj->RegisterComponent<StageObjectSpawnAnimation>();
             Object3DBase *objPtr = obj.get();
             if (ctx->AddObject3D(std::move(obj)) && objPtr) {
                 GroundRuntime runtime{};
@@ -910,9 +911,9 @@ private:
     float panelThickness_ = 2.0f;
     float spawnGroundCenterX_ = 0.0f;
     float spawnGroundCenterY_ = -16.0f;
-    float spawnGroundCenterZ_ = -2.0f;
+    float spawnGroundCenterZ_ = 256.0f;
     float spawnGroundWidth_ = 16.0f;
-    float spawnGroundDepth_ = 256.0f;
+    float spawnGroundDepth_ = 512.0f;
     float spawnGroundOffset_ = 4.0f;
 
     int panelWidthSplitCount_ = 3;

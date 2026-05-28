@@ -357,10 +357,15 @@ public:
         }
         if (auto *tr = reverseSprite->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{256.0f, 128.0f, 1.0f});
+            tr->SetScale(Vector3{512.0f, 128.0f, 1.0f});
         }
         pReverseSprite_ = reverseSprite.get();
         (void)ctx->AddObject2D(std::move(reverseSprite));
+
+        reverseSpriteStartPosition_.x = -512.0f;
+        reverseSpriteStartPosition_.y = screenHeight_ * 0.5f;
+        reverseSpriteTargetPosition_.x = 256.0f + 64.0f;
+        reverseSpriteTargetPosition_.y = screenHeight_ * 0.5f;
 
         // ゲージアンカー
         auto gageAnc = std::make_unique<Sprite>();
@@ -531,14 +536,13 @@ public:
                     AudioManager::Play(soundHandle, 1.0f);
 
                     if (player_) {
-                        if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
+                        /*if (auto *playerTr = player_->GetComponent3D<Transform3D>()) {
                             Vector2 screenPos;
                             if (ProjectWorldTo2DWorld(playerTr->GetTranslate(), screenPos)) {
                                 reverseSpriteStartPosition_ = Vector3{ screenPos.x, screenPos.y + reverseSpriteStartYOffset_, 0.0f };
-                            } else {
-                                reverseSpriteStartPosition_ = Vector3{ 0.0f, reverseSpriteStartYOffset_, 0.0f };
+                                reverseSpriteTargetPosition_ = reverseSpriteStartPosition_ + Vector3{ 0.0f, reverseSpriteMoveOffsetY_, 0.0f };
                             }
-                        }
+                        }*/
                         if (auto *getCoinCounter = player_->GetComponent3D<PlayerGetCoinCounter>()) {
                             getCoinCounter->AddCoin();
                         }
@@ -552,10 +556,9 @@ public:
                 if (reverseSpriteAnimActive_) {
                     reverseSpriteAnimElapsed_ += dt;
                     const float t = std::clamp(reverseSpriteAnimElapsed_ / std::max(0.0001f, reverseSpriteMoveDuration_), 0.0f, 1.0f);
-                    const float eased = EaseOutCubic(0.0f, 1.0f, t);
-                    const float targetY = reverseSpriteStartPosition_.y + reverseSpriteMoveOffsetY_;
-                    const float y = std::lerp(reverseSpriteStartPosition_.y, targetY, eased);
-                    tr->SetTranslate(Vector3{reverseSpriteStartPosition_.x, y, 0.0f});
+                    const float eased = EaseOutExpo(0.0f, 1.0f, t);
+                    const Vector3 currentPos = Vector3::Lerp(reverseSpriteStartPosition_, reverseSpriteTargetPosition_, eased);
+                    tr->SetTranslate(currentPos);
 
                     if (t >= 1.0f) {
                         reverseSpriteAnimActive_ = false;
@@ -1458,13 +1461,14 @@ private:
 
     Sprite *pReverseSprite_ = nullptr;
     Vector3 reverseSpriteStartPosition_{0.0f, 0.0f, 0.0f};
+    Vector3 reverseSpriteTargetPosition_{ 0.0f, 0.0f, 0.0f };
     bool reverseSpriteAnimActive_ = false;
     bool reverseSpriteFadeOutActive_ = false;
     float reverseSpriteAnimElapsed_ = 0.0f;
     float reverseSpriteFadeOutElapsed_ = 0.0f;
     float reverseSpriteAlpha_ = 0.0f;
-    float reverseSpriteMoveDuration_ = 0.25f;
-    float reverseSpriteFadeDuration_ = 0.25f;
+    float reverseSpriteMoveDuration_ = 0.5f;
+    float reverseSpriteFadeDuration_ = 1.0f;
     float reverseSpriteStartYOffset_ = 64.0f;
     float reverseSpriteMoveOffsetY_ = 64.0f;
     float reverseAngleMinDegrees_ = -130.0f;

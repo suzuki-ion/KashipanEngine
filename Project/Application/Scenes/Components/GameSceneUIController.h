@@ -348,7 +348,7 @@ public:
         reverseSprite->SetUniqueBatchKey();
         reverseSprite->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *mat = reverseSprite->GetComponent2D<Material2D>()) {
-            auto texture = TextureManager::GetTextureFromFileName("pReverse.png");
+            auto texture = TextureManager::GetTextureFromFileName("pReverse2.png");
             if (texture == TextureManager::kInvalidHandle) {
                 texture = TextureManager::GetTextureFromAssetPath("Application/Image/pReverse.png");
             }
@@ -357,7 +357,7 @@ public:
         }
         if (auto *tr = reverseSprite->GetComponent2D<Transform2D>()) {
             tr->SetTranslate(Vector3{0.0f, 0.0f, 0.0f});
-            tr->SetScale(Vector3{256.0f, 256.0f, 1.0f});
+            tr->SetScale(Vector3{256.0f, 128.0f, 1.0f});
         }
         pReverseSprite_ = reverseSprite.get();
         (void)ctx->AddObject2D(std::move(reverseSprite));

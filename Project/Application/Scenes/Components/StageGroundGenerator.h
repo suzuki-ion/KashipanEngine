@@ -409,6 +409,9 @@ public:
                     tr->SetTranslateY(5000.0f);
                     tr->SetScale(Vector3::Zero());
 				}
+                if (auto *coin = c.object->GetComponent3D<CoinDefined>()) {
+                    coin->ResetCollectAnimation();
+                }
             }
         }
         touchedGroundCount_ = 0;
@@ -722,6 +725,7 @@ private:
             }
             // コインとしての定義
             obj->RegisterComponent<CoinDefined>(collider_);
+            obj->RegisterComponent<StageObjectSpawnAnimation>();
             if (auto *tr = obj->GetComponent3D<Transform3D>()) {
                 tr->SetTranslate(Vector3{ 0.0f, -100.0f, 0.0f });
                 tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });

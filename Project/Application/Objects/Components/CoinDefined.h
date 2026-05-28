@@ -53,8 +53,6 @@ public:
             }
         }
 
-        ctx->RegisterComponent<StageObjectSpawnAnimation>();
-
         ResetCollectAnimation();
         return true;
     }
@@ -166,9 +164,6 @@ public:
         playerTransform_ = nullptr;
 
         tr->SetParentTransform(initialParent_);
-        tr->SetTranslate(initialTranslate_);
-        tr->SetScale(initialScale_);
-        tr->SetRotate(initialRotate_);
         mat->SetColor(defaultColor_);
 
         if (auto *spawnAnim = ctx->GetComponent<StageObjectSpawnAnimation>()) {

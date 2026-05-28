@@ -25,6 +25,10 @@ public:
         auto *tr = ctx->GetComponent<Transform3D>();
         if (!tr) return true;
 
+        if (animationElapsed_ >= animationDelay_ + animationDuration_) {
+            return true;
+        }
+
         animationElapsed_ += GetDeltaTime() * GetGameSpeed();
         if (animationElapsed_ < animationDelay_) {
             // アニメーション開始前は何もしない

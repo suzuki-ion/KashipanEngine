@@ -28,7 +28,7 @@ enum class TextAlignY {
 class ScreenBuffer;
 class Window;
 
-class Text : public Object2DBase {
+class Text2D : public Object2DBase {
 public:
     struct LineInfo {
         float width = 0.0f;
@@ -37,11 +37,11 @@ public:
         uint32_t endSpriteIndex = 0;
     };
 
-    Text() = delete;
+    Text2D() = delete;
     /// @brief テキストのコンストラクタ
     /// @param textCount テキストの文字数
-    explicit Text(uint32_t textCount = 128);
-    ~Text() override = default;
+    explicit Text2D(uint32_t textCount = 128);
+    ~Text2D() override = default;
 
     /// @brief テキストのフォントの設定
     /// @param fontFilePath フォントファイル(.fnt)のパス

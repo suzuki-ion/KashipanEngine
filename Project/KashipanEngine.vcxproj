@@ -206,7 +206,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
     <ClCompile Include="KashipanEngine\Font\FontLoader.cpp" />
-    <ClCompile Include="KashipanEngine\Font\Text.cpp" />
+    <ClCompile Include="KashipanEngine\Font\Text2D.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
@@ -232,6 +232,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Font\Text3D.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\GraphicsEngine.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp" />
@@ -374,7 +375,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\FontHeaders.h" />
     <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
     <ClInclude Include="KashipanEngine\Font\FontStructs.h" />
-    <ClInclude Include="KashipanEngine\Font\Text.h" />
+    <ClInclude Include="KashipanEngine\Font\Text3D.h" />
+    <ClInclude Include="KashipanEngine\Font\Text2D.h" />
     <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />

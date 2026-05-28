@@ -68,9 +68,10 @@ public:
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
 
         if (!hasCollected_) {
-            Vector3 rot = tr->GetRotate();
-            rot.y += idleRotationSpeed_ * dt;
-            tr->SetRotate(rot);
+            Quaternion rot = tr->GetRotateQuaternion();
+            Vector3 up = rot.RotateVector(Vector3(0.0f, 1.0f, 0.0f));
+            Quaternion rotY = rot.MakeRotateAxisAngle(up, idleRotationSpeed_ * dt);
+            tr->SetRotateQuaternion(rotY * rot);
         }
 
         if (isApproaching_) {

@@ -26,6 +26,10 @@ public:
         if (!tr) return true;
 
         animationElapsed_ += GetDeltaTime() * GetGameSpeed();
+        if (animationElapsed_ < animationDelay_) {
+            // アニメーション開始前は何もしない
+            return true;
+        }
         float t = Normalize01(animationElapsed_ - animationDelay_, 0.0f, animationDuration_);
 
         tr->SetScale(defaultScale_);
@@ -46,23 +50,26 @@ public:
         if (!tr) return false;
         defaultScale_ = tr->GetScale();
         tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
-
         animationElapsed_ = 0.0f;
-        tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
 
         // オブジェクトのデフォルト位置をアニメーション終了位置として設定
         endPosition_ = tr->GetTranslate();
+        const float z = endPosition_.z;
+        endPosition_.z = 0.0f;
 
         Vector3 direction = endPosition_.Normalize();
         if (direction == Vector3::Zero()) {
             direction = Vector3{ 0.0f, -1.0f, 0.0f }; // デフォルトの方向（下向き）
         }
         startPosition_ = direction * kStartRadius_;
-        startPosition_.z = endPosition_.z; // Z座標は変えない
+
+        startPosition_.z = z;
+        endPosition_.z = z;
 
         // ディレイをランダムに設定（0～0.5秒程度）
-        animationDelay_ = GetRandomFloat(0.0f, 1.0f);
+        animationDelay_ = GetRandomFloat(0.0f, 0.5f);
 
+        isAnimationStarted_ = false;
         return true;
     }
 
@@ -75,9 +82,9 @@ private:
     Vector3 defaultScale_{ 1.0f, 1.0f, 1.0f };
     Vector3 startPosition_{ 0.0f, 0.0f, 0.0f };
     Vector3 endPosition_{ 0.0f, 0.0f, 0.0f };
-    inline static const float kStartRadius_ = 128.0f;
+    inline static const float kStartRadius_ = 256.0f;
 
-    float animationDuration_ = 1.0f;
+    float animationDuration_ = 0.5f;
     float animationElapsed_ = 0.0f;
     float animationDelay_ = 0.0f;
     EaseType animationEaseType_ = EaseType::EaseOutBack;

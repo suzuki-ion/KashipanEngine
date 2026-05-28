@@ -73,7 +73,7 @@ public:
 
         // ステージの読み込み
         nlohmann::json j;
-        std::string stageDataFilePath = ctx->GetSceneVariableOr<std::string>("TargetStageFilePath", "Assets/Application/StageData/stage.json");
+        std::string stageDataFilePath = ctx->GetSceneVariableOr<std::string>("TargetStageFilePath", "Assets/Application/StageData/stage_01.json");
         std::ifstream ifs(stageDataFilePath);
         if (ifs.is_open()) {
             try {
@@ -410,7 +410,7 @@ public:
 
         // ステージの読み込み
         nlohmann::json j;
-        std::string stageDataFilePath = ctx->GetSceneVariableOr<std::string>("TargetStageFilePath", "Assets/Application/StageData/stage.json");
+        std::string stageDataFilePath = ctx->GetSceneVariableOr<std::string>("TargetStageFilePath", "Assets/Application/StageData/stage_01.json");
         std::ifstream ifs(stageDataFilePath);
         if (ifs.is_open()) {
             try {

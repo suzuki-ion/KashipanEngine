@@ -348,7 +348,7 @@ public:
         reverseSprite->SetUniqueBatchKey();
         reverseSprite->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
         if (auto *mat = reverseSprite->GetComponent2D<Material2D>()) {
-            auto texture = TextureManager::GetTextureFromFileName("pReverse2.png");
+            auto texture = TextureManager::GetTextureFromFileName("pReverse.png");
             if (texture == TextureManager::kInvalidHandle) {
                 texture = TextureManager::GetTextureFromAssetPath("Application/Image/pReverse.png");
             }

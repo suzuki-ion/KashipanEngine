@@ -394,6 +394,10 @@ public:
         for (auto &c : coins_) {
             if (c.object) {
                 c.isActive = false;
+
+                if(auto* tr = c.object->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslateY(5000.0f);
+				}
             }
         }
         touchedGroundCount_ = 0;

@@ -1,4 +1,4 @@
-#include "Text.h"
+#include "Text2D.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -13,8 +13,8 @@
 
 namespace KashipanEngine {
 
-Text::Text(uint32_t textCount)
-    : Object2DBase("Text") {
+Text2D::Text2D(uint32_t textCount)
+    : Object2DBase("Text2D") {
     sprites_.reserve(textCount);
     textCodePoints_.resize(textCount, -1);
     basePositions_.resize(textCount, Vector2{0.0f, 0.0f});
@@ -41,19 +41,19 @@ Text::Text(uint32_t textCount)
     }
 }
 
-void Text::SetFont(const char *fontFilePath) {
+void Text2D::SetFont(const char *fontFilePath) {
     fontData_ = LoadFNT(fontFilePath);
     ResolveFontTextures();
     RebuildTextLayout();
 }
 
-void Text::SetFont(const FontData &fontData) {
+void Text2D::SetFont(const FontData &fontData) {
     fontData_ = fontData;
     ResolveFontTextures();
     RebuildTextLayout();
 }
 
-void Text::SetText(const std::u8string &text) {
+void Text2D::SetText(const std::u8string &text) {
     if (text_ == text) {
         return;
     }
@@ -62,51 +62,51 @@ void Text::SetText(const std::u8string &text) {
     RebuildTextLayout();
 }
 
-void Text::SetTextAlign(TextAlignX textAlignX, TextAlignY textAlignY) {
+void Text2D::SetTextAlign(TextAlignX textAlignX, TextAlignY textAlignY) {
     if (textAlignX_ == textAlignX && textAlignY_ == textAlignY) return;
     textAlignX_ = textAlignX;
     textAlignY_ = textAlignY;
     ApplyTextAlign();
 }
 
-Sprite *Text::operator[](size_t index) {
+Sprite *Text2D::operator[](size_t index) {
     if (index >= sprites_.size()) return nullptr;
     return sprites_[index].get();
 }
 
-const Sprite *Text::operator[](size_t index) const {
+const Sprite *Text2D::operator[](size_t index) const {
     if (index >= sprites_.size()) return nullptr;
     return sprites_[index].get();
 }
 
-void Text::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
+void Text2D::AttachToRenderer(Window *targetWindow, const std::string &pipelineName) {
     for (auto &sprite : sprites_) {
         if (!sprite) continue;
         sprite->AttachToRenderer(targetWindow, pipelineName);
     }
 }
 
-void Text::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
+void Text2D::AttachToRenderer(ScreenBuffer *targetBuffer, const std::string &pipelineName) {
     for (auto &sprite : sprites_) {
         if (!sprite) continue;
         sprite->AttachToRenderer(targetBuffer, pipelineName);
     }
 }
 
-void Text::DetachFromRenderer() {
+void Text2D::DetachFromRenderer() {
     for (auto &sprite : sprites_) {
         if (!sprite) continue;
         sprite->DetachFromRenderer();
     }
 }
 
-void Text::OnUpdate() {
+void Text2D::OnUpdate() {
     for (auto &sprite : sprites_) {
         if (sprite) sprite->Update();
     }
 }
 
-void Text::RebuildTextLayout() {
+void Text2D::RebuildTextLayout() {
     lineInfos_.clear();
 
     if (sprites_.empty()) return;
@@ -163,7 +163,7 @@ void Text::RebuildTextLayout() {
     ApplyTextAlign();
 }
 
-void Text::ApplyTextAlign() {
+void Text2D::ApplyTextAlign() {
     if (lineInfos_.empty()) return;
 
     float totalHeight = 0.0f;
@@ -198,15 +198,15 @@ void Text::ApplyTextAlign() {
     }
 }
 
-void Text::CalculateTextAlignX(TextAlignX /*newTextAlignX*/) {
+void Text2D::CalculateTextAlignX(TextAlignX /*newTextAlignX*/) {
     ApplyTextAlign();
 }
 
-void Text::CalculateTextAlignY(TextAlignY /*newTextAlignY*/) {
+void Text2D::CalculateTextAlignY(TextAlignY /*newTextAlignY*/) {
     ApplyTextAlign();
 }
 
-void Text::ResolveFontTextures() {
+void Text2D::ResolveFontTextures() {
     for (auto &page : fontData_.pages) {
         const auto fileName = std::filesystem::path(page.file).filename().string();
         if (fileName.empty()) {
@@ -217,7 +217,7 @@ void Text::ResolveFontTextures() {
     }
 }
 
-void Text::HideSprite(size_t index) {
+void Text2D::HideSprite(size_t index) {
     if (index >= sprites_.size()) return;
     auto *sprite = sprites_[index].get();
     if (!sprite) return;
@@ -227,7 +227,7 @@ void Text::HideSprite(size_t index) {
     }
 }
 
-void Text::UpdateSpriteForChar(size_t index, const CharInfo &charData) {
+void Text2D::UpdateSpriteForChar(size_t index, const CharInfo &charData) {
     if (index >= sprites_.size()) return;
     auto *sprite = sprites_[index].get();
     if (!sprite) return;
@@ -262,7 +262,7 @@ void Text::UpdateSpriteForChar(size_t index, const CharInfo &charData) {
     }
 }
 
-std::u8string Text::ToU8String(const std::string &text) {
+std::u8string Text2D::ToU8String(const std::string &text) {
     return std::u8string(reinterpret_cast<const char8_t *>(text.data()), text.size());
 }
 

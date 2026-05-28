@@ -161,6 +161,18 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
+        auto text3D = std::make_unique<Text3D>(32);
+        text3D->SetName("TestText3D");
+        text3D->SetFont("arial.fnt");
+        text3D->SetText(u8"Hello, 3D Text!");
+        if (auto *transform = text3D->GetComponent3D<Transform3D>()) {
+            transform->SetTranslate(Vector3(0.0f, -2.0f, 0.0f));
+        }
+        text3D->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(text3D));
+    }
+
+    if (screenBuffer3D) {
         auto skybox = std::make_unique<Skybox>();
         skybox->SetName("TestSkybox");
 

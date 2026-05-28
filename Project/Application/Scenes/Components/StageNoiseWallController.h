@@ -140,7 +140,7 @@ private:
     float maxScale_ = 8.0f;
     bool movementEnabled_ = true;
 
-    Vector3 initialWallPosition_{0.0f, 0.0f, 256.0f};
+    Vector3 initialWallPosition_{0.0f, 0.0f, 512.0f};
 };
 
 } // namespace KashipanEngine

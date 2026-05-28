@@ -446,6 +446,7 @@
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
+    <ClInclude Include="Application\Objects\Components\StageObjectSpawnAnimation.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

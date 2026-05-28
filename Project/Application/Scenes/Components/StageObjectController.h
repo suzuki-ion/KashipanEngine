@@ -98,6 +98,14 @@ public:
                 const Vector4 baseColor = groundDefined ? groundDefined->GetDefaultColor() : Vector4{ 1.0f, 1.0f, 1.0f, 1.0f };
 
                 const float dist = (tr->GetTranslate() - playerPos).Length();
+                
+                // distがfar以下ならスポーンアニメーション
+                if (dist <= farFade) {
+                    if (auto *spawnAnim = groundInfo.object->GetComponent3D<StageObjectSpawnAnimation>()) {
+                        spawnAnim->StartAnimation();
+                    }
+                }
+
                 const float colorT = std::clamp((dist - nearFade) / fadeRange, 0.0f, 1.0f);
 
                 // 線形補間でカラースケールを計算

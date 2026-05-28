@@ -3,6 +3,7 @@
 
 #include <KashipanEngine.h>
 #include "Objects/Components/CollisionAttributes.h"
+#include "Objects/Components/StageObjectSpawnAnimation.h"
 
 namespace KashipanEngine {
 
@@ -104,6 +105,9 @@ public:
             if (auto *mat = ctx->GetComponent<Material3D>()) {
                 mat->SetColor(defaultColor_);
             }
+            if (auto *spawnAnim = ctx->GetComponent<StageObjectSpawnAnimation>()) {
+                spawnAnim->ResetAnimation();
+            }
         }
     }
 
@@ -161,7 +165,7 @@ private:
     Vector4 touchColorEnd_{0.5f, 1.0f, 0.5f, 1.0f};
 
     Vector4 nearColorScale_{ 1.0f, 1.0f, 1.0f, 1.0f };
-    Vector4 farColorScale_{ 3.0f, 3.0f, 3.0f, 3.0f };
+    Vector4 farColorScale_{ 4.0f, 4.0f, 4.0f, 4.0f };
 
     float nearDistance_ = 32.0f;
     float farDistance_ = 512.0f;

@@ -126,6 +126,21 @@ public:
                     mat->SetColor(finalColor);
                 }
             }
+
+            for (const auto &coinInfo : stageGroundGenerator_->GetCoins()) {
+                if (!coinInfo.object || !coinInfo.isActive) continue;
+                auto *coinDefined = coinInfo.object->GetComponent3D<CoinDefined>();
+                if (!coinDefined) continue;
+
+                const float dist = (coinInfo.object->GetComponent3D<Transform3D>()->GetTranslate() - playerPos).Length();
+                const float farDistance = coinDefined->GetFarDistance();
+
+                if (dist <= farDistance) {
+                    if (auto *spawnAnim = coinInfo.object->GetComponent3D<StageObjectSpawnAnimation>()) {
+                        spawnAnim->StartAnimation();
+                    }
+                }
+            }
         }
     }
 

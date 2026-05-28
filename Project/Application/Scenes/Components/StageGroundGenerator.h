@@ -49,6 +49,12 @@ public:
         float length = 0.0f;
         bool isActive = false;
     };
+    struct CoinRuntime {
+        Object3DBase *object = nullptr;
+        float centerZ = 0.0f;
+        float length = 0.0f;
+        bool isActive = false;
+    };
 
     StageGroundGenerator() : ISceneComponent("StageGroundGenerator", 1) {}
     ~StageGroundGenerator() override = default;
@@ -320,6 +326,10 @@ public:
     const std::vector<GroundRuntime> &GetGrounds() const {
         return grounds_;
     }
+    /// @brief コインオブジェクトの情報を取得
+    const std::vector<CoinRuntime> &GetCoins() const {
+        return coins_;
+    }
 
     int GetTouchedGroundCount() const { return touchedGroundCount_; }
 
@@ -397,6 +407,7 @@ public:
 
                 if(auto* tr = c.object->GetComponent3D<Transform3D>()) {
                     tr->SetTranslateY(5000.0f);
+                    tr->SetScale(Vector3::Zero());
 				}
             }
         }
@@ -597,13 +608,6 @@ private:
 
     static constexpr float kTwoPi = 3.14159265358979323846f * 2.0f;
 
-    struct CoinRuntime {
-        Object3DBase *object = nullptr;
-        float centerZ = 0.0f;
-        float length = 0.0f;
-        bool isActive = false;
-    };
-
     void TryGenerate() {
 		// すでに生成されているか、生成要求がない場合は何もしない
         if (generated_ || !requested_) return;
@@ -719,7 +723,8 @@ private:
             // コインとしての定義
             obj->RegisterComponent<CoinDefined>(collider_);
             if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3{ 0.0f, -100.0f, 0.0f }); // 最初は見えない場所に配置
+                tr->SetTranslate(Vector3{ 0.0f, -100.0f, 0.0f });
+                tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
             }
             Object3DBase *objPtr = obj.get();
             if (ctx->AddObject3D(std::move(obj)) && objPtr) {
@@ -892,6 +897,9 @@ private:
                 tr->SetScale(Vector3{ 3.5f, 3.5f, 3.5f });
                 c.isActive = true;
                 c.length = req.panelLength * stageLengthRate;
+                if (auto *coin = c.object->GetComponent3D<CoinDefined>()) {
+                    coin->ResetCollectAnimation();
+                }
                 break;
             }
         }

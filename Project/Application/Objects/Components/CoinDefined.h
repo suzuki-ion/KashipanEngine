@@ -4,6 +4,7 @@
 #include "Objects/Components/CollisionAttributes.h"
 #include "Objects/Components/PlayerActionGamepadVibrator.h"
 #include "Objects/Components/PlayerGetCoinCounter.h"
+#include "Objects/Components/StageObjectSpawnAnimation.h"
 
 #include <algorithm>
 
@@ -51,6 +52,8 @@ public:
                 return false;
             }
         }
+
+        ctx->RegisterComponent<StageObjectSpawnAnimation>();
 
         ResetCollectAnimation();
         return true;
@@ -167,6 +170,10 @@ public:
         tr->SetScale(initialScale_);
         tr->SetRotate(initialRotate_);
         mat->SetColor(defaultColor_);
+
+        if (auto *spawnAnim = ctx->GetComponent<StageObjectSpawnAnimation>()) {
+            spawnAnim->ResetAnimation();
+        }
     }
 
     bool HasCollected() const { return hasCollected_; }
@@ -174,6 +181,8 @@ public:
 #if defined(USE_IMGUI)
     void ShowImGui() override {}
 #endif
+
+    float GetFarDistance() const { return farDistance_; }
 
 private:
     void OnCollisionEnter(const HitInfo3D &hit) {
@@ -246,6 +255,8 @@ private:
     Vector3 approachStartTranslate_{ 0.0f, 0.0f, 0.0f };
 
     AudioManager::SoundHandle collectSound_ = AudioManager::GetSoundHandleFromFileName("seCoinget.mp3");
+
+    float farDistance_ = 512.0f;
 };
 
 } // namespace KashipanEngine

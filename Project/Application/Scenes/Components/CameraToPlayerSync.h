@@ -59,6 +59,7 @@ public:
         if (playerForwardSpeedMax_ > playerForwardSpeedMin_) {
             speedRatio = (playerMovement->GetForwardSpeed() - playerForwardSpeedMin_) / (playerForwardSpeedMax_ - playerForwardSpeedMin_);
         }
+        speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
 
         const float followDistance = EaseOutCubic(followDistanceMin_, followDistanceMax_, speedRatio);
         const float followHeight = EaseOutCubic(followHeightMin_, followHeightMax_, speedRatio);
@@ -350,7 +351,7 @@ private:
     float playerForwardSpeedMin_ = 0.0f;
     float playerForwardSpeedMax_ = 64.0f;
     float fovMin_ = 0.6f;
-    float fovMax_ = 2.6f;
+    float fovMax_ = 2.7f;
     float gravitySwitchFollowDistance_ = 10.0f;
     float fallSpeedForMaxTilt_ = 128.0f;
     float maxLookDownOffset_ = 4.0f;

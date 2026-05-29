@@ -10,20 +10,9 @@
 #include "Math/Vector3.h"
 #include "Objects/Object3DBase.h"
 #include "Objects/GameObjects/3D/Plane3D.h"
+#include "Font/TextAlign.h"
 
 namespace KashipanEngine {
-
-enum class TextAlignX {
-    Left,   ///< 左揃え
-    Center, ///< 中央揃え
-    Right,  ///< 右揃え
-};
-
-enum class TextAlignY {
-    Top,    ///< 上揃え
-    Center, ///< 中央揃え
-    Bottom, ///< 下揃え
-};
 
 class ScreenBuffer;
 class Window;
@@ -100,6 +89,7 @@ protected:
     void OnUpdate() override;
 
 private:
+    void CalculateFontSizeScale();
     void RebuildTextLayout();
     void ApplyTextAlign();
     void CalculateTextAlignX(TextAlignX newTextAlignX);
@@ -118,6 +108,7 @@ private:
     Transform3D *parentTransform_ = nullptr;
     TextAlignX textAlignX_ = TextAlignX::Left;
     TextAlignY textAlignY_ = TextAlignY::Top;
+    float fontSizeScale_ = 1.0f;
 
     uint64_t spriteBatchKey_ = 0;
 };

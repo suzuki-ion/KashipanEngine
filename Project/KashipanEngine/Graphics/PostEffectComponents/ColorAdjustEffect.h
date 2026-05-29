@@ -37,9 +37,9 @@ public:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::DragFloat("Brightness", &params_.brightness, 0.01f, -1.0f, 1.0f, "%.3f");
-        ImGui::DragFloat("Contrast", &params_.contrast, 0.01f, 0.0f, 2.0f, "%.3f");
-        ImGui::DragFloat("Saturation", &params_.saturation, 0.01f, 0.0f, 2.0f, "%.3f");
-        ImGui::DragFloat("Temperature", &params_.temperature, 0.01f, -1.0f, 1.0f, "%.3f");
+        ImGui::DragFloat("Contrast", &params_.contrast, 0.01f, 0.0f, 4.0f, "%.3f");
+        ImGui::DragFloat("Saturation", &params_.saturation, 0.01f, 0.0f, 4.0f, "%.3f");
+        ImGui::DragFloat("Temperature", &params_.temperature, 0.01f, -2.0f, 2.0f, "%.3f");
         ImGui::DragFloat3("ColorBalance", params_.colorBalance, 0.01f, -1.0f, 1.0f, "%.3f");
     }
 #endif

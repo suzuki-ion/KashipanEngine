@@ -160,10 +160,23 @@ void TestScene::Initialize() {
         AddObject2D(std::move(ring));
     }
 
+    if (screenBuffer2D) {
+        auto text2D = std::make_unique<Text2D>(32);
+        text2D->SetName("TestText2D");
+        text2D->SetFont("Assets/Application/Image/KaqookanV2_Logo.fnt");
+        text2D->SetText(u8"Hello, 2D Text!");
+        if (auto *transform = text2D->GetComponent2D<Transform2D>()) {
+            transform->SetTranslate(Vector2(64.0f, 256.0f));
+        }
+        text2D->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        AddObject2D(std::move(text2D));
+    }
+
     if (screenBuffer3D) {
         auto text3D = std::make_unique<Text3D>(32);
         text3D->SetName("TestText3D");
-        text3D->SetFont("arial.fnt");
+        text3D->SetFont("Assets/Application/Image/KaqookanV2_Logo.fnt");
+        text3D->SetTextAlign(TextAlignX::Center, TextAlignY::Center);
         text3D->SetText(u8"Hello, 3D Text!");
         if (auto *transform = text3D->GetComponent3D<Transform3D>()) {
             transform->SetTranslate(Vector3(0.0f, -2.0f, 0.0f));

@@ -37,6 +37,8 @@ public:
         const float t = std::clamp(static_cast<float>(count_) / static_cast<float>(maxCount_), 0.0f, 1.0f);
         return std::clamp(Lerp(minSpeedMultiplier_, maxSpeedMultiplier_, t), 0.0f, maxSpeedMultiplier_);
     }
+    float GetMinSpeedMultiplier() const { return minSpeedMultiplier_; }
+    float GetMaxSpeedMultiplier() const { return maxSpeedMultiplier_; }
 
     std::optional<bool> Update() override {
         auto *ctx = GetOwner3DContext();

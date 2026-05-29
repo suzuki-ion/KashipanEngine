@@ -5,6 +5,7 @@
 #include "Scenes/Components/StageGroundGenerator.h"
 #include "Objects/Components/PlayerMovementController.h"
 #include "Objects/Components/PlayerInputHandler.h"
+#include "Objects/Components/PlayerGetCoinCounter.h"
 #include "Utilities/FileIO/JSON.h"
 
 #include <algorithm>
@@ -25,6 +26,10 @@ public:
         if (loadParamsOnInitialize_) {
             (void)LoadParametersFromJson(paramJsonFilePath_);
         }
+        auto *getCoinCounter = player_->GetComponent3D<PlayerGetCoinCounter>();
+        float coinSpeedMultiplier = getCoinCounter ? getCoinCounter->GetMaxSpeedMultiplier() : 1.0f;
+        playerForwardSpeedMin_ = player_ ? player_->GetComponent3D<PlayerMovementController>()->GetMinForwardSpeed() : 0.0f;
+        playerForwardSpeedMax_ = player_ ? player_->GetComponent3D<PlayerMovementController>()->GetMaxForwardSpeed() * coinSpeedMultiplier : 0.0f;
     }
 
     void SetClearViewEnabled(bool enabled) { clearViewEnabled_ = enabled; }
@@ -50,17 +55,14 @@ public:
             right = right.Normalize();
         }
 
-        const float minSpeed = playerMovement->GetMinForwardSpeed();
-        const float maxSpeed = playerMovement->GetMaxForwardSpeed();
         float speedRatio = 0.0f;
-        if (maxSpeed > minSpeed) {
-            speedRatio = (playerMovement->GetForwardSpeed() - minSpeed) / (maxSpeed - minSpeed);
+        if (playerForwardSpeedMax_ > playerForwardSpeedMin_) {
+            speedRatio = (playerMovement->GetForwardSpeed() - playerForwardSpeedMin_) / (playerForwardSpeedMax_ - playerForwardSpeedMin_);
         }
-        speedRatio = std::clamp(speedRatio, 0.0f, 1.0f);
 
-        const float followDistance = std::lerp(followDistanceMin_, followDistanceMax_, speedRatio);
-        const float followHeight = std::lerp(followHeightMin_, followHeightMax_, speedRatio);
-        const float lookAtHeight = std::lerp(lookAtHeightMin_, lookAtHeightMax_, speedRatio);
+        const float followDistance = EaseOutCubic(followDistanceMin_, followDistanceMax_, speedRatio);
+        const float followHeight = EaseOutCubic(followHeightMin_, followHeightMax_, speedRatio);
+        const float lookAtHeight = EaseOutCubic(lookAtHeightMin_, lookAtHeightMax_, speedRatio);
 
         Vector3 cameraPos = playerPos - forward * followDistance + up * followHeight;
         Vector3 lookDir = (playerPos + up * lookAtHeight - cameraPos).Normalize();
@@ -71,7 +73,7 @@ public:
             lookDir = (lookTarget - cameraPos).Normalize();
         }
 
-        float targetFov = Lerp(fovMin_, fovMax_, speedRatio);
+        float targetFov = EaseOutCubic(fovMin_, fovMax_, speedRatio);
 
         auto *inputHandler = player_->GetComponent3D<PlayerInputHandler>();
         const bool isGravitySwitching = inputHandler && inputHandler->IsGravitySwitching();
@@ -340,13 +342,15 @@ private:
     Object3DBase *player_ = nullptr;
 
     float followDistanceMin_ = 8.0f;
-    float followDistanceMax_ = 2.0f;
+    float followDistanceMax_ = 1.0f;
     float followHeightMin_ = 2.0f;
     float followHeightMax_ = 6.0f;
     float lookAtHeightMin_ = 2.0f;
     float lookAtHeightMax_ = 6.0f;
+    float playerForwardSpeedMin_ = 0.0f;
+    float playerForwardSpeedMax_ = 64.0f;
     float fovMin_ = 0.6f;
-    float fovMax_ = 2.5f;
+    float fovMax_ = 2.6f;
     float gravitySwitchFollowDistance_ = 10.0f;
     float fallSpeedForMaxTilt_ = 128.0f;
     float maxLookDownOffset_ = 4.0f;

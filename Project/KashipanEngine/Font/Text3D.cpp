@@ -27,7 +27,10 @@ Text3D::Text3D(uint32_t textCount)
         auto plane = std::make_unique<Plane3D>();
         plane->SetBatchKey(spriteBatchKey_);
         plane->SetName(std::string("TextChar_") + std::to_string(i));
-        //plane->SetPivotPoint(0.0f, 0.0f);
+        auto vertexData = plane->GetVertexData<VertexData3D>();
+        for (auto &v : vertexData) {
+            v.position += Vector4{ 0.5f, -0.5f, 0.0f, 0.0f };
+        }
 
         if (auto *tr = plane->GetComponent3D<Transform3D>()) {
             if (parentTransform_) {
@@ -43,12 +46,14 @@ Text3D::Text3D(uint32_t textCount)
 
 void Text3D::SetFont(const char *fontFilePath) {
     fontData_ = LoadFNT(fontFilePath);
+    CalculateFontSizeScale();
     ResolveFontTextures();
     RebuildTextLayout();
 }
 
 void Text3D::SetFont(const FontData &fontData) {
     fontData_ = fontData;
+    CalculateFontSizeScale();
     ResolveFontTextures();
     RebuildTextLayout();
 }
@@ -106,6 +111,11 @@ void Text3D::OnUpdate() {
     }
 }
 
+void Text3D::CalculateFontSizeScale() {
+    const float size = static_cast<float>(fontData_.info.size);
+    fontSizeScale_ = (size > 0.0f) ? (1.0f / size) : 1.0f;
+}
+
 void Text3D::RebuildTextLayout() {
     lineInfos_.clear();
 
@@ -113,7 +123,7 @@ void Text3D::RebuildTextLayout() {
 
     lineInfos_.emplace_back(LineInfo{});
     lineInfos_.back().beginPlaneIndex = 0;
-    lineInfos_.back().height = fontData_.common.lineHeight;
+    lineInfos_.back().height = fontData_.common.lineHeight * fontSizeScale_;
 
     float cursorX = 0.0f;
     float cursorY = 0.0f;
@@ -130,10 +140,10 @@ void Text3D::RebuildTextLayout() {
         if (codePoint == '\n') {
             lineInfos_.back().endPlaneIndex = static_cast<uint32_t>(charIndex);
             cursorX = 0.0f;
-            cursorY += fontData_.common.lineHeight;
+            cursorY += fontData_.common.lineHeight * fontSizeScale_;
             lineInfos_.emplace_back(LineInfo{});
             lineInfos_.back().beginPlaneIndex = static_cast<uint32_t>(charIndex);
-            lineInfos_.back().height = fontData_.common.lineHeight;
+            lineInfos_.back().height = fontData_.common.lineHeight * fontSizeScale_;
             continue;
         }
 
@@ -146,9 +156,9 @@ void Text3D::RebuildTextLayout() {
         UpdatePlaneForChar(charIndex, charData);
 
         textCodePoints_[charIndex] = codePoint;
-        basePositions_[charIndex] = Vector3{ cursorX + charData.xOffset, cursorY + charData.yOffset, 0.0f };
-        lineInfos_.back().width += charData.xAdvance;
-        cursorX += charData.xAdvance;
+        basePositions_[charIndex] = Vector3{ cursorX + charData.xOffset * fontSizeScale_, cursorY + charData.yOffset * fontSizeScale_, 0.0f };
+        lineInfos_.back().width += charData.xAdvance * fontSizeScale_;
+        cursorX += charData.xAdvance * fontSizeScale_;
         ++charIndex;
     }
 
@@ -233,7 +243,7 @@ void Text3D::UpdatePlaneForChar(size_t index, const CharInfo &charData) {
     if (!plane) return;
 
     if (auto *tr = plane->GetComponent3D<Transform3D>()) {
-        tr->SetScale(Vector3{ charData.width, charData.height, 1.0f });
+        tr->SetScale(Vector3{ charData.width * fontSizeScale_, charData.height * fontSizeScale_, 1.0f });
     }
 
     if (charData.page >= 0 && static_cast<size_t>(charData.page) < fontData_.pages.size()) {

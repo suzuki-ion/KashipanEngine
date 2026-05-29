@@ -407,6 +407,7 @@
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ColorAdjustEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GaussianFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Font\Text3D.h" />
+    <ClInclude Include="KashipanEngine\Font\TextAlign.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

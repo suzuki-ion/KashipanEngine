@@ -380,6 +380,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
     <ClInclude Include="KashipanEngine\CoreHeaders.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\DX12Commands.h" />
+    <ClInclude Include="KashipanEngine\Font\TextAlign.h" />
     <ClInclude Include="KashipanEngine\GraphicsHeaders.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BoxFilterEffect.h" />

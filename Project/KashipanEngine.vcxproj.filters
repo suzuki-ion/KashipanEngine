@@ -410,6 +410,7 @@
     <ClInclude Include="KashipanEngine\Font\TextAlign.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
     <ClInclude Include="Application\Objects\ObjectBatchKeys.h" />
+    <ClInclude Include="Application\Objects\CreateFunc\CreatePlayerObject.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

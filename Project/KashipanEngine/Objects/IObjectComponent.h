@@ -14,6 +14,7 @@
 namespace KashipanEngine {
 
 class IObjectContext;
+class SceneContext;
 class Object2DContext;
 class Object3DContext;
 
@@ -89,6 +90,8 @@ protected:
         : kComponentType_(componentType), kMaxComponentCountPerObject_(maxComponentCountPerObject) {}
     /// @brief 所属オブジェクトのコンテキストを取得
     IObjectContext *GetOwnerContext() const { return ownerObject_; }
+    /// @brief 所属オブジェクトのシーンコンテキストを取得
+    virtual SceneContext *GetOwnerSceneContext() const = 0;
 
 private:
     /// @brief コンポーネントの種類名
@@ -108,6 +111,8 @@ protected:
 
     /// @brief 2Dオブジェクトコンテキストの取得
     Object2DContext *GetOwner2DContext() const;
+    /// @brief 2Dオブジェクトのシーンコンテキストの取得
+    SceneContext *GetOwnerSceneContext() const override;
 };
 
 /// @brief 3D向けオブジェクトコンポーネント基底クラス
@@ -119,6 +124,8 @@ protected:
 
     /// @brief 3Dオブジェクトコンテキストの取得
     Object3DContext *GetOwner3DContext() const;
+    /// @brief 3Dオブジェクトのシーンコンテキストの取得
+    SceneContext *GetOwnerSceneContext() const override;
 };
 
 } // namespace KashipanEngine

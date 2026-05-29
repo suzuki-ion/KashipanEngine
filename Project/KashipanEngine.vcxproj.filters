@@ -384,7 +384,7 @@
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\LightManager.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
-    <ClInclude Include="Application\Objects\Components\CollisionAttributes.h" />
+    <ClInclude Include="Application\Objects\CollisionAttributes.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\RadialBlurEffect.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
@@ -408,6 +408,8 @@
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GaussianFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Font\Text3D.h" />
     <ClInclude Include="KashipanEngine\Font\TextAlign.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
+    <ClInclude Include="Application\Objects\ObjectBatchKeys.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

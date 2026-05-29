@@ -584,6 +584,7 @@ void SceneBase::RebuildObject3DIndices() {
 
 bool SceneBase::AddObject2D(std::unique_ptr<Object2DBase> obj) {
     if (!obj) return false;
+    obj->SetSceneContext(Passkey<SceneBase>(), sceneContext_.get());
     objects2D_.push_back(std::move(obj));
 
     const size_t idx = objects2D_.size() - 1;
@@ -596,6 +597,7 @@ bool SceneBase::AddObject2D(std::unique_ptr<Object2DBase> obj) {
 
 bool SceneBase::AddObject3D(std::unique_ptr<Object3DBase> obj) {
     if (!obj) return false;
+    obj->SetSceneContext(Passkey<SceneBase>(), sceneContext_.get());
     objects3D_.push_back(std::move(obj));
 
     const size_t idx = objects3D_.size() - 1;

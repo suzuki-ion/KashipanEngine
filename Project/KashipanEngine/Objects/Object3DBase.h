@@ -23,6 +23,8 @@ namespace KashipanEngine {
 class GameEngine;
 
 class Object3DContext;
+class SceneContext;
+class SceneBase;
 class ScreenBuffer;
 class ShadowMapBuffer;
 class Transform3D;
@@ -306,6 +308,12 @@ public:
     /// @brief オブジェクトの種類を取得
     ObjectType GetObjectType() const noexcept { return objectType_; }
 
+    /// @brief シーンコンテキストの設定（SceneBase専用）
+    void SetSceneContext(Passkey<SceneBase>, SceneContext *sceneContext) {
+        if (!sceneContext) assert(false && "Scene context cannot be null.");
+        sceneContext_ = sceneContext;
+    }
+
 protected:
     /// @brief コンストラクタ
     /// @param name オブジェクト名
@@ -471,6 +479,7 @@ private:
     std::unordered_multimap<std::type_index, size_t> components3DIndexByType_;
 
     std::unique_ptr<Object3DContext> context_;
+    SceneContext *sceneContext_ = nullptr;
     std::vector<size_t> shaderBindingComponentIndices_;
 
     MyStd::AnyUnorderedMap userData_;

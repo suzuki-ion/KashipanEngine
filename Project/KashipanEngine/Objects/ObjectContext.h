@@ -9,6 +9,7 @@
 
 #include "Objects/Object2DBase.h"
 #include "Objects/Object3DBase.h"
+#include "Scene/SceneContext.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -110,6 +111,11 @@ public:
     /// @brief コンポーネントの存在チェック
     size_t HasComponents(const std::string &componentName) const;
 
+    /// @brief オブジェクトのシーンコンテキストの取得
+    SceneContext *GetOwnerSceneContext() const {
+        return owner_->sceneContext_;
+    }
+
 private:
     Object2DBase *owner_ = nullptr;
 };
@@ -207,6 +213,11 @@ public:
 
     /// @brief コンポーネントの存在チェック
     size_t HasComponents(const std::string &componentName) const;
+
+    /// @brief オブジェクトのシーンコンテキストの取得
+    SceneContext *GetOwnerSceneContext() const {
+        return owner_->sceneContext_;
+    }
 
 private:
     Object3DBase *owner_ = nullptr;

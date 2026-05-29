@@ -182,7 +182,6 @@ void TestScene::Initialize() {
         if (auto *transform = text3D->GetComponent3D<Transform3D>()) {
             transform->SetTranslate(Vector3(0.0f, -2.0f, 0.0f));
         }
-        text3D->RegisterComponent<PlayerInputHandler>();
         text3D->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(text3D));
     }

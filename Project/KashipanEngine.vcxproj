@@ -341,6 +341,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\Objects\CollisionAttributes.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
     <ClInclude Include="Application\Objects\ObjectBatchKeys.h" />
+    <ClInclude Include="Application\Objects\CreateFunc\CreatePlayerObject.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
     <ClInclude Include="Application\Scenes\EngineLogoScene.h" />

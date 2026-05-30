@@ -78,7 +78,7 @@ private:
     int maxCount_ = 10;
 
     float minSpeedMultiplier_ = 1.0f;
-    float maxSpeedMultiplier_ = 1.5f;
+    float maxSpeedMultiplier_ = 1.1f;
     float lastAppliedMultiplier_ = 1.0f;
 };
 

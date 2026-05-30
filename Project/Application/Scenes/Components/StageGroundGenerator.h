@@ -396,6 +396,10 @@ public:
                 g.object->RemoveComponent3D("GravityGroundDefined", 0);
 
                 g.isActive = false;
+                if (auto *tr = g.object->GetComponent3D<Transform3D>()) {
+                    tr->SetTranslateY(-10000.0f);
+                    tr->SetScale(Vector3::Zero());
+                }
                 if (auto* ground = g.object->GetComponent3D<GroundDefined>()) {
                     ground->ResetTouchColorAnimation();
                 }
@@ -406,7 +410,7 @@ public:
                 c.isActive = false;
 
                 if(auto* tr = c.object->GetComponent3D<Transform3D>()) {
-                    tr->SetTranslateY(5000.0f);
+                    tr->SetTranslateY(-10000.0f);
                     tr->SetScale(Vector3::Zero());
 				}
                 if (auto *coin = c.object->GetComponent3D<CoinDefined>()) {
@@ -703,6 +707,11 @@ private:
 			// 地面としての定義
             obj->RegisterComponent<GroundDefined>(collider_);
             obj->RegisterComponent<StageObjectSpawnAnimation>();
+            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(Vector3{ 0.0f, -10000.0f, 0.0f });
+                tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
+            }
+
             Object3DBase *objPtr = obj.get();
             if (ctx->AddObject3D(std::move(obj)) && objPtr) {
                 GroundRuntime runtime{};
@@ -727,7 +736,7 @@ private:
             obj->RegisterComponent<CoinDefined>(collider_);
             obj->RegisterComponent<StageObjectSpawnAnimation>();
             if (auto *tr = obj->GetComponent3D<Transform3D>()) {
-                tr->SetTranslate(Vector3{ 0.0f, -100.0f, 0.0f });
+                tr->SetTranslate(Vector3{ 0.0f, -10000.0f, 0.0f });
                 tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
             }
             Object3DBase *objPtr = obj.get();

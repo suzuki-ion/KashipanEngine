@@ -77,6 +77,11 @@ private:
             obj->SetName("DecorationBox");
             obj->SetBatchKey(ObjectBatchKeys::DecoBox, RenderType::Instancing);
 
+            if (auto *tr = obj->GetComponent3D<Transform3D>()) {
+                tr->SetTranslate(Vector3{ 0.0f, -10000.0f, 0.0f });
+                tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
+            }
+
             if (auto *mat = obj->GetComponent3D<Material3D>()) {
                 mat->SetEnableLighting(false);
                 mat->SetSampler(SamplerManager::GetSampler(DefaultSampler::LinearWrap));

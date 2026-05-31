@@ -148,6 +148,10 @@ public:
 	bool IsOnSlowGround() const { return isSlowGround_; }
 
 private:
+    void UpdateSlowGroundState(Object3DBase *groundObject) {
+        isSlowGround_ = groundObject && groundObject->GetComponent3D<SlowGroundDefined>() != nullptr;
+    }
+
     void ResetTransientCollisionState() {
         grounded_ = false;
         requestedGravityDirection_.reset();
@@ -234,11 +238,7 @@ private:
         }
 
 
-        if(auto *slowGround = hit.otherObject->GetComponent3D<SlowGroundDefined>()) {
-            isSlowGround_ = true;
-        } else {
-            isSlowGround_ = false;
-		}
+        UpdateSlowGroundState(hit.otherObject);
     }
 
     void OnCollisionStay(const HitInfo3D &hit) {
@@ -261,6 +261,7 @@ private:
         lastGroundNormal_ = normal;
         lastGroundObject_ = hit.otherObject;
         lastGroundWasFirstTouch_ = lastGroundWasFirstTouch_ || IsFirstTouchGroundAtCollision(hit.otherObject);
+        UpdateSlowGroundState(hit.otherObject);
 
         if (hit.time >= 0.0f) {
             if (!lastCollisionTime_.has_value() || hit.time < *lastCollisionTime_) {

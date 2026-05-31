@@ -165,6 +165,15 @@ public:
             lateralBehavior_->Apply(dt, gravityDirection_, forwardDirection_, forwardBehavior_->GetForwardSpeed(), forwardBehavior_->GetMinForwardSpeed());
         }
 
+        if (grounded && collisionBehavior_ && collisionEnabled && collisionBehavior_->IsOnSlowGround()) {
+            if (forwardBehavior_) {
+                forwardBehavior_->ForwardSpeedRef() *= slowGroundSpeedMultiplier_;
+            }
+            if (lateralBehavior_) {
+                lateralBehavior_->LateralVelocityRef() *= slowGroundSpeedMultiplier_;
+            }
+        }
+
         // 移動処理
         Vector3 lateralVelocity{ 0.0f, 0.0f, 0.0f };
         float forwardSpeed = 0.0f;
@@ -255,16 +264,6 @@ public:
 
             if (auto *vibrator = ctx->GetComponent<PlayerActionGamepadVibrator>()) {
                 vibrator->RequestLanding(landingImpact);
-            }
-
-            // 着地した地面がSlowGroundだった場合は減速する
-            if (collisionBehavior_ && collisionEnabled && collisionBehavior_->IsOnSlowGround()) {
-                if (forwardBehavior_) {
-                    forwardBehavior_->ForwardSpeedRef() *= slowGroundSpeedMultiplier_;
-                }
-                if (lateralBehavior_) {
-                    lateralBehavior_->LateralVelocityRef() *= slowGroundSpeedMultiplier_;
-                }
             }
 
         } else if ((skipLandingProcessing || !grounded) && wasGroundedPrev_) {// 離地したフレームで落下距離計測をリセット
@@ -575,7 +574,7 @@ private:
     float gravityGauge_ = gravityGaugeMax_;
     float landingGaugeRecoveryBase_ = 1.0f;
     float landingGaugeRecoveryPerDistance_ = 0.05f;
-    float slowGroundSpeedMultiplier_ = 0.95f;
+    float slowGroundSpeedMultiplier_ = 0.992f;
 
     float gravityChangeBlend_ = 0.0f;
     float gravityChangeBlendDuration_ = 0.35f;
@@ -585,7 +584,7 @@ private:
 
 	float gravityChargeCooldownTimer_ = 0.0f;
 	float gravityChargeCooldownDuration_ = 1.5f;
-	float gravityChargeValueParSecond_ = 6.0f;
+	float gravityChargeValueParSecond_ = 4.0f;
 
     float reverseAngleMinDegrees_ = -90.0f;
     float reverseAngleMaxDegrees_ = 90.0f;

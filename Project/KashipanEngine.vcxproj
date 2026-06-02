@@ -61,16 +61,19 @@
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -88,6 +91,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
       <OpenMPSupport>false</OpenMPSupport>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -122,6 +126,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
       <OpenMPSupport>false</OpenMPSupport>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -157,6 +162,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
       <OpenMPSupport>false</OpenMPSupport>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

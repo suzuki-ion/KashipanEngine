@@ -5,6 +5,7 @@
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Utilities/MathUtils.h"
+#include <reactphysics3d/reactphysics3d.h>
 
 #include <memory>
 #include <optional>
@@ -85,12 +86,10 @@ private:
             [&](const auto &sh) -> ColliderInfo3D::ShapeVariant {
                 using S = std::decay_t<decltype(sh)>;
 
-                // 位置だけをワールド変換する（W=1）
                 const auto transformPoint = [&](const Vector3 &p) {
                     return MathUtils::Transform(p, world);
                 };
 
-                // 回転/スケールを含めて方向ベクトルをワールド変換する（平行移動を除外）
                 const auto transformDir = [&](const Vector3 &v) {
                     Vector3 outV{};
                     outV.x = v.x * world.m[0][0] + v.y * world.m[1][0] + v.z * world.m[2][0];
@@ -99,92 +98,52 @@ private:
                     return outV;
                 };
 
-                if constexpr (std::is_same_v<S, Math::Point3D>) {
-                    Math::Point3D p = sh;
-                    p.position = transformPoint(p.position);
-                    return p;
-                } else if constexpr (std::is_same_v<S, Math::Sphere>) {
-                    Math::Sphere sp = sh;
+                if constexpr (std::is_same_v<S, ColliderInfo3D::SphereShape3D>) {
+                    ColliderInfo3D::SphereShape3D sp = sh;
                     sp.center = transformPoint(sp.center);
 
-                    // 半径はワールド行列の軸スケールの最大値で拡大する
                     const Vector3 ax = transformDir(Vector3{1.0f, 0.0f, 0.0f});
                     const Vector3 ay = transformDir(Vector3{0.0f, 1.0f, 0.0f});
                     const Vector3 az = transformDir(Vector3{0.0f, 0.0f, 1.0f});
                     const float rs = std::max({ax.Length(), ay.Length(), az.Length()});
                     sp.radius = sp.radius * rs;
                     return sp;
-                } else if constexpr (std::is_same_v<S, Math::AABB>) {
-                    // ローカル AABB -> ワールド座標系で axis-aligned AABB に変換（回転は無視して位置+スケールのみ反映）
-                    Math::AABB b = sh;
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::BoxShape3D>) {
+                    ColliderInfo3D::BoxShape3D b = sh;
+                    b.center = transformPoint(b.center);
 
-                    // ローカル中心と halfSize を求める
-                    Vector3 localCenter = (b.min + b.max) * 0.5f;
-                    Vector3 localHalf = (b.max - b.min) * 0.5f;
-
-                    // 中心はワールド変換（translation, rotation, scale を含む）
-                    Vector3 worldCenter = transformPoint(localCenter);
-
-                    // 各軸方向のワールドスケール（回転成分を含むので長さを使う）
                     const Vector3 ax = transformDir(Vector3{1.0f, 0.0f, 0.0f});
                     const Vector3 ay = transformDir(Vector3{0.0f, 1.0f, 0.0f});
                     const Vector3 az = transformDir(Vector3{0.0f, 0.0f, 1.0f});
-                    const float sx = std::abs(ax.Length());
-                    const float sy = std::abs(ay.Length());
-                    const float sz = std::abs(az.Length());
+                    b.halfExtents = Vector3{b.halfExtents.x * ax.Length(), b.halfExtents.y * ay.Length(), b.halfExtents.z * az.Length()};
+                    return b;
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) {
+                    ColliderInfo3D::CapsuleShape3D cap = sh;
+                    cap.center = transformPoint(cap.center);
 
-                    // halfSize にそれぞれのスケールを適用（スケールは一回だけ）
-                    Vector3 worldHalf = Vector3{ localHalf.x * sx, localHalf.y * sy, localHalf.z * sz };
-
-                    // axis-aligned な min/max を再構築（ワールド軸に沿った AABB）
-                    Math::AABB outA;
-                    outA.min = worldCenter - worldHalf;
-                    outA.max = worldCenter + worldHalf;
-
-                    return outA;
-                } else if constexpr (std::is_same_v<S, Math::OBB>) {
-                    Math::OBB o = sh;
-                    o.center = transformPoint(o.center);
-
-                    // ローカル OBB 軸をワールドへ変換
-                    const Vector3 localAxisX{o.orientation.m[0][0], o.orientation.m[0][1], o.orientation.m[0][2]};
-                    const Vector3 localAxisY{o.orientation.m[1][0], o.orientation.m[1][1], o.orientation.m[1][2]};
-                    const Vector3 localAxisZ{o.orientation.m[2][0], o.orientation.m[2][1], o.orientation.m[2][2]};
-
-                    Vector3 worldAxisX = transformDir(localAxisX);
-                    Vector3 worldAxisY = transformDir(localAxisY);
-                    Vector3 worldAxisZ = transformDir(localAxisZ);
-
-                    const float lenX = worldAxisX.Length();
-                    const float lenY = worldAxisY.Length();
-                    const float lenZ = worldAxisZ.Length();
-
-                    // スケールは halfSize 側にのみ反映
-                    o.halfSize = Vector3{
-                        o.halfSize.x * lenX,
-                        o.halfSize.y * lenY,
-                        o.halfSize.z * lenZ};
-
-                    // orientation は正規化した回転軸のみ保持（スケールを含めない）
-                    worldAxisX = (lenX > 0.0f) ? (worldAxisX / lenX) : Vector3{1.0f, 0.0f, 0.0f};
-                    worldAxisY = (lenY > 0.0f) ? (worldAxisY / lenY) : Vector3{0.0f, 1.0f, 0.0f};
-                    worldAxisZ = (lenZ > 0.0f) ? (worldAxisZ / lenZ) : Vector3{0.0f, 0.0f, 1.0f};
-
-                    Matrix4x4 orientation = Matrix4x4::Identity();
-                    orientation.m[0][0] = worldAxisX.x;
-                    orientation.m[0][1] = worldAxisX.y;
-                    orientation.m[0][2] = worldAxisX.z;
-                    orientation.m[1][0] = worldAxisY.x;
-                    orientation.m[1][1] = worldAxisY.y;
-                    orientation.m[1][2] = worldAxisY.z;
-                    orientation.m[2][0] = worldAxisZ.x;
-                    orientation.m[2][1] = worldAxisZ.y;
-                    orientation.m[2][2] = worldAxisZ.z;
-                    o.orientation = orientation;
-                    return o;
-                } else if constexpr (std::is_same_v<S, Math::Plane>) {
-                    // Plane は現状 Transform を反映しない（必要になった段階で対応する）
-                    return sh;
+                    const Vector3 ax = transformDir(Vector3{1.0f, 0.0f, 0.0f});
+                    const Vector3 ay = transformDir(Vector3{0.0f, 1.0f, 0.0f});
+                    const Vector3 az = transformDir(Vector3{0.0f, 0.0f, 1.0f});
+                    const float rs = std::max({ax.Length(), ay.Length(), az.Length()});
+                    cap.radius = cap.radius * rs;
+                    cap.height = cap.height * ay.Length();
+                    return cap;
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConvexMeshShape3D>) {
+                    ColliderInfo3D::ConvexMeshShape3D mesh = sh;
+                    const Vector3 ax = transformDir(Vector3{1.0f, 0.0f, 0.0f});
+                    const Vector3 ay = transformDir(Vector3{0.0f, 1.0f, 0.0f});
+                    const Vector3 az = transformDir(Vector3{0.0f, 0.0f, 1.0f});
+                    mesh.scale = Vector3{mesh.scale.x * ax.Length(), mesh.scale.y * ay.Length(), mesh.scale.z * az.Length()};
+                    return mesh;
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
+                    ColliderInfo3D::HeightFieldShape3D hf = sh;
+                    const Vector3 ax = transformDir(Vector3{1.0f, 0.0f, 0.0f});
+                    const Vector3 ay = transformDir(Vector3{0.0f, 1.0f, 0.0f});
+                    const Vector3 az = transformDir(Vector3{0.0f, 0.0f, 1.0f});
+                    hf.scale = Vector3{hf.scale.x * ax.Length(), hf.scale.y * ay.Length(), hf.scale.z * az.Length()};
+                    hf.minHeight = hf.minHeight * ay.Length();
+                    hf.maxHeight = hf.maxHeight * ay.Length();
+                    return hf;
                 } else {
                     return sh;
                 }

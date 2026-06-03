@@ -19,6 +19,7 @@ public:
 
     void Update() override {
         collider_.Update2D();
+        // ReactPhysics3D is updated in this existing call.
         collider_.Update3D();
     }
 

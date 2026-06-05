@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -211,6 +211,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
+    <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentSerialize.cpp" />
     <ClCompile Include="KashipanEngine\Font\FontLoader.cpp" />
     <ClCompile Include="KashipanEngine\Font\Text2D.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
@@ -343,6 +344,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application\ComponentRegistry.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\CollisionAttributes.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
@@ -381,6 +383,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\Assets\SkeletonManager.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentSerialize.h" />
     <ClInclude Include="KashipanEngine\FontHeaders.h" />
     <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
     <ClInclude Include="KashipanEngine\Font\FontStructs.h" />

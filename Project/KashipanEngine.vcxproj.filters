@@ -147,6 +147,7 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
     <ClCompile Include="KashipanEngine\Font\Text3D.cpp" />
+    <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentSerialize.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scenes\Components\SceneFade.h" />
@@ -411,6 +412,8 @@
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
     <ClInclude Include="Application\Objects\ObjectBatchKeys.h" />
     <ClInclude Include="Application\Objects\CreateFunc\CreatePlayerObject.h" />
+    <ClInclude Include="Application\ComponentRegistry.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentSerialize.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

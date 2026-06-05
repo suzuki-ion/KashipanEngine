@@ -11,7 +11,15 @@
 namespace KashipanEngine {
 
 inline void AppInitialize(const GameEngine::Context &context) {
-    auto *mainWindow = Window::CreateNormal("Main Window", 1280, 720);
+    auto monitorInfo = WindowsAPI::QueryMonitorInfo();
+    int32_t windowWidth = 1280;
+    int32_t windowHeight = 720;
+    if (monitorInfo) {
+        // モニターの解像度に基づいてウィンドウサイズを調整
+        windowWidth = static_cast<int32_t>(monitorInfo->Width() * 0.75f);
+        windowHeight = static_cast<int32_t>(monitorInfo->Height() * 0.75f);
+    }
+    auto *mainWindow = Window::CreateNormal("Main Window", windowWidth, windowHeight);
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
     mainWindow->UnregisterWindowEvent(WM_SYSCOMMAND);
     mainWindow->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();
@@ -32,7 +40,11 @@ inline void AppInitialize(const GameEngine::Context &context) {
         sm->RegisterScene<GameScene>("GameScene");
         sm->RegisterScene<ResultScene>("ResultScene");
 
+#if defined(RELEASE_BUILD)
+        sm->ChangeScene("EngineLogoScene");
+#else
 		sm->ChangeScene("TestScene");
+#endif
     }
 
     if (context.inputCommand) {

@@ -11,9 +11,9 @@ std::unique_ptr<Object3DBase> CreateGroundObject(SceneContext *context) {
     auto ground = std::make_unique<Box>();
     ground->SetName("Ground");
     ColliderInfo3D colliderInfo{};
-    Math::OBB groundBox{};
+    ColliderInfo3D::BoxShape3D groundBox{};
     groundBox.center = Vector3(0.0f, 0.0f, 0.0f);
-    groundBox.halfSize = Vector3(0.5f, 0.5f, 0.5f);
+    groundBox.halfExtents = Vector3(0.5f, 0.5f, 0.5f);
     colliderInfo.shape = groundBox;
     colliderInfo.attribute = CollisionAttribute::Ground;
     colliderInfo.ignoreAttribute = CollisionAttribute::Ground;

@@ -15,7 +15,7 @@ public:
 
     std::optional<bool> Initialize() override {
         ColliderInfo3D colliderInfo{};
-        Math::Sphere playerSphere{};
+        ColliderInfo3D::SphereShape3D playerSphere{};
         playerSphere.center = Vector3(0.0f, 0.0f, 0.0f);
         playerSphere.radius = 0.5f;
         colliderInfo.shape = playerSphere;

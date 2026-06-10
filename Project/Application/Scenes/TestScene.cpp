@@ -70,8 +70,11 @@ void TestScene::Initialize() {
             material->SetEnvironmentTexture(envTexture);
         }
         if (auto *transform = box->GetComponent3D<Transform3D>()) {
-            transform->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+            transform->SetTranslate(Vector3(0.0f, -1.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+            json test;
+            SerializeComponent(transform, transform->GetFieldInfos(), test);
+            SaveJSON(test, "TestBox_Transform3D.json");
         }
 
         box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");

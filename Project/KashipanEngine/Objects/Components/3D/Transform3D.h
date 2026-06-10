@@ -3,6 +3,7 @@
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 #include "Math/Quaternion.h"
+#include "ComponentSerialize/ComponentSerialize.h"
 #include <memory>
 #include <optional>
 #include <cstring>
@@ -25,6 +26,10 @@ public:
         cachedParentVersion_ = 0;
     }
     ~Transform3D() override = default;
+
+    std::optional<bool> Initialize() override {
+        return true;
+    }
 
     /// @brief コンポーネントのクローンを作成
     std::unique_ptr<IObjectComponent> Clone() const override {
@@ -189,6 +194,12 @@ public:
         SetScale(s);
     }
 #endif
+
+    REFLECT(
+        FIELD(Transform3D, translate_),
+        FIELD(Transform3D, rotate_),
+        FIELD(Transform3D, scale_)
+    )
 
 private:
     /// @brief オイラー角からクォータニオンへの変換（XYZ回転順）

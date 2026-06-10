@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -86,7 +86,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -97,8 +97,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/VERBOSE:UNUSEDLIBS /VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/Assimp/lib/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -121,7 +121,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -131,8 +131,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/Assimp/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -155,7 +155,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -167,8 +167,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/Assimp/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
     </Link>
@@ -298,6 +298,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
+    <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentSerialize.cpp" />
     <ClCompile Include="KashipanEngine\Font\FontLoader.cpp" />
     <ClCompile Include="KashipanEngine\Font\Text2D.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
@@ -430,9 +431,14 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application\ComponentRegistry.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\CollisionAttributes.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerCollisionPushBack.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
+    <ClInclude Include="Application\Objects\CreateFunc\CreateGroundObject.h" />
+    <ClInclude Include="Application\Objects\CreateFunc\CreateSkyboxObject.h" />
     <ClInclude Include="Application\Objects\ObjectBatchKeys.h" />
     <ClInclude Include="Application\Objects\CreateFunc\CreatePlayerObject.h" />
     <ClInclude Include="Application\Scenes\Components\CameraController.h" />
@@ -468,6 +474,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\Assets\SkeletonManager.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentSerialize.h" />
     <ClInclude Include="KashipanEngine\FontHeaders.h" />
     <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
     <ClInclude Include="KashipanEngine\Font\FontStructs.h" />

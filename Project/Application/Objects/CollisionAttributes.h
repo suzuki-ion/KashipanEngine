@@ -5,6 +5,7 @@ namespace KashipanEngine {
 
 namespace CollisionAttribute {
 inline constexpr std::size_t Player = 0;
+inline constexpr std::size_t Ground = 1;
 }
 
 } // namespace KashipanEngine

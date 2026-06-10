@@ -2,6 +2,7 @@
 
 #include "Objects/IObjectComponent.h"
 #include "Objects/Collision/Collider.h"
+#include "Scene/Components/ColliderComponent.h"
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Utilities/MathUtils.h"
@@ -15,28 +16,19 @@ namespace KashipanEngine {
 
 class Collision3D final : public IObjectComponent3D {
 public:
-    Collision3D(Collider *collider, const ColliderInfo3D &info = {})
-        : IObjectComponent3D("Collision3D", 100), collider_(collider), worldInfo_(info) {
+    Collision3D(const ColliderInfo3D &info = {})
+        : IObjectComponent3D("Collision3D", 100), worldInfo_(info) {
         localInfo_ = worldInfo_;
     }
 
     ~Collision3D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Collision3D>(collider_, localInfo_);
+        auto ptr = std::make_unique<Collision3D>(localInfo_);
         return ptr;
     }
 
     std::optional<bool> Initialize() override {
-        if (!collider_) return false;
-        if (colliderId_ != 0) return true;
-
-        if (auto *ctx = GetOwner3DContext()) {
-            worldInfo_.ownerObject = ctx->GetOwner();
-        }
-
-        worldInfo_ = MakeWorldInfo();
-        colliderId_ = collider_->Add(worldInfo_);
         return true;
     }
 
@@ -49,6 +41,7 @@ public:
     }
 
     std::optional<bool> Update() override {
+        TryAddToCollider();
         if (!collider_ || colliderId_ == 0) return true;
         worldInfo_ = MakeWorldInfo();
         collider_->UpdateColliderInfo3D(colliderId_, worldInfo_);
@@ -68,6 +61,23 @@ public:
 #endif
 
 private:
+    void TryAddToCollider() {
+        if (isAddedToCollider_) return;
+        auto *sceneCtx = GetOwnerSceneContext();
+        if (!sceneCtx) return;
+        collider_ = sceneCtx->GetComponent<ColliderComponent>()->GetCollider();
+        if (!collider_) return;
+        if (colliderId_ != 0) return;
+
+        if (auto *ctx = GetOwner3DContext()) {
+            worldInfo_.ownerObject = ctx->GetOwner();
+        }
+
+        worldInfo_ = MakeWorldInfo();
+        colliderId_ = collider_->Add(worldInfo_);
+        isAddedToCollider_ = true;
+    }
+
     ColliderInfo3D MakeWorldInfo() const {
         ColliderInfo3D out = localInfo_;
         out.ownerObject = worldInfo_.ownerObject;
@@ -198,6 +208,8 @@ private:
     ColliderInfo3D localInfo_{};
     ColliderInfo3D worldInfo_{};
     Collider::ColliderID colliderId_ = 0;
+
+    bool isAddedToCollider_ = false;
 };
 
 } // namespace KashipanEngine

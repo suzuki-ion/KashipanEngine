@@ -73,7 +73,7 @@ void TestScene::Initialize() {
             transform->SetTranslate(Vector3(0.0f, -1.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
             json test;
-            SerializeComponent(transform, transform->Reflect(), test);
+            SerializeComponent(transform, transform->GetFieldInfos(), test);
             SaveJSON(test, "TestBox_Transform3D.json");
         }
 

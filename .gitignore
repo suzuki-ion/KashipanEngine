@@ -9,6 +9,11 @@ imgui.ini
 # Tools folder
 Tools/
 
+# vcpkg files
+vcpkg_installed/
+vcpkg.json
+vcpkg-configuration.json
+
 # exclusion files
 *.dmp
 *.log

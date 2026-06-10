@@ -56,6 +56,7 @@ private:
 
         // 衝突の法線方向にプレイヤーを押し戻す
         Vector3 pushBack = hitInfo.normal * hitInfo.penetration;
+        pushBack.z = 0.0f;
         Vector3 newPos = transform->GetTranslate() + pushBack;
         transform->SetTranslate(newPos);
 

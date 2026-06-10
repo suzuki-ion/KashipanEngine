@@ -613,10 +613,12 @@ void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, 
     HitInfo3D hiA = hitInfo;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
+    hiA.normal = hitInfo.normal;
 
     HitInfo3D hiB = hitInfo;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
+    hiB.normal = -hitInfo.normal; // そのままの法線はAからBへの向きなので、B側は逆向きにする
 
     const bool isHitNow = hitInfo.isHit;
 

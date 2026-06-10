@@ -24,7 +24,6 @@ public:
         ptr->mass_ = mass_;
         ptr->useGravity_ = useGravity_;
         ptr->interpolate_ = interpolate_;
-        ptr->ccdEnabled_ = ccdEnabled_;
         return ptr;
     }
 
@@ -104,20 +103,12 @@ public:
 
     bool IsInterpolateEnabled() const { return interpolate_; }
 
-    void SetContinuousCollisionDetection(bool enabled) {
-        ccdEnabled_ = enabled;
-        if (rigidBody_) rigidBody_->enableContinuousCollisionDetection(enabled);
-    }
-
-    bool IsContinuousCollisionDetectionEnabled() const { return ccdEnabled_; }
-
 private:
     void ApplySettings() {
         if (!rigidBody_) return;
         rigidBody_->setType(bodyType_);
         rigidBody_->setMass(mass_);
         rigidBody_->enableGravity(useGravity_);
-        rigidBody_->enableContinuousCollisionDetection(ccdEnabled_);
         rigidBody_->setIsSleeping(!interpolate_);
     }
 
@@ -127,7 +118,6 @@ private:
     float mass_ = 1.0f;
     bool useGravity_ = true;
     bool interpolate_ = true;
-    bool ccdEnabled_ = false;
 };
 
 } // namespace KashipanEngine

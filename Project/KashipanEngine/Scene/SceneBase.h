@@ -226,6 +226,8 @@ protected:
     void AddSceneVariable(const std::string &key, const std::any &value);
     const MyStd::AnyUnorderedMap &GetSceneVariables() const;
 
+    SceneContext *GetSceneContext() const { return sceneContext_.get(); }
+
     static AudioManager *GetAudioManager() { return sAudioManager; }
     static ModelManager *GetModelManager() { return sModelManager; }
     static SkeletonManager *GetSkeletonManager() { return sSkeletonManager; }

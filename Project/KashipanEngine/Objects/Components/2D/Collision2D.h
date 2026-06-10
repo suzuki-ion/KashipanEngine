@@ -2,6 +2,7 @@
 
 #include "Objects/IObjectComponent.h"
 #include "Objects/Collision/Collider.h"
+#include "Scene/Components/ColliderComponent.h"
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/2D/Transform2D.h"
 
@@ -14,19 +15,22 @@ namespace KashipanEngine {
 
 class Collision2D final : public IObjectComponent2D {
 public:
-    Collision2D(Collider *collider, const ColliderInfo2D &info = {})
-        : IObjectComponent2D("Collision2D", 100), collider_(collider), worldInfo_(info) {
+    Collision2D(const ColliderInfo2D &info = {})
+        : IObjectComponent2D("Collision2D", 100), worldInfo_(info) {
         localInfo_ = worldInfo_;
     }
 
     ~Collision2D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Collision2D>(collider_, localInfo_);
+        auto ptr = std::make_unique<Collision2D>(localInfo_);
         return ptr;
     }
 
     std::optional<bool> Initialize() override {
+        auto *sceneCtx = GetOwnerSceneContext();
+        if (!sceneCtx) return false;
+        collider_ = sceneCtx->GetComponent<ColliderComponent>()->GetCollider();
         if (!collider_) return false;
         if (colliderId_ != 0) return true;
 

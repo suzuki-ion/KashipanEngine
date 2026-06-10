@@ -12,6 +12,7 @@
 namespace KashipanEngine {
 
 struct FieldInfo {
+    const char *parentTypeName;
     const char *name;
     size_t offset;
     enum class Type {
@@ -26,6 +27,11 @@ struct FieldInfo {
         Matrix4x4,
         Quaternion
     } type;
+};
+
+struct ClassFieldInfo {
+    const char *className;
+    std::vector<FieldInfo> fields;
 };
 
 template <typename T>
@@ -55,11 +61,11 @@ template <>
 constexpr FieldInfo::Type FieldTypeOf<Quaternion>() { return FieldInfo::Type::Quaternion; }
 
 #define FIELD(type, member) \
-    FieldInfo{#member, offsetof(type, member), FieldTypeOf<decltype(type::member)>()}
+    FieldInfo{#type, #member, offsetof(type, member), FieldTypeOf<decltype(type::member)>()}
 
 #define REFLECT(...) \
-    static std::vector<FieldInfo> Reflect() { \
-        return {__VA_ARGS__}; \
+    static std::vector<FieldInfo> GetFieldInfos() { \
+        return { __VA_ARGS__ }; \
     }
 
 void SerializeComponent(const void *component, const std::vector<FieldInfo> &fields, json &outJson);

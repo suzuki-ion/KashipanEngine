@@ -414,6 +414,10 @@
     <ClInclude Include="Application\Objects\CreateFunc\CreatePlayerObject.h" />
     <ClInclude Include="Application\ComponentRegistry.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentSerialize.h" />
+    <ClInclude Include="Application\Objects\CreateFunc\CreateGroundObject.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerCollisionPushBack.h" />
+    <ClInclude Include="Application\Objects\CreateFunc\CreateSkyboxObject.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

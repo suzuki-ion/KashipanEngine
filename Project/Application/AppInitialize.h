@@ -43,7 +43,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #if defined(RELEASE_BUILD)
         sm->ChangeScene("EngineLogoScene");
 #else
-		sm->ChangeScene("TestScene");
+		sm->ChangeScene("GameScene");
 #endif
     }
 

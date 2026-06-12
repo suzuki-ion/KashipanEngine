@@ -16,6 +16,21 @@ class ModelManager;
 /// @brief モデルのデータ管理用構造体（Model 生成時のみ利用する想定）
 struct ModelData final {
 public:
+    struct Vertex final {
+        float px = 0.0f;
+        float py = 0.0f;
+        float pz = 0.0f;
+        float nx = 0.0f;
+        float ny = 0.0f;
+        float nz = 0.0f;
+        float u = 0.0f;
+        float v = 0.0f;
+    };
+    struct MaterialData final {
+        float baseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        std::string diffuseTexturePath;
+    };
+
     struct VertexWeightData final {
         float weight = 0.0f;
         uint32_t vertexIndex = 0;
@@ -31,22 +46,6 @@ private:
 
     ModelData() = default;
 
-    struct Vertex final {
-        float px = 0.0f;
-        float py = 0.0f;
-        float pz = 0.0f;
-        float nx = 0.0f;
-        float ny = 0.0f;
-        float nz = 0.0f;
-        float u = 0.0f;
-        float v = 0.0f;
-    };
-
-    struct MaterialData final {
-        float baseColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        std::string diffuseTexturePath;
-    };
-
     std::vector<Vertex> vertices_;
     std::vector<uint32_t> indices_;
 
@@ -60,6 +59,8 @@ private:
 public:
     uint32_t GetVertexCount() const noexcept { return static_cast<uint32_t>(vertices_.size()); }
     uint32_t GetIndexCount() const noexcept { return static_cast<uint32_t>(indices_.size()); }
+    const std::vector<Vertex> &GetVertices() const noexcept { return vertices_; }
+    const std::vector<uint32_t> &GetIndices() const noexcept { return indices_; }
     const std::string &GetAssetRelativePath() const noexcept { return assetRelativePath_; }
     uint32_t GetMaterialCount() const noexcept { return static_cast<uint32_t>(materials_.size()); }
     const MaterialData *GetMaterial(uint32_t idx) const noexcept { return idx < materials_.size() ? &materials_[idx] : nullptr; }

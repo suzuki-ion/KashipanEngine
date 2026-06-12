@@ -6,6 +6,7 @@
 #include "Scenes/ResultScene.h"
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
 #include "Scenes/TestScene.h"
+#include "Scenes/CollisionTestScene.h"
 #endif
 
 namespace KashipanEngine {
@@ -35,6 +36,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #endif
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
         sm->RegisterScene<TestScene>("TestScene");
+        sm->RegisterScene<CollisionTestScene>("CollisionTestScene");
 #endif
         sm->RegisterScene<TitleScene>("TitleScene");
         sm->RegisterScene<GameScene>("GameScene");
@@ -43,7 +45,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #if defined(RELEASE_BUILD)
         sm->ChangeScene("EngineLogoScene");
 #else
-		sm->ChangeScene("GameScene");
+		sm->ChangeScene("CollisionTestScene");
 #endif
     }
 

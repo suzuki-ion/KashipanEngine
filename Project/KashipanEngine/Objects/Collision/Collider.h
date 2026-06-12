@@ -112,7 +112,6 @@ struct ColliderInfo3D final {
 
     ShapeVariant shape{};
     Object3DBase* ownerObject = nullptr;
-    reactphysics3d::RigidBody *rigidBody = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};

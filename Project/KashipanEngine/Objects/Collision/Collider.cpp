@@ -1,6 +1,9 @@
 #include "Collider.h"
 
+#include "Objects/Object3DBase.h"
 #include "Objects/Collision/CollisionAlgorithms2D.h"
+#include "Objects/Components/3D/Transform3D.h"
+#include "Objects/Components/3D/RigidBody3D.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -831,8 +834,8 @@ bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
 
     entry.runtime.shape = shapeHandle.value();
     const auto transform = MakeTransform3D(entry.info);
-    if (entry.info.rigidBody) {
-        entry.runtime.body = entry.info.rigidBody;
+    if (auto *rb = entry.info.ownerObject->GetComponent3D<RigidBody3D>()) {
+        entry.runtime.body = rb->GetRigidBody();
         entry.runtime.ownsBody = false;
         entry.runtime.body->setTransform(transform);
     } else {
@@ -982,7 +985,12 @@ reactphysics3d::Transform Collider::MakeTransform3D(const ColliderInfo3D &info) 
         },
         info.shape);
 
-    return reactphysics3d::Transform(ToRp3d(center), reactphysics3d::Quaternion::identity());
+    reactphysics3d::Quaternion rotation = reactphysics3d::Quaternion::identity();
+    if (auto *tr = info.ownerObject ? info.ownerObject->GetComponent3D<Transform3D>() : nullptr) {
+        const auto rot = tr->GetRotateQuaternion();
+        rotation = reactphysics3d::Quaternion(rot.x, rot.y, rot.z, rot.w);
+    }
+    return reactphysics3d::Transform(ToRp3d(center), rotation);
 }
 
 reactphysics3d::Vector3 Collider::ToRp3d(const Vector3 &v) const {

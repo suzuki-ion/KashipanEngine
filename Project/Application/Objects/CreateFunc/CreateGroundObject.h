@@ -20,7 +20,8 @@ std::unique_ptr<Object3DBase> CreateGroundObject(SceneContext *context) {
     ground->RegisterComponent(std::make_unique<Collision3D>(colliderInfo));
     if (auto *tr = ground->GetComponent3D<Transform3D>()) {
         tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
-        tr->SetScale(Vector3(10.0f, 1.0f, 1.0f));
+        tr->SetScale(Vector3(256.0f, 1.0f, 1.0f));
+        tr->SetRotate(Vector3(0.0f, 0.0f, 2.0f / 180.0f * M_PI));
     }
     ground->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
 

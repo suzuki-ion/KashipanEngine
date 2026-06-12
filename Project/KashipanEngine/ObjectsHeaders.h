@@ -10,6 +10,7 @@
 #include "Objects/Components/3D/LookAtConstraint.h"
 #include "Objects/Components/3D/Material3D.h"
 #include "Objects/Components/3D/Transform3D.h"
+#include "Objects/Components/3D/RigidBody3D.h"
 #include "Objects/GameObjects/2D/Ellipse.h"
 #include "Objects/GameObjects/2D/Line2D.h"
 #include "Objects/GameObjects/2D/Ring2D.h"

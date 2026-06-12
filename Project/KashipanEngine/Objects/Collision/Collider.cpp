@@ -4,6 +4,7 @@
 #include "Objects/Collision/CollisionAlgorithms2D.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Objects/Components/3D/RigidBody3D.h"
+#include "Utilities/TimeUtils.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -127,9 +128,24 @@ std::optional<Bounds3D> ComputeBounds3D(const ColliderInfo3D::ShapeVariant &shap
                     maxV.y = std::max(maxV.y, v.y);
                     maxV.z = std::max(maxV.z, v.z);
                 }
-                minV = Vector3{minV.x * s.scale.x, minV.y * s.scale.y, minV.z * s.scale.z};
-                maxV = Vector3{maxV.x * s.scale.x, maxV.y * s.scale.y, maxV.z * s.scale.z};
-                return Bounds3D{minV, maxV};
+                minV = Vector3{ minV.x * s.scale.x, minV.y * s.scale.y, minV.z * s.scale.z };
+                maxV = Vector3{ maxV.x * s.scale.x, maxV.y * s.scale.y, maxV.z * s.scale.z };
+                return Bounds3D{ minV, maxV };
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
+                if (s.vertices.empty()) return std::nullopt;
+                Vector3 minV = s.vertices.front();
+                Vector3 maxV = s.vertices.front();
+                for (const auto &v : s.vertices) {
+                    minV.x = std::min(minV.x, v.x);
+                    minV.y = std::min(minV.y, v.y);
+                    minV.z = std::min(minV.z, v.z);
+                    maxV.x = std::max(maxV.x, v.x);
+                    maxV.y = std::max(maxV.y, v.y);
+                    maxV.z = std::max(maxV.z, v.z);
+                }
+                minV = Vector3{ minV.x * s.scale.x, minV.y * s.scale.y, minV.z * s.scale.z };
+                maxV = Vector3{ maxV.x * s.scale.x, maxV.y * s.scale.y, maxV.z * s.scale.z };
+                return Bounds3D{ minV, maxV };
             } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
                 if (s.width == 0 || s.length == 0 || s.heights.empty()) return std::nullopt;
                 const Vector3 ext{
@@ -673,7 +689,13 @@ void Collider::Update3D() {
     if (!physicsWorld_) return;
 
     constexpr float kDefaultTimeStep = 1.0f / 60.0f;
-    StepPhysics(kDefaultTimeStep);
+    const float deltaTime = GetDeltaTime();
+    accumulatedTime_ += deltaTime;
+
+    while (accumulatedTime_ >= kDefaultTimeStep) {
+        StepPhysics(kDefaultTimeStep);
+        accumulatedTime_ -= kDefaultTimeStep;
+    }
 
     frameEvents3D_.clear();
     curPairs3D_.clear();
@@ -879,6 +901,8 @@ void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D> &entry) {
                     if (entry.runtime.shape.convexMesh) {
                         physicsCommon_.destroyConvexMesh(entry.runtime.shape.convexMesh);
                     }
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
+                    physicsCommon_.destroyConcaveMeshShape(static_cast<reactphysics3d::ConcaveMeshShape *>(entry.runtime.shape.shape));
                 } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
                     physicsCommon_.destroyHeightFieldShape(static_cast<reactphysics3d::HeightFieldShape *>(entry.runtime.shape.shape));
                     if (entry.runtime.shape.heightField) {
@@ -951,6 +975,25 @@ std::optional<Collider::ShapeHandle3D> Collider::CreateShape3D(const ColliderInf
                 if (handle.convexMesh) {
                     handle.shape = physicsCommon_.createConvexMeshShape(handle.convexMesh, ToRp3d(shape.scale));
                 }
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
+                /*if (shape.vertices.empty() || shape.indices.empty()) return;
+                constexpr std::uint32_t kVertexStride = sizeof(Vector3);
+                constexpr std::uint32_t kIndexStride = sizeof(std::uint32_t);
+                reactphysics3d::TriangleVertexArray array(
+                    static_cast<std::uint32_t>(shape.vertices.size() / 3),
+                    shape.vertices.data(),
+                    kVertexStride * 3,
+                    static_cast<std::uint32_t>(shape.indices.size() / 3),
+                    shape.indices.data(),
+                    kIndexStride * 3,
+                    reactphysics3d::TriangleVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
+                    reactphysics3d::TriangleVertexArray::IndexDataType::INDEX_INTEGER_TYPE);
+                std::vector<reactphysics3d::Message> messages;
+                reactphysics3d::TriangleMesh *mesh = physicsCommon_.createTriangleMesh(array, messages);
+                handle.concaveMesh = physicsCommon_.createConcaveMeshShape(mesh, ToRp3d(shape.scale));
+                if (handle.concaveMesh) {
+                    handle.shape = handle.concaveMesh;
+                }*/
             } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
                 if (shape.heights.empty() || shape.width == 0 || shape.length == 0) return;
                 std::vector<reactphysics3d::Message> messages;

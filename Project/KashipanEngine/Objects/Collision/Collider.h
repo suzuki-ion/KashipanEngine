@@ -94,6 +94,12 @@ struct ColliderInfo3D final {
         Vector3 scale{1.0f, 1.0f, 1.0f};
     };
 
+    struct ConcaveMeshShape3D final {
+        std::vector<Vector3> vertices{};
+        std::vector<std::uint32_t> indices{};
+        Vector3 scale{ 1.0f, 1.0f, 1.0f };
+    };
+
     struct HeightFieldShape3D final {
         std::vector<float> heights{};
         std::uint32_t width = 0;
@@ -108,6 +114,7 @@ struct ColliderInfo3D final {
         BoxShape3D,
         CapsuleShape3D,
         ConvexMeshShape3D,
+        ConcaveMeshShape3D,
         HeightFieldShape3D>;
 
     ShapeVariant shape{};
@@ -175,6 +182,7 @@ private:
     struct ShapeHandle3D {
         reactphysics3d::CollisionShape *shape = nullptr;
         reactphysics3d::ConvexMesh *convexMesh = nullptr;
+        reactphysics3d::ConcaveMeshShape *concaveMesh = nullptr;
         reactphysics3d::HeightField *heightField = nullptr;
     };
 
@@ -243,6 +251,8 @@ private:
     ColliderID nextId_ = 1;
     std::vector<Entry<ColliderInfo2D>> colliders2D_;
     std::vector<Entry<ColliderInfo3D>> colliders3D_;
+
+    float accumulatedTime_ = 0.0f;
 };
 
 } // namespace KashipanEngine

@@ -411,6 +411,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\GrayscaleEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\IPostEffectComponent.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\MotionBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\OutlineEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\RadialBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\VignetteEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />

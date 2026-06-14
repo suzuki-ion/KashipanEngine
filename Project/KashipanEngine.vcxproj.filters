@@ -421,6 +421,7 @@
     <ClInclude Include="MyStd\UniversalIndex.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
     <ClInclude Include="Application\Scenes\CollisionTestScene.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\OutlineEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

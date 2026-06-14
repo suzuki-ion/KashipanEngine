@@ -34,6 +34,18 @@ void TestScene::Initialize() {
     }
 
     if (screenBuffer3D) {
+        auto op = OutlineEffect::Params{};
+        op.threshold = 0.05f;
+        op.thickness = 2.0f;
+        op.color[0] = 0.0f;
+        op.color[1] = 0.0f;
+        op.color[2] = 0.0f;
+        op.color[3] = 1.0f;
+        op.cameraNear = mainCamera3D ? mainCamera3D->GetNearClip() : 0.1f;
+        op.cameraFar = mainCamera3D ? mainCamera3D->GetFarClip() : 1000.0f;
+        auto outlineEffect = std::make_unique<OutlineEffect>(op);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(outlineEffect));
+
         auto gp = GrayscaleEffect::Params{};
         gp.intensity = 0.5f;
         auto postEffectComponent = std::make_unique<GrayscaleEffect>(gp);

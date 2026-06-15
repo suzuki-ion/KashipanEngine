@@ -79,6 +79,61 @@ Handle RegisterEntry(ModelEntry&& entry) {
     return handle;
 }
 
+Matrix4x4 ConvertMatrix(const aiMatrix4x4 &m) {
+    Matrix4x4 out{};
+    out.m[0][0] = m.a1;
+    out.m[0][1] = m.a2;
+    out.m[0][2] = m.a3;
+    out.m[0][3] = m.a4;
+    out.m[1][0] = m.b1;
+    out.m[1][1] = m.b2;
+    out.m[1][2] = m.b3;
+    out.m[1][3] = m.b4;
+    out.m[2][0] = m.c1;
+    out.m[2][1] = m.c2;
+    out.m[2][2] = m.c3;
+    out.m[2][3] = m.c4;
+    out.m[3][0] = m.d1;
+    out.m[3][1] = m.d2;
+    out.m[3][2] = m.d3;
+    out.m[3][3] = m.d4;
+    return out;
+}
+
+void AddBoneInfluence(ModelData::Vertex &vertex, uint32_t boneIndex, float weight) {
+    if (weight <= 0.0f) return;
+
+    for (size_t i = 0; i < 4; ++i) {
+        if (vertex.boneWeights[i] == 0.0f) {
+            vertex.boneIndices[i] = boneIndex;
+            vertex.boneWeights[i] = weight;
+            return;
+        }
+    }
+
+    size_t minIndex = 0;
+    for (size_t i = 1; i < 4; ++i) {
+        if (vertex.boneWeights[i] < vertex.boneWeights[minIndex]) {
+            minIndex = i;
+        }
+    }
+    if (weight > vertex.boneWeights[minIndex]) {
+        vertex.boneIndices[minIndex] = boneIndex;
+        vertex.boneWeights[minIndex] = weight;
+    }
+}
+
+void NormalizeBoneWeights(ModelData::Vertex &vertex) {
+    float total = 0.0f;
+    for (float w : vertex.boneWeights) {
+        total += w;
+    }
+    if (total <= 0.0f) return;
+    for (float &w : vertex.boneWeights) {
+        w /= total;
+    }
+}
+
 } // namespace
 
 ModelManager::ModelManager(Passkey<GameEngine>, const std::string& assetsRootPath)
@@ -228,6 +283,44 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
             for (unsigned int j = 0; j < face.mNumIndices; ++j) {
                 dst.indices_.push_back(baseVertex + face.mIndices[j]);
             }
+        }
+
+        for (unsigned int bi = 0; bi < mesh->mNumBones; ++bi) {
+            const aiBone *bone = mesh->mBones[bi];
+            if (!bone) continue;
+
+            const std::string boneName = bone->mName.C_Str();
+            if (boneName.empty()) continue;
+
+            uint32_t boneIndex = 0;
+            auto clusterIt = dst.skinClusters_.find(boneName);
+            if (clusterIt == dst.skinClusters_.end()) {
+                boneIndex = static_cast<uint32_t>(dst.skinClusterNames_.size());
+                dst.skinClusterNames_.push_back(boneName);
+            } else {
+                const auto nameIt = std::find(dst.skinClusterNames_.begin(), dst.skinClusterNames_.end(), boneName);
+                boneIndex = nameIt != dst.skinClusterNames_.end()
+                    ? static_cast<uint32_t>(std::distance(dst.skinClusterNames_.begin(), nameIt))
+                    : 0u;
+            }
+
+            auto &cluster = dst.skinClusters_[boneName];
+            cluster.inverseBindPoseMatrix = ConvertMatrix(bone->mOffsetMatrix);
+
+            cluster.vertexWeights.reserve(cluster.vertexWeights.size() + bone->mNumWeights);
+            for (unsigned int wi = 0; wi < bone->mNumWeights; ++wi) {
+                const aiVertexWeight &srcWeight = bone->mWeights[wi];
+                const uint32_t vertexIndex = baseVertex + srcWeight.mVertexId;
+                if (vertexIndex >= dst.vertices_.size()) continue;
+
+                const float weight = srcWeight.mWeight;
+                cluster.vertexWeights.push_back({ weight, vertexIndex });
+                AddBoneInfluence(dst.vertices_[vertexIndex], boneIndex, weight);
+            }
+        }
+
+        for (size_t i = baseVertex; i < dst.vertices_.size(); ++i) {
+            NormalizeBoneWeights(dst.vertices_[i]);
         }
     };
 

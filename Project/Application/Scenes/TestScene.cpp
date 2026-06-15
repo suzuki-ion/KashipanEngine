@@ -111,12 +111,6 @@ void TestScene::Initialize() {
         }
     }
 
-    if (auto *keyframeAnimator = GetSceneComponent<KeyframeAnimator>()) {
-        auto skeletonHandle = SkeletonManager::GetSkeletonHandleFromFileName("walk.gltf");
-        auto animationHandle = AnimationManager::GetAnimationHandleFromFileName("walk.gltf");
-        keyframeAnimator->PlayFromAnimationAndSkeletonHandle(animationHandle, skeletonHandle, true);
-    }
-
     if (screenBuffer3D) {
         auto ring = std::make_unique<Ring3D>();
         ring->SetUvMode(Ring3D::UvMode::Curved);
@@ -199,6 +193,20 @@ void TestScene::Initialize() {
         }
         text3D->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
         AddObject3D(std::move(text3D));
+    }
+
+    if (auto *keyframeAnimator = GetSceneComponent<KeyframeAnimator>()) {
+        auto skeletonHandle = SkeletonManager::GetSkeletonHandleFromFileName("walk.gltf");
+        auto animationHandle = AnimationManager::GetAnimationHandleFromFileName("walk.gltf");
+        keyframeAnimator->PlayFromAnimationAndSkeletonHandle(animationHandle, skeletonHandle, true);
+    }
+
+    if (screenBuffer3D) {
+        auto modelHandle = ModelManager::GetModelHandleFromFileName("walk.gltf");
+        auto model = std::make_unique<Model>(modelHandle);
+        model->SetName("AnimatedModel");
+        model->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        AddObject3D(std::move(model));
     }
 
     if (screenBuffer3D) {

@@ -1,0 +1,16 @@
+{
+	"PipelineType": "Render",
+	"Name": "Object3D.Skinning.Solid.BlendNormal",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Object3D.Skinning.Vertex" },
+		"Pixel": { "UsePreset": "Object3D.Skinning.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthEnable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

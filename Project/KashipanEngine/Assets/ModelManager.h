@@ -25,6 +25,8 @@ public:
         float nz = 0.0f;
         float u = 0.0f;
         float v = 0.0f;
+        uint32_t boneIndices[4] = { 0, 0, 0, 0 };
+        float boneWeights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     };
     struct MaterialData final {
         float baseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -51,6 +53,7 @@ private:
 
     // ジョイント名からスキンウェイトデータへのマップ
     std::unordered_map<std::string, JointWeightData> skinClusters_;
+    std::vector<std::string> skinClusterNames_;
 
     std::vector<MaterialData> materials_;
 
@@ -61,6 +64,9 @@ public:
     uint32_t GetIndexCount() const noexcept { return static_cast<uint32_t>(indices_.size()); }
     const std::vector<Vertex> &GetVertices() const noexcept { return vertices_; }
     const std::vector<uint32_t> &GetIndices() const noexcept { return indices_; }
+    const std::unordered_map<std::string, JointWeightData> &GetSkinClusters() const noexcept { return skinClusters_; }
+    const std::vector<std::string> &GetSkinClusterNames() const noexcept { return skinClusterNames_; }
+    bool HasSkinning() const noexcept { return !skinClusters_.empty(); }
     const std::string &GetAssetRelativePath() const noexcept { return assetRelativePath_; }
     uint32_t GetMaterialCount() const noexcept { return static_cast<uint32_t>(materials_.size()); }
     const MaterialData *GetMaterial(uint32_t idx) const noexcept { return idx < materials_.size() ? &materials_[idx] : nullptr; }

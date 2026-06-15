@@ -348,7 +348,10 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="Application\ComponentRegistry.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\CollisionAttributes.h" />
-    <ClInclude Include="Application\Objects\Components\PlayerCollisionPushBack.h" />
+    <ClInclude Include="Application\Objects\Components\EnemyCollision.h" />
+    <ClInclude Include="Application\Objects\Components\EnemyCollisionPushBack.h" />
+    <ClInclude Include="Application\Objects\Components\EnemyMovement.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerCollision.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
     <ClInclude Include="Application\Objects\Components\PlayerMovement.h" />
     <ClInclude Include="Application\Objects\CreateFunc\CreateGroundObject.h" />

@@ -45,7 +45,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #if defined(RELEASE_BUILD)
         sm->ChangeScene("EngineLogoScene");
 #else
-		sm->ChangeScene("TestScene");
+		sm->ChangeScene("GameScene");
 #endif
     }
 
@@ -115,6 +115,10 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("PlayerMoveRight", Key::Right, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveRight", ControllerButton::DPadRight, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, 0.2f);
+
+        // プレイヤージャンプ
+        ic->RegisterCommand("PlayerJump", Key::Space, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerJump", ControllerButton::A, InputCommand::InputState::Down);
 
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
         // デバッグ用シーン遷移

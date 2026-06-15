@@ -14,6 +14,23 @@ GameScene::GameScene()
 void GameScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();
     auto *mainCamera3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetMainCamera3D() : nullptr;
+    auto *screenBuffer3D = sceneDefaultVariables_ ? sceneDefaultVariables_->GetScreenBuffer3D() : nullptr;
+
+    if (screenBuffer3D) {
+        auto op = OutlineEffect::Params{};
+        op.threshold = 0.05f;
+        op.thickness = 2.0f;
+        op.color[0] = 0.0f;
+        op.color[1] = 0.0f;
+        op.color[2] = 0.0f;
+        op.color[3] = 1.0f;
+        op.cameraNear = mainCamera3D ? mainCamera3D->GetNearClip() : 0.1f;
+        op.cameraFar = mainCamera3D ? mainCamera3D->GetFarClip() : 1000.0f;
+        auto outlineEffect = std::make_unique<OutlineEffect>(op);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(outlineEffect));
+
+        screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
+    }
 
     AddSceneComponent(std::make_unique<CameraController>(mainCamera3D));
     if (auto *camCtrl = GetSceneComponent<CameraController>()) {

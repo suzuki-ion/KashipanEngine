@@ -1,5 +1,6 @@
 #pragma once
 #include <KashipanEngine.h>
+#include "PlayerMovement.h"
 
 namespace KashipanEngine {
 
@@ -19,20 +20,34 @@ public:
     }
 
     std::optional<bool> Update() override {
-        return true;
-    }
+        if (!isActive_) return true;
+        if (!playerMovement_) {
+            playerMovement_ = GetOwner3DContext()->GetComponent<PlayerMovement>();
+        }
+        if (!playerMovement_ || !inputCommand_) return false;
 
-    bool IsMoveLeft() const {
-        return inputCommand_ && inputCommand_->Evaluate("PlayerMoveLeft").Triggered();
-    }
-    bool IsMoveRight() const {
-        return inputCommand_ && inputCommand_->Evaluate("PlayerMoveRight").Triggered();
-    }
-    bool IsMoveUp() const {
-        return inputCommand_ && inputCommand_->Evaluate("PlayerMoveUp").Triggered();
-    }
-    bool IsMoveDown() const {
-        return inputCommand_ && inputCommand_->Evaluate("PlayerMoveDown").Triggered();
+        auto moveLeftInfo = inputCommand_->Evaluate("PlayerMoveLeft");
+        if (moveLeftInfo.Triggered()) {
+            playerMovement_->MoveLeft(true, moveLeftInfo.Value());
+        } else {
+            playerMovement_->MoveLeft(false, 0.0f);
+        }
+
+        auto moveRightInfo = inputCommand_->Evaluate("PlayerMoveRight");
+        if (moveRightInfo.Triggered()) {
+            playerMovement_->MoveRight(true, moveRightInfo.Value());
+        } else {
+            playerMovement_->MoveRight(false, 0.0f);
+        }
+
+        auto jumpInfo = inputCommand_->Evaluate("PlayerJump");
+        if (jumpInfo.Triggered()) {
+            playerMovement_->Jump(true);
+        } else {
+            playerMovement_->Jump(false);
+        }
+
+        return true;
     }
 
 #ifdef USE_IMGUI
@@ -41,8 +56,14 @@ public:
     }
 #endif
 
+    void SetActive(bool active) { isActive_ = active; }
+    bool IsActive() const { return isActive_; }
+
 private:
+    PlayerMovement *playerMovement_ = nullptr;
     InputCommand *inputCommand_ = nullptr;
+
+    bool isActive_ = true;
 };
 
 } // namespace KashipanEngine

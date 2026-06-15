@@ -1,7 +1,6 @@
 #pragma once
 #include <KashipanEngine.h>
-#include "PlayerInputHandler.h"
-#include "PlayerCollisionPushBack.h"
+#include "PlayerCollision.h"
 
 namespace KashipanEngine {
 
@@ -15,39 +14,37 @@ public:
     }
 
     std::optional<bool> Initialize() override {
-        playerInputHandler_ = GetOwner3DContext()->GetComponent<PlayerInputHandler>();
-        if (!playerInputHandler_) return false;
-        playerCollisionPushBack_ = GetOwner3DContext()->GetComponent<PlayerCollisionPushBack>();
-        if (!playerCollisionPushBack_) return false;
+        playerCollision_ = GetOwner3DContext()->GetComponent<PlayerCollision>();
+        if (!playerCollision_) return false;
         return true;
     }
 
     std::optional<bool> Update() override {
-        if (!playerInputHandler_) return false;
-        if (!playerCollisionPushBack_) return false;
+        if (!playerCollision_) return false;
         auto *transform = GetOwner3DContext()->GetComponent<Transform3D>();
         if (!transform) return false;
         const float dt = GetDeltaTime() * GetGameSpeed();
+        const bool isGrounded = playerCollision_->IsGrounded();
 
-        if (playerCollisionPushBack_->IsGrounded()) {
-            isJumping_ = false;
-            velocity_.y = 0.0f;
-        }
-
-        if (playerInputHandler_->IsMoveLeft()) {
-            velocity_.x += -moveSpeed_;
-        } else if (playerInputHandler_->IsMoveRight()) {
-            velocity_.x += moveSpeed_;
+        // 左右移動
+        if (isMoveLeft_) {
+            velocity_.x += -moveSpeed_ * moveLeftInput_;
+        } else if (isMoveRight_) {
+            velocity_.x += moveSpeed_ * moveRightInput_;
         } else {
             velocity_.x = std::lerp(velocity_.x, 0.0f, lateralDeceleration_);
         }
-        if (!isJumping_ && playerInputHandler_->IsMoveUp()) {
-            velocity_.y = jumpPower_;
-            isJumping_ = true;
-        }
 
-        // 重力の適用
-        velocity_.y -= gravity_;
+        // 重力とジャンプ
+        if (isGrounded) {
+            velocity_.y = std::max(velocity_.y, 0.0f); // 地面にいるときは下向きの速度をリセット
+        } else {
+            velocity_.y -= gravity_;
+        }
+        if (isGrounded && isJumping_ && !wasJumping_) {
+            velocity_.y = jumpPower_;
+        }
+        wasJumping_ = isJumping_;
 
         // 速度の適用
         velocity_.x = std::clamp(velocity_.x, minVelocity_.x, maxVelocity_.x);
@@ -64,9 +61,12 @@ public:
     }
 #endif
 
+    void MoveLeft(bool isPressed, float input) { isMoveLeft_ = isPressed; moveLeftInput_ = input; }
+    void MoveRight(bool isPressed, float input) { isMoveRight_ = isPressed; moveRightInput_ = input; }
+    void Jump(bool isPressed) { isJumping_ = isPressed; }
+
 private:
-    PlayerInputHandler *playerInputHandler_ = nullptr;
-    PlayerCollisionPushBack *playerCollisionPushBack_ = nullptr;
+    PlayerCollision *playerCollision_ = nullptr;
     Vector3 velocity_ = Vector3::Zero();
     Vector3 minVelocity_ = Vector3(-8.0f, -16.0f, -8.0f);
     Vector3 maxVelocity_ = Vector3(8.0f, 16.0f, 8.0f);
@@ -77,6 +77,11 @@ private:
     float lateralDeceleration_ = 0.1f;
 
     bool isJumping_ = false;
+    bool wasJumping_ = false;
+    bool isMoveLeft_ = false;
+    bool isMoveRight_ = false;
+    float moveLeftInput_ = 0.0f;
+    float moveRightInput_ = 0.0f;
 };
 
 } // namespace KashipanEngine

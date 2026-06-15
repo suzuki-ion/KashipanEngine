@@ -4,13 +4,13 @@
 
 namespace KashipanEngine {
 
-class PlayerCollisionPushBack : public IObjectComponent3D {
+class PlayerCollision : public IObjectComponent3D {
 public:
-    PlayerCollisionPushBack()
-        : IObjectComponent3D("PlayerCollisionPushBack", 1) {}
+    PlayerCollision()
+        : IObjectComponent3D("PlayerCollision", 1) {}
 
     std::unique_ptr<IObjectComponent> Clone() const override {
-        return std::make_unique<PlayerCollisionPushBack>();
+        return std::make_unique<PlayerCollision>();
     }
 
     std::optional<bool> Initialize() override {
@@ -22,12 +22,12 @@ public:
         colliderInfo.onCollisionEnter = [this](const HitInfo3D &hitInfo) {
             OnCollisionEnter(hitInfo);
         };
-        /*colliderInfo.onCollisionStay = [this](const HitInfo3D &hitInfo) {
+        colliderInfo.onCollisionStay = [this](const HitInfo3D &hitInfo) {
             OnCollisionStay(hitInfo);
-            };*/
+        };
         colliderInfo.onCollisionExit = [this](const HitInfo3D &hitInfo) {
             OnCollisionExit(hitInfo);
-            };
+        };
         colliderInfo.attribute = CollisionAttribute::Player;
         colliderInfo.ignoreAttribute = CollisionAttribute::Player;
         GetOwner3DContext()->RegisterComponent(std::make_unique<Collision3D>(colliderInfo));
@@ -44,7 +44,7 @@ public:
 
 #ifdef USE_IMGUI
     void ShowImGui() override {
-        ImGui::Text("PlayerCollisionPushBack Component");
+        ImGui::Text("PlayerCollision Component");
     }
 #endif
 

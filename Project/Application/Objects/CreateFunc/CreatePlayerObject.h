@@ -1,6 +1,6 @@
 #pragma once
 #include <KashipanEngine.h>
-#include "Objects/Components/PlayerCollisionPushBack.h"
+#include "Objects/Components/PlayerCollision.h"
 #include "Objects/Components/PlayerInputHandler.h"
 #include "Objects/Components/PlayerMovement.h"
 
@@ -16,7 +16,7 @@ std::unique_ptr<Object3DBase> CreatePlayerObject(SceneContext *context) {
         tr->SetTranslate(Vector3(0.0f, 2.0f, 0.0f));
         tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
     }
-    player->RegisterComponent(std::make_unique<PlayerCollisionPushBack>());
+    player->RegisterComponent(std::make_unique<PlayerCollision>());
     player->RegisterComponent(std::make_unique<PlayerMovement>());
     player->RegisterComponent(std::make_unique<PlayerInputHandler>());
 

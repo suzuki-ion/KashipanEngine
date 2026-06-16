@@ -49,12 +49,13 @@ public:
 #endif
 
     bool IsGrounded() const { return isGrounded_; }
+    const Vector3 &GetHitNormal() const { return hitNormal_; }
 
 private:
     void OnCollisionEnter(const HitInfo3D &hitInfo) {
         if (hitInfo.otherObject->GetName() != "Ground") return;
         // 法線が上向きなら地面に接触しているとみなす
-        isGrounded_ = hitInfo.normal.y > 0.5f;
+        isGrounded_ = hitInfo.normal.y > groundedThreshold_;
     }
     void OnCollisionStay(const HitInfo3D &hitInfo) {
         if (hitInfo.otherObject->GetName() != "Ground") return;
@@ -67,6 +68,7 @@ private:
         pushBack.z = 0.0f;
         Vector3 newPos = transform->GetTranslate() + pushBack;
         transform->SetTranslate(newPos);
+        hitNormal_ = hitInfo.normal;
     }
     void OnCollisionExit(const HitInfo3D &hitInfo) {
         if (hitInfo.otherObject->GetName() != "Ground") return;
@@ -74,6 +76,8 @@ private:
     }
 
     bool isGrounded_ = false;
+    float groundedThreshold_ = 0.4f; // 法線のy成分がこの値以上なら地面とみなす
+    Vector3 hitNormal_ = Vector3::Zero();
 };
 
 } // namespace KashipanEngine

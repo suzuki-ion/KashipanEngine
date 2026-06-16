@@ -25,22 +25,23 @@ public:
         if (!transform) return false;
         const float dt = GetDeltaTime() * GetGameSpeed();
         const bool isGrounded = playerCollision_->IsGrounded();
+        const Vector3 &hitNormal = playerCollision_->GetHitNormal();
+        const Vector3 targetNormal = isGrounded ? Vector3(hitNormal.y, -hitNormal.x, 0.0f).Normalize() : Vector3(1.0f, 0.0f, 0.0f);
 
         // 左右移動
         if (isMoveLeft_) {
-            velocity_.x += -moveSpeed_ * moveLeftInput_;
+            velocity_ -= targetNormal * moveSpeed_ * moveLeftInput_;
         } else if (isMoveRight_) {
-            velocity_.x += moveSpeed_ * moveRightInput_;
+            velocity_ += targetNormal * moveSpeed_ * moveRightInput_;
         } else {
             velocity_.x = std::lerp(velocity_.x, 0.0f, lateralDeceleration_);
+            if (isGrounded && !isJumping_ && !wasJumping_) {
+                velocity_.y = std::lerp(velocity_.y, 0.0f, lateralDeceleration_);
+            }
         }
 
         // 重力とジャンプ
-        if (isGrounded) {
-            velocity_.y = std::max(velocity_.y, 0.0f); // 地面にいるときは下向きの速度をリセット
-        } else {
-            velocity_.y -= gravity_;
-        }
+        velocity_.y = isGrounded ? velocity_.y : velocity_.y - gravity_;
         if (isGrounded && isJumping_ && !wasJumping_) {
             velocity_.y = jumpPower_;
         }

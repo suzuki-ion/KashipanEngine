@@ -624,22 +624,22 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     }
 }
 
-void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, bool wasHit) {
+void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA, const HitInfo3D &hitInfoB, bool wasHit) {
     const auto *ea = Find3D(a);
     const auto *eb = Find3D(b);
     if (!ea || !eb) return;
 
-    HitInfo3D hiA = hitInfo;
+    HitInfo3D hiA = hitInfoA;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
-    hiA.normal = hitInfo.normal;
+    hiA.normal = hitInfoA.normal;
 
-    HitInfo3D hiB = hitInfo;
+    HitInfo3D hiB = hitInfoB;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
-    hiB.normal = -hitInfo.normal; // そのままの法線はAからBへの向きなので、B側は逆向きにする
+    hiB.normal = hitInfoB.normal;
 
-    const bool isHitNow = hitInfo.isHit;
+    const bool isHitNow = hitInfoA.isHit && hitInfoB.isHit;
 
     if (isHitNow) {
         if (!wasHit) {
@@ -760,14 +760,19 @@ void Collider::Update3D() {
                     continue;
                 }
 
-                HitInfo3D hitInfo{};
+                HitInfo3D hitInfoA{};
+                HitInfo3D hitInfoB{};
                 if (pair.getNbContactPoints() > 0) {
-                    hitInfo = MakeHitInfo(pair.getContactPoint(0));
+                    hitInfoA = MakeHitInfo(pair.getContactPoint(0));
+                    hitInfoB = hitInfoA;
+                    hitInfoA.normal = hitInfoA.normal;
+                    hitInfoB.normal = hitInfoA.normal;
                 } else {
-                    hitInfo.isHit = true;
+                    hitInfoA.isHit = true;
+                    hitInfoB.isHit = true;
                 }
 
-                events.push_back({idA, idB, hitInfo});
+                events.push_back({idA, idB, hitInfoA, hitInfoB});
                 pairs.push_back(MakePairKey(idA, idB));
             }
         }
@@ -779,25 +784,25 @@ void Collider::Update3D() {
     std::sort(curPairs3D_.begin(), curPairs3D_.end());
     curPairs3D_.erase(std::unique(curPairs3D_.begin(), curPairs3D_.end()), curPairs3D_.end());
 
-    std::unordered_map<std::uint64_t, HitInfo3D> hitMap;
+    std::unordered_map<std::uint64_t, std::pair<HitInfo3D, HitInfo3D>> hitMap;
     hitMap.reserve(frameEvents3D_.size());
     for (const auto &event : frameEvents3D_) {
         const std::uint64_t key = MakePairKey(event.a, event.b);
-        hitMap.emplace(key, event.hitInfo);
+        hitMap.emplace(key, std::make_pair(event.hitInfoA, event.hitInfoB));
     }
 
     for (const auto &[key, hitInfo] : hitMap) {
         const ColliderID a = static_cast<ColliderID>(key >> 32);
         const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
         const bool wasHit = std::binary_search(prevPairs3D_.begin(), prevPairs3D_.end(), key);
-        Dispatch3D(a, b, hitInfo, wasHit);
+        Dispatch3D(a, b, hitInfo.first, hitInfo.second, wasHit);
     }
 
     for (const auto key : prevPairs3D_) {
         if (std::binary_search(curPairs3D_.begin(), curPairs3D_.end(), key)) continue;
         const ColliderID a = static_cast<ColliderID>(key >> 32);
         const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
-        Dispatch3D(a, b, HitInfo3D{}, true);
+        Dispatch3D(a, b, HitInfo3D{}, HitInfo3D{}, true);
     }
 
     prevPairs3D_ = curPairs3D_;

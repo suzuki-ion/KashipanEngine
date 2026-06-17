@@ -4,7 +4,9 @@
 #include <cassert>
 #include <optional>
 #include <cstdint>
+#include "Utilities/FileIO/JSON.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
+#include "ComponentSerialize/ComponentSerialize.h"
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -47,6 +49,18 @@ public:
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     virtual void ShowImGui() = 0;
 #endif
+
+    /// @brief フィールド情報の取得（シリアライズ用）
+    /// @return フィールド情報のベクターを返す。フィールドがない場合は空のベクターを返す
+    virtual std::vector<FieldInfo> GetFieldInfos() { return {}; }
+
+    /// @brief コンポーネント情報をjsonへ保存
+    /// @return コンポーネント情報を含むjsonオブジェクトを返す。保存する情報がない場合は空のjsonオブジェクトを返す
+    virtual JSON SaveToJson() const { return JSON::object(); }
+    /// @brief jsonからコンポーネント情報を読み込み
+    /// @param json コンポーネント情報を含むjsonオブジェクト
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。読み込む情報がない場合は true を返す
+    virtual bool LoadFromJson(const JSON &json) { (void)json; return true; }
 
     /// @brief シェーダー変数へのバインド処理 
     /// @param binder シェーダー変数バインダー

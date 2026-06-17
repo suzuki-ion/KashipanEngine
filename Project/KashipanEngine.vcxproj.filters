@@ -149,9 +149,9 @@
     <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Application\Scenes\CollisionTestScene.cpp" />
+    <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application\ComponentRegistry.h" />
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
     <ClInclude Include="Application\Objects\CollisionAttributes.h" />
     <ClInclude Include="Application\Objects\Components\PlayerInputHandler.h" />
@@ -425,6 +425,21 @@
     <ClInclude Include="Application\Objects\Components\EnemyCollisionPushBack.h" />
     <ClInclude Include="Application\Objects\Components\PlayerCollision.h" />
     <ClInclude Include="Application\Objects\Components\EnemyCollision.h" />
+    <ClInclude Include="Application\Objects\Components\EnemyAliveStateController.h" />
+    <ClInclude Include="Application\Objects\CreateFunc\CreateEnemyObject.h" />
+    <ClInclude Include="Application\Objects\Components\PlayerEnemyJump.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentRegistry.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerializeHeader.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjecHierarchy.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
+    <ClInclude Include="KashipanEngine\Utilities\UUID128.h" />
+    <ClInclude Include="KashipanEngine\Objects\ObjectComponentHeader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -1,0 +1,796 @@
+{
+    "objects2D": [
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "samplerHandle": 1,
+                "texture": "",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Sprite_ScreenBuffer3D",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1920.0,
+                    "y": 1080.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 960.0,
+                    "y": 600.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "samplerHandle": 1,
+                "texture": "",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Sprite_ScreenBuffer2D",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1920.0,
+                    "y": 1080.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 960.0,
+                    "y": 600.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "samplerHandle": 1,
+                "texture": "KashipanEngine/white1x1.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "SceneChangeIn_White",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1920.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 960.0,
+                    "y": 1080.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "samplerHandle": 1,
+                "texture": "KashipanEngine/white1x1.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "SceneChangeIn_Black",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1920.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 960.0,
+                    "y": 1080.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sprite"
+        }
+    ],
+    "objects3D": [
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": true,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "KashipanEngine/white1x1.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Ground",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.5235987901687622
+                },
+                "scale": {
+                    "x": 256.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "translate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Box"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": true,
+                "enableShadowMapProjection": false,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "KashipanEngine/white1x1.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Player",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "translate": {
+                    "x": 11.183411598205566,
+                    "y": 7.611262798309326,
+                    "z": 0.0
+                }
+            },
+            "type": "Sphere"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_0",
+            "transform": {
+                "rotate": {
+                    "x": -1.9460915327072144,
+                    "y": 2.993528127670288,
+                    "z": -1.8135958909988403
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_1",
+            "transform": {
+                "rotate": {
+                    "x": 0.7603609561920166,
+                    "y": 2.491767644882202,
+                    "z": 2.5352861881256104
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_2",
+            "transform": {
+                "rotate": {
+                    "x": -2.7838926315307617,
+                    "y": 2.397906541824341,
+                    "z": 1.630969762802124
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_3",
+            "transform": {
+                "rotate": {
+                    "x": -2.1125783920288086,
+                    "y": -1.069108247756958,
+                    "z": 1.4656426906585693
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_4",
+            "transform": {
+                "rotate": {
+                    "x": -0.864473819732666,
+                    "y": 0.5068857669830322,
+                    "z": -0.0905461311340332
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_5",
+            "transform": {
+                "rotate": {
+                    "x": -2.6979243755340576,
+                    "y": 2.991039991378784,
+                    "z": 2.094817876815796
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_6",
+            "transform": {
+                "rotate": {
+                    "x": 1.9249513149261475,
+                    "y": 1.8108017444610596,
+                    "z": -2.7151026725769043
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 0.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "enableLighting": false,
+                "enableShadowMapProjection": true,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "Application/Image/circle2.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "HitEffect_7",
+            "transform": {
+                "rotate": {
+                    "x": -1.6523576974868774,
+                    "y": -1.540104866027832,
+                    "z": -0.6237227916717529
+                },
+                "scale": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Plane3D"
+        },
+        {
+            "material": {
+                "color": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "enableLighting": true,
+                "enableShadowMapProjection": false,
+                "samplerHandle": 1,
+                "shininess": 32.0,
+                "specularColor": {
+                    "w": 1.0,
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "texture": "KashipanEngine/white1x1.png",
+                "uvRotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "uvScale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "uvTranslate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                }
+            },
+            "name": "Enemy",
+            "transform": {
+                "rotate": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "scale": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0
+                },
+                "translate": {
+                    "x": 4.0,
+                    "y": 6.0,
+                    "z": 0.0
+                }
+            },
+            "type": "Sphere"
+        }
+    ],
+    "scene": "GameScene"
+}

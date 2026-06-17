@@ -9,20 +9,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Assets/AudioManager.h"
-#include "Assets/AnimationManager.h"
-#include "Assets/ModelManager.h"
-#include "Assets/SkeletonManager.h"
-#include "Assets/SamplerManager.h"
-#include "Assets/TextureManager.h"
-#include "Input/Input.h"
-#include "Input/InputCommand.h"
-
 #include "Objects/Object2DBase.h"
 #include "Objects/Object3DBase.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ISceneComponent.h"
 #include "Utilities/Passkeys.h"
+
+#include "Assets/ModelManager.h"
 
 namespace KashipanEngine {
 
@@ -30,6 +23,14 @@ class SceneContext;
 
 class SceneManager;
 class GameEngine;
+
+class AudioManager;
+class SkeletonManager;
+class SamplerManager;
+class TextureManager;
+class AnimationManager;
+class Input;
+class InputCommand;
 
 class SceneBase {
 public:

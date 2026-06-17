@@ -22,6 +22,7 @@
 #include "Math/Vector4.h"
 #include "Objects/IObjectComponent.h"
 #include "../../MyStd/AnyUnorderedMap.h"
+#include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
 
@@ -290,6 +291,9 @@ public:
         sceneContext_ = sceneContext;
     }
 
+    /// @brief オブジェクトIDの取得
+    const UUID128 &GetObjectId() const { return objectId_; }
+
 protected:
     /// @brief コンストラクタ
     /// @param name オブジェクト名
@@ -444,6 +448,9 @@ private:
     std::optional<std::vector<RenderPass::InstanceBufferRequirement>> instanceBufferRequirements_;
     std::optional<std::function<bool(void *constantBufferMaps, std::uint32_t instanceCount)>> updateConstantBuffersFunction_;
     std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction_;
+
+    // オブジェクトID管理用
+    const UUID128 objectId_;
 };
 
 } // namespace KashipanEngine

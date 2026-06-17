@@ -10,6 +10,7 @@
 #include "ObjectsHeaders.h"
 #include "SceneHeaders.h"
 #include "UtilitiesHeaders.h"
+#include "ComponentSerializeHeader.h"
 
 namespace KashipanEngine {
 int Execute(PasskeyForWinMain, const std::string &engineSettingsPath);

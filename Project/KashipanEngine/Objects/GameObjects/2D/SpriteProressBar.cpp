@@ -10,14 +10,13 @@ namespace KashipanEngine {
 
 SpriteProressBar::SpriteProressBar()
     : Object2DBase("SpriteProressBar") {
-    parentTransform_ = GetComponent2D<Transform2D>();
 
     auto makeChild = [this](const std::string &name) {
         auto sprite = std::make_unique<Sprite>();
         sprite->SetName(name);
         sprite->SetUniqueBatchKey();
         if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
-            tr->SetParentTransform(parentTransform_);
+            tr->SetParentObject(this);
         }
         return sprite;
     };
@@ -268,7 +267,7 @@ void SpriteProressBar::SyncSegmentSprites() {
         sprite->SetName("SpriteProressBarSegment");
         sprite->SetUniqueBatchKey();
         if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
-            tr->SetParentTransform(parentTransform_);
+            tr->SetParentObject(this);
         }
 
         if (!attachedPipelineName_.empty()) {

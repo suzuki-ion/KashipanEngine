@@ -30,8 +30,6 @@ public:
     }
 
     void Finalize() override {
-        blackSprite_ = nullptr;
-        whiteSprite_ = nullptr;
         playing_ = false;
         finished_ = false;
     }
@@ -43,11 +41,15 @@ public:
             InitializeSprites();
         }
 
+        auto *ctx = GetOwnerContext();
+        Sprite *whiteSprite = static_cast<Sprite *>(ctx->GetObject2D("SceneChangeIn_White"));
+        Sprite *blackSprite = static_cast<Sprite *>(ctx->GetObject2D("SceneChangeIn_Black"));
+        if (!whiteSprite || !blackSprite) return;
+
         float dt = GetDeltaTime();
         if (dt >= 1.0f) dt = 0.0f;
         elapsed_ = std::min(elapsed_ + dt, kDuration);
 
-        auto *ctx = GetOwnerContext();
         auto *screenBuffer2D = ctx ? ctx->GetComponent<SceneDefaultVariables>()->GetScreenBuffer2D() : nullptr;
         const float w = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetWidth()) : 0.0f;
         const float h = screenBuffer2D ? static_cast<float>(screenBuffer2D->GetHeight()) : 0.0f;
@@ -58,14 +60,14 @@ public:
         {
             const float u = Normalize01(t, 0.5f, 1.0f);
             const float e = EaseOutCubic(h, 0.0f, u);
-            ApplyScale(blackSprite_, w, e);
+            ApplyScale(blackSprite, w, e);
         }
 
         // Black: t=0.7..1.0 -> height initial -> 0
         {
             const float u = Normalize01(t, 0.7f, 1.0f);
             const float e = EaseOutCubic(h, 0.0f, u);
-            ApplyScale(whiteSprite_, w, e);
+            ApplyScale(whiteSprite, w, e);
         }
 
         if (elapsed_ >= kDuration) {
@@ -104,7 +106,6 @@ private:
                 tr->SetScale(Vector2(w, 0.0f));
             }
             obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-            whiteSprite_ = obj.get();
             ctx->AddObject2D(std::move(obj));
         }
 
@@ -123,7 +124,6 @@ private:
                 tr->SetScale(Vector2(w, 0.0f));
             }
             obj->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
-            blackSprite_ = obj.get();
             ctx->AddObject2D(std::move(obj));
         }
 
@@ -142,9 +142,8 @@ private:
     bool playing_ = false;
     bool finished_ = false;
     float elapsed_ = 0.0f;
-
-    Sprite *blackSprite_ = nullptr;
-    Sprite *whiteSprite_ = nullptr;
 };
+
+REGISTER_COMPONENT_SCENE(SceneChangeIn)
 
 } // namespace KashipanEngine

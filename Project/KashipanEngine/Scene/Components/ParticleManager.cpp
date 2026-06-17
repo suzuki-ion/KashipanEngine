@@ -556,15 +556,15 @@ bool ParticleManager::SetEmitting(const std::string& groupName, bool isEmitting)
     return false;
 }
 
-bool ParticleManager::SetParentTransform(const std::string& groupName, Transform3D* parentTransform) {
+bool ParticleManager::SetParentObject(const std::string& groupName, Object3DBase* parentObject) {
     for (auto& group : groups_) {
         if (group.config.name != groupName) continue;
 
-        group.parentTransform = parentTransform;
+        group.parentObject = parentObject;
         for (auto& particle : group.particles) {
             if (particle.kind != ParticleKind::D3D || !particle.object3D) continue;
             if (auto* tr = particle.object3D->GetComponent3D<Transform3D>()) {
-                tr->SetParentTransform(parentTransform);
+                tr->SetParentObject(parentObject);
             }
         }
         return true;

@@ -158,10 +158,10 @@ void SceneDefaultVariables::SetSceneComponents(std::function<bool(std::unique_pt
     // ScreenBufferアスペクト比維持コンポーネント
     {
         auto comp = std::make_unique<ScreenBufferKeepRatio>();
-        comp->AddSprite(screenBuffer2DSprite_,
+        comp->AddSprite("Sprite_ScreenBuffer2D",
             static_cast<float>(screenBuffer2D_ ? screenBuffer2D_->GetWidth() : 0),
             static_cast<float>(screenBuffer2D_ ? screenBuffer2D_->GetHeight() : 0));
-        comp->AddSprite(screenBuffer3DSprite_,
+        comp->AddSprite("Sprite_ScreenBuffer3D",
             static_cast<float>(screenBuffer3D_ ? screenBuffer3D_->GetWidth() : 0),
             static_cast<float>(screenBuffer3D_ ? screenBuffer3D_->GetHeight() : 0));
         keepRatioComp_ = comp.get();

@@ -440,7 +440,7 @@ bool KeyframeAnimator::PlayFromAnimationAndSkeletonHandle(uint32_t animationHand
             } else if (timeline.valueType == KeyframeValueType::Quaternion && (timeline.name.ends_with(".Rotate") || timeline.name.ends_with(".RotateQuat"))) {
                 timeline.applyFunctions.push_back(std::function<void(const Quaternion &)>([transform](const Quaternion &v) {
                     if (!transform) return;
-                    transform->SetRotateQuaternion(v);
+                    transform->SetRotate(v);
                     }));
             }
 

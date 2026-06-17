@@ -530,10 +530,10 @@ void ModelAnimator::ApplyPresetHierarchy(const std::vector<PresetObject> &preset
         if (childIt == activeModels.end() || parentIt == activeModels.end()) continue;
 
         auto *childTr = childIt->second->GetComponent3D<Transform3D>();
-        auto *parentTr = parentIt->second->GetComponent3D<Transform3D>();
-        if (!childTr || !parentTr) continue;
+        auto *parentObject = parentIt->second;
+        if (!childTr || !parentObject) continue;
 
-        childTr->SetParentTransform(parentTr);
+        childTr->SetParentObject(parentObject);
     }
 }
 

@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Objects/IObjectComponent.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ColliderComponent.h"

@@ -8,21 +8,17 @@ namespace KashipanEngine {
 
 class CameraController final : public ISceneComponent {
 public:
-    explicit CameraController(Camera3D *camera)
-        : ISceneComponent("CameraController", 1), camera_(camera) {
-        if (camera_) {
-            if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
-                targetTranslate_ = tr->GetTranslate();
-                targetRotate_ = tr->GetRotate();
-                targetRotateQuaternion_ = tr->GetRotateQuaternion();
-            }
-            targetFovY_ = camera_->GetFovY();
-        }
+    CameraController(const std::string &cameraName = "")
+        : ISceneComponent("CameraController", 1), cameraName_(cameraName) {
     }
     ~CameraController() override = default;
 
     void Update() override {
-        if (!camera_) return;
+        if (cameraName_.empty()) return;
+
+        auto *ctx = GetOwnerContext();
+        auto *camera = ctx ? static_cast<Camera3D *>(ctx->GetObject3D(cameraName_)) : nullptr;
+        if (!camera) return;
 
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
         const float tMove = std::clamp(lerpFactorMove_ * dt * 60.0f, 0.0f, 1.0f);
@@ -50,7 +46,7 @@ public:
             if (isShakeZ_) desiredTranslate.z += std::sin(phase * 4.9f) * amp;
         }
 
-        if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
+        if (auto *tr = camera->GetComponent3D<Transform3D>()) {
             const Vector3 curT = tr->GetTranslate();
 
             tr->SetTranslate(Vector3::Lerp(curT, desiredTranslate, tMove));
@@ -63,8 +59,12 @@ public:
             }
         }
 
-        const float curF = camera_->GetFovY();
-        camera_->SetFovY(curF + (targetFovY_ - curF) * tFov);
+        const float curF = camera->GetFovY();
+        camera->SetFovY(curF + (targetFovY_ - curF) * tFov);
+    }
+
+    void SetCamera(const std::string &cameraName) {
+        cameraName_ = cameraName;
     }
 
     void SetTargetTranslate(const Vector3 &v) { targetTranslate_ = v; }
@@ -111,9 +111,12 @@ public:
     bool IsShakeZ() const { return isShakeZ_; }
 
     void RecalculateOffsetFromCurrentCamera() {
-        if (!camera_ || !followTarget_) return;
+        if (cameraName_.empty() || !followTarget_) return;
+        auto *ctx = GetOwnerContext();
+        auto *camera = ctx ? static_cast<Camera3D *>(ctx->GetObject3D(cameraName_)) : nullptr;
+        if (!camera) return;
 
-        auto *camTr = camera_->GetComponent3D<Transform3D>();
+        auto *camTr = camera->GetComponent3D<Transform3D>();
         auto *tgtTr = followTarget_->GetComponent3D<Transform3D>();
         if (!camTr || !tgtTr) return;
 
@@ -161,7 +164,7 @@ public:
 #endif
 
 private:
-    Camera3D *camera_ = nullptr;
+    std::string cameraName_;
 
     Object3DBase *followTarget_ = nullptr;
 
@@ -185,5 +188,7 @@ private:
     bool isShakeY_ = true;
     bool isShakeZ_ = false;
 };
+
+REGISTER_COMPONENT_SCENE(CameraController)
 
 }  // namespace KashipanEngine

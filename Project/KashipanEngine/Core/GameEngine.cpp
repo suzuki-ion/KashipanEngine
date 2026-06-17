@@ -130,9 +130,6 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, "Assets");
     Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
-#if defined(USE_IMGUI)
-    imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
-#endif
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
 
@@ -162,10 +159,23 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
 
+#if defined(USE_IMGUI)
+    imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
+#endif
+
     //--------- ゲームループ終了条件 ---------//
 
     gameLoopEndConditionFunction_ = []() {
+#ifdef USE_IMGUI
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            return Window::GetWindowCount() == 0;
+        } else {
+            // ビューポートが無効な場合は、ImGuiのウィンドウが閉じられたかどうかで終了条件を判断する
+            return Window::GetWindow("ImGui Window") == nullptr;
+        }
+#else
         return Window::GetWindowCount() == 0;
+#endif
     };
 
     AppInitialize(context_);

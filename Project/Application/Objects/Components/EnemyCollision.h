@@ -29,12 +29,7 @@ public:
             OnCollisionExit(hitInfo);
             };
         colliderInfo.attribute = CollisionAttribute::Enemy;
-        colliderInfo.ignoreAttribute = CollisionAttribute::Enemy;
         GetOwner3DContext()->RegisterComponent(std::make_unique<Collision3D>(colliderInfo));
-        if (auto *tr = GetOwner3DContext()->GetComponent<Transform3D>()) {
-            tr->SetTranslate(Vector3(0.0f, 0.5f, 0.0f));
-            tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
-        }
         return true;
     }
 
@@ -49,6 +44,16 @@ public:
 #endif
 
     bool IsGrounded() const { return isGrounded_; }
+    bool IsCollidingWithPlayer() const { return isCollidingWithPlayer_; }
+    const Vector3 &GetHitNormal() const { return hitNormal_; }
+
+    bool ConsumePlayerCollision() {
+        if (isCollidingWithPlayer_) {
+            isCollidingWithPlayer_ = false;
+            return true;
+        }
+        return false;
+    }
 
 private:
     void OnCollisionEnter(const HitInfo3D &hitInfo) {
@@ -59,6 +64,7 @@ private:
             isCollidingWithPlayer_ = true;
             // プレイヤーにダメージを与えるなどの処理をここに追加
         }
+        hitNormal_ = hitInfo.normal;
     }
     void OnCollisionStay(const HitInfo3D &hitInfo) {
         if (hitInfo.otherObject->GetName() == "Ground") {
@@ -83,11 +89,14 @@ private:
             isCollidingWithPlayer_ = false;
             // プレイヤーとの接触が終了したときの処理をここに追加
         }
+        hitNormal_ = hitInfo.normal;
     }
 
     bool isGrounded_ = false;
     bool isCollidingWithPlayer_ = false;
     Vector3 hitNormal_ = Vector3::Zero();
 };
+
+REGISTER_COMPONENT_OBJECT3D(EnemyCollision)
 
 } // namespace KashipanEngine

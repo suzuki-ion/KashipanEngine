@@ -78,13 +78,13 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("SelectDown", Key::S, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectDown", Key::Down, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectDown", ControllerButton::DPadDown, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("SelectDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, 0.2f, true);
+        ic->RegisterCommand("SelectDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Trigger, 0, -0.2f, true);
 
         // 選択（左）
         ic->RegisterCommand("SelectLeft", Key::A, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectLeft", Key::Left, InputCommand::InputState::Trigger);
         ic->RegisterCommand("SelectLeft", ControllerButton::DPadLeft, InputCommand::InputState::Trigger);
-        ic->RegisterCommand("SelectLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.2f);
+        ic->RegisterCommand("SelectLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Trigger, 0, -0.2f, true);
 
         // 選択（右）
         ic->RegisterCommand("SelectRight", Key::D, InputCommand::InputState::Trigger);
@@ -102,13 +102,13 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("PlayerMoveDown", Key::S, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveDown", Key::Down, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveDown", ControllerButton::DPadDown, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerMoveDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, 0.2f, true);
+        ic->RegisterCommand("PlayerMoveDown", InputCommand::ControllerAnalog::LeftStickY, InputCommand::InputState::Down, 0, -0.2f, true);
 
         // プレイヤー移動（左）
         ic->RegisterCommand("PlayerMoveLeft", Key::A, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveLeft", Key::Left, InputCommand::InputState::Down);
         ic->RegisterCommand("PlayerMoveLeft", ControllerButton::DPadLeft, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerMoveLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, -0.2f);
+        ic->RegisterCommand("PlayerMoveLeft", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, -0.2f, true);
 
         // プレイヤー移動（右）
         ic->RegisterCommand("PlayerMoveRight", Key::D, InputCommand::InputState::Down);

@@ -85,4 +85,6 @@ private:
     float moveRightInput_ = 0.0f;
 };
 
+REGISTER_COMPONENT_OBJECT3D(PlayerMovement)
+
 } // namespace KashipanEngine

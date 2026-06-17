@@ -94,8 +94,8 @@ Matrix4x4 ConvertMatrix(const aiMatrix4x4 &m) {
     return out;
 }
 
-std::unique_ptr<Transform3D> ConvertTransform(const aiMatrix4x4 &m) {
-    auto transform = std::make_unique<Transform3D>();
+std::unique_ptr<SkeletonTransform> ConvertTransform(const aiMatrix4x4 &m) {
+    auto transform = std::make_unique<SkeletonTransform>();
 
     aiVector3D scaling;
     aiQuaternion rotation;
@@ -103,7 +103,7 @@ std::unique_ptr<Transform3D> ConvertTransform(const aiMatrix4x4 &m) {
     m.Decompose(scaling, rotation, translation);
 
     transform->SetScale(Vector3(scaling.x, scaling.y, scaling.z));
-    transform->SetRotateQuaternion(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+    transform->SetRotate(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
     transform->SetTranslate(Vector3(translation.x, translation.y, translation.z));
     return std::move(transform);
 }
@@ -156,8 +156,7 @@ void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
     if (jointIndex >= 0) {
         SkeletonJoint &joint = skeleton.joints[static_cast<size_t>(jointIndex)];
         joint.transform = ConvertTransform(node->mTransformation);
-        joint.skeletonSpaceTransform = std::make_unique<Transform3D>();
-        joint.skeletonSpaceTransform->SetParentTransform(joint.transform.get());
+        joint.skeletonSpaceTransform = ConvertTransform(node->mTransformation);
 
         if (node->mParent) {
             const std::string parentName = node->mParent->mName.C_Str();
@@ -166,7 +165,7 @@ void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
                 joint.parentIndex = parentIt->second;
                 skeleton.joints[static_cast<size_t>(parentIt->second)].childrenIndices.push_back(jointIndex);
                 auto *parentTransform = skeleton.joints[static_cast<size_t>(parentIt->second)].transform.get();
-                joint.transform->SetParentTransform(parentTransform);
+                joint.transform->SetParent(parentTransform);
             }
         }
     }
@@ -344,7 +343,7 @@ const bool SkeletonManager::UpdateSkeletonJointTransforms(SkeletonHandle handle)
 
     SkeletonData &data = it->second.data;
     const Skeleton &skeleton = data.GetSkeleton();
-    for (const auto &joint : skeleton.joints) {
+    for (auto &joint : skeleton.joints) {
         if (auto *t = joint.skeletonSpaceTransform.get()) {
             // ワールド行列取得時の行列更新処理を利用して、全スケルトンの行列を更新する
             t->GetWorldMatrix();

@@ -553,10 +553,10 @@ void SpriteAnimator::ApplyPresetHierarchy(const std::vector<PresetObject> &prese
         if (childIt == activeSprites.end() || parentIt == activeSprites.end()) continue;
 
         auto *childTr = childIt->second->GetComponent2D<Transform2D>();
-        auto *parentTr = parentIt->second->GetComponent2D<Transform2D>();
-        if (!childTr || !parentTr) continue;
+        auto *parentObject = parentIt->second;
+        if (!childTr || !parentObject) continue;
 
-        childTr->SetParentTransform(parentTr);
+        childTr->SetParentObject(parentObject);
     }
 }
 

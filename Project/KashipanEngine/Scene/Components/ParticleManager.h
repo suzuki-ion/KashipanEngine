@@ -111,7 +111,7 @@ public:
     bool Spawn(const std::string& groupName, std::optional<Vector3> center = std::nullopt);
     bool SetEmitCenter(const std::string& groupName, const Vector3& center, bool respawnExisting = false);
     bool SetEmitting(const std::string& groupName, bool isEmitting);
-    bool SetParentTransform(const std::string& groupName, Transform3D* parentTransform);
+    bool SetParentObject(const std::string& groupName, Object3DBase* parentObject);
 
     bool LoadFromJsonFile(const std::string& filepath);
     bool SaveToJsonFile(const std::string& filepath) const;
@@ -144,7 +144,7 @@ private:
         float spawnTimer = 0.0f;
         bool isEmitting = false;
         Vector3 emitCenter{ 0.0f, 0.0f, 0.0f };
-        Transform3D* parentTransform = nullptr;
+        Object3DBase* parentObject = nullptr;
     };
 
     static std::uint64_t MakeRandomBatchKey();

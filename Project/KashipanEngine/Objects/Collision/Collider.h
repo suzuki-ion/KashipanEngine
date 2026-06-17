@@ -196,7 +196,8 @@ private:
     struct CollisionEvent3D {
         ColliderID a = 0;
         ColliderID b = 0;
-        HitInfo3D hitInfo{};
+        HitInfo3D hitInfoA{};
+        HitInfo3D hitInfoB{};
     };
 
     template<typename Info>
@@ -238,7 +239,7 @@ private:
     HitInfo3D BuildHitInfo3D(const reactphysics3d::CollisionCallback::ContactPoint &contact) const;
 
     void Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, bool wasHit);
-    void Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, bool wasHit);
+    void Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA, const HitInfo3D &hitInfoB, bool wasHit);
 
     std::vector<std::uint64_t> prevPairs2D_;
     std::vector<std::uint64_t> prevPairs3D_;

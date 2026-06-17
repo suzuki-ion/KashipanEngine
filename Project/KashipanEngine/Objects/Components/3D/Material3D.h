@@ -199,6 +199,26 @@ public:
     }
 #endif
 
+    JSON SaveToJson() const override {
+        JSON json;
+        json["color"] = { instanceData_.color.x, instanceData_.color.y, instanceData_.color.z, instanceData_.color.w };
+        json["uvTransform"] = {
+            { "translate", { uvTransform_.translate.x, uvTransform_.translate.y, uvTransform_.translate.z } },
+            { "rotate", { uvTransform_.rotate.x, uvTransform_.rotate.y, uvTransform_.rotate.z } },
+            { "scale", { uvTransform_.scale.x, uvTransform_.scale.y, uvTransform_.scale.z } }
+        };
+        json["shininess"] = instanceData_.shininess;
+        json["specularColor"] = { instanceData_.specularColor.x, instanceData_.specularColor.y, instanceData_.specularColor.z, instanceData_.specularColor.w };
+        json["environmentCoefficient"] = instanceData_.environmentCoefficient;
+        if (textureHandle_ != TextureManager::kInvalidHandle) {
+            json["textureHandle"] = textureHandle_;
+        }
+        if (samplerHandle_ != SamplerManager::kInvalidHandle) {
+            json["samplerHandle"] = samplerHandle_;
+        }
+        return json;
+    }
+
 private:
     UVTransform uvTransform_;
     InstanceData instanceData_{};

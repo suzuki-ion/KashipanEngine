@@ -64,7 +64,7 @@ constexpr FieldInfo::Type FieldTypeOf<Quaternion>() { return FieldInfo::Type::Qu
     FieldInfo{#type, #member, offsetof(type, member), FieldTypeOf<decltype(type::member)>()}
 
 #define REFLECT(...) \
-    static std::vector<FieldInfo> GetFieldInfos() { \
+    std::vector<FieldInfo> GetFieldInfos() override { \
         return { __VA_ARGS__ }; \
     }
 

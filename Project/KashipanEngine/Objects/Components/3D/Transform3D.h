@@ -1,5 +1,6 @@
 #pragma once
 #include "Objects/IObjectComponent.h"
+#include "Objects/ObjectContext.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 #include "Math/Quaternion.h"
@@ -63,24 +64,30 @@ public:
         return true;
     }
 
-    /// @brief 親トランスフォームの設定
-    /// @param parent 親トランスフォーム
+    /// @brief 親オブジェクトを設定する
+    /// @param parent 親オブジェクト
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
-    bool SetParentTransform(Transform3D *parent) {
-        if (parent == this) {
-            return false;
+    bool SetParentObject(Object3DBase *parent) {
+        if (!parent) {
+            parentObject_ = nullptr;
+            isWorldMatrixCalculated_ = false;
+            cachedParentVersion_ = 0;
+            return true;
         }
-        for (auto *p = parent; p != nullptr; p = p->parentTransform_) {
-            if (p == this) return false;
+        auto *ctx = GetOwner3DContext();
+        auto *ownerObject = ctx ? ctx->GetOwner() : nullptr;
+        if (parent == ownerObject) return false;
+        for (auto *p = parent; p != nullptr; p = p->GetComponent3D<Transform3D>()->parentObject_) {
+            if (p == ownerObject) return false;
         }
-        parentTransform_ = parent;
+        parentObject_ = parent;
         // 親が変わったのでキャッシュは無効
         isWorldMatrixCalculated_ = false;
         cachedParentVersion_ = 0;
         return true;
     }
 
-    Transform3D *GetParentTransform() const { return parentTransform_; }
+    Object3DBase *GetParentObject() const { return parentObject_; }
 
     void SetTranslate(const Vector3 &translate) {
         if (translate_ == translate) return;
@@ -142,12 +149,13 @@ public:
 
             Matrix4x4 local = scaleMat * rotateMat * translateMat;
 
-            if (parentTransform_) {
+            auto *parentTransform = parentObject_ ? parentObject_->GetComponent3D<Transform3D>() : nullptr;
+            if (parentTransform) {
                 // 親のワールド行列を取得（必要なら親が再計算される）
-                const Matrix4x4 &pw = parentTransform_->GetWorldMatrix();
+                const Matrix4x4 &pw = parentTransform->GetWorldMatrix();
                 worldMatrix_ = local * pw;
                 // 親のバージョンをキャッシュ
-                cachedParentVersion_ = parentTransform_->GetWorldMatrixVersion();
+                cachedParentVersion_ = parentTransform->GetWorldMatrixVersion();
             } else {
                 worldMatrix_ = local;
                 cachedParentVersion_ = 0;
@@ -166,9 +174,10 @@ public:
         // 自分のキャッシュがあること、かつ親がいる場合は親が計算済みで
         // 親のバージョンが子がキャッシュしたものと一致していることを要求する
         if (!isWorldMatrixCalculated_) return false;
-        if (!parentTransform_) return true;
-        if (!parentTransform_->IsWorldMatrixCalculated()) return false;
-        return (cachedParentVersion_ == parentTransform_->GetWorldMatrixVersion());
+        auto *parentTransform = parentObject_ ? parentObject_->GetComponent3D<Transform3D>() : nullptr;
+        if (!parentTransform) return true;
+        if (!parentTransform->IsWorldMatrixCalculated()) return false;
+        return (cachedParentVersion_ == parentTransform->GetWorldMatrixVersion());
     }
     bool IsWorldMatrixDirty() const { return !IsWorldMatrixCalculated(); }
 
@@ -195,11 +204,46 @@ public:
     }
 #endif
 
-    REFLECT(
-        FIELD(Transform3D, translate_),
-        FIELD(Transform3D, rotate_),
-        FIELD(Transform3D, scale_)
-    )
+    JSON SaveToJson() const override {
+        JSON json;
+        json["translate"] = { translate_.x, translate_.y, translate_.z };
+        json["rotate"] = { rotate_.x, rotate_.y, rotate_.z };
+        json["scale"] = { scale_.x, scale_.y, scale_.z };
+        const std::string parentName = parentObject_ ? parentObject_->GetName() : "";
+        if (!parentName.empty()) {
+            json["parent"] = parentName;
+        }
+        return json;
+    }
+    bool LoadFromJson(const JSON &json) override {
+        if (!json.contains("translate") || !json.contains("rotate") || !json.contains("scale")) {
+            return false;
+        }
+        auto t = json["translate"];
+        auto r = json["rotate"];
+        auto s = json["scale"];
+        if (!t.is_array() || t.size() != 3 || !r.is_array() || r.size() != 3 || !s.is_array() || s.size() != 3) {
+            return false;
+        }
+        SetTranslate(Vector3(t[0].get<float>(), t[1].get<float>(), t[2].get<float>()));
+        SetRotate(Vector3(r[0].get<float>(), r[1].get<float>(), r[2].get<float>()));
+        SetScale(Vector3(s[0].get<float>(), s[1].get<float>(), s[2].get<float>()));
+
+        if (json.contains("parent")) {
+            std::string parentName = json["parent"].get<std::string>();
+            auto *sceneCtx = GetOwnerSceneContext();
+            if (sceneCtx) {
+                auto *parentObj = sceneCtx->GetObject3D(parentName);
+                if (parentObj) {
+                    SetParentObject(parentObj);
+                } else {
+                    // 親オブジェクトが見つからない場合はエラーとする
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
 private:
     /// @brief オイラー角からクォータニオンへの変換（XYZ回転順）
@@ -238,7 +282,7 @@ private:
     Quaternion rotateQuat_ = Quaternion::Identity();
     Vector3 scale_{ 1.0f, 1.0f, 1.0f };
 
-    Transform3D *parentTransform_ = nullptr;
+    Object3DBase *parentObject_ = nullptr;
     Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
     bool isWorldMatrixCalculated_ = false;
 

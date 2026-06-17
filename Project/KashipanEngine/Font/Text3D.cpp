@@ -21,8 +21,6 @@ Text3D::Text3D(uint32_t textCount)
 
     spriteBatchKey_ = GetRandomValue<uint64_t>(0, UINT64_MAX);
 
-    parentTransform_ = GetComponent3D<Transform3D>();
-
     for (uint32_t i = 0; i < textCount; ++i) {
         auto plane = std::make_unique<Plane3D>();
         plane->SetBatchKey(spriteBatchKey_);
@@ -33,9 +31,7 @@ Text3D::Text3D(uint32_t textCount)
         }
 
         if (auto *tr = plane->GetComponent3D<Transform3D>()) {
-            if (parentTransform_) {
-                tr->SetParentTransform(parentTransform_);
-            }
+            tr->SetParentObject(this);
             tr->SetScale(Vector3{ 0.0f, 0.0f, 0.0f });
             tr->SetTranslate(Vector3{ 0.0f, 0.0f, 0.0f });
         }

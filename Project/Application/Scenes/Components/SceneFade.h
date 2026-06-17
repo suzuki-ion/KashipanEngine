@@ -150,4 +150,6 @@ private:
     Sprite *sprite_ = nullptr;
 };
 
+REGISTER_COMPONENT_SCENE(SceneFade)
+
 } // namespace KashipanEngine

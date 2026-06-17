@@ -21,8 +21,6 @@ Text2D::Text2D(uint32_t textCount)
 
     spriteBatchKey_ = GetRandomValue<uint64_t>(0, UINT64_MAX);
 
-    parentTransform_ = GetComponent2D<Transform2D>();
-
     for (uint32_t i = 0; i < textCount; ++i) {
         auto sprite = std::make_unique<Sprite>();
         sprite->SetBatchKey(spriteBatchKey_);
@@ -30,9 +28,7 @@ Text2D::Text2D(uint32_t textCount)
         sprite->SetPivotPoint(0.0f, 0.0f);
 
         if (auto *tr = sprite->GetComponent2D<Transform2D>()) {
-            if (parentTransform_) {
-                tr->SetParentTransform(parentTransform_);
-            }
+            tr->SetParentObject(this);
             tr->SetScale(Vector2{0.0f, 0.0f});
             tr->SetTranslate(Vector2{0.0f, 0.0f});
         }

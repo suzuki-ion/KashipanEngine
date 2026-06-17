@@ -1,5 +1,6 @@
 #pragma once
 #include "Objects/IObjectComponent.h"
+#include "Objects/ObjectContext.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 #include <memory>
@@ -55,25 +56,32 @@ public:
         return true;
     }
 
-    /// @brief 親トランスフォームの設定
-    /// @param parent 親トランスフォームポインタ
+    /// @brief 親オブジェクトの設定
+    /// @param parent 親オブジェクトポインタ
     /// @return 設定に成功した場合はtrue、失敗した場合はfalseを返す
-    bool SetParentTransform(Transform2D *parent) {
-        if (parent == this) {
-            return false;
+    bool SetParentObject(Object2DBase *parent) {
+        if (!parent) {
+            parentObject_ = nullptr;
+            isWorldMatrixCalculated_ = false;
+            cachedParentVersion_ = 0;
+            return true;
         }
-        for (auto *p = parent; p != nullptr; p = p->parentTransform_) {
-            if (p == this) return false;
+        auto *ctx = GetOwner2DContext();
+        auto *ownerObject = ctx ? ctx->GetOwner() : nullptr;
+        if (parent == ownerObject) return false;
+        for (auto *p = parent; p != nullptr; p = p->GetComponent2D<Transform2D>()->parentObject_) {
+            if (p == ownerObject) return false;
         }
-        parentTransform_ = parent;
+        parentObject_ = parent;
+        // 親が変わったのでキャッシュは無効
         isWorldMatrixCalculated_ = false;
         cachedParentVersion_ = 0;
         return true;
     }
 
-    /// @brief 親トランスフォームの取得
-    /// @return 親トランスフォームポインタ
-    Transform2D *GetParentTransform() const { return parentTransform_; }
+    /// @brief 親オブジェクトの取得
+    /// @return 親オブジェクトポインタ（親がいない場合はnullptr）
+    Object2DBase *GetParentObject() const { return parentObject_; }
 
     /// @brief 平行移動の設定
     /// @param translate 平行移動ベクトル
@@ -114,10 +122,11 @@ public:
             Matrix4x4 local = Matrix4x4::Identity();
             local.MakeAffine(scale_, rotate_, translate_);
 
-            if (parentTransform_) {
-                const Matrix4x4 &pw = parentTransform_->GetWorldMatrix();
+            auto *parentTransform = parentObject_ ? parentObject_->GetComponent2D<Transform2D>() : nullptr;
+            if (parentTransform) {
+                const Matrix4x4 &pw = parentTransform->GetWorldMatrix();
                 worldMatrix_ = local * pw;
-                cachedParentVersion_ = parentTransform_->GetWorldMatrixVersion();
+                cachedParentVersion_ = parentTransform->GetWorldMatrixVersion();
             } else {
                 worldMatrix_ = local;
                 cachedParentVersion_ = 0;
@@ -132,9 +141,10 @@ public:
 
     bool IsWorldMatrixCalculated() const {
         if (!isWorldMatrixCalculated_) return false;
-        if (!parentTransform_) return true;
-        if (!parentTransform_->IsWorldMatrixCalculated()) return false;
-        return (cachedParentVersion_ == parentTransform_->GetWorldMatrixVersion());
+        auto *parentTransform = parentObject_ ? parentObject_->GetComponent2D<Transform2D>() : nullptr;
+        if (!parentTransform) return true;
+        if (!parentTransform->IsWorldMatrixCalculated()) return false;
+        return (cachedParentVersion_ == parentTransform->GetWorldMatrixVersion());
     }
     bool IsWorldMatrixDirty() const { return !IsWorldMatrixCalculated(); }
 
@@ -166,7 +176,7 @@ private:
     Vector3 rotate_{ 0.0f, 0.0f, 0.0f };
     Vector3 scale_{ 1.0f, 1.0f, 1.0f };
 
-    Transform2D *parentTransform_ = nullptr;
+    Object2DBase *parentObject_ = nullptr;
     Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
     bool isWorldMatrixCalculated_ = false;
 

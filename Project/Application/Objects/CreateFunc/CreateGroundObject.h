@@ -21,7 +21,7 @@ std::unique_ptr<Object3DBase> CreateGroundObject(SceneContext *context) {
     if (auto *tr = ground->GetComponent3D<Transform3D>()) {
         tr->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
         tr->SetScale(Vector3(256.0f, 1.0f, 1.0f));
-        tr->SetRotate(Vector3(0.0f, 0.0f, 45.0f / 180.0f * M_PI));
+        tr->SetRotate(Vector3(0.0f, 0.0f, ToRadians(30.0f)));
     }
     ground->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
 

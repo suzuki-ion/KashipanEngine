@@ -84,8 +84,6 @@ private:
     std::unique_ptr<Sprite> barSprite_;
     std::vector<std::unique_ptr<Sprite>> segmentSprites_;
 
-    Transform2D *parentTransform_ = nullptr;
-
     float progress_ = 0.0f;
     Vector2 barSize_ = Vector2{256.0f, 24.0f};
     FillDirection fillDirection_ = FillDirection::LeftToRight;

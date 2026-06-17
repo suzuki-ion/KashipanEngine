@@ -38,4 +38,6 @@ private:
     Vector3 angularVelocity_{0.0f, 0.0f, 1.0f};
 };
 
+REGISTER_COMPONENT_OBJECT3D(AlwaysRotate);
+
 } // namespace KashipanEngine

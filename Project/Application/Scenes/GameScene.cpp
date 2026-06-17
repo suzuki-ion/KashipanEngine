@@ -2,6 +2,7 @@
 #include "Scenes/Components/SceneChangeIn.h"
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/CameraController.h"
+#include "Objects/CreateFunc/CreateEnemyObject.h"
 #include "Objects/CreateFunc/CreateGroundObject.h"
 #include "Objects/CreateFunc/CreatePlayerObject.h"
 #include "Objects/CreateFunc/CreateSkyboxObject.h"
@@ -18,8 +19,8 @@ void GameScene::Initialize() {
 
     if (screenBuffer3D) {
         auto op = OutlineEffect::Params{};
-        op.threshold = 0.05f;
-        op.thickness = 2.0f;
+        op.threshold = 0.25f;
+        op.thickness = 5.0f;
         op.color[0] = 0.0f;
         op.color[1] = 0.0f;
         op.color[2] = 0.0f;
@@ -32,11 +33,12 @@ void GameScene::Initialize() {
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
     }
 
-    AddSceneComponent(std::make_unique<CameraController>(mainCamera3D));
+    AddSceneComponent(std::make_unique<CameraController>("Camera3D_ScreenBuffer3D"));
     if (auto *camCtrl = GetSceneComponent<CameraController>()) {
-        camCtrl->SetFollowOffset(Vector3(0.0f, 2.0f, -16.0f));
+        camCtrl->SetFollowOffset(Vector3(0.0f, 0.0f, -16.0f));
     }
 
+    AddObject3D(CreateEnemyObject(GetSceneContext()));
     AddObject3D(CreateGroundObject(GetSceneContext()));
     AddObject3D(CreatePlayerObject(GetSceneContext()));
     AddObject3D(CreateSkyboxObject(GetSceneContext()));
@@ -49,7 +51,9 @@ void GameScene::Initialize() {
         in->Play();
     }
 
-    AddSceneComponent(std::make_unique<ParticleManager>());
+    if (auto *pm = GetSceneComponent<ParticleManager>()) {
+        pm->LoadFromJsonFile("HitEffect.json");
+    }
 }
 
 GameScene::~GameScene() {}
@@ -65,7 +69,21 @@ void GameScene::OnUpdate() {
 
     if (auto *playrer = GetObject3D("Player")) {
         if (auto *camCtrl = GetSceneComponent<CameraController>()) {
-            camCtrl->SetTargetTranslate(playrer->GetComponent3D<Transform3D>()->GetTranslate() + Vector3(0.0f, 2.0f, -16.0f));
+            camCtrl->SetTargetTranslate(playrer->GetComponent3D<Transform3D>()->GetTranslate() + Vector3(0.0f, 0.0f, -16.0f));
+        }
+    }
+
+    if (auto *enemy = GetObject3D("Enemy")) {
+        if (!enemy->GetComponent3D<EnemyAliveStateController>()->IsAlive()) {
+            RemoveObject3D(enemy);
+        }
+    } else {
+        static float timer = 0.0f;
+        static const float spawnInterval = 1.0f;
+        timer += GetDeltaTime() * GetGameSpeed();
+        if (timer >= spawnInterval) {
+            timer = 0.0f;
+            AddObject3D(CreateEnemyObject(GetSceneContext()));
         }
     }
 
@@ -79,6 +97,25 @@ void GameScene::OnUpdate() {
             }
         }
     }
+
+    // 確認用のコンポーネント一覧表示用ImGui
+    ImGui::Begin("Component Registry");
+    ImGui::Text("Scene Components:");
+    for (const auto &comp : GetRegisteredSceneComponentTypes()) {
+        ImGui::Text("\t%s", comp.c_str());
+    }
+    ImGui::Separator();
+    ImGui::Text("Object2D Components:");
+    for (const auto &comp : GetRegisteredObject2DComponentTypes()) {
+        ImGui::Text("\t%s", comp.c_str());
+    }
+    ImGui::Separator();
+    ImGui::Text("Object3D Components:");
+    for (const auto &comp : GetRegisteredObject3DComponentTypes()) {
+        ImGui::Text("\t%s", comp.c_str());
+    }
+    ImGui::End();
+
 }
 
 } // namespace KashipanEngine

@@ -34,10 +34,7 @@ void CollisionTestScene::Initialize() {
     if (auto *mat = areaParent->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
     }
-    Transform3D *areaParentTr = nullptr;
-    if (auto *tr = areaParent->GetComponent3D<Transform3D>()) {
-        areaParentTr = tr;
-    }
+    Object3DBase *areaParentPtr = areaParent.get();
     AddObject3D(std::move(areaParent));
 
     // エリアのオブジェクトに使用する当たり判定情報
@@ -63,7 +60,7 @@ void CollisionTestScene::Initialize() {
     areaFloor->SetName("AreaFloor");
     if (auto *tr = areaFloor->GetComponent3D<Transform3D>()) {
         tr->SetScale(Vector3(areaSize_.x, 1.0f, areaSize_.z));
-        tr->SetParentTransform(areaParentTr);
+        tr->SetParentObject(areaParentPtr);
     }
     areaFloor->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
     areaFloor->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -74,7 +71,7 @@ void CollisionTestScene::Initialize() {
     if (auto *tr = areaWallLeft->GetComponent3D<Transform3D>()) {
         tr->SetScale(Vector3(1.0f, areaSize_.y, areaSize_.z));
         tr->SetTranslate(Vector3(-areaSize_.x * 0.5f, areaSize_.y * 0.5f, 0.0f));
-        tr->SetParentTransform(areaParentTr);
+        tr->SetParentObject(areaParentPtr);
     }
     areaWallLeft->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
     areaWallLeft->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -85,7 +82,7 @@ void CollisionTestScene::Initialize() {
     if (auto *tr = areaWallRight->GetComponent3D<Transform3D>()) {
         tr->SetScale(Vector3(1.0f, areaSize_.y, areaSize_.z));
         tr->SetTranslate(Vector3(areaSize_.x * 0.5f, areaSize_.y * 0.5f, 0.0f));
-        tr->SetParentTransform(areaParentTr);
+        tr->SetParentObject(areaParentPtr);
     }
     areaWallRight->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
     areaWallRight->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -96,7 +93,7 @@ void CollisionTestScene::Initialize() {
     if (auto *tr = areaWallBack->GetComponent3D<Transform3D>()) {
         tr->SetScale(Vector3(areaSize_.x, areaSize_.y, 1.0f));
         tr->SetTranslate(Vector3(0.0f, areaSize_.y * 0.5f, areaSize_.z * 0.5f));
-        tr->SetParentTransform(areaParentTr);
+        tr->SetParentObject(areaParentPtr);
     }
     areaWallBack->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
     areaWallBack->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
@@ -107,7 +104,7 @@ void CollisionTestScene::Initialize() {
     if (auto *tr = areaWallFront->GetComponent3D<Transform3D>()) {
         tr->SetScale(Vector3(areaSize_.x, areaSize_.y, 1.0f));
         tr->SetTranslate(Vector3(0.0f, areaSize_.y * 0.5f, -areaSize_.z * 0.5f));
-        tr->SetParentTransform(areaParentTr);
+        tr->SetParentObject(areaParentPtr);
     }
     areaWallFront->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
     areaWallFront->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");

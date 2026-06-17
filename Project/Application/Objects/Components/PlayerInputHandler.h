@@ -66,4 +66,6 @@ private:
     bool isActive_ = true;
 };
 
+REGISTER_COMPONENT_OBJECT3D(PlayerInputHandler)
+
 } // namespace KashipanEngine

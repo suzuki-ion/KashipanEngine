@@ -51,7 +51,7 @@ void ImGuiManager::InitializeInternal() {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
 
@@ -59,6 +59,12 @@ void ImGuiManager::InitializeInternal() {
         ImGuiStyle& style = ImGui::GetStyle();
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    } else {
+        // マルチビューポートを使用しない場合はImGui用のウィンドウを作成
+        Window::CreateNormal(
+            "ImGui Window",
+            1280, 720
+        );
     }
 
     // 現在の言語環境に合わせてフォントを設定
@@ -98,7 +104,14 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
 
     // バックエンド初期化はウィンドウ生成後に行う
     if (!isBackendInitialized_) {
-        mainHwnd_ = Window::GetFirstWindowHwndForImGui({});
+        ImGuiIO &io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            mainHwnd_ = Window::GetFirstWindowHwndForImGui({});
+        } else {
+            Window *window = Window::GetWindow("ImGui Window");
+            if (!window) return;
+            mainHwnd_ = Window::GetWindow("ImGui Window")->GetWindowHandle();
+        }
         if (!mainHwnd_) return;
 
         if (!ImGui_ImplWin32_Init(mainHwnd_)) {
@@ -139,6 +152,12 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+
+    ImGuiIO &io = ImGui::GetIO();
+    if (!(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)) {
+        // マルチビューポートを使用しない場合ImGui用ウィンドウ全体に対してドッキングを有効にする
+        ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+    }
 
     TextureManager::ShowImGuiLoadedTexturesWindow();
     ModelManager::ShowImGuiLoadedModelsWindow();

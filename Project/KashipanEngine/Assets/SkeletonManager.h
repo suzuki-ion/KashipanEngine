@@ -5,24 +5,88 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
-#include "Objects/Components/3D/Transform3D.h"
+#include "Math/Vector3.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Quaternion.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
+/// @brief スケルトン用トランスフォーム構造体
+class SkeletonTransform {
+public:
+    SkeletonTransform() = default;
+    ~SkeletonTransform() = default;
+
+    // ワールド行列の取得
+    const Matrix4x4 &GetWorldMatrix() {
+        if (isDirty_) {
+            UpdateWorldMatrix();
+        }
+        return worldMatrix_;
+    }
+
+    void SetTranslate(const Vector3 &t) { translate_ = t; MarkDirty(); }
+    void SetRotate(const Quaternion &r) { rotate_ = r; MarkDirty(); }
+    void SetScale(const Vector3 &s) { scale_ = s; MarkDirty(); }
+    void SetParent(SkeletonTransform *parent) { parent_ = parent; MarkDirty(); }
+
+    const Vector3 &GetTranslate() const noexcept { return translate_; }
+    const Quaternion &GetRotate() const noexcept { return rotate_; }
+    const Vector3 &GetScale() const noexcept { return scale_; }
+    const SkeletonTransform *GetParent() const noexcept { return parent_; }
+
+private:
+    // 変更通知
+    void MarkDirty() {
+        isDirty_ = true;
+    }
+
+    // 行列更新処理
+    void UpdateWorldMatrix() {
+        // クォータニオンから回転行列を生成してワールド行列を構築
+        Matrix4x4 scaleMat;
+        scaleMat.MakeScale(scale_);
+
+        Matrix4x4 rotateMat = rotate_.MakeRotateMatrix();
+
+        Matrix4x4 translateMat;
+        translateMat.MakeTranslate(translate_);
+
+        Matrix4x4 local = scaleMat * rotateMat * translateMat;
+        if (parent_) {
+            // 親がある場合は親のワールド行列と掛け合わせる
+            worldMatrix_ = parent_->GetWorldMatrix() * local;
+        } else {
+            worldMatrix_ = local;
+        }
+
+        isDirty_ = false;
+    }
+
+    Vector3 translate_ = Vector3::Zero();
+    Quaternion rotate_ = Quaternion::Identity();
+    Vector3 scale_ = { 1.0f, 1.0f, 1.0f };
+    SkeletonTransform *parent_ = nullptr;
+
+    Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
+    bool isDirty_ = true;
+};
+
 /// @brief モデルのノード構造体
 struct Node final {
-    std::unique_ptr<Transform3D> transform;
+    std::unique_ptr<SkeletonTransform> transform;
     std::string name;
     std::vector<Node> children;
 };
 
 /// @brief スケルトンのジョイント構造体
 struct SkeletonJoint final {
-    std::unique_ptr<Transform3D> transform;
+    std::unique_ptr<SkeletonTransform> transform;
     std::string name;
-    std::unique_ptr<Transform3D> skeletonSpaceTransform; // スケルトンスペースの変換（ルートジョイントからの累積変換）
+    std::unique_ptr<SkeletonTransform> skeletonSpaceTransform; // スケルトンスペースの変換（ルートジョイントからの累積変換）
     std::vector<int32_t> childrenIndices; // 子ジョイントのインデックス（ModelData のジョイント配列内でのインデックス）
     std::optional<int32_t> parentIndex; // 親ジョイントのインデックス（ModelData のジョイント配列内でのインデックス、ルートジョイントの場合は std::nullopt）
 };

@@ -12,13 +12,13 @@ std::unique_ptr<Object3DBase> CreatePlayerObject(SceneContext *context) {
 
     auto player = std::make_unique<Sphere>();
     player->SetName("Player");
-    if (auto *tr = player->GetComponent3D<Transform3D>()) {
-        tr->SetTranslate(Vector3(0.0f, 2.0f, 0.0f));
-        tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
-    }
     player->RegisterComponent(std::make_unique<PlayerCollision>());
     player->RegisterComponent(std::make_unique<PlayerMovement>());
     player->RegisterComponent(std::make_unique<PlayerInputHandler>());
+    if (auto *tr = player->GetComponent3D<Transform3D>()) {
+        tr->SetTranslate(Vector3(-4.0f, 6.0f, 0.0f));
+        tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+    }
 
     player->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
 

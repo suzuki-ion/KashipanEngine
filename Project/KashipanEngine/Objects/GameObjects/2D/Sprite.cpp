@@ -73,10 +73,12 @@ void Sprite::UpdateAnchorOffset() {
     if (!transform) return;
 
     Vector3 anchorOffset{ 0.0f, 0.0f, 0.0f };
-    if (auto *parent = transform->GetParentTransform()) {
-        const Vector3 &parentScale = parent->GetScale();
-        anchorOffset.x = (anchorPoint_.x - 0.5f) * parentScale.x;
-        anchorOffset.y = (0.5f - anchorPoint_.y) * parentScale.y;
+    if (auto *parentObject = transform->GetParentObject()) {
+        if (auto *parentTr = parentObject->GetComponent2D<Transform2D>()) {
+            const Vector3 &parentScale = parentTr->GetScale();
+            anchorOffset.x = (anchorPoint_.x - 0.5f) * parentScale.x;
+            anchorOffset.y = (0.5f - anchorPoint_.y) * parentScale.y;
+        }
     }
 
     if (anchorOffset == appliedAnchorOffset_) return;

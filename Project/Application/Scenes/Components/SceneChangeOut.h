@@ -148,4 +148,6 @@ private:
     Sprite *whiteSprite_ = nullptr;
 };
 
+REGISTER_COMPONENT_SCENE(SceneChangeOut)
+
 } // namespace KashipanEngine

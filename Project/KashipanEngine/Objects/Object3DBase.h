@@ -193,7 +193,7 @@ public:
         for (auto it = range.first; it != range.second; ++it) {
             size_t idx = it->second;
             if (idx < components3D_.size()) {
-                result.push_back(components3D_[idx]);
+                result.push_back(components3D_[idx].get());
             }
         }
         return result;
@@ -226,7 +226,7 @@ public:
         for (auto it = range.first; it != range.second; ++it) {
             const size_t idx = it->second;
             if (idx < components3D_.size()) {
-                result.push_back(static_cast<T *>(components3D_[idx]));
+                result.push_back(static_cast<T *>(components3D_[idx].get()));
             }
         }
         return result;
@@ -240,7 +240,7 @@ public:
         for (auto it = range.first; it != range.second; ++it) {
             size_t idx = it->second;
             if (idx < components3D_.size()) {
-                return components3D_[idx];
+                return components3D_[idx].get();
             }
         }
         return nullptr;
@@ -267,7 +267,7 @@ public:
         for (auto it = range.first; it != range.second; ++it) {
             const size_t idx = it->second;
             if (idx < components3D_.size()) {
-                return static_cast<T *>(components3D_[idx]);
+                return static_cast<T *>(components3D_[idx].get());
             }
         }
         return nullptr;
@@ -294,11 +294,51 @@ public:
         return static_cast<size_t>(components3DIndexByType_.count(std::type_index(typeid(T))));
     }
 
+    /// @brief ポインタからコンポーネントを削除
+    /// @param component 削除したいコンポーネントのポインタ
+    /// @return 削除に成功した場合は true
+    bool RemoveComponent3D(IObjectComponent3D *component);
     /// @brief 名前から一致する指定インデックスのコンポーネントを削除
     /// @param componentName コンポーネント名
     /// @param index 同名コンポーネントの何番目を削除するか (0: 最初)
     /// @return 削除に成功した場合は true
-    bool RemoveComponent3D(const std::string &componentName, size_t index = 0);
+    bool RemoveComponent3D(const std::string &componentName, size_t index = 0) {
+        const auto range = components3DIndexByName_.equal_range(componentName);
+        size_t count = 0;
+        for (auto it = range.first; it != range.second; ++it) {
+            if (count == index) {
+                size_t idx = it->second;
+                if (idx < components3D_.size()) {
+                    return RemoveComponent3D(components3D_[idx].get());
+                }
+            }
+            ++count;
+        }
+        return false;
+    }
+    /// @brief 型から一致する指定インデックスのコンポーネントを削除
+    /// @tparam T コンポーネントの型
+    /// @param index 同型コンポーネントの何番目を削除するか (0: 最初)
+    /// @return 削除に成功した場合は true
+    template<typename T>
+    bool RemoveComponent3D(size_t index = 0) {
+        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
+        const auto range = components3DIndexByType_.equal_range(std::type_index(typeid(T)));
+        size_t count = 0;
+        for (auto it = range.first; it != range.second; ++it) {
+            if (count == index) {
+                size_t idx = it->second;
+                if (idx < components3D_.size()) {
+                    return RemoveComponent3D(components3D_[idx].get());
+                }
+            }
+            ++count;
+        }
+        return false;
+    }
+
+    /// @brief 全コンポーネントの取得
+    const std::vector<std::unique_ptr<IObjectComponent3D>> &GetAllComponents3D() const { return components3D_; }
 
     /// @brief インスタンシング用バッチキー（同一キー同士がまとめて描画される）
     std::uint64_t GetInstanceBatchKey() const { return instanceBatchKey_; }
@@ -481,12 +521,11 @@ private:
     D3D12_INDEX_BUFFER_VIEW indexBufferView_{};
     void *vertexData_ = nullptr;
     void *indexData_ = nullptr;
-    std::vector<std::unique_ptr<IObjectComponent>> components_;
-    std::unordered_multimap<std::string, size_t> componentsIndexByName_;
 
-    std::vector<IObjectComponent3D*> components3D_;
+    std::vector<std::unique_ptr<IObjectComponent3D>> components3D_;
     std::unordered_multimap<std::string, size_t> components3DIndexByName_;
     std::unordered_multimap<std::type_index, size_t> components3DIndexByType_;
+    std::unordered_map<IObjectComponent3D *, size_t> components3DIndexByPointer_;
 
     std::unique_ptr<Object3DContext> context_;
     SceneContext *sceneContext_ = nullptr;

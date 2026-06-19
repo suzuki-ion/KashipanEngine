@@ -59,11 +59,17 @@ public:
         if (!owner_) return false;
         return owner_->template RegisterComponent<T>(std::forward<Args>(args)...);
     }
-
     /// @brief 既存コンポーネントの登録
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 登録に成功した場合は true
     bool RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
+        if (!owner_) return false;
+        return owner_->RegisterComponent(std::move(comp));
+    }
+    /// @brief 既存コンポーネントの登録
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 登録に成功した場合は true
+    bool RegisterComponent(std::unique_ptr<IObjectComponent2D> comp) {
         if (!owner_) return false;
         return owner_->RegisterComponent(std::move(comp));
     }
@@ -159,7 +165,6 @@ public:
         if (!owner_) return false;
         return owner_->template RegisterComponent<T>(std::forward<Args>(args)...);
     }
-
     /// @brief 既存コンポーネントの登録
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 登録に成功した場合は true

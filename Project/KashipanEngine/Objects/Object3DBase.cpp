@@ -24,14 +24,14 @@ std::uint64_t MakeRandomNonZeroU64() {
 Object3DBase::~Object3DBase() {
     DetachFromRenderer();
     // 終了処理の呼び出し
-    for (auto &c : components_) {
+    for (auto &c : components3D_) {
         c->Finalize();
     }
     // コンポーネントの破棄
     components3D_.clear();
     components3DIndexByName_.clear();
     components3DIndexByType_.clear();
-    components_.clear();
+    components3DIndexByPointer_.clear();
 }
 
 Object3DBase::RenderPassRegistrationHandle Object3DBase::GenerateRegistrationHandle() const {
@@ -362,35 +362,33 @@ bool Object3DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shad
 
 bool Object3DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
     if (!comp) return false;
-
-    auto *comp3D = dynamic_cast<IObjectComponent3D *>(comp.get());
-    if (comp3D == nullptr) return false;
+    auto *comp3DPtr = dynamic_cast<IObjectComponent3D *>(comp.get());
+    if (!comp3DPtr) return false;
+    comp.release();
+    std::unique_ptr<IObjectComponent3D> comp3D(comp3DPtr);
 
     // 登録上限を超えていないか確認
-    size_t maxCount = comp->GetMaxComponentCountPerObject();
-    size_t existingCount = HasComponents3D(comp->GetComponentType());
+    size_t maxCount = comp3D->GetMaxComponentCountPerObject();
+    size_t existingCount = HasComponents3D(comp3D->GetComponentType());
     if (existingCount >= maxCount) return false;
-    if (context_) comp->SetOwnerContext(static_cast<IObjectContext*>(context_.get()));
-    
+    if (context_) comp3D->SetOwnerContext(static_cast<IObjectContext*>(context_.get()));
+
     // 登録処理
-    const std::string key = comp->GetComponentType();
+    const std::string key = comp3D->GetComponentType();
 
-    components_.push_back(std::move(comp));
-    const size_t ownerIdx = components_.size() - 1;
-    componentsIndexByName_.emplace(key, ownerIdx);
-
-    components3D_.push_back(comp3D);
+    components3D_.push_back(std::move(comp3D));
     const size_t idx3D = components3D_.size() - 1;
     components3DIndexByName_.emplace(key, idx3D);
-    components3DIndexByType_.emplace(std::type_index(typeid(*comp3D)), idx3D);
+    components3DIndexByType_.emplace(std::type_index(typeid(*components3D_[idx3D])), idx3D);
+    components3DIndexByPointer_.emplace(components3D_[idx3D].get(), idx3D);
 
     // シェーダーバインド予定のコンポーネントかを記録
-    if (components_.back()->BindShaderVariables(nullptr) != std::nullopt) {
-        shaderBindingComponentIndices_.push_back(ownerIdx);
+    if (components3D_.back()->BindShaderVariables(nullptr) != std::nullopt) {
+        shaderBindingComponentIndices_.push_back(idx3D);
     }
 
     // 初期化処理の呼び出し
-    components_.back()->Initialize();
+    components3D_.back()->Initialize();
     return true;
 }
 
@@ -472,7 +470,14 @@ RenderCommand Object3DBase::CreateDefaultRenderCommand() const {
 }
 
 void Object3DBase::Update() {
-    for (auto *c : components3D_) {
+    // 優先度順にソートして更新
+    std::vector<IObjectComponent3D *> sorted;
+    sorted.reserve(components3D_.size());
+    for (auto &c : components3D_) sorted.push_back(c.get());
+    std::stable_sort(sorted.begin(), sorted.end(), [](const IObjectComponent3D *a, const IObjectComponent3D *b) {
+        return a->GetUpdatePriority() < b->GetUpdatePriority();
+        });
+    for (auto *c : sorted) {
         c->Update();
     }
     OnUpdate();
@@ -490,8 +495,8 @@ void Object3DBase::Render() {
 std::vector<Object3DBase::ShaderBindingFailureInfo> Object3DBase::BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder) {
     std::vector<ShaderBindingFailureInfo> failures;
     for (size_t idx : shaderBindingComponentIndices_) {
-        if (idx >= components_.size()) continue;
-        auto &comp = components_[idx];
+        if (idx >= components3D_.size()) continue;
+        auto &comp = components3D_[idx];
         auto result = comp->BindShaderVariables(&shaderBinder);
         if (result != std::nullopt && result.value() == false) {
             ShaderBindingFailureInfo info;
@@ -503,56 +508,25 @@ std::vector<Object3DBase::ShaderBindingFailureInfo> Object3DBase::BindShaderVari
     return failures;
 }
 
-bool Object3DBase::RemoveComponent3D(const std::string &componentName, size_t index) {
-    if (components_.empty()) return false;
+bool Object3DBase::RemoveComponent3D(IObjectComponent3D *component) {
+    if (!component) return false;
+    if (components3D_.empty()) return false;
 
-    size_t matchCount = 0;
-    size_t ownerRemoveIdx = static_cast<size_t>(-1);
+    auto it = components3DIndexByPointer_.find(component);
+    if (it == components3DIndexByPointer_.end()) return false;
 
-    for (size_t i = 0; i < components_.size(); ++i) {
-        const auto &c = components_[i];
-        if (!c) continue;
-        if (c->GetComponentType() != componentName) continue;
-        if (matchCount == index) {
-            ownerRemoveIdx = i;
-            break;
-        }
-        ++matchCount;
-    }
+    auto idx3D = it->second;
+    component->Finalize();
+    components3D_.erase(components3D_.begin() + idx3D);
 
-    if (ownerRemoveIdx == static_cast<size_t>(-1)) return false;
-
-    components_[ownerRemoveIdx]->Finalize();
-
-    // 3D配列から削除（同一ポインタを探す）
-    if (auto *c3d = dynamic_cast<IObjectComponent3D *>(components_[ownerRemoveIdx].get())) {
-        for (size_t i = 0; i < components3D_.size(); ++i) {
-            if (components3D_[i] == c3d) {
-                components3D_.erase(components3D_.begin() + static_cast<std::ptrdiff_t>(i));
-                break;
-            }
-        }
-    }
-
-    // 所有配列から削除
-    components_.erase(components_.begin() + static_cast<std::ptrdiff_t>(ownerRemoveIdx));
-
-    // インデックス類を再構築
-    componentsIndexByName_.clear();
-    shaderBindingComponentIndices_.clear();
-    for (size_t i = 0; i < components_.size(); ++i) {
-        const std::string key = components_[i]->GetComponentType();
-        componentsIndexByName_.emplace(key, i);
-        if (components_[i]->BindShaderVariables(nullptr) != std::nullopt) {
-            shaderBindingComponentIndices_.push_back(i);
-        }
-    }
-
+    // マップの再構築
     components3DIndexByName_.clear();
     components3DIndexByType_.clear();
+    components3DIndexByPointer_.clear();
     for (size_t i = 0; i < components3D_.size(); ++i) {
         components3DIndexByName_.emplace(components3D_[i]->GetComponentType(), i);
         components3DIndexByType_.emplace(std::type_index(typeid(*components3D_[i])), i);
+        components3DIndexByPointer_.emplace(components3D_[i].get(), i);
     }
 
     return true;
@@ -565,7 +539,7 @@ void Object3DBase::ShowImGui() {
     ImGui::TextUnformatted(name_.c_str());
 
     if (ImGui::CollapsingHeader(Translation("engine.imgui.object3d.components").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
-        for (auto &c : components_) {
+        for (auto &c : components3D_) {
             if (!c) continue;
             if (ImGui::TreeNode(c->GetComponentType().c_str())) {
                 c->ShowImGui();

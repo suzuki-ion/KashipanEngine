@@ -441,6 +441,8 @@
     <ClInclude Include="KashipanEngine\Utilities\UUID128.h" />
     <ClInclude Include="KashipanEngine\Objects\ObjectComponentHeader.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneComponentHeader.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorContext.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

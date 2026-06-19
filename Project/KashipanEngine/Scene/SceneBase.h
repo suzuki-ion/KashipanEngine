@@ -20,6 +20,7 @@
 namespace KashipanEngine {
 
 class SceneContext;
+class SceneEditorContext;
 
 class SceneManager;
 class GameEngine;
@@ -48,11 +49,8 @@ public:
     void Update();
 
 #if defined(USE_IMGUI)
-    void ShowImGui();
+    void ShowImGui() {}
 #endif
-
-    bool SaveObjectsToJson(const std::string &filePath) const;
-    bool LoadObjectsFromJson(const std::string &filePath);
 
     void SetSceneManager(Passkey<SceneManager>, SceneManager *sceneManager) { sceneManager_ = sceneManager; }
 
@@ -74,6 +72,7 @@ public:
     virtual void Finalize() {}
 
     friend class SceneContext;
+    friend class SceneEditorContext;
 
 protected:
     SceneBase(const std::string &sceneName);
@@ -228,6 +227,7 @@ protected:
     const MyStd::AnyUnorderedMap &GetSceneVariables() const;
 
     SceneContext *GetSceneContext() const { return sceneContext_.get(); }
+    SceneEditorContext *GetSceneEditorContext() const { return sceneEditorContext_.get(); }
 
     static AudioManager *GetAudioManager() { return sAudioManager; }
     static ModelManager *GetModelManager() { return sModelManager; }
@@ -263,19 +263,12 @@ private:
     std::vector<std::unique_ptr<ISceneComponent>> sceneComponents_;
     std::unordered_multimap<std::string, size_t> sceneComponentsIndexByName_;
     std::unordered_multimap<std::type_index, size_t> sceneComponentsIndexByType_;
+
     std::unique_ptr<SceneContext> sceneContext_;
+    std::unique_ptr<SceneEditorContext> sceneEditorContext_;
 
     std::string nextSceneName_;
     SceneManager *sceneManager_ = nullptr;
-
-#if defined(USE_IMGUI)
-    std::array<char, 260> objectJsonPath_{};
-    std::array<char, 128> objectAddName_{};
-    int objectAddDimension_ = 0;
-    int objectAddType2D_ = 0;
-    int objectAddType3D_ = 0;
-    ModelManager::ModelHandle objectAddModelHandle_ = ModelManager::kInvalidHandle;
-#endif
 };
 
 } // namespace KashipanEngine

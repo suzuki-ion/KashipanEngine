@@ -33,6 +33,10 @@ public:
     const std::string &GetComponentType() const { return kComponentType_; }
     /// @brief 1つのオブジェクトに登録可能な同じコンポーネントの最大数を取得
     size_t GetMaxComponentCountPerObject() const { return kMaxComponentCountPerObject_; }
+    /// @brief 更新優先度を取得
+    int GetUpdatePriority() const { return updatePriority_; }
+    /// @brief 更新優先度を設定
+    void SetUpdatePriority(int priority) { updatePriority_ = priority; }
 
     /// @brief 初期化処理（オブジェクトに登録された直後に呼ばれる想定）
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
@@ -114,6 +118,9 @@ private:
     const size_t kMaxComponentCountPerObject_ = 0xFF;
     /// @brief オーナーオブジェクト
     IObjectContext *ownerObject_ = nullptr;
+
+    /// @brief 更新優先度（小さいほど先に更新される）
+    int updatePriority_ = 1;
 };
 
 /// @brief 2D向けオブジェクトコンポーネント基底クラス

@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <string>
+#include "Utilities/FileIO/JSON.h"
 
 namespace KashipanEngine {
 
@@ -36,6 +37,9 @@ public:
 #if defined(USE_IMGUI)
     virtual void ShowImGui() {}
 #endif
+
+    virtual JSON SaveToJson() const { return JSON::object(); }
+    virtual bool LoadFromJson(const JSON &json) { (void)json; return true; }
 
 protected:
     ISceneComponent(const std::string &componentType, size_t maxComponentCountPerScene = 0xFF)

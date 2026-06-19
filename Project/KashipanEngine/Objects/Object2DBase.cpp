@@ -23,14 +23,14 @@ std::uint64_t MakeRandomNonZeroU64() {
 Object2DBase::~Object2DBase() {
     DetachFromRenderer();
     // コンポーネントの終了処理
-    for (auto &c : components_) {
+    for (auto &c : components2D_) {
         c->Finalize();
     }
     // コンポーネントの破棄
     components2D_.clear();
     components2DIndexByName_.clear();
     components2DIndexByType_.clear();
-    components_.clear();
+    components2DIndexByPointer_.clear();
 }
 
 Object2DBase::RenderPassRegistrationHandle Object2DBase::GenerateRegistrationHandle() const {
@@ -300,35 +300,33 @@ bool Object2DBase::SubmitInstance(void *instanceMaps, ShaderVariableBinder &shad
 
 bool Object2DBase::RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
     if (!comp) return false;
+    auto *comp2DPtr = dynamic_cast<IObjectComponent2D *>(comp.get());
+    if (!comp2DPtr) return false;
+    comp.release();
+    std::unique_ptr<IObjectComponent2D> comp2D(comp2DPtr);
 
-    auto *comp2D = dynamic_cast<IObjectComponent2D *>(comp.get());
-    if (comp2D == nullptr) return false;
-    
     // 登録上限を超えていないか確認
-    size_t maxCount = comp->GetMaxComponentCountPerObject();
-    size_t existingCount = HasComponents2D(comp->GetComponentType());
+    size_t maxCount = comp2D->GetMaxComponentCountPerObject();
+    size_t existingCount = HasComponents2D(comp2D->GetComponentType());
     if (existingCount >= maxCount) return false;
-    if (context_) comp->SetOwnerContext(static_cast<IObjectContext*>(context_.get()));
+    if (context_) comp2D->SetOwnerContext(static_cast<IObjectContext*>(context_.get()));
 
     // 登録処理
-    const std::string key = comp->GetComponentType();
+    const std::string key = comp2D->GetComponentType();
 
-    components_.push_back(std::move(comp));
-    const size_t ownerIdx = components_.size() - 1;
-    componentsIndexByName_.emplace(key, ownerIdx);
-
-    components2D_.push_back(comp2D);
+    components2D_.push_back(std::move(comp2D));
     const size_t idx2D = components2D_.size() - 1;
     components2DIndexByName_.emplace(key, idx2D);
-    components2DIndexByType_.emplace(std::type_index(typeid(*comp2D)), idx2D);
+    components2DIndexByType_.emplace(std::type_index(typeid(*components2D_[idx2D])), idx2D);
+    components2DIndexByPointer_.emplace(components2D_[idx2D].get(), idx2D);
 
     // シェーダーバインド予定のコンポーネントかを記録
-    if (components_.back()->BindShaderVariables(nullptr) != std::nullopt) {
-        shaderBindingComponentIndices_.push_back(ownerIdx);
+    if (components2D_.back()->BindShaderVariables(nullptr) != std::nullopt) {
+        shaderBindingComponentIndices_.push_back(idx2D);
     }
 
     // 初期化処理の呼び出し
-    components_.back()->Initialize();
+    components2D_.back()->Initialize();
     return true;
 }
 
@@ -410,7 +408,14 @@ RenderCommand Object2DBase::CreateDefaultRenderCommand() const {
 }
 
 void Object2DBase::Update() {
-    for (auto *c : components2D_) {
+    // 優先度順にソートして更新
+    std::vector<IObjectComponent2D *> sorted;
+    sorted.reserve(components2D_.size());
+    for (auto &c : components2D_) sorted.push_back(c.get());
+    std::stable_sort(sorted.begin(), sorted.end(), [](const IObjectComponent2D *a, const IObjectComponent2D *b) {
+        return a->GetUpdatePriority() < b->GetUpdatePriority();
+        });
+    for (auto *c : sorted) {
         c->Update();
     }
     OnUpdate();
@@ -428,8 +433,8 @@ void Object2DBase::Render() {
 std::vector<Object2DBase::ShaderBindingFailureInfo> Object2DBase::BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder) {
     std::vector<ShaderBindingFailureInfo> failures;
     for (size_t idx : shaderBindingComponentIndices_) {
-        if (idx >= components_.size()) continue;
-        auto &comp = components_[idx];
+        if (idx >= components2D_.size()) continue;
+        auto &comp = components2D_[idx];
         auto result = comp->BindShaderVariables(&shaderBinder);
         if (result != std::nullopt && result.value() == false) {
             ShaderBindingFailureInfo info;
@@ -441,57 +446,25 @@ std::vector<Object2DBase::ShaderBindingFailureInfo> Object2DBase::BindShaderVari
     return failures;
 }
 
-bool Object2DBase::RemoveComponent2D(const std::string &componentName, size_t index) {
-    if (components_.empty()) return false;
+bool Object2DBase::RemoveComponent2D(IObjectComponent2D *component) {
+    if (!component) return false;
+    if (components2D_.empty()) return false;
 
-    size_t matchCount = 0;
-    size_t ownerRemoveIdx = static_cast<size_t>(-1);
+    auto it = components2DIndexByPointer_.find(component);
+    if (it == components2DIndexByPointer_.end()) return false;
 
-    for (size_t i = 0; i < components_.size(); ++i) {
-        const auto &c = components_[i];
-        if (!c) continue;
-        if (c->GetComponentType() != componentName) continue;
-        if (matchCount == index) {
-            ownerRemoveIdx = i;
-            break;
-        }
-        ++matchCount;
-    }
+    auto idx2D = it->second;
+    component->Finalize();
+    components2D_.erase(components2D_.begin() + idx2D);
 
-    if (ownerRemoveIdx == static_cast<size_t>(-1)) return false;
-
-    // 終了処理
-    components_[ownerRemoveIdx]->Finalize();
-
-    // 2D配列から削除（同一ポインタを探す）
-    if (auto *c2d = dynamic_cast<IObjectComponent2D *>(components_[ownerRemoveIdx].get())) {
-        for (size_t i = 0; i < components2D_.size(); ++i) {
-            if (components2D_[i] == c2d) {
-                components2D_.erase(components2D_.begin() + static_cast<std::ptrdiff_t>(i));
-                break;
-            }
-        }
-    }
-
-    // 所有配列から削除
-    components_.erase(components_.begin() + static_cast<std::ptrdiff_t>(ownerRemoveIdx));
-
-    // インデックス類を再構築
-    componentsIndexByName_.clear();
-    shaderBindingComponentIndices_.clear();
-    for (size_t i = 0; i < components_.size(); ++i) {
-        const std::string key = components_[i]->GetComponentType();
-        componentsIndexByName_.emplace(key, i);
-        if (components_[i]->BindShaderVariables(nullptr) != std::nullopt) {
-            shaderBindingComponentIndices_.push_back(i);
-        }
-    }
-
+    // マップの再構築
     components2DIndexByName_.clear();
     components2DIndexByType_.clear();
+    components2DIndexByPointer_.clear();
     for (size_t i = 0; i < components2D_.size(); ++i) {
         components2DIndexByName_.emplace(components2D_[i]->GetComponentType(), i);
         components2DIndexByType_.emplace(std::type_index(typeid(*components2D_[i])), i);
+        components2DIndexByPointer_.emplace(components2D_[i].get(), i);
     }
 
     return true;
@@ -504,7 +477,7 @@ void Object2DBase::ShowImGui() {
     ImGui::TextUnformatted(name_.c_str());
 
     if (ImGui::CollapsingHeader(Translation("engine.imgui.object2d.components").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
-        for (auto &c : components_) {
+        for (auto &c : components2D_) {
             if (!c) continue;
             if (ImGui::TreeNode(c->GetComponentType().c_str())) {
                 c->ShowImGui();

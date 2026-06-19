@@ -23,7 +23,7 @@ void CollisionTestScene::Initialize() {
         transform->SetRotate(Vector3(ToRadians(30.0f), ToRadians(30.0f), 0.0f));
     }
 
-    AddSceneComponent(std::make_unique<DebugCameraMovement>(mainCamera3D));
+    AddSceneComponent(std::make_unique<DebugCameraMovement>("Camera3D_ScreenBuffer3D"));
     if (auto *debugCameraMovement = GetSceneComponent<DebugCameraMovement>()) {
         debugCameraMovement->SetEnable(true);
     }

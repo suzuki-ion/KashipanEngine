@@ -1,5 +1,5 @@
 #pragma once
-#include "Objects/IObjectComponent.h"
+#include "Objects/ObjectComponentHeader.h"
 #include "Objects/ObjectContext.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Utilities/MathUtils.h"
@@ -120,5 +120,7 @@ private:
     bool isRotateY_ = true;
     bool isRotateZ_ = true;
 };
+
+REGISTER_COMPONENT_OBJECT3D(LookAtConstraint)
 
 } // namespace KashipanEngine

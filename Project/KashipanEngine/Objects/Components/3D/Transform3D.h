@@ -1,10 +1,8 @@
 #pragma once
-#include "Objects/IObjectComponent.h"
-#include "Objects/ObjectContext.h"
+#include "Objects/ObjectComponentHeader.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 #include "Math/Quaternion.h"
-#include "ComponentSerialize/ComponentSerialize.h"
 #include <memory>
 #include <optional>
 #include <cstring>
@@ -291,5 +289,7 @@ private:
     // この Transform が最後に計算したときの親のバージョン
     std::uint64_t cachedParentVersion_ = 0;
 };
+
+REGISTER_COMPONENT_OBJECT3D(Transform3D)
 
 } // namespace KashipanEngine

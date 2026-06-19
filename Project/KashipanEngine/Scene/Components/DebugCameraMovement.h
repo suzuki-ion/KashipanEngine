@@ -1,5 +1,5 @@
 #pragma once
-#include "Scene/Components/ISceneComponent.h"
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Objects/SystemObjects/Camera3D.h"
 #include "Input/Input.h"
 #include "Utilities/MathUtils.h"
@@ -14,9 +14,8 @@ class SceneContext;
 
 class DebugCameraMovement : public ISceneComponent {
 public:
-    DebugCameraMovement(Camera3D *camera);
+    DebugCameraMovement(const std::string &cameraName = "");
     void Update() override;
-    void SetOwnerContext(SceneContext *context) { ownerContext_ = context; }
 
     void SetCenter(const Vector3 &center);
     void SetDistance(float distance);
@@ -45,7 +44,7 @@ public:
 #endif
 
 private:
-    Camera3D *camera_;
+    std::string cameraName_;
     Input *input_;
     SceneContext *ownerContext_ = nullptr;
     SphericalCoordinates spherical_;
@@ -63,5 +62,7 @@ private:
     void HandleInput();
     void UpdateCamera();
 };
+
+REGISTER_COMPONENT_SCENE(DebugCameraMovement)
 
 } // namespace KashipanEngine

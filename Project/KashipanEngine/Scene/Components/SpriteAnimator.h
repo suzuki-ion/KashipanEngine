@@ -6,9 +6,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Math/Vector2.h"
 #include "Objects/GameObjects/2D/Sprite.h"
-#include "Scene/Components/ISceneComponent.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/MathUtils/Easings.h"
 
@@ -254,5 +254,7 @@ private:
     int selectedTimelineKeyIndex_ = -1;
 #endif
 };
+
+REGISTER_COMPONENT_SCENE(SpriteAnimator)
 
 } // namespace KashipanEngine

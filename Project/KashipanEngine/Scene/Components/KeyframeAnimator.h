@@ -2,9 +2,9 @@
 #include <cstdint>
 #include <variant>
 
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Math/Quaternion.h"
 #include "Math/Vector3.h"
-#include "Scene/Components/ISceneComponent.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/MathUtils/Easings.h"
 
@@ -161,5 +161,7 @@ private:
     std::unordered_map<std::string, KeyframeTimeline> timelines_;
     std::unordered_map<std::string, KeyframePlaybackState> playbackStates_;
 };
+
+REGISTER_COMPONENT_SCENE(KeyframeAnimator)
 
 } // namespace KashipanEngine

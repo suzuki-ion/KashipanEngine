@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene/Components/ISceneComponent.h"
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Scene/SceneBase.h"
 #include "Objects/GameObjects/2D/Sprite.h"
 #include "Objects/Components/2D/Transform2D.h"
@@ -104,5 +104,7 @@ private:
 
     std::vector<Entry> entries_;
 };
+
+REGISTER_COMPONENT_SCENE(ScreenBufferKeepRatio)
 
 } // namespace KashipanEngine

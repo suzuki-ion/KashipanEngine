@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Objects/Collision/Collider.h"
-#include "Scene/Components/ISceneComponent.h"
-#include "Scene/SceneContext.h"
+#include "Scene/Components/SceneComponentHeader.h"
 
 namespace KashipanEngine {
 
@@ -31,5 +30,7 @@ public:
 private:
     Collider collider_{};
 };
+
+REGISTER_COMPONENT_SCENE(ColliderComponent)
 
 } // namespace KashipanEngine

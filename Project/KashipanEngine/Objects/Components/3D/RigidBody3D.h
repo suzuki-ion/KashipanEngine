@@ -1,6 +1,5 @@
 #pragma once
-#include "Objects/IObjectComponent.h"
-#include "Objects/ObjectContext.h"
+#include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Math/Vector3.h"
 #include "Math/Quaternion.h"
@@ -144,5 +143,7 @@ private:
 
     bool isInitialized_ = false;
 };
+
+REGISTER_COMPONENT_OBJECT3D(RigidBody3D)
 
 } // namespace KashipanEngine

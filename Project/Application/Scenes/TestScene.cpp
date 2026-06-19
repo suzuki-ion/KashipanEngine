@@ -28,7 +28,7 @@ void TestScene::Initialize() {
         pm->LoadFromJsonFile("HitEffect.json");
     }
     if (mainCamera3D) {
-        auto debugCameraMovement = std::make_unique<DebugCameraMovement>(mainCamera3D);
+        auto debugCameraMovement = std::make_unique<DebugCameraMovement>("Camera3D_ScreenBuffer3D");
         debugCameraMovement->SetEnable(true);
         AddSceneComponent(std::move(debugCameraMovement));
     }

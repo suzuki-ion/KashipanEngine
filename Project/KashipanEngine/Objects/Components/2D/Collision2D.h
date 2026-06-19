@@ -1,5 +1,5 @@
 #pragma once
-#include "Objects/IObjectComponent.h"
+#include "Objects/ObjectComponentHeader.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ColliderComponent.h"
 #include "Objects/ObjectContext.h"
@@ -151,5 +151,7 @@ private:
     ColliderInfo2D worldInfo_{};
     Collider::ColliderID colliderId_ = 0;
 };
+
+REGISTER_COMPONENT_OBJECT2D(Collision2D)
 
 } // namespace KashipanEngine

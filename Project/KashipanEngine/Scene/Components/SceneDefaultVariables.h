@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Core/Window.h"
-#include "Scene/Components/ISceneComponent.h"
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Scene/Components/ColliderComponent.h"
 #include "Scene/Components/LightManager.h"
 #include "Scene/Components/ScreenBufferKeepRatio.h"
@@ -103,5 +103,7 @@ private:
     Camera2D *windowCamera2D_ = nullptr;
     Window *mainWindow_ = nullptr;
 };
+
+REGISTER_COMPONENT_SCENE(SceneDefaultVariables)
 
 } // namespace KashipanEngine

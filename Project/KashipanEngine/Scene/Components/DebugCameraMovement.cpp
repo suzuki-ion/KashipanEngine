@@ -16,8 +16,8 @@
 
 namespace KashipanEngine {
 
-DebugCameraMovement::DebugCameraMovement(Camera3D* camera)
-    : ISceneComponent("DebugCameraMovement", 1), camera_(camera) {
+DebugCameraMovement::DebugCameraMovement(const std::string &cameraName)
+    : ISceneComponent("DebugCameraMovement", 1), cameraName_(cameraName) {
     spherical_.radius = 10.0f;
     spherical_.theta = 0.0f;
     spherical_.phi = M_PI / 2.0f;
@@ -109,9 +109,12 @@ void DebugCameraMovement::HandleInput() {
 }
 
 void DebugCameraMovement::UpdateCamera() {
-    if (!camera_) return;
+    auto *ownerContext = GetOwnerContext();
+    if (!ownerContext) return;
+    Camera3D *camera = static_cast<Camera3D *>(ownerContext->GetObject3D(cameraName_));
+    if (!camera) return;
     Vector3 pos = spherical_.ToVector3();
-    if (auto *tr = camera_->GetComponent3D<Transform3D>()) {
+    if (auto *tr = camera->GetComponent3D<Transform3D>()) {
         tr->SetTranslate(pos);
 
         // カメラの前方方向を計算（注視点へ向かうベクトル）

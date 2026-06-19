@@ -598,11 +598,13 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorContext.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjecHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneBase.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />

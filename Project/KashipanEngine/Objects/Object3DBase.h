@@ -315,8 +315,14 @@ public:
         sceneContext_ = sceneContext;
     }
 
+    /// @brief オブジェクトIDの設定
+    void SetObjectId(const UUID128 &id) { objectId_ = id; }
     /// @brief オブジェクトIDの取得
     const UUID128 &GetObjectId() const { return objectId_; }
+    /// @brief オブジェクトの保存の可否設定
+    void SetSaveEnabled(bool enabled) { isSaveEnabled_ = enabled; }
+    /// @brief オブジェクトの保存の可否取得
+    bool IsSaveEnabled() const { return isSaveEnabled_; }
 
 protected:
     /// @brief コンストラクタ
@@ -496,7 +502,9 @@ private:
     std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction_;
 
     // オブジェクトID管理用
-    const UUID128 objectId_;
+    UUID128 objectId_;
+    // オブジェクトの保存の可否
+    bool isSaveEnabled_ = true;
 };
 
 } // namespace KashipanEngine

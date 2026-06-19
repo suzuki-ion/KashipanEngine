@@ -31,17 +31,23 @@ std::vector<std::string> &GetRegisteredObject3DComponentTypes() {
 } // namespace Local
 
 bool RegisterComponentTypeScene(const std::string &typeName, std::function<std::unique_ptr<ISceneComponent>()> createFunc) {
-    Local::GetSceneComponentFactoryMap()[typeName] = createFunc;
+    auto &factoryMap = Local::GetSceneComponentFactoryMap();
+    if (factoryMap.find(typeName) != factoryMap.end()) return false;
+    factoryMap[typeName] = createFunc;
     Local::GetRegisteredSceneComponentTypes().push_back(typeName);
     return true;
 }
 bool RegisterComponentTypeObject2D(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent2D>()> createFunc) {
-    Local::GetObject2DComponentFactoryMap()[typeName] = createFunc;
+    auto &factoryMap = Local::GetObject2DComponentFactoryMap();
+    if (factoryMap.find(typeName) != factoryMap.end()) return false;
+    factoryMap[typeName] = createFunc;
     Local::GetRegisteredObject2DComponentTypes().push_back(typeName);
     return true;
 }
 bool RegisterComponentTypeObject3D(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent3D>()> createFunc) {
-    Local::GetObject3DComponentFactoryMap()[typeName] = createFunc;
+    auto &factoryMap = Local::GetObject3DComponentFactoryMap();
+    if (factoryMap.find(typeName) != factoryMap.end()) return false;
+    factoryMap[typeName] = createFunc;
     Local::GetRegisteredObject3DComponentTypes().push_back(typeName);
     return true;
 }

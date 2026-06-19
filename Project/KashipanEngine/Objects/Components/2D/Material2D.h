@@ -1,5 +1,5 @@
 #pragma once
-#include "Objects/IObjectComponent.h"
+#include "Objects/ObjectComponentHeader.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
@@ -147,5 +147,7 @@ private:
 
     bool isBufferDirty_ = true;
 };
+
+REGISTER_COMPONENT_OBJECT2D(Material2D)
 
 } // namespace KashipanEngine

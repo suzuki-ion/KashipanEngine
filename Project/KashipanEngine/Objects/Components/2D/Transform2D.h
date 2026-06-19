@@ -1,5 +1,5 @@
 #pragma once
-#include "Objects/IObjectComponent.h"
+#include "Objects/ObjectComponentHeader.h"
 #include "Objects/ObjectContext.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
@@ -183,5 +183,7 @@ private:
     std::uint64_t worldMatrixVersion_ = 0;
     std::uint64_t cachedParentVersion_ = 0;
 };
+
+REGISTER_COMPONENT_OBJECT2D(Transform2D)
 
 } // namespace KashipanEngine

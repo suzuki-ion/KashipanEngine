@@ -5,7 +5,7 @@
 #include <vector>
 #include <optional>
 
-#include "Scene/Components/ISceneComponent.h"
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Objects/Object3DBase.h"
 #include "Objects/Object2DBase.h"
@@ -175,5 +175,7 @@ private:
     std::optional<std::size_t> editingGroupIndex_{};
 #endif
 };
+
+REGISTER_COMPONENT_SCENE(ParticleManager)
 
 } // namespace KashipanEngine

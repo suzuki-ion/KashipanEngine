@@ -1,4 +1,7 @@
 #include "Scene/Components/Letterbox.h"
+#include "Scene/Components/SceneDefaultVariables.h"
+#include "Objects/Components/2D/Transform2D.h"
+#include "Objects/Components/2D/Material2D.h"
 
 namespace KashipanEngine {
 

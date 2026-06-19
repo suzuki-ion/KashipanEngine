@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "Scene/Components/ISceneComponent.h"
+#include "Scene/Components/SceneComponentHeader.h"
 
 namespace KashipanEngine {
 
@@ -62,5 +62,7 @@ private:
     float shadowNear_ = 0.1f;
     float shadowFar_ = 64.0f;
 };
+
+REGISTER_COMPONENT_SCENE(ShadowMapCameraSync)
 
 } // namespace KashipanEngine

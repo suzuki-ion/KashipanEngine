@@ -3,11 +3,10 @@
 
 #include <memory>
 
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Objects/SystemObjects/LightCountBinder.h"
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
-#include "Scene/Components/ISceneComponent.h"
-#include "Scene/SceneContext.h"
 
 namespace KashipanEngine {
 
@@ -109,5 +108,7 @@ private:
 
     LightCountBinder *lightCountBinder_ = nullptr;
 };
+
+REGISTER_COMPONENT_SCENE(LightManager)
 
 } // namespace KashipanEngine

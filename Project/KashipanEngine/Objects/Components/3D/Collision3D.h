@@ -1,5 +1,5 @@
 #pragma once
-#include "Objects/IObjectComponent.h"
+#include "Objects/ObjectComponentHeader.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ColliderComponent.h"
 #include "Objects/ObjectContext.h"
@@ -169,5 +169,7 @@ private:
 
     bool isAddedToCollider_ = false;
 };
+
+REGISTER_COMPONENT_OBJECT3D(Collision3D)
 
 } // namespace KashipanEngine

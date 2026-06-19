@@ -1,5 +1,6 @@
 #pragma once
-#include <KashipanEngine.h>
+#include "Scene/Components/SceneComponentHeader.h"
+#include "Objects/GameObjects/2D/Rect.h"
 
 namespace KashipanEngine {
 
@@ -28,5 +29,7 @@ private:
     float thickness_ = 50.0f;
     Vector4 color_ = Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 };
+
+REGISTER_COMPONENT_SCENE(Letterbox)
 
 } // namespace KashipanEngine

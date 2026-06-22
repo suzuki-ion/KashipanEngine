@@ -33,7 +33,10 @@ void SceneBase::SetEnginePointers(
 SceneBase::SceneBase(const std::string &sceneName)
     : name_(sceneName) {
     sceneContext_ = std::make_unique<SceneContext>(Passkey<SceneBase>{}, this);
+#ifdef USE_IMGUI
     sceneEditorContext_ = std::make_unique<SceneEditorContext>(Passkey<SceneBase>{}, this);
+    sceneEditor_ = std::make_unique<SceneEditor>(Passkey<SceneBase>{}, sceneEditorContext_.get());
+#endif
     // デフォルトのシーン変数コンポーネントを追加
     auto defaultVarsComp = std::make_unique<SceneDefaultVariables>();
     auto *ptr = defaultVarsComp.get();
@@ -71,6 +74,14 @@ void SceneBase::Update() {
 
     OnUpdate();
 }
+
+#ifdef USE_IMGUI
+void SceneBase::ShowImGui() {
+    if (sceneEditor_) {
+        sceneEditor_->ShowImGui();
+    }
+}
+#endif
 
 void SceneBase::RebuildObject2DIndices() {
     objects2DIndexByPointer_.clear();

@@ -409,13 +409,16 @@ RenderCommand Object2DBase::CreateDefaultRenderCommand() const {
 
 void Object2DBase::Update() {
     // 優先度順にソートして更新
-    std::vector<IObjectComponent2D *> sorted;
+    /*std::vector<IObjectComponent2D *> sorted;
     sorted.reserve(components2D_.size());
     for (auto &c : components2D_) sorted.push_back(c.get());
     std::stable_sort(sorted.begin(), sorted.end(), [](const IObjectComponent2D *a, const IObjectComponent2D *b) {
         return a->GetUpdatePriority() < b->GetUpdatePriority();
         });
     for (auto *c : sorted) {
+        c->Update();
+    }*/
+    for (auto &c : components2D_) {
         c->Update();
     }
     OnUpdate();
@@ -446,6 +449,17 @@ std::vector<Object2DBase::ShaderBindingFailureInfo> Object2DBase::BindShaderVari
     return failures;
 }
 
+void Object2DBase::RebuildComponentIndexTables() {
+    components2DIndexByName_.clear();
+    components2DIndexByType_.clear();
+    components2DIndexByPointer_.clear();
+    for (size_t i = 0; i < components2D_.size(); ++i) {
+        components2DIndexByName_.emplace(components2D_[i]->GetComponentType(), i);
+        components2DIndexByType_.emplace(std::type_index(typeid(*components2D_[i])), i);
+        components2DIndexByPointer_.emplace(components2D_[i].get(), i);
+    }
+}
+
 bool Object2DBase::RemoveComponent2D(IObjectComponent2D *component) {
     if (!component) return false;
     if (components2D_.empty()) return false;
@@ -458,14 +472,7 @@ bool Object2DBase::RemoveComponent2D(IObjectComponent2D *component) {
     components2D_.erase(components2D_.begin() + idx2D);
 
     // マップの再構築
-    components2DIndexByName_.clear();
-    components2DIndexByType_.clear();
-    components2DIndexByPointer_.clear();
-    for (size_t i = 0; i < components2D_.size(); ++i) {
-        components2DIndexByName_.emplace(components2D_[i]->GetComponentType(), i);
-        components2DIndexByType_.emplace(std::type_index(typeid(*components2D_[i])), i);
-        components2DIndexByPointer_.emplace(components2D_[i].get(), i);
-    }
+    RebuildComponentIndexTables();
 
     return true;
 }

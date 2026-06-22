@@ -32,7 +32,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         auto *sm = context.sceneManager;
         
 #if defined(RELEASE_BUILD)
-        sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "TitleScene");
+        sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "GameScene");
 #endif
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
         sm->RegisterScene<TestScene>("TestScene");
@@ -45,7 +45,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #if defined(RELEASE_BUILD)
         sm->ChangeScene("EngineLogoScene");
 #else
-		sm->ChangeScene("GameScene");
+		sm->ChangeScene("CollisionTestScene");
 #endif
     }
 
@@ -117,8 +117,8 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("PlayerMoveRight", InputCommand::ControllerAnalog::LeftStickX, InputCommand::InputState::Down, 0, 0.2f);
 
         // プレイヤージャンプ
-        ic->RegisterCommand("PlayerJump", Key::Space, InputCommand::InputState::Down);
-        ic->RegisterCommand("PlayerJump", ControllerButton::A, InputCommand::InputState::Down);
+        ic->RegisterCommand("PlayerJump", Key::Space, InputCommand::InputState::Trigger);
+        ic->RegisterCommand("PlayerJump", ControllerButton::A, InputCommand::InputState::Trigger);
 
 #if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
         // デバッグ用シーン遷移

@@ -3,8 +3,8 @@
         {
             "baseScale": [
                 0.20000000298023224,
-                1.0,
-                1.0
+                2.0,
+                2.0
             ],
             "color": [
                 1.0,
@@ -19,7 +19,7 @@
                 1.0,
                 0.0
             ],
-            "endScale": 1.0,
+            "endScale": 2.0,
             "gravity": [
                 0.0,
                 0.0,
@@ -50,8 +50,8 @@
             "linearDamping": 0.0,
             "loop": false,
             "name": "HitEffect",
-            "peakScale": 1.0,
-            "pipeline": "Object3D.Solid.BlendAdd",
+            "peakScale": 2.0,
+            "pipeline": "Object3D.Solid.BlendNormal",
             "resetOnSpawn": true,
             "rotationSpeed": [
                 0.0,
@@ -89,9 +89,103 @@
                 1.0,
                 1.0
             ],
-            "startScale": 1.0,
+            "startScale": 2.0,
             "target": "3D",
             "texture": "circle2.png",
+            "useSpawnBox": false
+        },
+        {
+            "baseScale": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "count": 8,
+            "endColor": [
+                1.0,
+                1.0,
+                1.0,
+                0.0
+            ],
+            "endScale": 0.0,
+            "gravity": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "initialRotationMax": [
+                3.140000104904175,
+                3.140000104904175,
+                3.140000104904175
+            ],
+            "initialRotationMin": [
+                -3.140000104904175,
+                -3.140000104904175,
+                -3.140000104904175
+            ],
+            "initialVelocityMax": [
+                4.0,
+                4.0,
+                4.0
+            ],
+            "initialVelocityMin": [
+                -4.0,
+                -4.0,
+                -4.0
+            ],
+            "lifeTimeRandomRange": 0.0,
+            "lifeTimeSec": 1.0,
+            "linearDamping": 0.0,
+            "loop": false,
+            "name": "HitEffect2",
+            "peakScale": 0.5,
+            "pipeline": "Object3D.Solid.BlendNormal",
+            "resetOnSpawn": true,
+            "rotationSpeed": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "shape2D": "Sprite",
+            "shape3D": "Box",
+            "spawnBox": {
+                "max": [
+                    5.0,
+                    5.0,
+                    5.0
+                ],
+                "min": [
+                    -5.0,
+                    0.0,
+                    -5.0
+                ]
+            },
+            "spawnCenter": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "spawnCountMax": 8,
+            "spawnCountMin": 8,
+            "spawnIntervalSec": 0.0,
+            "spawnOnStart": false,
+            "spawnRadius": 0.0,
+            "speed": 4.0,
+            "startColor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "startScale": 0.5,
+            "target": "3D",
+            "texture": "square_alpha.png",
             "useSpawnBox": false
         }
     ],

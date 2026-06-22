@@ -501,6 +501,9 @@ private:
     /// @return バインドに失敗したコンポーネントの情報リスト
     std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
 
+    /// @brief インデックステーブルの再作成
+    void RebuildComponentIndexTables();
+
     static inline Renderer *sRenderer = nullptr;
 
     ObjectType objectType_ = ObjectType::GameObject;

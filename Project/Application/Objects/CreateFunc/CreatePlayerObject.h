@@ -3,6 +3,7 @@
 #include "Objects/Components/PlayerCollision.h"
 #include "Objects/Components/PlayerInputHandler.h"
 #include "Objects/Components/PlayerMovement.h"
+#include "Objects/Components/PlayerEnemyJump.h"
 
 namespace KashipanEngine {
 
@@ -12,8 +13,9 @@ std::unique_ptr<Object3DBase> CreatePlayerObject(SceneContext *context) {
 
     auto player = std::make_unique<Sphere>();
     player->SetName("Player");
-    player->RegisterComponent(std::make_unique<PlayerCollision>());
+    player->RegisterComponent(std::make_unique<PlayerEnemyJump>());
     player->RegisterComponent(std::make_unique<PlayerMovement>());
+    player->RegisterComponent(std::make_unique<PlayerCollision>());
     player->RegisterComponent(std::make_unique<PlayerInputHandler>());
     if (auto *tr = player->GetComponent3D<Transform3D>()) {
         tr->SetTranslate(Vector3(-4.0f, 6.0f, 0.0f));

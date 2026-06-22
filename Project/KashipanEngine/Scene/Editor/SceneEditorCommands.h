@@ -1,16 +1,15 @@
 #pragma once
 #ifdef USE_IMGUI
 #include <imgui.h>
-#include "Scene/Editor/SceneEditorContext.h"
 
 namespace KashipanEngine {
 
 class SceneEditor;
 
-class SceneComponentInspector final {
+class SceneEditorCommands final {
 public:
-    SceneComponentInspector(Passkey<SceneEditor>, SceneEditorContext *context) : context_(context) {}
-    ~SceneComponentInspector() = default;
+    SceneEditorCommands(Passkey<SceneEditor>, SceneEditorContext *context) : context_(context) {}
+    ~SceneEditorCommands() = default;
 
     void ShowImGui();
 

@@ -23,12 +23,13 @@ public:
         const Vector3 &hitNormal = enemyCollision_->GetHitNormal();
 
         // プレイヤーと衝突しているかつ衝突の法線が上向きなら死亡状態にする
-        if (isCollidingWithPlayer && hitNormal.y > playerCollisionThreshold_) {
+        if (isCollidingWithPlayer && hitNormal.y < playerCollisionThreshold_) {
             isActive_ = false;
             auto *ownerScene = GetOwnerSceneContext();
             auto *transform = GetOwner3DContext()->GetComponent<Transform3D>();
             if (auto *pm = ownerScene ? ownerScene->GetComponent<ParticleManager>() : nullptr) {
                 pm->Spawn("HitEffect", transform->GetTranslate());
+                pm->Spawn("HitEffect2", transform->GetTranslate());
             }
         }
 

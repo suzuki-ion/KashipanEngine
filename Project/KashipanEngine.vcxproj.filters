@@ -150,6 +150,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Application\Scenes\CollisionTestScene.cpp" />
     <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentRegistry.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorContext.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -430,7 +433,7 @@
     <ClInclude Include="Application\Objects\Components\PlayerEnemyJump.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentRegistry.h" />
     <ClInclude Include="KashipanEngine\ComponentSerializeHeader.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjecHierarchy.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h" />
@@ -443,6 +446,8 @@
     <ClInclude Include="KashipanEngine\Scene\Components\SceneComponentHeader.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorContext.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneEditor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

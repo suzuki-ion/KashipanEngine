@@ -9,6 +9,9 @@
 #include <unordered_map>
 #include <vector>
 
+#ifdef USE_IMGUI
+#include "Scene/SceneEditor.h"
+#endif
 #include "Objects/Object2DBase.h"
 #include "Objects/Object3DBase.h"
 #include "Objects/Collision/Collider.h"
@@ -20,7 +23,9 @@
 namespace KashipanEngine {
 
 class SceneContext;
+#ifdef USE_IMGUI
 class SceneEditorContext;
+#endif
 
 class SceneManager;
 class GameEngine;
@@ -49,7 +54,7 @@ public:
     void Update();
 
 #if defined(USE_IMGUI)
-    void ShowImGui() {}
+    void ShowImGui();
 #endif
 
     void SetSceneManager(Passkey<SceneManager>, SceneManager *sceneManager) { sceneManager_ = sceneManager; }
@@ -72,7 +77,9 @@ public:
     virtual void Finalize() {}
 
     friend class SceneContext;
+#ifdef USE_IMGUI
     friend class SceneEditorContext;
+#endif
 
 protected:
     SceneBase(const std::string &sceneName);
@@ -219,6 +226,8 @@ protected:
         return nullptr;
     }
 
+    const std::vector<std::unique_ptr<ISceneComponent>> &GetSceneComponents() const { return sceneComponents_; }
+
     size_t HasSceneComponents(const std::string &componentName) const {
         return sceneComponentsIndexByName_.count(componentName);
     }
@@ -227,7 +236,9 @@ protected:
     const MyStd::AnyUnorderedMap &GetSceneVariables() const;
 
     SceneContext *GetSceneContext() const { return sceneContext_.get(); }
+#ifdef USE_IMGUI
     SceneEditorContext *GetSceneEditorContext() const { return sceneEditorContext_.get(); }
+#endif
 
     static AudioManager *GetAudioManager() { return sAudioManager; }
     static ModelManager *GetModelManager() { return sModelManager; }
@@ -265,7 +276,10 @@ private:
     std::unordered_multimap<std::type_index, size_t> sceneComponentsIndexByType_;
 
     std::unique_ptr<SceneContext> sceneContext_;
+#ifdef USE_IMGUI
     std::unique_ptr<SceneEditorContext> sceneEditorContext_;
+    std::unique_ptr<SceneEditor> sceneEditor_;
+#endif
 
     std::string nextSceneName_;
     SceneManager *sceneManager_ = nullptr;

@@ -27,6 +27,10 @@ public:
         return ptr;
     }
 
+    std::optional<bool> Initialize() override {
+        return TryInitialize();
+    }
+
     std::optional<bool> Finalize() override {
         return true;
     }

@@ -21,9 +21,9 @@ void GameScene::Initialize() {
         auto op = OutlineEffect::Params{};
         op.threshold = 0.25f;
         op.thickness = 5.0f;
-        op.color[0] = 0.0f;
-        op.color[1] = 0.0f;
-        op.color[2] = 0.0f;
+        op.color[0] = 1.0f;
+        op.color[1] = 1.0f;
+        op.color[2] = 1.0f;
         op.color[3] = 1.0f;
         op.cameraNear = mainCamera3D ? mainCamera3D->GetNearClip() : 0.1f;
         op.cameraFar = mainCamera3D ? mainCamera3D->GetFarClip() : 1000.0f;
@@ -38,10 +38,11 @@ void GameScene::Initialize() {
         camCtrl->SetFollowOffset(Vector3(0.0f, 0.0f, -16.0f));
     }
 
-    AddObject3D(CreateEnemyObject(GetSceneContext()));
+    AddObject3D(CreateEnemyObject(GetSceneContext(), Vector3(0.0f, 6.0f, 0.0f)));
+    AddObject3D(CreateEnemyObject(GetSceneContext(), Vector3(2.0f, 6.0f, 0.0f)));
+    AddObject3D(CreateEnemyObject(GetSceneContext(), Vector3(4.0f, 6.0f, 0.0f)));
     AddObject3D(CreateGroundObject(GetSceneContext()));
     AddObject3D(CreatePlayerObject(GetSceneContext()));
-    AddObject3D(CreateSkyboxObject(GetSceneContext()));
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -73,17 +74,28 @@ void GameScene::OnUpdate() {
         }
     }
 
-    if (auto *enemy = GetObject3D("Enemy")) {
+    struct EnemySpawnInfo {
+        Vector3 spawnPosition;
+        float spawnInterval = 1.0f;
+        float timer;
+    };
+    static std::vector<EnemySpawnInfo> enemySpawnInfos;
+    for (auto *enemy : GetObjects3D("Enemy")) {
         if (!enemy->GetComponent3D<EnemyAliveStateController>()->IsAlive()) {
+            EnemySpawnInfo spawnInfo;
+            spawnInfo.spawnPosition = enemy->GetComponent3D<Transform3D>()->GetTranslate();
+            spawnInfo.timer = 0.0f;
+            enemySpawnInfos.push_back(spawnInfo);
             RemoveObject3D(enemy);
         }
-    } else {
-        static float timer = 0.0f;
-        static const float spawnInterval = 1.0f;
-        timer += GetDeltaTime() * GetGameSpeed();
-        if (timer >= spawnInterval) {
-            timer = 0.0f;
-            AddObject3D(CreateEnemyObject(GetSceneContext()));
+    }
+    for (auto it = enemySpawnInfos.begin(); it != enemySpawnInfos.end();) {
+        it->timer += GetDeltaTime();
+        if (it->timer >= it->spawnInterval) {
+            AddObject3D(CreateEnemyObject(GetSceneContext(), it->spawnPosition));
+            it = enemySpawnInfos.erase(it);
+        } else {
+            ++it;
         }
     }
 
@@ -98,6 +110,7 @@ void GameScene::OnUpdate() {
         }
     }
 
+#ifdef USE_IMGUI
     // 確認用のコンポーネント一覧表示用ImGui
     ImGui::Begin("Component Registry");
     ImGui::Text("Scene Components:");
@@ -115,6 +128,7 @@ void GameScene::OnUpdate() {
         ImGui::Text("\t%s", comp.c_str());
     }
     ImGui::End();
+#endif
 
 }
 

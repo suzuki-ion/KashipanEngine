@@ -21,7 +21,7 @@
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
 #include "Objects/IObjectComponent.h"
-#include "../../MyStd/AnyUnorderedMap.h"
+#include "AnyUnorderedMap.h"
 #include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
@@ -454,6 +454,9 @@ private:
     /// @param shaderBinder シェーダ変数バインダー
     /// @return バインドに失敗したコンポーネントの情報リスト
     std::vector<ShaderBindingFailureInfo> BindShaderVariablesToComponents(ShaderVariableBinder &shaderBinder);
+
+    /// @brief インデックステーブルの再作成
+    void RebuildComponentIndexTables();
 
     static inline Renderer* sRenderer = nullptr;
 

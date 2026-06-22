@@ -508,6 +508,17 @@ std::vector<Object3DBase::ShaderBindingFailureInfo> Object3DBase::BindShaderVari
     return failures;
 }
 
+void Object3DBase::RebuildComponentIndexTables() {
+    components3DIndexByName_.clear();
+    components3DIndexByType_.clear();
+    components3DIndexByPointer_.clear();
+    for (size_t i = 0; i < components3D_.size(); ++i) {
+        components3DIndexByName_.emplace(components3D_[i]->GetComponentType(), i);
+        components3DIndexByType_.emplace(std::type_index(typeid(*components3D_[i])), i);
+        components3DIndexByPointer_.emplace(components3D_[i].get(), i);
+    }
+}
+
 bool Object3DBase::RemoveComponent3D(IObjectComponent3D *component) {
     if (!component) return false;
     if (components3D_.empty()) return false;
@@ -520,14 +531,7 @@ bool Object3DBase::RemoveComponent3D(IObjectComponent3D *component) {
     components3D_.erase(components3D_.begin() + idx3D);
 
     // マップの再構築
-    components3DIndexByName_.clear();
-    components3DIndexByType_.clear();
-    components3DIndexByPointer_.clear();
-    for (size_t i = 0; i < components3D_.size(); ++i) {
-        components3DIndexByName_.emplace(components3D_[i]->GetComponentType(), i);
-        components3DIndexByType_.emplace(std::type_index(typeid(*components3D_[i])), i);
-        components3DIndexByPointer_.emplace(components3D_[i].get(), i);
-    }
+    RebuildComponentIndexTables();
 
     return true;
 }

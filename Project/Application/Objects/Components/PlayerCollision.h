@@ -35,6 +35,7 @@ public:
     }
 
     std::optional<bool> Update() override {
+        isCollidingWithEnemy_ = false;
         return true;
     }
 
@@ -45,6 +46,7 @@ public:
 #endif
 
     bool IsGrounded() const { return isGrounded_; }
+    bool IsCollidingWithEnemy() const { return isCollidingWithEnemy_; }
     const Vector3 &GetHitNormal() const { return hitNormal_; }
 
 private:
@@ -52,6 +54,8 @@ private:
         if (hitInfo.otherObject->GetName() == "Ground") {
             // 法線が上向きなら地面に接触しているとみなす
             isGrounded_ = hitInfo.normal.y > groundedThreshold_;
+        } else if (hitInfo.otherObject->GetName() == "Enemy") {
+            isCollidingWithEnemy_ = true;
         }
     }
     void OnCollisionStay(const HitInfo3D &hitInfo) {
@@ -65,8 +69,8 @@ private:
             pushBack.z = 0.0f;
             Vector3 newPos = transform->GetTranslate() + pushBack;
             transform->SetTranslate(newPos);
-            hitNormal_ = hitInfo.normal;
         }
+        hitNormal_ = hitInfo.normal;
     }
     void OnCollisionExit(const HitInfo3D &hitInfo) {
         if (hitInfo.otherObject->GetName() == "Ground") {

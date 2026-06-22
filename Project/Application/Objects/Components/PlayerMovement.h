@@ -14,17 +14,17 @@ public:
     }
 
     std::optional<bool> Initialize() override {
-        playerCollision_ = GetOwner3DContext()->GetComponent<PlayerCollision>();
-        if (!playerCollision_) return false;
         return true;
     }
 
     std::optional<bool> Update() override {
+        playerCollision_ = GetOwner3DContext()->GetComponent<PlayerCollision>();
         if (!playerCollision_) return false;
         auto *transform = GetOwner3DContext()->GetComponent<Transform3D>();
         if (!transform) return false;
         const float dt = GetDeltaTime() * GetGameSpeed();
         const bool isGrounded = playerCollision_->IsGrounded();
+        const bool isCollidingWithEnemy = playerCollision_->IsCollidingWithEnemy();
         const Vector3 &hitNormal = playerCollision_->GetHitNormal();
         const Vector3 targetNormal = isGrounded ? Vector3(hitNormal.y, -hitNormal.x, 0.0f).Normalize() : Vector3(1.0f, 0.0f, 0.0f);
 
@@ -41,8 +41,8 @@ public:
         }
 
         // 重力とジャンプ
-        velocity_.y = isGrounded ? velocity_.y : velocity_.y - gravity_;
-        if (isGrounded && isJumping_ && !wasJumping_) {
+        velocity_.y = (isGrounded || isCollidingWithEnemy) ? velocity_.y : velocity_.y - gravity_;
+        if ((isGrounded || isCollidingWithEnemy) && isJumping_ && !wasJumping_) {
             velocity_.y = jumpPower_;
         }
         wasJumping_ = isJumping_;

@@ -448,6 +448,7 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorContext.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneEditor.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DissolveEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

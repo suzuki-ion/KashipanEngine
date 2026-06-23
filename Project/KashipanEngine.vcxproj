@@ -415,6 +415,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\BoxFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ChromaticAberrationEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\ColorAdjustEffect.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DissolveEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DitherEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DotMatrixEffect.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\FXAAEffect.h" />

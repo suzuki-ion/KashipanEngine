@@ -15,6 +15,7 @@
 #include "Graphics/PostEffectComponents/VignetteEffect.h"
 #include "Graphics/PostEffectComponents/GaussianFilterEffect.h"
 #include "Graphics/PostEffectComponents/OutlineEffect.h"
+#include "Graphics/PostEffectComponents/DissolveEffect.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/DefineMaps.h"

@@ -68,6 +68,10 @@ void TestScene::Initialize() {
         auto colorAdjustEffect = std::make_unique<ColorAdjustEffect>(cap);
         screenBuffer3D->RegisterPostEffectComponent(std::move(colorAdjustEffect));
 
+        auto dp = DissolveEffect::Params{};
+        auto dissolveEffect = std::make_unique<DissolveEffect>(dp);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(dissolveEffect));
+
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
     }
 

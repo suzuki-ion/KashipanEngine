@@ -40,6 +40,13 @@ private:
 
     bool isBackendInitialized_ = false;
     bool isInitialized_ = false;
+
+    // 各種デバッグウィンドウ表示フラグ
+    bool isShowLoadedTexturesWindow_ = false;
+    bool isShowLoadedModelsWindow_ = false;
+    bool isShowLoadedSoundsWindow_ = false;
+    bool isShowPlayingSoundsWindow_ = false;
+    bool isShowLoggerWindow_ = true;
 };
 
 } // namespace KashipanEngine

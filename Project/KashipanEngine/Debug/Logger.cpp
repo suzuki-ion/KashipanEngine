@@ -19,11 +19,15 @@
 #include <deque>
 #include <atomic>
 #include <algorithm>
+#ifdef USE_IMGUI
+#include <imgui.h>
+#endif
 
 namespace KashipanEngine {
 namespace {
 bool sLoggerInitialized = false;
 std::ofstream sLogFile;
+std::vector<std::string> sLogLines;
 const std::string kBuildTypeString =
 #ifdef DEBUG_BUILD
 "[Debug]";
@@ -87,6 +91,7 @@ void WriteToSinks(const std::string &formattedLine) {
     }
     if (cfg.enableFileLogging && sLogFile.is_open()) {
         sLogFile << formattedLine;
+        sLogLines.push_back(formattedLine);
     }
 }
 
@@ -638,5 +643,22 @@ void LogScope::PopPrefix() {
     sScopeFrames.pop_back();
     --sTabCount;
 }
+
+#ifdef USE_IMGUI
+void ShowImGuiLoggerWindow(Passkey<ImGuiManager>) {
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+    ImGui::Begin("Logger", nullptr, window_flags);
+    {
+        ImGuiListClipper clipper;
+        clipper.Begin(static_cast<int>(sLogLines.size()));
+        while (clipper.Step()) {
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+                ImGui::TextUnformatted(sLogLines[i].c_str());
+            }
+        }
+    }
+    ImGui::End();
+}
+#endif
 
 } // namespace KashipanEngine

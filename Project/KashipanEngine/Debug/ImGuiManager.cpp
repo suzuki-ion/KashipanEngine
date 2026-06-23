@@ -159,10 +159,23 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
     }
 
-    TextureManager::ShowImGuiLoadedTexturesWindow();
-    ModelManager::ShowImGuiLoadedModelsWindow();
-    AudioManager::ShowImGuiLoadedSoundsWindow();
-    AudioManager::ShowImGuiPlayingSoundsWindow();
+    // 各種デバッグウィンドウの表示を呼び出せるメニューを作成
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Debug Windows")) {
+            ImGui::MenuItem("Loaded Textures", nullptr, &isShowLoadedTexturesWindow_);
+            ImGui::MenuItem("Loaded Models", nullptr, &isShowLoadedModelsWindow_);
+            ImGui::MenuItem("Loaded Sounds", nullptr, &isShowLoadedSoundsWindow_);
+            ImGui::MenuItem("Playing Sounds", nullptr, &isShowPlayingSoundsWindow_);
+            ImGui::MenuItem("Logger", nullptr, &isShowLoggerWindow_);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+    if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
+    if (isShowLoadedModelsWindow_) ModelManager::ShowImGuiLoadedModelsWindow();
+    if (isShowLoadedSoundsWindow_) AudioManager::ShowImGuiLoadedSoundsWindow();
+    if (isShowPlayingSoundsWindow_) AudioManager::ShowImGuiPlayingSoundsWindow();
+    if (isShowLoggerWindow_) ShowImGuiLoggerWindow(Passkey<ImGuiManager>());
 }
 
 void ImGuiManager::Render(Passkey<GameEngine>) {

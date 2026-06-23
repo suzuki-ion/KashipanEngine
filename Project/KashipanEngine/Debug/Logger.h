@@ -53,4 +53,9 @@ private:
     void PopPrefix();
 };
 
+#ifdef USE_IMGUI
+class ImGuiManager;
+void ShowImGuiLoggerWindow(Passkey<ImGuiManager>);
+#endif
+
 } // namespace KashipanEngine

@@ -1,6 +1,5 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
-#include "Objects/ObjectContext.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 #include <memory>

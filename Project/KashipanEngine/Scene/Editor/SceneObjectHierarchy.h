@@ -43,6 +43,13 @@ private:
     void ShowObject2DItem(const Object2DItem &item, size_t &index);
     void ShowObject3DItem(const Object3DItem &item, size_t &index);
 
+    void ShowObject2DContextMenu(Object2DBase *obj);
+    void ShowObject3DContextMenu(Object3DBase *obj);
+
+    void ShowHierarchyContextMenu();
+    void ShowAddObject2DMenu(Object2DBase *parent = nullptr);
+    void ShowAddObject3DMenu(Object3DBase *parent = nullptr);
+
     SceneEditorContext *editorContext_;
 
     std::vector<Object2DItem> object2DItems_;

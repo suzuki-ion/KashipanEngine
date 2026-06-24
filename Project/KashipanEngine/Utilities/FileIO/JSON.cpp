@@ -167,6 +167,32 @@ void PrintJSON(const JSON &json, const std::string &title) {
     std::cout << "===================" << std::endl;
 }
 
+JSON ToJSON(const bool &value) { return JSON(value); }
+JSON ToJSON(const int &value) { return JSON(value); }
+JSON ToJSON(const float &value) { return JSON(value); }
+JSON ToJSON(const double &value) { return JSON(value); }
+JSON ToJSON(const std::string &value) { return JSON(value); }
+JSON ToJSON(const Vector2 &value) { return JSON({ {"x", value.x}, {"y", value.y} }); }
+JSON ToJSON(const Vector3 &value) { return JSON({ {"x", value.x}, {"y", value.y}, {"z", value.z} }); }
+JSON ToJSON(const Vector4 &value) { return JSON({ {"x", value.x}, {"y", value.y}, {"z", value.z}, {"w", value.w} }); }
+JSON ToJSON(const Quaternion &value) { return JSON({ {"x", value.x}, {"y", value.y}, {"z", value.z}, {"w", value.w} }); }
+JSON ToJSON(const Matrix3x3 &value) {
+    return JSON({
+        {"m00", value.m[0][0]}, {"m01", value.m[0][1]}, {"m02", value.m[0][2]},
+        {"m10", value.m[1][0]}, {"m11", value.m[1][1]}, {"m12", value.m[1][2]},
+        {"m20", value.m[2][0]}, {"m21", value.m[2][1]}, {"m22", value.m[2][2]}
+        });
+}
+JSON ToJSON(const Matrix4x4 &value) {
+    return JSON({
+        {"m00", value.m[0][0]}, {"m01", value.m[0][1]}, {"m02", value.m[0][2]}, {"m03", value.m[0][3]},
+        {"m10", value.m[1][0]}, {"m11", value.m[1][1]}, {"m12", value.m[1][2]}, {"m13", value.m[1][3]},
+        {"m20", value.m[2][0]}, {"m21", value.m[2][1]}, {"m22", value.m[2][2]}, {"m23", value.m[2][3]},
+        {"m30", value.m[3][0]}, {"m31", value.m[3][1]}, {"m32", value.m[3][2]}, {"m33", value.m[3][3]}
+        });
+}
+JSON ToJSON(const std::vector<JSON> &values) { return JSON(values); }
+
 // テンプレートの明示的なインスタンス化
 template std::optional<int> GetJSONValue<int>(const JSON &json, const std::string &key);
 template std::optional<float> GetJSONValue<float>(const JSON &json, const std::string &key);

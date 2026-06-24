@@ -1,9 +1,8 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Collision/Collider.h"
-#include "Scene/Components/ColliderComponent.h"
-#include "Objects/ObjectContext.h"
 #include "Objects/Components/2D/Transform2D.h"
+#include "Scene/Components/ColliderComponent.h"
 
 #include <memory>
 #include <optional>

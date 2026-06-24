@@ -81,7 +81,9 @@ void GameScene::OnUpdate() {
     };
     static std::vector<EnemySpawnInfo> enemySpawnInfos;
     for (auto *enemy : GetObjects3D("Enemy")) {
-        if (!enemy->GetComponent3D<EnemyAliveStateController>()->IsAlive()) {
+        auto *enemyAliveStateController = enemy->GetComponent3D<EnemyAliveStateController>();
+        if (!enemyAliveStateController) continue;
+        if (!enemyAliveStateController->IsAlive()) {
             EnemySpawnInfo spawnInfo;
             spawnInfo.spawnPosition = enemy->GetComponent3D<Transform3D>()->GetTranslate();
             spawnInfo.timer = 0.0f;

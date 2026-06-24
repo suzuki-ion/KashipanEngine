@@ -21,9 +21,7 @@ public:
 
     std::optional<bool> Update() override {
         if (!isActive_) return true;
-        if (!playerMovement_) {
-            playerMovement_ = GetOwner3DContext()->GetComponent<PlayerMovement>();
-        }
+        playerMovement_ = GetOwner3DContext()->GetComponent<PlayerMovement>();
         if (!playerMovement_ || !inputCommand_) return false;
 
         auto moveLeftInfo = inputCommand_->Evaluate("PlayerMoveLeft");

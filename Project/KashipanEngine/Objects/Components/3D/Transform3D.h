@@ -85,7 +85,7 @@ public:
         return true;
     }
 
-    Object3DBase *GetParentObject() const { return parentObject_; }
+    Object3DBase *GetParentObject() const { return TryGetParentObject(); }
 
     void SetTranslate(const Vector3 &translate) {
         if (translate_ == translate) return;
@@ -147,7 +147,8 @@ public:
 
             Matrix4x4 local = scaleMat * rotateMat * translateMat;
 
-            auto *parentTransform = parentObject_ ? parentObject_->GetComponent3D<Transform3D>() : nullptr;
+            auto *parentObj = TryGetParentObject();
+            auto *parentTransform = parentObj ? parentObj->GetComponent3D<Transform3D>() : nullptr;
             if (parentTransform) {
                 // 親のワールド行列を取得（必要なら親が再計算される）
                 const Matrix4x4 &pw = parentTransform->GetWorldMatrix();
@@ -188,13 +189,18 @@ public:
         Vector3 s = scale_;
         Vector3 rDeg{r.x * 180.0f / 3.14159265f, r.y * 180.0f / 3.14159265f, r.z * 180.0f / 3.14159265f};
 
-        ImGui::DragFloat3(Translation("engine.imgui.transform.translate").c_str(), &t.x, 0.01f);
-        if (ImGui::DragFloat3(Translation("engine.imgui.transform.rotate").c_str(), &rDeg.x, 0.01f, -180.0f, 180.0f)) {
+        ImGuiCustom::EditValue(Translation("engine.imgui.transform.translate").c_str(), translate_, 0.01f);
+        if (ImGuiCustom::EditValue(Translation("engine.imgui.transform.rotate").c_str(), rotate_, 0.01f, -180.0f, 180.0f)) {
             r.x = rDeg.x * 3.14159265f / 180.0f;
             r.y = rDeg.y * 3.14159265f / 180.0f;
             r.z = rDeg.z * 3.14159265f / 180.0f;
         }
-        ImGui::DragFloat3(Translation("engine.imgui.transform.scale").c_str(), &s.x, 0.01f);
+        ImGuiCustom::EditValue(Translation("engine.imgui.transform.scale").c_str(), scale_, 0.01f);
+
+        ImGui::Spacing();
+        ImGui::TextUnformatted(Translation("engine.imgui.transform.parent").c_str());
+        std::string parentName = parentObject_ ? parentObject_->GetName() : "(None)";
+        ImGui::TextUnformatted(parentName.c_str());
 
         SetTranslate(t);
         SetRotate(r);
@@ -273,6 +279,13 @@ private:
             rotZ = std::atan2(-mat.m[0][1], mat.m[0][0]);
         }
         return Vector3(rotX, rotY, rotZ);
+    }
+
+    Object3DBase *TryGetParentObject() const {
+        if (!parentObject_) return nullptr;
+        auto *sceneCtx = GetOwnerSceneContext();
+        auto *parentObj = sceneCtx ? sceneCtx->GetObject3D(parentObject_) : nullptr;
+        return parentObj;
     }
 
     Vector3 translate_{ 0.0f, 0.0f, 0.0f };

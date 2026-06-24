@@ -1,9 +1,8 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Collision/Collider.h"
-#include "Scene/Components/ColliderComponent.h"
-#include "Objects/ObjectContext.h"
 #include "Objects/Components/3D/Transform3D.h"
+#include "Scene/Components/ColliderComponent.h"
 #include "Utilities/MathUtils.h"
 #include <reactphysics3d/reactphysics3d.h>
 

@@ -70,6 +70,7 @@ struct ShaderBindLocation {
     bool isRootCBV           = false;
     bool isRootSRV           = false;
     bool isRootUAV           = false;
+    bool isBindless          = false;
     ShaderStage stage        = ShaderStage::Unknown;
 };
 

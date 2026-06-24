@@ -4,12 +4,12 @@
 #include <cassert>
 #include <optional>
 #include <cstdint>
-#include "Utilities/FileIO/JSON.h"
+#include "Utilities/FileIO.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "ComponentSerialize/ComponentSerialize.h"
 
 #if defined(USE_IMGUI)
-#include <imgui.h>
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 #endif
 

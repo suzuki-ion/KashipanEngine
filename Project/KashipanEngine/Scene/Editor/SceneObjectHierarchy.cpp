@@ -207,4 +207,42 @@ void SceneObjectHierarchy::ShowObject3DItem(const Object3DItem &item, size_t &in
     ImGui::PopID();
 }
 
+void SceneObjectHierarchy::ShowObject2DContextMenu(Object2DBase *obj) {
+    if (ImGui::BeginPopupContextItem("Object2DContextMenu")) {
+        if (ImGui::MenuItem("Delete Object")) {
+            editorContext_->RemoveObject2D(obj);
+            selectedObjectType_ = SelectedObjectType::None;
+            selectedObject2DIndex_ = SIZE_MAX;
+            selectedObject2D_ = nullptr;
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void SceneObjectHierarchy::ShowObject3DContextMenu(Object3DBase *obj) {
+    if (ImGui::BeginPopupContextItem("Object3DContextMenu")) {
+        if (ImGui::MenuItem("Delete Object")) {
+            editorContext_->RemoveObject3D(obj);
+            selectedObjectType_ = SelectedObjectType::None;
+            selectedObject3DIndex_ = SIZE_MAX;
+            selectedObject3D_ = nullptr;
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void SceneObjectHierarchy::ShowHierarchyContextMenu() {
+    if (ImGui::BeginPopupContextWindow("HierarchyContextMenu")) {
+        ImGui::EndPopup();
+    }
+}
+
+void SceneObjectHierarchy::ShowAddObject2DMenu(Object2DBase *parent) {
+    (void)parent;
+}
+
+void SceneObjectHierarchy::ShowAddObject3DMenu(Object3DBase *parent) {
+    (void)parent;
+}
+
 } // namespace KashipanEngine

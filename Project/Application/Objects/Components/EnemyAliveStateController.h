@@ -14,10 +14,8 @@ public:
     }
 
     std::optional<bool> Update() override {
-        if (!enemyCollision_) {
-            enemyCollision_ = GetOwner3DContext()->GetComponent<EnemyCollision>();
-            if (!enemyCollision_) return false;
-        }
+        enemyCollision_ = GetOwner3DContext()->GetComponent<EnemyCollision>();
+        if (!enemyCollision_) return false;
 
         const bool isCollidingWithPlayer = enemyCollision_->ConsumePlayerCollision();
         const Vector3 &hitNormal = enemyCollision_->GetHitNormal();

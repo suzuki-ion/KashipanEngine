@@ -153,6 +153,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorContext.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
+    <ClCompile Include="Externals\imgui\imgui_stdlib.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -449,6 +450,9 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneEditor.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\DissolveEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\MeshRenderer.h" />
+    <ClInclude Include="KashipanEngine\Utilities\ImGuiCustom.h" />
+    <ClInclude Include="Externals\imgui\imgui_stdlib.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

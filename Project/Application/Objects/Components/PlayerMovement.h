@@ -13,10 +13,6 @@ public:
         return std::make_unique<PlayerMovement>();
     }
 
-    std::optional<bool> Initialize() override {
-        return true;
-    }
-
     std::optional<bool> Update() override {
         playerCollision_ = GetOwner3DContext()->GetComponent<PlayerCollision>();
         if (!playerCollision_) return false;

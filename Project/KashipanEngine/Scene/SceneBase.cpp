@@ -84,20 +84,24 @@ void SceneBase::ShowImGui() {
 #endif
 
 void SceneBase::RebuildObject2DIndices() {
+    objects2DIndexByUUID_.clear();
     objects2DIndexByPointer_.clear();
     objects2DIndexByName_.clear();
     for (size_t i = 0; i < objects2D_.size(); ++i) {
         if (!objects2D_[i]) continue;
+        objects2DIndexByUUID_.emplace(objects2D_[i]->GetObjectID(), i);
         objects2DIndexByPointer_.emplace(objects2D_[i].get(), i);
         objects2DIndexByName_.emplace(objects2D_[i]->GetName(), i);
     }
 }
 
 void SceneBase::RebuildObject3DIndices() {
+    objects3DIndexByUUID_.clear();
     objects3DIndexByPointer_.clear();
     objects3DIndexByName_.clear();
     for (size_t i = 0; i < objects3D_.size(); ++i) {
         if (!objects3D_[i]) continue;
+        objects3DIndexByUUID_.emplace(objects3D_[i]->GetObjectID(), i);
         objects3DIndexByPointer_.emplace(objects3D_[i].get(), i);
         objects3DIndexByName_.emplace(objects3D_[i]->GetName(), i);
     }
@@ -123,46 +127,99 @@ bool SceneBase::AddObject3D(std::unique_ptr<Object3DBase> obj) {
 
     const size_t idx = objects3D_.size() - 1;
     if (objects3D_[idx]) {
+        objects3DIndexByUUID_.emplace(objects3D_[idx]->GetObjectID(), idx);
         objects3DIndexByPointer_.emplace(objects3D_[idx].get(), idx);
         objects3DIndexByName_.emplace(objects3D_[idx]->GetName(), idx);
     }
     return true;
 }
 
+bool SceneBase::InsertObject2D(std::unique_ptr<Object2DBase> obj, size_t index) {
+    if (!obj) return false;
+    if (index > objects2D_.size()) AddObject2D(std::move(obj));
+    else {
+        obj->SetSceneContext(Passkey<SceneBase>(), sceneContext_.get());
+        objects2D_.insert(objects2D_.begin() + static_cast<std::ptrdiff_t>(index), std::move(obj));
+        RebuildObject2DIndices();
+    }
+    return true;
+}
+
+bool SceneBase::InsertObject3D(std::unique_ptr<Object3DBase> obj, size_t index) {
+    if (!obj) return false;
+    if (index > objects3D_.size()) AddObject3D(std::move(obj));
+    else {
+        obj->SetSceneContext(Passkey<SceneBase>(), sceneContext_.get());
+        objects3D_.insert(objects3D_.begin() + static_cast<std::ptrdiff_t>(index), std::move(obj));
+        RebuildObject3DIndices();
+    }
+    return true;
+}
+
 bool SceneBase::RemoveObject2D(Object2DBase *obj) {
     if (!obj) return false;
-
-    bool found = false;
-    auto range = objects2DIndexByPointer_.equal_range(obj);
-    for (auto it = range.first; it != range.second; ++it) {
-        const size_t idx = it->second;
-        if (idx < objects2D_.size() && objects2D_[idx] && objects2D_[idx].get() == obj) {
-            objects2D_.erase(objects2D_.begin() + static_cast<std::ptrdiff_t>(idx));
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) return false;
+    auto it = objects2DIndexByPointer_.find(obj);
+    if (it == objects2DIndexByPointer_.end()) return false;
+    objects2D_.erase(objects2D_.begin() + static_cast<std::ptrdiff_t>(it->second));
     RebuildObject2DIndices();
     return true;
 }
 
 bool SceneBase::RemoveObject3D(Object3DBase *obj) {
     if (!obj) return false;
+    auto it = objects3DIndexByPointer_.find(obj);
+    if (it == objects3DIndexByPointer_.end()) return false;
+    objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(it->second));
+    RebuildObject3DIndices();
+    return true;
+}
 
-    bool found = false;
-    auto range = objects3DIndexByPointer_.equal_range(obj);
-    for (auto it = range.first; it != range.second; ++it) {
-        const size_t idx = it->second;
-        if (idx < objects3D_.size() && objects3D_[idx] && objects3D_[idx].get() == obj) {
-            objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(idx));
-            found = true;
-            break;
-        }
+bool SceneBase::ReleaseObject2D(Object2DBase *obj) {
+    if (!obj) return false;
+    auto it = objects2DIndexByPointer_.find(obj);
+    if (it == objects2DIndexByPointer_.end()) return false;
+    objects2D_[it->second].release();
+    objects2D_.erase(objects2D_.begin() + static_cast<std::ptrdiff_t>(it->second));
+    RebuildObject2DIndices();
+    return true;
+}
+
+bool SceneBase::ReleaseObject3D(Object3DBase *obj) {
+    if (!obj) return false;
+    auto it = objects3DIndexByPointer_.find(obj);
+    if (it == objects3DIndexByPointer_.end()) return false;
+    objects3D_[it->second].release();
+    objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(it->second));
+    RebuildObject3DIndices();
+    return true;
+}
+
+bool SceneBase::MoveObject2D(Object2DBase *obj, size_t newIndex) {
+    if (!obj) return false;
+    if (newIndex >= objects2D_.size()) newIndex = objects2D_.size() - 1;
+    auto it = objects2DIndexByPointer_.find(obj);
+    if (it == objects2DIndexByPointer_.end()) return false;
+    objects2D_.insert(objects2D_.begin() + static_cast<std::ptrdiff_t>(newIndex), std::move(objects2D_[it->second]));
+    if (newIndex < it->second) {
+        objects2D_.erase(objects2D_.begin() + static_cast<std::ptrdiff_t>(it->second + 1));
+    } else {
+        objects2D_.erase(objects2D_.begin() + static_cast<std::ptrdiff_t>(it->second));
     }
+    RebuildObject2DIndices();
+    return true;
+}
 
-    if (!found) return false;
+bool SceneBase::MoveObject3D(Object3DBase *obj, size_t newIndex) {
+    if (!obj) return false;
+    if (newIndex >= objects3D_.size()) newIndex = objects3D_.size() - 1;
+    auto it = objects3DIndexByPointer_.find(obj);
+    if (it == objects3DIndexByPointer_.end()) return false;
+    objects3D_.insert(objects3D_.begin() + static_cast<std::ptrdiff_t>(newIndex), std::move(objects3D_[it->second]));
+    if (newIndex < it->second) {
+        objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(it->second + 1));
+    } else {
+        objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(it->second));
+    }
     RebuildObject3DIndices();
     return true;
 }
@@ -175,6 +232,7 @@ void SceneBase::ClearObjects2D() {
 
 void SceneBase::ClearObjects3D() {
     objects3D_.clear();
+    objects3DIndexByUUID_.clear();
     objects3DIndexByPointer_.clear();
     objects3DIndexByName_.clear();
 }

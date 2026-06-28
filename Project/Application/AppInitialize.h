@@ -45,7 +45,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
 #if defined(RELEASE_BUILD)
         sm->ChangeScene("EngineLogoScene");
 #else
-		sm->ChangeScene("GameScene");
+		sm->ChangeScene("CollisionTestScene");
 #endif
     }
 

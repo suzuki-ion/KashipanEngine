@@ -100,15 +100,61 @@ protected:
         return v;
     }
 
+    /// @brief 2D オブジェクトを追加
+    /// @param obj 2D オブジェクトのユニークポインタ
+    /// @return 追加に成功した場合は true、失敗した場合は false を返す
     bool AddObject2D(std::unique_ptr<Object2DBase> obj);
+    /// @brief 3D オブジェクトを追加
+    /// @param obj 3D オブジェクトのユニークポインタ
+    /// @return 追加に成功した場合は true、失敗した場合は false を返す
     bool AddObject3D(std::unique_ptr<Object3DBase> obj);
 
+    /// @brief 2D オブジェクトを指定したインデックスに挿入
+    /// @param obj 2D オブジェクトのユニークポインタ
+    /// @param index 挿入するインデックス
+    /// @return 挿入に成功した場合は true、失敗した場合は false を返す
+    bool InsertObject2D(std::unique_ptr<Object2DBase> obj, size_t index);
+    /// @brief 3D オブジェクトを指定したインデックスに挿入
+    /// @param obj 3D オブジェクトのユニークポインタ
+    /// @param index 挿入するインデックス
+    /// @return 挿入に成功した場合は true、失敗した場合は false を返す
+    bool InsertObject3D(std::unique_ptr<Object3DBase> obj, size_t index);
+
+    /// @brief 2D オブジェクトを削除
+    /// @param obj 削除する 2D オブジェクトのポインタ
+    /// @return 削除に成功した場合は true、失敗した場合は false を返す
     bool RemoveObject2D(Object2DBase *obj);
+    /// @brief 3D オブジェクトを削除
+    /// @param obj 削除する 3D オブジェクトのポインタ
+    /// @return 削除に成功した場合は true、失敗した場合は false を返す
     bool RemoveObject3D(Object3DBase *obj);
+
+    /// @brief 2D オブジェクトを解放（所有権の放棄をし、シーンから削除。インスタンスの解放は行わない）
+    /// @param obj 解放する 2D オブジェクトのポインタ
+    /// @return 解放に成功した場合は true、失敗した場合は false を返す
+    bool ReleaseObject2D(Object2DBase *obj);
+    /// @brief 3D オブジェクトを解放（所有権の放棄をし、シーンから削除。インスタンスの解放は行わない）
+    /// @param obj 解放する 3D オブジェクトのポインタ
+    /// @return 解放に成功した場合は true、失敗した場合は false を返す
+    bool ReleaseObject3D(Object3DBase *obj);
+
+    /// @brief 2D オブジェクトを移動
+    /// @param obj 移動する 2D オブジェクトのポインタ
+    /// @param newIndex 移動先のインデックス
+    /// @return 移動に成功した場合は true、失敗した場合は false を返す
+    bool MoveObject2D(Object2DBase *obj, size_t newIndex);
+    /// @brief 3D オブジェクトを移動
+    /// @param obj 移動する 3D オブジェクトのポインタ
+    /// @param newIndex 移動先のインデックス
+    /// @return 移動に成功した場合は true、失敗した場合は false を返す
+    bool MoveObject3D(Object3DBase *obj, size_t newIndex);
 
     const std::vector<std::unique_ptr<Object2DBase>> &GetObjects2D() const { return objects2D_; }
     const std::vector<std::unique_ptr<Object3DBase>> &GetObjects3D() const { return objects3D_; }
 
+    /// @brief 名前から一致する 2D オブジェクトを取得
+    /// @param objectName オブジェクト名
+    /// @return 一致するオブジェクトのポインタのリスト（存在しない場合は空のリスト）
     std::vector<Object2DBase *> GetObjects2D(const std::string &objectName) const {
         std::vector<Object2DBase *> objects;
         auto range = objects2DIndexByName_.equal_range(objectName);
@@ -121,6 +167,9 @@ protected:
         return objects;
     }
 
+    /// @brief 名前から一致する 3D オブジェクトを取得
+    /// @param objectName オブジェクト名
+    /// @return 一致するオブジェクトのポインタのリスト（存在しない場合は空のリスト）
     std::vector<Object3DBase *> GetObjects3D(const std::string &objectName) const {
         std::vector<Object3DBase *> objects;
         auto range = objects3DIndexByName_.equal_range(objectName);
@@ -133,6 +182,9 @@ protected:
         return objects;
     }
 
+    /// @brief 名前から一致する最初の 2D オブジェクトを取得
+    /// @param objectName オブジェクト名
+    /// @return 一致するオブジェクトのポインタ（存在しない場合は nullptr）
     Object2DBase *GetObject2D(const std::string &objectName) const {
         auto range = objects2DIndexByName_.equal_range(objectName);
         for (auto it = range.first; it != range.second; ++it) {
@@ -144,6 +196,9 @@ protected:
         return nullptr;
     }
 
+    /// @brief 名前から一致する最初の 3D オブジェクトを取得
+    /// @param objectName オブジェクト名
+    /// @return 一致するオブジェクトのポインタ（存在しない場合は nullptr）
     Object3DBase *GetObject3D(const std::string &objectName) const {
         auto range = objects3DIndexByName_.equal_range(objectName);
         for (auto it = range.first; it != range.second; ++it) {
@@ -155,28 +210,44 @@ protected:
         return nullptr;
     }
 
+    /// @brief ポインタから一致する 2D オブジェクトを取得
+    /// @param obj オブジェクトのポインタ
+    /// @return オブジェクトのポインタ（存在しない場合は nullptr）
     Object2DBase *GetObject2D(Object2DBase *obj) const {
         if (!obj) return nullptr;
-        auto range = objects2DIndexByPointer_.equal_range(obj);
-        for (auto it = range.first; it != range.second; ++it) {
-            const size_t idx = it->second;
-            if (idx < objects2D_.size() && objects2D_[idx] && objects2D_[idx].get() == obj) {
-                return objects2D_[idx].get();
-            }
-        }
-        return nullptr;
+        auto it = objects2DIndexByPointer_.find(obj);
+        if (it == objects2DIndexByPointer_.end()) return nullptr;
+        return objects2D_[it->second].get();
     }
 
+    /// @brief ポインタから一致する 3D オブジェクトを取得
+    /// @param obj オブジェクトのポインタ
+    /// @return オブジェクトのポインタ（存在しない場合は nullptr）
     Object3DBase *GetObject3D(Object3DBase *obj) const {
         if (!obj) return nullptr;
-        auto range = objects3DIndexByPointer_.equal_range(obj);
-        for (auto it = range.first; it != range.second; ++it) {
-            const size_t idx = it->second;
-            if (idx < objects3D_.size() && objects3D_[idx] && objects3D_[idx].get() == obj) {
-                return objects3D_[idx].get();
-            }
-        }
-        return nullptr;
+        auto it = objects3DIndexByPointer_.find(obj);
+        if (it == objects3DIndexByPointer_.end()) return nullptr;
+        return objects3D_[it->second].get();
+    }
+
+    /// @brief UUIDから一致する 2D オブジェクトを取得
+    /// @param uuid オブジェクトのUUID
+    /// @return オブジェクトのポインタ（存在しない場合は nullptr）
+    Object2DBase *GetObject2D(const UUID128 &uuid) const {
+        if (!uuid.IsValid()) return nullptr;
+        auto it = objects2DIndexByUUID_.find(uuid);
+        if (it == objects2DIndexByUUID_.end()) return nullptr;
+        return objects2D_[it->second].get();
+    }
+
+    /// @brief UUIDから一致する 3D オブジェクトを取得
+    /// @param uuid オブジェクトのUUID
+    /// @return オブジェクトのポインタ（存在しない場合は nullptr）
+    Object3DBase *GetObject3D(const UUID128 &uuid) const {
+        if (!uuid.IsValid()) return nullptr;
+        auto it = objects3DIndexByUUID_.find(uuid);
+        if (it == objects3DIndexByUUID_.end()) return nullptr;
+        return objects3D_[it->second].get();
     }
 
     void ClearObjects2D();
@@ -266,8 +337,10 @@ private:
 
     std::vector<std::unique_ptr<Object2DBase>> objects2D_;
     std::vector<std::unique_ptr<Object3DBase>> objects3D_;
-    std::unordered_multimap<Object2DBase *, size_t> objects2DIndexByPointer_;
-    std::unordered_multimap<Object3DBase *, size_t> objects3DIndexByPointer_;
+    std::unordered_map<UUID128, size_t> objects2DIndexByUUID_;
+    std::unordered_map<UUID128, size_t> objects3DIndexByUUID_;
+    std::unordered_map<Object2DBase *, size_t> objects2DIndexByPointer_;
+    std::unordered_map<Object3DBase *, size_t> objects3DIndexByPointer_;
     std::unordered_multimap<std::string, size_t> objects2DIndexByName_;
     std::unordered_multimap<std::string, size_t> objects3DIndexByName_;
 

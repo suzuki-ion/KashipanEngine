@@ -30,9 +30,22 @@ private:
         std::vector<ObjectItem<T>> children;
         bool isExpanded = true;
         size_t depth = 0;
+        size_t originalIndex = SIZE_MAX;
     };
     using Object2DItem = ObjectItem<Object2DBase>;
     using Object3DItem = ObjectItem<Object3DBase>;
+
+    enum class DropPosition {
+        Above,
+        Inside,
+        Below
+    };
+    template <typename T>
+    struct DragDropPayload {
+        T *objectItemSource = nullptr;
+        T *objectItemTarget = nullptr;
+        DropPosition position = DropPosition::Inside;
+    };
 
     void RebuildObject2DItems();
     void RebuildObject3DItems();
@@ -50,17 +63,27 @@ private:
     void ShowAddObject2DMenu(Object2DBase *parent = nullptr);
     void ShowAddObject3DMenu(Object3DBase *parent = nullptr);
 
+    void DragAndDropObject2D(Object2DItem *objItem);
+    void DragAndDropObject3D(Object3DItem *objItem);
+    void ApplyDragAndDrop2D();
+    void ApplyDragAndDrop3D();
+    DropPosition DragAndDropTargetCommon();
+
     SceneEditorContext *editorContext_;
 
     std::vector<Object2DItem> object2DItems_;
     std::vector<Object3DItem> object3DItems_;
-    std::unordered_map<Object2DBase *, std::vector<Object2DBase *>> object2DParentMap_;
-    std::unordered_map<Object3DBase *, std::vector<Object3DBase *>> object3DParentMap_;
+    std::unordered_map<Object2DBase *, std::vector<std::pair<Object2DBase *, size_t>>> object2DParentMap_;
+    std::unordered_map<Object3DBase *, std::vector<std::pair<Object3DBase *, size_t>>> object3DParentMap_;
+    
     size_t selectedObject2DIndex_ = SIZE_MAX;
     size_t selectedObject3DIndex_ = SIZE_MAX;
     Object2DBase *selectedObject2D_ = nullptr;
     Object3DBase *selectedObject3D_ = nullptr;
-    
+
+    DragDropPayload<Object2DItem> dragDropPayload2D_;
+    DragDropPayload<Object3DItem> dragDropPayload3D_;
+
     enum class SelectedObjectType {
         None,
         Object2D,

@@ -167,6 +167,8 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
             ImGui::MenuItem("Loaded Sounds", nullptr, &isShowLoadedSoundsWindow_);
             ImGui::MenuItem("Playing Sounds", nullptr, &isShowPlayingSoundsWindow_);
             ImGui::MenuItem("Logger", nullptr, &isShowLoggerWindow_);
+            ImGui::Separator();
+            ImGui::MenuItem("ImGui Demo Window", nullptr, &isShowImGuiDemoWindow_);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -176,6 +178,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     if (isShowLoadedSoundsWindow_) AudioManager::ShowImGuiLoadedSoundsWindow();
     if (isShowPlayingSoundsWindow_) AudioManager::ShowImGuiPlayingSoundsWindow();
     if (isShowLoggerWindow_) ShowImGuiLoggerWindow(Passkey<ImGuiManager>());
+    if (isShowImGuiDemoWindow_) ImGui::ShowDemoWindow(&isShowImGuiDemoWindow_);
 }
 
 void ImGuiManager::Render(Passkey<GameEngine>) {

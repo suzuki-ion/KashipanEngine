@@ -13,8 +13,9 @@ private:
     uint64_t high_; // 上位64ビット
     uint64_t low_;  // 下位64ビット
     std::string stringUUID_;
+    bool isValid_ = false;
 
-    void GenerateUUID() {
+    void InitUUID() {
         static std::random_device rd;
         static std::mt19937_64 gen(rd());
         static std::uniform_int_distribution<int> dis(0, 15);
@@ -47,18 +48,88 @@ private:
             high_ = std::stoull(hexStr.substr(0, 16), nullptr, 16);
             low_ = std::stoull(hexStr.substr(16, 16), nullptr, 16);
         }
+
+        isValid_ = true;
+    }
+
+    void StringToUUID(const std::string &uuidStr) {
+        if (uuidStr.length() != 36) {
+            ClearUUID();
+            return;
+        }
+        std::string hexStr;
+        for (char c : uuidStr) {
+            if (c != '-') hexStr += c;
+        }
+        if (hexStr.length() == 32) {
+            high_ = std::stoull(hexStr.substr(0, 16), nullptr, 16);
+            low_ = std::stoull(hexStr.substr(16, 16), nullptr, 16);
+            stringUUID_ = uuidStr;
+            isValid_ = true;
+        } else {
+            ClearUUID();
+        }
+    }
+
+    void UUIDToString() {
+        std::stringstream ss;
+        ss << std::hex << std::setfill('0');
+        ss << std::setw(16) << high_;
+        ss << std::setw(16) << low_;
+        std::string hexStr = ss.str();
+        stringUUID_ = hexStr.substr(0, 8) + "-" + hexStr.substr(8, 4) + "-" + hexStr.substr(12, 4) + "-" + hexStr.substr(16, 4) + "-" + hexStr.substr(20, 12);
+        isValid_ = true;
+    }
+
+    void ClearUUID() {
+        high_ = 0;
+        low_ = 0;
+        stringUUID_.clear();
+        isValid_ = false;
     }
 
 public:
-    UUID128() { GenerateUUID(); }
+    /// @brief デフォルトコンストラクタ（無効なUUIDを生成）
+    explicit UUID128() : high_(0), low_(0), stringUUID_(""), isValid_(false) {}
+    /// @brief コンストラクタ（新しいUUIDを生成）
+    explicit UUID128(bool generateNew) : high_(0), low_(0), stringUUID_(""), isValid_(false) {
+        if (generateNew) InitUUID();
+    }
+    /// @brief コンストラクタ（既存のUUID文字列から生成）
+    explicit UUID128(const std::string &uuidStr) : high_(0), low_(0), stringUUID_(""), isValid_(false) {
+        StringToUUID(uuidStr);
+    }
+    /// @brief コンストラクタ（既存の上位64ビットと下位64ビットから生成）
+    explicit UUID128(uint64_t high, uint64_t low) : high_(high), low_(low), stringUUID_(""), isValid_(false) {
+        UUIDToString();
+    }
     ~UUID128() = default;
 
-    void ReGenerate() { GenerateUUID(); }
     bool operator==(const UUID128 &other) const { return high_ == other.high_ && low_ == other.low_; }
     bool operator!=(const UUID128 &other) const { return !(*this == other); }
+
+    /// @brief UUIDを生成する（新しいUUIDを生成して設定する）
+    void GenerateUUID() { InitUUID(); }
+    /// @brief UUIDをリセットする（無効化する）
+    void ResetUUID() { ClearUUID(); }
+    /// @brief UUIDの文字列を取得する
     const std::string &ToString() const { return stringUUID_; }
+    /// @brief UUIDの上位64ビットを取得する
     uint64_t GetHigh() const { return high_; }
+    /// @brief UUIDの下位64ビットを取得する
     uint64_t GetLow() const { return low_; }
+    /// @brief UUIDが有効かどうかを取得する（UUIDが生成されているかどうか）
+    bool IsValid() const { return isValid_; }
 };
 
 } // namespace KashipanEngine
+
+// std::hash の特殊化を提供して、UUID128 を unordered_map などで使用できるようにする
+namespace std {
+template<>
+struct hash<KashipanEngine::UUID128> {
+    std::size_t operator()(const KashipanEngine::UUID128 &uuid) const noexcept {
+        return std::hash<std::string>()(uuid.ToString());
+    }
+};
+} // namespace std

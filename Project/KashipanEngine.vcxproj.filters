@@ -126,7 +126,6 @@
     <ClCompile Include="KashipanEngine\Utilities\FileIO\CSV.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\Directory.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\INI.cpp" />
-    <ClCompile Include="KashipanEngine\Utilities\FileIO\JSON.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\RawFile.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\TextFile.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
@@ -154,6 +153,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
     <ClCompile Include="Externals\imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\JSON.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Objects\Components\AlwaysRotate.h" />
@@ -453,6 +453,7 @@
     <ClInclude Include="KashipanEngine\Objects\Components\MeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Utilities\ImGuiCustom.h" />
     <ClInclude Include="Externals\imgui\imgui_stdlib.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\PropertyVisitor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

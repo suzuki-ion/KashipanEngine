@@ -117,6 +117,12 @@ public:
 
     /// @brief ポインタから一致する3Dオブジェクトを取得
     Object3DBase *GetObject3D(Object3DBase *obj) const;
+
+    /// @brief UUIDから一致する2Dオブジェクトを取得
+    Object2DBase *GetObject2D(const UUID128 &uuid) const;
+
+    /// @brief UUIDから一致する3Dオブジェクトを取得
+    Object3DBase *GetObject3D(const UUID128 &uuid) const;
     
     AudioManager *GetAudioManager() { return SceneBase::GetAudioManager(); }
     ModelManager *GetModelManager() { return SceneBase::GetModelManager(); }

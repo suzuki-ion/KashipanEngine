@@ -1,5 +1,6 @@
 #pragma once
 #include "ComponentSerialize/ComponentSerialize.h"
+#include "ComponentSerialize/PropertyVisitor.h"
 #include "Objects/IObjectComponent.h"
 #include "Scene/Components/ISceneComponent.h"
 

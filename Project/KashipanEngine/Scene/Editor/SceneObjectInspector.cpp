@@ -25,6 +25,12 @@ void SceneObjectInspector::ShowObject2DInspector(Object2DBase *obj) {
     ImGui::Text("Object2D Inspector");
     ImGui::Separator();
     ImGui::Text("Name: %s", obj->GetName().c_str());
+    ImGui::Text("Save Enable");
+    ImGui::SameLine();
+    bool isSaveEnabled = obj->IsSaveEnabled();
+    if (ImGui::Checkbox("##SaveEnable", &isSaveEnabled)) {
+        obj->SetSaveEnabled(isSaveEnabled);
+    }
     int id = 0;
     IObjectComponent2D *componentToRemove = nullptr; // 削除するコンポーネントを保持する変数
     for (const auto &comp : obj->GetAllComponents2D()) {
@@ -32,14 +38,17 @@ void SceneObjectInspector::ShowObject2DInspector(Object2DBase *obj) {
         ImGui::Separator();
         // 開閉可能なツリー構造でコンポーネントを表示
         if (ImGui::TreeNode(comp->GetComponentType().c_str())) {
+            // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
+            if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
+                if (ImGui::MenuItem("Remove Component")) {
+                    componentToRemove = comp.get();
+                }
+                ImGui::EndPopup();
+            }
             comp->ShowImGui();
             ImGui::TreePop();
         }
         ImGui::Indent();
-        // 一番初めのコンポーネントでなければコンポーネントの削除ボタンを表示
-        if (id > 0 && ImGui::Button("Remove Component")) {
-            componentToRemove = comp.get();
-        }
         ImGui::Unindent();
         ImGui::PopID();
         id++;
@@ -74,6 +83,12 @@ void SceneObjectInspector::ShowObject3DInspector(Object3DBase *obj) {
     ImGui::Text("Object3D Inspector");
     ImGui::Separator();
     ImGui::Text("Name: %s", obj->GetName().c_str());
+    ImGui::Text("Save Enable");
+    ImGui::SameLine();
+    bool isSaveEnabled = obj->IsSaveEnabled();
+    if (ImGui::Checkbox("##SaveEnable", &isSaveEnabled)) {
+        obj->SetSaveEnabled(isSaveEnabled);
+    }
     int id = 0;
     IObjectComponent3D *componentToRemove = nullptr; // 削除するコンポーネントを保持する変数
     for (const auto &comp : obj->GetAllComponents3D()) {
@@ -81,14 +96,17 @@ void SceneObjectInspector::ShowObject3DInspector(Object3DBase *obj) {
         ImGui::Separator();
         // 開閉可能なツリー構造でコンポーネントを表示
         if (ImGui::TreeNode(comp->GetComponentType().c_str())) {
+            // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
+            if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
+                if (ImGui::MenuItem("Remove Component")) {
+                    componentToRemove = comp.get();
+                }
+                ImGui::EndPopup();
+            }
             comp->ShowImGui();
             ImGui::TreePop();
         }
         ImGui::Indent();
-        // 一番初めのコンポーネントでなければコンポーネントの削除ボタンを表示
-        if (id > 0 && ImGui::Button("Remove Component")) {
-            componentToRemove = comp.get();
-        }
         ImGui::Unindent();
         ImGui::PopID();
         id++;

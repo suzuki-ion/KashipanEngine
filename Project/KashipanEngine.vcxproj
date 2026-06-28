@@ -403,6 +403,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\ComponentSerializeHeader.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentRegistry.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentSerialize.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\PropertyVisitor.h" />
     <ClInclude Include="KashipanEngine\FontHeaders.h" />
     <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
     <ClInclude Include="KashipanEngine\Font\FontStructs.h" />

@@ -7,6 +7,7 @@
 #include <any>
 #include <typeinfo>
 #include <utility>
+#include <optional>
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
@@ -17,13 +18,18 @@
 namespace ImGuiCustom {
 
 // ==========================================
-// 1. 共通構造体・ヘルパー・共通前方宣言
+// 1. 共通オプション構造体 ＆ 前方宣言
 // ==========================================
 
-// スライダーに切り替えるためのタグ構造体
-struct Slider {};
+struct UiOptions {
+    bool asSlider = false;         // true: Slider系を使用 / false: Drag系を使用
+    float vSpeed = 1.0f;           // Drag時の変化速度
+    float vMin = 0.0f;             // 最小値 (0.0fのままなら型ごとのデフォルトを適用)
+    float vMax = 0.0f;             // 最大値 (0.0fのままなら型ごとのデフォルトを適用)
+    const char *format = nullptr;  // フォーマット (nullptrなら型ごとのデフォルト)
+    int flags = 0;                 // ImGuiSliderFlags や ImGuiInputTextFlags 等の兼用フラグ
+};
 
-// 内部用ヘルパー: マップのキーなどを自動で文字列化する
 namespace detail {
 template <typename T>
 inline std::string ToString(const T &val) {
@@ -37,141 +43,152 @@ inline std::string ToString(const T &val) {
 }
 }
 
-// コンテナからの再帰呼び出し解決のための前方宣言
-template <typename T, typename... Args> bool EditValue(const char *label, T &value, Args&&... args);
-template <typename T, typename... Args> void ShowValue(const char *label, const T &value, Args&&... args);
+// コンテナやstd::anyからの相互・再帰呼び出し解決のための汎用前方宣言
+template <typename T> bool EditValue(const char *label, T &value, const UiOptions &opts = {});
+template <typename T> void ShowValue(const char *label, const T &value, const UiOptions &opts = {});
 
 
 // ==========================================
 // 2. EditValue 拡張関数群 (編集用)
 // ==========================================
 
-// --- 2-1. 基礎型 (Drag系 : デフォルト) ---
-inline bool EditValue(const char *label, bool &value) { return ImGui::Checkbox(label, &value); }
-inline bool EditValue(const char *label, int &value, float v_speed = 1.0f, int v_min = 0, int v_max = 0, ImGuiSliderFlags flags = 0) {
-    return ImGui::DragInt(label, &value, v_speed, v_min, v_max, "%d", flags);
-}
-inline bool EditValue(const char *label, float &value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::DragFloat(label, &value, v_speed, v_min, v_max, format, flags);
-}
-inline bool EditValue(const char *label, double &value, float v_speed = 1.0f, double v_min = 0.0, double v_max = 0.0, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::DragScalar(label, ImGuiDataType_Double, &value, v_speed, &v_min, &v_max, format, flags);
-}
-inline bool EditValue(const char *label, std::string &value, ImGuiInputTextFlags flags = 0) {
-    return ImGui::InputText(label, &value, flags);
+// --- 2-1. 基礎型 ---
+inline bool EditValue(const char *label, bool &value, const UiOptions &opts) {
+    (void)opts; // boolではオプションは無視
+    return ImGui::Checkbox(label, &value);
 }
 
-// --- 2-2. カスタス数学型 (Drag系) ---
-inline bool EditValue(const char *label, Vector2 &value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::DragFloat2(label, &value.x, v_speed, v_min, v_max, format, flags);
+inline bool EditValue(const char *label, int &value, const UiOptions &opts) {
+    if (opts.asSlider) {
+        int minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0 : static_cast<int>(opts.vMin);
+        int maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 100 : static_cast<int>(opts.vMax);
+        const char *fmt = opts.format ? opts.format : "%d";
+        return ImGui::SliderInt(label, &value, minVal, maxVal, fmt, opts.flags);
+    } else {
+        const char *fmt = opts.format ? opts.format : "%d";
+        return ImGui::DragInt(label, &value, opts.vSpeed, static_cast<int>(opts.vMin), static_cast<int>(opts.vMax), fmt, opts.flags);
+    }
 }
-inline bool EditValue(const char *label, Vector3 &value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::DragFloat3(label, &value.x, v_speed, v_min, v_max, format, flags);
+
+inline bool EditValue(const char *label, float &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat(label, &value, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat(label, &value, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
 }
-inline bool EditValue(const char *label, Vector4 &value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::DragFloat4(label, &value.x, v_speed, v_min, v_max, format, flags);
+
+inline bool EditValue(const char *label, double &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        double minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0 : static_cast<double>(opts.vMin);
+        double maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0 : static_cast<double>(opts.vMax);
+        return ImGui::SliderScalar(label, ImGuiDataType_Double, &value, &minVal, &maxVal, fmt, opts.flags);
+    } else {
+        double minVal = static_cast<double>(opts.vMin);
+        double maxVal = static_cast<double>(opts.vMax);
+        return ImGui::DragScalar(label, ImGuiDataType_Double, &value, opts.vSpeed, &minVal, &maxVal, fmt, opts.flags);
+    }
 }
-inline bool EditValue(const char *label, Quaternion &value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
+
+inline bool EditValue(const char *label, std::string &value, const UiOptions &opts) {
+    return ImGui::InputText(label, &value, opts.flags);
+}
+
+// --- 2-2. カスタム数学型 ---
+inline bool EditValue(const char *label, Vector2 &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat2(label, &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat2(label, &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, Vector3 &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat3(label, &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat3(label, &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, Vector4 &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat4(label, &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat4(label, &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opts) {
     std::string q_label = std::string(label) + " (X,Y,Z,W)";
-    return ImGui::DragFloat4(q_label.c_str(), &value.x, v_speed, v_min, v_max, format, flags);
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat4(q_label.c_str(), &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat4(q_label.c_str(), &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
 }
-inline bool EditValue(const char *label, Matrix3x3 &value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
+
+inline bool EditValue(const char *label, Matrix3x3 &value, const UiOptions &opts) {
     bool changed = false;
-    ImGui::Text("%s :", label);
+    ImGui::Text("%s%s :", label, opts.asSlider ? " (Slider)" : "");
     ImGui::Indent();
+    const char *fmt = opts.format ? opts.format : "%.3f";
     for (int i = 0; i < 3; ++i) {
         ImGui::PushID(i);
         std::string row_label = "[" + std::to_string(i) + "]";
-        if (ImGui::DragFloat3(row_label.c_str(), value.m[i], v_speed, v_min, v_max, format, flags)) { changed = true; }
+        if (opts.asSlider) {
+            float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+            float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+            if (ImGui::SliderFloat3(row_label.c_str(), value.m[i], minVal, maxVal, fmt, opts.flags)) { changed = true; }
+        } else {
+            if (ImGui::DragFloat3(row_label.c_str(), value.m[i], opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags)) { changed = true; }
+        }
         ImGui::PopID();
     }
     ImGui::Unindent();
     return changed;
 }
-inline bool EditValue(const char *label, Matrix4x4 &value, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
+
+inline bool EditValue(const char *label, Matrix4x4 &value, const UiOptions &opts) {
     bool changed = false;
-    ImGui::Text("%s :", label);
+    ImGui::Text("%s%s :", label, opts.asSlider ? " (Slider)" : "");
     ImGui::Indent();
+    const char *fmt = opts.format ? opts.format : "%.3f";
     for (int i = 0; i < 4; ++i) {
         ImGui::PushID(i);
         std::string row_label = "[" + std::to_string(i) + "]";
-        if (ImGui::DragFloat4(row_label.c_str(), value.m[i], v_speed, v_min, v_max, format, flags)) { changed = true; }
+        if (opts.asSlider) {
+            float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+            float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+            if (ImGui::SliderFloat4(row_label.c_str(), value.m[i], minVal, maxVal, fmt, opts.flags)) { changed = true; }
+        } else {
+            if (ImGui::DragFloat4(row_label.c_str(), value.m[i], opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags)) { changed = true; }
+        }
         ImGui::PopID();
     }
     ImGui::Unindent();
     return changed;
 }
 
-// --- 2-3. 基礎型 (Sliderタグ系 ＆ フォールバック) ---
-inline bool EditValue(const char *label, int &value, Slider, int v_min = 0, int v_max = 100, const char *format = "%d", ImGuiSliderFlags flags = 0) {
-    return ImGui::SliderInt(label, &value, v_min, v_max, format, flags);
-}
-inline bool EditValue(const char *label, float &value, Slider, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::SliderFloat(label, &value, v_min, v_max, format, flags);
-}
-inline bool EditValue(const char *label, bool &value, Slider) { return EditValue(label, value); }
-inline bool EditValue(const char *label, std::string &value, Slider) { return EditValue(label, value); }
-
-inline bool EditValueSlider(const char *label, int &value, int v_min = 0, int v_max = 100, const char *format = "%d", ImGuiSliderFlags flags = 0) {
-    return EditValue(label, value, Slider{}, v_min, v_max, format, flags);
-}
-inline bool EditValueSlider(const char *label, float &value, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return EditValue(label, value, Slider{}, v_min, v_max, format, flags);
-}
-inline bool EditValueSlider(const char *label, bool &value) { return EditValue(label, value); }
-inline bool EditValueSlider(const char *label, std::string &value) { return EditValue(label, value); }
-
-// --- 2-4. カスタム数学型 (Sliderタグ系 ＆ ラッパー) ---
-inline bool EditValue(const char *label, Vector2 &value, Slider, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::SliderFloat2(label, &value.x, v_min, v_max, format, flags);
-}
-inline bool EditValue(const char *label, Vector3 &value, Slider, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::SliderFloat3(label, &value.x, v_min, v_max, format, flags);
-}
-inline bool EditValue(const char *label, Vector4 &value, Slider, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    return ImGui::SliderFloat4(label, &value.x, v_min, v_max, format, flags);
-}
-inline bool EditValue(const char *label, Quaternion &value, Slider, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    std::string q_label = std::string(label) + " (X,Y,Z,W)";
-    return ImGui::SliderFloat4(q_label.c_str(), &value.x, v_min, v_max, format, flags);
-}
-inline bool EditValue(const char *label, Matrix3x3 &value, Slider, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    bool changed = false;
-    ImGui::Text("%s (Slider) :", label);
-    ImGui::Indent();
-    for (int i = 0; i < 3; ++i) {
-        ImGui::PushID(i);
-        std::string row_label = "[" + std::to_string(i) + "]";
-        if (ImGui::SliderFloat3(row_label.c_str(), value.m[i], v_min, v_max, format, flags)) { changed = true; }
-        ImGui::PopID();
-    }
-    ImGui::Unindent();
-    return changed;
-}
-inline bool EditValue(const char *label, Matrix4x4 &value, Slider, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) {
-    bool changed = false;
-    ImGui::Text("%s (Slider) :", label);
-    ImGui::Indent();
-    for (int i = 0; i < 4; ++i) {
-        ImGui::PushID(i);
-        std::string row_label = "[" + std::to_string(i) + "]";
-        if (ImGui::SliderFloat4(row_label.c_str(), value.m[i], v_min, v_max, format, flags)) { changed = true; }
-        ImGui::PopID();
-    }
-    ImGui::Unindent();
-    return changed;
-}
-
-inline bool EditValueSlider(const char *label, Vector2 &value, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) { return EditValue(label, value, Slider{}, v_min, v_max, format, flags); }
-inline bool EditValueSlider(const char *label, Vector3 &value, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) { return EditValue(label, value, Slider{}, v_min, v_max, format, flags); }
-inline bool EditValueSlider(const char *label, Vector4 &value, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) { return EditValue(label, value, Slider{}, v_min, v_max, format, flags); }
-inline bool EditValueSlider(const char *label, Quaternion &value, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) { return EditValue(label, value, Slider{}, v_min, v_max, format, flags); }
-inline bool EditValueSlider(const char *label, Matrix3x3 &value, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) { return EditValue(label, value, Slider{}, v_min, v_max, format, flags); }
-inline bool EditValueSlider(const char *label, Matrix4x4 &value, float v_min = 0.0f, float v_max = 1.0f, const char *format = "%.3f", ImGuiSliderFlags flags = 0) { return EditValue(label, value, Slider{}, v_min, v_max, format, flags); }
-
-// --- 2-5. コンテナ型 (テンプレート・再帰処理) ---
-template <typename T, typename... Args>
-bool EditValue(const char *label, std::vector<T> &vec, Args&&... args) {
+// --- 2-3. コンテナ型 (テンプレート・再帰処理) ---
+template <typename T>
+bool EditValue(const char *label, std::vector<T> &vec, const UiOptions &opts) {
     bool changed = false;
     std::string node_name = std::string(label) + " [" + std::to_string(vec.size()) + " items]";
 
@@ -185,8 +202,7 @@ bool EditValue(const char *label, std::vector<T> &vec, Args&&... args) {
             if (ImGui::Button("-")) { eraseIt = vec.begin() + i; }
             ImGui::SameLine();
             std::string item_label = "[" + std::to_string(i) + "]";
-            ImGui::SameLine();
-            if (EditValue(item_label.c_str(), vec[i], std::forward<Args>(args)...)) { changed = true; }
+            if (EditValue(item_label.c_str(), vec[i], opts)) { changed = true; }
             ImGui::PopID();
         }
         if (insertIt != vec.end()) { vec.insert(insertIt, T{}); changed = true; }
@@ -197,8 +213,8 @@ bool EditValue(const char *label, std::vector<T> &vec, Args&&... args) {
     return changed;
 }
 
-template <typename K, typename V, typename... Args>
-bool EditValue(const char *label, std::unordered_map<K, V> &map, Args&&... args) {
+template <typename K, typename V>
+bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions &opts) {
     bool changed = false;
     std::string node_name = std::string(label) + " [" + std::to_string(map.size()) + " pairs]";
 
@@ -224,7 +240,7 @@ bool EditValue(const char *label, std::unordered_map<K, V> &map, Args&&... args)
             ImGui::SameLine();
 
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-            if (EditValue("##value", kv.second, std::forward<Args>(args)...)) { changed = true; }
+            if (EditValue("##value", kv.second, opts)) { changed = true; }
             ImGui::PopID();
         }
 
@@ -259,9 +275,8 @@ bool EditValue(const char *label, std::unordered_map<K, V> &map, Args&&... args)
     return changed;
 }
 
-// --- 2-6. 動的型 (std::any) ---
-template <typename... Args>
-bool EditValue(const char *label, std::any &value, Args&&... args) {
+// --- 2-4. 動的型 (std::any) ---
+inline bool EditValue(const char *label, std::any &value, const UiOptions &opts) {
     if (!value.has_value()) { ImGui::Text("%s: [Empty]", label); return false; }
 
     const auto &type = value.type();
@@ -269,37 +284,37 @@ bool EditValue(const char *label, std::any &value, Args&&... args) {
 
     if (type == typeid(int)) {
         auto v = std::any_cast<int>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(float)) {
         auto v = std::any_cast<float>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(double)) {
         auto v = std::any_cast<double>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(bool)) {
         auto v = std::any_cast<bool>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(std::string)) {
         auto v = std::any_cast<std::string>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(Vector2)) {
         auto v = std::any_cast<Vector2>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(Vector3)) {
         auto v = std::any_cast<Vector3>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(Vector4)) {
         auto v = std::any_cast<Vector4>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(Quaternion)) {
         auto v = std::any_cast<Quaternion>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(Matrix3x3)) {
         auto v = std::any_cast<Matrix3x3>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else if (type == typeid(Matrix4x4)) {
         auto v = std::any_cast<Matrix4x4>(value);
-        if (EditValue(label, v, std::forward<Args>(args)...)) { value = v; changed = true; }
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else {
         ImGui::Text("%s: [Unsupported Any Type: %s]", label, type.name());
     }
@@ -312,71 +327,92 @@ bool EditValue(const char *label, std::any &value, Args&&... args) {
 // ==========================================
 
 // --- 3-1. 基礎型 ---
-inline void ShowValue(const char *label, const bool &value) { ImGui::LabelText(label, value ? "true" : "false"); }
-inline void ShowValue(const char *label, const int &value, const char *format = "%d") { ImGui::LabelText(label, format, value); }
-inline void ShowValue(const char *label, const float &value, const char *format = "%.3f") { ImGui::LabelText(label, format, value); }
-inline void ShowValue(const char *label, const double &value, const char *format = "%.3f") { ImGui::LabelText(label, format, value); }
-inline void ShowValue(const char *label, const std::string &value) { ImGui::LabelText(label, "%s", value.c_str()); }
+inline void ShowValue(const char *label, const bool &value, const UiOptions &opts) {
+    (void)opts;
+    ImGui::LabelText(label, value ? "true" : "false");
+}
+inline void ShowValue(const char *label, const int &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%d";
+    ImGui::LabelText(label, fmt, value);
+}
+inline void ShowValue(const char *label, const float &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, fmt, value);
+}
+inline void ShowValue(const char *label, const double &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, fmt, value);
+}
+inline void ShowValue(const char *label, const std::string &value, const UiOptions &opts) {
+    (void)opts;
+    ImGui::LabelText(label, "%s", value.c_str());
+}
 
 // --- 3-2. カスタム数学型 ---
-inline void ShowValue(const char *label, const Vector2 &value, const char *format = "%.3f") {
-    ImGui::LabelText(label, (std::string(format) + ", " + format).c_str(), value.x, value.y);
+inline void ShowValue(const char *label, const Vector2 &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, (std::string(fmt) + ", " + fmt).c_str(), value.x, value.y);
 }
-inline void ShowValue(const char *label, const Vector3 &value, const char *format = "%.3f") {
-    ImGui::LabelText(label, (std::string(format) + ", " + format + ", " + format).c_str(), value.x, value.y, value.z);
+inline void ShowValue(const char *label, const Vector3 &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, (std::string(fmt) + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z);
 }
-inline void ShowValue(const char *label, const Vector4 &value, const char *format = "%.3f") {
-    ImGui::LabelText(label, (std::string(format) + ", " + format + ", " + format + ", " + format).c_str(), value.x, value.y, value.z, value.w);
+inline void ShowValue(const char *label, const Vector4 &value, const UiOptions &opts) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, (std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z, value.w);
 }
-inline void ShowValue(const char *label, const Quaternion &value, const char *format = "%.3f") {
+inline void ShowValue(const char *label, const Quaternion &value, const UiOptions &opts) {
     std::string q_label = std::string(label) + " (Quaternion)";
-    ImGui::LabelText(q_label.c_str(), (std::string(format) + ", " + format + ", " + format + ", " + format).c_str(), value.x, value.y, value.z, value.w);
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(q_label.c_str(), (std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z, value.w);
 }
-inline void ShowValue(const char *label, const Matrix3x3 &value, const char *format = "%.3f") {
+inline void ShowValue(const char *label, const Matrix3x3 &value, const UiOptions &opts) {
     ImGui::Text("%s (ReadOnly) :", label);
     ImGui::Indent();
-    std::string fmt = std::string(format) + ", " + format + ", " + format;
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    std::string composite_fmt = std::string(fmt) + ", " + fmt + ", " + fmt;
     for (int i = 0; i < 3; ++i) {
         std::string row_label = "[" + std::to_string(i) + "]";
-        ImGui::LabelText(row_label.c_str(), fmt.c_str(), value.m[i][0], value.m[i][1], value.m[i][2]);
+        ImGui::LabelText(row_label.c_str(), composite_fmt.c_str(), value.m[i][0], value.m[i][1], value.m[i][2]);
     }
     ImGui::Unindent();
 }
-inline void ShowValue(const char *label, const Matrix4x4 &value, const char *format = "%.3f") {
+inline void ShowValue(const char *label, const Matrix4x4 &value, const UiOptions &opts) {
     ImGui::Text("%s (ReadOnly) :", label);
     ImGui::Indent();
-    std::string fmt = std::string(format) + ", " + format + ", " + format + ", " + format;
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    std::string composite_fmt = std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt;
     for (int i = 0; i < 4; ++i) {
         std::string row_label = "[" + std::to_string(i) + "]";
-        ImGui::LabelText(row_label.c_str(), fmt.c_str(), value.m[i][0], value.m[i][1], value.m[i][2], value.m[i][3]);
+        ImGui::LabelText(row_label.c_str(), composite_fmt.c_str(), value.m[i][0], value.m[i][1], value.m[i][2], value.m[i][3]);
     }
     ImGui::Unindent();
 }
 
 // --- 3-3. コンテナ型 (テンプレート・再帰処理) ---
-template <typename T, typename... Args>
-void ShowValue(const char *label, const std::vector<T> &vec, Args&&... args) {
+template <typename T>
+void ShowValue(const char *label, const std::vector<T> &vec, const UiOptions &opts) {
     std::string node_name = std::string(label) + " [" + std::to_string(vec.size()) + " items] (ReadOnly)";
     if (ImGui::TreeNode(node_name.c_str())) {
         for (size_t i = 0; i < vec.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
             std::string item_label = "[" + std::to_string(i) + "]";
-            ShowValue(item_label.c_str(), vec[i], std::forward<Args>(args)...);
+            ShowValue(item_label.c_str(), vec[i], opts);
             ImGui::PopID();
         }
         ImGui::TreePop();
     }
 }
 
-template <typename K, typename V, typename... Args>
-void ShowValue(const char *label, const std::unordered_map<K, V> &map, Args&&... args) {
+template <typename K, typename V>
+void ShowValue(const char *label, const std::unordered_map<K, V> &map, const UiOptions &opts) {
     std::string node_name = std::string(label) + " [" + std::to_string(map.size()) + " pairs] (ReadOnly)";
     if (ImGui::TreeNode(node_name.c_str())) {
         int id = 0;
         for (const auto &kv : map) {
             ImGui::PushID(id++);
             std::string key_label = detail::ToString(kv.first);
-            ShowValue(key_label.c_str(), kv.second, std::forward<Args>(args)...);
+            ShowValue(key_label.c_str(), kv.second, opts);
             ImGui::PopID();
         }
         ImGui::TreePop();
@@ -384,13 +420,12 @@ void ShowValue(const char *label, const std::unordered_map<K, V> &map, Args&&...
 }
 
 // --- 3-4. 動的型 (std::any) ---
-template <typename... Args>
-void ShowValue(const char *label, const std::any &value, Args&&... args) {
+inline void ShowValue(const char *label, const std::any &value, const UiOptions &opts) {
     if (!value.has_value()) { ImGui::LabelText(label, "[Empty]"); return; }
 
     const auto &type = value.type();
 
-    if (type == typeid(int)) { ShowValue(label, std::any_cast<int>(value), std::forward<Args>(args)...); } else if (type == typeid(float)) { ShowValue(label, std::any_cast<float>(value), std::forward<Args>(args)...); } else if (type == typeid(double)) { ShowValue(label, std::any_cast<double>(value), std::forward<Args>(args)...); } else if (type == typeid(bool)) { ShowValue(label, std::any_cast<bool>(value), std::forward<Args>(args)...); } else if (type == typeid(std::string)) { ShowValue(label, std::any_cast<std::string>(value), std::forward<Args>(args)...); } else if (type == typeid(Vector2)) { ShowValue(label, std::any_cast<Vector2>(value), std::forward<Args>(args)...); } else if (type == typeid(Vector3)) { ShowValue(label, std::any_cast<Vector3>(value), std::forward<Args>(args)...); } else if (type == typeid(Vector4)) { ShowValue(label, std::any_cast<Vector4>(value), std::forward<Args>(args)...); } else if (type == typeid(Quaternion)) { ShowValue(label, std::any_cast<Quaternion>(value), std::forward<Args>(args)...); } else if (type == typeid(Matrix3x3)) { ShowValue(label, std::any_cast<Matrix3x3>(value), std::forward<Args>(args)...); } else if (type == typeid(Matrix4x4)) { ShowValue(label, std::any_cast<Matrix4x4>(value), std::forward<Args>(args)...); } else {
+    if (type == typeid(int)) { ShowValue(label, std::any_cast<int>(value), opts); } else if (type == typeid(float)) { ShowValue(label, std::any_cast<float>(value), opts); } else if (type == typeid(double)) { ShowValue(label, std::any_cast<double>(value), opts); } else if (type == typeid(bool)) { ShowValue(label, std::any_cast<bool>(value), opts); } else if (type == typeid(std::string)) { ShowValue(label, std::any_cast<std::string>(value), opts); } else if (type == typeid(Vector2)) { ShowValue(label, std::any_cast<Vector2>(value), opts); } else if (type == typeid(Vector3)) { ShowValue(label, std::any_cast<Vector3>(value), opts); } else if (type == typeid(Vector4)) { ShowValue(label, std::any_cast<Vector4>(value), opts); } else if (type == typeid(Quaternion)) { ShowValue(label, std::any_cast<Quaternion>(value), opts); } else if (type == typeid(Matrix3x3)) { ShowValue(label, std::any_cast<Matrix3x3>(value), opts); } else if (type == typeid(Matrix4x4)) { ShowValue(label, std::any_cast<Matrix4x4>(value), opts); } else {
         ImGui::LabelText(label, "[Unsupported Any Type: %s]", type.name());
     }
 }

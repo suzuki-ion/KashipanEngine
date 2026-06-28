@@ -47,6 +47,7 @@ private:
     bool isShowLoadedSoundsWindow_ = false;
     bool isShowPlayingSoundsWindow_ = false;
     bool isShowLoggerWindow_ = true;
+    bool isShowImGuiDemoWindow_ = false;
 };
 
 } // namespace KashipanEngine

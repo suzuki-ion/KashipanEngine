@@ -69,6 +69,11 @@ Object2DBase *SceneContext::GetObject2D(Object2DBase *obj) const {
     return owner_->GetObject2D(obj);
 }
 
+Object2DBase *SceneContext::GetObject2D(const UUID128 &uuid) const {
+    if (!owner_) return nullptr;
+    return owner_->GetObject2D(uuid);
+}
+
 std::vector<Object3DBase *> SceneContext::GetObjects3D(const std::string &objectName) const {
     if (objectName.empty() || !owner_) return {};
     return owner_->GetObjects3D(objectName);
@@ -82,6 +87,11 @@ Object3DBase *SceneContext::GetObject3D(const std::string &objectName) const {
 Object3DBase *SceneContext::GetObject3D(Object3DBase *obj) const {
     if (!obj || !owner_) return nullptr;
     return owner_->GetObject3D(obj);
+}
+
+Object3DBase *SceneContext::GetObject3D(const UUID128 &uuid) const {
+    if (!owner_) return nullptr;
+    return owner_->GetObject3D(uuid);
 }
 
 } // namespace KashipanEngine

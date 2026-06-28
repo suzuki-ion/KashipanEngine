@@ -62,8 +62,8 @@ public:
         return true;
     }
 
-    /// @brief 親オブジェクトを設定する
-    /// @param parent 親オブジェクト
+    /// @brief 親オブジェクトをポインタから設定する
+    /// @param parent 親オブジェクトのポインタ（nullptrの場合は親を解除）
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool SetParentObject(Object3DBase *parent) {
         if (!parent) {
@@ -83,6 +83,22 @@ public:
         isWorldMatrixCalculated_ = false;
         cachedParentVersion_ = 0;
         return true;
+    }
+    /// @brief 親オブジェクトをUUIDから設定する
+    /// @param parentUUID 親オブジェクトのUUID（無効な場合は親を解除）
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す
+    bool SetParentObject(const UUID128 &parentUUID) {
+        if (!parentUUID.IsValid()) {
+            parentObject_ = nullptr;
+            isWorldMatrixCalculated_ = false;
+            cachedParentVersion_ = 0;
+            return true;
+        }
+        auto *sceneCtx = GetOwnerSceneContext();
+        if (!sceneCtx) return false;
+        auto *parent = sceneCtx->GetObject3D(parentUUID);
+        if (!parent) return false;
+        return SetParentObject(parent);
     }
 
     Object3DBase *GetParentObject() const { return TryGetParentObject(); }
@@ -189,13 +205,13 @@ public:
         Vector3 s = scale_;
         Vector3 rDeg{r.x * 180.0f / 3.14159265f, r.y * 180.0f / 3.14159265f, r.z * 180.0f / 3.14159265f};
 
-        ImGuiCustom::EditValue(Translation("engine.imgui.transform.translate").c_str(), translate_, 0.01f);
-        if (ImGuiCustom::EditValue(Translation("engine.imgui.transform.rotate").c_str(), rotate_, 0.01f, -180.0f, 180.0f)) {
+        ImGuiCustom::EditValue(Translation("engine.imgui.transform.translate").c_str(), t, { .vSpeed = 0.01f });
+        if (ImGuiCustom::EditValue(Translation("engine.imgui.transform.rotate").c_str(), rDeg, { .vSpeed = 0.01f, .vMin = -180.0f, .vMax = 180.0f })) {
             r.x = rDeg.x * 3.14159265f / 180.0f;
             r.y = rDeg.y * 3.14159265f / 180.0f;
             r.z = rDeg.z * 3.14159265f / 180.0f;
         }
-        ImGuiCustom::EditValue(Translation("engine.imgui.transform.scale").c_str(), scale_, 0.01f);
+        ImGuiCustom::EditValue(Translation("engine.imgui.transform.scale").c_str(), s, { .vSpeed = 0.01f });
 
         ImGui::Spacing();
         ImGui::TextUnformatted(Translation("engine.imgui.transform.parent").c_str());
@@ -210,41 +226,28 @@ public:
 
     JSON SaveToJson() const override {
         JSON json;
-        json["translate"] = { translate_.x, translate_.y, translate_.z };
-        json["rotate"] = { rotate_.x, rotate_.y, rotate_.z };
-        json["scale"] = { scale_.x, scale_.y, scale_.z };
-        const std::string parentName = parentObject_ ? parentObject_->GetName() : "";
-        if (!parentName.empty()) {
-            json["parent"] = parentName;
+        json["translate"] = ToJSON(translate_);
+        json["rotate"] = ToJSON(rotateQuat_);
+        json["scale"] = ToJSON(scale_);
+        auto *parentObj = TryGetParentObject();
+        if (parentObj) {
+            json["parent"] = ToJSON(parentObj->GetObjectID());
         }
         return json;
     }
+
     bool LoadFromJson(const JSON &json) override {
         if (!json.contains("translate") || !json.contains("rotate") || !json.contains("scale")) {
             return false;
         }
-        auto t = json["translate"];
-        auto r = json["rotate"];
-        auto s = json["scale"];
-        if (!t.is_array() || t.size() != 3 || !r.is_array() || r.size() != 3 || !s.is_array() || s.size() != 3) {
-            return false;
-        }
-        SetTranslate(Vector3(t[0].get<float>(), t[1].get<float>(), t[2].get<float>()));
-        SetRotate(Vector3(r[0].get<float>(), r[1].get<float>(), r[2].get<float>()));
-        SetScale(Vector3(s[0].get<float>(), s[1].get<float>(), s[2].get<float>()));
-
+        translate_ = FromJSON<Vector3>(json["translate"]);
+        rotateQuat_ = FromJSON<Quaternion>(json["rotate"]);
+        scale_ = FromJSON<Vector3>(json["scale"]);
         if (json.contains("parent")) {
-            std::string parentName = json["parent"].get<std::string>();
-            auto *sceneCtx = GetOwnerSceneContext();
-            if (sceneCtx) {
-                auto *parentObj = sceneCtx->GetObject3D(parentName);
-                if (parentObj) {
-                    SetParentObject(parentObj);
-                } else {
-                    // 親オブジェクトが見つからない場合はエラーとする
-                    return false;
-                }
-            }
+            UUID128 parentUUID = FromJSON<UUID128>(json["parent"]);
+            SetParentObject(parentUUID);
+        } else {
+            SetParentObject(nullptr);
         }
         return true;
     }

@@ -6,8 +6,14 @@ namespace KashipanEngine {
 const std::string &SceneEditorContext::GetSceneName() const { return owner_->GetName(); }
 bool SceneEditorContext::AddObject2D(std::unique_ptr<Object2DBase> obj) { return owner_->AddObject2D(std::move(obj)); }
 bool SceneEditorContext::AddObject3D(std::unique_ptr<Object3DBase> obj) { return owner_->AddObject3D(std::move(obj)); }
+bool SceneEditorContext::InsertObject2D(std::unique_ptr<Object2DBase> obj, size_t index) { return owner_->InsertObject2D(std::move(obj), index); }
+bool SceneEditorContext::InsertObject3D(std::unique_ptr<Object3DBase> obj, size_t index) { return owner_->InsertObject3D(std::move(obj), index); }
 bool SceneEditorContext::RemoveObject2D(Object2DBase *obj) { return owner_->RemoveObject2D(obj); }
 bool SceneEditorContext::RemoveObject3D(Object3DBase *obj) { return owner_->RemoveObject3D(obj); }
+bool SceneEditorContext::ReleaseObject2D(Object2DBase *obj) { return owner_->ReleaseObject2D(obj); }
+bool SceneEditorContext::ReleaseObject3D(Object3DBase *obj) { return owner_->ReleaseObject3D(obj); }
+bool SceneEditorContext::MoveObject2D(Object2DBase *obj, size_t newIndex) { return owner_->MoveObject2D(obj, newIndex); }
+bool SceneEditorContext::MoveObject3D(Object3DBase *obj, size_t newIndex) { return owner_->MoveObject3D(obj, newIndex); }
 const std::vector<std::unique_ptr<Object2DBase>> &SceneEditorContext::GetObjects2D() const { return owner_->GetObjects2D(); }
 const std::vector<std::unique_ptr<Object3DBase>> &SceneEditorContext::GetObjects3D() const { return owner_->GetObjects3D(); }
 bool SceneEditorContext::AddSceneComponent(std::unique_ptr<ISceneComponent> comp) { return owner_->AddSceneComponent(std::move(comp)); }

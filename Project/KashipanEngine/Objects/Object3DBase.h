@@ -356,9 +356,9 @@ public:
     }
 
     /// @brief オブジェクトIDの設定
-    void SetObjectId(const UUID128 &id) { objectId_ = id; }
+    void SetObjectID(const UUID128 &id) { objectId_ = id; }
     /// @brief オブジェクトIDの取得
-    const UUID128 &GetObjectId() const { return objectId_; }
+    const UUID128 &GetObjectID() const { return objectId_; }
     /// @brief オブジェクトの保存の可否設定
     void SetSaveEnabled(bool enabled) { isSaveEnabled_ = enabled; }
     /// @brief オブジェクトの保存の可否取得
@@ -544,7 +544,7 @@ private:
     std::optional<std::function<bool(void *instanceMaps, ShaderVariableBinder &, std::uint32_t instanceIndex)>> submitInstanceFunction_;
 
     // オブジェクトID管理用
-    UUID128 objectId_;
+    UUID128 objectId_ = UUID128(true);
     // オブジェクトの保存の可否
     bool isSaveEnabled_ = true;
 };

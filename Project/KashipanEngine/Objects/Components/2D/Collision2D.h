@@ -151,6 +151,6 @@ private:
     Collider::ColliderID colliderId_ = 0;
 };
 
-REGISTER_COMPONENT_OBJECT2D(Collision2D)
+REGISTER_COMPONENT_OBJECT(Collision2D)
 
 } // namespace KashipanEngine

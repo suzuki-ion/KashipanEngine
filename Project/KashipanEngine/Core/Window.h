@@ -26,7 +26,7 @@ class PipelineManager;
 class Renderer;
 class ImGuiManager;
 class Object2DBase;
-class Object3DBase;
+class EmptyObject;
 class ScreenBuffer;
 
 /// @brief ウィンドウの種類

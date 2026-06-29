@@ -38,11 +38,11 @@ void GameScene::Initialize() {
         camCtrl->SetFollowOffset(Vector3(0.0f, 0.0f, -16.0f));
     }
 
-    AddObject3D(CreateEnemyObject(GetSceneContext(), Vector3(0.0f, 6.0f, 0.0f)));
-    AddObject3D(CreateEnemyObject(GetSceneContext(), Vector3(2.0f, 6.0f, 0.0f)));
-    AddObject3D(CreateEnemyObject(GetSceneContext(), Vector3(4.0f, 6.0f, 0.0f)));
-    AddObject3D(CreateGroundObject(GetSceneContext()));
-    AddObject3D(CreatePlayerObject(GetSceneContext()));
+    AddObject(CreateEnemyObject(GetSceneContext(), Vector3(0.0f, 6.0f, 0.0f)));
+    AddObject(CreateEnemyObject(GetSceneContext(), Vector3(2.0f, 6.0f, 0.0f)));
+    AddObject(CreateEnemyObject(GetSceneContext(), Vector3(4.0f, 6.0f, 0.0f)));
+    AddObject(CreateGroundObject(GetSceneContext()));
+    AddObject(CreatePlayerObject(GetSceneContext()));
 
     AddSceneComponent(std::make_unique<SceneChangeIn>());
     AddSceneComponent(std::make_unique<SceneChangeOut>());
@@ -68,7 +68,7 @@ void GameScene::OnUpdate() {
         }
     }
 
-    if (auto *playrer = GetObject3D("Player")) {
+    if (auto *playrer = GetObject("Player")) {
         if (auto *camCtrl = GetSceneComponent<CameraController>()) {
             camCtrl->SetTargetTranslate(playrer->GetComponent3D<Transform3D>()->GetTranslate() + Vector3(0.0f, 0.0f, -16.0f));
         }
@@ -88,13 +88,13 @@ void GameScene::OnUpdate() {
             spawnInfo.spawnPosition = enemy->GetComponent3D<Transform3D>()->GetTranslate();
             spawnInfo.timer = 0.0f;
             enemySpawnInfos.push_back(spawnInfo);
-            RemoveObject3D(enemy);
+            RemoveObject(enemy);
         }
     }
     for (auto it = enemySpawnInfos.begin(); it != enemySpawnInfos.end();) {
         it->timer += GetDeltaTime();
         if (it->timer >= it->spawnInterval) {
-            AddObject3D(CreateEnemyObject(GetSceneContext(), it->spawnPosition));
+            AddObject(CreateEnemyObject(GetSceneContext(), it->spawnPosition));
             it = enemySpawnInfos.erase(it);
         } else {
             ++it;
@@ -125,8 +125,8 @@ void GameScene::OnUpdate() {
         ImGui::Text("\t%s", comp.c_str());
     }
     ImGui::Separator();
-    ImGui::Text("Object3D Components:");
-    for (const auto &comp : GetRegisteredObject3DComponentTypes()) {
+    ImGui::Text("Object Components:");
+    for (const auto &comp : GetRegisteredObjectComponentTypes()) {
         ImGui::Text("\t%s", comp.c_str());
     }
     ImGui::End();

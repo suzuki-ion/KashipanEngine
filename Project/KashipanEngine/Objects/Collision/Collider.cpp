@@ -1,6 +1,6 @@
 #include "Collider.h"
 
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/Collision/CollisionAlgorithms2D.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Objects/Components/3D/RigidBody3D.h"

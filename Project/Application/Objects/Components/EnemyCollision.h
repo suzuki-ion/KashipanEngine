@@ -4,10 +4,10 @@
 
 namespace KashipanEngine {
 
-class EnemyCollision : public IObjectComponent3D {
+class EnemyCollision : public IObjectComponent {
 public:
     EnemyCollision()
-        : IObjectComponent3D("EnemyCollision", 1) {}
+        : IObjectComponent("EnemyCollision", 1) {}
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         return std::make_unique<EnemyCollision>();
@@ -97,6 +97,6 @@ private:
     Vector3 hitNormal_ = Vector3::Zero();
 };
 
-REGISTER_COMPONENT_OBJECT3D(EnemyCollision)
+REGISTER_COMPONENT_OBJECT(EnemyCollision)
 
 } // namespace KashipanEngine

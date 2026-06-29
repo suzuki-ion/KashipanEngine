@@ -183,6 +183,6 @@ private:
     std::uint64_t cachedParentVersion_ = 0;
 };
 
-REGISTER_COMPONENT_OBJECT2D(Transform2D)
+REGISTER_COMPONENT_OBJECT(Transform2D)
 
 } // namespace KashipanEngine

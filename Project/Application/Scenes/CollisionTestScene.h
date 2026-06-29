@@ -14,9 +14,9 @@ protected:
     void OnUpdate() override;
 
 private:
-    void RespawnAreaObject(Object3DBase *obj);
+    void RespawnAreaObject(EmptyObject *obj);
     SceneDefaultVariables *sceneDefaultVariables_ = nullptr;
-    std::vector<Object3DBase *> areaObjects_;
+    std::vector<EmptyObject *> areaObjects_;
 
     Vector3 areaSize_ = Vector3(128.0f, 32.0f, 128.0f);
 };

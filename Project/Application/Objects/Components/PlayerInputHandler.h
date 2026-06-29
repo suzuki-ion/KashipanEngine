@@ -4,10 +4,10 @@
 
 namespace KashipanEngine {
 
-class PlayerInputHandler : public IObjectComponent3D {
+class PlayerInputHandler : public IObjectComponent {
 public:
     PlayerInputHandler()
-        : IObjectComponent3D("PlayerInputHandler", 1) {}
+        : IObjectComponent("PlayerInputHandler", 1) {}
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         return std::make_unique<PlayerInputHandler>();
@@ -64,6 +64,6 @@ private:
     bool isActive_ = true;
 };
 
-REGISTER_COMPONENT_OBJECT3D(PlayerInputHandler)
+REGISTER_COMPONENT_OBJECT(PlayerInputHandler)
 
 } // namespace KashipanEngine

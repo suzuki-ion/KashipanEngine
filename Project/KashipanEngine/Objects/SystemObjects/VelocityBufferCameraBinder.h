@@ -1,10 +1,10 @@
 #pragma once
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/SystemObjects/Camera3D.h"
 
 namespace KashipanEngine {
 
-class VelocityBufferCameraBinder final : public Object3DBase {
+class VelocityBufferCameraBinder final : public EmptyObject {
 public:
     struct VelocityCameraConstants {
         Matrix4x4 viewProjection;

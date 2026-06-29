@@ -3,7 +3,7 @@
 
 namespace KashipanEngine {
 
-std::unique_ptr<Object3DBase> CreateSkyboxObject(SceneContext *context) {
+std::unique_ptr<EmptyObject> CreateSkyboxObject(SceneContext *context) {
     auto *sceneDefaultVariables = context->GetComponent<SceneDefaultVariables>();
     auto *screenBuffer3D = sceneDefaultVariables ? sceneDefaultVariables->GetScreenBuffer3D() : nullptr;
 

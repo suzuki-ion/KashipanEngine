@@ -7,11 +7,11 @@ void SceneObjectInspector::ShowImGui() {
     ImGui::Begin("Scene Object Inspector");
     if (objectHierarchy_) {
         Object2DBase *selectedObject2D = objectHierarchy_->GetSelectedObject2D();
-        Object3DBase *selectedObject3D = objectHierarchy_->GetSelectedObject3D();
+        EmptyObject *selectedObject = objectHierarchy_->GetSelectedObject();
         if (selectedObject2D) {
             ShowObject2DInspector(selectedObject2D);
-        } else if (selectedObject3D) {
-            ShowObject3DInspector(selectedObject3D);
+        } else if (selectedObject) {
+            ShowObjectInspector(selectedObject);
         } else {
             ImGui::Text("No object selected.");
         }
@@ -24,13 +24,6 @@ void SceneObjectInspector::ShowImGui() {
 void SceneObjectInspector::ShowObject2DInspector(Object2DBase *obj) {
     ImGui::Text("Object2D Inspector");
     ImGui::Separator();
-    ImGui::Text("Name: %s", obj->GetName().c_str());
-    ImGui::Text("Save Enable");
-    ImGui::SameLine();
-    bool isSaveEnabled = obj->IsSaveEnabled();
-    if (ImGui::Checkbox("##SaveEnable", &isSaveEnabled)) {
-        obj->SetSaveEnabled(isSaveEnabled);
-    }
     int id = 0;
     IObjectComponent2D *componentToRemove = nullptr; // 削除するコンポーネントを保持する変数
     for (const auto &comp : obj->GetAllComponents2D()) {
@@ -79,18 +72,12 @@ void SceneObjectInspector::ShowObject2DInspector(Object2DBase *obj) {
     }
 }
 
-void SceneObjectInspector::ShowObject3DInspector(Object3DBase *obj) {
-    ImGui::Text("Object3D Inspector");
+void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
+    ImGui::Text("Object Inspector");
     ImGui::Separator();
     ImGui::Text("Name: %s", obj->GetName().c_str());
-    ImGui::Text("Save Enable");
-    ImGui::SameLine();
-    bool isSaveEnabled = obj->IsSaveEnabled();
-    if (ImGui::Checkbox("##SaveEnable", &isSaveEnabled)) {
-        obj->SetSaveEnabled(isSaveEnabled);
-    }
     int id = 0;
-    IObjectComponent3D *componentToRemove = nullptr; // 削除するコンポーネントを保持する変数
+    IObjectComponent *componentToRemove = nullptr; // 削除するコンポーネントを保持する変数
     for (const auto &comp : obj->GetAllComponents3D()) {
         ImGui::PushID(id);
         ImGui::Separator();
@@ -124,10 +111,10 @@ void SceneObjectInspector::ShowObject3DInspector(Object3DBase *obj) {
     }
 
     if (ImGui::BeginPopup("AddComponentPopup3D")) {
-        for (const auto &compType : GetRegisteredObject3DComponentTypes()) {
+        for (const auto &compType : GetRegisteredObjectComponentTypes()) {
             if (ImGui::MenuItem(compType.c_str())) {
                 // コンポーネントを追加する処理
-                auto newComp = CreateObject3DComponentByType(compType);
+                auto newComp = CreateObjectComponentByType(compType);
                 if (newComp) {
                     obj->RegisterComponent(std::move(newComp));
                 }

@@ -25,7 +25,7 @@ class DirectXCommon;
 class GraphicsEngine;
 class PipelineManager;
 class Object2DBase;
-class Object3DBase;
+class EmptyObject;
 class ScreenBuffer;
 class ShadowMapBuffer;
 class IPostEffectComponent;
@@ -57,7 +57,7 @@ struct RenderCommand final {
 private:
     friend class Renderer;
     friend class Object2DBase;
-    friend class Object3DBase;
+    friend class EmptyObject;
     friend class IPostEffectComponent;
     RenderCommand() = default;
     UINT vertexCount = 0;           //< 頂点数
@@ -90,12 +90,12 @@ public:
 private:
     friend class Renderer;
     friend class Object2DBase;
-    friend class Object3DBase;
+    friend class EmptyObject;
     friend class ScreenBuffer;
     friend class ShadowMapBuffer;
 
     RenderPass(Passkey<Object2DBase>) : dimension(RenderDimension::D2) {}
-    RenderPass(Passkey<Object3DBase>) : dimension(RenderDimension::D3) {}
+    RenderPass(Passkey<EmptyObject>) : dimension(RenderDimension::D3) {}
     RenderPass(Passkey<ScreenBuffer>, RenderDimension dim) : dimension(dim) {}
 
     Window *window = nullptr;          //< 描画先ウィンドウ（Window 描画の場合）

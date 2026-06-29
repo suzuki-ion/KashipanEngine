@@ -1,10 +1,10 @@
 #pragma once
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
-class Sphere : public Object3DBase {
+class Sphere : public EmptyObject {
 public:
     /// @brief コンストラクタ
     /// @param latSegments 緯度分割数

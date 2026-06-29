@@ -29,7 +29,7 @@ public:
 } // namespace
 
 ShadowMapBinder::ShadowMapBinder()
-    : Object3DBase("ShadowMapBinder") {
+    : EmptyObject("ShadowMapBinder") {
     SetRenderType(RenderType::Standard);
     SetConstantBufferRequirements({
         { shadowMapConstantsNameKey_, sizeof(ShadowMapConstants) },

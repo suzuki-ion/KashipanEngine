@@ -4,7 +4,7 @@
 namespace KashipanEngine {
 
 DirectionalLight::DirectionalLight()
-    : Object3DBase("DirectionalLight") {
+    : EmptyObject("DirectionalLight") {
     SetRenderType(RenderType::Standard);
     UpdateLightBufferCPU();
 

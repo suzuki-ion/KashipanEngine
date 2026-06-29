@@ -1,5 +1,5 @@
 #pragma once
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/VertexData3D.h"
 #include "Assets/ModelManager.h"
 #include <assimp/Importer.hpp>
@@ -10,7 +10,7 @@ namespace KashipanEngine {
 
 class GameEngine;
 
-class Model : public Object3DBase {
+class Model : public EmptyObject {
     static inline ModelManager *sModelManager;
 public:
     static void SetModelManager(Passkey<GameEngine>, ModelManager* modelManager) { sModelManager = modelManager; }

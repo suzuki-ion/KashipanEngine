@@ -511,7 +511,7 @@ bool ModelAnimator::ResolveActiveModels(const std::string &presetName, std::unor
     if (presetIt == presets_.end()) return false;
 
     for (const auto &entry : presetIt->second) {
-        auto *obj = ctx->GetObject3D(entry.objectName);
+        auto *obj = ctx->GetObject(entry.objectName);
         if (!obj) continue;
         auto *model = dynamic_cast<Model *>(obj);
         if (!model) continue;

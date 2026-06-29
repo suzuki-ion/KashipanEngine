@@ -111,7 +111,7 @@ void DebugCameraMovement::HandleInput() {
 void DebugCameraMovement::UpdateCamera() {
     auto *ownerContext = GetOwnerContext();
     if (!ownerContext) return;
-    Camera3D *camera = static_cast<Camera3D *>(ownerContext->GetObject3D(cameraName_));
+    Camera3D *camera = static_cast<Camera3D *>(ownerContext->GetObject(cameraName_));
     if (!camera) return;
     Vector3 pos = spherical_.ToVector3();
     if (auto *tr = camera->GetComponent3D<Transform3D>()) {

@@ -8,7 +8,7 @@
 
 #include "Font/FontStructs.h"
 #include "Math/Vector3.h"
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/Plane3D.h"
 #include "Font/TextAlign.h"
 
@@ -17,7 +17,7 @@ namespace KashipanEngine {
 class ScreenBuffer;
 class Window;
 
-class Text3D : public Object3DBase {
+class Text3D : public EmptyObject {
 public:
     struct LineInfo {
         float width = 0.0f;

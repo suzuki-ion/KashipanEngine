@@ -3,7 +3,7 @@
 
 namespace KashipanEngine {
 
-Box::Box() : Object3DBase("Box", sizeof(Vertex), sizeof(Index), 24, 36) {
+Box::Box() : EmptyObject("Box", sizeof(Vertex), sizeof(Index), 24, 36) {
     SetRenderType(RenderType::Instancing);
     LogScope scope;
 

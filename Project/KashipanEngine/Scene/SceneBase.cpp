@@ -47,16 +47,12 @@ SceneBase::SceneBase(const std::string &sceneName)
 }
 
 SceneBase::~SceneBase() {
-    ClearObjects2D();
-    ClearObjects3D();
+    ClearSceneObjects();
     ClearSceneComponents();
 }
 
 void SceneBase::Update() {
-    for (auto &o : objects2D_) {
-        if (o) o->Update();
-    }
-    for (auto &o : objects3D_) {
+    for (auto &o : objects_) {
         if (o) o->Update();
     }
 
@@ -95,7 +91,7 @@ void SceneBase::RebuildObject2DIndices() {
     }
 }
 
-void SceneBase::RebuildObject3DIndices() {
+void SceneBase::RebuildObjectIndices() {
     objects3DIndexByUUID_.clear();
     objects3DIndexByPointer_.clear();
     objects3DIndexByName_.clear();
@@ -120,7 +116,7 @@ bool SceneBase::AddObject2D(std::unique_ptr<Object2DBase> obj) {
     return true;
 }
 
-bool SceneBase::AddObject3D(std::unique_ptr<Object3DBase> obj) {
+bool SceneBase::AddObject(std::unique_ptr<EmptyObject> obj) {
     if (!obj) return false;
     obj->SetSceneContext(Passkey<SceneBase>(), sceneContext_.get());
     objects3D_.push_back(std::move(obj));
@@ -145,13 +141,13 @@ bool SceneBase::InsertObject2D(std::unique_ptr<Object2DBase> obj, size_t index) 
     return true;
 }
 
-bool SceneBase::InsertObject3D(std::unique_ptr<Object3DBase> obj, size_t index) {
+bool SceneBase::InsertObject(std::unique_ptr<EmptyObject> obj, size_t index) {
     if (!obj) return false;
-    if (index > objects3D_.size()) AddObject3D(std::move(obj));
+    if (index > objects3D_.size()) AddObject(std::move(obj));
     else {
         obj->SetSceneContext(Passkey<SceneBase>(), sceneContext_.get());
         objects3D_.insert(objects3D_.begin() + static_cast<std::ptrdiff_t>(index), std::move(obj));
-        RebuildObject3DIndices();
+        RebuildObjectIndices();
     }
     return true;
 }
@@ -165,12 +161,12 @@ bool SceneBase::RemoveObject2D(Object2DBase *obj) {
     return true;
 }
 
-bool SceneBase::RemoveObject3D(Object3DBase *obj) {
+bool SceneBase::RemoveObject(EmptyObject *obj) {
     if (!obj) return false;
     auto it = objects3DIndexByPointer_.find(obj);
     if (it == objects3DIndexByPointer_.end()) return false;
     objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(it->second));
-    RebuildObject3DIndices();
+    RebuildObjectIndices();
     return true;
 }
 
@@ -184,13 +180,13 @@ bool SceneBase::ReleaseObject2D(Object2DBase *obj) {
     return true;
 }
 
-bool SceneBase::ReleaseObject3D(Object3DBase *obj) {
+bool SceneBase::ReleaseObject(EmptyObject *obj) {
     if (!obj) return false;
     auto it = objects3DIndexByPointer_.find(obj);
     if (it == objects3DIndexByPointer_.end()) return false;
     objects3D_[it->second].release();
     objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(it->second));
-    RebuildObject3DIndices();
+    RebuildObjectIndices();
     return true;
 }
 
@@ -209,7 +205,7 @@ bool SceneBase::MoveObject2D(Object2DBase *obj, size_t newIndex) {
     return true;
 }
 
-bool SceneBase::MoveObject3D(Object3DBase *obj, size_t newIndex) {
+bool SceneBase::MoveObject(EmptyObject *obj, size_t newIndex) {
     if (!obj) return false;
     if (newIndex >= objects3D_.size()) newIndex = objects3D_.size() - 1;
     auto it = objects3DIndexByPointer_.find(obj);
@@ -220,7 +216,7 @@ bool SceneBase::MoveObject3D(Object3DBase *obj, size_t newIndex) {
     } else {
         objects3D_.erase(objects3D_.begin() + static_cast<std::ptrdiff_t>(it->second));
     }
-    RebuildObject3DIndices();
+    RebuildObjectIndices();
     return true;
 }
 
@@ -235,6 +231,43 @@ void SceneBase::ClearObjects3D() {
     objects3DIndexByUUID_.clear();
     objects3DIndexByPointer_.clear();
     objects3DIndexByName_.clear();
+}
+
+std::vector<EmptyObject *> SceneBase::GetSceneObjects(const std::string &objectName) const {
+    std::vector<EmptyObject *> objects;
+    auto it = objectsIndexByName_.find(objectName);
+    if (it == objectsIndexByName_.end()) return objects;
+    for (const size_t idx : it->second) {
+        if (idx < objects_.size() && objects_[idx]) {
+            objects.push_back(objects_[idx].get());
+        }
+    }
+    return objects;
+}
+
+EmptyObject *SceneBase::GetSceneObject(const std::string &objectName) const {
+    auto it = objectsIndexByName_.find(objectName);
+    if (it == objectsIndexByName_.end()) return nullptr;
+    for (const size_t idx : it->second) {
+        if (idx < objects_.size() && objects_[idx]) {
+            return objects_[idx].get();
+        }
+    }
+    return nullptr;
+}
+
+EmptyObject *SceneBase::GetSceneObject(EmptyObject *obj) const {
+    if (!obj) return nullptr;
+    auto it = objectsIndexByPointer_.find(obj);
+    if (it == objectsIndexByPointer_.end()) return nullptr;
+    return objects_[it->second].get();
+}
+
+EmptyObject *SceneBase::GetSceneObject(const UUID128 &uuid) const {
+    if (!uuid.IsValid()) return nullptr;
+    auto it = objectsIndexByUUID_.find(uuid);
+    if (it == objectsIndexByUUID_.end()) return nullptr;
+    return objects_[it->second].get();
 }
 
 void SceneBase::ChangeToNextScene() {

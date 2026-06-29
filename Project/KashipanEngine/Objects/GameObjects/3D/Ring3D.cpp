@@ -7,7 +7,7 @@
 namespace KashipanEngine {
 
 Ring3D::Ring3D(size_t segmentCount, float innerRadius, float outerRadius, float startAngle, float endAngle, UvMode uvMode)
-    : Object3DBase("Ring3D", sizeof(Vertex), sizeof(Index), (segmentCount + 1) * 2, segmentCount * 6),
+    : EmptyObject("Ring3D", sizeof(Vertex), sizeof(Index), (segmentCount + 1) * 2, segmentCount * 6),
       segmentCount_(segmentCount),
       innerRadius_(innerRadius),
       outerRadius_(outerRadius),

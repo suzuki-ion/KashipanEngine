@@ -14,7 +14,7 @@
 namespace KashipanEngine {
 
 Text3D::Text3D(uint32_t textCount)
-    : Object3DBase("Text3D") {
+    : EmptyObject("Text3D") {
     planes_.reserve(textCount);
     textCodePoints_.resize(textCount, -1);
     basePositions_.resize(textCount, Vector3{ 0.0f, 0.0f, 0.0f });

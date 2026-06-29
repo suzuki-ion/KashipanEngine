@@ -5,7 +5,7 @@
 namespace KashipanEngine {
 
 Camera3D::Camera3D()
-    : Object3DBase("Camera3D") {
+    : EmptyObject("Camera3D") {
     SetRenderType(RenderType::Standard);
     // GPU constant buffer is now owned by Renderer
 

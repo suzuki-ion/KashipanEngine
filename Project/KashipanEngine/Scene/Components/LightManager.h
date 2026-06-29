@@ -30,7 +30,7 @@ public:
 
         auto light = std::make_unique<PointLight>();
         auto *lightPtr = light.get();
-        if (!context->AddObject3D(std::move(light))) return nullptr;
+        if (!context->AddObject(std::move(light))) return nullptr;
 
         if (lightCountBinder_) {
             lightCountBinder_->AddPointLight(lightPtr);
@@ -48,7 +48,7 @@ public:
 
         auto light = std::make_unique<SpotLight>();
         auto *lightPtr = light.get();
-        if (!context->AddObject3D(std::move(light))) return nullptr;
+        if (!context->AddObject(std::move(light))) return nullptr;
 
         if (lightCountBinder_) {
             lightCountBinder_->AddSpotLight(lightPtr);
@@ -68,7 +68,7 @@ public:
 
         auto *context = GetOwnerContext();
         if (!context) return false;
-        return context->RemoveObject3D(light);
+        return context->RemoveObject(light);
     }
 
     bool RemoveSpotLight(SpotLight *light) {
@@ -83,7 +83,7 @@ public:
 
         auto *context = GetOwnerContext();
         if (!context) return false;
-        return context->RemoveObject3D(light);
+        return context->RemoveObject(light);
     }
 
     void Initialize() override {
@@ -99,7 +99,7 @@ private:
         auto *context = GetOwnerContext();
         if (!context) return nullptr;
 
-        if (auto *obj = context->GetObject3D("LightCountBinder")) {
+        if (auto *obj = context->GetObject("LightCountBinder")) {
             return dynamic_cast<LightCountBinder *>(obj);
         }
 

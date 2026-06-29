@@ -1,10 +1,10 @@
 #pragma once
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/VertexDataSkybox.h"
 
 namespace KashipanEngine {
 
-class Skybox : public Object3DBase {
+class Skybox : public EmptyObject {
 public:
     Skybox();
     ~Skybox() override = default;

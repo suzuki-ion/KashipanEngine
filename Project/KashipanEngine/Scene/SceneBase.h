@@ -12,8 +12,7 @@
 #ifdef USE_IMGUI
 #include "Scene/SceneEditor.h"
 #endif
-#include "Objects/Object2DBase.h"
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ISceneComponent.h"
 #include "Utilities/Passkeys.h"
@@ -86,13 +85,22 @@ protected:
 
     virtual void OnUpdate() {}
 
+    /// @brief シーン変数を取得
+    /// @tparam T 変数の型
+    /// @param key 変数のキー
+    /// @param out 変数の値を格納する参照
+    /// @return 変数が存在する場合は true、存在しない場合は false を返す
     template<typename T>
     bool TryGetSceneVariable(const std::string &key, T &out) const {
         const auto &vars = GetSceneVariables();
         if (!vars.contains(key)) return false;
         return vars.at(key).TryGetValue(out);
     }
-
+    /// @brief シーン変数を取得（存在しない場合はデフォルト値を返す）
+    /// @tparam T 変数の型
+    /// @param key 変数のキー
+    /// @param defaultValue デフォルト値
+    /// @return 変数の値
     template<typename T>
     T GetSceneVariableOr(const std::string &key, const T &defaultValue) const {
         T v = defaultValue;
@@ -100,161 +108,54 @@ protected:
         return v;
     }
 
-    /// @brief 2D オブジェクトを追加
-    /// @param obj 2D オブジェクトのユニークポインタ
-    /// @return 追加に成功した場合は true、失敗した場合は false を返す
-    bool AddObject2D(std::unique_ptr<Object2DBase> obj);
-    /// @brief 3D オブジェクトを追加
-    /// @param obj 3D オブジェクトのユニークポインタ
-    /// @return 追加に成功した場合は true、失敗した場合は false を返す
-    bool AddObject3D(std::unique_ptr<Object3DBase> obj);
-
-    /// @brief 2D オブジェクトを指定したインデックスに挿入
-    /// @param obj 2D オブジェクトのユニークポインタ
-    /// @param index 挿入するインデックス
-    /// @return 挿入に成功した場合は true、失敗した場合は false を返す
-    bool InsertObject2D(std::unique_ptr<Object2DBase> obj, size_t index);
-    /// @brief 3D オブジェクトを指定したインデックスに挿入
-    /// @param obj 3D オブジェクトのユニークポインタ
-    /// @param index 挿入するインデックス
-    /// @return 挿入に成功した場合は true、失敗した場合は false を返す
-    bool InsertObject3D(std::unique_ptr<Object3DBase> obj, size_t index);
-
-    /// @brief 2D オブジェクトを削除
-    /// @param obj 削除する 2D オブジェクトのポインタ
+    /// @brief 空のオブジェクトを生成
+    /// @param name 空のオブジェクト名
+    /// @param index 生成位置のインデックス（省略時は末尾に追加）
+    /// @return 生成された空のオブジェクトのポインタ
+    EmptyObject *CreateEmptyObject(const std::string &name = "", size_t index = MAXSIZE_T);
+    /// @brief オブジェクトを削除
+    /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
-    bool RemoveObject2D(Object2DBase *obj);
-    /// @brief 3D オブジェクトを削除
-    /// @param obj 削除する 3D オブジェクトのポインタ
-    /// @return 削除に成功した場合は true、失敗した場合は false を返す
-    bool RemoveObject3D(Object3DBase *obj);
-
-    /// @brief 2D オブジェクトを解放（所有権の放棄をし、シーンから削除。インスタンスの解放は行わない）
-    /// @param obj 解放する 2D オブジェクトのポインタ
-    /// @return 解放に成功した場合は true、失敗した場合は false を返す
-    bool ReleaseObject2D(Object2DBase *obj);
+    bool DeleteObject(EmptyObject *obj);
     /// @brief 3D オブジェクトを解放（所有権の放棄をし、シーンから削除。インスタンスの解放は行わない）
     /// @param obj 解放する 3D オブジェクトのポインタ
     /// @return 解放に成功した場合は true、失敗した場合は false を返す
-    bool ReleaseObject3D(Object3DBase *obj);
-
-    /// @brief 2D オブジェクトを移動
-    /// @param obj 移動する 2D オブジェクトのポインタ
+    bool ReleaseObject(EmptyObject *obj);
+    /// @brief オブジェクトを移動
+    /// @param 移動するオブジェクトのポインタ
     /// @param newIndex 移動先のインデックス
     /// @return 移動に成功した場合は true、失敗した場合は false を返す
-    bool MoveObject2D(Object2DBase *obj, size_t newIndex);
-    /// @brief 3D オブジェクトを移動
-    /// @param obj 移動する 3D オブジェクトのポインタ
-    /// @param newIndex 移動先のインデックス
-    /// @return 移動に成功した場合は true、失敗した場合は false を返す
-    bool MoveObject3D(Object3DBase *obj, size_t newIndex);
+    bool MoveObject(EmptyObject *obj, size_t newIndex);
 
-    const std::vector<std::unique_ptr<Object2DBase>> &GetObjects2D() const { return objects2D_; }
-    const std::vector<std::unique_ptr<Object3DBase>> &GetObjects3D() const { return objects3D_; }
-
-    /// @brief 名前から一致する 2D オブジェクトを取得
+    /// @brief シーン内のオブジェクト一覧を取得
+    /// @return オブジェクトのリスト
+    const std::vector<std::unique_ptr<EmptyObject>> &GetSceneObjects() const { return objects_; }
+    /// @brief 名前から一致するオブジェクトを取得
     /// @param objectName オブジェクト名
     /// @return 一致するオブジェクトのポインタのリスト（存在しない場合は空のリスト）
-    std::vector<Object2DBase *> GetObjects2D(const std::string &objectName) const {
-        std::vector<Object2DBase *> objects;
-        auto range = objects2DIndexByName_.equal_range(objectName);
-        for (auto it = range.first; it != range.second; ++it) {
-            const size_t idx = it->second;
-            if (idx < objects2D_.size() && objects2D_[idx]) {
-                objects.push_back(objects2D_[idx].get());
-            }
-        }
-        return objects;
-    }
-
-    /// @brief 名前から一致する 3D オブジェクトを取得
-    /// @param objectName オブジェクト名
-    /// @return 一致するオブジェクトのポインタのリスト（存在しない場合は空のリスト）
-    std::vector<Object3DBase *> GetObjects3D(const std::string &objectName) const {
-        std::vector<Object3DBase *> objects;
-        auto range = objects3DIndexByName_.equal_range(objectName);
-        for (auto it = range.first; it != range.second; ++it) {
-            const size_t idx = it->second;
-            if (idx < objects3D_.size() && objects3D_[idx]) {
-                objects.push_back(objects3D_[idx].get());
-            }
-        }
-        return objects;
-    }
-
-    /// @brief 名前から一致する最初の 2D オブジェクトを取得
+    std::vector<EmptyObject *> GetSceneObjects(const std::string &objectName) const;
+    /// @brief 名前から一致する最初のオブジェクトを取得
     /// @param objectName オブジェクト名
     /// @return 一致するオブジェクトのポインタ（存在しない場合は nullptr）
-    Object2DBase *GetObject2D(const std::string &objectName) const {
-        auto range = objects2DIndexByName_.equal_range(objectName);
-        for (auto it = range.first; it != range.second; ++it) {
-            const size_t idx = it->second;
-            if (idx < objects2D_.size() && objects2D_[idx]) {
-                return objects2D_[idx].get();
-            }
-        }
-        return nullptr;
-    }
-
-    /// @brief 名前から一致する最初の 3D オブジェクトを取得
-    /// @param objectName オブジェクト名
-    /// @return 一致するオブジェクトのポインタ（存在しない場合は nullptr）
-    Object3DBase *GetObject3D(const std::string &objectName) const {
-        auto range = objects3DIndexByName_.equal_range(objectName);
-        for (auto it = range.first; it != range.second; ++it) {
-            const size_t idx = it->second;
-            if (idx < objects3D_.size() && objects3D_[idx]) {
-                return objects3D_[idx].get();
-            }
-        }
-        return nullptr;
-    }
-
-    /// @brief ポインタから一致する 2D オブジェクトを取得
+    EmptyObject *GetSceneObject(const std::string &objectName) const;
+    /// @brief ポインタから一致するオブジェクトを取得
     /// @param obj オブジェクトのポインタ
     /// @return オブジェクトのポインタ（存在しない場合は nullptr）
-    Object2DBase *GetObject2D(Object2DBase *obj) const {
-        if (!obj) return nullptr;
-        auto it = objects2DIndexByPointer_.find(obj);
-        if (it == objects2DIndexByPointer_.end()) return nullptr;
-        return objects2D_[it->second].get();
-    }
-
-    /// @brief ポインタから一致する 3D オブジェクトを取得
-    /// @param obj オブジェクトのポインタ
-    /// @return オブジェクトのポインタ（存在しない場合は nullptr）
-    Object3DBase *GetObject3D(Object3DBase *obj) const {
-        if (!obj) return nullptr;
-        auto it = objects3DIndexByPointer_.find(obj);
-        if (it == objects3DIndexByPointer_.end()) return nullptr;
-        return objects3D_[it->second].get();
-    }
-
-    /// @brief UUIDから一致する 2D オブジェクトを取得
+    EmptyObject *GetSceneObject(EmptyObject *obj) const;
+    /// @brief UUIDから一致するオブジェクトを取得
     /// @param uuid オブジェクトのUUID
     /// @return オブジェクトのポインタ（存在しない場合は nullptr）
-    Object2DBase *GetObject2D(const UUID128 &uuid) const {
-        if (!uuid.IsValid()) return nullptr;
-        auto it = objects2DIndexByUUID_.find(uuid);
-        if (it == objects2DIndexByUUID_.end()) return nullptr;
-        return objects2D_[it->second].get();
-    }
+    EmptyObject *GetSceneObject(const UUID128 &uuid) const;
 
-    /// @brief UUIDから一致する 3D オブジェクトを取得
-    /// @param uuid オブジェクトのUUID
-    /// @return オブジェクトのポインタ（存在しない場合は nullptr）
-    Object3DBase *GetObject3D(const UUID128 &uuid) const {
-        if (!uuid.IsValid()) return nullptr;
-        auto it = objects3DIndexByUUID_.find(uuid);
-        if (it == objects3DIndexByUUID_.end()) return nullptr;
-        return objects3D_[it->second].get();
-    }
+    /// @brief シーン内のオブジェクトをすべて削除
+    void ClearSceneObjects();
 
-    void ClearObjects2D();
-    void ClearObjects3D();
-
+    /// @brief 次のシーン名を設定
+    /// @param nextSceneName 次のシーン名
     void SetNextSceneName(const std::string &nextSceneName) { nextSceneName_ = nextSceneName; }
+    /// @brief 次のシーンに切り替え
     void ChangeToNextScene();
+    /// @brief 次のシーン名をクリア
     void ClearNextSceneName() { nextSceneName_.clear(); }
 
     bool AddSceneComponent(std::unique_ptr<ISceneComponent> comp);
@@ -330,23 +231,17 @@ private:
     static inline Input *sInput = nullptr;
     static inline InputCommand *sInputCommand = nullptr;
 
-    void RebuildObject2DIndices();
-    void RebuildObject3DIndices();
+    void RebuildObjectIndexTables();
 
     std::string name_;
 
-    std::vector<std::unique_ptr<Object2DBase>> objects2D_;
-    std::vector<std::unique_ptr<Object3DBase>> objects3D_;
-    std::unordered_map<UUID128, size_t> objects2DIndexByUUID_;
-    std::unordered_map<UUID128, size_t> objects3DIndexByUUID_;
-    std::unordered_map<Object2DBase *, size_t> objects2DIndexByPointer_;
-    std::unordered_map<Object3DBase *, size_t> objects3DIndexByPointer_;
-    std::unordered_multimap<std::string, size_t> objects2DIndexByName_;
-    std::unordered_multimap<std::string, size_t> objects3DIndexByName_;
+    std::vector<std::unique_ptr<EmptyObject>> objects_;
+    std::unordered_map<UUID128, size_t> objectsIndexByUUID_;
+    std::unordered_map<EmptyObject *, size_t> objectsIndexByPointer_;
+    std::unordered_map<std::string, std::vector<size_t>> objectsIndexByName_;
 
     std::vector<std::unique_ptr<ISceneComponent>> sceneComponents_;
-    std::unordered_multimap<std::string, size_t> sceneComponentsIndexByName_;
-    std::unordered_multimap<std::type_index, size_t> sceneComponentsIndexByType_;
+    std::unordered_map<size_t, std::vector<size_t>> sceneComponentsIndexByType_;
 
     std::unique_ptr<SceneContext> sceneContext_;
 #ifdef USE_IMGUI

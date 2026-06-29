@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
-class Cylinder3D : public Object3DBase {
+class Cylinder3D : public EmptyObject {
 public:
     enum class Caps {
         None = 0,

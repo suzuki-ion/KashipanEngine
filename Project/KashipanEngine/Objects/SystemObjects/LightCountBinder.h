@@ -3,13 +3,13 @@
 #include <cstdint>
 #include <vector>
 
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/SystemObjects/PointLight.h"
 #include "Objects/SystemObjects/SpotLight.h"
 
 namespace KashipanEngine {
 
-class LightCountBinder final : public Object3DBase {
+class LightCountBinder final : public EmptyObject {
 public:
     struct LightCounts {
         std::uint32_t pointLightCount = 0;

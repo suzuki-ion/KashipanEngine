@@ -1,14 +1,14 @@
 #pragma once
 #include <cstdint>
 #include "Assets/SamplerManager.h"
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/SystemObjects/Camera3D.h"
 
 namespace KashipanEngine {
 
 class ShadowMapBuffer;
 
-class ShadowMapBinder final : public Object3DBase {
+class ShadowMapBinder final : public EmptyObject {
 public:
     struct ShadowMapConstants {
         Matrix4x4 lightViewProjectionMatrix;

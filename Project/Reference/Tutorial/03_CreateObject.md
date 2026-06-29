@@ -2,7 +2,7 @@
 
 KashipanEngine のゲームオブジェクトは、
 - 2D：`Object2DBase` 派生
-- 3D：`Object3DBase` 派生
+- 3D：`EmptyObject` 派生
 
 または、エンジン標準のプリミティブ/既定オブジェクト（`Sprite`, `Box`, `Model` など）を使って作成します。
 
@@ -40,7 +40,7 @@ if (auto* tr = obj->GetComponent3D<KashipanEngine::Transform3D>()) {
 
 ## 3.3 シーンに追加する
 
-`SceneBase` 派生クラスの中で `AddObject2D` / `AddObject3D` を使ってシーンに所有させます。
+`SceneBase` 派生クラスの中で `AddObject2D` / `AddObject` を使ってシーンに所有させます。
 
 ```cpp
 void MyScene::Initialize() {

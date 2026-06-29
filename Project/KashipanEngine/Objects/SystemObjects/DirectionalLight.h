@@ -1,13 +1,13 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 
 namespace KashipanEngine {
 
-class DirectionalLight final : public Object3DBase {
+class DirectionalLight final : public EmptyObject {
 public:
     DirectionalLight();
     ~DirectionalLight() override = default;

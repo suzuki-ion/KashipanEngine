@@ -90,8 +90,8 @@ void TestScene::Initialize() {
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
         }
 
-        box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(box));
+        box->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+        AddObject(std::move(box));
     }
 
     if (screenBuffer3D) {
@@ -102,8 +102,8 @@ void TestScene::Initialize() {
             transform->SetTranslate(Vector3(-2.0f, 0.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
         }
-        animatedCube->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(animatedCube));
+        animatedCube->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+        AddObject(std::move(animatedCube));
 
         auto *keyframeAnimator = GetSceneComponent<KeyframeAnimator>();
         if (keyframeAnimator) {
@@ -142,8 +142,8 @@ void TestScene::Initialize() {
                 return defaultTarget;
                 });
         }
-        ring->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(ring));
+        ring->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+        AddObject(std::move(ring));
     }
 
     if (screenBuffer3D) {
@@ -157,8 +157,8 @@ void TestScene::Initialize() {
             transform->SetTranslate(Vector3(0.0f, 2.0f, 0.0f));
             transform->SetScale(Vector3(1.0f, 1.0f, 1.0f));
         }
-        cylinder->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(cylinder));
+        cylinder->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+        AddObject(std::move(cylinder));
     }
 
     if (screenBuffer2D) {
@@ -198,8 +198,8 @@ void TestScene::Initialize() {
         if (auto *transform = text3D->GetComponent3D<Transform3D>()) {
             transform->SetTranslate(Vector3(0.0f, -2.0f, 0.0f));
         }
-        text3D->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-        AddObject3D(std::move(text3D));
+        text3D->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+        AddObject(std::move(text3D));
     }
 
     if (screenBuffer3D) {
@@ -216,7 +216,7 @@ void TestScene::Initialize() {
         }
 
         skybox->AttachToRenderer(screenBuffer3D, "Skybox.Solid.BlendNormal");
-        AddObject3D(std::move(skybox));
+        AddObject(std::move(skybox));
     }
 }
 

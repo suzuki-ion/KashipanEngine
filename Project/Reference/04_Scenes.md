@@ -31,8 +31,8 @@
   - `virtual void OnUpdate()`
 - オブジェクト管理
   - `bool AddObject2D(std::unique_ptr<Object2DBase> obj)`
-  - `bool AddObject3D(std::unique_ptr<Object3DBase> obj)`
-  - `bool RemoveObject2D(Object2DBase* obj)` / `bool RemoveObject3D(Object3DBase* obj)`
+  - `bool AddObject(std::unique_ptr<EmptyObject> obj)`
+  - `bool RemoveObject2D(Object2DBase* obj)` / `bool RemoveObject(EmptyObject* obj)`
   - `void ClearObjects2D()` / `void ClearObjects3D()`
 - シーンコンポーネント
   - `bool AddSceneComponent(std::unique_ptr<ISceneComponent> comp)`

@@ -4,7 +4,7 @@
 namespace KashipanEngine {
 
 SpotLight::SpotLight()
-    : Object3DBase("SpotLight") {
+    : EmptyObject("SpotLight") {
     SetRenderType(RenderType::Instancing);
     UpdateLightBufferCPU();
 

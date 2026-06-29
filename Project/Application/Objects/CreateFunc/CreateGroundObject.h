@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-std::unique_ptr<Object3DBase> CreateGroundObject(SceneContext *context) {
+std::unique_ptr<EmptyObject> CreateGroundObject(SceneContext *context) {
     auto *sceneDefaultVariables = context->GetComponent<SceneDefaultVariables>();
     auto *screenBuffer3D = sceneDefaultVariables ? sceneDefaultVariables->GetScreenBuffer3D() : nullptr;
 
@@ -23,7 +23,7 @@ std::unique_ptr<Object3DBase> CreateGroundObject(SceneContext *context) {
         tr->SetScale(Vector3(256.0f, 1.0f, 1.0f));
         tr->SetRotate(Vector3(0.0f, 0.0f, ToRadians(30.0f)));
     }
-    ground->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+    ground->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
 
     return std::move(ground);
 }

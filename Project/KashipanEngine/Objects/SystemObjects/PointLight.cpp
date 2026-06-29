@@ -5,7 +5,7 @@
 namespace KashipanEngine {
 
 PointLight::PointLight()
-    : Object3DBase("PointLight") {
+    : EmptyObject("PointLight") {
     SetRenderType(RenderType::Instancing);
     UpdateLightBufferCPU();
 

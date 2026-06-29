@@ -167,7 +167,7 @@ bool KeyframeAnimator::PlayFromAnimationHandle(uint32_t handle, const std::strin
         transform2D = obj2D->GetComponent2D<Transform2D>();
     }
     if (!transform2D) {
-        if (auto *obj3D = ctx->GetObject3D(objectName)) {
+        if (auto *obj3D = ctx->GetObject(objectName)) {
             transform3D = obj3D->GetComponent3D<Transform3D>();
         }
     }

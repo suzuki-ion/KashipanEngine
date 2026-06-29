@@ -7,7 +7,7 @@
 namespace KashipanEngine {
 
 Sphere::Sphere(size_t latSegments, size_t lonSegments)
-    : Object3DBase("Sphere", sizeof(Vertex), sizeof(Index), latSegments * lonSegments * 6, latSegments * lonSegments * 6) {
+    : EmptyObject("Sphere", sizeof(Vertex), sizeof(Index), latSegments * lonSegments * 6, latSegments * lonSegments * 6) {
     SetRenderType(RenderType::Instancing);
     LogScope scope;
 

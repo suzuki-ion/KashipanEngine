@@ -7,7 +7,7 @@
 
 #include "Scene/Components/SceneComponentHeader.h"
 #include "Graphics/ScreenBuffer.h"
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/Object2DBase.h"
 #include "Objects/Components/3D/Transform3D.h"
 #include "Objects/Components/3D/Material3D.h"
@@ -49,7 +49,7 @@ public:
 
     struct ParticleGroupConfig {
         std::string name = "ParticleGroup";
-        std::string pipelineName = "Object3D.Solid.BlendNormal";
+        std::string pipelineName = "Object.Solid.BlendNormal";
         std::string textureName = "white1x1.png";
         std::string target = "3D";
         ParticleShape2D shape2D = ParticleShape2D::Sprite;
@@ -111,7 +111,7 @@ public:
     bool Spawn(const std::string& groupName, std::optional<Vector3> center = std::nullopt);
     bool SetEmitCenter(const std::string& groupName, const Vector3& center, bool respawnExisting = false);
     bool SetEmitting(const std::string& groupName, bool isEmitting);
-    bool SetParentObject(const std::string& groupName, Object3DBase* parentObject);
+    bool SetParentObject(const std::string& groupName, EmptyObject* parentObject);
 
     bool LoadFromJsonFile(const std::string& filepath);
     bool SaveToJsonFile(const std::string& filepath) const;
@@ -128,7 +128,7 @@ private:
 
     struct ParticleInstance {
         ParticleKind kind = ParticleKind::D3D;
-        Object3DBase* object3D = nullptr;
+        EmptyObject* object3D = nullptr;
         Object2DBase* object2D = nullptr;
         Vector3 velocity{ 0.0f, 1.0f, 0.0f };
         float elapsed = 0.0f;
@@ -144,7 +144,7 @@ private:
         float spawnTimer = 0.0f;
         bool isEmitting = false;
         Vector3 emitCenter{ 0.0f, 0.0f, 0.0f };
-        Object3DBase* parentObject = nullptr;
+        EmptyObject* parentObject = nullptr;
     };
 
     static std::uint64_t MakeRandomBatchKey();
@@ -159,7 +159,7 @@ private:
     void CreateParticleInstance(ParticleGroup& group);
     Vector3 MakeSpawnPosition(const ParticleGroup& group) const;
     std::unique_ptr<Object2DBase> CreateParticleObject2D(const ParticleGroup& group, std::size_t index) const;
-    std::unique_ptr<Object3DBase> CreateParticleObject3D(const ParticleGroup& group, std::size_t index) const;
+    std::unique_ptr<EmptyObject> CreateParticleObject(const ParticleGroup& group, std::size_t index) const;
 
     ScreenBuffer* screenBuffer2D_ = nullptr;
     ScreenBuffer* screenBuffer3D_ = nullptr;

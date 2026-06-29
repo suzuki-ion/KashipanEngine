@@ -2,7 +2,7 @@
 
 namespace KashipanEngine {
 
-Skybox::Skybox() : Object3DBase("Skybox", sizeof(Vertex), sizeof(Index), 24, 36) {
+Skybox::Skybox() : EmptyObject("Skybox", sizeof(Vertex), sizeof(Index), 24, 36) {
     SetRenderType(RenderType::Instancing);
     LogScope scope;
 

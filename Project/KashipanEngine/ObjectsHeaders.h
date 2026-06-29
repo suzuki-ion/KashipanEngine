@@ -34,7 +34,7 @@
 #include "Objects/GameObjects/3D/VertexDataSkybox.h"
 #include "Objects/IObjectComponent.h"
 #include "Objects/Object2DBase.h"
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/ObjectContext.h"
 #include "Objects/SystemObjects/Camera2D.h"
 #include "Objects/SystemObjects/Camera3D.h"

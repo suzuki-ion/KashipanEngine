@@ -13,10 +13,10 @@
 
 namespace KashipanEngine {
 
-class Collision3D final : public IObjectComponent3D {
+class Collision3D final : public IObjectComponent {
 public:
     Collision3D(const ColliderInfo3D &info = {})
-        : IObjectComponent3D("Collision3D", 100), worldInfo_(info) {
+        : IObjectComponent("Collision3D", 100), worldInfo_(info) {
         localInfo_ = worldInfo_;
     }
 
@@ -169,6 +169,6 @@ private:
     bool isAddedToCollider_ = false;
 };
 
-REGISTER_COMPONENT_OBJECT3D(Collision3D)
+REGISTER_COMPONENT_OBJECT(Collision3D)
 
 } // namespace KashipanEngine

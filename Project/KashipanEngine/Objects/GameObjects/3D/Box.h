@@ -1,10 +1,10 @@
 #pragma once
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
-class Box : public Object3DBase {
+class Box : public EmptyObject {
 public:
     Box();
     ~Box() override = default;

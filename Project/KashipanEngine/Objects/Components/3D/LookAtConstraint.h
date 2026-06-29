@@ -11,9 +11,9 @@
 namespace KashipanEngine {
 
 /// @brief LookAt制約コンポーネント
-class LookAtConstraint final : public IObjectComponent3D {
+class LookAtConstraint final : public IObjectComponent {
 public:
-    LookAtConstraint() : IObjectComponent3D("LookAtConstraint", 1) {}
+    LookAtConstraint() : IObjectComponent("LookAtConstraint", 1) {}
     ~LookAtConstraint() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
@@ -121,6 +121,6 @@ private:
     bool isRotateZ_ = true;
 };
 
-REGISTER_COMPONENT_OBJECT3D(LookAtConstraint)
+REGISTER_COMPONENT_OBJECT(LookAtConstraint)
 
 } // namespace KashipanEngine

@@ -1,13 +1,13 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 
 namespace KashipanEngine {
 
-class PointLight final : public Object3DBase {
+class PointLight final : public EmptyObject {
 public:
     PointLight();
     ~PointLight() override = default;

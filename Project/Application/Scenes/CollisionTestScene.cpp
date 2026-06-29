@@ -34,8 +34,8 @@ void CollisionTestScene::Initialize() {
     if (auto *mat = areaParent->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4(0.0f, 0.0f, 0.0f, 0.0f));
     }
-    Object3DBase *areaParentPtr = areaParent.get();
-    AddObject3D(std::move(areaParent));
+    EmptyObject *areaParentPtr = areaParent.get();
+    AddObject(std::move(areaParent));
 
     // エリアのオブジェクトに使用する当たり判定情報
     ColliderInfo3D areaColliderInfo{};
@@ -63,8 +63,8 @@ void CollisionTestScene::Initialize() {
         tr->SetParentObject(areaParentPtr);
     }
     areaFloor->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
-    areaFloor->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-    AddObject3D(std::move(areaFloor));
+    areaFloor->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+    AddObject(std::move(areaFloor));
     // エリアの壁 (左)
     auto areaWallLeft = std::make_unique<Box>();
     areaWallLeft->SetName("AreaWallLeft");
@@ -74,8 +74,8 @@ void CollisionTestScene::Initialize() {
         tr->SetParentObject(areaParentPtr);
     }
     areaWallLeft->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
-    areaWallLeft->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-    AddObject3D(std::move(areaWallLeft));
+    areaWallLeft->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+    AddObject(std::move(areaWallLeft));
     // エリアの壁 (右)
     auto areaWallRight = std::make_unique<Box>();
     areaWallRight->SetName("AreaWallRight");
@@ -85,8 +85,8 @@ void CollisionTestScene::Initialize() {
         tr->SetParentObject(areaParentPtr);
     }
     areaWallRight->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
-    areaWallRight->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-    AddObject3D(std::move(areaWallRight));
+    areaWallRight->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+    AddObject(std::move(areaWallRight));
     // エリアの壁 (奥)
     auto areaWallBack = std::make_unique<Box>();
     areaWallBack->SetName("AreaWallBack");
@@ -96,8 +96,8 @@ void CollisionTestScene::Initialize() {
         tr->SetParentObject(areaParentPtr);
     }
     areaWallBack->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
-    areaWallBack->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-    AddObject3D(std::move(areaWallBack));
+    areaWallBack->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+    AddObject(std::move(areaWallBack));
     // エリアの壁 (手前)
     auto areaWallFront = std::make_unique<Box>();
     areaWallFront->SetName("AreaWallFront");
@@ -107,8 +107,8 @@ void CollisionTestScene::Initialize() {
         tr->SetParentObject(areaParentPtr);
     }
     areaWallFront->RegisterComponent(std::make_unique<Collision3D>(areaColliderInfo));
-    areaWallFront->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-    AddObject3D(std::move(areaWallFront));
+    areaWallFront->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+    AddObject(std::move(areaWallFront));
 
     // テスト用の地面
     /*auto groundObj = ModelManager::GetModelDataFromFileName("ground.obj");
@@ -134,8 +134,8 @@ void CollisionTestScene::Initialize() {
         .scale = Vector3(8.0f, 8.0f, 8.0f)
     };
     ground->RegisterComponent(std::make_unique<Collision3D>(groundColliderInfo));
-    ground->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
-    AddObject3D(std::move(ground));*/
+    ground->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
+    AddObject(std::move(ground));*/
 
     // ランダムな位置に Box と Sphere を配置
     for (size_t i = 0; i < boxCounts; ++i) {
@@ -143,9 +143,9 @@ void CollisionTestScene::Initialize() {
         box->SetName("Box" + std::to_string(i));
         box->RegisterComponent(std::make_unique<RigidBody3D>());
         box->RegisterComponent(std::make_unique<Collision3D>(boxColliderInfo));
-        box->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        box->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
         auto *ptr = box.get();
-        AddObject3D(std::move(box));
+        AddObject(std::move(box));
         RespawnAreaObject(ptr);
         areaObjects_.push_back(ptr);
     }
@@ -154,9 +154,9 @@ void CollisionTestScene::Initialize() {
         sphere->SetName("Sphere" + std::to_string(i));
         sphere->RegisterComponent(std::make_unique<RigidBody3D>());
         sphere->RegisterComponent(std::make_unique<Collision3D>(sphereColliderInfo));
-        sphere->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        sphere->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
         auto *ptr = sphere.get();
-        AddObject3D(std::move(sphere));
+        AddObject(std::move(sphere));
         RespawnAreaObject(ptr);
         areaObjects_.push_back(ptr);
     }
@@ -178,8 +178,8 @@ void CollisionTestScene::OnUpdate() {
     //}
 }
 
-void CollisionTestScene::RespawnAreaObject(Object3DBase *obj) {
-    auto *areaObj = GetObject3D(obj);
+void CollisionTestScene::RespawnAreaObject(EmptyObject *obj) {
+    auto *areaObj = GetObject(obj);
     if (!areaObj) return;
     auto *tr = areaObj->GetComponent3D<Transform3D>();
     if (!tr) return;

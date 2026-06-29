@@ -96,10 +96,7 @@
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object3DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\ObjectContext.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\EmptyObject.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
@@ -351,8 +348,7 @@
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Ray.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Segment.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Triangle.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object2DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object3DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\EmptyObject.h" />
     <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />
@@ -454,6 +450,8 @@
     <ClInclude Include="KashipanEngine\Utilities\ImGuiCustom.h" />
     <ClInclude Include="Externals\imgui\imgui_stdlib.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\PropertyVisitor.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\TypeToString.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

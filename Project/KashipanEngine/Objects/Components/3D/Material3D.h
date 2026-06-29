@@ -12,7 +12,7 @@
 namespace KashipanEngine {
 
 /// @brief 3Dマテリアルコンポーネント
-class Material3D : public IObjectComponent3D {
+class Material3D : public IObjectComponent {
 public:
     struct InstanceData {
         float enableLighting = 1.0f;
@@ -34,7 +34,7 @@ public:
     Material3D(const Vector4 &color = Vector4{1.0f, 1.0f, 1.0f, 1.0f},
         TextureManager::TextureHandle texture = TextureManager::kInvalidHandle,
         SamplerManager::SamplerHandle sampler = SamplerManager::kInvalidHandle)
-        : IObjectComponent3D("Material3D", 1), textureHandle_(texture), samplerHandle_(sampler) {
+        : IObjectComponent("Material3D", 1), textureHandle_(texture), samplerHandle_(sampler) {
         SetColor(color);
     }
     ~Material3D() override = default;
@@ -232,6 +232,6 @@ private:
     bool isBufferDirty_ = true;
 };
 
-REGISTER_COMPONENT_OBJECT3D(Material3D)
+REGISTER_COMPONENT_OBJECT(Material3D)
 
 } // namespace KashipanEngine

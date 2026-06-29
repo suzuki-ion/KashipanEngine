@@ -3,9 +3,9 @@
 オブジェクトの振る舞いは「オブジェクトコンポーネント」として追加します。
 
 - 2D：`IObjectComponent2D`
-- 3D：`IObjectComponent3D`
+- 3D：`IObjectComponent`
 
-追加は `Object2DBase` / `Object3DBase` の `RegisterComponent(...)` を使います。
+追加は `Object2DBase` / `EmptyObject` の `RegisterComponent(...)` を使います。
 
 ---
 
@@ -17,7 +17,7 @@
 #include <KashipanEngine.h>
 #include "Objects/Components/Player/PlayerMove.h"
 
-// obj は Object3DBase 派生（例：Model）
+// obj は EmptyObject 派生（例：Model）
 obj->RegisterComponent<PlayerMove>(2.0f, 0.25f);
 
 if (auto* pm = obj->GetComponent3D<PlayerMove>()) {
@@ -32,12 +32,12 @@ if (auto* pm = obj->GetComponent3D<PlayerMove>()) {
 ```cpp
 #include <KashipanEngine.h>
 
-class Spin final : public KashipanEngine::IObjectComponent3D {
+class Spin final : public KashipanEngine::IObjectComponent {
 public:
-    Spin() : IObjectComponent3D("Spin") {}
+    Spin() : IObjectComponent("Spin") {}
 
     void Update() override {
-        auto* owner = GetOwnerObject3D();
+        auto* owner = GetOwnerObject();
         if (!owner) return;
         if (auto* tr = owner->GetComponent3D<KashipanEngine::Transform3D>()) {
             auto r = tr->GetRotate();

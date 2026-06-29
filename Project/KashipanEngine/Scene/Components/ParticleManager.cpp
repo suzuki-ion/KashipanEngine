@@ -340,7 +340,7 @@ std::unique_ptr<Object2DBase> ParticleManager::CreateParticleObject2D(const Part
     }
 }
 
-std::unique_ptr<Object3DBase> ParticleManager::CreateParticleObject3D(const ParticleGroup& group, std::size_t index) const {
+std::unique_ptr<EmptyObject> ParticleManager::CreateParticleObject(const ParticleGroup& group, std::size_t index) const {
     const auto& cfg = group.config;
     const std::string baseName = cfg.name.empty() ? "ParticleGroup" : cfg.name;
     switch (cfg.shape3D) {
@@ -399,7 +399,7 @@ void ParticleManager::CreateParticleInstance(ParticleGroup& group) {
 
         ctx->AddObject2D(std::move(obj));
     } else {
-        auto obj = CreateParticleObject3D(group, idx);
+        auto obj = CreateParticleObject(group, idx);
         obj->SetBatchKey(group.batchKey, RenderType::Instancing);
 
         if (auto* mat = obj->GetComponent3D<Material3D>()) {
@@ -415,7 +415,7 @@ void ParticleManager::CreateParticleInstance(ParticleGroup& group) {
         group.particles.push_back(instance);
         RespawnParticle(group, group.particles.back());
 
-        ctx->AddObject3D(std::move(obj));
+        ctx->AddObject(std::move(obj));
     }
 
     group.spawnedCount = group.particles.size();
@@ -468,7 +468,7 @@ void ParticleManager::DestroyGroupObjects(ParticleGroup& group) {
             particle.object2D = nullptr;
         } else {
             if (!particle.object3D) continue;
-            ctx->RemoveObject3D(particle.object3D);
+            ctx->RemoveObject(particle.object3D);
             particle.object3D = nullptr;
         }
     }
@@ -556,7 +556,7 @@ bool ParticleManager::SetEmitting(const std::string& groupName, bool isEmitting)
     return false;
 }
 
-bool ParticleManager::SetParentObject(const std::string& groupName, Object3DBase* parentObject) {
+bool ParticleManager::SetParentObject(const std::string& groupName, EmptyObject* parentObject) {
     for (auto& group : groups_) {
         if (group.config.name != groupName) continue;
 
@@ -749,13 +749,13 @@ void ParticleManager::ShowImGui() {
     ImGui::InputText(Translation("engine.imgui.particle_manager.name").c_str(), nameBuffer_.data(), nameBuffer_.size());
 
     const char* pipelines[] = {
-        "Object3D.Solid.BlendNormal",
+        "Object.Solid.BlendNormal",
         "Object2D.DoubleSidedCulling.BlendNormal"
     };
     int pipelineIndex = newGroupConfig_.pipelineName == "Object2D.DoubleSidedCulling.BlendNormal" ? 1 : 0;
     if (ImGui::Combo(Translation("engine.imgui.particle_manager.pipeline").c_str(), &pipelineIndex, pipelines, 2)) {
         if (pipelineIndex == 0) {
-            newGroupConfig_.pipelineName = "Object3D.Solid.BlendNormal";
+            newGroupConfig_.pipelineName = "Object.Solid.BlendNormal";
             newGroupConfig_.target = "3D";
         } else if (pipelineIndex == 1) {
             newGroupConfig_.pipelineName = "Object2D.DoubleSidedCulling.BlendNormal";

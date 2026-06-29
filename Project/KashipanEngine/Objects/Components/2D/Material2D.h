@@ -148,6 +148,6 @@ private:
     bool isBufferDirty_ = true;
 };
 
-REGISTER_COMPONENT_OBJECT2D(Material2D)
+REGISTER_COMPONENT_OBJECT(Material2D)
 
 } // namespace KashipanEngine

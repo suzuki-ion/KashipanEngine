@@ -9,7 +9,7 @@
 
 namespace KashipanEngine {
 
-Billboard::Billboard() : Object3DBase("Billboard", sizeof(Vertex), sizeof(Index), 4, 6) {
+Billboard::Billboard() : EmptyObject("Billboard", sizeof(Vertex), sizeof(Index), 4, 6) {
     SetRenderType(RenderType::Instancing);
     LogScope scope;
 

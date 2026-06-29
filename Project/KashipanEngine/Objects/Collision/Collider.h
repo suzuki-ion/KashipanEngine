@@ -20,7 +20,7 @@
 namespace KashipanEngine {
 
 class Object2DBase;
-class Object3DBase;
+class EmptyObject;
 
 struct HitInfo final {
     bool isHit = false;
@@ -42,8 +42,8 @@ struct HitInfo3D final {
     Vector3 normal{0.0f, 0.0f, 0.0f};
     float penetration = 0.0f;
 
-    Object3DBase* selfObject = nullptr;
-    Object3DBase* otherObject = nullptr;
+    EmptyObject* selfObject = nullptr;
+    EmptyObject* otherObject = nullptr;
 };
 
 struct ColliderInfo2D final {
@@ -118,7 +118,7 @@ struct ColliderInfo3D final {
         HeightFieldShape3D>;
 
     ShapeVariant shape{};
-    Object3DBase* ownerObject = nullptr;
+    EmptyObject* ownerObject = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};

@@ -1,38 +1,17 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
-#include "Math/Matrix4x4.h"
-#include "Math/Vector3.h"
-#include "Math/Quaternion.h"
-#include <memory>
-#include <optional>
-#include <cstring>
-#include <cstdint>
-#include <cmath>
+#include "Scene/SceneBase.h"
 
 namespace KashipanEngine {
 
-/// @brief 3Dトランスフォームコンポーネント
-class Transform3D : public IObjectComponent {
+class Transform : public IObjectComponent {
 public:
-    struct InstanceData {
-        Matrix4x4 world;
-    };
-
-    Transform3D() : IObjectComponent("Transform3D", 1) {
-        isWorldMatrixCalculated_ = false;
-        worldMatrix_ = Matrix4x4::Identity();
-        worldMatrixVersion_ = 0;
-        cachedParentVersion_ = 0;
-    }
-    ~Transform3D() override = default;
-
-    std::optional<bool> Initialize() override {
-        return true;
-    }
+    OBJECT_COMPONENT_CONSTRUCTOR(Transform, 1);
+    ~Transform() override = default;
 
     /// @brief コンポーネントのクローンを作成
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Transform3D>();
+        auto ptr = std::make_unique<Transform>();
         ptr->translate_ = translate_;
         ptr->rotate_ = rotate_;
         ptr->rotateQuat_ = rotateQuat_;
@@ -42,24 +21,6 @@ public:
         ptr->worldMatrixVersion_ = 0;
         ptr->cachedParentVersion_ = 0;
         return ptr;
-    }
-
-    std::optional<bool> BindShaderVariables(ShaderVariableBinder *shaderBinder) override {
-        (void)shaderBinder;
-        return std::nullopt;
-    }
-
-    std::optional<bool> BindInstancingResources(ShaderVariableBinder *binder, std::uint32_t instanceCount) override {
-        (void)binder;
-        (void)instanceCount;
-        return std::nullopt;
-    }
-
-    std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) override {
-        if (!instanceMap) return false;
-        auto *arr = static_cast<InstanceData *>(instanceMap);
-        arr[instanceIndex].world = GetWorldMatrix();
-        return true;
     }
 
     /// @brief 親オブジェクトをポインタから設定する
@@ -72,10 +33,9 @@ public:
             cachedParentVersion_ = 0;
             return true;
         }
-        auto *ctx = GetOwner3DContext();
-        auto *ownerObject = ctx ? ctx->GetOwner() : nullptr;
+        auto *ownerObject = GetOwnerObject();
         if (parent == ownerObject) return false;
-        for (auto *p = parent; p != nullptr; p = p->GetComponent3D<Transform3D>()->parentObject_) {
+        for (auto *p = parent; p != nullptr; p = p->GetComponent<Transform>()->parentObject_) {
             if (p == ownerObject) return false;
         }
         parentObject_ = parent;
@@ -94,9 +54,9 @@ public:
             cachedParentVersion_ = 0;
             return true;
         }
-        auto *sceneCtx = GetOwnerSceneContext();
-        if (!sceneCtx) return false;
-        auto *parent = sceneCtx->GetObject(parentUUID);
+        auto *ownerScene = GetOwnerScene();
+        if (!ownerScene) return false;
+        auto *parent = ownerScene->GetSceneObject(parentUUID);
         if (!parent) return false;
         return SetParentObject(parent);
     }
@@ -109,7 +69,7 @@ public:
         isWorldMatrixCalculated_ = false;
     }
 
-    void SetTranslateY(const float& translateY) {
+    void SetTranslateY(const float &translateY) {
         if (translate_.y == translateY) return;
         translate_.y = translateY;
         isWorldMatrixCalculated_ = false;
@@ -164,7 +124,7 @@ public:
             Matrix4x4 local = scaleMat * rotateMat * translateMat;
 
             auto *parentObj = TryGetParentObject();
-            auto *parentTransform = parentObj ? parentObj->GetComponent3D<Transform3D>() : nullptr;
+            auto *parentTransform = parentObj ? parentObj->GetComponent<Transform>() : nullptr;
             if (parentTransform) {
                 // 親のワールド行列を取得（必要なら親が再計算される）
                 const Matrix4x4 &pw = parentTransform->GetWorldMatrix();
@@ -203,7 +163,7 @@ public:
         Vector3 t = translate_;
         Vector3 r = rotate_;
         Vector3 s = scale_;
-        Vector3 rDeg{r.x * 180.0f / 3.14159265f, r.y * 180.0f / 3.14159265f, r.z * 180.0f / 3.14159265f};
+        Vector3 rDeg{ r.x * 180.0f / 3.14159265f, r.y * 180.0f / 3.14159265f, r.z * 180.0f / 3.14159265f };
 
         ImGuiCustom::EditValue(Translation("engine.imgui.transform.translate").c_str(), t, { .vSpeed = 0.01f });
         if (ImGuiCustom::EditValue(Translation("engine.imgui.transform.rotate").c_str(), rDeg, { .vSpeed = 0.01f, .vMin = -180.0f, .vMax = 180.0f })) {
@@ -286,8 +246,8 @@ private:
 
     EmptyObject *TryGetParentObject() const {
         if (!parentObject_) return nullptr;
-        auto *sceneCtx = GetOwnerSceneContext();
-        auto *parentObj = sceneCtx ? sceneCtx->GetObject(parentObject_) : nullptr;
+        auto *ownerScene = GetOwnerScene();
+        auto *parentObj = ownerScene ? ownerScene->GetSceneObject(parentObject_) : nullptr;
         return parentObj;
     }
 
@@ -305,7 +265,5 @@ private:
     // この Transform が最後に計算したときの親のバージョン
     std::uint64_t cachedParentVersion_ = 0;
 };
-
-REGISTER_COMPONENT_OBJECT(Transform3D)
 
 } // namespace KashipanEngine

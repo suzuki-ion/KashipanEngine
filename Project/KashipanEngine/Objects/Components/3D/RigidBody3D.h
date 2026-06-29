@@ -10,9 +10,9 @@
 
 namespace KashipanEngine {
 
-class RigidBody3D final : public IObjectComponent3D {
+class RigidBody3D final : public IObjectComponent {
 public:
-    RigidBody3D() : IObjectComponent3D("RigidBody3D", 1) {}
+    RigidBody3D() : IObjectComponent("RigidBody3D", 1) {}
 
     ~RigidBody3D() override = default;
 
@@ -148,6 +148,6 @@ private:
     bool isInitialized_ = false;
 };
 
-REGISTER_COMPONENT_OBJECT3D(RigidBody3D)
+REGISTER_COMPONENT_OBJECT(RigidBody3D)
 
 } // namespace KashipanEngine

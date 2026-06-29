@@ -9,9 +9,9 @@
 	//===========================
 	// レンダーパイプライン例
 	//===========================
-	"RenderPipeline_Object3D": {
+	"RenderPipeline_Object": {
 		// パイプライン識別名 (重複不可)
-		"Name": "Object3D",
+		"Name": "Object",
 
 		// ルートシグネチャ (プリセット利用例)
 		"RootSignature": {
@@ -28,7 +28,7 @@
 			"AutoTopologyFromShaders": true,
 
 			"Vertex": {
-				"Path": "Shaders/Object3D/Object3D_VS.hlsl",
+				"Path": "Shaders/Object/Object_VS.hlsl",
 				"EntryPoint": "VSMain",
 				"TargetProfile": "vs_6_6",
 				"Macros": [
@@ -39,7 +39,7 @@
 				]
 			},
 			"Pixel": {
-				"Path": "Shaders/Object3D/Object3D_PS.hlsl",
+				"Path": "Shaders/Object/Object_PS.hlsl",
 				"EntryPoint": "PSMain",
 				"TargetProfile": "ps_6_6",
 				"Macros": [

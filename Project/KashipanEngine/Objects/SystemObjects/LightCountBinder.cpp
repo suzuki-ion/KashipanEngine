@@ -6,7 +6,7 @@
 namespace KashipanEngine {
 
 LightCountBinder::LightCountBinder()
-    : Object3DBase("LightCountBinder") {
+    : EmptyObject("LightCountBinder") {
     SetRenderType(RenderType::Standard);
 
     SetConstantBufferRequirements({ { "Pixel:LightCounts", sizeof(LightCounts) } });

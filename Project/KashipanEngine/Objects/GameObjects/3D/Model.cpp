@@ -5,7 +5,7 @@
 namespace KashipanEngine {
 
 Model::Model(const ModelData &modelData)
-    : Object3DBase(
+    : EmptyObject(
         modelData.GetAssetRelativePath(),
         sizeof(Vertex),
         sizeof(Index),

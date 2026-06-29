@@ -4,7 +4,7 @@
 namespace KashipanEngine {
 
 Triangle3D::Triangle3D()
-    : Object3DBase("Triangle3D", sizeof(Vertex), sizeof(Index), 3, 3) {
+    : EmptyObject("Triangle3D", sizeof(Vertex), sizeof(Index), 3, 3) {
     SetRenderType(RenderType::Instancing);
     LogScope scope;
 

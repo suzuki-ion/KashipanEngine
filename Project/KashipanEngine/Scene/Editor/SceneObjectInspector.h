@@ -18,7 +18,7 @@ public:
 
 private:
     void ShowObject2DInspector(Object2DBase *obj);
-    void ShowObject3DInspector(Object3DBase *obj);
+    void ShowObjectInspector(EmptyObject *obj);
 
     SceneEditorContext *context_ = nullptr;
     SceneObjectHierarchy *objectHierarchy_ = nullptr;

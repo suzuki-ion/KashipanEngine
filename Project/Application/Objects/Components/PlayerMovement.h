@@ -4,10 +4,10 @@
 
 namespace KashipanEngine {
 
-class PlayerMovement : public IObjectComponent3D {
+class PlayerMovement : public IObjectComponent {
 public:
     PlayerMovement()
-        : IObjectComponent3D("PlayerMovement", 1) {}
+        : IObjectComponent("PlayerMovement", 1) {}
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         return std::make_unique<PlayerMovement>();
@@ -81,6 +81,6 @@ private:
     float moveRightInput_ = 0.0f;
 };
 
-REGISTER_COMPONENT_OBJECT3D(PlayerMovement)
+REGISTER_COMPONENT_OBJECT(PlayerMovement)
 
 } // namespace KashipanEngine

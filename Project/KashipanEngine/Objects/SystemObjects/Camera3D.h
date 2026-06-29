@@ -1,13 +1,13 @@
 #pragma once
 #include <memory>
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
 #include "Math/Vector3.h"
 
 namespace KashipanEngine {
 
-class Camera3D final : public Object3DBase {
+class Camera3D final : public EmptyObject {
 public:
     Camera3D();
     ~Camera3D() override = default;

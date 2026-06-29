@@ -3,7 +3,7 @@
 KashipanEngine の描画は `Renderer` が中心で、オブジェクトやオフスクリーンが **永続レンダーパス** を登録することでフレームごとに描画されます。
 
 - `GameEngine` → `GraphicsEngine` → `Renderer::RenderFrame(...)`
-- `Object2DBase` / `Object3DBase` → `AttachToRenderer(...)` で `Renderer` にパス登録
+- `Object2DBase` / `EmptyObject` → `AttachToRenderer(...)` で `Renderer` にパス登録
 - `ScreenBuffer` も Renderer に登録し、オフスクリーン描画＋ポストエフェクトを駆動
 
 関連：`KashipanEngine/Graphics/Renderer.h`
@@ -25,7 +25,7 @@ KashipanEngine の描画は `Renderer` が中心で、オブジェクトやオ�
 また、`GameEngine` 初期化時に以下が行われます。
 
 - `Object2DBase::SetRenderer(Passkey<GameEngine>, Renderer*)`
-- `Object3DBase::SetRenderer(Passkey<GameEngine>, Renderer*)`
+- `EmptyObject::SetRenderer(Passkey<GameEngine>, Renderer*)`
 - `ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>, DirectXCommon*)`
 - `ScreenBuffer::SetRenderer(Passkey<GameEngine>, Renderer*)`
 - `ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>, DirectXCommon*)`
@@ -76,11 +76,11 @@ KashipanEngine の描画は `Renderer` が中心で、オブジェクトやオ�
 
 ---
 
-## 利用者が普段触る入口：`Object2DBase` / `Object3DBase`
+## 利用者が普段触る入口：`Object2DBase` / `EmptyObject`
 
 通常、利用者は `Renderer` を直接触るのではなく、
 - `Object2DBase::AttachToRenderer(...)`
-- `Object3DBase::AttachToRenderer(...)`
+- `EmptyObject::AttachToRenderer(...)`
 
 でパス登録します。
 
@@ -92,7 +92,7 @@ obj2d->AttachToRenderer(Window::GetWindow("Main Window"), "Object2D.Solid.BlendN
 ### 例：3D を ScreenBuffer に描画
 ```cpp
 auto* sb3d = ScreenBuffer::Create(1280, 720);
-obj3d->AttachToRenderer(sb3d, "Object3D.Solid.BlendNormal");
+obj3d->AttachToRenderer(sb3d, "Object.Solid.BlendNormal");
 ```
 
 ---

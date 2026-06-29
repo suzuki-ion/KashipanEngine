@@ -290,10 +290,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Skybox.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Sphere.cpp" />
     <ClCompile Include="KashipanEngine\Objects\GameObjects\3D\Triangle3D.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object2DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\Object3DBase.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\ObjectContext.cpp" />
-    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\EmptyObject.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera2D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\Camera3D.cpp" />
     <ClCompile Include="KashipanEngine\Objects\SystemObjects\DirectionalLight.cpp" />
@@ -404,6 +401,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentRegistry.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\ComponentSerialize.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\PropertyVisitor.h" />
+    <ClInclude Include="KashipanEngine\ComponentSerialize\TypeToString.h" />
     <ClInclude Include="KashipanEngine\FontHeaders.h" />
     <ClInclude Include="KashipanEngine\Font\FontLoader.h" />
     <ClInclude Include="KashipanEngine\Font\FontStructs.h" />
@@ -438,6 +436,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\3D\LookAtConstraint.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\MeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\3D\RigidBody3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\Ring2D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\2D\SpriteProressBar.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.h" />
@@ -577,8 +576,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Ray.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Segment.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\3D\Triangle.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object2DBase.h" />
-    <ClInclude Include="KashipanEngine\Objects\Object3DBase.h" />
+    <ClInclude Include="KashipanEngine\Objects\EmptyObject.h" />
     <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Circle.h" />

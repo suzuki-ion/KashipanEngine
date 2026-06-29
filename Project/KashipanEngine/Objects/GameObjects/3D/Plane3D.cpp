@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-Plane3D::Plane3D() : Object3DBase("Plane3D", sizeof(Vertex), sizeof(Index), 4, 6) {
+Plane3D::Plane3D() : EmptyObject("Plane3D", sizeof(Vertex), sizeof(Index), 4, 6) {
     SetRenderType(RenderType::Instancing);
     LogScope scope;
 

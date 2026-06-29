@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
-class Plane3D : public Object3DBase {
+class Plane3D : public EmptyObject {
 public:
     Plane3D();
     ~Plane3D() override = default;

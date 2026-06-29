@@ -12,7 +12,7 @@ constexpr float kMinRadius = 0.0001f;
 }
 
 Cylinder3D::Cylinder3D(size_t segmentCount, Caps caps, float height, float radius)
-    : Object3DBase("Cylinder3D", sizeof(Vertex), sizeof(Index),
+    : EmptyObject("Cylinder3D", sizeof(Vertex), sizeof(Index),
           (segmentCount + 1) * 2 + (segmentCount + 2) * 2,
           segmentCount * 6 + segmentCount * 3 * 2),
       segmentCount_(segmentCount),

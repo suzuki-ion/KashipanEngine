@@ -20,10 +20,10 @@ void SceneDefaultVariables::Initialize() {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("Camera3D_ScreenBuffer3D");
         if (screenBuffer3D_) {
-            obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
+            obj->AttachToRenderer(screenBuffer3D_, "Object.Solid.BlendNormal");
         }
         mainCamera3D_ = obj.get();
-        sceneContext->AddObject3D(std::move(obj));
+        sceneContext->AddObject(std::move(obj));
     }
     // ScreenBuffer2D用カメラ
     {
@@ -85,25 +85,25 @@ void SceneDefaultVariables::Initialize() {
     {
         auto obj = std::make_unique<DirectionalLight>();
         obj->SetName("DirectionalLight");
-        obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
+        obj->AttachToRenderer(screenBuffer3D_, "Object.Solid.BlendNormal");
         directionalLight_ = obj.get();
-        sceneContext->AddObject3D(std::move(obj));
+        sceneContext->AddObject(std::move(obj));
     }
     // ライト管理用
     {
         auto obj = std::make_unique<LightCountBinder>();
         obj->SetName("LightCountBinder");
-        obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
+        obj->AttachToRenderer(screenBuffer3D_, "Object.Solid.BlendNormal");
         lightCountBinder_ = obj.get();
-        sceneContext->AddObject3D(std::move(obj));
+        sceneContext->AddObject(std::move(obj));
     }
     // シャドウマッピング用ライトカメラ
     {
         auto obj = std::make_unique<Camera3D>();
         obj->SetName("LightCamera3D");
-        obj->AttachToRenderer(shadowMapBuffer_, "Object3D.ShadowMap.DepthOnly");
+        obj->AttachToRenderer(shadowMapBuffer_, "Object.ShadowMap.DepthOnly");
         lightCamera3D_ = obj.get();
-        sceneContext->AddObject3D(std::move(obj));
+        sceneContext->AddObject(std::move(obj));
     }
     // シャドウマッピング用バインダー
     {
@@ -111,9 +111,9 @@ void SceneDefaultVariables::Initialize() {
         obj->SetName("ShadowMapBinder");
         obj->SetShadowMapBuffer(shadowMapBuffer_);
         obj->SetCamera3D(lightCamera3D_);
-        obj->AttachToRenderer(screenBuffer3D_, "Object3D.Solid.BlendNormal");
+        obj->AttachToRenderer(screenBuffer3D_, "Object.Solid.BlendNormal");
         shadowMapBinder_ = obj.get();
-        sceneContext->AddObject3D(std::move(obj));
+        sceneContext->AddObject(std::move(obj));
     }
     // Window用カメラ
     {

@@ -39,9 +39,9 @@ bool SceneContext::AddObject2D(std::unique_ptr<Object2DBase> obj) {
     return owner_->AddObject2D(std::move(obj));
 }
 
-bool SceneContext::AddObject3D(std::unique_ptr<Object3DBase> obj) {
+bool SceneContext::AddObject(std::unique_ptr<EmptyObject> obj) {
     if (!owner_) return false;
-    return owner_->AddObject3D(std::move(obj));
+    return owner_->AddObject(std::move(obj));
 }
 
 bool SceneContext::RemoveObject2D(Object2DBase *obj) {
@@ -49,9 +49,9 @@ bool SceneContext::RemoveObject2D(Object2DBase *obj) {
     return owner_->RemoveObject2D(obj);
 }
 
-bool SceneContext::RemoveObject3D(Object3DBase *obj) {
+bool SceneContext::RemoveObject(EmptyObject *obj) {
     if (!owner_) return false;
-    return owner_->RemoveObject3D(obj);
+    return owner_->RemoveObject(obj);
 }
 
 std::vector<Object2DBase *> SceneContext::GetObjects2D(const std::string &objectName) const {
@@ -74,24 +74,24 @@ Object2DBase *SceneContext::GetObject2D(const UUID128 &uuid) const {
     return owner_->GetObject2D(uuid);
 }
 
-std::vector<Object3DBase *> SceneContext::GetObjects3D(const std::string &objectName) const {
+std::vector<EmptyObject *> SceneContext::GetObjects3D(const std::string &objectName) const {
     if (objectName.empty() || !owner_) return {};
     return owner_->GetObjects3D(objectName);
 }
 
-Object3DBase *SceneContext::GetObject3D(const std::string &objectName) const {
+EmptyObject *SceneContext::GetObject(const std::string &objectName) const {
     if (objectName.empty() || !owner_) return nullptr;
-    return owner_->GetObject3D(objectName);
+    return owner_->GetObject(objectName);
 }
 
-Object3DBase *SceneContext::GetObject3D(Object3DBase *obj) const {
+EmptyObject *SceneContext::GetObject(EmptyObject *obj) const {
     if (!obj || !owner_) return nullptr;
-    return owner_->GetObject3D(obj);
+    return owner_->GetObject(obj);
 }
 
-Object3DBase *SceneContext::GetObject3D(const UUID128 &uuid) const {
+EmptyObject *SceneContext::GetObject(const UUID128 &uuid) const {
     if (!owner_) return nullptr;
-    return owner_->GetObject3D(uuid);
+    return owner_->GetObject(uuid);
 }
 
 } // namespace KashipanEngine

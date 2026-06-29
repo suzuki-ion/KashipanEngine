@@ -6,7 +6,7 @@
 namespace KashipanEngine {
 
 VelocityBufferCameraBinder::VelocityBufferCameraBinder()
-    : Object3DBase("VelocityBufferCameraBinder") {
+    : EmptyObject("VelocityBufferCameraBinder") {
     SetRenderType(RenderType::Standard);
     SetConstantBufferRequirements({{ constantsNameKey_, sizeof(VelocityCameraConstants) }}); 
     SetUpdateConstantBuffersFunction(

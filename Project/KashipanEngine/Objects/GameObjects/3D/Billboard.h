@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/GameObjects/3D/VertexData3D.h"
 
 namespace KashipanEngine {
 
 class Camera3D;
 
-class Billboard : public Object3DBase {
+class Billboard : public EmptyObject {
 public:
     enum class FacingMode {
         MatchCameraRotation,

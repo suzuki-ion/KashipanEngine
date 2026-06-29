@@ -9,7 +9,7 @@ namespace KashipanEngine {
 Model::Model(const ModelData &modelData)
     : Object3DBase(
         modelData.GetAssetRelativePath(),
-        sizeof(Vertex),
+        modelData.HasSkinning() ? sizeof(VertexSkinning) : sizeof(VertexNormal),
         sizeof(Index),
         modelData.GetVertexCount(),
         modelData.GetIndexCount()) {
@@ -33,7 +33,7 @@ void Model::InitializeGeometry(const ModelData& modelData) {
     if (dstI.size() != modelData.indices_.size()) return;
 
     if (hasSkinning_) {
-        auto dstV = GetVertexSpan<Vertex>();
+        auto dstV = GetVertexSpan<VertexSkinning>();
         if (dstV.size() != modelData.vertices_.size()) return;
 
         for (size_t i = 0; i < dstV.size(); ++i) {
@@ -41,12 +41,11 @@ void Model::InitializeGeometry(const ModelData& modelData) {
             dstV[i].position = Vector4(src.px, src.py, src.pz, 1.0f);
             dstV[i].normal = Vector3(src.nx, src.ny, src.nz);
             dstV[i].texcoord = Vector2(src.u, src.v);
-            dstV[i].enableSkinning = 1;
             std::copy(std::begin(src.boneIndices), std::end(src.boneIndices), std::begin(dstV[i].boneIndices));
             std::copy(std::begin(src.boneWeights), std::end(src.boneWeights), std::begin(dstV[i].boneWeights));
         }
     } else {
-        auto dstV = GetVertexSpan<Vertex>();
+        auto dstV = GetVertexSpan<VertexNormal>();
         if (dstV.size() != modelData.vertices_.size()) return;
 
         for (size_t i = 0; i < dstV.size(); ++i) {

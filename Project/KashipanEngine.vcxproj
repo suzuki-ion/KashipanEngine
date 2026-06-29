@@ -427,6 +427,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Cylinder3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Ring3D.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\Skybox.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkinning.h" />
     <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkybox.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\LightCountBinder.h" />
     <ClInclude Include="KashipanEngine\Objects\SystemObjects\PointLight.h" />

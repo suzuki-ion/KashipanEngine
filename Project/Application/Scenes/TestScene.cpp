@@ -205,7 +205,7 @@ void TestScene::Initialize() {
         auto modelHandle = ModelManager::GetModelHandleFromFileName("walk.gltf");
         auto model = std::make_unique<Model>(modelHandle);
         model->SetName("AnimatedModel");
-        model->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+        model->AttachToRenderer(screenBuffer3D, "Object3D.Skinning.Solid.BlendNormal");
         AddObject3D(std::move(model));
     }
 

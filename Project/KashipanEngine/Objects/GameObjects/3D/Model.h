@@ -1,6 +1,7 @@
 #pragma once
 #include "Objects/Object3DBase.h"
 #include "Objects/GameObjects/3D/VertexData3D.h"
+#include "Objects/GameObjects/3D/VertexDataSkinning.h"
 #include "Assets/ModelManager.h"
 #include "Assets/SkeletonManager.h"
 #include <array>
@@ -37,7 +38,8 @@ protected:
     std::optional<RenderCommand> CreateRenderCommand(PipelineBinder &pipelineBinder) override;
 
 private:
-    using Vertex = VertexData3D;
+    using VertexNormal = VertexData3D;
+    using VertexSkinning = VertexDataSkinning;
     using Index = uint32_t;
     static constexpr uint32_t kMaxSkinningMatrices = 256;
 

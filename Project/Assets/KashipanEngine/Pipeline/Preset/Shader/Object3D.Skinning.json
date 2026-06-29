@@ -1,13 +1,10 @@
 {
 	"BaseName": "Object3D.Skinning",
 	"Vertex": {
-		"Path": "Object/ObjectVS.hlsl",
+		"Path": "Object/ObjectSkinningVS.hlsl",
 		"EntryPoint": "main",
 		"TargetProfile": "vs_6_0",
-		"Macros": [
-			{ "Name": "Object3D" },
-			{ "Name": "Skinning" }
-		]
+		"Macros": []
 	},
 	"Pixel": {
 		"Path": "Object/ObjectPS.hlsl",

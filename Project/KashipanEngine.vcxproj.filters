@@ -422,6 +422,7 @@
     <ClInclude Include="MyStd\VectorMap.h" />
     <ClInclude Include="Application\Scenes\CollisionTestScene.h" />
     <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\OutlineEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\GameObjects\3D\VertexDataSkinning.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

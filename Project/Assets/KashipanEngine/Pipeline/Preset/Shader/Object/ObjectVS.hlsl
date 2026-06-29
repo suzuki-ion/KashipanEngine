@@ -8,45 +8,12 @@ struct VSInput {
 
 #ifdef Object3D
 #include "Object3D.hlsli"
-static const uint kMaxSkinningMatrices = 256;
-
 struct VSInput {
 	float4 position : POSITION0;
 	float2 texcoord : TEXCOORD0;
 	float3 normal : NORMAL0;
-	uint4 boneIndices : BLENDINDICES0;
-	float4 boneWeights : BLENDWEIGHT0;
-	bool enableSkinning : BLENDENABLE0;
 };
 
-struct Skinned {
-	float4 position;
-	float3 normal;
-};
-
-cbuffer gSkinningMatrices : register(b1) {
-	float4x4 skinningMatrices[kMaxSkinningMatrices];
-	float4x4 skinningNormalMatrices[kMaxSkinningMatrices];
-	bool enableSkinning;
-};
-
-Skinned CalculateSkinnedPosition(VSInput input) {
-	Skinned skinned;
-	
-	skinned.position = mul(float4(input.position.xyz, 1.0), skinningMatrices[input.boneIndices.x]) * input.boneWeights.x;
-	skinned.position += mul(float4(input.position.xyz, 1.0), skinningMatrices[input.boneIndices.y]) * input.boneWeights.y;
-	skinned.position += mul(float4(input.position.xyz, 1.0), skinningMatrices[input.boneIndices.z]) * input.boneWeights.z;
-	skinned.position += mul(float4(input.position.xyz, 1.0), skinningMatrices[input.boneIndices.w]) * input.boneWeights.w;
-	skinned.position.x = 1.0f;
-	
-	skinned.normal = mul(input.normal, (float3x3) skinningNormalMatrices[input.boneIndices.x]) * input.boneWeights.x;
-	skinned.normal += mul(input.normal, (float3x3) skinningNormalMatrices[input.boneIndices.y]) * input.boneWeights.y;
-	skinned.normal += mul(input.normal, (float3x3) skinningNormalMatrices[input.boneIndices.z]) * input.boneWeights.z;
-	skinned.normal += mul(input.normal, (float3x3) skinningNormalMatrices[input.boneIndices.w]) * input.boneWeights.w;
-	skinned.normal = normalize(skinned.normal);
-	
-	return skinned;
-};
 #endif
 
 struct TransformationMatrix {
@@ -71,12 +38,6 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
 #ifdef Object3D
 	output.normal = normalize(mul(input.normal, (float3x3)world));
 	output.worldPosition = mul(input.position, world).xyz;
-	if (input.enableSkinning && enableSkinning) {
-		Skinned skinned = CalculateSkinnedPosition(input);
-		output.position = mul(float4(skinned.position.xyz, 1.0), worldViewProjection);
-		output.worldPosition = mul(float4(skinned.position.xyz, 1.0), world).xyz;
-		output.normal = normalize(mul(skinned.normal, (float3x3) world));
-	}
 #endif
 	output.instanceId = instanceId;
 	return output;

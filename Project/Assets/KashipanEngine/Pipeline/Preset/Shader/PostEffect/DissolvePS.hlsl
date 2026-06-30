@@ -15,16 +15,16 @@ float4 main(VSOutput input) : SV_Target0 {
 	float4 screenColor = gTexture.Sample(gSampler, input.uv);
 	if (useMaskTexture) {
 		float maskValue = gMaskTexture.Sample(gSampler, input.uv).r;
-		if (maskValue > maskThreshold) {
+		if (maskValue < maskThreshold) {
 			return screenColor;
-		} else if (maskValue > maskThreshold + edgeThickness) {
+		} else if (maskValue < maskThreshold + edgeThickness) {
 			float edge = 1.0 - smoothstep(maskThreshold, maskThreshold + edgeThickness, maskValue);
 			color += edge * edgeColor;
 		}
 	} else {
-		if (screenColor.a > maskThreshold) {
+		if (screenColor.a < maskThreshold) {
 			return screenColor;
-		} else if (screenColor.a > maskThreshold + edgeThickness) {
+		} else if (screenColor.a < maskThreshold + edgeThickness) {
 			float edge = 1.0 - smoothstep(maskThreshold, maskThreshold + edgeThickness, screenColor.a);
 			color += edge * edgeColor;
 		}

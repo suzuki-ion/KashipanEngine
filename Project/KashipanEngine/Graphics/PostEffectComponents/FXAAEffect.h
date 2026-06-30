@@ -40,7 +40,7 @@ public:
     }
 #endif
 
-    std::vector<PostEffectPass> BuildPostEffectPasses() const override {
+    std::vector<PostEffectPass> BuildPostEffectPasses() override {
         auto *owner = GetOwnerBuffer();
         if (!owner) return {};
 

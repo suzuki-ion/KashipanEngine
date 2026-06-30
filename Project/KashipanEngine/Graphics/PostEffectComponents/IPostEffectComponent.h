@@ -32,7 +32,7 @@ public:
 
     /// @brief このコンポーネントが提供するポストエフェクトパス一覧を返す
     /// @details 返り値はフレーム毎に再構築してよい（軽量な前提）。
-    virtual std::vector<PostEffectPass> BuildPostEffectPasses() const { return {}; }
+    virtual std::vector<PostEffectPass> BuildPostEffectPasses() { return {}; }
 
 #if defined(USE_IMGUI)
     /// @brief ポストエフェクトのパラメータ表示/調整UI（Begin/Endは呼ばない）

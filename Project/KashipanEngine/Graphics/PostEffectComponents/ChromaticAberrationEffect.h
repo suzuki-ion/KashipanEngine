@@ -38,7 +38,7 @@ public:
     }
 #endif
 
-    std::vector<PostEffectPass> BuildPostEffectPasses() const override {
+    std::vector<PostEffectPass> BuildPostEffectPasses() override {
         PostEffectPass pass;
         pass.pipelineName = "PostEffect.ChromaticAberration";
         pass.passName = "ChromaticAberration";

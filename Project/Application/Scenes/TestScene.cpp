@@ -72,6 +72,10 @@ void TestScene::Initialize() {
         auto dissolveEffect = std::make_unique<DissolveEffect>(dp);
         screenBuffer3D->RegisterPostEffectComponent(std::move(dissolveEffect));
 
+        auto wnp = WhiteNoiseEffect::Params{};
+        auto whiteNoiseEffect = std::make_unique<WhiteNoiseEffect>(wnp);
+        screenBuffer3D->RegisterPostEffectComponent(std::move(whiteNoiseEffect));
+
         screenBuffer3D->AttachToRenderer("ScreenBuffer3D");
     }
 

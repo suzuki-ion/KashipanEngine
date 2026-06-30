@@ -41,7 +41,7 @@ public:
         ImGui::ColorEdit4("Color", params_.color);
     }
 #endif
-    std::vector<PostEffectPass> BuildPostEffectPasses() const override {
+    std::vector<PostEffectPass> BuildPostEffectPasses() override {
         PostEffectPass pass;
         pass.pipelineName = "PostEffect.Outline";
         pass.passName = "Outline";

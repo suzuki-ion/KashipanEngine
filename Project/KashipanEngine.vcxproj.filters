@@ -454,6 +454,7 @@
     <ClInclude Include="KashipanEngine\Utilities\ImGuiCustom.h" />
     <ClInclude Include="Externals\imgui\imgui_stdlib.h" />
     <ClInclude Include="KashipanEngine\ComponentSerialize\PropertyVisitor.h" />
+    <ClInclude Include="KashipanEngine\Graphics\PostEffectComponents\WhiteNoiseEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -33,7 +33,7 @@ Skinned Skinning(VSInput input) {
 	skinned.position += mul(float4(input.position.xyz, 1.0), skinningMatrices[input.boneIndices.y]) * input.boneWeights.y;
 	skinned.position += mul(float4(input.position.xyz, 1.0), skinningMatrices[input.boneIndices.z]) * input.boneWeights.z;
 	skinned.position += mul(float4(input.position.xyz, 1.0), skinningMatrices[input.boneIndices.w]) * input.boneWeights.w;
-	skinned.position.x = 1.0f;
+	skinned.position.w = 1.0f;
 	
 	skinned.normal = mul(input.normal, (float3x3) skinningNormalMatrices[input.boneIndices.x]) * input.boneWeights.x;
 	skinned.normal += mul(input.normal, (float3x3) skinningNormalMatrices[input.boneIndices.y]) * input.boneWeights.y;

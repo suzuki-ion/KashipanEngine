@@ -36,20 +36,19 @@ void SceneObjectInspector::ShowObject2DInspector(Object2DBase *obj) {
     for (const auto &comp : obj->GetAllComponents2D()) {
         ImGui::PushID(id);
         ImGui::Separator();
-        // 開閉可能なツリー構造でコンポーネントを表示
-        if (ImGui::TreeNode(comp->GetComponentType().c_str())) {
-            // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
-            if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
-                if (ImGui::MenuItem("Remove Component")) {
-                    componentToRemove = comp.get();
-                }
-                ImGui::EndPopup();
+        bool isOpen = ImGui::TreeNode(comp->GetComponentType().c_str());
+        // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
+        if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
+            if (ImGui::MenuItem("Remove Component")) {
+                componentToRemove = comp.get();
             }
+            ImGui::EndPopup();
+        }
+        // 開閉可能なツリー構造でコンポーネントを表示
+        if (isOpen) {
             comp->ShowImGui();
             ImGui::TreePop();
         }
-        ImGui::Indent();
-        ImGui::Unindent();
         ImGui::PopID();
         id++;
     }
@@ -94,20 +93,19 @@ void SceneObjectInspector::ShowObject3DInspector(Object3DBase *obj) {
     for (const auto &comp : obj->GetAllComponents3D()) {
         ImGui::PushID(id);
         ImGui::Separator();
-        // 開閉可能なツリー構造でコンポーネントを表示
-        if (ImGui::TreeNode(comp->GetComponentType().c_str())) {
-            // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
-            if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
-                if (ImGui::MenuItem("Remove Component")) {
-                    componentToRemove = comp.get();
-                }
-                ImGui::EndPopup();
+        bool isOpen = ImGui::TreeNode(comp->GetComponentType().c_str());
+        // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
+        if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
+            if (ImGui::MenuItem("Remove Component")) {
+                componentToRemove = comp.get();
             }
+            ImGui::EndPopup();
+        }
+        // 開閉可能なツリー構造でコンポーネントを表示
+        if (isOpen) {
             comp->ShowImGui();
             ImGui::TreePop();
         }
-        ImGui::Indent();
-        ImGui::Unindent();
         ImGui::PopID();
         id++;
     }

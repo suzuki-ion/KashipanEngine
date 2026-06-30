@@ -33,7 +33,8 @@ public:
             cachedParentVersion_ = 0;
             return true;
         }
-        auto *ownerObject = GetOwnerObject();
+        auto *objectCtx = GetOwnerObjectContext();
+        const auto *ownerObject = objectCtx ? objectCtx->GetOwner() : nullptr;
         if (parent == ownerObject) return false;
         for (auto *p = parent; p != nullptr; p = p->GetComponent<Transform>()->parentObject_) {
             if (p == ownerObject) return false;
@@ -54,9 +55,9 @@ public:
             cachedParentVersion_ = 0;
             return true;
         }
-        auto *ownerScene = GetOwnerScene();
-        if (!ownerScene) return false;
-        auto *parent = ownerScene->GetSceneObject(parentUUID);
+        auto *sceneCtx = GetOwnerSceneContext();
+        if (!sceneCtx) return false;
+        auto *parent = sceneCtx->GetSceneObject(parentUUID);
         if (!parent) return false;
         return SetParentObject(parent);
     }
@@ -149,7 +150,7 @@ public:
         // 自分のキャッシュがあること、かつ親がいる場合は親が計算済みで
         // 親のバージョンが子がキャッシュしたものと一致していることを要求する
         if (!isWorldMatrixCalculated_) return false;
-        auto *parentTransform = parentObject_ ? parentObject_->GetComponent3D<Transform3D>() : nullptr;
+        auto *parentTransform = parentObject_ ? parentObject_->GetComponent<Transform>() : nullptr;
         if (!parentTransform) return true;
         if (!parentTransform->IsWorldMatrixCalculated()) return false;
         return (cachedParentVersion_ == parentTransform->GetWorldMatrixVersion());
@@ -246,8 +247,8 @@ private:
 
     EmptyObject *TryGetParentObject() const {
         if (!parentObject_) return nullptr;
-        auto *ownerScene = GetOwnerScene();
-        auto *parentObj = ownerScene ? ownerScene->GetSceneObject(parentObject_) : nullptr;
+        auto *sceneCtx = GetOwnerSceneContext();
+        auto *parentObj = sceneCtx ? sceneCtx->GetSceneObject(parentObject_) : nullptr;
         return parentObj;
     }
 

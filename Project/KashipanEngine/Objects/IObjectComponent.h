@@ -24,6 +24,15 @@ class IObjectComponent {
     /// @brief コンポーネントの型ID設定用
     static inline size_t sComponentTypeID = 0;
 public:
+    /// @brief コンポーネントの型IDを取得
+    /// @tparam T コンポーネントの型
+    /// @return コンポーネントの型ID
+    template<typename T>
+    static size_t GetComponentTypeID() {
+        static size_t typeID = sComponentTypeID++;
+        return typeID;
+    }
+
     virtual ~IObjectComponent() = default;
     IObjectComponent(const IObjectComponent &) = delete;
     IObjectComponent &operator=(const IObjectComponent &) = delete;
@@ -65,14 +74,6 @@ public:
     bool LoadFromJsonInterface(Passkey<SceneBase>, const JSON &json) { return LoadFromJson(json); }
 
 protected:
-    /// @brief コンポーネントの型IDを取得（派生クラスで使用する想定）
-    /// @tparam T コンポーネントの型
-    /// @return コンポーネントの型ID
-    template<typename T>
-    static size_t GetComponentTypeID() {
-        static size_t typeID = sComponentTypeID++;
-        return typeID;
-    }
     IObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID)
         : kComponentType_(typeName), kMaxComponentCountPerObject_(maxCount), kComponentTypeID_(componentTypeID), updatePriority_(1) {}
 #define OBJECT_COMPONENT_CONSTRUCTOR(typeName, maxCount, initializeCode) \

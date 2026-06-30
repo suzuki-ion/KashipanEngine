@@ -10,10 +10,11 @@ class ObjectContext;
 class SceneContext;
 class SceneBase;
 
-/// @brief 3Dオブジェクト基底クラス
+/// @brief 空オブジェクトクラス
 class EmptyObject final {
     EmptyObject(SceneContext *ownerSceneContext, const std::string &name);
 public:
+    EmptyObject() = delete;
     EmptyObject(Passkey<SceneBase>, SceneContext *ownerSceneContext, const std::string &name = "EmptyObject")
         : EmptyObject(ownerSceneContext, name) {}
     ~EmptyObject() = default;
@@ -31,59 +32,11 @@ public:
     const std::string &GetName() const { return name_; }
 
     //==================================================
-    // コンポーネント追加系メソッド
-    //==================================================
-
-    /// @brief コンポーネントの追加（生成）
-    /// @tparam T コンポーネントの型（IObjectComponentを継承している必要あり）
-    /// @tparam Args コンポーネントのコンストラクタ引数の型
-    /// @param args コンポーネントのコンストラクタ引数
-    /// @return 追加に成功した場合は true
-    template<typename T, typename... Args>
-    bool AddComponent(Args&&... args) {
-        static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
-        try {
-            auto comp = std::make_unique<T>(std::forward<Args>(args)...);
-            return AddComponent(std::move(comp));
-        } catch (...) { return false; }
-    }
-    /// @brief 既存コンポーネントの追加
-    /// @param comp 既存コンポーネント（ムーブされる）
-    /// @return 追加に成功した場合は true
-    bool AddComponent(std::unique_ptr<IObjectComponent> comp);
-
-    //==================================================
-    // コンポーネント削除系メソッド
-    //==================================================
-
-    /// @brief 型から一致する指定インデックスのコンポーネントを削除
-    /// @tparam T コンポーネントの型
-    /// @param index 同型コンポーネントの何番目を削除するか (0: 最初)
-    /// @return 削除に成功した場合は true
-    template<typename T>
-    bool RemoveComponent(size_t index = 0) {
-        static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
-        size_t typeIndex = IObjectComponent::GetComponentTypeID<T>();
-        if (typeIndex >= componentsIndexByType_.size()) return false;
-        const auto &indices = componentsIndexByType_[typeIndex];
-        if (index >= indices.size()) return false;
-        size_t idx = indices[index];
-        if (idx < components_.size()) {
-            return RemoveComponent(components_[idx].get());
-        }
-        return false;
-    }
-    /// @brief ポインタからコンポーネントを削除
-    /// @param component 削除したいコンポーネントのポインタ
-    /// @return 削除に成功した場合は true
-    bool RemoveComponent(IObjectComponent *component);
-
-    //==================================================
     // コンポーネント取得系メソッド
     //==================================================
 
     /// @brief 型から一致するコンポーネント一覧を取得
-    /// @tparam T コンポーネントの型（例: Transform3D）
+    /// @tparam T コンポーネントの型
     /// @return 一致するコンポーネントのリスト（存在しない場合は空のリスト）
     template<typename T>
     std::vector<T *> GetComponents() const {
@@ -100,7 +53,7 @@ public:
         return result;
     }
     /// @brief 型から一致する最初のコンポーネントを取得
-    /// @tparam T 取得したいコンポーネント型（例: Transform3D）
+    /// @tparam T 取得したいコンポーネント型
     /// @return 一致するコンポーネント（存在しない場合は nullptr）
     template<typename T>
     T *GetComponent() const {
@@ -115,6 +68,11 @@ public:
         }
         return nullptr;
     }
+    /// @brief ポインタからコンポーネントを取得
+    /// @param component コンポーネントのポインタ
+    /// @return コンポーネント（存在しない場合は nullptr）
+    IObjectComponent *GetComponent(const IObjectComponent *component) const;
+
     /// @brief 型からコンポーネントの個数を確認
     /// @tparam T コンポーネントの型
     /// @return 一致するコンポーネントの個数
@@ -128,14 +86,77 @@ public:
     /// @brief ポインタからコンポーネントの個数を確認
     /// @param component コンポーネントのポインタ
     /// @return 一致するコンポーネントの個数
-    size_t HasComponent(IObjectComponent *component) const {
-        if (component == nullptr) return 0;
-        auto it = componentsIndexByPointer_.find(component);
-        if (it == componentsIndexByPointer_.end()) return 0;
-        return 1;
-    }
-    /// @brief 全コンポーネントの取得
+    size_t HasComponent(const IObjectComponent *component) const;
+
+    /// @brief 全コンポーネントの取得（コンポーネント本体と追加順のペアのリスト）
     const std::vector<std::pair<std::unique_ptr<IObjectComponent>, size_t>> &GetAllComponents() const { return components_; }
+
+    //==================================================
+    // コンポーネント追加系メソッド
+    //==================================================
+
+    /// @brief 既存コンポーネントの追加
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
+    IObjectComponent *AddComponent(std::unique_ptr<IObjectComponent> comp);
+    /// @brief 既存コンポーネントの追加
+    /// @tparam T コンポーネントの型
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
+    template<typename T>
+    T *AddComponent(std::unique_ptr<T> comp) {
+        static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
+        return static_cast<T *>(AddComponent(std::move(comp)));
+    }
+    /// @brief コンポーネントの追加（生成）
+    /// @tparam T コンポーネントの型
+    /// @tparam Args コンポーネントのコンストラクタ引数の型
+    /// @param args コンポーネントのコンストラクタ引数
+    /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
+    template<typename T, typename... Args>
+    T *AddComponent(Args&&... args) {
+        static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
+        try {
+            auto comp = std::make_unique<T>(std::forward<Args>(args)...);
+            return static_cast<T *>(AddComponent(std::move(comp)));
+        } catch (...) { return nullptr; }
+    }
+
+    //==================================================
+    // コンポーネント削除系メソッド
+    //==================================================
+
+    /// @brief ポインタからコンポーネントを削除
+    /// @param component 削除したいコンポーネントのポインタ
+    /// @return 削除に成功した場合は true
+    bool RemoveComponent(const IObjectComponent *component);
+    /// @brief 型から一致する最初のコンポーネントを削除
+    /// @tparam T 削除したいコンポーネントの型
+    /// @return 削除に成功した場合は true
+    template<typename T>
+    bool RemoveComponent() {
+        static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
+        T *comp = GetComponent<T>();
+        if (!comp) return false;
+        return RemoveComponent(comp);
+    }
+    /// @brief 型から一致する全てのコンポーネントを削除
+    /// @tparam T 削除したいコンポーネントの型
+    /// @return 削除に成功した場合は true
+    template <typename T>
+    bool RemoveComponents() {
+        static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
+        bool allRemoved = true;
+        while (true) {
+            T *comp = GetComponent<T>();
+            if (!comp) break;
+            if (!RemoveComponent(comp)) {
+                allRemoved = false;
+                break;
+            }
+        }
+        return allRemoved;
+    }
 
     /// @brief オブジェクトIDの設定
     void SetObjectID(const UUID128 &id) { objectID_ = id; }
@@ -154,20 +175,24 @@ public:
 private:
     friend class ObjectContext;
 
-    /// @brief コンポーネントのインデックステーブルの再作成
-    void RebuildComponentIndexTables();
-
     std::string name_ = "EmptyObject";
 
-    /// @brief コンポーネントのリスト（ペア: コンポーネント本体, コンポーネントの世代）
+    /// @brief コンポーネントのリスト（ペア: コンポーネント本体, コンポーネントが追加された順番）
     std::vector<std::pair<std::unique_ptr<IObjectComponent>, size_t>> components_;
     std::vector<std::vector<size_t>> componentsIndexByType_;
-    std::unordered_map<IObjectComponent *, size_t> componentsIndexByPointer_;
+    std::unordered_map<const IObjectComponent *, size_t> componentsIndexByPointer_;
     std::vector<size_t> componentsFreeIndices_;
+    size_t nextAddedID_ = 0;
+
+    struct UpdateComponentInfo {
+        size_t addedID;
+        int priority;
+        IObjectComponent *component;
+    };
+    std::vector<UpdateComponentInfo> updateComponents_;
 
     SceneContext *ownerSceneContext_ = nullptr;
     std::unique_ptr<ObjectContext> objectContext_;
-    std::unordered_map<std::string, std::any> objectProperties_;
     UUID128 objectID_ = UUID128(true);
     bool isSaveEnabled_ = true;
 

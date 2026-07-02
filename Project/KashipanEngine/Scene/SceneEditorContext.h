@@ -1,28 +1,23 @@
 #pragma once
-
-#include <any>
-#include <string>
-#include <type_traits>
-#include <vector>
-
+#ifdef USE_IMGUI
 #include "Scene/Scene.h"
 
 namespace KashipanEngine {
 
-/// @brief Scene コンテキスト
-class SceneContext final {
+/// @brief SceneEditor コンテキスト
+class SceneEditorContext final {
 public:
-    SceneContext() = delete;
-    SceneContext(Passkey<Scene>, Scene *owner) : owner_(owner) {}
-    ~SceneContext() = default;
+    SceneEditorContext() = delete;
+    SceneEditorContext(Passkey<Scene>, Scene *owner) : owner_(owner) {}
+    ~SceneEditorContext() = default;
 
-    SceneContext(const SceneContext &) = delete;
-    SceneContext &operator=(const SceneContext &) = delete;
-    SceneContext(SceneContext &&) = delete;
-    SceneContext &operator=(SceneContext &&) = delete;
+    SceneEditorContext(const SceneEditorContext &) = delete;
+    SceneEditorContext &operator=(const SceneEditorContext &) = delete;
+    SceneEditorContext(SceneEditorContext &&) = delete;
+    SceneEditorContext &operator=(SceneEditorContext &&) = delete;
 
     const std::string &GetName() const { return owner_->GetName(); }
-
+    void SetName(const std::string &name) { owner_->name_ = name; }
 
     //==================================================
     // シーン変数
@@ -237,3 +232,4 @@ private:
 };
 
 } // namespace KashipanEngine
+#endif // USE_IMGUI

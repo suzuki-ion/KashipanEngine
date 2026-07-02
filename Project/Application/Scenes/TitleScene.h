@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-class TitleScene final : public SceneBase {
+class TitleScene final : public Scene {
 public:
     TitleScene();
     ~TitleScene() override;

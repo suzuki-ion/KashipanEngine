@@ -137,7 +137,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     context_.sceneManager = sceneManager_.get();
     context_.inputCommand = inputCommand_.get();
 
-    SceneBase::SetEnginePointers(
+    Scene::SetEnginePointers(
         Passkey<GameEngine>{},
         audioManager_.get(),
         modelManager_.get(),

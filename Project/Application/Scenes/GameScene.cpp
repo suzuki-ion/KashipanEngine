@@ -10,7 +10,7 @@
 namespace KashipanEngine {
 
 GameScene::GameScene()
-    : SceneBase("GameScene") {}
+    : Scene("GameScene") {}
 
 void GameScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();

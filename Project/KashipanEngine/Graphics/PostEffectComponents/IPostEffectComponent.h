@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Graphics/Renderer.h"
+#include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
 
@@ -24,6 +25,8 @@ public:
     const std::string& GetComponentType() const { return kComponentType_; }
     /// @brief 1つの ScreenBuffer に登録可能な同じコンポーネントの最大数を取得
     size_t GetMaxComponentCountPerBuffer() const { return kMaxComponentCountPerBuffer_; }
+    bool IsActive() const noexcept { return isActive_; }
+    void SetActive(bool active) noexcept { isActive_ = active; }
 
     /// @brief 初期化処理（ScreenBuffer に登録された直後に呼ばれる想定）
     virtual std::optional<bool> Initialize() { return std::nullopt; }
@@ -33,6 +36,16 @@ public:
     /// @brief このコンポーネントが提供するポストエフェクトパス一覧を返す
     /// @details 返り値はフレーム毎に再構築してよい（軽量な前提）。
     virtual std::vector<PostEffectPass> BuildPostEffectPasses() const { return {}; }
+    JSON SaveToJsonInterface() const {
+        JSON json = SaveToJson();
+        json["type"] = GetComponentType();
+        json["isActive"] = isActive_;
+        return json;
+    }
+    bool LoadFromJsonInterface(const JSON &json) {
+        isActive_ = json.value("isActive", true);
+        return LoadFromJson(json);
+    }
 
 #if defined(USE_IMGUI)
     /// @brief ポストエフェクトのパラメータ表示/調整UI（Begin/Endは呼ばない）
@@ -66,6 +79,9 @@ protected:
         return cmd;
     }
 
+    virtual JSON SaveToJson() const { return JSON::object(); }
+    virtual bool LoadFromJson(const JSON &json) { (void)json; return true; }
+
 private:
     friend class ScreenBuffer;
 
@@ -78,6 +94,7 @@ private:
     const size_t kMaxComponentCountPerBuffer_ = 0xFF;
 
     ScreenBuffer* ownerBuffer_ = nullptr;
+    bool isActive_ = true;
 };
 
 } // namespace KashipanEngine

@@ -8,16 +8,16 @@ namespace KashipanEngine {
 
 class ObjectContext;
 class SceneContext;
-class SceneBase;
+class Scene;
 
 /// @brief 空オブジェクトクラス
 class EmptyObject final {
     EmptyObject(SceneContext *ownerSceneContext, const std::string &name);
 public:
     EmptyObject() = delete;
-    EmptyObject(Passkey<SceneBase>, SceneContext *ownerSceneContext, const std::string &name = "EmptyObject")
+    EmptyObject(Passkey<Scene>, SceneContext *ownerSceneContext, const std::string &name = "EmptyObject")
         : EmptyObject(ownerSceneContext, name) {}
-    ~EmptyObject() = default;
+    ~EmptyObject();
 
     EmptyObject(const EmptyObject &) = delete;
     EmptyObject &operator=(const EmptyObject &) = delete;
@@ -26,7 +26,9 @@ public:
 
     std::unique_ptr<EmptyObject> Clone() const;
 
-    void Update(Passkey<SceneBase>);
+    void InitializeInterface(Passkey<Scene>) { Initialize(); }
+    void FinalizeInterface(Passkey<Scene>) { Finalize(); }
+    void UpdateInterface(Passkey<Scene>) { Update(); }
 
     void SetName(const std::string &name) { name_ = name; }
     const std::string &GetName() const { return name_; }
@@ -157,6 +159,8 @@ public:
         }
         return allRemoved;
     }
+    /// @brief 全コンポーネントを削除
+    void ClearComponents();
 
     /// @brief オブジェクトIDの設定
     void SetObjectID(const UUID128 &id) { objectID_ = id; }
@@ -172,8 +176,22 @@ public:
     /// @brief オブジェクトのアクティブ状態取得
     bool IsActive() const { return isActive_; }
 
+    //==================================================
+    // JSON保存/読み込み系メソッド
+    //==================================================
+
+    /// @brief オブジェクト情報をjsonへ保存
+    JSON SaveToJson(Passkey<Scene>);
+    /// @brief オブジェクト情報をjsonから読み込み
+    bool LoadFromJson(Passkey<Scene>, const JSON &json);
+
 private:
     friend class ObjectContext;
+
+    void Initialize();
+    void Finalize();
+    void Update();
+    void RegenerateUpdateComponentsList();
 
     std::string name_ = "EmptyObject";
 

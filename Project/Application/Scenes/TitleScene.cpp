@@ -5,7 +5,7 @@
 namespace KashipanEngine {
 
 TitleScene::TitleScene()
-    : SceneBase("TitleScene") {}
+    : Scene("TitleScene") {}
 
 void TitleScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();

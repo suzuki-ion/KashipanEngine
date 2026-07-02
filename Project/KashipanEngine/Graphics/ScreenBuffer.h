@@ -14,6 +14,7 @@
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
 #include "Graphics/IShaderTexture.h"
+#include "Graphics/IRenderTarget.h"
 
 namespace KashipanEngine {
 
@@ -22,7 +23,7 @@ class DirectXCommon;
 class Window;
 
 /// @brief オフスクリーンレンダリング用スクリーンバッファ
-class ScreenBuffer final : public IShaderTexture {
+class ScreenBuffer final : public IShaderTexture, public IRenderTarget {
 public:
     /// @brief GameEngine から DirectXCommon を設定
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
@@ -74,6 +75,12 @@ public:
 
     std::uint32_t GetWidth() const noexcept override { return width_; }
     std::uint32_t GetHeight() const noexcept override { return height_; }
+    RenderTargetKind GetRenderTargetKind() const noexcept override { return RenderTargetKind::ScreenBuffer; }
+    std::string GetRenderTargetName() const override { return name_; }
+    std::uint32_t GetRenderTargetWidth() const noexcept override { return width_; }
+    std::uint32_t GetRenderTargetHeight() const noexcept override { return height_; }
+    bool IsRenderTargetAvailable() const noexcept override { return width_ > 0 && height_ > 0 && !IsPendingDestroy(const_cast<ScreenBuffer *>(this)); }
+    void SetRenderTargetName(const std::string &name) { name_ = name; }
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override;
 
@@ -86,6 +93,8 @@ public:
 
     /// @brief ポストエフェクトコンポーネント登録
     bool RegisterPostEffectComponent(std::unique_ptr<IPostEffectComponent> component);
+    bool RemovePostEffectComponent(const IPostEffectComponent *component);
+    void ClearPostEffectComponents();
 
     /// @brief 登録済みポストエフェクトコンポーネントを全て取得
     const std::vector<std::unique_ptr<IPostEffectComponent>> &GetPostEffectComponents() const { return postEffectComponents_; }
@@ -169,6 +178,7 @@ private:
 
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;
+    std::string name_;
 
     DXGI_FORMAT colorFormat_ = DXGI_FORMAT_UNKNOWN;
     DXGI_FORMAT depthFormat_ = DXGI_FORMAT_UNKNOWN;

@@ -8,6 +8,10 @@ EmptyObject::EmptyObject(SceneContext *ownerSceneContext, const std::string &nam
     name_ = name;
 }
 
+EmptyObject::~EmptyObject() {
+    ClearComponents();
+}
+
 std::unique_ptr<EmptyObject> EmptyObject::Clone() const {
     std::unique_ptr<EmptyObject> newObj = std::make_unique<EmptyObject>(ownerSceneContext_, name_);
     for (const auto &comp : components_) {
@@ -19,25 +23,6 @@ std::unique_ptr<EmptyObject> EmptyObject::Clone() const {
     newObj->SetActive(isActive_);
     newObj->SetSaveEnabled(isSaveEnabled_);
     return newObj;
-}
-
-void EmptyObject::Update(Passkey<SceneBase>) {
-    updateComponents_.clear();
-    updateComponents_.reserve(components_.size());
-    for (const auto &comp : components_) {
-        if (comp.first && comp.first->IsActive()) {
-            updateComponents_.push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first.get() });
-        }
-    }
-    // 優先度->追加順の昇順でソート
-    std::sort(updateComponents_.begin(), updateComponents_.end(),
-        [](const UpdateComponentInfo &a, const UpdateComponentInfo &b) {
-            if (a.priority != b.priority) return a.priority < b.priority;
-            return a.addedID < b.addedID;
-        });
-    for (const auto &info : updateComponents_) {
-        info.component->UpdateInterface(Passkey<EmptyObject>());
-    }
 }
 
 IObjectComponent *EmptyObject::GetComponent(const IObjectComponent *component) const {
@@ -72,12 +57,14 @@ IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> co
             components_[freeIndex].first = std::move(comp);
             components_[freeIndex].second = nextAddedID_++;
             componentsIndexByType_[typeIndex].push_back(freeIndex);
+            componentsIndexByPointer_[components_[freeIndex].first.get()] = freeIndex;
             components_[freeIndex].first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_);
             return components_[freeIndex].first.get();
         }
     }
     components_.push_back({ std::move(comp), nextAddedID_++ });
     componentsIndexByType_[typeIndex].push_back(components_.size() - 1);
+    componentsIndexByPointer_[components_.back().first.get()] = components_.size() - 1;
     components_.back().first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_);
     return components_.back().first.get();
 }
@@ -93,9 +80,94 @@ bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
     auto &indices = componentsIndexByType_[typeIndex];
     auto indexIt = std::find(indices.begin(), indices.end(), index);
     if (indexIt != indices.end()) indices.erase(indexIt);
+    componentsIndexByPointer_.erase(components_[index].first.get());
     componentsFreeIndices_.push_back(index);
     components_[index].first.reset();
     return true;
+}
+
+void EmptyObject::ClearComponents() {
+    Finalize();
+    for (auto &compPair : components_) {
+        compPair.first.reset();
+    }
+    components_.clear();
+    componentsIndexByType_.clear();
+    componentsIndexByPointer_.clear();
+    componentsFreeIndices_.clear();
+    nextAddedID_ = 0;
+}
+
+JSON EmptyObject::SaveToJson(Passkey<Scene>) {
+    JSON json = JSON::object();
+    if (!isSaveEnabled_) return json;
+    json["name"] = name_;
+    json["isActive"] = isActive_;
+    json["objectID"] = objectID_.ToString();
+    RegenerateUpdateComponentsList();
+    for (const auto &compPair : updateComponents_) {
+        if (!compPair.component) continue;
+        JSON compJson = compPair.component->SaveToJsonInterface(Passkey<EmptyObject>());
+        compJson["type"] = compPair.component->GetComponentType();
+        json["components"].push_back(compJson);
+    }
+    return json;
+}
+
+bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
+    name_ = json.value("name", "EmptyObject");
+    isActive_ = json.value("isActive", true);
+    objectID_ = UUID128(json.value("objectID", ""));
+    for (const auto &compJson : json.value("components", JSON::array())) {
+        std::string typeName = compJson.value("type", "");
+        if (typeName.empty()) continue;
+        auto comp = CreateObjectComponentByType(typeName);
+        if (!comp) continue;
+        if (!comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson)) continue;
+        AddComponent(std::move(comp));
+    }
+    return true;
+}
+
+void EmptyObject::Initialize() {
+    RegenerateUpdateComponentsList();
+    for (auto &compPair : updateComponents_) {
+        if (compPair.component) {
+            compPair.component->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_);
+        }
+    }
+}
+
+void EmptyObject::Finalize() {
+    RegenerateUpdateComponentsList();
+    for (auto &compPair : updateComponents_) {
+        if (compPair.component) {
+            compPair.component->FinalizeInterface(Passkey<EmptyObject>());
+        }
+    }
+}
+
+void EmptyObject::Update() {
+    RegenerateUpdateComponentsList();
+    for (const auto &info : updateComponents_) {
+        info.component->UpdateInterface(Passkey<EmptyObject>());
+    }
+}
+
+void EmptyObject::RegenerateUpdateComponentsList() {
+    updateComponents_.clear();
+    updateComponents_.reserve(components_.size());
+    for (const auto &comp : components_) {
+        if (comp.first && comp.first->IsActive()) {
+            updateComponents_.push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first.get() });
+        }
+    }
+    // 優先度->追加順の昇順でソート
+    std::sort(updateComponents_.begin(), updateComponents_.end(),
+        [](const UpdateComponentInfo &a, const UpdateComponentInfo &b) {
+            if (a.priority != b.priority) return a.priority < b.priority;
+            return a.addedID < b.addedID;
+        });
 }
 
 } // namespace KashipanEngine

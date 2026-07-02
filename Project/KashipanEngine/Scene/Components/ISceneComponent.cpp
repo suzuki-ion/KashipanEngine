@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-SceneBase *ISceneComponent::GetOwnerScene() const {
+Scene *ISceneComponent::GetOwnerScene() const {
     auto *ctx = GetOwnerContext();
     return ctx ? ctx->GetOwner() : nullptr;
 }

@@ -7,6 +7,7 @@
 #include "Utilities/Passkeys.h"
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/IShaderTexture.h"
+#include "Graphics/IRenderTarget.h"
 
 namespace KashipanEngine {
 
@@ -15,7 +16,7 @@ class DirectXCommon;
 class Renderer;
 
 /// @brief シャドウマップ生成用（深度のみ）オフスクリーンバッファ
-class ShadowMapBuffer final : public IShaderTexture {
+class ShadowMapBuffer final : public IShaderTexture, public IRenderTarget {
 public:
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon* dx) { sDirectXCommon_ = dx; }
 
@@ -47,6 +48,12 @@ public:
 
     std::uint32_t GetWidth() const noexcept override { return width_; }
     std::uint32_t GetHeight() const noexcept override { return height_; }
+    RenderTargetKind GetRenderTargetKind() const noexcept override { return RenderTargetKind::ShadowMapBuffer; }
+    std::string GetRenderTargetName() const override { return name_; }
+    std::uint32_t GetRenderTargetWidth() const noexcept override { return width_; }
+    std::uint32_t GetRenderTargetHeight() const noexcept override { return height_; }
+    bool IsRenderTargetAvailable() const noexcept override { return width_ > 0 && height_ > 0 && !IsPendingDestroy(const_cast<ShadowMapBuffer *>(this)); }
+    void SetRenderTargetName(const std::string &name) { name_ = name; }
 
     /// @brief シャドウマップ SRV
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override;
@@ -86,6 +93,7 @@ private:
 
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;
+    std::string name_;
 
     DXGI_FORMAT depthFormat_ = DXGI_FORMAT_UNKNOWN;
     DXGI_FORMAT srvFormat_ = DXGI_FORMAT_UNKNOWN;

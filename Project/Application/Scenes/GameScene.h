@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-class GameScene final : public SceneBase {
+class GameScene final : public Scene {
 public:
     GameScene();
     ~GameScene() override;

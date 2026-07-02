@@ -6,7 +6,7 @@
 namespace KashipanEngine {
 
 TestScene::TestScene()
-    : SceneBase("TestScene") {}
+    : Scene("TestScene") {}
 
 void TestScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();

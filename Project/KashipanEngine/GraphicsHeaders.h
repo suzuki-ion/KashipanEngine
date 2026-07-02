@@ -17,6 +17,7 @@
 #include "Graphics/PostEffectComponents/OutlineEffect.h"
 #include "Graphics/PostEffectComponents/DissolveEffect.h"
 #include "Graphics/IShaderTexture.h"
+#include "Graphics/IRenderTarget.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/DefineMaps.h"
 #include "Graphics/Pipeline/EnumMaps.h"

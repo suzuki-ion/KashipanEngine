@@ -6,7 +6,7 @@
 namespace KashipanEngine {
 
 CollisionTestScene::CollisionTestScene()
-    : SceneBase("CollisionTestScene") {}
+    : Scene("CollisionTestScene") {}
 
 void CollisionTestScene::Initialize() {
     sceneDefaultVariables_ = GetSceneComponent<SceneDefaultVariables>();

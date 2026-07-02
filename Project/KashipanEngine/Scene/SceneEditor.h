@@ -16,7 +16,7 @@ namespace KashipanEngine {
 
 class SceneEditor final {
 public:
-    SceneEditor(Passkey<SceneBase>, SceneEditorContext *context) {
+    SceneEditor(Passkey<Scene>, SceneContext *context) {
         context_ = context;
         objectHierarchy_ = std::make_unique<SceneObjectHierarchy>(Passkey<SceneEditor>{}, context_);
         objectInspector_ = std::make_unique<SceneObjectInspector>(Passkey<SceneEditor>{}, context_, objectHierarchy_.get());
@@ -29,7 +29,7 @@ public:
     }
 
 private:
-    SceneEditorContext *context_;
+    SceneContext *context_;
     std::unique_ptr<SceneObjectHierarchy> objectHierarchy_;
     std::unique_ptr<SceneObjectInspector> objectInspector_;
 };

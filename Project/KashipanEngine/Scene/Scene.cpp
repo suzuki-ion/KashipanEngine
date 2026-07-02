@@ -1,0 +1,341 @@
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
+#include "Scene/SceneContext.h"
+#ifdef USE_IMGUI
+#include "Scene/SceneEditorContext.h"
+#endif
+
+#include <algorithm>
+#include <cstring>
+
+namespace KashipanEngine {
+
+void Scene::SetEnginePointers(
+    Passkey<GameEngine>,
+    AudioManager *audioManager,
+    ModelManager *modelManager,
+    SkeletonManager *skeletonManager,
+    SamplerManager *samplerManager,
+    TextureManager *textureManager,
+    AnimationManager *animationManager,
+    Input *input,
+    InputCommand *inputCommand) {
+    sAudioManager = audioManager;
+    sModelManager = modelManager;
+    sSkeletonManager = skeletonManager;
+    sSamplerManager = samplerManager;
+    sTextureManager = textureManager;
+    sAnimationManager = animationManager;
+    sInput = input;
+    sInputCommand = inputCommand;
+}
+
+Scene::Scene(const std::string &sceneName)
+    : name_(sceneName) {
+    sceneContext_ = std::make_unique<SceneContext>(Passkey<Scene>{}, this);
+#ifdef USE_IMGUI
+    sceneEditorContext_ = std::make_unique<SceneEditorContext>(Passkey<Scene>{}, this);
+    sceneEditor_ = std::make_unique<SceneEditor>(Passkey<Scene>{}, sceneEditorContext_.get());
+#endif
+}
+
+Scene::Scene(const JSON &sceneData) : Scene(std::string("Unnamed Scene")) {
+    LoadFromJSON(sceneData);
+}
+
+Scene::~Scene() {
+    json sceneData = SaveToJSON();
+    std::string filePath = "Assets/KashipanEngine/LastSceneBackup/" + name_ + ".json";
+    SaveJSON(sceneData, filePath);
+    ClearSceneObjects();
+    ClearSceneComponents();
+}
+
+#ifdef USE_IMGUI
+void Scene::ShowImGui() {
+    if (sceneEditor_) {
+        sceneEditor_->ShowImGui();
+    }
+}
+#endif
+
+JSON Scene::SaveToJSON() const {
+    JSON json;
+    json["sceneName"] = name_;
+    json["sceneID"] = sceneID_.ToString();
+    for (const auto &compPair : components_) {
+        if (!compPair.first) continue;
+        JSON compJson;
+        compJson["componentType"] = compPair.first->GetComponentType();
+        compJson["data"] = compPair.first->SaveToJsonInterface(Passkey<Scene>{});
+        json["sceneComponents"].push_back(compJson);
+    }
+    for (const auto &obj : objects_) {
+        if (!obj) continue;
+        json["sceneObjects"].push_back(obj->SaveToJson(Passkey<Scene>{}));
+    }
+    for (const auto &varPair : sceneVariables_) {
+        JSON varJson;
+        varJson["key"] = varPair.first;
+        varJson["type"] = varPair.second.GetTypeInfo().ToString();
+        varJson["value"] = SaveAnyToJson(varPair.second);
+        json["sceneVariables"].push_back(varJson);
+    }
+    return json;
+}
+
+bool Scene::LoadFromJSON(const JSON &json) {
+    if (json.empty()) return false;
+    name_ = json.value("sceneName", "");
+    sceneID_ = UUID128(json.value("sceneID", ""));
+    // シーンコンポーネントを追加
+    for (const auto &compData : json.value("sceneComponents", std::vector<JSON>())) {
+        std::string compType = compData.value("componentType", "");
+        if (compType.empty()) continue;
+        auto comp = CreateSceneComponentByType(compType);
+        if (!comp) continue;
+        auto compJson = compData.value("data", JSON());
+        if (!compJson.is_object()) continue;
+        comp->LoadFromJsonInterface(Passkey<Scene>{}, compJson);
+        AddComponent(std::move(comp));
+    }
+    // オブジェクトを全て追加してからオブジェクトにコンポーネントを追加する
+    std::vector<EmptyObject *> createdObjects;
+    const auto &objects = json.value("sceneObjects", std::vector<JSON>());
+    for (const auto &objData : objects) {
+        std::string objName = objData.value("objectName", "");
+        if (objName.empty()) continue;
+        createdObjects.push_back(CreateEmptyObject(objName));
+    }
+    for (size_t i = 0; i < objects.size(); ++i) {
+        const auto &objData = objects[i];
+        EmptyObject *obj = createdObjects[i];
+        obj->LoadFromJson(Passkey<Scene>{}, objData);
+    }
+    // シーン変数を追加
+    for (const auto &varData : json.value("sceneVariables", std::vector<JSON>())) {
+        std::string key = varData.value("key", "");
+        if (key.empty()) continue;
+        std::string type = varData.value("type", "");
+        TypeInfo typeInfo = GetValueType(type);
+        MyAny value = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
+        AddSceneVariable(key, value, typeInfo);
+    }
+    return true;
+}
+
+MyAny *Scene::AddSceneVariable(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) {
+    sceneVariables_.emplace(key, MyAny(value, typeInfo));
+    return &sceneVariables_[key];
+}
+
+MyAny *Scene::GetSceneVariable(const std::string &key) {
+    auto it = sceneVariables_.find(key);
+    if (it != sceneVariables_.end()) {
+        return &(it->second);
+    }
+    return nullptr;
+}
+
+const TypeInfo &Scene::GetSceneVariableTypeInfo(const std::string &key) {
+    auto *var = GetSceneVariable(key);
+    if (var) {
+        return var->GetTypeInfo();
+    }
+    throw std::runtime_error("Scene variable not found");
+}
+
+const TypeInfo &Scene::GetGlobalSceneVariableTypeInfo(const std::string &key) {
+    auto *var = GetGlobalSceneVariableInternal(key);
+    if (var) {
+        return var->GetTypeInfo();
+    }
+    throw std::runtime_error("Scene variable not found");
+}
+
+EmptyObject *Scene::CreateEmptyObject(const std::string &name, size_t index) {
+    auto newObj = std::make_unique<EmptyObject>(Passkey<Scene>{}, sceneContext_.get(), name);
+    auto newObjPtr = newObj.get();
+    if (index >= objects_.size()) {
+        objects_.push_back(std::move(newObj));
+    } else {
+        objects_.insert(objects_.begin() + index, std::move(newObj));
+    }
+    objectsByUUID_[newObjPtr->GetObjectID()] = newObjPtr;
+    objectsExistingSet_.insert(newObjPtr);
+    objectsByName_[name].insert(newObjPtr);
+    return newObjPtr;
+}
+
+bool Scene::DeleteObject(EmptyObject *obj) {
+    if (!obj) return false;
+    auto it = std::find_if(objects_.begin(), objects_.end(),
+        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    if (it == objects_.end()) return false;
+    objects_.erase(it);
+    return true;
+}
+
+bool Scene::ReleaseObject(EmptyObject *obj) {
+    return false;
+}
+
+bool Scene::MoveObject(EmptyObject *obj, size_t newIndex) {
+    return false;
+}
+
+std::vector<EmptyObject *> Scene::GetSceneObjects(const std::string &objectName) const {
+    return std::vector<EmptyObject *>();
+}
+
+EmptyObject *Scene::GetSceneObject(const std::string &objectName) const {
+    return nullptr;
+}
+
+EmptyObject *Scene::GetSceneObject(EmptyObject *obj) const {
+    return nullptr;
+}
+
+EmptyObject *Scene::GetSceneObject(const UUID128 &uuid) const {
+    return nullptr;
+}
+
+void Scene::ClearSceneObjects() {
+    for (auto &obj : objects_) {
+        if (obj) {
+            obj.reset();
+        }
+    }
+    objects_.clear();
+    objectsByUUID_.clear();
+    objectsExistingSet_.clear();
+    objectsByName_.clear();
+}
+
+ISceneComponent *Scene::GetComponent(const ISceneComponent *component) const {
+    if (component == nullptr) return nullptr;
+    auto it = componentsIndexByPointer_.find(component);
+    if (it == componentsIndexByPointer_.end()) return nullptr;
+    size_t index = it->second;
+    if (index >= components_.size()) return nullptr;
+    return components_[index].first.get();
+}
+
+size_t Scene::HasComponent(const ISceneComponent *component) const {
+    if (component == nullptr) return 0;
+    auto it = componentsIndexByPointer_.find(component);
+    if (it == componentsIndexByPointer_.end()) return 0;
+    return 1;
+}
+
+ISceneComponent *Scene::AddComponent(std::unique_ptr<ISceneComponent> comp) {
+    if (!comp) return nullptr;
+    size_t typeIndex = comp->GetComponentTypeID();
+    if (typeIndex >= componentsIndexByType_.size()) {
+        componentsIndexByType_.resize(typeIndex + 1);
+    }
+    if (componentsIndexByType_[typeIndex].size() >= comp->GetMaxComponentCountPerObject()) {
+        return nullptr; // 同じ型のコンポーネントが最大数に達している場合は追加できない
+    }
+    if (componentsFreeIndices_.size() > 0) {
+        size_t freeIndex = componentsFreeIndices_.back();
+        componentsFreeIndices_.pop_back();
+        if (freeIndex < components_.size()) {
+            components_[freeIndex].first = std::move(comp);
+            components_[freeIndex].second = nextAddedComponentID_++;
+            componentsIndexByType_[typeIndex].push_back(freeIndex);
+            componentsIndexByPointer_[components_[freeIndex].first.get()] = freeIndex;
+            components_[freeIndex].first->InitializeInterface(Passkey<Scene>(), sceneContext_.get());
+            return components_[freeIndex].first.get();
+        }
+    }
+    components_.push_back({ std::move(comp), nextAddedComponentID_++ });
+    componentsIndexByType_[typeIndex].push_back(components_.size() - 1);
+    componentsIndexByPointer_[components_.back().first.get()] = components_.size() - 1;
+    components_.back().first->InitializeInterface(Passkey<Scene>(), sceneContext_.get());
+    return components_.back().first.get();
+}
+
+bool Scene::RemoveComponent(const ISceneComponent *component) {
+    if (component == nullptr) return false;
+    auto it = componentsIndexByPointer_.find(component);
+    if (it == componentsIndexByPointer_.end()) return false;
+    size_t index = it->second;
+    if (index >= components_.size()) return false;
+    components_[index].first->FinalizeInterface(Passkey<Scene>());
+    size_t typeIndex = components_[index].first->GetComponentTypeID();
+    auto &indices = componentsIndexByType_[typeIndex];
+    auto indexIt = std::find(indices.begin(), indices.end(), index);
+    if (indexIt != indices.end()) indices.erase(indexIt);
+    componentsIndexByPointer_.erase(components_[index].first.get());
+    componentsFreeIndices_.push_back(index);
+    components_[index].first.reset();
+    return true;
+}
+
+void Scene::ClearSceneComponents() {
+    for (auto &compPair : components_) {
+        if (compPair.first) {
+            compPair.first->FinalizeInterface(Passkey<Scene>());
+            compPair.first.reset();
+        }
+    }
+    components_.clear();
+    componentsIndexByType_.clear();
+    componentsIndexByPointer_.clear();
+    componentsFreeIndices_.clear();
+    nextAddedComponentID_ = 0;
+}
+
+bool Scene::ChangeToNextScene() {
+    if (sceneManager_ && !nextSceneName_.empty()) {
+        return sceneManager_->ChangeScene(nextSceneName_);
+    }
+    return false;
+}
+
+void Scene::UpdateComponents() {
+    updateComponents_.clear();
+    updateComponents_.reserve(components_.size());
+    for (const auto &comp : components_) {
+        if (comp.first && comp.first->IsActive()) {
+            updateComponents_.push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first.get() });
+        }
+    }
+    // 優先度->追加順の昇順でソート
+    std::sort(updateComponents_.begin(), updateComponents_.end(),
+        [](const UpdateComponentInfo &a, const UpdateComponentInfo &b) {
+            if (a.priority != b.priority) return a.priority < b.priority;
+            return a.addedID < b.addedID;
+        });
+    for (const auto &info : updateComponents_) {
+        info.component->UpdateInterface(Passkey<Scene>());
+    }
+}
+
+void Scene::RegenerateUpdateComponentsList() {}
+
+MyAny *Scene::AddGlobalSceneVariableInternal(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) {
+    if (!sceneManager_) return nullptr;
+    return sceneManager_->AddGlobalSceneVariable(key, value, typeInfo);
+}
+
+bool Scene::RemoveGlobalSceneVariableInternal(const std::string &key) {
+    if (!sceneManager_) return false;
+    return sceneManager_->RemoveGlobalSceneVariable(key);
+}
+
+MyAny *Scene::GetGlobalSceneVariableInternal(const std::string &key) {
+    if (!sceneManager_) return nullptr;
+    return sceneManager_->GetGlobalSceneVariable(key);
+}
+
+const std::unordered_map<std::string, MyAny> &Scene::GetGlobalSceneVariablesInternal() const {
+    if (!sceneManager_) {
+        static const std::unordered_map<std::string, MyAny> emptyMap;
+        return emptyMap;
+    }
+    return sceneManager_->GetGlobalSceneVariables();
+}
+
+} // namespace KashipanEngine

@@ -1,6 +1,6 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
-#include "Scene/SceneBase.h"
+#include "Scene/Scene.h"
 
 namespace KashipanEngine {
 
@@ -81,7 +81,7 @@ public:
     void SetRotate(const Vector3 &rotate) {
         if (rotate_ == rotate) return;
         rotate_ = rotate;
-        rotateQuat_ = EulerToQuaternion(rotate);
+        rotateQuat_ = Quaternion::MakeRotateEuler(rotate);
         isWorldMatrixCalculated_ = false;
     }
 
@@ -89,7 +89,7 @@ public:
     /// @param quat クォータニオン
     void SetRotateQuaternion(const Quaternion &quat) {
         rotateQuat_ = quat.Normalize();
-        rotate_ = QuaternionToEuler(rotateQuat_);
+        rotate_ = rotateQuat_.MakeEuler();
         isWorldMatrixCalculated_ = false;
     }
 
@@ -214,36 +214,7 @@ public:
     }
 
 private:
-    /// @brief オイラー角からクォータニオンへの変換（XYZ回転順）
-    static Quaternion EulerToQuaternion(const Vector3 &euler) {
-        Quaternion q;
-        Quaternion qx = q.MakeRotateAxisAngle(Vector3(1.0f, 0.0f, 0.0f), euler.x);
-        Quaternion qy = q.MakeRotateAxisAngle(Vector3(0.0f, 1.0f, 0.0f), euler.y);
-        Quaternion qz = q.MakeRotateAxisAngle(Vector3(0.0f, 0.0f, 1.0f), euler.z);
-        return (qx * qy * qz).Normalize();
-    }
 
-    /// @brief クォータニオンからオイラー角への変換（XYZ回転順）
-    static Vector3 QuaternionToEuler(const Quaternion &q) {
-        Matrix4x4 mat = q.MakeRotateMatrix();
-        float rotX, rotY, rotZ;
-
-        float sy = mat.m[0][2];
-        if (sy > 0.9999f) {
-            rotY = 3.14159265f * 0.5f;
-            rotX = std::atan2(mat.m[1][0], mat.m[1][1]);
-            rotZ = 0.0f;
-        } else if (sy < -0.9999f) {
-            rotY = -3.14159265f * 0.5f;
-            rotX = std::atan2(-mat.m[1][0], mat.m[1][1]);
-            rotZ = 0.0f;
-        } else {
-            rotY = std::asin(sy);
-            rotX = std::atan2(-mat.m[1][2], mat.m[2][2]);
-            rotZ = std::atan2(-mat.m[0][1], mat.m[0][0]);
-        }
-        return Vector3(rotX, rotY, rotZ);
-    }
 
     EmptyObject *TryGetParentObject() const {
         if (!parentObject_) return nullptr;

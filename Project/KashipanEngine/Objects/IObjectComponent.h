@@ -2,7 +2,6 @@
 #include <string>
 #include <memory>
 #include <cassert>
-#include <optional>
 #include <cstdint>
 #include "Utilities/FileIO.h"
 #include "ComponentSerialize/ComponentRegistry.h"
@@ -15,7 +14,6 @@
 namespace KashipanEngine {
 
 class EmptyObject;
-class SceneBase;
 class ObjectContext;
 class SceneContext;
 
@@ -68,10 +66,10 @@ public:
 
 #ifdef USE_IMGUI
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
-    void ShowImGuiInterface(Passkey<SceneBase>) { ShowImGui(); }
+    void ShowImGuiInterface(Passkey<EmptyObject>) { ShowImGui(); }
 #endif
-    JSON SaveToJsonInterface(Passkey<SceneBase>) const { return SaveToJson(); }
-    bool LoadFromJsonInterface(Passkey<SceneBase>, const JSON &json) { return LoadFromJson(json); }
+    JSON SaveToJsonInterface(Passkey<EmptyObject>) const { return SaveToJson(); }
+    bool LoadFromJsonInterface(Passkey<EmptyObject>, const JSON &json) { return LoadFromJson(json); }
 
 protected:
     IObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID)

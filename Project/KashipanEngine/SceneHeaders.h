@@ -6,6 +6,8 @@
 #include "Scene/Components/LightManager.h"
 #include "Scene/Components/SceneDefaultVariables.h"
 #include "Scene/Components/ScreenBufferKeepRatio.h"
+#include "Scene/Components/SceneRenderer.h"
+#include "Scene/Components/RenderTargetComponents.h"
 #include "Scene/Components/ShadowMapCameraSync.h"
 #include "Scene/Components/ParticleManager.h"
 #include "Scene/Components/ModelAnimator.h"

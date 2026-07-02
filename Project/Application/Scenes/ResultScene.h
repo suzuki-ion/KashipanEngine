@@ -3,7 +3,7 @@
 
 namespace KashipanEngine {
 
-class ResultScene final : public SceneBase {
+class ResultScene final : public Scene {
 public:
     ResultScene();
     ~ResultScene() override;

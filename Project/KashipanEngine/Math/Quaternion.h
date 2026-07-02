@@ -4,7 +4,7 @@
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 
-struct Quaternion {
+struct Quaternion final {
     static Quaternion Identity() noexcept {
         static Quaternion id(0.0f, 0.0f, 0.0f, 1.0f);
         return id;
@@ -145,13 +145,11 @@ struct Quaternion {
         }
         return Conjugate() / normSq;
     }
-
     Vector3 RotateVector(const Vector3 &vec) const noexcept {
         Quaternion vecQuat(vec.x, vec.y, vec.z, 0.0f);
         Quaternion resQuat = (*this) * vecQuat * Inverse();
         return Vector3(resQuat.x, resQuat.y, resQuat.z);
     }
-
     Matrix4x4 MakeRotateMatrix() const noexcept {
         Matrix4x4 mat;
         float xx = x * x;
@@ -180,6 +178,26 @@ struct Quaternion {
         mat.m[3][2] = 0.0f;
         mat.m[3][3] = 1.0f;
         return mat;
+    }
+    Vector3 MakeEuler() {
+        Matrix4x4 mat = MakeRotateMatrix();
+        float rotX, rotY, rotZ;
+
+        float sy = mat.m[0][2];
+        if (sy > 0.9999f) {
+            rotY = 3.14159265f * 0.5f;
+            rotX = std::atan2(mat.m[1][0], mat.m[1][1]);
+            rotZ = 0.0f;
+        } else if (sy < -0.9999f) {
+            rotY = -3.14159265f * 0.5f;
+            rotX = std::atan2(-mat.m[1][0], mat.m[1][1]);
+            rotZ = 0.0f;
+        } else {
+            rotY = std::asin(sy);
+            rotX = std::atan2(-mat.m[1][2], mat.m[2][2]);
+            rotZ = std::atan2(-mat.m[0][1], mat.m[0][0]);
+        }
+        return Vector3(rotX, rotY, rotZ);
     }
 
     float x;

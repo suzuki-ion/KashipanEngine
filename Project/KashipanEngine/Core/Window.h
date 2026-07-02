@@ -14,6 +14,7 @@
 #include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
+#include "Graphics/IRenderTarget.h"
 
 namespace KashipanEngine {
 
@@ -49,7 +50,7 @@ enum class SizeChangeMode {
 };
 
 /// @brief ウィンドウ用クラス
-class Window final {
+class Window final : public IRenderTarget {
     friend class IWindowEvent;
     static inline WindowsAPI *sWindowsAPI = nullptr;
     static inline DirectXCommon *sDirectXCommon = nullptr;
@@ -282,6 +283,11 @@ public:
     int32_t GetClientWidth() const noexcept { return size_.clientWidth; }
     /// @brief クライアント高さを取得する
     int32_t GetClientHeight() const noexcept { return size_.clientHeight; }
+    RenderTargetKind GetRenderTargetKind() const noexcept override { return RenderTargetKind::Window; }
+    std::string GetRenderTargetName() const override { return GetWindowTitle(); }
+    std::uint32_t GetRenderTargetWidth() const noexcept override { return static_cast<std::uint32_t>(GetClientWidth()); }
+    std::uint32_t GetRenderTargetHeight() const noexcept override { return static_cast<std::uint32_t>(GetClientHeight()); }
+    bool IsRenderTargetAvailable() const noexcept override { return !isPendingDestroy_ && descriptor_.hwnd != nullptr; }
     /// @brief アスペクト比を取得する
     float GetAspectRatio() const noexcept { return size_.aspectRatio; }
     /// @brief コマンドリストを取得する

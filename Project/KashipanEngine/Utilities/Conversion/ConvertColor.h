@@ -13,4 +13,4 @@ Vector4 ConvertColor(unsigned int color);
 /// @return 正規化されたRGBAの色
 Vector4 ConvertColor(const Vector4 &color);
 
-};
+} // namespace KashipanEngine

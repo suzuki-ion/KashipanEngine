@@ -41,6 +41,7 @@ const std::vector<PostEffectPass> &ScreenBuffer::BuildPostEffectPasses(Passkey<R
 
     for (const auto& c : postEffectComponents_) {
         if (!c) continue;
+        if (!c->IsActive()) continue;
         auto passes = c->BuildPostEffectPasses();
         if (passes.empty()) continue;
         for (auto& p : passes) {
@@ -399,6 +400,31 @@ bool ScreenBuffer::RegisterPostEffectComponent(std::unique_ptr<IPostEffectCompon
     cachedPostEffectPassesDirty_ = true;
 
     return true;
+}
+
+bool ScreenBuffer::RemovePostEffectComponent(const IPostEffectComponent *component) {
+    if (!component) return false;
+    auto it = std::find_if(postEffectComponents_.begin(), postEffectComponents_.end(),
+        [component](const std::unique_ptr<IPostEffectComponent> &c) { return c.get() == component; });
+    if (it == postEffectComponents_.end()) return false;
+    if (*it) {
+        (*it)->Finalize();
+    }
+    postEffectComponents_.erase(it);
+    cachedPostEffectPasses_.clear();
+    cachedPostEffectPassesDirty_ = true;
+    return true;
+}
+
+void ScreenBuffer::ClearPostEffectComponents() {
+    for (auto &component : postEffectComponents_) {
+        if (component) {
+            component->Finalize();
+        }
+    }
+    postEffectComponents_.clear();
+    cachedPostEffectPasses_.clear();
+    cachedPostEffectPassesDirty_ = true;
 }
 
 void ScreenBuffer::AttachToRenderer(const std::string& passName) {

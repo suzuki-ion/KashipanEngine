@@ -10,6 +10,15 @@ void ShaderVariableBinder::SetNameMap(const MyStd::NameMap<ShaderVariableBinding
 
 const MyStd::NameMap<ShaderVariableBinding>& ShaderVariableBinder::GetNameMap() const { return nameMap_; }
 
+const ShaderVariableBinding *ShaderVariableBinder::FindBinding(const std::string& nameKey) const {
+    return nameMap_.TryGet(nameKey);
+}
+
+const ShaderCompiler::ShaderVariable *ShaderVariableBinder::FindShaderVariable(const std::string& nameKey) const {
+    const auto *binding = FindBinding(nameKey);
+    return binding ? &binding->Variable() : nullptr;
+}
+
 static ShaderStage VisibilityToStage(D3D12_SHADER_VISIBILITY vis) {
     switch (vis) {
     case D3D12_SHADER_VISIBILITY_VERTEX: return ShaderStage::Vertex;
@@ -124,9 +133,7 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, D3D12_GPU_DESCRIPTOR
     if (it == locations_.end()) return false;
     const ShaderBindLocation& loc = it->second;
     if (!loc.isDescriptorTable) return false;
-    // バインドレスの場合は個別ではバインドできないので失敗とする
-    if (loc.isBindless) return false;
-
+    // メモ：バインドレスの場合でもバインドは可能だが、その場合はデスクリプタテーブルの先頭にバインドされる
     cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
     return true;
 }

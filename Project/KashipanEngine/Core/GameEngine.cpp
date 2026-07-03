@@ -5,12 +5,9 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
-#include "Objects/GameObjects/3D/Model.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
 #include "AppInitialize.h"
-
-#include "Scene/SceneBase.h"
 
 #include <cstdint>
 #include <algorithm>
@@ -119,8 +116,6 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     if (graphicsEngine_) {
         auto* renderer = graphicsEngine_->GetRenderer(Passkey<GameEngine>{});
         ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, renderer);
-        Object2DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
-        EmptyObject::SetRenderer(Passkey<GameEngine>{}, renderer);
     }
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
@@ -129,7 +124,6 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, "Assets");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, "Assets");
-    Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
 
@@ -210,8 +204,6 @@ GameEngine::~GameEngine() {
     textureManager_.reset();
 
     ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    Object2DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    EmptyObject::SetRenderer(Passkey<GameEngine>{}, nullptr);
 
     graphicsEngine_.reset();
     directXCommon_.reset();
@@ -252,17 +244,15 @@ void GameEngine::GameLoopUpdate() {
 #endif
 
     if (sceneManager_) {
-        if (auto *scene = sceneManager_->GetCurrentScene()) {
-            if (!isGameLoopPaused_ || isNextFrameRequested_) {
-                scene->Update();
-                if (isNextFrameRequested_) {
-                    isNextFrameRequested_ = false;
-                }
+        if (!isGameLoopPaused_ || isNextFrameRequested_) {
+            sceneManager_->Update(Passkey<GameEngine>{});
+            if (isNextFrameRequested_) {
+                isNextFrameRequested_ = false;
             }
-#if defined(USE_IMGUI)
-            scene->ShowImGui();
-#endif
         }
+#if defined(USE_IMGUI)
+        sceneManager_->ShowImGui(Passkey<GameEngine>{});
+#endif
     }
 
     if (!isGameLoopRunning_ || isGameLoopPaused_) {

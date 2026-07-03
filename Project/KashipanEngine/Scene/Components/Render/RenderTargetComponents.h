@@ -3,20 +3,20 @@
 #include <cstdint>
 #include <string>
 
+#include "Scene/Components/SceneComponentHeader.h"
 #include "Core/Window.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
-#include "Scene/Components/SceneComponentHeader.h"
 
 namespace KashipanEngine {
 
-class WindowComponent final : public ISceneComponent {
+class WindowListComponent final : public ISceneComponent {
 public:
-    SCENE_COMPONENT_CONSTRUCTOR(WindowComponent, 0xFF, )
-    ~WindowComponent() override = default;
+    SCENE_COMPONENT_CONSTRUCTOR(WindowListComponent, 0xFF, )
+    ~WindowListComponent() override = default;
 
     std::unique_ptr<ISceneComponent> Clone() const override {
-        auto ptr = std::make_unique<WindowComponent>();
+        auto ptr = std::make_unique<WindowListComponent>();
         ptr->title_ = title_;
         ptr->width_ = width_;
         ptr->height_ = height_;
@@ -85,12 +85,12 @@ private:
     WindowType windowType_ = WindowType::Normal;
 };
 
-class ScreenBufferComponent final : public ISceneComponent {
+class ScreenBufferComponent final : public IObjectComponent {
 public:
-    SCENE_COMPONENT_CONSTRUCTOR(ScreenBufferComponent, 0xFF, )
+    OBJECT_COMPONENT_CONSTRUCTOR(ScreenBufferComponent, 0xFF, )
     ~ScreenBufferComponent() override = default;
 
-    std::unique_ptr<ISceneComponent> Clone() const override {
+    std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<ScreenBufferComponent>();
         ptr->name_ = name_;
         ptr->width_ = width_;
@@ -101,6 +101,13 @@ public:
     }
 
     ScreenBuffer *GetScreenBuffer() const noexcept { return buffer_; }
+    const std::string &GetName() const noexcept { return name_; }
+    void SetName(const std::string &name) { name_ = name; }
+    void SetSize(std::uint32_t width, std::uint32_t height) { width_ = width; height_ = height; }
+    void SetAttachToRenderer(bool attach, const std::string &passName = "") {
+        attachToRenderer_ = attach;
+        passName_ = passName;
+    }
 
 protected:
     void Initialize() override {
@@ -109,7 +116,7 @@ protected:
         if (!buffer_) return;
         buffer_->SetRenderTargetName(name_);
         if (attachToRenderer_) {
-            buffer_->AttachToRenderer(passName_);
+            buffer_->AttachToRenderer(passName_.empty() ? name_ : passName_);
         }
     }
 
@@ -162,12 +169,12 @@ private:
     std::string passName_;
 };
 
-class ShadowMapBufferComponent final : public ISceneComponent {
+class ShadowMapBufferComponent final : public IObjectComponent {
 public:
-    SCENE_COMPONENT_CONSTRUCTOR(ShadowMapBufferComponent, 0xFF, )
+    OBJECT_COMPONENT_CONSTRUCTOR(ShadowMapBufferComponent, 0xFF, )
     ~ShadowMapBufferComponent() override = default;
 
-    std::unique_ptr<ISceneComponent> Clone() const override {
+    std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<ShadowMapBufferComponent>();
         ptr->name_ = name_;
         ptr->width_ = width_;
@@ -176,6 +183,9 @@ public:
     }
 
     ShadowMapBuffer *GetShadowMapBuffer() const noexcept { return buffer_; }
+    const std::string &GetName() const noexcept { return name_; }
+    void SetName(const std::string &name) { name_ = name; }
+    void SetSize(std::uint32_t width, std::uint32_t height) { width_ = width; height_ = height; }
 
 protected:
     void Initialize() override {
@@ -226,8 +236,8 @@ private:
     std::uint32_t height_ = 2048;
 };
 
-REGISTER_COMPONENT_SCENE(WindowComponent)
-REGISTER_COMPONENT_SCENE(ScreenBufferComponent)
-REGISTER_COMPONENT_SCENE(ShadowMapBufferComponent)
+REGISTER_COMPONENT_OBJECT(WindowComponent)
+REGISTER_COMPONENT_OBJECT(ScreenBufferComponent)
+REGISTER_COMPONENT_OBJECT(ShadowMapBufferComponent)
 
 } // namespace KashipanEngine

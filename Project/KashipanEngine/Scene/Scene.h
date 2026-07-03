@@ -10,9 +10,6 @@
 #include <unordered_set>
 #include <vector>
 
-#ifdef USE_IMGUI
-#include "Scene/SceneEditor.h"
-#endif
 #include "Objects/EmptyObject.h"
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/ISceneComponent.h"
@@ -26,6 +23,7 @@ namespace KashipanEngine {
 
 class SceneContext;
 #ifdef USE_IMGUI
+class SceneEditor;
 class SceneEditorContext;
 #endif
 
@@ -66,7 +64,7 @@ public:
     void UpdateInterface(Passkey<SceneManager>) { UpdateComponents(); OnUpdate(); }
 
 #if defined(USE_IMGUI)
-    void ShowImGui();
+    void ShowImGuiInterface(Passkey<SceneManager>);
 #endif
 
     /// @brief シーンの保存

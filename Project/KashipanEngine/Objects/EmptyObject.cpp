@@ -107,8 +107,9 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
     RegenerateUpdateComponentsList();
     for (const auto &compPair : updateComponents_) {
         if (!compPair.component) continue;
-        JSON compJson = compPair.component->SaveToJsonInterface(Passkey<EmptyObject>());
+        JSON compJson;
         compJson["type"] = compPair.component->GetComponentType();
+        compJson["data"] = compPair.component->SaveToJsonInterface(Passkey<EmptyObject>());
         json["components"].push_back(compJson);
     }
     return json;
@@ -118,13 +119,22 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     name_ = json.value("name", "EmptyObject");
     isActive_ = json.value("isActive", true);
     objectID_ = UUID128(json.value("objectID", ""));
-    for (const auto &compJson : json.value("components", JSON::array())) {
+    const auto &componentsJson = json.value("components", JSON::array());
+    std::vector<std::pair<IObjectComponent *, JSON>> loadedComponents;
+    // 先にコンポーネントを全て登録してからロードする
+    for (const auto &compJson : componentsJson) {
         std::string typeName = compJson.value("type", "");
         if (typeName.empty()) continue;
         auto comp = CreateObjectComponentByType(typeName);
+        loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson);
+    }
+    // 各コンポーネントにJSONデータをロードさせる
+    for (const auto &compPair : loadedComponents) {
+        IObjectComponent *comp = compPair.first;
+        const JSON &compJson = compPair.second;
         if (!comp) continue;
-        if (!comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson)) continue;
-        AddComponent(std::move(comp));
+        AddComponent(std::unique_ptr<IObjectComponent>(comp));
+        comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson);
     }
     return true;
 }

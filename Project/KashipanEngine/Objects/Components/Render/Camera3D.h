@@ -3,12 +3,12 @@
 
 namespace KashipanEngine {
 
-class Camera final : public IObjectComponent {
+class Camera3D final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(Camera, 1, )
-    ~Camera() override = default;
+    OBJECT_COMPONENT_CONSTRUCTOR(Camera3D, 1, )
+    ~Camera3D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<Camera>();
+        auto ptr = std::make_unique<Camera3D>();
         ptr->fovY_ = fovY_;
         ptr->nearClip_ = nearClip_;
         ptr->farClip_ = farClip_;
@@ -28,6 +28,6 @@ private:
     bool orthographic_ = false;
 };
 
-REGISTER_COMPONENT_OBJECT(Camera)
+REGISTER_COMPONENT_OBJECT(Camera3D)
 
 } // namespace KashipanEngine

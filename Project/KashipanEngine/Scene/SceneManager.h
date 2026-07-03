@@ -49,6 +49,10 @@ public:
 
     /// @brief シーンの更新処理
     void Update(Passkey<GameEngine>);
+#ifdef USE_IMGUI
+    /// @brief ImGuiの描画処理
+    void ShowImGui(Passkey<GameEngine>);
+#endif
 
     //==================================================
     // シーン切り替え系

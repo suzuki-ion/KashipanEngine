@@ -66,8 +66,18 @@ public:
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     void ShowImGuiInterface(Passkey<Scene>) { ShowImGui(); }
 #endif
-    JSON SaveToJsonInterface(Passkey<Scene>) const { return SaveToJson(); }
-    bool LoadFromJsonInterface(Passkey<Scene>, const JSON &json) { return LoadFromJson(json); }
+    JSON SaveToJsonInterface(Passkey<Scene>) const {
+        JSON json;
+        json["priority"] = updatePriority_;
+        json["isActive"] = isActive_;
+        json["data"] = SaveToJson();
+        return json;
+    }
+    bool LoadFromJsonInterface(Passkey<Scene>, const JSON &json) {
+        updatePriority_ = json.value("priority", 1);
+        isActive_ = json.value("isActive", true);
+        return LoadFromJson(json["data"]);
+    }
 
 protected:
     ISceneComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID)

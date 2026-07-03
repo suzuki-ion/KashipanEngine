@@ -13,7 +13,6 @@
 #include "Assets/SkeletonManager.h"
 #include "Assets/AudioManager.h"
 #include "Assets/AnimationManager.h"
-#include "Objects/Object2DBase.h"
 #include "Objects/EmptyObject.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"

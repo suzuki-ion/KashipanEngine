@@ -5,7 +5,7 @@
 #include <cstdint>
 #include "Utilities/FileIO.h"
 #include "ComponentSerialize/ComponentRegistry.h"
-
+#include "Utilities/MyAny.h"
 #if defined(USE_IMGUI)
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
@@ -22,6 +22,11 @@ class IObjectComponent {
     /// @brief コンポーネントの型ID設定用
     static inline size_t sComponentTypeID = 0;
 public:
+    /// @brief メンバー変数の情報（ImGuiなどからのアクセス用）
+    struct MemberVariable {
+        void *ptr = nullptr;
+        TypeInfo typeInfo;
+    };
     /// @brief コンポーネントの型IDを取得
     /// @tparam T コンポーネントの型
     /// @return コンポーネントの型ID
@@ -68,8 +73,18 @@ public:
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     void ShowImGuiInterface(Passkey<EmptyObject>) { ShowImGui(); }
 #endif
-    JSON SaveToJsonInterface(Passkey<EmptyObject>) const { return SaveToJson(); }
-    bool LoadFromJsonInterface(Passkey<EmptyObject>, const JSON &json) { return LoadFromJson(json); }
+    JSON SaveToJsonInterface(Passkey<EmptyObject>) const {
+        JSON json;
+        json["priority"] = updatePriority_;
+        json["isActive"] = isActive_;
+        json["customData"] = SaveToJson();
+        return json;
+    }
+    bool LoadFromJsonInterface(Passkey<EmptyObject>, const JSON &json) {
+        updatePriority_ = json.value("priority", 1);
+        isActive_ = json.value("isActive", true);
+        return LoadFromJson(json["customData"]);
+    }
 
 protected:
     IObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID)
@@ -107,6 +122,37 @@ protected:
     /// @brief 所属オブジェクトのシーンのコンテキストを取得
     SceneContext *GetOwnerSceneContext() const { return sceneContext_; }
 
+    /// @brief メンバー変数を追加する
+    /// @param key 変数のキー
+    /// @param variable メンバー変数の情報
+    void AddMemberVariable(const std::string &key, const MemberVariable &variable) {
+        memberVariables_[key] = variable;
+    }
+    /// @brief メンバー変数を追加する
+    /// @tparam T 変数の型
+    /// @param key 変数のキー
+    /// @param ptr 変数のポインタ
+    template <typename T>
+    void AddMemberVariable(const std::string &key, T *variable) {
+        memberVariables_[key] = { static_cast<void *>(variable), GetValueType<T>() };
+    }
+    /// @brief メンバ変数の取得
+    /// @param key 変数のキー
+    /// @return メンバー変数の情報（存在しない場合は nullptr）
+    MemberVariable *GetMemberVariable(const std::string &key) {
+        auto it = memberVariables_.find(key);
+        if (it != memberVariables_.end()) {
+            return &it->second;
+        }
+        return nullptr;
+    }
+    /// @brief 全てのメンバー変数の取得
+    /// @return メンバー変数のマップ
+    const std::unordered_map<std::string, MemberVariable> &GetAllMemberVariables() const {
+        return memberVariables_;
+    }
+#define ADD_MEMBER_VARIABLE(var) AddMemberVariable(#var, &var)
+
 private:
     /// @brief コンポーネントの種類名
     const std::string kComponentType_ = "IObjectComponent";
@@ -124,6 +170,9 @@ private:
     int updatePriority_ = 1;
     /// @brief アクティブ状態（falseの場合はUpdateが呼ばれない）
     bool isActive_ = true;
+
+    /// @brief メンバー変数のマップ（ImGuiなどからアクセスするための汎用的な変数格納用）
+    std::unordered_map<std::string, MemberVariable> memberVariables_;
 };
 
 } // namespace KashipanEngine

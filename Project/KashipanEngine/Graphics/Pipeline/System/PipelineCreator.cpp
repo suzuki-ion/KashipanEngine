@@ -345,6 +345,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
 
     outInfo.name = name;
     outInfo.type = PipelineType::Render;
+    outInfo.renderPriority = json.value("RenderPriority", json.value("Priority", 0));
     outInfo.topologyType = ToD3DTopology(psoDesc.PrimitiveTopologyType);
     outInfo.pipelineSet.rootSignature = rootSignature;
     outInfo.pipelineSet.pipelineState = pso;
@@ -451,6 +452,7 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
     }
     outInfo.name = name;
     outInfo.type = PipelineType::Compute;
+    outInfo.renderPriority = json.value("RenderPriority", json.value("Priority", 0));
     outInfo.topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     outInfo.pipelineSet.rootSignature = rootSignature;
     outInfo.pipelineSet.pipelineState = pso;
@@ -587,15 +589,59 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
         } else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ||
             param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV ||
             param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_UAV) {
-            outInfo.variableBinder.RegisterRootDescriptor({},
-                param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ? D3D_SIT_CBUFFER :
-                param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV ? D3D_SIT_TEXTURE :
-                D3D_SIT_UAV_RWTYPED,
-                param.Descriptor.ShaderRegister,
-                param.Descriptor.RegisterSpace,
-                static_cast<UINT>(i),
-                stage
-            );
+            if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV) {
+                outInfo.variableBinder.RegisterRootDescriptor({},
+                    D3D_SIT_CBUFFER,
+                    param.Descriptor.ShaderRegister,
+                    param.Descriptor.RegisterSpace,
+                    static_cast<UINT>(i),
+                    stage
+                );
+            } else if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV) {
+                outInfo.variableBinder.RegisterRootDescriptor({},
+                    D3D_SIT_TEXTURE,
+                    param.Descriptor.ShaderRegister,
+                    param.Descriptor.RegisterSpace,
+                    static_cast<UINT>(i),
+                    stage
+                );
+                outInfo.variableBinder.RegisterRootDescriptor({},
+                    D3D_SIT_STRUCTURED,
+                    param.Descriptor.ShaderRegister,
+                    param.Descriptor.RegisterSpace,
+                    static_cast<UINT>(i),
+                    stage
+                );
+                outInfo.variableBinder.RegisterRootDescriptor({},
+                    D3D_SIT_BYTEADDRESS,
+                    param.Descriptor.ShaderRegister,
+                    param.Descriptor.RegisterSpace,
+                    static_cast<UINT>(i),
+                    stage
+                );
+            } else {
+                outInfo.variableBinder.RegisterRootDescriptor({},
+                    D3D_SIT_UAV_RWTYPED,
+                    param.Descriptor.ShaderRegister,
+                    param.Descriptor.RegisterSpace,
+                    static_cast<UINT>(i),
+                    stage
+                );
+                outInfo.variableBinder.RegisterRootDescriptor({},
+                    D3D_SIT_UAV_RWSTRUCTURED,
+                    param.Descriptor.ShaderRegister,
+                    param.Descriptor.RegisterSpace,
+                    static_cast<UINT>(i),
+                    stage
+                );
+                outInfo.variableBinder.RegisterRootDescriptor({},
+                    D3D_SIT_UAV_RWBYTEADDRESS,
+                    param.Descriptor.ShaderRegister,
+                    param.Descriptor.RegisterSpace,
+                    static_cast<UINT>(i),
+                    stage
+                );
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ enum class ShaderStage : UINT {
 /// @brief シェーダー変数バインディング情報構造体
 struct ShaderVariableBinding {
     const std::string &Name() const { return name; }
+    const ShaderCompiler::ShaderVariable &Variable() const { return variable; }
     D3D_SHADER_INPUT_TYPE Type() const { return type; }
     UINT BindPoint() const { return bindPoint; }
     UINT BindCount() const { return bindCount; }
@@ -36,6 +37,7 @@ struct ShaderVariableBinding {
 private:
     friend inline MyStd::NameMap<ShaderVariableBinding> CreateShaderVariableMap(const ShaderCompiler::ShaderCompiledInfo &compiled, bool appendSpace);
     std::string name;
+    ShaderCompiler::ShaderVariable variable;
     D3D_SHADER_INPUT_TYPE type{};
     UINT bindPoint = 0;
     UINT bindCount = 0;
@@ -51,6 +53,11 @@ inline MyStd::NameMap<ShaderVariableBinding> CreateShaderVariableMap(const Shade
         const auto &rb = kv.second;
         ShaderVariableBinding binding{};
         binding.name      = rb.Name();
+        const auto variableIt = refl.ShaderVariables().find(rb.Name());
+        if (variableIt != refl.ShaderVariables().end()) {
+            const auto *variable = &variableIt->second;
+            binding.variable = *variable;
+        }
         binding.type      = rb.Type();
         binding.bindPoint = rb.BindPoint();
         binding.bindCount = rb.BindCount();
@@ -97,6 +104,8 @@ public:
     void SetCommandList(ID3D12GraphicsCommandList* cmd);
     void SetNameMap(const MyStd::NameMap<ShaderVariableBinding>& nameMap);
     const MyStd::NameMap<ShaderVariableBinding>& GetNameMap() const;
+    const ShaderVariableBinding *FindBinding(const std::string& nameKey) const;
+    const ShaderCompiler::ShaderVariable *FindShaderVariable(const std::string& nameKey) const;
 
     /// @brief デスクリプタテーブル範囲を登録（PipelineCreator専用）
     /// @param type デスクリプタタイプ

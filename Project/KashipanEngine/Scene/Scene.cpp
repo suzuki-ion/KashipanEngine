@@ -2,6 +2,7 @@
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
 #ifdef USE_IMGUI
+#include "Scene/SceneEditor.h"
 #include "Scene/SceneEditorContext.h"
 #endif
 
@@ -52,7 +53,7 @@ Scene::~Scene() {
 }
 
 #ifdef USE_IMGUI
-void Scene::ShowImGui() {
+void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
     if (sceneEditor_) {
         sceneEditor_->ShowImGui();
     }
@@ -66,7 +67,7 @@ JSON Scene::SaveToJSON() const {
     for (const auto &compPair : components_) {
         if (!compPair.first) continue;
         JSON compJson;
-        compJson["componentType"] = compPair.first->GetComponentType();
+        compJson["type"] = compPair.first->GetComponentType();
         compJson["data"] = compPair.first->SaveToJsonInterface(Passkey<Scene>{});
         json["sceneComponents"].push_back(compJson);
     }
@@ -89,15 +90,15 @@ bool Scene::LoadFromJSON(const JSON &json) {
     name_ = json.value("sceneName", "");
     sceneID_ = UUID128(json.value("sceneID", ""));
     // シーンコンポーネントを追加
+    std::vector<std::pair<ISceneComponent *, JSON>> loadedComponents;
+    // 先にコンポーネントを全て登録してからロードする
     for (const auto &compData : json.value("sceneComponents", std::vector<JSON>())) {
-        std::string compType = compData.value("componentType", "");
+        std::string compType = compData.value("type", "");
         if (compType.empty()) continue;
         auto comp = CreateSceneComponentByType(compType);
         if (!comp) continue;
         auto compJson = compData.value("data", JSON());
-        if (!compJson.is_object()) continue;
-        comp->LoadFromJsonInterface(Passkey<Scene>{}, compJson);
-        AddComponent(std::move(comp));
+        loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson);
     }
     // オブジェクトを全て追加してからオブジェクトにコンポーネントを追加する
     std::vector<EmptyObject *> createdObjects;

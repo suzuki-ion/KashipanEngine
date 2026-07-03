@@ -30,6 +30,7 @@ public:
 
     /// @brief パイプライン情報の取得
     const PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }
+    const PipelineInfo &GetPipeline(const std::string &pipelineName) const { return pipelineInfos_.at(pipelineName); }
     /// @brief パイプラインの存在確認
     bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
 

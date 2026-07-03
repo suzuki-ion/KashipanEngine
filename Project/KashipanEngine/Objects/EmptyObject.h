@@ -185,6 +185,15 @@ public:
     /// @brief オブジェクト情報をjsonから読み込み
     bool LoadFromJson(Passkey<Scene>, const JSON &json);
 
+#if defined(USE_IMGUI)
+    /// @brief 所有コンポーネントの ImGui 表示（ウィンドウの Begin/End は呼ばない）
+    void ShowComponentImGui(IObjectComponent *component) {
+        if (GetComponent(component)) {
+            component->ShowImGuiInterface(Passkey<EmptyObject>{});
+        }
+    }
+#endif
+
 private:
     friend class ObjectContext;
 

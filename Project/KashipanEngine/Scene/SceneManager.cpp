@@ -28,6 +28,12 @@ void SceneManager::Update(Passkey<GameEngine>) {
     }
 }
 
+void SceneManager::ShowImGui(Passkey<GameEngine>) {
+    if (currentScene_) {
+        currentScene_->ShowImGuiInterface(Passkey<SceneManager>());
+    }
+}
+
 bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     if (!hasPendingSceneChange_) return false;
     hasPendingSceneChange_ = false;

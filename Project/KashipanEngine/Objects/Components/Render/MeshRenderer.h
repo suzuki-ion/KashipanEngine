@@ -1,6 +1,7 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Graphics/IRenderTarget.h"
+#include "Graphics/MaterialManager.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/SceneRenderer.h"
@@ -18,6 +19,7 @@ public:
         ptr->targetName_ = targetName_;
         ptr->pipelineName_ = pipelineName_;
         ptr->materialName_ = materialName_;
+        ptr->materialHandle_ = materialHandle_;
         return ptr;
     }
 
@@ -31,11 +33,13 @@ public:
     }
     void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
     void SetMaterialName(const std::string &materialName) { materialName_ = materialName; }
+    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandle_ = materialHandle; }
 
     RenderTargetKind GetTargetKind() const noexcept { return targetKind_; }
     const std::string &GetTargetName() const noexcept { return targetName_; }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
     const std::string &GetMaterialName() const noexcept { return materialName_; }
+    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept { return materialHandle_; }
 
 protected:
     void Update() override {
@@ -60,7 +64,7 @@ protected:
             SceneRenderer::TargetKey{ targetKind_, targetName_ },
             SceneRenderer::PipelineKey{ pipelineName_ },
             SceneRenderer::MeshKey{ meshFilter->GetMeshHandle() },
-            SceneRenderer::MaterialKey{ materialName_ },
+            SceneRenderer::MaterialKey{ materialName_, materialHandle_ },
             world);
     }
 
@@ -74,6 +78,10 @@ protected:
         ImGui::InputText("TargetName", &targetName_);
         ImGui::InputText("Pipeline", &pipelineName_);
         ImGui::InputText("Material", &materialName_);
+        int materialHandle = static_cast<int>(materialHandle_);
+        if (ImGui::InputInt("MaterialHandle", &materialHandle)) {
+            materialHandle_ = materialHandle <= 0 ? MaterialManager::kInvalidHandle : static_cast<MaterialManager::MaterialHandle>(materialHandle);
+        }
     }
 #endif
 
@@ -83,6 +91,7 @@ protected:
         json["targetName"] = targetName_;
         json["pipelineName"] = pipelineName_;
         json["materialName"] = materialName_;
+        json["materialHandle"] = materialHandle_;
         return json;
     }
 
@@ -91,6 +100,7 @@ protected:
         targetName_ = json.value("targetName", std::string{});
         pipelineName_ = json.value("pipelineName", std::string{ "Object3D.Solid.BlendNormal" });
         materialName_ = json.value("materialName", std::string{ "Default" });
+        materialHandle_ = json.value("materialHandle", MaterialManager::kInvalidHandle);
         return true;
     }
 
@@ -99,6 +109,7 @@ private:
     std::string targetName_;
     std::string pipelineName_ = "Object3D.Solid.BlendNormal";
     std::string materialName_ = "Default";
+    MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
 };
 
 REGISTER_COMPONENT_OBJECT(MeshRenderer)

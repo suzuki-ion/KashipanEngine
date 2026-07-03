@@ -15,6 +15,7 @@
 #include "Core/WindowsAPI/WindowSize.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
 #include "Graphics/IRenderTarget.h"
+#include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
 
@@ -26,9 +27,6 @@ class GraphicsEngine;
 class PipelineManager;
 class Renderer;
 class ImGuiManager;
-class Object2DBase;
-class EmptyObject;
-class ScreenBuffer;
 
 /// @brief ウィンドウの種類
 enum class WindowType {

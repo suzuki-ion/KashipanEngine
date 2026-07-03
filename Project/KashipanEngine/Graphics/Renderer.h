@@ -30,45 +30,6 @@ class ScreenBuffer;
 class ShadowMapBuffer;
 class IPostEffectComponent;
 
-/// @brief オブジェクト種別
-enum class ObjectType {
-    GameObject,
-    SystemObject,
-};
-
-/// @brief 描画方式
-enum class RenderType {
-    Standard,   //< 個別に描画
-    Instancing, //< 同一オブジェクトをまとめて描画
-};
-
-/// @brief 描画次元
-enum class RenderDimension {
-    D2,
-    D3,
-};
-
-/// @brief 描画指示用構造体
-struct RenderCommand final {
-    RenderCommand(const RenderCommand &) = default;
-    RenderCommand &operator=(const RenderCommand &) = default;
-    RenderCommand(RenderCommand &&) = default;
-    RenderCommand &operator=(RenderCommand &&) = default;
-private:
-    friend class Renderer;
-    friend class Object2DBase;
-    friend class EmptyObject;
-    friend class IPostEffectComponent;
-    RenderCommand() = default;
-    UINT vertexCount = 0;           //< 頂点数
-    UINT indexCount = 0;            //< インデックス数
-    UINT instanceCount = 1;         //< インスタンス数
-    UINT startVertexLocation = 0;   //< 開始頂点位置
-    UINT startIndexLocation = 0;    //< 開始インデックス位置
-    INT baseVertexLocation = 0;     //< ベース頂点位置
-    UINT startInstanceLocation = 0; //< 開始インスタンス位置
-};
-
 /// @brief 描画パス情報構造体
 struct RenderPass final {
 public:

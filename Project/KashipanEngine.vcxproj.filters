@@ -467,6 +467,21 @@
     <ClInclude Include="KashipanEngine\Objects\Components\ICollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\RigidBody2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\MeshFilter.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Renderer\RenderBufferContainer.h" />
+    <ClInclude Include="KashipanEngine\Graphics\MaterialManager.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\CapsuleCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\ICollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\RigidBody2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\RigidBody3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\SphereCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera2D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\Light.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Render\LightManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Render\RenderTargetComponents.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Render\SceneRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

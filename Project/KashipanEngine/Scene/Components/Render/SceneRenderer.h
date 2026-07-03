@@ -6,6 +6,7 @@
 
 #include "Assets/ModelManager.h"
 #include "Graphics/IRenderTarget.h"
+#include "Graphics/MaterialManager.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/SceneComponentHeader.h"
 
@@ -17,7 +18,11 @@ class SceneRenderer final : public ISceneComponent {
 public:
     struct MaterialKey {
         std::string name;
-        bool operator<(const MaterialKey &other) const noexcept { return name < other.name; }
+        MaterialManager::MaterialHandle handle = MaterialManager::kInvalidHandle;
+        bool operator<(const MaterialKey &other) const noexcept {
+            if (handle != other.handle) return handle < other.handle;
+            return name < other.name;
+        }
     };
     struct MeshKey {
         ModelManager::ModelHandle handle = ModelManager::kInvalidHandle;

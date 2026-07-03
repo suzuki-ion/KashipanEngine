@@ -6,11 +6,8 @@ namespace KashipanEngine {
 void SceneObjectInspector::ShowImGui() {
     ImGui::Begin("Scene Object Inspector");
     if (objectHierarchy_) {
-        Object2DBase *selectedObject2D = objectHierarchy_->GetSelectedObject2D();
         EmptyObject *selectedObject = objectHierarchy_->GetSelectedObject();
-        if (selectedObject2D) {
-            ShowObject2DInspector(selectedObject2D);
-        } else if (selectedObject) {
+        if (selectedObject) {
             ShowObjectInspector(selectedObject);
         } else {
             ImGui::Text("No object selected.");
@@ -21,102 +18,62 @@ void SceneObjectInspector::ShowImGui() {
     ImGui::End();
 }
 
-void SceneObjectInspector::ShowObject2DInspector(Object2DBase *obj) {
-    ImGui::Text("Object2D Inspector");
+void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
+    ImGui::Text("Object Inspector");
     ImGui::Separator();
+
+    std::string name = obj->GetName();
+    if (ImGui::InputText("Name", &name)) {
+        obj->SetName(name);
+    }
+
+    bool active = obj->IsActive();
+    if (ImGui::Checkbox("Active", &active)) {
+        obj->SetActive(active);
+    }
+
+    IObjectComponent *componentToRemove = nullptr;
     int id = 0;
-    IObjectComponent2D *componentToRemove = nullptr; // 削除するコンポーネントを保持する変数
-    for (const auto &comp : obj->GetAllComponents2D()) {
+    for (const auto &entry : obj->GetAllComponents()) {
+        const auto &comp = entry.first;
+        if (!comp) continue;
+
         ImGui::PushID(id);
         ImGui::Separator();
-        // 開閉可能なツリー構造でコンポーネントを表示
+        bool componentActive = comp->IsActive();
+        if (ImGui::Checkbox("##Active", &componentActive)) {
+            comp->SetActive(componentActive);
+        }
+        ImGui::SameLine();
         if (ImGui::TreeNode(comp->GetComponentType().c_str())) {
-            // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
-            if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
+            if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
                 if (ImGui::MenuItem("Remove Component")) {
                     componentToRemove = comp.get();
                 }
                 ImGui::EndPopup();
             }
-            comp->ShowImGui();
+            obj->ShowComponentImGui(comp.get());
             ImGui::TreePop();
         }
-        ImGui::Indent();
-        ImGui::Unindent();
         ImGui::PopID();
-        id++;
+        ++id;
     }
 
-    // 削除するコンポーネントがあれば削除する
     if (componentToRemove) {
-        obj->RemoveComponent2D(componentToRemove);
+        obj->RemoveComponent(componentToRemove);
     }
 
-    // 追加可能なコンポーネントのリストを表示
     ImGui::Separator();
     if (ImGui::Button("Add Component")) {
         ImGui::OpenPopup("AddComponentPopup");
     }
 
     if (ImGui::BeginPopup("AddComponentPopup")) {
-        for (const auto &compType : GetRegisteredObject2DComponentTypes()) {
-            if (ImGui::MenuItem(compType.c_str())) {
-                // コンポーネントを追加する処理
-                auto newComp = CreateObject2DComponentByType(compType);
-                if (newComp) {
-                    obj->RegisterComponent(std::move(newComp));
-                }
-            }
-        }
-        ImGui::EndPopup();
-    }
-}
-
-void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
-    ImGui::Text("Object Inspector");
-    ImGui::Separator();
-    ImGui::Text("Name: %s", obj->GetName().c_str());
-    int id = 0;
-    IObjectComponent *componentToRemove = nullptr; // 削除するコンポーネントを保持する変数
-    for (const auto &comp : obj->GetAllComponents3D()) {
-        ImGui::PushID(id);
-        ImGui::Separator();
-        // 開閉可能なツリー構造でコンポーネントを表示
-        if (ImGui::TreeNode(comp->GetComponentType().c_str())) {
-            // 一番初めのコンポーネントでなければ右クリックでコンテキストメニューを表示
-            if (id > 0 && ImGui::BeginPopupContextItem("ComponentContextMenu")) {
-                if (ImGui::MenuItem("Remove Component")) {
-                    componentToRemove = comp.get();
-                }
-                ImGui::EndPopup();
-            }
-            comp->ShowImGui();
-            ImGui::TreePop();
-        }
-        ImGui::Indent();
-        ImGui::Unindent();
-        ImGui::PopID();
-        id++;
-    }
-
-    // 削除するコンポーネントがあれば削除する
-    if (componentToRemove) {
-        obj->RemoveComponent3D(componentToRemove);
-    }
-
-    // 追加可能なコンポーネントのリストを表示
-    ImGui::Separator();
-    if (ImGui::Button("Add Component")) {
-        ImGui::OpenPopup("AddComponentPopup3D");
-    }
-
-    if (ImGui::BeginPopup("AddComponentPopup3D")) {
         for (const auto &compType : GetRegisteredObjectComponentTypes()) {
             if (ImGui::MenuItem(compType.c_str())) {
-                // コンポーネントを追加する処理
                 auto newComp = CreateObjectComponentByType(compType);
                 if (newComp) {
-                    obj->RegisterComponent(std::move(newComp));
+                    obj->AddComponent(std::move(newComp));
                 }
             }
         }

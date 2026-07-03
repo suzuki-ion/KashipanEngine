@@ -1,7 +1,8 @@
 #pragma once
 #ifdef USE_IMGUI
 #include <imgui.h>
-#include "Scene/Editor/SceneEditorContext.h"
+#include "Utilities/ImGuiCustom.h"
+#include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
 
 namespace KashipanEngine {
@@ -17,7 +18,6 @@ public:
     void ShowImGui();
 
 private:
-    void ShowObject2DInspector(Object2DBase *obj);
     void ShowObjectInspector(EmptyObject *obj);
 
     SceneEditorContext *context_ = nullptr;

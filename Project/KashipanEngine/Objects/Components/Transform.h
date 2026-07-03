@@ -6,7 +6,12 @@ namespace KashipanEngine {
 
 class Transform : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(Transform, 1);
+    OBJECT_COMPONENT_CONSTRUCTOR(Transform, 1,
+        ADD_MEMBER_VARIABLE(translate_);
+        ADD_MEMBER_VARIABLE(rotate_);
+        ADD_MEMBER_VARIABLE(scale_);
+        ADD_MEMBER_VARIABLE(worldMatrix_);
+    )
     ~Transform() override = default;
 
     /// @brief コンポーネントのクローンを作成

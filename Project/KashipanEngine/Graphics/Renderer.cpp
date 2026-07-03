@@ -7,6 +7,7 @@
 #include "Graphics/PostEffectComponents/IPostEffectComponent.h"
 #include <unordered_map>
 #include <chrono>
+#include <algorithm>
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -287,10 +288,17 @@ void Renderer::RenderScreenPasses() {
 
         auto *buffer = passInfo->screenBuffer;
 
-        const auto &effectPasses = buffer->BuildPostEffectPasses(Passkey<Renderer>{});
+        auto effectPasses = buffer->BuildPostEffectPasses(Passkey<Renderer>{});
         if (effectPasses.empty()) {
             continue;
         }
+        std::stable_sort(effectPasses.begin(), effectPasses.end(), [this](const PostEffectPass &a, const PostEffectPass &b) {
+            const auto priorityOf = [this](const std::string &pipelineName) -> std::int32_t {
+                if (!pipelineManager_ || !pipelineManager_->HasPipeline(pipelineName)) return 0;
+                return pipelineManager_->GetPipeline(pipelineName).RenderPriority();
+            };
+            return priorityOf(a.pipelineName) < priorityOf(b.pipelineName);
+        });
 
         const void *targetKey = static_cast<const void *>(buffer);
 
@@ -439,6 +447,14 @@ void Renderer::RenderScreenPasses() {
 void Renderer::Render2DStandard(std::vector<const RenderPass *> renderPasses,
      std::function<void *(const RenderPass *)> getTargetKeyFunc) {
     RendererCpuTimerScope tTotal(*this, CpuTimerStats::Scope::Standard_Total);
+    std::stable_sort(renderPasses.begin(), renderPasses.end(), [this](const RenderPass *a, const RenderPass *b) {
+        const auto priorityOf = [this](const RenderPass *pass) -> std::int32_t {
+            if (!pass || !pipelineManager_ || !pipelineManager_->HasPipeline(pass->pipelineName)) return 0;
+            return pipelineManager_->GetPipeline(pass->pipelineName).RenderPriority();
+        };
+        return priorityOf(a) < priorityOf(b);
+    });
+
     for (const auto *passInfo : renderPasses) {
         if (!passInfo) continue;
 
@@ -628,7 +644,16 @@ void Renderer::Render2DInstancing(std::unordered_map<BatchKey, std::vector<const
      std::function<void *(const RenderPass *)> /*getTargetKeyFunc*/) {
     RendererCpuTimerScope tTotal(*this, CpuTimerStats::Scope::Instancing_Total);
 
-    for (const auto &key : batchOrder) {
+    std::vector<BatchKey> sortedBatchOrder = batchOrder;
+    std::stable_sort(sortedBatchOrder.begin(), sortedBatchOrder.end(), [this](const BatchKey &a, const BatchKey &b) {
+        const auto priorityOf = [this](const std::string &pipelineName) -> std::int32_t {
+            if (!pipelineManager_ || !pipelineManager_->HasPipeline(pipelineName)) return 0;
+            return pipelineManager_->GetPipeline(pipelineName).RenderPriority();
+        };
+        return priorityOf(a.pipelineName) < priorityOf(b.pipelineName);
+    });
+
+    for (const auto &key : sortedBatchOrder) {
         auto itBatch = renderPasses.find(key);
         if (itBatch == renderPasses.end()) continue;
 

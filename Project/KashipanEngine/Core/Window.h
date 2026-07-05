@@ -52,8 +52,6 @@ class Window final : public IRenderTarget {
     friend class IWindowEvent;
     static inline WindowsAPI *sWindowsAPI = nullptr;
     static inline DirectXCommon *sDirectXCommon = nullptr;
-    static inline PipelineManager *sPipelineManager = nullptr;
-    static inline Renderer *sRenderer = nullptr;
 
     // 値保持する既定イベント + 拡張イベント(unique_ptr) をまとめた variant
     using Events = std::variant<
@@ -91,8 +89,6 @@ public:
     static void SetWindowsAPI(Passkey<GameEngine>, WindowsAPI *windowsAPI) { sWindowsAPI = windowsAPI; }
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *directXCommon) { sDirectXCommon = directXCommon; }
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
-    static void SetPipelineManager(Passkey<GraphicsEngine>, PipelineManager *pm) { sPipelineManager = pm; }
-    static void SetRenderer(Passkey<GraphicsEngine>, Renderer *renderer) { sRenderer = renderer; }
 
     /// @brief 全ウィンドウ破棄
     static void AllDestroy(Passkey<GameEngine>);
@@ -289,7 +285,11 @@ public:
     /// @brief アスペクト比を取得する
     float GetAspectRatio() const noexcept { return size_.aspectRatio; }
     /// @brief コマンドリストを取得する
-    ID3D12GraphicsCommandList *GetCommandList() const;
+    ID3D12GraphicsCommandList *GetCommandList() const override;
+    /// @brief 描画前処理
+    void BeginDraw() override;
+    /// @brief 描画後処理
+    void EndDraw() override;
 
     /// @brief 指定のウィンドウスタイルを持っているかどうかをチェック
     bool HasWindowStyle(DWORD style) const noexcept { return (descriptor_.windowStyle & style) != 0; }

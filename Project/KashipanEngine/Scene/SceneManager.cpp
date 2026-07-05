@@ -68,4 +68,20 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     return true;
 }
 
+MyAny *SceneManager::AddGlobalSceneVariable(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) {
+    globalSceneVariables_.emplace(key, MyAny(value, typeInfo));
+    return &globalSceneVariables_[key];
+}
+
+MyAny *SceneManager::GetGlobalSceneVariable(const std::string &key) {
+    auto it = globalSceneVariables_.find(key);
+    return (it != globalSceneVariables_.end()) ? &it->second : nullptr;
+}
+
+const TypeInfo &SceneManager::GetGlobalSceneVariableTypeInfo(const std::string &key) {
+    static TypeInfo noneType(ValueType::None);
+    auto it = globalSceneVariables_.find(key);
+    return (it != globalSceneVariables_.end()) ? it->second.GetTypeInfo() : noneType;
+}
+
 } // namespace KashipanEngine

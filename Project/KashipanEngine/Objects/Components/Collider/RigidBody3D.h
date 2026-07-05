@@ -1,19 +1,17 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
-#include "Objects/Components/3D/Transform3D.h"
+#include "Objects/Components/Transform.h"
 #include "Math/Vector3.h"
 #include "Math/Quaternion.h"
 #include "Scene/Components/ColliderComponent.h"
 #include <reactphysics3d/reactphysics3d.h>
 #include <memory>
-#include <optional>
 
 namespace KashipanEngine {
 
 class RigidBody3D final : public IObjectComponent {
 public:
-    RigidBody3D() : IObjectComponent("RigidBody3D", 1) {}
-
+    OBJECT_COMPONENT_CONSTRUCTOR(RigidBody3D, 1, )
     ~RigidBody3D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
@@ -25,31 +23,6 @@ public:
         ptr->interpolate_ = interpolate_;
         ptr->isInitialized_ = false;
         return ptr;
-    }
-
-    std::optional<bool> Initialize() override {
-        return TryInitialize();
-    }
-
-    std::optional<bool> Finalize() override {
-        return true;
-    }
-
-    std::optional<bool> Update() override {
-        TryInitialize();
-        if (!rigidBody_) return true;
-        auto *ctx = GetOwner3DContext();
-        if (!ctx) return false;
-        auto *tr = ctx->GetComponent<Transform3D>();
-        if (!tr) return false;
-
-        const auto transform = rigidBody_->getTransform();
-        const auto pos = transform.getPosition();
-        const auto rot = transform.getOrientation();
-
-        tr->SetTranslate(Vector3{pos.x, pos.y, pos.z});
-        tr->SetRotateQuaternion(Quaternion{rot.x, rot.y, rot.z, rot.w});
-        return true;
     }
 
     void SetPhysicsWorld(reactphysics3d::PhysicsWorld *world) { world_ = world; }
@@ -84,6 +57,27 @@ public:
 
     bool IsInterpolateEnabled() const { return interpolate_; }
 
+protected:
+    void Initialize() override {
+        TryInitialize();
+    }
+
+    void Update() override {
+        TryInitialize();
+        if (!rigidBody_) return;
+        auto *ctx = GetOwnerObjectContext();
+        if (!ctx) return;
+        auto *tr = ctx->GetComponent<Transform>();
+        if (!tr) return;
+
+        const auto transform = rigidBody_->getTransform();
+        const auto pos = transform.getPosition();
+        const auto rot = transform.getOrientation();
+
+        tr->SetTranslate(Vector3{pos.x, pos.y, pos.z});
+        tr->SetRotateQuaternion(Quaternion{rot.x, rot.y, rot.z, rot.w});
+    }
+
 #ifdef USE_IMGUI
     void ShowImGui() override {
         ImGui::Text("RigidBody3D Component");
@@ -110,11 +104,11 @@ private:
         auto *sceneCtx = GetOwnerSceneContext();
         auto *colliderComp = sceneCtx ? sceneCtx->GetComponent<ColliderComponent>() : nullptr;
         if (!sceneCtx || !colliderComp) return false;
-        world_ = sceneCtx->GetComponent<ColliderComponent>()->GetCollider()->GetPhysicsWorld();
+        world_ = colliderComp->GetCollider()->GetPhysicsWorld();
         if (!world_) return false;
-        auto *ctx = GetOwner3DContext();
+        auto *ctx = GetOwnerObjectContext();
         if (!ctx) return false;
-        auto *tr = ctx->GetComponent<Transform3D>();
+        auto *tr = ctx->GetComponent<Transform>();
         if (!tr) return false;
 
         const Vector3 pos = tr->GetTranslate();

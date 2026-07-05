@@ -16,6 +16,15 @@ public:
         ptr->intensity_ = intensity_;
         return ptr;
     }
+
+    void SetType(Type type) { type_ = type; }
+    void SetColor(const Vector4 &color) { color_ = color; }
+    void SetIntensity(float intensity) { intensity_ = intensity; }
+
+    Type GetType() const noexcept { return type_; }
+    const Vector4 &GetColor() const noexcept { return color_; }
+    float GetIntensity() const noexcept { return intensity_; }
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override { int t = static_cast<int>(type_); const char *items[] = { "Directional", "Point", "Spot" }; if (ImGui::Combo("Type", &t, items, 3)) type_ = static_cast<Type>(t); ImGui::ColorEdit4("Color", &color_.x); ImGui::DragFloat("Intensity", &intensity_, 0.01f, 0.0f); }

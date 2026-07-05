@@ -219,8 +219,6 @@ public:
     }
 
 private:
-
-
     EmptyObject *TryGetParentObject() const {
         if (!parentObject_) return nullptr;
         auto *sceneCtx = GetOwnerSceneContext();
@@ -242,5 +240,7 @@ private:
     // この Transform が最後に計算したときの親のバージョン
     std::uint64_t cachedParentVersion_ = 0;
 };
+
+REGISTER_COMPONENT_OBJECT(Transform);
 
 } // namespace KashipanEngine

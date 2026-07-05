@@ -7,15 +7,17 @@ namespace KashipanEngine {
 
 class ColliderComponent final : public ISceneComponent {
 public:
-    ColliderComponent() : ISceneComponent("ColliderComponent") {}
+    SCENE_COMPONENT_CONSTRUCTOR(ColliderComponent, 1, )
     ~ColliderComponent() override = default;
 
-    ColliderComponent(const ColliderComponent &) = delete;
-    ColliderComponent &operator=(const ColliderComponent &) = delete;
+    std::unique_ptr<ISceneComponent> Clone() const override {
+        return std::make_unique<ColliderComponent>();
+    }
 
     Collider *GetCollider() { return &collider_; }
     const Collider *GetCollider() const { return &collider_; }
 
+protected:
     void Update() override {
         collider_.Update2D();
         // ReactPhysics3D is updated in this existing call.

@@ -84,6 +84,8 @@ public:
 #endif
 
     /// @brief 描画後処理
+    void EndDraw(Passkey<Window>);
+    /// @brief 描画後処理
     void EndDraw(Passkey<DirectXCommon>);
     /// @brief Present
     void Present(Passkey<DirectXCommon>);
@@ -124,6 +126,8 @@ private:
 
     /// @brief 描画前処理
     void BeginDrawInternal();
+    /// @brief 描画後処理
+    void EndDrawInternal();
     /// @brief サイズ変更指示
     void ResizeSignalInternal(int32_t width, int32_t height);
 

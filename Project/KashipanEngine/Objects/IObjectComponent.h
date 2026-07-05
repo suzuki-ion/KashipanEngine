@@ -53,6 +53,8 @@ public:
     size_t GetComponentTypeID() const { return kComponentTypeID_; }
     /// @brief 更新優先度を取得
     int GetUpdatePriority() const { return updatePriority_; }
+    /// @brief 更新優先度を設定
+    void SetUpdatePriority(int priority) { updatePriority_ = priority; }
     /// @brief アクティブ状態を取得
     bool IsActive() const { return isActive_; }
     /// @brief アクティブ状態を設定
@@ -83,7 +85,10 @@ public:
     bool LoadFromJsonInterface(Passkey<EmptyObject>, const JSON &json) {
         updatePriority_ = json.value("priority", 1);
         isActive_ = json.value("isActive", true);
-        return LoadFromJson(json["customData"]);
+        if (json.contains("customData")) {
+            return LoadFromJson(json["customData"]);
+        }
+        return true;
     }
 
 protected:
@@ -114,9 +119,6 @@ protected:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。読み込む情報がない場合は true を返す
     virtual bool LoadFromJson(const JSON &json) { (void)json; return true; }
 
-    /// @brief 更新優先度を設定
-    void SetUpdatePriority(int priority) { updatePriority_ = priority; }
-
     /// @brief 所属オブジェクトのコンテキストを取得
     ObjectContext *GetOwnerObjectContext() const { return objectContext_; }
     /// @brief 所属オブジェクトのシーンのコンテキストを取得
@@ -126,7 +128,7 @@ protected:
     /// @param key 変数のキー
     /// @param variable メンバー変数の情報
     void AddMemberVariable(const std::string &key, const MemberVariable &variable) {
-        memberVariables_[key] = variable;
+        memberVariables_.insert_or_assign(key, variable);
     }
     /// @brief メンバー変数を追加する
     /// @tparam T 変数の型
@@ -134,7 +136,7 @@ protected:
     /// @param ptr 変数のポインタ
     template <typename T>
     void AddMemberVariable(const std::string &key, T *variable) {
-        memberVariables_[key] = { static_cast<void *>(variable), GetValueType<T>() };
+        memberVariables_.insert_or_assign(key, MemberVariable{ static_cast<void *>(variable), GetValueType<T>() });
     }
     /// @brief メンバ変数の取得
     /// @param key 変数のキー

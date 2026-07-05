@@ -1,4 +1,6 @@
 #include "ComponentRegistry.h"
+#include "Objects/IObjectComponent.h"
+#include "Scene/Components/ISceneComponent.h"
 
 namespace KashipanEngine {
 

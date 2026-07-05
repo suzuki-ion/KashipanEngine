@@ -1,0 +1,270 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000
+            },
+            "type": "SceneRenderer"
+        }
+    ],
+    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneName": "DefaultScene",
+    "sceneObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "aspectRatio": 1.7777777910232544,
+                            "farClip": 1000.0,
+                            "fovY": 0.44999998807907104,
+                            "nearClip": 0.10000000149011612,
+                            "orthoSize": 10.0,
+                            "orthographic": false
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Camera3D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera3D",
+                                "Pixel:gCamera3D"
+                            ],
+                            "pipelineName": ""
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "CameraRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "Camera",
+            "objectID": "a47798a2-a2a3-4514-a7c7-bb75c0ad7aa7"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "intensity": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Pixel:gDirectionalLight"
+                            ],
+                            "pipelineName": ""
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "DirectionalLight",
+            "objectID": "5a20b59b-3f11-438b-8e5f-1ebbbf59d3a0"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 128.0,
+                                "y": 128.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 256,
+                            "title": "Normal Window",
+                            "width": 512
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "NormalWindowObject"
+                }
+            ],
+            "isActive": true,
+            "name": "Window",
+            "objectID": "8a6dcb9c-aa39-4f90-a4a0-64d43f3ab486"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b78-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 3.569999933242798,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 1
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "TestObject",
+            "objectID": "c6e243c1-ec22-4c9a-8009-e4a5e9f93a8f"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "isActive": true,
+            "name": "TestParentObject",
+            "objectID": "4aeae184-8b78-4af0-bc21-da2f9467b1d5"
+        }
+    ]
+}

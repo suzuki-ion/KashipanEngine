@@ -1,13 +1,13 @@
 ﻿{
 	"PipelineType": "Render",
-	"Name": "Object.Solid.BlendNormal",
+	"Name": "Object3D.Solid.BlendNormal",
 	"Shader": {
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
 		"AutoRootDescriptorFromShader": true,
-		"Vertex": { "UsePreset": "Object.Vertex" },
-		"Pixel": { "UsePreset": "Object.Pixel" }
+		"Vertex": { "UsePreset": "Object3D.Vertex" },
+		"Pixel": { "UsePreset": "Object3D.Pixel" }
 	},
 	"RasterizerState": { "UsePreset": "Solid" },
 	"BlendState": { "UsePreset": "Normal" },

@@ -1,0 +1,95 @@
+#pragma once
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include "Assets/SamplerManager.h"
+#include "Assets/TextureManager.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Vector4.h"
+#include "Utilities/FileIO.h"
+#include "Utilities/Passkeys.h"
+
+namespace KashipanEngine {
+
+class GameEngine;
+
+/// @brief マテリアル管理クラス
+class MaterialManager final {
+public:
+    using MaterialHandle = std::uint32_t;
+    static constexpr MaterialHandle kInvalidHandle = 0;
+
+    struct Material {
+        std::string name = "Default";
+        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        Matrix4x4 uvTransform = Matrix4x4::Identity();
+        TextureManager::TextureHandle textureHandle = TextureManager::kInvalidHandle;
+        TextureManager::TextureHandle environmentHandle = TextureManager::kInvalidHandle;
+        SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
+        float shininess = 32.0f;
+        Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+        float environmentCoefficient = 1.0f;
+        bool enableLighting = true;
+        bool enableShadowMapProjection = true;
+    };
+    struct MaterialEntry final {
+        std::string fullPath;
+        std::string assetPath;
+        std::string fileName;
+        MaterialManager::Material material;
+    };
+
+    /// @brief コンストラクタ（GameEngine からのみ生成可能）
+    /// @param assetsRootPath Assets フォルダのルートパス
+    MaterialManager(Passkey<GameEngine>, const std::string &assetsRootPath = "Assets");
+    ~MaterialManager();
+
+    MaterialManager(const MaterialManager&) = delete;
+    MaterialManager& operator=(const MaterialManager&) = delete;
+    MaterialManager(MaterialManager&&) = delete;
+    MaterialManager& operator=(MaterialManager&&) = delete;
+
+    /// @brief 指定ファイルパスのマテリアルを読み込む（Assets ルートからの相対 or フルパス）
+    /// @return 読み込んだマテリアルのハンドル（失敗時は `kInvalidHandle`）
+    MaterialHandle LoadMaterial(const std::string& filePath);
+    /// @brief 指定マテリアルを保存する
+    /// @param handle 保存するマテリアルのハンドル
+    /// @param filePath 保存先のファイルパス（空文字の場合は元のパスに上書き保存）
+    /// @return 保存に成功した場合は true、失敗した場合は false
+    bool SaveMaterial(MaterialHandle handle, const std::string& filePath = "");
+    /// @brief 全てのマテリアルを保存する
+    /// @param folderPath 保存先のフォルダパス（空文字の場合は元のパスに上書き保存）
+    /// @return 保存に成功した場合は true、失敗した場合は false
+    bool SaveAllMaterials(const std::string &folderPath = "");
+
+    /// @brief ファイル名単体からマテリアルハンドルを取得
+    /// @param fileName ファイル名（例: "my_material.mat"）
+    static MaterialHandle GetMaterialHandleFromFileName(const std::string& fileName);
+    /// @brief マテリアル名からハンドルを取得
+    /// @param name マテリアル名（例: "MyMaterial"）
+    static MaterialHandle GetMaterialHandleFromName(const std::string& name);
+
+    /// @brief ハンドルからマテリアルを取得
+    static Material* GetMaterial(MaterialHandle handle);
+    /// @brief マテリアル名からマテリアルを取得
+    static Material* GetMaterial(const std::string& name);
+
+    /// @brief マテリアルを登録
+    static MaterialHandle RegisterMaterial(const std::string &name, const Material &material, const std::string &filePath = "");
+    /// @brief マテリアルを削除
+    static bool RemoveMaterial(const std::string& name);
+
+    /// @brief 読み込み済みマテリアル一覧を取得
+    static std::vector<MaterialEntry> GetLoadedMaterialListEntries();
+
+    const std::string &GetAssetsRootPath() const noexcept;
+
+private:
+    void InitializeMaterialManager();
+    void FinalizeMaterialManager();
+    void LoadAllFromAssetsFolder();
+};
+
+} // namespace KashipanEngine

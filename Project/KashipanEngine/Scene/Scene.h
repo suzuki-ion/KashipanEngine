@@ -17,8 +17,6 @@
 #include "Utilities/UUID128.h"
 #include "Utilities/MyAny.h"
 
-#include "Assets/ModelManager.h"
-
 namespace KashipanEngine {
 
 class SceneContext;
@@ -31,10 +29,12 @@ class SceneManager;
 class GameEngine;
 
 class AudioManager;
+class ModelManager;
 class SkeletonManager;
 class SamplerManager;
 class TextureManager;
 class AnimationManager;
+class MaterialManager;
 class Input;
 class InputCommand;
 
@@ -58,10 +58,15 @@ public:
 
     const std::string &GetName() const { return name_; }
     const std::string &GetNextSceneName() const { return nextSceneName_; }
+    SceneContext *GetSceneContext() const { return sceneContext_.get(); }
 
     void InitializeInterface(Passkey<SceneManager>) { OnInitialize(); }
     void FinalizeInterface(Passkey<SceneManager>) { OnFinalize(); }
-    void UpdateInterface(Passkey<SceneManager>) { UpdateComponents(); OnUpdate(); }
+    void UpdateInterface(Passkey<SceneManager>) {
+        UpdateSceneObjects();
+        UpdateComponents();
+        OnUpdate();
+    }
 
 #if defined(USE_IMGUI)
     void ShowImGuiInterface(Passkey<SceneManager>);
@@ -85,6 +90,7 @@ public:
         SamplerManager *samplerManager,
         TextureManager *textureManager,
         AnimationManager *animationManager,
+        MaterialManager *materialManager,
         Input *input,
         InputCommand *inputCommand);
 
@@ -164,7 +170,7 @@ protected:
     /// @param name 空のオブジェクト名
     /// @param index 生成位置のインデックス（省略時は末尾に追加）
     /// @return 生成された空のオブジェクトのポインタ
-    EmptyObject *CreateEmptyObject(const std::string &name = "", size_t index = MAXSIZE_T);
+    EmptyObject *CreateEmptyObject(const std::string &name = "", const UUID128 &objectID = UUID128(), size_t index = MAXSIZE_T);
     /// @brief オブジェクトを削除
     /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
@@ -218,7 +224,7 @@ protected:
         const auto &indices = componentsIndexByType_[typeIndex];
         for (size_t idx : indices) {
             if (idx < components_.size()) {
-                result.push_back(static_cast<T *>(components_[idx].get()));
+                result.push_back(static_cast<T *>(components_[idx].first.get()));
             }
         }
         return result;
@@ -234,7 +240,7 @@ protected:
         const auto &indices = componentsIndexByType_[typeIndex];
         for (size_t idx : indices) {
             if (idx < components_.size()) {
-                return static_cast<T *>(components_[idx].get());
+                return static_cast<T *>(components_[idx].first.get());
             }
         }
         return nullptr;
@@ -277,7 +283,7 @@ protected:
     template<typename T>
     T *AddComponent(std::unique_ptr<T> comp) {
         static_assert(std::is_base_of_v<ISceneComponent, T>, "T must derive from ISceneComponent");
-        return static_cast<T *>(AddComponent(std::move(comp)));
+        return static_cast<T *>(AddComponent(std::unique_ptr<ISceneComponent>(std::move(comp))));
     }
     /// @brief コンポーネントの追加（生成）
     /// @tparam T コンポーネントの型
@@ -289,7 +295,7 @@ protected:
         static_assert(std::is_base_of_v<ISceneComponent, T>, "T must derive from ISceneComponent");
         try {
             auto comp = std::make_unique<T>(std::forward<Args>(args)...);
-            return static_cast<T *>(AddComponent(std::move(comp)));
+            return static_cast<T *>(AddComponent(std::unique_ptr<ISceneComponent>(std::move(comp))));
         } catch (...) { return nullptr; }
     }
 
@@ -348,13 +354,6 @@ protected:
     bool HasNextSceneName() const { return !nextSceneName_.empty(); }
 
     //==================================================
-    // シーンコンテキストへのアクセス
-    //==================================================
-
-    /// @brief シーンコンテキストを取得
-    SceneContext *GetSceneContext() const { return sceneContext_.get(); }
-
-    //==================================================
     // 各種マネージャーへのアクセス
     //==================================================
 
@@ -364,6 +363,7 @@ protected:
     static SamplerManager *GetSamplerManager() { return sSamplerManager; }
     static TextureManager *GetTextureManager() { return sTextureManager; }
     static AnimationManager *GetAnimationManager() { return sAnimationManager; }
+    static MaterialManager *GetMaterialManager() { return sMaterialManager; }
     static Input *GetInput() { return sInput; }
     static InputCommand *GetInputCommand() { return sInputCommand; }
 
@@ -374,11 +374,14 @@ private:
     static inline SamplerManager *sSamplerManager = nullptr;
     static inline TextureManager *sTextureManager = nullptr;
     static inline AnimationManager *sAnimationManager = nullptr;
+    static inline MaterialManager *sMaterialManager = nullptr;
     static inline Input *sInput = nullptr;
     static inline InputCommand *sInputCommand = nullptr;
 
+    void UpdateSceneObjects();
     void UpdateComponents();
     void RegenerateUpdateComponentsList();
+    void RemoveObjectFromMaps(EmptyObject *obj);
 
     std::string name_;
 

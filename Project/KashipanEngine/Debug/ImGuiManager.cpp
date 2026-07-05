@@ -110,7 +110,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         } else {
             Window *window = Window::GetWindow("ImGui Window");
             if (!window) return;
-            mainHwnd_ = Window::GetWindow("ImGui Window")->GetWindowHandle();
+            mainHwnd_ = window->GetWindowHandle();
         }
         if (!mainHwnd_) return;
 
@@ -197,6 +197,7 @@ void ImGuiManager::Render(Passkey<GameEngine>) {
                 if (!mainHwnd_) mainHwnd_ = hwnd;
 
                 if (auto* cmd = directXCommon_->GetRecordedCommandListForImGui({}, hwnd)) {
+                    Window::GetWindow(mainHwnd_)->BeginDraw();
                     ImGui_ImplDX12_RenderDrawData(mainVp->DrawData, cmd);
                 }
             }

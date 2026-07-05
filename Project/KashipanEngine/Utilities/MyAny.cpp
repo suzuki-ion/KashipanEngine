@@ -40,8 +40,6 @@ JSON SaveAnyToJson(const MyAny &value) {
         // std::unordered_map の場合、キーと値の型を取得して再帰的に保存
         const auto &templateArgs = typeInfo.GetTemplateArguments();
         if (templateArgs.size() >= 2) {
-            const TypeInfo &keyTypeInfo = templateArgs[0];
-            const TypeInfo &valueTypeInfo = templateArgs[1];
             const auto &map = value.AnyCast<std::unordered_map<MyAny, MyAny>>();
             for (const auto &[key, val] : map) {
                 JSON keyJson = SaveAnyToJson(key);

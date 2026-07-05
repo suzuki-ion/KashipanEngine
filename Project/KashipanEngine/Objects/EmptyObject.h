@@ -180,7 +180,16 @@ public:
     bool IsSaveEnabled() const { return isSaveEnabled_; }
 
     /// @brief オブジェクトのアクティブ状態設定
-    void SetActive(bool active) { isActive_ = active; }
+    /// @details 有効化時に全コンポーネントのInitialize、無効化時に全コンポーネントのFinalizeが走る
+    void SetActive(bool active) {
+        if (isActive_ == active) return;
+        isActive_ = active;
+        if (active) {
+            Initialize();
+        } else {
+            Finalize();
+        }
+    }
     /// @brief オブジェクトのアクティブ状態取得
     bool IsActive() const { return isActive_; }
 

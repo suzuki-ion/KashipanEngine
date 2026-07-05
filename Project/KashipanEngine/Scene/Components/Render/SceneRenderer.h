@@ -56,6 +56,9 @@ public:
         return it != targetOwners_.end() ? it->second : nullptr;
     }
 
+    /// @brief 描画先オブジェクトに付与された全描画先コンポーネントから IRenderTarget を収集する
+    static void CollectRenderTargets(EmptyObject *targetObject, std::vector<IRenderTarget *> &out);
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override;

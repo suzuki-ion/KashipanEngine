@@ -60,6 +60,18 @@ public:
     /// @return 読み込んだテクスチャのハンドル（失敗時は `kInvalidHandle`）
     TextureHandle LoadTexture(const std::string& filePath);
 
+    /// @brief 外部管理のテクスチャ（ScreenBuffer / ShadowMapBuffer 等）を登録する
+    /// @details SRVハンドルやサイズは毎回 texture から取得されるため、
+    ///          ダブルバッファ等でSRVが入れ替わるテクスチャも通常テクスチャと同様に扱える。
+    /// @param name 管理用の名前（ファイル名と同じ検索マップに登録される）
+    /// @param texture 外部テクスチャ（登録解除まで生存していること）
+    /// @return 登録したテクスチャのハンドル（失敗時は `kInvalidHandle`）
+    static TextureHandle RegisterExternalTexture(const std::string& name, const IShaderTexture* texture);
+    /// @brief 外部管理のテクスチャを登録解除する
+    static bool UnregisterExternalTexture(TextureHandle handle);
+    /// @brief 外部管理のテクスチャをポインタから登録解除する
+    static bool UnregisterExternalTexture(const IShaderTexture* texture);
+
 	/// @brief 指定ファイルパスのテクスチャを読み込む（Assets ルートからの相対 or フルパス）
 	/// @return 読み込んだテクスチャの `ScratchImage`（失敗時は空の `ScratchImage`）
 	DirectX::ScratchImage LoadTextureFromFile(const std::string& filePath);

@@ -1,8 +1,10 @@
 #include "ScreenBuffer.h"
 #include "Core/DirectXCommon.h"
 #include "Graphics/Resources/IGraphicsResource.h"
+#include "Assets/TextureManager.h"
 #include "Debug/Logger.h"
 #include <algorithm>
+#include <cstdio>
 #include <vector>
 
 namespace KashipanEngine {
@@ -12,6 +14,8 @@ namespace {
 std::unordered_map<ScreenBuffer *, std::unique_ptr<ScreenBuffer>> sBufferMap{};
 // 「破棄要求→フレーム終端で実破棄」のための pending リスト
 std::vector<const ScreenBuffer *> sPendingDestroy;
+// 自動命名用カウンタ
+std::uint32_t sAutoNameCounter = 0;
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
@@ -26,7 +30,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
 }
 
 ScreenBuffer *ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
-    DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
+    const std::string &name, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
     std::unique_ptr<ScreenBuffer> buffer(new ScreenBuffer());
     auto *raw = buffer.get();
 
@@ -34,8 +38,45 @@ ScreenBuffer *ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
         return nullptr;
     }
 
+    raw->RegisterToTextureManager(name);
+
     sBufferMap.emplace(raw, std::move(buffer));
     return raw;
+}
+
+void ScreenBuffer::SetRenderTargetName(const std::string &name) {
+    if (name.empty() || name == name_) return;
+    UnregisterFromTextureManager();
+    RegisterToTextureManager(name);
+}
+
+void ScreenBuffer::RegisterToTextureManager(const std::string &name) {
+    // 名前が空の場合は自動生成する
+    std::string registerName = name;
+    if (registerName.empty()) {
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "ScreenBuffer_%u", sAutoNameCounter++);
+        registerName = buf;
+    }
+    // 同名衝突時はサフィックスを付けて再試行する
+    textureHandle_ = TextureManager::RegisterExternalTexture(registerName, this);
+    std::uint32_t suffix = 1;
+    while (textureHandle_ == TextureManager::kInvalidHandle && suffix < 1000) {
+        char buf[16];
+        std::snprintf(buf, sizeof(buf), "_%u", suffix++);
+        textureHandle_ = TextureManager::RegisterExternalTexture(registerName + buf, this);
+        if (textureHandle_ != TextureManager::kInvalidHandle) {
+            registerName += buf;
+        }
+    }
+    name_ = registerName;
+}
+
+void ScreenBuffer::UnregisterFromTextureManager() {
+    if (textureHandle_ != TextureManager::kInvalidHandle) {
+        TextureManager::UnregisterExternalTexture(textureHandle_);
+        textureHandle_ = TextureManager::kInvalidHandle;
+    }
 }
 
 void ScreenBuffer::AllDestroy(Passkey<GameEngine>) {
@@ -120,6 +161,7 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 }
 
 void ScreenBuffer::Destroy() {
+    UnregisterFromTextureManager();
     for (size_t i = 0; i < kBufferCount; ++i) {
         shaderResources_[i].reset();
         depthStencils_[i].reset();

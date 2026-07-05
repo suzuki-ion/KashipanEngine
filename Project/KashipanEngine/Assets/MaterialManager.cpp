@@ -8,11 +8,17 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <filesystem>
 #include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#if defined(USE_IMGUI)
+#include <imgui.h>
+#include "Utilities/ImGuiCustom.h"
+#endif
 
 namespace KashipanEngine {
 
@@ -212,13 +218,40 @@ MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string&
 
 bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &filePath) {
     if (handle == kInvalidHandle) return false;
+    auto it = sMaterials.find(handle);
+    if (it == sMaterials.end()) return false;
+
     std::string savePath;
     if (!filePath.empty()) {
         savePath = NormalizePathSlashes(filePath);
     } else {
-        auto it = sMaterials.find(handle);
-        if (it == sMaterials.end()) return false;
         savePath = it->second.fullPath;
+    }
+    if (savePath.empty()) return false;
+
+    const Material &material = it->second.material;
+    JSON json = JSON::object();
+    json["name"] = material.name;
+    json["color"] = ToJSON(material.color);
+    json["uvTransform"] = ToJSON(material.uvTransform);
+    json["textureFile"] = TextureManager::GetTextureFileName(material.textureHandle);
+    json["environmentFile"] = TextureManager::GetTextureFileName(material.environmentHandle);
+    json["samplerHandle"] = material.samplerHandle;
+    json["shininess"] = material.shininess;
+    json["specularColor"] = ToJSON(material.specularColor);
+    json["environmentCoefficient"] = material.environmentCoefficient;
+    json["enableLighting"] = material.enableLighting;
+    json["enableShadowMapProjection"] = material.enableShadowMapProjection;
+
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path(savePath).parent_path(), ec);
+    SaveJSON(json, savePath);
+
+    // 保存先が変わった場合はエントリ情報を更新する
+    if (it->second.fullPath != savePath) {
+        it->second.fullPath = savePath;
+        it->second.assetPath = MakeAssetRelativePath(sAssetsRootPath, savePath);
+        it->second.fileName = std::filesystem::path(savePath).filename().string();
     }
     return true;
 }
@@ -312,5 +345,137 @@ std::vector<MaterialEntry> MaterialManager::GetLoadedMaterialListEntries() {
 const std::string &MaterialManager::GetAssetsRootPath() const noexcept {
     return sAssetsRootPath;
 }
+
+#if defined(USE_IMGUI)
+void MaterialManager::ShowImGuiMaterialManagerWindow() {
+    if (!ImGui::Begin("MaterialManager - Materials")) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Text("Materials: %d", static_cast<int>(sMaterials.size()));
+
+    //--------- 新規マテリアルの追加 ---------//
+    static char sNewMaterialName[128] = "";
+    ImGui::InputText("##NewMaterialName", sNewMaterialName, sizeof(sNewMaterialName));
+    ImGui::SameLine();
+    if (ImGui::Button("Add Material")) {
+        const std::string name = sNewMaterialName;
+        if (!name.empty() && GetMaterialHandleFromName(name) == kInvalidHandle) {
+            Material material{};
+            material.name = name;
+            const std::string filePath = sAssetsRootPath + "/Materials/" + name + ".mat";
+            const auto handle = RegisterMaterial(name, material, filePath);
+            if (handle != kInvalidHandle) {
+                SaveMaterial(handle);
+                sNewMaterialName[0] = '\0';
+            }
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save All")) {
+        SaveAllMaterials();
+    }
+
+    ImGui::Separator();
+
+    //--------- マテリアル一覧と編集 ---------//
+    static MaterialHandle sSelectedHandle = kInvalidHandle;
+    std::string pendingRemoveName;
+
+    if (ImGui::BeginTable("##MaterialList", 3,
+        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+        ImVec2(0, 180))) {
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("File", ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("##Actions", ImGuiTableColumnFlags_WidthFixed, 70);
+        ImGui::TableHeadersRow();
+
+        for (const auto &entry : GetLoadedMaterialListEntries()) {
+            const auto handle = GetMaterialHandleFromName(entry.material.name);
+            ImGui::TableNextRow();
+            ImGui::PushID(static_cast<int>(handle));
+
+            ImGui::TableSetColumnIndex(0);
+            const bool isSelected = (sSelectedHandle == handle);
+            if (ImGui::Selectable(entry.material.name.c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap)) {
+                sSelectedHandle = handle;
+            }
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::TextUnformatted(entry.assetPath.c_str());
+
+            ImGui::TableSetColumnIndex(2);
+            if (ImGui::SmallButton("Remove")) {
+                pendingRemoveName = entry.material.name;
+            }
+
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+
+    if (!pendingRemoveName.empty()) {
+        const auto handle = GetMaterialHandleFromName(pendingRemoveName);
+        if (handle == sSelectedHandle) sSelectedHandle = kInvalidHandle;
+        RemoveMaterial(pendingRemoveName);
+    }
+
+    ImGui::Separator();
+
+    //--------- 選択中マテリアルの編集 ---------//
+    auto *material = GetMaterial(sSelectedHandle);
+    if (!material) {
+        ImGui::TextUnformatted("No material selected.");
+        ImGui::End();
+        return;
+    }
+
+    // 名前の変更（Enter確定。名前マップも更新する）
+    static char sRenameBuffer[128] = "";
+    static MaterialHandle sRenameTarget = kInvalidHandle;
+    if (sRenameTarget != sSelectedHandle) {
+        std::snprintf(sRenameBuffer, sizeof(sRenameBuffer), "%s", material->name.c_str());
+        sRenameTarget = sSelectedHandle;
+    }
+    if (ImGui::InputText("Name", sRenameBuffer, sizeof(sRenameBuffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
+        const std::string newName = sRenameBuffer;
+        if (!newName.empty() && newName != material->name && GetMaterialHandleFromName(newName) == kInvalidHandle) {
+            sNameToHandle.erase(material->name);
+            material->name = newName;
+            sNameToHandle[newName] = sSelectedHandle;
+        }
+    }
+
+    ImGui::ColorEdit4("Color", &material->color.x);
+
+    // テクスチャは読み込み済みのものから選択する
+    std::vector<std::string> textureNames;
+    for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
+        textureNames.push_back(entry.fileName);
+    }
+    std::string textureName = TextureManager::GetTextureFileName(material->textureHandle);
+    if (ImGuiCustom::SelectString("Texture", textureName, textureNames, true)) {
+        material->textureHandle = textureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromFileName(textureName);
+    }
+    std::string environmentName = TextureManager::GetTextureFileName(material->environmentHandle);
+    if (ImGuiCustom::SelectString("Environment", environmentName, textureNames, true)) {
+        material->environmentHandle = environmentName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromFileName(environmentName);
+    }
+
+    ImGui::DragFloat("Shininess", &material->shininess, 0.1f, 0.0f, 1024.0f);
+    ImGui::ColorEdit4("Specular Color", &material->specularColor.x);
+    ImGui::DragFloat("Environment Coefficient", &material->environmentCoefficient, 0.01f, 0.0f, 1.0f);
+    ImGui::Checkbox("Enable Lighting", &material->enableLighting);
+    ImGui::Checkbox("Enable ShadowMap Projection", &material->enableShadowMapProjection);
+    ImGuiCustom::EditValue("UV Transform", material->uvTransform);
+
+    if (ImGui::Button("Save")) {
+        SaveMaterial(sSelectedHandle);
+    }
+
+    ImGui::End();
+}
+#endif
 
 } // namespace KashipanEngine

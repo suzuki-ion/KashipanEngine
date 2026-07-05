@@ -26,8 +26,9 @@ int GetRenderTargetKindOrder(RenderTargetKind kind) {
     }
 }
 
-/// @brief 描画先オブジェクトに付与された全描画先コンポーネントから IRenderTarget を収集する
-void CollectRenderTargets(EmptyObject *targetObject, std::vector<IRenderTarget *> &out) {
+} // namespace
+
+void SceneRenderer::CollectRenderTargets(EmptyObject *targetObject, std::vector<IRenderTarget *> &out) {
     out.clear();
     if (!targetObject) return;
 
@@ -44,8 +45,6 @@ void CollectRenderTargets(EmptyObject *targetObject, std::vector<IRenderTarget *
         if (auto *window = component->GetWindow()) out.push_back(window);
     }
 }
-
-} // namespace
 
 void SceneRenderer::RegisterMeshRenderer(MeshRenderer *renderer) {
     if (!renderer) return;

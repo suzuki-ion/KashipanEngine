@@ -58,7 +58,18 @@ public:
     /// @brief アクティブ状態を取得
     bool IsActive() const { return isActive_; }
     /// @brief アクティブ状態を設定
-    void SetActive(bool active) { isActive_ = active; }
+    /// @details オブジェクトへ登録済みの場合、有効化時にInitialize、無効化時にFinalizeが走る
+    void SetActive(bool active) {
+        if (isActive_ == active) return;
+        isActive_ = active;
+        if (objectContext_) {
+            if (active) {
+                Initialize();
+            } else {
+                Finalize();
+            }
+        }
+    }
 
     /// @brief 初期化処理
     void InitializeInterface(Passkey<EmptyObject>, ObjectContext *objectContext, SceneContext *sceneContext) {

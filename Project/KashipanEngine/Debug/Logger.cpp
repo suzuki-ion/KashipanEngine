@@ -28,6 +28,8 @@ namespace {
 bool sLoggerInitialized = false;
 std::ofstream sLogFile;
 std::vector<std::string> sLogLines;
+// ImGui表示用ログ行の排他制御（ワーカースレッドが追記、メインスレッドが描画で参照するため）
+std::mutex sLogLinesMutex;
 const std::string kBuildTypeString =
 #ifdef DEBUG_BUILD
 "[Debug]";
@@ -91,6 +93,7 @@ void WriteToSinks(const std::string &formattedLine) {
     }
     if (cfg.enableFileLogging && sLogFile.is_open()) {
         sLogFile << formattedLine;
+        std::lock_guard<std::mutex> linesLock(sLogLinesMutex);
         sLogLines.push_back(formattedLine);
     }
 }
@@ -649,13 +652,21 @@ void ShowImGuiLoggerWindow(Passkey<ImGuiManager>) {
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
     ImGui::Begin("Logger", nullptr, window_flags);
     {
+        // ワーカースレッドが sLogLines へ追記するため、描画中はロックして参照する
+        std::lock_guard<std::mutex> linesLock(sLogLinesMutex);
         ImGuiListClipper clipper;
         clipper.Begin(static_cast<int>(sLogLines.size()));
         while (clipper.Step()) {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
-                ImGui::TextUnformatted(sLogLines[i].c_str());
+                const std::string &line = sLogLines[i];
+                // 行末の改行はクリッパーの行高計算を狂わせるため除いて表示する
+                const char *begin = line.c_str();
+                const char *end = begin + line.size();
+                while (end > begin && (end[-1] == '\n' || end[-1] == '\r')) --end;
+                ImGui::TextUnformatted(begin, end);
             }
         }
+        clipper.End();
     }
     ImGui::End();
 }

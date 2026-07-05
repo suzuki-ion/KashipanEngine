@@ -52,11 +52,18 @@ struct TextureEntry final {
     UINT srvIndex = 0;
     UINT mipLevels = 1;
     UINT frameCount = 1;
+
+    /// @brief 外部管理テクスチャ（ScreenBuffer等）。非nullの場合はSRV/サイズをここから毎回取得する
+    const IShaderTexture *external = nullptr;
 };
 
 std::unordered_map<Handle, TextureEntry> sTextures;
 FileMap<Handle> sFileNameToHandle;
 FileMap<Handle> sAssetPathToHandle;
+
+// 外部管理テクスチャ用ハンドル（SRVインデックス由来のハンドルと衝突しない上位領域を使う）
+constexpr Handle kExternalHandleBase = 0x80000000u;
+Handle sNextExternalHandle = kExternalHandleBase;
 
 ID3D12Device* sDevice = nullptr;
 SRVHeap* sSrvHeap = nullptr;
@@ -111,6 +118,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::TextureView::GetSrvHandle() const no
     if (handle_ == kInvalidHandle) return h;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return h;
+    if (it->second.external) return it->second.external->GetSrvHandle();
     h.ptr = it->second.srvGpuPtr;
     return h;
 }
@@ -119,6 +127,7 @@ std::uint32_t TextureManager::TextureView::GetWidth() const noexcept {
     if (handle_ == kInvalidHandle) return 0;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return 0;
+    if (it->second.external) return it->second.external->GetWidth();
     return static_cast<std::uint32_t>(it->second.width);
 }
 
@@ -126,6 +135,7 @@ std::uint32_t TextureManager::TextureView::GetHeight() const noexcept {
     if (handle_ == kInvalidHandle) return 0;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return 0;
+    if (it->second.external) return it->second.external->GetHeight();
     return static_cast<std::uint32_t>(it->second.height);
 }
 
@@ -146,10 +156,52 @@ bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::
     if (it == sTextures.end()) return false;
 
     D3D12_GPU_DESCRIPTOR_HANDLE h{};
-    h.ptr = it->second.srvGpuPtr;
+    if (it->second.external) {
+        h = it->second.external->GetSrvHandle();
+    } else {
+        h.ptr = it->second.srvGpuPtr;
+    }
     if (h.ptr == 0) return false;
 
     return shaderBinder->Bind(nameKey, h);
+}
+
+TextureManager::TextureHandle TextureManager::RegisterExternalTexture(const std::string& name, const IShaderTexture* texture) {
+    LogScope scope;
+    if (!texture || name.empty()) return kInvalidHandle;
+    // 同名の外部テクスチャは登録できない
+    if (sFileNameToHandle.find(name) != sFileNameToHandle.end()) return kInvalidHandle;
+
+    TextureEntry entry{};
+    entry.fileName = name;
+    entry.assetPath = name;
+    entry.external = texture;
+
+    const Handle handle = sNextExternalHandle++;
+    sFileNameToHandle[name] = handle;
+    sAssetPathToHandle[name] = handle;
+    sTextures.emplace(handle, std::move(entry));
+    return handle;
+}
+
+bool TextureManager::UnregisterExternalTexture(TextureHandle handle) {
+    LogScope scope;
+    auto it = sTextures.find(handle);
+    if (it == sTextures.end() || !it->second.external) return false;
+    sFileNameToHandle.erase(it->second.fileName);
+    sAssetPathToHandle.erase(it->second.assetPath);
+    sTextures.erase(it);
+    return true;
+}
+
+bool TextureManager::UnregisterExternalTexture(const IShaderTexture* texture) {
+    if (!texture) return false;
+    for (const auto &kv : sTextures) {
+        if (kv.second.external == texture) {
+            return UnregisterExternalTexture(kv.first);
+        }
+    }
+    return false;
 }
 
 TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, const std::string& assetsRootPath)
@@ -599,9 +651,15 @@ std::vector<TextureManager::TextureListEntry> TextureManager::GetLoadedTextureLi
         e.handle = kv.first;
         e.fileName = t.fileName;
         e.assetPath = t.assetPath;
-        e.width = t.width;
-        e.height = t.height;
-        e.srvGpuPtr = t.srvGpuPtr;
+        if (t.external) {
+            e.width = t.external->GetWidth();
+            e.height = t.external->GetHeight();
+            e.srvGpuPtr = t.external->GetSrvHandle().ptr;
+        } else {
+            e.width = t.width;
+            e.height = t.height;
+            e.srvGpuPtr = t.srvGpuPtr;
+        }
         out.push_back(std::move(e));
     }
 

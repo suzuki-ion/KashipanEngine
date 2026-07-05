@@ -44,6 +44,40 @@ inline std::string ToString(const T &val) {
 }
 
 // ==========================================
+// 1-2. 文字列の選択コンボ
+// ==========================================
+
+/// @brief 文字列を候補リストから選択するコンボボックス
+/// @param label ラベル
+/// @param value 現在値（変更時に上書きされる）
+/// @param items 候補リスト
+/// @param allowNone 先頭に「(None)」を表示して空文字を選択可能にする
+/// @return 値が変更された場合は true
+inline bool SelectString(const char *label, std::string &value, const std::vector<std::string> &items, bool allowNone = false) {
+    bool changed = false;
+    const char *preview = value.empty() ? "(None)" : value.c_str();
+    if (ImGui::BeginCombo(label, preview)) {
+        if (allowNone) {
+            const bool selected = value.empty();
+            if (ImGui::Selectable("(None)", selected) && !selected) {
+                value.clear();
+                changed = true;
+            }
+        }
+        for (const auto &item : items) {
+            const bool selected = (item == value);
+            if (ImGui::Selectable(item.c_str(), selected) && !selected) {
+                value = item;
+                changed = true;
+            }
+            if (selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    return changed;
+}
+
+// ==========================================
 // 2. EditValue 拡張関数群 (編集用)
 // ==========================================
 

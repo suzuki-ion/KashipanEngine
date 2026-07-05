@@ -1,7 +1,9 @@
 #include "ShadowMapBuffer.h"
 #include "Core/DirectXCommon.h"
 #include "Graphics/Resources/IGraphicsResource.h"
+#include "Assets/TextureManager.h"
 #include <algorithm>
+#include <cstdio>
 #include <vector>
 
 namespace KashipanEngine {
@@ -11,13 +13,15 @@ namespace {
 std::unordered_map<ShadowMapBuffer *, std::unique_ptr<ShadowMapBuffer>> sBufferMap{};
 // 「破棄要求→フレーム終端で実破棄」のための pending リスト
 std::vector<const ShadowMapBuffer *> sPendingDestroy;
+// 自動命名用カウンタ
+std::uint32_t sAutoNameCounter = 0;
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ShadowMapBuffer::GetSrvHandle() const noexcept {
     return depth_ ? depth_->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
-ShadowMapBuffer *ShadowMapBuffer::Create(std::uint32_t width, std::uint32_t height, DXGI_FORMAT depthFormat, DXGI_FORMAT srvFormat) {
+ShadowMapBuffer *ShadowMapBuffer::Create(std::uint32_t width, std::uint32_t height, const std::string &name, DXGI_FORMAT depthFormat, DXGI_FORMAT srvFormat) {
     std::unique_ptr<ShadowMapBuffer> buffer(new ShadowMapBuffer());
     auto *raw = buffer.get();
 
@@ -25,8 +29,45 @@ ShadowMapBuffer *ShadowMapBuffer::Create(std::uint32_t width, std::uint32_t heig
         return nullptr;
     }
 
+    raw->RegisterToTextureManager(name);
+
     sBufferMap.emplace(raw, std::move(buffer));
     return raw;
+}
+
+void ShadowMapBuffer::SetRenderTargetName(const std::string &name) {
+    if (name.empty() || name == name_) return;
+    UnregisterFromTextureManager();
+    RegisterToTextureManager(name);
+}
+
+void ShadowMapBuffer::RegisterToTextureManager(const std::string &name) {
+    // 名前が空の場合は自動生成する
+    std::string registerName = name;
+    if (registerName.empty()) {
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "ShadowMapBuffer_%u", sAutoNameCounter++);
+        registerName = buf;
+    }
+    // 同名衝突時はサフィックスを付けて再試行する
+    textureHandle_ = TextureManager::RegisterExternalTexture(registerName, this);
+    std::uint32_t suffix = 1;
+    while (textureHandle_ == TextureManager::kInvalidHandle && suffix < 1000) {
+        char buf[16];
+        std::snprintf(buf, sizeof(buf), "_%u", suffix++);
+        textureHandle_ = TextureManager::RegisterExternalTexture(registerName + buf, this);
+        if (textureHandle_ != TextureManager::kInvalidHandle) {
+            registerName += buf;
+        }
+    }
+    name_ = registerName;
+}
+
+void ShadowMapBuffer::UnregisterFromTextureManager() {
+    if (textureHandle_ != TextureManager::kInvalidHandle) {
+        TextureManager::UnregisterExternalTexture(textureHandle_);
+        textureHandle_ = TextureManager::kInvalidHandle;
+    }
 }
 
 void ShadowMapBuffer::AllDestroy(Passkey<GameEngine>) {
@@ -94,6 +135,7 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
 }
 
 void ShadowMapBuffer::Destroy() {
+    UnregisterFromTextureManager();
     depth_.reset();
 
     dx12Commands_ = nullptr;

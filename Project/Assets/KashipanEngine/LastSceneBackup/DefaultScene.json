@@ -45,7 +45,7 @@
                             "aspectRatio": 1.7777777910232544,
                             "farClip": 1000.0,
                             "fovY": 0.44999998807907104,
-                            "nearClip": 0.10000000149011612,
+                            "nearClip": 0.009999999776482582,
                             "orthoSize": 10.0,
                             "orthographic": false
                         },
@@ -61,7 +61,8 @@
                                 "Vertex:gCamera3D",
                                 "Pixel:gCamera3D"
                             ],
-                            "pipelineName": ""
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
                         "priority": 1
@@ -70,7 +71,7 @@
                 }
             ],
             "isActive": true,
-            "name": "Camera",
+            "name": "Camera3D",
             "objectID": "a47798a2-a2a3-4514-a7c7-bb75c0ad7aa7"
         },
         {
@@ -123,7 +124,8 @@
                             "bindVariableNames": [
                                 "Pixel:gDirectionalLight"
                             ],
-                            "pipelineName": ""
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
                         "priority": 1
@@ -220,9 +222,9 @@
                 {
                     "data": {
                         "customData": {
-                            "materialName": "Default",
+                            "materialName": "White",
                             "pipelineName": "Object3D.Solid.BlendNormal",
-                            "targetObjectID": ""
+                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
                         "priority": 1
@@ -265,6 +267,144 @@
             "isActive": true,
             "name": "TestParentObject",
             "objectID": "4aeae184-8b78-4af0-bc21-da2f9467b1d5"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 720,
+                            "isShowViewer": true,
+                            "name": "ScreenBuffer_0",
+                            "width": 1280
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "ScreenBufferObject"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "baseTexture": "",
+                            "baseTextureColor": [
+                                1.0,
+                                1.0,
+                                1.0,
+                                1.0
+                            ],
+                            "edgeColor": [
+                                1.0,
+                                1.0,
+                                1.0,
+                                1.0
+                            ],
+                            "edgeThickness": 0.10000000149011612,
+                            "maskTexture": "",
+                            "maskThreshold": 0.47200000286102295
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "DissolveEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "brightness": 0.009999999776482582,
+                            "colorBalance": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "contrast": 1.0,
+                            "saturation": 1.0,
+                            "temperature": 0.0
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "ColorAdjustEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "dotRadius": 3.5,
+                            "dotSpacing": 5.400000095367432,
+                            "intensity": 1.0,
+                            "monochrome": false,
+                            "threshold": 0.0
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "DotMatrixEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "direction": [
+                                1.0,
+                                0.0
+                            ],
+                            "strength": 0.01080000028014183
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "ChromaticAberrationEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "center": [
+                                0.5,
+                                0.5
+                            ],
+                            "color": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "innerRadius": 0.30000001192092896,
+                            "intensity": 1.0,
+                            "smoothness": 0.30000001192092896
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "VignetteEffect"
+                }
+            ],
+            "isActive": true,
+            "name": "ScreenBuffer",
+            "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
         }
     ]
 }

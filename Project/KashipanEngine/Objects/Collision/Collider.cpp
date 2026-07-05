@@ -2,8 +2,8 @@
 
 #include "Objects/EmptyObject.h"
 #include "Objects/Collision/CollisionAlgorithms2D.h"
-#include "Objects/Components/3D/Transform3D.h"
-#include "Objects/Components/3D/RigidBody3D.h"
+#include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/RigidBody3D.h"
 #include "Utilities/TimeUtils.h"
 #include <algorithm>
 #include <cmath>
@@ -861,7 +861,7 @@ bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
 
     entry.runtime.shape = shapeHandle.value();
     const auto transform = MakeTransform3D(entry.info);
-    if (auto *rb = entry.info.ownerObject->GetComponent3D<RigidBody3D>()) {
+    if (auto *rb = entry.info.ownerObject->GetComponent<RigidBody3D>()) {
         entry.runtime.body = rb->GetRigidBody();
         entry.runtime.ownsBody = false;
         entry.runtime.body->setTransform(transform);
@@ -1034,7 +1034,7 @@ reactphysics3d::Transform Collider::MakeTransform3D(const ColliderInfo3D &info) 
         info.shape);
 
     reactphysics3d::Quaternion rotation = reactphysics3d::Quaternion::identity();
-    if (auto *tr = info.ownerObject ? info.ownerObject->GetComponent3D<Transform3D>() : nullptr) {
+    if (auto *tr = info.ownerObject ? info.ownerObject->GetComponent<Transform>() : nullptr) {
         const auto rot = tr->GetRotateQuaternion();
         rotation = reactphysics3d::Quaternion(rot.x, rot.y, rot.z, rot.w);
     }

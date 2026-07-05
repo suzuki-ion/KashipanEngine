@@ -13,6 +13,7 @@
 #include "Assets/SkeletonManager.h"
 #include "Assets/AudioManager.h"
 #include "Assets/AnimationManager.h"
+#include "Assets/MaterialManager.h"
 #include "Objects/EmptyObject.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
@@ -128,6 +129,8 @@ private:
     std::unique_ptr<AudioManager> audioManager_;
     /// @brief アニメーション管理クラス
     std::unique_ptr<AnimationManager> animationManager_;
+    /// @brief マテリアル管理クラス
+    std::unique_ptr<MaterialManager> materialManager_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス

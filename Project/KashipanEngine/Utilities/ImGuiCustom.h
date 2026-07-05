@@ -43,22 +43,17 @@ inline std::string ToString(const T &val) {
 }
 }
 
-// コンテナやstd::anyからの相互・再帰呼び出し解決のための汎用前方宣言
-template <typename T> bool EditValue(const char *label, T &value, const UiOptions &opts = {});
-template <typename T> void ShowValue(const char *label, const T &value, const UiOptions &opts = {});
-
-
 // ==========================================
 // 2. EditValue 拡張関数群 (編集用)
 // ==========================================
 
 // --- 2-1. 基礎型 ---
-inline bool EditValue(const char *label, bool &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, bool &value, const UiOptions &opts = {}) {
     (void)opts; // boolではオプションは無視
     return ImGui::Checkbox(label, &value);
 }
 
-inline bool EditValue(const char *label, int &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, int &value, const UiOptions &opts = {}) {
     if (opts.asSlider) {
         int minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0 : static_cast<int>(opts.vMin);
         int maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 100 : static_cast<int>(opts.vMax);
@@ -70,7 +65,7 @@ inline bool EditValue(const char *label, int &value, const UiOptions &opts) {
     }
 }
 
-inline bool EditValue(const char *label, float &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, float &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     if (opts.asSlider) {
         float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
@@ -81,7 +76,7 @@ inline bool EditValue(const char *label, float &value, const UiOptions &opts) {
     }
 }
 
-inline bool EditValue(const char *label, double &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, double &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     if (opts.asSlider) {
         double minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0 : static_cast<double>(opts.vMin);
@@ -94,12 +89,12 @@ inline bool EditValue(const char *label, double &value, const UiOptions &opts) {
     }
 }
 
-inline bool EditValue(const char *label, std::string &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, std::string &value, const UiOptions &opts = {}) {
     return ImGui::InputText(label, &value, opts.flags);
 }
 
 // --- 2-2. カスタム数学型 ---
-inline bool EditValue(const char *label, Vector2 &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, Vector2 &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     if (opts.asSlider) {
         float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
@@ -110,7 +105,7 @@ inline bool EditValue(const char *label, Vector2 &value, const UiOptions &opts) 
     }
 }
 
-inline bool EditValue(const char *label, Vector3 &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, Vector3 &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     if (opts.asSlider) {
         float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
@@ -121,7 +116,7 @@ inline bool EditValue(const char *label, Vector3 &value, const UiOptions &opts) 
     }
 }
 
-inline bool EditValue(const char *label, Vector4 &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, Vector4 &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     if (opts.asSlider) {
         float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
@@ -132,7 +127,7 @@ inline bool EditValue(const char *label, Vector4 &value, const UiOptions &opts) 
     }
 }
 
-inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opts = {}) {
     std::string q_label = std::string(label) + " (X,Y,Z,W)";
     const char *fmt = opts.format ? opts.format : "%.3f";
     if (opts.asSlider) {
@@ -144,7 +139,7 @@ inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opt
     }
 }
 
-inline bool EditValue(const char *label, Matrix3x3 &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, Matrix3x3 &value, const UiOptions &opts = {}) {
     bool changed = false;
     ImGui::Text("%s%s :", label, opts.asSlider ? " (Slider)" : "");
     ImGui::Indent();
@@ -165,7 +160,7 @@ inline bool EditValue(const char *label, Matrix3x3 &value, const UiOptions &opts
     return changed;
 }
 
-inline bool EditValue(const char *label, Matrix4x4 &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, Matrix4x4 &value, const UiOptions &opts = {}) {
     bool changed = false;
     ImGui::Text("%s%s :", label, opts.asSlider ? " (Slider)" : "");
     ImGui::Indent();
@@ -188,7 +183,7 @@ inline bool EditValue(const char *label, Matrix4x4 &value, const UiOptions &opts
 
 // --- 2-3. コンテナ型 (テンプレート・再帰処理) ---
 template <typename T>
-bool EditValue(const char *label, std::vector<T> &vec, const UiOptions &opts) {
+bool EditValue(const char *label, std::vector<T> &vec, const UiOptions &opts = {}) {
     bool changed = false;
     std::string node_name = std::string(label) + " [" + std::to_string(vec.size()) + " items]";
 
@@ -214,7 +209,7 @@ bool EditValue(const char *label, std::vector<T> &vec, const UiOptions &opts) {
 }
 
 template <typename K, typename V>
-bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions &opts) {
+bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions &opts = {}) {
     bool changed = false;
     std::string node_name = std::string(label) + " [" + std::to_string(map.size()) + " pairs]";
 
@@ -276,7 +271,7 @@ bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions
 }
 
 // --- 2-4. 動的型 (std::any) ---
-inline bool EditValue(const char *label, std::any &value, const UiOptions &opts) {
+inline bool EditValue(const char *label, std::any &value, const UiOptions &opts = {}) {
     if (!value.has_value()) { ImGui::Text("%s: [Empty]", label); return false; }
 
     const auto &type = value.type();
@@ -327,46 +322,46 @@ inline bool EditValue(const char *label, std::any &value, const UiOptions &opts)
 // ==========================================
 
 // --- 3-1. 基礎型 ---
-inline void ShowValue(const char *label, const bool &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const bool &value, const UiOptions &opts = {}) {
     (void)opts;
     ImGui::LabelText(label, value ? "true" : "false");
 }
-inline void ShowValue(const char *label, const int &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const int &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%d";
     ImGui::LabelText(label, fmt, value);
 }
-inline void ShowValue(const char *label, const float &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const float &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     ImGui::LabelText(label, fmt, value);
 }
-inline void ShowValue(const char *label, const double &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const double &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     ImGui::LabelText(label, fmt, value);
 }
-inline void ShowValue(const char *label, const std::string &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const std::string &value, const UiOptions &opts = {}) {
     (void)opts;
     ImGui::LabelText(label, "%s", value.c_str());
 }
 
 // --- 3-2. カスタム数学型 ---
-inline void ShowValue(const char *label, const Vector2 &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const Vector2 &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     ImGui::LabelText(label, (std::string(fmt) + ", " + fmt).c_str(), value.x, value.y);
 }
-inline void ShowValue(const char *label, const Vector3 &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const Vector3 &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     ImGui::LabelText(label, (std::string(fmt) + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z);
 }
-inline void ShowValue(const char *label, const Vector4 &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const Vector4 &value, const UiOptions &opts = {}) {
     const char *fmt = opts.format ? opts.format : "%.3f";
     ImGui::LabelText(label, (std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z, value.w);
 }
-inline void ShowValue(const char *label, const Quaternion &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const Quaternion &value, const UiOptions &opts = {}) {
     std::string q_label = std::string(label) + " (Quaternion)";
     const char *fmt = opts.format ? opts.format : "%.3f";
     ImGui::LabelText(q_label.c_str(), (std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z, value.w);
 }
-inline void ShowValue(const char *label, const Matrix3x3 &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const Matrix3x3 &value, const UiOptions &opts = {}) {
     ImGui::Text("%s (ReadOnly) :", label);
     ImGui::Indent();
     const char *fmt = opts.format ? opts.format : "%.3f";
@@ -377,7 +372,7 @@ inline void ShowValue(const char *label, const Matrix3x3 &value, const UiOptions
     }
     ImGui::Unindent();
 }
-inline void ShowValue(const char *label, const Matrix4x4 &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const Matrix4x4 &value, const UiOptions &opts = {}) {
     ImGui::Text("%s (ReadOnly) :", label);
     ImGui::Indent();
     const char *fmt = opts.format ? opts.format : "%.3f";
@@ -391,7 +386,7 @@ inline void ShowValue(const char *label, const Matrix4x4 &value, const UiOptions
 
 // --- 3-3. コンテナ型 (テンプレート・再帰処理) ---
 template <typename T>
-void ShowValue(const char *label, const std::vector<T> &vec, const UiOptions &opts) {
+void ShowValue(const char *label, const std::vector<T> &vec, const UiOptions &opts = {}) {
     std::string node_name = std::string(label) + " [" + std::to_string(vec.size()) + " items] (ReadOnly)";
     if (ImGui::TreeNode(node_name.c_str())) {
         for (size_t i = 0; i < vec.size(); ++i) {
@@ -405,7 +400,7 @@ void ShowValue(const char *label, const std::vector<T> &vec, const UiOptions &op
 }
 
 template <typename K, typename V>
-void ShowValue(const char *label, const std::unordered_map<K, V> &map, const UiOptions &opts) {
+void ShowValue(const char *label, const std::unordered_map<K, V> &map, const UiOptions &opts = {}) {
     std::string node_name = std::string(label) + " [" + std::to_string(map.size()) + " pairs] (ReadOnly)";
     if (ImGui::TreeNode(node_name.c_str())) {
         int id = 0;
@@ -420,7 +415,7 @@ void ShowValue(const char *label, const std::unordered_map<K, V> &map, const UiO
 }
 
 // --- 3-4. 動的型 (std::any) ---
-inline void ShowValue(const char *label, const std::any &value, const UiOptions &opts) {
+inline void ShowValue(const char *label, const std::any &value, const UiOptions &opts = {}) {
     if (!value.has_value()) { ImGui::LabelText(label, "[Empty]"); return; }
 
     const auto &type = value.type();

@@ -1,52 +1,15 @@
 #pragma once
 #include <KashipanEngine.h>
-#include "Scenes/EngineLogoScene.h"
-#include "Scenes/TitleScene.h"
-#include "Scenes/GameScene.h"
-#include "Scenes/ResultScene.h"
-#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
-#include "Scenes/TestScene.h"
-#include "Scenes/CollisionTestScene.h"
-#endif
 
 namespace KashipanEngine {
 
 inline void AppInitialize(const GameEngine::Context &context) {
-    auto monitorInfo = WindowsAPI::QueryMonitorInfo();
-    int32_t windowWidth = 1280;
-    int32_t windowHeight = 720;
-    if (monitorInfo) {
-        // モニターの解像度に基づいてウィンドウサイズを調整
-        windowWidth = static_cast<int32_t>(monitorInfo->Width() * 0.75f);
-        windowHeight = static_cast<int32_t>(monitorInfo->Height() * 0.75f);
-    }
-    auto *mainWindow = Window::CreateNormal("Main Window", windowWidth, windowHeight);
-#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
-    mainWindow->UnregisterWindowEvent(WM_SYSCOMMAND);
-    mainWindow->RegisterWindowEvent<WindowDefaultEvent::SysCommandCloseEventSimple>();
-#else
-    static_cast<void>(mainWindow); // リリースビルドで未使用の変数警告回避
-#endif
-
+    // NOTE: 旧Application層（クラスベースのシーン群）は新シーンシステム（JSONファクトリ方式）への
+    //       移行待ちのため、一旦空のデフォルトシーンのみを登録している。
     if (context.sceneManager) {
         auto *sm = context.sceneManager;
-        
-#if defined(RELEASE_BUILD)
-        sm->RegisterScene<EngineLogoScene>("EngineLogoScene", "GameScene");
-#endif
-#if defined(DEBUG_BUILD) or defined(DEVELOPMENT_BUILD)
-        sm->RegisterScene<TestScene>("TestScene");
-        sm->RegisterScene<CollisionTestScene>("CollisionTestScene");
-#endif
-        sm->RegisterScene<TitleScene>("TitleScene");
-        sm->RegisterScene<GameScene>("GameScene");
-        sm->RegisterScene<ResultScene>("ResultScene");
-
-#if defined(RELEASE_BUILD)
-        sm->ChangeScene("EngineLogoScene");
-#else
-		sm->ChangeScene("CollisionTestScene");
-#endif
+        sm->RegisterScene("DefaultScene", LoadJSON("Assets/KashipanEngine/LastSceneBackup/DefaultScene.json"));
+        sm->ChangeScene("DefaultScene");
     }
 
     if (context.inputCommand) {
@@ -57,7 +20,7 @@ inline void AppInitialize(const GameEngine::Context &context) {
         ic->RegisterCommand("Submit", Key::Enter, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", Key::Space, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Submit", ControllerButton::A, InputCommand::InputState::Trigger);
-        
+
         // キャンセル
         ic->RegisterCommand("Cancel", Key::Escape, InputCommand::InputState::Trigger);
         ic->RegisterCommand("Cancel", ControllerButton::B, InputCommand::InputState::Trigger);

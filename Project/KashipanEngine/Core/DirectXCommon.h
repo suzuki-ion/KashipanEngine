@@ -84,7 +84,8 @@ public:
 
     /// @brief フレーム終端で実行するコマンドリストを登録
     void AddRecordCommandList(Passkey<DX12SwapChain>, ID3D12CommandList* list);
-    void AddRecordCommandList(Passkey<Renderer>, ID3D12CommandList* list);
+    void AddRecordCommandList(Passkey<ScreenBuffer>, ID3D12CommandList* list);
+    void AddRecordCommandList(Passkey<ShadowMapBuffer>, ID3D12CommandList* list);
 
 #if defined(USE_IMGUI)
     /// @brief D3D12デバイス取得（ImGui 用）
@@ -100,14 +101,6 @@ public:
     // ImGui viewport 用のスワップチェーンを必要に応じて生成する
     DX12SwapChain* GetOrCreateSwapChainForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd, int32_t width, int32_t height);
 #endif
-
-    /// @brief 指定のウィンドウのスワップチェーン取得
-    DX12SwapChain *GetSwapChain(Passkey<Renderer>, HWND hwnd) const;
-    /// @brief 指定のウィンドウのコマンドリスト取得
-    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>, HWND hwnd) const;
-
-    /// @brief 外部で記録したコマンドリスト群を実行（Renderer 用）
-    void ExecuteExternalCommandLists(Passkey<Renderer>, const std::vector<ID3D12CommandList*>& lists);
 
     /// @brief コマンドオブジェクトを確保（DirectXCommon が所有）
     /// @return スロットインデックス（失敗時は -1）

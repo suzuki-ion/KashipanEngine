@@ -1,6 +1,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
+#include "Scene/Components/Render/SceneRenderer.h"
 #ifdef USE_IMGUI
 #include "Scene/SceneEditor.h"
 #include "Scene/SceneEditorContext.h"
@@ -19,6 +20,7 @@ void Scene::SetEnginePointers(
     SamplerManager *samplerManager,
     TextureManager *textureManager,
     AnimationManager *animationManager,
+    MaterialManager *materialManager,
     Input *input,
     InputCommand *inputCommand) {
     sAudioManager = audioManager;
@@ -27,6 +29,7 @@ void Scene::SetEnginePointers(
     sSamplerManager = samplerManager;
     sTextureManager = textureManager;
     sAnimationManager = animationManager;
+    sMaterialManager = materialManager;
     sInput = input;
     sInputCommand = inputCommand;
 }
@@ -100,13 +103,19 @@ bool Scene::LoadFromJSON(const JSON &json) {
         auto compJson = compData.value("data", JSON());
         loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson);
     }
+    for (const auto &[comp, compJson] : loadedComponents) {
+        if (comp) {
+            comp->LoadFromJsonInterface(Passkey<Scene>{}, compJson);
+        }
+    }
     // オブジェクトを全て追加してからオブジェクトにコンポーネントを追加する
     std::vector<EmptyObject *> createdObjects;
     const auto &objects = json.value("sceneObjects", std::vector<JSON>());
     for (const auto &objData : objects) {
-        std::string objName = objData.value("objectName", "");
-        if (objName.empty()) continue;
-        createdObjects.push_back(CreateEmptyObject(objName));
+        std::string objName = objData.value("name", "Empty Object");
+        UUID128 objID(objData.value("objectID", ""));
+        EmptyObject *obj = CreateEmptyObject(objName, objID);
+        createdObjects.push_back(obj);
     }
     for (size_t i = 0; i < objects.size(); ++i) {
         const auto &objData = objects[i];
@@ -154,9 +163,10 @@ const TypeInfo &Scene::GetGlobalSceneVariableTypeInfo(const std::string &key) {
     throw std::runtime_error("Scene variable not found");
 }
 
-EmptyObject *Scene::CreateEmptyObject(const std::string &name, size_t index) {
+EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &objectID, size_t index) {
     auto newObj = std::make_unique<EmptyObject>(Passkey<Scene>{}, sceneContext_.get(), name);
     auto newObjPtr = newObj.get();
+    newObjPtr->SetObjectID(objectID);
     if (index >= objects_.size()) {
         objects_.push_back(std::move(newObj));
     } else {
@@ -173,32 +183,78 @@ bool Scene::DeleteObject(EmptyObject *obj) {
     auto it = std::find_if(objects_.begin(), objects_.end(),
         [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
     if (it == objects_.end()) return false;
+    RemoveObjectFromMaps(obj);
     objects_.erase(it);
     return true;
 }
 
 bool Scene::ReleaseObject(EmptyObject *obj) {
-    return false;
+    if (!obj) return false;
+    auto it = std::find_if(objects_.begin(), objects_.end(),
+        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    if (it == objects_.end()) return false;
+    RemoveObjectFromMaps(obj);
+    it->release();
+    objects_.erase(it);
+    return true;
 }
 
 bool Scene::MoveObject(EmptyObject *obj, size_t newIndex) {
-    return false;
+    if (!obj) return false;
+    auto it = std::find_if(objects_.begin(), objects_.end(),
+        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    if (it == objects_.end()) return false;
+    if (newIndex >= objects_.size()) newIndex = objects_.size() - 1;
+
+    std::unique_ptr<EmptyObject> moved = std::move(*it);
+    objects_.erase(it);
+    objects_.insert(objects_.begin() + newIndex, std::move(moved));
+    return true;
 }
 
 std::vector<EmptyObject *> Scene::GetSceneObjects(const std::string &objectName) const {
-    return std::vector<EmptyObject *>();
+    std::vector<EmptyObject *> result;
+    auto it = objectsByName_.find(objectName);
+    if (it == objectsByName_.end()) return result;
+    // 追加順（objects_の並び）で返す
+    for (const auto &obj : objects_) {
+        if (obj && it->second.contains(obj.get())) {
+            result.push_back(obj.get());
+        }
+    }
+    return result;
 }
 
 EmptyObject *Scene::GetSceneObject(const std::string &objectName) const {
+    auto it = objectsByName_.find(objectName);
+    if (it == objectsByName_.end() || it->second.empty()) return nullptr;
+    for (const auto &obj : objects_) {
+        if (obj && it->second.contains(obj.get())) {
+            return obj.get();
+        }
+    }
     return nullptr;
 }
 
 EmptyObject *Scene::GetSceneObject(EmptyObject *obj) const {
-    return nullptr;
+    if (!obj) return nullptr;
+    return objectsExistingSet_.contains(obj) ? obj : nullptr;
 }
 
 EmptyObject *Scene::GetSceneObject(const UUID128 &uuid) const {
-    return nullptr;
+    auto it = objectsByUUID_.find(uuid);
+    return it != objectsByUUID_.end() ? it->second : nullptr;
+}
+
+void Scene::RemoveObjectFromMaps(EmptyObject *obj) {
+    if (!obj) return;
+    objectsByUUID_.erase(obj->GetObjectID());
+    objectsExistingSet_.erase(obj);
+    auto nameIt = objectsByName_.find(obj->GetName());
+    if (nameIt != objectsByName_.end()) {
+        nameIt->second.erase(obj);
+        if (nameIt->second.empty()) objectsByName_.erase(nameIt);
+    }
 }
 
 void Scene::ClearSceneObjects() {
@@ -293,6 +349,15 @@ bool Scene::ChangeToNextScene() {
         return sceneManager_->ChangeScene(nextSceneName_);
     }
     return false;
+}
+
+void Scene::UpdateSceneObjects() {
+    if (objects_.empty()) return;
+    for (const auto &obj : objects_) {
+        if (obj) {
+            obj->UpdateInterface(Passkey<Scene>());
+        }
+    }
 }
 
 void Scene::UpdateComponents() {

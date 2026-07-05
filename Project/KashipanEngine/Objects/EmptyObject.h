@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include "Objects/IObjectComponent.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
@@ -47,10 +48,17 @@ public:
         size_t typeIndex = IObjectComponent::GetComponentTypeID<T>();
         if (typeIndex >= componentsIndexByType_.size()) return result;
         const auto &indices = componentsIndexByType_[typeIndex];
+        std::vector<const std::pair<std::unique_ptr<IObjectComponent>, size_t> *> sortedComponents;
         for (size_t idx : indices) {
             if (idx < components_.size()) {
-                result.push_back(static_cast<T *>(components_[idx].get()));
+                sortedComponents.push_back(&components_[idx]);
             }
+        }
+        std::sort(sortedComponents.begin(), sortedComponents.end(), [](const auto *a, const auto *b) {
+            return a->second < b->second;
+        });
+        for (const auto *pair : sortedComponents) {
+            result.push_back(static_cast<T *>(pair->first.get()));
         }
         return result;
     }
@@ -65,7 +73,7 @@ public:
         const auto &indices = componentsIndexByType_[typeIndex];
         for (size_t idx : indices) {
             if (idx < components_.size()) {
-                return static_cast<T *>(components_[idx].get());
+                return static_cast<T *>(components_[idx].first.get());
             }
         }
         return nullptr;
@@ -108,7 +116,7 @@ public:
     template<typename T>
     T *AddComponent(std::unique_ptr<T> comp) {
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
-        return static_cast<T *>(AddComponent(std::move(comp)));
+        return static_cast<T *>(AddComponent(std::unique_ptr<IObjectComponent>(std::move(comp))));
     }
     /// @brief コンポーネントの追加（生成）
     /// @tparam T コンポーネントの型
@@ -120,7 +128,7 @@ public:
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         try {
             auto comp = std::make_unique<T>(std::forward<Args>(args)...);
-            return static_cast<T *>(AddComponent(std::move(comp)));
+            return static_cast<T *>(AddComponent(std::unique_ptr<IObjectComponent>(std::move(comp))));
         } catch (...) { return nullptr; }
     }
 

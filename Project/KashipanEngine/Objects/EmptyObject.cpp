@@ -1,4 +1,5 @@
 #include "EmptyObject.h"
+#include "Objects/Components/Transform.h"
 
 namespace KashipanEngine {
 
@@ -6,6 +7,7 @@ EmptyObject::EmptyObject(SceneContext *ownerSceneContext, const std::string &nam
     objectContext_ = std::make_unique<ObjectContext>(Passkey<EmptyObject>(), this);
     ownerSceneContext_ = ownerSceneContext;
     name_ = name;
+    AddComponent(std::make_unique<Transform>());
 }
 
 EmptyObject::~EmptyObject() {
@@ -13,7 +15,7 @@ EmptyObject::~EmptyObject() {
 }
 
 std::unique_ptr<EmptyObject> EmptyObject::Clone() const {
-    std::unique_ptr<EmptyObject> newObj = std::make_unique<EmptyObject>(ownerSceneContext_, name_);
+    std::unique_ptr<EmptyObject> newObj(new EmptyObject(ownerSceneContext_, name_));
     for (const auto &comp : components_) {
         if (!comp.first) continue;
         auto clonedComp = comp.first->Clone();
@@ -116,6 +118,7 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
 }
 
 bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
+    ClearComponents();
     name_ = json.value("name", "EmptyObject");
     isActive_ = json.value("isActive", true);
     objectID_ = UUID128(json.value("objectID", ""));
@@ -126,14 +129,13 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         std::string typeName = compJson.value("type", "");
         if (typeName.empty()) continue;
         auto comp = CreateObjectComponentByType(typeName);
-        loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson);
+        loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson["data"]);
     }
     // 各コンポーネントにJSONデータをロードさせる
     for (const auto &compPair : loadedComponents) {
         IObjectComponent *comp = compPair.first;
         const JSON &compJson = compPair.second;
         if (!comp) continue;
-        AddComponent(std::unique_ptr<IObjectComponent>(comp));
         comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson);
     }
     return true;

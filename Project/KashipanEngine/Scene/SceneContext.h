@@ -23,7 +23,6 @@ public:
 
     const std::string &GetName() const { return owner_->GetName(); }
 
-
     //==================================================
     // シーン変数
     //==================================================
@@ -92,7 +91,7 @@ public:
     /// @param name 空のオブジェクト名
     /// @param index 生成位置のインデックス（省略時は末尾に追加）
     /// @return 生成された空のオブジェクトのポインタ
-    EmptyObject *CreateEmptyObject(const std::string &name = "", size_t index = MAXSIZE_T) { return owner_->CreateEmptyObject(name, index); }
+    EmptyObject *CreateEmptyObject(const std::string &name = "", const UUID128 &objectID = UUID128(), size_t index = MAXSIZE_T) { return owner_->CreateEmptyObject(name, objectID, index); }
     /// @brief オブジェクトを削除
     /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
@@ -229,6 +228,7 @@ public:
     SamplerManager *GetSamplerManager() { return Scene::GetSamplerManager(); }
     TextureManager *GetTextureManager() { return Scene::GetTextureManager(); }
     AnimationManager *GetAnimationManager() { return Scene::GetAnimationManager(); }
+    MaterialManager *GetMaterialManager() { return Scene::GetMaterialManager(); }
     Input *GetInput() { return Scene::GetInput(); }
     InputCommand *GetInputCommand() { return Scene::GetInputCommand(); }
 

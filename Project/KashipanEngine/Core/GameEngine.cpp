@@ -1,7 +1,7 @@
 #include "GameEngine.h"
 #include "EngineSettings.h"
 #include "Core/Window.h"
-#include "Graphics/Renderer.h"
+#include "Scene/SceneContext.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
@@ -113,17 +113,13 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
-    if (graphicsEngine_) {
-        auto* renderer = graphicsEngine_->GetRenderer(Passkey<GameEngine>{});
-        ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, renderer);
-    }
-
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
     skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, "Assets");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, "Assets");
+    materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, "Assets");
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
 
@@ -139,6 +135,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         samplerManager_.get(),
         textureManager_.get(),
         animationManager_.get(),
+        materialManager_.get(),
         input_.get(),
         inputCommand_.get());
 
@@ -202,8 +199,6 @@ GameEngine::~GameEngine() {
     modelManager_.reset();
     samplerManager_.reset();
     textureManager_.reset();
-
-    ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
 
     graphicsEngine_.reset();
     directXCommon_.reset();
@@ -277,17 +272,19 @@ void GameEngine::GameLoopDraw() {
     directXCommon_->BeginDraw({});
     Window::Draw({});
 
-    graphicsEngine_->RenderFrame({});
+    {
+        SceneContext *sceneContext = nullptr;
+        if (sceneManager_) {
+            if (const auto *currentScene = sceneManager_->GetCurrentScene()) {
+                sceneContext = currentScene->GetSceneContext();
+            }
+        }
+        graphicsEngine_->RenderFrame({}, sceneContext);
+    }
 
 #if defined(USE_IMGUI)
     if (imguiManager_) {
         DrawProfilingImGui();
-
-        if (graphicsEngine_) {
-            if (auto *renderer = graphicsEngine_->GetRenderer({})) {
-                renderer->ShowImGuiCpuTimersWindow();
-            }
-        }
 
         if (input_) {
             input_->ShowImGui();
@@ -295,9 +292,6 @@ void GameEngine::GameLoopDraw() {
         if (inputCommand_) {
             inputCommand_->ShowImGui();
         }
-
-        ScreenBuffer::ShowImGuiScreenBuffersWindow();
-        ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow();
 
         ImGui::Begin("GameLoop Control");
         if (isGameLoopPaused_) {

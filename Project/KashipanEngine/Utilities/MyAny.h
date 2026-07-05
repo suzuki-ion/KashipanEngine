@@ -127,7 +127,7 @@ struct hash<MyAny> {
 };
 } // namespace std
 
-template <typename T, typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, MyAny>>>
+template <typename T, typename>
 MyAny::MyAny(const T &value) : content(std::make_unique<Holder<T>>(value)) {
     if constexpr (is_vector_v<T>) {
         // すでに std::vector<MyAny> であればそのまま保持

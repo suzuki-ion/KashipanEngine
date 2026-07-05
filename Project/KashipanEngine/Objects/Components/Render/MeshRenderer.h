@@ -1,13 +1,18 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
-#include "Graphics/IRenderTarget.h"
-#include "Graphics/MaterialManager.h"
+#include "Assets/MaterialManager.h"
+#include "Assets/ModelManager.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Transform.h"
-#include "Scene/Components/SceneRenderer.h"
+#include "Scene/Components/Render/SceneRenderer.h"
+#include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
 
+/// @brief メッシュ描画用コンポーネント
+/// @details 描画先は「描画先コンポーネント（NormalWindowObject / OverlayWindowObject /
+///          ScreenBufferObject / ShadowMapObject）が付与されたオブジェクト」を指定する。
+///          指定オブジェクトに付与された全ての描画先に対して描画が行われる。
 class MeshRenderer final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 1, SetUpdatePriority(900);)
@@ -15,101 +20,136 @@ public:
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<MeshRenderer>();
-        ptr->targetKind_ = targetKind_;
-        ptr->targetName_ = targetName_;
+        ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
         ptr->materialName_ = materialName_;
         ptr->materialHandle_ = materialHandle_;
         return ptr;
     }
 
-    void SetTarget(RenderTargetKind kind, const std::string &name) {
-        targetKind_ = kind;
-        targetName_ = name;
-    }
-    void SetTarget(const IRenderTarget *target) {
-        if (!target) return;
-        SetTarget(target->GetRenderTargetKind(), target->GetRenderTargetName());
-    }
-    void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
-    void SetMaterialName(const std::string &materialName) { materialName_ = materialName; }
-    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandle_ = materialHandle; }
+    //==================================================
+    // 描画先指定
+    //==================================================
 
-    RenderTargetKind GetTargetKind() const noexcept { return targetKind_; }
-    const std::string &GetTargetName() const noexcept { return targetName_; }
+    /// @brief 描画先オブジェクトを設定（描画先コンポーネントが付与されたオブジェクト）
+    void SetTargetObject(const EmptyObject *targetObject) {
+        targetObjectID_ = targetObject ? targetObject->GetObjectID() : UUID128();
+    }
+    /// @brief 描画先オブジェクトをUUIDから設定
+    void SetTargetObject(const UUID128 &targetObjectID) { targetObjectID_ = targetObjectID; }
+    /// @brief 描画先オブジェクトのUUIDを取得
+    const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
+    /// @brief 描画先オブジェクトを取得（存在しない場合は nullptr）
+    EmptyObject *GetTargetObject() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
+        return sceneContext->GetSceneObject(targetObjectID_);
+    }
+
+    //==================================================
+    // パイプライン・マテリアル指定
+    //==================================================
+
+    void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
+
+    void SetMaterialName(const std::string &materialName) {
+        materialName_ = materialName;
+        materialHandle_ = MaterialManager::kInvalidHandle;
+    }
+    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandle_ = materialHandle; }
     const std::string &GetMaterialName() const noexcept { return materialName_; }
-    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept { return materialHandle_; }
+    /// @brief マテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
+    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept {
+        if (materialHandle_ == MaterialManager::kInvalidHandle && !materialName_.empty()) {
+            materialHandle_ = MaterialManager::GetMaterialHandleFromName(materialName_);
+        }
+        return materialHandle_;
+    }
+
+    //==================================================
+    // 描画情報取得
+    //==================================================
+
+    /// @brief 描画に使用するメッシュハンドルを取得（MeshFilter コンポーネントから）
+    ModelManager::ModelHandle GetMeshHandle() const {
+        auto *objectContext = GetOwnerObjectContext();
+        if (!objectContext) return ModelManager::kInvalidHandle;
+        auto *meshFilter = objectContext->GetComponent<MeshFilter>();
+        if (!meshFilter) return ModelManager::kInvalidHandle;
+        return meshFilter->GetMeshHandle();
+    }
+
+    /// @brief ワールド行列を取得（Transform コンポーネントから）
+    Matrix4x4 GetWorldMatrix() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        return transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+    }
 
 protected:
-    void Update() override {
-        auto *sceneContext = GetOwnerSceneContext();
-        auto *objectContext = GetOwnerObjectContext();
-        if (!sceneContext || !objectContext) return;
-
-        auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
-        if (!sceneRenderer) {
-            sceneRenderer = sceneContext->AddComponent<SceneRenderer>();
+    void Initialize() override {
+        auto *sceneRenderer = GetOrAddSceneRenderer();
+        if (sceneRenderer) {
+            sceneRenderer->RegisterMeshRenderer(this);
         }
-        if (!sceneRenderer) return;
+    }
 
-        auto *meshFilter = objectContext->GetComponent<MeshFilter>();
-        if (!meshFilter || !meshFilter->HasMesh()) return;
-
-        auto *transform = objectContext->GetComponent<Transform>();
-        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
-
-        sceneRenderer->Submit(
-            this,
-            SceneRenderer::TargetKey{ targetKind_, targetName_ },
-            SceneRenderer::PipelineKey{ pipelineName_ },
-            SceneRenderer::MeshKey{ meshFilter->GetMeshHandle() },
-            SceneRenderer::MaterialKey{ materialName_, materialHandle_ },
-            world);
+    void Finalize() override {
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+        if (sceneRenderer) {
+            sceneRenderer->UnregisterMeshRenderer(this);
+        }
     }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        int kind = static_cast<int>(targetKind_);
-        const char *items[] = { "Window", "ScreenBuffer", "ShadowMapBuffer" };
-        if (ImGui::Combo("Target", &kind, items, 3)) {
-            targetKind_ = static_cast<RenderTargetKind>(kind);
-        }
-        ImGui::InputText("TargetName", &targetName_);
+        auto *targetObject = GetTargetObject();
+        std::string targetName = targetObject ? targetObject->GetName() : "(None)";
+        ImGui::Text("Target: %s", targetName.c_str());
         ImGui::InputText("Pipeline", &pipelineName_);
-        ImGui::InputText("Material", &materialName_);
-        int materialHandle = static_cast<int>(materialHandle_);
-        if (ImGui::InputInt("MaterialHandle", &materialHandle)) {
-            materialHandle_ = materialHandle <= 0 ? MaterialManager::kInvalidHandle : static_cast<MaterialManager::MaterialHandle>(materialHandle);
+        if (ImGui::InputText("Material", &materialName_)) {
+            materialHandle_ = MaterialManager::kInvalidHandle;
         }
     }
 #endif
 
     JSON SaveToJson() const override {
         JSON json = JSON::object();
-        json["targetKind"] = static_cast<int>(targetKind_);
-        json["targetName"] = targetName_;
+        json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
         json["materialName"] = materialName_;
-        json["materialHandle"] = materialHandle_;
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
-        targetKind_ = static_cast<RenderTargetKind>(json.value("targetKind", static_cast<int>(RenderTargetKind::ScreenBuffer)));
-        targetName_ = json.value("targetName", std::string{});
+        if (json.contains("targetObjectID")) {
+            targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
+        } else {
+            targetObjectID_ = UUID128();
+        }
         pipelineName_ = json.value("pipelineName", std::string{ "Object3D.Solid.BlendNormal" });
         materialName_ = json.value("materialName", std::string{ "Default" });
-        materialHandle_ = json.value("materialHandle", MaterialManager::kInvalidHandle);
+        materialHandle_ = MaterialManager::kInvalidHandle;
         return true;
     }
 
 private:
-    RenderTargetKind targetKind_ = RenderTargetKind::ScreenBuffer;
-    std::string targetName_;
+    SceneRenderer *GetOrAddSceneRenderer() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext) return nullptr;
+        auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
+        if (!sceneRenderer) {
+            sceneRenderer = sceneContext->AddComponent<SceneRenderer>();
+        }
+        return sceneRenderer;
+    }
+
+    UUID128 targetObjectID_{};
     std::string pipelineName_ = "Object3D.Solid.BlendNormal";
     std::string materialName_ = "Default";
-    MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
+    mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
 };
 
 REGISTER_COMPONENT_OBJECT(MeshRenderer)

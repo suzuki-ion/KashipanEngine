@@ -164,6 +164,20 @@ void PipelineManager::LoadPreset() {
     Log(Translation("engine.graphics.pipeline.loadpreset.end"), LogSeverity::Debug);
 }
 
+namespace {
+// ImGuiでの選択用に読み込み済みパイプライン名を保持する
+std::vector<std::string> sRenderPipelineNames;
+std::vector<std::string> sComputePipelineNames;
+} // namespace
+
+const std::vector<std::string> &PipelineManager::GetLoadedRenderPipelineNames() {
+    return sRenderPipelineNames;
+}
+
+const std::vector<std::string> &PipelineManager::GetLoadedComputePipelineNames() {
+    return sComputePipelineNames;
+}
+
 void PipelineManager::LoadPipelines() {
     LogScope scope;
     Log(Translation("engine.graphics.pipeline.load.start"), LogSeverity::Debug);
@@ -215,6 +229,19 @@ void PipelineManager::LoadPipelines() {
             Log(Translation("engine.graphics.pipeline.load.unknown.type") + type + " " + Translation("label.filepath") + file, LogSeverity::Warning);
         }
     }
+
+    // ImGuiでの選択用に名前一覧を再構築する
+    sRenderPipelineNames.clear();
+    sComputePipelineNames.clear();
+    for (const auto &kv : pipelineInfos_) {
+        if (kv.second.Type() == PipelineType::Render) {
+            sRenderPipelineNames.push_back(kv.first);
+        } else {
+            sComputePipelineNames.push_back(kv.first);
+        }
+    }
+    std::sort(sRenderPipelineNames.begin(), sRenderPipelineNames.end());
+    std::sort(sComputePipelineNames.begin(), sComputePipelineNames.end());
 
     Log(Translation("engine.graphics.pipeline.load.end"), LogSeverity::Debug);
 }

@@ -2,10 +2,14 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
+#include "Graphics/PipelineManager.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Utilities/UUID128.h"
+#if defined(USE_IMGUI)
+#include "Objects/Components/Render/TargetObjectSelector.h"
+#endif
 
 namespace KashipanEngine {
 
@@ -105,11 +109,15 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        auto *targetObject = GetTargetObject();
-        std::string targetName = targetObject ? targetObject->GetName() : "(None)";
-        ImGui::Text("Target: %s", targetName.c_str());
-        ImGui::InputText("Pipeline", &pipelineName_);
-        if (ImGui::InputText("Material", &materialName_)) {
+        // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
+        TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        // パイプラインとマテリアルは読み込み済みのものから選択する
+        ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
+        std::vector<std::string> materialNames;
+        for (const auto &entry : MaterialManager::GetLoadedMaterialListEntries()) {
+            materialNames.push_back(entry.material.name);
+        }
+        if (ImGuiCustom::SelectString("Material", materialName_, materialNames)) {
             materialHandle_ = MaterialManager::kInvalidHandle;
         }
     }

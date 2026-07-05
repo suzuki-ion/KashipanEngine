@@ -48,8 +48,9 @@ private:
         std::span<const SceneRenderer::DrawEntry> batch,
         SceneRenderer *sceneRenderer);
 
-    /// @brief 指定パイプラインに対するカメラ・ライトの定数バッファバインド
+    /// @brief 指定描画先・パイプラインに対するカメラ・ライトの定数バッファバインド
     void BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
+        IRenderTarget *target,
         const std::string &pipelineName,
         SceneRenderer *sceneRenderer);
 

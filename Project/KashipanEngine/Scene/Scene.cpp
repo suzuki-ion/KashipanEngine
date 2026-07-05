@@ -354,7 +354,7 @@ bool Scene::ChangeToNextScene() {
 void Scene::UpdateSceneObjects() {
     if (objects_.empty()) return;
     for (const auto &obj : objects_) {
-        if (obj) {
+        if (obj && obj->IsActive()) {
             obj->UpdateInterface(Passkey<Scene>());
         }
     }

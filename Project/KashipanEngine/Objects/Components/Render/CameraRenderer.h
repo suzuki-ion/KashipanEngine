@@ -10,7 +10,12 @@
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
+#include "Graphics/PipelineManager.h"
 #include "Scene/Components/Render/SceneRenderer.h"
+#include "Utilities/UUID128.h"
+#if defined(USE_IMGUI)
+#include "Objects/Components/Render/TargetObjectSelector.h"
+#endif
 
 namespace KashipanEngine {
 
@@ -26,6 +31,7 @@ public:
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<CameraRenderer>();
+        ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
         ptr->bindVariableNames_ = bindVariableNames_;
         return ptr;
@@ -34,6 +40,25 @@ public:
     /// @brief 使用するパイプラインを設定（空文字の場合は全パイプラインに適用）
     void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
+
+    //==================================================
+    // 描画先指定
+    //==================================================
+
+    /// @brief 適用先の描画先オブジェクトを設定（未指定の場合は全描画先に適用）
+    void SetTargetObject(const EmptyObject *targetObject) {
+        targetObjectID_ = targetObject ? targetObject->GetObjectID() : UUID128();
+    }
+    /// @brief 適用先の描画先オブジェクトをUUIDから設定
+    void SetTargetObject(const UUID128 &targetObjectID) { targetObjectID_ = targetObjectID; }
+    /// @brief 適用先の描画先オブジェクトのUUIDを取得
+    const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
+    /// @brief 適用先の描画先オブジェクトを取得（未指定・存在しない場合は nullptr）
+    EmptyObject *GetTargetObject() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
+        return sceneContext->GetSceneObject(targetObjectID_);
+    }
 
     /// @brief バインド先の定数バッファ変数名を設定（例: "Vertex:gCamera3D"）
     void SetBindVariableNames(const std::vector<std::string> &names) { bindVariableNames_ = names; }
@@ -78,7 +103,10 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::InputText("Pipeline", &pipelineName_);
+        // 適用先の描画先オブジェクトをシーン上から選択（D&D対応、未指定は全描画先）
+        TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        // パイプラインは読み込み済みのものから選択（未指定は全パイプライン）
+        ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
         for (const auto &name : bindVariableNames_) {
             ImGui::BulletText("%s", name.c_str());
         }
@@ -87,12 +115,18 @@ protected:
 
     JSON SaveToJson() const override {
         JSON json = JSON::object();
+        json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
         json["bindVariableNames"] = bindVariableNames_;
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
+        if (json.contains("targetObjectID")) {
+            targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
+        } else {
+            targetObjectID_ = UUID128();
+        }
         pipelineName_ = json.value("pipelineName", std::string{});
         bindVariableNames_.clear();
         if (json.contains("bindVariableNames")) {
@@ -182,6 +216,7 @@ private:
     }
 
     std::unique_ptr<ConstantBufferResource> constantBuffer_;
+    UUID128 targetObjectID_{};
     std::string pipelineName_;
     std::vector<std::string> bindVariableNames_;
 };

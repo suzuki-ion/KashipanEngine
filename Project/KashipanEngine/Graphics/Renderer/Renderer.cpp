@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include <algorithm>
 #include <cstring>
 #include <vector>
 
@@ -143,7 +144,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
     shaderBinder.SetCommandList(commandList);
 
     // カメラ・ライトの定数バッファバインド
-    BindCameraAndLights(commandList, pipelineName, sceneRenderer);
+    BindCameraAndLights(commandList, target, pipelineName, sceneRenderer);
 
     const std::uint32_t instanceCount = static_cast<std::uint32_t>(batch.size());
 
@@ -205,7 +206,21 @@ void Renderer::DrawBatch(IRenderTarget *target,
     commandList->DrawIndexedInstanced(meshBuffers->indexCount, instanceCount, 0, 0, 0);
 }
 
+namespace {
+
+/// @brief 指定の描画先が対象オブジェクトの描画先に含まれるか（未指定の場合は全描画先に適用）
+bool IsTargetMatch(EmptyObject *targetObject, bool hasTargetSpecified, IRenderTarget *target) {
+    if (!hasTargetSpecified) return true;
+    if (!targetObject) return false; // 指定されているが解決できない場合は適用しない
+    std::vector<IRenderTarget *> targets;
+    SceneRenderer::CollectRenderTargets(targetObject, targets);
+    return std::find(targets.begin(), targets.end(), target) != targets.end();
+}
+
+} // namespace
+
 void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
+    IRenderTarget *target,
     const std::string &pipelineName,
     SceneRenderer *sceneRenderer) {
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
@@ -215,6 +230,8 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
         // パイプライン指定がある場合は一致するパイプラインのみバインド
         if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
+        // 描画先指定がある場合は一致する描画先のみバインド
+        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
         auto *constantBuffer = cameraRenderer->GetConstantBuffer();
         if (!constantBuffer) continue;
         for (const auto &variableName : cameraRenderer->GetBindVariableNames()) {
@@ -225,6 +242,7 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
+        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
         auto *constantBuffer = lightRenderer->GetConstantBuffer();
         if (!constantBuffer) continue;
         for (const auto &variableName : lightRenderer->GetBindVariableNames()) {
@@ -261,8 +279,22 @@ void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
             auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pass.pipelineName);
             shaderBinder.SetCommandList(commandList);
 
-            // 直前パスの描画結果
+            // 直前パスの描画結果と既定サンプラー
             shaderBinder.Bind("Pixel:gTexture", screenBuffer->GetSrvHandle());
+            SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearClamp);
+
+            // コンポーネントが要求する追加テクスチャ
+            for (const auto &requirement : pass.textureBindRequirements) {
+                if (!requirement.getHandle) continue;
+                const auto handle = requirement.getHandle();
+                if (handle.ptr == 0) continue;
+                shaderBinder.Bind(requirement.variableName, handle);
+            }
+
+            // コンポーネントが要求するサンプラー
+            for (const auto &requirement : pass.samplerBindRequirements) {
+                SamplerManager::BindSampler(&shaderBinder, requirement.variableName, requirement.sampler);
+            }
 
             // コンポーネントが要求する定数バッファ
             for (const auto &requirement : pass.constantBufferRequirements) {

@@ -63,7 +63,7 @@ public:
         if (!content || !content->isType<T>()) {
             return nullptr;
         }
-        return &(static_cast<Holder<T>*>(content)->value);
+        return &(static_cast<Holder<T>*>(content.get())->value);
     }
     void *GetRawPointer() const {
         if (!content) {

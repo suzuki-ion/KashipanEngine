@@ -3,6 +3,7 @@
 #include "ImGuiManager.h"
 
 #include "Assets/TextureManager.h"
+#include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/AudioManager.h"
 #include "Core/WindowsAPI.h"
@@ -164,6 +165,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         if (ImGui::BeginMenu("Debug Windows")) {
             ImGui::MenuItem("Loaded Textures", nullptr, &isShowLoadedTexturesWindow_);
             ImGui::MenuItem("Loaded Models", nullptr, &isShowLoadedModelsWindow_);
+            ImGui::MenuItem("Materials", nullptr, &isShowMaterialsWindow_);
             ImGui::MenuItem("Loaded Sounds", nullptr, &isShowLoadedSoundsWindow_);
             ImGui::MenuItem("Playing Sounds", nullptr, &isShowPlayingSoundsWindow_);
             ImGui::MenuItem("Logger", nullptr, &isShowLoggerWindow_);
@@ -175,6 +177,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     }
     if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
     if (isShowLoadedModelsWindow_) ModelManager::ShowImGuiLoadedModelsWindow();
+    if (isShowMaterialsWindow_) MaterialManager::ShowImGuiMaterialManagerWindow();
     if (isShowLoadedSoundsWindow_) AudioManager::ShowImGuiLoadedSoundsWindow();
     if (isShowPlayingSoundsWindow_) AudioManager::ShowImGuiPlayingSoundsWindow();
     if (isShowLoggerWindow_) ShowImGuiLoggerWindow(Passkey<ImGuiManager>());

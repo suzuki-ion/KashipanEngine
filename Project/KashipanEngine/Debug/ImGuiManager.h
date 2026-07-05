@@ -44,6 +44,7 @@ private:
     // 各種デバッグウィンドウ表示フラグ
     bool isShowLoadedTexturesWindow_ = false;
     bool isShowLoadedModelsWindow_ = false;
+    bool isShowMaterialsWindow_ = false;
     bool isShowLoadedSoundsWindow_ = false;
     bool isShowPlayingSoundsWindow_ = false;
     bool isShowLoggerWindow_ = true;

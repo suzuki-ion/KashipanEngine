@@ -70,6 +70,13 @@ public:
 
 #if defined(USE_IMGUI)
     void ShowImGuiInterface(Passkey<SceneManager>);
+
+    /// @brief 所有シーンコンポーネントの ImGui 表示（ウィンドウの Begin/End は呼ばない）
+    void ShowComponentImGui(ISceneComponent *component) {
+        if (GetComponent(component)) {
+            component->ShowImGuiInterface(Passkey<Scene>{});
+        }
+    }
 #endif
 
     /// @brief シーンの保存

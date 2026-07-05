@@ -1,4 +1,5 @@
 #include "SceneObjectHierarchy.h"
+#include "Scene/Editor/SceneObjectPayload.h"
 #include "Objects/Components/Transform.h"
 
 namespace KashipanEngine {
@@ -138,17 +139,22 @@ void SceneObjectHierarchy::ShowAddObjectMenu(EmptyObject *parent) {
 
 void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-        ImGui::SetDragDropPayload("DND_OBJECT", &objItem, sizeof(ObjectItem *));
+        // 外部（インスペクター等）でも受け取れる共有ペイロード型で送る
+        SceneObjectDragDropPayload dndPayload;
+        dndPayload.object = objItem->object;
+        dndPayload.internalItem = objItem;
+        ImGui::SetDragDropPayload(kSceneObjectDragDropType, &dndPayload, sizeof(dndPayload));
         ImGui::Text("%s", objItem->name.c_str());
         ImGui::EndDragDropSource();
     }
     if (ImGui::BeginDragDropTarget()) {
         ImGuiDragDropFlags targetFlags = ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect;
-        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("DND_OBJECT", targetFlags)) {
+        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(kSceneObjectDragDropType, targetFlags)) {
             DropPosition dropPosition = DragAndDropTargetCommon();
             if (payload->IsDelivery()) {
-                IM_ASSERT(payload->DataSize == sizeof(ObjectItem *));
-                dragDropPayload_.objectItemSource = *(ObjectItem **)payload->Data;
+                IM_ASSERT(payload->DataSize == sizeof(SceneObjectDragDropPayload));
+                auto *dndPayload = static_cast<const SceneObjectDragDropPayload *>(payload->Data);
+                dragDropPayload_.objectItemSource = static_cast<ObjectItem *>(dndPayload->internalItem);
                 dragDropPayload_.objectItemTarget = objItem;
                 dragDropPayload_.position = dropPosition;
             }

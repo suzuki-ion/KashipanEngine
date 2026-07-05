@@ -222,6 +222,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
+      <Filter>Externals\imgui</Filter>
+    </ClCompile>
     <ClCompile Include="Externals\imgui\imgui.cpp">
       <Filter>Externals\imgui</Filter>
     </ClCompile>
@@ -548,6 +551,9 @@
   <ItemGroup>
     <ClInclude Include="Application\AppInitialize.h">
       <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\ImGuizmo.h">
+      <Filter>Externals\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Externals\imgui\imconfig.h">
       <Filter>Externals\imgui</Filter>
@@ -942,7 +948,43 @@
     <ClInclude Include="KashipanEngine\Objects\Components\MeshFilter.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BoxFilterEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ChromaticAberrationEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ColorAdjustEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DissolveEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DitherEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DotMatrixEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\FXAAEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\GaussianFilterEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\GrayscaleEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\IPostProcessComponent.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\OutlineEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\RadialBlurEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\VignetteEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera2D.h">
@@ -973,6 +1015,9 @@
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ShadowMapObject.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Text.h">
@@ -1081,6 +1126,9 @@
       <Filter>KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h">
+      <Filter>KashipanEngine\Scene\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectPayload.h">
       <Filter>KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h">

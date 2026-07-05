@@ -58,11 +58,11 @@ public:
     /// @param handle 保存するマテリアルのハンドル
     /// @param filePath 保存先のファイルパス（空文字の場合は元のパスに上書き保存）
     /// @return 保存に成功した場合は true、失敗した場合は false
-    bool SaveMaterial(MaterialHandle handle, const std::string& filePath = "");
+    static bool SaveMaterial(MaterialHandle handle, const std::string& filePath = "");
     /// @brief 全てのマテリアルを保存する
     /// @param folderPath 保存先のフォルダパス（空文字の場合は元のパスに上書き保存）
     /// @return 保存に成功した場合は true、失敗した場合は false
-    bool SaveAllMaterials(const std::string &folderPath = "");
+    static bool SaveAllMaterials(const std::string &folderPath = "");
 
     /// @brief ファイル名単体からマテリアルハンドルを取得
     /// @param fileName ファイル名（例: "my_material.mat"）
@@ -83,6 +83,11 @@ public:
 
     /// @brief 読み込み済みマテリアル一覧を取得
     static std::vector<MaterialEntry> GetLoadedMaterialListEntries();
+
+#if defined(USE_IMGUI)
+    /// @brief マテリアル管理用ImGuiウィンドウを描画（一覧・編集・追加・削除・保存）
+    static void ShowImGuiMaterialManagerWindow();
+#endif
 
     const std::string &GetAssetsRootPath() const noexcept;
 

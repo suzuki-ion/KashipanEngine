@@ -336,6 +336,10 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
     <ClCompile Include="Externals\imgui\imgui.cpp" />
     <ClCompile Include="Externals\imgui\imgui_demo.cpp" />
     <ClCompile Include="Externals\imgui\imgui_draw.cpp" />
@@ -447,6 +451,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\AppInitialize.h" />
+    <ClInclude Include="Externals\imgui\ImGuizmo.h" />
     <ClInclude Include="Externals\imgui\imconfig.h" />
     <ClInclude Include="Externals\imgui\imgui.h" />
     <ClInclude Include="Externals\imgui\imgui_impl_dx12.h" />
@@ -578,7 +583,19 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\RigidBody3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\SphereCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\MeshFilter.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BoxFilterEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ChromaticAberrationEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ColorAdjustEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DissolveEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DitherEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DotMatrixEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\FXAAEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\GaussianFilterEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\GrayscaleEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\IPostProcessComponent.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\OutlineEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\RadialBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\VignetteEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraRenderer.h" />
@@ -589,6 +606,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\Render\OverlayWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ShadowMapObject.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Text.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="KashipanEngine\Objects\EmptyObject.h" />
@@ -625,6 +643,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectPayload.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h" />

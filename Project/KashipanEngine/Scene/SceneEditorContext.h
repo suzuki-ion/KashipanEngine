@@ -20,6 +20,22 @@ public:
     void SetName(const std::string &name) { owner_->name_ = name; }
 
     //==================================================
+    // シーンの保存・読込
+    //==================================================
+
+    /// @brief シーンをJSONへ保存する
+    JSON SaveSceneToJSON() const { return owner_->SaveToJSON(); }
+    /// @brief シーンをJSONから読み込む（現在の内容は破棄される）
+    bool LoadSceneFromJSON(const JSON &json) {
+        owner_->ClearSceneObjects();
+        owner_->ClearSceneComponents();
+        return owner_->LoadFromJSON(json);
+    }
+
+    /// @brief シーンコンポーネントの ImGui 表示（ウィンドウの Begin/End は呼ばない）
+    void ShowComponentImGui(ISceneComponent *component) { owner_->ShowComponentImGui(component); }
+
+    //==================================================
     // シーン変数
     //==================================================
 

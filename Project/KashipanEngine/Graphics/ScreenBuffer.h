@@ -30,7 +30,9 @@ public:
     static void CommitDestroy(Passkey<GameEngine>);
 
     /// @brief ScreenBuffer 生成
+    /// @param name 管理用の名前（空の場合は自動生成。TextureManagerにこの名前で登録される）
     static ScreenBuffer *Create(std::uint32_t width, std::uint32_t height,
+        const std::string &name = "",
         DXGI_FORMAT colorFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
         DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
     /// @brief ポインタから存在確認
@@ -61,7 +63,11 @@ public:
     //==================================================
 
     RenderTargetKind GetRenderTargetKind() const noexcept override { return RenderTargetKind::ScreenBuffer; }
-    std::string GetRenderTargetName() const override { return "ScreenBuffer"; }
+    std::string GetRenderTargetName() const override { return name_; }
+    /// @brief 管理用の名前を設定（TextureManagerへの登録名も更新される）
+    void SetRenderTargetName(const std::string &name);
+    /// @brief TextureManagerに登録されているテクスチャハンドルを取得
+    std::uint32_t GetTextureHandle() const noexcept { return textureHandle_; }
     std::uint32_t GetRenderTargetWidth() const noexcept override { return width_; }
     std::uint32_t GetRenderTargetHeight() const noexcept override { return height_; }
     bool IsRenderTargetAvailable() const noexcept override { return width_ > 0 && height_ > 0 && !this->IsPendingDestroy(); }
@@ -123,6 +129,14 @@ private:
 
     /// @brief コマンド記録終了
     bool EndRecord(bool discard = false);
+
+    /// @brief TextureManager への登録（名前が空の場合は自動生成）
+    void RegisterToTextureManager(const std::string &name);
+    /// @brief TextureManager からの登録解除
+    void UnregisterFromTextureManager();
+
+    std::string name_;
+    std::uint32_t textureHandle_ = 0;
 
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;

@@ -105,8 +105,6 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     //--------- インスタンス生成 ---------//
 
-    sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
-
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
@@ -122,6 +120,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, "Assets");
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
+    sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
 
     context_.engine = this;
     context_.sceneManager = sceneManager_.get();
@@ -186,6 +185,7 @@ GameEngine::~GameEngine() {
     ScreenBuffer::AllDestroy({});
     ShadowMapBuffer::AllDestroy({});
 
+    sceneManager_.reset();
     inputCommand_.reset();
     input_.reset();
 
@@ -193,6 +193,7 @@ GameEngine::~GameEngine() {
     imguiManager_.reset();
 #endif
 
+    materialManager_.reset();
     audioManager_.reset();
     animationManager_.reset();
     skeletonManager_.reset();

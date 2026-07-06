@@ -31,7 +31,7 @@
                             "translate": {
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": -30.420000076293945
+                                "z": 0.0
                             }
                         },
                         "isActive": true,
@@ -91,9 +91,9 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 1.1399999856948853,
-                                "y": 1.0829999446868896,
-                                "z": 1.9800000190734863
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
                             }
                         },
                         "isActive": true,
@@ -110,13 +110,8 @@
                                 "y": 1.0,
                                 "z": 1.0
                             },
-                            "decay": 2.0,
-                            "distance": 10.0,
-                            "innerAngle": 0.3499999940395355,
-                            "intensity": 7.380000114440918,
-                            "outerAngle": 0.6000000238418579,
-                            "radius": 10.0,
-                            "type": 1
+                            "intensity": 1.0,
+                            "type": 0
                         },
                         "isActive": true,
                         "priority": 1
@@ -147,6 +142,50 @@
                 {
                     "data": {
                         "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 128.0,
+                                "y": 128.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 256,
+                            "title": "Normal Window",
+                            "width": 512
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "NormalWindowObject"
+                }
+            ],
+            "isActive": true,
+            "name": "Window",
+            "objectID": "8a6dcb9c-aa39-4f90-a4a0-64d43f3ab486"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
                             "parent": "4aeae184-8b78-4af0-bc21-da2f9467b1d5",
                             "rotate": {
                                 "w": 1.0,
@@ -160,9 +199,9 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 3.0395617485046387,
+                                "x": 3.569999933242798,
                                 "y": 0.0,
-                                "z": -0.28997504711151123
+                                "z": 0.0
                             }
                         },
                         "isActive": true,
@@ -173,7 +212,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 11
+                            "meshHandle": 1
                         },
                         "isActive": true,
                         "priority": 1
@@ -196,61 +235,6 @@
             "isActive": true,
             "name": "TestObject",
             "objectID": "c6e243c1-ec22-4c9a-8009-e4a5e9f93a8f"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
-                            "parent": "4aeae184-8b78-4af0-bc21-da2f9467b1d5",
-                            "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "translate": {
-                                "x": -2.2773797512054443,
-                                "y": 1.630982756614685,
-                                "z": -0.6372044682502747
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "meshHandle": 13
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "MeshFilter"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "materialName": "White",
-                            "pipelineName": "Object3D.Solid.BlendNormal",
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
-                        },
-                        "isActive": true,
-                        "priority": 900
-                    },
-                    "type": "MeshRenderer"
-                }
-            ],
-            "isActive": false,
-            "name": "EmptyObject",
-            "objectID": "f1029f3e-37b2-4140-9bff-0e4575564d14"
         },
         {
             "components": [
@@ -327,7 +311,7 @@
                 {
                     "data": {
                         "customData": {
-                            "baseTexture": "KashipanEngine/uvChecker.png",
+                            "baseTexture": "",
                             "baseTextureColor": [
                                 1.0,
                                 1.0,
@@ -341,8 +325,8 @@
                                 1.0
                             ],
                             "edgeThickness": 0.10000000149011612,
-                            "maskTexture": "Application/Image/noise0.png",
-                            "maskThreshold": 0.4909999966621399
+                            "maskTexture": "",
+                            "maskThreshold": 0.47200000286102295
                         },
                         "isActive": true,
                         "priority": 1
@@ -370,6 +354,34 @@
                 {
                     "data": {
                         "customData": {
+                            "dotRadius": 3.5,
+                            "dotSpacing": 5.400000095367432,
+                            "intensity": 1.0,
+                            "monochrome": false,
+                            "threshold": 0.0
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "DotMatrixEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "direction": [
+                                1.0,
+                                0.0
+                            ],
+                            "strength": 0.01080000028014183
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "ChromaticAberrationEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "center": [
                                 0.5,
                                 0.5
@@ -393,50 +405,6 @@
             "isActive": true,
             "name": "ScreenBuffer",
             "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
-                            "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "translate": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "Transform"
-                }
-            ],
-            "isActive": true,
-            "name": "EmptyObject",
-            "objectID": "7ee66625-9d8c-4e22-8cf6-3598988ffed3"
-        }
-    ],
-    "sceneVariables": [
-        {
-            "key": "testFloat",
-            "type": "Float",
-            "value": -6.20143509085599e-20
-        },
-        {
-            "key": "testInt",
-            "type": "Int32",
-            "value": -1617794272
         }
     ]
 }

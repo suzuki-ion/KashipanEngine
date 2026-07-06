@@ -68,6 +68,11 @@ protected:
         }
     }
 
+    /// @brief 描画内容確認用のImGuiウィンドウ表示（ポーズ中も表示し続ける）
+    void ShowPersistentImGui() override {
+        ShowViewerWindow();
+    }
+
     /// @brief 描画内容確認用のImGuiウィンドウ表示
     void ShowViewerWindow() {
         if (!isShowViewer_) return;
@@ -96,12 +101,6 @@ protected:
         ImGui::End();
     }
 #endif
-
-    void Update() override {
-#if defined(USE_IMGUI)
-        ShowViewerWindow();
-#endif
-    }
 
     JSON SaveToJson() const override {
         JSON json = JSON::object();

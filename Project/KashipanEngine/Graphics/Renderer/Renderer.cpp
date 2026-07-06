@@ -12,11 +12,16 @@
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/PipelineManager.h"
 #include "Graphics/Renderer/ResourceContainer.h"
+#include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Graphics/ShadowMapBuffer.h"
+#include "Math/Vector3.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Objects/Components/Render/CameraRenderer.h"
+#include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
+#include "Objects/Components/Render/ShadowMapObject.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneContext.h"
 
@@ -36,7 +41,63 @@ struct MaterialElement {
     Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
     float environmentCoefficient = 0.0f;
 };
+
+/// @brief gPointLights 構造化バッファと同レイアウトの構造体
+struct PointLightElement {
+    std::uint32_t enabled = 0;
+    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector3 position{ 0.0f, 0.0f, 0.0f };
+    float radius = 10.0f;
+    float intensity = 1.0f;
+    float decay = 2.0f;
+};
+
+/// @brief gSpotLights 構造化バッファと同レイアウトの構造体
+struct SpotLightElement {
+    std::uint32_t enabled = 0;
+    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector3 position{ 0.0f, 0.0f, 0.0f };
+    float distance = 10.0f;
+    Vector3 direction{ 0.0f, -1.0f, 0.0f };
+    float innerAngle = 0.35f;
+    float outerAngle = 0.6f;
+    float intensity = 1.0f;
+    float decay = 2.0f;
+};
 #pragma pack(pop)
+
+/// @brief LightCounts 定数バッファと同レイアウトの構造体
+struct LightCountsData {
+    std::uint32_t pointLightCount = 0;
+    std::uint32_t spotLightCount = 0;
+    std::uint32_t padding[2]{};
+};
+
+/// @brief ShadowMapConstants 定数バッファと同レイアウトの構造体
+struct ShadowMapConstantsData {
+    Matrix4x4 lightViewProjection;
+    float lightNear = 0.1f;
+    float lightFar = 1000.0f;
+    float padding[2]{};
+};
+
+/// @brief シャドウマップ比較用サンプラーのハンドルを取得する（初回に作成）
+SamplerManager::SamplerHandle GetShadowSamplerCmpHandle() {
+    static SamplerManager::SamplerHandle sHandle = [] {
+        D3D12_SAMPLER_DESC desc{};
+        desc.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+        desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        desc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+        desc.MinLOD = 0.0f;
+        desc.MaxLOD = D3D12_FLOAT32_MAX;
+        desc.MipLODBias = 0.0f;
+        desc.MaxAnisotropy = 1;
+        return SamplerManager::CreateSampler(desc);
+    }();
+    return sHandle;
+}
 
 /// @brief バッファキャッシュキー生成（描画先＋パイプライン＋メッシュ＋マテリアルでバッチを識別）
 std::string MakeBatchKey(const void *target, const std::string &pipelineName,
@@ -188,15 +249,22 @@ void Renderer::DrawBatch(IRenderTarget *target,
             }
         }
 
-        // マテリアルのテクスチャ・サンプラーバインド
+        // マテリアルのテクスチャ・サンプラーバインド（未設定の場合は既定値をバインドする）
         if (material && material->textureHandle != TextureManager::kInvalidHandle) {
             TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", material->textureHandle);
+        } else {
+            const auto fallbackHandle = TextureManager::GetTextureFromFileName("white1x1.png");
+            if (fallbackHandle != TextureManager::kInvalidHandle) {
+                TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackHandle);
+            }
         }
         if (material && material->environmentHandle != TextureManager::kInvalidHandle) {
             TextureManager::BindTexture(&shaderBinder, "Pixel:gEnvironmentMap", material->environmentHandle);
         }
         if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
             SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
+        } else {
+            SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
         }
     }
 
@@ -226,6 +294,11 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
     shaderBinder.SetCommandList(commandList);
 
+    // エディター用描画先の場合はエディターカメラを優先してバインドする
+    if (auto *editorCameraBuffer = sceneRenderer->GetEditorCameraBuffer(target)) {
+        shaderBinder.Bind("Vertex:gCamera3D", editorCameraBuffer);
+        shaderBinder.Bind("Pixel:gCamera3D", editorCameraBuffer);
+    } else
     for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
         // パイプライン指定がある場合は一致するパイプラインのみバインド
@@ -241,6 +314,8 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
 
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
+        // ポイント/スポットライトは構造化バッファ側でまとめてバインドする
+        if (lightRenderer->GetLightType() != Light::Type::Directional) continue;
         if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
         if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
         auto *constantBuffer = lightRenderer->GetConstantBuffer();
@@ -249,6 +324,147 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
             shaderBinder.Bind(variableName, constantBuffer);
         }
     }
+
+    BindLightBuffersAndShadowMap(target, pipelineName, sceneRenderer, shaderBinder);
+}
+
+void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
+    const std::string &pipelineName,
+    SceneRenderer *sceneRenderer,
+    ShaderVariableBinder &shaderBinder) {
+    //--------- ポイント/スポットライトの収集 ---------//
+    std::vector<PointLightElement> pointLights;
+    std::vector<SpotLightElement> spotLights;
+    for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
+        if (!lightRenderer || !lightRenderer->IsActive()) continue;
+        if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
+        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        auto *light = lightRenderer->GetLight();
+        if (!light) continue;
+
+        if (light->GetType() == Light::Type::Point) {
+            PointLightElement element;
+            element.enabled = light->IsActive() ? 1u : 0u;
+            element.color = light->GetColor();
+            element.position = lightRenderer->GetWorldPosition();
+            element.radius = light->GetRadius();
+            element.intensity = light->GetIntensity();
+            element.decay = light->GetDecay();
+            pointLights.push_back(element);
+        } else if (light->GetType() == Light::Type::Spot) {
+            SpotLightElement element;
+            element.enabled = light->IsActive() ? 1u : 0u;
+            element.color = light->GetColor();
+            element.position = lightRenderer->GetWorldPosition();
+            element.distance = light->GetDistance();
+            element.direction = lightRenderer->GetWorldDirection();
+            element.innerAngle = light->GetInnerAngle();
+            element.outerAngle = light->GetOuterAngle();
+            element.intensity = light->GetIntensity();
+            element.decay = light->GetDecay();
+            spotLights.push_back(element);
+        }
+    }
+
+    //--------- ライト個数の定数バッファ ---------//
+    {
+        LightCountsData counts;
+        counts.pointLightCount = static_cast<std::uint32_t>(pointLights.size());
+        counts.spotLightCount = static_cast<std::uint32_t>(spotLights.size());
+        auto key = MakeBatchKey(target, pipelineName, 0, 0, "lightCounts");
+        auto *countsBuffer = resourceContainer_->GetOrCreateConstantBuffer(key, sizeof(LightCountsData));
+        if (countsBuffer) {
+            if (auto *mapped = countsBuffer->Map()) {
+                std::memcpy(mapped, &counts, sizeof(counts));
+                shaderBinder.Bind("Pixel:LightCounts", countsBuffer);
+            }
+        }
+    }
+
+    //--------- ライトの構造化バッファ（0個でもダミー1要素をバインドする） ---------//
+    {
+        auto key = MakeBatchKey(target, pipelineName, 0, 0, "pointLights");
+        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
+            key, sizeof(PointLightElement), std::max<size_t>(1, pointLights.size()));
+        if (buffer) {
+            if (auto *mapped = static_cast<PointLightElement *>(buffer->Map())) {
+                if (pointLights.empty()) {
+                    mapped[0] = PointLightElement{};
+                } else {
+                    std::memcpy(mapped, pointLights.data(), sizeof(PointLightElement) * pointLights.size());
+                }
+                shaderBinder.Bind("Pixel:gPointLights", buffer);
+            }
+        }
+    }
+    {
+        auto key = MakeBatchKey(target, pipelineName, 0, 0, "spotLights");
+        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
+            key, sizeof(SpotLightElement), std::max<size_t>(1, spotLights.size()));
+        if (buffer) {
+            if (auto *mapped = static_cast<SpotLightElement *>(buffer->Map())) {
+                if (spotLights.empty()) {
+                    mapped[0] = SpotLightElement{};
+                } else {
+                    std::memcpy(mapped, spotLights.data(), sizeof(SpotLightElement) * spotLights.size());
+                }
+                shaderBinder.Bind("Pixel:gSpotLights", buffer);
+            }
+        }
+    }
+
+    //--------- シャドウマップ ---------//
+    // シャドウマップ描画先を持つオブジェクトを対象にしたカメラをライトカメラとして扱う
+    ShadowMapBuffer *shadowMapBuffer = nullptr;
+    CameraRenderer *shadowCamera = nullptr;
+    for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
+        if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        auto *targetObject = cameraRenderer->GetTargetObject();
+        if (!targetObject) continue;
+        auto *shadowMapObject = targetObject->GetComponent<ShadowMapObject>();
+        if (!shadowMapObject) continue;
+        auto *buffer = shadowMapObject->GetShadowMapBuffer();
+        if (!buffer || !ShadowMapBuffer::IsExist(buffer)) continue;
+        shadowMapBuffer = buffer;
+        shadowCamera = cameraRenderer;
+        break;
+    }
+
+    ShadowMapConstantsData shadowConstants;
+    if (shadowMapBuffer && shadowCamera) {
+        shadowConstants.lightViewProjection = shadowCamera->GetViewProjectionMatrix();
+        shadowConstants.lightNear = shadowCamera->GetNearClip();
+        shadowConstants.lightFar = shadowCamera->GetFarClip();
+        const auto srvHandle = shadowMapBuffer->GetSrvHandle();
+        if (srvHandle.ptr != 0) {
+            shaderBinder.Bind("Pixel:gShadowMap", srvHandle);
+        }
+    } else {
+        // シャドウマップが無い場合は常に範囲外となる行列を渡して影を無効化する
+        // （mul(worldPos, VP) が (0,0,2,1) となり ndc.z=2 で範囲外判定になる）
+        std::memset(&shadowConstants.lightViewProjection, 0, sizeof(Matrix4x4));
+        shadowConstants.lightViewProjection.m[3][2] = 2.0f;
+        shadowConstants.lightViewProjection.m[3][3] = 1.0f;
+        shadowConstants.lightNear = 0.0f;
+        shadowConstants.lightFar = 1.0f;
+        // 未バインドのデスクリプタアクセスを避けるためダミーテクスチャをバインドする
+        const auto fallbackHandle = TextureManager::GetTextureFromFileName("white1x1.png");
+        if (fallbackHandle != TextureManager::kInvalidHandle) {
+            TextureManager::BindTexture(&shaderBinder, "Pixel:gShadowMap", fallbackHandle);
+        }
+    }
+
+    {
+        auto key = MakeBatchKey(target, pipelineName, 0, 0, "shadowMapConstants");
+        auto *constantsBuffer = resourceContainer_->GetOrCreateConstantBuffer(key, sizeof(ShadowMapConstantsData));
+        if (constantsBuffer) {
+            if (auto *mapped = constantsBuffer->Map()) {
+                std::memcpy(mapped, &shadowConstants, sizeof(shadowConstants));
+                shaderBinder.Bind("Pixel:ShadowMapConstants", constantsBuffer);
+            }
+        }
+    }
+    SamplerManager::BindSampler(&shaderBinder, "Pixel:gShadowSamplerCmp", GetShadowSamplerCmpHandle());
 }
 
 void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
@@ -267,6 +483,21 @@ void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
 
     for (auto *component : postProcessComponents) {
         if (!component || !component->IsActive()) continue;
+
+        // 中間レンダーターゲットを使う多段パス等はコンポーネント側のカスタム描画で行う
+        IPostProcessComponent::CustomRenderContext customContext;
+        customContext.screenBuffer = screenBuffer;
+        customContext.commandList = commandList;
+        customContext.pipelineManager = pipelineManager_;
+        customContext.pipelineBinder = &pipelineBinder;
+        customContext.getShaderBinder = [this, commandList](const std::string &name) -> ShaderVariableBinder & {
+            auto &binder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, name);
+            binder.SetCommandList(commandList);
+            return binder;
+        };
+        if (component->RenderCustomInterface(Passkey<Renderer>{}, customContext)) {
+            continue;
+        }
 
         auto passes = component->BuildPassesInterface(Passkey<Renderer>{});
         for (const auto &pass : passes) {

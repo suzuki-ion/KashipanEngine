@@ -202,11 +202,53 @@ public:
     /// @brief オブジェクト情報をjsonから読み込み
     bool LoadFromJson(Passkey<Scene>, const JSON &json);
 
+    //==================================================
+    // コンポーネント単体のJSONスナップショット（エディターのUndo/Redo用）
+    //==================================================
+
+    /// @brief 所有コンポーネント単体をjsonへ保存（type と data を含む）
+    JSON SaveComponentToJson(const IObjectComponent *component) const {
+        JSON json = JSON::object();
+        auto *comp = GetComponent(component);
+        if (!comp) return json;
+        json["type"] = comp->GetComponentType();
+        json["data"] = comp->SaveToJsonInterface(Passkey<EmptyObject>{});
+        return json;
+    }
+    /// @brief jsonからコンポーネントを生成して追加する
+    IObjectComponent *AddComponentFromJson(const JSON &json) {
+        const std::string type = json.value("type", "");
+        if (type.empty()) return nullptr;
+        auto comp = CreateObjectComponentByType(type);
+        auto *ptr = AddComponent(std::move(comp));
+        if (ptr && json.contains("data")) {
+            ptr->LoadFromJsonInterface(Passkey<EmptyObject>{}, json["data"]);
+        }
+        return ptr;
+    }
+    /// @brief 所有コンポーネントの状態をjsonから復元する
+    bool LoadComponentFromJson(IObjectComponent *component, const JSON &json) {
+        auto *comp = GetComponent(component);
+        if (!comp) return false;
+        const JSON &data = json.contains("data") ? json["data"] : json;
+        return comp->LoadFromJsonInterface(Passkey<EmptyObject>{}, data);
+    }
+
 #if defined(USE_IMGUI)
     /// @brief 所有コンポーネントの ImGui 表示（ウィンドウの Begin/End は呼ばない）
     void ShowComponentImGui(IObjectComponent *component) {
         if (GetComponent(component)) {
             component->ShowImGuiInterface(Passkey<EmptyObject>{});
+        }
+    }
+
+    /// @brief 全コンポーネントの常時ImGui表示（ゲームループがポーズ中でも毎フレーム呼ばれる）
+    void ShowPersistentImGui(Passkey<Scene>) {
+        if (!isActive_) return;
+        for (auto &pair : components_) {
+            if (pair.first) {
+                pair.first->ShowPersistentImGuiInterface(Passkey<EmptyObject>{});
+            }
         }
     }
 #endif

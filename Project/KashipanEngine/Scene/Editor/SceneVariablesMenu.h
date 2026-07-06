@@ -62,14 +62,14 @@ public:
 private:
     void AddVariableOfSelectedType(const std::string &key) {
         switch (newVariableType_) {
-        case 0: context_->AddSceneVariable<bool>(key); break;
-        case 1: context_->AddSceneVariable<int>(key); break;
-        case 2: context_->AddSceneVariable<float>(key); break;
-        case 3: context_->AddSceneVariable<double>(key); break;
-        case 4: context_->AddSceneVariable<std::string>(key); break;
-        case 5: context_->AddSceneVariable<Vector2>(key); break;
-        case 6: context_->AddSceneVariable<Vector3>(key); break;
-        case 7: context_->AddSceneVariable<Vector4>(key); break;
+        case 0: context_->AddSceneVariable<bool>(key, false); break;
+        case 1: context_->AddSceneVariable<int>(key, 0); break;
+        case 2: context_->AddSceneVariable<float>(key, 0.0f); break;
+        case 3: context_->AddSceneVariable<double>(key, 0.0); break;
+        case 4: context_->AddSceneVariable<std::string>(key, std::string{}); break;
+        case 5: context_->AddSceneVariable<Vector2>(key, Vector2::Zero()); break;
+        case 6: context_->AddSceneVariable<Vector3>(key, Vector3::Zero()); break;
+        case 7: context_->AddSceneVariable<Vector4>(key, Vector4::Zero()); break;
         case 8: context_->AddSceneVariable<Quaternion>(key, Quaternion::Identity()); break;
         case 9: context_->AddSceneVariable<Matrix4x4>(key, Matrix4x4::Identity()); break;
         default: break;

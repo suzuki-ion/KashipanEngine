@@ -60,6 +60,12 @@ void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
     if (sceneEditor_) {
         sceneEditor_->ShowImGui();
     }
+    // ビューアウィンドウ等、ポーズ中も表示し続けたいコンポーネントのImGui表示
+    for (const auto &object : objects_) {
+        if (object) {
+            object->ShowPersistentImGui(Passkey<Scene>{});
+        }
+    }
 }
 #endif
 
@@ -137,6 +143,13 @@ bool Scene::LoadFromJSON(const JSON &json) {
 MyAny *Scene::AddSceneVariable(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) {
     sceneVariables_.emplace(key, MyAny(value, typeInfo));
     return &sceneVariables_[key];
+}
+
+bool Scene::RemoveSceneVariable(const std::string &key) {
+    auto it = sceneVariables_.find(key);
+    if (it == sceneVariables_.end()) return false;
+    sceneVariables_.erase(it);
+    return true;
 }
 
 MyAny *Scene::GetSceneVariable(const std::string &key) {

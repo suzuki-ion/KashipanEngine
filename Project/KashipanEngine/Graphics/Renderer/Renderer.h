@@ -14,6 +14,7 @@ class PipelineBinder;
 class ResourceContainer;
 class SceneContext;
 class ScreenBuffer;
+class ShaderVariableBinder;
 class IRenderTarget;
 
 /// @brief 描画用のレンダラークラス
@@ -53,6 +54,12 @@ private:
         IRenderTarget *target,
         const std::string &pipelineName,
         SceneRenderer *sceneRenderer);
+
+    /// @brief ポイント/スポットライトの構造化バッファ・個数定数・シャドウマップのバインド
+    void BindLightBuffersAndShadowMap(IRenderTarget *target,
+        const std::string &pipelineName,
+        SceneRenderer *sceneRenderer,
+        ShaderVariableBinder &shaderBinder);
 
     /// @brief ScreenBuffer へのポストプロセス適用
     void RenderPostProcess(ScreenBuffer *screenBuffer,

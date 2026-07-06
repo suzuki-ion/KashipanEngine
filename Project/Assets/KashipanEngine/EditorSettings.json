@@ -1,0 +1,10 @@
+{
+    "hierarchy.objects": false,
+    "inspector.component.Camera3D": false,
+    "inspector.component.CameraRenderer": false,
+    "inspector.component.Light": true,
+    "inspector.component.LightRenderer": true,
+    "inspector.component.MeshFilter": false,
+    "inspector.component.MeshRenderer": false,
+    "inspector.component.Transform": false
+}

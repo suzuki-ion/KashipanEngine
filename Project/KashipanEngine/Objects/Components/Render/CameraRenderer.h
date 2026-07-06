@@ -67,6 +67,13 @@ public:
     /// @brief カメラ情報の定数バッファを取得
     ConstantBufferResource *GetConstantBuffer() const noexcept { return constantBuffer_.get(); }
 
+    /// @brief 最後にアップロードしたビュー射影行列を取得（シャドウマップ定数等に使用）
+    const Matrix4x4 &GetViewProjectionMatrix() const noexcept { return lastViewProjection_; }
+    /// @brief ニアクリップ距離を取得
+    float GetNearClip() const noexcept { return lastNearClip_; }
+    /// @brief ファークリップ距離を取得
+    float GetFarClip() const noexcept { return lastFarClip_; }
+
 protected:
     void Initialize() override {
         if (!constantBuffer_) {
@@ -183,6 +190,9 @@ private:
                 0.0f, 0.0f, camera2d->GetWidth(), camera2d->GetHeight(),
                 camera2d->GetNearClip(), camera2d->GetFarClip());
             constant.viewProjection = constant.view * constant.projection;
+            lastViewProjection_ = constant.viewProjection;
+            lastNearClip_ = camera2d->GetNearClip();
+            lastFarClip_ = camera2d->GetFarClip();
             std::memcpy(mapped, &constant, sizeof(constant));
             return;
         }
@@ -212,6 +222,9 @@ private:
         constant.viewProjection = constant.view * constant.projection;
         constant.eyePosition = Vector4(world.m[3][0], world.m[3][1], world.m[3][2], 1.0f);
         constant.fov = fovY;
+        lastViewProjection_ = constant.viewProjection;
+        lastNearClip_ = nearClip;
+        lastFarClip_ = farClip;
         std::memcpy(mapped, &constant, sizeof(constant));
     }
 
@@ -219,6 +232,11 @@ private:
     UUID128 targetObjectID_{};
     std::string pipelineName_;
     std::vector<std::string> bindVariableNames_;
+
+    // シャドウマップ定数等で参照するためのキャッシュ
+    Matrix4x4 lastViewProjection_ = Matrix4x4::Identity();
+    float lastNearClip_ = 0.1f;
+    float lastFarClip_ = 1000.0f;
 };
 
 REGISTER_COMPONENT_OBJECT(CameraRenderer)

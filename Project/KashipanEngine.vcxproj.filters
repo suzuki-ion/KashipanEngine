@@ -948,6 +948,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\MeshFilter.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BloomEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BoxFilterEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>
@@ -1117,6 +1120,9 @@
       <Filter>KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h">
+      <Filter>KashipanEngine\Scene\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h">
       <Filter>KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h">

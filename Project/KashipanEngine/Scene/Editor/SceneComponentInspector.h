@@ -2,6 +2,7 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include "Scene/SceneEditorContext.h"
+#include "Scene/Editor/EditorSettings.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 
 namespace KashipanEngine {
@@ -34,7 +35,9 @@ public:
                 component->SetActive(componentActive);
             }
             ImGui::SameLine();
-            if (ImGui::TreeNode(component->GetComponentType().c_str())) {
+            // 開閉状態はコンポーネントの種類ごとに保存される（デフォルトは開いた状態）
+            if (EditorSettings::PersistentTreeNode(component->GetComponentType().c_str(),
+                    "sceneComponentInspector." + component->GetComponentType())) {
                 if (ImGui::BeginPopupContextItem("SceneComponentContextMenu")) {
                     if (ImGui::MenuItem("Remove Component")) {
                         componentToRemove = component.get();

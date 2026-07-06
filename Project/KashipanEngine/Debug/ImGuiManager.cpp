@@ -13,6 +13,7 @@
 #include "Utilities/Conversion/ConvertString.h"
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx12.h>
 
@@ -97,6 +98,7 @@ void ImGuiManager::ShutdownInternal() {
     ImGui::DestroyContext();
     sImGuiLegacySrv.reset();
 
+    SetMainHwnd(nullptr);
     isInitialized_ = false;
 }
 
@@ -107,11 +109,11 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     if (!isBackendInitialized_) {
         ImGuiIO &io = ImGui::GetIO();
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            mainHwnd_ = Window::GetFirstWindowHwndForImGui({});
+            SetMainHwnd(Window::GetFirstWindowHwndForImGui({}));
         } else {
             Window *window = Window::GetWindow("ImGui Window");
             if (!window) return;
-            mainHwnd_ = window->GetWindowHandle();
+            SetMainHwnd(window->GetWindowHandle());
         }
         if (!mainHwnd_) return;
 
@@ -153,6 +155,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 
     ImGuiIO &io = ImGui::GetIO();
     if (!(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)) {
@@ -197,7 +200,7 @@ void ImGuiManager::Render(Passkey<GameEngine>) {
             HWND hwnd = PlatformHwndFromViewport(mainVp);
             if (hwnd) {
                 // mainHwnd_ が未解決の場合は補完
-                if (!mainHwnd_) mainHwnd_ = hwnd;
+                if (!mainHwnd_) SetMainHwnd(hwnd);
 
                 if (auto* cmd = directXCommon_->GetRecordedCommandListForImGui({}, hwnd)) {
                     Window::GetWindow(mainHwnd_)->BeginDraw();

@@ -107,9 +107,15 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
 
         auto *targetObject = meshRenderer->GetTargetObject();
         CollectRenderTargets(targetObject, targets);
+        // エディター用描画先には全てのMeshRendererを描画する
+        if (editorTarget_ && editorTarget_->IsRenderTargetAvailable()) {
+            targets.push_back(editorTarget_);
+        }
         for (auto *target : targets) {
             if (!target || !target->IsRenderTargetAvailable()) continue;
-            targetOwners_[target] = targetObject;
+            if (target != editorTarget_) {
+                targetOwners_[target] = targetObject;
+            }
             SortableEntry sortable;
             sortable.entry.target = target;
             sortable.entry.renderer = meshRenderer;

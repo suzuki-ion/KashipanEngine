@@ -7,6 +7,7 @@
 namespace KashipanEngine {
 
 class SceneEditor;
+class SceneEditorCommands;
 
 class SceneObjectHierarchy final {
 public:
@@ -20,6 +21,14 @@ public:
     void ShowImGui();
 
     EmptyObject *GetSelectedObject() const { return selectedObject_; }
+
+    /// @brief Undo/Redo用のコマンド管理を設定する
+    void SetCommands(SceneEditorCommands *commands) { commands_ = commands; }
+    /// @brief 選択状態をクリアする（Undo/Redoやシーンロードでオブジェクトが変わった場合用）
+    void ClearSelection() {
+        selectedObject_ = nullptr;
+        selectedObjectIndex_ = SIZE_MAX;
+    }
 
 private:
     struct ObjectItem {
@@ -53,6 +62,7 @@ private:
     DropPosition DragAndDropTargetCommon();
 
     SceneEditorContext *editorContext_ = nullptr;
+    SceneEditorCommands *commands_ = nullptr;
 
     std::vector<ObjectItem> objectItems_;
     std::unordered_map<EmptyObject *, std::vector<std::pair<EmptyObject *, size_t>>> objectParentMap_;

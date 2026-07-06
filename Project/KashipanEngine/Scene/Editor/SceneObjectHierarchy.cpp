@@ -1,5 +1,7 @@
 #include "SceneObjectHierarchy.h"
+#include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneObjectPayload.h"
+#include "Scene/Editor/SceneEditorCommands.h"
 #include "Objects/Components/Transform.h"
 
 namespace KashipanEngine {
@@ -9,7 +11,7 @@ void SceneObjectHierarchy::ShowImGui() {
 
     ImGui::Begin("Scene Object Hierarchy");
 
-    if (ImGui::CollapsingHeader("Objects", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {
         size_t index = 0;
         for (size_t i = 0; i < objectItems_.size(); ++i) {
             ShowObjectItem(objectItems_[i], index);
@@ -67,7 +69,9 @@ void SceneObjectHierarchy::RecursivelyBuildObjectItems(EmptyObject *obj, ObjectI
 }
 
 void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index) {
-    ImGui::PushID(static_cast<int>(index));
+    // インデックスではなくオブジェクトをIDにすることで、
+    // オブジェクトの追加/削除があっても開閉状態が別のオブジェクトへずれないようにする
+    ImGui::PushID(item.object);
     for (size_t i = 0; i < item.depth; ++i) {
         ImGui::Indent();
     }
@@ -82,7 +86,19 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
+    // 開閉状態を保存・復元する（デフォルトは開いた状態）
+    bool storedOpen = true;
+    std::string settingsKey;
+    if (!item.children.empty()) {
+        settingsKey = "hierarchy.object." + item.object->GetObjectID().ToString();
+        storedOpen = EditorSettings::GetBool(settingsKey, true);
+        ImGui::SetNextItemOpen(storedOpen, ImGuiCond_Once);
+    }
+
     const bool isOpen = ImGui::TreeNodeEx(item.name.c_str(), flags);
+    if (!item.children.empty() && isOpen != storedOpen) {
+        EditorSettings::SetBool(settingsKey, isOpen);
+    }
     DragAndDropObject(const_cast<ObjectItem *>(&item));
     ShowObjectContextMenu(item.object);
 
@@ -107,9 +123,12 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
 void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
     if (ImGui::BeginPopupContextItem("ObjectContextMenu")) {
         if (ImGui::MenuItem("Delete Object")) {
-            editorContext_->DeleteObject(obj);
-            selectedObjectIndex_ = SIZE_MAX;
-            selectedObject_ = nullptr;
+            if (commands_) {
+                commands_->Execute(std::make_unique<DeleteObjectCommand>(obj));
+            } else {
+                editorContext_->DeleteObject(obj);
+            }
+            ClearSelection();
         }
         ImGui::EndPopup();
     }
@@ -118,7 +137,11 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
 void SceneObjectHierarchy::ShowHierarchyContextMenu() {
     if (ImGui::BeginPopupContextWindow("HierarchyContextMenu")) {
         if (ImGui::MenuItem("Create Empty Object")) {
-            editorContext_->CreateEmptyObject("EmptyObject");
+            if (commands_) {
+                commands_->Execute(std::make_unique<CreateObjectCommand>("EmptyObject"));
+            } else {
+                editorContext_->CreateEmptyObject("EmptyObject");
+            }
         }
         ImGui::EndPopup();
     }
@@ -180,21 +203,47 @@ void SceneObjectHierarchy::ApplyDragAndDrop() {
 
     bool isParentSet = false;
     if (sourceTransform) {
+        // Undo用に移動前の状態を保存しておく
+        const JSON transformBefore = sourceItem->object->SaveComponentToJson(sourceTransform);
+        const size_t indexBefore = editorContext_->GetObjectIndex(sourceItem->object);
+        size_t indexAfter = MAXSIZE_T;
+
         switch (position) {
         case DropPosition::Above:
             isParentSet = sourceTransform->SetParentObject(targetParent);
-            if (isParentSet) editorContext_->MoveObject(sourceItem->object, moveIndex);
+            if (isParentSet) {
+                indexAfter = moveIndex;
+                editorContext_->MoveObject(sourceItem->object, indexAfter);
+            }
             break;
         case DropPosition::Below:
             isParentSet = sourceTransform->SetParentObject(targetParent);
-            if (isParentSet) editorContext_->MoveObject(sourceItem->object, moveIndex + 1);
+            if (isParentSet) {
+                indexAfter = moveIndex + 1;
+                editorContext_->MoveObject(sourceItem->object, indexAfter);
+            }
             break;
         case DropPosition::Inside:
             isParentSet = sourceTransform->SetParentObject(targetItem->object);
-            if (isParentSet) editorContext_->MoveObject(sourceItem->object, moveIndex);
+            if (isParentSet) {
+                indexAfter = moveIndex;
+                editorContext_->MoveObject(sourceItem->object, indexAfter);
+            }
             break;
         default:
             break;
+        }
+
+        // 親変更と並び替えをひとつの操作としてUndo履歴へ積む
+        if (isParentSet && commands_) {
+            const JSON transformAfter = sourceItem->object->SaveComponentToJson(sourceTransform);
+            auto composite = std::make_unique<CompositeCommand>("Move Object: " + sourceItem->object->GetName());
+            if (transformBefore != transformAfter) {
+                composite->AddCommand(std::make_unique<ComponentEditCommand>(
+                    sourceItem->object, sourceTransform, transformBefore, transformAfter));
+            }
+            composite->AddCommand(std::make_unique<MoveObjectCommand>(sourceItem->object, indexBefore, indexAfter));
+            commands_->PushExecuted(std::move(composite));
         }
     }
 

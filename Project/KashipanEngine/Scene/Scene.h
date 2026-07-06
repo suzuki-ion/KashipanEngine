@@ -129,7 +129,7 @@ protected:
     /// @brief シーン変数を削除する
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
-    bool RemoveSceneVariable(const std::string &key) { return sceneVariables_.erase(key) > 0; }
+    bool RemoveSceneVariable(const std::string &key);
     /// @brief シーン変数の情報を取得する
     /// @param key 変数のキー
     /// @return シーン変数のポインタ（存在しない場合は nullptr）
@@ -214,6 +214,33 @@ protected:
 
     /// @brief シーン内のオブジェクトをすべて削除
     void ClearSceneObjects();
+
+    //==================================================
+    // オブジェクト単体のJSONスナップショット（エディターのUndo/Redo用）
+    //==================================================
+
+    /// @brief オブジェクト単体をjsonへ保存する
+    JSON SaveObjectToJson(EmptyObject *obj) {
+        if (!obj || !GetSceneObject(obj)) return JSON::object();
+        return obj->SaveToJson(Passkey<Scene>{});
+    }
+    /// @brief jsonからオブジェクトを生成する
+    EmptyObject *CreateObjectFromJson(const JSON &json, size_t index = MAXSIZE_T) {
+        const std::string name = json.value("name", "EmptyObject");
+        const UUID128 objectID(json.value("objectID", std::string{}));
+        auto *obj = CreateEmptyObject(name, objectID, index);
+        if (obj) {
+            obj->LoadFromJson(Passkey<Scene>{}, json);
+        }
+        return obj;
+    }
+    /// @brief オブジェクトのシーン内インデックスを取得する（存在しない場合は MAXSIZE_T）
+    size_t GetObjectIndex(const EmptyObject *obj) const {
+        for (size_t i = 0; i < objects_.size(); ++i) {
+            if (objects_[i].get() == obj) return i;
+        }
+        return MAXSIZE_T;
+    }
 
     //==================================================
     // コンポーネント取得系メソッド

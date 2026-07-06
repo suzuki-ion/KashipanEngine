@@ -67,6 +67,41 @@ public:
     /// @brief ライト情報の定数バッファを取得
     ConstantBufferResource *GetConstantBuffer() const noexcept { return constantBuffer_.get(); }
 
+    /// @brief 同一オブジェクトの Light コンポーネントを取得（存在しない場合は nullptr）
+    Light *GetLight() const {
+        auto *objectContext = GetOwnerObjectContext();
+        return objectContext ? objectContext->GetComponent<Light>() : nullptr;
+    }
+
+    /// @brief ライトの種類を取得（Light コンポーネントが無い場合は Directional）
+    Light::Type GetLightType() const {
+        auto *light = GetLight();
+        return light ? light->GetType() : Light::Type::Directional;
+    }
+
+    /// @brief ライトのワールド座標を取得（Transform が無い場合は原点）
+    Vector3 GetWorldPosition() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        if (!transform) return Vector3(0.0f, 0.0f, 0.0f);
+        const Matrix4x4 &world = transform->GetWorldMatrix();
+        return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
+    }
+
+    /// @brief ライトのワールド方向（Transform の +Z）を取得
+    Vector3 GetWorldDirection() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        Vector3 direction(0.0f, -1.0f, 0.0f);
+        if (transform) {
+            const Matrix4x4 &world = transform->GetWorldMatrix();
+            Vector3 forward(world.m[2][0], world.m[2][1], world.m[2][2]);
+            const float length = forward.Length();
+            if (length > 0.0f) direction = forward * (1.0f / length);
+        }
+        return direction;
+    }
+
 protected:
     void Initialize() override {
         if (!constantBuffer_) {

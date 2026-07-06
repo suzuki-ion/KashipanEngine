@@ -29,9 +29,22 @@ public:
 
     bool IsInitialized() const noexcept { return isInitialized_; }
 
+    /// @brief ImGui のメインウィンドウハンドルを取得（未初期化の場合は nullptr）
+    /// @details ウィンドウプロシージャが ImGui へイベントを転送するかの判定に使う。
+    ///          他ウィンドウのマウス座標が ImGui へ流れないようにするため、
+    ///          このハンドルのウィンドウ宛のメッセージのみ転送する。
+    static HWND GetMainWindowHwnd() noexcept { return sMainHwnd_; }
+
 private:
     void InitializeInternal();
     void ShutdownInternal();
+
+    void SetMainHwnd(HWND hwnd) noexcept {
+        mainHwnd_ = hwnd;
+        sMainHwnd_ = hwnd;
+    }
+
+    static inline HWND sMainHwnd_ = nullptr;
 
     WindowsAPI* windowsAPI_ = nullptr;
     DirectXCommon* directXCommon_ = nullptr;

@@ -14,6 +14,7 @@
 #include "Objects/Components/Collider/SphereCollider.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Objects/Components/PostProcessing/BloomEffect.h"
 #include "Objects/Components/PostProcessing/BoxFilterEffect.h"
 #include "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
 #include "Objects/Components/PostProcessing/ColorAdjustEffect.h"

@@ -187,6 +187,36 @@ void ScreenBuffer::NextPass() {
     BeginRecord(true);
 }
 
+void ScreenBuffer::RebindWriteTarget() {
+    if (!dx12Commands_) return;
+    auto *cmd = dx12Commands_->GetCommandList();
+    auto *rt = renderTargets_[GetRtvWriteIndex()].get();
+    if (!cmd || !rt) return;
+
+    rt->SetCommandList(cmd);
+    if (!rt->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET)) return;
+
+    const auto rtv = rt->GetCPUDescriptorHandle();
+    cmd->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
+
+    D3D12_VIEWPORT vp{};
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    vp.Width = static_cast<float>(width_);
+    vp.Height = static_cast<float>(height_);
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+
+    D3D12_RECT sc{};
+    sc.left = 0;
+    sc.top = 0;
+    sc.right = static_cast<LONG>(width_);
+    sc.bottom = static_cast<LONG>(height_);
+
+    cmd->RSSetViewports(1, &vp);
+    cmd->RSSetScissorRects(1, &sc);
+}
+
 void ScreenBuffer::EndDraw() {
     if (!EndRecord()) return;
 

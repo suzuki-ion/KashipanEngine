@@ -56,8 +56,8 @@ protected:
         JSON json = JSON::object();
         json["maskThreshold"] = params_.maskThreshold;
         json["edgeThickness"] = params_.edgeThickness;
-        json["baseTexture"] = TextureManager::GetTextureFileName(params_.baseTexture);
-        json["maskTexture"] = TextureManager::GetTextureFileName(params_.maskTexture);
+        json["baseTexture"] = TextureManager::GetTextureAssetPath(params_.baseTexture);
+        json["maskTexture"] = TextureManager::GetTextureAssetPath(params_.maskTexture);
         json["baseTextureColor"] = { params_.baseTextureColor[0], params_.baseTextureColor[1], params_.baseTextureColor[2], params_.baseTextureColor[3] };
         json["edgeColor"] = { params_.edgeColor[0], params_.edgeColor[1], params_.edgeColor[2], params_.edgeColor[3] };
         return json;
@@ -66,8 +66,8 @@ protected:
     bool LoadFromJson(const JSON &json) override {
         params_.maskThreshold = json.value("maskThreshold", 0.5f);
         params_.edgeThickness = json.value("edgeThickness", 0.1f);
-        params_.baseTexture = TextureManager::GetTextureFromFileName(json.value("baseTexture", std::string{}));
-        params_.maskTexture = TextureManager::GetTextureFromFileName(json.value("maskTexture", std::string{}));
+        params_.baseTexture = TextureManager::GetTextureFromAssetPath(json.value("baseTexture", std::string{}));
+        params_.maskTexture = TextureManager::GetTextureFromAssetPath(json.value("maskTexture", std::string{}));
         if (json.contains("baseTextureColor") && json["baseTextureColor"].is_array() && json["baseTextureColor"].size() >= 4) {
             for (int i = 0; i < 4; ++i) params_.baseTextureColor[i] = json["baseTextureColor"][i].get<float>();
         }

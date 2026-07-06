@@ -4,6 +4,10 @@ struct Vector2;
 struct Vector3;
 
 struct Vector4 final {
+    static const Vector4 &Zero() noexcept {
+        static Vector4 zero(0.0f, 0.0f, 0.0f, 0.0f);
+        return zero;
+    }
     static Vector4 Lerp(const Vector4 &start, const Vector4 &end, float t) noexcept;
 
     Vector4() noexcept = default;

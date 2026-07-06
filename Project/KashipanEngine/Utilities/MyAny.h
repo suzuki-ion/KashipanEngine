@@ -16,6 +16,32 @@ template <typename T> inline constexpr bool is_pair_v = is_pair<T>::value;
 /// @brief カスタムAnyクラス
 class MyAny {
 public:
+    struct BaseHolder {
+        virtual ~BaseHolder() {}
+        virtual BaseHolder *clone() const = 0;
+        bool isType(const ValueType &valueType) const {
+            return valueType == ValueType::Any || valueType == typeInfo.GetBaseType();
+        }
+        bool isType(const std::vector<TypeInfo> &templateArgs) const {
+            if (typeInfo.GetBaseType() == ValueType::Any) return true;
+            if (typeInfo.GetTemplateArguments().size() != templateArgs.size()) return false;
+            for (size_t i = 0; i < templateArgs.size(); ++i) {
+                if (!isType(templateArgs[i])) return false;
+            }
+            return true;
+        }
+        bool isType(const TypeInfo &typeInfoT) const {
+            return typeInfoT.GetBaseType() == ValueType::Any ||
+                (typeInfoT.GetBaseType() == typeInfo.GetBaseType() && isType(typeInfoT.GetTemplateArguments()));
+        }
+        template<typename T>
+        bool isType() const {
+            TypeInfo typeInfoT = GetValueType<T>();
+            return typeInfoT.GetBaseType() == ValueType::Any || isType(typeInfoT);
+        }
+        TypeInfo typeInfo = TypeInfo(ValueType::None);
+    };
+
     MyAny() : content(nullptr) {}
     template <typename T, typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, MyAny>>>
     MyAny(const T &value);
@@ -82,31 +108,6 @@ public:
         return content->typeInfo;
     }
 private:
-    struct BaseHolder {
-        virtual ~BaseHolder() {}
-        virtual BaseHolder *clone() const = 0;
-        bool isType(const ValueType &valueType) const {
-            return valueType == ValueType::Any || valueType == typeInfo.GetBaseType();
-        }
-        bool isType(const std::vector<TypeInfo> &templateArgs) const {
-            if (typeInfo.GetBaseType() == ValueType::Any) return true;
-            if (typeInfo.GetTemplateArguments().size() != templateArgs.size()) return false;
-            for (size_t i = 0; i < templateArgs.size(); ++i) {
-                if (!isType(templateArgs[i])) return false;
-            }
-            return true;
-        }
-        bool isType(const TypeInfo &typeInfoT) const {
-            return typeInfoT.GetBaseType() == ValueType::Any ||
-                (typeInfoT.GetBaseType() == typeInfo.GetBaseType() && isType(typeInfoT.GetTemplateArguments()));
-        }
-        template<typename T>
-        bool isType() const {
-            TypeInfo typeInfoT = GetValueType<T>();
-            return typeInfoT.GetBaseType() == ValueType::Any || isType(typeInfoT);
-        }
-        TypeInfo typeInfo = TypeInfo(ValueType::None);
-    };
     template<typename T>
     struct Holder : BaseHolder {
         Holder(const T &value) : value(value) {

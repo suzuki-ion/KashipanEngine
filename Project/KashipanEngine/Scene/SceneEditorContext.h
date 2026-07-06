@@ -141,6 +141,13 @@ public:
     /// @brief シーン内のオブジェクトをすべて削除
     void ClearSceneObjects() { owner_->ClearSceneObjects(); }
 
+    /// @brief オブジェクト単体をjsonへ保存する
+    JSON SaveObjectToJson(EmptyObject *obj) { return owner_->SaveObjectToJson(obj); }
+    /// @brief jsonからオブジェクトを生成する
+    EmptyObject *CreateObjectFromJson(const JSON &json, size_t index = MAXSIZE_T) { return owner_->CreateObjectFromJson(json, index); }
+    /// @brief オブジェクトのシーン内インデックスを取得する
+    size_t GetObjectIndex(const EmptyObject *obj) const { return owner_->GetObjectIndex(obj); }
+
     //==================================================
     // コンポーネント取得系メソッド
     //==================================================

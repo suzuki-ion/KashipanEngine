@@ -11,6 +11,7 @@
 #if defined(USE_IMGUI)
 #include <imgui.h>
 #include <imgui_impl_win32.h>
+#include "Debug/ImGuiManager.h"
 #endif
 
 #pragma comment(lib, "Shcore.lib")
@@ -106,9 +107,16 @@ LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     LogScope scope;
 
 #if defined(USE_IMGUI)
-    // ImGui 用イベント処理（マルチビューポートのプラットフォームウィンドウも対象になる）
-    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
-        return 0;
+    // ImGui 用イベント処理
+    // ImGui のメインウィンドウ宛のメッセージのみ転送する。
+    // 他ウィンドウのメッセージも転送するとマウス座標が共有され、
+    // カーソルを合わせていない ImGui アイテムが反応してしまう。
+    // （マルチビューポートのプラットフォームウィンドウは ImGui 側が
+    //   独自のウィンドウプロシージャを持つためここには来ない）
+    if (hwnd == ImGuiManager::GetMainWindowHwnd()) {
+        if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
+            return 0;
+        }
     }
 #endif
 

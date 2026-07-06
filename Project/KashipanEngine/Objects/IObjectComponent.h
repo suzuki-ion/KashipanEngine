@@ -85,6 +85,8 @@ public:
 #ifdef USE_IMGUI
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     void ShowImGuiInterface(Passkey<EmptyObject>) { ShowImGui(); }
+    /// @brief 常時ImGui表示（ゲームループがポーズ中でも毎フレーム呼ばれる）
+    void ShowPersistentImGuiInterface(Passkey<EmptyObject>) { if (IsActive()) { ShowPersistentImGui(); } }
 #endif
     JSON SaveToJsonInterface(Passkey<EmptyObject>) const {
         JSON json;
@@ -120,6 +122,8 @@ protected:
     virtual void ShowImGui() {
         ImGui::Text("None");
     }
+    /// @brief 常時ImGui表示（ビューアウィンドウ等、ポーズ中も表示し続けたいものに使う）
+    virtual void ShowPersistentImGui() {}
 #endif
 
     /// @brief コンポーネント情報をjsonへ保存

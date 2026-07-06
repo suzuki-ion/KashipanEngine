@@ -6,6 +6,7 @@
 
 namespace KashipanEngine {
 
+class ConstantBufferResource;
 class EmptyObject;
 class MeshRenderer;
 class CameraRenderer;
@@ -59,6 +60,22 @@ public:
     /// @brief 描画先オブジェクトに付与された全描画先コンポーネントから IRenderTarget を収集する
     static void CollectRenderTargets(EmptyObject *targetObject, std::vector<IRenderTarget *> &out);
 
+    //==================================================
+    // エディター用描画先
+    //==================================================
+
+    /// @brief エディター用描画先を設定する（全MeshRendererがこの描画先にも描画される）
+    /// @param target エディター用描画先（nullptrで解除）
+    /// @param cameraBuffer この描画先の描画時にバインドされるカメラ定数バッファ
+    void SetEditorTarget(IRenderTarget *target, ConstantBufferResource *cameraBuffer) {
+        editorTarget_ = target;
+        editorCameraBuffer_ = cameraBuffer;
+    }
+    /// @brief 指定描画先がエディター用描画先の場合、そのカメラ定数バッファを返す
+    ConstantBufferResource *GetEditorCameraBuffer(const IRenderTarget *target) const {
+        return (editorTarget_ && target == editorTarget_) ? editorCameraBuffer_ : nullptr;
+    }
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override;
@@ -71,6 +88,9 @@ private:
 
     std::vector<DrawEntry> sortedDrawList_;
     std::unordered_map<const IRenderTarget *, EmptyObject *> targetOwners_;
+
+    IRenderTarget *editorTarget_ = nullptr;
+    ConstantBufferResource *editorCameraBuffer_ = nullptr;
 };
 
 REGISTER_COMPONENT_SCENE(SceneRenderer)

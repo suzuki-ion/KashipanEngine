@@ -100,6 +100,14 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* r
     if (it == locations_.end()) return false;
     const ShaderBindLocation& loc = it->second;
     resource->SetCommandList(cmd_);
+    if (loc.isDescriptorTable) {
+        // 自動ルートシグネチャ生成では SRV/UAV はデスクリプタテーブルになるため、
+        // リソースのデスクリプタハンドルをテーブルとしてバインドする
+        const auto handle = resource->GetGPUDescriptorHandle();
+        if (handle.ptr == 0) return false;
+        cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, handle);
+        return true;
+    }
     if (loc.isRootCBV) {
         if (resource->GetResourceViewType() != ResourceViewType::CBV) {
             return false;

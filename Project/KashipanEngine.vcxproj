@@ -375,6 +375,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.cpp" />
     <ClCompile Include="KashipanEngine\Debug\CrashHandler.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportCrashSceneBackup.cpp" />
     <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportDump.cpp" />
     <ClCompile Include="KashipanEngine\Debug\ImGuiManager.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
@@ -416,6 +417,17 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Scene\Components\Render\SceneRenderer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\EditorSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneSaver.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\SceneEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Scene.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
@@ -501,6 +513,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowMessage.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowSize.h" />
     <ClInclude Include="KashipanEngine\Debug\CrashHandler.h" />
+    <ClInclude Include="KashipanEngine\Debug\CrashHandler\ExportCrashSceneBackup.h" />
     <ClInclude Include="KashipanEngine\Debug\CrashHandler\ExportDump.h" />
     <ClInclude Include="KashipanEngine\Debug\ImGuiManager.h" />
     <ClInclude Include="KashipanEngine\Debug\LogSettings.h" />
@@ -610,6 +623,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Text.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Velocity.h" />
     <ClInclude Include="KashipanEngine\Objects\EmptyObject.h" />
     <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\MathObjects\2D\Capsule2D.h" />
@@ -641,6 +655,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\ComponentAddMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\AssetsWindow.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorSettings.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />

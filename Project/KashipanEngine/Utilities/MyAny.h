@@ -16,32 +16,6 @@ template <typename T> inline constexpr bool is_pair_v = is_pair<T>::value;
 /// @brief カスタムAnyクラス
 class MyAny {
 public:
-    struct BaseHolder {
-        virtual ~BaseHolder() {}
-        virtual BaseHolder *clone() const = 0;
-        bool isType(const ValueType &valueType) const {
-            return valueType == ValueType::Any || valueType == typeInfo.GetBaseType();
-        }
-        bool isType(const std::vector<TypeInfo> &templateArgs) const {
-            if (typeInfo.GetBaseType() == ValueType::Any) return true;
-            if (typeInfo.GetTemplateArguments().size() != templateArgs.size()) return false;
-            for (size_t i = 0; i < templateArgs.size(); ++i) {
-                if (!isType(templateArgs[i])) return false;
-            }
-            return true;
-        }
-        bool isType(const TypeInfo &typeInfoT) const {
-            return typeInfoT.GetBaseType() == ValueType::Any ||
-                (typeInfoT.GetBaseType() == typeInfo.GetBaseType() && isType(typeInfoT.GetTemplateArguments()));
-        }
-        template<typename T>
-        bool isType() const {
-            TypeInfo typeInfoT = GetValueType<T>();
-            return typeInfoT.GetBaseType() == ValueType::Any || isType(typeInfoT);
-        }
-        TypeInfo typeInfo = TypeInfo(ValueType::None);
-    };
-
     MyAny() : content(nullptr) {}
     template <typename T, typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, MyAny>>>
     MyAny(const T &value);
@@ -49,12 +23,24 @@ public:
     MyAny(const T &value, const TypeInfo &explicitTypeInfo) : content(std::make_unique<Holder<T>>(value)) {
         content->typeInfo = explicitTypeInfo;
     }
-    MyAny(const MyAny &other) : content(other.content ? other.content->clone() : nullptr) {}
+    /// @brief 既に構築済みの MyAny が保持する実データはそのままに、宣言上の型情報だけ上書きする
+    /// @details テンプレート版の MyAny(const T&, const TypeInfo&) に MyAny 自身を渡すと、
+    ///          T が MyAny だと推論されて Holder<MyAny>（MyAny を入れ子で包んだもの）が作られてしまい、
+    ///          そこへ本来の型（例えば Float）の typeInfo だけを上書きすると、実データの型と
+    ///          typeInfo が矛盾した Holder になる。結果、後段の AnyCast<float>() 等が
+    ///          Holder<MyAny>* を Holder<float>* として誤って解釈してしまい値が壊れる。
+    ///          この非テンプレートのオーバーロードが優先的に選ばれることで、そのような
+    ///          誤用（既存の MyAny をさらに MyAny(value, typeInfo) で包む）を安全にする。
+    MyAny(const MyAny &value, const TypeInfo &explicitTypeInfo)
+        : content(value.content ? value.content->clone() : nullptr) {
+        if (content) content->typeInfo = explicitTypeInfo;
+    }
+    MyAny(const MyAny &other) : content(other.content ? std::move(other.content->clone()) : nullptr) {}
     MyAny(MyAny &&other) noexcept : content(std::move(other.content)) {}
     ~MyAny() = default;
     MyAny &operator=(const MyAny &other) {
         if (this != &other) {
-            content.reset(other.content ? other.content->clone() : nullptr);
+            content = other.content ? std::move(other.content->clone()) : nullptr;
         }
         return *this;
     }
@@ -108,12 +94,39 @@ public:
         return content->typeInfo;
     }
 private:
+    struct BaseHolder {
+        virtual ~BaseHolder() {}
+        virtual std::unique_ptr<BaseHolder> clone() const = 0;
+        bool isType(const ValueType &valueType) const {
+            return valueType == ValueType::Any || valueType == typeInfo.GetBaseType();
+        }
+        bool isType(const std::vector<TypeInfo> &templateArgs) const {
+            if (typeInfo.GetBaseType() == ValueType::Any) return true;
+            if (typeInfo.GetTemplateArguments().size() != templateArgs.size()) return false;
+            for (size_t i = 0; i < templateArgs.size(); ++i) {
+                if (!isType(templateArgs[i])) return false;
+            }
+            return true;
+        }
+        bool isType(const TypeInfo &typeInfoT) const {
+            return typeInfoT.GetBaseType() == ValueType::Any ||
+                (typeInfoT.GetBaseType() == typeInfo.GetBaseType() && isType(typeInfoT.GetTemplateArguments()));
+        }
+        template<typename T>
+        bool isType() const {
+            TypeInfo typeInfoT = GetValueType<T>();
+            return typeInfoT.GetBaseType() == ValueType::Any || isType(typeInfoT);
+        }
+        TypeInfo typeInfo = TypeInfo(ValueType::None);
+    };
     template<typename T>
     struct Holder : BaseHolder {
         Holder(const T &value) : value(value) {
             typeInfo = GetValueType<T>();
         }
-        BaseHolder *clone() const override { return new Holder(value); }
+        std::unique_ptr<BaseHolder> clone() const override {
+            return std::make_unique<Holder<T>>(value);
+        }
         T value;
     };
     std::unique_ptr<BaseHolder> content;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Math/Vector2.h"
 
@@ -7,6 +7,7 @@ namespace KashipanEngine {
 class RigidBody2D final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(RigidBody2D, 1, )
+    COMPONENT_CATEGORY("Collision")
     ~RigidBody2D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<RigidBody2D>();

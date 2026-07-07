@@ -80,9 +80,14 @@ bool ShadowMapBuffer::IsExist(ShadowMapBuffer *buffer) {
     return sBufferMap.find(buffer) != sBufferMap.end();
 }
 
-void ShadowMapBuffer::DestroyNotify() const {
-    if (!IsExist(const_cast<ShadowMapBuffer *>(this))) return;
+void ShadowMapBuffer::DestroyNotify() {
+    if (!IsExist(this)) return;
     if (IsPendingDestroy()) return;
+    // 名前を即座に解放しないと、同フレーム内で同名の ShadowMapBuffer を
+    // 再登録しようとした際（シーンの作り直し等）に名前衝突してしまうため、
+    // TextureManager への登録はここで即座に解除する
+    // （実体（GPUリソース）の破棄はフレーム終端の CommitDestroy まで遅延する）
+    UnregisterFromTextureManager();
     sPendingDestroy.push_back(this);
 }
 

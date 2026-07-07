@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include "JSON.h"
+#include "Directory.h"
 
 namespace KashipanEngine {
 
@@ -14,6 +15,10 @@ JSON LoadJSON(const std::string &filename) {
 
 bool SaveJSON(const JSON &jsonData, const std::string &filepath, int indent) {
     try {
+        // 保存先フォルダが存在しない場合は作成する
+        if (!EnsureParentDirectoryExists(filepath)) {
+            return false;
+        }
         std::ofstream file(filepath);
         if (!file.is_open()) {
             return false;

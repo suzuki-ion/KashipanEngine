@@ -449,6 +449,10 @@
 		"engine.crashhandler.crash.export.dump.start": "クラッシュダンプのエクスポート開始。",
 		"engine.crashhandler.crash.export.dump.end": "クラッシュダンプのエクスポート完了。ファイルパス：",
 		"engine.crashhandler.crash.export.dump.failed": "クラッシュダンプのエクスポートに失敗しました。ファイルパス：",
+		"engine.crashhandler.crash.export.scene.noscene": "現在アクティブなシーンが存在しないため、シーンのバックアップ保存をスキップしました。",
+		"engine.crashhandler.crash.export.scene.start": "クラッシュ時シーンバックアップのエクスポート開始。",
+		"engine.crashhandler.crash.export.scene.end": "クラッシュ時シーンバックアップのエクスポート完了。ファイルパス：",
+		"engine.crashhandler.crash.export.scene.failed": "クラッシュ時シーンバックアップのエクスポートに失敗しました。ファイルパス：",
 
 		//--------- Texture ---------//
 		"engine.texture.loading.start": "テクスチャ読み込み開始。ファイルパス：",

@@ -64,13 +64,22 @@ struct SpotLightElement {
     float intensity = 1.0f;
     float decay = 2.0f;
 };
+
+/// @brief gDirectionalLights 構造化バッファと同レイアウトの構造体
+struct DirectionalLightElement {
+    std::uint32_t enabled = 0;
+    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector3 direction{ 0.0f, -1.0f, 0.0f };
+    float intensity = 1.0f;
+};
 #pragma pack(pop)
 
 /// @brief LightCounts 定数バッファと同レイアウトの構造体
 struct LightCountsData {
     std::uint32_t pointLightCount = 0;
     std::uint32_t spotLightCount = 0;
-    std::uint32_t padding[2]{};
+    std::uint32_t directionalLightCount = 0;
+    std::uint32_t padding = 0;
 };
 
 /// @brief ShadowMapConstants 定数バッファと同レイアウトの構造体
@@ -123,9 +132,9 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     if (!sceneRenderer) return;
 
     const auto &drawList = sceneRenderer->BuildSortedDrawList(Passkey<Renderer>{}, pipelineManager_);
-    if (drawList.empty()) return;
 
     // 描画先ごとの範囲に区切って描画（リストは描画先順でソート済み）
+    std::unordered_set<const IRenderTarget *> renderedTargets;
     size_t begin = 0;
     while (begin < drawList.size()) {
         IRenderTarget *target = drawList[begin].target;
@@ -135,13 +144,50 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
         RenderToTarget(target,
             std::span<const SceneRenderer::DrawEntry>(drawList.data() + begin, end - begin),
             sceneRenderer);
+        renderedTargets.insert(target);
         begin = end;
     }
+
+    // 描画対象オブジェクトが無い ScreenBuffer にもポストエフェクトのみ適用する
+    RenderPostProcessOnlyTargets(sceneContext, renderedTargets);
 }
 
 void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
     if (resourceContainer_) {
         resourceContainer_->Clear();
+    }
+}
+
+void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
+    const std::unordered_set<const IRenderTarget *> &renderedTargets) {
+    for (const auto &object : sceneContext->GetSceneObjects()) {
+        if (!object || !object->IsActive()) continue;
+
+        // アクティブなポストエフェクトコンポーネントを持つオブジェクトのみ対象
+        bool hasActivePostProcess = false;
+        for (auto *component : object->GetComponents<IPostProcessComponent>()) {
+            if (component && component->IsActive()) {
+                hasActivePostProcess = true;
+                break;
+            }
+        }
+        if (!hasActivePostProcess) continue;
+
+        for (auto *screenBufferObject : object->GetComponents<ScreenBufferObject>()) {
+            if (!screenBufferObject || !screenBufferObject->IsActive()) continue;
+            auto *buffer = screenBufferObject->GetScreenBuffer();
+            if (!buffer || !ScreenBuffer::IsExist(buffer)) continue;
+            if (!buffer->IsRenderTargetAvailable()) continue;
+            // 描画リスト経由で既に描画済みの場合はポストエフェクトも適用済み
+            if (renderedTargets.find(buffer) != renderedTargets.end()) continue;
+
+            buffer->BeginDraw();
+            auto *commandList = buffer->GetCommandList();
+            if (!commandList) continue;
+            PipelineBinder pipelineBinder(commandList, pipelineManager_);
+            RenderPostProcess(buffer, pipelineBinder, object.get());
+            buffer->EndDraw();
+        }
     }
 }
 
@@ -177,7 +223,7 @@ void Renderer::RenderToTarget(IRenderTarget *target,
 
     // ScreenBuffer の場合は所有オブジェクトのポストプロセスを適用
     if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
-        RenderPostProcess(static_cast<ScreenBuffer *>(target), pipelineBinder, sceneRenderer);
+        RenderPostProcess(static_cast<ScreenBuffer *>(target), pipelineBinder, sceneRenderer->GetTargetOwner(target));
     }
 
     // ウィンドウのコマンドリストはこの後 ImGui 等の描画にも使われるため、
@@ -225,8 +271,10 @@ void Renderer::DrawBatch(IRenderTarget *target,
     // マテリアルの構造化バッファ（シェーダーはインスタンスIDで参照するため個数分並べる）
     {
         MaterialElement element;
-        const auto *material = MaterialManager::GetMaterial(meshRenderer->GetMaterialHandle());
+        auto *material = MaterialManager::GetMaterial(meshRenderer->GetMaterialHandle());
         if (material) {
+            // 読み込み時に未解決だったテクスチャハンドルの解決を試みる
+            material->ResolveTextureHandles();
             element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
             element.enableEnvironmentMapping = (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
             element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
@@ -312,19 +360,7 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         }
     }
 
-    for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
-        if (!lightRenderer || !lightRenderer->IsActive()) continue;
-        // ポイント/スポットライトは構造化バッファ側でまとめてバインドする
-        if (lightRenderer->GetLightType() != Light::Type::Directional) continue;
-        if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
-        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
-        auto *constantBuffer = lightRenderer->GetConstantBuffer();
-        if (!constantBuffer) continue;
-        for (const auto &variableName : lightRenderer->GetBindVariableNames()) {
-            shaderBinder.Bind(variableName, constantBuffer);
-        }
-    }
-
+    // ライトは種類ごとに構造化バッファへまとめてバインドする
     BindLightBuffersAndShadowMap(target, pipelineName, sceneRenderer, shaderBinder);
 }
 
@@ -332,17 +368,32 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
     const std::string &pipelineName,
     SceneRenderer *sceneRenderer,
     ShaderVariableBinder &shaderBinder) {
-    //--------- ポイント/スポットライトの収集 ---------//
+    //--------- ライトの収集（種類ごとに構造化バッファへまとめる） ---------//
     std::vector<PointLightElement> pointLights;
     std::vector<SpotLightElement> spotLights;
+    std::vector<DirectionalLightElement> directionalLights;
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
         if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
         auto *light = lightRenderer->GetLight();
-        if (!light) continue;
+        if (!light) {
+            // Light コンポーネントが無い場合は既定値のディレクショナルライトとして扱う
+            DirectionalLightElement element;
+            element.enabled = 1u;
+            element.direction = lightRenderer->GetWorldDirection();
+            directionalLights.push_back(element);
+            continue;
+        }
 
-        if (light->GetType() == Light::Type::Point) {
+        if (light->GetType() == Light::Type::Directional) {
+            DirectionalLightElement element;
+            element.enabled = light->IsActive() ? 1u : 0u;
+            element.color = light->GetColor();
+            element.direction = lightRenderer->GetWorldDirection();
+            element.intensity = light->GetIntensity();
+            directionalLights.push_back(element);
+        } else if (light->GetType() == Light::Type::Point) {
             PointLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
             element.color = light->GetColor();
@@ -371,6 +422,7 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
         LightCountsData counts;
         counts.pointLightCount = static_cast<std::uint32_t>(pointLights.size());
         counts.spotLightCount = static_cast<std::uint32_t>(spotLights.size());
+        counts.directionalLightCount = static_cast<std::uint32_t>(directionalLights.size());
         auto key = MakeBatchKey(target, pipelineName, 0, 0, "lightCounts");
         auto *countsBuffer = resourceContainer_->GetOrCreateConstantBuffer(key, sizeof(LightCountsData));
         if (countsBuffer) {
@@ -409,6 +461,21 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
                     std::memcpy(mapped, spotLights.data(), sizeof(SpotLightElement) * spotLights.size());
                 }
                 shaderBinder.Bind("Pixel:gSpotLights", buffer);
+            }
+        }
+    }
+    {
+        auto key = MakeBatchKey(target, pipelineName, 0, 0, "directionalLights");
+        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
+            key, sizeof(DirectionalLightElement), std::max<size_t>(1, directionalLights.size()));
+        if (buffer) {
+            if (auto *mapped = static_cast<DirectionalLightElement *>(buffer->Map())) {
+                if (directionalLights.empty()) {
+                    mapped[0] = DirectionalLightElement{};
+                } else {
+                    std::memcpy(mapped, directionalLights.data(), sizeof(DirectionalLightElement) * directionalLights.size());
+                }
+                shaderBinder.Bind("Pixel:gDirectionalLights", buffer);
             }
         }
     }
@@ -469,11 +536,8 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
 
 void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
     PipelineBinder &pipelineBinder,
-    SceneRenderer *sceneRenderer) {
-    if (!screenBuffer || !sceneRenderer) return;
-
-    auto *ownerObject = sceneRenderer->GetTargetOwner(screenBuffer);
-    if (!ownerObject) return;
+    EmptyObject *ownerObject) {
+    if (!screenBuffer || !ownerObject) return;
 
     auto postProcessComponents = ownerObject->GetComponents<IPostProcessComponent>();
     if (postProcessComponents.empty()) return;

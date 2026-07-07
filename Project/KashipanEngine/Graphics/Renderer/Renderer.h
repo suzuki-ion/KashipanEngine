@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <span>
+#include <unordered_set>
 
 #include "Utilities/Passkeys.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -62,9 +63,15 @@ private:
         ShaderVariableBinder &shaderBinder);
 
     /// @brief ScreenBuffer へのポストプロセス適用
+    /// @param ownerObject ScreenBuffer を所有するオブジェクト（ポストエフェクトコンポーネントの取得元）
     void RenderPostProcess(ScreenBuffer *screenBuffer,
         PipelineBinder &pipelineBinder,
-        SceneRenderer *sceneRenderer);
+        EmptyObject *ownerObject);
+
+    /// @brief 描画リストに含まれない ScreenBuffer へのポストエフェクトのみの適用
+    /// @details オブジェクトの描画が無くともポストエフェクトコンポーネントがあれば実行する
+    void RenderPostProcessOnlyTargets(SceneContext *sceneContext,
+        const std::unordered_set<const IRenderTarget *> &renderedTargets);
 
     /// @brief DirectX共通クラスへのポインタ
     DirectXCommon *directXCommon_ = nullptr;

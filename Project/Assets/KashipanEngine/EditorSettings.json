@@ -1,10 +1,21 @@
 {
+    "hierarchy.object.4aeae184-8b78-4af0-bc21-da2f9467b1d5": true,
     "hierarchy.objects": false,
+    "inspector.component.BloomEffect": true,
     "inspector.component.Camera3D": false,
     "inspector.component.CameraRenderer": false,
-    "inspector.component.Light": true,
-    "inspector.component.LightRenderer": true,
+    "inspector.component.ChromaticAberrationEffect": false,
+    "inspector.component.ColorAdjustEffect": true,
+    "inspector.component.DissolveEffect": false,
+    "inspector.component.Light": false,
+    "inspector.component.LightRenderer": false,
     "inspector.component.MeshFilter": false,
     "inspector.component.MeshRenderer": false,
-    "inspector.component.Transform": false
+    "inspector.component.NormalWindowObject": false,
+    "inspector.component.OutlineEffect": false,
+    "inspector.component.ScreenBufferObject": true,
+    "inspector.component.SphereCollider": true,
+    "inspector.component.Transform": false,
+    "inspector.component.VignetteEffect": true,
+    "sceneComponentInspector.KeyframeAnimator": true
 }

@@ -107,6 +107,8 @@ bool Scene::LoadFromJSON(const JSON &json) {
         auto comp = CreateSceneComponentByType(compType);
         if (!comp) continue;
         auto compJson = compData.value("data", JSON());
+        // 追加時の初期化前にアクティブ状態を反映し、無効なコンポーネントの初期化を防ぐ
+        comp->SetActive(compJson.value("isActive", true));
         loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson);
     }
     for (const auto &[comp, compJson] : loadedComponents) {
@@ -134,15 +136,16 @@ bool Scene::LoadFromJSON(const JSON &json) {
         if (key.empty()) continue;
         std::string type = varData.value("type", "");
         TypeInfo typeInfo = GetValueType(type);
-        MyAny value = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
-        AddSceneVariable(key, value, typeInfo);
+        // LoadAnyFromJson は既に正しい型で保持された MyAny を返すため、
+        // それをさらに MyAny(value, typeInfo) で包んではいけない。
+        // その2引数コンストラクタは T を MyAny 自身と推論して Holder<MyAny> を
+        // 構築した上で typeInfo だけ（例えば Float に）上書きしてしまうため、
+        // 実データは MyAny 一個分のバイト列のまま「Float」を騙る不整合な Holder になり、
+        // AnyCast<float>() 等が Holder<MyAny>* を Holder<float>* として誤って
+        // reinterpret し、値が破損して見える（未定義動作）。
+        sceneVariables_[key] = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
     }
     return true;
-}
-
-MyAny *Scene::AddSceneVariable(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) {
-    sceneVariables_.emplace(key, MyAny(value, typeInfo));
-    return &sceneVariables_[key];
 }
 
 bool Scene::RemoveSceneVariable(const std::string &key) {

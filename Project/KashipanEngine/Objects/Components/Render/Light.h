@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Math/Vector4.h"
 
@@ -8,6 +8,7 @@ class Light final : public IObjectComponent {
 public:
     enum class Type { Directional, Point, Spot };
     OBJECT_COMPONENT_CONSTRUCTOR(Light, 0xFF, )
+    COMPONENT_CATEGORY("Render")
     ~Light() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<Light>();

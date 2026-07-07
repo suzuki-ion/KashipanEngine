@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <unordered_map>
 #include <vector>
 
@@ -25,6 +25,7 @@ public:
     };
 
     SCENE_COMPONENT_CONSTRUCTOR(SceneRenderer, 1, SetUpdatePriority(1000);)
+    COMPONENT_CATEGORY("Render")
     ~SceneRenderer() override = default;
 
     std::unique_ptr<ISceneComponent> Clone() const override {

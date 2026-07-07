@@ -37,17 +37,19 @@ protected:
         ImGui::ColorEdit4("Base Texture Color", params_.baseTextureColor);
         ImGui::ColorEdit4("Edge Color", params_.edgeColor);
         // テクスチャは読み込み済みのものから選択する
+        // ファイル名単体だと同名ファイルが複数フォルダにある場合にImGuiのID重複警告が出るため、
+        // Assetsからの相対パスを表示・選択キーとして使う
         std::vector<std::string> textureNames;
         for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
-            textureNames.push_back(entry.fileName);
+            textureNames.push_back(entry.assetPath);
         }
-        std::string baseTextureName = TextureManager::GetTextureFileName(params_.baseTexture);
+        std::string baseTextureName = TextureManager::GetTextureAssetPath(params_.baseTexture);
         if (ImGuiCustom::SelectString("Base Texture", baseTextureName, textureNames, true)) {
-            params_.baseTexture = baseTextureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromFileName(baseTextureName);
+            params_.baseTexture = baseTextureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(baseTextureName);
         }
-        std::string maskTextureName = TextureManager::GetTextureFileName(params_.maskTexture);
+        std::string maskTextureName = TextureManager::GetTextureAssetPath(params_.maskTexture);
         if (ImGuiCustom::SelectString("Mask Texture", maskTextureName, textureNames, true)) {
-            params_.maskTexture = maskTextureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromFileName(maskTextureName);
+            params_.maskTexture = maskTextureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(maskTextureName);
         }
     }
 #endif

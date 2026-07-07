@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 
 namespace KashipanEngine {
@@ -6,6 +6,7 @@ namespace KashipanEngine {
 class Animator final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(Animator, 1, )
+    COMPONENT_CATEGORY("Animation")
     ~Animator() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<Animator>();

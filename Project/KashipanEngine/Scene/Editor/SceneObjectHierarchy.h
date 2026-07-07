@@ -46,8 +46,12 @@ private:
     };
 
     struct DragDropPayload {
-        ObjectItem *objectItemSource = nullptr;
-        ObjectItem *objectItemTarget = nullptr;
+        // ObjectItem は毎フレーム RebuildObjectItems() で作り直される一時ツリー構造体のため、
+        // フレームをまたいで保持すると（ドラッグ中に対象アイテムが描画されない等の理由で
+        // ペイロードが前フレームのまま持ち越された場合）ダングリングポインタになる。
+        // 実体である EmptyObject* のみを保持し、必要な情報は都度 editorContext_ 経由で取得する。
+        EmptyObject *objectSource = nullptr;
+        EmptyObject *objectTarget = nullptr;
         DropPosition position = DropPosition::Inside;
     };
 
@@ -56,7 +60,6 @@ private:
     void ShowObjectItem(const ObjectItem &item, size_t &index);
     void ShowObjectContextMenu(EmptyObject *obj);
     void ShowHierarchyContextMenu();
-    void ShowAddObjectMenu(EmptyObject *parent = nullptr);
     void DragAndDropObject(ObjectItem *objItem);
     void ApplyDragAndDrop();
     DropPosition DragAndDropTargetCommon();

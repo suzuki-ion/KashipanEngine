@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 
 namespace KashipanEngine {
@@ -7,6 +7,7 @@ namespace KashipanEngine {
 class Camera2D final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(Camera2D, 1, )
+    COMPONENT_CATEGORY("Render")
     ~Camera2D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<Camera2D>();

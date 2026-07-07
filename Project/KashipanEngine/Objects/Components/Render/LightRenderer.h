@@ -1,15 +1,11 @@
 #pragma once
 #include <cstdint>
-#include <cstring>
 #include <string>
-#include <vector>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Transform.h"
-#include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Vector3.h"
-#include "Math/Vector4.h"
 #include "Graphics/PipelineManager.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Utilities/UUID128.h"
@@ -20,20 +16,20 @@
 namespace KashipanEngine {
 
 /// @brief 描画時に使用するライトへ付与するコンポーネント
-/// @details 同一オブジェクトの Transform と Light からライト情報を計算して
-///          定数バッファへアップロードする。
-///          使用するパイプラインと、そのパイプラインに含まれるシェーダーの
-///          どの定数バッファへバインドするかを指定できる。
+/// @details 同一オブジェクトの Transform と Light からライト情報を取得し、
+///          Renderer がライトの種類ごとの構造化バッファ
+///          （gDirectionalLights / gPointLights / gSpotLights）へまとめて送る。
+///          使用するパイプラインと適用先の描画先を指定できる。
 class LightRenderer final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(LightRenderer, 1, SetUpdatePriority(950);)
+    COMPONENT_CATEGORY("Render")
     ~LightRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<LightRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
-        ptr->bindVariableNames_ = bindVariableNames_;
         return ptr;
     }
 
@@ -60,12 +56,9 @@ public:
         return sceneContext->GetSceneObject(targetObjectID_);
     }
 
-    /// @brief バインド先の定数バッファ変数名を設定（例: "Pixel:gDirectionalLight"）
-    void SetBindVariableNames(const std::vector<std::string> &names) { bindVariableNames_ = names; }
-    const std::vector<std::string> &GetBindVariableNames() const noexcept { return bindVariableNames_; }
-
-    /// @brief ライト情報の定数バッファを取得
-    ConstantBufferResource *GetConstantBuffer() const noexcept { return constantBuffer_.get(); }
+    //==================================================
+    // ライト情報取得（Renderer が構造化バッファへ詰めるために使用）
+    //==================================================
 
     /// @brief 同一オブジェクトの Light コンポーネントを取得（存在しない場合は nullptr）
     Light *GetLight() const {
@@ -104,21 +97,10 @@ public:
 
 protected:
     void Initialize() override {
-        if (!constantBuffer_) {
-            constantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(DirectionalLightConstant));
-        }
-        if (bindVariableNames_.empty()) {
-            bindVariableNames_ = { "Pixel:gDirectionalLight" };
-        }
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
             sceneRenderer->RegisterLightRenderer(this);
         }
-        UploadLightConstant();
-    }
-
-    void Update() override {
-        UploadLightConstant();
     }
 
     void Finalize() override {
@@ -127,7 +109,6 @@ protected:
         if (sceneRenderer) {
             sceneRenderer->UnregisterLightRenderer(this);
         }
-        constantBuffer_.reset();
     }
 
 #if defined(USE_IMGUI)
@@ -136,9 +117,6 @@ protected:
         TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
         // パイプラインは読み込み済みのものから選択（未指定は全パイプライン）
         ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
-        for (const auto &name : bindVariableNames_) {
-            ImGui::BulletText("%s", name.c_str());
-        }
     }
 #endif
 
@@ -146,7 +124,6 @@ protected:
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
-        json["bindVariableNames"] = bindVariableNames_;
         return json;
     }
 
@@ -157,25 +134,10 @@ protected:
             targetObjectID_ = UUID128();
         }
         pipelineName_ = json.value("pipelineName", std::string{});
-        bindVariableNames_.clear();
-        if (json.contains("bindVariableNames")) {
-            for (const auto &name : json["bindVariableNames"]) {
-                bindVariableNames_.push_back(name.get<std::string>());
-            }
-        }
         return true;
     }
 
 private:
-    /// @brief gDirectionalLight 定数バッファと同レイアウトの構造体
-    struct DirectionalLightConstant {
-        std::uint32_t enabled = 0;
-        float padding[3]{};
-        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-        Vector3 direction{ 0.0f, -1.0f, 0.0f };
-        float intensity = 1.0f;
-    };
-
     SceneRenderer *GetOrAddSceneRenderer() const {
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
@@ -186,39 +148,8 @@ private:
         return sceneRenderer;
     }
 
-    void UploadLightConstant() {
-        if (!constantBuffer_) return;
-        auto *objectContext = GetOwnerObjectContext();
-        if (!objectContext) return;
-
-        DirectionalLightConstant constant{};
-        constant.enabled = IsActive() ? 1u : 0u;
-
-        if (auto *light = objectContext->GetComponent<Light>()) {
-            constant.color = light->GetColor();
-            constant.intensity = light->GetIntensity();
-            constant.enabled = (light->IsActive() && IsActive()) ? 1u : 0u;
-        }
-
-        // Transform の前方ベクトル（+Z）をライト方向とする
-        if (auto *transform = objectContext->GetComponent<Transform>()) {
-            const Matrix4x4 &world = transform->GetWorldMatrix();
-            Vector3 forward(world.m[2][0], world.m[2][1], world.m[2][2]);
-            const float length = forward.Length();
-            if (length > 0.0f) {
-                constant.direction = forward * (1.0f / length);
-            }
-        }
-
-        void *mapped = constantBuffer_->Map();
-        if (!mapped) return;
-        std::memcpy(mapped, &constant, sizeof(constant));
-    }
-
-    std::unique_ptr<ConstantBufferResource> constantBuffer_;
     UUID128 targetObjectID_{};
     std::string pipelineName_;
-    std::vector<std::string> bindVariableNames_;
 };
 
 REGISTER_COMPONENT_OBJECT(LightRenderer)

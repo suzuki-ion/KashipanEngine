@@ -89,9 +89,10 @@ bool ScreenBuffer::IsExist(ScreenBuffer *buffer) {
     return sBufferMap.find(buffer) != sBufferMap.end();
 }
 
-void ScreenBuffer::DestroyNotify() const {
+void ScreenBuffer::DestroyNotify() {
     if (!IsExist(const_cast<ScreenBuffer *>(this))) return;
     if (IsPendingDestroy()) return;
+    UnregisterFromTextureManager();
     sPendingDestroy.push_back(this);
 }
 
@@ -161,7 +162,6 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 }
 
 void ScreenBuffer::Destroy() {
-    UnregisterFromTextureManager();
     for (size_t i = 0; i < kBufferCount; ++i) {
         shaderResources_[i].reset();
         depthStencils_[i].reset();

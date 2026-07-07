@@ -1,4 +1,5 @@
-#include "TextFile.h"
+﻿#include "TextFile.h"
+#include "Directory.h"
 #include <fstream>
 
 namespace KashipanEngine {
@@ -19,6 +20,8 @@ TextFileData LoadTextFile(const std::string &filePath) {
 }
 
 void SaveTextFile(const TextFileData &textFileData) {
+    // 保存先フォルダが存在しない場合は作成する
+    EnsureParentDirectoryExists(textFileData.filePath);
     std::ofstream file(textFileData.filePath);
     if (!file.is_open()) {
         return;

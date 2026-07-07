@@ -1,4 +1,5 @@
-#include "CSV.h"
+﻿#include "CSV.h"
+#include "Directory.h"
 #include <fstream>
 
 namespace KashipanEngine {
@@ -39,6 +40,8 @@ CSVData LoadCSV(const std::string &filePath, bool hasHeader) {
 }
 
 void SaveCSV(const std::string &filePath, const CSVData &data) {
+    // 保存先フォルダが存在しない場合は作成する
+    EnsureParentDirectoryExists(filePath);
     std::ofstream file(filePath);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open CSV file for writing: " + filePath);

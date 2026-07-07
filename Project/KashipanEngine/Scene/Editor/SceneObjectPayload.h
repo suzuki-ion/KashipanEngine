@@ -13,8 +13,6 @@ inline constexpr const char *kSceneObjectDragDropType = "DND_OBJECT";
 ///          object からドラッグされたシーンオブジェクトを取得する。
 struct SceneObjectDragDropPayload {
     EmptyObject *object = nullptr;
-    /// @brief ヒエラルキー内部処理用（外部からは使用しない）
-    void *internalItem = nullptr;
 };
 
 } // namespace KashipanEngine

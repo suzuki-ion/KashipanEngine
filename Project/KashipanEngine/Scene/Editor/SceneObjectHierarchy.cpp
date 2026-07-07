@@ -122,6 +122,34 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
 
 void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
     if (ImGui::BeginPopupContextItem("ObjectContextMenu")) {
+        if (ImGui::MenuItem("Create Empty Object")) {
+            // 右クリックしたオブジェクトと同じ階層かつ次のインデックス位置に作成する
+            const size_t index = editorContext_->GetObjectIndex(obj);
+            const size_t newIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
+            if (commands_) {
+                commands_->Execute(std::make_unique<CreateSiblingObjectCommand>("EmptyObject", obj, newIndex));
+            } else {
+                auto *newObj = editorContext_->CreateEmptyObject("EmptyObject", UUID128(), newIndex);
+                auto *transform = obj->GetComponent<Transform>();
+                if (auto *parent = transform ? transform->GetParentObject() : nullptr) {
+                    if (auto *newTransform = newObj ? newObj->GetComponent<Transform>() : nullptr) {
+                        newTransform->SetParentObject(parent);
+                    }
+                }
+            }
+        }
+        if (ImGui::MenuItem("Create Child Empty Object")) {
+            // 右クリックしたオブジェクトの子オブジェクトとして最後尾に作成する
+            if (commands_) {
+                commands_->Execute(std::make_unique<CreateChildObjectCommand>("EmptyObject", obj));
+            } else {
+                auto *newObj = editorContext_->CreateEmptyObject("EmptyObject");
+                if (auto *newTransform = newObj ? newObj->GetComponent<Transform>() : nullptr) {
+                    newTransform->SetParentObject(obj);
+                }
+            }
+        }
+        ImGui::Separator();
         if (ImGui::MenuItem("Delete Object")) {
             if (commands_) {
                 commands_->Execute(std::make_unique<DeleteObjectCommand>(obj));
@@ -135,7 +163,10 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
 }
 
 void SceneObjectHierarchy::ShowHierarchyContextMenu() {
-    if (ImGui::BeginPopupContextWindow("HierarchyContextMenu")) {
+    // ImGuiPopupFlags_NoOpenOverItems を指定しないと、オブジェクト項目上での右クリックでも
+    // この window レベルのメニューが同一フレームで開いてしまい、
+    // オブジェクト自体の ObjectContextMenu を閉じてしまう（表示されないように見える）ため必須。
+    if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
         if (ImGui::MenuItem("Create Empty Object")) {
             if (commands_) {
                 commands_->Execute(std::make_unique<CreateObjectCommand>("EmptyObject"));
@@ -147,25 +178,11 @@ void SceneObjectHierarchy::ShowHierarchyContextMenu() {
     }
 }
 
-void SceneObjectHierarchy::ShowAddObjectMenu(EmptyObject *parent) {
-    auto *obj = editorContext_->CreateEmptyObject("EmptyObject");
-    if (obj && parent) {
-        auto *transform = obj->GetComponent<Transform>();
-        if (!transform) {
-            transform = obj->AddComponent<Transform>();
-        }
-        if (transform) {
-            transform->SetParentObject(parent);
-        }
-    }
-}
-
 void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
         // 外部（インスペクター等）でも受け取れる共有ペイロード型で送る
         SceneObjectDragDropPayload dndPayload;
         dndPayload.object = objItem->object;
-        dndPayload.internalItem = objItem;
         ImGui::SetDragDropPayload(kSceneObjectDragDropType, &dndPayload, sizeof(dndPayload));
         ImGui::Text("%s", objItem->name.c_str());
         ImGui::EndDragDropSource();
@@ -177,8 +194,10 @@ void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
             if (payload->IsDelivery()) {
                 IM_ASSERT(payload->DataSize == sizeof(SceneObjectDragDropPayload));
                 auto *dndPayload = static_cast<const SceneObjectDragDropPayload *>(payload->Data);
-                dragDropPayload_.objectItemSource = static_cast<ObjectItem *>(dndPayload->internalItem);
-                dragDropPayload_.objectItemTarget = objItem;
+                // ObjectItem は毎フレーム作り直される一時構造体のためフレームをまたいで保持しない。
+                // 実体（EmptyObject*）のみを保持し、必要な情報は ApplyDragAndDrop 側で都度取得する。
+                dragDropPayload_.objectSource = dndPayload->object;
+                dragDropPayload_.objectTarget = objItem->object;
                 dragDropPayload_.position = dropPosition;
             }
         }
@@ -187,25 +206,25 @@ void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
 }
 
 void SceneObjectHierarchy::ApplyDragAndDrop() {
-    if (!dragDropPayload_.objectItemSource || !dragDropPayload_.objectItemTarget) return;
+    if (!dragDropPayload_.objectSource || !dragDropPayload_.objectTarget) return;
 
-    ObjectItem *sourceItem = dragDropPayload_.objectItemSource;
-    ObjectItem *targetItem = dragDropPayload_.objectItemTarget;
+    EmptyObject *sourceObject = dragDropPayload_.objectSource;
+    EmptyObject *targetObject = dragDropPayload_.objectTarget;
     DropPosition position = dragDropPayload_.position;
 
-    size_t moveIndex = targetItem->originalIndex;
-    auto *targetTransform = targetItem->object->GetComponent<Transform>();
+    size_t moveIndex = editorContext_->GetObjectIndex(targetObject);
+    auto *targetTransform = targetObject->GetComponent<Transform>();
     auto *targetParent = targetTransform ? targetTransform->GetParentObject() : nullptr;
-    auto *sourceTransform = sourceItem->object->GetComponent<Transform>();
+    auto *sourceTransform = sourceObject->GetComponent<Transform>();
     if (!sourceTransform) {
-        sourceTransform = sourceItem->object->AddComponent<Transform>();
+        sourceTransform = sourceObject->AddComponent<Transform>();
     }
 
     bool isParentSet = false;
     if (sourceTransform) {
         // Undo用に移動前の状態を保存しておく
-        const JSON transformBefore = sourceItem->object->SaveComponentToJson(sourceTransform);
-        const size_t indexBefore = editorContext_->GetObjectIndex(sourceItem->object);
+        const JSON transformBefore = sourceObject->SaveComponentToJson(sourceTransform);
+        const size_t indexBefore = editorContext_->GetObjectIndex(sourceObject);
         size_t indexAfter = MAXSIZE_T;
 
         switch (position) {
@@ -213,21 +232,21 @@ void SceneObjectHierarchy::ApplyDragAndDrop() {
             isParentSet = sourceTransform->SetParentObject(targetParent);
             if (isParentSet) {
                 indexAfter = moveIndex;
-                editorContext_->MoveObject(sourceItem->object, indexAfter);
+                editorContext_->MoveObject(sourceObject, indexAfter);
             }
             break;
         case DropPosition::Below:
             isParentSet = sourceTransform->SetParentObject(targetParent);
             if (isParentSet) {
                 indexAfter = moveIndex + 1;
-                editorContext_->MoveObject(sourceItem->object, indexAfter);
+                editorContext_->MoveObject(sourceObject, indexAfter);
             }
             break;
         case DropPosition::Inside:
-            isParentSet = sourceTransform->SetParentObject(targetItem->object);
+            isParentSet = sourceTransform->SetParentObject(targetObject);
             if (isParentSet) {
                 indexAfter = moveIndex;
-                editorContext_->MoveObject(sourceItem->object, indexAfter);
+                editorContext_->MoveObject(sourceObject, indexAfter);
             }
             break;
         default:
@@ -236,19 +255,19 @@ void SceneObjectHierarchy::ApplyDragAndDrop() {
 
         // 親変更と並び替えをひとつの操作としてUndo履歴へ積む
         if (isParentSet && commands_) {
-            const JSON transformAfter = sourceItem->object->SaveComponentToJson(sourceTransform);
-            auto composite = std::make_unique<CompositeCommand>("Move Object: " + sourceItem->object->GetName());
+            const JSON transformAfter = sourceObject->SaveComponentToJson(sourceTransform);
+            auto composite = std::make_unique<CompositeCommand>("Move Object: " + sourceObject->GetName());
             if (transformBefore != transformAfter) {
                 composite->AddCommand(std::make_unique<ComponentEditCommand>(
-                    sourceItem->object, sourceTransform, transformBefore, transformAfter));
+                    sourceObject, sourceTransform, transformBefore, transformAfter));
             }
-            composite->AddCommand(std::make_unique<MoveObjectCommand>(sourceItem->object, indexBefore, indexAfter));
+            composite->AddCommand(std::make_unique<MoveObjectCommand>(sourceObject, indexBefore, indexAfter));
             commands_->PushExecuted(std::move(composite));
         }
     }
 
-    dragDropPayload_.objectItemSource = nullptr;
-    dragDropPayload_.objectItemTarget = nullptr;
+    dragDropPayload_.objectSource = nullptr;
+    dragDropPayload_.objectTarget = nullptr;
 }
 
 SceneObjectHierarchy::DropPosition SceneObjectHierarchy::DragAndDropTargetCommon() {

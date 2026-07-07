@@ -33,6 +33,29 @@ public:
         float environmentCoefficient = 1.0f;
         bool enableLighting = true;
         bool enableShadowMapProjection = true;
+
+        /// @brief テクスチャファイル名（読み込み時に未解決だった場合の遅延解決用）
+        std::string textureFileName;
+        /// @brief 環境マップファイル名（読み込み時に未解決だった場合の遅延解決用）
+        std::string environmentFileName;
+
+        /// @brief 未解決のテクスチャハンドルをファイル名から解決する
+        /// @details 読み込み時に対象テクスチャが存在しなかった場合でも、
+        ///          ハンドルが得られるまで呼び出しの度に解決を試み続ける。
+        void ResolveTextureHandles() {
+            if (textureHandle == TextureManager::kInvalidHandle && !textureFileName.empty()) {
+                textureHandle = TextureManager::GetTextureFromFileName(textureFileName);
+            } else {
+                // すでにハンドルが有効な場合はテクスチャが削除されていないか確認するために再取得する
+                textureHandle = TextureManager::GetTexture(textureHandle);
+            }
+            if (environmentHandle == TextureManager::kInvalidHandle && !environmentFileName.empty()) {
+                environmentHandle = TextureManager::GetTextureFromFileName(environmentFileName);
+            } else {
+                // すでにハンドルが有効な場合はテクスチャが削除されていないか確認するために再取得する
+                environmentHandle = TextureManager::GetTexture(environmentHandle);
+            }
+        }
     };
     struct MaterialEntry final {
         std::string fullPath;

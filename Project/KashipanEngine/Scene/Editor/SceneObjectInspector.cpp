@@ -1,5 +1,6 @@
 #include "SceneObjectInspector.h"
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 
@@ -100,15 +101,17 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
     }
 
     if (ImGui::BeginPopup("AddComponentPopup")) {
-        for (const auto &compType : GetRegisteredObjectComponentTypes()) {
-            if (ImGui::MenuItem(compType.c_str())) {
-                if (commands_) {
-                    commands_->Execute(std::make_unique<AddComponentCommand>(obj, compType));
-                } else {
-                    auto newComp = CreateObjectComponentByType(compType);
-                    if (newComp) {
-                        obj->AddComponent(std::move(newComp));
-                    }
+        // カテゴリごとのツリーメニューから追加する型を選択する
+        std::string selectedType;
+        if (ComponentAddMenu::Show(GetRegisteredObjectComponentTypes(),
+                [](const std::string &typeName) -> const std::vector<std::string> & { return GetObjectComponentCategory(typeName); },
+                selectedType)) {
+            if (commands_) {
+                commands_->Execute(std::make_unique<AddComponentCommand>(obj, selectedType));
+            } else {
+                auto newComp = CreateObjectComponentByType(selectedType);
+                if (newComp) {
+                    obj->AddComponent(std::move(newComp));
                 }
             }
         }

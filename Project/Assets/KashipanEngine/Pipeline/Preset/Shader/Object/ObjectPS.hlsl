@@ -13,14 +13,14 @@ struct Material {
 #include "../Common/ShadowMap.hlsli"
 #include "Object3D.hlsli"
 
-ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
-
 StructuredBuffer<PointLight> gPointLights : register(t4);
 StructuredBuffer<SpotLight> gSpotLights : register(t5);
+StructuredBuffer<DirectionalLight> gDirectionalLights : register(t6);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
 	uint gSpotLightCount;
+	uint gDirectionalLightCount;
 };
 #endif
 
@@ -95,13 +95,19 @@ PSOutput main(VSOutput input) {
 		lightingColor = float4(1,1,1,1);
 	}
 
-	// Directional
-	if (gDirectionalLight.enabled && mat.enableLighting) {
-		float lam = HalfLambert(input.normal, -gDirectionalLight.direction);
-		float spec = BlinnPhongReflection(input.normal, gDirectionalLight.direction, input.worldPosition, mat.shininess);
-		float4 diffuse = gDirectionalLight.color * lam * gDirectionalLight.intensity;
-		float4 speculer = gDirectionalLight.color * gDirectionalLight.intensity * spec * mat.specularColor;
-		lightingColor += diffuse + speculer;
+	// Directional lights
+	if (mat.enableLighting) {
+		for (uint i = 0; i < gDirectionalLightCount; ++i) {
+			DirectionalLight light = gDirectionalLights[i];
+			if (!light.enabled) {
+				continue;
+			}
+			float lam = HalfLambert(input.normal, -light.direction);
+			float spec = BlinnPhongReflection(input.normal, light.direction, input.worldPosition, mat.shininess);
+			float4 diffuse = light.color * lam * light.intensity;
+			float4 speculer = light.color * light.intensity * spec * mat.specularColor;
+			lightingColor += diffuse + speculer;
+		}
 	}
 
 	// Point lights

@@ -17,6 +17,10 @@ class Scene;
 class SceneContext;
 
 /// @brief シーンコンポーネントインターフェースクラス
+/// @details 派生クラスは COMPONENT_CATEGORY マクロ（または public static な
+///          std::vector<std::string> GetComponentCategory()）でカテゴリを宣言できる。
+///          カテゴリは階層構造（例: {"Render", "Debug"}）で、
+///          Add Scene Component メニューにてカテゴリごとのツリーで表示される。
 class ISceneComponent {
     /// @brief コンポーネントの型ID設定用
     static inline size_t sComponentTypeID = 0;
@@ -64,9 +68,13 @@ public:
     }
 
     /// @brief 初期化処理
+    /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
+    ///          アクティブな場合のみ実行される（非アクティブの場合は有効化時に走る）。
     void InitializeInterface(Passkey<Scene>, SceneContext *sceneContext) {
         sceneContext_ = sceneContext;
-        Initialize();
+        if (isActive_) {
+            Initialize();
+        }
     }
     /// @brief 終了処理
     void FinalizeInterface(Passkey<Scene>) { Finalize(); }

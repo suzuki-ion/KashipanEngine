@@ -83,14 +83,16 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
         }
 
         // テクスチャハンドル
+        // （この時点で対象テクスチャが存在しない場合はファイル名を保持しておき、
+        //   ResolveTextureHandles によってハンドルが得られるまで解決を試み続ける）
         if (json.contains("textureFile") && json["textureFile"].is_string()) {
-            const std::string texFile = FromJSON<std::string>(json["textureFile"]);
-            outMaterial.textureHandle = TextureManager::GetTextureFromFileName(texFile);
+            outMaterial.textureFileName = FromJSON<std::string>(json["textureFile"]);
+            outMaterial.textureHandle = TextureManager::GetTextureFromFileName(outMaterial.textureFileName);
         }
 
         if (json.contains("environmentFile") && json["environmentFile"].is_string()) {
-            const std::string envFile = FromJSON<std::string>(json["environmentFile"]);
-            outMaterial.environmentHandle = TextureManager::GetTextureFromFileName(envFile);
+            outMaterial.environmentFileName = FromJSON<std::string>(json["environmentFile"]);
+            outMaterial.environmentHandle = TextureManager::GetTextureFromFileName(outMaterial.environmentFileName);
         }
 
         // サンプラーハンドル
@@ -234,8 +236,13 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     json["name"] = material.name;
     json["color"] = ToJSON(material.color);
     json["uvTransform"] = ToJSON(material.uvTransform);
-    json["textureFile"] = TextureManager::GetTextureFileName(material.textureHandle);
-    json["environmentFile"] = TextureManager::GetTextureFileName(material.environmentHandle);
+    // ハンドルが未解決の場合でも読み込み時のファイル名を保持して保存する
+    std::string textureFile = TextureManager::GetTextureFileName(material.textureHandle);
+    if (textureFile.empty()) textureFile = material.textureFileName;
+    std::string environmentFile = TextureManager::GetTextureFileName(material.environmentHandle);
+    if (environmentFile.empty()) environmentFile = material.environmentFileName;
+    json["textureFile"] = textureFile;
+    json["environmentFile"] = environmentFile;
     json["samplerHandle"] = material.samplerHandle;
     json["shininess"] = material.shininess;
     json["specularColor"] = ToJSON(material.specularColor);
@@ -450,17 +457,23 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
     ImGui::ColorEdit4("Color", &material->color.x);
 
     // テクスチャは読み込み済みのものから選択する
-    std::vector<std::string> textureNames;
+    // ファイル名単体だと同名ファイルが複数フォルダにある場合にImGuiのID重複警告が出るため、
+    // Assetsからの相対パスを表示・選択キーとして使う（選択候補は常に解決済みなのでハンドルは即座に得られる）
+    std::vector<std::string> texturePaths;
     for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
-        textureNames.push_back(entry.fileName);
+        texturePaths.push_back(entry.assetPath);
     }
-    std::string textureName = TextureManager::GetTextureFileName(material->textureHandle);
-    if (ImGuiCustom::SelectString("Texture", textureName, textureNames, true)) {
-        material->textureHandle = textureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromFileName(textureName);
+    std::string texturePath = TextureManager::GetTextureAssetPath(material->textureHandle);
+    if (texturePath.empty()) texturePath = material->textureFileName; // 未解決の場合は保留中のファイル名を表示
+    if (ImGuiCustom::SelectString("Texture", texturePath, texturePaths, true)) {
+        material->textureHandle = texturePath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(texturePath);
+        material->textureFileName = TextureManager::GetTextureFileName(material->textureHandle);
     }
-    std::string environmentName = TextureManager::GetTextureFileName(material->environmentHandle);
-    if (ImGuiCustom::SelectString("Environment", environmentName, textureNames, true)) {
-        material->environmentHandle = environmentName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromFileName(environmentName);
+    std::string environmentPath = TextureManager::GetTextureAssetPath(material->environmentHandle);
+    if (environmentPath.empty()) environmentPath = material->environmentFileName;
+    if (ImGuiCustom::SelectString("Environment", environmentPath, texturePaths, true)) {
+        material->environmentHandle = environmentPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(environmentPath);
+        material->environmentFileName = TextureManager::GetTextureFileName(material->environmentHandle);
     }
 
     ImGui::DragFloat("Shininess", &material->shininess, 0.1f, 0.0f, 1024.0f);

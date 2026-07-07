@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include <cstdint>
 #include <string>
@@ -12,6 +12,7 @@ namespace KashipanEngine {
 class ShadowMapObject final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(ShadowMapObject, 0xFF, )
+    COMPONENT_CATEGORY("Render", "RenderTarget")
     ~ShadowMapObject() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
@@ -113,10 +114,35 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
-        name_ = json.value("name", std::string{});
-        width_ = json.value("width", 2048u);
-        height_ = json.value("height", 2048u);
+        const std::string loadedName = json.value("name", std::string{});
+        const std::uint32_t loadedWidth = json.value("width", 2048u);
+        const std::uint32_t loadedHeight = json.value("height", 2048u);
         isShowViewer_ = json.value("isShowViewer", false);
+
+        // AddComponent() の時点で Initialize() が先に呼ばれ、
+        // この関数が読み込むより前にデフォルト値（空の名前・既定サイズ）で
+        // バッファが作成・登録されてしまっている。
+        // ここで単に name_/width_/height_ を上書きするだけだと、
+        // 実際に TextureManager へ登録されている名前（自動生成された別名）と
+        // 表示上の名前が食い違ったままになり、その名前を参照するマテリアル等が
+        // テクスチャを見つけられなくなるため、バッファ側も正しい状態へ同期し直す。
+        if (buffer_ && ShadowMapBuffer::IsExist(buffer_)) {
+            if (buffer_->GetWidth() != loadedWidth || buffer_->GetHeight() != loadedHeight) {
+                buffer_->DestroyNotify();
+                buffer_ = ShadowMapBuffer::Create(loadedWidth, loadedHeight, loadedName);
+                name_ = buffer_ ? buffer_->GetRenderTargetName() : loadedName;
+            } else {
+                name_ = loadedName;
+                if (!name_.empty()) {
+                    buffer_->SetRenderTargetName(name_);
+                }
+                name_ = buffer_->GetRenderTargetName();
+            }
+        } else {
+            name_ = loadedName;
+        }
+        width_ = loadedWidth;
+        height_ = loadedHeight;
         return true;
     }
 

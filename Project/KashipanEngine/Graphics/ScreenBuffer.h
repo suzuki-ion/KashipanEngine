@@ -48,7 +48,7 @@ public:
     /// @brief 指定バッファが破棄要求済みか
     bool IsPendingDestroy() const;
     /// @brief アプリ側から破棄要求（実体の破棄は CommitDestroy で行う）
-    void DestroyNotify() const;
+    void DestroyNotify();
 
     //==================================================
     // IShaderTexture オーバーライド関数

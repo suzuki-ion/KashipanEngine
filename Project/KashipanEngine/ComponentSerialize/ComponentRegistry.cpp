@@ -22,20 +22,31 @@ std::vector<std::string> &GetRegisteredObjectComponentTypes() {
     static std::vector<std::string> registeredObjectComponentTypes;
     return registeredObjectComponentTypes;
 }
+
+std::unordered_map<std::string, std::vector<std::string>> &GetSceneComponentCategoryMap() {
+    static std::unordered_map<std::string, std::vector<std::string>> sceneComponentCategoryMap;
+    return sceneComponentCategoryMap;
+}
+std::unordered_map<std::string, std::vector<std::string>> &GetObjectComponentCategoryMap() {
+    static std::unordered_map<std::string, std::vector<std::string>> objectComponentCategoryMap;
+    return objectComponentCategoryMap;
+}
 } // namespace Local
 
-bool RegisterComponentTypeScene(const std::string &typeName, std::function<std::unique_ptr<ISceneComponent>()> createFunc) {
+bool RegisterComponentTypeScene(const std::string &typeName, std::function<std::unique_ptr<ISceneComponent>()> createFunc, const std::vector<std::string> &category) {
     auto &factoryMap = Local::GetSceneComponentFactoryMap();
     if (factoryMap.find(typeName) != factoryMap.end()) return false;
     factoryMap[typeName] = createFunc;
     Local::GetRegisteredSceneComponentTypes().push_back(typeName);
+    Local::GetSceneComponentCategoryMap()[typeName] = category;
     return true;
 }
-bool RegisterComponentTypeObject(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent>()> createFunc) {
+bool RegisterComponentTypeObject(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent>()> createFunc, const std::vector<std::string> &category) {
     auto &factoryMap = Local::GetObjectComponentFactoryMap();
     if (factoryMap.find(typeName) != factoryMap.end()) return false;
     factoryMap[typeName] = createFunc;
     Local::GetRegisteredObjectComponentTypes().push_back(typeName);
+    Local::GetObjectComponentCategoryMap()[typeName] = category;
     return true;
 }
 
@@ -59,6 +70,19 @@ const std::vector<std::string> &GetRegisteredSceneComponentTypes() {
 }
 const std::vector<std::string> &GetRegisteredObjectComponentTypes() {
     return Local::GetRegisteredObjectComponentTypes();
+}
+
+const std::vector<std::string> &GetSceneComponentCategory(const std::string &typeName) {
+    static const std::vector<std::string> kEmptyCategory;
+    const auto &map = Local::GetSceneComponentCategoryMap();
+    auto it = map.find(typeName);
+    return it != map.end() ? it->second : kEmptyCategory;
+}
+const std::vector<std::string> &GetObjectComponentCategory(const std::string &typeName) {
+    static const std::vector<std::string> kEmptyCategory;
+    const auto &map = Local::GetObjectComponentCategoryMap();
+    auto it = map.find(typeName);
+    return it != map.end() ? it->second : kEmptyCategory;
 }
 
 } // namespace KashipanEngine

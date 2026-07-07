@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/ModelManager.h"
 
@@ -7,6 +7,7 @@ namespace KashipanEngine {
 class MeshFilter final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(MeshFilter, 1, )
+    COMPONENT_CATEGORY("Render")
     explicit MeshFilter(ModelManager::ModelHandle meshHandle)
         : MeshFilter() {
         meshHandle_ = meshHandle;

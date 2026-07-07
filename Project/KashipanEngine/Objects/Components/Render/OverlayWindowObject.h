@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include <cstdint>
 #include <string>
@@ -12,6 +12,7 @@ namespace KashipanEngine {
 class OverlayWindowObject final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(OverlayWindowObject, 0xFF, )
+    COMPONENT_CATEGORY("Render", "RenderTarget")
         ~OverlayWindowObject() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

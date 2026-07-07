@@ -60,14 +60,16 @@ IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> co
             components_[freeIndex].second = nextAddedID_++;
             componentsIndexByType_[typeIndex].push_back(freeIndex);
             componentsIndexByPointer_[components_[freeIndex].first.get()] = freeIndex;
-            components_[freeIndex].first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_);
+            // オブジェクトが非アクティブの場合は初期化を保留する（有効化時に走る）
+            components_[freeIndex].first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, isActive_);
             return components_[freeIndex].first.get();
         }
     }
     components_.push_back({ std::move(comp), nextAddedID_++ });
     componentsIndexByType_[typeIndex].push_back(components_.size() - 1);
     componentsIndexByPointer_[components_.back().first.get()] = components_.size() - 1;
-    components_.back().first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_);
+    // オブジェクトが非アクティブの場合は初期化を保留する（有効化時に走る）
+    components_.back().first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, isActive_);
     return components_.back().first.get();
 }
 
@@ -129,6 +131,10 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         std::string typeName = compJson.value("type", "");
         if (typeName.empty()) continue;
         auto comp = CreateObjectComponentByType(typeName);
+        // 追加時の初期化前にアクティブ状態を反映し、無効なコンポーネントの初期化を防ぐ
+        if (comp && compJson.contains("data")) {
+            comp->SetActive(compJson["data"].value("isActive", true));
+        }
         loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson["data"]);
     }
     // 各コンポーネントにJSONデータをロードさせる
@@ -142,10 +148,17 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
 }
 
 void EmptyObject::Initialize() {
+    // アクティブなコンポーネントを優先度順に初期化する
     RegenerateUpdateComponentsList();
     for (auto &compPair : updateComponents_) {
         if (compPair.component) {
             compPair.component->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_);
+        }
+    }
+    // 非アクティブなコンポーネントにもコンテキストは設定する（初期化は有効化時に走る）
+    for (auto &compPair : components_) {
+        if (compPair.first && !compPair.first->IsActive()) {
+            compPair.first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, false);
         }
     }
 }

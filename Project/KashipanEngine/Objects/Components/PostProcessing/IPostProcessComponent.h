@@ -22,6 +22,9 @@ class ShaderVariableBinder;
 ///          コンポーネントIDは IPostProcessComponent から生成したIDで固定にしている。
 class IPostProcessComponent : public IObjectComponent {
 public:
+    // 派生エフェクトは全て PostProcessing カテゴリに分類される
+    COMPONENT_CATEGORY("PostProcessing")
+
     struct PassInfo {
         struct ConstantBufferRequirement {
             std::string variableName;

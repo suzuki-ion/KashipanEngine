@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Transform.h"
 #include "Math/Vector3.h"
@@ -12,6 +12,7 @@ namespace KashipanEngine {
 class RigidBody3D final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(RigidBody3D, 1, )
+    COMPONENT_CATEGORY("Collision")
     ~RigidBody3D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

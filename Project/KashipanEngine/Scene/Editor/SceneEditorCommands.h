@@ -1,12 +1,10 @@
 #pragma once
 #ifdef USE_IMGUI
-#include <imgui.h>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "Scene/SceneEditorContext.h"
-#include "ComponentSerialize/ComponentRegistry.h"
 
 namespace KashipanEngine {
 
@@ -38,13 +36,8 @@ public:
     explicit CreateObjectCommand(const std::string &name, size_t index = MAXSIZE_T)
         : name_(name), objectID_(true), index_(index) {}
 
-    bool Execute(SceneEditorContext *context) override {
-        return context->CreateEmptyObject(name_, objectID_, index_) != nullptr;
-    }
-    bool Undo(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        return obj && context->DeleteObject(obj);
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return "Create Object: " + name_; }
 
     const UUID128 &GetObjectID() const noexcept { return objectID_; }
@@ -55,22 +48,54 @@ private:
     size_t index_ = MAXSIZE_T;
 };
 
+/// @brief オブジェクトを兄弟として作成するコマンド（参照オブジェクトと同じ親・指定インデックス）
+class CreateSiblingObjectCommand final : public IEditorCommand {
+public:
+    CreateSiblingObjectCommand(const std::string &name, EmptyObject *referenceObject, size_t index)
+        : name_(name), objectID_(true),
+          referenceObjectID_(referenceObject ? referenceObject->GetObjectID() : UUID128()),
+          index_(index) {}
+
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
+    std::string GetName() const override { return "Create Object: " + name_; }
+
+    const UUID128 &GetObjectID() const noexcept { return objectID_; }
+
+private:
+    std::string name_;
+    UUID128 objectID_;
+    UUID128 referenceObjectID_;
+    size_t index_ = MAXSIZE_T;
+};
+
+/// @brief オブジェクトを指定オブジェクトの子として末尾に作成するコマンド
+class CreateChildObjectCommand final : public IEditorCommand {
+public:
+    CreateChildObjectCommand(const std::string &name, EmptyObject *parentObject)
+        : name_(name), objectID_(true),
+          parentObjectID_(parentObject ? parentObject->GetObjectID() : UUID128()) {}
+
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
+    std::string GetName() const override { return "Create Child Object: " + name_; }
+
+    const UUID128 &GetObjectID() const noexcept { return objectID_; }
+
+private:
+    std::string name_;
+    UUID128 objectID_;
+    UUID128 parentObjectID_;
+};
+
 /// @brief オブジェクト削除コマンド
 class DeleteObjectCommand final : public IEditorCommand {
 public:
     explicit DeleteObjectCommand(EmptyObject *obj)
         : objectID_(obj ? obj->GetObjectID() : UUID128()), name_(obj ? obj->GetName() : "") {}
 
-    bool Execute(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj) return false;
-        snapshot_ = context->SaveObjectToJson(obj);
-        index_ = context->GetObjectIndex(obj);
-        return context->DeleteObject(obj);
-    }
-    bool Undo(SceneEditorContext *context) override {
-        return context->CreateObjectFromJson(snapshot_, index_) != nullptr;
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return "Delete Object: " + name_; }
 
 private:
@@ -89,19 +114,8 @@ public:
     MoveObjectCommand(EmptyObject *obj, size_t oldIndex, size_t newIndex)
         : objectID_(obj ? obj->GetObjectID() : UUID128()), newIndex_(newIndex), oldIndex_(oldIndex) {}
 
-    bool Execute(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj) return false;
-        if (oldIndex_ == MAXSIZE_T) {
-            oldIndex_ = context->GetObjectIndex(obj);
-        }
-        return context->MoveObject(obj, newIndex_);
-    }
-    bool Undo(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj) return false;
-        return context->MoveObject(obj, oldIndex_);
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return "Move Object"; }
 
 private:
@@ -120,20 +134,8 @@ public:
           oldName_(oldName), newName_(newName),
           oldActive_(oldActive), newActive_(newActive) {}
 
-    bool Execute(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj) return false;
-        obj->SetName(newName_);
-        obj->SetActive(newActive_);
-        return true;
-    }
-    bool Undo(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj) return false;
-        obj->SetName(oldName_);
-        obj->SetActive(oldActive_);
-        return true;
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return "Edit Object: " + newName_; }
 
 private:
@@ -154,27 +156,8 @@ public:
     AddComponentCommand(EmptyObject *obj, const std::string &componentType)
         : objectID_(obj ? obj->GetObjectID() : UUID128()), componentType_(componentType) {}
 
-    bool Execute(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj) return false;
-        auto newComponent = CreateObjectComponentByType(componentType_);
-        if (!newComponent) return false;
-        component_ = obj->AddComponent(std::move(newComponent));
-        if (!component_) return false;
-        // Redo時は以前の状態を復元する
-        if (!state_.empty()) {
-            obj->LoadComponentFromJson(component_, state_);
-        }
-        return true;
-    }
-    bool Undo(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj || !component_) return false;
-        state_ = obj->SaveComponentToJson(component_);
-        const bool removed = obj->RemoveComponent(component_);
-        if (removed) component_ = nullptr;
-        return removed;
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return "Add Component: " + componentType_; }
 
 private:
@@ -191,20 +174,8 @@ public:
         : objectID_(obj ? obj->GetObjectID() : UUID128()), component_(component),
           componentType_(component ? component->GetComponentType() : "") {}
 
-    bool Execute(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj || !component_) return false;
-        snapshot_ = obj->SaveComponentToJson(component_);
-        const bool removed = obj->RemoveComponent(component_);
-        if (removed) component_ = nullptr;
-        return removed;
-    }
-    bool Undo(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj) return false;
-        component_ = obj->AddComponentFromJson(snapshot_);
-        return component_ != nullptr;
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return "Remove Component: " + componentType_; }
 
 private:
@@ -223,16 +194,8 @@ public:
           componentType_(component ? component->GetComponentType() : ""),
           before_(std::move(before)), after_(std::move(after)) {}
 
-    bool Execute(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj || !component_) return false;
-        return obj->LoadComponentFromJson(component_, after_);
-    }
-    bool Undo(SceneEditorContext *context) override {
-        auto *obj = context->GetSceneObject(objectID_);
-        if (!obj || !component_) return false;
-        return obj->LoadComponentFromJson(component_, before_);
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return "Edit Component: " + componentType_; }
 
 private:
@@ -257,20 +220,8 @@ public:
     }
     bool IsEmpty() const noexcept { return commands_.empty(); }
 
-    bool Execute(SceneEditorContext *context) override {
-        bool allSucceeded = true;
-        for (auto &command : commands_) {
-            if (!command->Execute(context)) allSucceeded = false;
-        }
-        return allSucceeded;
-    }
-    bool Undo(SceneEditorContext *context) override {
-        bool allSucceeded = true;
-        for (auto it = commands_.rbegin(); it != commands_.rend(); ++it) {
-            if (!(*it)->Undo(context)) allSucceeded = false;
-        }
-        return allSucceeded;
-    }
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return name_; }
 
 private:
@@ -289,36 +240,13 @@ public:
     ~SceneEditorCommands() = default;
 
     /// @brief コマンドを実行してUndoスタックへ積む
-    bool Execute(std::unique_ptr<IEditorCommand> command) {
-        if (!command || !context_) return false;
-        if (!command->Execute(context_)) return false;
-        PushToUndoStack(std::move(command));
-        return true;
-    }
+    bool Execute(std::unique_ptr<IEditorCommand> command);
 
     /// @brief 既に適用済みの操作をUndoスタックへ積む（パラメータ編集のコアレス用）
-    void PushExecuted(std::unique_ptr<IEditorCommand> command) {
-        if (!command) return;
-        PushToUndoStack(std::move(command));
-    }
+    void PushExecuted(std::unique_ptr<IEditorCommand> command);
 
-    bool Undo() {
-        if (undoStack_.empty() || !context_) return false;
-        auto command = std::move(undoStack_.back());
-        undoStack_.pop_back();
-        const bool succeeded = command->Undo(context_);
-        redoStack_.push_back(std::move(command));
-        return succeeded;
-    }
-
-    bool Redo() {
-        if (redoStack_.empty() || !context_) return false;
-        auto command = std::move(redoStack_.back());
-        redoStack_.pop_back();
-        const bool succeeded = command->Execute(context_);
-        undoStack_.push_back(std::move(command));
-        return succeeded;
-    }
+    bool Undo();
+    bool Redo();
 
     bool CanUndo() const noexcept { return !undoStack_.empty(); }
     bool CanRedo() const noexcept { return !redoStack_.empty(); }
@@ -332,23 +260,12 @@ public:
     }
 
     /// @brief 履歴表示ImGui（ウィンドウのBegin/Endは呼ばない）
-    void ShowHistoryImGui() {
-        ImGui::Text("Undo Stack: %d", static_cast<int>(undoStack_.size()));
-        for (auto it = undoStack_.rbegin(); it != undoStack_.rend(); ++it) {
-            ImGui::BulletText("%s", (*it)->GetName().c_str());
-        }
-    }
+    void ShowHistoryImGui();
 
 private:
     static constexpr size_t kMaxHistory = 128;
 
-    void PushToUndoStack(std::unique_ptr<IEditorCommand> command) {
-        undoStack_.push_back(std::move(command));
-        if (undoStack_.size() > kMaxHistory) {
-            undoStack_.erase(undoStack_.begin());
-        }
-        redoStack_.clear();
-    }
+    void PushToUndoStack(std::unique_ptr<IEditorCommand> command);
 
     SceneEditorContext *context_ = nullptr;
     std::vector<std::unique_ptr<IEditorCommand>> undoStack_;

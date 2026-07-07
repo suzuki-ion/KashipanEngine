@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
@@ -20,6 +20,7 @@ namespace KashipanEngine {
 class MeshRenderer final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 1, SetUpdatePriority(900);)
+    COMPONENT_CATEGORY("Render")
     ~MeshRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

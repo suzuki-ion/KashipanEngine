@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Objects/Collision/Collider.h"
 #include "Scene/Components/SceneComponentHeader.h"
@@ -8,6 +8,7 @@ namespace KashipanEngine {
 class ColliderComponent final : public ISceneComponent {
 public:
     SCENE_COMPONENT_CONSTRUCTOR(ColliderComponent, 1, )
+    COMPONENT_CATEGORY("Collision")
     ~ColliderComponent() override = default;
 
     std::unique_ptr<ISceneComponent> Clone() const override {

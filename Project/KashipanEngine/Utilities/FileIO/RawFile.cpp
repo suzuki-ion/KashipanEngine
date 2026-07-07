@@ -1,4 +1,5 @@
-#include "RawFile.h"
+﻿#include "RawFile.h"
+#include "Directory.h"
 #include <fstream>
 #include <cctype>
 #include <algorithm>
@@ -209,6 +210,8 @@ RawFileData LoadFile(const std::string &filePath, size_t detectBytes) {
 }
 
 void SaveFile(const RawFileData &fileData) {
+    // 保存先フォルダが存在しない場合は作成する
+    EnsureParentDirectoryExists(fileData.filePath);
     std::ofstream file(fileData.filePath, std::ios::binary);
     if (!file) {
         throw std::runtime_error("Failed to open file for writing: " + fileData.filePath);

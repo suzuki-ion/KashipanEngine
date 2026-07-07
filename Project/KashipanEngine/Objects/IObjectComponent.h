@@ -18,6 +18,10 @@ class ObjectContext;
 class SceneContext;
 
 /// @brief オブジェクトコンポーネントインターフェースクラス
+/// @details 派生クラスは COMPONENT_CATEGORY マクロ（または public static な
+///          std::vector<std::string> GetComponentCategory()）でカテゴリを宣言できる。
+///          カテゴリは階層構造（例: {"Collision", "Collider"}）で、
+///          Add Component メニューにてカテゴリごとのツリーで表示される。
 class IObjectComponent {
     /// @brief コンポーネントの型ID設定用
     static inline size_t sComponentTypeID = 0;
@@ -72,10 +76,16 @@ public:
     }
 
     /// @brief 初期化処理
-    void InitializeInterface(Passkey<EmptyObject>, ObjectContext *objectContext, SceneContext *sceneContext) {
+    /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
+    ///          アクティブかつ allowInitialize が true の場合のみ実行される。
+    ///          （非アクティブの場合は有効化時に Initialize が走る）
+    /// @param allowInitialize 所有オブジェクトが非アクティブの場合などに false を渡す
+    void InitializeInterface(Passkey<EmptyObject>, ObjectContext *objectContext, SceneContext *sceneContext, bool allowInitialize = true) {
         objectContext_ = objectContext;
         sceneContext_ = sceneContext;
-        Initialize();
+        if (allowInitialize && isActive_) {
+            Initialize();
+        }
     }
     /// @brief 終了処理
     void FinalizeInterface(Passkey<EmptyObject>) { Finalize(); }

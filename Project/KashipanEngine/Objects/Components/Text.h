@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Math/Vector4.h"
 
@@ -7,6 +7,7 @@ namespace KashipanEngine {
 class Text final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(Text, 1, )
+    COMPONENT_CATEGORY("Render")
     ~Text() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<Text>();

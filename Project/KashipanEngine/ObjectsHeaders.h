@@ -39,6 +39,7 @@
 #include "Objects/Components/Render/ShadowMapObject.h"
 #include "Objects/Components/Text.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Velocity.h"
 #include "Objects/IObjectComponent.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/ObjectContext.h"

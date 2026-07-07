@@ -17,8 +17,10 @@ class GameEngine;
 
 class SceneManager {
 public:
-    SceneManager(Passkey<GameEngine>) {}
-    ~SceneManager() = default;
+    SceneManager(Passkey<GameEngine>) { sActiveInstance_ = this; }
+    ~SceneManager() {
+        if (sActiveInstance_ == this) sActiveInstance_ = nullptr;
+    }
 
     SceneManager(const SceneManager &) = delete;
     SceneManager &operator=(const SceneManager &) = delete;
@@ -31,6 +33,12 @@ public:
         if (currentScene_) return currentScene_.get();
         return nullptr;
     }
+
+    /// @brief クラッシュハンドラから現在アクティブなSceneManagerを取得する
+    /// @details エンジン実行中は常に唯一のSceneManagerが動いている前提で、
+    ///          最後に生存しているインスタンスを保持しているだけなので、
+    ///          通常のゲームロジックからは使用しないこと。
+    static const SceneManager *GetActiveInstance(PasskeyForCrashHandler) { return sActiveInstance_; }
 
     /// @brief シーンの登録
     /// @param sceneName 登録するシーンの名前
@@ -100,6 +108,8 @@ public:
     const std::unordered_map<std::string, MyAny> &GetGlobalSceneVariables() const { return globalSceneVariables_; }
 
 private:
+    static inline SceneManager *sActiveInstance_ = nullptr;
+
     std::unordered_map<std::string, JSON> sceneFactoriesData_;
     std::unordered_map<std::string, MyAny> globalSceneVariables_;
 

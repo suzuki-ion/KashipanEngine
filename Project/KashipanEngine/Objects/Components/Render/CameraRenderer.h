@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstring>
 #include <string>
 #include <vector>
@@ -27,6 +27,7 @@ namespace KashipanEngine {
 class CameraRenderer final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(CameraRenderer, 1, SetUpdatePriority(950);)
+    COMPONENT_CATEGORY("Render")
     ~CameraRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

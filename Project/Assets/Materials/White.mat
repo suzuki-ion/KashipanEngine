@@ -5,10 +5,10 @@
         "y": 1.0,
         "z": 1.0
     },
-    "enableLighting": false,
+    "enableLighting": true,
     "enableShadowMapProjection": false,
     "environmentCoefficient": 1.0,
-    "environmentFile": "",
+    "environmentFile": "rostock_laage_airport_4k.dds",
     "name": "White",
     "samplerHandle": 0,
     "shininess": 32.0,

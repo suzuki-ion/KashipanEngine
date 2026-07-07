@@ -45,13 +45,7 @@ public:
     /// @param value 変数の値
     /// @return 追加されたシーン変数のポインタ
     template <typename T>
-    MyAny *AddSceneVariable(const std::string &key, const T &value = T()) { return owner_->AddSceneVariable(key, value, GetValueType<T>()); }
-    /// @brief シーン変数を追加する
-    /// @param key 変数のキー
-    /// @param value 変数の値（MyAny 型）
-    /// @param typeInfo 変数の型情報
-    /// @return 追加されたシーン変数のポインタ
-    MyAny *AddSceneVariable(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) { return owner_->AddSceneVariable(key, value, typeInfo); }
+    MyAny *AddSceneVariable(const std::string &key, const T &value = T()) { return owner_->AddSceneVariable(key, value); }
     /// @brief シーン変数を削除する
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す

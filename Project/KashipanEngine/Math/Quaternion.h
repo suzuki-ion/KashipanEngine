@@ -53,6 +53,44 @@ struct Quaternion final {
         return Quaternion(axis.x * s, axis.y * s, axis.z * s, c);
     }
 
+    /// @brief 回転行列（スケール成分を含まない、行ベクトル規約: v' = v * M）からクォータニオンを生成する
+    /// @details オイラー角を経由すると（ジンバルロックや ImGuizmo 側との回転順の不一致により）
+    ///          ドラッグ操作中に回転が不安定になるため、行列から直接変換する必要がある場合に使う。
+    static Quaternion MakeFromRotationMatrix(const Matrix4x4 &m) noexcept {
+        const float m00 = m.m[0][0], m01 = m.m[0][1], m02 = m.m[0][2];
+        const float m10 = m.m[1][0], m11 = m.m[1][1], m12 = m.m[1][2];
+        const float m20 = m.m[2][0], m21 = m.m[2][1], m22 = m.m[2][2];
+        const float trace = m00 + m11 + m22;
+
+        Quaternion q;
+        if (trace > 0.0f) {
+            float s = std::sqrt(trace + 1.0f) * 2.0f; // s = 4w
+            q.w = 0.25f * s;
+            q.x = (m12 - m21) / s;
+            q.y = (m20 - m02) / s;
+            q.z = (m01 - m10) / s;
+        } else if (m00 > m11 && m00 > m22) {
+            float s = std::sqrt(1.0f + m00 - m11 - m22) * 2.0f; // s = 4x
+            q.w = (m12 - m21) / s;
+            q.x = 0.25f * s;
+            q.y = (m01 + m10) / s;
+            q.z = (m02 + m20) / s;
+        } else if (m11 > m22) {
+            float s = std::sqrt(1.0f + m11 - m00 - m22) * 2.0f; // s = 4y
+            q.w = (m20 - m02) / s;
+            q.x = (m01 + m10) / s;
+            q.y = 0.25f * s;
+            q.z = (m12 + m21) / s;
+        } else {
+            float s = std::sqrt(1.0f + m22 - m00 - m11) * 2.0f; // s = 4z
+            q.w = (m01 - m10) / s;
+            q.x = (m02 + m20) / s;
+            q.y = (m12 + m21) / s;
+            q.z = 0.25f * s;
+        }
+        return q.Normalize();
+    }
+
     Quaternion() noexcept = default;
     constexpr Quaternion(float x, float y, float z, float w) noexcept
         : x(x), y(y), z(z), w(w)

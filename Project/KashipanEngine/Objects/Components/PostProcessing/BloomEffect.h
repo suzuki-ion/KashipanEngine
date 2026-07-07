@@ -31,7 +31,7 @@ public:
         std::uint32_t iterations = 4; // ダウンサンプル段数 (1..16)
     };
 
-    BloomEffect() : IPostProcessComponent("BloomEffect", 1) {}
+    BloomEffect() : IPostProcessComponent("BloomEffect") {}
     ~BloomEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

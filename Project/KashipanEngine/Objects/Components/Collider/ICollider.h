@@ -19,6 +19,7 @@ public:
         Sphere,
         Capsule,
         Ray,
+        Mesh,
         Ray2D,
         Box2D,
         Circle2D,

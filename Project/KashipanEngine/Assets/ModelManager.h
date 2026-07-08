@@ -94,10 +94,24 @@ public:
     /// @return 読み込んだモデルのハンドル（失敗時は `kInvalidHandle`）
     ModelHandle LoadModel(const std::string& filePath);
 
+    /// @brief 頂点・インデックス配列からメッシュを登録する（プリミティブメッシュ等の動的生成用）
+    /// @details 実ファイルを伴わないメッシュを登録する。同名で登録済みの場合は既存のハンドルを返す。
+    /// @param name 登録名（重複防止のためファイル名・アセットパスの両方として使われる）
+    /// @return 登録したメッシュのハンドル（失敗時は `kInvalidHandle`）
+    static ModelHandle RegisterProceduralMesh(const std::string& name, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices);
+
     /// @brief ファイル名単体からモデルハンドルを取得
     static ModelHandle GetModelHandleFromFileName(const std::string& fileName);
     /// @brief Assetsルートからの相対パスからモデルハンドルを取得
     static ModelHandle GetModelHandleFromAssetPath(const std::string& assetPath);
+
+    /// @brief 読み込み済みモデルのファイル名/パス登録をリネーム後の値へ更新する
+    /// @details 実ファイルを外部（Assetsウィンドウ等）でリネーム/移動した後に呼ぶこと。
+    ///          このメソッド自体はファイルの実体は操作しない。
+    /// @param oldAssetPath リネーム前のAssetsルートからの相対パス
+    /// @param newAssetPath リネーム後のAssetsルートからの相対パス
+    /// @return 対象モデルが見つかり更新に成功した場合は true
+    static bool RenameModel(const std::string& oldAssetPath, const std::string& newAssetPath);
 
     /// @brief ハンドルからモデルデータを取得
     static const ModelData &GetModelData(ModelHandle handle);

@@ -27,19 +27,21 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
         ImGui::Checkbox("Color", &params_.color);
     }
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["intensity"] = params_.intensity;
         json["color"] = params_.color;
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.intensity = json.value("intensity", 1.0f);
         params_.color = json.value("color", true);
         return true;

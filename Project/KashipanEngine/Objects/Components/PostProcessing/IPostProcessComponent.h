@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <functional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -73,6 +74,14 @@ public:
     /// @return 描画を行った場合は true（その場合 BuildPasses による描画は行われない）
     bool RenderCustomInterface(Passkey<Renderer>, CustomRenderContext &context) { return RenderCustom(context); }
 
+    /// @brief 指定のスクリーンバッファがこのポストエフェクトの適用対象に含まれるか（除外設定されていないか）
+    /// @details 同一オブジェクトに複数の ScreenBufferObject が付与されている場合に、
+    ///          どのスクリーンバッファへ適用するかを個別に除外設定できる。
+    bool IsScreenBufferIncluded(const ScreenBuffer *screenBuffer) const {
+        if (!screenBuffer) return false;
+        return !excludedScreenBufferNames_.contains(screenBuffer->GetRenderTargetName());
+    }
+
 protected:
     IPostProcessComponent(const std::string &componentType, size_t maxComponentCountPerBuffer = 0xFF)
         : IObjectComponent(componentType, maxComponentCountPerBuffer, GetComponentTypeID<IPostProcessComponent>()) {}
@@ -95,6 +104,59 @@ protected:
         auto *screenBufferObject = objectContext->GetComponent<ScreenBufferObject>();
         return screenBufferObject ? screenBufferObject->GetScreenBuffer() : nullptr;
     }
+
+#if defined(USE_IMGUI)
+    /// @brief 適用先ScreenBufferObjectの除外設定UI（派生クラスは自身のShowImGui()の先頭でこれを呼ぶこと）
+    /// @details 同一オブジェクトが持つ ScreenBufferObject が2つ以上ある場合のみ表示する
+    void ShowImGui() override {
+        auto *objectContext = GetOwnerObjectContext();
+        auto screenBufferObjects = objectContext ? objectContext->GetComponents<ScreenBufferObject>() : std::vector<ScreenBufferObject *>{};
+        if (screenBufferObjects.size() <= 1) return;
+
+        if (ImGui::TreeNode("Apply Target Filter")) {
+            for (auto *screenBufferObject : screenBufferObjects) {
+                auto *buffer = screenBufferObject ? screenBufferObject->GetScreenBuffer() : nullptr;
+                if (!buffer) continue;
+                const std::string &name = buffer->GetRenderTargetName();
+                bool included = !excludedScreenBufferNames_.contains(name);
+                ImGui::PushID(buffer);
+                if (ImGui::Checkbox(name.c_str(), &included)) {
+                    if (included) {
+                        excludedScreenBufferNames_.erase(name);
+                    } else {
+                        excludedScreenBufferNames_.insert(name);
+                    }
+                }
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+    }
+#endif
+
+    /// @brief 派生クラスは自身のSaveToJson()の先頭で `JSON json = IPostProcessComponent::SaveToJson();` として呼び、
+    ///        追加のフィールドをマージすること
+    JSON SaveToJson() const override {
+        JSON json = JSON::object();
+        json["excludedScreenBuffers"] = JSON::array();
+        for (const auto &name : excludedScreenBufferNames_) {
+            json["excludedScreenBuffers"].push_back(name);
+        }
+        return json;
+    }
+
+    /// @brief 派生クラスは自身のLoadFromJson()の先頭で `IPostProcessComponent::LoadFromJson(json);` を呼ぶこと
+    bool LoadFromJson(const JSON &json) override {
+        excludedScreenBufferNames_.clear();
+        for (const auto &name : json.value("excludedScreenBuffers", std::vector<std::string>())) {
+            excludedScreenBufferNames_.insert(name);
+        }
+        return true;
+    }
+
+private:
+    /// @brief 適用対象から除外するスクリーンバッファ名（GetRenderTargetName()）の集合
+    std::unordered_set<std::string> excludedScreenBufferNames_;
 };
 
 } // namespace KashipanEngine

@@ -169,12 +169,26 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
     json["name"] = name_;
     json["isActive"] = isActive_;
     json["objectID"] = objectID_.ToString();
-    RegenerateUpdateComponentsList();
-    for (const auto &compPair : updateComponents_) {
-        if (!compPair.component) continue;
+
+    // updateComponents_ はUpdateループ用のリストで、オブジェクトが非アクティブだと空になるため
+    // 保存には使えない（非アクティブなオブジェクトのコンポーネントが消えてしまう）。
+    // 保存は実行時の有効状態に関わらず全コンポーネントを対象にする。
+    std::vector<const std::pair<std::unique_ptr<IObjectComponent>, size_t> *> ordered;
+    ordered.reserve(components_.size());
+    for (const auto &compPair : components_) {
+        if (compPair.first) ordered.push_back(&compPair);
+    }
+    std::sort(ordered.begin(), ordered.end(),
+        [](const auto *a, const auto *b) {
+            if (a->first->GetUpdatePriority() != b->first->GetUpdatePriority()) {
+                return a->first->GetUpdatePriority() < b->first->GetUpdatePriority();
+            }
+            return a->second < b->second;
+        });
+    for (const auto *compPair : ordered) {
         JSON compJson;
-        compJson["type"] = compPair.component->GetComponentType();
-        compJson["data"] = compPair.component->SaveToJsonInterface(Passkey<EmptyObject>());
+        compJson["type"] = compPair->first->GetComponentType();
+        compJson["data"] = compPair->first->SaveToJsonInterface(Passkey<EmptyObject>());
         json["components"].push_back(compJson);
     }
     return json;

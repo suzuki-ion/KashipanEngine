@@ -1,5 +1,6 @@
 #include "ModelManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Assets/PrimitiveMeshGenerator.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/FileIO/Directory.h"
@@ -84,6 +85,7 @@ Handle RegisterEntry(ModelEntry&& entry) {
 ModelManager::ModelManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
+    PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes();
     LoadAllFromAssetsFolder();
 }
 
@@ -261,6 +263,30 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
     return handle;
 }
 
+ModelManager::ModelHandle ModelManager::RegisterProceduralMesh(const std::string& name, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices) {
+    LogScope scope;
+    const std::string normalizedName = NormalizePathSlashes(name);
+
+    // 同名で登録済みの場合は再登録せず既存のハンドルを返す
+    auto it = sAssetPathToHandle.find(normalizedName);
+    if (it != sAssetPathToHandle.end()) return it->second;
+
+    ModelEntry entry{};
+    entry.fullPath = normalizedName;
+    entry.assetPath = normalizedName;
+    entry.fileName = normalizedName;
+    entry.data.assetRelativePath_ = normalizedName;
+    entry.data.vertices_ = std::move(vertices);
+    entry.data.indices_ = std::move(indices);
+
+    const auto handle = RegisterEntry(std::move(entry));
+    if (handle == kInvalidHandle) {
+        Log(Translation("engine.model.loading.failed.register") + normalizedName, LogSeverity::Error);
+        return kInvalidHandle;
+    }
+    return handle;
+}
+
 ModelManager::ModelHandle ModelManager::GetModelHandleFromFileName(const std::string& fileName) {
     LogScope scope;
     auto it = sFileNameToHandle.find(fileName);
@@ -279,6 +305,30 @@ ModelManager::ModelHandle ModelManager::GetModelHandleFromAssetPath(const std::s
         return kInvalidHandle;
     }
     return it->second;
+}
+
+bool ModelManager::RenameModel(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const Handle handle = pathIt->second;
+    auto entryIt = sModels.find(handle);
+    if (entryIt == sModels.end()) return false;
+
+    ModelEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fullPath = "Assets/" + normalizedNew;
+    entry.data.assetRelativePath_ = normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
 }
 
 const ModelData &ModelManager::GetModelData(ModelHandle handle) {

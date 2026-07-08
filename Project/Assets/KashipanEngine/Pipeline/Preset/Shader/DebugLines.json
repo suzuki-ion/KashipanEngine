@@ -1,0 +1,13 @@
+{
+	"BaseName": "DebugLines",
+	"Vertex": {
+		"Path": "DebugDraw/DebugLinesVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Path": "DebugDraw/DebugLinesPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

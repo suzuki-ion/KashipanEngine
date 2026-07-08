@@ -270,6 +270,9 @@
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\PrimitiveMeshGenerator.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
@@ -657,6 +660,9 @@
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\PrimitiveMeshGenerator.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
@@ -993,6 +999,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h">
       <Filter>KashipanEngine\Objects\Components\Collider</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshCollider.h">
+      <Filter>KashipanEngine\Objects\Components\Collider</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Capsule2DCollider.h">
       <Filter>KashipanEngine\Objects\Components\Collider</Filter>
     </ClInclude>
@@ -1087,6 +1096,9 @@
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\NormalWindowObject.h">

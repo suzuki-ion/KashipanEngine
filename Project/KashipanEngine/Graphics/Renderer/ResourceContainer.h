@@ -116,6 +116,28 @@ public:
         return raw;
     }
 
+    /// @brief キーに対応する頂点バッファを取得（容量不足の場合は作り直す）
+    VertexBufferResource *GetOrCreateVertexBuffer(const std::string &key, size_t byteSize) {
+        if (byteSize == 0) return nullptr;
+        auto it = vertexBuffers_.find(key);
+        if (it != vertexBuffers_.end() && it->second.byteSize >= byteSize) {
+            return it->second.buffer.get();
+        }
+
+        // 再確保時は余裕を持った容量にする
+        size_t capacity = byteSize;
+        if (it != vertexBuffers_.end()) {
+            capacity = std::max(byteSize, it->second.byteSize * 2);
+        }
+
+        VertexBufferEntry entry;
+        entry.byteSize = capacity;
+        entry.buffer = std::make_unique<VertexBufferResource>(capacity);
+        auto *raw = entry.buffer.get();
+        vertexBuffers_[key] = std::move(entry);
+        return raw;
+    }
+
     /// @brief キーに対応するUAVテクスチャを取得（サイズ/フォーマット不一致の場合は作り直す）
     /// @details 作り直された場合、前フレームまでの内容は失われる（Computeシェーダー側での
     ///          再初期化が必要な場合は formatKind やサイズを変更しない運用にすること）
@@ -141,6 +163,7 @@ public:
         meshBuffers_.clear();
         structuredBuffers_.clear();
         constantBuffers_.clear();
+        vertexBuffers_.clear();
         uavTextures_.clear();
     }
 
@@ -154,6 +177,10 @@ private:
         std::unique_ptr<ConstantBufferResource> buffer;
         size_t byteSize = 0;
     };
+    struct VertexBufferEntry {
+        std::unique_ptr<VertexBufferResource> buffer;
+        size_t byteSize = 0;
+    };
     struct UAVTextureEntry {
         std::unique_ptr<UnorderedAccessResource> texture;
         UINT width = 0;
@@ -164,6 +191,7 @@ private:
     std::unordered_map<ModelManager::ModelHandle, std::unique_ptr<MeshBuffers>> meshBuffers_;
     std::unordered_map<std::string, StructuredBufferEntry> structuredBuffers_;
     std::unordered_map<std::string, ConstantBufferEntry> constantBuffers_;
+    std::unordered_map<std::string, VertexBufferEntry> vertexBuffers_;
     std::unordered_map<std::string, UAVTextureEntry> uavTextures_;
 };
 

@@ -169,6 +169,7 @@
                                 1.0,
                                 0.0
                             ],
+                            "excludedScreenBuffers": [],
                             "strength": 0.0034000000450760126
                         },
                         "isActive": true,
@@ -400,6 +401,7 @@
                                 1.0
                             ],
                             "edgeThickness": 0.10000000149011612,
+                            "excludedScreenBuffers": [],
                             "maskTexture": "Application/Image/noise0.png",
                             "maskThreshold": 0.5099999904632568
                         },
@@ -414,11 +416,65 @@
             "objectID": "7ee66625-9d8c-4e22-8cf6-3598988ffed3"
         },
         {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                }
+            ],
             "isActive": false,
             "name": "Window",
             "objectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3"
         },
         {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                }
+            ],
             "isActive": true,
             "name": "Camera3D(1)",
             "objectID": "a4211086-7732-474d-bd4d-d3dadbb3f94d"
@@ -439,6 +495,16 @@
             "key": "testFloat",
             "type": "Float",
             "value": 0.0
+        },
+        {
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
+        },
+        {
+            "key": "testInt",
+            "type": "Int32",
+            "value": 0
         }
     ]
 }

@@ -32,6 +32,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Mask Threshold", &params_.maskThreshold, 0.001f, 0.0f, 1.0f, "%.3f");
         ImGui::DragFloat("Edge Thickness", &params_.edgeThickness, 0.001f, 0.0f, 1.0f, "%.3f");
         ImGui::ColorEdit4("Base Texture Color", params_.baseTextureColor);
@@ -55,7 +56,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["maskThreshold"] = params_.maskThreshold;
         json["edgeThickness"] = params_.edgeThickness;
         json["baseTexture"] = TextureManager::GetTextureAssetPath(params_.baseTexture);
@@ -66,6 +67,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.maskThreshold = json.value("maskThreshold", 0.5f);
         params_.edgeThickness = json.value("edgeThickness", 0.1f);
         params_.baseTexture = TextureManager::GetTextureFromAssetPath(json.value("baseTexture", std::string{}));

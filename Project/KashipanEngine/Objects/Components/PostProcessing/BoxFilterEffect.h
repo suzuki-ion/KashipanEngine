@@ -27,19 +27,21 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
         ImGui::DragInt2("Half Size", params_.halfSize, 1.0f, 1);
     }
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["intensity"] = params_.intensity;
         json["halfSize"] = { params_.halfSize[0], params_.halfSize[1] };
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.intensity = json.value("intensity", 1.0f);
         if (json.contains("halfSize") && json["halfSize"].is_array() && json["halfSize"].size() >= 2) {
             params_.halfSize[0] = json["halfSize"][0].get<int>();

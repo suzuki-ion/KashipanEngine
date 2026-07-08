@@ -1,7 +1,13 @@
 ﻿#pragma once
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
+#include "Assets/ModelManager.h"
+#include "Assets/MaterialManager.h"
+#include "Graphics/Renderer/EditorDebugDraw.h"
+#include "Math/Matrix4x4.h"
 #include "Scene/Components/SceneComponentHeader.h"
 
 namespace KashipanEngine {
@@ -9,6 +15,7 @@ namespace KashipanEngine {
 class ConstantBufferResource;
 class EmptyObject;
 class MeshRenderer;
+class SpriteRenderer;
 class CameraRenderer;
 class LightRenderer;
 class IRenderTarget;
@@ -18,10 +25,15 @@ class Renderer;
 /// @brief シーン内の描画用コンポーネントを収集して描画リストを構築するシーンコンポーネント
 class SceneRenderer final : public ISceneComponent {
 public:
-    /// @brief 描画リストの1要素（描画先と描画対象のペア）
+    /// @brief 描画リストの1要素
+    /// @details MeshRenderer/SpriteRenderer どちらから作られたエントリかを問わず、
+    ///          描画に必要な値をここで解決済みの状態で保持する（Rendererはこの値のみを参照する）。
     struct DrawEntry {
         IRenderTarget *target = nullptr;
-        MeshRenderer *renderer = nullptr;
+        std::string pipelineName;
+        ModelManager::ModelHandle meshHandle = ModelManager::kInvalidHandle;
+        MaterialManager::MaterialHandle materialHandle = MaterialManager::kInvalidHandle;
+        Matrix4x4 worldMatrix = Matrix4x4::Identity();
     };
 
     SCENE_COMPONENT_CONSTRUCTOR(SceneRenderer, 1, SetUpdatePriority(1000);)
@@ -38,12 +50,15 @@ public:
 
     void RegisterMeshRenderer(MeshRenderer *renderer);
     void UnregisterMeshRenderer(const MeshRenderer *renderer);
+    void RegisterSpriteRenderer(SpriteRenderer *renderer);
+    void UnregisterSpriteRenderer(const SpriteRenderer *renderer);
     void RegisterCameraRenderer(CameraRenderer *renderer);
     void UnregisterCameraRenderer(const CameraRenderer *renderer);
     void RegisterLightRenderer(LightRenderer *renderer);
     void UnregisterLightRenderer(const LightRenderer *renderer);
 
     const std::vector<MeshRenderer *> &GetMeshRenderers() const noexcept { return meshRenderers_; }
+    const std::vector<SpriteRenderer *> &GetSpriteRenderers() const noexcept { return spriteRenderers_; }
     const std::vector<CameraRenderer *> &GetCameraRenderers() const noexcept { return cameraRenderers_; }
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
 
@@ -77,6 +92,11 @@ public:
         return (editorTarget_ && target == editorTarget_) ? editorCameraBuffer_ : nullptr;
     }
 
+    /// @brief エディターのデバッグ表示設定（グリッド/当たり判定の可視化）を登録する
+    /// @details SceneEditorViewが毎フレーム呼び、Rendererがエディター用描画先の描画時に参照する
+    void SetEditorDebugDraw(EditorDebugDrawSettings settings) { editorDebugDraw_ = std::move(settings); }
+    const EditorDebugDrawSettings &GetEditorDebugDraw() const noexcept { return editorDebugDraw_; }
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override;
@@ -84,6 +104,7 @@ protected:
 
 private:
     std::vector<MeshRenderer *> meshRenderers_;
+    std::vector<SpriteRenderer *> spriteRenderers_;
     std::vector<CameraRenderer *> cameraRenderers_;
     std::vector<LightRenderer *> lightRenderers_;
 
@@ -92,6 +113,7 @@ private:
 
     IRenderTarget *editorTarget_ = nullptr;
     ConstantBufferResource *editorCameraBuffer_ = nullptr;
+    EditorDebugDrawSettings editorDebugDraw_;
 };
 
 REGISTER_COMPONENT_SCENE(SceneRenderer)

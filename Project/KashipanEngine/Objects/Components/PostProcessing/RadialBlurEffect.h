@@ -30,6 +30,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 4.0f, "%.3f");
         ImGui::DragInt("Sample Count", &params_.sampleCount, 1.0f, 1, 64);
         ImGui::DragFloat2("Center", params_.radialCenter, 0.001f, -1.0f, 2.0f, "%.3f");
@@ -38,7 +39,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["intensity"] = params_.intensity;
         json["sampleCount"] = params_.sampleCount;
         json["radialCenter"] = { params_.radialCenter[0], params_.radialCenter[1] };
@@ -47,6 +48,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.intensity = json.value("intensity", 0.25f);
         params_.sampleCount = json.value("sampleCount", 8);
         if (json.contains("radialCenter") && json["radialCenter"].is_array() && json["radialCenter"].size() >= 2) {

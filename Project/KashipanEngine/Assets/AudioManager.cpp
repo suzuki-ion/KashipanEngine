@@ -479,6 +479,29 @@ SoundHandle AudioManager::GetSoundHandleFromAssetPath(const std::string &assetPa
     return it->second;
 }
 
+bool AudioManager::RenameSound(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const SoundHandle handle = pathIt->second;
+    auto entryIt = sSounds.find(handle);
+    if (entryIt == sSounds.end()) return false;
+
+    SoundEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fullPath = "Assets/" + normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
+}
+
 AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop,
     double startTimeSec, double endTimeSec) {
     PlayParams params{};

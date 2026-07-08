@@ -53,6 +53,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Threshold", &params_.threshold, 0.01f, 0.0f, 10.0f, "%.3f");
         ImGui::DragFloat("SoftKnee", &params_.softKnee, 0.01f, 0.0f, 1.0f, "%.3f");
         ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
@@ -65,7 +66,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["threshold"] = params_.threshold;
         json["softKnee"] = params_.softKnee;
         json["intensity"] = params_.intensity;
@@ -75,6 +76,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.threshold = json.value("threshold", 1.0f);
         params_.softKnee = json.value("softKnee", 0.5f);
         params_.intensity = json.value("intensity", 0.8f);

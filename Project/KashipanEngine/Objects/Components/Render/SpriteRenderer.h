@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <unordered_set>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -17,18 +17,18 @@
 
 namespace KashipanEngine {
 
-/// @brief メッシュ描画用コンポーネント
-/// @details 描画先は「描画先コンポーネント（NormalWindowObject / OverlayWindowObject /
-///          ScreenBufferObject / ShadowMapObject）が付与されたオブジェクト」を指定する。
-///          指定オブジェクトに付与された全ての描画先に対して描画が行われる。
-class MeshRenderer final : public IObjectComponent {
+/// @brief 2Dスプライト描画用コンポーネント
+/// @details Object2D系のパイプラインを使用する想定のコンポーネント。MeshRendererと同様に
+///          描画するメッシュ（通常は平面）はMeshFilterコンポーネントから取得する。
+///          描画先の指定方法・パイプライン/マテリアルの指定方法はMeshRendererと同じ。
+class SpriteRenderer final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 0xFF, SetUpdatePriority(900);)
+    OBJECT_COMPONENT_CONSTRUCTOR(SpriteRenderer, 0xFF, SetUpdatePriority(900);)
     COMPONENT_CATEGORY("Render")
-    ~MeshRenderer() override = default;
+    ~SpriteRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<MeshRenderer>();
+        auto ptr = std::make_unique<SpriteRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
         ptr->materialName_ = materialName_;
@@ -107,7 +107,7 @@ protected:
     void Initialize() override {
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
-            sceneRenderer->RegisterMeshRenderer(this);
+            sceneRenderer->RegisterSpriteRenderer(this);
         }
     }
 
@@ -115,7 +115,7 @@ protected:
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) {
-            sceneRenderer->UnregisterMeshRenderer(this);
+            sceneRenderer->UnregisterSpriteRenderer(this);
         }
     }
 
@@ -165,7 +165,7 @@ protected:
         } else {
             targetObjectID_ = UUID128();
         }
-        pipelineName_ = json.value("pipelineName", std::string{ "Object3D.Solid.BlendNormal" });
+        pipelineName_ = json.value("pipelineName", std::string{ "Object2D.DoubleSidedCulling.BlendNormal" });
         materialName_ = json.value("materialName", std::string{ "Default" });
         materialHandle_ = MaterialManager::kInvalidHandle;
         excludedRenderTargetNames_.clear();
@@ -187,13 +187,13 @@ private:
     }
 
     UUID128 targetObjectID_{};
-    std::string pipelineName_ = "Object3D.Solid.BlendNormal";
+    std::string pipelineName_ = "Object2D.DoubleSidedCulling.BlendNormal";
     std::string materialName_ = "Default";
     mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
     /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合
     std::unordered_set<std::string> excludedRenderTargetNames_;
 };
 
-REGISTER_COMPONENT_OBJECT(MeshRenderer)
+REGISTER_COMPONENT_OBJECT(SpriteRenderer)
 
 } // namespace KashipanEngine

@@ -36,6 +36,25 @@ public:
     void ShowComponentImGui(ISceneComponent *component) { owner_->ShowComponentImGui(component); }
 
     //==================================================
+    // 再生制御（Unity風のPlay/Pause/Stop）
+    //==================================================
+
+    /// @brief 再生中かどうか
+    bool IsPlaying() const { return owner_->IsPlaying(); }
+    /// @brief 一時停止中かどうか
+    bool IsPaused() const { return owner_->IsPaused(); }
+    /// @brief 再生を開始する（開始前のシーン状態を保存する）
+    void PlayStart() { owner_->PlayStart(); }
+    /// @brief 再生を終了する（開始前のシーン状態へ復元する）
+    void PlayStop() { owner_->PlayStop(); }
+    /// @brief 一時停止する
+    void PlayPause() { owner_->PlayPause(); }
+    /// @brief 一時停止を解除する
+    void PlayResume() { owner_->PlayResume(); }
+    /// @brief 1フレームだけ進める（一時停止中のみ有効）
+    void RequestStepFrame() { owner_->RequestStepFrame(); }
+
+    //==================================================
     // シーン変数
     //==================================================
 

@@ -60,20 +60,12 @@ public:
     /// @brief 更新優先度を設定
     void SetUpdatePriority(int priority) { updatePriority_ = priority; }
     /// @brief アクティブ状態を取得
-    bool IsActive() const { return isActive_; }
+    /// @details EmptyObject/ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
+    bool IsActive() const;
     /// @brief アクティブ状態を設定
-    /// @details オブジェクトへ登録済みの場合、有効化時にInitialize、無効化時にFinalizeが走る
-    void SetActive(bool active) {
-        if (isActive_ == active) return;
-        isActive_ = active;
-        if (objectContext_) {
-            if (active) {
-                Initialize();
-            } else {
-                Finalize();
-            }
-        }
-    }
+    /// @details オブジェクトへ登録済みの場合、有効化時にInitialize、無効化時にFinalizeが走る。
+    ///          定義は EmptyObject/ObjectContext の完全な型定義が必要なため IObjectComponent.cpp にある
+    void SetActive(bool active);
 
     /// @brief 初期化処理
     /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
@@ -83,7 +75,7 @@ public:
     void InitializeInterface(Passkey<EmptyObject>, ObjectContext *objectContext, SceneContext *sceneContext, bool allowInitialize = true) {
         objectContext_ = objectContext;
         sceneContext_ = sceneContext;
-        if (allowInitialize && isActive_) {
+        if (allowInitialize && IsActive()) {
             Initialize();
         }
     }

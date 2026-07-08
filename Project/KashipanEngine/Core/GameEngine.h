@@ -60,15 +60,6 @@ public:
     /// @return 実行結果コード
     int Execute(PasskeyForGameEngineMain);
 
-    /// @brief ゲームループ実行関数
-    void GameLoopRun();
-    /// @brief ゲームループ終了関数
-    void GameLoopEnd();
-    /// @brief ゲームループ一時停止関数
-    void GameLoopPause();
-    /// @brief ゲームループ再開関数
-    void GameLoopResume();
-
     /// @brief ゲームループ終了条件設定
     void SetGameLoopEndCondition(const std::function<bool()> &func) {
         gameLoopEndConditionFunction_ = func;
@@ -136,13 +127,6 @@ private:
     /// @brief ImGui 管理クラス
     std::unique_ptr<ImGuiManager> imguiManager_;
 #endif
-
-    /// @brief ゲームループ実行フラグ
-    bool isGameLoopRunning_ = false;
-    /// @brief ゲームループ一時停止フラグ
-    bool isGameLoopPaused_ = false;
-    /// @brief フレーム単位で進める要求フラグ（ポーズ中のみ有効）
-    bool isNextFrameRequested_ = false;
 
     /// @brief ゲームループ終了条件関数
     std::function<bool()> gameLoopEndConditionFunction_;

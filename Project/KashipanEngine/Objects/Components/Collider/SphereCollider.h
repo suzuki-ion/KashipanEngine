@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class SphereCollider final : public ICollider {
 public:
-    SphereCollider() : ICollider("SphereCollider", Shape::Sphere, GetComponentTypeID<SphereCollider>()) {}
+    SphereCollider() : ICollider("SphereCollider", Shape::Sphere, false, GetComponentTypeID<SphereCollider>()) {}
     ~SphereCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
@@ -15,6 +15,21 @@ public:
         ptr->center_ = center_;
         ptr->SetTrigger(IsTrigger());
         return ptr;
+    }
+
+    void SetRadius(float radius) { radius_ = radius; }
+    void SetCenter(const Vector3 &center) { center_ = center; }
+    float GetRadius() const noexcept { return radius_; }
+    const Vector3 &GetCenter() const noexcept { return center_; }
+
+    std::optional<ColliderInfo3D> BuildColliderInfo3D() const override {
+        ColliderInfo3D info;
+        ColliderInfo3D::SphereShape3D sphere;
+        sphere.center = GetOwnerWorldPosition() + center_;
+        sphere.radius = radius_;
+        info.shape = sphere;
+        info.ownerObject = const_cast<EmptyObject *>(GetOwnerObjectContext() ? GetOwnerObjectContext()->GetOwner() : nullptr);
+        return info;
     }
 
 protected:

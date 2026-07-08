@@ -75,6 +75,12 @@ public:
     void EndDraw() override;
     ID3D12GraphicsCommandList *GetCommandList() const override { return dx12Commands_ ? dx12Commands_->GetCommandList() : nullptr; }
 
+    /// @brief バッファサイズを変更する（GPUリソースを新しいサイズで作り直す）
+    /// @details TextureManagerへの登録名・ハンドルはそのまま維持される（サイズはこのオブジェクトから
+    ///          毎回取得されるため再登録は不要）。BeginDraw/EndDraw の外側から呼ぶこと。
+    /// @return 成功した場合はtrue、失敗した場合（未初期化・サイズが0等）はfalseを返す
+    bool Resize(std::uint32_t width, std::uint32_t height);
+
     //==================================================
     // リソース取得
     //==================================================

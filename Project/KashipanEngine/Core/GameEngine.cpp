@@ -7,6 +7,7 @@
 #include "Utilities/TimeUtils.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
+#include "Graphics/ComputeCommandProcessor.h"
 #include "AppInitialize.h"
 
 #include <cstdint>
@@ -109,6 +110,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
@@ -184,6 +186,7 @@ GameEngine::~GameEngine() {
     Window::AllDestroy({});
     ScreenBuffer::AllDestroy({});
     ShadowMapBuffer::AllDestroy({});
+    ComputeCommandProcessor::Finalize(Passkey<GameEngine>{});
 
     sceneManager_.reset();
     inputCommand_.reset();
@@ -240,23 +243,10 @@ void GameEngine::GameLoopUpdate() {
 #endif
 
     if (sceneManager_) {
-        if (!isGameLoopPaused_ || isNextFrameRequested_) {
-            sceneManager_->Update(Passkey<GameEngine>{});
-            if (isNextFrameRequested_) {
-                isNextFrameRequested_ = false;
-            }
-        }
+        sceneManager_->Update(Passkey<GameEngine>{});
 #if defined(USE_IMGUI)
         sceneManager_->ShowImGui(Passkey<GameEngine>{});
 #endif
-    }
-
-    if (!isGameLoopRunning_ || isGameLoopPaused_) {
-#if defined(USE_IMGUI)
-        const auto endTp = std::chrono::high_resolution_clock::now();
-        updateMs_ = std::chrono::duration<float, std::milli>(endTp - beginTp).count();
-#endif
-        return;
     }
 
 #if defined(USE_IMGUI)
@@ -294,21 +284,6 @@ void GameEngine::GameLoopDraw() {
             inputCommand_->ShowImGui();
         }
 
-        ImGui::Begin("GameLoop Control");
-        if (isGameLoopPaused_) {
-            if (ImGui::Button("Resume Game Loop")) {
-                GameLoopResume();
-            }
-            if (ImGui::Button("Step Frame")) {
-                isNextFrameRequested_ = true;
-            }
-        } else {
-            if (ImGui::Button("Pause Game Loop")) {
-                GameLoopPause();
-            }
-        }
-        ImGui::End();
-
         imguiManager_->Render({});
     }
 #endif
@@ -336,24 +311,6 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         directXCommon_->AllDestroyPendingSwapChains({});
     }
     return 0;
-}
-
-void GameEngine::GameLoopRun() {
-    isGameLoopRunning_ = true;
-    isGameLoopPaused_ = false;
-}
-
-void GameEngine::GameLoopEnd() {
-    isGameLoopRunning_ = false;
-    isGameLoopPaused_ = false;
-}
-
-void GameEngine::GameLoopPause() {
-    isGameLoopPaused_ = true;
-}
-
-void GameEngine::GameLoopResume() {
-    isGameLoopPaused_ = false;
 }
 
 } // namespace KashipanEngine

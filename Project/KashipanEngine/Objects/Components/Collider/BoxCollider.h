@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class BoxCollider final : public ICollider {
 public:
-    BoxCollider() : ICollider("BoxCollider", Shape::Box, GetComponentTypeID<BoxCollider>()) {}
+    BoxCollider() : ICollider("BoxCollider", Shape::Box, false, GetComponentTypeID<BoxCollider>()) {}
     ~BoxCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
@@ -21,6 +21,16 @@ public:
     void SetCenter(const Vector3 &center) { center_ = center; }
     const Vector3 &GetSize() const noexcept { return size_; }
     const Vector3 &GetCenter() const noexcept { return center_; }
+
+    std::optional<ColliderInfo3D> BuildColliderInfo3D() const override {
+        ColliderInfo3D info;
+        ColliderInfo3D::BoxShape3D box;
+        box.center = GetOwnerWorldPosition() + center_;
+        box.halfExtents = size_ * 0.5f;
+        info.shape = box;
+        info.ownerObject = const_cast<EmptyObject *>(GetOwnerObjectContext() ? GetOwnerObjectContext()->GetOwner() : nullptr);
+        return info;
+    }
 
 protected:
 #if defined(USE_IMGUI)

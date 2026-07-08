@@ -180,18 +180,13 @@ public:
     bool IsSaveEnabled() const { return isSaveEnabled_; }
 
     /// @brief オブジェクトのアクティブ状態設定
-    /// @details 有効化時に全コンポーネントのInitialize、無効化時に全コンポーネントのFinalizeが走る
-    void SetActive(bool active) {
-        if (isActive_ == active) return;
-        isActive_ = active;
-        if (active) {
-            Initialize();
-        } else {
-            Finalize();
-        }
-    }
+    /// @details 有効化時に全コンポーネントのInitialize、無効化時に全コンポーネントのFinalizeが走る。
+    ///          子孫オブジェクト自身の isActive フラグは変更しないが、実効アクティブ状態
+    ///          （祖先が無効なら自身も無効として扱われる）が変化した子孫についても
+    ///          同様にInitialize/Finalizeが走る。
+    void SetActive(bool active);
     /// @brief オブジェクトのアクティブ状態取得
-    bool IsActive() const { return isActive_; }
+    bool IsActive() const;
 
     //==================================================
     // JSON保存/読み込み系メソッド
@@ -244,7 +239,7 @@ public:
 
     /// @brief 全コンポーネントの常時ImGui表示（ゲームループがポーズ中でも毎フレーム呼ばれる）
     void ShowPersistentImGui(Passkey<Scene>) {
-        if (!isActive_) return;
+        if (!IsActive()) return;
         for (auto &pair : components_) {
             if (pair.first) {
                 pair.first->ShowPersistentImGuiInterface(Passkey<EmptyObject>{});
@@ -260,6 +255,8 @@ private:
     void Finalize();
     void Update();
     void RegenerateUpdateComponentsList();
+    /// @brief シーン内から自身の子孫オブジェクトを探し、変更前の実効アクティブ状態を記録する（SetActive用）
+    void CollectDescendantsActiveState(std::vector<std::pair<EmptyObject *, bool>> &out) const;
 
     std::string name_ = "EmptyObject";
 

@@ -14,6 +14,8 @@ class SceneEditor;
 class SceneEditorCommands;
 class ScreenBuffer;
 class ConstantBufferResource;
+class CameraRenderer;
+struct ColliderInfo2D;
 
 /// @brief シーンエディター用のシーンビュー
 /// @details エディター専用の ScreenBuffer とデバッグカメラを持ち、
@@ -50,10 +52,24 @@ private:
     /// @brief XZ平面のグリッド線を描画する
     void DrawGrid(const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief ワールド座標をシーンビュー画像上のスクリーン座標へ変換する
+    /// @param clampToVisibleArea true の場合、NDC範囲を大きく超える点は false を返す（アイコン表示等、
+    ///        画面外の点をそもそも描画したくない場合用）。線分の描画では端点がこの範囲外でも
+    ///        線自体は ImGui のクリップ矩形で正しく切り取られるため false を渡すこと。
     /// @return カメラの背面にある場合は false
-    bool ProjectToImage(const Vector3 &worldPosition, const ImVec2 &imagePos, const ImVec2 &imageSize, ImVec2 &outScreenPos) const;
+    bool ProjectToImage(const Vector3 &worldPosition, const ImVec2 &imagePos, const ImVec2 &imageSize, ImVec2 &outScreenPos, bool clampToVisibleArea = true) const;
     /// @brief LightRenderer が付いたオブジェクトをアイコンで描画する
     void DrawLightMarkers(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief CameraRenderer が付いたオブジェクトをアイコンと視錐台で描画する
+    void DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief 指定カメラの視錐台をワールド座標から逆投影して描画する
+    void DrawCameraFrustum(CameraRenderer *cameraRenderer, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color);
+    /// @brief シーン上のICollider派生コンポーネントの当たり判定形状をワイヤーフレームで描画する
+    void DrawColliderGizmos(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    void DrawWireBox3D(const Vector3 &center, const Vector3 &halfExtents, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color);
+    void DrawWireSphere3D(const Vector3 &center, float radius, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color);
+    void DrawWireCapsule3D(const Vector3 &center, float radius, float height, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color);
+    void DrawCollider2DShape(const ColliderInfo2D &info, float worldZ, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color);
+    void DrawRayGizmo(const Vector3 &origin, const Vector3 &direction, float length, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color);
     void ShowGizmo(EmptyObject *selectedObject, SceneEditorCommands *commands, const ImVec2 &imagePos, const ImVec2 &imageSize);
 
     SceneEditorContext *context_ = nullptr;

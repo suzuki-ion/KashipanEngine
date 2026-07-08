@@ -39,6 +39,10 @@ public:
     void ReleaseAllResources(Passkey<GraphicsEngine>);
 
 private:
+    /// @brief シーン内のComputeShaderProcessingコンポーネントを処理する（Dispatch実行）
+    /// @details 専用コマンドリスト（ComputeCommandProcessor）上で全てまとめて記録・実行される
+    void ProcessComputeShaders(SceneContext *sceneContext);
+
     /// @brief 単一の描画先への描画処理
     void RenderToTarget(IRenderTarget *target,
         std::span<const SceneRenderer::DrawEntry> entries,

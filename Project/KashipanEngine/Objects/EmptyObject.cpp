@@ -1,5 +1,6 @@
 #include "EmptyObject.h"
 #include "Objects/Components/Transform.h"
+#include "Scene/SceneContext.h"
 
 namespace KashipanEngine {
 
@@ -100,6 +101,66 @@ void EmptyObject::ClearComponents() {
     componentsIndexByPointer_.clear();
     componentsFreeIndices_.clear();
     nextAddedID_ = 0;
+}
+
+bool EmptyObject::IsActive() const {
+    auto *transform = GetComponent<Transform>();
+    auto *parentObject = transform ? transform->GetParentObject() : nullptr;
+    parentObject = ownerSceneContext_ ? ownerSceneContext_->GetSceneObject(parentObject) : nullptr;
+    bool parentActive = parentObject ? parentObject->IsActive() : true;
+    return isActive_ && parentActive;
+}
+
+void EmptyObject::SetActive(bool active) {
+    if (isActive_ == active) return;
+
+    // 実効アクティブ状態（IsActive）の変化を検知するため、変更前の子孫の状態を記録しておく
+    std::vector<std::pair<EmptyObject *, bool>> descendantsBefore;
+    CollectDescendantsActiveState(descendantsBefore);
+
+    isActive_ = active;
+    if (IsActive()) {
+        Initialize();
+    } else {
+        Finalize();
+    }
+
+    // 実効アクティブ状態が変化した子孫だけInitialize/Finalizeを実行する
+    // （子孫自身の isActive フラグは変更しない）
+    for (auto &[descendant, wasActive] : descendantsBefore) {
+        if (!descendant) continue;
+        const bool isActiveNow = descendant->IsActive();
+        if (isActiveNow == wasActive) continue;
+        if (isActiveNow) {
+            descendant->Initialize();
+        } else {
+            descendant->Finalize();
+        }
+    }
+}
+
+void EmptyObject::CollectDescendantsActiveState(std::vector<std::pair<EmptyObject *, bool>> &out) const {
+    if (!ownerSceneContext_) return;
+    for (const auto &objPtr : ownerSceneContext_->GetSceneObjects()) {
+        EmptyObject *candidate = objPtr.get();
+        if (!candidate || candidate == this) continue;
+
+        // candidate が this の子孫かどうかを親チェーンをたどって判定する
+        auto *transform = candidate->GetComponent<Transform>();
+        EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
+        bool isDescendant = false;
+        while (parent) {
+            if (parent == this) {
+                isDescendant = true;
+                break;
+            }
+            auto *parentTransform = parent->GetComponent<Transform>();
+            parent = parentTransform ? parentTransform->GetParentObject() : nullptr;
+        }
+        if (!isDescendant) continue;
+
+        out.emplace_back(candidate, candidate->IsActive());
+    }
 }
 
 JSON EmptyObject::SaveToJson(Passkey<Scene>) {

@@ -20,6 +20,7 @@
 namespace KashipanEngine {
 
 class EmptyObject;
+class ICollider;
 
 struct HitInfo final {
     bool isHit = false;
@@ -57,6 +58,8 @@ struct ColliderInfo2D final {
 
     ShapeVariant shape{};
     EmptyObject* ownerObject = nullptr;
+    /// @brief この情報を生成したICollider（RigidBodyの使用コライダー選択に使用。SceneObjectColliderが設定する）
+    ICollider* sourceCollider = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};
@@ -118,6 +121,8 @@ struct ColliderInfo3D final {
 
     ShapeVariant shape{};
     EmptyObject* ownerObject = nullptr;
+    /// @brief この情報を生成したICollider（RigidBodyの使用コライダー選択に使用。SceneObjectColliderが設定する）
+    ICollider* sourceCollider = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};

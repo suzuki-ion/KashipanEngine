@@ -161,6 +161,35 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     return true;
 }
 
+bool ScreenBuffer::Resize(std::uint32_t width, std::uint32_t height) {
+    if (width == 0 || height == 0) return false;
+    if (width == width_ && height == height_) return true;
+    if (!dx12Commands_) return false;
+
+    width_ = width;
+    height_ = height;
+
+    rtvWriteIndex_ = 0;
+    dsvWriteIndex_ = 0;
+    isLastBeginDisableDepthWrite_ = false;
+    isFirstBeginRecord_ = true;
+
+    auto *cmd = dx12Commands_->GetCommandList();
+    for (size_t i = 0; i < kBufferCount; ++i) {
+        renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
+        depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
+
+        if (cmd) {
+            renderTargets_[i]->SetCommandList(cmd);
+            depthStencils_[i]->SetCommandList(cmd);
+        }
+        if (!renderTargets_[i] || !depthStencils_[i] || !shaderResources_[i]) return false;
+    }
+
+    return true;
+}
+
 void ScreenBuffer::Destroy() {
     for (size_t i = 0; i < kBufferCount; ++i) {
         shaderResources_[i].reset();

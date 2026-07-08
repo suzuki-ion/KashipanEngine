@@ -29,6 +29,7 @@
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
+#include "Objects/Components/Render/CameraController.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"

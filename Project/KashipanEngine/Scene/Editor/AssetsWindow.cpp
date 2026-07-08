@@ -4,10 +4,23 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <string_view>
 
 #include "Assets/TextureManager.h"
 
 namespace KashipanEngine {
+
+namespace {
+/// @brief 実行ディレクトリ("."）からの相対パスを、TextureManagerが管理する
+///        Assetsルートからの相対パスへ変換する（先頭の "Assets/" を取り除く）
+std::string ToAssetsRelativePath(const std::string &cwdRelativePath) {
+    constexpr std::string_view kAssetsPrefix = "Assets/";
+    if (cwdRelativePath.rfind(kAssetsPrefix, 0) == 0) {
+        return cwdRelativePath.substr(kAssetsPrefix.size());
+    }
+    return cwdRelativePath;
+}
+} // namespace
 
 AssetsWindow::AssetsWindow(Passkey<SceneEditor>) {
     RefreshFolderTree();
@@ -177,8 +190,11 @@ void AssetsWindow::ShowFileGrid() {
             ImGui::PopStyleColor();
         } else {
             // 読み込み済みテクスチャの場合はサムネイルを表示する
+            // file.path は実行ディレクトリ（"."）からの相対パス（例: "Assets/Materials/White.png"）だが、
+            // TextureManager 側は Assets ルートからの相対パス（例: "Materials/White.png"）で管理しているため、
+            // 先頭の "Assets/" を取り除いてから問い合わせる必要がある
             D3D12_GPU_DESCRIPTOR_HANDLE srvHandle{};
-            const auto textureHandle = TextureManager::GetTextureFromAssetPath(file.path);
+            const auto textureHandle = TextureManager::GetTextureFromAssetPath(ToAssetsRelativePath(file.path));
             if (textureHandle != TextureManager::kInvalidHandle) {
                 srvHandle = TextureManager::GetTextureView(textureHandle).GetSrvHandle();
             }

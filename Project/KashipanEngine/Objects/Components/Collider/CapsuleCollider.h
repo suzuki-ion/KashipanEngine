@@ -6,7 +6,7 @@ namespace KashipanEngine {
 
 class CapsuleCollider final : public ICollider {
 public:
-    CapsuleCollider() : ICollider("CapsuleCollider", Shape::Capsule, GetComponentTypeID<CapsuleCollider>()) {}
+    CapsuleCollider() : ICollider("CapsuleCollider", Shape::Capsule, false, GetComponentTypeID<CapsuleCollider>()) {}
     ~CapsuleCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
@@ -16,6 +16,24 @@ public:
         ptr->center_ = center_;
         ptr->SetTrigger(IsTrigger());
         return ptr;
+    }
+
+    void SetRadius(float radius) { radius_ = radius; }
+    void SetHeight(float height) { height_ = height; }
+    void SetCenter(const Vector3 &center) { center_ = center; }
+    float GetRadius() const noexcept { return radius_; }
+    float GetHeight() const noexcept { return height_; }
+    const Vector3 &GetCenter() const noexcept { return center_; }
+
+    std::optional<ColliderInfo3D> BuildColliderInfo3D() const override {
+        ColliderInfo3D info;
+        ColliderInfo3D::CapsuleShape3D capsule;
+        capsule.center = GetOwnerWorldPosition() + center_;
+        capsule.radius = radius_;
+        capsule.height = height_;
+        info.shape = capsule;
+        info.ownerObject = const_cast<EmptyObject *>(GetOwnerObjectContext() ? GetOwnerObjectContext()->GetOwner() : nullptr);
+        return info;
     }
 
 protected:

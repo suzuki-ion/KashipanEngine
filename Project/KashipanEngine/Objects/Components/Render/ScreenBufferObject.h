@@ -32,9 +32,13 @@ public:
         }
     }
     const std::string &GetName() const noexcept { return name_; }
+    /// @brief バッファサイズを変更する（既存のバッファがあれば実際にリサイズされる）
     void SetSize(std::uint32_t width, std::uint32_t height) {
         width_ = width;
         height_ = height;
+        if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
+            buffer_->Resize(width_, height_);
+        }
     }
 
 protected:
@@ -60,8 +64,10 @@ protected:
         }
         int w = static_cast<int>(width_);
         int h = static_cast<int>(height_);
-        if (ImGuiCustom::EditValue("Width", w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
-        if (ImGuiCustom::EditValue("Height", h)) height_ = static_cast<std::uint32_t>(std::max(1, h));
+        bool sizeChanged = false;
+        if (ImGuiCustom::EditValue("Width", w)) { w = std::max(1, w); sizeChanged = true; }
+        if (ImGuiCustom::EditValue("Height", h)) { h = std::max(1, h); sizeChanged = true; }
+        if (sizeChanged) SetSize(static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h));
 
         // 描画内容確認用ビューアウィンドウ
         if (ImGui::Button(isShowViewer_ ? "Close Viewer" : "Open Viewer")) {

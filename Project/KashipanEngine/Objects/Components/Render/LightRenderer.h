@@ -1,11 +1,13 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <unordered_set>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Transform.h"
 #include "Math/Vector3.h"
+#include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Utilities/UUID128.h"
@@ -22,7 +24,7 @@ namespace KashipanEngine {
 ///          使用するパイプラインと適用先の描画先を指定できる。
 class LightRenderer final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(LightRenderer, 1, SetUpdatePriority(950);)
+    OBJECT_COMPONENT_CONSTRUCTOR(LightRenderer, 0xFF, SetUpdatePriority(950);)
     COMPONENT_CATEGORY("Render")
     ~LightRenderer() override = default;
 
@@ -30,6 +32,7 @@ public:
         auto ptr = std::make_unique<LightRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
+        ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         return ptr;
     }
 
@@ -54,6 +57,12 @@ public:
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
+    }
+
+    /// @brief 指定の描画先がこのコンポーネントの適用対象に含まれるか（除外設定されていないか）
+    bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        if (!target) return false;
+        return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
 
     //==================================================
@@ -115,6 +124,8 @@ protected:
     void ShowImGui() override {
         // 適用先の描画先オブジェクトをシーン上から選択（D&D対応、未指定は全描画先）
         TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        // 対象オブジェクトが持つ描画先ごとに適用する/しないを選択する
+        TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
         // パイプラインは読み込み済みのものから選択（未指定は全パイプライン）
         ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
     }
@@ -124,6 +135,9 @@ protected:
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
+        for (const auto &name : excludedRenderTargetNames_) {
+            json["excludedRenderTargetNames"].push_back(name);
+        }
         return json;
     }
 
@@ -134,6 +148,10 @@ protected:
             targetObjectID_ = UUID128();
         }
         pipelineName_ = json.value("pipelineName", std::string{});
+        excludedRenderTargetNames_.clear();
+        for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
+            excludedRenderTargetNames_.insert(name);
+        }
         return true;
     }
 
@@ -150,6 +168,8 @@ private:
 
     UUID128 targetObjectID_{};
     std::string pipelineName_;
+    /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合
+    std::unordered_set<std::string> excludedRenderTargetNames_;
 };
 
 REGISTER_COMPONENT_OBJECT(LightRenderer)

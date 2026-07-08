@@ -139,6 +139,20 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
     return true;
 }
 
+bool ShadowMapBuffer::Resize(std::uint32_t width, std::uint32_t height) {
+    if (width == 0 || height == 0) return false;
+    if (width == width_ && height == height_) return true;
+    if (!dx12Commands_) return false;
+
+    width_ = width;
+    height_ = height;
+
+    depth_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, srvFormat_);
+    if (!depth_ || !depth_->HasSrv()) return false;
+
+    return true;
+}
+
 void ShadowMapBuffer::Destroy() {
     UnregisterFromTextureManager();
     depth_.reset();

@@ -102,6 +102,12 @@ public:
     /// @param enable true の場合、深度書き込みを有効にする。false の場合、深度書き込みを無効にする。
     void SetDepthWriteEnabled(bool enable) noexcept { isDepthWriteEnabled_ = enable; }
 
+    /// @brief バッファサイズを変更する（GPUリソースを新しいサイズで作り直す）
+    /// @details TextureManagerへの登録名・ハンドルはそのまま維持される（サイズはこのオブジェクトから
+    ///          毎回取得されるため再登録は不要）。BeginDraw/EndDraw の外側から呼ぶこと。
+    /// @return 成功した場合はtrue、失敗した場合（未初期化・サイズが0等）はfalseを返す
+    bool Resize(std::uint32_t width, std::uint32_t height);
+
 private:
     static inline DirectXCommon *sDirectXCommon_ = nullptr;
     static constexpr size_t kBufferCount = 2;

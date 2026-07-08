@@ -2,6 +2,7 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include <string>
+#include <vector>
 #include "Utilities/ImGuiCustom.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
@@ -29,6 +30,13 @@ private:
     /// @brief 編集セッションが終了していたら保留中の編集をUndo履歴へ積む
     void FlushPendingComponentEdit();
 
+    /// @brief オブジェクトが持つコンポーネントを処理優先順位（更新優先度→追加順）で並べたものを取得する
+    static std::vector<IObjectComponent *> GetOrderedComponents(EmptyObject *obj);
+    /// @brief コンポーネント行に対するD&Dソース/ターゲットの登録（直前に表示した項目が対象になる）
+    void DragAndDropComponent(IObjectComponent *comp);
+    /// @brief 保留中のコンポーネントD&Dを適用し、処理優先順位を並び順どおりに振り直す
+    void ApplyComponentDragAndDrop(EmptyObject *obj);
+
     SceneEditorContext *context_ = nullptr;
     SceneObjectHierarchy *objectHierarchy_ = nullptr;
     SceneEditorCommands *commands_ = nullptr;
@@ -42,6 +50,12 @@ private:
     IObjectComponent *editComponent_ = nullptr;
     JSON editBefore_;
     JSON editAfter_;
+
+    // コンポーネント並び替えD&D用（Above: ターゲットの上、Below: ターゲットの下）
+    enum class ComponentDropPosition { Above, Below };
+    IObjectComponent *componentDragSource_ = nullptr;
+    IObjectComponent *componentDragTarget_ = nullptr;
+    ComponentDropPosition componentDragPosition_ = ComponentDropPosition::Above;
 };
 
 } // namespace KashipanEngine

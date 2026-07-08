@@ -5,6 +5,8 @@
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Editor/SceneObjectPayload.h"
+#include "Scene/Components/Render/SceneRenderer.h"
+#include "Graphics/IRenderTarget.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
@@ -12,6 +14,17 @@
 
 namespace KashipanEngine {
 namespace TargetObjectSelector {
+
+namespace {
+const char *ToString(RenderTargetKind kind) {
+    switch (kind) {
+    case RenderTargetKind::Window:          return "Window";
+    case RenderTargetKind::ScreenBuffer:    return "ScreenBuffer";
+    case RenderTargetKind::ShadowMapBuffer: return "ShadowMapBuffer";
+    default:                                return "Unknown";
+    }
+}
+} // namespace
 
 bool HasRenderTargetComponent(EmptyObject *object) {
     if (!object) return false;
@@ -65,6 +78,36 @@ bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &target
     }
 
     return changed;
+}
+
+void ShowRenderTargetFilters(SceneContext *sceneContext, const UUID128 &targetObjectID, std::unordered_set<std::string> &excludedRenderTargetNames) {
+    if (!sceneContext || !targetObjectID.IsValid()) return;
+    EmptyObject *targetObject = sceneContext->GetSceneObject(targetObjectID);
+    if (!targetObject) return;
+
+    std::vector<IRenderTarget *> targets;
+    SceneRenderer::CollectRenderTargets(targetObject, targets);
+    if (targets.empty()) return;
+
+    // 使われなくなった除外設定はそのまま残しておく（一時的にコンポーネントを外しただけの場合を考慮）
+    if (ImGui::TreeNode("Render Target Filter")) {
+        for (auto *target : targets) {
+            if (!target) continue;
+            const std::string &name = target->GetRenderTargetName();
+            bool included = !excludedRenderTargetNames.contains(name);
+            const std::string label = std::string("[") + ToString(target->GetRenderTargetKind()) + "] " + name;
+            ImGui::PushID(target);
+            if (ImGui::Checkbox(label.c_str(), &included)) {
+                if (included) {
+                    excludedRenderTargetNames.erase(name);
+                } else {
+                    excludedRenderTargetNames.insert(name);
+                }
+            }
+            ImGui::PopID();
+        }
+        ImGui::TreePop();
+    }
 }
 
 } // namespace TargetObjectSelector

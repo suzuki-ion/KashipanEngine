@@ -28,6 +28,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Threshold", &params_.threshold, 0.001f, 0.0f, 1.0f, "%.4f");
         ImGui::DragFloat("Threshold Min", &params_.thresholdMin, 0.0001f, 0.0f, 1.0f, "%.4f");
         ImGui::DragFloat("Strength", &params_.strength, 0.01f, 0.0f, 4.0f, "%.3f");
@@ -35,7 +36,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["threshold"] = params_.threshold;
         json["thresholdMin"] = params_.thresholdMin;
         json["strength"] = params_.strength;
@@ -43,6 +44,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.threshold = json.value("threshold", 0.01f);
         params_.thresholdMin = json.value("thresholdMin", 0.001f);
         params_.strength = json.value("strength", 1.0f);

@@ -54,15 +54,77 @@ bool CreateChildObjectCommand::Undo(SceneEditorContext *context) {
     return obj && context->DeleteObject(obj);
 }
 
+bool PasteObjectCommand::Execute(SceneEditorContext *context) {
+    if (nodes_.empty()) return false;
+    EmptyObject *attachParent = attachParentID_.IsValid() ? context->GetSceneObject(attachParentID_) : nullptr;
+    EmptyObject *rootObj = nullptr;
+    for (size_t i = 0; i < nodes_.size(); ++i) {
+        const size_t index = (i == 0) ? insertIndex_ : MAXSIZE_T;
+        EmptyObject *obj = context->CreateObjectFromJson(nodes_[i].json, index);
+        if (!obj) return false;
+        if (i == 0) rootObj = obj;
+        // 部分木の根（＝コピー時にparentIndexInSubtreeが-1だったノード）は貼り付け先へ接続する。
+        // preserveOriginalRootParent_の場合は各ノードのJSONに残された元の親参照をそのまま使うため何もしない
+        // （それ以外の部分木内部の子孫は常にTransformの"parent"参照で自動的に接続済み）。
+        if (!preserveOriginalRootParent_ && nodes_[i].parentIndexInSubtree < 0) {
+            if (auto *transform = obj->GetComponent<Transform>()) {
+                transform->SetParentObject(attachParent);
+            }
+        }
+    }
+    return rootObj != nullptr;
+}
+bool PasteObjectCommand::Undo(SceneEditorContext *context) {
+    // 子孫から先に削除する（nodes_はルート→子孫の順で積まれているため逆順に辿る）
+    bool allSucceeded = true;
+    for (auto it = nodes_.rbegin(); it != nodes_.rend(); ++it) {
+        const UUID128 id(it->json.value("objectID", std::string{}));
+        auto *obj = context->GetSceneObject(id);
+        if (obj && !context->DeleteObject(obj)) allSucceeded = false;
+    }
+    return allSucceeded;
+}
+
+namespace {
+/// @brief 指定オブジェクトを根とする部分木のJSONスナップショットをpre-order順で収集する
+///        （PasteObjectCommandのクリップボード構築と同じ手法。DeleteObjectCommandの
+///        Undo用に、削除で失われる子孫も含めて復元できるようにするため使用する）
+void CollectSubtreeSnapshot(SceneEditorContext *context, EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) {
+    if (!obj || !context) return;
+    const int myIndex = static_cast<int>(out.size());
+    out.push_back({ context->SaveObjectToJson(obj), parentIndex });
+    for (const auto &objPtr : context->GetSceneObjects()) {
+        EmptyObject *candidate = objPtr.get();
+        if (!candidate || candidate == obj) continue;
+        auto *candidateTransform = candidate->GetComponent<Transform>();
+        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
+            CollectSubtreeSnapshot(context, candidate, myIndex, out);
+        }
+    }
+}
+} // namespace
+
 bool DeleteObjectCommand::Execute(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
-    snapshot_ = context->SaveObjectToJson(obj);
+    snapshot_.clear();
     index_ = context->GetObjectIndex(obj);
+    CollectSubtreeSnapshot(context, obj, -1, snapshot_);
+    // オブジェクト削除は子オブジェクトも連鎖的に削除する（Scene::DeleteObject側で再帰処理される）
     return context->DeleteObject(obj);
 }
 bool DeleteObjectCommand::Undo(SceneEditorContext *context) {
-    return context->CreateObjectFromJson(snapshot_, index_) != nullptr;
+    if (snapshot_.empty()) return false;
+    // pre-order（親→子の順）でそのまま復元すれば、各ノードのTransform "parent" が
+    // 元のobjectIDを参照しているため、親が先に生成済みであれば自動的に親子関係も復元される
+    EmptyObject *rootObj = nullptr;
+    for (size_t i = 0; i < snapshot_.size(); ++i) {
+        const size_t index = (i == 0) ? index_ : MAXSIZE_T;
+        EmptyObject *obj = context->CreateObjectFromJson(snapshot_[i].json, index);
+        if (!obj) return false;
+        if (i == 0) rootObj = obj;
+    }
+    return rootObj != nullptr;
 }
 
 bool MoveObjectCommand::Execute(SceneEditorContext *context) {

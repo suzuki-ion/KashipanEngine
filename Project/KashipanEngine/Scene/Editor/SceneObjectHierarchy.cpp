@@ -1,4 +1,5 @@
 #include "SceneObjectHierarchy.h"
+#include <algorithm>
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/Editor/SceneEditorCommands.h"
@@ -6,10 +7,61 @@
 
 namespace KashipanEngine {
 
+namespace {
+/// @brief クリップボードのノード列を貼り付け用に複製し、全ノードへ新しいobjectIDを割り当てて
+///        部分木内部の親子参照（Transformの"parent"）を新IDへ張り替える。
+///        同じクリップボードから複数回貼り付けてもUUIDが衝突しないよう、貼り付けの都度呼び出すこと。
+/// @param preserveRootParent trueの場合、ルートノード（parentIndexInSubtree<0）の"parent"参照は
+///        元のまま変更しない（複製時に、複製元と同じ親へ自動的に接続されるようにするため）。
+///        falseの場合はルートノードの"parent"を消去する（PasteObjectCommand側でattachParentへ接続する）。
+std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent) {
+    std::vector<PasteObjectCommand::Node> result = source;
+
+    std::vector<UUID128> freshIDs;
+    freshIDs.reserve(result.size());
+    for (size_t i = 0; i < result.size(); ++i) {
+        freshIDs.emplace_back(true);
+    }
+
+    for (size_t i = 0; i < result.size(); ++i) {
+        JSON &json = result[i].json;
+        json["objectID"] = freshIDs[i].ToString();
+        if (!json.contains("components")) continue;
+        for (auto &compJson : json["components"]) {
+            if (compJson.value("type", "") != "Transform" || !compJson.contains("data")) continue;
+            auto &data = compJson["data"];
+            const int parentIndex = result[i].parentIndexInSubtree;
+            if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < freshIDs.size()) {
+                data["parent"] = freshIDs[static_cast<size_t>(parentIndex)].ToString();
+            } else if (!preserveRootParent) {
+                data.erase("parent");
+            }
+        }
+    }
+    return result;
+}
+
+/// @brief objがcandidatesのいずれかの子孫であるかをTransformの親参照チェーンから判定する
+bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *> &candidates) {
+    auto *transform = obj->GetComponent<Transform>();
+    EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
+    while (parent) {
+        if (candidates.contains(parent)) return true;
+        auto *parentTransform = parent->GetComponent<Transform>();
+        parent = parentTransform ? parentTransform->GetParentObject() : nullptr;
+    }
+    return false;
+}
+} // namespace
+
 void SceneObjectHierarchy::ShowImGui() {
+    // このフレームの表示順はShowObjectItemの呼び出し毎に積み直す（Shift範囲選択の計算に使う）
+    visibleOrderThisFrame_.clear();
     RebuildObjectItems();
 
     ImGui::Begin("Scene Object Hierarchy");
+
+    HandleKeyboardShortcuts();
 
     if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {
         size_t index = 0;
@@ -18,6 +70,10 @@ void SceneObjectHierarchy::ShowImGui() {
             ++index;
         }
     }
+
+    // Shift範囲選択はツリー全体の表示順（visibleOrderThisFrame_）が確定してからでないと
+    // 対象範囲を計算できないため、全アイテムの描画後にまとめて適用する
+    ApplyPendingRangeSelect();
 
     ShowHierarchyContextMenu();
     ApplyDragAndDrop();
@@ -69,6 +125,9 @@ void SceneObjectHierarchy::RecursivelyBuildObjectItems(EmptyObject *obj, ObjectI
 }
 
 void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index) {
+    // このフレームの表示順を記録する（Shift範囲選択の範囲計算に使う）
+    visibleOrderThisFrame_.push_back(item.object);
+
     // インデックスではなくオブジェクトをIDにすることで、
     // オブジェクトの追加/削除があっても開閉状態が別のオブジェクトへずれないようにする
     ImGui::PushID(item.object);
@@ -82,7 +141,7 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     } else {
         flags |= ImGuiTreeNodeFlags_OpenOnArrow;
     }
-    if (selectedObjectIndex_ == index) {
+    if (selectedObjects_.contains(item.object)) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
@@ -102,9 +161,42 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     DragAndDropObject(const_cast<ObjectItem *>(&item));
     ShowObjectContextMenu(item.object);
 
-    if (ImGui::IsItemClicked()) {
-        selectedObjectIndex_ = index;
-        selectedObject_ = item.object;
+    // クリックした瞬間（mouse down）に選択を確定すると、インスペクターがすぐ切り替わってしまい
+    // インスペクター側へのD&D（ヒエラルキーからオブジェクトをドラッグしてフィールドへ設定する操作）が
+    // 阻害されるため、実際にドラッグへ発展しなかった場合に限り、指を離した時点で選択を確定する。
+    // ドラッグ判定は BeginDragDropSource() の成否ではなく、実際のマウス移動距離で厳密に行う
+    // （BeginDragDropSource は一部ウィジェットでしきい値が変わることがあり、Ctrl/Shiftキーを
+    // 同時に押しながらのクリックで手ブレ的な微小移動が起きた際に誤ってドラッグ扱いされ、
+    // 選択処理そのものがスキップされてしまう不具合があったため）。
+    if (ImGui::IsItemDeactivated()) {
+        const ImGuiIO &io = ImGui::GetIO();
+        const float dragThreshold = io.MouseDragThreshold;
+        const bool wasDragged = io.MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] > (dragThreshold * dragThreshold);
+        if (!wasDragged) {
+            if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+                // Shift+クリック: 範囲選択。対象の並び順はツリー全体を描画し終えないと確定しないため、
+                // ここでは要求のみ記録し、ApplyPendingRangeSelect() で確定させる。
+                pendingRangeTarget_ = item.object;
+            } else if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+                // Ctrl+クリック: 個別に選択/選択解除をトグルする
+                if (selectedObjects_.contains(item.object)) {
+                    selectedObjects_.erase(item.object);
+                    if (selectedObject_ == item.object) {
+                        selectedObject_ = selectedObjects_.empty() ? nullptr : *selectedObjects_.begin();
+                    }
+                } else {
+                    selectedObjects_.insert(item.object);
+                    selectedObject_ = item.object;
+                }
+                selectionAnchorObject_ = item.object;
+            } else {
+                // 修飾キー無しのクリックは単一選択に置き換える
+                selectedObjects_.clear();
+                selectedObjects_.insert(item.object);
+                selectedObject_ = item.object;
+                selectionAnchorObject_ = item.object;
+            }
+        }
     }
 
     if (!item.children.empty() && isOpen) {
@@ -122,6 +214,11 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
 
 void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
     if (ImGui::BeginPopupContextItem("ObjectContextMenu")) {
+        // 右クリックしたオブジェクトが複数選択に含まれる場合、Copy/Clone/Deleteは選択中の全オブジェクトを対象にする
+        // （Create/Pasteはあくまで右クリックした1点を基準にした挿入操作のため対象外）
+        const std::vector<EmptyObject *> targets =
+            (selectedObjects_.size() > 1 && selectedObjects_.contains(obj)) ? GetSelectionRoots() : std::vector<EmptyObject *>{ obj };
+
         if (ImGui::MenuItem("Create Empty Object")) {
             // 右クリックしたオブジェクトと同じ階層かつ次のインデックス位置に作成する
             const size_t index = editorContext_->GetObjectIndex(obj);
@@ -150,13 +247,28 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
             }
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("Delete Object")) {
-            if (commands_) {
-                commands_->Execute(std::make_unique<DeleteObjectCommand>(obj));
-            } else {
-                editorContext_->DeleteObject(obj);
-            }
-            ClearSelection();
+        const std::string copyLabel = (targets.size() > 1) ? ("Copy " + std::to_string(targets.size()) + " Objects") : "Copy Object";
+        if (ImGui::MenuItem(copyLabel.c_str(), "Ctrl+C")) {
+            CopyObjects(targets);
+        }
+        if (ImGui::MenuItem("Paste Object", "Ctrl+V", false, !clipboardNodes_.empty())) {
+            auto *transform = obj->GetComponent<Transform>();
+            EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
+            const size_t index = editorContext_->GetObjectIndex(obj);
+            const size_t insertIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
+            PasteObject(parent, insertIndex);
+        }
+        if (ImGui::MenuItem("Paste to Child Object", "Ctrl+Shift+V", false, !clipboardNodes_.empty())) {
+            PasteObject(obj, MAXSIZE_T);
+        }
+        const std::string cloneLabel = (targets.size() > 1) ? ("Clone " + std::to_string(targets.size()) + " Objects") : "Clone Object";
+        if (ImGui::MenuItem(cloneLabel.c_str(), "Ctrl+D")) {
+            CloneObjects(targets);
+        }
+        ImGui::Separator();
+        const std::string deleteLabel = (targets.size() > 1) ? ("Delete " + std::to_string(targets.size()) + " Objects") : "Delete Object";
+        if (ImGui::MenuItem(deleteLabel.c_str())) {
+            DeleteObjects(targets);
         }
         ImGui::EndPopup();
     }
@@ -174,8 +286,166 @@ void SceneObjectHierarchy::ShowHierarchyContextMenu() {
                 editorContext_->CreateEmptyObject("EmptyObject");
             }
         }
+        if (ImGui::MenuItem("Paste Object", "Ctrl+V", false, !clipboardNodes_.empty())) {
+            PasteObject(nullptr, MAXSIZE_T);
+        }
         ImGui::EndPopup();
     }
+}
+
+void SceneObjectHierarchy::HandleKeyboardShortcuts() {
+    // ヒエラルキーウィンドウにフォーカスがある時のみ有効にする（テキスト入力中などに誤爆させないため）
+    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) return;
+    if (!ImGui::IsKeyDown(ImGuiMod_Ctrl)) return;
+
+    if (ImGui::IsKeyPressed(ImGuiKey_C, false)) {
+        if (!selectedObjects_.empty()) CopyObjects(GetSelectionRoots());
+        return;
+    }
+    if (ImGui::IsKeyDown(ImGuiMod_Shift) && ImGui::IsKeyPressed(ImGuiKey_V, false)) {
+        // Ctrl+Shift+V: 選択中オブジェクトの子として貼り付ける（選択が無ければルート直下へ）
+        PasteObject(selectedObject_, MAXSIZE_T);
+        return;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_V, false)) {
+        EmptyObject *parent = nullptr;
+        size_t insertIndex = MAXSIZE_T;
+        if (selectedObject_) {
+            auto *transform = selectedObject_->GetComponent<Transform>();
+            parent = transform ? transform->GetParentObject() : nullptr;
+            const size_t index = editorContext_->GetObjectIndex(selectedObject_);
+            insertIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
+        }
+        PasteObject(parent, insertIndex);
+        return;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_D, false)) {
+        if (!selectedObjects_.empty()) CloneObjects(GetSelectionRoots());
+        return;
+    }
+}
+
+std::vector<EmptyObject *> SceneObjectHierarchy::GetSelectionRoots() const {
+    std::vector<EmptyObject *> roots;
+    for (auto *obj : selectedObjects_) {
+        if (obj && !IsDescendantOfAny(obj, selectedObjects_)) roots.push_back(obj);
+    }
+    return roots;
+}
+
+void SceneObjectHierarchy::CopyObjects(const std::vector<EmptyObject *> &objs) {
+    if (objs.empty() || !editorContext_) return;
+    clipboardNodes_.clear();
+    for (auto *obj : objs) {
+        if (obj) CollectSubtreeNodes(obj, -1, clipboardNodes_);
+    }
+    clipboardRootName_ = (objs.size() == 1 && objs[0]) ? objs[0]->GetName() : (std::to_string(objs.size()) + " Objects");
+}
+
+void SceneObjectHierarchy::PasteObject(EmptyObject *attachParent, size_t insertIndex) {
+    if (clipboardNodes_.empty() || !editorContext_) return;
+    auto nodes = PrepareNodesForInstantiation(clipboardNodes_, /*preserveRootParent=*/false);
+    ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
+        std::move(nodes), attachParent, insertIndex, clipboardRootName_, "Paste Object"));
+}
+
+void SceneObjectHierarchy::CloneObjects(const std::vector<EmptyObject *> &objs) {
+    if (objs.empty() || !editorContext_) return;
+    std::vector<PasteObjectCommand::Node> nodes;
+    for (auto *obj : objs) {
+        if (obj) CollectSubtreeNodes(obj, -1, nodes);
+    }
+    // preserveRootParent=true: 各複製元ごとに元の親が異なっていても、それぞれ元通りの親へ接続されるようにする
+    auto prepared = PrepareNodesForInstantiation(nodes, /*preserveRootParent=*/true);
+
+    EmptyObject *firstObj = objs.front();
+    const size_t originalIndex = editorContext_->GetObjectIndex(firstObj);
+    const size_t insertIndex = (originalIndex == MAXSIZE_T) ? MAXSIZE_T : originalIndex + 1;
+    const std::string name = (objs.size() == 1) ? firstObj->GetName() : (std::to_string(objs.size()) + " Objects");
+
+    ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
+        std::move(prepared), nullptr, insertIndex, name, "Clone Object", /*preserveOriginalRootParent=*/true));
+}
+
+void SceneObjectHierarchy::DeleteObjects(const std::vector<EmptyObject *> &objs) {
+    if (objs.empty() || !editorContext_) return;
+
+    if (commands_) {
+        if (objs.size() == 1) {
+            commands_->Execute(std::make_unique<DeleteObjectCommand>(objs[0]));
+        } else {
+            auto composite = std::make_unique<CompositeCommand>("Delete " + std::to_string(objs.size()) + " Objects");
+            for (auto *obj : objs) {
+                if (obj) composite->AddCommand(std::make_unique<DeleteObjectCommand>(obj));
+            }
+            commands_->Execute(std::move(composite));
+        }
+    } else {
+        for (auto *obj : objs) {
+            if (obj) editorContext_->DeleteObject(obj);
+        }
+    }
+    ClearSelection();
+}
+
+void SceneObjectHierarchy::CollectSubtreeNodes(EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) const {
+    if (!obj || !editorContext_) return;
+    const int myIndex = static_cast<int>(out.size());
+    out.push_back({ editorContext_->SaveObjectToJson(obj), parentIndex });
+
+    // 子オブジェクトをTransformの親参照から探す（RebuildObjectItemsが使う手法と同じ）
+    for (const auto &objPtr : editorContext_->GetSceneObjects()) {
+        EmptyObject *candidate = objPtr.get();
+        if (!candidate || candidate == obj) continue;
+        auto *candidateTransform = candidate->GetComponent<Transform>();
+        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
+            CollectSubtreeNodes(candidate, myIndex, out);
+        }
+    }
+}
+
+void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command) {
+    if (!command || !editorContext_) return;
+    PasteObjectCommand *rawCommand = command.get();
+    const bool succeeded = commands_ ? commands_->Execute(std::move(command)) : rawCommand->Execute(editorContext_);
+    if (!succeeded) return;
+
+    auto newRoots = rawCommand->GetRootObjects(editorContext_);
+    if (!newRoots.empty()) {
+        selectedObjects_.clear();
+        for (auto *obj : newRoots) selectedObjects_.insert(obj);
+        selectedObject_ = newRoots.back();
+        selectionAnchorObject_ = newRoots.back();
+    }
+}
+
+void SceneObjectHierarchy::ApplyPendingRangeSelect() {
+    if (!pendingRangeTarget_) return;
+    EmptyObject *target = pendingRangeTarget_;
+    pendingRangeTarget_ = nullptr;
+
+    EmptyObject *anchor = selectionAnchorObject_ ? selectionAnchorObject_ : target;
+    auto anchorIt = std::find(visibleOrderThisFrame_.begin(), visibleOrderThisFrame_.end(), anchor);
+    auto targetIt = std::find(visibleOrderThisFrame_.begin(), visibleOrderThisFrame_.end(), target);
+    if (anchorIt == visibleOrderThisFrame_.end() || targetIt == visibleOrderThisFrame_.end()) {
+        // 起点が非表示（親が折りたたまれている等）で見つからない場合は対象単体を選択する
+        selectedObjects_.clear();
+        selectedObjects_.insert(target);
+        selectedObject_ = target;
+        selectionAnchorObject_ = target;
+        return;
+    }
+
+    size_t anchorIndex = static_cast<size_t>(std::distance(visibleOrderThisFrame_.begin(), anchorIt));
+    size_t targetIndex = static_cast<size_t>(std::distance(visibleOrderThisFrame_.begin(), targetIt));
+    if (anchorIndex > targetIndex) std::swap(anchorIndex, targetIndex);
+
+    selectedObjects_.clear();
+    for (size_t i = anchorIndex; i <= targetIndex; ++i) {
+        selectedObjects_.insert(visibleOrderThisFrame_[i]);
+    }
+    selectedObject_ = target;
+    // 起点はそのまま維持する（連続Shiftクリックで同じ起点から範囲を再計算できるようにするため）
 }
 
 void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {

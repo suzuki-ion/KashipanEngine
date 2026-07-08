@@ -46,11 +46,12 @@ SceneEditorView::~SceneEditorView() {
     screenBuffer_ = nullptr;
 }
 
-void SceneEditorView::ShowImGui(EmptyObject *selectedObject, SceneEditorCommands *commands) {
+void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands) {
     EnsureResources();
     UpdateCameraBuffer();
     RegisterEditorTarget();
-    ShowSceneViewWindow(selectedObject, commands);
+    UpdateEditorDebugDraw();
+    ShowSceneViewWindow(selectedObjects, commands);
 }
 
 void SceneEditorView::EnsureResources() {
@@ -107,7 +108,7 @@ void SceneEditorView::RegisterEditorTarget() {
     }
 }
 
-void SceneEditorView::ShowSceneViewWindow(EmptyObject *selectedObject, SceneEditorCommands *commands) {
+void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands) {
     if (!ImGui::Begin("Scene View")) {
         ImGui::End();
         return;
@@ -156,8 +157,8 @@ void SceneEditorView::ShowSceneViewWindow(EmptyObject *selectedObject, SceneEdit
     //--------- カメラ操作（画像上でのマウス操作） ---------//
     HandleCameraInput();
 
-    //--------- XZ平面のグリッド線 ---------//
-    if (showGrid_) DrawGrid(imagePos, drawSize);
+    // グリッド線・当たり判定のワイヤーフレームは screenBuffer_ へGPUで直接描画される
+    // （UpdateEditorDebugDraw で設定済み。DebugGrid/DebugLinesパイプライン参照）
 
     //--------- ライトのデバッグ表示 ---------//
     if (showLightMarkers_) DrawLightMarkers(imagePos, drawSize);
@@ -165,11 +166,8 @@ void SceneEditorView::ShowSceneViewWindow(EmptyObject *selectedObject, SceneEdit
     //--------- カメラのデバッグ表示 ---------//
     if (showCameraMarkers_) DrawCameraMarkers(imagePos, drawSize);
 
-    //--------- 当たり判定のデバッグ表示 ---------//
-    if (showColliderGizmos_) DrawColliderGizmos(imagePos, drawSize);
-
     //--------- ImGuizmo によるギズモ表示 ---------//
-    ShowGizmo(selectedObject, commands, imagePos, drawSize);
+    ShowGizmo(selectedObjects, commands, imagePos, drawSize);
 
     ImGui::End();
 }
@@ -203,17 +201,25 @@ void SceneEditorView::HandleCameraInput() {
     }
 }
 
-void SceneEditorView::DrawGrid(const ImVec2 &imagePos, const ImVec2 &imageSize) {
-    if (imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+void SceneEditorView::UpdateEditorDebugDraw() {
+    if (!context_) return;
+    auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
 
-    ImGuizmo::SetOrthographic(false);
-    ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
-    ImGuizmo::SetRect(imagePos.x, imagePos.y, imageSize.x, imageSize.y);
+    EditorDebugDrawSettings settings;
+    settings.showGrid = showGrid_;
+    settings.showColliderGizmos = showColliderGizmos_;
+    // カメラのズーム量に応じてグリッドの表示範囲を追従させる（Blenderのように「無限」に感じられる範囲を保つ）
+    settings.gridFadeDistance = std::clamp(distance_ * 4.0f, 20.0f, 2000.0f);
 
-    Matrix4x4 view = view_;
-    Matrix4x4 projection = projection_;
-    Matrix4x4 identity = Matrix4x4::Identity();
-    ImGuizmo::DrawGrid(&view.m[0][0], &projection.m[0][0], &identity.m[0][0], 100.0f);
+    if (showColliderGizmos_) {
+        AppendColliderDebugLines(settings.lines);
+    }
+    if (showCameraMarkers_) {
+        AppendCameraFrustumLines(settings.lines);
+    }
+
+    sceneRenderer->SetEditorDebugDraw(std::move(settings));
 }
 
 bool SceneEditorView::ProjectToImage(const Vector3 &worldPosition, const ImVec2 &imagePos, const ImVec2 &imageSize, ImVec2 &outScreenPos, bool clampToVisibleArea) const {
@@ -327,67 +333,61 @@ void SceneEditorView::DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &im
             ImVec2(center.x + kHalfWidth, center.y + kHalfHeight),
             color, 2.0f, 0, 2.0f);
         drawList->AddCircle(center, 3.5f, color, 12, 1.5f);
-
-        // 視錐台
-        DrawCameraFrustum(cameraRenderer, imagePos, imageSize, color);
     }
 
     drawList->PopClipRect();
 }
 
-void SceneEditorView::DrawCameraFrustum(CameraRenderer *cameraRenderer, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) {
-    if (!cameraRenderer) return;
+void SceneEditorView::AppendCameraFrustumLines(std::vector<DebugLineVertex> &out) {
+    if (!context_) return;
+    auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
 
-    const Matrix4x4 invViewProjection = cameraRenderer->GetViewProjectionMatrix().Inverse();
+    constexpr Vector4 kNearColor{ 0.47f, 0.78f, 1.0f, 1.0f };
+    constexpr Vector4 kFarColor{ 0.47f, 0.78f, 1.0f, 0.6f };
 
-    // NDCの4隅（近平面 z=0 / 遠平面 z=1、D3Dの深度レンジ）をワールド座標へ逆投影する
-    static constexpr float kNdcXY[4][2] = { {-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f} };
-    Vector3 nearCorners[4];
-    Vector3 farCorners[4];
-    for (int i = 0; i < 4; ++i) {
-        nearCorners[i] = UnprojectNdc(invViewProjection, kNdcXY[i][0], kNdcXY[i][1], 0.0f);
-        farCorners[i] = UnprojectNdc(invViewProjection, kNdcXY[i][0], kNdcXY[i][1], 1.0f);
-    }
+    for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
+        if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
 
-    ImVec2 nearScreen[4];
-    ImVec2 farScreen[4];
-    bool nearValid[4];
-    bool farValid[4];
-    for (int i = 0; i < 4; ++i) {
-        // 頂点がウィンドウ外にはみ出していても、線自体はImGuiのクリップ矩形で正しく切り取られるように
-        // クランプせずに射影する（カメラの背後にある場合のみ false になる）
-        nearValid[i] = ProjectToImage(nearCorners[i], imagePos, imageSize, nearScreen[i], false);
-        farValid[i] = ProjectToImage(farCorners[i], imagePos, imageSize, farScreen[i], false);
-    }
+        const Matrix4x4 invViewProjection = cameraRenderer->GetViewProjectionMatrix().Inverse();
 
-    auto *drawList = ImGui::GetWindowDrawList();
-    for (int i = 0; i < 4; ++i) {
-        const int next = (i + 1) % 4;
-        if (nearValid[i] && nearValid[next]) drawList->AddLine(nearScreen[i], nearScreen[next], color, 1.5f);
-        if (farValid[i] && farValid[next]) drawList->AddLine(farScreen[i], farScreen[next], color, 1.0f);
-        if (nearValid[i] && farValid[i]) drawList->AddLine(nearScreen[i], farScreen[i], color, 1.0f);
+        // NDCの4隅（近平面 z=0 / 遠平面 z=1、D3Dの深度レンジ）をワールド座標へ逆投影する
+        static constexpr float kNdcXY[4][2] = { {-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f} };
+        Vector3 nearCorners[4];
+        Vector3 farCorners[4];
+        for (int i = 0; i < 4; ++i) {
+            nearCorners[i] = UnprojectNdc(invViewProjection, kNdcXY[i][0], kNdcXY[i][1], 0.0f);
+            farCorners[i] = UnprojectNdc(invViewProjection, kNdcXY[i][0], kNdcXY[i][1], 1.0f);
+        }
+
+        for (int i = 0; i < 4; ++i) {
+            const int next = (i + 1) % 4;
+            out.push_back({ nearCorners[i], kNearColor });
+            out.push_back({ nearCorners[next], kNearColor });
+            out.push_back({ farCorners[i], kFarColor });
+            out.push_back({ farCorners[next], kFarColor });
+            out.push_back({ nearCorners[i], kNearColor });
+            out.push_back({ farCorners[i], kFarColor });
+        }
     }
 }
 
-void SceneEditorView::DrawColliderGizmos(const ImVec2 &imagePos, const ImVec2 &imageSize) {
-    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+void SceneEditorView::AppendColliderDebugLines(std::vector<DebugLineVertex> &out) {
+    if (!context_) return;
     auto *sceneObjectCollider = context_->GetComponent<SceneObjectCollider>();
     if (!sceneObjectCollider) return;
 
-    constexpr ImU32 kSolidColor = IM_COL32(80, 230, 120, 255);
-    constexpr ImU32 kTriggerColor = IM_COL32(255, 200, 40, 255);
-    constexpr ImU32 kRayColor = IM_COL32(255, 90, 220, 255);
-
-    auto *drawList = ImGui::GetWindowDrawList();
-    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+    constexpr Vector4 kSolidColor{ 0.31f, 0.90f, 0.47f, 1.0f };
+    constexpr Vector4 kTriggerColor{ 1.0f, 0.78f, 0.16f, 1.0f };
+    constexpr Vector4 kRayColor{ 1.0f, 0.35f, 0.86f, 1.0f };
 
     for (auto *collider : sceneObjectCollider->GetRegisteredColliders()) {
         if (!collider || !collider->IsActive()) continue;
-        const ImU32 color = collider->IsTrigger() ? kTriggerColor : kSolidColor;
+        const Vector4 &color = collider->IsTrigger() ? kTriggerColor : kSolidColor;
 
         if (collider->Is2D()) {
             if (auto info = collider->BuildColliderInfo2D()) {
-                DrawCollider2DShape(*info, collider->GetOwnerWorldPosition().z, imagePos, imageSize, color);
+                AppendCollider2DShape(out, *info, collider->GetOwnerWorldPosition().z, color);
             }
             continue;
         }
@@ -396,24 +396,22 @@ void SceneEditorView::DrawColliderGizmos(const ImVec2 &imagePos, const ImVec2 &i
             std::visit([&](const auto &shape) {
                 using T = std::decay_t<decltype(shape)>;
                 if constexpr (std::is_same_v<T, ColliderInfo3D::SphereShape3D>) {
-                    DrawWireSphere3D(shape.center, shape.radius, imagePos, imageSize, color);
+                    AppendWireSphere3D(out, shape.center, shape.radius, color);
                 } else if constexpr (std::is_same_v<T, ColliderInfo3D::BoxShape3D>) {
-                    DrawWireBox3D(shape.center, shape.halfExtents, imagePos, imageSize, color);
+                    AppendWireBox3D(out, shape.center, shape.halfExtents, color);
                 } else if constexpr (std::is_same_v<T, ColliderInfo3D::CapsuleShape3D>) {
-                    DrawWireCapsule3D(shape.center, shape.radius, shape.height, imagePos, imageSize, color);
+                    AppendWireCapsule3D(out, shape.center, shape.radius, shape.height, color);
                 }
                 // ConvexMesh/ConcaveMesh/HeightFieldはエンジン内に生成コンポーネントが無いため未対応
             }, info->shape);
         } else if (auto *rayCollider = dynamic_cast<RayCollider *>(collider)) {
             // RayColliderは常駐形状を持たないため、方向・距離からレイとして描画する
-            DrawRayGizmo(collider->GetOwnerWorldPosition(), rayCollider->GetDirection(), rayCollider->GetMaxDistance(), imagePos, imageSize, kRayColor);
+            AppendRayGizmo(out, collider->GetOwnerWorldPosition(), rayCollider->GetDirection(), rayCollider->GetMaxDistance(), kRayColor);
         }
     }
-
-    drawList->PopClipRect();
 }
 
-void SceneEditorView::DrawWireBox3D(const Vector3 &center, const Vector3 &halfExtents, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) {
+void SceneEditorView::AppendWireBox3D(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &halfExtents, const Vector4 &color) {
     Vector3 corners[8];
     for (int i = 0; i < 8; ++i) {
         corners[i] = Vector3(
@@ -421,32 +419,24 @@ void SceneEditorView::DrawWireBox3D(const Vector3 &center, const Vector3 &halfEx
             center.y + ((i & 2) ? halfExtents.y : -halfExtents.y),
             center.z + ((i & 4) ? halfExtents.z : -halfExtents.z));
     }
-    ImVec2 screen[8];
-    bool valid[8];
-    for (int i = 0; i < 8; ++i) {
-        valid[i] = ProjectToImage(corners[i], imagePos, imageSize, screen[i], false);
-    }
 
     static constexpr int kEdges[12][2] = {
         {0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 3},
         {2, 6}, {3, 7}, {4, 5}, {4, 6}, {5, 7}, {6, 7},
     };
-    auto *drawList = ImGui::GetWindowDrawList();
     for (const auto &edge : kEdges) {
-        if (valid[edge[0]] && valid[edge[1]]) {
-            drawList->AddLine(screen[edge[0]], screen[edge[1]], color, 1.5f);
-        }
+        out.push_back({ corners[edge[0]], color });
+        out.push_back({ corners[edge[1]], color });
     }
 }
 
-void SceneEditorView::DrawWireSphere3D(const Vector3 &center, float radius, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) {
+void SceneEditorView::AppendWireSphere3D(std::vector<DebugLineVertex> &out, const Vector3 &center, float radius, const Vector4 &color) {
     constexpr int kSegments = 24;
-    auto *drawList = ImGui::GetWindowDrawList();
 
     // XY・XZ・YZの3つの円で球を近似する
     for (int plane = 0; plane < 3; ++plane) {
-        ImVec2 prevScreen{};
-        bool prevValid = false;
+        Vector3 prevPoint{};
+        bool hasPrev = false;
         for (int i = 0; i <= kSegments; ++i) {
             const float angle = static_cast<float>(i) / static_cast<float>(kSegments) * 2.0f * std::numbers::pi_v<float>;
             const float c = std::cos(angle) * radius;
@@ -456,220 +446,262 @@ void SceneEditorView::DrawWireSphere3D(const Vector3 &center, float radius, cons
             else if (plane == 1) { point.x += c; point.z += s; }
             else { point.y += c; point.z += s; }
 
-            ImVec2 screen;
-            const bool valid = ProjectToImage(point, imagePos, imageSize, screen, false);
-            if (valid && prevValid) drawList->AddLine(prevScreen, screen, color, 1.5f);
-            prevScreen = screen;
-            prevValid = valid;
+            if (hasPrev) {
+                out.push_back({ prevPoint, color });
+                out.push_back({ point, color });
+            }
+            prevPoint = point;
+            hasPrev = true;
         }
     }
 }
 
-void SceneEditorView::DrawWireCapsule3D(const Vector3 &center, float radius, float height, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) {
+void SceneEditorView::AppendWireCapsule3D(std::vector<DebugLineVertex> &out, const Vector3 &center, float radius, float height, const Vector4 &color) {
     constexpr int kSegments = 24;
-    auto *drawList = ImGui::GetWindowDrawList();
     const float halfHeight = height * 0.5f;
     const Vector3 topCenter = center + Vector3(0.0f, halfHeight, 0.0f);
     const Vector3 bottomCenter = center - Vector3(0.0f, halfHeight, 0.0f);
 
     // カプセルはReactPhysics3Dの規約に合わせてY軸方向を軸とする（半球部は簡略化して円柱部のみ描画する）
-    auto drawCircleXZ = [&](const Vector3 &circleCenter) {
-        ImVec2 prevScreen{};
-        bool prevValid = false;
+    auto appendCircleXZ = [&](const Vector3 &circleCenter) {
+        Vector3 prevPoint{};
+        bool hasPrev = false;
         for (int i = 0; i <= kSegments; ++i) {
             const float angle = static_cast<float>(i) / static_cast<float>(kSegments) * 2.0f * std::numbers::pi_v<float>;
             Vector3 point = circleCenter;
             point.x += std::cos(angle) * radius;
             point.z += std::sin(angle) * radius;
-            ImVec2 screen;
-            const bool valid = ProjectToImage(point, imagePos, imageSize, screen, false);
-            if (valid && prevValid) drawList->AddLine(prevScreen, screen, color, 1.5f);
-            prevScreen = screen;
-            prevValid = valid;
+            if (hasPrev) {
+                out.push_back({ prevPoint, color });
+                out.push_back({ point, color });
+            }
+            prevPoint = point;
+            hasPrev = true;
         }
     };
-    drawCircleXZ(topCenter);
-    drawCircleXZ(bottomCenter);
+    appendCircleXZ(topCenter);
+    appendCircleXZ(bottomCenter);
 
     for (int i = 0; i < 4; ++i) {
         const float angle = static_cast<float>(i) / 4.0f * 2.0f * std::numbers::pi_v<float>;
         const float dx = std::cos(angle) * radius;
         const float dz = std::sin(angle) * radius;
-        ImVec2 topScreen;
-        ImVec2 bottomScreen;
-        const bool topValid = ProjectToImage(topCenter + Vector3(dx, 0.0f, dz), imagePos, imageSize, topScreen, false);
-        const bool bottomValid = ProjectToImage(bottomCenter + Vector3(dx, 0.0f, dz), imagePos, imageSize, bottomScreen, false);
-        if (topValid && bottomValid) drawList->AddLine(topScreen, bottomScreen, color, 1.5f);
+        out.push_back({ topCenter + Vector3(dx, 0.0f, dz), color });
+        out.push_back({ bottomCenter + Vector3(dx, 0.0f, dz), color });
     }
 }
 
-void SceneEditorView::DrawCollider2DShape(const ColliderInfo2D &info, float worldZ, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) {
-    auto *drawList = ImGui::GetWindowDrawList();
-
+void SceneEditorView::AppendCollider2DShape(std::vector<DebugLineVertex> &out, const ColliderInfo2D &info, float worldZ, const Vector4 &color) {
     std::visit([&](const auto &shape) {
         using T = std::decay_t<decltype(shape)>;
         if constexpr (std::is_same_v<T, Math::Point2D>) {
-            ImVec2 screen;
-            if (ProjectToImage(Vector3(shape.position.x, shape.position.y, worldZ), imagePos, imageSize, screen, false)) {
-                drawList->AddCircleFilled(screen, 3.0f, color);
-            }
+            // 点は微小な十字線として表現する
+            const Vector3 p(shape.position.x, shape.position.y, worldZ);
+            constexpr float kSize = 0.1f;
+            out.push_back({ p - Vector3(kSize, 0.0f, 0.0f), color });
+            out.push_back({ p + Vector3(kSize, 0.0f, 0.0f), color });
+            out.push_back({ p - Vector3(0.0f, kSize, 0.0f), color });
+            out.push_back({ p + Vector3(0.0f, kSize, 0.0f), color });
         } else if constexpr (std::is_same_v<T, Math::Circle>) {
             constexpr int kSegments = 24;
-            ImVec2 prevScreen{};
-            bool prevValid = false;
+            Vector3 prevPoint{};
+            bool hasPrev = false;
             for (int i = 0; i <= kSegments; ++i) {
                 const float angle = static_cast<float>(i) / static_cast<float>(kSegments) * 2.0f * std::numbers::pi_v<float>;
                 const Vector3 point(shape.center.x + std::cos(angle) * shape.radius, shape.center.y + std::sin(angle) * shape.radius, worldZ);
-                ImVec2 screen;
-                const bool valid = ProjectToImage(point, imagePos, imageSize, screen, false);
-                if (valid && prevValid) drawList->AddLine(prevScreen, screen, color, 1.5f);
-                prevScreen = screen;
-                prevValid = valid;
+                if (hasPrev) {
+                    out.push_back({ prevPoint, color });
+                    out.push_back({ point, color });
+                }
+                prevPoint = point;
+                hasPrev = true;
             }
         } else if constexpr (std::is_same_v<T, Math::Rect>) {
-            const Vector2 corners2D[4] = {
-                Vector2(shape.center.x - shape.halfSize.x, shape.center.y - shape.halfSize.y),
-                Vector2(shape.center.x + shape.halfSize.x, shape.center.y - shape.halfSize.y),
-                Vector2(shape.center.x + shape.halfSize.x, shape.center.y + shape.halfSize.y),
-                Vector2(shape.center.x - shape.halfSize.x, shape.center.y + shape.halfSize.y),
+            const Vector3 corners[4] = {
+                Vector3(shape.center.x - shape.halfSize.x, shape.center.y - shape.halfSize.y, worldZ),
+                Vector3(shape.center.x + shape.halfSize.x, shape.center.y - shape.halfSize.y, worldZ),
+                Vector3(shape.center.x + shape.halfSize.x, shape.center.y + shape.halfSize.y, worldZ),
+                Vector3(shape.center.x - shape.halfSize.x, shape.center.y + shape.halfSize.y, worldZ),
             };
-            ImVec2 screen[4];
-            bool valid[4];
-            for (int i = 0; i < 4; ++i) {
-                valid[i] = ProjectToImage(Vector3(corners2D[i].x, corners2D[i].y, worldZ), imagePos, imageSize, screen[i], false);
-            }
             for (int i = 0; i < 4; ++i) {
                 const int next = (i + 1) % 4;
-                if (valid[i] && valid[next]) drawList->AddLine(screen[i], screen[next], color, 1.5f);
+                out.push_back({ corners[i], color });
+                out.push_back({ corners[next], color });
             }
         } else if constexpr (std::is_same_v<T, Math::Segment2D>) {
-            ImVec2 startScreen;
-            ImVec2 endScreen;
-            const bool startValid = ProjectToImage(Vector3(shape.start.x, shape.start.y, worldZ), imagePos, imageSize, startScreen, false);
-            const bool endValid = ProjectToImage(Vector3(shape.end.x, shape.end.y, worldZ), imagePos, imageSize, endScreen, false);
-            if (startValid && endValid) drawList->AddLine(startScreen, endScreen, color, 2.0f);
-            if (endValid) drawList->AddCircleFilled(endScreen, 3.0f, color);
+            out.push_back({ Vector3(shape.start.x, shape.start.y, worldZ), color });
+            out.push_back({ Vector3(shape.end.x, shape.end.y, worldZ), color });
         } else if constexpr (std::is_same_v<T, Math::Capsule2D>) {
             const Vector2 axis = shape.end - shape.start;
             const float axisLength = axis.Length();
             const Vector2 dir = axisLength > 1e-6f ? axis * (1.0f / axisLength) : Vector2(1.0f, 0.0f);
             const Vector2 offset = dir.Perpendicular() * shape.radius;
 
-            ImVec2 s1;
-            ImVec2 s2;
-            ImVec2 e1;
-            ImVec2 e2;
-            const bool s1Valid = ProjectToImage(Vector3(shape.start.x + offset.x, shape.start.y + offset.y, worldZ), imagePos, imageSize, s1, false);
-            const bool s2Valid = ProjectToImage(Vector3(shape.start.x - offset.x, shape.start.y - offset.y, worldZ), imagePos, imageSize, s2, false);
-            const bool e1Valid = ProjectToImage(Vector3(shape.end.x + offset.x, shape.end.y + offset.y, worldZ), imagePos, imageSize, e1, false);
-            const bool e2Valid = ProjectToImage(Vector3(shape.end.x - offset.x, shape.end.y - offset.y, worldZ), imagePos, imageSize, e2, false);
-            if (s1Valid && e1Valid) drawList->AddLine(s1, e1, color, 1.5f);
-            if (s2Valid && e2Valid) drawList->AddLine(s2, e2, color, 1.5f);
+            const Vector3 s1(shape.start.x + offset.x, shape.start.y + offset.y, worldZ);
+            const Vector3 s2(shape.start.x - offset.x, shape.start.y - offset.y, worldZ);
+            const Vector3 e1(shape.end.x + offset.x, shape.end.y + offset.y, worldZ);
+            const Vector3 e2(shape.end.x - offset.x, shape.end.y - offset.y, worldZ);
+            out.push_back({ s1, color });
+            out.push_back({ e1, color });
+            out.push_back({ s2, color });
+            out.push_back({ e2, color });
 
             // 端の半円（近似）
             const float baseAngle = std::atan2(dir.y, dir.x);
-            auto drawArc = [&](const Vector2 &arcCenter, float startAngle) {
+            auto appendArc = [&](const Vector2 &arcCenter, float startAngle) {
                 constexpr int kArcSegments = 12;
-                ImVec2 prevScreen{};
-                bool prevValid = false;
+                Vector3 prevPoint{};
+                bool hasPrev = false;
                 for (int i = 0; i <= kArcSegments; ++i) {
                     const float angle = startAngle + static_cast<float>(i) / static_cast<float>(kArcSegments) * std::numbers::pi_v<float>;
                     const Vector3 point(arcCenter.x + std::cos(angle) * shape.radius, arcCenter.y + std::sin(angle) * shape.radius, worldZ);
-                    ImVec2 screen;
-                    const bool valid = ProjectToImage(point, imagePos, imageSize, screen, false);
-                    if (valid && prevValid) drawList->AddLine(prevScreen, screen, color, 1.5f);
-                    prevScreen = screen;
-                    prevValid = valid;
+                    if (hasPrev) {
+                        out.push_back({ prevPoint, color });
+                        out.push_back({ point, color });
+                    }
+                    prevPoint = point;
+                    hasPrev = true;
                 }
             };
-            drawArc(shape.end, baseAngle - std::numbers::pi_v<float> * 0.5f);
-            drawArc(shape.start, baseAngle + std::numbers::pi_v<float> * 0.5f);
+            appendArc(shape.end, baseAngle - std::numbers::pi_v<float> * 0.5f);
+            appendArc(shape.start, baseAngle + std::numbers::pi_v<float> * 0.5f);
         }
     }, info.shape);
 }
 
-void SceneEditorView::DrawRayGizmo(const Vector3 &origin, const Vector3 &direction, float length, const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) {
+void SceneEditorView::AppendRayGizmo(std::vector<DebugLineVertex> &out, const Vector3 &origin, const Vector3 &direction, float length, const Vector4 &color) {
     const Vector3 dir = direction.Length() > 1e-6f ? direction.Normalize() : Vector3(0.0f, -1.0f, 0.0f);
     const Vector3 end = origin + dir * length;
-
-    ImVec2 startScreen;
-    ImVec2 endScreen;
-    const bool startValid = ProjectToImage(origin, imagePos, imageSize, startScreen, false);
-    const bool endValid = ProjectToImage(end, imagePos, imageSize, endScreen, false);
-
-    auto *drawList = ImGui::GetWindowDrawList();
-    if (startValid && endValid) drawList->AddLine(startScreen, endScreen, color, 2.0f);
-    if (endValid) drawList->AddCircleFilled(endScreen, 3.0f, color);
+    out.push_back({ origin, color });
+    out.push_back({ end, color });
 }
 
-void SceneEditorView::ShowGizmo(EmptyObject *selectedObject, SceneEditorCommands *commands, const ImVec2 &imagePos, const ImVec2 &imageSize) {
-    // 選択オブジェクトが変わった場合は編集状態をリセットする
-    if (selectedObject != gizmoTargetObject_) {
-        gizmoTargetObject_ = selectedObject;
+void SceneEditorView::ApplyWorldMatrixToTransform(Transform *transform, const Matrix4x4 &worldMatrix) {
+    if (!transform) return;
+
+    // 親がいる場合はローカル行列へ変換してから適用する
+    Matrix4x4 local = worldMatrix;
+    if (auto *parentObject = transform->GetParentObject()) {
+        if (auto *parentTransform = parentObject->GetComponent<Transform>()) {
+            local = worldMatrix * parentTransform->GetWorldMatrix().Inverse();
+        }
+    }
+
+    Vector3 translate;
+    Vector3 rotateDeg;
+    Vector3 scale;
+    ImGuizmo::DecomposeMatrixToComponents(&local.m[0][0], &translate.x, &rotateDeg.x, &scale.x);
+
+    // オイラー角を経由すると（ジンバルロックや ImGuizmo との回転順の差により）
+    // ドラッグ中に回転が不安定になるため、回転はローカル行列から直接クォータニオンへ変換する。
+    // （translate/scale の抽出には ImGuizmo の分解結果をそのまま使う）
+    Matrix4x4 rotationOnly = local;
+    auto normalizeRow = [](Matrix4x4 &m, int row, float scaleValue) {
+        if (std::abs(scaleValue) < 1e-8f) return;
+        m.m[row][0] /= scaleValue;
+        m.m[row][1] /= scaleValue;
+        m.m[row][2] /= scaleValue;
+    };
+    normalizeRow(rotationOnly, 0, scale.x);
+    normalizeRow(rotationOnly, 1, scale.y);
+    normalizeRow(rotationOnly, 2, scale.z);
+
+    transform->SetTranslate(translate);
+    transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotationOnly));
+    transform->SetScale(scale);
+}
+
+void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    // 選択集合が変わった場合は編集状態をリセットする
+    if (selectedObjects != gizmoTargetObjects_) {
+        gizmoTargetObjects_ = selectedObjects;
         isGizmoEditing_ = false;
     }
-    if (!selectedObject || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
-    auto *transform = selectedObject->GetComponent<Transform>();
-    if (!transform) return;
+
+    std::vector<std::pair<EmptyObject *, Transform *>> targets;
+    for (auto *obj : gizmoTargetObjects_) {
+        if (!obj) continue;
+        if (auto *transform = obj->GetComponent<Transform>()) {
+            targets.emplace_back(obj, transform);
+        }
+    }
+    if (targets.empty() || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
     ImGuizmo::SetRect(imagePos.x, imagePos.y, imageSize.x, imageSize.y);
 
-    Matrix4x4 model = transform->GetWorldMatrix();
     Matrix4x4 view = view_;
     Matrix4x4 projection = projection_;
+    const bool isSingle = (targets.size() == 1);
+
+    if (!ImGuizmo::IsUsing()) {
+        // 未操作中はギズモの基準行列を毎フレーム最新の状態から作り直す。
+        // 単一選択時は対象自身のワールド行列（Local/Worldモードの切り替えが意味を持つ）、
+        // 複数選択時は選択群の平均位置を中心としたワールド軸固定の仮想行列にする
+        // （バラバラな向きのオブジェクト群に共通のローカル基準は定義できないため）。
+        if (isSingle) {
+            groupGizmoMatrix_ = targets[0].second->GetWorldMatrix();
+        } else {
+            Vector3 pivot{ 0.0f, 0.0f, 0.0f };
+            for (auto &[obj, transform] : targets) {
+                const Matrix4x4 &world = transform->GetWorldMatrix();
+                pivot = pivot + Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
+            }
+            pivot = pivot * (1.0f / static_cast<float>(targets.size()));
+            groupGizmoMatrix_ = Matrix4x4::Identity();
+            groupGizmoMatrix_.m[3][0] = pivot.x;
+            groupGizmoMatrix_.m[3][1] = pivot.y;
+            groupGizmoMatrix_.m[3][2] = pivot.z;
+        }
+    }
+
+    // このフレームの増分（デルタ）を算出するため、Manipulate直前の状態を控えておく
+    const Matrix4x4 beforeManipulate = groupGizmoMatrix_;
 
     ImGuizmo::Manipulate(
         &view.m[0][0], &projection.m[0][0],
         static_cast<ImGuizmo::OPERATION>(gizmoOperation_),
-        static_cast<ImGuizmo::MODE>(gizmoMode_),
-        &model.m[0][0]);
+        isSingle ? static_cast<ImGuizmo::MODE>(gizmoMode_) : ImGuizmo::WORLD,
+        &groupGizmoMatrix_.m[0][0]);
 
     if (ImGuizmo::IsUsing()) {
-        // 操作開始時に変更前の状態を保存する（Undo用）
+        // 操作開始時に変更前の状態を全対象分保存する（Undo用）
         if (!isGizmoEditing_) {
             isGizmoEditing_ = true;
-            gizmoBefore_ = selectedObject->SaveComponentToJson(transform);
-        }
-
-        // 親がいる場合はローカル行列へ変換してから適用する
-        Matrix4x4 local = model;
-        if (auto *parentObject = transform->GetParentObject()) {
-            if (auto *parentTransform = parentObject->GetComponent<Transform>()) {
-                local = model * parentTransform->GetWorldMatrix().Inverse();
+            gizmoBeforeStates_.clear();
+            for (auto &[obj, transform] : targets) {
+                gizmoBeforeStates_.push_back({ obj, obj->SaveComponentToJson(transform) });
             }
         }
 
-        Vector3 translate;
-        Vector3 rotateDeg;
-        Vector3 scale;
-        ImGuizmo::DecomposeMatrixToComponents(&local.m[0][0], &translate.x, &rotateDeg.x, &scale.x);
-
-        // オイラー角を経由すると（ジンバルロックや ImGuizmo との回転順の差により）
-        // ドラッグ中に回転が不安定になるため、回転はローカル行列から直接クォータニオンへ変換する。
-        // （translate/scale の抽出には ImGuizmo の分解結果をそのまま使う）
-        Matrix4x4 rotationOnly = local;
-        auto normalizeRow = [](Matrix4x4 &m, int row, float scaleValue) {
-            if (std::abs(scaleValue) < 1e-8f) return;
-            m.m[row][0] /= scaleValue;
-            m.m[row][1] /= scaleValue;
-            m.m[row][2] /= scaleValue;
-        };
-        normalizeRow(rotationOnly, 0, scale.x);
-        normalizeRow(rotationOnly, 1, scale.y);
-        normalizeRow(rotationOnly, 2, scale.z);
-
-        transform->SetTranslate(translate);
-        transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotationOnly));
-        transform->SetScale(scale);
-    } else if (isGizmoEditing_) {
-        // 操作終了時にUndo/Redo履歴へ積む
-        isGizmoEditing_ = false;
-        JSON after = selectedObject->SaveComponentToJson(transform);
-        if (commands && after != gizmoBefore_) {
-            commands->PushExecuted(std::make_unique<ComponentEditCommand>(selectedObject, transform, gizmoBefore_, after));
+        // このフレームでギズモに加えられた増分（ワールド空間）を全対象へ均等に適用する
+        // （row-vector規約: A' = A * D なら D = A^-1 * A'）
+        const Matrix4x4 delta = beforeManipulate.Inverse() * groupGizmoMatrix_;
+        for (auto &[obj, transform] : targets) {
+            const Matrix4x4 newWorld = transform->GetWorldMatrix() * delta;
+            ApplyWorldMatrixToTransform(transform, newWorld);
         }
+    } else if (isGizmoEditing_) {
+        // 操作終了時にUndo/Redo履歴へ積む（全対象をまとめて1操作にする）
+        isGizmoEditing_ = false;
+        if (commands) {
+            auto composite = std::make_unique<CompositeCommand>(
+                (gizmoBeforeStates_.size() > 1) ? ("Transform " + std::to_string(gizmoBeforeStates_.size()) + " Objects") : "Transform Object");
+            bool anyChanged = false;
+            for (auto &state : gizmoBeforeStates_) {
+                if (!state.object) continue;
+                auto *transform = state.object->GetComponent<Transform>();
+                if (!transform) continue;
+                JSON after = state.object->SaveComponentToJson(transform);
+                if (after != state.before) {
+                    anyChanged = true;
+                    composite->AddCommand(std::make_unique<ComponentEditCommand>(state.object, transform, state.before, after));
+                }
+            }
+            if (anyChanged) commands->PushExecuted(std::move(composite));
+        }
+        gizmoBeforeStates_.clear();
     }
 }
 

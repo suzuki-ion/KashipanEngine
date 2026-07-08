@@ -5,6 +5,7 @@
 #include "Utilities/Translation.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/AssetDragDropPayload.h"
 
 #include <algorithm>
 #include <cctype>
@@ -295,6 +296,27 @@ MaterialManager::MaterialHandle MaterialManager::GetMaterialHandleFromName(const
     return it->second;
 }
 
+bool MaterialManager::RenameMaterialFile(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    // assetPath -> handle の直接マップは存在しないため走査して探す
+    // （Material::name とは独立した概念のため sNameToHandle は使わない）
+    auto entryIt = std::find_if(sMaterials.begin(), sMaterials.end(),
+        [&normalizedOld](const auto &kv) { return kv.second.assetPath == normalizedOld; });
+    if (entryIt == sMaterials.end()) return false;
+
+    MaterialEntry &entry = entryIt->second;
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fullPath = sAssetsRootPath + "/" + normalizedNew;
+
+    sFileNameToHandle[entry.fileName] = entryIt->first;
+    return true;
+}
+
 MaterialManager::Material* MaterialManager::GetMaterial(MaterialHandle handle) {
     if (handle == kInvalidHandle) return nullptr;
     auto it = sMaterials.find(handle);
@@ -454,7 +476,17 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
         }
     }
 
-    ImGui::ColorEdit4("Color", &material->color.x);
+    ShowMaterialEditorFields(*material);
+
+    if (ImGui::Button("Save")) {
+        SaveMaterial(sSelectedHandle);
+    }
+
+    ImGui::End();
+}
+
+void MaterialManager::ShowMaterialEditorFields(Material &material) {
+    ImGui::ColorEdit4("Color", &material.color.x);
 
     // テクスチャは読み込み済みのものから選択する
     // ファイル名単体だと同名ファイルが複数フォルダにある場合にImGuiのID重複警告が出るため、
@@ -463,31 +495,34 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
     for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
         texturePaths.push_back(entry.assetPath);
     }
-    std::string texturePath = TextureManager::GetTextureAssetPath(material->textureHandle);
-    if (texturePath.empty()) texturePath = material->textureFileName; // 未解決の場合は保留中のファイル名を表示
+    std::string texturePath = TextureManager::GetTextureAssetPath(material.textureHandle);
+    if (texturePath.empty()) texturePath = material.textureFileName; // 未解決の場合は保留中のファイル名を表示
     if (ImGuiCustom::SelectString("Texture", texturePath, texturePaths, true)) {
-        material->textureHandle = texturePath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(texturePath);
-        material->textureFileName = TextureManager::GetTextureFileName(material->textureHandle);
+        material.textureHandle = texturePath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(texturePath);
+        material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
     }
-    std::string environmentPath = TextureManager::GetTextureAssetPath(material->environmentHandle);
-    if (environmentPath.empty()) environmentPath = material->environmentFileName;
+    // Assetsウィンドウからのテクスチャファイルドラッグ&ドロップも受け付ける
+    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
+        material.textureHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
+        material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
+    }
+    std::string environmentPath = TextureManager::GetTextureAssetPath(material.environmentHandle);
+    if (environmentPath.empty()) environmentPath = material.environmentFileName;
     if (ImGuiCustom::SelectString("Environment", environmentPath, texturePaths, true)) {
-        material->environmentHandle = environmentPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(environmentPath);
-        material->environmentFileName = TextureManager::GetTextureFileName(material->environmentHandle);
+        material.environmentHandle = environmentPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(environmentPath);
+        material.environmentFileName = TextureManager::GetTextureFileName(material.environmentHandle);
+    }
+    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
+        material.environmentHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
+        material.environmentFileName = TextureManager::GetTextureFileName(material.environmentHandle);
     }
 
-    ImGui::DragFloat("Shininess", &material->shininess, 0.1f, 0.0f, 1024.0f);
-    ImGui::ColorEdit4("Specular Color", &material->specularColor.x);
-    ImGui::DragFloat("Environment Coefficient", &material->environmentCoefficient, 0.01f, 0.0f, 1.0f);
-    ImGui::Checkbox("Enable Lighting", &material->enableLighting);
-    ImGui::Checkbox("Enable ShadowMap Projection", &material->enableShadowMapProjection);
-    ImGuiCustom::EditValue("UV Transform", material->uvTransform);
-
-    if (ImGui::Button("Save")) {
-        SaveMaterial(sSelectedHandle);
-    }
-
-    ImGui::End();
+    ImGui::DragFloat("Shininess", &material.shininess, 0.1f, 0.0f, 1024.0f);
+    ImGui::ColorEdit4("Specular Color", &material.specularColor.x);
+    ImGui::DragFloat("Environment Coefficient", &material.environmentCoefficient, 0.01f, 0.0f, 1.0f);
+    ImGui::Checkbox("Enable Lighting", &material.enableLighting);
+    ImGui::Checkbox("Enable ShadowMap Projection", &material.enableShadowMapProjection);
+    ImGuiCustom::EditValue("UV Transform", material.uvTransform);
 }
 #endif
 

@@ -2,6 +2,7 @@
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Components/Render/SceneRenderer.h"
+#include "Objects/Components/Transform.h"
 #ifdef USE_IMGUI
 #include "Scene/SceneEditor.h"
 #include "Scene/SceneEditorContext.h"
@@ -220,6 +221,25 @@ EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &ob
 bool Scene::DeleteObject(EmptyObject *obj) {
     if (!obj) return false;
     auto it = std::find_if(objects_.begin(), objects_.end(),
+        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    if (it == objects_.end()) return false;
+
+    // 子オブジェクトも道連れに削除する（削除前に対象を収集してから再帰的に削除する。
+    // 削除中に objects_ が変化しイテレータが無効化されるため、先に収集する必要がある）
+    std::vector<EmptyObject *> children;
+    for (const auto &candidate : objects_) {
+        if (!candidate || candidate.get() == obj) continue;
+        auto *candidateTransform = candidate->GetComponent<Transform>();
+        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
+            children.push_back(candidate.get());
+        }
+    }
+    for (auto *child : children) {
+        DeleteObject(child); // 再帰呼び出しでさらに孫オブジェクトも削除される
+    }
+
+    // 子オブジェクトの削除により objects_ が変化しているため、対象オブジェクトを再検索する
+    it = std::find_if(objects_.begin(), objects_.end(),
         [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
     if (it == objects_.end()) return false;
     RemoveObjectFromMaps(obj);

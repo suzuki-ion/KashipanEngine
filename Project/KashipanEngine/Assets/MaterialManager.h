@@ -94,6 +94,15 @@ public:
     /// @param name マテリアル名（例: "MyMaterial"）
     static MaterialHandle GetMaterialHandleFromName(const std::string& name);
 
+    /// @brief 読み込み済みマテリアルのファイル名/パス登録をリネーム後の値へ更新する
+    /// @details 実ファイル（.mat）を外部（Assetsウィンドウ等）でリネーム/移動した後に呼ぶこと。
+    ///          このメソッド自体はファイルの実体は操作しない。マテリアル自身の名前（Material::name、
+    ///          sNameToHandleでの検索キー）は別概念のため変更しない。
+    /// @param oldAssetPath リネーム前のAssetsルートからの相対パス
+    /// @param newAssetPath リネーム後のAssetsルートからの相対パス
+    /// @return 対象マテリアルが見つかり更新に成功した場合は true
+    static bool RenameMaterialFile(const std::string& oldAssetPath, const std::string& newAssetPath);
+
     /// @brief ハンドルからマテリアルを取得
     static Material* GetMaterial(MaterialHandle handle);
     /// @brief マテリアル名からマテリアルを取得
@@ -110,6 +119,11 @@ public:
 #if defined(USE_IMGUI)
     /// @brief マテリアル管理用ImGuiウィンドウを描画（一覧・編集・追加・削除・保存）
     static void ShowImGuiMaterialManagerWindow();
+    /// @brief 単一マテリアルの編集フィールド（色・テクスチャ・各種パラメータ）を描画する
+    /// @details Assetsウィンドウの単一マテリアル編集ウィンドウ等、一覧テーブルを持たない
+    ///          呼び出し元と共有するために切り出したもの。テクスチャ/環境マップの選択欄は
+    ///          Assetsウィンドウからのドラッグ&ドロップも受け付ける。
+    static void ShowMaterialEditorFields(Material &material);
 #endif
 
     const std::string &GetAssetsRootPath() const noexcept;

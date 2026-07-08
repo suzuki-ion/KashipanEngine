@@ -188,6 +188,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\LogSettings.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object3D.Solid.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugGrid.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugLines.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.BoxFilter.json" />
@@ -232,6 +234,12 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ColorAdjust.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Common\Camera2D.hlsli" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\ComputeTest.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugGrid.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugLines.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugGridVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugGridPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugLinesVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugLinesPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Grayscale.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
@@ -353,6 +361,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\PrimitiveMeshGenerator.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
@@ -425,6 +434,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\AssetEditorWindows.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\EditorSettings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp" />
@@ -486,6 +496,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
+    <ClInclude Include="KashipanEngine\Assets\PrimitiveMeshGenerator.h" />
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SkeletonManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
@@ -598,6 +609,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Capsule2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\CapsuleCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Circle2DCollider.h" />
@@ -630,6 +642,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Light.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\LightRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\NormalWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\OverlayWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferObject.h" />
@@ -672,6 +685,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\ComponentAddMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\AssetsWindow.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\AssetEditorWindows.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\EditorSettings.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
@@ -687,6 +701,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Scene\SceneEditorContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
     <ClInclude Include="KashipanEngine\UtilitiesHeaders.h" />
+    <ClInclude Include="KashipanEngine\Utilities\AssetDragDropPayload.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertString.h" />
     <ClInclude Include="KashipanEngine\Utilities\Dialogs\ConfirmDialog.h" />

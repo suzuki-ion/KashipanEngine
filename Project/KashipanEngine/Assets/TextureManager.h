@@ -88,6 +88,14 @@ public:
     /// @brief ハンドルからテクスチャのAssets相対パスを取得（無効時は空文字）
     static std::string GetTextureAssetPath(TextureHandle handle);
 
+    /// @brief 読み込み済みテクスチャのファイル名/パス登録をリネーム後の値へ更新する
+    /// @details 実ファイルを外部（Assetsウィンドウ等）でリネーム/移動した後に呼ぶこと。
+    ///          このメソッド自体はファイルの実体は操作しない。
+    /// @param oldAssetPath リネーム前のAssetsルートからの相対パス
+    /// @param newAssetPath リネーム後のAssetsルートからの相対パス
+    /// @return 対象テクスチャが見つかり更新に成功した場合は true
+    static bool RenameTexture(const std::string &oldAssetPath, const std::string &newAssetPath);
+
     /// @brief 読み込み済みテクスチャ一覧を取得
     static std::vector<TextureListEntry> GetLoadedTextureListEntries();
 

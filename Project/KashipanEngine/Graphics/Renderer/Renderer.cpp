@@ -32,17 +32,26 @@ namespace KashipanEngine {
 
 namespace {
 
-/// @brief gMaterials 構造化バッファと同レイアウトの構造体
+/// @brief gMaterials 構造化バッファ（Object3D）と同レイアウトの構造体
 #pragma pack(push, 4)
 struct MaterialElement {
     float enableLighting = 1.0f;
     float enableEnvironmentMapping = 0.0f;
     float enableShadowMapProjection = 1.0f;
+    float useTexture = 1.0f;
     Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
     Matrix4x4 uvTransform = Matrix4x4::Identity();
     float shininess = 32.0f;
     Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
     float environmentCoefficient = 0.0f;
+};
+
+/// @brief gMaterials 構造化バッファ（Object2D）と同レイアウトの構造体
+struct Material2DElement {
+    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Matrix4x4 uvTransform = Matrix4x4::Identity();
+    float useTexture = 1.0f;
+    float padding[3]{};
 };
 
 /// @brief gPointLights 構造化バッファと同レイアウトの構造体
@@ -290,13 +299,13 @@ void Renderer::RenderToTarget(IRenderTarget *target,
     // 同一（パイプライン・メッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
     size_t begin = 0;
     while (begin < entries.size()) {
-        auto *renderer = entries[begin].renderer;
+        const auto &first = entries[begin];
         size_t end = begin;
         while (end < entries.size()) {
-            auto *other = entries[end].renderer;
-            if (other->GetPipelineName() != renderer->GetPipelineName() ||
-                other->GetMeshHandle() != renderer->GetMeshHandle() ||
-                other->GetMaterialHandle() != renderer->GetMaterialHandle()) {
+            const auto &other = entries[end];
+            if (other.pipelineName != first.pipelineName ||
+                other.meshHandle != first.meshHandle ||
+                other.materialHandle != first.materialHandle) {
                 break;
             }
             ++end;
@@ -308,7 +317,10 @@ void Renderer::RenderToTarget(IRenderTarget *target,
 
     // ScreenBuffer の場合は所有オブジェクトのポストプロセスを適用
     if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
-        RenderPostProcess(static_cast<ScreenBuffer *>(target), pipelineBinder, sceneRenderer->GetTargetOwner(target));
+        auto *screenBuffer = static_cast<ScreenBuffer *>(target);
+        // エディター用描画先の場合、デバッグ表示（グリッド・当たり判定）をポストプロセスより先に描画する
+        RenderEditorDebugOverlay(screenBuffer, pipelineBinder, sceneRenderer);
+        RenderPostProcess(screenBuffer, pipelineBinder, sceneRenderer->GetTargetOwner(target));
     }
 
     // ウィンドウのコマンドリストはこの後 ImGui 等の描画にも使われるため、
@@ -324,11 +336,13 @@ void Renderer::DrawBatch(IRenderTarget *target,
     SceneRenderer *sceneRenderer) {
     if (batch.empty()) return;
 
-    auto *meshRenderer = batch.front().renderer;
-    const std::string &pipelineName = meshRenderer->GetPipelineName();
+    const auto &first = batch.front();
+    const std::string &pipelineName = first.pipelineName;
+    // Object2D系パイプラインかどうか（マテリアル構造体のレイアウトが異なる）
+    const bool isObject2D = pipelineName.rfind("Object2D", 0) == 0;
     auto *commandList = target->GetCommandList();
 
-    const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(meshRenderer->GetMeshHandle());
+    const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(first.meshHandle);
     if (!meshBuffers || !meshBuffers->vertexBuffer || !meshBuffers->indexBuffer) return;
 
     pipelineBinder.UsePipeline(pipelineName);
@@ -342,43 +356,65 @@ void Renderer::DrawBatch(IRenderTarget *target,
 
     // ワールド行列のインスタンスバッファ
     {
-        auto key = MakeBatchKey(target, pipelineName, meshRenderer->GetMeshHandle(), meshRenderer->GetMaterialHandle(), "transform");
+        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, "transform");
         auto *instanceBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(Matrix4x4), instanceCount);
         if (!instanceBuffer) return;
         auto *mapped = static_cast<Matrix4x4 *>(instanceBuffer->Map());
         if (!mapped) return;
         for (size_t i = 0; i < batch.size(); ++i) {
-            mapped[i] = batch[i].renderer->GetWorldMatrix();
+            mapped[i] = batch[i].worldMatrix;
         }
         shaderBinder.Bind("Vertex:gTransformationMatrices", instanceBuffer);
     }
 
     // マテリアルの構造化バッファ（シェーダーはインスタンスIDで参照するため個数分並べる）
     {
-        MaterialElement element;
-        auto *material = MaterialManager::GetMaterial(meshRenderer->GetMaterialHandle());
+        auto *material = MaterialManager::GetMaterial(first.materialHandle);
         if (material) {
             // 読み込み時に未解決だったテクスチャハンドルの解決を試みる
             material->ResolveTextureHandles();
-            element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
-            element.enableEnvironmentMapping = (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-            element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
-            element.color = material->color;
-            element.uvTransform = material->uvTransform;
-            element.shininess = material->shininess;
-            element.specularColor = material->specularColor;
-            element.environmentCoefficient = material->environmentCoefficient;
         }
 
-        auto key = MakeBatchKey(target, pipelineName, meshRenderer->GetMeshHandle(), meshRenderer->GetMaterialHandle(), "material");
-        auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
-        if (materialBuffer) {
-            auto *mapped = static_cast<MaterialElement *>(materialBuffer->Map());
-            if (mapped) {
-                for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                    mapped[i] = element;
+        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, "material");
+        if (isObject2D) {
+            Material2DElement element;
+            if (material) {
+                element.color = material->color;
+                element.uvTransform = material->uvTransform;
+                element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+            }
+            auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(Material2DElement), instanceCount);
+            if (materialBuffer) {
+                auto *mapped = static_cast<Material2DElement *>(materialBuffer->Map());
+                if (mapped) {
+                    for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                        mapped[i] = element;
+                    }
+                    shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
                 }
-                shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
+            }
+        } else {
+            MaterialElement element;
+            if (material) {
+                element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
+                element.enableEnvironmentMapping = (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+                element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
+                element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+                element.color = material->color;
+                element.uvTransform = material->uvTransform;
+                element.shininess = material->shininess;
+                element.specularColor = material->specularColor;
+                element.environmentCoefficient = material->environmentCoefficient;
+            }
+            auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
+            if (materialBuffer) {
+                auto *mapped = static_cast<MaterialElement *>(materialBuffer->Map());
+                if (mapped) {
+                    for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                        mapped[i] = element;
+                    }
+                    shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
+                }
             }
         }
 
@@ -622,6 +658,64 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
     SamplerManager::BindSampler(&shaderBinder, "Pixel:gShadowSamplerCmp", GetShadowSamplerCmpHandle());
 }
 
+void Renderer::RenderEditorDebugOverlay(ScreenBuffer *screenBuffer,
+    PipelineBinder &pipelineBinder,
+    SceneRenderer *sceneRenderer) {
+    if (!screenBuffer || !sceneRenderer) return;
+
+    // エディター用描画先でなければ何もしない（通常の描画先にはデバッグ表示を出さない）
+    auto *cameraBuffer = sceneRenderer->GetEditorCameraBuffer(screenBuffer);
+    if (!cameraBuffer) return;
+
+    const auto &settings = sceneRenderer->GetEditorDebugDraw();
+    auto *commandList = screenBuffer->GetCommandList();
+    if (!commandList) return;
+
+    if (settings.showGrid && pipelineManager_->HasPipeline("DebugGrid")) {
+        struct GridConstant {
+            float fadeDistance = 100.0f;
+            float padding[3]{};
+        };
+        GridConstant gridConstant{};
+        gridConstant.fadeDistance = std::max(1.0f, settings.gridFadeDistance);
+
+        auto *gridBuffer = resourceContainer_->GetOrCreateConstantBuffer("EditorDebugGrid", sizeof(GridConstant));
+        if (gridBuffer) {
+            if (auto *mapped = gridBuffer->Map()) {
+                std::memcpy(mapped, &gridConstant, sizeof(gridConstant));
+            }
+
+            pipelineBinder.UsePipeline("DebugGrid");
+            auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "DebugGrid");
+            shaderBinder.SetCommandList(commandList);
+            shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
+            shaderBinder.Bind("Pixel:gCamera3D", cameraBuffer);
+            shaderBinder.Bind("Vertex:GridCB", gridBuffer);
+            shaderBinder.Bind("Pixel:GridCB", gridBuffer);
+            // カメラ位置を中心とした大きな板ポリゴン（2三角形）を全画面ではなくワールド空間へ直接描画する
+            commandList->DrawInstanced(6, 1, 0, 0);
+        }
+    }
+
+    if (settings.showColliderGizmos && !settings.lines.empty() && pipelineManager_->HasPipeline("DebugLines")) {
+        const size_t vertexCount = settings.lines.size();
+        const size_t byteSize = sizeof(DebugLineVertex) * vertexCount;
+        auto *vertexBuffer = resourceContainer_->GetOrCreateVertexBuffer("EditorDebugLines", byteSize);
+        if (vertexBuffer) {
+            if (auto *mapped = vertexBuffer->Map()) {
+                std::memcpy(mapped, settings.lines.data(), byteSize);
+            }
+
+            pipelineBinder.UsePipeline("DebugLines");
+            auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "DebugLines");
+            shaderBinder.SetCommandList(commandList);
+            shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
+            pipelineBinder.SetVertexBuffer(vertexBuffer, sizeof(DebugLineVertex));
+            commandList->DrawInstanced(static_cast<UINT>(vertexCount), 1, 0, 0);
+        }
+    }
+}
+
 void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
     PipelineBinder &pipelineBinder,
     EmptyObject *ownerObject) {
@@ -635,6 +729,8 @@ void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
 
     for (auto *component : postProcessComponents) {
         if (!component || !component->IsActive()) continue;
+        // 除外設定されているスクリーンバッファには適用しない
+        if (!component->IsScreenBufferIncluded(screenBuffer)) continue;
 
         // 中間レンダーターゲットを使う多段パス等はコンポーネント側のカスタム描画で行う
         IPostProcessComponent::CustomRenderContext customContext;

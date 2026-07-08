@@ -38,6 +38,9 @@ public:
             cachedParentVersion_ = 0;
             return true;
         }
+        // 親にTransformを持たないオブジェクトは親にできない
+        if (!parent->GetComponent<Transform>()) return false;
+
         auto *objectCtx = GetOwnerObjectContext();
         const auto *ownerObject = objectCtx ? objectCtx->GetOwner() : nullptr;
         if (parent == ownerObject) return false;

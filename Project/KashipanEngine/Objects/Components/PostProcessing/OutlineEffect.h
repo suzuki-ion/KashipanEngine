@@ -30,6 +30,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Threshold", &params_.threshold, 0.001f, 0.0f, 10.0f, "%.4f");
         ImGui::DragFloat("Thickness", &params_.thickness, 0.1f, 0.0f, 16.0f, "%.1f");
         ImGui::ColorEdit4("Color", params_.color);
@@ -39,7 +40,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["threshold"] = params_.threshold;
         json["thickness"] = params_.thickness;
         json["color"] = { params_.color[0], params_.color[1], params_.color[2], params_.color[3] };
@@ -49,6 +50,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.threshold = json.value("threshold", 0.1f);
         params_.thickness = json.value("thickness", 1.0f);
         if (json.contains("color") && json["color"].is_array() && json["color"].size() >= 4) {

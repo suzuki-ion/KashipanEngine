@@ -196,7 +196,6 @@ protected:
         for (size_t i = 0; i < followTargets_.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
             auto &target = followTargets_[i];
-            // 描画先オブジェクトに限らず、シーン上の任意のオブジェクトを追従先として選択できるようにする
             TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), target.objectID, true, false);
             ImGui::TextUnformatted("Follow Position");
             ImGui::Checkbox("X##Pos", &target.followPositionX); ImGui::SameLine();

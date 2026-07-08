@@ -640,6 +640,29 @@ std::string TextureManager::GetTextureAssetPath(TextureHandle handle) {
     return it->second.assetPath;
 }
 
+bool TextureManager::RenameTexture(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const Handle handle = pathIt->second;
+    auto entryIt = sTextures.find(handle);
+    if (entryIt == sTextures.end()) return false;
+
+    TextureEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fullPath = "Assets/" + normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
+}
+
 std::vector<TextureManager::TextureListEntry> TextureManager::GetLoadedTextureListEntries() {
     LogScope scope;
     std::vector<TextureListEntry> out;

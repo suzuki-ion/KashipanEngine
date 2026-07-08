@@ -72,6 +72,12 @@ private:
         PipelineBinder &pipelineBinder,
         EmptyObject *ownerObject);
 
+    /// @brief エディター用描画先にのみ、デバッグ表示（グリッド・当たり判定）を描画する
+    /// @details target がエディター用描画先でない場合は何もしない
+    void RenderEditorDebugOverlay(ScreenBuffer *screenBuffer,
+        PipelineBinder &pipelineBinder,
+        SceneRenderer *sceneRenderer);
+
     /// @brief 描画リストに含まれない ScreenBuffer へのポストエフェクトのみの適用
     /// @details オブジェクトの描画が無くともポストエフェクトコンポーネントがあれば実行する
     void RenderPostProcessOnlyTargets(SceneContext *sceneContext,

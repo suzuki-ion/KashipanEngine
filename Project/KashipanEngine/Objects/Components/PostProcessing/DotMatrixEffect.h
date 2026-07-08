@@ -30,6 +30,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Dot Spacing", &params_.dotSpacing, 0.1f, 1.0f, 64.0f, "%.1f");
         ImGui::DragFloat("Dot Radius", &params_.dotRadius, 0.1f, 0.0f, 64.0f, "%.1f");
         ImGui::DragFloat("Threshold", &params_.threshold, 0.01f, 0.0f, 1.0f, "%.3f");
@@ -39,7 +40,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["dotSpacing"] = params_.dotSpacing;
         json["dotRadius"] = params_.dotRadius;
         json["threshold"] = params_.threshold;
@@ -49,6 +50,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.dotSpacing = json.value("dotSpacing", 8.0f);
         params_.dotRadius = json.value("dotRadius", 3.5f);
         params_.threshold = json.value("threshold", 0.0f);

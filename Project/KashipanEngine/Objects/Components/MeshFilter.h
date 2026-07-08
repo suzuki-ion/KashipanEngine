@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <string>
+#include <vector>
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/ModelManager.h"
 
@@ -25,10 +27,15 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::Text("MeshHandle: %u", static_cast<unsigned>(meshHandle_));
-        int value = static_cast<int>(meshHandle_);
-        if (ImGui::InputInt("##MeshHandle", &value)) {
-            meshHandle_ = value <= 0 ? ModelManager::kInvalidHandle : static_cast<ModelManager::ModelHandle>(value);
+        // 読み込み済みモデルの中から選択する（重複名を避けるためAssetsルートからの相対パスをキーにする）
+        std::vector<std::string> modelPaths;
+        std::string currentPath;
+        for (const auto &entry : ModelManager::GetLoadedModelListEntries()) {
+            modelPaths.push_back(entry.assetPath);
+            if (entry.handle == meshHandle_) currentPath = entry.assetPath;
+        }
+        if (ImGuiCustom::SelectString("Mesh", currentPath, modelPaths, true)) {
+            meshHandle_ = currentPath.empty() ? ModelManager::kInvalidHandle : ModelManager::GetModelHandleFromAssetPath(currentPath);
         }
     }
 #endif

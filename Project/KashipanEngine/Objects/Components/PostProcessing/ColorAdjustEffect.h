@@ -30,6 +30,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat("Brightness", &params_.brightness, 0.01f, -1.0f, 1.0f, "%.3f");
         ImGui::DragFloat("Contrast", &params_.contrast, 0.01f, 0.0f, 4.0f, "%.3f");
         ImGui::DragFloat("Saturation", &params_.saturation, 0.01f, 0.0f, 4.0f, "%.3f");
@@ -39,7 +40,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["brightness"] = params_.brightness;
         json["contrast"] = params_.contrast;
         json["saturation"] = params_.saturation;
@@ -49,6 +50,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         params_.brightness = json.value("brightness", 0.0f);
         params_.contrast = json.value("contrast", 1.0f);
         params_.saturation = json.value("saturation", 1.0f);

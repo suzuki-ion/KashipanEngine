@@ -52,6 +52,14 @@ public:
     /// @brief Assetsルートからの相対パスから音声ハンドルを取得
     static SoundHandle GetSoundHandleFromAssetPath(const std::string &assetPath);
 
+    /// @brief 読み込み済み音声のファイル名/パス登録をリネーム後の値へ更新する
+    /// @details 実ファイルを外部（Assetsウィンドウ等）でリネーム/移動した後に呼ぶこと。
+    ///          このメソッド自体はファイルの実体は操作しない。
+    /// @param oldAssetPath リネーム前のAssetsルートからの相対パス
+    /// @param newAssetPath リネーム後のAssetsルートからの相対パス
+    /// @return 対象音声が見つかり更新に成功した場合は true
+    static bool RenameSound(const std::string &oldAssetPath, const std::string &newAssetPath);
+
     /// @brief 音声を再生する
     /// @param sound 再生する音声ハンドル
     /// @param volume ボリューム (0.0f ~ 1.0f)

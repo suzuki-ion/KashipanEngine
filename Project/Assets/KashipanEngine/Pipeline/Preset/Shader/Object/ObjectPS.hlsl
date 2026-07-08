@@ -87,7 +87,10 @@ PSOutput main(VSOutput input) {
 #endif
 
 #ifdef Object3D
-    float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+    float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	if (mat.useTexture > 0.5f) {
+		textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+	}
 	float4 baseColor = mat.color * textureColor;
 	float4 lightingColor = float4(0,0,0,0);
 	float4 envColor = float4(0,0,0,0);

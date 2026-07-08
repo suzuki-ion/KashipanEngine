@@ -50,7 +50,7 @@ void SceneEditor::ShowImGui() {
     if (isShowObjectInspector_) objectInspector_->ShowImGui();
     if (isShowComponentInspector_) componentInspector_->ShowImGui();
     if (isShowVariablesMenu_) variablesMenu_->ShowImGui();
-    if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObject(), commands_.get());
+    if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObjects(), commands_.get());
     if (isShowAssets_) assetsWindow_->ShowImGui();
 }
 

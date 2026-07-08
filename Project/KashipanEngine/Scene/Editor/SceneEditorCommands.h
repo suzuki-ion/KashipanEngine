@@ -88,6 +88,58 @@ private:
     UUID128 parentObjectID_;
 };
 
+/// @brief オブジェクト（とその子孫）をJSONスナップショットから貼り付け／複製するコマンド
+/// @details 各ノードのJSONはコマンド生成時点で新しいobjectID・親子関係（サブツリー内の参照）を
+///          反映済みの状態で渡される想定（Copy/Paste/Clone側で構築する）。
+class PasteObjectCommand final : public IEditorCommand {
+public:
+    struct Node {
+        JSON json;
+        int parentIndexInSubtree = -1;
+    };
+
+    // attachParent: 部分木の根（parentIndexInSubtree<0のノード）を接続する先。
+    //   preserveOriginalRootParentがtrueの場合は無視され、各ルートノードのJSONに残された
+    //   元の親参照（Transformの"parent"）がロード時にそのまま解決される（＝複製時に使用。
+    //   複数オブジェクトを同時に複製する際、それぞれ元と異なる親を持っていても正しく再現できる）。
+    // nodesは複数の独立したルート（parentIndexInSubtree<0のノードが複数）を含んでよい
+    //   （複数選択でのコピー/複製に対応するため）。
+    PasteObjectCommand(std::vector<Node> nodes, EmptyObject *attachParent, size_t insertIndex,
+        const std::string &rootName, const std::string &commandName, bool preserveOriginalRootParent = false)
+        : nodes_(std::move(nodes)),
+          attachParentID_(attachParent ? attachParent->GetObjectID() : UUID128()),
+          insertIndex_(insertIndex), rootName_(rootName), commandName_(commandName),
+          preserveOriginalRootParent_(preserveOriginalRootParent) {}
+
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
+    std::string GetName() const override { return commandName_ + ": " + rootName_; }
+
+    EmptyObject *GetRootObject(SceneEditorContext *context) const {
+        if (nodes_.empty()) return nullptr;
+        return context->GetSceneObject(UUID128(nodes_.front().json.value("objectID", std::string{})));
+    }
+    /// @brief 生成された部分木の根を全て取得する（複数選択でのコピー/複製に対応するため複数返りうる）
+    std::vector<EmptyObject *> GetRootObjects(SceneEditorContext *context) const {
+        std::vector<EmptyObject *> result;
+        for (const auto &node : nodes_) {
+            if (node.parentIndexInSubtree >= 0) continue;
+            if (auto *obj = context->GetSceneObject(UUID128(node.json.value("objectID", std::string{})))) {
+                result.push_back(obj);
+            }
+        }
+        return result;
+    }
+
+private:
+    std::vector<Node> nodes_;
+    UUID128 attachParentID_;
+    size_t insertIndex_ = MAXSIZE_T;
+    std::string rootName_;
+    std::string commandName_;
+    bool preserveOriginalRootParent_ = false;
+};
+
 /// @brief オブジェクト削除コマンド
 class DeleteObjectCommand final : public IEditorCommand {
 public:
@@ -101,7 +153,9 @@ public:
 private:
     UUID128 objectID_;
     std::string name_;
-    JSON snapshot_;
+    // 削除対象とその全子孫のスナップショット（pre-order、先頭が削除対象自身）。
+    // 子孫は元のobjectID・親参照のままにしておき、Undo時に元の親子関係が自動的に復元されるようにする。
+    std::vector<PasteObjectCommand::Node> snapshot_;
     size_t index_ = MAXSIZE_T;
 };
 

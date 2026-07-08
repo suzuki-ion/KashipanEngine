@@ -31,6 +31,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        IPostProcessComponent::ShowImGui();
         ImGui::DragFloat2("Center", params_.center, 0.001f, -2.0f, 2.0f, "%.3f");
         ImGui::ColorEdit4("Color", &params_.color.x);
         ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
@@ -40,7 +41,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
-        JSON json = JSON::object();
+        JSON json = IPostProcessComponent::SaveToJson();
         json["center"] = { params_.center[0], params_.center[1] };
         json["color"] = ToJSON(params_.color);
         json["intensity"] = params_.intensity;
@@ -50,6 +51,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        IPostProcessComponent::LoadFromJson(json);
         if (json.contains("center") && json["center"].is_array() && json["center"].size() >= 2) {
             params_.center[0] = json["center"][0].get<float>();
             params_.center[1] = json["center"][1].get<float>();

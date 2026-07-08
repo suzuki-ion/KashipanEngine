@@ -63,6 +63,11 @@ public:
     void InitializeInterface(Passkey<SceneManager>) { OnInitialize(); }
     void FinalizeInterface(Passkey<SceneManager>) { OnFinalize(); }
     void UpdateInterface(Passkey<SceneManager>) {
+#if defined(USE_IMGUI)
+        // エディター実行時はPlay中（かつ一時停止していないか、1フレーム進める要求がある）場合のみ更新する
+        if (!isPlaying_ || (isPaused_ && !isStepFrameRequested_)) return;
+        isStepFrameRequested_ = false;
+#endif
         UpdateSceneObjects();
         UpdateComponents();
         OnUpdate();
@@ -77,6 +82,25 @@ public:
             component->ShowImGuiInterface(Passkey<Scene>{});
         }
     }
+
+    //==================================================
+    // エディターの再生制御（Unity風のPlay/Pause/Stop）
+    //==================================================
+
+    /// @brief 再生中かどうか
+    bool IsPlaying() const { return isPlaying_; }
+    /// @brief 一時停止中かどうか
+    bool IsPaused() const { return isPaused_; }
+    /// @brief 再生を開始する（開始前のシーン状態を保存する）
+    void PlayStart();
+    /// @brief 再生を終了する（開始前のシーン状態へ復元する）
+    void PlayStop();
+    /// @brief 一時停止する
+    void PlayPause() { isPaused_ = true; }
+    /// @brief 一時停止を解除する
+    void PlayResume() { isPaused_ = false; }
+    /// @brief 1フレームだけ進める（一時停止中のみ有効）
+    void RequestStepFrame() { isStepFrameRequested_ = true; }
 #endif
 
     /// @brief シーンの保存
@@ -451,6 +475,15 @@ private:
 #ifdef USE_IMGUI
     std::unique_ptr<SceneEditorContext> sceneEditorContext_;
     std::unique_ptr<SceneEditor> sceneEditor_;
+
+    /// @brief 再生中かどうか（エディター上でのUnity風Play/Stop用）
+    bool isPlaying_ = false;
+    /// @brief 一時停止中かどうか
+    bool isPaused_ = false;
+    /// @brief 1フレームだけ進める要求フラグ（一時停止中のみ有効）
+    bool isStepFrameRequested_ = false;
+    /// @brief 再生開始前のシーン状態のスナップショット（Stop時に復元する）
+    JSON editModeSnapshot_;
 #endif
 
     std::string nextSceneName_;

@@ -50,6 +50,7 @@ ShaderStage StageFromName(const std::string &stageName) {
     if (stageName == "Geometry") return ShaderStage::Geometry;
     if (stageName == "Hull") return ShaderStage::Hull;
     if (stageName == "Domain") return ShaderStage::Domain;
+    if (stageName == "Compute") return ShaderStage::Compute;
     return ShaderStage::Unknown;
 }
 
@@ -60,6 +61,7 @@ D3D12_SHADER_VISIBILITY VisibilityFromStage(ShaderStage stage) {
         case ShaderStage::Geometry: return D3D12_SHADER_VISIBILITY_GEOMETRY;
         case ShaderStage::Hull: return D3D12_SHADER_VISIBILITY_HULL;
         case ShaderStage::Domain: return D3D12_SHADER_VISIBILITY_DOMAIN;
+        // Computeシェーダー専用ルートシグネチャは常にALLでなければならない
         default: return D3D12_SHADER_VISIBILITY_ALL;
     }
 }
@@ -423,7 +425,7 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
         }
         outInfo.shaders.clear();
         for (const auto &p : shadersWithStages) if (p.first) outInfo.shaders.push_back(p.first);
-        BuildShaderVariableBinder(outInfo, shadersWithStages, ownedRootSigParsed);
+        BuildShaderVariableBinder(outInfo, shadersWithStages, ownedRootSigParsed, true);
     } else {
         Log(Translation("engine.graphics.pipeline.load.shader.missing") + name, LogSeverity::Error);
         return false;
@@ -459,7 +461,8 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
     return true;
 }
 
-void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo *, std::string>> &shadersWithStages, std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig) {
+void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo *, std::string>> &shadersWithStages, std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig, bool isCompute) {
+    outInfo.variableBinder.SetIsCompute({}, isCompute);
     MyStd::NameMap<ShaderVariableBinding> nameMap;
     for (const auto &entry : shadersWithStages) {
         ShaderCompiler::ShaderCompiledInfo *shader = entry.first;
@@ -488,7 +491,7 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
             case D3D12_SHADER_VISIBILITY_GEOMETRY: stage = ShaderStage::Geometry; break;
             case D3D12_SHADER_VISIBILITY_HULL: stage = ShaderStage::Hull; break;
             case D3D12_SHADER_VISIBILITY_DOMAIN: stage = ShaderStage::Domain; break;
-            case D3D12_SHADER_VISIBILITY_ALL: default: stage = ShaderStage::Unknown; break;
+            case D3D12_SHADER_VISIBILITY_ALL: default: stage = isCompute ? ShaderStage::Compute : ShaderStage::Unknown; break;
         }
         if (param.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE) {
             // rangesStorage は "DescriptorTable を持つパラメータ順" に格納される（root-parameter index とは一致しない）

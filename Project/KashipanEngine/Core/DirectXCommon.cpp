@@ -279,6 +279,11 @@ void DirectXCommon::AddRecordCommandList(Passkey<ShadowMapBuffer>, ID3D12Command
     recordedCommandLists_.push_back(list);
 }
 
+void DirectXCommon::AddRecordCommandList(Passkey<ComputeCommandProcessor>, ID3D12CommandList* list) {
+    if (!list) return;
+    recordedCommandLists_.push_back(list);
+}
+
 void DirectXCommon::ExecuteCommandLists() {
     for (auto &sc : sSwapChains) {
         if (sc && sc->IsCreated() && sc->IsDrawing()) sc->EndDraw(Passkey<DirectXCommon>{});
@@ -381,11 +386,19 @@ int DirectXCommon::AcquireCommandObjects(Passkey<ShadowMapBuffer>) {
     return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
 }
 
+int DirectXCommon::AcquireCommandObjects(Passkey<ComputeCommandProcessor>) {
+    return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
+}
+
 DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
     return GetCommandObjectsInternal(commandObjects_, slotIndex);
 }
 
 DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    return GetCommandObjectsInternal(commandObjects_, slotIndex);
+}
+
+DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex) {
     return GetCommandObjectsInternal(commandObjects_, slotIndex);
 }
 
@@ -398,6 +411,10 @@ void DirectXCommon::ReleaseCommandObjects(Passkey<ScreenBuffer>, int slotIndex) 
 }
 
 void DirectXCommon::ReleaseCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
+}
+
+void DirectXCommon::ReleaseCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex) {
     ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
 }
 

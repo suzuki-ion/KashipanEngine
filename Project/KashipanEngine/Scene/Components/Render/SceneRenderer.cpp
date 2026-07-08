@@ -113,6 +113,8 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
         }
         for (auto *target : targets) {
             if (!target || !target->IsRenderTargetAvailable()) continue;
+            // エディター用描画先には除外設定に関わらず常に全MeshRendererを描画する
+            if (target != editorTarget_ && !meshRenderer->IsRenderTargetIncluded(target)) continue;
             if (target != editorTarget_) {
                 targetOwners_[target] = targetObject;
             }

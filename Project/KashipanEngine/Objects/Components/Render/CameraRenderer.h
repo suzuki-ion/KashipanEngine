@@ -1,14 +1,17 @@
 ﻿#pragma once
 #include <cstring>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Transform.h"
+#include "Graphics/IRenderTarget.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Graphics/PipelineManager.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -26,7 +29,7 @@ namespace KashipanEngine {
 ///          どの定数バッファへバインドするかを指定できる。
 class CameraRenderer final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(CameraRenderer, 1, SetUpdatePriority(950);)
+    OBJECT_COMPONENT_CONSTRUCTOR(CameraRenderer, 0xFF, SetUpdatePriority(950);)
     COMPONENT_CATEGORY("Render")
     ~CameraRenderer() override = default;
 
@@ -35,6 +38,7 @@ public:
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
         ptr->bindVariableNames_ = bindVariableNames_;
+        ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         return ptr;
     }
 
@@ -61,6 +65,12 @@ public:
         return sceneContext->GetSceneObject(targetObjectID_);
     }
 
+    /// @brief 指定の描画先がこのコンポーネントの適用対象に含まれるか（除外設定されていないか）
+    bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        if (!target) return false;
+        return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
+    }
+
     /// @brief バインド先の定数バッファ変数名を設定（例: "Vertex:gCamera3D"）
     void SetBindVariableNames(const std::vector<std::string> &names) { bindVariableNames_ = names; }
     const std::vector<std::string> &GetBindVariableNames() const noexcept { return bindVariableNames_; }
@@ -68,12 +78,26 @@ public:
     /// @brief カメラ情報の定数バッファを取得
     ConstantBufferResource *GetConstantBuffer() const noexcept { return constantBuffer_.get(); }
 
+    /// @brief カメラのワールド座標を取得（Transform が無い場合は原点）
+    Vector3 GetWorldPosition() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        if (!transform) return Vector3(0.0f, 0.0f, 0.0f);
+        const Matrix4x4 &world = transform->GetWorldMatrix();
+        return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
+    }
+
     /// @brief 最後にアップロードしたビュー射影行列を取得（シャドウマップ定数等に使用）
     const Matrix4x4 &GetViewProjectionMatrix() const noexcept { return lastViewProjection_; }
     /// @brief ニアクリップ距離を取得
     float GetNearClip() const noexcept { return lastNearClip_; }
     /// @brief ファークリップ距離を取得
     float GetFarClip() const noexcept { return lastFarClip_; }
+
+    /// @brief カメラの定数バッファを現在のTransformの状態で更新する
+    /// @details ゲームループが停止/一時停止中でも描画自体は継続されるため、
+    ///          Update() ではなく Renderer から毎フレーム直接呼ばれる（プル型の更新）
+    void RefreshConstantBuffer() { UploadCameraConstant(); }
 
 protected:
     void Initialize() override {
@@ -96,10 +120,6 @@ protected:
         UploadCameraConstant();
     }
 
-    void Update() override {
-        UploadCameraConstant();
-    }
-
     void Finalize() override {
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
@@ -113,6 +133,8 @@ protected:
     void ShowImGui() override {
         // 適用先の描画先オブジェクトをシーン上から選択（D&D対応、未指定は全描画先）
         TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        // 対象オブジェクトが持つ描画先ごとに適用する/しないを選択する
+        TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
         // パイプラインは読み込み済みのものから選択（未指定は全パイプライン）
         ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
         for (const auto &name : bindVariableNames_) {
@@ -126,6 +148,9 @@ protected:
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
         json["bindVariableNames"] = bindVariableNames_;
+        for (const auto &name : excludedRenderTargetNames_) {
+            json["excludedRenderTargetNames"].push_back(name);
+        }
         return json;
     }
 
@@ -141,6 +166,10 @@ protected:
             for (const auto &name : json["bindVariableNames"]) {
                 bindVariableNames_.push_back(name.get<std::string>());
             }
+        }
+        excludedRenderTargetNames_.clear();
+        for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
+            excludedRenderTargetNames_.insert(name);
         }
         return true;
     }
@@ -233,6 +262,8 @@ private:
     UUID128 targetObjectID_{};
     std::string pipelineName_;
     std::vector<std::string> bindVariableNames_;
+    /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合
+    std::unordered_set<std::string> excludedRenderTargetNames_;
 
     // シャドウマップ定数等で参照するためのキャッシュ
     Matrix4x4 lastViewProjection_ = Matrix4x4::Identity();

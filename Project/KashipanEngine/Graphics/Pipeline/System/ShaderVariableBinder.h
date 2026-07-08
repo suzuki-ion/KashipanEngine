@@ -21,7 +21,8 @@ enum class ShaderStage : UINT {
     Pixel,
     Geometry,
     Hull,
-    Domain
+    Domain,
+    Compute
 };
 
 /// @brief シェーダー変数バインディング情報構造体
@@ -102,6 +103,9 @@ class ShaderVariableBinder {
 public:
     ShaderVariableBinder(Passkey<PipelineInfo>);
     void SetCommandList(ID3D12GraphicsCommandList* cmd);
+    /// @brief Computeパイプライン用かどうかを設定（PipelineCreator専用）
+    /// @details true の場合、Bind() は SetGraphicsRoot* ではなく SetComputeRoot* を発行する
+    void SetIsCompute(Passkey<PipelineCreator>, bool isCompute) { isCompute_ = isCompute; }
     void SetNameMap(const MyStd::NameMap<ShaderVariableBinding>& nameMap);
     const MyStd::NameMap<ShaderVariableBinding>& GetNameMap() const;
     const ShaderVariableBinding *FindBinding(const std::string& nameKey) const;
@@ -157,6 +161,7 @@ private:
     ID3D12GraphicsCommandList* cmd_ = nullptr;
     MyStd::NameMap<ShaderVariableBinding> nameMap_;
     std::unordered_map<ShaderResourceKey, ShaderBindLocation, ShaderResourceKeyHasher> locations_;
+    bool isCompute_ = false;
 
     static ShaderStage StageFromNameKey(const std::string& nameKey);
 };

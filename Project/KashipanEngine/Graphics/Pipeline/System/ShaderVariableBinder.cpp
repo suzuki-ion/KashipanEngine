@@ -37,6 +37,7 @@ ShaderStage ShaderVariableBinder::StageFromNameKey(const std::string& nameKey) {
     if (nameKey.rfind("Geometry:", 0) == 0) return ShaderStage::Geometry;
     if (nameKey.rfind("Hull:", 0) == 0) return ShaderStage::Hull;
     if (nameKey.rfind("Domain:", 0) == 0) return ShaderStage::Domain;
+    if (nameKey.rfind("Compute:", 0) == 0) return ShaderStage::Compute;
     return ShaderStage::Unknown;
 }
 
@@ -105,28 +106,32 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* r
         // リソースのデスクリプタハンドルをテーブルとしてバインドする
         const auto handle = resource->GetGPUDescriptorHandle();
         if (handle.ptr == 0) return false;
-        cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, handle);
+        if (isCompute_) cmd_->SetComputeRootDescriptorTable(loc.rootParameterIndex, handle);
+        else cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, handle);
         return true;
     }
     if (loc.isRootCBV) {
         if (resource->GetResourceViewType() != ResourceViewType::CBV) {
             return false;
         }
-        cmd_->SetGraphicsRootConstantBufferView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        if (isCompute_) cmd_->SetComputeRootConstantBufferView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        else cmd_->SetGraphicsRootConstantBufferView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     if (loc.isRootSRV) {
         if (resource->GetResourceViewType() != ResourceViewType::SRV) {
             return false;
         }
-        cmd_->SetGraphicsRootShaderResourceView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        if (isCompute_) cmd_->SetComputeRootShaderResourceView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        else cmd_->SetGraphicsRootShaderResourceView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     if (loc.isRootUAV) {
         if (resource->GetResourceViewType() != ResourceViewType::UAV) {
             return false;
         }
-        cmd_->SetGraphicsRootUnorderedAccessView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        if (isCompute_) cmd_->SetComputeRootUnorderedAccessView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        else cmd_->SetGraphicsRootUnorderedAccessView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     return false;
@@ -142,7 +147,8 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, D3D12_GPU_DESCRIPTOR
     const ShaderBindLocation& loc = it->second;
     if (!loc.isDescriptorTable) return false;
     // メモ：バインドレスの場合でもバインドは可能だが、その場合はデスクリプタテーブルの先頭にバインドされる
-    cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
+    if (isCompute_) cmd_->SetComputeRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
+    else cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
     return true;
 }
 

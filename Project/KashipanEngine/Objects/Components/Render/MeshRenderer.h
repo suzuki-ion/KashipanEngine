@@ -1,7 +1,10 @@
 ﻿#pragma once
+#include <unordered_set>
+
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
+#include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Transform.h"
@@ -19,7 +22,7 @@ namespace KashipanEngine {
 ///          指定オブジェクトに付与された全ての描画先に対して描画が行われる。
 class MeshRenderer final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 1, SetUpdatePriority(900);)
+    OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 0xFF, SetUpdatePriority(900);)
     COMPONENT_CATEGORY("Render")
     ~MeshRenderer() override = default;
 
@@ -29,6 +32,7 @@ public:
         ptr->pipelineName_ = pipelineName_;
         ptr->materialName_ = materialName_;
         ptr->materialHandle_ = materialHandle_;
+        ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         return ptr;
     }
 
@@ -49,6 +53,12 @@ public:
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
+    }
+
+    /// @brief 指定の描画先がこのコンポーネントの描画対象に含まれるか（除外設定されていないか）
+    bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        if (!target) return false;
+        return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
 
     //==================================================
@@ -112,6 +122,8 @@ protected:
     void ShowImGui() override {
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
         TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        // 対象オブジェクトが持つ描画先ごとに描画する/しないを選択する
+        TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
         // パイプラインとマテリアルは読み込み済みのものから選択する
         ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
         std::vector<std::string> materialNames;
@@ -129,6 +141,9 @@ protected:
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
         json["materialName"] = materialName_;
+        for (const auto &name : excludedRenderTargetNames_) {
+            json["excludedRenderTargetNames"].push_back(name);
+        }
         return json;
     }
 
@@ -141,6 +156,10 @@ protected:
         pipelineName_ = json.value("pipelineName", std::string{ "Object3D.Solid.BlendNormal" });
         materialName_ = json.value("materialName", std::string{ "Default" });
         materialHandle_ = MaterialManager::kInvalidHandle;
+        excludedRenderTargetNames_.clear();
+        for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
+            excludedRenderTargetNames_.insert(name);
+        }
         return true;
     }
 
@@ -159,6 +178,8 @@ private:
     std::string pipelineName_ = "Object3D.Solid.BlendNormal";
     std::string materialName_ = "Default";
     mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
+    /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合
+    std::unordered_set<std::string> excludedRenderTargetNames_;
 };
 
 REGISTER_COMPONENT_OBJECT(MeshRenderer)

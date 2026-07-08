@@ -9,6 +9,7 @@
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/Resources/IndexBufferResource.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
+#include "Graphics/Resources/UnorderedAccessResource.h"
 #include "Graphics/Resources/VertexBufferResource.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
@@ -115,11 +116,32 @@ public:
         return raw;
     }
 
+    /// @brief キーに対応するUAVテクスチャを取得（サイズ/フォーマット不一致の場合は作り直す）
+    /// @details 作り直された場合、前フレームまでの内容は失われる（Computeシェーダー側での
+    ///          再初期化が必要な場合は formatKind やサイズを変更しない運用にすること）
+    UnorderedAccessResource *GetOrCreateUAVTexture(const std::string &key, UINT width, UINT height, DXGI_FORMAT format) {
+        if (width == 0 || height == 0) return nullptr;
+        auto it = uavTextures_.find(key);
+        if (it != uavTextures_.end() && it->second.width == width && it->second.height == height && it->second.format == format) {
+            return it->second.texture.get();
+        }
+
+        UAVTextureEntry entry;
+        entry.width = width;
+        entry.height = height;
+        entry.format = format;
+        entry.texture = std::make_unique<UnorderedAccessResource>(width, height, format);
+        auto *raw = entry.texture.get();
+        uavTextures_[key] = std::move(entry);
+        return raw;
+    }
+
     /// @brief 保持している全リソースを解放する
     void Clear() {
         meshBuffers_.clear();
         structuredBuffers_.clear();
         constantBuffers_.clear();
+        uavTextures_.clear();
     }
 
 private:
@@ -132,10 +154,17 @@ private:
         std::unique_ptr<ConstantBufferResource> buffer;
         size_t byteSize = 0;
     };
+    struct UAVTextureEntry {
+        std::unique_ptr<UnorderedAccessResource> texture;
+        UINT width = 0;
+        UINT height = 0;
+        DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+    };
 
     std::unordered_map<ModelManager::ModelHandle, std::unique_ptr<MeshBuffers>> meshBuffers_;
     std::unordered_map<std::string, StructuredBufferEntry> structuredBuffers_;
     std::unordered_map<std::string, ConstantBufferEntry> constantBuffers_;
+    std::unordered_map<std::string, UAVTextureEntry> uavTextures_;
 };
 
 } // namespace KashipanEngine

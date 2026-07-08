@@ -1,11 +1,13 @@
 ﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
+#include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Transform.h"
 #include "Math/Vector3.h"
 #include "Math/Quaternion.h"
-#include "Scene/Components/ColliderComponent.h"
+#include "Scene/Components/SceneObjectCollider.h"
 #include <reactphysics3d/reactphysics3d.h>
 #include <memory>
+#include <vector>
 
 namespace KashipanEngine {
 
@@ -23,7 +25,55 @@ public:
         ptr->useGravity_ = useGravity_;
         ptr->interpolate_ = interpolate_;
         ptr->isInitialized_ = false;
+        ptr->selectedColliderTypeName_ = selectedColliderTypeName_;
+        ptr->selectedColliderOccurrenceIndex_ = selectedColliderOccurrenceIndex_;
         return ptr;
+    }
+
+    //==================================================
+    // 使用するColliderコンポーネントの選択
+    //==================================================
+
+    /// @brief 同一オブジェクト上のICollider派生コンポーネントから使用する形状を選択する
+    /// @param collider 選択するコライダー（nullptrの場合は未選択＝どのコライダーでも使用可）
+    void SetSelectedCollider(ICollider *collider) {
+        if (!collider) {
+            selectedColliderTypeName_.clear();
+            selectedColliderOccurrenceIndex_ = 0;
+            return;
+        }
+        int occurrence = 0;
+        for (auto *candidate : GetOwnerColliders()) {
+            if (candidate == collider) {
+                selectedColliderTypeName_ = candidate->GetComponentType();
+                selectedColliderOccurrenceIndex_ = occurrence;
+                return;
+            }
+            if (candidate->GetComponentType() == collider->GetComponentType()) ++occurrence;
+        }
+    }
+    /// @brief 選択中のコライダーを取得（未選択・見つからない場合は nullptr）
+    ICollider *GetSelectedCollider() const {
+        if (selectedColliderTypeName_.empty()) return nullptr;
+        int occurrence = 0;
+        for (auto *candidate : GetOwnerColliders()) {
+            if (candidate->GetComponentType() != selectedColliderTypeName_) continue;
+            if (occurrence == selectedColliderOccurrenceIndex_) return candidate;
+            ++occurrence;
+        }
+        return nullptr;
+    }
+    /// @brief 同一オブジェクト上の全ICollider派生コンポーネントを取得
+    std::vector<ICollider *> GetOwnerColliders() const {
+        std::vector<ICollider *> result;
+        auto *ctx = GetOwnerObjectContext();
+        if (!ctx) return result;
+        for (const auto &pair : ctx->GetAllComponents()) {
+            if (auto *collider = dynamic_cast<ICollider *>(pair.first.get())) {
+                result.push_back(collider);
+            }
+        }
+        return result;
     }
 
     void SetPhysicsWorld(reactphysics3d::PhysicsWorld *world) { world_ = world; }
@@ -96,14 +146,47 @@ protected:
                 SetInterpolate(interpolate_);
             }
         }
+
+        // 使用する形状（Colliderコンポーネント）の選択
+        const auto colliders = GetOwnerColliders();
+        auto *current = GetSelectedCollider();
+        const std::string preview = current ? current->GetComponentType() : "(Any)";
+        if (ImGui::BeginCombo("Collider Shape", preview.c_str())) {
+            if (ImGui::Selectable("(Any)", !current)) {
+                SetSelectedCollider(nullptr);
+            }
+            for (auto *collider : colliders) {
+                if (collider->Is2D()) continue;
+                ImGui::PushID(collider);
+                const bool selected = (collider == current);
+                if (ImGui::Selectable(collider->GetComponentType().c_str(), selected)) {
+                    SetSelectedCollider(collider);
+                }
+                ImGui::PopID();
+            }
+            ImGui::EndCombo();
+        }
     }
 #endif
+
+    JSON SaveToJson() const override {
+        JSON json = JSON::object();
+        json["selectedColliderTypeName"] = selectedColliderTypeName_;
+        json["selectedColliderOccurrenceIndex"] = selectedColliderOccurrenceIndex_;
+        return json;
+    }
+
+    bool LoadFromJson(const JSON &json) override {
+        selectedColliderTypeName_ = json.value("selectedColliderTypeName", std::string{});
+        selectedColliderOccurrenceIndex_ = json.value("selectedColliderOccurrenceIndex", 0);
+        return true;
+    }
 
 private:
     bool TryInitialize() {
         if (isInitialized_) return true;
         auto *sceneCtx = GetOwnerSceneContext();
-        auto *colliderComp = sceneCtx ? sceneCtx->GetComponent<ColliderComponent>() : nullptr;
+        auto *colliderComp = sceneCtx ? sceneCtx->GetComponent<SceneObjectCollider>() : nullptr;
         if (!sceneCtx || !colliderComp) return false;
         world_ = colliderComp->GetCollider()->GetPhysicsWorld();
         if (!world_) return false;
@@ -141,6 +224,11 @@ private:
     bool interpolate_ = true;
 
     bool isInitialized_ = false;
+
+    /// @brief 使用するコライダーのコンポーネント型名（空の場合は未選択＝どのコライダーでも使用可）
+    std::string selectedColliderTypeName_;
+    /// @brief 同一型のコライダーが複数ある場合の何番目かを示すインデックス
+    int selectedColliderOccurrenceIndex_ = 0;
 };
 
 REGISTER_COMPONENT_OBJECT(RigidBody3D)

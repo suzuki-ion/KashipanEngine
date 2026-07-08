@@ -25,6 +25,7 @@ public:
 
 private:
     void ShowMainWindow();
+    void ShowPlayControls();
     void HandleShortcuts();
     void PerformUndo();
     void PerformRedo();

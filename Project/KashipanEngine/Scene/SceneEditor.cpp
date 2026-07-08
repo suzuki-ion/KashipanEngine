@@ -112,6 +112,9 @@ void SceneEditor::ShowMainWindow() {
         context_->SetName(sceneName);
     }
 
+    //--------- 再生制御（Unity風のPlay/Pause/Stop） ---------//
+    ShowPlayControls();
+
     //--------- 保存・読込ポップアップ ---------//
     saver_->ShowImGui();
     if (loader_->ShowImGui()) {
@@ -126,6 +129,38 @@ void SceneEditor::ShowMainWindow() {
     ImGui::Begin("History");
     commands_->ShowHistoryImGui();
     ImGui::End();
+}
+
+void SceneEditor::ShowPlayControls() {
+    ImGui::Separator();
+    if (!context_->IsPlaying()) {
+        if (ImGui::Button("Play")) {
+            context_->PlayStart();
+            // 再生開始でオブジェクトのポインタ等が変わりうるため選択をクリアする
+            objectHierarchy_->ClearSelection();
+        }
+    } else {
+        if (ImGui::Button("Stop")) {
+            context_->PlayStop();
+            objectHierarchy_->ClearSelection();
+        }
+        ImGui::SameLine();
+        if (context_->IsPaused()) {
+            if (ImGui::Button("Resume")) {
+                context_->PlayResume();
+            }
+        } else {
+            if (ImGui::Button("Pause")) {
+                context_->PlayPause();
+            }
+        }
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!context_->IsPaused());
+        if (ImGui::Button("Step Frame")) {
+            context_->RequestStepFrame();
+        }
+        ImGui::EndDisabled();
+    }
 }
 
 void SceneEditor::HandleShortcuts() {

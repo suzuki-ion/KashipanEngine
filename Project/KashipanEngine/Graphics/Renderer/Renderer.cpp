@@ -8,6 +8,7 @@
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
 #include "Core/DirectXCommon.h"
+#include "Graphics/ComputeCommandProcessor.h"
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/PipelineManager.h"
@@ -16,6 +17,7 @@
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
 #include "Math/Vector3.h"
+#include "Objects/Components/Compute/ComputeShaderProcessing.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/Light.h"
@@ -23,6 +25,7 @@
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
 #include "Objects/EmptyObject.h"
+#include "Scene/Components/Compute/SceneComputeProcessor.h"
 #include "Scene/SceneContext.h"
 
 namespace KashipanEngine {
@@ -116,6 +119,15 @@ std::string MakeBatchKey(const void *target, const std::string &pipelineName,
     return std::string(buffer) + pipelineName;
 }
 
+/// @brief ComputeShaderProcessing::UAVTextureBindRequirement::formatKind から DXGI_FORMAT へ変換
+DXGI_FORMAT UAVFormatFromKind(int formatKind) {
+    switch (formatKind) {
+        case 1: return DXGI_FORMAT_R32_FLOAT;
+        case 2: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        default: return DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
+}
+
 } // namespace
 
 Renderer::Renderer(Passkey<GraphicsEngine>, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
@@ -128,8 +140,19 @@ Renderer::~Renderer() = default;
 void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) {
     if (!sceneContext || !pipelineManager_) return;
 
+    // Computeシェーダー処理は他の描画パスより先に実行し、結果を後続パスから参照できるようにする
+    ProcessComputeShaders(sceneContext);
+
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
+
+    // カメラの定数バッファは常に最新のTransformを反映する（ゲームループが停止/一時停止中でも
+    // 描画自体は継続されるため、Update() 頼みだと停止中はカメラが固まって描画が崩れてしまう）
+    for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
+        if (cameraRenderer && cameraRenderer->IsActive()) {
+            cameraRenderer->RefreshConstantBuffer();
+        }
+    }
 
     const auto &drawList = sceneRenderer->BuildSortedDrawList(Passkey<Renderer>{}, pipelineManager_);
 
@@ -150,6 +173,68 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
     // 描画対象オブジェクトが無い ScreenBuffer にもポストエフェクトのみ適用する
     RenderPostProcessOnlyTargets(sceneContext, renderedTargets);
+}
+
+void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
+    if (!sceneContext) return;
+    auto *sceneProcessor = sceneContext->GetComponent<SceneComputeProcessor>();
+    if (!sceneProcessor) return;
+    const auto &components = sceneProcessor->GetComputeShaderProcessings();
+    if (components.empty()) return;
+
+    auto *commandList = ComputeCommandProcessor::BeginRecord(Passkey<Renderer>{});
+    if (!commandList) return;
+
+    // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
+    PipelineBinder pipelineBinder(commandList, pipelineManager_);
+    pipelineBinder.Invalidate();
+
+    for (auto *component : components) {
+        if (!component || !component->IsActive()) continue;
+        const std::string &pipelineName = component->GetPipelineName();
+        if (pipelineName.empty() || !pipelineManager_->HasPipeline(pipelineName)) continue;
+        if (pipelineManager_->GetPipeline(pipelineName).Type() != PipelineType::Compute) continue;
+
+        pipelineBinder.UsePipeline(pipelineName);
+        auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
+        shaderBinder.SetCommandList(commandList);
+
+        // 読み取り専用テクスチャ（読み込み済みテクスチャから）
+        for (const auto &req : component->GetTextureBindRequirements()) {
+            if (req.variableName.empty() || req.textureAssetPath.empty()) continue;
+            const auto handle = TextureManager::GetTextureFromAssetPath(req.textureAssetPath);
+            if (handle == TextureManager::kInvalidHandle) continue;
+            TextureManager::BindTexture(&shaderBinder, req.variableName, handle);
+        }
+
+        // 読み書き可能なUAVテクスチャ（エンジン側で生成・管理。キー継続でフレームをまたいで内容が保持される）
+        for (const auto &req : component->GetUAVTextureBindRequirements()) {
+            if (req.variableName.empty() || req.width == 0 || req.height == 0) continue;
+            const std::string key = MakeBatchKey(component, pipelineName, 0, 0, req.variableName.c_str());
+            auto *uavTexture = resourceContainer_->GetOrCreateUAVTexture(key, req.width, req.height, UAVFormatFromKind(req.formatKind));
+            if (!uavTexture) continue;
+            shaderBinder.Bind(req.variableName, uavTexture);
+        }
+
+        // 定数バッファ（float配列をそのまま送る）
+        for (const auto &req : component->GetConstantBufferBindRequirements()) {
+            if (req.variableName.empty() || req.values.empty()) continue;
+            const std::string key = MakeBatchKey(component, pipelineName, 0, 0, req.variableName.c_str());
+            const size_t byteSize = req.values.size() * sizeof(float);
+            auto *constantBuffer = resourceContainer_->GetOrCreateConstantBuffer(key, byteSize);
+            if (!constantBuffer) continue;
+            void *mapped = constantBuffer->Map();
+            if (!mapped) continue;
+            std::memcpy(mapped, req.values.data(), byteSize);
+            shaderBinder.Bind(req.variableName, constantBuffer);
+        }
+
+        std::uint32_t groupX = 1, groupY = 1, groupZ = 1;
+        component->GetGroupCounts(groupX, groupY, groupZ);
+        commandList->Dispatch(groupX, groupY, groupZ);
+    }
+
+    ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
 }
 
 void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
@@ -353,6 +438,8 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
         // 描画先指定がある場合は一致する描画先のみバインド
         if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        // 除外設定されている描画先にはバインドしない
+        if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
         auto *constantBuffer = cameraRenderer->GetConstantBuffer();
         if (!constantBuffer) continue;
         for (const auto &variableName : cameraRenderer->GetBindVariableNames()) {
@@ -376,6 +463,7 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
         if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
         auto *light = lightRenderer->GetLight();
         if (!light) {
             // Light コンポーネントが無い場合は既定値のディレクショナルライトとして扱う

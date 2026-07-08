@@ -67,6 +67,29 @@ void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
         }
     }
 }
+
+void Scene::PlayStart() {
+    if (isPlaying_) return;
+    editModeSnapshot_ = SaveToJSON();
+    isPlaying_ = true;
+    isPaused_ = false;
+    isStepFrameRequested_ = false;
+}
+
+void Scene::PlayStop() {
+    if (!isPlaying_) return;
+    isPlaying_ = false;
+    isPaused_ = false;
+    isStepFrameRequested_ = false;
+
+    JSON snapshot = std::move(editModeSnapshot_);
+    editModeSnapshot_ = JSON();
+    if (snapshot.empty()) return;
+
+    ClearSceneObjects();
+    ClearSceneComponents();
+    LoadFromJSON(snapshot);
+}
 #endif
 
 JSON Scene::SaveToJSON() const {
@@ -274,10 +297,14 @@ void Scene::RemoveObjectFromMaps(EmptyObject *obj) {
 }
 
 void Scene::ClearSceneObjects() {
+    // FinalizeInterface を呼んでからオブジェクトを破棄する
     for (auto &obj : objects_) {
         if (obj) {
-            obj.reset();
+            obj->FinalizeInterface(Passkey<Scene>());
         }
+    }
+    for (auto &obj : objects_) {
+        obj.reset();
     }
     objects_.clear();
     objectsByUUID_.clear();
@@ -347,11 +374,14 @@ bool Scene::RemoveComponent(const ISceneComponent *component) {
 }
 
 void Scene::ClearSceneComponents() {
+    // FinalizeInterface を呼んでからコンポーネントを破棄する
     for (auto &compPair : components_) {
         if (compPair.first) {
             compPair.first->FinalizeInterface(Passkey<Scene>());
-            compPair.first.reset();
         }
+    }
+    for (auto &compPair : components_) {
+        compPair.first.reset();
     }
     components_.clear();
     componentsIndexByType_.clear();

@@ -606,6 +606,12 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     HitInfo2D hiB = hitInfo;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
+    // hitInfo.normal は「Aから見てBへ向かう方向」で計算されるため、
+    // B自身から見た法線（自分から相手が去っていく方向）はその逆向きになる。
+    // これを行わないと、AとBが同じ向きの法線を受け取ってしまい、
+    // どちらがA/Bとして扱われるか（コライダーの登録順や数）によって
+    // 見かけ上の法線方向が不安定になる。
+    hiB.normal = -hitInfo.normal;
 
     const bool isHitNow = hitInfo.isHit;
 
@@ -765,8 +771,12 @@ void Collider::Update3D() {
                 if (pair.getNbContactPoints() > 0) {
                     hitInfoA = MakeHitInfo(pair.getContactPoint(0));
                     hitInfoB = hitInfoA;
-                    hitInfoA.normal = hitInfoA.normal;
-                    hitInfoB.normal = hitInfoA.normal;
+                    // getWorldNormal() は collider1(A) から見た法線のため、
+                    // B自身から見た法線はその逆向きになる。ここを揃えないと、
+                    // RP3Dの内部順序（collider1/collider2の割り当て）がシーン内の
+                    // オブジェクト数や状況によって変わった際に、同じ組み合わせの
+                    // 衝突でも得られる法線の向きが不安定になってしまう。
+                    hitInfoB.normal = -hitInfoA.normal;
                 } else {
                     hitInfoA.isHit = true;
                     hitInfoB.isHit = true;
@@ -861,7 +871,14 @@ bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
 
     entry.runtime.shape = shapeHandle.value();
     const auto transform = MakeTransform3D(entry.info);
-    if (auto *rb = entry.info.ownerObject->GetComponent<RigidBody3D>()) {
+    // RigidBody3Dが使用コライダーを明示的に選択している場合は、そのコライダーだけを
+    // RigidBodyへ取り付ける（未選択の場合は従来通りどのコライダーでも取り付ける）
+    auto *rb = entry.info.ownerObject->GetComponent<RigidBody3D>();
+    if (rb) {
+        auto *selected = rb->GetSelectedCollider();
+        if (selected && selected != entry.info.sourceCollider) rb = nullptr;
+    }
+    if (rb) {
         entry.runtime.body = rb->GetRigidBody();
         entry.runtime.ownsBody = false;
         entry.runtime.body->setTransform(transform);

@@ -1,10 +1,19 @@
 #include "SceneObjectInspector.h"
+#include <algorithm>
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 
 namespace KashipanEngine {
+
+namespace {
+/// @brief インスペクター内でのコンポーネント並び替えD&Dペイロード型名（この.cpp内のみで完結する）
+constexpr const char *kComponentDragDropType = "DND_COMPONENT";
+struct ComponentDragDropPayload {
+    IObjectComponent *component = nullptr;
+};
+} // namespace
 
 void SceneObjectInspector::ShowImGui() {
     ImGui::Begin("Scene Object Inspector");
@@ -51,13 +60,10 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
         }
     }
 
-    //--------- コンポーネント一覧 ---------//
+    //--------- コンポーネント一覧（処理優先順位＝更新優先度の順に並べる） ---------//
     IObjectComponent *componentToRemove = nullptr;
     int id = 0;
-    for (const auto &entry : obj->GetAllComponents()) {
-        const auto &comp = entry.first;
-        if (!comp) continue;
-
+    for (IObjectComponent *comp : GetOrderedComponents(obj)) {
         ImGui::PushID(id);
         ImGui::Separator();
         bool componentActive = comp->IsActive();
@@ -66,26 +72,30 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
         }
         ImGui::SameLine();
         // 開閉状態はコンポーネントの種類ごとに保存される（デフォルトは開いた状態）
-        if (EditorSettings::PersistentTreeNode(comp->GetComponentType().c_str(),
-                "inspector.component." + comp->GetComponentType())) {
+        bool headerOpen = EditorSettings::PersistentTreeNode(comp->GetComponentType().c_str(),
+                "inspector.component." + comp->GetComponentType());
+        // ヒエラルキーと同様に、D&Dでコンポーネント自体の処理優先順位を並び替えられるようにする
+        DragAndDropComponent(comp);
+        if (headerOpen) {
             if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
                 if (ImGui::MenuItem("Remove Component")) {
-                    componentToRemove = comp.get();
+                    componentToRemove = comp;
                 }
                 ImGui::EndPopup();
             }
             // パラメータ変更をUndo履歴へ積むため、表示前後の状態を比較する
-            JSON before = obj->SaveComponentToJson(comp.get());
-            obj->ShowComponentImGui(comp.get());
-            JSON after = obj->SaveComponentToJson(comp.get());
+            JSON before = obj->SaveComponentToJson(comp);
+            obj->ShowComponentImGui(comp);
+            JSON after = obj->SaveComponentToJson(comp);
             if (before != after) {
-                TrackComponentEdit(obj, comp.get(), before, after);
+                TrackComponentEdit(obj, comp, before, after);
             }
             ImGui::TreePop();
         }
         ImGui::PopID();
         ++id;
     }
+    ApplyComponentDragAndDrop(obj);
 
     if (componentToRemove) {
         if (commands_) {
@@ -150,6 +160,102 @@ void SceneObjectInspector::FlushPendingComponentEdit() {
     editComponent_ = nullptr;
     editBefore_ = JSON();
     editAfter_ = JSON();
+}
+
+std::vector<IObjectComponent *> SceneObjectInspector::GetOrderedComponents(EmptyObject *obj) {
+    // (更新優先度, 追加順ID) で並べる。実際の Update 実行順（EmptyObject::RegenerateUpdateComponentsList）と一致させる
+    std::vector<std::pair<IObjectComponent *, size_t>> entries;
+    for (const auto &entry : obj->GetAllComponents()) {
+        if (!entry.first) continue;
+        entries.emplace_back(entry.first.get(), entry.second);
+    }
+    std::sort(entries.begin(), entries.end(), [](const auto &a, const auto &b) {
+        if (a.first->GetUpdatePriority() != b.first->GetUpdatePriority()) {
+            return a.first->GetUpdatePriority() < b.first->GetUpdatePriority();
+        }
+        return a.second < b.second;
+    });
+
+    std::vector<IObjectComponent *> result;
+    result.reserve(entries.size());
+    for (const auto &entry : entries) {
+        result.push_back(entry.first);
+    }
+    return result;
+}
+
+void SceneObjectInspector::DragAndDropComponent(IObjectComponent *comp) {
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+        ComponentDragDropPayload dndPayload;
+        dndPayload.component = comp;
+        ImGui::SetDragDropPayload(kComponentDragDropType, &dndPayload, sizeof(dndPayload));
+        ImGui::Text("%s", comp->GetComponentType().c_str());
+        ImGui::EndDragDropSource();
+    }
+    if (ImGui::BeginDragDropTarget()) {
+        ImGuiDragDropFlags targetFlags = ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect;
+        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(kComponentDragDropType, targetFlags)) {
+            const ImVec2 itemRectMin = ImGui::GetItemRectMin();
+            const ImVec2 itemRectMax = ImGui::GetItemRectMax();
+            const float mouseY = ImGui::GetMousePos().y;
+            const float itemMidY = (itemRectMin.y + itemRectMax.y) * 0.5f;
+            const ComponentDropPosition dropPosition = (mouseY < itemMidY) ? ComponentDropPosition::Above : ComponentDropPosition::Below;
+
+            ImDrawList *drawList = ImGui::GetWindowDrawList();
+            constexpr ImU32 kHighlightColor = IM_COL32(0, 255, 0, 255);
+            const float lineY = (dropPosition == ComponentDropPosition::Above) ? itemRectMin.y : itemRectMax.y;
+            drawList->AddLine(ImVec2(itemRectMin.x, lineY), ImVec2(itemRectMax.x, lineY), kHighlightColor, 2.0f);
+
+            if (payload->IsDelivery()) {
+                IM_ASSERT(payload->DataSize == sizeof(ComponentDragDropPayload));
+                auto *dndPayload = static_cast<const ComponentDragDropPayload *>(payload->Data);
+                componentDragSource_ = dndPayload->component;
+                componentDragTarget_ = comp;
+                componentDragPosition_ = dropPosition;
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+}
+
+void SceneObjectInspector::ApplyComponentDragAndDrop(EmptyObject *obj) {
+    IObjectComponent *source = componentDragSource_;
+    IObjectComponent *target = componentDragTarget_;
+    const ComponentDropPosition position = componentDragPosition_;
+    componentDragSource_ = nullptr;
+    componentDragTarget_ = nullptr;
+    if (!source || !target || source == target) return;
+
+    std::vector<IObjectComponent *> ordered = GetOrderedComponents(obj);
+    auto sourceIt = std::find(ordered.begin(), ordered.end(), source);
+    if (sourceIt == ordered.end()) return;
+    ordered.erase(sourceIt);
+
+    auto targetIt = std::find(ordered.begin(), ordered.end(), target);
+    if (targetIt == ordered.end()) return;
+    size_t insertIndex = static_cast<size_t>(std::distance(ordered.begin(), targetIt));
+    if (position == ComponentDropPosition::Below) ++insertIndex;
+    ordered.insert(ordered.begin() + insertIndex, source);
+
+    // 新しい並び順どおりに更新優先度を振り直す（変更があったものだけUndo履歴へ積む）
+    auto composite = std::make_unique<CompositeCommand>("Reorder Component: " + source->GetComponentType());
+    bool anyChange = false;
+    for (size_t i = 0; i < ordered.size(); ++i) {
+        IObjectComponent *comp = ordered[i];
+        const int newPriority = static_cast<int>(i);
+        if (comp->GetUpdatePriority() == newPriority) continue;
+
+        const JSON before = obj->SaveComponentToJson(comp);
+        comp->SetUpdatePriority(newPriority);
+        const JSON after = obj->SaveComponentToJson(comp);
+        if (before != after) {
+            composite->AddCommand(std::make_unique<ComponentEditCommand>(obj, comp, before, after));
+            anyChange = true;
+        }
+    }
+    if (anyChange && commands_) {
+        commands_->PushExecuted(std::move(composite));
+    }
 }
 
 } // namespace KashipanEngine

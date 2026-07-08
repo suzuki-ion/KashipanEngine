@@ -396,6 +396,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\VertexBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\ComputeCommandProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ScreenBuffer.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp" />
     <ClCompile Include="KashipanEngine\Input\Controller.cpp" />
@@ -411,8 +412,13 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
     <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Collision\Collider.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.cpp" />
     <ClCompile Include="KashipanEngine\Objects\EmptyObject.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Collider\ICollider.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Render\SceneRenderer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
@@ -562,6 +568,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\VertexBufferResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\ComputeCommandProcessor.h" />
     <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
@@ -589,9 +596,14 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\Animator.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioListener.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\Capsule2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\CapsuleCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\Circle2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\ICollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\Ray2DCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\RayCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\RigidBody2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\RigidBody3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\SphereCollider.h" />
@@ -610,8 +622,10 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\OutlineEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\RadialBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\VignetteEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera3D.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Light.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\LightRenderer.h" />
@@ -646,7 +660,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\ObjectComponentHeader.h" />
     <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
-    <ClInclude Include="KashipanEngine\Scene\Components\ColliderComponent.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\SceneObjectCollider.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Render\SceneRenderer.h" />

@@ -63,6 +63,10 @@ void SceneEditor::ShowMainWindow() {
     //--------- メニューバー（保存・読込・Undo/Redo・ウィンドウ切替） ---------//
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("New Scene...")) {
+                isNewSceneRequested_ = true;
+                newSceneName_ = "New Scene";
+            }
             if (ImGui::MenuItem("Save Scene...", "Ctrl+S")) {
                 saver_->Open();
             }
@@ -115,7 +119,12 @@ void SceneEditor::ShowMainWindow() {
     //--------- 再生制御（Unity風のPlay/Pause/Stop） ---------//
     ShowPlayControls();
 
-    //--------- 保存・読込ポップアップ ---------//
+    //--------- 新規作成・保存・読込ポップアップ ---------//
+    if (ShowNewSceneModal()) {
+        // シーンが差し替わったので選択と履歴をクリアする
+        commands_->Clear();
+        objectHierarchy_->ClearSelection();
+    }
     saver_->ShowImGui();
     if (loader_->ShowImGui()) {
         // シーンが差し替わったので選択と履歴をクリアする
@@ -161,6 +170,31 @@ void SceneEditor::ShowPlayControls() {
         }
         ImGui::EndDisabled();
     }
+}
+
+bool SceneEditor::ShowNewSceneModal() {
+    bool created = false;
+    if (isNewSceneRequested_) {
+        ImGui::OpenPopup("New Scene");
+        isNewSceneRequested_ = false;
+    }
+    if (ImGui::BeginPopupModal("New Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "Current scene will be discarded (unsaved changes will be lost).");
+        ImGui::InputText("Scene Name", &newSceneName_);
+        if (ImGui::Button("Create", ImVec2(120, 0))) {
+            context_->ClearSceneObjects();
+            context_->ClearSceneComponents();
+            context_->SetName(newSceneName_.empty() ? "New Scene" : newSceneName_);
+            created = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+    return created;
 }
 
 void SceneEditor::HandleShortcuts() {

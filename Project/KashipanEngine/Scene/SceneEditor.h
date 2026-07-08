@@ -1,6 +1,7 @@
 #pragma once
 #ifdef USE_IMGUI
 #include <memory>
+#include <string>
 
 #include "Scene/SceneEditorContext.h"
 
@@ -26,6 +27,9 @@ public:
 private:
     void ShowMainWindow();
     void ShowPlayControls();
+    /// @brief シーン新規作成の確認モーダル（既存内容を破棄する前に確認する）
+    /// @return このフレームでシーンが新規作成された場合は true
+    bool ShowNewSceneModal();
     void HandleShortcuts();
     void PerformUndo();
     void PerformRedo();
@@ -48,6 +52,10 @@ private:
     bool isShowComponentInspector_ = true;
     bool isShowVariablesMenu_ = true;
     bool isShowAssets_ = true;
+
+    // シーン新規作成の確認モーダル用
+    bool isNewSceneRequested_ = false;
+    std::string newSceneName_;
 };
 
 } // namespace KashipanEngine

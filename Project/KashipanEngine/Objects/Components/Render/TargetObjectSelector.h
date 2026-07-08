@@ -15,13 +15,16 @@ namespace TargetObjectSelector {
 /// @brief 指定オブジェクトが描画先コンポーネントを持っているか
 bool HasRenderTargetComponent(EmptyObject *object);
 
-/// @brief 描画先オブジェクトの選択UI（シーン上のオブジェクトから選択 or ヒエラルキーからのD&D）
+/// @brief オブジェクトの選択UI（シーン上のオブジェクトから選択 or ヒエラルキーからのD&D）
 /// @param label ラベル
 /// @param sceneContext 所属シーンのコンテキスト
-/// @param targetObjectID 選択中の描画先オブジェクトID（変更時に上書きされる）
+/// @param targetObjectID 選択中のオブジェクトID（変更時に上書きされる）
 /// @param allowNone 未指定（None）を選択可能にする
+/// @param restrictToRenderTargets true の場合、コンボの候補を描画先コンポーネントを持つオブジェクトのみに絞る
+///        （MeshRenderer等の「描画先オブジェクト」選択用。追従先オブジェクト等、任意のオブジェクトを
+///        選択させたい場合は false を指定する。ヒエラルキーからのD&Dはこのフラグに関わらず常に受け付ける）
 /// @return 値が変更された場合は true
-bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &targetObjectID, bool allowNone = true);
+bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &targetObjectID, bool allowNone = true, bool restrictToRenderTargets = true);
 
 /// @brief 対象オブジェクトが持つ描画先ごとに、描画する/しないをチェックボックスで選択するUI
 /// @details 対象オブジェクトが未指定、または描画先コンポーネントを1つも持たない場合は何も表示しない

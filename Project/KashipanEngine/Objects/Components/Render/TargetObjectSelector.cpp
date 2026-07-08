@@ -34,7 +34,7 @@ bool HasRenderTargetComponent(EmptyObject *object) {
            object->HasComponents<ShadowMapObject>() > 0;
 }
 
-bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &targetObjectID, bool allowNone) {
+bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &targetObjectID, bool allowNone, bool restrictToRenderTargets) {
     if (!sceneContext) return false;
     bool changed = false;
 
@@ -49,9 +49,10 @@ bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &target
                 changed = true;
             }
         }
-        // 描画先コンポーネントを持つオブジェクトのみを候補にする
         for (const auto &object : sceneContext->GetSceneObjects()) {
-            if (!object || !HasRenderTargetComponent(object.get())) continue;
+            if (!object) continue;
+            // restrictToRenderTargets が true の場合は描画先コンポーネントを持つオブジェクトのみを候補にする
+            if (restrictToRenderTargets && !HasRenderTargetComponent(object.get())) continue;
             const bool selected = (object.get() == current);
             ImGui::PushID(object.get());
             if (ImGui::Selectable(object->GetName().c_str(), selected) && !selected) {

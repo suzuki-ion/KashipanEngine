@@ -95,6 +95,12 @@ private:
     EmptyObject *gizmoTargetObject_ = nullptr;
     bool isGizmoEditing_ = false;
     JSON gizmoBefore_;
+
+    // デバッグ表示の有効/無効（再起動後も維持される）
+    bool showGrid_ = true;
+    bool showLightMarkers_ = true;
+    bool showCameraMarkers_ = true;
+    bool showColliderGizmos_ = true;
 };
 
 } // namespace KashipanEngine

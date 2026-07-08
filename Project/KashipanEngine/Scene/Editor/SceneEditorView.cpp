@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <variant>
 
+#include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/SceneObjectCollider.h"
@@ -25,7 +26,13 @@
 namespace KashipanEngine {
 
 SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *context)
-    : context_(context), gizmoOperation_(ImGuizmo::TRANSLATE), gizmoMode_(ImGuizmo::LOCAL) {}
+    : context_(context), gizmoOperation_(ImGuizmo::TRANSLATE), gizmoMode_(ImGuizmo::LOCAL) {
+    // デバッグ表示の有効/無効を復元する（再起動後も維持される）
+    showGrid_ = EditorSettings::GetBool("sceneView.showGrid", true);
+    showLightMarkers_ = EditorSettings::GetBool("sceneView.showLightMarkers", true);
+    showCameraMarkers_ = EditorSettings::GetBool("sceneView.showCameraMarkers", true);
+    showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
+}
 
 SceneEditorView::~SceneEditorView() {
     if (context_) {
@@ -117,6 +124,15 @@ void SceneEditorView::ShowSceneViewWindow(EmptyObject *selectedObject, SceneEdit
     ImGui::SameLine();
     if (ImGui::RadioButton("World", gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
 
+    //--------- デバッグ表示の有効/無効切り替え ---------//
+    if (ImGui::Checkbox("Grid", &showGrid_)) EditorSettings::SetBool("sceneView.showGrid", showGrid_);
+    ImGui::SameLine();
+    if (ImGui::Checkbox("Lights", &showLightMarkers_)) EditorSettings::SetBool("sceneView.showLightMarkers", showLightMarkers_);
+    ImGui::SameLine();
+    if (ImGui::Checkbox("Cameras", &showCameraMarkers_)) EditorSettings::SetBool("sceneView.showCameraMarkers", showCameraMarkers_);
+    ImGui::SameLine();
+    if (ImGui::Checkbox("Colliders", &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
+
     //--------- シーンビュー画像 ---------//
     if (!screenBuffer_ || screenBuffer_->GetSrvHandle().ptr == 0) {
         ImGui::TextUnformatted("Scene view is not ready.");
@@ -141,16 +157,16 @@ void SceneEditorView::ShowSceneViewWindow(EmptyObject *selectedObject, SceneEdit
     HandleCameraInput();
 
     //--------- XZ平面のグリッド線 ---------//
-    DrawGrid(imagePos, drawSize);
+    if (showGrid_) DrawGrid(imagePos, drawSize);
 
     //--------- ライトのデバッグ表示 ---------//
-    DrawLightMarkers(imagePos, drawSize);
+    if (showLightMarkers_) DrawLightMarkers(imagePos, drawSize);
 
     //--------- カメラのデバッグ表示 ---------//
-    DrawCameraMarkers(imagePos, drawSize);
+    if (showCameraMarkers_) DrawCameraMarkers(imagePos, drawSize);
 
     //--------- 当たり判定のデバッグ表示 ---------//
-    DrawColliderGizmos(imagePos, drawSize);
+    if (showColliderGizmos_) DrawColliderGizmos(imagePos, drawSize);
 
     //--------- ImGuizmo によるギズモ表示 ---------//
     ShowGizmo(selectedObject, commands, imagePos, drawSize);

@@ -102,7 +102,9 @@
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
-copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
+robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
+if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -136,7 +138,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
-copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
+robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
+if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -174,7 +178,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
-copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
+robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
+if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -199,6 +205,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.RadialBlur.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.Vignette.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Skybox.Solid.BlendNormal.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Skinning.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Add.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\BlendState\Exclusion.json" />
@@ -241,6 +248,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugLinesVS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugLinesPS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\example.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skinning.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skinning\SkinningCS.hlsl" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Grayscale.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Line\Line.hlsli" />
@@ -401,6 +410,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\IndexBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\RenderTargetResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\RWStructuredBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp" />
@@ -433,6 +443,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\AssetEditorWindows.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp" />
@@ -567,6 +578,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Renderer\EditorDebugDraw.h" />
     <ClInclude Include="KashipanEngine\Graphics\Renderer\Renderer.h" />
     <ClInclude Include="KashipanEngine\Graphics\Renderer\ResourceContainer.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources.h" />
@@ -575,6 +587,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Graphics\Resources\IGraphicsResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\IndexBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\RenderTargetResource.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Resources\RWStructuredBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h" />
@@ -643,6 +656,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"</Comman
     <ClInclude Include="KashipanEngine\Objects\Components\Render\LightRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\NormalWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\OverlayWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferObject.h" />

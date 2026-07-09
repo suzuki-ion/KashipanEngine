@@ -44,6 +44,8 @@
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
+#include "Objects/Components/Render/SkinnedMeshRenderer.h"
+#include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Text.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Velocity.h"

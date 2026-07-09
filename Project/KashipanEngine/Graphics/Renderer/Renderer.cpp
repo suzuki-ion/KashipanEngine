@@ -23,7 +23,9 @@
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
+#include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
+#include "Graphics/Resources/RWStructuredBufferResource.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/Components/Compute/SceneComputeProcessor.h"
 #include "Scene/SceneContext.h"
@@ -151,6 +153,8 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
     // Computeシェーダー処理は他の描画パスより先に実行し、結果を後続パスから参照できるようにする
     ProcessComputeShaders(sceneContext);
+    // GPUスキニングも描画リスト構築より先に実行し、スキニング結果を描画パスから参照できるようにする
+    ProcessSkinning(sceneContext);
 
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
@@ -254,6 +258,65 @@ void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
     ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
 }
 
+void Renderer::ProcessSkinning(SceneContext *sceneContext) {
+    if (!sceneContext || !pipelineManager_) return;
+    auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
+    const auto &renderers = sceneRenderer->GetSkinnedMeshRenderers();
+    if (renderers.empty()) return;
+    if (!pipelineManager_->HasPipeline("Skinning") || pipelineManager_->GetPipeline("Skinning").Type() != PipelineType::Compute) return;
+
+    auto *commandList = ComputeCommandProcessor::BeginRecord(Passkey<Renderer>{});
+    if (!commandList) return;
+
+    // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
+    PipelineBinder pipelineBinder(commandList, pipelineManager_);
+    pipelineBinder.Invalidate();
+
+    for (auto *renderer : renderers) {
+        if (!renderer || !renderer->IsActive()) continue;
+        // ゲームループが停止/一時停止中でも描画自体は継続されるため、Update()に頼らずここで
+        // 毎フレーム明示的にリソースを最新化する（CameraRenderer::RefreshConstantBufferと同じ考え方）
+        renderer->RefreshSkinningResources(Passkey<Renderer>{});
+        if (!renderer->HasValidSkinningData(Passkey<Renderer>{})) continue;
+
+        auto *sourceVertices = renderer->GetSourceVerticesBuffer(Passkey<Renderer>{});
+        auto *skinWeights = renderer->GetSkinWeightsBuffer(Passkey<Renderer>{});
+        auto *boneMatrices = renderer->GetBoneMatricesBuffer(Passkey<Renderer>{});
+        auto *constantBuffer = renderer->GetSkinningConstantBuffer(Passkey<Renderer>{});
+        auto *outputBuffer = renderer->GetSkinnedVertexBuffer(Passkey<Renderer>{});
+        auto *blendShapeDeltas = renderer->GetBlendShapeDeltasBuffer(Passkey<Renderer>{});
+        auto *blendShapeWeights = renderer->GetBlendShapeWeightsBuffer(Passkey<Renderer>{});
+        if (!sourceVertices || !skinWeights || !boneMatrices || !constantBuffer || !outputBuffer ||
+            !blendShapeDeltas || !blendShapeWeights) continue;
+
+        pipelineBinder.UsePipeline("Skinning");
+        auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "Skinning");
+        shaderBinder.SetCommandList(commandList);
+
+        outputBuffer->SetCommandList(commandList);
+        outputBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        // cbufferのバインド名は変数名ではなくブロック名(cbuffer <名前>)で登録されるため注意
+        shaderBinder.Bind("Compute:SkinningConstants", constantBuffer);
+        shaderBinder.Bind("Compute:gSourceVertices", sourceVertices);
+        shaderBinder.Bind("Compute:gSkinWeights", skinWeights);
+        shaderBinder.Bind("Compute:gBoneMatrices", boneMatrices);
+        shaderBinder.Bind("Compute:gBlendShapeDeltas", blendShapeDeltas);
+        shaderBinder.Bind("Compute:gBlendShapeWeights", blendShapeWeights);
+        shaderBinder.Bind("Compute:gOutputVertices", outputBuffer);
+
+        const std::uint32_t vertexCount = renderer->GetVertexCount(Passkey<Renderer>{});
+        const std::uint32_t groupCount = std::max<std::uint32_t>(1, (vertexCount + 63) / 64);
+        commandList->Dispatch(groupCount, 1, 1);
+
+        // 後続の描画パスで頂点バッファとして読めるように状態遷移しておく
+        outputBuffer->TransitionTo(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    }
+
+    ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
+}
+
 void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
     if (resourceContainer_) {
         resourceContainer_->Clear();
@@ -318,7 +381,8 @@ void Renderer::RenderToTarget(IRenderTarget *target,
             const auto &other = entries[end];
             if (other.pipelineName != first.pipelineName ||
                 other.meshHandle != first.meshHandle ||
-                other.materialHandle != first.materialHandle) {
+                other.materialHandle != first.materialHandle ||
+                other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
                 break;
             }
             ++end;
@@ -356,7 +420,10 @@ void Renderer::DrawBatch(IRenderTarget *target,
     auto *commandList = target->GetCommandList();
 
     const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(first.meshHandle);
-    if (!meshBuffers || !meshBuffers->vertexBuffer || !meshBuffers->indexBuffer) return;
+    if (!meshBuffers || !meshBuffers->indexBuffer) return;
+    // SkinnedMeshRendererから作られたエントリの場合は静的な頂点バッファではなく
+    // GPUスキニング結果（インスタンス専用）を頂点バッファとして使用する
+    if (!first.skinnedVertexBuffer && !meshBuffers->vertexBuffer) return;
 
     pipelineBinder.UsePipeline(pipelineName);
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
@@ -451,7 +518,13 @@ void Renderer::DrawBatch(IRenderTarget *target,
     }
 
     // メッシュのバインドと描画
-    pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
+    if (first.skinnedVertexBuffer) {
+        first.skinnedVertexBuffer->SetCommandList(commandList);
+        D3D12_VERTEX_BUFFER_VIEW skinnedView = first.skinnedVertexBuffer->GetView(sizeof(ResourceContainer::MeshVertex));
+        pipelineBinder.SetVertexBufferView(0, 1, &skinnedView);
+    } else {
+        pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
+    }
     pipelineBinder.SetIndexBuffer(meshBuffers->indexBuffer.get());
     commandList->DrawIndexedInstanced(meshBuffers->indexCount, instanceCount, 0, 0, 0);
 }

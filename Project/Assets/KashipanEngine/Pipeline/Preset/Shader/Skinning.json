@@ -1,0 +1,9 @@
+{
+	"BaseName": "Skinning",
+	"Compute": {
+		"Name": "CS",
+		"Path": "Skinning/SkinningCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

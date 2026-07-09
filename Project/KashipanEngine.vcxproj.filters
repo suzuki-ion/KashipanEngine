@@ -396,6 +396,9 @@
     <ClCompile Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.cpp">
       <Filter>KashipanEngine\Graphics\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Resources\RWStructuredBufferResource.cpp">
+      <Filter>KashipanEngine\Graphics\Resources</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp">
       <Filter>KashipanEngine\Graphics\Resources</Filter>
     </ClCompile>
@@ -604,6 +607,7 @@
       <Filter>KashipanEngine\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\AssetEditorWindows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\AppInitialize.h">
@@ -903,6 +907,9 @@
     <ClInclude Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.h">
       <Filter>KashipanEngine\Graphics\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Resources\RWStructuredBufferResource.h">
+      <Filter>KashipanEngine\Graphics\Resources</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.h">
       <Filter>KashipanEngine\Graphics\Resources</Filter>
     </ClInclude>
@@ -1101,6 +1108,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\NormalWindowObject.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
@@ -1117,6 +1127,9 @@
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.cpp">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClCompile>
     <ClInclude Include="KashipanEngine\Objects\Components\Text.h">
@@ -1416,6 +1429,9 @@
     <ClInclude Include="MyStd\VectorMap.h">
       <Filter>MyStd</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\AssetEditorWindows.h" />
+    <ClInclude Include="KashipanEngine\Utilities\AssetDragDropPayload.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Renderer\EditorDebugDraw.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -1793,6 +1809,17 @@
     <None Include="tools\sync_filters.py">
       <Filter>tools</Filter>
     </None>
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugGrid.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugLines.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Skinning.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugGrid.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugLines.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugGridVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugGridPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugLinesVS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugDraw\DebugLinesPS.hlsl" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skinning.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\Skinning\SkinningCS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />

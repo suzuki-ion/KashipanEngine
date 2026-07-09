@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -40,6 +41,18 @@ public:
         std::vector<VertexWeightData> vertexWeights;
     };
 
+    /// @brief BlendShape（モーフターゲット）の頂点1つ分の差分（バインドポーズからの差分のみ保持する）
+    struct BlendShapeVertexDelta final {
+        Vector3 deltaPosition{ 0.0f, 0.0f, 0.0f };
+        Vector3 deltaNormal{ 0.0f, 0.0f, 0.0f };
+        uint32_t vertexIndex = 0;
+    };
+    /// @brief BlendShape1つ分のデータ（変化の無い頂点は保持しないスパース表現）
+    struct BlendShapeData final {
+        std::string name;
+        std::vector<BlendShapeVertexDelta> deltas;
+    };
+
 private:
     friend class ModelManager;
     friend class Model;
@@ -51,6 +64,9 @@ private:
 
     // ジョイント名からスキンウェイトデータへのマップ
     std::unordered_map<std::string, JointWeightData> skinClusters_;
+
+    // BlendShape（モーフターゲット）一覧
+    std::vector<BlendShapeData> blendShapes_;
 
     std::vector<MaterialData> materials_;
 
@@ -64,6 +80,16 @@ public:
     const std::string &GetAssetRelativePath() const noexcept { return assetRelativePath_; }
     uint32_t GetMaterialCount() const noexcept { return static_cast<uint32_t>(materials_.size()); }
     const MaterialData *GetMaterial(uint32_t idx) const noexcept { return idx < materials_.size() ? &materials_[idx] : nullptr; }
+
+    /// @brief ジョイント名からスキンウェイトデータへのマップを取得（SkinnedMeshRenderer用）
+    const std::unordered_map<std::string, JointWeightData> &GetSkinClusters() const noexcept { return skinClusters_; }
+    /// @brief スキニング用のジョイントウェイトデータを持つか（ボーンが1つも無いメッシュはfalse）
+    bool HasSkinning() const noexcept { return !skinClusters_.empty(); }
+
+    /// @brief BlendShape（モーフターゲット）一覧を取得（SkinnedMeshRenderer用）
+    const std::vector<BlendShapeData> &GetBlendShapes() const noexcept { return blendShapes_; }
+    /// @brief BlendShapeを1つ以上持つか
+    bool HasBlendShapes() const noexcept { return !blendShapes_.empty(); }
 };
 
 /// @brief モデル管理クラス

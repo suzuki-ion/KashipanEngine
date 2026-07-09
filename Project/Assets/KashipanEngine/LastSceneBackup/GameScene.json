@@ -266,16 +266,6 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 1
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "MeshFilter"
-                },
-                {
-                    "data": {
-                        "customData": {
                             "center": {
                                 "x": 0.0,
                                 "y": 0.0,
@@ -341,41 +331,30 @@
                 {
                     "data": {
                         "customData": {
-                            "groupCountX": 1,
-                            "groupCountY": 1,
-                            "groupCountZ": 1,
-                            "pipelineName": "Compute.Test",
-                            "textureBinds": [
-                                {
-                                    "textureAssetPath": "",
-                                    "variableName": ""
-                                }
-                            ],
-                            "uavTextureBinds": [
-                                {
-                                    "formatKind": 0,
-                                    "height": 256,
-                                    "variableName": "",
-                                    "width": 256
-                                }
-                            ]
+                            "meshHandle": 28
                         },
                         "isActive": true,
-                        "priority": 100
+                        "priority": 1
                     },
-                    "type": "ComputeShaderProcessing"
+                    "type": "MeshFilter"
                 },
                 {
                     "data": {
                         "customData": {
-                            "materialName": "Black",
+                            "animationClipName": "Armature|mixamo.com|Layer0",
+                            "blendShapes": [],
+                            "loop": true,
+                            "materialName": "Default",
                             "pipelineName": "Object3D.Solid.BlendNormal",
+                            "playOnStart": true,
+                            "playbackSpeed": 0.5400000214576721,
+                            "quality": 0,
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                         },
                         "isActive": true,
                         "priority": 900
                     },
-                    "type": "MeshRenderer"
+                    "type": "SkinnedMeshRenderer"
                 }
             ],
             "isActive": true,

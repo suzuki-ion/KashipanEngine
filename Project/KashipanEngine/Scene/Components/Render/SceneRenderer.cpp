@@ -6,6 +6,7 @@
 #include "Graphics/PipelineManager.h"
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
+#include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
@@ -122,6 +123,17 @@ void SceneRenderer::UnregisterSpriteRenderer(const SpriteRenderer *renderer) {
     if (it != spriteRenderers_.end()) spriteRenderers_.erase(it);
 }
 
+void SceneRenderer::RegisterSkinnedMeshRenderer(SkinnedMeshRenderer *renderer) {
+    if (!renderer) return;
+    if (std::find(skinnedMeshRenderers_.begin(), skinnedMeshRenderers_.end(), renderer) != skinnedMeshRenderers_.end()) return;
+    skinnedMeshRenderers_.push_back(renderer);
+}
+
+void SceneRenderer::UnregisterSkinnedMeshRenderer(const SkinnedMeshRenderer *renderer) {
+    auto it = std::find(skinnedMeshRenderers_.begin(), skinnedMeshRenderers_.end(), renderer);
+    if (it != skinnedMeshRenderers_.end()) skinnedMeshRenderers_.erase(it);
+}
+
 void SceneRenderer::RegisterCameraRenderer(CameraRenderer *renderer) {
     if (!renderer) return;
     if (std::find(cameraRenderers_.begin(), cameraRenderers_.end(), renderer) != cameraRenderers_.end()) return;
@@ -150,9 +162,47 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     if (!pipelineManager) return sortedDrawList_;
 
     std::vector<SortableEntry> sortableEntries;
-    sortableEntries.reserve(meshRenderers_.size() + spriteRenderers_.size());
+    sortableEntries.reserve(meshRenderers_.size() + spriteRenderers_.size() + skinnedMeshRenderers_.size());
     CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, sortableEntries, targetOwners_);
     CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, sortableEntries, targetOwners_);
+
+    // SkinnedMeshRendererはGPUスキニング結果バッファ(skinnedVertexBuffer)を追加で持つため、
+    // MeshRenderer/SpriteRendererと形が異なりCollectSortableEntriesは使わず個別に収集する
+    {
+        std::vector<IRenderTarget *> targets;
+        for (auto *renderer : skinnedMeshRenderers_) {
+            if (!renderer || !renderer->IsActive()) continue;
+            if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
+            if (!renderer->HasValidSkinningData()) continue;
+
+            const std::string &pipelineName = renderer->GetPipelineName();
+            if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
+            const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+
+            auto *targetObject = renderer->GetTargetObject();
+            SceneRenderer::CollectRenderTargets(targetObject, targets);
+            if (editorTarget_ && editorTarget_->IsRenderTargetAvailable()) {
+                targets.push_back(editorTarget_);
+            }
+            for (auto *target : targets) {
+                if (!target || !target->IsRenderTargetAvailable()) continue;
+                if (target != editorTarget_ && !renderer->IsRenderTargetIncluded(target)) continue;
+                if (target != editorTarget_) {
+                    targetOwners_[target] = targetObject;
+                }
+                SortableEntry sortable;
+                sortable.entry.target = target;
+                sortable.entry.pipelineName = pipelineName;
+                sortable.entry.meshHandle = renderer->GetMeshHandle();
+                sortable.entry.materialHandle = renderer->GetMaterialHandle();
+                sortable.entry.worldMatrix = renderer->GetWorldMatrix();
+                sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
+                sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
+                sortable.pipelinePriority = pipelinePriority;
+                sortableEntries.push_back(sortable);
+            }
+        }
+    }
 
     // 描画先→パイプライン優先度→パイプライン名→メッシュ→マテリアルの順でソート
     std::stable_sort(sortableEntries.begin(), sortableEntries.end(),
@@ -176,6 +226,7 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
 void SceneRenderer::ShowImGui() {
     ImGui::Text("MeshRenderers: %d", static_cast<int>(meshRenderers_.size()));
     ImGui::Text("SpriteRenderers: %d", static_cast<int>(spriteRenderers_.size()));
+    ImGui::Text("SkinnedMeshRenderers: %d", static_cast<int>(skinnedMeshRenderers_.size()));
     ImGui::Text("CameraRenderers: %d", static_cast<int>(cameraRenderers_.size()));
     ImGui::Text("LightRenderers: %d", static_cast<int>(lightRenderers_.size()));
 }

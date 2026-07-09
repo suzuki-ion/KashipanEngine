@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <filesystem>
 #include <functional>
 #include <unordered_map>
@@ -66,6 +67,15 @@ std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::stri
         return NormalizePathSlashes(full.filename().string());
     }
     return NormalizePathSlashes(rel.string());
+}
+
+Matrix4x4 ConvertMatrix(const aiMatrix4x4& m) {
+    Matrix4x4 out{};
+    out.m[0][0] = m.a1; out.m[0][1] = m.a2; out.m[0][2] = m.a3; out.m[0][3] = m.a4;
+    out.m[1][0] = m.b1; out.m[1][1] = m.b2; out.m[1][2] = m.b3; out.m[1][3] = m.b4;
+    out.m[2][0] = m.c1; out.m[2][1] = m.c2; out.m[2][2] = m.c3; out.m[2][3] = m.c4;
+    out.m[3][0] = m.d1; out.m[3][1] = m.d2; out.m[3][2] = m.d3; out.m[3][3] = m.d4;
+    return out;
 }
 
 Handle RegisterEntry(ModelEntry&& entry) {
@@ -229,6 +239,72 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
             const aiFace& face = mesh->mFaces[f];
             for (unsigned int j = 0; j < face.mNumIndices; ++j) {
                 dst.indices_.push_back(baseVertex + face.mIndices[j]);
+            }
+        }
+
+        // ボーン（スキンウェイト）の抽出。SkinnedMeshRenderer のGPUスキニングで使用する
+        for (unsigned int bi = 0; bi < mesh->mNumBones; ++bi) {
+            const aiBone* bone = mesh->mBones[bi];
+            if (!bone) continue;
+            const std::string boneName = bone->mName.C_Str();
+            if (boneName.empty()) continue;
+
+            auto& cluster = dst.skinClusters_[boneName];
+            cluster.inverseBindPoseMatrix = ConvertMatrix(bone->mOffsetMatrix);
+            cluster.vertexWeights.reserve(cluster.vertexWeights.size() + bone->mNumWeights);
+            for (unsigned int wi = 0; wi < bone->mNumWeights; ++wi) {
+                const auto& w = bone->mWeights[wi];
+                ModelData::VertexWeightData vw;
+                vw.weight = w.mWeight;
+                vw.vertexIndex = baseVertex + w.mVertexId;
+                cluster.vertexWeights.push_back(vw);
+            }
+        }
+
+        // BlendShape（モーフターゲット）の頂点差分抽出。SkinnedMeshRenderer のGPUスキニングで使用する
+        for (unsigned int ai = 0; ai < mesh->mNumAnimMeshes; ++ai) {
+            const aiAnimMesh* animMesh = mesh->mAnimMeshes[ai];
+            if (!animMesh) continue;
+            const std::string shapeName = animMesh->mName.length > 0
+                ? std::string(animMesh->mName.C_Str())
+                : ("BlendShape" + std::to_string(ai));
+
+            // 同名のBlendShapeが既にあれば追記する（複数メッシュに分かれたモデル用）
+            ModelData::BlendShapeData* target = nullptr;
+            for (auto& bs : dst.blendShapes_) {
+                if (bs.name == shapeName) {
+                    target = &bs;
+                    break;
+                }
+            }
+            if (!target) {
+                dst.blendShapes_.push_back(ModelData::BlendShapeData{});
+                target = &dst.blendShapes_.back();
+                target->name = shapeName;
+            }
+
+            const bool hasAnimNormals = animMesh->HasNormals() && hasNormals;
+            const unsigned int animVertexCount = std::min(animMesh->mNumVertices, mesh->mNumVertices);
+            constexpr float kEpsilon = 1e-6f;
+            for (unsigned int vi = 0; vi < animVertexCount; ++vi) {
+                const aiVector3D& basePos = mesh->mVertices[vi];
+                const aiVector3D& morphPos = animMesh->mVertices[vi];
+                Vector3 deltaPos(morphPos.x - basePos.x, morphPos.y - basePos.y, morphPos.z - basePos.z);
+                Vector3 deltaNormal(0.0f, 0.0f, 0.0f);
+                if (hasAnimNormals) {
+                    const aiVector3D& baseNormal = mesh->mNormals[vi];
+                    const aiVector3D& morphNormal = animMesh->mNormals[vi];
+                    deltaNormal = Vector3(morphNormal.x - baseNormal.x, morphNormal.y - baseNormal.y, morphNormal.z - baseNormal.z);
+                }
+                if (std::abs(deltaPos.x) < kEpsilon && std::abs(deltaPos.y) < kEpsilon && std::abs(deltaPos.z) < kEpsilon &&
+                    std::abs(deltaNormal.x) < kEpsilon && std::abs(deltaNormal.y) < kEpsilon && std::abs(deltaNormal.z) < kEpsilon) {
+                    continue;
+                }
+                ModelData::BlendShapeVertexDelta delta;
+                delta.deltaPosition = deltaPos;
+                delta.deltaNormal = deltaNormal;
+                delta.vertexIndex = baseVertex + vi;
+                target->deltas.push_back(delta);
             }
         }
     };

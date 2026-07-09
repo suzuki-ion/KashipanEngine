@@ -43,6 +43,11 @@ private:
     /// @details 専用コマンドリスト（ComputeCommandProcessor）上で全てまとめて記録・実行される
     void ProcessComputeShaders(SceneContext *sceneContext);
 
+    /// @brief シーン内のSkinnedMeshRendererに対してGPUスキニング（Computeシェーダー）を実行する
+    /// @details 描画リスト構築・描画より先に実行し、各インスタンスのスキニング結果バッファを
+    ///          後続の描画パスで頂点バッファとして参照できるようにする
+    void ProcessSkinning(SceneContext *sceneContext);
+
     /// @brief 単一の描画先への描画処理
     void RenderToTarget(IRenderTarget *target,
         std::span<const SceneRenderer::DrawEntry> entries,

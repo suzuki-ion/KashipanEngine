@@ -16,11 +16,13 @@ class ConstantBufferResource;
 class EmptyObject;
 class MeshRenderer;
 class SpriteRenderer;
+class SkinnedMeshRenderer;
 class CameraRenderer;
 class LightRenderer;
 class IRenderTarget;
 class PipelineManager;
 class Renderer;
+class RWStructuredBufferResource;
 
 /// @brief シーン内の描画用コンポーネントを収集して描画リストを構築するシーンコンポーネント
 class SceneRenderer final : public ISceneComponent {
@@ -34,6 +36,10 @@ public:
         ModelManager::ModelHandle meshHandle = ModelManager::kInvalidHandle;
         MaterialManager::MaterialHandle materialHandle = MaterialManager::kInvalidHandle;
         Matrix4x4 worldMatrix = Matrix4x4::Identity();
+        /// @brief SkinnedMeshRendererから作られたエントリのみ非null。
+        ///        非nullの場合、頂点バッファは静的メッシュではなくこのGPUスキニング結果を使用し、
+        ///        インスタンス（バッチ）結合の対象にもならない（各インスタンスが専用の出力バッファを持つため）
+        RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
     };
 
     SCENE_COMPONENT_CONSTRUCTOR(SceneRenderer, 1, SetUpdatePriority(1000);)
@@ -52,6 +58,8 @@ public:
     void UnregisterMeshRenderer(const MeshRenderer *renderer);
     void RegisterSpriteRenderer(SpriteRenderer *renderer);
     void UnregisterSpriteRenderer(const SpriteRenderer *renderer);
+    void RegisterSkinnedMeshRenderer(SkinnedMeshRenderer *renderer);
+    void UnregisterSkinnedMeshRenderer(const SkinnedMeshRenderer *renderer);
     void RegisterCameraRenderer(CameraRenderer *renderer);
     void UnregisterCameraRenderer(const CameraRenderer *renderer);
     void RegisterLightRenderer(LightRenderer *renderer);
@@ -59,6 +67,7 @@ public:
 
     const std::vector<MeshRenderer *> &GetMeshRenderers() const noexcept { return meshRenderers_; }
     const std::vector<SpriteRenderer *> &GetSpriteRenderers() const noexcept { return spriteRenderers_; }
+    const std::vector<SkinnedMeshRenderer *> &GetSkinnedMeshRenderers() const noexcept { return skinnedMeshRenderers_; }
     const std::vector<CameraRenderer *> &GetCameraRenderers() const noexcept { return cameraRenderers_; }
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
 
@@ -107,6 +116,7 @@ protected:
 private:
     std::vector<MeshRenderer *> meshRenderers_;
     std::vector<SpriteRenderer *> spriteRenderers_;
+    std::vector<SkinnedMeshRenderer *> skinnedMeshRenderers_;
     std::vector<CameraRenderer *> cameraRenderers_;
     std::vector<LightRenderer *> lightRenderers_;
 

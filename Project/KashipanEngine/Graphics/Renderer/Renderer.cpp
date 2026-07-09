@@ -437,6 +437,18 @@ void Renderer::DrawBatch(IRenderTarget *target,
     // ワールド行列のインスタンスバッファ
     {
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, "transform");
+        if (first.skinnedVertexBuffer) {
+            // SkinnedMeshRendererのエントリはインスタンス結合されず必ずinstanceCount=1で
+            // 個別にDrawBatchが呼ばれるが、同じメッシュ/マテリアル/パイプライン/描画先を
+            // 参照する別インスタンスがあると上記キーが完全に一致してしまい、
+            // resourceContainer_にキャッシュされた同一GPUバッファを取り合って上書きし合う
+            // （結果、全インスタンスが最後に書き込まれた1つのワールド行列を参照して
+            // 同じ位置に描画されてしまう）。インスタンス固有のスキニング出力バッファの
+            // ポインタをキーに含めることで、インスタンスごとに専用の変換行列バッファを使う。
+            char suffix[32];
+            std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
+            key += suffix;
+        }
         auto *instanceBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(Matrix4x4), instanceCount);
         if (!instanceBuffer) return;
         auto *mapped = static_cast<Matrix4x4 *>(instanceBuffer->Map());
@@ -456,6 +468,12 @@ void Renderer::DrawBatch(IRenderTarget *target,
         }
 
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, "material");
+        if (first.skinnedVertexBuffer) {
+            // 上記の変換行列バッファと同じ理由で、スキニングインスタンスごとに専用バッファを使う
+            char suffix[32];
+            std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
+            key += suffix;
+        }
         if (isObject2D) {
             Material2DElement element;
             if (material) {

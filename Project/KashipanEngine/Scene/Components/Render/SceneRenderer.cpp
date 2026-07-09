@@ -134,6 +134,12 @@ void SceneRenderer::UnregisterSkinnedMeshRenderer(const SkinnedMeshRenderer *ren
     if (it != skinnedMeshRenderers_.end()) skinnedMeshRenderers_.erase(it);
 }
 
+void SceneRenderer::ResetAllSkinnedMeshRendererPoses() {
+    for (auto *renderer : skinnedMeshRenderers_) {
+        if (renderer) renderer->ResetAnimationToBindPose();
+    }
+}
+
 void SceneRenderer::RegisterCameraRenderer(CameraRenderer *renderer) {
     if (!renderer) return;
     if (std::find(cameraRenderers_.begin(), cameraRenderers_.end(), renderer) != cameraRenderers_.end()) return;

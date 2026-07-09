@@ -95,9 +95,14 @@ void Scene::PlayStop() {
     isPaused_ = false;
     isStepFrameRequested_ = false;
 
-    // SkinnedMeshRendererのアニメーションはSkeletonManagerが持つジョイントのTransformを直接
-    // 書き換えて進行するため、シーンオブジェクトを再生開始前の状態へ戻すだけでは元のポーズに戻らない。
-    // ここで明示的にバインドポーズへ復元する。
+    // SkinnedMeshRendererのアニメーションは各コンポーネントが専用に複製したスケルトンインスタンスの
+    // ジョイントTransformを直接書き換えて進行するため、シーンオブジェクトを再生開始前の状態へ
+    // 戻すだけでは元のポーズに戻らない。ここで明示的にバインドポーズへ復元する。
+    if (auto *sceneRenderer = GetComponent<SceneRenderer>()) {
+        sceneRenderer->ResetAllSkinnedMeshRendererPoses();
+    }
+    // SkeletonManagerが保持する共有アセット本体（KeyframeAnimator等、複製を使わない別経路の
+    // 消費者向け）のジョイント姿勢もバインドポーズへ復元しておく。
     SkeletonManager::ResetAllSkeletonsToBindPose();
 
     JSON snapshot = std::move(editModeSnapshot_);

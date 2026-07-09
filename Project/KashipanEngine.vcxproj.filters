@@ -178,6 +178,9 @@
     <Filter Include="KashipanEngine\Scene\Components">
       <UniqueIdentifier>{C602097F-9A52-5DEF-B496-A54E7E98B780}</UniqueIdentifier>
     </Filter>
+    <Filter Include="KashipanEngine\Scene\Components\Audio">
+      <UniqueIdentifier>{3C4D5E6F-7A8B-5C9D-AE0F-2A3B4C5D6E7F}</UniqueIdentifier>
+    </Filter>
     <Filter Include="KashipanEngine\Scene\Components\Compute">
       <UniqueIdentifier>{2B3C4D5E-6F7A-5B8C-9D0E-1F2A3B4C5D6E}</UniqueIdentifier>
     </Filter>
@@ -464,6 +467,9 @@
     </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp">
       <Filter>KashipanEngine\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp">
+      <Filter>KashipanEngine\Scene\Components\Audio</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp">
       <Filter>KashipanEngine\Scene\Components\Compute</Filter>
@@ -1209,6 +1215,9 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\SceneObjectCollider.h">
       <Filter>KashipanEngine\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h">
+      <Filter>KashipanEngine\Scene\Components\Audio</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h">
       <Filter>KashipanEngine\Scene\Components\Compute</Filter>

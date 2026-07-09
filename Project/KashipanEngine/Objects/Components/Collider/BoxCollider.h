@@ -14,6 +14,7 @@ public:
         ptr->size_ = size_;
         ptr->center_ = center_;
         ptr->SetTrigger(IsTrigger());
+        ptr->CopySyncSettingsFrom(*this);
         return ptr;
     }
 
@@ -25,8 +26,9 @@ public:
     std::optional<ColliderInfo3D> BuildColliderInfo3D() const override {
         ColliderInfo3D info;
         ColliderInfo3D::BoxShape3D box;
-        box.center = GetOwnerWorldPosition() + center_;
-        box.halfExtents = size_ * 0.5f;
+        const Vector3 scale = GetSyncedOwnerScale();
+        box.center = GetSyncedOwnerPosition() + center_;
+        box.halfExtents = Vector3(size_.x * scale.x, size_.y * scale.y, size_.z * scale.z) * 0.5f;
         info.shape = box;
         info.ownerObject = const_cast<EmptyObject *>(GetOwnerObjectContext() ? GetOwnerObjectContext()->GetOwner() : nullptr);
         return info;

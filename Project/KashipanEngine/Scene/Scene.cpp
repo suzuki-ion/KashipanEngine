@@ -3,6 +3,7 @@
 #include "Scene/SceneContext.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/RigidBody3D.h"
 #ifdef USE_IMGUI
 #include "Scene/SceneEditor.h"
 #include "Scene/SceneEditorContext.h"
@@ -72,6 +73,16 @@ void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
 void Scene::PlayStart() {
     if (isPlaying_) return;
     editModeSnapshot_ = SaveToJSON();
+
+    // 物理ボディは生成された時点の位置のまま追従しないため、エディターでの移動を反映してから再生を開始する
+    // （反映しないと、生成時点の古い位置へUpdateで引き戻されてしまう）
+    for (const auto &object : objects_) {
+        if (!object) continue;
+        for (auto *rigidBody : object->GetComponents<RigidBody3D>()) {
+            rigidBody->SyncFromTransform();
+        }
+    }
+
     isPlaying_ = true;
     isPaused_ = false;
     isStepFrameRequested_ = false;

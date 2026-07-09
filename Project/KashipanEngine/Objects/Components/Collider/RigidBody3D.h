@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Transform.h"
@@ -108,6 +108,26 @@ public:
 
     bool IsInterpolateEnabled() const { return interpolate_; }
 
+    /// @brief 現在のTransformの位置・回転を物理ボディへ反映する
+    /// @details エディターでオブジェクトを移動させても、既に生成済みの物理ボディの位置は
+    ///          自動的には追従しない（毎フレームUpdateで行っているのは物理→Transformへの反映のみ）。
+    ///          そのままPlayを開始すると、物理ボディが生成された時点の古い位置（多くの場合原点）へ
+    ///          Transformが引き戻されてしまうため、Play開始時にこれを呼んで同期を取る。
+    void SyncFromTransform() {
+        if (!rigidBody_) return;
+        auto *ctx = GetOwnerObjectContext();
+        auto *tr = ctx ? ctx->GetComponent<Transform>() : nullptr;
+        if (!tr) return;
+
+        const Vector3 pos = tr->GetTranslate();
+        const Quaternion rot = tr->GetRotateQuaternion();
+        rigidBody_->setTransform(reactphysics3d::Transform(
+            reactphysics3d::Vector3(pos.x, pos.y, pos.z),
+            reactphysics3d::Quaternion(rot.x, rot.y, rot.z, rot.w)));
+        rigidBody_->setLinearVelocity(reactphysics3d::Vector3(0.0f, 0.0f, 0.0f));
+        rigidBody_->setAngularVelocity(reactphysics3d::Vector3(0.0f, 0.0f, 0.0f));
+    }
+
 protected:
     void Initialize() override {
         TryInitialize();
@@ -173,12 +193,20 @@ protected:
         JSON json = JSON::object();
         json["selectedColliderTypeName"] = selectedColliderTypeName_;
         json["selectedColliderOccurrenceIndex"] = selectedColliderOccurrenceIndex_;
+        json["bodyType"] = static_cast<int>(bodyType_);
+        json["mass"] = mass_;
+        json["useGravity"] = useGravity_;
+        json["interpolate"] = interpolate_;
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
         selectedColliderTypeName_ = json.value("selectedColliderTypeName", std::string{});
         selectedColliderOccurrenceIndex_ = json.value("selectedColliderOccurrenceIndex", 0);
+        bodyType_ = static_cast<reactphysics3d::BodyType>(json.value("bodyType", static_cast<int>(reactphysics3d::BodyType::DYNAMIC)));
+        mass_ = json.value("mass", 1.0f);
+        useGravity_ = json.value("useGravity", true);
+        interpolate_ = json.value("interpolate", true);
         return true;
     }
 

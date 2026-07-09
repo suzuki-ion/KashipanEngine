@@ -1,9 +1,12 @@
 #pragma once
+#include <cmath>
 #include <functional>
 #include <optional>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Collision/Collider.h"
+#include "Math/Quaternion.h"
+#include "Math/Vector2.h"
 
 namespace KashipanEngine {
 
@@ -34,6 +37,15 @@ public:
     bool Is2D() const noexcept { return is2D_; }
     bool IsTrigger() const noexcept { return isTrigger_; }
     void SetTrigger(bool isTrigger) noexcept { isTrigger_ = isTrigger; }
+
+    /// @brief 他のICollider（通常は複製元）からTransform同期設定をコピーする（Cloneで使用）
+    void CopySyncSettingsFrom(const ICollider &other) {
+        for (int i = 0; i < 3; ++i) {
+            syncPosition_[i] = other.syncPosition_[i];
+            syncRotation_[i] = other.syncRotation_[i];
+            syncScale_[i] = other.syncScale_[i];
+        }
+    }
 
     //==================================================
     // 衝突コールバック（3D用）
@@ -70,6 +82,34 @@ public:
     /// @details デバッグシーンビューでの当たり判定可視化にも使用するため公開している
     Vector3 GetOwnerWorldPosition() const;
 
+    //==================================================
+    // Transform同期設定
+    //==================================================
+    // 位置・回転・スケールそれぞれXYZ軸ごとに、同オブジェクトのTransformへ追従させるかを個別に選択できる。
+    // 無効にした軸は各コライダーの形状計算において「値なし」（位置・回転は0、スケールは1）として扱われる。
+
+    bool IsSyncPositionEnabled(int axis) const noexcept { return syncPosition_[axis]; }
+    bool IsSyncRotationEnabled(int axis) const noexcept { return syncRotation_[axis]; }
+    bool IsSyncScaleEnabled(int axis) const noexcept { return syncScale_[axis]; }
+
+    /// @brief 同期設定を考慮したオーナーのワールド座標を取得する（無効な軸は0として扱う）
+    Vector3 GetSyncedOwnerPosition() const;
+    /// @brief 同期設定を考慮したオーナーの回転（オイラー角、ラジアン、ローカル）を取得する（無効な軸は0として扱う）
+    Vector3 GetSyncedOwnerRotationEuler() const;
+    /// @brief 同期設定を考慮したオーナーの回転（クォータニオン）を取得する
+    Quaternion GetSyncedOwnerRotation() const;
+    /// @brief 同期設定を考慮したオーナーのスケール（ローカル。Transformにワールドスケール取得APIが無いため）を取得する（無効な軸は1として扱う）
+    Vector3 GetSyncedOwnerScale() const;
+
+    /// @brief 同期設定のZ回転を考慮して、2D用のローカルオフセットを回転させる
+    Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &localOffset) const {
+        const float angle = GetSyncedOwnerRotationEuler().z;
+        if (angle == 0.0f) return localOffset;
+        const float c = std::cos(angle);
+        const float s = std::sin(angle);
+        return Vector2(localOffset.x * c - localOffset.y * s, localOffset.x * s + localOffset.y * c);
+    }
+
 protected:
     ICollider(const std::string &typeName, Shape shape, bool is2D, size_t componentTypeID)
         : IObjectComponent(typeName, 0xFF, componentTypeID), shape_(shape), is2D_(is2D) {}
@@ -82,17 +122,48 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::Checkbox("IsTrigger", &isTrigger_);
+        ImGui::Separator();
+        ImGui::TextUnformatted("Sync With Transform");
+        if (is2D_) {
+            ImGui::Checkbox("Pos X", &syncPosition_[0]); ImGui::SameLine();
+            ImGui::Checkbox("Pos Y", &syncPosition_[1]);
+            ImGui::Checkbox("Rot Z", &syncRotation_[2]);
+            ImGui::Checkbox("Scale X", &syncScale_[0]); ImGui::SameLine();
+            ImGui::Checkbox("Scale Y", &syncScale_[1]);
+        } else {
+            ImGui::Checkbox("Pos X", &syncPosition_[0]); ImGui::SameLine();
+            ImGui::Checkbox("Pos Y", &syncPosition_[1]); ImGui::SameLine();
+            ImGui::Checkbox("Pos Z", &syncPosition_[2]);
+            ImGui::Checkbox("Rot X", &syncRotation_[0]); ImGui::SameLine();
+            ImGui::Checkbox("Rot Y", &syncRotation_[1]); ImGui::SameLine();
+            ImGui::Checkbox("Rot Z", &syncRotation_[2]);
+            ImGui::Checkbox("Scale X", &syncScale_[0]); ImGui::SameLine();
+            ImGui::Checkbox("Scale Y", &syncScale_[1]); ImGui::SameLine();
+            ImGui::Checkbox("Scale Z", &syncScale_[2]);
+        }
     }
 #endif
 
     JSON SaveToJson() const override {
         JSON json = JSON::object();
         json["isTrigger"] = isTrigger_;
+        json["syncPosition"] = { syncPosition_[0], syncPosition_[1], syncPosition_[2] };
+        json["syncRotation"] = { syncRotation_[0], syncRotation_[1], syncRotation_[2] };
+        json["syncScale"] = { syncScale_[0], syncScale_[1], syncScale_[2] };
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
         isTrigger_ = json.value("isTrigger", false);
+        if (json.contains("syncPosition") && json["syncPosition"].is_array() && json["syncPosition"].size() == 3) {
+            for (int i = 0; i < 3; ++i) syncPosition_[i] = json["syncPosition"][i].get<bool>();
+        }
+        if (json.contains("syncRotation") && json["syncRotation"].is_array() && json["syncRotation"].size() == 3) {
+            for (int i = 0; i < 3; ++i) syncRotation_[i] = json["syncRotation"][i].get<bool>();
+        }
+        if (json.contains("syncScale") && json["syncScale"].is_array() && json["syncScale"].size() == 3) {
+            for (int i = 0; i < 3; ++i) syncScale_[i] = json["syncScale"][i].get<bool>();
+        }
         return true;
     }
 
@@ -100,6 +171,11 @@ private:
     Shape shape_;
     bool is2D_ = false;
     bool isTrigger_ = false;
+
+    // Transform同期設定（位置・回転はデフォルトで追従、スケールは既存挙動を変えないためデフォルト非追従）
+    bool syncPosition_[3] = { true, true, true };
+    bool syncRotation_[3] = { true, true, true };
+    bool syncScale_[3] = { false, false, false };
 
     std::function<void(const HitInfo3D &)> onCollisionEnter3D_;
     std::function<void(const HitInfo3D &)> onCollisionStay3D_;

@@ -23,6 +23,7 @@ public:
         ptr->convex_ = convex_;
         ptr->explicitMeshHandle_ = explicitMeshHandle_;
         ptr->SetTrigger(IsTrigger());
+        ptr->CopySyncSettingsFrom(*this);
         return ptr;
     }
 
@@ -57,15 +58,18 @@ public:
         }
 
         ColliderInfo3D info;
+        const Vector3 scale = GetSyncedOwnerScale();
         if (convex_) {
             ColliderInfo3D::ConvexMeshShape3D meshShape;
             meshShape.vertices = std::move(vertices);
             meshShape.indices = data.GetIndices();
+            meshShape.scale = scale;
             info.shape = std::move(meshShape);
         } else {
             ColliderInfo3D::ConcaveMeshShape3D meshShape;
             meshShape.vertices = std::move(vertices);
             meshShape.indices = data.GetIndices();
+            meshShape.scale = scale;
             info.shape = std::move(meshShape);
         }
         auto *objectContext = GetOwnerObjectContext();

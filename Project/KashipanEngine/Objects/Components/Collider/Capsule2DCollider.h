@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
 
@@ -16,6 +17,7 @@ public:
         ptr->end_ = end_;
         ptr->radius_ = radius_;
         ptr->SetTrigger(IsTrigger());
+        ptr->CopySyncSettingsFrom(*this);
         return ptr;
     }
 
@@ -28,11 +30,12 @@ public:
 
     std::optional<ColliderInfo2D> BuildColliderInfo2D() const override {
         ColliderInfo2D info;
-        const Vector2 worldPos(GetOwnerWorldPosition());
+        const Vector2 worldPos(GetSyncedOwnerPosition());
+        const Vector3 scale = GetSyncedOwnerScale();
         Math::Capsule2D capsule;
-        capsule.start = worldPos + start_;
-        capsule.end = worldPos + end_;
-        capsule.radius = radius_;
+        capsule.start = worldPos + RotateOffsetBySyncedRotation2D(Vector2(start_.x * scale.x, start_.y * scale.y));
+        capsule.end = worldPos + RotateOffsetBySyncedRotation2D(Vector2(end_.x * scale.x, end_.y * scale.y));
+        capsule.radius = radius_ * std::max(scale.x, scale.y);
         info.shape = capsule;
         info.ownerObject = GetOwnerObjectContext() ? const_cast<EmptyObject *>(GetOwnerObjectContext()->GetOwner()) : nullptr;
         return info;

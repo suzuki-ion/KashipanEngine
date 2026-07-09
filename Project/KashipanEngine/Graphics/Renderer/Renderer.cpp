@@ -182,6 +182,14 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
     // 描画対象オブジェクトが無い ScreenBuffer にもポストエフェクトのみ適用する
     RenderPostProcessOnlyTargets(sceneContext, renderedTargets);
+
+    // シーンに描画対象が一つも無い場合でも、エディター用描画先には背景だけは描画する
+    auto *editorTarget = sceneRenderer->GetEditorTarget();
+    if (editorTarget && editorTarget->IsRenderTargetAvailable() &&
+        editorTarget->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer &&
+        renderedTargets.find(editorTarget) == renderedTargets.end()) {
+        RenderToTarget(editorTarget, {}, sceneRenderer);
+    }
 }
 
 void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
@@ -295,6 +303,11 @@ void Renderer::RenderToTarget(IRenderTarget *target,
     if (!commandList) return;
 
     PipelineBinder pipelineBinder(commandList, pipelineManager_);
+
+    // エディター用描画先の場合、他の描画より先に背景（単色 or テクスチャ）を描画する
+    if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
+        RenderEditorBackground(static_cast<ScreenBuffer *>(target), pipelineBinder, sceneRenderer);
+    }
 
     // 同一（パイプライン・メッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
     size_t begin = 0;
@@ -714,6 +727,52 @@ void Renderer::RenderEditorDebugOverlay(ScreenBuffer *screenBuffer,
             commandList->DrawInstanced(static_cast<UINT>(vertexCount), 1, 0, 0);
         }
     }
+}
+
+void Renderer::RenderEditorBackground(ScreenBuffer *screenBuffer,
+    PipelineBinder &pipelineBinder,
+    SceneRenderer *sceneRenderer) {
+    if (!screenBuffer || !sceneRenderer) return;
+
+    // エディター用描画先でなければ何もしない（通常の描画先の背景には影響しない）
+    if (!sceneRenderer->GetEditorCameraBuffer(screenBuffer)) return;
+    if (!pipelineManager_->HasPipeline("Background")) return;
+
+    const auto &settings = sceneRenderer->GetEditorDebugDraw();
+    auto *commandList = screenBuffer->GetCommandList();
+    if (!commandList) return;
+
+    struct BackgroundConstant {
+        Vector4 color{ 0.0f, 0.0f, 0.0f, 1.0f };
+        float useTexture = 0.0f;
+        float padding[3]{};
+    };
+    BackgroundConstant constant{};
+    constant.color = settings.backgroundColor;
+    constant.useTexture = (settings.backgroundTextureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+
+    auto *constantBuffer = resourceContainer_->GetOrCreateConstantBuffer("EditorBackground", sizeof(BackgroundConstant));
+    if (!constantBuffer) return;
+    if (auto *mapped = constantBuffer->Map()) {
+        std::memcpy(mapped, &constant, sizeof(constant));
+    }
+
+    pipelineBinder.UsePipeline("Background");
+    auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "Background");
+    shaderBinder.SetCommandList(commandList);
+    shaderBinder.Bind("Pixel:BackgroundCB", constantBuffer);
+
+    if (constant.useTexture > 0.5f) {
+        TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", settings.backgroundTextureHandle);
+    } else {
+        const auto fallbackHandle = TextureManager::GetTextureFromFileName("white1x1.png");
+        if (fallbackHandle != TextureManager::kInvalidHandle) {
+            TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackHandle);
+        }
+    }
+    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearClamp);
+
+    commandList->DrawInstanced(3, 1, 0, 0);
 }
 
 void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,

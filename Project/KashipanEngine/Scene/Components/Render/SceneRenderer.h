@@ -91,6 +91,8 @@ public:
     ConstantBufferResource *GetEditorCameraBuffer(const IRenderTarget *target) const {
         return (editorTarget_ && target == editorTarget_) ? editorCameraBuffer_ : nullptr;
     }
+    /// @brief エディター用描画先を取得する（未設定の場合は nullptr）
+    IRenderTarget *GetEditorTarget() const noexcept { return editorTarget_; }
 
     /// @brief エディターのデバッグ表示設定（グリッド/当たり判定の可視化）を登録する
     /// @details SceneEditorViewが毎フレーム呼び、Rendererがエディター用描画先の描画時に参照する

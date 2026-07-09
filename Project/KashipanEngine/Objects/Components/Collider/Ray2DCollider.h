@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
 
@@ -16,6 +17,7 @@ public:
         ptr->direction_ = direction_;
         ptr->length_ = length_;
         ptr->SetTrigger(IsTrigger());
+        ptr->CopySyncSettingsFrom(*this);
         return ptr;
     }
 
@@ -27,8 +29,10 @@ public:
     std::optional<ColliderInfo2D> BuildColliderInfo2D() const override {
         ColliderInfo2D info;
         Math::Segment2D segment;
-        segment.start = Vector2(GetOwnerWorldPosition());
-        segment.end = segment.start + direction_.Normalize() * length_;
+        const Vector3 scale = GetSyncedOwnerScale();
+        segment.start = Vector2(GetSyncedOwnerPosition());
+        const Vector2 rotatedDir = RotateOffsetBySyncedRotation2D(direction_.Normalize());
+        segment.end = segment.start + rotatedDir * (length_ * std::max(scale.x, scale.y));
         info.shape = segment;
         info.ownerObject = GetOwnerObjectContext() ? const_cast<EmptyObject *>(GetOwnerObjectContext()->GetOwner()) : nullptr;
         return info;

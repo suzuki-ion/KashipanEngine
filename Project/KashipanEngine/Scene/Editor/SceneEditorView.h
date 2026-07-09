@@ -2,12 +2,14 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include <memory>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "Scene/SceneEditorContext.h"
 #include "Graphics/Renderer/EditorDebugDraw.h"
 #include "Math/Matrix4x4.h"
+#include "Math/Quaternion.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 
@@ -59,9 +61,9 @@ private:
     void UpdateEditorDebugDraw();
     /// @brief シーン上のICollider派生コンポーネントの当たり判定形状をワールド空間の線分として追加する
     void AppendColliderDebugLines(std::vector<DebugLineVertex> &out);
-    void AppendWireBox3D(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &halfExtents, const Vector4 &color);
+    void AppendWireBox3D(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &halfExtents, const Quaternion &rotation, const Vector4 &color);
     void AppendWireSphere3D(std::vector<DebugLineVertex> &out, const Vector3 &center, float radius, const Vector4 &color);
-    void AppendWireCapsule3D(std::vector<DebugLineVertex> &out, const Vector3 &center, float radius, float height, const Vector4 &color);
+    void AppendWireCapsule3D(std::vector<DebugLineVertex> &out, const Vector3 &center, float radius, float height, const Quaternion &rotation, const Vector4 &color);
     void AppendCollider2DShape(std::vector<DebugLineVertex> &out, const ColliderInfo2D &info, float worldZ, const Vector4 &color);
     void AppendRayGizmo(std::vector<DebugLineVertex> &out, const Vector3 &origin, const Vector3 &direction, float length, const Vector4 &color);
     /// @brief シーン上のCameraRendererが付いたオブジェクトの視錐台をワールド空間の線分として追加する
@@ -122,6 +124,11 @@ private:
     bool showLightMarkers_ = true;
     bool showCameraMarkers_ = true;
     bool showColliderGizmos_ = true;
+
+    // シーンビューの背景設定（再起動後も維持される）
+    Vector4 backgroundColor_{ 0.0f, 0.0f, 0.0f, 1.0f };
+    /// @brief 背景に使うテクスチャのAssetsルートからの相対パス（空文字の場合はbackgroundColor_を使用）
+    std::string backgroundTexturePath_;
 };
 
 } // namespace KashipanEngine

@@ -78,6 +78,12 @@ private:
         PipelineBinder &pipelineBinder,
         SceneRenderer *sceneRenderer);
 
+    /// @brief エディター用描画先にのみ、他の描画より先に背景（単色 or テクスチャ）を描画する
+    /// @details target がエディター用描画先でない場合は何もしない
+    void RenderEditorBackground(ScreenBuffer *screenBuffer,
+        PipelineBinder &pipelineBinder,
+        SceneRenderer *sceneRenderer);
+
     /// @brief 描画リストに含まれない ScreenBuffer へのポストエフェクトのみの適用
     /// @details オブジェクトの描画が無くともポストエフェクトコンポーネントがあれば実行する
     void RenderPostProcessOnlyTargets(SceneContext *sceneContext,

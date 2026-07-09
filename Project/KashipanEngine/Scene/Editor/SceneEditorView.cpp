@@ -20,8 +20,10 @@
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
 #include "Objects/Components/Transform.h"
+#include "Assets/TextureManager.h"
 #include "Math/Quaternion.h"
 #include "Utilities/MathUtils.h"
+#include "Utilities/AssetDragDropPayload.h"
 
 namespace KashipanEngine {
 
@@ -32,6 +34,13 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     showLightMarkers_ = EditorSettings::GetBool("sceneView.showLightMarkers", true);
     showCameraMarkers_ = EditorSettings::GetBool("sceneView.showCameraMarkers", true);
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
+
+    // 背景設定を復元する（再起動後も維持される）
+    backgroundColor_.x = EditorSettings::GetFloat("sceneView.backgroundColor.r", 0.0f);
+    backgroundColor_.y = EditorSettings::GetFloat("sceneView.backgroundColor.g", 0.0f);
+    backgroundColor_.z = EditorSettings::GetFloat("sceneView.backgroundColor.b", 0.0f);
+    backgroundColor_.w = EditorSettings::GetFloat("sceneView.backgroundColor.a", 1.0f);
+    backgroundTexturePath_ = EditorSettings::GetString("sceneView.backgroundTexturePath", std::string{});
 }
 
 SceneEditorView::~SceneEditorView() {
@@ -134,6 +143,27 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     ImGui::SameLine();
     if (ImGui::Checkbox("Colliders", &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
 
+    //--------- 背景設定（単色 or テクスチャ） ---------//
+    if (ImGui::ColorEdit4("Background Color", &backgroundColor_.x)) {
+        EditorSettings::SetFloat("sceneView.backgroundColor.r", backgroundColor_.x);
+        EditorSettings::SetFloat("sceneView.backgroundColor.g", backgroundColor_.y);
+        EditorSettings::SetFloat("sceneView.backgroundColor.b", backgroundColor_.z);
+        EditorSettings::SetFloat("sceneView.backgroundColor.a", backgroundColor_.w);
+    }
+    ImGui::SameLine();
+    std::vector<std::string> texturePaths;
+    for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
+        texturePaths.push_back(entry.assetPath);
+    }
+    if (ImGuiCustom::SelectString("Background Texture", backgroundTexturePath_, texturePaths, true)) {
+        EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
+    }
+    // Assetsウィンドウからのテクスチャファイルドラッグ&ドロップも受け付ける
+    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
+        backgroundTexturePath_ = droppedPath;
+        EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
+    }
+
     //--------- シーンビュー画像 ---------//
     if (!screenBuffer_ || screenBuffer_->GetSrvHandle().ptr == 0) {
         ImGui::TextUnformatted("Scene view is not ready.");
@@ -211,6 +241,11 @@ void SceneEditorView::UpdateEditorDebugDraw() {
     settings.showColliderGizmos = showColliderGizmos_;
     // カメラのズーム量に応じてグリッドの表示範囲を追従させる（Blenderのように「無限」に感じられる範囲を保つ）
     settings.gridFadeDistance = std::clamp(distance_ * 4.0f, 20.0f, 2000.0f);
+
+    settings.backgroundColor = backgroundColor_;
+    settings.backgroundTextureHandle = backgroundTexturePath_.empty()
+        ? TextureManager::kInvalidHandle
+        : TextureManager::GetTextureFromAssetPath(backgroundTexturePath_);
 
     if (showColliderGizmos_) {
         AppendColliderDebugLines(settings.lines);
@@ -393,31 +428,34 @@ void SceneEditorView::AppendColliderDebugLines(std::vector<DebugLineVertex> &out
         }
 
         if (auto info = collider->BuildColliderInfo3D()) {
+            const Quaternion rotation = collider->GetSyncedOwnerRotation();
             std::visit([&](const auto &shape) {
                 using T = std::decay_t<decltype(shape)>;
                 if constexpr (std::is_same_v<T, ColliderInfo3D::SphereShape3D>) {
                     AppendWireSphere3D(out, shape.center, shape.radius, color);
                 } else if constexpr (std::is_same_v<T, ColliderInfo3D::BoxShape3D>) {
-                    AppendWireBox3D(out, shape.center, shape.halfExtents, color);
+                    AppendWireBox3D(out, shape.center, shape.halfExtents, rotation, color);
                 } else if constexpr (std::is_same_v<T, ColliderInfo3D::CapsuleShape3D>) {
-                    AppendWireCapsule3D(out, shape.center, shape.radius, shape.height, color);
+                    AppendWireCapsule3D(out, shape.center, shape.radius, shape.height, rotation, color);
                 }
                 // ConvexMesh/ConcaveMesh/HeightFieldはエンジン内に生成コンポーネントが無いため未対応
             }, info->shape);
         } else if (auto *rayCollider = dynamic_cast<RayCollider *>(collider)) {
             // RayColliderは常駐形状を持たないため、方向・距離からレイとして描画する
-            AppendRayGizmo(out, collider->GetOwnerWorldPosition(), rayCollider->GetDirection(), rayCollider->GetMaxDistance(), kRayColor);
+            const Vector3 rotatedDirection = collider->GetSyncedOwnerRotation().RotateVector(rayCollider->GetDirection());
+            AppendRayGizmo(out, collider->GetSyncedOwnerPosition(), rotatedDirection, rayCollider->GetMaxDistance(), kRayColor);
         }
     }
 }
 
-void SceneEditorView::AppendWireBox3D(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &halfExtents, const Vector4 &color) {
+void SceneEditorView::AppendWireBox3D(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &halfExtents, const Quaternion &rotation, const Vector4 &color) {
     Vector3 corners[8];
     for (int i = 0; i < 8; ++i) {
-        corners[i] = Vector3(
-            center.x + ((i & 1) ? halfExtents.x : -halfExtents.x),
-            center.y + ((i & 2) ? halfExtents.y : -halfExtents.y),
-            center.z + ((i & 4) ? halfExtents.z : -halfExtents.z));
+        const Vector3 localOffset(
+            (i & 1) ? halfExtents.x : -halfExtents.x,
+            (i & 2) ? halfExtents.y : -halfExtents.y,
+            (i & 4) ? halfExtents.z : -halfExtents.z);
+        corners[i] = center + rotation.RotateVector(localOffset);
     }
 
     static constexpr int kEdges[12][2] = {
@@ -456,21 +494,21 @@ void SceneEditorView::AppendWireSphere3D(std::vector<DebugLineVertex> &out, cons
     }
 }
 
-void SceneEditorView::AppendWireCapsule3D(std::vector<DebugLineVertex> &out, const Vector3 &center, float radius, float height, const Vector4 &color) {
+void SceneEditorView::AppendWireCapsule3D(std::vector<DebugLineVertex> &out, const Vector3 &center, float radius, float height, const Quaternion &rotation, const Vector4 &color) {
     constexpr int kSegments = 24;
     const float halfHeight = height * 0.5f;
-    const Vector3 topCenter = center + Vector3(0.0f, halfHeight, 0.0f);
-    const Vector3 bottomCenter = center - Vector3(0.0f, halfHeight, 0.0f);
+    const Vector3 topCenter = center + rotation.RotateVector(Vector3(0.0f, halfHeight, 0.0f));
+    const Vector3 bottomCenter = center - rotation.RotateVector(Vector3(0.0f, halfHeight, 0.0f));
 
     // カプセルはReactPhysics3Dの規約に合わせてY軸方向を軸とする（半球部は簡略化して円柱部のみ描画する）
+    // 円周上の点はローカルXZ平面で計算してからコライダーの回転を適用する
     auto appendCircleXZ = [&](const Vector3 &circleCenter) {
         Vector3 prevPoint{};
         bool hasPrev = false;
         for (int i = 0; i <= kSegments; ++i) {
             const float angle = static_cast<float>(i) / static_cast<float>(kSegments) * 2.0f * std::numbers::pi_v<float>;
-            Vector3 point = circleCenter;
-            point.x += std::cos(angle) * radius;
-            point.z += std::sin(angle) * radius;
+            const Vector3 localOffset(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius);
+            const Vector3 point = circleCenter + rotation.RotateVector(localOffset);
             if (hasPrev) {
                 out.push_back({ prevPoint, color });
                 out.push_back({ point, color });
@@ -484,10 +522,10 @@ void SceneEditorView::AppendWireCapsule3D(std::vector<DebugLineVertex> &out, con
 
     for (int i = 0; i < 4; ++i) {
         const float angle = static_cast<float>(i) / 4.0f * 2.0f * std::numbers::pi_v<float>;
-        const float dx = std::cos(angle) * radius;
-        const float dz = std::sin(angle) * radius;
-        out.push_back({ topCenter + Vector3(dx, 0.0f, dz), color });
-        out.push_back({ bottomCenter + Vector3(dx, 0.0f, dz), color });
+        const Vector3 localOffset(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius);
+        const Vector3 rotatedOffset = rotation.RotateVector(localOffset);
+        out.push_back({ topCenter + rotatedOffset, color });
+        out.push_back({ bottomCenter + rotatedOffset, color });
     }
 }
 

@@ -1039,6 +1039,7 @@ std::optional<Collider::ShapeHandle3D> Collider::CreateShape3D(const ColliderInf
 
 reactphysics3d::Transform Collider::MakeTransform3D(const ColliderInfo3D &info) const {
     Vector3 center{0.0f, 0.0f, 0.0f};
+    bool hasOwnCenter = false;
     std::visit(
         [&](const auto &shape) {
             using S = std::decay_t<decltype(shape)>;
@@ -1046,13 +1047,20 @@ reactphysics3d::Transform Collider::MakeTransform3D(const ColliderInfo3D &info) 
                           std::is_same_v<S, ColliderInfo3D::BoxShape3D> ||
                           std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) {
                 center = shape.center;
+                hasOwnCenter = true;
             }
         },
         info.shape);
 
+    // ConvexMeshShape3D/ConcaveMeshShape3D/HeightFieldShape3Dは形状側に位置を持たない
+    // （頂点はオブジェクトのローカル座標系のまま）ため、コライダーの同期設定を考慮した位置を使用する
+    if (!hasOwnCenter && info.sourceCollider) {
+        center = info.sourceCollider->GetSyncedOwnerPosition();
+    }
+
     reactphysics3d::Quaternion rotation = reactphysics3d::Quaternion::identity();
-    if (auto *tr = info.ownerObject ? info.ownerObject->GetComponent<Transform>() : nullptr) {
-        const auto rot = tr->GetRotateQuaternion();
+    if (info.sourceCollider) {
+        const auto rot = info.sourceCollider->GetSyncedOwnerRotation();
         rotation = reactphysics3d::Quaternion(rot.x, rot.y, rot.z, rot.w);
     }
     return reactphysics3d::Transform(ToRp3d(center), rotation);

@@ -15,6 +15,7 @@ public:
         ptr->size_ = size_;
         ptr->center_ = center_;
         ptr->SetTrigger(IsTrigger());
+        ptr->CopySyncSettingsFrom(*this);
         return ptr;
     }
 
@@ -26,8 +27,9 @@ public:
     std::optional<ColliderInfo2D> BuildColliderInfo2D() const override {
         ColliderInfo2D info;
         Math::Rect rect;
-        rect.center = Vector2(GetOwnerWorldPosition()) + center_;
-        rect.halfSize = size_ * 0.5f;
+        const Vector3 scale = GetSyncedOwnerScale();
+        rect.center = Vector2(GetSyncedOwnerPosition()) + RotateOffsetBySyncedRotation2D(center_);
+        rect.halfSize = Vector2(size_.x * scale.x, size_.y * scale.y) * 0.5f;
         info.shape = rect;
         info.ownerObject = GetOwnerObjectContext() ? const_cast<EmptyObject *>(GetOwnerObjectContext()->GetOwner()) : nullptr;
         return info;

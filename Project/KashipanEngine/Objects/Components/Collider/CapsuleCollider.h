@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector3.h"
 
@@ -15,6 +16,7 @@ public:
         ptr->height_ = height_;
         ptr->center_ = center_;
         ptr->SetTrigger(IsTrigger());
+        ptr->CopySyncSettingsFrom(*this);
         return ptr;
     }
 
@@ -28,9 +30,10 @@ public:
     std::optional<ColliderInfo3D> BuildColliderInfo3D() const override {
         ColliderInfo3D info;
         ColliderInfo3D::CapsuleShape3D capsule;
-        capsule.center = GetOwnerWorldPosition() + center_;
-        capsule.radius = radius_;
-        capsule.height = height_;
+        const Vector3 scale = GetSyncedOwnerScale();
+        capsule.center = GetSyncedOwnerPosition() + center_;
+        capsule.radius = radius_ * std::max(scale.x, scale.z);
+        capsule.height = height_ * scale.y;
         info.shape = capsule;
         info.ownerObject = const_cast<EmptyObject *>(GetOwnerObjectContext() ? GetOwnerObjectContext()->GetOwner() : nullptr);
         return info;

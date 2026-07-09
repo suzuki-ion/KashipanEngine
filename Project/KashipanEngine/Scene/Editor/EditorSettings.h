@@ -15,6 +15,18 @@ public:
     /// @brief bool値の設定（変更があった場合のみ保存する）
     static void SetBool(const std::string &key, bool value);
 
+    /// @brief float値の取得
+    static float GetFloat(const std::string &key, float defaultValue);
+
+    /// @brief float値の設定（変更があった場合のみ保存する）
+    static void SetFloat(const std::string &key, float value);
+
+    /// @brief string値の取得
+    static std::string GetString(const std::string &key, const std::string &defaultValue);
+
+    /// @brief string値の設定（変更があった場合のみ保存する）
+    static void SetString(const std::string &key, const std::string &value);
+
     /// @brief 開閉状態を保存するツリーノード（デフォルトは開いた状態）
     /// @details 開閉状態は key で保存され、再起動後も維持される。
     static bool PersistentTreeNode(const char *label, const std::string &key, bool defaultOpen = true);

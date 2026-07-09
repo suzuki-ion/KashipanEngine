@@ -20,6 +20,36 @@ void EditorSettings::SetBool(const std::string &key, bool value) {
     SaveJSON(sData_, kFilePath);
 }
 
+float EditorSettings::GetFloat(const std::string &key, float defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end() || !it->is_number()) return defaultValue;
+    return it->get<float>();
+}
+
+void EditorSettings::SetFloat(const std::string &key, float value) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it != sData_.end() && it->is_number() && it->get<float>() == value) return;
+    sData_[key] = value;
+    SaveJSON(sData_, kFilePath);
+}
+
+std::string EditorSettings::GetString(const std::string &key, const std::string &defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end() || !it->is_string()) return defaultValue;
+    return it->get<std::string>();
+}
+
+void EditorSettings::SetString(const std::string &key, const std::string &value) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it != sData_.end() && it->is_string() && it->get<std::string>() == value) return;
+    sData_[key] = value;
+    SaveJSON(sData_, kFilePath);
+}
+
 bool EditorSettings::PersistentTreeNode(const char *label, const std::string &key, bool defaultOpen) {
     const bool stored = GetBool(key, defaultOpen);
     ImGui::SetNextItemOpen(stored, ImGuiCond_Once);

@@ -22,6 +22,7 @@ public:
         ptr->direction_ = direction_;
         ptr->maxDistance_ = maxDistance_;
         ptr->SetTrigger(IsTrigger());
+        ptr->CopySyncSettingsFrom(*this);
         return ptr;
     }
 
@@ -39,8 +40,8 @@ public:
         auto *world = sceneObjectCollider ? sceneObjectCollider->GetCollider()->GetPhysicsWorld() : nullptr;
         if (!world) return false;
 
-        const Vector3 origin = GetOwnerWorldPosition();
-        const Vector3 dir = direction_.Normalize();
+        const Vector3 origin = GetSyncedOwnerPosition();
+        const Vector3 dir = GetSyncedOwnerRotation().RotateVector(direction_).Normalize();
         const Vector3 end = origin + dir * maxDistance_;
 
         const reactphysics3d::Ray ray(

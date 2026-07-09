@@ -1,6 +1,150 @@
 {
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000
+            },
+            "type": "SceneRenderer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 500
+            },
+            "type": "SceneAudioPlayer"
+        }
+    ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
     "sceneName": "New Scene",
+    "sceneObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "used": true
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "AudioListener"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "aspectRatio": 1.7777777910232544,
+                            "farClip": 1000.0,
+                            "fovY": 0.44999998807907104,
+                            "nearClip": 2.2899999618530273,
+                            "orthoSize": 10.0,
+                            "orthographic": false
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Camera3D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera3D",
+                                "Pixel:gCamera3D"
+                            ],
+                            "pipelineName": "",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950
+                    },
+                    "type": "CameraRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "Camera",
+            "objectID": "efcdc0c3-11c7-4dec-bab6-a5583a114f2d"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": -0.19277799129486084,
+                                "y": 0.0,
+                                "z": -1.9603263139724731
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "effectFrequency": 1.0,
+                            "effectQ": 1.0,
+                            "effectType": 0,
+                            "enableSpatialAudio": true,
+                            "loop": true,
+                            "maxDistance": 25.0,
+                            "minDistance": 1.0,
+                            "pitch": 0.0,
+                            "reverbMix": 0.30000001192092896,
+                            "soundName": "Application/Sound/bgmGameScene.mp3",
+                            "volume": 1.0
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "AudioSource"
+                }
+            ],
+            "isActive": true,
+            "name": "Object",
+            "objectID": "eb13064b-e5c1-46cc-a36b-27cd95e3dfe6"
+        }
+    ],
     "sceneVariables": [
         {
             "key": "testFloat",

@@ -451,6 +451,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Objects\EmptyObject.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Collider\ICollider.cpp" />
     <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />
@@ -704,6 +705,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\ObjectContext.h" />
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneObjectCollider.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />

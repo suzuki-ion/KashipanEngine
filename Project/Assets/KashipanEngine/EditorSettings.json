@@ -3,6 +3,8 @@
     "hierarchy.object.4aeae184-8b78-4af0-bc21-da2f9467b1d5": true,
     "hierarchy.object.8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3": true,
     "hierarchy.objects": false,
+    "inspector.component.AudioListener": true,
+    "inspector.component.AudioSource": true,
     "inspector.component.BloomEffect": true,
     "inspector.component.BoxCollider": true,
     "inspector.component.Camera3D": true,

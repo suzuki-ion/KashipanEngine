@@ -24,6 +24,14 @@ public:
     using PlayHandle = uint32_t;
     static constexpr PlayHandle kInvalidPlayHandle = 0;
 
+    /// @brief 再生中の音声にかけるフィルター種別
+    enum class FilterType {
+        LowPass,
+        HighPass,
+        BandPass,
+        Notch,
+    };
+
     struct PlayParams final {
         SoundHandle sound = kInvalidSoundHandle;
         float volume = 1.0f;
@@ -51,6 +59,9 @@ public:
     static SoundHandle GetSoundHandleFromFileName(const std::string &fileName);
     /// @brief Assetsルートからの相対パスから音声ハンドルを取得
     static SoundHandle GetSoundHandleFromAssetPath(const std::string &assetPath);
+
+    /// @brief 読み込み済み音声のAssetsルートからの相対パス一覧を取得する（Asset選択UI用）
+    static std::vector<std::string> GetLoadedSoundAssetPaths();
 
     /// @brief 読み込み済み音声のファイル名/パス登録をリネーム後の値へ更新する
     /// @details 実ファイルを外部（Assetsウィンドウ等）でリネーム/移動した後に呼ぶこと。
@@ -99,6 +110,26 @@ public:
     /// @param pitch ピッチ（半音単位。+1.0f で半音上がる）
     /// @return 成功した場合 true
     static bool SetPitch(PlayHandle play, float pitch);
+
+    /// @brief 再生中の定位（パン）を設定する
+    /// @param play 再生ハンドル
+    /// @param pan パン (-1.0f: 左 ～ 0.0f: 中央 ～ 1.0f: 右)
+    /// @return 成功した場合 true
+    static bool SetPan(PlayHandle play, float pan);
+
+    /// @brief 再生中の音声にかけるフィルターを設定する
+    /// @param play 再生ハンドル
+    /// @param type フィルター種別
+    /// @param frequency 正規化カットオフ周波数 (0.0f に近いほど強くかかる、最大 1.0f でフィルター無しと同等)
+    /// @param oneOverQ フィルターの効き具合（共鳴）。既定値は 1.0f
+    /// @return 成功した場合 true
+    static bool SetFilter(PlayHandle play, FilterType type, float frequency, float oneOverQ = 1.0f);
+
+    /// @brief 再生中の音声にかけるリバーブの送り量(ウェットレベル)を設定する
+    /// @param play 再生ハンドル
+    /// @param wetLevel リバーブの送り量 (0.0f: リバーブ無し ～ 1.0f: 最大)
+    /// @return 成功した場合 true（リバーブ初期化に失敗している場合は false）
+    static bool SetReverbSend(PlayHandle play, float wetLevel);
 
     /// @brief 再生中かどうか
     static bool IsPlaying(PlayHandle play);

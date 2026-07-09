@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Scene/Components/Audio/SceneAudioPlayer.h"
 #include "Scene/Components/Compute/SceneComputeProcessor.h"
 #include "Scene/Components/ISceneComponent.h"
 #include "Scene/Components/KeyframeAnimator.h"

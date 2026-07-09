@@ -209,9 +209,9 @@ public:
         if (!json.contains("translate") || !json.contains("rotate") || !json.contains("scale")) {
             return false;
         }
-        translate_ = FromJSON<Vector3>(json["translate"]);
-        rotateQuat_ = FromJSON<Quaternion>(json["rotate"]);
-        scale_ = FromJSON<Vector3>(json["scale"]);
+        SetTranslate(FromJSON<Vector3>(json["translate"]));
+        SetRotateQuaternion(FromJSON<Quaternion>(json["rotate"]));
+        SetScale(FromJSON<Vector3>(json["scale"]));
         if (json.contains("parent")) {
             UUID128 parentUUID = FromJSON<UUID128>(json["parent"]);
             SetParentObject(parentUUID);

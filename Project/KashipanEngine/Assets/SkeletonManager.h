@@ -52,6 +52,21 @@ public:
         MarkDirty();
     }
 
+    /// @brief このTransformの複製を作成する（現在のTRS・バインドポーズをコピーする）
+    /// @details parent_は複製しないため、階層を複製する場合は呼び出し側で複製後の
+    ///          親インスタンスへSetParentし直すこと（SkeletonManager::CloneSkeleton参照）
+    std::unique_ptr<SkeletonTransform> Clone() const {
+        auto copy = std::make_unique<SkeletonTransform>();
+        copy->translate_ = translate_;
+        copy->rotate_ = rotate_;
+        copy->scale_ = scale_;
+        copy->bindTranslate_ = bindTranslate_;
+        copy->bindRotate_ = bindRotate_;
+        copy->bindScale_ = bindScale_;
+        copy->isDirty_ = true;
+        return copy;
+    }
+
 private:
     // 変更通知
     void MarkDirty() {
@@ -193,6 +208,14 @@ public:
     ///          ゲームループ停止時（シーンエディターのStop）など、アニメーション再生前の
     ///          状態へ戻したい場合に呼ぶ。
     static void ResetAllSkeletonsToBindPose();
+
+    /// @brief 指定スケルトンの複製（ジョイント階層・バインドポーズを含む）を作成する
+    /// @details 複数のSkinnedMeshRendererが同じスケルトンアセットを参照していても、
+    ///          このManagerが持つ本体（アセット単位で共有）を直接書き換えるとアニメーション
+    ///          再生状態が互いに干渉してしまう。SkinnedMeshRendererはこの関数で複製した
+    ///          自分専用のSkeletonを保持し、そちらのジョイントTransformのみを書き換えて使う。
+    /// @return 複製されたSkeleton（ハンドルが無効な場合は空のSkeleton）
+    static Skeleton CloneSkeleton(SkeletonHandle handle);
 
 private:
     void LoadAllFromAssetsFolder();

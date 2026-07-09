@@ -71,6 +71,10 @@ public:
     const std::vector<CameraRenderer *> &GetCameraRenderers() const noexcept { return cameraRenderers_; }
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
 
+    /// @brief 登録済みの全SkinnedMeshRendererのアニメーション姿勢をバインドポーズへ戻す
+    /// @details ゲームループ停止時（Scene::PlayStop）に呼ばれる
+    void ResetAllSkinnedMeshRendererPoses();
+
     /// @brief ソート済み描画リストを構築して返す
     /// @details 描画先→パイプラインの描画優先度→メッシュ→マテリアルの順でソートされる
     /// @param pipelineManager パイプラインの描画優先度取得用

@@ -141,6 +141,16 @@ public:
     void Stop() { isPlaying_ = false; }
     bool IsPlaying() const noexcept { return isPlaying_; }
 
+    /// @brief このコンポーネント専用のスケルトンインスタンスの姿勢をバインドポーズへ戻し、
+    ///        アニメーション経過時間もリセットする（ゲームループ停止時にSceneRenderer経由で呼ばれる）
+    void ResetAnimationToBindPose() {
+        for (auto &joint : skeletonInstance_.joints) {
+            if (auto *t = joint.transform.get()) t->ResetToBindPose();
+            if (auto *t = joint.skeletonSpaceTransform.get()) t->ResetToBindPose();
+        }
+        elapsedTime_ = 0.0f;
+    }
+
     /// @brief 選択中メッシュのアセットに紐づくアニメーションクリップ名の一覧を取得
     std::vector<std::string> GetAvailableAnimationClipNames() const;
 
@@ -261,6 +271,11 @@ private:
     std::vector<std::string> jointNames_;
     /// @brief jointNames_と対応するバインドポーズ逆行列
     std::vector<Matrix4x4> inverseBindPoses_;
+    /// @brief このコンポーネント専用のスケルトンインスタンス（SkeletonManagerが保持する
+    ///        アセット本体とは独立した複製）。同じスケルトンアセットを参照する複数の
+    ///        SkinnedMeshRendererが互いのアニメーション再生状態（ジョイント姿勢）に
+    ///        干渉しないよう、メッシュ解決時にSkeletonManager::CloneSkeletonで複製して保持する
+    Skeleton skeletonInstance_;
 
     // GPUリソース（コンポーネント自身が所有・管理する）
     std::unique_ptr<StructuredBufferResource> sourceVerticesBuffer_;

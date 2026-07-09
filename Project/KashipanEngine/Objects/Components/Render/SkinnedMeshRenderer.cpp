@@ -183,6 +183,7 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
         vertexCount_ = 0;
         jointNames_.clear();
         inverseBindPoses_.clear();
+        skeletonInstance_ = Skeleton{};
         blendShapes_.clear();
         sourceVerticesBuffer_.reset();
         skinWeightsBuffer_.reset();
@@ -197,6 +198,10 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
     vertexCount_ = modelData.GetVertexCount();
     skeletonHandle_ = SkeletonManager::GetSkeletonHandleFromAssetPath(modelData.GetAssetRelativePath());
     animationHandle_ = AnimationManager::GetAnimationHandleFromAssetPath(modelData.GetAssetRelativePath());
+    // SkeletonManagerが保持する共有アセット本体ではなく、このコンポーネント専用に複製した
+    // スケルトンを使う（同じスケルトンアセットを参照する複数のSkinnedMeshRendererが
+    // 互いのアニメーション再生状態に干渉しないようにするため）
+    skeletonInstance_ = SkeletonManager::CloneSkeleton(skeletonHandle_);
 
     // 元頂点（バインドポーズ）バッファ
     std::vector<SkinCPUVertex> cpuVertices(vertexCount_);
@@ -294,8 +299,10 @@ void SkinnedMeshRenderer::AdvanceAnimation(float deltaTime) {
 
     elapsedTime_ += deltaTime * playbackSpeed_;
 
-    const auto &skeletonData = SkeletonManager::GetSkeletonData(skeletonHandle_);
-    ApplyClipToSkeletonJoints(*clip, skeletonData.GetSkeleton(), elapsedTime_, loop_);
+    // SkeletonManagerが持つ共有アセット本体ではなく、このコンポーネント専用のスケルトン
+    // インスタンスへ姿勢を適用する（共有インスタンスへ書き込むと、同じスケルトンアセットを
+    // 使う他のSkinnedMeshRendererと姿勢が干渉してしまうため）
+    ApplyClipToSkeletonJoints(*clip, skeletonInstance_, elapsedTime_, loop_);
 
     if (!loop_) {
         float clipEndTime = 0.0f;
@@ -317,13 +324,13 @@ void SkinnedMeshRenderer::UpdateSkinningBuffers() {
     // BlendShapeウェイトは毎フレーム正しくアップロードする必要がある
     std::vector<Matrix4x4> boneMatrices(std::max<std::size_t>(1, jointNames_.size()), Matrix4x4::Identity());
 
-    if (!jointNames_.empty() && skeletonHandle_ != SkeletonManager::kInvalidHandle) {
-        const auto &skeletonData = SkeletonManager::GetSkeletonData(skeletonHandle_);
-        const Skeleton &skeleton = skeletonData.GetSkeleton();
+    // SkeletonManagerが保持する共有アセット本体ではなく、このコンポーネント専用に複製した
+    // スケルトンインスタンスから現在の姿勢を読み取る
+    if (!jointNames_.empty()) {
         for (std::size_t i = 0; i < jointNames_.size(); ++i) {
-            auto it = skeleton.jointNameToIndexMap.find(jointNames_[i]);
-            if (it == skeleton.jointNameToIndexMap.end()) continue;
-            SkeletonTransform *transform = skeleton.joints[static_cast<std::size_t>(it->second)].transform.get();
+            auto it = skeletonInstance_.jointNameToIndexMap.find(jointNames_[i]);
+            if (it == skeletonInstance_.jointNameToIndexMap.end()) continue;
+            SkeletonTransform *transform = skeletonInstance_.joints[static_cast<std::size_t>(it->second)].transform.get();
             if (!transform) continue;
             boneMatrices[i] = inverseBindPoses_[i] * transform->GetWorldMatrix();
         }

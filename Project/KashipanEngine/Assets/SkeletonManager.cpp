@@ -387,6 +387,36 @@ const bool SkeletonManager::UpdateSkeletonJointTransforms(SkeletonHandle handle)
     return true;
 }
 
+Skeleton SkeletonManager::CloneSkeleton(SkeletonHandle handle) {
+    Skeleton out{};
+    if (handle == kInvalidHandle) return out;
+
+    auto it = sSkeletons.find(handle);
+    if (it == sSkeletons.end()) return out;
+
+    const Skeleton &src = it->second.data.GetSkeleton();
+    out.rootJointIndex = src.rootJointIndex;
+    out.jointNameToIndexMap = src.jointNameToIndexMap;
+    out.joints.resize(src.joints.size());
+    for (size_t i = 0; i < src.joints.size(); ++i) {
+        const SkeletonJoint &srcJoint = src.joints[i];
+        SkeletonJoint &dstJoint = out.joints[i];
+        dstJoint.name = srcJoint.name;
+        dstJoint.childrenIndices = srcJoint.childrenIndices;
+        dstJoint.parentIndex = srcJoint.parentIndex;
+        dstJoint.transform = srcJoint.transform ? srcJoint.transform->Clone() : nullptr;
+        dstJoint.skeletonSpaceTransform = srcJoint.skeletonSpaceTransform ? srcJoint.skeletonSpaceTransform->Clone() : nullptr;
+    }
+    // 複製したTransform同士で親子関係を張り直す（Clone()は親を複製しないため）
+    for (SkeletonJoint &joint : out.joints) {
+        if (!joint.parentIndex.has_value() || !joint.transform) continue;
+        const auto parentIndex = static_cast<size_t>(*joint.parentIndex);
+        if (parentIndex >= out.joints.size()) continue;
+        joint.transform->SetParent(out.joints[parentIndex].transform.get());
+    }
+    return out;
+}
+
 void SkeletonManager::ResetAllSkeletonsToBindPose() {
     for (auto &kv : sSkeletons) {
         const Skeleton &skeleton = kv.second.data.GetSkeleton();

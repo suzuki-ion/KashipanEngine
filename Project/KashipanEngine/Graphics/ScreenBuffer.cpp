@@ -152,6 +152,11 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 
         renderTargets_[i]->SetCommandList(cmd->GetCommandList());
         depthStencils_[i]->SetCommandList(cmd->GetCommandList());
+
+        rtBufferWidth_[i] = width_;
+        rtBufferHeight_[i] = height_;
+        dsBufferWidth_[i] = width_;
+        dsBufferHeight_[i] = height_;
     }
 
     for (size_t i = 0; i < kBufferCount; ++i) {
@@ -166,28 +171,42 @@ bool ScreenBuffer::Resize(std::uint32_t width, std::uint32_t height) {
     if (width == width_ && height == height_) return true;
     if (!dx12Commands_) return false;
 
+    // ここではサイズを記憶するだけで、GPUリソースの再生成は行わない。
+    // 実際の再生成は、各バッファがBeginRecordで実際に使用されるタイミングで
+    // EnsureRenderTargetSize/EnsureDepthStencilSizeにより1バッファずつ行われる。
     width_ = width;
     height_ = height;
 
-    rtvWriteIndex_ = 0;
-    dsvWriteIndex_ = 0;
-    isLastBeginDisableDepthWrite_ = false;
-    isFirstBeginRecord_ = true;
+    return true;
+}
 
-    auto *cmd = dx12Commands_->GetCommandList();
-    for (size_t i = 0; i < kBufferCount; ++i) {
-        renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
-        depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
-        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
+void ScreenBuffer::EnsureRenderTargetSize(size_t index, ID3D12GraphicsCommandList *cmd) {
+    if (index >= kBufferCount) return;
+    if (width_ == 0 || height_ == 0) return;
+    if (rtBufferWidth_[index] == width_ && rtBufferHeight_[index] == height_) return;
 
-        if (cmd) {
-            renderTargets_[i]->SetCommandList(cmd);
-            depthStencils_[i]->SetCommandList(cmd);
-        }
-        if (!renderTargets_[i] || !depthStencils_[i] || !shaderResources_[i]) return false;
+    renderTargets_[index] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
+    shaderResources_[index] = std::make_unique<ShaderResourceResource>(renderTargets_[index].get());
+    if (cmd) {
+        renderTargets_[index]->SetCommandList(cmd);
     }
 
-    return true;
+    rtBufferWidth_[index] = width_;
+    rtBufferHeight_[index] = height_;
+}
+
+void ScreenBuffer::EnsureDepthStencilSize(size_t index, ID3D12GraphicsCommandList *cmd) {
+    if (index >= kBufferCount) return;
+    if (width_ == 0 || height_ == 0) return;
+    if (dsBufferWidth_[index] == width_ && dsBufferHeight_[index] == height_) return;
+
+    depthStencils_[index] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+    if (cmd) {
+        depthStencils_[index]->SetCommandList(cmd);
+    }
+
+    dsBufferWidth_[index] = width_;
+    dsBufferHeight_[index] = height_;
 }
 
 void ScreenBuffer::Destroy() {
@@ -195,6 +214,10 @@ void ScreenBuffer::Destroy() {
         shaderResources_[i].reset();
         depthStencils_[i].reset();
         renderTargets_[i].reset();
+        rtBufferWidth_[i] = 0;
+        rtBufferHeight_[i] = 0;
+        dsBufferWidth_[i] = 0;
+        dsBufferHeight_[i] = 0;
     }
     dx12Commands_ = nullptr;
 
@@ -265,6 +288,14 @@ ID3D12GraphicsCommandList *ScreenBuffer::BeginRecord(bool disableDepthWrite) {
     if (!cmd) return nullptr;
 
     isLastBeginDisableDepthWrite_ = disableDepthWrite;
+
+    // Resize()で要求されたサイズに対して、これから書き込みに使うバッファのみを必要に応じて作り直す
+    // （まだ使われていない方のバッファはそのまま残るため、リサイズ直後でも空のフレームが
+    // 表示されることがない。全バッファが新サイズに揃うまでは数フレームかかるが視覚的な破綻は無い）
+    EnsureRenderTargetSize(GetRtvWriteIndex(), cmd);
+    if (!disableDepthWrite) {
+        EnsureDepthStencilSize(GetDsvWriteIndex(), cmd);
+    }
 
     auto *rt = renderTargets_[GetRtvWriteIndex()].get();
     auto *ds = depthStencils_[GetDsvWriteIndex()].get();

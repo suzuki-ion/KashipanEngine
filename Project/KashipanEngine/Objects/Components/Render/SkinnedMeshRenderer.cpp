@@ -176,7 +176,10 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
     lastMeshHandle_ = meshHandle;
     const auto &modelData = ModelManager::GetModelData(meshHandle);
 
-    if (!modelData.HasSkinning() || modelData.GetVertexCount() == 0) {
+    // ボーンを持たないメッシュ（AnimatedCubeのような単なるノードアニメーションのモデル等）でも、
+    // バインドポーズのまま描画できるよう、頂点さえあれば以降の処理を続行する
+    // （jointNames_が空の場合、頂点ごとのボーンウェイトは全て0になりバインドポーズのまま出力される）
+    if (modelData.GetVertexCount() == 0) {
         vertexCount_ = 0;
         jointNames_.clear();
         inverseBindPoses_.clear();
@@ -308,11 +311,13 @@ void SkinnedMeshRenderer::AdvanceAnimation(float deltaTime) {
 }
 
 void SkinnedMeshRenderer::UpdateSkinningBuffers() {
-    if (!boneMatricesBuffer_ || !skinningConstants_ || jointNames_.empty()) return;
+    if (!boneMatricesBuffer_ || !skinningConstants_) return;
 
-    std::vector<Matrix4x4> boneMatrices(jointNames_.size(), Matrix4x4::Identity());
+    // jointNames_が空（ボーンを持たないメッシュ）の場合でも、gVertexCount等の定数と
+    // BlendShapeウェイトは毎フレーム正しくアップロードする必要がある
+    std::vector<Matrix4x4> boneMatrices(std::max<std::size_t>(1, jointNames_.size()), Matrix4x4::Identity());
 
-    if (skeletonHandle_ != SkeletonManager::kInvalidHandle) {
+    if (!jointNames_.empty() && skeletonHandle_ != SkeletonManager::kInvalidHandle) {
         const auto &skeletonData = SkeletonManager::GetSkeletonData(skeletonHandle_);
         const Skeleton &skeleton = skeletonData.GetSkeleton();
         for (std::size_t i = 0; i < jointNames_.size(); ++i) {

@@ -17,7 +17,7 @@
     "inspector.component.Light": true,
     "inspector.component.LightRenderer": true,
     "inspector.component.MeshCollider": true,
-    "inspector.component.MeshFilter": false,
+    "inspector.component.MeshFilter": true,
     "inspector.component.MeshRenderer": true,
     "inspector.component.NormalWindowObject": true,
     "inspector.component.OutlineEffect": true,

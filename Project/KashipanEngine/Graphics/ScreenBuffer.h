@@ -102,8 +102,13 @@ public:
     /// @param enable true の場合、深度書き込みを有効にする。false の場合、深度書き込みを無効にする。
     void SetDepthWriteEnabled(bool enable) noexcept { isDepthWriteEnabled_ = enable; }
 
-    /// @brief バッファサイズを変更する（GPUリソースを新しいサイズで作り直す）
-    /// @details TextureManagerへの登録名・ハンドルはそのまま維持される（サイズはこのオブジェクトから
+    /// @brief バッファサイズの変更を通知する（GPUリソースの再生成は即時には行わない）
+    /// @details 呼び出した時点では新しいサイズを記憶するだけで、実際のGPUリソース再生成は
+    ///          BeginDraw（内部的にはBeginRecord）でそのリソースが実際に使用される際、
+    ///          そのリソース単体のみを対象に行われる（ダブルバッファの全リソースを一括で
+    ///          作り直すと、まだ使われていない方のバッファまで空の状態になり、その内容が
+    ///          そのまま画面に一瞬表示されてちらつく問題があったため）。
+    ///          TextureManagerへの登録名・ハンドルはそのまま維持される（サイズはこのオブジェクトから
     ///          毎回取得されるため再登録は不要）。BeginDraw/EndDraw の外側から呼ぶこと。
     /// @return 成功した場合はtrue、失敗した場合（未初期化・サイズが0等）はfalseを返す
     bool Resize(std::uint32_t width, std::uint32_t height);
@@ -141,6 +146,15 @@ private:
     /// @brief コマンド記録終了
     bool EndRecord(bool discard = false);
 
+    /// @brief 指定インデックスのRenderTarget/ShaderResourceが現在の width_/height_ と異なるサイズの
+    ///        場合のみ、そのインデックスのリソースだけを新しいサイズで作り直す
+    /// @details RenderTarget用とDepthStencil用でインデックスの進み方が異なる場合があるため
+    ///          （深度書き込み無効時はDSVインデックスが進まない）、それぞれ独立して管理する
+    void EnsureRenderTargetSize(size_t index, ID3D12GraphicsCommandList *cmd);
+    /// @brief 指定インデックスのDepthStencilが現在の width_/height_ と異なるサイズの場合のみ、
+    ///        そのインデックスのリソースだけを新しいサイズで作り直す
+    void EnsureDepthStencilSize(size_t index, ID3D12GraphicsCommandList *cmd);
+
     /// @brief TextureManager への登録（名前が空の場合は自動生成）
     void RegisterToTextureManager(const std::string &name);
     /// @brief TextureManager からの登録解除
@@ -165,6 +179,15 @@ private:
     std::unique_ptr<RenderTargetResource> renderTargets_[kBufferCount];
     std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount];
     std::unique_ptr<ShaderResourceResource> shaderResources_[kBufferCount];
+
+    // 各インデックスのRenderTarget/DepthStencilが実際にGPU上で確保されているサイズ
+    // （width_/height_とは異なる場合がある。Resize()は即時にはGPUリソースを作り直さず、
+    // このサイズとの差分をEnsureRenderTargetSize/EnsureDepthStencilSizeで検知して
+    // 使用時に1バッファずつ作り直す。RTVとDSVでインデックスの進み方が異なることがあるため別々に持つ）
+    std::uint32_t rtBufferWidth_[kBufferCount]{};
+    std::uint32_t rtBufferHeight_[kBufferCount]{};
+    std::uint32_t dsBufferWidth_[kBufferCount]{};
+    std::uint32_t dsBufferHeight_[kBufferCount]{};
 
     int commandSlotIndex_ = -1;
     DX12Commands *dx12Commands_ = nullptr;

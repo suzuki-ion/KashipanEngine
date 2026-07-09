@@ -253,7 +253,7 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
+                                "x": -2.2213668823242188,
                                 "y": 4.0,
                                 "z": 0.0
                             }
@@ -331,7 +331,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 28
+                            "meshHandle": 29
                         },
                         "isActive": true,
                         "priority": 1
@@ -360,6 +360,132 @@
             "isActive": true,
             "name": "Player",
             "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 3.2211790084838867,
+                                "y": 4.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "center": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "isTrigger": false,
+                            "radius": 0.5,
+                            "syncPosition": [
+                                true,
+                                true,
+                                true
+                            ],
+                            "syncRotation": [
+                                true,
+                                true,
+                                true
+                            ],
+                            "syncScale": [
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "SphereCollider"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bodyType": 2,
+                            "interpolate": true,
+                            "mass": 1.0,
+                            "selectedColliderOccurrenceIndex": 0,
+                            "selectedColliderTypeName": "SphereCollider",
+                            "useGravity": true
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "RigidBody3D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 29
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "animationClipName": "Armature|mixamo.com|Layer0",
+                            "blendShapes": [],
+                            "loop": true,
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "playOnStart": true,
+                            "playbackSpeed": 0.5400000214576721,
+                            "quality": 0,
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900
+                    },
+                    "type": "SkinnedMeshRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "Player",
+            "objectID": "9b226009-fb61-465c-b33c-029cf54045d1"
         },
         {
             "components": [

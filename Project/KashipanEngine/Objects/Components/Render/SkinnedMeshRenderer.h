@@ -187,7 +187,9 @@ public:
     /// @brief 直接呼び出し版（SceneRenderer::BuildSortedDrawListから使用）
     RWStructuredBufferResource *GetSkinnedVertexBuffer() const noexcept { return skinnedVertexBuffer_.get(); }
     bool HasValidSkinningData() const noexcept {
-        return vertexCount_ > 0 && !jointNames_.empty() && sourceVerticesBuffer_ && skinWeightsBuffer_ &&
+        // ボーンを持たないメッシュ（jointNames_が空）でも、バインドポーズのまま
+        // （+BlendShapeがあれば適用した状態で）描画できるようにする
+        return vertexCount_ > 0 && sourceVerticesBuffer_ && skinWeightsBuffer_ &&
             boneMatricesBuffer_ && skinningConstants_ && skinnedVertexBuffer_ &&
             blendShapeDeltasBuffer_ && blendShapeWeightsBuffer_;
     }

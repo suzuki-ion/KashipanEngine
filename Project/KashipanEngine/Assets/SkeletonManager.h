@@ -38,6 +38,20 @@ public:
     const Vector3 &GetScale() const noexcept { return scale_; }
     const SkeletonTransform *GetParent() const noexcept { return parent_; }
 
+    /// @brief 現在のTRSをバインドポーズとして記憶する（スケルトン構築直後に呼ぶ想定）
+    void CaptureBindPose() {
+        bindTranslate_ = translate_;
+        bindRotate_ = rotate_;
+        bindScale_ = scale_;
+    }
+    /// @brief 記憶しておいたバインドポーズへ復元する（ゲームループ停止時などに使用）
+    void ResetToBindPose() {
+        translate_ = bindTranslate_;
+        rotate_ = bindRotate_;
+        scale_ = bindScale_;
+        MarkDirty();
+    }
+
 private:
     // 変更通知
     void MarkDirty() {
@@ -57,8 +71,9 @@ private:
 
         Matrix4x4 local = scaleMat * rotateMat * translateMat;
         if (parent_) {
-            // 親がある場合は親のワールド行列と掛け合わせる
-            worldMatrix_ = parent_->GetWorldMatrix() * local;
+            // 親がある場合は親のワールド行列と掛け合わせる（行ベクトル規約: 自身のlocalを先に適用してから
+            // 親のワールド行列を適用する。Objects/Components/Transform::GetWorldMatrixと同じ規約）
+            worldMatrix_ = local * parent_->GetWorldMatrix();
         } else {
             worldMatrix_ = local;
         }
@@ -70,6 +85,11 @@ private:
     Quaternion rotate_ = Quaternion::Identity();
     Vector3 scale_ = { 1.0f, 1.0f, 1.0f };
     SkeletonTransform *parent_ = nullptr;
+
+    // CaptureBindPose()で記憶したバインドポーズ（ResetToBindPose()用）
+    Vector3 bindTranslate_ = Vector3::Zero();
+    Quaternion bindRotate_ = Quaternion::Identity();
+    Vector3 bindScale_ = { 1.0f, 1.0f, 1.0f };
 
     Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
     bool isDirty_ = true;
@@ -166,6 +186,13 @@ public:
     /// @param handle スケルトンハンドル
     /// @return 更新に成功した場合はtrue、失敗した場合はfalseを返す
     static const bool UpdateSkeletonJointTransforms(SkeletonHandle handle);
+
+    /// @brief 読み込み済みの全スケルトンのジョイント姿勢をバインドポーズへ復元する
+    /// @details アニメーションはSkeletonManagerが持つジョイントのTransformを直接書き換えて
+    ///          進行するため、シーンオブジェクトの状態とは独立してポーズが残り続ける。
+    ///          ゲームループ停止時（シーンエディターのStop）など、アニメーション再生前の
+    ///          状態へ戻したい場合に呼ぶ。
+    static void ResetAllSkeletonsToBindPose();
 
 private:
     void LoadAllFromAssetsFolder();

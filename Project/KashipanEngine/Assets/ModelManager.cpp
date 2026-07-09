@@ -70,11 +70,15 @@ std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::stri
 }
 
 Matrix4x4 ConvertMatrix(const aiMatrix4x4& m) {
+    // Assimpの行列は列ベクトル規約(v' = M * v)で定義されているが、本エンジンのMatrix4x4は
+    // 行ベクトル規約(v' = v * M)で乗算するため、そのまま乗算に使えるよう転置して格納する
+    // （SkeletonManager側はDecompose()でTRSへ分解してから本エンジン独自の規約で再構築しているため
+    // この転置は不要だが、GPUスキニングではボーンオフセット行列をそのまま乗算に使うため必須）。
     Matrix4x4 out{};
-    out.m[0][0] = m.a1; out.m[0][1] = m.a2; out.m[0][2] = m.a3; out.m[0][3] = m.a4;
-    out.m[1][0] = m.b1; out.m[1][1] = m.b2; out.m[1][2] = m.b3; out.m[1][3] = m.b4;
-    out.m[2][0] = m.c1; out.m[2][1] = m.c2; out.m[2][2] = m.c3; out.m[2][3] = m.c4;
-    out.m[3][0] = m.d1; out.m[3][1] = m.d2; out.m[3][2] = m.d3; out.m[3][3] = m.d4;
+    out.m[0][0] = m.a1; out.m[1][0] = m.a2; out.m[2][0] = m.a3; out.m[3][0] = m.a4;
+    out.m[0][1] = m.b1; out.m[1][1] = m.b2; out.m[2][1] = m.b3; out.m[3][1] = m.b4;
+    out.m[0][2] = m.c1; out.m[1][2] = m.c2; out.m[2][2] = m.c3; out.m[3][2] = m.c4;
+    out.m[0][3] = m.d1; out.m[1][3] = m.d2; out.m[2][3] = m.d3; out.m[3][3] = m.d4;
     return out;
 }
 

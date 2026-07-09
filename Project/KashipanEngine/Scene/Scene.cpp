@@ -2,6 +2,7 @@
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Components/Render/SceneRenderer.h"
+#include "Assets/SkeletonManager.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
 #ifdef USE_IMGUI
@@ -93,6 +94,11 @@ void Scene::PlayStop() {
     isPlaying_ = false;
     isPaused_ = false;
     isStepFrameRequested_ = false;
+
+    // SkinnedMeshRendererのアニメーションはSkeletonManagerが持つジョイントのTransformを直接
+    // 書き換えて進行するため、シーンオブジェクトを再生開始前の状態へ戻すだけでは元のポーズに戻らない。
+    // ここで明示的にバインドポーズへ復元する。
+    SkeletonManager::ResetAllSkeletonsToBindPose();
 
     JSON snapshot = std::move(editModeSnapshot_);
     editModeSnapshot_ = JSON();

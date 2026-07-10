@@ -39,6 +39,26 @@ bool HasSerializeFieldMetadata(const std::vector<std::string> &metadataList) {
     return false;
 }
 
+/// @brief `#include "path.as"` を解決するコールバック
+/// @details includeで指定されたパスが相対パスの場合、includeディレクティブを書いたファイル（from）
+///          と同じディレクトリからの相対パスとして解決する。絶対パス指定の場合はそのまま使用する
+int ResolveIncludePath(const char *include, const char *from, CScriptBuilder *builder, void *) {
+    if (!include || !builder) return -1;
+
+    std::string includePath = include;
+    const bool isAbsolute = includePath.size() >= 2 &&
+        (includePath[1] == ':' || includePath[0] == '/' || includePath[0] == '\\');
+
+    if (!isAbsolute && from) {
+        const std::string fromPath = from;
+        const auto slashPos = fromPath.find_last_of("/\\");
+        if (slashPos != std::string::npos) {
+            includePath = fromPath.substr(0, slashPos + 1) + includePath;
+        }
+    }
+    return builder->AddSectionFromFile(includePath.c_str());
+}
+
 } // namespace
 
 /// @brief コライダーへ設定した衝突コールバックのフック情報
@@ -141,6 +161,7 @@ bool ScriptComponent::Reload() {
         return false;
     }
     moduleName_ = moduleName;
+    builder.SetIncludeCallback(ResolveIncludePath, nullptr);
 
     // ビルド中のコンパイルメッセージを収集し、失敗時にインスペクターへ表示できるようにする
     scriptEngine->BeginMessageCapture();

@@ -58,6 +58,10 @@ public:
     void GetGroupCounts(std::uint32_t &x, std::uint32_t &y, std::uint32_t &z) const noexcept {
         x = groupCountX_; y = groupCountY_; z = groupCountZ_;
     }
+    /// @brief ディスパッチするスレッドグループ数を設定
+    void SetGroupCounts(std::uint32_t x, std::uint32_t y, std::uint32_t z) noexcept {
+        groupCountX_ = x; groupCountY_ = y; groupCountZ_ = z;
+    }
 
     const std::vector<TextureBindRequirement> &GetTextureBindRequirements() const noexcept { return textureBindRequirements_; }
     const std::vector<UAVTextureBindRequirement> &GetUAVTextureBindRequirements() const noexcept { return uavTextureBindRequirements_; }

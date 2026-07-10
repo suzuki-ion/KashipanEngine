@@ -15,6 +15,12 @@ public:
         ptr->color_ = color_;
         return ptr;
     }
+
+    void SetText(const std::string &text) { text_ = text; }
+    const std::string &GetText() const noexcept { return text_; }
+    void SetColor(const Vector4 &color) { color_ = color; }
+    const Vector4 &GetColor() const noexcept { return color_; }
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override { ImGui::InputTextMultiline("Text", &text_); ImGui::ColorEdit4("Color", &color_.x); }

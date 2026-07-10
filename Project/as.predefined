@@ -1,6 +1,56 @@
 // このファイルはKashipanEngineが起動時に自動生成したものです。直接編集しないでください。
 // VSCodeのAngelScript Language Serverがコード補完に使用する型定義ファイルです。
 
+enum LightType {
+	Directional = 0,
+	Point = 1,
+	Spot = 2
+}
+
+enum EaseType {
+	Linear = 0,
+	EaseInQuad = 1,
+	EaseOutQuad = 2,
+	EaseInOutQuad = 3,
+	EaseOutInQuad = 4,
+	EaseInCubic = 5,
+	EaseOutCubic = 6,
+	EaseInOutCubic = 7,
+	EaseOutInCubic = 8,
+	EaseInQuart = 9,
+	EaseOutQuart = 10,
+	EaseInOutQuart = 11,
+	EaseOutInQuart = 12,
+	EaseInQuint = 13,
+	EaseOutQuint = 14,
+	EaseInOutQuint = 15,
+	EaseOutInQuint = 16,
+	EaseInSine = 17,
+	EaseOutSine = 18,
+	EaseInOutSine = 19,
+	EaseOutInSine = 20,
+	EaseInExpo = 21,
+	EaseOutExpo = 22,
+	EaseInOutExpo = 23,
+	EaseOutInExpo = 24,
+	EaseInCirc = 25,
+	EaseOutCirc = 26,
+	EaseInOutCirc = 27,
+	EaseOutInCirc = 28,
+	EaseInBack = 29,
+	EaseOutBack = 30,
+	EaseInOutBack = 31,
+	EaseOutInBack = 32,
+	EaseInElastic = 33,
+	EaseOutElastic = 34,
+	EaseInOutElastic = 35,
+	EaseOutInElastic = 36,
+	EaseInBounce = 37,
+	EaseOutBounce = 38,
+	EaseInOutBounce = 39,
+	EaseOutInBounce = 40
+}
+
 funcdef bool less(const T&in a, const T&in b);
 
 class array<T> {
@@ -249,6 +299,47 @@ class Transform {
 	const Matrix4x4& GetWorldMatrix();
 }
 
+class Object {
+	const string& GetName() const;
+	void SetName(const string&in);
+	bool IsActive() const;
+	void SetActive(bool);
+	Transform@ GetTransform();
+	bool GetComponent(?&out);
+	bool GetComponents(?&out);
+}
+
+class HitInfo {
+	HitInfo();
+	HitInfo(const HitInfo&in);
+	Vector3 normal;
+	float penetration;
+	Object@ selfObject;
+	Object@ otherObject;
+	HitInfo& opAssign(const HitInfo&in);
+}
+
+class Scene {
+	const string& GetName() const;
+	Object@ GetObject(const string&in) const;
+	Object@[]@ GetObjects(const string&in) const;
+	void SetNextSceneName(const string&in);
+	bool ChangeToNextScene();
+	bool HasNextSceneName() const;
+	void ClearNextSceneName();
+	bool SetVariable(const string&in, ?&in);
+	bool GetVariable(const string&in, ?&out);
+	bool HasVariable(const string&in);
+	bool RemoveVariable(const string&in);
+	bool SetGlobalVariable(const string&in, ?&in);
+	bool GetGlobalVariable(const string&in, ?&out);
+	bool HasGlobalVariable(const string&in);
+	bool RemoveGlobalVariable(const string&in);
+}
+
+interface ScriptComponentBehavior {
+}
+
 class Velocity {
 	bool IsActive() const;
 	void SetActive(bool);
@@ -332,102 +423,215 @@ class MeshFilter {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetMeshHandle(uint);
+	uint GetMeshHandle() const;
+	bool HasMesh() const;
 }
 
 class Animator {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetAnimationName(const string&in);
+	const string& GetAnimationName() const;
+	void SetPlayOnStart(bool);
+	bool GetPlayOnStart() const;
 }
 
 class Text {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetText(const string&in);
+	const string& GetText() const;
+	void SetColor(const Vector4&in);
+	const Vector4& GetColor() const;
 }
 
 class ComputeShaderProcessing {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetPipelineName(const string&in);
+	const string& GetPipelineName() const;
+	void SetGroupCounts(uint, uint, uint);
+	void GetGroupCounts(uint&out, uint&out, uint&out) const;
 }
 
 class RigidBody2D {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetVelocity(const Vector2&in);
+	const Vector2& GetVelocity() const;
+	void SetMass(float);
+	float GetMass() const;
+	void SetUseGravity(bool);
+	bool IsGravityEnabled() const;
 }
 
 class RigidBody3D {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetBodyType(int);
+	int GetBodyType() const;
+	void SetMass(float);
+	float GetMass() const;
+	void SetUseGravity(bool);
+	bool IsGravityEnabled() const;
+	void SetInterpolate(bool);
+	bool IsInterpolateEnabled() const;
+	void SyncFromTransform();
 }
 
 class MeshRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetPipelineName(const string&in);
+	const string& GetPipelineName() const;
+	void SetMaterialName(const string&in);
+	const string& GetMaterialName() const;
+	Object@ GetTargetObject() const;
+	void SetTargetObject(Object@);
 }
 
 class SkinnedMeshRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetPipelineName(const string&in);
+	const string& GetPipelineName() const;
+	void SetMaterialName(const string&in);
+	const string& GetMaterialName() const;
+	void SetAnimationClipName(const string&in);
+	const string& GetAnimationClipName() const;
+	void SetPlayOnStart(bool);
+	bool GetPlayOnStart() const;
+	void SetLoop(bool);
+	bool GetLoop() const;
+	void SetPlaybackSpeed(float);
+	float GetPlaybackSpeed() const;
+	void Play();
+	void Stop();
+	bool IsPlaying() const;
+	void SetBlendShapeWeight(const string&in, float);
+	float GetBlendShapeWeight(const string&in) const;
 }
 
 class Camera2D {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetSize(float, float);
+	void SetNearClip(float);
+	void SetFarClip(float);
+	float GetWidth() const;
+	float GetHeight() const;
+	float GetNearClip() const;
+	float GetFarClip() const;
 }
 
 class CameraRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetPipelineName(const string&in);
+	const string& GetPipelineName() const;
+	Vector3 GetWorldPosition() const;
+	const Matrix4x4& GetViewProjectionMatrix() const;
+	float GetNearClip() const;
+	float GetFarClip() const;
 }
 
 class CameraController {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	bool IsControllable() const;
+	void AddFollowTarget(Object@);
+	void RemoveFollowTarget(uint);
+	void SetPositionOffset(const Vector3&in);
+	const Vector3& GetPositionOffset() const;
+	void SetRotationOffset(const Vector3&in);
+	const Vector3& GetRotationOffset() const;
+	void SetTargetFovY(float);
+	float GetTargetFovY() const;
+	void SetMoveStrength(float);
+	float GetMoveStrength() const;
+	void SetRotateStrength(float);
+	float GetRotateStrength() const;
+	void SetFovLerpFactor(float);
+	float GetFovLerpFactor() const;
 }
 
 class Light {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetType(LightType);
+	LightType GetType() const;
+	void SetColor(const Vector4&in);
+	const Vector4& GetColor() const;
+	void SetIntensity(float);
+	float GetIntensity() const;
+	void SetRadius(float);
+	float GetRadius() const;
+	void SetDistance(float);
+	float GetDistance() const;
+	void SetDecay(float);
+	float GetDecay() const;
+	void SetInnerAngle(float);
+	float GetInnerAngle() const;
+	void SetOuterAngle(float);
+	float GetOuterAngle() const;
 }
 
 class LightRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetPipelineName(const string&in);
+	const string& GetPipelineName() const;
+	Light@ GetLight() const;
+	LightType GetLightType() const;
+	Vector3 GetWorldPosition() const;
+	Vector3 GetWorldDirection() const;
 }
 
 class NormalWindowObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTitle(const string&in);
+	void SetSize(uint, uint);
 }
 
 class OverlayWindowObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTitle(const string&in);
+	void SetSize(uint, uint);
 }
 
 class ScreenBufferObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetName(const string&in);
+	const string& GetName() const;
+	void SetSize(uint, uint);
 }
 
 class ShadowMapObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetName(const string&in);
+	const string& GetName() const;
+	void SetSize(uint, uint);
 }
 
 class BoxCollider {
@@ -515,110 +719,173 @@ class BloomEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetThreshold() const;
+	void SetThreshold(float);
+	float GetSoftKnee() const;
+	void SetSoftKnee(float);
+	float GetIntensity() const;
+	void SetIntensity(float);
+	float GetBlurRadius() const;
+	void SetBlurRadius(float);
+	uint GetIterations() const;
+	void SetIterations(uint);
 }
 
 class BoxFilterEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetIntensity() const;
+	void SetIntensity(float);
+	void SetHalfSize(int, int);
+	int GetHalfSizeX() const;
+	int GetHalfSizeY() const;
 }
 
 class ChromaticAberrationEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetDirection(const Vector2&in);
+	Vector2 GetDirection() const;
+	float GetStrength() const;
+	void SetStrength(float);
 }
 
 class ColorAdjustEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetBrightness() const;
+	void SetBrightness(float);
+	float GetContrast() const;
+	void SetContrast(float);
+	float GetSaturation() const;
+	void SetSaturation(float);
+	float GetTemperature() const;
+	void SetTemperature(float);
+	Vector3 GetColorBalance() const;
+	void SetColorBalance(const Vector3&in);
 }
 
 class DissolveEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetMaskThreshold() const;
+	void SetMaskThreshold(float);
+	float GetEdgeThickness() const;
+	void SetEdgeThickness(float);
+	string GetBaseTexturePath() const;
+	void SetBaseTexturePath(const string&in);
+	string GetMaskTexturePath() const;
+	void SetMaskTexturePath(const string&in);
+	Vector4 GetBaseTextureColor() const;
+	void SetBaseTextureColor(const Vector4&in);
+	Vector4 GetEdgeColor() const;
+	void SetEdgeColor(const Vector4&in);
 }
 
 class DitherEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetIntensity() const;
+	void SetIntensity(float);
+	bool IsColorDither() const;
+	void SetColorDither(bool);
 }
 
 class DotMatrixEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetDotSpacing() const;
+	void SetDotSpacing(float);
+	float GetDotRadius() const;
+	void SetDotRadius(float);
+	float GetThreshold() const;
+	void SetThreshold(float);
+	float GetIntensity() const;
+	void SetIntensity(float);
+	bool IsMonochrome() const;
+	void SetMonochrome(bool);
 }
 
 class FXAAEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetThreshold() const;
+	void SetThreshold(float);
+	float GetThresholdMin() const;
+	void SetThresholdMin(float);
+	float GetStrength() const;
+	void SetStrength(float);
 }
 
 class GaussianFilterEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	int GetRadius() const;
+	void SetRadius(int);
+	float GetSigma() const;
+	void SetSigma(float);
 }
 
 class GrayscaleEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetIntensity() const;
+	void SetIntensity(float);
 }
 
 class OutlineEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetThreshold() const;
+	void SetThreshold(float);
+	float GetThickness() const;
+	void SetThickness(float);
+	Vector4 GetColor() const;
+	void SetColor(const Vector4&in);
+	float GetCameraNear() const;
+	void SetCameraNear(float);
+	float GetCameraFar() const;
+	void SetCameraFar(float);
 }
 
 class RadialBlurEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	float GetIntensity() const;
+	void SetIntensity(float);
+	int GetSampleCount() const;
+	void SetSampleCount(int);
+	Vector2 GetCenter() const;
+	void SetCenter(const Vector2&in);
+	float GetStartRadius() const;
+	void SetStartRadius(float);
 }
 
 class VignetteEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
-}
-
-class Object {
-	const string& GetName() const;
-	void SetName(const string&in);
-	bool IsActive() const;
-	void SetActive(bool);
-	Transform@ GetTransform();
-	bool GetComponent(?&out);
-	bool GetComponents(?&out);
-}
-
-class HitInfo {
-	HitInfo();
-	HitInfo(const HitInfo&in);
-	Vector3 normal;
-	float penetration;
-	Object@ selfObject;
-	Object@ otherObject;
-	HitInfo& opAssign(const HitInfo&in);
-}
-
-class Scene {
-	const string& GetName() const;
-	Object@ GetObject(const string&in) const;
-	void SetNextSceneName(const string&in);
-	bool ChangeToNextScene();
-	bool HasNextSceneName() const;
-	void ClearNextSceneName();
-}
-
-interface ScriptComponentBehavior {
+	Vector2 GetCenter() const;
+	void SetCenter(const Vector2&in);
+	Vector4 GetColor() const;
+	void SetColor(const Vector4&in);
+	float GetIntensity() const;
+	void SetIntensity(float);
+	float GetInnerRadius() const;
+	void SetInnerRadius(float);
+	float GetSmoothness() const;
+	void SetSmoothness(float);
 }
 
 uint scan(const string&in str, ?&out...);
@@ -648,6 +915,23 @@ Scene@ GetScene();
 Object@ FindObject(const string&in);
 bool GetComponent(?&out);
 bool GetComponents(?&out);
+
+namespace Easing {
+	float Normalize01(float, float, float);
+	Vector2 Normalize01(const Vector2&in, const Vector2&in, const Vector2&in);
+	Vector3 Normalize01(const Vector3&in, const Vector3&in, const Vector3&in);
+	Vector4 Normalize01(const Vector4&in, const Vector4&in, const Vector4&in);
+	float Lerp(float, float, float);
+	float Apply(float, EaseType);
+	float Eased(float, float, float, EaseType);
+	Vector2 Eased(const Vector2&in, const Vector2&in, float, EaseType);
+	Vector3 Eased(const Vector3&in, const Vector3&in, float, EaseType);
+	Vector4 Eased(const Vector4&in, const Vector4&in, float, EaseType);
+	float EasedGAB(float, float, float, EaseType, EaseType);
+	Vector2 EasedGAB(const Vector2&in, const Vector2&in, float, EaseType, EaseType);
+	Vector3 EasedGAB(const Vector3&in, const Vector3&in, float, EaseType, EaseType);
+	Vector4 EasedGAB(const Vector4&in, const Vector4&in, float, EaseType, EaseType);
+}
 
 namespace Math {
 	Vector2 Lerp(const Vector2&in, const Vector2&in, float);

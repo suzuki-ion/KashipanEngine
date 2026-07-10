@@ -31,7 +31,8 @@ struct AnimationEntry final {
 };
 
 std::unordered_map<Handle, AnimationEntry> sAnimations;
-FileMap<Handle> sFileNameToHandle;
+// 異なるフォルダに同名ファイルが存在する場合があるため、ファイル名1つに対して複数のハンドルを保持する
+FileMap<std::vector<Handle>> sFileNameToHandle;
 FileMap<Handle> sAssetPathToHandle;
 
 std::string NormalizePathSlashes(std::string s) {
@@ -67,7 +68,7 @@ Handle RegisterEntry(AnimationEntry &&entry) {
     if (handle == AnimationManager::kInvalidHandle) return AnimationManager::kInvalidHandle;
     if (sAnimations.find(handle) != sAnimations.end()) return AnimationManager::kInvalidHandle;
 
-    sFileNameToHandle[entry.fileName] = handle;
+    sFileNameToHandle[entry.fileName].push_back(handle);
     sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
     sAnimations.emplace(handle, std::move(entry));
     return handle;
@@ -302,9 +303,14 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
 }
 
 AnimationManager::AnimationHandle AnimationManager::GetAnimationHandleFromFileName(const std::string &fileName) {
-    if (fileName.empty()) return kInvalidHandle;
+    const auto &handles = GetAnimationHandlesFromFileName(fileName);
+    return handles.empty() ? kInvalidHandle : handles.front();
+}
+
+const std::vector<AnimationManager::AnimationHandle> &AnimationManager::GetAnimationHandlesFromFileName(const std::string &fileName) {
+    if (fileName.empty()) return sEmptyHandleList;
     auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidHandle;
+    if (it == sFileNameToHandle.end()) return sEmptyHandleList;
     return it->second;
 }
 

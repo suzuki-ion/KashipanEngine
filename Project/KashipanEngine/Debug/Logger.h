@@ -54,8 +54,8 @@ private:
 };
 
 #ifdef USE_IMGUI
-class ImGuiManager;
-void ShowImGuiLoggerWindow(Passkey<ImGuiManager>);
+class SceneEditor;
+void ShowImGuiLoggerWindow(Passkey<SceneEditor>);
 #endif
 
 } // namespace KashipanEngine

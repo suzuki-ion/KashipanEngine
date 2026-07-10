@@ -648,7 +648,7 @@ void LogScope::PopPrefix() {
 }
 
 #ifdef USE_IMGUI
-void ShowImGuiLoggerWindow(Passkey<ImGuiManager>) {
+void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
     ImGui::Begin("Logger", nullptr, window_flags);
     {

@@ -3,6 +3,13 @@
 #include <imgui.h>
 #include <string>
 
+#include "Assets/AudioManager.h"
+#include "Assets/MaterialManager.h"
+#include "Assets/ModelManager.h"
+#include "Assets/TextureManager.h"
+#include "Debug/Logger.h"
+#include "Input/Input.h"
+#include "Input/InputCommand.h"
 #include "Scene/Editor/AssetsWindow.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneComponentInspector.h"
@@ -38,6 +45,15 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowComponentInspector_ = EditorSettings::GetBool("sceneEditor.showComponentInspector", true);
     isShowVariablesMenu_ = EditorSettings::GetBool("sceneEditor.showVariablesMenu", true);
     isShowAssets_ = EditorSettings::GetBool("sceneEditor.showAssets", true);
+
+    isShowLoadedTexturesWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedTextures", false);
+    isShowLoadedModelsWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedModels", false);
+    isShowMaterialsWindow_ = EditorSettings::GetBool("sceneEditor.showMaterials", false);
+    isShowLoadedSoundsWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedSounds", false);
+    isShowPlayingSoundsWindow_ = EditorSettings::GetBool("sceneEditor.showPlayingSounds", false);
+    isShowLoggerWindow_ = EditorSettings::GetBool("sceneEditor.showLogger", true);
+    isShowInputStateWindow_ = EditorSettings::GetBool("sceneEditor.showInputState", false);
+    isShowInputCommandEditorWindow_ = EditorSettings::GetBool("sceneEditor.showInputCommandEditor", false);
 }
 
 SceneEditor::~SceneEditor() = default;
@@ -52,16 +68,26 @@ void SceneEditor::ShowImGui() {
     if (isShowVariablesMenu_) variablesMenu_->ShowImGui();
     if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObjects(), commands_.get());
     if (isShowAssets_) assetsWindow_->ShowImGui();
+
+    //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
+    if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
+    if (isShowLoadedModelsWindow_) ModelManager::ShowImGuiLoadedModelsWindow();
+    if (isShowMaterialsWindow_) MaterialManager::ShowImGuiMaterialManagerWindow();
+    if (isShowLoadedSoundsWindow_) AudioManager::ShowImGuiLoadedSoundsWindow();
+    if (isShowPlayingSoundsWindow_) AudioManager::ShowImGuiPlayingSoundsWindow();
+    if (isShowLoggerWindow_) ShowImGuiLoggerWindow(Passkey<SceneEditor>{});
+    if (isShowImGuiDemoWindow_) ImGui::ShowDemoWindow(&isShowImGuiDemoWindow_);
+    if (isShowInputStateWindow_) {
+        if (auto *input = context_->GetInput()) input->ShowImGui();
+    }
+    if (isShowInputCommandEditorWindow_) {
+        if (auto *inputCommand = context_->GetInputCommand()) inputCommand->ShowImGui();
+    }
 }
 
 void SceneEditor::ShowMainWindow() {
-    if (!ImGui::Begin("Scene Editor", nullptr, ImGuiWindowFlags_MenuBar)) {
-        ImGui::End();
-        return;
-    }
-
-    //--------- メニューバー（保存・読込・Undo/Redo・ウィンドウ切替） ---------//
-    if (ImGui::BeginMenuBar()) {
+    //--------- メインメニューバー（保存・読込・Undo/Redo・ウィンドウ切替・デバッグウィンドウ） ---------//
+    if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("New Scene...")) {
                 isNewSceneRequested_ = true;
@@ -107,7 +133,42 @@ void SceneEditor::ShowMainWindow() {
             }
             ImGui::EndMenu();
         }
-        ImGui::EndMenuBar();
+        if (ImGui::BeginMenu("Debug Windows")) {
+            if (ImGui::MenuItem("Loaded Textures", nullptr, &isShowLoadedTexturesWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showLoadedTextures", isShowLoadedTexturesWindow_);
+            }
+            if (ImGui::MenuItem("Loaded Models", nullptr, &isShowLoadedModelsWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showLoadedModels", isShowLoadedModelsWindow_);
+            }
+            if (ImGui::MenuItem("Materials", nullptr, &isShowMaterialsWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showMaterials", isShowMaterialsWindow_);
+            }
+            if (ImGui::MenuItem("Loaded Sounds", nullptr, &isShowLoadedSoundsWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showLoadedSounds", isShowLoadedSoundsWindow_);
+            }
+            if (ImGui::MenuItem("Playing Sounds", nullptr, &isShowPlayingSoundsWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showPlayingSounds", isShowPlayingSoundsWindow_);
+            }
+            if (ImGui::MenuItem("Logger", nullptr, &isShowLoggerWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showLogger", isShowLoggerWindow_);
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Input State", nullptr, &isShowInputStateWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showInputState", isShowInputStateWindow_);
+            }
+            if (ImGui::MenuItem("Input Command Editor", nullptr, &isShowInputCommandEditorWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showInputCommandEditor", isShowInputCommandEditorWindow_);
+            }
+            ImGui::Separator();
+            ImGui::MenuItem("ImGui Demo Window", nullptr, &isShowImGuiDemoWindow_);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    if (!ImGui::Begin("Scene Editor")) {
+        ImGui::End();
+        return;
     }
 
     //--------- シーン名の編集 ---------//

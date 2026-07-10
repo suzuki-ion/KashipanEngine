@@ -65,6 +65,17 @@ private:
     void ShowObjectItem(const ObjectItem &item, size_t &index);
     void ShowObjectContextMenu(EmptyObject *obj);
     void ShowHierarchyContextMenu();
+    /// @brief オブジェクト作成メニューの中身（グループ分けされたテンプレート一覧）を表示する
+    /// @param referenceObject 基準オブジェクト（asChild=falseの場合は兄弟として作成。nullptrならルート直下）
+    /// @param asChild trueの場合、referenceObjectの子として作成する（referenceObjectは非nullである必要がある）
+    void ShowCreateObjectMenu(EmptyObject *referenceObject, bool asChild);
+    /// @brief テンプレート化されたオブジェクト（指定コンポーネント一式を持つ）を作成する
+    /// @param objectName 作成するオブジェクトの名前
+    /// @param componentTypes 追加するコンポーネントの型名一覧（登録済みの型名文字列と一致させること）
+    /// @param referenceObject 基準オブジェクト（asChild=falseの場合は兄弟として作成。nullptrならルート直下）
+    /// @param asChild trueの場合、referenceObjectの子として作成する
+    void CreateTemplateObject(const std::string &objectName, const std::vector<std::string> &componentTypes,
+        EmptyObject *referenceObject, bool asChild);
     void DragAndDropObject(ObjectItem *objItem);
     void ApplyDragAndDrop();
     DropPosition DragAndDropTargetCommon();

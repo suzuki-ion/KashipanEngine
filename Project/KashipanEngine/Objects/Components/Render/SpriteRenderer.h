@@ -6,6 +6,7 @@
 #include "Assets/ModelManager.h"
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
+#include "Math/Vector2.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -21,6 +22,8 @@ namespace KashipanEngine {
 /// @details Object2D系のパイプラインを使用する想定のコンポーネント。MeshRendererと同様に
 ///          描画するメッシュ（通常は平面）はMeshFilterコンポーネントから取得する。
 ///          描画先の指定方法・パイプライン/マテリアルの指定方法はMeshRendererと同じ。
+///          メッシュはXY平面上の-0.5～0.5の単位クアッド（Rect2D等）を想定しており、
+///          アンカー・ピボットはその単位クアッド内の正規化座標(0,0)=左下 ～ (1,1)=右上で指定する。
 class SpriteRenderer final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(SpriteRenderer, 0xFF, SetUpdatePriority(900);)
@@ -34,6 +37,8 @@ public:
         ptr->materialName_ = materialName_;
         ptr->materialHandle_ = materialHandle_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
+        ptr->anchor_ = anchor_;
+        ptr->pivot_ = pivot_;
         return ptr;
     }
 
@@ -84,6 +89,23 @@ public:
     }
 
     //==================================================
+    // アンカー・ピボット
+    //==================================================
+
+    /// @brief アンカーを設定する
+    /// @details Transformの座標に一致させるメッシュ上の点（単位クアッド内の正規化座標。
+    ///          (0,0)=左下 ～ (1,1)=右上、既定値は(0.5,0.5)=中心）
+    void SetAnchor(const Vector2 &anchor) { anchor_ = anchor; }
+    const Vector2 &GetAnchor() const noexcept { return anchor_; }
+
+    /// @brief ピボットを設定する
+    /// @details 回転・拡縮の中心にするメッシュ上の点（単位クアッド内の正規化座標。
+    ///          アンカーと異なる点を指定した場合、回転・拡縮の中心はアンカー（＝Transformの座標）とは
+    ///          別の位置になる。既定値は(0.5,0.5)=中心）
+    void SetPivot(const Vector2 &pivot) { pivot_ = pivot; }
+    const Vector2 &GetPivot() const noexcept { return pivot_; }
+
+    //==================================================
     // 描画情報取得
     //==================================================
 
@@ -96,11 +118,37 @@ public:
         return meshFilter->GetMeshHandle();
     }
 
-    /// @brief ワールド行列を取得（Transform コンポーネントから）
+    /// @brief ワールド行列を取得（Transform コンポーネントに、アンカー・ピボットによる補正を加えたもの）
+    /// @details メッシュ（単位クアッド、-0.5～0.5）のピボット点が回転・拡縮の中心兼ワールド行列の
+    ///          原点となるように平行移動し、続けてアンカー点がTransformのワールド座標に一致するように
+    ///          再度平行移動で補正する（アンカーとピボットが同じ場合は何も変化しない）。
     Matrix4x4 GetWorldMatrix() const {
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-        return transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+        if (!transform) return Matrix4x4::Identity();
+
+        Matrix4x4 world = transform->GetWorldMatrix();
+
+        // ピボット: 単位クアッド上のこの点が新しい原点(回転・拡縮の中心)になるよう平行移動成分へ加算する
+        // (行ベクトル規約のため、平行移動量はワールド行列の回転・拡縮部分(行0,1)で変換してから加える)
+        const float pivotOffsetX = 0.5f - pivot_.x;
+        const float pivotOffsetY = 0.5f - pivot_.y;
+        if (pivotOffsetX != 0.0f || pivotOffsetY != 0.0f) {
+            world.m[3][0] += pivotOffsetX * world.m[0][0] + pivotOffsetY * world.m[1][0];
+            world.m[3][1] += pivotOffsetX * world.m[0][1] + pivotOffsetY * world.m[1][1];
+            world.m[3][2] += pivotOffsetX * world.m[0][2] + pivotOffsetY * world.m[1][2];
+        }
+
+        // アンカー: ピボットとは独立して、この点がTransformのワールド座標に一致するように補正する
+        const float anchorDeltaX = anchor_.x - pivot_.x;
+        const float anchorDeltaY = anchor_.y - pivot_.y;
+        if (anchorDeltaX != 0.0f || anchorDeltaY != 0.0f) {
+            world.m[3][0] -= anchorDeltaX * world.m[0][0] + anchorDeltaY * world.m[1][0];
+            world.m[3][1] -= anchorDeltaX * world.m[0][1] + anchorDeltaY * world.m[1][1];
+            world.m[3][2] -= anchorDeltaX * world.m[0][2] + anchorDeltaY * world.m[1][2];
+        }
+
+        return world;
     }
 
 protected:
@@ -145,6 +193,9 @@ protected:
                 }
             }
         }
+        // アンカー・ピボット（単位クアッド内の正規化座標。(0,0)=左下 ～ (1,1)=右上）
+        ImGui::DragFloat2("Anchor", &anchor_.x, 0.01f);
+        ImGui::DragFloat2("Pivot", &pivot_.x, 0.01f);
     }
 #endif
 
@@ -156,6 +207,8 @@ protected:
         for (const auto &name : excludedRenderTargetNames_) {
             json["excludedRenderTargetNames"].push_back(name);
         }
+        json["anchor"] = ToJSON(anchor_);
+        json["pivot"] = ToJSON(pivot_);
         return json;
     }
 
@@ -172,6 +225,8 @@ protected:
         for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
             excludedRenderTargetNames_.insert(name);
         }
+        anchor_ = json.contains("anchor") ? FromJSON<Vector2>(json["anchor"]) : Vector2(0.5f, 0.5f);
+        pivot_ = json.contains("pivot") ? FromJSON<Vector2>(json["pivot"]) : Vector2(0.5f, 0.5f);
         return true;
     }
 
@@ -192,6 +247,11 @@ private:
     mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
     /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合
     std::unordered_set<std::string> excludedRenderTargetNames_;
+
+    /// @brief アンカー（Transformの座標に一致させるメッシュ上の点。単位クアッド内の正規化座標）
+    Vector2 anchor_{ 0.5f, 0.5f };
+    /// @brief ピボット（回転・拡縮の中心にするメッシュ上の点。単位クアッド内の正規化座標）
+    Vector2 pivot_{ 0.5f, 0.5f };
 };
 
 REGISTER_COMPONENT_OBJECT(SpriteRenderer)

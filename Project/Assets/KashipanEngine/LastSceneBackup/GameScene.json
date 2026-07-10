@@ -111,9 +111,9 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": -2.874013900756836,
-                                "y": 0.9993168711662292,
-                                "z": -8.0
+                                "x": 0.0,
+                                "y": 2.0,
+                                "z": -10.0
                             }
                         },
                         "isActive": true,
@@ -253,9 +253,9 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": -2.8746213912963867,
-                                "y": 2.3348987102508545,
-                                "z": 4.98943445563782e-05
+                                "x": 0.0,
+                                "y": 2.0,
+                                "z": 0.0
                             }
                         },
                         "isActive": true,
@@ -285,29 +285,14 @@
                             ],
                             "syncScale": [
                                 true,
-                                false,
-                                false
+                                true,
+                                true
                             ]
                         },
                         "isActive": true,
                         "priority": 1
                     },
                     "type": "SphereCollider"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "bodyType": 2,
-                            "interpolate": true,
-                            "mass": 1.0,
-                            "selectedColliderOccurrenceIndex": 0,
-                            "selectedColliderTypeName": "SphereCollider",
-                            "useGravity": true
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "RigidBody3D"
                 },
                 {
                     "data": {
@@ -331,7 +316,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 26
+                            "meshHandle": 2
                         },
                         "isActive": true,
                         "priority": 1
@@ -344,7 +329,7 @@
                             "animationClipName": "BODYAction",
                             "blendShapes": [],
                             "loop": true,
-                            "materialName": "Default",
+                            "materialName": "Black",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,
                             "playbackSpeed": 0.5400000214576721,
@@ -360,132 +345,6 @@
             "isActive": true,
             "name": "Player",
             "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
-                            "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
-                            "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "translate": {
-                                "x": 0.0,
-                                "y": 4.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "center": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "isTrigger": false,
-                            "radius": 0.5,
-                            "syncPosition": [
-                                true,
-                                true,
-                                true
-                            ],
-                            "syncRotation": [
-                                true,
-                                true,
-                                true
-                            ],
-                            "syncScale": [
-                                true,
-                                false,
-                                false
-                            ]
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "SphereCollider"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "bodyType": 2,
-                            "interpolate": true,
-                            "mass": 1.0,
-                            "selectedColliderOccurrenceIndex": 0,
-                            "selectedColliderTypeName": "SphereCollider",
-                            "useGravity": true
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "RigidBody3D"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "acceleration": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "velocity": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "Velocity"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "meshHandle": 29
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "MeshFilter"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "animationClipName": "Armature|mixamo.com|Layer0",
-                            "blendShapes": [],
-                            "loop": true,
-                            "materialName": "Default",
-                            "pipelineName": "Object3D.Solid.BlendNormal",
-                            "playOnStart": true,
-                            "playbackSpeed": 0.5400000214576721,
-                            "quality": 0,
-                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
-                        },
-                        "isActive": true,
-                        "priority": 900
-                    },
-                    "type": "SkinnedMeshRenderer"
-                }
-            ],
-            "isActive": false,
-            "name": "Player",
-            "objectID": "9b226009-fb61-465c-b33c-029cf54045d1"
         },
         {
             "components": [
@@ -616,7 +475,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 6
+                            "meshHandle": 7
                         },
                         "isActive": true,
                         "priority": 1
@@ -706,7 +565,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 6
+                            "meshHandle": 7
                         },
                         "isActive": true,
                         "priority": 1
@@ -738,9 +597,9 @@
                                 true
                             ],
                             "syncScale": [
-                                false,
-                                false,
-                                false
+                                true,
+                                true,
+                                true
                             ]
                         },
                         "isActive": true,
@@ -796,7 +655,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 6
+                            "meshHandle": 7
                         },
                         "isActive": true,
                         "priority": 1
@@ -828,9 +687,9 @@
                                 true
                             ],
                             "syncScale": [
-                                false,
-                                false,
-                                false
+                                true,
+                                true,
+                                true
                             ]
                         },
                         "isActive": true,
@@ -886,7 +745,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 6
+                            "meshHandle": 7
                         },
                         "isActive": true,
                         "priority": 1
@@ -976,7 +835,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 6
+                            "meshHandle": 7
                         },
                         "isActive": true,
                         "priority": 1
@@ -1008,9 +867,9 @@
                                 true
                             ],
                             "syncScale": [
-                                false,
-                                false,
-                                false
+                                true,
+                                true,
+                                true
                             ]
                         },
                         "isActive": true,

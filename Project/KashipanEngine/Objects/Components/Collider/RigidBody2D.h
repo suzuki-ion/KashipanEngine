@@ -23,6 +23,17 @@ public:
     }
 
     //==================================================
+    // 物理パラメータ
+    //==================================================
+
+    void SetVelocity(const Vector2 &velocity) { velocity_ = velocity; }
+    const Vector2 &GetVelocity() const noexcept { return velocity_; }
+    void SetMass(float mass) { mass_ = mass; }
+    float GetMass() const noexcept { return mass_; }
+    void SetUseGravity(bool enabled) { useGravity_ = enabled; }
+    bool IsGravityEnabled() const noexcept { return useGravity_; }
+
+    //==================================================
     // 使用するColliderコンポーネントの選択
     //==================================================
 

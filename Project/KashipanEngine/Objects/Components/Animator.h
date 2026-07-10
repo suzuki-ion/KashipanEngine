@@ -16,6 +16,8 @@ public:
     }
     void SetAnimationName(const std::string &name) { animationName_ = name; }
     const std::string &GetAnimationName() const noexcept { return animationName_; }
+    void SetPlayOnStart(bool playOnStart) { playOnStart_ = playOnStart; }
+    bool GetPlayOnStart() const noexcept { return playOnStart_; }
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override { ImGui::InputText("Animation", &animationName_); ImGui::Checkbox("PlayOnStart", &playOnStart_); }

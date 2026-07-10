@@ -22,7 +22,10 @@
 #include "Objects/ObjectContext.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
+#include "Utilities/MathUtils/Easings.h"
+#include "Utilities/MyAny.h"
 #include "Utilities/TimeUtils.h"
+#include "Utilities/ValueType.h"
 
 // オブジェクトコンポーネント（全種類をスクリプトへ登録する）
 #include "Objects/Components/Animator.h"
@@ -304,8 +307,20 @@ auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
     return binder;
 }
 
-void RegisterComponentTypes(asIScriptEngine *engine) {
+/// @brief Light::Type をスクリプト用の LightType 列挙型として登録する
+void RegisterLightTypeEnum(asIScriptEngine *engine) {
+    engine->RegisterEnum("LightType");
+    engine->RegisterEnumValue("LightType", "Directional", static_cast<int>(Light::Type::Directional));
+    engine->RegisterEnumValue("LightType", "Point", static_cast<int>(Light::Type::Point));
+    engine->RegisterEnumValue("LightType", "Spot", static_cast<int>(Light::Type::Spot));
+}
+
+/// @brief Transformコンポーネントを登録する
+/// @details Object::GetTransform() が Transform@ を返すため、Object/Scene（RegisterObjectTypes）より
+///          先に登録しておく必要がある。gComponentTypeBindings のクリアもここで行う（最初に呼ばれるため）
+void RegisterTransformType(asIScriptEngine *engine) {
     gComponentTypeBindings.clear();
+    RegisterLightTypeEnum(engine);
 
     RegisterComponentType<Transform>(engine, "Transform")
         .method("void SetTranslate(const Vector3 &in)", &Transform::SetTranslate)
@@ -317,7 +332,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetScale(const Vector3 &in)", &Transform::SetScale)
         .method("const Vector3 &GetScale() const", &Transform::GetScale)
         .method("const Matrix4x4 &GetWorldMatrix()", &Transform::GetWorldMatrix);
+}
 
+void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<Velocity>(engine, "Velocity")
         .method("void SetVelocity(const Vector3 &in)", &Velocity::SetVelocity)
         .method("const Vector3 &GetVelocity() const", &Velocity::GetVelocity)
@@ -373,24 +390,160 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetScriptPath() const", &ScriptComponent::GetScriptPath)
         .method("bool Reload()", &ScriptComponent::Reload);
 
-    // 型固有メソッド無しで登録するコンポーネント（GetComponentでの取得と共通メソッドのみ）
-    RegisterComponentType<MeshFilter>(engine, "MeshFilter");
-    RegisterComponentType<Animator>(engine, "Animator");
-    RegisterComponentType<Text>(engine, "Text");
-    RegisterComponentType<ComputeShaderProcessing>(engine, "ComputeShaderProcessing");
-    RegisterComponentType<RigidBody2D>(engine, "RigidBody2D");
-    RegisterComponentType<RigidBody3D>(engine, "RigidBody3D");
-    RegisterComponentType<MeshRenderer>(engine, "MeshRenderer");
-    RegisterComponentType<SkinnedMeshRenderer>(engine, "SkinnedMeshRenderer");
-    RegisterComponentType<Camera2D>(engine, "Camera2D");
-    RegisterComponentType<CameraRenderer>(engine, "CameraRenderer");
-    RegisterComponentType<CameraController>(engine, "CameraController");
-    RegisterComponentType<Light>(engine, "Light");
-    RegisterComponentType<LightRenderer>(engine, "LightRenderer");
-    RegisterComponentType<NormalWindowObject>(engine, "NormalWindowObject");
-    RegisterComponentType<OverlayWindowObject>(engine, "OverlayWindowObject");
-    RegisterComponentType<ScreenBufferObject>(engine, "ScreenBufferObject");
-    RegisterComponentType<ShadowMapObject>(engine, "ShadowMapObject");
+    RegisterComponentType<MeshFilter>(engine, "MeshFilter")
+        .method("void SetMeshHandle(uint)", [](MeshFilter &c, uint32_t handle) { c.SetMeshHandle(handle); })
+        .method("uint GetMeshHandle() const", [](const MeshFilter &c) -> uint32_t { return c.GetMeshHandle(); })
+        .method("bool HasMesh() const", &MeshFilter::HasMesh);
+
+    RegisterComponentType<Animator>(engine, "Animator")
+        .method("void SetAnimationName(const string &in)", &Animator::SetAnimationName)
+        .method("const string &GetAnimationName() const", &Animator::GetAnimationName)
+        .method("void SetPlayOnStart(bool)", &Animator::SetPlayOnStart)
+        .method("bool GetPlayOnStart() const", &Animator::GetPlayOnStart);
+
+    RegisterComponentType<Text>(engine, "Text")
+        .method("void SetText(const string &in)", &Text::SetText)
+        .method("const string &GetText() const", &Text::GetText)
+        .method("void SetColor(const Vector4 &in)", &Text::SetColor)
+        .method("const Vector4 &GetColor() const", &Text::GetColor);
+
+    RegisterComponentType<ComputeShaderProcessing>(engine, "ComputeShaderProcessing")
+        .method("void SetPipelineName(const string &in)", &ComputeShaderProcessing::SetPipelineName)
+        .method("const string &GetPipelineName() const", &ComputeShaderProcessing::GetPipelineName)
+        .method("void SetGroupCounts(uint, uint, uint)", &ComputeShaderProcessing::SetGroupCounts)
+        .method("void GetGroupCounts(uint &out, uint &out, uint &out) const", &ComputeShaderProcessing::GetGroupCounts);
+
+    RegisterComponentType<RigidBody2D>(engine, "RigidBody2D")
+        .method("void SetVelocity(const Vector2 &in)", &RigidBody2D::SetVelocity)
+        .method("const Vector2 &GetVelocity() const", &RigidBody2D::GetVelocity)
+        .method("void SetMass(float)", &RigidBody2D::SetMass)
+        .method("float GetMass() const", &RigidBody2D::GetMass)
+        .method("void SetUseGravity(bool)", &RigidBody2D::SetUseGravity)
+        .method("bool IsGravityEnabled() const", &RigidBody2D::IsGravityEnabled);
+
+    RegisterComponentType<RigidBody3D>(engine, "RigidBody3D")
+        .method("void SetBodyType(int)", [](RigidBody3D &rb, int type) { rb.SetBodyType(static_cast<reactphysics3d::BodyType>(type)); })
+        .method("int GetBodyType() const", [](const RigidBody3D &rb) -> int { return static_cast<int>(rb.GetBodyType()); })
+        .method("void SetMass(float)", &RigidBody3D::SetMass)
+        .method("float GetMass() const", &RigidBody3D::GetMass)
+        .method("void SetUseGravity(bool)", &RigidBody3D::SetUseGravity)
+        .method("bool IsGravityEnabled() const", &RigidBody3D::IsGravityEnabled)
+        .method("void SetInterpolate(bool)", &RigidBody3D::SetInterpolate)
+        .method("bool IsInterpolateEnabled() const", &RigidBody3D::IsInterpolateEnabled)
+        .method("void SyncFromTransform()", &RigidBody3D::SyncFromTransform);
+
+    RegisterComponentType<MeshRenderer>(engine, "MeshRenderer")
+        .method("void SetPipelineName(const string &in)", &MeshRenderer::SetPipelineName)
+        .method("const string &GetPipelineName() const", &MeshRenderer::GetPipelineName)
+        .method("void SetMaterialName(const string &in)", &MeshRenderer::SetMaterialName)
+        .method("const string &GetMaterialName() const", &MeshRenderer::GetMaterialName)
+        .method("Object@ GetTargetObject() const", &MeshRenderer::GetTargetObject)
+        .method("void SetTargetObject(Object@)", [](MeshRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); });
+
+    RegisterComponentType<SkinnedMeshRenderer>(engine, "SkinnedMeshRenderer")
+        .method("void SetPipelineName(const string &in)", &SkinnedMeshRenderer::SetPipelineName)
+        .method("const string &GetPipelineName() const", &SkinnedMeshRenderer::GetPipelineName)
+        .method("void SetMaterialName(const string &in)", &SkinnedMeshRenderer::SetMaterialName)
+        .method("const string &GetMaterialName() const", &SkinnedMeshRenderer::GetMaterialName)
+        .method("void SetAnimationClipName(const string &in)", &SkinnedMeshRenderer::SetAnimationClipName)
+        .method("const string &GetAnimationClipName() const", &SkinnedMeshRenderer::GetAnimationClipName)
+        .method("void SetPlayOnStart(bool)", &SkinnedMeshRenderer::SetPlayOnStart)
+        .method("bool GetPlayOnStart() const", &SkinnedMeshRenderer::GetPlayOnStart)
+        .method("void SetLoop(bool)", &SkinnedMeshRenderer::SetLoop)
+        .method("bool GetLoop() const", &SkinnedMeshRenderer::GetLoop)
+        .method("void SetPlaybackSpeed(float)", &SkinnedMeshRenderer::SetPlaybackSpeed)
+        .method("float GetPlaybackSpeed() const", &SkinnedMeshRenderer::GetPlaybackSpeed)
+        .method("void Play()", &SkinnedMeshRenderer::Play)
+        .method("void Stop()", &SkinnedMeshRenderer::Stop)
+        .method("bool IsPlaying() const", &SkinnedMeshRenderer::IsPlaying)
+        .method("void SetBlendShapeWeight(const string &in, float)", &SkinnedMeshRenderer::SetBlendShapeWeight)
+        .method("float GetBlendShapeWeight(const string &in) const", &SkinnedMeshRenderer::GetBlendShapeWeight);
+
+    RegisterComponentType<Camera2D>(engine, "Camera2D")
+        .method("void SetSize(float, float)", &Camera2D::SetSize)
+        .method("void SetNearClip(float)", &Camera2D::SetNearClip)
+        .method("void SetFarClip(float)", &Camera2D::SetFarClip)
+        .method("float GetWidth() const", &Camera2D::GetWidth)
+        .method("float GetHeight() const", &Camera2D::GetHeight)
+        .method("float GetNearClip() const", &Camera2D::GetNearClip)
+        .method("float GetFarClip() const", &Camera2D::GetFarClip);
+
+    RegisterComponentType<CameraRenderer>(engine, "CameraRenderer")
+        .method("void SetPipelineName(const string &in)", &CameraRenderer::SetPipelineName)
+        .method("const string &GetPipelineName() const", &CameraRenderer::GetPipelineName)
+        .method("Vector3 GetWorldPosition() const", &CameraRenderer::GetWorldPosition)
+        .method("const Matrix4x4 &GetViewProjectionMatrix() const", &CameraRenderer::GetViewProjectionMatrix)
+        .method("float GetNearClip() const", &CameraRenderer::GetNearClip)
+        .method("float GetFarClip() const", &CameraRenderer::GetFarClip);
+
+    RegisterComponentType<CameraController>(engine, "CameraController")
+        .method("bool IsControllable() const", &CameraController::IsControllable)
+        .method("void AddFollowTarget(Object@)", [](CameraController &c, EmptyObject *obj) {
+            if (obj) c.AddFollowTarget(obj->GetObjectID());
+        })
+        .method("void RemoveFollowTarget(uint)", [](CameraController &c, uint32_t index) { c.RemoveFollowTarget(index); })
+        .method("void SetPositionOffset(const Vector3 &in)", &CameraController::SetPositionOffset)
+        .method("const Vector3 &GetPositionOffset() const", &CameraController::GetPositionOffset)
+        .method("void SetRotationOffset(const Vector3 &in)", &CameraController::SetRotationOffset)
+        .method("const Vector3 &GetRotationOffset() const", &CameraController::GetRotationOffset)
+        .method("void SetTargetFovY(float)", &CameraController::SetTargetFovY)
+        .method("float GetTargetFovY() const", &CameraController::GetTargetFovY)
+        .method("void SetMoveStrength(float)", [](CameraController &c, float v) {
+            c.GetMoveStrength().usePerAxis = false;
+            c.GetMoveStrength().all = v;
+        })
+        .method("float GetMoveStrength() const", [](const CameraController &c) -> float { return c.GetMoveStrength().all; })
+        .method("void SetRotateStrength(float)", [](CameraController &c, float v) {
+            c.GetRotateStrength().usePerAxis = false;
+            c.GetRotateStrength().all = v;
+        })
+        .method("float GetRotateStrength() const", [](const CameraController &c) -> float { return c.GetRotateStrength().all; })
+        .method("void SetFovLerpFactor(float)", &CameraController::SetFovLerpFactor)
+        .method("float GetFovLerpFactor() const", &CameraController::GetFovLerpFactor);
+
+    RegisterComponentType<Light>(engine, "Light")
+        .method("void SetType(LightType)", &Light::SetType)
+        .method("LightType GetType() const", &Light::GetType)
+        .method("void SetColor(const Vector4 &in)", &Light::SetColor)
+        .method("const Vector4 &GetColor() const", &Light::GetColor)
+        .method("void SetIntensity(float)", &Light::SetIntensity)
+        .method("float GetIntensity() const", &Light::GetIntensity)
+        .method("void SetRadius(float)", &Light::SetRadius)
+        .method("float GetRadius() const", &Light::GetRadius)
+        .method("void SetDistance(float)", &Light::SetDistance)
+        .method("float GetDistance() const", &Light::GetDistance)
+        .method("void SetDecay(float)", &Light::SetDecay)
+        .method("float GetDecay() const", &Light::GetDecay)
+        .method("void SetInnerAngle(float)", &Light::SetInnerAngle)
+        .method("float GetInnerAngle() const", &Light::GetInnerAngle)
+        .method("void SetOuterAngle(float)", &Light::SetOuterAngle)
+        .method("float GetOuterAngle() const", &Light::GetOuterAngle);
+
+    RegisterComponentType<LightRenderer>(engine, "LightRenderer")
+        .method("void SetPipelineName(const string &in)", &LightRenderer::SetPipelineName)
+        .method("const string &GetPipelineName() const", &LightRenderer::GetPipelineName)
+        .method("Light@ GetLight() const", &LightRenderer::GetLight)
+        .method("LightType GetLightType() const", &LightRenderer::GetLightType)
+        .method("Vector3 GetWorldPosition() const", &LightRenderer::GetWorldPosition)
+        .method("Vector3 GetWorldDirection() const", &LightRenderer::GetWorldDirection);
+
+    RegisterComponentType<NormalWindowObject>(engine, "NormalWindowObject")
+        .method("void SetTitle(const string &in)", &NormalWindowObject::SetTitle)
+        .method("void SetSize(uint, uint)", &NormalWindowObject::SetSize);
+
+    RegisterComponentType<OverlayWindowObject>(engine, "OverlayWindowObject")
+        .method("void SetTitle(const string &in)", &OverlayWindowObject::SetTitle)
+        .method("void SetSize(uint, uint)", &OverlayWindowObject::SetSize);
+
+    RegisterComponentType<ScreenBufferObject>(engine, "ScreenBufferObject")
+        .method("void SetName(const string &in)", &ScreenBufferObject::SetName)
+        .method("const string &GetName() const", &ScreenBufferObject::GetName)
+        .method("void SetSize(uint, uint)", &ScreenBufferObject::SetSize);
+
+    RegisterComponentType<ShadowMapObject>(engine, "ShadowMapObject")
+        .method("void SetName(const string &in)", &ShadowMapObject::SetName)
+        .method("const string &GetName() const", &ShadowMapObject::GetName)
+        .method("void SetSize(uint, uint)", &ShadowMapObject::SetSize);
 
     // コライダー
     RegisterColliderType<BoxCollider>(engine, "BoxCollider");
@@ -403,20 +556,181 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterColliderType<Capsule2DCollider>(engine, "Capsule2DCollider");
     RegisterColliderType<Ray2DCollider>(engine, "Ray2DCollider");
 
+    //==================================================
     // ポストプロセスエフェクト
-    RegisterComponentType<BloomEffect>(engine, "BloomEffect");
-    RegisterComponentType<BoxFilterEffect>(engine, "BoxFilterEffect");
-    RegisterComponentType<ChromaticAberrationEffect>(engine, "ChromaticAberrationEffect");
-    RegisterComponentType<ColorAdjustEffect>(engine, "ColorAdjustEffect");
-    RegisterComponentType<DissolveEffect>(engine, "DissolveEffect");
-    RegisterComponentType<DitherEffect>(engine, "DitherEffect");
-    RegisterComponentType<DotMatrixEffect>(engine, "DotMatrixEffect");
-    RegisterComponentType<FXAAEffect>(engine, "FXAAEffect");
-    RegisterComponentType<GaussianFilterEffect>(engine, "GaussianFilterEffect");
-    RegisterComponentType<GrayscaleEffect>(engine, "GrayscaleEffect");
-    RegisterComponentType<OutlineEffect>(engine, "OutlineEffect");
-    RegisterComponentType<RadialBlurEffect>(engine, "RadialBlurEffect");
-    RegisterComponentType<VignetteEffect>(engine, "VignetteEffect");
+    //==================================================
+    // それぞれ内部の Params 構造体を直接は公開せず、フィールドごとの Get/Set をラムダで提供する
+
+    RegisterComponentType<BloomEffect>(engine, "BloomEffect")
+        .method("float GetThreshold() const", [](const BloomEffect &e) { return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetSoftKnee() const", [](const BloomEffect &e) { return e.GetParams().softKnee; })
+        .method("void SetSoftKnee(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.softKnee = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const BloomEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetBlurRadius() const", [](const BloomEffect &e) { return e.GetParams().blurRadius; })
+        .method("void SetBlurRadius(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
+        .method("uint GetIterations() const", [](const BloomEffect &e) -> uint32_t { return e.GetParams().iterations; })
+        .method("void SetIterations(uint)", [](BloomEffect &e, uint32_t v) { auto p = e.GetParams(); p.iterations = v; e.SetParams(p); });
+
+    RegisterComponentType<BoxFilterEffect>(engine, "BoxFilterEffect")
+        .method("float GetIntensity() const", [](const BoxFilterEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](BoxFilterEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("void SetHalfSize(int, int)", [](BoxFilterEffect &e, int x, int y) {
+            auto p = e.GetParams(); p.halfSize[0] = x; p.halfSize[1] = y; e.SetParams(p);
+        })
+        .method("int GetHalfSizeX() const", [](const BoxFilterEffect &e) { return e.GetParams().halfSize[0]; })
+        .method("int GetHalfSizeY() const", [](const BoxFilterEffect &e) { return e.GetParams().halfSize[1]; });
+
+    RegisterComponentType<ChromaticAberrationEffect>(engine, "ChromaticAberrationEffect")
+        .method("void SetDirection(const Vector2 &in)", [](ChromaticAberrationEffect &e, const Vector2 &dir) {
+            auto p = e.GetParams(); p.directionX = dir.x; p.directionY = dir.y; e.SetParams(p);
+        })
+        .method("Vector2 GetDirection() const", [](const ChromaticAberrationEffect &e) -> Vector2 {
+            const auto &p = e.GetParams(); return Vector2(p.directionX, p.directionY);
+        })
+        .method("float GetStrength() const", [](const ChromaticAberrationEffect &e) { return e.GetParams().strength; })
+        .method("void SetStrength(float)", [](ChromaticAberrationEffect &e, float v) { auto p = e.GetParams(); p.strength = v; e.SetParams(p); });
+
+    RegisterComponentType<ColorAdjustEffect>(engine, "ColorAdjustEffect")
+        .method("float GetBrightness() const", [](const ColorAdjustEffect &e) { return e.GetParams().brightness; })
+        .method("void SetBrightness(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.brightness = v; e.SetParams(p); })
+        .method("float GetContrast() const", [](const ColorAdjustEffect &e) { return e.GetParams().contrast; })
+        .method("void SetContrast(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.contrast = v; e.SetParams(p); })
+        .method("float GetSaturation() const", [](const ColorAdjustEffect &e) { return e.GetParams().saturation; })
+        .method("void SetSaturation(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.saturation = v; e.SetParams(p); })
+        .method("float GetTemperature() const", [](const ColorAdjustEffect &e) { return e.GetParams().temperature; })
+        .method("void SetTemperature(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.temperature = v; e.SetParams(p); })
+        .method("Vector3 GetColorBalance() const", [](const ColorAdjustEffect &e) -> Vector3 {
+            const auto &p = e.GetParams(); return Vector3(p.colorBalance[0], p.colorBalance[1], p.colorBalance[2]);
+        })
+        .method("void SetColorBalance(const Vector3 &in)", [](ColorAdjustEffect &e, const Vector3 &v) {
+            auto p = e.GetParams(); p.colorBalance[0] = v.x; p.colorBalance[1] = v.y; p.colorBalance[2] = v.z; e.SetParams(p);
+        });
+
+    RegisterComponentType<DissolveEffect>(engine, "DissolveEffect")
+        .method("float GetMaskThreshold() const", [](const DissolveEffect &e) { return e.GetParams().maskThreshold; })
+        .method("void SetMaskThreshold(float)", [](DissolveEffect &e, float v) { auto p = e.GetParams(); p.maskThreshold = v; e.SetParams(p); })
+        .method("float GetEdgeThickness() const", [](const DissolveEffect &e) { return e.GetParams().edgeThickness; })
+        .method("void SetEdgeThickness(float)", [](DissolveEffect &e, float v) { auto p = e.GetParams(); p.edgeThickness = v; e.SetParams(p); })
+        .method("string GetBaseTexturePath() const", [](const DissolveEffect &e) -> std::string {
+            return TextureManager::GetTextureAssetPath(e.GetParams().baseTexture);
+        })
+        .method("void SetBaseTexturePath(const string &in)", [](DissolveEffect &e, const std::string &path) {
+            auto p = e.GetParams();
+            p.baseTexture = path.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(path);
+            e.SetParams(p);
+        })
+        .method("string GetMaskTexturePath() const", [](const DissolveEffect &e) -> std::string {
+            return TextureManager::GetTextureAssetPath(e.GetParams().maskTexture);
+        })
+        .method("void SetMaskTexturePath(const string &in)", [](DissolveEffect &e, const std::string &path) {
+            auto p = e.GetParams();
+            p.maskTexture = path.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(path);
+            e.SetParams(p);
+        })
+        .method("Vector4 GetBaseTextureColor() const", [](const DissolveEffect &e) -> Vector4 {
+            const auto &c = e.GetParams().baseTextureColor; return Vector4(c[0], c[1], c[2], c[3]);
+        })
+        .method("void SetBaseTextureColor(const Vector4 &in)", [](DissolveEffect &e, const Vector4 &c) {
+            auto p = e.GetParams();
+            p.baseTextureColor[0] = c.x; p.baseTextureColor[1] = c.y; p.baseTextureColor[2] = c.z; p.baseTextureColor[3] = c.w;
+            e.SetParams(p);
+        })
+        .method("Vector4 GetEdgeColor() const", [](const DissolveEffect &e) -> Vector4 {
+            const auto &c = e.GetParams().edgeColor; return Vector4(c[0], c[1], c[2], c[3]);
+        })
+        .method("void SetEdgeColor(const Vector4 &in)", [](DissolveEffect &e, const Vector4 &c) {
+            auto p = e.GetParams();
+            p.edgeColor[0] = c.x; p.edgeColor[1] = c.y; p.edgeColor[2] = c.z; p.edgeColor[3] = c.w;
+            e.SetParams(p);
+        });
+
+    RegisterComponentType<DitherEffect>(engine, "DitherEffect")
+        .method("float GetIntensity() const", [](const DitherEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](DitherEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("bool IsColorDither() const", [](const DitherEffect &e) { return e.GetParams().color; })
+        .method("void SetColorDither(bool)", [](DitherEffect &e, bool v) { auto p = e.GetParams(); p.color = v; e.SetParams(p); });
+
+    RegisterComponentType<DotMatrixEffect>(engine, "DotMatrixEffect")
+        .method("float GetDotSpacing() const", [](const DotMatrixEffect &e) { return e.GetParams().dotSpacing; })
+        .method("void SetDotSpacing(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.dotSpacing = v; e.SetParams(p); })
+        .method("float GetDotRadius() const", [](const DotMatrixEffect &e) { return e.GetParams().dotRadius; })
+        .method("void SetDotRadius(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.dotRadius = v; e.SetParams(p); })
+        .method("float GetThreshold() const", [](const DotMatrixEffect &e) { return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const DotMatrixEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("bool IsMonochrome() const", [](const DotMatrixEffect &e) { return e.GetParams().monochrome; })
+        .method("void SetMonochrome(bool)", [](DotMatrixEffect &e, bool v) { auto p = e.GetParams(); p.monochrome = v; e.SetParams(p); });
+
+    RegisterComponentType<FXAAEffect>(engine, "FXAAEffect")
+        .method("float GetThreshold() const", [](const FXAAEffect &e) { return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetThresholdMin() const", [](const FXAAEffect &e) { return e.GetParams().thresholdMin; })
+        .method("void SetThresholdMin(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.thresholdMin = v; e.SetParams(p); })
+        .method("float GetStrength() const", [](const FXAAEffect &e) { return e.GetParams().strength; })
+        .method("void SetStrength(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.strength = v; e.SetParams(p); });
+
+    RegisterComponentType<GaussianFilterEffect>(engine, "GaussianFilterEffect")
+        .method("int GetRadius() const", [](const GaussianFilterEffect &e) { return e.GetParams().radius; })
+        .method("void SetRadius(int)", [](GaussianFilterEffect &e, int v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
+        .method("float GetSigma() const", [](const GaussianFilterEffect &e) { return e.GetParams().sigma; })
+        .method("void SetSigma(float)", [](GaussianFilterEffect &e, float v) { auto p = e.GetParams(); p.sigma = v; e.SetParams(p); });
+
+    RegisterComponentType<GrayscaleEffect>(engine, "GrayscaleEffect")
+        .method("float GetIntensity() const", [](const GrayscaleEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](GrayscaleEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); });
+
+    RegisterComponentType<OutlineEffect>(engine, "OutlineEffect")
+        .method("float GetThreshold() const", [](const OutlineEffect &e) { return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetThickness() const", [](const OutlineEffect &e) { return e.GetParams().thickness; })
+        .method("void SetThickness(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.thickness = v; e.SetParams(p); })
+        .method("Vector4 GetColor() const", [](const OutlineEffect &e) -> Vector4 {
+            const auto &c = e.GetParams().color; return Vector4(c[0], c[1], c[2], c[3]);
+        })
+        .method("void SetColor(const Vector4 &in)", [](OutlineEffect &e, const Vector4 &c) {
+            auto p = e.GetParams();
+            p.color[0] = c.x; p.color[1] = c.y; p.color[2] = c.z; p.color[3] = c.w;
+            e.SetParams(p);
+        })
+        .method("float GetCameraNear() const", [](const OutlineEffect &e) { return e.GetParams().cameraNear; })
+        .method("void SetCameraNear(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.cameraNear = v; e.SetParams(p); })
+        .method("float GetCameraFar() const", [](const OutlineEffect &e) { return e.GetParams().cameraFar; })
+        .method("void SetCameraFar(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.cameraFar = v; e.SetParams(p); });
+
+    RegisterComponentType<RadialBlurEffect>(engine, "RadialBlurEffect")
+        .method("float GetIntensity() const", [](const RadialBlurEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](RadialBlurEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("int GetSampleCount() const", [](const RadialBlurEffect &e) { return e.GetParams().sampleCount; })
+        .method("void SetSampleCount(int)", [](RadialBlurEffect &e, int v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
+        .method("Vector2 GetCenter() const", [](const RadialBlurEffect &e) -> Vector2 {
+            const auto &c = e.GetParams().radialCenter; return Vector2(c[0], c[1]);
+        })
+        .method("void SetCenter(const Vector2 &in)", [](RadialBlurEffect &e, const Vector2 &c) {
+            auto p = e.GetParams(); p.radialCenter[0] = c.x; p.radialCenter[1] = c.y; e.SetParams(p);
+        })
+        .method("float GetStartRadius() const", [](const RadialBlurEffect &e) { return e.GetParams().startRadius; })
+        .method("void SetStartRadius(float)", [](RadialBlurEffect &e, float v) { auto p = e.GetParams(); p.startRadius = v; e.SetParams(p); });
+
+    RegisterComponentType<VignetteEffect>(engine, "VignetteEffect")
+        .method("Vector2 GetCenter() const", [](const VignetteEffect &e) -> Vector2 {
+            const auto &c = e.GetParams().center; return Vector2(c[0], c[1]);
+        })
+        .method("void SetCenter(const Vector2 &in)", [](VignetteEffect &e, const Vector2 &c) {
+            auto p = e.GetParams(); p.center[0] = c.x; p.center[1] = c.y; e.SetParams(p);
+        })
+        .method("Vector4 GetColor() const", [](const VignetteEffect &e) -> Vector4 { return e.GetParams().color; })
+        .method("void SetColor(const Vector4 &in)", [](VignetteEffect &e, const Vector4 &c) {
+            auto p = e.GetParams(); p.color = c; e.SetParams(p);
+        })
+        .method("float GetIntensity() const", [](const VignetteEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetInnerRadius() const", [](const VignetteEffect &e) { return e.GetParams().innerRadius; })
+        .method("void SetInnerRadius(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.innerRadius = v; e.SetParams(p); })
+        .method("float GetSmoothness() const", [](const VignetteEffect &e) { return e.GetParams().smoothness; })
+        .method("void SetSmoothness(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.smoothness = v; e.SetParams(p); });
 }
 
 //==================================================
@@ -471,11 +785,109 @@ bool GetComponentsIntoArray(EmptyObject &obj, void *ref, int typeId) {
     return true;
 }
 
+/// @brief EmptyObjectのポインタ配列から array<Object@>@ を構築する（Scene::GetObjects用）
+CScriptArray *MakeObjectArray(const std::vector<EmptyObject *> &objects) {
+    asIScriptContext *context = asGetActiveContext();
+    asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
+    if (!engine) return nullptr;
+
+    asITypeInfo *arrayType = engine->GetTypeInfoByDecl("array<Object@>");
+    if (!arrayType) return nullptr;
+
+    CScriptArray *array = CScriptArray::Create(arrayType, static_cast<asUINT>(objects.size()));
+    if (!array) return nullptr;
+    for (asUINT i = 0; i < objects.size(); ++i) {
+        void *handle = objects[i];
+        array->SetValue(i, &handle);
+    }
+    return array;
+}
+
+//==================================================
+// シーン変数（?&in/?&out と MyAny の相互変換）
+//==================================================
+
+/// @brief シーン変数の読み書きで対応する型のタイプID（RegisterObjectTypesで一度だけ設定される）
+/// @details ラムダをネイティブ呼び出し規約で登録するには非キャプチャである必要があるため、
+///          キャプチャ変数の代わりにこのグローバル変数を経由して型IDを参照する
+struct SceneVariableTypeIds {
+    int stringTypeId = 0;
+    int vector2TypeId = 0;
+    int vector3TypeId = 0;
+    int vector4TypeId = 0;
+    int quaternionTypeId = 0;
+};
+SceneVariableTypeIds gSceneVariableTypeIds;
+
+/// @brief ?&in で渡された値を型に応じてシーン変数へ書き込む（上書き）
+/// @return 対応している型であれば true、対応外の型の場合は false
+bool SetSceneVariableFromGeneric(SceneContext &scene, const std::string &key, void *ref, int typeId) {
+    if (!ref) return false;
+    if (typeId == asTYPEID_BOOL) { scene.AddSceneVariable<bool>(key, *static_cast<bool *>(ref)); return true; }
+    if (typeId == asTYPEID_INT32) { scene.AddSceneVariable<int32_t>(key, *static_cast<int32_t *>(ref)); return true; }
+    if (typeId == asTYPEID_UINT32) { scene.AddSceneVariable<uint32_t>(key, *static_cast<uint32_t *>(ref)); return true; }
+    if (typeId == asTYPEID_FLOAT) { scene.AddSceneVariable<float>(key, *static_cast<float *>(ref)); return true; }
+    if (typeId == asTYPEID_DOUBLE) { scene.AddSceneVariable<double>(key, *static_cast<double *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.stringTypeId) { scene.AddSceneVariable<std::string>(key, *static_cast<std::string *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector2TypeId) { scene.AddSceneVariable<Vector2>(key, *static_cast<Vector2 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector3TypeId) { scene.AddSceneVariable<Vector3>(key, *static_cast<Vector3 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector4TypeId) { scene.AddSceneVariable<Vector4>(key, *static_cast<Vector4 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.quaternionTypeId) { scene.AddSceneVariable<Quaternion>(key, *static_cast<Quaternion *>(ref)); return true; }
+    return false;
+}
+
+/// @brief ?&in で渡された値を型に応じてグローバルシーン変数へ書き込む（上書き）
+/// @details AddGlobalSceneVariable は既存キーがあっても上書きしない仕様のため、先に削除してから追加する
+/// @return 対応している型であれば true、対応外の型の場合は false
+bool SetGlobalSceneVariableFromGeneric(SceneContext &scene, const std::string &key, void *ref, int typeId) {
+    if (!ref) return false;
+    scene.RemoveGlobalSceneVariable(key);
+    if (typeId == asTYPEID_BOOL) { scene.AddGlobalSceneVariable<bool>(key, *static_cast<bool *>(ref)); return true; }
+    if (typeId == asTYPEID_INT32) { scene.AddGlobalSceneVariable<int32_t>(key, *static_cast<int32_t *>(ref)); return true; }
+    if (typeId == asTYPEID_UINT32) { scene.AddGlobalSceneVariable<uint32_t>(key, *static_cast<uint32_t *>(ref)); return true; }
+    if (typeId == asTYPEID_FLOAT) { scene.AddGlobalSceneVariable<float>(key, *static_cast<float *>(ref)); return true; }
+    if (typeId == asTYPEID_DOUBLE) { scene.AddGlobalSceneVariable<double>(key, *static_cast<double *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.stringTypeId) { scene.AddGlobalSceneVariable<std::string>(key, *static_cast<std::string *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector2TypeId) { scene.AddGlobalSceneVariable<Vector2>(key, *static_cast<Vector2 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector3TypeId) { scene.AddGlobalSceneVariable<Vector3>(key, *static_cast<Vector3 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector4TypeId) { scene.AddGlobalSceneVariable<Vector4>(key, *static_cast<Vector4 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.quaternionTypeId) { scene.AddGlobalSceneVariable<Quaternion>(key, *static_cast<Quaternion *>(ref)); return true; }
+    return false;
+}
+
+/// @brief MyAny（シーン変数の実体）の値を型に応じて ?&out の変数へ書き戻す
+/// @return 変数が存在し、かつ渡された型と一致していれば true
+bool WriteSceneVariableToGeneric(MyAny *value, void *ref, int typeId) {
+    if (!value || !ref || value->IsEmpty()) return false;
+    if (typeId == asTYPEID_BOOL && value->IsType<bool>()) { *static_cast<bool *>(ref) = value->AnyCast<bool>(); return true; }
+    if (typeId == asTYPEID_INT32 && value->IsType<int32_t>()) { *static_cast<int32_t *>(ref) = value->AnyCast<int32_t>(); return true; }
+    if (typeId == asTYPEID_UINT32 && value->IsType<uint32_t>()) { *static_cast<uint32_t *>(ref) = value->AnyCast<uint32_t>(); return true; }
+    if (typeId == asTYPEID_FLOAT && value->IsType<float>()) { *static_cast<float *>(ref) = value->AnyCast<float>(); return true; }
+    if (typeId == asTYPEID_DOUBLE && value->IsType<double>()) { *static_cast<double *>(ref) = value->AnyCast<double>(); return true; }
+    if (typeId == gSceneVariableTypeIds.stringTypeId && value->IsType<std::string>()) { *static_cast<std::string *>(ref) = value->AnyCast<std::string>(); return true; }
+    if (typeId == gSceneVariableTypeIds.vector2TypeId && value->IsType<Vector2>()) { *static_cast<Vector2 *>(ref) = value->AnyCast<Vector2>(); return true; }
+    if (typeId == gSceneVariableTypeIds.vector3TypeId && value->IsType<Vector3>()) { *static_cast<Vector3 *>(ref) = value->AnyCast<Vector3>(); return true; }
+    if (typeId == gSceneVariableTypeIds.vector4TypeId && value->IsType<Vector4>()) { *static_cast<Vector4 *>(ref) = value->AnyCast<Vector4>(); return true; }
+    if (typeId == gSceneVariableTypeIds.quaternionTypeId && value->IsType<Quaternion>()) { *static_cast<Quaternion *>(ref) = value->AnyCast<Quaternion>(); return true; }
+    return false;
+}
+
 //==================================================
 // オブジェクト・シーン・衝突情報
 //==================================================
 
+/// @brief Object/Scene/HitInfo とそれらのメソッドを登録する
+/// @details Object::GetTransform() が Transform@ を返すため、RegisterTransformType の後に呼ぶこと。
+///          MeshRenderer 等ここより後に登録されるコンポーネントは Object@/Scene@ を
+///          パラメータ/戻り値として自由に参照できる（型は既に登録済みのため）。
 void RegisterObjectTypes(asIScriptEngine *engine) {
+    // シーン変数の ?&in/?&out 変換で使うタイプIDをキャッシュする（string/Vector2等はここまでに登録済み）
+    gSceneVariableTypeIds.stringTypeId = engine->GetTypeIdByDecl("string");
+    gSceneVariableTypeIds.vector2TypeId = engine->GetTypeIdByDecl("Vector2");
+    gSceneVariableTypeIds.vector3TypeId = engine->GetTypeIdByDecl("Vector3");
+    gSceneVariableTypeIds.vector4TypeId = engine->GetTypeIdByDecl("Vector4");
+    gSceneVariableTypeIds.quaternionTypeId = engine->GetTypeIdByDecl("Quaternion");
+
     // エンジン側が所有権を持つ型は参照カウント無しの参照型として登録する
     asbind20::ref_class<EmptyObject>(engine, "Object", asOBJ_NOCOUNT)
         .method("const string &GetName() const", &EmptyObject::GetName)
@@ -501,14 +913,97 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("const string &GetName() const", &SceneContext::GetName)
         .method("Object@ GetObject(const string &in) const",
             [](const SceneContext &scene, const std::string &name) -> EmptyObject * { return scene.GetSceneObject(name); })
+        .method("array<Object@>@ GetObjects(const string &in) const", [](const SceneContext &scene, const std::string &name) -> CScriptArray * {
+            return MakeObjectArray(scene.GetSceneObjects(name));
+        })
         .method("void SetNextSceneName(const string &in)", &SceneContext::SetNextSceneName)
         .method("bool ChangeToNextScene()", &SceneContext::ChangeToNextScene)
         .method("bool HasNextSceneName() const", &SceneContext::HasNextSceneName)
-        .method("void ClearNextSceneName()", &SceneContext::ClearNextSceneName);
+        .method("void ClearNextSceneName()", &SceneContext::ClearNextSceneName)
+        // シーン変数（このシーンが読み込まれている間だけ有効。スクリプト間で値を受け渡すのに使う）
+        .method("bool SetVariable(const string &in, ?&in)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+            return SetSceneVariableFromGeneric(scene, key, ref, typeId);
+        })
+        .method("bool GetVariable(const string &in, ?&out)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+            return WriteSceneVariableToGeneric(scene.GetSceneVariable(key), ref, typeId);
+        })
+        .method("bool HasVariable(const string &in)", [](SceneContext &scene, const std::string &key) -> bool {
+            return scene.GetSceneVariable(key) != nullptr;
+        })
+        .method("bool RemoveVariable(const string &in)", &SceneContext::RemoveSceneVariable)
+        // グローバルシーン変数（シーンを跨いでも値が残る。SceneManagerが保持する）
+        .method("bool SetGlobalVariable(const string &in, ?&in)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+            return SetGlobalSceneVariableFromGeneric(scene, key, ref, typeId);
+        })
+        .method("bool GetGlobalVariable(const string &in, ?&out)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+            return WriteSceneVariableToGeneric(scene.GetGlobalSceneVariable(key), ref, typeId);
+        })
+        .method("bool HasGlobalVariable(const string &in)", [](SceneContext &scene, const std::string &key) -> bool {
+            return scene.GetGlobalSceneVariable(key) != nullptr;
+        })
+        .method("bool RemoveGlobalVariable(const string &in)", &SceneContext::RemoveGlobalSceneVariable);
 
     // スクリプト側でコンポーネントの動作を定義するためのインターフェース
     // （ScriptComponentはこのインターフェースを実装したクラスを探して実行する）
     engine->RegisterInterface("ScriptComponentBehavior");
+}
+
+//==================================================
+// イージング関数（Utilities/MathUtils/Easings.h）
+//==================================================
+
+/// @brief EaseType 列挙型と Easing:: 名前空間のユーティリティ関数を登録する
+void RegisterEasingBindings(asIScriptEngine *engine) {
+    engine->RegisterEnum("EaseType");
+    static const std::pair<const char *, EaseType> kEaseTypeValues[] = {
+        { "Linear", EaseType::Linear },
+        { "EaseInQuad", EaseType::EaseInQuad }, { "EaseOutQuad", EaseType::EaseOutQuad },
+        { "EaseInOutQuad", EaseType::EaseInOutQuad }, { "EaseOutInQuad", EaseType::EaseOutInQuad },
+        { "EaseInCubic", EaseType::EaseInCubic }, { "EaseOutCubic", EaseType::EaseOutCubic },
+        { "EaseInOutCubic", EaseType::EaseInOutCubic }, { "EaseOutInCubic", EaseType::EaseOutInCubic },
+        { "EaseInQuart", EaseType::EaseInQuart }, { "EaseOutQuart", EaseType::EaseOutQuart },
+        { "EaseInOutQuart", EaseType::EaseInOutQuart }, { "EaseOutInQuart", EaseType::EaseOutInQuart },
+        { "EaseInQuint", EaseType::EaseInQuint }, { "EaseOutQuint", EaseType::EaseOutQuint },
+        { "EaseInOutQuint", EaseType::EaseInOutQuint }, { "EaseOutInQuint", EaseType::EaseOutInQuint },
+        { "EaseInSine", EaseType::EaseInSine }, { "EaseOutSine", EaseType::EaseOutSine },
+        { "EaseInOutSine", EaseType::EaseInOutSine }, { "EaseOutInSine", EaseType::EaseOutInSine },
+        { "EaseInExpo", EaseType::EaseInExpo }, { "EaseOutExpo", EaseType::EaseOutExpo },
+        { "EaseInOutExpo", EaseType::EaseInOutExpo }, { "EaseOutInExpo", EaseType::EaseOutInExpo },
+        { "EaseInCirc", EaseType::EaseInCirc }, { "EaseOutCirc", EaseType::EaseOutCirc },
+        { "EaseInOutCirc", EaseType::EaseInOutCirc }, { "EaseOutInCirc", EaseType::EaseOutInCirc },
+        { "EaseInBack", EaseType::EaseInBack }, { "EaseOutBack", EaseType::EaseOutBack },
+        { "EaseInOutBack", EaseType::EaseInOutBack }, { "EaseOutInBack", EaseType::EaseOutInBack },
+        { "EaseInElastic", EaseType::EaseInElastic }, { "EaseOutElastic", EaseType::EaseOutElastic },
+        { "EaseInOutElastic", EaseType::EaseInOutElastic }, { "EaseOutInElastic", EaseType::EaseOutInElastic },
+        { "EaseInBounce", EaseType::EaseInBounce }, { "EaseOutBounce", EaseType::EaseOutBounce },
+        { "EaseInOutBounce", EaseType::EaseInOutBounce }, { "EaseOutInBounce", EaseType::EaseOutInBounce },
+    };
+    for (const auto &entry : kEaseTypeValues) {
+        engine->RegisterEnumValue("EaseType", entry.first, static_cast<int>(entry.second));
+    }
+
+    // Easing:: 名前空間へユーティリティ関数をまとめて登録する
+    asbind20::namespace_ easingNamespace(engine, "Easing");
+    asbind20::global(engine)
+        .function("float Normalize01(float, float, float)",
+            static_cast<float (*)(const float &, const float &, const float &)>(&Normalize01))
+        .function("Vector2 Normalize01(const Vector2 &in, const Vector2 &in, const Vector2 &in)",
+            static_cast<Vector2 (*)(const Vector2 &, const Vector2 &, const Vector2 &)>(&Normalize01))
+        .function("Vector3 Normalize01(const Vector3 &in, const Vector3 &in, const Vector3 &in)",
+            static_cast<Vector3 (*)(const Vector3 &, const Vector3 &, const Vector3 &)>(&Normalize01))
+        .function("Vector4 Normalize01(const Vector4 &in, const Vector4 &in, const Vector4 &in)",
+            static_cast<Vector4 (*)(const Vector4 &, const Vector4 &, const Vector4 &)>(&Normalize01))
+        .function("float Lerp(float, float, float)",
+            static_cast<float (*)(const float &, const float &, const float &)>(&Lerp))
+        .function("float Apply(float, EaseType)", &Apply)
+        .function("float Eased(float, float, float, EaseType)", &Eased<float>)
+        .function("Vector2 Eased(const Vector2 &in, const Vector2 &in, float, EaseType)", &Eased<Vector2>)
+        .function("Vector3 Eased(const Vector3 &in, const Vector3 &in, float, EaseType)", &Eased<Vector3>)
+        .function("Vector4 Eased(const Vector4 &in, const Vector4 &in, float, EaseType)", &Eased<Vector4>)
+        .function("float EasedGAB(float, float, float, EaseType, EaseType)", &EasedGAB<float>)
+        .function("Vector2 EasedGAB(const Vector2 &in, const Vector2 &in, float, EaseType, EaseType)", &EasedGAB<Vector2>)
+        .function("Vector3 EasedGAB(const Vector3 &in, const Vector3 &in, float, EaseType, EaseType)", &EasedGAB<Vector3>)
+        .function("Vector4 EasedGAB(const Vector4 &in, const Vector4 &in, float, EaseType, EaseType)", &EasedGAB<Vector4>);
 }
 
 //==================================================
@@ -735,8 +1230,13 @@ bool GenerateScriptPredefinedFile(asIScriptEngine *engine, const std::string &fi
 void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     if (!engine) return;
     RegisterMathTypes(engine);
-    RegisterComponentTypes(engine);
+    // Transform は Object::GetTransform() が参照するため、Object/Scene より先に登録する
+    RegisterTransformType(engine);
+    // Object/Scene はここで一度に登録する。以降に登録するコンポーネント（MeshRenderer等）は
+    // Object@/Scene@ をパラメータ/戻り値として自由に参照できる（型・メソッドとも登録済みのため）
     RegisterObjectTypes(engine);
+    RegisterComponentTypes(engine);
+    RegisterEasingBindings(engine);
     RegisterGlobalFunctions(engine);
 }
 

@@ -10,16 +10,19 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 ## 目次
 
 1. [基本的な使い方](#基本的な使い方)
-2. [ScriptComponentBehavior（ライフサイクル）](#scriptcomponentbehaviorライフサイクル)
-3. [SerializeField（変数のインスペクター編集・保存）](#serializefield変数のインスペクター編集保存)
-4. [コンポーネントの取得（GetComponent / GetComponents）](#コンポーネントの取得getcomponent--getcomponents)
-5. [グローバル関数](#グローバル関数)
-6. [オブジェクト・シーン型](#オブジェクトシーン型)
-7. [コンポーネント型](#コンポーネント型)
-8. [数学型](#数学型)
-9. [Math名前空間](#math名前空間)
-10. [サンプルスクリプト](#サンプルスクリプト)
-11. [注意事項](#注意事項)
+2. [ファイルの分割（#include）](#ファイルの分割include)
+3. [ScriptComponentBehavior（ライフサイクル）](#scriptcomponentbehaviorライフサイクル)
+4. [SerializeField（変数のインスペクター編集・保存）](#serializefield変数のインスペクター編集保存)
+5. [コンポーネントの取得（GetComponent / GetComponents）](#コンポーネントの取得getcomponent--getcomponents)
+6. [グローバル関数](#グローバル関数)
+7. [オブジェクト・シーン型](#オブジェクトシーン型)
+8. [シーン変数（スクリプト間の値の受け渡し）](#シーン変数スクリプト間の値の受け渡し)
+9. [コンポーネント型](#コンポーネント型)
+10. [数学型](#数学型)
+11. [Math名前空間](#math名前空間)
+12. [Easing（イージング）](#easingイージング)
+13. [サンプルスクリプト](#サンプルスクリプト)
+14. [注意事項](#注意事項)
 
 ---
 
@@ -39,6 +42,26 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 ### VSCodeでのコード補完（as.predefined）
 
 スクリプトエンジンの初期化時に、登録済みの全API定義を書き出した `as.predefined` ファイルが実行ディレクトリ（`Assets` フォルダと同じ階層）へ自動生成されます。VSCodeの **AngelScript Language Server** 拡張機能はこのファイルを読み込んでコード補完・型チェックを行うため、スクリプトを含むフォルダをVSCodeで開くだけでエンジンAPIの補完が有効になります。エンジン側のバインディングを変更した場合は、エンジンを一度起動すると最新の内容で再生成されます。
+
+## ファイルの分割（#include）
+
+他の `.as` ファイルを取り込むために `#include` ディレクティブが使用できます。
+
+```angelscript
+// Assets/Scripts/Player.as
+#include "Utils/MathHelpers.as"
+
+class Player : ScriptComponentBehavior {
+    void Update() {
+        float smoothed = SmoothStep(0.0f, 1.0f, 0.5f); // MathHelpers.as で定義した関数
+    }
+}
+```
+
+- 相対パスで指定した場合、`#include` を書いたファイルと同じディレクトリからの相対パスとして解決されます（ネストしたincludeも、そのファイル自身の場所を基準に解決されます）。
+- 絶対パス（`C:\...` やスラッシュ始まり）を指定した場合はそのまま使用されます。
+- 同じファイルが複数箇所からincludeされても二重に取り込まれません。
+- includeされたファイルもコンパイルエラー時のメッセージ（ファイル名・行番号）に反映されます。
 
 ## ScriptComponentBehavior（ライフサイクル）
 
@@ -207,10 +230,43 @@ GetComponent(tf);
 |---|---|
 | `const string &GetName() const` | シーン名を取得する |
 | `Object@ GetObject(const string &in name) const` | 名前が一致する最初のオブジェクトを取得する |
+| `array<Object@>@ GetObjects(const string &in name) const` | 名前が一致する**全ての**オブジェクトを取得する（0件でも配列は返る） |
 | `void SetNextSceneName(const string &in)` | 次のシーン名を設定する |
 | `bool ChangeToNextScene()` | 次のシーンへ切り替える |
 | `bool HasNextSceneName() const` | 次のシーン名が設定されているかを取得する |
 | `void ClearNextSceneName()` | 次のシーン名をクリアする |
+| `bool SetVariable(const string &in key, ?&in value)` | シーン変数を設定する（[詳細](#シーン変数スクリプト間の値の受け渡し)） |
+| `bool GetVariable(const string &in key, ?&out value)` | シーン変数を取得する |
+| `bool HasVariable(const string &in key)` | シーン変数が存在するかどうか |
+| `bool RemoveVariable(const string &in key)` | シーン変数を削除する |
+| `bool SetGlobalVariable(const string &in key, ?&in value)` | グローバルシーン変数を設定する（シーンを跨いで保持される） |
+| `bool GetGlobalVariable(const string &in key, ?&out value)` | グローバルシーン変数を取得する |
+| `bool HasGlobalVariable(const string &in key)` | グローバルシーン変数が存在するかどうか |
+| `bool RemoveGlobalVariable(const string &in key)` | グローバルシーン変数を削除する |
+
+## シーン変数（スクリプト間の値の受け渡し）
+
+`ScriptComponent` は1つにつき独立したスクリプトモジュールとしてコンパイルされるため、あるスクリプトのグローバル変数やクラスのメンバー変数に、別のスクリプトから直接アクセスすることはできません。異なるスクリプト間で値をやり取りしたい場合は、`Scene` のシーン変数を経由します。
+
+```angelscript
+// scriptA.as（敵を倒した側）
+GetScene().SetVariable("lastKilledEnemyName", GetOwnerObject().GetName());
+GetScene().SetGlobalVariable("score", currentScore + 100); // シーン遷移後も保持したい値
+
+// scriptB.as（UI表示側、別オブジェクト）
+string enemyName;
+if (GetScene().GetVariable("lastKilledEnemyName", enemyName)) {
+    Log("倒した敵: " + enemyName);
+}
+int score;
+GetScene().GetGlobalVariable("score", score);
+```
+
+- **シーン変数**（`SetVariable`/`GetVariable`/`HasVariable`/`RemoveVariable`）は、そのシーンが読み込まれている間だけ有効です。シーンが切り替わると失われます。
+- **グローバルシーン変数**（`SetGlobalVariable`/`GetGlobalVariable`/`HasGlobalVariable`/`RemoveGlobalVariable`）は `SceneManager` が保持するため、シーンを切り替えても値が残ります。スコアやフラグなどシーンを跨いで引き継ぎたい値に使用してください。
+- `SetVariable`/`SetGlobalVariable` は同じキーへ再度呼び出すと値を上書きします（型が変わっても構いません）。
+- `GetVariable`/`GetGlobalVariable` は、キーが存在しない場合、または既存の値と渡した変数の型が異なる場合に `false` を返します（`value` は変更されません）。
+- 対応している型は `[SerializeField]` と同じです: `bool` / `int` / `uint` / `float` / `double` / `string` / `Vector2` / `Vector3` / `Vector4` / `Quaternion`。
 
 ## コンポーネント型
 
@@ -286,6 +342,122 @@ GetComponent(tf);
 | `void SetScriptPath(const string &in)` / `const string &GetScriptPath() const` | スクリプトパスの設定/取得 |
 | `bool Reload()` | スクリプトを再コンパイルする |
 
+### MeshFilter
+
+| メソッド | 説明 |
+|---|---|
+| `void SetMeshHandle(uint)` / `uint GetMeshHandle() const` | 使用するメッシュのハンドルの設定/取得 |
+| `bool HasMesh() const` | メッシュが設定されているかどうか |
+
+### Animator
+
+| メソッド | 説明 |
+|---|---|
+| `void SetAnimationName(const string &in)` / `const string &GetAnimationName() const` | 再生するアニメーション名の設定/取得 |
+| `void SetPlayOnStart(bool)` / `bool GetPlayOnStart() const` | 開始時に自動再生するかどうか |
+
+### Text
+
+| メソッド | 説明 |
+|---|---|
+| `void SetText(const string &in)` / `const string &GetText() const` | 表示文字列の設定/取得 |
+| `void SetColor(const Vector4 &in)` / `const Vector4 &GetColor() const` | 色の設定/取得 |
+
+### ComputeShaderProcessing
+
+| メソッド | 説明 |
+|---|---|
+| `void SetPipelineName(const string &in)` / `const string &GetPipelineName() const` | 使用するComputeパイプライン名の設定/取得 |
+| `void SetGroupCounts(uint, uint, uint)` | ディスパッチするスレッドグループ数(x, y, z)を設定する |
+| `void GetGroupCounts(uint &out, uint &out, uint &out) const` | スレッドグループ数(x, y, z)を取得する |
+
+### RigidBody2D / RigidBody3D
+
+| メソッド | RigidBody2D | RigidBody3D | 説明 |
+|---|:-:|:-:|---|
+| `void SetMass(float)` / `float GetMass() const` | o | o | 質量 |
+| `void SetUseGravity(bool)` / `bool IsGravityEnabled() const` | o | o | 重力の有効/無効 |
+| `void SetVelocity(const Vector2 &in)` / `const Vector2 &GetVelocity() const` | o | - | 速度 |
+| `void SetBodyType(int)` / `int GetBodyType() const` | - | o | 物理ボディ種別（0:Static 1:Kinematic 2:Dynamic） |
+| `void SetInterpolate(bool)` / `bool IsInterpolateEnabled() const` | - | o | 補間の有効/無効 |
+| `void SyncFromTransform()` | - | o | 現在のTransformの位置・回転を物理ボディへ反映する（Play開始時の同期用） |
+
+### MeshRenderer / SkinnedMeshRenderer
+
+| メソッド | MeshRenderer | SkinnedMeshRenderer | 説明 |
+|---|:-:|:-:|---|
+| `void SetPipelineName(const string &in)` / `const string &GetPipelineName() const` | o | o | 使用パイプライン名 |
+| `void SetMaterialName(const string &in)` / `const string &GetMaterialName() const` | o | o | 使用マテリアル名 |
+| `void SetTargetObject(Object@)` / `Object@ GetTargetObject() const` | o | - | 描画先オブジェクト |
+| `void SetAnimationClipName(const string &in)` / `const string &GetAnimationClipName() const` | - | o | 再生するアニメーションクリップ名 |
+| `void SetPlayOnStart(bool)` / `bool GetPlayOnStart() const` | - | o | 開始時に自動再生するかどうか |
+| `void SetLoop(bool)` / `bool GetLoop() const` | - | o | ループ再生 |
+| `void SetPlaybackSpeed(float)` / `float GetPlaybackSpeed() const` | - | o | 再生速度倍率 |
+| `void Play()` / `void Stop()` / `bool IsPlaying() const` | - | o | 再生制御 |
+| `void SetBlendShapeWeight(const string &in, float)` / `float GetBlendShapeWeight(const string &in) const` | - | o | BlendShapeウェイト（0～100）の設定/取得 |
+
+### Camera2D
+
+| メソッド | 説明 |
+|---|---|
+| `void SetSize(float width, float height)` | 表示範囲サイズを設定する |
+| `void SetNearClip(float)` / `float GetNearClip() const` | 近クリップ距離 |
+| `void SetFarClip(float)` / `float GetFarClip() const` | 遠クリップ距離 |
+| `float GetWidth() const` / `float GetHeight() const` | 表示範囲サイズを取得する |
+
+### CameraRenderer
+
+| メソッド | 説明 |
+|---|---|
+| `void SetPipelineName(const string &in)` / `const string &GetPipelineName() const` | 使用パイプライン名 |
+| `Vector3 GetWorldPosition() const` | カメラのワールド座標を取得する |
+| `const Matrix4x4 &GetViewProjectionMatrix() const` | 直近アップロードしたビュー射影行列を取得する |
+| `float GetNearClip() const` / `float GetFarClip() const` | 直近使用したニア/ファークリップ距離を取得する |
+
+### CameraController
+
+同一オブジェクトの `Camera3D` を、複数の追従先オブジェクトへ滑らかに追従させるコンポーネント。
+
+| メソッド | 説明 |
+|---|---|
+| `bool IsControllable() const` | 同オブジェクトに `Camera3D` があるかどうか |
+| `void AddFollowTarget(Object@)` | 追従先オブジェクトを追加する |
+| `void RemoveFollowTarget(uint index)` | 追従先オブジェクトをインデックス指定で削除する |
+| `void SetPositionOffset(const Vector3 &in)` / `const Vector3 &GetPositionOffset() const` | 位置オフセット |
+| `void SetRotationOffset(const Vector3 &in)` / `const Vector3 &GetRotationOffset() const` | 回転オフセット（オイラー角、ラジアン） |
+| `void SetTargetFovY(float)` / `float GetTargetFovY() const` | 目標画角Y |
+| `void SetMoveStrength(float)` / `float GetMoveStrength() const` | 移動追従の強さ（0.0～1.0） |
+| `void SetRotateStrength(float)` / `float GetRotateStrength() const` | 回転追従の強さ（0.0～1.0） |
+| `void SetFovLerpFactor(float)` / `float GetFovLerpFactor() const` | 画角遷移の強さ（0.0～1.0） |
+
+### Light / LightRenderer
+
+`LightType` 列挙型（`Directional` / `Point` / `Spot`）が使用できます。
+
+| メソッド | Light | LightRenderer | 説明 |
+|---|:-:|:-:|---|
+| `void SetPipelineName(const string &in)` / `const string &GetPipelineName() const` | - | o | 使用パイプライン名 |
+| `void SetType(LightType)` / `LightType GetType() const` | o | - | ライト種別 |
+| `LightType GetLightType() const` | - | o | 同オブジェクトの `Light` の種別を取得する |
+| `Light@ GetLight() const` | - | o | 同オブジェクトの `Light` コンポーネントを取得する |
+| `void SetColor(const Vector4 &in)` / `const Vector4 &GetColor() const` | o | - | 色 |
+| `void SetIntensity(float)` / `float GetIntensity() const` | o | - | 強度 |
+| `void SetRadius(float)` / `float GetRadius() const` | o | - | 半径（Point用） |
+| `void SetDistance(float)` / `float GetDistance() const` | o | - | 距離（Spot用） |
+| `void SetDecay(float)` / `float GetDecay() const` | o | - | 減衰（Point/Spot共通） |
+| `void SetInnerAngle(float)` / `float GetInnerAngle() const` | o | - | 内側角度（Spot用、ラジアン） |
+| `void SetOuterAngle(float)` / `float GetOuterAngle() const` | o | - | 外側角度（Spot用、ラジアン） |
+| `Vector3 GetWorldPosition() const` | - | o | ワールド座標を取得する |
+| `Vector3 GetWorldDirection() const` | - | o | ワールド方向（+Z）を取得する |
+
+### 描画先コンポーネント（NormalWindowObject / OverlayWindowObject / ScreenBufferObject / ShadowMapObject）
+
+| メソッド | Window系(Normal/Overlay) | Buffer系(ScreenBuffer/ShadowMap) | 説明 |
+|---|:-:|:-:|---|
+| `void SetTitle(const string &in)` | o | - | ウィンドウタイトルの設定 |
+| `void SetName(const string &in)` / `const string &GetName() const` | - | o | 管理用名前（TextureManagerへの登録名）の設定/取得 |
+| `void SetSize(uint width, uint height)` | o | o | サイズの設定（バッファ系は既存バッファを実際にリサイズする） |
+
 ### コライダー（BoxCollider / SphereCollider / CapsuleCollider / MeshCollider / RayCollider / Box2DCollider / Circle2DCollider / Capsule2DCollider / Ray2DCollider）
 
 共通メソッドに加えて以下を持ちます。
@@ -295,11 +467,25 @@ GetComponent(tf);
 | `bool IsTrigger() const` / `void SetTrigger(bool)` | トリガー（すり抜け）かどうか |
 | `bool Is2D() const` | 2D用コライダーかどうか |
 
-### その他のコンポーネント
+### ポストプロセスエフェクト
 
-以下の型は共通メソッドのみで登録されています（`GetComponent` での取得・アクティブ切り替えが可能）。
+`ScreenBufferObject` が付与されたオブジェクトに追加すると、そのスクリーンバッファへエフェクトがかかります。いずれも共通メソッドに加えて以下のGet/Setを持ちます。
 
-`MeshFilter` / `Animator` / `Text` / `ComputeShaderProcessing` / `RigidBody2D` / `RigidBody3D` / `MeshRenderer` / `SkinnedMeshRenderer` / `Camera2D` / `CameraRenderer` / `CameraController` / `Light` / `LightRenderer` / `NormalWindowObject` / `OverlayWindowObject` / `ScreenBufferObject` / `ShadowMapObject` / `BloomEffect` / `BoxFilterEffect` / `ChromaticAberrationEffect` / `ColorAdjustEffect` / `DissolveEffect` / `DitherEffect` / `DotMatrixEffect` / `FXAAEffect` / `GaussianFilterEffect` / `GrayscaleEffect` / `OutlineEffect` / `RadialBlurEffect` / `VignetteEffect`
+| コンポーネント | メソッド |
+|---|---|
+| `BloomEffect` | `GetThreshold`/`SetThreshold`, `GetSoftKnee`/`SetSoftKnee`, `GetIntensity`/`SetIntensity`, `GetBlurRadius`/`SetBlurRadius`（すべて`float`）, `GetIterations`/`SetIterations`（`uint`、ダウンサンプル段数1～16） |
+| `BoxFilterEffect` | `GetIntensity`/`SetIntensity`（`float`）, `GetHalfSizeX`/`GetHalfSizeY`（`int`）, `SetHalfSize(int, int)` |
+| `ChromaticAberrationEffect` | `GetDirection`/`SetDirection`（`Vector2`）, `GetStrength`/`SetStrength`（`float`） |
+| `ColorAdjustEffect` | `GetBrightness`/`SetBrightness`, `GetContrast`/`SetContrast`, `GetSaturation`/`SetSaturation`, `GetTemperature`/`SetTemperature`（すべて`float`）, `GetColorBalance`/`SetColorBalance`（`Vector3`） |
+| `DissolveEffect` | `GetMaskThreshold`/`SetMaskThreshold`, `GetEdgeThickness`/`SetEdgeThickness`（`float`）, `GetBaseTexturePath`/`SetBaseTexturePath`, `GetMaskTexturePath`/`SetMaskTexturePath`（`string`、読み込み済みテクスチャのAssetsルートからの相対パス）, `GetBaseTextureColor`/`SetBaseTextureColor`, `GetEdgeColor`/`SetEdgeColor`（`Vector4`） |
+| `DitherEffect` | `GetIntensity`/`SetIntensity`（`float`）, `IsColorDither`/`SetColorDither`（`bool`） |
+| `DotMatrixEffect` | `GetDotSpacing`/`SetDotSpacing`, `GetDotRadius`/`SetDotRadius`, `GetThreshold`/`SetThreshold`, `GetIntensity`/`SetIntensity`（`float`）, `IsMonochrome`/`SetMonochrome`（`bool`） |
+| `FXAAEffect` | `GetThreshold`/`SetThreshold`, `GetThresholdMin`/`SetThresholdMin`, `GetStrength`/`SetStrength`（すべて`float`） |
+| `GaussianFilterEffect` | `GetRadius`/`SetRadius`（`int`）, `GetSigma`/`SetSigma`（`float`） |
+| `GrayscaleEffect` | `GetIntensity`/`SetIntensity`（`float`） |
+| `OutlineEffect` | `GetThreshold`/`SetThreshold`, `GetThickness`/`SetThickness`（`float`）, `GetColor`/`SetColor`（`Vector4`）, `GetCameraNear`/`SetCameraNear`, `GetCameraFar`/`SetCameraFar`（`float`） |
+| `RadialBlurEffect` | `GetIntensity`/`SetIntensity`（`float`）, `GetSampleCount`/`SetSampleCount`（`int`）, `GetCenter`/`SetCenter`（`Vector2`）, `GetStartRadius`/`SetStartRadius`（`float`） |
+| `VignetteEffect` | `GetCenter`/`SetCenter`（`Vector2`）, `GetColor`/`SetColor`（`Vector4`）, `GetIntensity`/`SetIntensity`, `GetInnerRadius`/`SetInnerRadius`, `GetSmoothness`/`SetSmoothness`（`float`） |
 
 ## 数学型
 
@@ -399,6 +585,37 @@ float m03 = mat.GetElement(0, 3);
 | `Matrix3x3 Math::IdentityMatrix3x3()` | 3x3単位行列を取得する |
 | `Matrix4x4 Math::IdentityMatrix4x4()` | 4x4単位行列を取得する |
 
+## Easing（イージング）
+
+`Utilities/MathUtils/Easings.h` のイージング関数を `Easing::` 名前空間で使用できます。
+
+```angelscript
+class Popup : ScriptComponentBehavior {
+    float elapsed = 0.0f;
+
+    void Update() {
+        elapsed += GetDeltaTime();
+        float t = Easing::Normalize01(elapsed, 0.0f, 1.0f); // 0.0~1.0に正規化
+        Vector3 pos = Easing::Eased(Vector3(0, -5, 0), Vector3(0, 0, 0), t, EaseType::EaseOutBack);
+        GetTransform().SetTranslate(pos);
+    }
+}
+```
+
+### EaseType
+
+`Linear` と、Quad/Cubic/Quart/Quint/Sine/Expo/Circ/Back/Elastic/Bounce の各カーブに対して `EaseIn` / `EaseOut` / `EaseInOut` / `EaseOutIn` を組み合わせた列挙値が使用できます（例: `EaseType::EaseInOutCubic`、`EaseType::EaseOutBounce`）。
+
+### 関数
+
+| 関数 | 説明 |
+|---|---|
+| `float/Vector2/Vector3/Vector4 Easing::Normalize01(value, min, max)` | `value` を `min`～`max` の範囲で 0.0～1.0 に正規化する（クランプ済み） |
+| `float Easing::Lerp(float start, float end, float t)` | 線形補間（`Vector2`/`Vector3`/`Vector4` の線形補間は [Math名前空間](#math名前空間) を使用） |
+| `float Easing::Apply(float t, EaseType type)` | 0.0～1.0の進行度 `t` にイージングカーブを適用した値（0.0～1.0）を返す |
+| `float/Vector2/Vector3/Vector4 Easing::Eased(start, end, float t, EaseType type)` | `start`→`end` を `t`（0.0～1.0）とイージングタイプで補間する |
+| `float/Vector2/Vector3/Vector4 Easing::EasedGAB(start, end, float t, EaseType goType, EaseType backType)` | `start`→`end`→`start` と行って帰ってくる補間（`t`が0.5未満で行き、0.5以上で帰り） |
+
 ## サンプルスクリプト
 
 ```angelscript
@@ -455,3 +672,5 @@ class Player : ScriptComponentBehavior {
 - **RayCollider / Ray2DCollider**: レイキャスト専用のコライダーは常駐形状を持たないため、OnCollisionEnter等の衝突イベントは発生しません。
 - **数学型は値型**: `Vector3` 等を変数に代入するとコピーされます。`Transform` の座標を変更する場合は `GetTranslate()` で取得→変更→`SetTranslate()` で書き戻してください。
 - **文字列と数値の連結**: `"value=" + 1.0f` のような連結が可能です（scriptstdstringアドオンによる）。
+- **ポストプロセスエフェクトの内部Params構造体**: `BloomEffect`等が内部で持つ `Params` 構造体自体はスクリプトへ公開されていません。フィールドごとのGet/Setメソッドを使用してください。
+- **`Object@` を要求する引数**: `MeshRenderer::SetTargetObject`や`CameraController::AddFollowTarget`のように `Object@` を引数に取るメソッドへ `null` を渡した場合は何もしません（クラッシュしません）。

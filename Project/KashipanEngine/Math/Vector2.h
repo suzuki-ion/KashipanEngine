@@ -3,8 +3,9 @@
 #include <cmath>
 #include <vector>
 
+#include "Math/Matrix3x3.h"
+
 struct Vector3;
-struct Matrix3x3;
 
 struct Vector2 final {
     static const Vector2 &Zero() noexcept {
@@ -48,6 +49,19 @@ struct Vector2 final {
     float y;
 };
 
+// constexpr関数は使用する全ての翻訳単位で定義が見えている必要があるため、ヘッダ内で定義する
+inline constexpr float Vector2::Dot(const Vector2 &vector) const noexcept {
+    return x * vector.x + y * vector.y;
+}
+
+inline constexpr float Vector2::Cross(const Vector2 &vector) const noexcept {
+    return x * vector.y - y * vector.x;
+}
+
+inline constexpr float Vector2::LengthSquared() const noexcept {
+    return x * x + y * y;
+}
+
 inline constexpr Vector2 operator-(const Vector2 &vector) noexcept {
     return Vector2(-vector.x, -vector.y);
 }
@@ -76,5 +90,16 @@ inline constexpr Vector2 operator/(const Vector2 &a, const Vector2 &b) {
     return Vector2(a.x / b.x, a.y / b.y);
 }
 
-inline constexpr Vector2 operator*(const Matrix3x3 &matrix, const Vector2 &vector) noexcept;
-inline constexpr Vector2 operator*(const Vector2 &vector, const Matrix3x3 &matrix) noexcept;
+inline constexpr Vector2 operator*(const Matrix3x3 &matrix, const Vector2 &vector) noexcept {
+    return Vector2(
+        matrix.m[0][0] * vector.x + matrix.m[1][0] * vector.y + matrix.m[2][0],
+        matrix.m[0][1] * vector.x + matrix.m[1][1] * vector.y + matrix.m[2][1]
+    );
+}
+
+inline constexpr Vector2 operator*(const Vector2 &vector, const Matrix3x3 &matrix) noexcept {
+    return Vector2(
+        vector.x * matrix.m[0][0] + vector.y * matrix.m[0][1] + matrix.m[0][2],
+        vector.x * matrix.m[1][0] + vector.y * matrix.m[1][1] + matrix.m[1][2]
+    );
+}

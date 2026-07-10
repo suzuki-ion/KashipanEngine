@@ -181,6 +181,9 @@
     <Filter Include="KashipanEngine\Scene\Components\Audio">
       <UniqueIdentifier>{3C4D5E6F-7A8B-5C9D-AE0F-2A3B4C5D6E7F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="KashipanEngine\Scene\Components\Script">
+      <UniqueIdentifier>{5C1D7056-E51C-430B-A5AD-72692209681F}</UniqueIdentifier>
+    </Filter>
     <Filter Include="KashipanEngine\Scene\Components\Compute">
       <UniqueIdentifier>{2B3C4D5E-6F7A-5B8C-9D0E-1F2A3B4C5D6E}</UniqueIdentifier>
     </Filter>
@@ -470,6 +473,15 @@
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp">
       <Filter>KashipanEngine\Scene\Components\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp">
       <Filter>KashipanEngine\Scene\Components\Compute</Filter>
@@ -1166,6 +1178,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Velocity.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\ScriptComponent.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\EmptyObject.h">
       <Filter>KashipanEngine\Objects</Filter>
     </ClInclude>
@@ -1237,6 +1252,12 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h">
       <Filter>KashipanEngine\Scene\Components\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h">
       <Filter>KashipanEngine\Scene\Components\Compute</Filter>

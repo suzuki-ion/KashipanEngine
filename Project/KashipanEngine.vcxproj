@@ -500,7 +500,12 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Objects\EmptyObject.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Collider\ICollider.cpp" />
     <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />
@@ -956,6 +961,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Text.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\ScriptComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Velocity.h" />
     <ClInclude Include="KashipanEngine\Objects\EmptyObject.h" />
     <ClInclude Include="KashipanEngine\Objects\IObjectComponent.h" />
@@ -981,6 +987,8 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneObjectCollider.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />

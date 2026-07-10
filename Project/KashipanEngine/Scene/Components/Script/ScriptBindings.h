@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #include "Math/Vector3.h"
 
 class asIScriptEngine;
@@ -24,6 +26,14 @@ struct ScriptHitInfo final {
 ///          文字列型(string)と配列型(array)を使用するため、RegisterStdString/RegisterScriptArray の後に呼ぶこと。
 /// @param engine 登録先のスクリプトエンジン
 void RegisterEngineScriptBindings(asIScriptEngine *engine);
+
+/// @brief エンジンに登録済みの型・関数からVSCodeのAngelScript Language Server用の型定義ファイル(as.predefined)を生成する
+/// @details 列挙型・funcdef・インターフェース・クラス・グローバルプロパティ・グローバル関数（名前空間ごと）を
+///          AngelScriptの宣言構文で書き出す。RegisterEngineScriptBindings の後に呼ぶこと。
+/// @param engine 登録済みのスクリプトエンジン
+/// @param filePath 出力先ファイルパス（通常は "as.predefined"）
+/// @return 生成に成功した場合は true
+bool GenerateScriptPredefinedFile(asIScriptEngine *engine, const std::string &filePath);
 
 /// @brief スクリプト実行中のオーナーコンテキストを設定するRAIIスコープ
 /// @details スクリプト側の GetOwnerObject()/GetTransform()/GetScene()/FindObject()/GetComponent() は

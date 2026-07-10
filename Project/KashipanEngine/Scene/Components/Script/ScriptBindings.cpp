@@ -1,5 +1,7 @@
 #include "Scene/Components/Script/ScriptBindings.h"
 
+#include <fstream>
+#include <map>
 #include <string_view>
 #include <unordered_map>
 
@@ -566,7 +568,169 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         });
 }
 
+//==================================================
+// as.predefined 生成
+//==================================================
+
+/// @brief 型名を取得する（テンプレート型は "array<T>" のようにサブタイプ付きで返す）
+std::string GetScriptTypeName(const asITypeInfo *typeInfo) {
+    std::string name = typeInfo->GetName();
+    if (typeInfo->GetFlags() & asOBJ_TEMPLATE) {
+        name += "<";
+        const asUINT subTypeCount = typeInfo->GetSubTypeCount();
+        for (asUINT i = 0; i < subTypeCount; ++i) {
+            if (i > 0) name += ", ";
+            const asITypeInfo *subType = typeInfo->GetSubType(i);
+            name += subType ? subType->GetName() : "T";
+        }
+        name += ">";
+    }
+    return name;
+}
+
+/// @brief コンストラクタ/ファクトリのビヘイビア宣言を "TypeName(params)" 形式へ変換する
+/// @details テンプレート型のファクトリ先頭に入る隠し引数(int&in)は取り除く
+std::string MakeConstructorDeclaration(const std::string &typeName, const asIScriptFunction *function, bool isTemplate) {
+    std::string decl = function->GetDeclaration(false, false, true);
+    const auto parenPos = decl.find('(');
+    if (parenPos == std::string::npos) return {};
+    std::string params = decl.substr(parenPos);
+    if (isTemplate) {
+        // "(int&in)" または "(int&in, ..." の隠し引数を除去する
+        if (params.rfind("(int&in)", 0) == 0) {
+            params = "()" + params.substr(8);
+        } else if (params.rfind("(int&in, ", 0) == 0) {
+            params = "(" + params.substr(9);
+        }
+    }
+    return typeName + params;
+}
+
 } // namespace
+
+bool GenerateScriptPredefinedFile(asIScriptEngine *engine, const std::string &filePath) {
+    if (!engine) return false;
+
+    std::string out;
+    out += "// このファイルはKashipanEngineが起動時に自動生成したものです。直接編集しないでください。\n";
+    out += "// VSCodeのAngelScript Language Serverがコード補完に使用する型定義ファイルです。\n\n";
+
+    // 列挙型
+    const asUINT enumCount = engine->GetEnumCount();
+    for (asUINT i = 0; i < enumCount; ++i) {
+        const asITypeInfo *enumType = engine->GetEnumByIndex(i);
+        if (!enumType) continue;
+        out += "enum " + std::string(enumType->GetName()) + " {\n";
+        const asUINT valueCount = enumType->GetEnumValueCount();
+        for (asUINT v = 0; v < valueCount; ++v) {
+            int value = 0;
+            const char *valueName = enumType->GetEnumValueByIndex(v, &value);
+            out += "\t" + std::string(valueName ? valueName : "") + " = " + std::to_string(value);
+            out += (v + 1 < valueCount) ? ",\n" : "\n";
+        }
+        out += "}\n\n";
+    }
+
+    // funcdef
+    const asUINT funcdefCount = engine->GetFuncdefCount();
+    for (asUINT i = 0; i < funcdefCount; ++i) {
+        const asITypeInfo *funcdefType = engine->GetFuncdefByIndex(i);
+        const asIScriptFunction *signature = funcdefType ? funcdefType->GetFuncdefSignature() : nullptr;
+        if (!signature) continue;
+        out += "funcdef " + std::string(signature->GetDeclaration(false, false, true)) + ";\n";
+    }
+    if (funcdefCount > 0) out += "\n";
+
+    // オブジェクト型（インターフェース・クラス）
+    const asUINT typeCount = engine->GetObjectTypeCount();
+    for (asUINT i = 0; i < typeCount; ++i) {
+        const asITypeInfo *typeInfo = engine->GetObjectTypeByIndex(i);
+        if (!typeInfo) continue;
+        const asQWORD flags = typeInfo->GetFlags();
+        const std::string typeName = GetScriptTypeName(typeInfo);
+
+        // RegisterInterfaceで登録されたインターフェース
+        if (flags & asOBJ_SCRIPT_OBJECT) {
+            out += "interface " + typeName + " {\n}\n\n";
+            continue;
+        }
+
+        out += "class " + typeName + " {\n";
+
+        // コンストラクタ/ファクトリ
+        const asUINT behaviourCount = typeInfo->GetBehaviourCount();
+        for (asUINT b = 0; b < behaviourCount; ++b) {
+            asEBehaviours behaviour = asBEHAVE_CONSTRUCT;
+            const asIScriptFunction *function = typeInfo->GetBehaviourByIndex(b, &behaviour);
+            if (!function) continue;
+            if (behaviour != asBEHAVE_CONSTRUCT && behaviour != asBEHAVE_FACTORY) continue;
+            const std::string decl = MakeConstructorDeclaration(typeInfo->GetName(), function, (flags & asOBJ_TEMPLATE) != 0);
+            if (!decl.empty()) out += "\t" + decl + ";\n";
+        }
+
+        // プロパティ
+        const asUINT propertyCount = typeInfo->GetPropertyCount();
+        for (asUINT p = 0; p < propertyCount; ++p) {
+            const char *decl = typeInfo->GetPropertyDeclaration(p);
+            if (decl) out += "\t" + std::string(decl) + ";\n";
+        }
+
+        // メソッド
+        const asUINT methodCount = typeInfo->GetMethodCount();
+        for (asUINT m = 0; m < methodCount; ++m) {
+            const asIScriptFunction *method = typeInfo->GetMethodByIndex(m);
+            if (!method) continue;
+            out += "\t" + std::string(method->GetDeclaration(false, false, true)) + ";\n";
+        }
+
+        out += "}\n\n";
+    }
+
+    // グローバルプロパティ
+    const asUINT globalPropertyCount = engine->GetGlobalPropertyCount();
+    for (asUINT i = 0; i < globalPropertyCount; ++i) {
+        const char *name = nullptr;
+        const char *nameSpace = nullptr;
+        int typeId = 0;
+        bool isConst = false;
+        if (engine->GetGlobalPropertyByIndex(i, &name, &nameSpace, &typeId, &isConst) < 0 || !name) continue;
+        const char *typeDecl = engine->GetTypeDeclaration(typeId);
+        if (!typeDecl) continue;
+        std::string decl = std::string(isConst ? "const " : "") + typeDecl + " " + name + ";";
+        if (nameSpace && nameSpace[0] != '\0') {
+            out += "namespace " + std::string(nameSpace) + " { " + decl + " }\n";
+        } else {
+            out += decl + "\n";
+        }
+    }
+    if (globalPropertyCount > 0) out += "\n";
+
+    // グローバル関数（名前空間ごとにまとめる）
+    std::map<std::string, std::vector<std::string>> functionsByNamespace;
+    const asUINT globalFunctionCount = engine->GetGlobalFunctionCount();
+    for (asUINT i = 0; i < globalFunctionCount; ++i) {
+        const asIScriptFunction *function = engine->GetGlobalFunctionByIndex(i);
+        if (!function) continue;
+        const char *nameSpace = function->GetNamespace();
+        functionsByNamespace[nameSpace ? nameSpace : ""].push_back(
+            std::string(function->GetDeclaration(false, false, true)) + ";");
+    }
+    for (const auto &[nameSpace, declarations] : functionsByNamespace) {
+        if (nameSpace.empty()) {
+            for (const auto &decl : declarations) out += decl + "\n";
+            out += "\n";
+        } else {
+            out += "namespace " + nameSpace + " {\n";
+            for (const auto &decl : declarations) out += "\t" + decl + "\n";
+            out += "}\n\n";
+        }
+    }
+
+    std::ofstream file(filePath, std::ios::binary);
+    if (!file) return false;
+    file.write(out.data(), static_cast<std::streamsize>(out.size()));
+    return file.good();
+}
 
 void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     if (!engine) return;

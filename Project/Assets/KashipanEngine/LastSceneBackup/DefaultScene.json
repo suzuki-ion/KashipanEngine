@@ -7,6 +7,14 @@
                 "priority": 1000
             },
             "type": "SceneRenderer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1
+            },
+            "type": "SceneScriptEngine"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
@@ -104,6 +112,23 @@
                         "priority": 1
                     },
                     "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "rotateSpeed": {
+                                    "x": 0.6200000047683716,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "scriptPath": "Assets/Application/testScript.as"
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "ScriptComponent"
                 },
                 {
                     "data": {

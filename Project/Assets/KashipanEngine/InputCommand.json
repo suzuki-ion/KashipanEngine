@@ -21,6 +21,14 @@
             "state": "Trigger"
         }
     ],
+    "DebugSceneChange": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "F1",
+            "state": "Trigger"
+        }
+    ],
     "Pause": [
         {
             "device": "Keyboard",

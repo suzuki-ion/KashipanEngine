@@ -10,6 +10,8 @@
 
 #include <string>
 #include <Windows.h>
+#undef CopyFile
+#undef DeleteFile
 
 namespace KashipanEngine {
 

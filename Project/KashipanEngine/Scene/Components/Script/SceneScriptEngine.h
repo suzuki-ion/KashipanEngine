@@ -1,4 +1,7 @@
 #pragma once
+#include <string>
+#include <vector>
+
 #include "Scene/Components/SceneComponentHeader.h"
 
 class asIScriptEngine;
@@ -22,6 +25,12 @@ public:
     /// @brief 共有スクリプトエンジンを取得（未初期化の場合は nullptr）
     asIScriptEngine *GetEngine() const noexcept { return engine_; }
 
+    /// @brief スクリプトビルド時のコンパイルメッセージの収集を開始する
+    /// @details 収集中もログへの出力は行われる。ScriptComponentがビルドエラーの詳細表示に使用する
+    void BeginMessageCapture();
+    /// @brief メッセージ収集を終了し、収集したメッセージを取得する
+    std::vector<std::string> EndMessageCapture();
+
 protected:
     void Initialize() override;
     void Finalize() override;
@@ -32,6 +41,8 @@ protected:
 
 private:
     asIScriptEngine *engine_ = nullptr;
+    /// @brief メッセージ収集用バッファ（BeginMessageCapture～EndMessageCaptureの間だけ使用）
+    std::vector<std::string> messageCaptureBuffer_;
 };
 
 REGISTER_COMPONENT_SCENE(SceneScriptEngine)

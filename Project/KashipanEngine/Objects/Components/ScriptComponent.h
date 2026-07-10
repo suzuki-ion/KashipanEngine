@@ -113,6 +113,8 @@ private:
     asIScriptFunction *onCollisionExitMethod_ = nullptr;
 
     std::string lastError_;
+    /// @brief 直近のビルド失敗時のコンパイルメッセージ（成功時は空）
+    std::vector<std::string> buildErrorMessages_;
 
     std::vector<SerializedField> serializedFields_;
     /// @brief 次回ビルド時に適用する [SerializeField] の値（読込済み・リロード退避用）

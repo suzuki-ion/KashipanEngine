@@ -122,6 +122,7 @@ bool ScriptComponent::Reload() {
     UnhookColliders();
     ReleaseScript();
     lastError_.clear();
+    buildErrorMessages_.clear();
 
     if (scriptPath_.empty()) return false;
 
@@ -141,14 +142,17 @@ bool ScriptComponent::Reload() {
     }
     moduleName_ = moduleName;
 
-    if (builder.AddSectionFromFile(scriptPath_.c_str()) < 0) {
-        lastError_ = "スクリプトファイルの読み込みに失敗しました: " + scriptPath_;
-        engine->DiscardModule(moduleName_.c_str());
-        moduleName_.clear();
-        return false;
-    }
-    if (builder.BuildModule() < 0) {
-        lastError_ = "スクリプトのビルドに失敗しました: " + scriptPath_;
+    // ビルド中のコンパイルメッセージを収集し、失敗時にインスペクターへ表示できるようにする
+    scriptEngine->BeginMessageCapture();
+    const bool isSectionLoaded = builder.AddSectionFromFile(scriptPath_.c_str()) >= 0;
+    const bool isBuilt = isSectionLoaded && builder.BuildModule() >= 0;
+    auto buildMessages = scriptEngine->EndMessageCapture();
+
+    if (!isBuilt) {
+        lastError_ = isSectionLoaded
+            ? "スクリプトのビルドに失敗しました: " + scriptPath_
+            : "スクリプトファイルの読み込みに失敗しました: " + scriptPath_;
+        buildErrorMessages_ = std::move(buildMessages);
         engine->DiscardModule(moduleName_.c_str());
         moduleName_.clear();
         return false;
@@ -493,6 +497,16 @@ void ScriptComponent::ShowImGui() {
     }
     if (!lastError_.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", lastError_.c_str());
+        // ビルド失敗時はコンパイラの出力したメッセージを失敗表示の下に出す
+        if (!buildErrorMessages_.empty()) {
+            ImGui::Indent();
+            for (const auto &message : buildErrorMessages_) {
+                ImGui::PushTextWrapPos(0.0f);
+                ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.5f, 1.0f), "%s", message.c_str());
+                ImGui::PopTextWrapPos();
+            }
+            ImGui::Unindent();
+        }
     }
 
     if (serializedFields_.empty()) return;
@@ -537,8 +551,17 @@ JSON ScriptComponent::SaveToJson() const {
 bool ScriptComponent::LoadFromJson(const JSON &json) {
     scriptPath_ = json.value("scriptPath", std::string{});
     pendingFieldValues_ = json.value("fields", JSON::object());
-    // 既にビルド済み（Initialize後に読み込まれた）の場合はその場で反映する
-    if (!serializedFields_.empty()) {
+
+    // シーン読み込み時はコンポーネント追加時点でInitialize()が空のscriptPath_で
+    // 呼ばれてしまっているため、ここで読み込んだパスを使って改めてリロードする。
+    // 非アクティブな場合はSetActive(true)時のInitialize()に任せる
+    if (IsActive()) {
+        if (Reload()) {
+            HookColliders();
+            CallMethod(startMethod_);
+        }
+    } else if (!serializedFields_.empty()) {
+        // 既にビルド済み（Initialize後に読み込まれた）の場合はその場で反映する
         ApplyFieldValuesFromJson(pendingFieldValues_);
     }
     return true;

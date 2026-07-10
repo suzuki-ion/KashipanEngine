@@ -111,8 +111,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 4.0,
+                                "x": -2.874013900756836,
+                                "y": 0.9993168711662292,
                                 "z": -8.0
                             }
                         },
@@ -243,9 +243,9 @@
                             "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
                             "rotate": {
                                 "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": -2.1434454538393766e-05,
+                                "y": 1.3183040215025699e-09,
+                                "z": -0.00017595753888599575
                             },
                             "scale": {
                                 "x": 1.0,
@@ -253,9 +253,9 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": -2.8741278648376465,
-                                "y": 4.0,
-                                "z": 0.0
+                                "x": -2.8746213912963867,
+                                "y": 2.3348987102508545,
+                                "z": 4.98943445563782e-05
                             }
                         },
                         "isActive": true,
@@ -331,7 +331,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 29
+                            "meshHandle": 26
                         },
                         "isActive": true,
                         "priority": 1
@@ -341,7 +341,7 @@
                 {
                     "data": {
                         "customData": {
-                            "animationClipName": "Armature|mixamo.com|Layer0",
+                            "animationClipName": "BODYAction",
                             "blendShapes": [],
                             "loop": true,
                             "materialName": "Default",
@@ -483,7 +483,7 @@
                     "type": "SkinnedMeshRenderer"
                 }
             ],
-            "isActive": true,
+            "isActive": false,
             "name": "Player",
             "objectID": "9b226009-fb61-465c-b33c-029cf54045d1"
         },
@@ -862,10 +862,10 @@
                         "customData": {
                             "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
                             "rotate": {
-                                "w": 0.9902680516242981,
+                                "w": 0.9902681708335876,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.13917310535907745
+                                "z": 0.13917312026023865
                             },
                             "scale": {
                                 "x": 15.999850273132324,

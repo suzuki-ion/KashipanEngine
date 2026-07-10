@@ -1,5 +1,6 @@
 #include "SceneObjectHierarchy.h"
 #include <algorithm>
+#include "ComponentSerialize/ComponentRegistry.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/Editor/SceneEditorCommands.h"
@@ -219,32 +220,15 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
         const std::vector<EmptyObject *> targets =
             (selectedObjects_.size() > 1 && selectedObjects_.contains(obj)) ? GetSelectionRoots() : std::vector<EmptyObject *>{ obj };
 
-        if (ImGui::MenuItem("Create Empty Object")) {
+        if (ImGui::BeginMenu("Create Object")) {
             // 右クリックしたオブジェクトと同じ階層かつ次のインデックス位置に作成する
-            const size_t index = editorContext_->GetObjectIndex(obj);
-            const size_t newIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
-            if (commands_) {
-                commands_->Execute(std::make_unique<CreateSiblingObjectCommand>("EmptyObject", obj, newIndex));
-            } else {
-                auto *newObj = editorContext_->CreateEmptyObject("EmptyObject", UUID128(), newIndex);
-                auto *transform = obj->GetComponent<Transform>();
-                if (auto *parent = transform ? transform->GetParentObject() : nullptr) {
-                    if (auto *newTransform = newObj ? newObj->GetComponent<Transform>() : nullptr) {
-                        newTransform->SetParentObject(parent);
-                    }
-                }
-            }
+            ShowCreateObjectMenu(obj, false);
+            ImGui::EndMenu();
         }
-        if (ImGui::MenuItem("Create Child Empty Object")) {
+        if (ImGui::BeginMenu("Create Child Object")) {
             // 右クリックしたオブジェクトの子オブジェクトとして最後尾に作成する
-            if (commands_) {
-                commands_->Execute(std::make_unique<CreateChildObjectCommand>("EmptyObject", obj));
-            } else {
-                auto *newObj = editorContext_->CreateEmptyObject("EmptyObject");
-                if (auto *newTransform = newObj ? newObj->GetComponent<Transform>() : nullptr) {
-                    newTransform->SetParentObject(obj);
-                }
-            }
+            ShowCreateObjectMenu(obj, true);
+            ImGui::EndMenu();
         }
         ImGui::Separator();
         const std::string copyLabel = (targets.size() > 1) ? ("Copy " + std::to_string(targets.size()) + " Objects") : "Copy Object";
@@ -279,17 +263,105 @@ void SceneObjectHierarchy::ShowHierarchyContextMenu() {
     // この window レベルのメニューが同一フレームで開いてしまい、
     // オブジェクト自体の ObjectContextMenu を閉じてしまう（表示されないように見える）ため必須。
     if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
-        if (ImGui::MenuItem("Create Empty Object")) {
-            if (commands_) {
-                commands_->Execute(std::make_unique<CreateObjectCommand>("EmptyObject"));
-            } else {
-                editorContext_->CreateEmptyObject("EmptyObject");
-            }
+        if (ImGui::BeginMenu("Create Object")) {
+            ShowCreateObjectMenu(nullptr, false);
+            ImGui::EndMenu();
         }
         if (ImGui::MenuItem("Paste Object", "Ctrl+V", false, !clipboardNodes_.empty())) {
             PasteObject(nullptr, MAXSIZE_T);
         }
         ImGui::EndPopup();
+    }
+}
+
+void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bool asChild) {
+    if (ImGui::MenuItem("Empty Object")) {
+        CreateTemplateObject("EmptyObject", {}, referenceObject, asChild);
+    }
+    ImGui::Separator();
+    if (ImGui::BeginMenu("3D")) {
+        if (ImGui::MenuItem("Mesh Object")) {
+            CreateTemplateObject("Mesh Object", { "MeshFilter", "MeshRenderer" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem("Camera Object")) {
+            CreateTemplateObject("Camera Object", { "Camera3D", "CameraRenderer" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem("Light Object")) {
+            CreateTemplateObject("Light Object", { "Light", "LightRenderer" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem("Skinned Mesh Object")) {
+            CreateTemplateObject("Skinned Mesh Object", { "MeshFilter", "SkinnedMeshRenderer" }, referenceObject, asChild);
+        }
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Render Target")) {
+        if (ImGui::MenuItem("Window Object")) {
+            CreateTemplateObject("Window Object", { "NormalWindowObject" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem("Screen Buffer Object")) {
+            CreateTemplateObject("Screen Buffer Object", { "ScreenBufferObject" }, referenceObject, asChild);
+        }
+        ImGui::EndMenu();
+    }
+}
+
+void SceneObjectHierarchy::CreateTemplateObject(const std::string &objectName, const std::vector<std::string> &componentTypes,
+    EmptyObject *referenceObject, bool asChild) {
+    UUID128 newObjectID;
+    std::unique_ptr<IEditorCommand> createCommand;
+
+    if (asChild) {
+        auto cmd = std::make_unique<CreateChildObjectCommand>(objectName, referenceObject);
+        newObjectID = cmd->GetObjectID();
+        createCommand = std::move(cmd);
+    } else if (referenceObject) {
+        const size_t index = editorContext_->GetObjectIndex(referenceObject);
+        const size_t newIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
+        auto cmd = std::make_unique<CreateSiblingObjectCommand>(objectName, referenceObject, newIndex);
+        newObjectID = cmd->GetObjectID();
+        createCommand = std::move(cmd);
+    } else {
+        auto cmd = std::make_unique<CreateObjectCommand>(objectName);
+        newObjectID = cmd->GetObjectID();
+        createCommand = std::move(cmd);
+    }
+
+    if (commands_) {
+        auto composite = std::make_unique<CompositeCommand>("Create " + objectName);
+        composite->AddCommand(std::move(createCommand));
+        for (const auto &type : componentTypes) {
+            composite->AddCommand(std::make_unique<AddComponentCommand>(newObjectID, type));
+        }
+        commands_->Execute(std::move(composite));
+        return;
+    }
+
+    // Undo/Redo管理が無い場合のフォールバック（コマンドを介さず直接生成する）
+    EmptyObject *newObj = nullptr;
+    if (asChild) {
+        newObj = editorContext_->CreateEmptyObject(objectName);
+        if (auto *newTransform = newObj ? newObj->GetComponent<Transform>() : nullptr) {
+            newTransform->SetParentObject(referenceObject);
+        }
+    } else if (referenceObject) {
+        const size_t index = editorContext_->GetObjectIndex(referenceObject);
+        const size_t newIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
+        newObj = editorContext_->CreateEmptyObject(objectName, UUID128(), newIndex);
+        auto *refTransform = referenceObject->GetComponent<Transform>();
+        if (auto *parent = refTransform ? refTransform->GetParentObject() : nullptr) {
+            if (auto *newTransform = newObj ? newObj->GetComponent<Transform>() : nullptr) {
+                newTransform->SetParentObject(parent);
+            }
+        }
+    } else {
+        newObj = editorContext_->CreateEmptyObject(objectName);
+    }
+
+    if (!newObj) return;
+    for (const auto &type : componentTypes) {
+        if (auto comp = CreateObjectComponentByType(type)) {
+            newObj->AddComponent(std::move(comp));
+        }
     }
 }
 

@@ -372,6 +372,12 @@ void PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes() {
         RegisterMesh("Plane-YZ", std::move(verts), std::move(idx));
     }
     {
+        // 2D(SpriteRenderer等)向けの分かりやすい名前を付けた平面プリミティブ。ジオメトリはPlane-XYと同一
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GeneratePlane(verts, idx, 'Y');
+        RegisterMesh("Rect2D", std::move(verts), std::move(idx));
+    }
+    {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;
         GenerateBox(verts, idx);
         RegisterMesh("Box", std::move(verts), std::move(idx));
@@ -392,6 +398,12 @@ void PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes() {
         RegisterMesh("Triangle-YZ", std::move(verts), std::move(idx));
     }
     {
+        // 2D(SpriteRenderer等)向けの分かりやすい名前を付けた三角形プリミティブ。ジオメトリはTriangle-XYと同一
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GenerateTriangle(verts, idx, 'Y');
+        RegisterMesh("Triangle2D", std::move(verts), std::move(idx));
+    }
+    {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;
         GenerateCircle(verts, idx, 'Z');
         RegisterMesh("Circle-XZ", std::move(verts), std::move(idx));
@@ -405,6 +417,12 @@ void PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes() {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;
         GenerateCircle(verts, idx, 'X');
         RegisterMesh("Circle-YZ", std::move(verts), std::move(idx));
+    }
+    {
+        // 2D(SpriteRenderer等)向けの分かりやすい名前を付けた円プリミティブ。ジオメトリはCircle-XYと同一
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GenerateCircle(verts, idx, 'Y');
+        RegisterMesh("Circle2D", std::move(verts), std::move(idx));
     }
     {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;

@@ -209,6 +209,10 @@ class AddComponentCommand final : public IEditorCommand {
 public:
     AddComponentCommand(EmptyObject *obj, const std::string &componentType)
         : objectID_(obj ? obj->GetObjectID() : UUID128()), componentType_(componentType) {}
+    /// @brief 対象オブジェクトがまだ生成されていない場合用（同一CompositeCommand内で、
+    ///        先行するオブジェクト生成コマンドが割り当て済みのobjectIDを直接指定する）
+    AddComponentCommand(const UUID128 &objectID, const std::string &componentType)
+        : objectID_(objectID), componentType_(componentType) {}
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;

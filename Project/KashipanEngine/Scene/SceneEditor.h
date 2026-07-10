@@ -53,6 +53,17 @@ private:
     bool isShowVariablesMenu_ = true;
     bool isShowAssets_ = true;
 
+    // デバッグ用ウィンドウ表示フラグ（旧ImGuiManagerから移設）
+    bool isShowLoadedTexturesWindow_ = false;
+    bool isShowLoadedModelsWindow_ = false;
+    bool isShowMaterialsWindow_ = false;
+    bool isShowLoadedSoundsWindow_ = false;
+    bool isShowPlayingSoundsWindow_ = false;
+    bool isShowLoggerWindow_ = true;
+    bool isShowImGuiDemoWindow_ = false;
+    bool isShowInputStateWindow_ = false;
+    bool isShowInputCommandEditorWindow_ = false;
+
     // シーン新規作成の確認モーダル用
     bool isNewSceneRequested_ = false;
     std::string newSceneName_;

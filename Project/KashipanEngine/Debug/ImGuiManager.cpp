@@ -2,10 +2,6 @@
 
 #include "ImGuiManager.h"
 
-#include "Assets/TextureManager.h"
-#include "Assets/MaterialManager.h"
-#include "Assets/ModelManager.h"
-#include "Assets/AudioManager.h"
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
 #include "Core/Window.h"
@@ -162,29 +158,6 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         // マルチビューポートを使用しない場合ImGui用ウィンドウ全体に対してドッキングを有効にする
         ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
     }
-
-    // 各種デバッグウィンドウの表示を呼び出せるメニューを作成
-    if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("Debug Windows")) {
-            ImGui::MenuItem("Loaded Textures", nullptr, &isShowLoadedTexturesWindow_);
-            ImGui::MenuItem("Loaded Models", nullptr, &isShowLoadedModelsWindow_);
-            ImGui::MenuItem("Materials", nullptr, &isShowMaterialsWindow_);
-            ImGui::MenuItem("Loaded Sounds", nullptr, &isShowLoadedSoundsWindow_);
-            ImGui::MenuItem("Playing Sounds", nullptr, &isShowPlayingSoundsWindow_);
-            ImGui::MenuItem("Logger", nullptr, &isShowLoggerWindow_);
-            ImGui::Separator();
-            ImGui::MenuItem("ImGui Demo Window", nullptr, &isShowImGuiDemoWindow_);
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-    }
-    if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
-    if (isShowLoadedModelsWindow_) ModelManager::ShowImGuiLoadedModelsWindow();
-    if (isShowMaterialsWindow_) MaterialManager::ShowImGuiMaterialManagerWindow();
-    if (isShowLoadedSoundsWindow_) AudioManager::ShowImGuiLoadedSoundsWindow();
-    if (isShowPlayingSoundsWindow_) AudioManager::ShowImGuiPlayingSoundsWindow();
-    if (isShowLoggerWindow_) ShowImGuiLoggerWindow(Passkey<ImGuiManager>());
-    if (isShowImGuiDemoWindow_) ImGui::ShowDemoWindow(&isShowImGuiDemoWindow_);
 }
 
 void ImGuiManager::Render(Passkey<GameEngine>) {

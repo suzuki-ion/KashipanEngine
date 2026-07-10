@@ -122,6 +122,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, "Assets");
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
+    inputCommand_->LoadFromJSON(InputCommand::kDefaultSaveFilePath);
     sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
 
     context_.engine = this;
@@ -189,6 +190,9 @@ GameEngine::~GameEngine() {
     ComputeCommandProcessor::Finalize(Passkey<GameEngine>{});
 
     sceneManager_.reset();
+    if (inputCommand_) {
+        inputCommand_->SaveToJSON(InputCommand::kDefaultSaveFilePath);
+    }
     inputCommand_.reset();
     input_.reset();
 
@@ -276,14 +280,6 @@ void GameEngine::GameLoopDraw() {
 #if defined(USE_IMGUI)
     if (imguiManager_) {
         DrawProfilingImGui();
-
-        if (input_) {
-            input_->ShowImGui();
-        }
-        if (inputCommand_) {
-            inputCommand_->ShowImGui();
-        }
-
         imguiManager_->Render({});
     }
 #endif

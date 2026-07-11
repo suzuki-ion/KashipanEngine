@@ -33,10 +33,149 @@ std::string TrimMetadata(const std::string &metadata) {
     return metadata.substr(first, last - first + 1);
 }
 
-/// @brief メタデータのリストに SerializeField が含まれるかを確認する
-bool HasSerializeFieldMetadata(const std::vector<std::string> &metadataList) {
+/// @brief 属性メタデータのトークン（属性名 + 引数リスト）
+struct AttributeToken {
+    std::string name;
+    std::vector<std::string> args;
+};
+
+/// @brief 属性の引数文字列から前後の空白と引用符を取り除く
+std::string UnquoteAttributeArg(const std::string &arg) {
+    std::string s = TrimMetadata(arg);
+    if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') || (s.front() == '\'' && s.back() == '\''))) {
+        s = s.substr(1, s.size() - 2);
+    }
+    return s;
+}
+
+/// @brief 1つのメタデータブロック文字列を属性トークンへ分解する
+/// @details `[SerializeField, Range(1, 10)]` のように1つのブロックへ複数の属性を
+///          カンマ区切りで書けるため、括弧・引用符の外にあるカンマでのみ分割する
+void ParseMetadataString(const std::string &metadata, std::vector<AttributeToken> &out) {
+    std::vector<std::string> parts;
+    std::string current;
+    int parenDepth = 0;
+    bool inQuote = false;
+    char quoteChar = '"';
+    for (const char c : metadata) {
+        if (inQuote) {
+            if (c == quoteChar) inQuote = false;
+            current += c;
+            continue;
+        }
+        if (c == '"' || c == '\'') { inQuote = true; quoteChar = c; current += c; continue; }
+        if (c == '(') { ++parenDepth; current += c; continue; }
+        if (c == ')') { if (parenDepth > 0) --parenDepth; current += c; continue; }
+        if (c == ',' && parenDepth == 0) { parts.push_back(current); current.clear(); continue; }
+        current += c;
+    }
+    parts.push_back(current);
+
+    for (const auto &part : parts) {
+        const std::string token = TrimMetadata(part);
+        if (token.empty()) continue;
+
+        AttributeToken attr;
+        const auto open = token.find('(');
+        if (open == std::string::npos) {
+            attr.name = token;
+        } else {
+            attr.name = TrimMetadata(token.substr(0, open));
+            const auto close = token.rfind(')');
+            const auto argsEnd = (close != std::string::npos && close > open) ? close : token.size();
+            const std::string argsStr = token.substr(open + 1, argsEnd - open - 1);
+
+            // 引数を引用符の外にあるカンマで分割する
+            if (!TrimMetadata(argsStr).empty()) {
+                std::string arg;
+                bool argInQuote = false;
+                char argQuote = '"';
+                for (const char c : argsStr) {
+                    if (argInQuote) {
+                        if (c == argQuote) argInQuote = false;
+                        arg += c;
+                        continue;
+                    }
+                    if (c == '"' || c == '\'') { argInQuote = true; argQuote = c; arg += c; continue; }
+                    if (c == ',') { attr.args.push_back(UnquoteAttributeArg(arg)); arg.clear(); continue; }
+                    arg += c;
+                }
+                attr.args.push_back(UnquoteAttributeArg(arg));
+            }
+        }
+        out.push_back(std::move(attr));
+    }
+}
+
+/// @brief メタデータのリストを属性トークンのリストへ変換する
+/// @details `[SerializeField][Range(1, 10)]` のように別ブロックで書いた場合も
+///          リストの各要素として渡ってくるため、全ブロックをまとめて解析する
+std::vector<AttributeToken> ParseAttributeTokens(const std::vector<std::string> &metadataList) {
+    std::vector<AttributeToken> tokens;
     for (const auto &metadata : metadataList) {
-        if (TrimMetadata(metadata) == kSerializeFieldMetadata) return true;
+        ParseMetadataString(metadata, tokens);
+    }
+    return tokens;
+}
+
+/// @brief 属性の引数をfloatとして取得する（無い・解釈できない場合は既定値）
+float ParseFloatArg(const std::vector<std::string> &args, size_t index, float defaultValue) {
+    if (index >= args.size()) return defaultValue;
+    try {
+        return std::stof(args[index]);
+    } catch (...) {
+        return defaultValue;
+    }
+}
+
+/// @brief 属性の引数をintとして取得する（無い・解釈できない場合は既定値）
+int ParseIntArg(const std::vector<std::string> &args, size_t index, int defaultValue) {
+    if (index >= args.size()) return defaultValue;
+    try {
+        return std::stoi(args[index]);
+    } catch (...) {
+        return defaultValue;
+    }
+}
+
+/// @brief メタデータのリストを解析してフィールド属性へ変換する
+ScriptComponent::FieldAttributes ParseFieldAttributes(const std::vector<std::string> &metadataList) {
+    ScriptComponent::FieldAttributes attrs;
+    for (const auto &token : ParseAttributeTokens(metadataList)) {
+        if (token.name == kSerializeFieldMetadata) {
+            attrs.serializeField = true;
+        } else if (token.name == "Range") {
+            attrs.hasRange = true;
+            attrs.rangeMin = ParseFloatArg(token.args, 0, 0.0f);
+            attrs.rangeMax = ParseFloatArg(token.args, 1, 1.0f);
+            if (attrs.rangeMax < attrs.rangeMin) std::swap(attrs.rangeMin, attrs.rangeMax);
+        } else if (token.name == "TextArea") {
+            // Unityと同様、内容の行数に応じて minLines〜maxLines の範囲で高さが変わる
+            attrs.multiline = true;
+            attrs.minLines = std::max(1, ParseIntArg(token.args, 0, 3));
+            attrs.maxLines = std::max(attrs.minLines, ParseIntArg(token.args, 1, attrs.minLines));
+        } else if (token.name == "Multiline") {
+            // Unityと同様、固定行数（既定3行）のテキストエリアになる
+            attrs.multiline = true;
+            attrs.minLines = attrs.maxLines = std::max(1, ParseIntArg(token.args, 0, 3));
+        } else if (token.name == "ColorPicker") {
+            attrs.colorPicker = true;
+        } else if (token.name == "Header") {
+            if (!token.args.empty()) attrs.header = token.args[0];
+        } else if (token.name == "Space") {
+            attrs.hasSpace = true;
+            attrs.space = ParseFloatArg(token.args, 0, 8.0f);  // Unityの[Space]の既定値と同じ8px
+        } else if (token.name == "Tooltip") {
+            if (!token.args.empty()) attrs.tooltip = token.args[0];
+        }
+    }
+    return attrs;
+}
+
+/// @brief 型メタデータに [System.Serializable] が含まれるかを確認する
+bool HasSerializableMetadata(const std::vector<std::string> &metadataList) {
+    for (const auto &token : ParseAttributeTokens(metadataList)) {
+        if (token.name == "System.Serializable" || token.name == "Serializable") return true;
     }
     return false;
 }
@@ -427,15 +566,24 @@ void ScriptComponent::Update() {
     CallMethod(updateMethod_);
 }
 
+bool ScriptComponent::IsSupportedFieldType(int typeId) const {
+    return typeId == asTYPEID_BOOL || typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32 ||
+           typeId == asTYPEID_FLOAT || typeId == asTYPEID_DOUBLE ||
+           typeId == stringTypeId_ || typeId == vector2TypeId_ || typeId == vector3TypeId_ ||
+           typeId == vector4TypeId_ || typeId == quaternionTypeId_;
+}
+
 void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
     serializedFields_.clear();
     asIScriptModule *module = builder.GetModule();
     if (!module) return;
+    asIScriptEngine *engine = module->GetEngine();
 
     // グローバル変数
     const asUINT varCount = module->GetGlobalVarCount();
     for (asUINT i = 0; i < varCount; ++i) {
-        if (!HasSerializeFieldMetadata(builder.GetMetadataForVar(static_cast<int>(i)))) continue;
+        FieldAttributes attrs = ParseFieldAttributes(builder.GetMetadataForVar(static_cast<int>(i)));
+        if (!attrs.serializeField) continue;
 
         const char *name = nullptr;
         int typeId = 0;
@@ -444,7 +592,13 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
         void *address = module->GetAddressOfGlobalVar(i);
         if (!address) continue;
 
-        serializedFields_.push_back({ name, typeId, address });
+        SerializedField field;
+        field.name = name;
+        field.typeId = typeId;
+        field.address = address;
+        field.attributes = std::move(attrs);
+        CollectSerializableChildren(field, builder, engine, 0);
+        serializedFields_.push_back(std::move(field));
     }
 
     // Behaviorクラスのメンバ変数
@@ -452,7 +606,8 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
         const int behaviorTypeId = behaviorType_->GetTypeId();
         const asUINT propertyCount = behaviorType_->GetPropertyCount();
         for (asUINT i = 0; i < propertyCount; ++i) {
-            if (!HasSerializeFieldMetadata(builder.GetMetadataForTypeProperty(behaviorTypeId, static_cast<int>(i)))) continue;
+            FieldAttributes attrs = ParseFieldAttributes(builder.GetMetadataForTypeProperty(behaviorTypeId, static_cast<int>(i)));
+            if (!attrs.serializeField) continue;
 
             const char *name = nullptr;
             int typeId = 0;
@@ -461,8 +616,135 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
             void *address = behaviorObject_->GetAddressOfProperty(i);
             if (!address) continue;
 
-            serializedFields_.push_back({ name, typeId, address });
+            SerializedField field;
+            field.name = name;
+            field.typeId = typeId;
+            field.address = address;
+            field.attributes = std::move(attrs);
+            CollectSerializableChildren(field, builder, engine, 0);
+            serializedFields_.push_back(std::move(field));
         }
+    }
+}
+
+void ScriptComponent::CollectSerializableChildren(SerializedField &field, CScriptBuilder &builder, asIScriptEngine *engine, int depth) {
+    // 自己参照型（Serializableクラスが自身の型のメンバを持つ場合など）による無限再帰を防ぐ
+    constexpr int kMaxSerializableDepth = 8;
+    if (!engine || depth >= kMaxSerializableDepth) return;
+    if (IsSupportedFieldType(field.typeId)) return;
+
+    asITypeInfo *type = engine->GetTypeInfoById(field.typeId);
+    if (!type || !(type->GetFlags() & asOBJ_SCRIPT_OBJECT)) return;
+
+    // [System.Serializable] が付いたスクリプトクラスのみ展開の対象にする
+    const int classTypeId = type->GetTypeId();
+    if (!HasSerializableMetadata(builder.GetMetadataForType(classTypeId))) return;
+
+    field.isScriptObject = true;
+    const asUINT propertyCount = type->GetPropertyCount();
+    for (asUINT i = 0; i < propertyCount; ++i) {
+        const char *name = nullptr;
+        int propTypeId = 0;
+        bool isPrivate = false;
+        bool isProtected = false;
+        if (type->GetProperty(i, &name, &propTypeId, &isPrivate, &isProtected) < 0 || !name) continue;
+
+        FieldAttributes attrs = ParseFieldAttributes(builder.GetMetadataForTypeProperty(classTypeId, static_cast<int>(i)));
+        // Unityと同様、publicメンバは自動で対象になり、private/protectedは [SerializeField] が必要
+        if ((isPrivate || isProtected) && !attrs.serializeField) continue;
+
+        SerializedField child;
+        child.name = name;
+        child.typeId = propTypeId;
+        child.propertyIndex = i;
+        child.attributes = std::move(attrs);
+        CollectSerializableChildren(child, builder, engine, depth + 1);
+        if (!child.isScriptObject && !IsSupportedFieldType(child.typeId)) continue;
+        field.children.push_back(std::move(child));
+    }
+}
+
+JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) const {
+    if (!address) return JSON();
+
+    if (field.isScriptObject) {
+        // Serializableクラスはハンドルとして格納されているため、参照先を解決してから
+        // 子フィールドをネストしたJSONオブジェクトへ書き出す
+        asIScriptObject *object = *static_cast<asIScriptObject **>(address);
+        if (!object) return JSON();
+        JSON json = JSON::object();
+        for (const auto &child : field.children) {
+            void *childAddress = object->GetAddressOfProperty(child.propertyIndex);
+            if (!childAddress) continue;
+            JSON value = CaptureField(child, childAddress);
+            if (!value.is_null()) json[child.name] = std::move(value);
+        }
+        return json;
+    }
+
+    if (field.typeId == asTYPEID_BOOL) {
+        return *static_cast<bool *>(address);
+    } else if (field.typeId == asTYPEID_INT32) {
+        return *static_cast<int32_t *>(address);
+    } else if (field.typeId == asTYPEID_UINT32) {
+        return *static_cast<uint32_t *>(address);
+    } else if (field.typeId == asTYPEID_FLOAT) {
+        return *static_cast<float *>(address);
+    } else if (field.typeId == asTYPEID_DOUBLE) {
+        return *static_cast<double *>(address);
+    } else if (field.typeId == stringTypeId_) {
+        return *static_cast<std::string *>(address);
+    } else if (field.typeId == vector2TypeId_) {
+        return ToJSON(*static_cast<Vector2 *>(address));
+    } else if (field.typeId == vector3TypeId_) {
+        return ToJSON(*static_cast<Vector3 *>(address));
+    } else if (field.typeId == vector4TypeId_) {
+        return ToJSON(*static_cast<Vector4 *>(address));
+    } else if (field.typeId == quaternionTypeId_) {
+        return ToJSON(*static_cast<Quaternion *>(address));
+    }
+    return JSON();
+}
+
+void ScriptComponent::ApplyField(const SerializedField &field, void *address, const JSON &value) {
+    if (!address) return;
+
+    if (field.isScriptObject) {
+        if (!value.is_object()) return;
+        asIScriptObject *object = *static_cast<asIScriptObject **>(address);
+        if (!object) return;
+        for (const auto &child : field.children) {
+            if (!value.contains(child.name)) continue;
+            void *childAddress = object->GetAddressOfProperty(child.propertyIndex);
+            if (childAddress) ApplyField(child, childAddress, value[child.name]);
+        }
+        return;
+    }
+
+    try {
+        if (field.typeId == asTYPEID_BOOL) {
+            *static_cast<bool *>(address) = value.get<bool>();
+        } else if (field.typeId == asTYPEID_INT32) {
+            *static_cast<int32_t *>(address) = value.get<int32_t>();
+        } else if (field.typeId == asTYPEID_UINT32) {
+            *static_cast<uint32_t *>(address) = value.get<uint32_t>();
+        } else if (field.typeId == asTYPEID_FLOAT) {
+            *static_cast<float *>(address) = value.get<float>();
+        } else if (field.typeId == asTYPEID_DOUBLE) {
+            *static_cast<double *>(address) = value.get<double>();
+        } else if (field.typeId == stringTypeId_) {
+            *static_cast<std::string *>(address) = value.get<std::string>();
+        } else if (field.typeId == vector2TypeId_) {
+            *static_cast<Vector2 *>(address) = FromJSON<Vector2>(value);
+        } else if (field.typeId == vector3TypeId_) {
+            *static_cast<Vector3 *>(address) = FromJSON<Vector3>(value);
+        } else if (field.typeId == vector4TypeId_) {
+            *static_cast<Vector4 *>(address) = FromJSON<Vector4>(value);
+        } else if (field.typeId == quaternionTypeId_) {
+            *static_cast<Quaternion *>(address) = FromJSON<Quaternion>(value);
+        }
+    } catch (const JSON::exception &) {
+        // 型が合わない保存値（スクリプト側の型変更後など）は無視して既定値のままにする
     }
 }
 
@@ -471,27 +753,8 @@ JSON ScriptComponent::CaptureFieldValuesToJson() const {
 
     JSON json = JSON::object();
     for (const auto &field : serializedFields_) {
-        if (field.typeId == asTYPEID_BOOL) {
-            json[field.name] = *static_cast<bool *>(field.address);
-        } else if (field.typeId == asTYPEID_INT32) {
-            json[field.name] = *static_cast<int32_t *>(field.address);
-        } else if (field.typeId == asTYPEID_UINT32) {
-            json[field.name] = *static_cast<uint32_t *>(field.address);
-        } else if (field.typeId == asTYPEID_FLOAT) {
-            json[field.name] = *static_cast<float *>(field.address);
-        } else if (field.typeId == asTYPEID_DOUBLE) {
-            json[field.name] = *static_cast<double *>(field.address);
-        } else if (field.typeId == stringTypeId_) {
-            json[field.name] = *static_cast<std::string *>(field.address);
-        } else if (field.typeId == vector2TypeId_) {
-            json[field.name] = ToJSON(*static_cast<Vector2 *>(field.address));
-        } else if (field.typeId == vector3TypeId_) {
-            json[field.name] = ToJSON(*static_cast<Vector3 *>(field.address));
-        } else if (field.typeId == vector4TypeId_) {
-            json[field.name] = ToJSON(*static_cast<Vector4 *>(field.address));
-        } else if (field.typeId == quaternionTypeId_) {
-            json[field.name] = ToJSON(*static_cast<Quaternion *>(field.address));
-        }
+        JSON value = CaptureField(field, field.address);
+        if (!value.is_null()) json[field.name] = std::move(value);
     }
     return json;
 }
@@ -501,32 +764,7 @@ void ScriptComponent::ApplyFieldValuesFromJson(const JSON &json) {
 
     for (auto &field : serializedFields_) {
         if (!json.contains(field.name)) continue;
-        const JSON &value = json[field.name];
-        try {
-            if (field.typeId == asTYPEID_BOOL) {
-                *static_cast<bool *>(field.address) = value.get<bool>();
-            } else if (field.typeId == asTYPEID_INT32) {
-                *static_cast<int32_t *>(field.address) = value.get<int32_t>();
-            } else if (field.typeId == asTYPEID_UINT32) {
-                *static_cast<uint32_t *>(field.address) = value.get<uint32_t>();
-            } else if (field.typeId == asTYPEID_FLOAT) {
-                *static_cast<float *>(field.address) = value.get<float>();
-            } else if (field.typeId == asTYPEID_DOUBLE) {
-                *static_cast<double *>(field.address) = value.get<double>();
-            } else if (field.typeId == stringTypeId_) {
-                *static_cast<std::string *>(field.address) = value.get<std::string>();
-            } else if (field.typeId == vector2TypeId_) {
-                *static_cast<Vector2 *>(field.address) = FromJSON<Vector2>(value);
-            } else if (field.typeId == vector3TypeId_) {
-                *static_cast<Vector3 *>(field.address) = FromJSON<Vector3>(value);
-            } else if (field.typeId == vector4TypeId_) {
-                *static_cast<Vector4 *>(field.address) = FromJSON<Vector4>(value);
-            } else if (field.typeId == quaternionTypeId_) {
-                *static_cast<Quaternion *>(field.address) = FromJSON<Quaternion>(value);
-            }
-        } catch (const JSON::exception &) {
-            // 型が合わない保存値（スクリプト側の型変更後など）は無視して既定値のままにする
-        }
+        ApplyField(field, field.address, json[field.name]);
     }
 }
 
@@ -537,7 +775,7 @@ void ScriptComponent::ShowImGui() {
     if (ImGui::Button("Refresh List")) {
         RefreshAvailableScriptPaths();
     }
-    ImGui::SameLine();
+    // コンボの右に並べると画面外へはみ出して押しづらいため、Reloadは下の行に配置する
     if (ImGui::Button("Reload")) {
         if (Reload()) {
             HookColliders();
@@ -570,31 +808,102 @@ void ScriptComponent::ShowImGui() {
 
     ImGui::SeparatorText("Serialize Fields");
     for (auto &field : serializedFields_) {
-        const char *label = field.name.c_str();
-        if (field.typeId == asTYPEID_BOOL) {
-            ImGui::Checkbox(label, static_cast<bool *>(field.address));
-        } else if (field.typeId == asTYPEID_INT32) {
-            ImGui::DragInt(label, static_cast<int32_t *>(field.address));
-        } else if (field.typeId == asTYPEID_UINT32) {
-            ImGui::DragScalar(label, ImGuiDataType_U32, field.address);
-        } else if (field.typeId == asTYPEID_FLOAT) {
-            ImGui::DragFloat(label, static_cast<float *>(field.address), 0.01f);
-        } else if (field.typeId == asTYPEID_DOUBLE) {
-            ImGuiCustom::EditValue(label, *static_cast<double *>(field.address), { .vSpeed = 0.01f });
-        } else if (field.typeId == stringTypeId_) {
-            ImGuiCustom::EditValue(label, *static_cast<std::string *>(field.address));
-        } else if (field.typeId == vector2TypeId_) {
-            ImGuiCustom::EditValue(label, *static_cast<Vector2 *>(field.address), { .vSpeed = 0.01f });
-        } else if (field.typeId == vector3TypeId_) {
-            ImGuiCustom::EditValue(label, *static_cast<Vector3 *>(field.address), { .vSpeed = 0.01f });
-        } else if (field.typeId == vector4TypeId_) {
-            ImGuiCustom::EditValue(label, *static_cast<Vector4 *>(field.address), { .vSpeed = 0.01f });
-        } else if (field.typeId == quaternionTypeId_) {
-            ImGuiCustom::EditValue(label, *static_cast<Quaternion *>(field.address), { .vSpeed = 0.01f });
-        } else {
-            ImGui::Text("%s: (unsupported type)", label);
-        }
+        ImGui::PushID(field.name.c_str());
+        DrawFieldImGui(field, field.address);
+        ImGui::PopID();
     }
+}
+
+void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
+    const FieldAttributes &attrs = field.attributes;
+
+    // 装飾系の属性（Header/Space）はフィールド本体の上に描画する
+    if (!attrs.header.empty()) ImGui::SeparatorText(attrs.header.c_str());
+    if (attrs.hasSpace) ImGui::Dummy(ImVec2(0.0f, attrs.space));
+
+    if (!address) return;
+    const char *label = field.name.c_str();
+
+    if (field.isScriptObject) {
+        // [System.Serializable] クラスはツリーで子フィールドを表示する
+        asIScriptObject *object = *static_cast<asIScriptObject **>(address);
+        if (!object) {
+            ImGui::Text("%s: (null)", label);
+            return;
+        }
+        const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
+        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+        if (isOpen) {
+            for (auto &child : field.children) {
+                ImGui::PushID(child.name.c_str());
+                DrawFieldImGui(child, object->GetAddressOfProperty(child.propertyIndex));
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+        return;
+    }
+
+    if (field.typeId == asTYPEID_BOOL) {
+        ImGui::Checkbox(label, static_cast<bool *>(address));
+    } else if (field.typeId == asTYPEID_INT32) {
+        if (attrs.hasRange) {
+            ImGui::SliderInt(label, static_cast<int32_t *>(address),
+                static_cast<int>(attrs.rangeMin), static_cast<int>(attrs.rangeMax));
+        } else {
+            ImGui::DragInt(label, static_cast<int32_t *>(address));
+        }
+    } else if (field.typeId == asTYPEID_UINT32) {
+        if (attrs.hasRange) {
+            const uint32_t minValue = static_cast<uint32_t>(std::max(0.0f, attrs.rangeMin));
+            const uint32_t maxValue = static_cast<uint32_t>(std::max(0.0f, attrs.rangeMax));
+            ImGui::SliderScalar(label, ImGuiDataType_U32, address, &minValue, &maxValue);
+        } else {
+            ImGui::DragScalar(label, ImGuiDataType_U32, address);
+        }
+    } else if (field.typeId == asTYPEID_FLOAT) {
+        if (attrs.hasRange) {
+            ImGui::SliderFloat(label, static_cast<float *>(address), attrs.rangeMin, attrs.rangeMax);
+        } else {
+            ImGui::DragFloat(label, static_cast<float *>(address), 0.01f);
+        }
+    } else if (field.typeId == asTYPEID_DOUBLE) {
+        if (attrs.hasRange) {
+            const double minValue = static_cast<double>(attrs.rangeMin);
+            const double maxValue = static_cast<double>(attrs.rangeMax);
+            ImGui::SliderScalar(label, ImGuiDataType_Double, address, &minValue, &maxValue);
+        } else {
+            ImGuiCustom::EditValue(label, *static_cast<double *>(address), { .vSpeed = 0.01f });
+        }
+    } else if (field.typeId == stringTypeId_) {
+        auto *str = static_cast<std::string *>(address);
+        if (attrs.multiline) {
+            // 内容の行数に応じて minLines〜maxLines の範囲で高さを調整する（UnityのTextArea相当）
+            int lineCount = 1 + static_cast<int>(std::count(str->begin(), str->end(), '\n'));
+            lineCount = std::clamp(lineCount, attrs.minLines, attrs.maxLines);
+            const float height = ImGui::GetTextLineHeight() * static_cast<float>(lineCount)
+                + ImGui::GetStyle().FramePadding.y * 2.0f;
+            ImGui::InputTextMultiline(label, str, ImVec2(0.0f, height));
+        } else {
+            ImGuiCustom::EditValue(label, *str);
+        }
+    } else if (field.typeId == vector2TypeId_) {
+        ImGuiCustom::EditValue(label, *static_cast<Vector2 *>(address), { .vSpeed = 0.01f });
+    } else if (field.typeId == vector3TypeId_) {
+        ImGuiCustom::EditValue(label, *static_cast<Vector3 *>(address), { .vSpeed = 0.01f });
+    } else if (field.typeId == vector4TypeId_) {
+        if (attrs.colorPicker) {
+            ImGui::ColorEdit4(label, &static_cast<Vector4 *>(address)->x);
+        } else {
+            ImGuiCustom::EditValue(label, *static_cast<Vector4 *>(address), { .vSpeed = 0.01f });
+        }
+    } else if (field.typeId == quaternionTypeId_) {
+        ImGuiCustom::EditValue(label, *static_cast<Quaternion *>(address), { .vSpeed = 0.01f });
+    } else {
+        ImGui::Text("%s: (unsupported type)", label);
+    }
+
+    if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
 }
 #endif
 

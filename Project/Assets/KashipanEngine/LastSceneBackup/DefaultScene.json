@@ -117,13 +117,13 @@
                     "data": {
                         "customData": {
                             "fields": {
-                                "rotateSpeed": {
-                                    "x": 4.960000038146973,
+                                "angularVelocity": {
+                                    "x": 0.0,
                                     "y": 0.0,
-                                    "z": 0.0
+                                    "z": 1.0
                                 }
                             },
-                            "scriptPath": "Assets/Application/testScript.as"
+                            "scriptPath": "Assets\\Application\\Scripts\\AlwaysRotate.as"
                         },
                         "isActive": true,
                         "priority": 1

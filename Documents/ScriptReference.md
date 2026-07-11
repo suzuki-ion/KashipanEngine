@@ -13,6 +13,8 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 2. [ファイルの分割（#include）](#ファイルの分割include)
 3. [ScriptComponentBehavior（ライフサイクル）](#scriptcomponentbehaviorライフサイクル)
 4. [SerializeField（変数のインスペクター編集・保存）](#serializefield変数のインスペクター編集保存)
+    - [表示用の属性（Unity互換）](#表示用の属性unity互換)
+    - [System.Serializable（クラスのシリアライズ）](#systemserializableクラスのシリアライズ)
 5. [コンポーネントの取得・追加・削除](#コンポーネントの取得追加削除)
 6. [グローバル関数](#グローバル関数)
 7. [オブジェクト・シーン型](#オブジェクトシーン型)
@@ -130,8 +132,68 @@ int stageNo = 1;
 | プリミティブ | `bool` / `int` / `uint` / `float` / `double` |
 | 文字列 | `string` |
 | 数学型 | `Vector2` / `Vector3` / `Vector4` / `Quaternion` |
+| クラス | [System.Serializable](#systemserializableクラスのシリアライズ) を付けたスクリプトクラス |
 
 上記以外の型に付けた場合、インスペクターには `(unsupported type)` と表示され、保存対象になりません。
+
+### 表示用の属性（Unity互換）
+
+`[SerializeField]` 付き変数には、UnityのC#と同様の属性を付けてインスペクターでの表示方法を変更できます。
+
+| 属性 | 対象の型 | 効果 |
+|---|---|---|
+| `[Range(min, max)]` | `int` / `uint` / `float` / `double` | ドラッグ入力の代わりに min〜max のスライダーで編集する |
+| `[TextArea]` / `[TextArea(minLines, maxLines)]` | `string` | 複数行のテキストエリアで編集する。内容の行数に応じて minLines〜maxLines（既定 3〜3）の範囲で高さが自動調整される |
+| `[Multiline]` / `[Multiline(行数)]` | `string` | 固定行数（既定3行）の複数行テキストエリアで編集する |
+| `[ColorPicker]` | `Vector4` | RGBAの色としてカラーピッカーで編集する |
+| `[Header("見出しのテキスト")]` | 任意 | フィールドの上に見出し（セパレーター付き）を表示する |
+| `[Space]` / `[Space(高さpx)]` | 任意 | フィールドの上に余白を挿入する（既定8px） |
+| `[Tooltip("説明文")]` | 任意 | 項目にマウスを乗せたときに説明文を表示する |
+
+属性はUnityと同様に、1つのブロックへカンマ区切りでまとめて書いても、別々のブロックに分けて書いても機能します。
+
+```angelscript
+class Player : ScriptComponentBehavior {
+    // まとめて書く場合
+    [SerializeField, Range(1, 10), Tooltip("移動速度")]
+    float moveSpeed = 5.0f;
+
+    // 分けて書く場合
+    [SerializeField]
+    [Header("見た目の設定")]
+    [ColorPicker]
+    Vector4 tintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    [SerializeField, Space, TextArea(3, 8)]
+    string description;
+}
+```
+
+### System.Serializable（クラスのシリアライズ）
+
+スクリプトで定義したクラスに `[System.Serializable]` を付けると、そのクラス型の `[SerializeField]` 付き変数がインスペクターでツリー展開され、中のメンバ変数を編集・保存できます。
+
+- クラスの **publicメンバは自動的に対象**になります（`[SerializeField]` 不要）
+- **private / protectedメンバは `[SerializeField]` を付けた場合のみ**対象になります
+- メンバ変数にも `[Range]` などの表示用の属性を付けられます
+- Serializableクラスの中にさらにSerializableクラスを持つネストにも対応しています
+
+```angelscript
+[System.Serializable]
+class JumpSettings {
+    float power = 5.0f;              // publicなので自動的に対象
+    [Range(0.1, 2.0)]
+    float chargeTime = 0.5f;
+
+    [SerializeField]
+    private float internalValue = 0; // privateはSerializeFieldが必要
+}
+
+class Player : ScriptComponentBehavior {
+    [SerializeField, Header("ジャンプ設定")]
+    JumpSettings jump;
+}
+```
 
 ## コンポーネントの取得・追加・削除
 

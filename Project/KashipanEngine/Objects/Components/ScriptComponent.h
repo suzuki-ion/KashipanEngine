@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,6 +30,11 @@ class EmptyObject;
 ///          クラスのメンバ変数やグローバル変数に `[SerializeField]` メタデータを付けると、
 ///          ImGuiのインスペクター上で編集でき、シーンへの保存/読込の対象になる。
 ///          対応型: bool / int / uint / float / double / string / Vector2 / Vector3 / Vector4 / Quaternion
+///          および [System.Serializable] を付けたスクリプトクラス（public変数は自動対象、
+///          private/protected変数は [SerializeField] が必要）
+///          表示用の属性（Unity互換）: [Range(min, max)] [TextArea(minLines, maxLines)] [Multiline]
+///          [ColorPicker]（Vector4を色として編集） [Header("見出し")] [Space(高さpx)] [Tooltip("説明")]
+///          `[SerializeField, Range(1, 10)]` のように1つのブロックへカンマ区切りでまとめて記述できる
 class ScriptComponent final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(ScriptComponent, 0xFF, )
@@ -49,6 +55,22 @@ public:
     /// @brief 直近のコンパイル/実行時エラー内容を取得する（無い場合は空文字）
     const std::string &GetLastError() const noexcept { return lastError_; }
 
+    /// @brief スクリプト変数に付与された属性（Unity互換メタデータ）
+    struct FieldAttributes {
+        bool serializeField = false;  ///< [SerializeField]
+        bool hasRange = false;        ///< [Range(min, max)]
+        float rangeMin = 0.0f;
+        float rangeMax = 0.0f;
+        bool multiline = false;       ///< [Multiline] / [TextArea(minLines, maxLines)]
+        int minLines = 3;
+        int maxLines = 3;
+        bool colorPicker = false;     ///< [ColorPicker]（Vector4を色として編集する）
+        std::string header;           ///< [Header("...")]（空なら無し）
+        bool hasSpace = false;        ///< [Space(高さpx)]
+        float space = 8.0f;
+        std::string tooltip;          ///< [Tooltip("...")]（空なら無し）
+    };
+
 protected:
     void Initialize() override;
     void Finalize() override;
@@ -66,7 +88,16 @@ private:
     struct SerializedField {
         std::string name;
         int typeId = 0;
+        /// @brief 変数の格納先アドレス（ルート階層のみ。子フィールドはハンドルの差し替えに
+        ///        追従するため、アクセス時に毎回親オブジェクトから解決する）
         void *address = nullptr;
+        /// @brief 子フィールドの場合の、親クラス内でのプロパティインデックス
+        uint32_t propertyIndex = 0;
+        /// @brief [System.Serializable] が付いたスクリプトクラス型かどうか
+        bool isScriptObject = false;
+        FieldAttributes attributes;
+        /// @brief isScriptObject の場合のサブフィールド
+        std::vector<SerializedField> children;
     };
     /// @brief コライダーへ設定した衝突コールバックのフック情報（定義はcpp内）
     struct ColliderHooks;
@@ -91,12 +122,24 @@ private:
     /// @brief 設定した衝突コールバックを元に戻す
     void UnhookColliders();
 
+    /// @brief 指定タイプIDがシリアライズ対応のプリミティブ/数学型かを判定する
+    bool IsSupportedFieldType(int typeId) const;
     /// @brief [SerializeField] 付き変数（グローバル変数とBehaviorクラスのメンバ変数）を収集する
     void CollectSerializedFields(CScriptBuilder &builder);
+    /// @brief フィールドが [System.Serializable] クラス型の場合に子フィールドを再帰的に収集する
+    void CollectSerializableChildren(SerializedField &field, CScriptBuilder &builder, asIScriptEngine *engine, int depth);
+    /// @brief フィールドの現在値をJSONへ変換する（Serializableクラスはネストしたオブジェクトになる）
+    JSON CaptureField(const SerializedField &field, void *address) const;
+    /// @brief JSONの値をフィールドへ適用する
+    void ApplyField(const SerializedField &field, void *address, const JSON &value);
     /// @brief 収集済みフィールドの現在値をJSONへ書き出す（未ビルド時は pendingFieldValues_ をそのまま返す）
     JSON CaptureFieldValuesToJson() const;
     /// @brief JSONの値を収集済みフィールドへ適用する
     void ApplyFieldValuesFromJson(const JSON &json);
+#if defined(USE_IMGUI)
+    /// @brief フィールドの編集UIを属性（Range/TextArea等）に応じて表示する
+    void DrawFieldImGui(SerializedField &field, void *address);
+#endif
 
     std::string scriptPath_;
     std::string moduleName_;

@@ -240,6 +240,21 @@ EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &ob
     return newObjPtr;
 }
 
+EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name) {
+    if (!source || !objectsExistingSet_.contains(source)) return nullptr;
+
+    auto cloned = source->Clone();
+    if (!cloned) return nullptr;
+    if (!name.empty()) cloned->SetName(name);
+
+    auto *clonedPtr = cloned.get();
+    objects_.push_back(std::move(cloned));
+    objectsByUUID_[clonedPtr->GetObjectID()] = clonedPtr;
+    objectsExistingSet_.insert(clonedPtr);
+    objectsByName_[clonedPtr->GetName()].insert(clonedPtr);
+    return clonedPtr;
+}
+
 bool Scene::DeleteObject(EmptyObject *obj) {
     if (!obj) return false;
     auto it = std::find_if(objects_.begin(), objects_.end(),

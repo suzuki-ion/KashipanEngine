@@ -23,6 +23,14 @@
                 "priority": 50
             },
             "type": "SceneComputeProcessor"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1
+            },
+            "type": "SceneScriptEngine"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
@@ -322,6 +330,33 @@
                         "priority": 1
                     },
                     "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "gravity": 0.20000000298023224,
+                                "groundedThreshold": 0.4000000059604645,
+                                "jumpPower": 16.0,
+                                "lateralDeceleration": 0.10000000149011612,
+                                "maxVelocity": {
+                                    "x": 8.0,
+                                    "y": 16.0,
+                                    "z": 8.0
+                                },
+                                "minVelocity": {
+                                    "x": -8.0,
+                                    "y": -16.0,
+                                    "z": -8.0
+                                },
+                                "moveSpeed": 0.10000000149011612
+                            },
+                            "scriptPath": "Assets\\Application\\Scripts\\Player.as"
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "ScriptComponent"
                 },
                 {
                     "data": {
@@ -721,10 +756,10 @@
                         "customData": {
                             "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
                             "rotate": {
-                                "w": 0.9902681708335876,
+                                "w": 0.9902680516242981,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.13917312026023865
+                                "z": 0.13917310535907745
                             },
                             "scale": {
                                 "x": 15.999850273132324,

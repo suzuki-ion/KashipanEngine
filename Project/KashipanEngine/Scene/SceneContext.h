@@ -86,6 +86,11 @@ public:
     /// @param index 生成位置のインデックス（省略時は末尾に追加）
     /// @return 生成された空のオブジェクトのポインタ
     EmptyObject *CreateEmptyObject(const std::string &name = "", const UUID128 &objectID = UUID128(), size_t index = MAXSIZE_T) { return owner_->CreateEmptyObject(name, objectID, index); }
+    /// @brief 既存オブジェクトを複製してシーンへ追加する
+    /// @param source 複製元オブジェクトのポインタ（このシーンに属している必要がある）
+    /// @param name 複製後のオブジェクト名（空の場合は複製元と同じ名前になる）
+    /// @return 複製されたオブジェクトのポインタ（失敗した場合は nullptr）
+    EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "") { return owner_->CloneObject(source, name); }
     /// @brief オブジェクトを削除
     /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す

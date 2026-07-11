@@ -307,6 +307,8 @@ class Object {
 	Transform@ GetTransform();
 	bool GetComponent(?&out);
 	bool GetComponents(?&out);
+	bool AddComponent(?&out);
+	bool RemoveComponent(?&in);
 }
 
 class HitInfo {
@@ -327,6 +329,9 @@ class Scene {
 	bool ChangeToNextScene();
 	bool HasNextSceneName() const;
 	void ClearNextSceneName();
+	Object@ CreateObject(const string&in name = "");
+	Object@ CloneObject(Object@ source, const string&in name = "");
+	bool DeleteObject(Object@ obj);
 	bool SetVariable(const string&in, ?&in);
 	bool GetVariable(const string&in, ?&out);
 	bool HasVariable(const string&in);
@@ -915,19 +920,21 @@ Scene@ GetScene();
 Object@ FindObject(const string&in);
 bool GetComponent(?&out);
 bool GetComponents(?&out);
+bool AddComponent(?&out);
+bool RemoveComponent(?&in);
 
 namespace Easing {
-	float Normalize01(float, float, float);
+	float Normalize01(const float&in, const float&in, const float&in);
 	Vector2 Normalize01(const Vector2&in, const Vector2&in, const Vector2&in);
 	Vector3 Normalize01(const Vector3&in, const Vector3&in, const Vector3&in);
 	Vector4 Normalize01(const Vector4&in, const Vector4&in, const Vector4&in);
-	float Lerp(float, float, float);
+	float Lerp(const float&in, const float&in, const float&in);
 	float Apply(float, EaseType);
-	float Eased(float, float, float, EaseType);
+	float Eased(const float&in, const float&in, float, EaseType);
 	Vector2 Eased(const Vector2&in, const Vector2&in, float, EaseType);
 	Vector3 Eased(const Vector3&in, const Vector3&in, float, EaseType);
 	Vector4 Eased(const Vector4&in, const Vector4&in, float, EaseType);
-	float EasedGAB(float, float, float, EaseType, EaseType);
+	float EasedGAB(const float&in, const float&in, float, EaseType, EaseType);
 	Vector2 EasedGAB(const Vector2&in, const Vector2&in, float, EaseType, EaseType);
 	Vector3 EasedGAB(const Vector3&in, const Vector3&in, float, EaseType, EaseType);
 	Vector4 EasedGAB(const Vector4&in, const Vector4&in, float, EaseType, EaseType);
@@ -946,5 +953,13 @@ namespace Math {
 	Quaternion MakeFromRotationMatrix(const Matrix4x4&in);
 	Matrix3x3 IdentityMatrix3x3();
 	Matrix4x4 IdentityMatrix4x4();
+}
+
+namespace Random {
+	int Int(int, int);
+	int64 Int64(int64, int64);
+	float Float(float, float);
+	double Double(double, double);
+	bool Bool(float trueProbability = 0.5f);
 }
 

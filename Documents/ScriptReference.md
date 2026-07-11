@@ -13,7 +13,7 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 2. [ファイルの分割（#include）](#ファイルの分割include)
 3. [ScriptComponentBehavior（ライフサイクル）](#scriptcomponentbehaviorライフサイクル)
 4. [SerializeField（変数のインスペクター編集・保存）](#serializefield変数のインスペクター編集保存)
-5. [コンポーネントの取得（GetComponent / GetComponents）](#コンポーネントの取得getcomponent--getcomponents)
+5. [コンポーネントの取得・追加・削除](#コンポーネントの取得追加削除)
 6. [グローバル関数](#グローバル関数)
 7. [オブジェクト・シーン型](#オブジェクトシーン型)
 8. [シーン変数（スクリプト間の値の受け渡し）](#シーン変数スクリプト間の値の受け渡し)
@@ -21,8 +21,9 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 10. [数学型](#数学型)
 11. [Math名前空間](#math名前空間)
 12. [Easing（イージング）](#easingイージング)
-13. [サンプルスクリプト](#サンプルスクリプト)
-14. [注意事項](#注意事項)
+13. [Random（乱数）](#random乱数)
+14. [サンプルスクリプト](#サンプルスクリプト)
+15. [注意事項](#注意事項)
 
 ---
 
@@ -132,9 +133,9 @@ int stageNo = 1;
 
 上記以外の型に付けた場合、インスペクターには `(unsupported type)` と表示され、保存対象になりません。
 
-## コンポーネントの取得（GetComponent / GetComponents）
+## コンポーネントの取得・追加・削除
 
-取得したいコンポーネント型のハンドル変数（または配列）を引数に渡すと、型に応じたコンポーネントが取得できます。
+取得/追加したいコンポーネント型のハンドル変数（または配列）を引数に渡すと、型に応じたコンポーネントが取得/生成されます。
 
 ```angelscript
 // 単体取得: 最初に見つかったコンポーネントを取得
@@ -150,7 +151,16 @@ for (uint i = 0; i < sources.length(); i++) {
     sources[i].Stop();
 }
 
-// グローバル版は自身のオブジェクトが対象（obj.GetComponent(...) の省略形）
+// 追加: 渡した変数の型のコンポーネントを新規生成して追加する
+BoxCollider@ col;
+if (GetOwnerObject().AddComponent(col)) {
+    col.SetTrigger(true);
+}
+
+// 削除: 既に取得済みのハンドルを渡すとそのインスタンスを削除する
+GetOwnerObject().RemoveComponent(col);
+
+// グローバル版は自身のオブジェクトが対象（obj.GetComponent(...) 等の省略形）
 Transform@ tf;
 GetComponent(tf);
 ```
@@ -159,8 +169,15 @@ GetComponent(tf);
 |---|---|---|
 | `bool Object::GetComponent(?&out)` | 見つかった場合 `true` | 型に一致する最初のコンポーネントをハンドルへ格納 |
 | `bool Object::GetComponents(?&out)` | 成功した場合 `true` | 型に一致する全コンポーネントを `array<T@>` へ格納（0個でも配列は生成される） |
+| `bool Object::AddComponent(?&out)` | 追加できた場合 `true` | 渡した変数の型のコンポーネントを新規生成して追加し、ハンドルへ格納する（最大追加数を超える等で失敗する場合がある） |
+| `bool Object::RemoveComponent(?&in)` | 削除できた場合 `true` | 渡したハンドルが指すコンポーネントインスタンスを削除する |
 | `bool GetComponent(?&out)` | 同上 | 自身のオブジェクトを対象にした省略形 |
 | `bool GetComponents(?&out)` | 同上 | 自身のオブジェクトを対象にした省略形 |
+| `bool AddComponent(?&out)` | 同上 | 自身のオブジェクトを対象にした省略形 |
+| `bool RemoveComponent(?&in)` | 同上 | 自身のオブジェクトを対象にした省略形 |
+
+- `AddComponent` で生成されたコンポーネントは規定値で初期化されます。既存コンポーネントの複製は [Scene.CloneObject](#オブジェクトシーン型) でオブジェクトごと複製してください（コンポーネント単体の複製はできません）。
+- `RemoveComponent` で削除した後、渡したハンドル自体は自動では `null` になりません。削除後に同じハンドルへアクセスしないでください。
 
 ## グローバル関数
 
@@ -221,8 +238,10 @@ GetComponent(tf);
 | `bool IsActive() const` | アクティブ状態を取得する |
 | `void SetActive(bool)` | アクティブ状態を設定する |
 | `Transform@ GetTransform()` | Transformコンポーネントを取得する |
-| `bool GetComponent(?&out)` | コンポーネントを取得する（[詳細](#コンポーネントの取得getcomponent--getcomponents)） |
+| `bool GetComponent(?&out)` | コンポーネントを取得する（[詳細](#コンポーネントの取得追加削除)） |
 | `bool GetComponents(?&out)` | コンポーネントを全件取得する |
+| `bool AddComponent(?&out)` | コンポーネントを新規追加する |
+| `bool RemoveComponent(?&in)` | コンポーネントを削除する |
 
 ### Scene（シーン）
 
@@ -231,6 +250,9 @@ GetComponent(tf);
 | `const string &GetName() const` | シーン名を取得する |
 | `Object@ GetObject(const string &in name) const` | 名前が一致する最初のオブジェクトを取得する |
 | `array<Object@>@ GetObjects(const string &in name) const` | 名前が一致する**全ての**オブジェクトを取得する（0件でも配列は返る） |
+| `Object@ CreateObject(const string &in name = "")` | 空のオブジェクトを新規生成してシーンへ追加する |
+| `Object@ CloneObject(Object@ source, const string &in name = "")` | 既存オブジェクトを複製してシーンへ追加する（`source` はこのシーンに属している必要がある。子オブジェクトや親子関係は複製されない） |
+| `bool DeleteObject(Object@ obj)` | オブジェクトを削除する（子オブジェクトがあれば道連れに削除される） |
 | `void SetNextSceneName(const string &in)` | 次のシーン名を設定する |
 | `bool ChangeToNextScene()` | 次のシーンへ切り替える |
 | `bool HasNextSceneName() const` | 次のシーン名が設定されているかを取得する |
@@ -616,6 +638,26 @@ class Popup : ScriptComponentBehavior {
 | `float/Vector2/Vector3/Vector4 Easing::Eased(start, end, float t, EaseType type)` | `start`→`end` を `t`（0.0～1.0）とイージングタイプで補間する |
 | `float/Vector2/Vector3/Vector4 Easing::EasedGAB(start, end, float t, EaseType goType, EaseType backType)` | `start`→`end`→`start` と行って帰ってくる補間（`t`が0.5未満で行き、0.5以上で帰り） |
 
+## Random（乱数）
+
+`Utilities/RandomValue.h` の乱数関数を `Random::` 名前空間で使用できます。
+
+```angelscript
+int enemyType = Random::Int(0, 2);
+float spawnDelay = Random::Float(1.0f, 3.0f);
+if (Random::Bool(0.1f)) { // 10%の確率でtrue
+    Log("レアドロップ発生");
+}
+```
+
+| 関数 | 説明 |
+|---|---|
+| `int Random::Int(int min, int max)` | `min`以上`max`以下のランダムな整数を取得する |
+| `int64 Random::Int64(int64 min, int64 max)` | `min`以上`max`以下のランダムな64ビット整数を取得する |
+| `float Random::Float(float min, float max)` | `min`以上`max`以下のランダムな浮動小数点数を取得する |
+| `double Random::Double(double min, double max)` | `min`以上`max`以下のランダムな倍精度浮動小数点数を取得する |
+| `bool Random::Bool(float trueProbability = 0.5f)` | `trueProbability`（0.0～1.0）の確率で `true` を返す |
+
 ## サンプルスクリプト
 
 ```angelscript
@@ -674,3 +716,5 @@ class Player : ScriptComponentBehavior {
 - **文字列と数値の連結**: `"value=" + 1.0f` のような連結が可能です（scriptstdstringアドオンによる）。
 - **ポストプロセスエフェクトの内部Params構造体**: `BloomEffect`等が内部で持つ `Params` 構造体自体はスクリプトへ公開されていません。フィールドごとのGet/Setメソッドを使用してください。
 - **`Object@` を要求する引数**: `MeshRenderer::SetTargetObject`や`CameraController::AddFollowTarget`のように `Object@` を引数に取るメソッドへ `null` を渡した場合は何もしません（クラッシュしません）。
+- **AddComponentの追加数上限**: コンポーネント種別ごとに1オブジェクトへ追加できる最大数が決まっており（例: `Transform`は1個まで）、上限を超えて`AddComponent`を呼ぶと失敗し`false`が返ります。
+- **CloneObjectの複製範囲**: `Scene.CloneObject`は対象オブジェクト自身が持つコンポーネントのみを複製します。子オブジェクトの複製や、親子関係（`Transform`の親設定）の引き継ぎは行われません。

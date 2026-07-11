@@ -1,5 +1,6 @@
 #include "Objects/Components/ScriptComponent.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 
@@ -15,6 +16,7 @@
 #include "Objects/Components/Collider/ICollider.h"
 #include "Scene/Components/Script/SceneScriptEngine.h"
 #include "Scene/Components/Script/ScriptBindings.h"
+#include "Utilities/FileIO/Directory.h"
 
 namespace KashipanEngine {
 
@@ -58,6 +60,36 @@ int ResolveIncludePath(const char *include, const char *from, CScriptBuilder *bu
     }
     return builder->AddSectionFromFile(includePath.c_str());
 }
+
+#if defined(USE_IMGUI)
+/// @brief Assetsフォルダ以下に存在する全ての .as ファイルの一覧（キャッシュ）
+/// @details ファイルシステムを毎フレーム走査しないよう、一度取得した結果を保持し、
+///          明示的な更新（RefreshAvailableScriptPaths）があるまで使い回す
+std::vector<std::string> gAvailableScriptPaths;
+bool gAvailableScriptPathsValid = false;
+
+/// @brief Assetsフォルダ以下の .as ファイル一覧を再取得する
+void RefreshAvailableScriptPaths() {
+    gAvailableScriptPaths.clear();
+
+    const auto dir = GetDirectoryData("Assets", true, true);
+    const auto filtered = GetDirectoryDataByExtension(dir, { ".as" });
+    std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
+        for (const auto &file : d.files) gAvailableScriptPaths.push_back(file);
+        for (const auto &subdir : d.subdirectories) flatten(subdir);
+    };
+    flatten(filtered);
+
+    std::sort(gAvailableScriptPaths.begin(), gAvailableScriptPaths.end());
+    gAvailableScriptPathsValid = true;
+}
+
+/// @brief Assetsフォルダ以下の .as ファイル一覧を取得する（未取得の場合は取得してからキャッシュする）
+const std::vector<std::string> &GetAvailableScriptPaths() {
+    if (!gAvailableScriptPathsValid) RefreshAvailableScriptPaths();
+    return gAvailableScriptPaths;
+}
+#endif // USE_IMGUI
 
 } // namespace
 
@@ -500,7 +532,11 @@ void ScriptComponent::ApplyFieldValuesFromJson(const JSON &json) {
 
 #if defined(USE_IMGUI)
 void ScriptComponent::ShowImGui() {
-    ImGuiCustom::EditValue("Script Path", scriptPath_);
+    ImGuiCustom::SelectString("Script Path", scriptPath_, GetAvailableScriptPaths(), true);
+    ImGui::SameLine();
+    if (ImGui::Button("Refresh List")) {
+        RefreshAvailableScriptPaths();
+    }
     ImGui::SameLine();
     if (ImGui::Button("Reload")) {
         if (Reload()) {

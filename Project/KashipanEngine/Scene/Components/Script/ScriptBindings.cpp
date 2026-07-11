@@ -10,6 +10,7 @@
 #include <asbind20/asbind.hpp>
 
 #include "Assets/AudioManager.h"
+#include "ComponentSerialize/ComponentRegistry.h"
 #include "Debug/Logger.h"
 #include "Input/InputCommand.h"
 #include "Math/Matrix3x3.h"
@@ -24,6 +25,7 @@
 #include "Scene/SceneContext.h"
 #include "Utilities/MathUtils/Easings.h"
 #include "Utilities/MyAny.h"
+#include "Utilities/RandomValue.h"
 #include "Utilities/TimeUtils.h"
 #include "Utilities/ValueType.h"
 
@@ -83,8 +85,10 @@ namespace {
 ObjectContext *gCurrentObjectContext = nullptr;
 SceneContext *gCurrentSceneContext = nullptr;
 
-/// @brief スクリプトの型ID→コンポーネント取得処理のマップ（GetComponent(?&out)用）
+/// @brief スクリプトの型ID→コンポーネント取得/生成処理のマップ（GetComponent/AddComponent(?&out)用）
 struct ComponentTypeBinding {
+    /// @brief ComponentRegistryへ登録されている型名（CreateObjectComponentByTypeへ渡す）
+    std::string engineTypeName;
     IObjectComponent *(*getOne)(EmptyObject &) = nullptr;
     std::vector<IObjectComponent *> (*getAll)(EmptyObject &) = nullptr;
 };
@@ -287,6 +291,7 @@ auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
 
     const int typeId = engine->GetTypeIdByDecl(name);
     gComponentTypeBindings[typeId] = ComponentTypeBinding{
+        name,
         +[](EmptyObject &obj) -> IObjectComponent * { return obj.GetComponent<T>(); },
         +[](EmptyObject &obj) -> std::vector<IObjectComponent *> {
             auto typed = obj.GetComponents<T>();
@@ -785,6 +790,40 @@ bool GetComponentsIntoArray(EmptyObject &obj, void *ref, int typeId) {
     return true;
 }
 
+/// @brief 型IDに対応するコンポーネントを新規生成してオブジェクトへ追加し、出力ハンドルへ格納する
+/// @param ref 出力先（T@ 変数へのポインタ）。渡した変数の型からどのコンポーネントを追加するか決まる
+/// @param typeId 出力先のスクリプト型ID
+/// @return 追加できた場合は true（型が未登録、または追加数上限などで失敗した場合は false）
+bool AddComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
+    if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
+    const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+    auto it = gComponentTypeBindings.find(baseTypeId);
+    if (it == gComponentTypeBindings.end()) {
+        *static_cast<void **>(ref) = nullptr;
+        return false;
+    }
+
+    auto newComponent = CreateObjectComponentByType(it->second.engineTypeName);
+    IObjectComponent *added = newComponent ? obj.AddComponent(std::move(newComponent)) : nullptr;
+    // コンポーネント型は参照カウント無し(asOBJ_NOCOUNT)のためAddRefは不要
+    *static_cast<void **>(ref) = added;
+    return added != nullptr;
+}
+
+/// @brief ?&in で渡されたコンポーネントハンドルをオブジェクトから削除する
+/// @param ref 削除したいコンポーネントハンドルへのポインタ
+/// @param typeId 渡されたハンドルのスクリプト型ID
+/// @return 削除できた場合は true
+bool RemoveComponentFromHandle(EmptyObject &obj, void *ref, int typeId) {
+    if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
+    const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+    if (gComponentTypeBindings.find(baseTypeId) == gComponentTypeBindings.end()) return false;
+
+    void *componentPtr = *static_cast<void **>(ref);
+    if (!componentPtr) return false;
+    return obj.RemoveComponent(static_cast<IObjectComponent *>(componentPtr));
+}
+
 /// @brief EmptyObjectのポインタ配列から array<Object@>@ を構築する（Scene::GetObjects用）
 CScriptArray *MakeObjectArray(const std::vector<EmptyObject *> &objects) {
     asIScriptContext *context = asGetActiveContext();
@@ -900,6 +939,12 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         })
         .method("bool GetComponents(?&out)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
             return GetComponentsIntoArray(obj, ref, typeId);
+        })
+        .method("bool AddComponent(?&out)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
+            return AddComponentIntoHandle(obj, ref, typeId);
+        })
+        .method("bool RemoveComponent(?&in)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
+            return RemoveComponentFromHandle(obj, ref, typeId);
         });
 
     asbind20::value_class<ScriptHitInfo>(engine, "HitInfo")
@@ -920,6 +965,14 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("bool ChangeToNextScene()", &SceneContext::ChangeToNextScene)
         .method("bool HasNextSceneName() const", &SceneContext::HasNextSceneName)
         .method("void ClearNextSceneName()", &SceneContext::ClearNextSceneName)
+        // オブジェクトの生成・複製・削除
+        .method("Object@ CreateObject(const string &in name = \"\")", [](SceneContext &scene, const std::string &name) -> EmptyObject * {
+            return scene.CreateEmptyObject(name);
+        })
+        .method("Object@ CloneObject(Object@ source, const string &in name = \"\")", [](SceneContext &scene, EmptyObject *source, const std::string &name) -> EmptyObject * {
+            return scene.CloneObject(source, name);
+        })
+        .method("bool DeleteObject(Object@ obj)", &SceneContext::DeleteObject)
         // シーン変数（このシーンが読み込まれている間だけ有効。スクリプト間で値を受け渡すのに使う）
         .method("bool SetVariable(const string &in, ?&in)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
             return SetSceneVariableFromGeneric(scene, key, ref, typeId);
@@ -985,7 +1038,7 @@ void RegisterEasingBindings(asIScriptEngine *engine) {
     // Easing:: 名前空間へユーティリティ関数をまとめて登録する
     asbind20::namespace_ easingNamespace(engine, "Easing");
     asbind20::global(engine)
-        .function("float Normalize01(float, float, float)",
+        .function("float Normalize01(const float &in, const float &in, const float &in)",
             static_cast<float (*)(const float &, const float &, const float &)>(&Normalize01))
         .function("Vector2 Normalize01(const Vector2 &in, const Vector2 &in, const Vector2 &in)",
             static_cast<Vector2 (*)(const Vector2 &, const Vector2 &, const Vector2 &)>(&Normalize01))
@@ -993,17 +1046,32 @@ void RegisterEasingBindings(asIScriptEngine *engine) {
             static_cast<Vector3 (*)(const Vector3 &, const Vector3 &, const Vector3 &)>(&Normalize01))
         .function("Vector4 Normalize01(const Vector4 &in, const Vector4 &in, const Vector4 &in)",
             static_cast<Vector4 (*)(const Vector4 &, const Vector4 &, const Vector4 &)>(&Normalize01))
-        .function("float Lerp(float, float, float)",
+        .function("float Lerp(const float &in, const float &in, const float &in)",
             static_cast<float (*)(const float &, const float &, const float &)>(&Lerp))
         .function("float Apply(float, EaseType)", &Apply)
-        .function("float Eased(float, float, float, EaseType)", &Eased<float>)
+        .function("float Eased(const float &in, const float &in, float, EaseType)", &Eased<float>)
         .function("Vector2 Eased(const Vector2 &in, const Vector2 &in, float, EaseType)", &Eased<Vector2>)
         .function("Vector3 Eased(const Vector3 &in, const Vector3 &in, float, EaseType)", &Eased<Vector3>)
         .function("Vector4 Eased(const Vector4 &in, const Vector4 &in, float, EaseType)", &Eased<Vector4>)
-        .function("float EasedGAB(float, float, float, EaseType, EaseType)", &EasedGAB<float>)
+        .function("float EasedGAB(const float &in, const float &in, float, EaseType, EaseType)", &EasedGAB<float>)
         .function("Vector2 EasedGAB(const Vector2 &in, const Vector2 &in, float, EaseType, EaseType)", &EasedGAB<Vector2>)
         .function("Vector3 EasedGAB(const Vector3 &in, const Vector3 &in, float, EaseType, EaseType)", &EasedGAB<Vector3>)
         .function("Vector4 EasedGAB(const Vector4 &in, const Vector4 &in, float, EaseType, EaseType)", &EasedGAB<Vector4>);
+}
+
+//==================================================
+// 乱数（Utilities/RandomValue.h）
+//==================================================
+
+/// @brief Random:: 名前空間へ乱数ユーティリティ関数を登録する
+void RegisterRandomBindings(asIScriptEngine *engine) {
+    asbind20::namespace_ randomNamespace(engine, "Random");
+    asbind20::global(engine)
+        .function("int Int(int, int)", &GetRandomInt)
+        .function("int64 Int64(int64, int64)", &GetRandomInt64)
+        .function("float Float(float, float)", &GetRandomFloat)
+        .function("double Double(double, double)", &GetRandomDouble)
+        .function("bool Bool(float trueProbability = 0.5f)", &GetRandomBool);
 }
 
 //==================================================
@@ -1060,6 +1128,14 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("bool GetComponents(?&out)", [](void *ref, int typeId) -> bool {
             auto *owner = gCurrentObjectContext ? const_cast<EmptyObject *>(gCurrentObjectContext->GetOwner()) : nullptr;
             return owner ? GetComponentsIntoArray(*owner, ref, typeId) : false;
+        })
+        .function("bool AddComponent(?&out)", [](void *ref, int typeId) -> bool {
+            auto *owner = gCurrentObjectContext ? const_cast<EmptyObject *>(gCurrentObjectContext->GetOwner()) : nullptr;
+            return owner ? AddComponentIntoHandle(*owner, ref, typeId) : false;
+        })
+        .function("bool RemoveComponent(?&in)", [](void *ref, int typeId) -> bool {
+            auto *owner = gCurrentObjectContext ? const_cast<EmptyObject *>(gCurrentObjectContext->GetOwner()) : nullptr;
+            return owner ? RemoveComponentFromHandle(*owner, ref, typeId) : false;
         });
 }
 
@@ -1237,6 +1313,7 @@ void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     RegisterObjectTypes(engine);
     RegisterComponentTypes(engine);
     RegisterEasingBindings(engine);
+    RegisterRandomBindings(engine);
     RegisterGlobalFunctions(engine);
 }
 

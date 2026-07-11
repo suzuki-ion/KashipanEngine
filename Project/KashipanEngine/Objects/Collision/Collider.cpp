@@ -606,11 +606,9 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     HitInfo2D hiB = hitInfo;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
-    // hitInfo.normal は「Aから見てBへ向かう方向」で計算されるため、
-    // B自身から見た法線（自分から相手が去っていく方向）はその逆向きになる。
-    // これを行わないと、AとBが同じ向きの法線を受け取ってしまい、
-    // どちらがA/Bとして扱われるか（コライダーの登録順や数）によって
-    // 見かけ上の法線方向が不安定になる。
+    // hitInfo.normal は ComputeHit(A, B) により「BからAへ向かう方向
+    // （Aの押し出し方向）」で計算されるため、B側が受け取る法線
+    // （AからBへ向かう＝Bの押し出し方向）はその逆向きになる。
     hiB.normal = -hitInfo.normal;
 
     const bool isHitNow = hitInfo.isHit;
@@ -769,21 +767,31 @@ void Collider::Update3D() {
                 HitInfo3D hitInfoA{};
                 HitInfo3D hitInfoB{};
                 if (pair.getNbContactPoints() > 0) {
-                    hitInfoA = MakeHitInfo(pair.getContactPoint(0));
-                    hitInfoB = hitInfoA;
-                    // getWorldNormal() は collider1(A) から見た法線のため、
-                    // B自身から見た法線はその逆向きになる。ここを揃えないと、
-                    // RP3Dの内部順序（collider1/collider2の割り当て）がシーン内の
-                    // オブジェクト数や状況によって変わった際に、同じ組み合わせの
-                    // 衝突でも得られる法線の向きが不安定になってしまう。
-                    hitInfoB.normal = -hitInfoA.normal;
+                    // getWorldNormal() は collider1(A) から collider2(B) へ向かうベクトル。
+                    // エンジンの規約（2D側の ComputeHit と同じ）では、各コライダーが
+                    // 受け取る法線は「相手から自分へ向かう方向（押し出し方向）」なので、
+                    // B側はそのまま、A側は逆向きになる。
+                    hitInfoB = MakeHitInfo(pair.getContactPoint(0));
+                    hitInfoA = hitInfoB;
+                    hitInfoA.normal = -hitInfoB.normal;
                 } else {
                     hitInfoA.isHit = true;
                     hitInfoB.isHit = true;
                 }
 
-                events.push_back({idA, idB, hitInfoA, hitInfoB});
-                pairs.push_back(MakePairKey(idA, idB));
+                // Dispatch側は MakePairKey（ID昇順）で a/b を復元するため、
+                // ここでも小さいID側を a に揃えておく。これがずれると、RP3Dの
+                // collider1/collider2 の内部順序次第で HitInfo が入れ替わり、
+                // 逆向きの法線が届いてしまう。
+                ColliderID eventA = idA;
+                ColliderID eventB = idB;
+                if (eventA > eventB) {
+                    std::swap(eventA, eventB);
+                    std::swap(hitInfoA, hitInfoB);
+                }
+
+                events.push_back({eventA, eventB, hitInfoA, hitInfoB});
+                pairs.push_back(MakePairKey(eventA, eventB));
             }
         }
     };

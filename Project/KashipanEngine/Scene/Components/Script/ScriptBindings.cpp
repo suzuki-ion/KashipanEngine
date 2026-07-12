@@ -276,6 +276,22 @@ void RegisterMathTypes(asIScriptEngine *engine) {
 }
 
 //==================================================
+// タグ型
+//==================================================
+
+/// @brief Tag型を値型として登録する
+/// @details 文字列からハッシュ値を計算して保持する軽量な比較用タグ。
+///          オブジェクト/コンポーネントのGetTag()との比較や、スクリプト内での分類判定に使う
+void RegisterTagType(asIScriptEngine *engine) {
+    asbind20::value_class<Tag>(engine, "Tag", asOBJ_APP_CLASS_ALLINTS | asOBJ_APP_CLASS_MORE_CONSTRUCTORS)
+        .behaviours_by_traits()
+        .constructor<const std::string &>("const string &in name")
+        .opEquals()
+        .method("uint64 GetHash() const", &Tag::GetHash)
+        .method("bool IsEmpty() const", &Tag::IsEmpty);
+}
+
+//==================================================
 // コンポーネント型
 //==================================================
 
@@ -287,7 +303,10 @@ auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
     binder
         .method("bool IsActive() const", static_cast<bool (T::*)() const>(&T::IsActive))
         .method("void SetActive(bool)", static_cast<void (T::*)(bool)>(&T::SetActive))
-        .method("const string &GetComponentType() const", static_cast<const std::string &(T::*)() const>(&T::GetComponentType));
+        .method("const string &GetComponentType() const", static_cast<const std::string &(T::*)() const>(&T::GetComponentType))
+        .method("void SetTag(const string &in)", static_cast<void (T::*)(const std::string &)>(&T::SetTag))
+        .method("Tag GetTag() const", [](const T &component) -> Tag { return component.GetTag(); })
+        .method("const string &GetTagName() const", [](const T &component) -> const std::string & { return component.GetTagName(); });
 
     const int typeId = engine->GetTypeIdByDecl(name);
     gComponentTypeBindings[typeId] = ComponentTypeBinding{
@@ -939,6 +958,9 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("void SetName(const string &in)", &EmptyObject::SetName)
         .method("bool IsActive() const", &EmptyObject::IsActive)
         .method("void SetActive(bool)", &EmptyObject::SetActive)
+        .method("void SetTag(const string &in)", &EmptyObject::SetTag)
+        .method("Tag GetTag() const", [](const EmptyObject &obj) -> Tag { return obj.GetTag(); })
+        .method("const string &GetTagName() const", &EmptyObject::GetTagName)
         .method("Transform@ GetTransform()", [](EmptyObject &obj) -> Transform * { return obj.GetComponent<Transform>(); })
         .method("bool GetComponent(?&out)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
             return GetComponentIntoHandle(obj, ref, typeId);
@@ -1312,6 +1334,8 @@ bool GenerateScriptPredefinedFile(asIScriptEngine *engine, const std::string &fi
 void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     if (!engine) return;
     RegisterMathTypes(engine);
+    // Tag はコンポーネント共通メソッド（GetTag等）が参照するため、コンポーネント登録より先に登録する
+    RegisterTagType(engine);
     // Transform は Object::GetTransform() が参照するため、Object/Scene より先に登録する
     RegisterTransformType(engine);
     // Object/Scene はここで一度に登録する。以降に登録するコンポーネント（MeshRenderer等）は

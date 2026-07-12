@@ -4,7 +4,8 @@
             "data": {
                 "data": {},
                 "isActive": true,
-                "priority": 1000
+                "priority": 1000,
+                "tag": ""
             },
             "type": "SceneRenderer"
         },
@@ -12,7 +13,8 @@
             "data": {
                 "data": {},
                 "isActive": true,
-                "priority": 1
+                "priority": 1,
+                "tag": ""
             },
             "type": "SceneScriptEngine"
         }
@@ -43,7 +45,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -56,7 +59,8 @@
                             "width": 1280
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "ScreenBufferObject"
                 },
@@ -71,14 +75,16 @@
                             "strength": 0.0034000000450760126
                         },
                         "isActive": false,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "ChromaticAberrationEffect"
                 }
             ],
             "isActive": true,
             "name": "ScreenBuffer",
-            "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
+            "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+            "tag": ""
         },
         {
             "components": [
@@ -87,8 +93,8 @@
                         "customData": {
                             "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
                             "rotate": {
-                                "w": 0.999875545501709,
-                                "x": -0.015783458948135376,
+                                "w": 0.9998754262924194,
+                                "x": -0.015783457085490227,
                                 "y": 0.0,
                                 "z": 0.0
                             },
@@ -98,13 +104,14 @@
                                 "z": 1.0000052452087402
                             },
                             "translate": {
-                                "x": 1.4922871589660645,
-                                "y": 1.6799999475479126,
-                                "z": -17.188833236694336
+                                "x": 0.0,
+                                "y": 1.6800098419189453,
+                                "z": -7.690304756164551
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -119,7 +126,8 @@
                             "orthographic": false
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Camera3D"
                 },
@@ -134,14 +142,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "CameraRenderer"
                 }
             ],
             "isActive": true,
             "name": "Camera3D",
-            "objectID": "a47798a2-a2a3-4514-a7c7-bb75c0ad7aa7"
+            "objectID": "a47798a2-a2a3-4514-a7c7-bb75c0ad7aa7",
+            "tag": ""
         },
         {
             "components": [
@@ -167,7 +177,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -188,11 +199,12 @@
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowDistance": 100.0,
-                            "shadowMapResolution": 4096,
+                            "shadowMapResolution": 2048,
                             "type": 0
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Light"
                 },
@@ -203,14 +215,162 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 950
+                        "priority": 950,
+                        "tag": ""
                     },
                     "type": "LightRenderer"
                 }
             ],
-            "isActive": true,
+            "isActive": false,
             "name": "DirectonalLight",
-            "objectID": "e93dba32-a59a-49fe-9df6-9b84c978abd3"
+            "objectID": "e93dba32-a59a-49fe-9df6-9b84c978abd3",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 0.26097390055656433,
+                                "x": 0.31695836782455444,
+                                "y": 0.8680585622787476,
+                                "z": -0.2791135013103485
+                            },
+                            "scale": {
+                                "x": 0.9999756217002869,
+                                "y": 0.99998539686203,
+                                "z": 0.9999700784683228
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 0.7223681807518005,
+                                "y": 0.9907692074775696,
+                                "z": 0.6432379484176636
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.3799999952316284,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "isActive": false,
+            "name": "DirectonalLight",
+            "objectID": "976e5d3d-2144-4ab6-beee-c6cf098f10b7",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 0.6463260650634766,
+                                "x": 0.09919355809688568,
+                                "y": -0.6355223655700684,
+                                "z": 0.4105296730995178
+                            },
+                            "scale": {
+                                "x": 0.9999939203262329,
+                                "y": 0.9999889135360718,
+                                "z": 0.9999808669090271
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 0.9907692074775696,
+                                "y": 0.6432379484176636,
+                                "z": 0.6432379484176636
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.3799999952316284,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "isActive": false,
+            "name": "DirectonalLight",
+            "objectID": "787930c0-2729-480d-bf7b-5097a49e1e19",
+            "tag": ""
         },
         {
             "components": [
@@ -236,7 +396,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -247,8 +408,8 @@
                             "color": {
                                 "w": 1.0,
                                 "x": 1.0,
-                                "y": 0.6430768966674805,
-                                "z": 0.6430768966674805
+                                "y": 0.0,
+                                "z": 0.0
                             },
                             "decay": 2.0,
                             "distance": 10.0,
@@ -261,7 +422,8 @@
                             "type": 1
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Light"
                 },
@@ -272,14 +434,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "LightRenderer"
                 }
             ],
             "isActive": true,
             "name": "PointLight",
-            "objectID": "5a20b59b-3f11-438b-8e5f-1ebbbf59d3a0"
+            "objectID": "5a20b59b-3f11-438b-8e5f-1ebbbf59d3a0",
+            "tag": ""
         },
         {
             "components": [
@@ -305,7 +469,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -315,8 +480,8 @@
                             "castShadows": true,
                             "color": {
                                 "w": 1.0,
-                                "x": 0.6430768966674805,
-                                "y": 0.7792567610740662,
+                                "x": 0.0,
+                                "y": 0.38153886795043945,
                                 "z": 1.0
                             },
                             "decay": 2.0,
@@ -330,7 +495,8 @@
                             "type": 1
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Light"
                 },
@@ -341,14 +507,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "LightRenderer"
                 }
             ],
             "isActive": true,
             "name": "PointLight",
-            "objectID": "c89cf304-be50-4a70-a4ef-72b3e05b4200"
+            "objectID": "c89cf304-be50-4a70-a4ef-72b3e05b4200",
+            "tag": ""
         },
         {
             "components": [
@@ -374,7 +542,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -384,9 +553,9 @@
                             "castShadows": true,
                             "color": {
                                 "w": 1.0,
-                                "x": 0.6452733278274536,
+                                "x": 0.00615382194519043,
                                 "y": 1.0,
-                                "z": 0.6430768966674805
+                                "z": 0.0
                             },
                             "decay": 2.0,
                             "distance": 10.0,
@@ -399,7 +568,8 @@
                             "type": 1
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Light"
                 },
@@ -410,14 +580,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "LightRenderer"
                 }
             ],
             "isActive": true,
             "name": "PointLight",
-            "objectID": "88bee54f-438c-4cf1-a268-0986f4cb0bb7"
+            "objectID": "88bee54f-438c-4cf1-a268-0986f4cb0bb7",
+            "tag": ""
         },
         {
             "components": [
@@ -443,7 +615,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -468,7 +641,8 @@
                             "type": 2
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Light"
                 },
@@ -479,14 +653,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 950
+                        "priority": 950,
+                        "tag": ""
                     },
                     "type": "LightRenderer"
                 }
             ],
-            "isActive": true,
+            "isActive": false,
             "name": "SpotLight",
-            "objectID": "8aa467b4-04ff-4c6c-b8e2-1f57d8a79390"
+            "objectID": "8aa467b4-04ff-4c6c-b8e2-1f57d8a79390",
+            "tag": ""
         },
         {
             "components": [
@@ -512,7 +688,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -522,7 +699,8 @@
                             "meshHandle": 7
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "MeshFilter"
                 },
@@ -534,14 +712,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 900
+                        "priority": 900,
+                        "tag": ""
                     },
                     "type": "MeshRenderer"
                 }
             ],
             "isActive": true,
             "name": "Ground",
-            "objectID": "112267b3-81b8-4a1e-b9c5-71cb635b06cc"
+            "objectID": "112267b3-81b8-4a1e-b9c5-71cb635b06cc",
+            "tag": ""
         },
         {
             "components": [
@@ -567,7 +747,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -577,7 +758,8 @@
                             "meshHandle": 7
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "MeshFilter"
                 },
@@ -589,14 +771,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 900
+                        "priority": 900,
+                        "tag": ""
                     },
                     "type": "MeshRenderer"
                 }
             ],
             "isActive": true,
             "name": "Box",
-            "objectID": "e2b4b8db-ed6e-40b8-b5fc-5155eddbfde3"
+            "objectID": "e2b4b8db-ed6e-40b8-b5fc-5155eddbfde3",
+            "tag": ""
         },
         {
             "components": [
@@ -622,7 +806,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -632,7 +817,8 @@
                             "meshHandle": 1
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "MeshFilter"
                 },
@@ -644,14 +830,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 900
+                        "priority": 900,
+                        "tag": ""
                     },
                     "type": "MeshRenderer"
                 }
             ],
             "isActive": true,
             "name": "Sphere",
-            "objectID": "da9332df-cda4-4285-8c95-563c9682aba1"
+            "objectID": "da9332df-cda4-4285-8c95-563c9682aba1",
+            "tag": ""
         },
         {
             "components": [
@@ -677,7 +865,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -687,7 +876,8 @@
                             "meshHandle": 16
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "MeshFilter"
                 },
@@ -699,14 +889,16 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 900
+                        "priority": 900,
+                        "tag": ""
                     },
                     "type": "MeshRenderer"
                 }
             ],
             "isActive": true,
             "name": "Tetrahedron",
-            "objectID": "4bad31aa-0c90-497c-b996-295e85d7cdb2"
+            "objectID": "4bad31aa-0c90-497c-b996-295e85d7cdb2",
+            "tag": ""
         }
     ],
     "sceneVariables": [

@@ -18,6 +18,7 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 5. [コンポーネントの取得・追加・削除](#コンポーネントの取得追加削除)
 6. [グローバル関数](#グローバル関数)
 7. [オブジェクト・シーン型](#オブジェクトシーン型)
+    - [Tag（タグ）](#tagタグ)
 8. [シーン変数（スクリプト間の値の受け渡し）](#シーン変数スクリプト間の値の受け渡し)
 9. [コンポーネント型](#コンポーネント型)
 10. [数学型](#数学型)
@@ -299,6 +300,9 @@ GetComponent(tf);
 | `void SetName(const string &in)` | オブジェクト名を設定する |
 | `bool IsActive() const` | アクティブ状態を取得する |
 | `void SetActive(bool)` | アクティブ状態を設定する |
+| `void SetTag(const string &in)` | タグを設定する（[詳細](#tagタグ)） |
+| `Tag GetTag() const` | タグを取得する（比較用） |
+| `const string &GetTagName() const` | タグの文字列を取得する |
 | `Transform@ GetTransform()` | Transformコンポーネントを取得する |
 | `bool GetComponent(?&out)` | コンポーネントを取得する（[詳細](#コンポーネントの取得追加削除)） |
 | `bool GetComponents(?&out)` | コンポーネントを全件取得する |
@@ -327,6 +331,43 @@ GetComponent(tf);
 | `bool GetGlobalVariable(const string &in key, ?&out value)` | グローバルシーン変数を取得する |
 | `bool HasGlobalVariable(const string &in key)` | グローバルシーン変数が存在するかどうか |
 | `bool RemoveGlobalVariable(const string &in key)` | グローバルシーン変数を削除する |
+
+### Tag（タグ）
+
+文字列からハッシュ値（FNV-1a 64bit）を計算して保持する軽量な値型です。比較（`==` / `!=`）はハッシュ値同士で行われるため、文字列比較より高速にオブジェクトやコンポーネントの分類・判別ができます。
+
+| メンバ | 説明 |
+|---|---|
+| `Tag()` | 既定のタグを作成する（空文字列のタグと等しい） |
+| `Tag(const string &in name)` | 文字列からタグを作成する |
+| `uint64 GetHash() const` | 内部のハッシュ値を取得する |
+| `bool IsEmpty() const` | 空文字列のタグ（未設定）かどうか |
+| `==` / `!=` | ハッシュ値同士の比較 |
+
+タグはエディターのインスペクター（オブジェクト・各コンポーネント・シーンコンポーネントの「Tag」欄）からも設定でき、シーンへ保存されます。スクリプト側では `SetTag` / `GetTag` / `GetTagName` で読み書きします。
+
+```angelscript
+class Player : ScriptComponentBehavior {
+    // スクリプト側でTagを作成して比較に使う
+    Tag enemyTag("Enemy");
+
+    void Start() {
+        // オブジェクトへのタグ設定（コンポーネントにも同様に設定できる）
+        GetOwnerObject().SetTag("Player");
+    }
+
+    void OnCollisionEnter(const HitInfo &in hit) {
+        if (hit.otherObject is null) return;
+        // タグでの判別（名前と違い、ハッシュ同士の高速な比較になる）
+        if (hit.otherObject.GetTag() == enemyTag) {
+            Log("敵と衝突: " + hit.otherObject.GetTagName());
+        }
+    }
+}
+```
+
+- 同じ文字列からは常に同じハッシュ値が計算されるため、別々の場所で `Tag("Enemy")` と作成したもの同士も等しくなります。
+- タグ未設定（空文字列）の状態は `IsEmpty()` で判定できます。`Tag()`（既定値）とも等しくなります。
 
 ## シーン変数（スクリプト間の値の受け渡し）
 
@@ -361,6 +402,9 @@ GetScene().GetGlobalVariable("score", score);
 | `bool IsActive() const` | アクティブ状態を取得する |
 | `void SetActive(bool)` | アクティブ状態を設定する |
 | `const string &GetComponentType() const` | コンポーネントの種類名を取得する |
+| `void SetTag(const string &in)` | タグを設定する（[詳細](#tagタグ)） |
+| `Tag GetTag() const` | タグを取得する（比較用） |
+| `const string &GetTagName() const` | タグの文字列を取得する |
 
 ### Transform
 

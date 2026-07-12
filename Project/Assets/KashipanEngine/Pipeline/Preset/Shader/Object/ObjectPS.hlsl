@@ -109,7 +109,13 @@ PSOutput main(VSOutput input) {
 			float spec = BlinnPhongReflection(input.normal, light.direction, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor;
-			lightingColor += diffuse + speculer;
+			// このライトが影を生成する場合、カスケードシャドウマップから影係数を求めて
+			// このライトの寄与のみを減衰させる
+			float shadow = 1.0f;
+			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+				shadow = ComputeDirectionalShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.direction);
+			}
+			lightingColor += (diffuse + speculer) * shadow;
 		}
 	}
 
@@ -133,7 +139,12 @@ PSOutput main(VSOutput input) {
 			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity * atten;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
-			lightingColor += diffuse + speculer;
+			// このライトが影を生成する場合、キューブシャドウマップから影係数を求める
+			float shadow = 1.0f;
+			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+				shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.position);
+			}
+			lightingColor += (diffuse + speculer) * shadow;
 		}
 	}
 
@@ -161,10 +172,15 @@ PSOutput main(VSOutput input) {
 			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity * atten;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
-			lightingColor += diffuse + speculer;
+			// このライトが影を生成する場合、シャドウマップから影係数を求める
+			float shadow = 1.0f;
+			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+				shadow = ComputeSpotShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, lightDir);
+			}
+			lightingColor += (diffuse + speculer) * shadow;
 		}
 	}
-	
+
 	// Environment map
 	if (mat.enableEnvironmentMapping) {
 		float3 cameraToPosition = input.worldPosition - gCamera3D.eyePosition.xyz;
@@ -175,11 +191,6 @@ PSOutput main(VSOutput input) {
 
 	output.color = baseColor * lightingColor + envColor;
 
-	if (mat.enableShadowMapProjection) {
-		float shadow = ComputeShadowFactor(input.worldPosition);
-		output.color *= shadow;
-	}
-	
 	output.color.a = mat.color.a * textureColor.a;
 	if (output.color.a < 0.01f) {
 		discard;

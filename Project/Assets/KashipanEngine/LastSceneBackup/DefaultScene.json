@@ -25,133 +25,6 @@
                 {
                     "data": {
                         "customData": {
-                            "parent": "4aeae184-8b78-4af0-bc21-da2f9467b1d5",
-                            "rotate": {
-                                "w": 0.7071067094802856,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.7071068286895752
-                            },
-                            "scale": {
-                                "x": 0.9999673366546631,
-                                "y": 0.9999673366546631,
-                                "z": 1.000000238418579
-                            },
-                            "translate": {
-                                "x": 3.2311196327209473,
-                                "y": 2.2835468627135924e-08,
-                                "z": -0.28997504711151123
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "meshHandle": 11
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "MeshFilter"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "materialName": "ScreenBuffer2Mat",
-                            "pipelineName": "Object3D.Solid.BlendNormal",
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "MeshRenderer"
-                }
-            ],
-            "isActive": true,
-            "name": "TestObject",
-            "objectID": "c6e243c1-ec22-4c9a-8009-e4a5e9f93a8f"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
-                            "parent": "4aeae184-8b78-4af0-bc21-da2f9467b1d5",
-                            "rotate": {
-                                "w": 0.9559246301651001,
-                                "x": -0.046724364161491394,
-                                "y": 0.02525750733911991,
-                                "z": 0.28876808285713196
-                            },
-                            "scale": {
-                                "x": 1.0000427961349487,
-                                "y": 1.0000383853912354,
-                                "z": 0.999994695186615
-                            },
-                            "translate": {
-                                "x": 0.05930197238922119,
-                                "y": 1.6264057159423828,
-                                "z": -7.693900108337402
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "meshHandle": 14
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "MeshFilter"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "fields": {
-                                "angularVelocity": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 1.0
-                                }
-                            },
-                            "scriptPath": "Assets\\Application\\Scripts\\AlwaysRotate.as"
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "ScriptComponent"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "materialName": "ScreenBuffer2Mat",
-                            "pipelineName": "Object3D.Solid.BlendNormal",
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
-                        },
-                        "isActive": true,
-                        "priority": 900
-                    },
-                    "type": "MeshRenderer"
-                }
-            ],
-            "isActive": true,
-            "name": "EmptyObject",
-            "objectID": "f1029f3e-37b2-4140-9bff-0e4575564d14"
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
                             "rotate": {
                                 "w": 1.0,
                                 "x": 0.0,
@@ -258,7 +131,7 @@
                                 "Pixel:gCamera3D"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
+                            "targetObjectID": ""
                         },
                         "isActive": true,
                         "priority": 1
@@ -277,20 +150,20 @@
                         "customData": {
                             "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
                             "rotate": {
-                                "w": 0.9457409381866455,
-                                "x": 0.2523229718208313,
-                                "y": -0.17131030559539795,
-                                "z": 0.11207094043493271
+                                "w": 0.8755530714988708,
+                                "x": 0.4040954113006592,
+                                "y": 0.23460865020751953,
+                                "z": 0.1227700412273407
                             },
                             "scale": {
-                                "x": 1.0,
-                                "y": 1.000009536743164,
-                                "z": 1.000011920928955
+                                "x": 0.9999738335609436,
+                                "y": 0.9999821186065674,
+                                "z": 0.9999738335609436
                             },
                             "translate": {
-                                "x": -1.6490000486373901,
-                                "y": 1.0829999446868896,
-                                "z": 3.328188896179199
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
                             }
                         },
                         "isActive": true,
@@ -301,18 +174,21 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "color": {
                                 "w": 1.0,
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "x": 0.6432379484176636,
+                                "y": 0.6475152373313904,
+                                "z": 0.9907692074775696
                             },
-                            "decay": 1.7999999523162842,
+                            "decay": 2.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 0.9200000166893005,
+                            "intensity": 0.3799999952316284,
                             "outerAngle": 0.6000000238418579,
-                            "radius": 28.299999237060547,
+                            "radius": 10.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 4096,
                             "type": 0
                         },
                         "isActive": true,
@@ -323,8 +199,77 @@
                 {
                     "data": {
                         "customData": {
+                            "pipelineName": "",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "DirectonalLight",
+            "objectID": "e93dba32-a59a-49fe-9df6-9b84c978abd3"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.000009536743164,
+                                "z": 1.000011920928955
+                            },
+                            "translate": {
+                                "x": -2.381734848022461,
+                                "y": 2.000001907348633,
+                                "z": -3.1186442375183105
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 0.6430768966674805,
+                                "z": 0.6430768966674805
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 1.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 8.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "type": 1
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "pipelineName": "Object3D.Solid.BlendNormal",
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
+                            "targetObjectID": ""
                         },
                         "isActive": true,
                         "priority": 1
@@ -350,95 +295,60 @@
                             },
                             "scale": {
                                 "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "y": 1.000009536743164,
+                                "z": 1.000011920928955
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": -0.4763147234916687,
+                                "y": 2.0000009536743164,
+                                "z": 3.6987805366516113
                             }
                         },
                         "isActive": true,
                         "priority": 1
                     },
                     "type": "Transform"
-                }
-            ],
-            "isActive": true,
-            "name": "TestParentObject",
-            "objectID": "4aeae184-8b78-4af0-bc21-da2f9467b1d5"
-        },
-        {
-            "components": [
+                },
                 {
                     "data": {
                         "customData": {
-                            "rotate": {
+                            "castShadows": true,
+                            "color": {
                                 "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 1.0,
+                                "x": 0.6430768966674805,
+                                "y": 0.7792567610740662,
                                 "z": 1.0
                             },
-                            "translate": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            }
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 1.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 8.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "type": 1
                         },
                         "isActive": true,
                         "priority": 1
                     },
-                    "type": "Transform"
+                    "type": "Light"
                 },
                 {
                     "data": {
                         "customData": {
-                            "height": 720,
-                            "isShowViewer": true,
-                            "name": "ScreenBuffer_1",
-                            "width": 1280
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
                         },
                         "isActive": true,
                         "priority": 1
                     },
-                    "type": "ScreenBufferObject"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "baseTexture": "KashipanEngine/uvChecker.png",
-                            "baseTextureColor": [
-                                1.0,
-                                1.0,
-                                1.0,
-                                1.0
-                            ],
-                            "edgeColor": [
-                                1.0,
-                                1.0,
-                                1.0,
-                                1.0
-                            ],
-                            "edgeThickness": 0.10000000149011612,
-                            "excludedScreenBuffers": [],
-                            "maskTexture": "Application/Image/noise0.png",
-                            "maskThreshold": 0.0
-                        },
-                        "isActive": true,
-                        "priority": 1
-                    },
-                    "type": "DissolveEffect"
+                    "type": "LightRenderer"
                 }
             ],
             "isActive": true,
-            "name": "ScreenBuffer2",
-            "objectID": "7ee66625-9d8c-4e22-8cf6-3598988ffed3"
+            "name": "PointLight",
+            "objectID": "c89cf304-be50-4a70-a4ef-72b3e05b4200"
         },
         {
             "components": [
@@ -454,13 +364,13 @@
                             },
                             "scale": {
                                 "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "y": 1.000009536743164,
+                                "z": 1.000011920928955
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": 3.3150501251220703,
+                                "y": 2.0,
+                                "z": -0.8690711259841919
                             }
                         },
                         "isActive": true,
@@ -471,35 +381,112 @@
                 {
                     "data": {
                         "customData": {
-                            "farClip": 1000.0,
-                            "height": 720.0,
-                            "nearClip": 0.0,
-                            "width": 1280.0
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 0.6452733278274536,
+                                "y": 1.0,
+                                "z": 0.6430768966674805
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 1.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 8.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 512,
+                            "type": 1
                         },
                         "isActive": true,
                         "priority": 1
                     },
-                    "type": "Camera2D"
+                    "type": "Light"
                 },
                 {
                     "data": {
                         "customData": {
-                            "bindVariableNames": [
-                                "Vertex:gCamera2D",
-                                "Pixel:gCamera2D"
-                            ],
-                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "PointLight",
+            "objectID": "88bee54f-438c-4cf1-a268-0986f4cb0bb7"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 0.973143458366394,
+                                "x": 0.2301996499300003,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0000065565109253,
+                                "z": 1.0000065565109253
+                            },
+                            "translate": {
+                                "x": -0.20099741220474243,
+                                "y": 5.081628799438477,
+                                "z": -6.836292266845703
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 16.0,
+                            "innerAngle": 0.4886922240257263,
+                            "intensity": 1.0,
+                            "outerAngle": 0.8028514385223389,
+                            "radius": 10.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "type": 2
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "",
+                            "targetObjectID": ""
                         },
                         "isActive": true,
                         "priority": 950
                     },
-                    "type": "CameraRenderer"
+                    "type": "LightRenderer"
                 }
             ],
             "isActive": true,
-            "name": "Camera2D",
-            "objectID": "b1f3b537-b896-4bfe-946d-767478413149"
+            "name": "SpotLight",
+            "objectID": "8aa467b4-04ff-4c6c-b8e2-1f57d8a79390"
         },
         {
             "components": [
@@ -514,9 +501,9 @@
                                 "z": 0.0
                             },
                             "scale": {
-                                "x": 512.0,
-                                "y": 512.0,
-                                "z": 0.0
+                                "x": 16.0,
+                                "y": 1.0,
+                                "z": 16.0
                             },
                             "translate": {
                                 "x": 0.0,
@@ -532,7 +519,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 15
+                            "meshHandle": 7
                         },
                         "isActive": true,
                         "priority": 1
@@ -542,27 +529,19 @@
                 {
                     "data": {
                         "customData": {
-                            "anchor": {
-                                "x": 0.0,
-                                "y": 0.0
-                            },
-                            "materialName": "ScreenBuffer2Mat",
-                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
-                            "pivot": {
-                                "x": 0.5,
-                                "y": 0.5
-                            },
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
                         },
                         "isActive": true,
                         "priority": 900
                     },
-                    "type": "SpriteRenderer"
+                    "type": "MeshRenderer"
                 }
             ],
             "isActive": true,
-            "name": "Sprite",
-            "objectID": "1fddeba8-9481-4a99-acb2-41290b9a3a8d"
+            "name": "Ground",
+            "objectID": "112267b3-81b8-4a1e-b9c5-71cb635b06cc"
         },
         {
             "components": [
@@ -582,8 +561,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 217.31982421875,
-                                "y": 396.2235107421875,
+                                "x": -1.2599999904632568,
+                                "y": 1.0,
                                 "z": 0.0
                             }
                         },
@@ -595,7 +574,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 11
+                            "meshHandle": 7
                         },
                         "isActive": true,
                         "priority": 1
@@ -605,27 +584,129 @@
                 {
                     "data": {
                         "customData": {
-                            "anchor": {
-                                "x": 0.5,
-                                "y": 0.5
-                            },
-                            "materialName": "ScreenBuffer2Mat",
-                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
-                            "pivot": {
-                                "x": 0.5,
-                                "y": 0.5
-                            },
-                            "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
                         },
                         "isActive": true,
                         "priority": 900
                     },
-                    "type": "SpriteRenderer"
+                    "type": "MeshRenderer"
                 }
             ],
             "isActive": true,
-            "name": "Sprite",
-            "objectID": "0fffb242-efd3-4beb-b3b2-2e9b889773c4"
+            "name": "Box",
+            "objectID": "e2b4b8db-ed6e-40b8-b5fc-5155eddbfde3"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.9996526837348938,
+                                "y": 1.0,
+                                "z": 0.8900163769721985
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 1
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "Sphere",
+            "objectID": "da9332df-cda4-4285-8c95-563c9682aba1"
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 2.2910535335540771e-07,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 0.9999904036521912,
+                                "y": 0.9999839663505554,
+                                "z": 0.9999720454216003
+                            },
+                            "translate": {
+                                "x": 0.5640653967857361,
+                                "y": 0.9999861121177673,
+                                "z": -0.6584042906761169
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "isActive": true,
+            "name": "Tetrahedron",
+            "objectID": "4bad31aa-0c90-497c-b996-295e85d7cdb2"
         }
     ],
     "sceneVariables": [

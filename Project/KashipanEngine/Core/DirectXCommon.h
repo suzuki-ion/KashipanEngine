@@ -88,6 +88,7 @@ public:
     void AddRecordCommandList(Passkey<ScreenBuffer>, ID3D12CommandList* list);
     void AddRecordCommandList(Passkey<ShadowMapBuffer>, ID3D12CommandList* list);
     void AddRecordCommandList(Passkey<ComputeCommandProcessor>, ID3D12CommandList* list);
+    void AddRecordCommandList(Passkey<Renderer>, ID3D12CommandList* list);
 
 #if defined(USE_IMGUI)
     /// @brief D3D12デバイス取得（ImGui 用）
@@ -109,17 +110,20 @@ public:
     int AcquireCommandObjects(Passkey<ScreenBuffer>);
     int AcquireCommandObjects(Passkey<ShadowMapBuffer>);
     int AcquireCommandObjects(Passkey<ComputeCommandProcessor>);
+    int AcquireCommandObjects(Passkey<Renderer>);
 
     /// @brief コマンドオブジェクトを取得
     DX12Commands* GetCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
     DX12Commands* GetCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
     DX12Commands* GetCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex);
+    DX12Commands* GetCommandObjects(Passkey<Renderer>, int slotIndex);
 
     /// @brief コマンドオブジェクトを解放
     void ReleaseCommandObjects(Passkey<DX12SwapChain>, int slotIndex);
     void ReleaseCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
     void ReleaseCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
     void ReleaseCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex);
+    void ReleaseCommandObjects(Passkey<Renderer>, int slotIndex);
 
 private:
     DirectXCommon(const DirectXCommon &) = delete;

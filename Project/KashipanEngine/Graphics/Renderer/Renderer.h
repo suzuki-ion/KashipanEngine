@@ -1,15 +1,21 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <span>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "Utilities/Passkeys.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 
 namespace KashipanEngine {
 
+class DepthStencilResource;
 class DirectXCommon;
+class DX12Commands;
 class GraphicsEngine;
+class LightRenderer;
 class PipelineManager;
 class PipelineBinder;
 class ResourceContainer;
@@ -38,10 +44,45 @@ public:
     /// @brief GPUリソースの全開放
     void ReleaseAllResources(Passkey<GraphicsEngine>);
 
+    /// @brief カスケードシャドウ（Directionalライト）のカスケード数
+    static constexpr std::uint32_t kShadowCascadeCount = 4;
+    /// @brief 1描画先で同時に影を生成できるライト数の上限（定数バッファサイズによる実質上限）
+    static constexpr std::uint32_t kMaxShadowLightsPerTarget = 16;
+    /// @brief 1ライトあたりのビュー射影行列の最大数（ポイントライトのキューブ6面が最大）
+    static constexpr std::uint32_t kMaxShadowViewProjections = 6;
+
 private:
+    /// @brief シャドウマップ描画ジョブ1件分のデータ
+    /// @details Directionalは（ライト×描画先カメラ）ごと、Spot/Pointはライトごとに1ジョブ。
+    ///          シャドウマップ配列内のスライス範囲 [baseSlice, baseSlice + sliceCount) を占有する
+    struct ShadowJobData {
+        Matrix4x4 viewProjections[kMaxShadowViewProjections];
+        float cascadeSplits[kShadowCascadeCount]{};
+        /// @brief カスケードごとの深度バイアス係数（1テクセルのワールドサイズをNDC深度へ換算した値。Directional用）
+        float cascadeBiasScales[kShadowCascadeCount]{};
+        /// @brief 透視投影の深度バイアス係数（シェーダー側でビュー深度で割って1テクセル相当のNDCバイアスになる。Spot/Point用）
+        float perspectiveBiasScale = 0.0f;
+        std::uint32_t baseSlice = 0;
+        std::uint32_t sliceCount = 0;
+        int lightType = 0;  ///< 0: Directional / 1: Spot / 2: Point（HLSL側と対応）
+    };
+    /// @brief 描画先ごとの「影を生成するライト」の割り当て（並び順がシェーダーのshadowMapIndexに対応）
+    struct TargetShadowEntry {
+        const LightRenderer *lightRenderer = nullptr;
+        int jobIndex = -1;
+    };
+
     /// @brief シーン内のComputeShaderProcessingコンポーネントを処理する（Dispatch実行）
     /// @details 専用コマンドリスト（ComputeCommandProcessor）上で全てまとめて記録・実行される
     void ProcessComputeShaders(SceneContext *sceneContext);
+
+    /// @brief 描画先ごとのシャドウマップ描画パスを実行する
+    /// @details 各描画先について「その描画先で使うカメラ」と「その描画先に適用されるライト」から
+    ///          影を生成するライトを収集し（多すぎる場合はカメラに近い順に優先）、
+    ///          Directional=4カスケード / Spot=1面 / Point=キューブ6面 のシャドウマップを
+    ///          1つのTexture2DArrayへまとめて描画する
+    void RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
+        const std::vector<IRenderTarget *> &targets);
 
     /// @brief シーン内のSkinnedMeshRendererに対してGPUスキニング（Computeシェーダー）を実行する
     /// @details 描画リスト構築・描画より先に実行し、各インスタンスのスキニング結果バッファを
@@ -100,6 +141,24 @@ private:
     PipelineManager *pipelineManager_ = nullptr;
     /// @brief GPUリソースキャッシュ
     std::unique_ptr<ResourceContainer> resourceContainer_;
+
+    //==================================================
+    // シャドウマップ
+    //==================================================
+
+    /// @brief 今フレームのシャドウマップ描画ジョブ
+    std::vector<ShadowJobData> shadowJobs_;
+    /// @brief 描画先ごとの「影を生成するライト」割り当て
+    std::unordered_map<const IRenderTarget *, std::vector<TargetShadowEntry>> targetShadowEntries_;
+    /// @brief 全シャドウマップをスライスとしてまとめたTexture2DArray（エンジン内部で自動生成・管理）
+    std::unique_ptr<DepthStencilResource> shadowMapArray_;
+    std::uint32_t shadowArrayResolution_ = 0;
+    std::uint32_t shadowArraySliceCount_ = 0;
+    /// @brief シャドウマップ配列がシェーダーから参照可能な状態（SRV遷移済み）かどうか
+    bool shadowArrayReady_ = false;
+    /// @brief シャドウパス記録用のコマンドスロット
+    int shadowCommandSlotIndex_ = -1;
+    DX12Commands *shadowCommands_ = nullptr;
 };
 
 } // namespace KashipanEngine

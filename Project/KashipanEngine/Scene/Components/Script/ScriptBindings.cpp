@@ -522,7 +522,13 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetInnerAngle(float)", &Light::SetInnerAngle)
         .method("float GetInnerAngle() const", &Light::GetInnerAngle)
         .method("void SetOuterAngle(float)", &Light::SetOuterAngle)
-        .method("float GetOuterAngle() const", &Light::GetOuterAngle);
+        .method("float GetOuterAngle() const", &Light::GetOuterAngle)
+        .method("void SetCastShadows(bool)", &Light::SetCastShadows)
+        .method("bool IsCastShadows() const", &Light::IsCastShadows)
+        .method("void SetShadowDistance(float)", &Light::SetShadowDistance)
+        .method("float GetShadowDistance() const", &Light::GetShadowDistance)
+        .method("void SetShadowMapResolution(uint)", &Light::SetShadowMapResolution)
+        .method("uint GetShadowMapResolution() const", &Light::GetShadowMapResolution);
 
     RegisterComponentType<LightRenderer>(engine, "LightRenderer")
         .method("void SetPipelineName(const string &in)", &LightRenderer::SetPipelineName)

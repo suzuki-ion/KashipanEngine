@@ -155,7 +155,15 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
         ImGui::SetNextItemOpen(storedOpen, ImGuiCond_Once);
     }
 
+    // 非アクティブなオブジェクトは灰色の文字で表示する
+    const bool isInactive = !item.object->IsActive();
+    if (isInactive) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    }
     const bool isOpen = ImGui::TreeNodeEx(item.name.c_str(), flags);
+    if (isInactive) {
+        ImGui::PopStyleColor();
+    }
     if (!item.children.empty() && isOpen != storedOpen) {
         EditorSettings::SetBool(settingsKey, isOpen);
     }

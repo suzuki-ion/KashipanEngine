@@ -8,6 +8,7 @@
 #include "Assets/MaterialManager.h"
 #include "Graphics/Renderer/EditorDebugDraw.h"
 #include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
 #include "Scene/Components/SceneComponentHeader.h"
 
 namespace KashipanEngine {
@@ -93,16 +94,32 @@ public:
     // エディター用描画先
     //==================================================
 
+    /// @brief エディターカメラの情報（シャドウマップのカスケード計算等で使用する）
+    struct EditorCameraInfo {
+        Matrix4x4 viewProjection = Matrix4x4::Identity();
+        Vector3 position{ 0.0f, 0.0f, 0.0f };
+        float nearClip = 0.1f;
+        float farClip = 1000.0f;
+        bool valid = false;
+    };
+
     /// @brief エディター用描画先を設定する（全MeshRendererがこの描画先にも描画される）
     /// @param target エディター用描画先（nullptrで解除）
     /// @param cameraBuffer この描画先の描画時にバインドされるカメラ定数バッファ
-    void SetEditorTarget(IRenderTarget *target, ConstantBufferResource *cameraBuffer) {
+    /// @param cameraInfo エディターカメラの情報（シャドウマップ計算用。未指定の場合は無効扱い）
+    void SetEditorTarget(IRenderTarget *target, ConstantBufferResource *cameraBuffer,
+        const EditorCameraInfo &cameraInfo = {}) {
         editorTarget_ = target;
         editorCameraBuffer_ = cameraBuffer;
+        editorCameraInfo_ = cameraInfo;
     }
     /// @brief 指定描画先がエディター用描画先の場合、そのカメラ定数バッファを返す
     ConstantBufferResource *GetEditorCameraBuffer(const IRenderTarget *target) const {
         return (editorTarget_ && target == editorTarget_) ? editorCameraBuffer_ : nullptr;
+    }
+    /// @brief 指定描画先がエディター用描画先の場合、そのカメラ情報を返す（それ以外は nullptr）
+    const EditorCameraInfo *GetEditorCameraInfo(const IRenderTarget *target) const {
+        return (editorTarget_ && target == editorTarget_ && editorCameraInfo_.valid) ? &editorCameraInfo_ : nullptr;
     }
     /// @brief エディター用描画先を取得する（未設定の場合は nullptr）
     IRenderTarget *GetEditorTarget() const noexcept { return editorTarget_; }
@@ -129,6 +146,7 @@ private:
 
     IRenderTarget *editorTarget_ = nullptr;
     ConstantBufferResource *editorCameraBuffer_ = nullptr;
+    EditorCameraInfo editorCameraInfo_;
     EditorDebugDrawSettings editorDebugDraw_;
 };
 

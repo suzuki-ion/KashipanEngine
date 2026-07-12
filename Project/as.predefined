@@ -591,6 +591,12 @@ class Light {
 	float GetInnerAngle() const;
 	void SetOuterAngle(float);
 	float GetOuterAngle() const;
+	void SetCastShadows(bool);
+	bool IsCastShadows() const;
+	void SetShadowDistance(float);
+	float GetShadowDistance() const;
+	void SetShadowMapResolution(uint);
+	uint GetShadowMapResolution() const;
 }
 
 class LightRenderer {

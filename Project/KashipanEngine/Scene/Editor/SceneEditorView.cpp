@@ -103,6 +103,7 @@ void SceneEditorView::UpdateCameraBuffer() {
     constant.viewProjection = view_ * projection_;
     constant.eyePosition = Vector4(eye.x, eye.y, eye.z, 1.0f);
     constant.fov = fovY_;
+    cameraEye_ = eye;
 
     if (void *mapped = cameraBuffer_->Map()) {
         std::memcpy(mapped, &constant, sizeof(constant));
@@ -113,7 +114,14 @@ void SceneEditorView::RegisterEditorTarget() {
     if (!context_) return;
     auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
     if (sceneRenderer && screenBuffer_) {
-        sceneRenderer->SetEditorTarget(screenBuffer_, cameraBuffer_.get());
+        // シャドウマップのカスケード計算用にエディターカメラの情報も渡す
+        SceneRenderer::EditorCameraInfo cameraInfo;
+        cameraInfo.viewProjection = view_ * projection_;
+        cameraInfo.position = cameraEye_;
+        cameraInfo.nearClip = nearClip_;
+        cameraInfo.farClip = farClip_;
+        cameraInfo.valid = true;
+        sceneRenderer->SetEditorTarget(screenBuffer_, cameraBuffer_.get(), cameraInfo);
     }
 }
 

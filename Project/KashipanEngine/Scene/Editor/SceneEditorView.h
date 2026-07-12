@@ -102,6 +102,8 @@ private:
 
     Matrix4x4 view_ = Matrix4x4::Identity();
     Matrix4x4 projection_ = Matrix4x4::Identity();
+    /// @brief 直近に計算したカメラ位置（シャドウマップ計算用にSceneRendererへ渡す）
+    Vector3 cameraEye_{ 0.0f, 0.0f, 0.0f };
 
     // ギズモ状態（ImGuizmo::OPERATION / ImGuizmo::MODE をヘッダーで公開しないため int で保持する）
     int gizmoOperation_;

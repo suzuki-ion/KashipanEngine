@@ -1,3 +1,5 @@
+#pragma once
+
 struct Camera3D {
     float4x4 view;
     float4x4 projection;

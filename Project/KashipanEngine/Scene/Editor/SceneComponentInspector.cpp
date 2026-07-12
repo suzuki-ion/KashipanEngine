@@ -1,6 +1,7 @@
 #include "SceneComponentInspector.h"
 #ifdef USE_IMGUI
 #include <imgui.h>
+#include <imgui_stdlib.h>
 
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
@@ -36,6 +37,11 @@ void SceneComponentInspector::ShowImGui() {
                     componentToRemove = component.get();
                 }
                 ImGui::EndPopup();
+            }
+            // タグ（分類・判別用の任意文字列）
+            std::string tagName = component->GetTagName();
+            if (ImGui::InputText("Tag", &tagName)) {
+                component->SetTag(tagName);
             }
             context_->ShowComponentImGui(component.get());
             ImGui::TreePop();

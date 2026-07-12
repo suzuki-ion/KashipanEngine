@@ -17,10 +17,13 @@ EmptyObject::~EmptyObject() {
 
 std::unique_ptr<EmptyObject> EmptyObject::Clone() const {
     std::unique_ptr<EmptyObject> newObj(new EmptyObject(ownerSceneContext_, name_));
+    newObj->SetTag(tagName_);
     for (const auto &comp : components_) {
         if (!comp.first) continue;
         auto clonedComp = comp.first->Clone();
         if (!clonedComp) continue;
+        // 派生クラスのCloneは基底クラスのタグを複製しないため、ここで引き継ぐ
+        clonedComp->SetTag(comp.first->GetTagName());
         newObj->AddComponent(std::move(clonedComp));
     }
     newObj->SetActive(isActive_);
@@ -167,6 +170,7 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
     JSON json = JSON::object();
     if (!isSaveEnabled_) return json;
     json["name"] = name_;
+    json["tag"] = tagName_;
     json["isActive"] = isActive_;
     json["objectID"] = objectID_.ToString();
 
@@ -197,6 +201,7 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
 bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     ClearComponents();
     name_ = json.value("name", "EmptyObject");
+    SetTag(json.value("tag", std::string{}));
     isActive_ = json.value("isActive", true);
     objectID_ = UUID128(json.value("objectID", ""));
     const auto &componentsJson = json.value("components", JSON::array());

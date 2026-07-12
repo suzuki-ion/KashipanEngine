@@ -6,6 +6,7 @@
 #include "Utilities/FileIO.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Utilities/MyAny.h"
+#include "Utilities/Tag.h"
 #if defined(USE_IMGUI)
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
@@ -67,6 +68,16 @@ public:
     ///          定義は EmptyObject/ObjectContext の完全な型定義が必要なため IObjectComponent.cpp にある
     void SetActive(bool active);
 
+    /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
+    void SetTag(const std::string &tagName) {
+        tagName_ = tagName;
+        tag_ = Tag(tagName);
+    }
+    /// @brief タグを取得する（比較用）
+    const Tag &GetTag() const noexcept { return tag_; }
+    /// @brief タグの文字列を取得する（表示・保存用）
+    const std::string &GetTagName() const noexcept { return tagName_; }
+
     /// @brief 初期化処理
     /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
     ///          アクティブかつ allowInitialize が true の場合のみ実行される。
@@ -94,12 +105,14 @@ public:
         JSON json;
         json["priority"] = updatePriority_;
         json["isActive"] = isActive_;
+        json["tag"] = tagName_;
         json["customData"] = SaveToJson();
         return json;
     }
     bool LoadFromJsonInterface(Passkey<EmptyObject>, const JSON &json) {
         updatePriority_ = json.value("priority", 1);
         isActive_ = json.value("isActive", true);
+        SetTag(json.value("tag", std::string{}));
         if (json.contains("customData")) {
             return LoadFromJson(json["customData"]);
         }
@@ -189,6 +202,9 @@ private:
     int updatePriority_ = 1;
     /// @brief アクティブ状態（falseの場合はUpdateが呼ばれない）
     bool isActive_ = true;
+    /// @brief タグ（比較用ハッシュ）と表示・保存用のタグ文字列
+    Tag tag_;
+    std::string tagName_;
 
     /// @brief メンバー変数のマップ（ImGuiなどからアクセスするための汎用的な変数格納用）
     std::unordered_map<std::string, MemberVariable> memberVariables_;

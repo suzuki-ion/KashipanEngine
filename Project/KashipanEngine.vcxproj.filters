@@ -1454,6 +1454,9 @@
     <ClInclude Include="KashipanEngine\Utilities\Translation.h">
       <Filter>KashipanEngine\Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\Tag.h">
+      <Filter>KashipanEngine\Utilities</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\UUID128.h">
       <Filter>KashipanEngine\Utilities</Filter>
     </ClInclude>

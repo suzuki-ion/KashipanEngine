@@ -3,6 +3,7 @@
 #include "Objects/IObjectComponent.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
+#include "Utilities/Tag.h"
 #include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
@@ -33,6 +34,16 @@ public:
 
     void SetName(const std::string &name) { name_ = name; }
     const std::string &GetName() const { return name_; }
+
+    /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
+    void SetTag(const std::string &tagName) {
+        tagName_ = tagName;
+        tag_ = Tag(tagName);
+    }
+    /// @brief タグを取得する（比較用）
+    const Tag &GetTag() const noexcept { return tag_; }
+    /// @brief タグの文字列を取得する（表示・保存用）
+    const std::string &GetTagName() const noexcept { return tagName_; }
 
     //==================================================
     // コンポーネント取得系メソッド
@@ -259,6 +270,9 @@ private:
     void CollectDescendantsActiveState(std::vector<std::pair<EmptyObject *, bool>> &out) const;
 
     std::string name_ = "EmptyObject";
+    /// @brief タグ（比較用ハッシュ）と表示・保存用のタグ文字列
+    Tag tag_;
+    std::string tagName_;
 
     /// @brief コンポーネントのリスト（ペア: コンポーネント本体, コンポーネントが追加された順番）
     std::vector<std::pair<std::unique_ptr<IObjectComponent>, size_t>> components_;

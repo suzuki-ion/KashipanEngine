@@ -40,10 +40,10 @@ inline bool ShadowIsOutside(float2 uv, float depth) {
 
 /// 面がライトに対して浅い角度なほどバイアスを増やす係数（テクセル数相当）を求める
 /// @param toLightDir 表面からライトへ向かう方向
-/// @return 1.0（正面）〜 4.0（すれすれ）テクセル相当の係数
+/// @return 2.5（正面）〜 9.5（すれすれ）テクセル相当の係数
 inline float ShadowSlopeFactor(float3 normal, float3 toLightDir) {
 	float slope = 1.0f - saturate(dot(normalize(normal), normalize(toLightDir)));
-	return 1.0f + 3.0f * slope;
+	return 2.5f + 7.0f * slope;
 }
 
 inline float ShadowPcf3x3(float slice, float2 uv, float depthRef, float2 texel) {

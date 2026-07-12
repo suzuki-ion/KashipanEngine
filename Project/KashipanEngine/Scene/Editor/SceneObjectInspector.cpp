@@ -60,6 +60,12 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
         }
     }
 
+    //--------- タグ（分類・判別用の任意文字列） ---------//
+    std::string tagName = obj->GetTagName();
+    if (ImGui::InputText("Tag", &tagName)) {
+        obj->SetTag(tagName);
+    }
+
     //--------- コンポーネント一覧（処理優先順位＝更新優先度の順に並べる） ---------//
     IObjectComponent *componentToRemove = nullptr;
     int id = 0;
@@ -85,6 +91,11 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
             }
             // パラメータ変更をUndo履歴へ積むため、表示前後の状態を比較する
             JSON before = obj->SaveComponentToJson(comp);
+            // タグ（分類・判別用の任意文字列。before/afterの間で編集することでUndo対象になる）
+            std::string componentTag = comp->GetTagName();
+            if (ImGui::InputText("Tag", &componentTag)) {
+                comp->SetTag(componentTag);
+            }
             obj->ShowComponentImGui(comp);
             JSON after = obj->SaveComponentToJson(comp);
             if (before != after) {

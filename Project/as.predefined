@@ -284,10 +284,23 @@ class Matrix4x4 {
 	void MakeViewportMatrix(float, float, float, float, float, float);
 }
 
+class Tag {
+	Tag();
+	Tag(const Tag&in);
+	Tag(const string&in name);
+	Tag& opAssign(const Tag&in);
+	bool opEquals(const Tag&in) const;
+	uint64 GetHash() const;
+	bool IsEmpty() const;
+}
+
 class Transform {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetTranslate(const Vector3&in);
 	const Vector3& GetTranslate() const;
 	void SetRotate(const Vector3&in);
@@ -304,6 +317,9 @@ class Object {
 	void SetName(const string&in);
 	bool IsActive() const;
 	void SetActive(bool);
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	Transform@ GetTransform();
 	bool GetComponent(?&out);
 	bool GetComponents(?&out);
@@ -349,6 +365,9 @@ class Velocity {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetVelocity(const Vector3&in);
 	const Vector3& GetVelocity() const;
 	void SetAcceleration(const Vector3&in);
@@ -360,6 +379,9 @@ class AudioSource {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	uint Play();
 	void Stop();
 	bool Pause();
@@ -380,6 +402,9 @@ class AudioListener {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetUsed(bool);
 	bool GetUsed() const;
 	Vector3 GetWorldPosition() const;
@@ -389,6 +414,9 @@ class Camera3D {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetFovY(float);
 	float GetFovY() const;
 	void SetNearClip(float);
@@ -407,6 +435,9 @@ class SpriteRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetAnchor(const Vector2&in);
 	const Vector2& GetAnchor() const;
 	void SetPivot(const Vector2&in);
@@ -419,6 +450,9 @@ class ScriptComponent {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetScriptPath(const string&in);
 	const string& GetScriptPath() const;
 	bool Reload();
@@ -428,6 +462,9 @@ class MeshFilter {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetMeshHandle(uint);
 	uint GetMeshHandle() const;
 	bool HasMesh() const;
@@ -437,6 +474,9 @@ class Animator {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetAnimationName(const string&in);
 	const string& GetAnimationName() const;
 	void SetPlayOnStart(bool);
@@ -447,6 +487,9 @@ class Text {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetText(const string&in);
 	const string& GetText() const;
 	void SetColor(const Vector4&in);
@@ -457,6 +500,9 @@ class ComputeShaderProcessing {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetPipelineName(const string&in);
 	const string& GetPipelineName() const;
 	void SetGroupCounts(uint, uint, uint);
@@ -467,6 +513,9 @@ class RigidBody2D {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetVelocity(const Vector2&in);
 	const Vector2& GetVelocity() const;
 	void SetMass(float);
@@ -479,6 +528,9 @@ class RigidBody3D {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetBodyType(int);
 	int GetBodyType() const;
 	void SetMass(float);
@@ -494,6 +546,9 @@ class MeshRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetPipelineName(const string&in);
 	const string& GetPipelineName() const;
 	void SetMaterialName(const string&in);
@@ -506,6 +561,9 @@ class SkinnedMeshRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetPipelineName(const string&in);
 	const string& GetPipelineName() const;
 	void SetMaterialName(const string&in);
@@ -529,6 +587,9 @@ class Camera2D {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetSize(float, float);
 	void SetNearClip(float);
 	void SetFarClip(float);
@@ -542,6 +603,9 @@ class CameraRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetPipelineName(const string&in);
 	const string& GetPipelineName() const;
 	Vector3 GetWorldPosition() const;
@@ -554,6 +618,9 @@ class CameraController {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsControllable() const;
 	void AddFollowTarget(Object@);
 	void RemoveFollowTarget(uint);
@@ -575,6 +642,9 @@ class Light {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetType(LightType);
 	LightType GetType() const;
 	void SetColor(const Vector4&in);
@@ -603,6 +673,9 @@ class LightRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetPipelineName(const string&in);
 	const string& GetPipelineName() const;
 	Light@ GetLight() const;
@@ -615,6 +688,9 @@ class NormalWindowObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetTitle(const string&in);
 	void SetSize(uint, uint);
 }
@@ -623,6 +699,9 @@ class OverlayWindowObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetTitle(const string&in);
 	void SetSize(uint, uint);
 }
@@ -631,6 +710,9 @@ class ScreenBufferObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetName(const string&in);
 	const string& GetName() const;
 	void SetSize(uint, uint);
@@ -640,6 +722,9 @@ class ShadowMapObject {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetName(const string&in);
 	const string& GetName() const;
 	void SetSize(uint, uint);
@@ -649,6 +734,9 @@ class BoxCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -658,6 +746,9 @@ class SphereCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -667,6 +758,9 @@ class CapsuleCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -676,6 +770,9 @@ class MeshCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -685,6 +782,9 @@ class RayCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -694,6 +794,9 @@ class Box2DCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -703,6 +806,9 @@ class Circle2DCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -712,6 +818,9 @@ class Capsule2DCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -721,6 +830,9 @@ class Ray2DCollider {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
 	bool Is2D() const;
@@ -730,6 +842,9 @@ class BloomEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetThreshold() const;
 	void SetThreshold(float);
 	float GetSoftKnee() const;
@@ -746,6 +861,9 @@ class BoxFilterEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetIntensity() const;
 	void SetIntensity(float);
 	void SetHalfSize(int, int);
@@ -757,6 +875,9 @@ class ChromaticAberrationEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	void SetDirection(const Vector2&in);
 	Vector2 GetDirection() const;
 	float GetStrength() const;
@@ -767,6 +888,9 @@ class ColorAdjustEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetBrightness() const;
 	void SetBrightness(float);
 	float GetContrast() const;
@@ -783,6 +907,9 @@ class DissolveEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetMaskThreshold() const;
 	void SetMaskThreshold(float);
 	float GetEdgeThickness() const;
@@ -801,6 +928,9 @@ class DitherEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetIntensity() const;
 	void SetIntensity(float);
 	bool IsColorDither() const;
@@ -811,6 +941,9 @@ class DotMatrixEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetDotSpacing() const;
 	void SetDotSpacing(float);
 	float GetDotRadius() const;
@@ -827,6 +960,9 @@ class FXAAEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetThreshold() const;
 	void SetThreshold(float);
 	float GetThresholdMin() const;
@@ -839,6 +975,9 @@ class GaussianFilterEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	int GetRadius() const;
 	void SetRadius(int);
 	float GetSigma() const;
@@ -849,6 +988,9 @@ class GrayscaleEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetIntensity() const;
 	void SetIntensity(float);
 }
@@ -857,6 +999,9 @@ class OutlineEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetThreshold() const;
 	void SetThreshold(float);
 	float GetThickness() const;
@@ -873,6 +1018,9 @@ class RadialBlurEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	float GetIntensity() const;
 	void SetIntensity(float);
 	int GetSampleCount() const;
@@ -887,6 +1035,9 @@ class VignetteEffect {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
 	Vector2 GetCenter() const;
 	void SetCenter(const Vector2&in);
 	Vector4 GetColor() const;

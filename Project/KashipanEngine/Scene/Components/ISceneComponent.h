@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdint>
 #include "Utilities/FileIO.h"
+#include "Utilities/Tag.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 
 #if defined(USE_IMGUI)
@@ -67,6 +68,16 @@ public:
         }
     }
 
+    /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
+    void SetTag(const std::string &tagName) {
+        tagName_ = tagName;
+        tag_ = Tag(tagName);
+    }
+    /// @brief タグを取得する（比較用）
+    const Tag &GetTag() const noexcept { return tag_; }
+    /// @brief タグの文字列を取得する（表示・保存用）
+    const std::string &GetTagName() const noexcept { return tagName_; }
+
     /// @brief 初期化処理
     /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
     ///          アクティブな場合のみ実行される（非アクティブの場合は有効化時に走る）。
@@ -89,12 +100,14 @@ public:
         JSON json;
         json["priority"] = updatePriority_;
         json["isActive"] = isActive_;
+        json["tag"] = tagName_;
         json["data"] = SaveToJson();
         return json;
     }
     bool LoadFromJsonInterface(Passkey<Scene>, const JSON &json) {
         updatePriority_ = json.value("priority", 1);
         isActive_ = json.value("isActive", true);
+        SetTag(json.value("tag", std::string{}));
         return LoadFromJson(json["data"]);
     }
 
@@ -147,6 +160,9 @@ private:
     int updatePriority_ = 1;
     /// @brief アクティブ状態（falseの場合はUpdateが呼ばれない）
     bool isActive_ = true;
+    /// @brief タグ（比較用ハッシュ）と表示・保存用のタグ文字列
+    Tag tag_;
+    std::string tagName_;
 };
 
 } // namespace KashipanEngine

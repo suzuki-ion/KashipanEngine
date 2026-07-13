@@ -31,7 +31,7 @@
     "inspector.component.OutlineEffect": true,
     "inspector.component.RigidBody3D": true,
     "inspector.component.ScreenBufferObject": true,
-    "inspector.component.ScriptComponent": true,
+    "inspector.component.ScriptComponent": false,
     "inspector.component.ShadowMapObject": false,
     "inspector.component.SkinnedMeshRenderer": true,
     "inspector.component.SphereCollider": false,

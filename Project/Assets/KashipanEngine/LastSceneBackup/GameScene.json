@@ -45,79 +45,6 @@
                 {
                     "data": {
                         "customData": {
-                            "rotate": {
-                                "w": 0.6644630432128906,
-                                "x": 0.7071068286895752,
-                                "y": 0.0,
-                                "z": 0.2418448030948639
-                            },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 0.9999929070472717,
-                                "z": 0.9999929070472717
-                            },
-                            "translate": {
-                                "x": 0.0,
-                                "y": 11.313970565795898,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "castShadows": false,
-                            "color": {
-                                "w": 1.0,
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "decay": 2.0,
-                            "distance": 10.0,
-                            "innerAngle": 0.3499999940395355,
-                            "intensity": 1.0,
-                            "outerAngle": 0.6000000238418579,
-                            "radius": 10.0,
-                            "shadowDistance": 100.0,
-                            "shadowMapResolution": 2048,
-                            "type": 0
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Light"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "pipelineName": "Object3D.Solid.BlendNormal",
-                            "targetObjectID": ""
-                        },
-                        "isActive": true,
-                        "priority": 950,
-                        "tag": ""
-                    },
-                    "type": "LightRenderer"
-                }
-            ],
-            "editorOnly": true,
-            "isActive": true,
-            "name": "DebugDirectionalLight",
-            "objectID": "2e74d675-445c-402c-aa96-156b73a72caa",
-            "tag": ""
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
                             "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
                             "rotate": {
                                 "w": 1.0,
@@ -131,8 +58,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 2.999872922897339,
+                                "x": -4.065912246704102,
+                                "y": 2.999873161315918,
                                 "z": -16.0
                             }
                         },
@@ -246,7 +173,7 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
+                                "x": -4.066038131713867,
                                 "y": 0.9998729228973389,
                                 "z": 0.0
                             }
@@ -1392,6 +1319,55 @@
                 {
                     "data": {
                         "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 1080,
+                            "interceptedMessages": [],
+                            "title": "Normal Window",
+                            "width": 1920
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "NormalWindowObject"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Window Object",
+            "objectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
                             "parent": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
                             "rotate": {
                                 "w": 1.0,
@@ -1420,9 +1396,9 @@
                     "data": {
                         "customData": {
                             "farClip": 1000.0,
-                            "height": 1080.0,
+                            "height": 1920.0,
                             "nearClip": 0.0,
-                            "width": 1920.0
+                            "width": 1080.0
                         },
                         "isActive": true,
                         "priority": 1,
@@ -1434,8 +1410,8 @@
                     "data": {
                         "customData": {
                             "bindVariableNames": [
-                                "Vertex:gCamera3D",
-                                "Pixel:gCamera3D"
+                                "Vertex:gCamera2D",
+                                "Pixel:gCamera2D"
                             ],
                             "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                             "targetObjectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04"
@@ -1449,8 +1425,8 @@
             ],
             "editorOnly": false,
             "isActive": true,
-            "name": "Camera Object",
-            "objectID": "274277ba-5b28-4d78-bab1-ccd122976793",
+            "name": "Camera 2D Object",
+            "objectID": "1efbad77-46b2-4295-93b9-d8c434ce2dcb",
             "tag": ""
         },
         {
@@ -1460,19 +1436,19 @@
                         "customData": {
                             "parent": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
                             "rotate": {
-                                "w": 1.0,
+                                "w": 0.7071068286895752,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": 0.7071068286895752
                             },
                             "scale": {
                                 "x": 1920.0,
-                                "y": 1080.0,
+                                "y": -1080.0,
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 0.0,
+                                "x": 540.0,
+                                "y": 960.0,
                                 "z": 0.0
                             }
                         },
@@ -1517,56 +1493,8 @@
             ],
             "editorOnly": false,
             "isActive": true,
-            "name": "Mesh Object",
-            "objectID": "9b2d4ba7-6b04-4e12-a49e-a0e03898de6a",
-            "tag": ""
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
-                            "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "translate": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "height": 1080,
-                            "title": "Normal Window",
-                            "width": 1920
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "NormalWindowObject"
-                }
-            ],
-            "editorOnly": false,
-            "isActive": true,
-            "name": "Window Object",
-            "objectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
+            "name": "Sprite Object",
+            "objectID": "3d37c934-87d3-4a19-b820-39551d78e15c",
             "tag": ""
         }
     ],

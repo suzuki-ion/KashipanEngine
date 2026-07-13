@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -19,8 +20,8 @@
 
 namespace KashipanEngine {
 
-class Object2DBase;
-class Object3DBase;
+class EmptyObject;
+class ICollider;
 
 struct HitInfo final {
     bool isHit = false;
@@ -33,8 +34,11 @@ struct HitInfo2D final {
     Vector3 normal{0.0f, 0.0f, 0.0f};
     float penetration = 0.0f;
 
-    Object2DBase* selfObject = nullptr;
-    Object2DBase* otherObject = nullptr;
+    EmptyObject* selfObject = nullptr;
+    EmptyObject* otherObject = nullptr;
+    /// @brief 衝突判定を行った自分側/相手側のコライダーコンポーネント
+    ICollider* selfCollider = nullptr;
+    ICollider* otherCollider = nullptr;
 };
 
 struct HitInfo3D final {
@@ -42,8 +46,11 @@ struct HitInfo3D final {
     Vector3 normal{0.0f, 0.0f, 0.0f};
     float penetration = 0.0f;
 
-    Object3DBase* selfObject = nullptr;
-    Object3DBase* otherObject = nullptr;
+    EmptyObject* selfObject = nullptr;
+    EmptyObject* otherObject = nullptr;
+    /// @brief 衝突判定を行った自分側/相手側のコライダーコンポーネント
+    ICollider* selfCollider = nullptr;
+    ICollider* otherCollider = nullptr;
 };
 
 struct ColliderInfo2D final {
@@ -57,7 +64,9 @@ struct ColliderInfo2D final {
         Math::Capsule2D>;
 
     ShapeVariant shape{};
-    Object2DBase* ownerObject = nullptr;
+    EmptyObject* ownerObject = nullptr;
+    /// @brief この情報を生成したICollider（RigidBodyの使用コライダー選択に使用。SceneObjectColliderが設定する）
+    ICollider* sourceCollider = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};
@@ -67,6 +76,8 @@ struct ColliderInfo2D final {
     std::function<void(const HitInfo2D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
+    /// @brief 連続衝突判定（CCD）。高速移動時に移動経路を分割して判定し、すり抜けを検出する
+    bool continuousDetection = false;
 };
 
 struct ColliderInfo3D final {
@@ -118,7 +129,9 @@ struct ColliderInfo3D final {
         HeightFieldShape3D>;
 
     ShapeVariant shape{};
-    Object3DBase* ownerObject = nullptr;
+    EmptyObject* ownerObject = nullptr;
+    /// @brief この情報を生成したICollider（RigidBodyの使用コライダー選択に使用。SceneObjectColliderが設定する）
+    ICollider* sourceCollider = nullptr;
 
     std::bitset<kMaxAttributes> attribute{};
     std::bitset<kMaxAttributes> ignoreAttribute{};
@@ -128,6 +141,8 @@ struct ColliderInfo3D final {
     std::function<void(const HitInfo3D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
+    /// @brief 連続衝突判定（CCD）。高速移動時に移動経路を分割して判定し、すり抜けを検出する
+    bool continuousDetection = false;
 };
 
 class Collider final {
@@ -205,6 +220,11 @@ private:
         ColliderID id;
         Info info;
         ColliderRuntime3D runtime{};
+        /// @brief 連続衝突判定用の前フレーム位置（3Dはボディ位置、2Dは形状のバウンディング中心）
+        /// @details CCDが有効かつ有効状態の間だけ毎フレーム記録される。ランタイムは毎フレーム
+        ///          再構築されるため、フレームを跨ぐ情報はEntry側に保持する
+        bool hasPrevPosition = false;
+        Vector3 prevPosition{ 0.0f, 0.0f, 0.0f };
     };
 
     template<typename TEntry>
@@ -240,6 +260,14 @@ private:
 
     void Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, bool wasHit);
     void Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA, const HitInfo3D &hitInfoB, bool wasHit);
+
+    /// @brief 2Dの連続衝突判定（スイープ）。CCD有効コライダーの移動経路の中間位置で判定し、
+    ///        検出したヒットをペアキー（ID昇順。HitInfoは小さいID側を自分として計算）で収集する
+    void CollectContinuousHits2D(std::unordered_map<std::uint64_t, HitInfo2D> &outHits);
+    /// @brief 2Dコライダーの現在位置を次フレームのスイープ用に記録する
+    void RecordPrevPositions2D();
+    /// @brief 3Dコライダーの現在位置を次フレームのスイープ用に記録する
+    void RecordPrevPositions3D();
 
     std::vector<std::uint64_t> prevPairs2D_;
     std::vector<std::uint64_t> prevPairs3D_;

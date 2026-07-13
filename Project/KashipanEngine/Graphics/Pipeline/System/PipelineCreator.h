@@ -29,9 +29,11 @@ public:
 
 private:
     /// @brief ShaderVariableBinder を構築
+    /// @param isCompute Computeパイプライン用かどうか（ShaderVisibility::ALLの解釈とBind先の切り替えに使用）
     void BuildShaderVariableBinder(PipelineInfo &outInfo,
         const std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo*, std::string>> &shadersWithStages,
-        std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig = std::nullopt);
+        std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig = std::nullopt,
+        bool isCompute = false);
 
     ID3D12Device *device_ = nullptr;
     ComponentsPresetContainer *components_ = nullptr;

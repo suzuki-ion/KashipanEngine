@@ -1,4 +1,6 @@
 #include "ComponentRegistry.h"
+#include "Objects/IObjectComponent.h"
+#include "Scene/Components/ISceneComponent.h"
 
 namespace KashipanEngine {
 
@@ -7,12 +9,8 @@ std::unordered_map<std::string, std::function<std::unique_ptr<ISceneComponent>()
     static std::unordered_map<std::string, std::function<std::unique_ptr<ISceneComponent>()>> sceneComponentFactoryMap;
     return sceneComponentFactoryMap;
 }
-std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent2D>()>> &GetObject2DComponentFactoryMap() {
-    static std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent2D>()>> object2DComponentFactoryMap;
-    return object2DComponentFactoryMap;
-}
-std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent3D>()>> &GetObject3DComponentFactoryMap() {
-    static std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent3D>()>> object3DComponentFactoryMap;
+std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent>()>> &GetObjectComponentFactoryMap() {
+    static std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent>()>> object3DComponentFactoryMap;
     return object3DComponentFactoryMap;
 }
 
@@ -20,35 +18,35 @@ std::vector<std::string> &GetRegisteredSceneComponentTypes() {
     static std::vector<std::string> registeredSceneComponentTypes;
     return registeredSceneComponentTypes;
 }
-std::vector<std::string> &GetRegisteredObject2DComponentTypes() {
-    static std::vector<std::string> registeredObject2DComponentTypes;
-    return registeredObject2DComponentTypes;
+std::vector<std::string> &GetRegisteredObjectComponentTypes() {
+    static std::vector<std::string> registeredObjectComponentTypes;
+    return registeredObjectComponentTypes;
 }
-std::vector<std::string> &GetRegisteredObject3DComponentTypes() {
-    static std::vector<std::string> registeredObject3DComponentTypes;
-    return registeredObject3DComponentTypes;
+
+std::unordered_map<std::string, std::vector<std::string>> &GetSceneComponentCategoryMap() {
+    static std::unordered_map<std::string, std::vector<std::string>> sceneComponentCategoryMap;
+    return sceneComponentCategoryMap;
+}
+std::unordered_map<std::string, std::vector<std::string>> &GetObjectComponentCategoryMap() {
+    static std::unordered_map<std::string, std::vector<std::string>> objectComponentCategoryMap;
+    return objectComponentCategoryMap;
 }
 } // namespace Local
 
-bool RegisterComponentTypeScene(const std::string &typeName, std::function<std::unique_ptr<ISceneComponent>()> createFunc) {
+bool RegisterComponentTypeScene(const std::string &typeName, std::function<std::unique_ptr<ISceneComponent>()> createFunc, const std::vector<std::string> &category) {
     auto &factoryMap = Local::GetSceneComponentFactoryMap();
     if (factoryMap.find(typeName) != factoryMap.end()) return false;
     factoryMap[typeName] = createFunc;
     Local::GetRegisteredSceneComponentTypes().push_back(typeName);
+    Local::GetSceneComponentCategoryMap()[typeName] = category;
     return true;
 }
-bool RegisterComponentTypeObject2D(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent2D>()> createFunc) {
-    auto &factoryMap = Local::GetObject2DComponentFactoryMap();
+bool RegisterComponentTypeObject(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent>()> createFunc, const std::vector<std::string> &category) {
+    auto &factoryMap = Local::GetObjectComponentFactoryMap();
     if (factoryMap.find(typeName) != factoryMap.end()) return false;
     factoryMap[typeName] = createFunc;
-    Local::GetRegisteredObject2DComponentTypes().push_back(typeName);
-    return true;
-}
-bool RegisterComponentTypeObject3D(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent3D>()> createFunc) {
-    auto &factoryMap = Local::GetObject3DComponentFactoryMap();
-    if (factoryMap.find(typeName) != factoryMap.end()) return false;
-    factoryMap[typeName] = createFunc;
-    Local::GetRegisteredObject3DComponentTypes().push_back(typeName);
+    Local::GetRegisteredObjectComponentTypes().push_back(typeName);
+    Local::GetObjectComponentCategoryMap()[typeName] = category;
     return true;
 }
 
@@ -59,16 +57,9 @@ std::unique_ptr<ISceneComponent> CreateSceneComponentByType(const std::string &t
     }
     return nullptr;
 }
-std::unique_ptr<IObjectComponent2D> CreateObject2DComponentByType(const std::string &typeName) {
-    auto it = Local::GetObject2DComponentFactoryMap().find(typeName);
-    if (it != Local::GetObject2DComponentFactoryMap().end()) {
-        return it->second();
-    }
-    return nullptr;
-}
-std::unique_ptr<IObjectComponent3D> CreateObject3DComponentByType(const std::string &typeName) {
-    auto it = Local::GetObject3DComponentFactoryMap().find(typeName);
-    if (it != Local::GetObject3DComponentFactoryMap().end()) {
+std::unique_ptr<IObjectComponent> CreateObjectComponentByType(const std::string &typeName) {
+    auto it = Local::GetObjectComponentFactoryMap().find(typeName);
+    if (it != Local::GetObjectComponentFactoryMap().end()) {
         return it->second();
     }
     return nullptr;
@@ -77,11 +68,21 @@ std::unique_ptr<IObjectComponent3D> CreateObject3DComponentByType(const std::str
 const std::vector<std::string> &GetRegisteredSceneComponentTypes() {
     return Local::GetRegisteredSceneComponentTypes();
 }
-const std::vector<std::string> &GetRegisteredObject2DComponentTypes() {
-    return Local::GetRegisteredObject2DComponentTypes();
+const std::vector<std::string> &GetRegisteredObjectComponentTypes() {
+    return Local::GetRegisteredObjectComponentTypes();
 }
-const std::vector<std::string> &GetRegisteredObject3DComponentTypes() {
-    return Local::GetRegisteredObject3DComponentTypes();
+
+const std::vector<std::string> &GetSceneComponentCategory(const std::string &typeName) {
+    static const std::vector<std::string> kEmptyCategory;
+    const auto &map = Local::GetSceneComponentCategoryMap();
+    auto it = map.find(typeName);
+    return it != map.end() ? it->second : kEmptyCategory;
+}
+const std::vector<std::string> &GetObjectComponentCategory(const std::string &typeName) {
+    static const std::vector<std::string> kEmptyCategory;
+    const auto &map = Local::GetObjectComponentCategoryMap();
+    auto it = map.find(typeName);
+    return it != map.end() ? it->second : kEmptyCategory;
 }
 
 } // namespace KashipanEngine

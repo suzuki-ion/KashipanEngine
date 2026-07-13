@@ -5,9 +5,9 @@
 
 namespace KashipanEngine {
 
-class PlayerEnemyJump final : public IObjectComponent3D {
+class PlayerEnemyJump final : public IObjectComponent {
 public:
-    PlayerEnemyJump() : IObjectComponent3D("PlayerEnemyJump", 1) {}
+    PlayerEnemyJump() : IObjectComponent("PlayerEnemyJump", 1) {}
     ~PlayerEnemyJump() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

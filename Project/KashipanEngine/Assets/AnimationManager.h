@@ -72,8 +72,13 @@ public:
     /// @return 読み込んだアニメーションのハンドル（失敗時は `kInvalidHandle`）
     AnimationHandle LoadAnimation(const std::string &filePath);
 
-    /// @brief ファイル名単体からアニメーションハンドルを取得
+    /// @brief ファイル名単体からアニメーションハンドルを取得する
+    /// @details 同名ファイルが複数読み込まれている場合は最初に登録されたハンドルを返す。
+    ///          全てのハンドルが必要な場合は `GetAnimationHandlesFromFileName` を使うこと。
     static AnimationHandle GetAnimationHandleFromFileName(const std::string &fileName);
+    /// @brief ファイル名単体から一致する全てのアニメーションハンドルを取得する
+    /// @details 異なるフォルダに同名ファイルが存在する場合、複数のハンドルが返ることがある。
+    static const std::vector<AnimationHandle> &GetAnimationHandlesFromFileName(const std::string &fileName);
     /// @brief Assetsルートからの相対パスからアニメーションハンドルを取得
     static AnimationHandle GetAnimationHandleFromAssetPath(const std::string &assetPath);
 
@@ -94,6 +99,7 @@ private:
 
     std::string assetsRootPath_;
     static inline const AnimationData sEmptyData;
+    static inline const std::vector<AnimationHandle> sEmptyHandleList;
 };
 
 } // namespace KashipanEngine

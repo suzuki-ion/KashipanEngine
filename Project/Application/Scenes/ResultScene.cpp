@@ -5,7 +5,7 @@
 namespace KashipanEngine {
 
 ResultScene::ResultScene()
-    : SceneBase("ResultScene") {
+    : Scene("ResultScene") {
 }
 
 void ResultScene::Initialize() {

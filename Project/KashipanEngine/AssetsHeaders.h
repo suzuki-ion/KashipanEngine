@@ -8,3 +8,4 @@
 #include "Assets/SkeletonManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
+#include "Assets/MaterialManager.h"

@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Utilities/Passkeys.h"
@@ -29,6 +30,7 @@ struct PipelineInfo {
     const std::string &Name() const { return name; }
     PipelineType Type() const { return type; }
     D3D_PRIMITIVE_TOPOLOGY TopologyType() const { return topologyType; }
+    std::int32_t RenderPriority() const { return renderPriority; }
     const PipelineSet &GetPipelineSet() const { return pipelineSet; }
     const std::vector<ShaderCompiler::ShaderCompiledInfo *> &Shaders() const { return shaders; }
     ShaderVariableBinder &GetVariableBinder() { return variableBinder; }
@@ -37,6 +39,7 @@ private:
     friend class PipelineCreator;
     std::string name;
     PipelineType type = PipelineType::Render;
+    std::int32_t renderPriority = 0;
     D3D_PRIMITIVE_TOPOLOGY topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     PipelineSet pipelineSet;
     std::vector<ShaderCompiler::ShaderCompiledInfo *> shaders;

@@ -7,13 +7,11 @@
 #include <unordered_map>
 
 #include "Core/DirectX/DX12Commands.h"
-#include "Utilities/Passkeys.h"
-#include "PostEffectComponents/IPostEffectComponent.h"
-#include "Graphics/Renderer.h"
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
 #include "Graphics/IShaderTexture.h"
+#include "Graphics/IRenderTarget.h"
 
 namespace KashipanEngine {
 
@@ -22,60 +20,76 @@ class DirectXCommon;
 class Window;
 
 /// @brief オフスクリーンレンダリング用スクリーンバッファ
-class ScreenBuffer final : public IShaderTexture {
+class ScreenBuffer final : public IShaderTexture, public IRenderTarget {
 public:
     /// @brief GameEngine から DirectXCommon を設定
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
-
-    /// @brief GameEngine から Renderer を設定（persistent pass 登録用）
-    static void SetRenderer(Passkey<GameEngine>, Renderer* renderer) { sRenderer = renderer; }
-
-    /// @brief ScreenBuffer 生成
-    static ScreenBuffer *Create(std::uint32_t width, std::uint32_t height,
-        DXGI_FORMAT colorFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
-        DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
-
     /// @brief 全 ScreenBuffer 破棄
     static void AllDestroy(Passkey<GameEngine>);
-
-    /// @brief ScreenBuffer インスタンス数取得
-    static size_t GetBufferCount();
-
-    /// @brief ポインタから存在確認
-    static bool IsExist(ScreenBuffer *buffer);
-
-    /// @brief Renderer 用: 全 ScreenBuffer のコマンド記録開始
-    static void AllBeginRecord(Passkey<Renderer>);
-
-    /// @brief Renderer 用: 全 ScreenBuffer のコマンド記録終了
-    static std::vector<ID3D12CommandList *> AllEndRecord(Passkey<Renderer>);
-
-    /// @brief Renderer 用: 全 ScreenBuffer のコマンドを Close する
-    static void AllCloseRecord(Passkey<Renderer>);
-
-    /// @brief Renderer 用: 指定バッファを discard としてマーク（AllEndRecord で反映）
-    static void MarkDiscard(Passkey<Renderer>, ScreenBuffer *buffer);
-
-    /// @brief アプリ側から破棄要求（実体の破棄は CommitDestroy で行う）
-    static void DestroyNotify(ScreenBuffer *buffer);
-
     /// @brief 破棄要求済み ScreenBuffer をフレーム終端で実際に破棄する
     static void CommitDestroy(Passkey<GameEngine>);
 
-    /// @brief 指定バッファが破棄要求済みか
-    static bool IsPendingDestroy(ScreenBuffer *buffer);
-
-    ~ScreenBuffer();
+    /// @brief ScreenBuffer 生成
+    /// @param name 管理用の名前（空の場合は自動生成。TextureManagerにこの名前で登録される）
+    static ScreenBuffer *Create(std::uint32_t width, std::uint32_t height,
+        const std::string &name = "",
+        DXGI_FORMAT colorFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
+        DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
+    /// @brief ポインタから存在確認
+    static bool IsExist(ScreenBuffer *buffer);
 
     ScreenBuffer(const ScreenBuffer &) = delete;
     ScreenBuffer &operator=(const ScreenBuffer &) = delete;
     ScreenBuffer(ScreenBuffer &&) = delete;
     ScreenBuffer &operator=(ScreenBuffer &&) = delete;
 
+    ~ScreenBuffer();
+
+    /// @brief 指定バッファが破棄要求済みか
+    bool IsPendingDestroy() const;
+    /// @brief アプリ側から破棄要求（実体の破棄は CommitDestroy で行う）
+    void DestroyNotify();
+
+    //==================================================
+    // IShaderTexture オーバーライド関数
+    //==================================================
+
     std::uint32_t GetWidth() const noexcept override { return width_; }
     std::uint32_t GetHeight() const noexcept override { return height_; }
-
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandle() const noexcept override;
+
+    //==================================================
+    // IRenderTarget オーバーライド関数
+    //==================================================
+
+    RenderTargetKind GetRenderTargetKind() const noexcept override { return RenderTargetKind::ScreenBuffer; }
+    std::string GetRenderTargetName() const override { return name_; }
+    /// @brief 管理用の名前を設定（TextureManagerへの登録名も更新される）
+    void SetRenderTargetName(const std::string &name);
+    /// @brief TextureManagerに登録されているテクスチャハンドルを取得
+    std::uint32_t GetTextureHandle() const noexcept { return textureHandle_; }
+    std::uint32_t GetRenderTargetWidth() const noexcept override { return width_; }
+    std::uint32_t GetRenderTargetHeight() const noexcept override { return height_; }
+    bool IsRenderTargetAvailable() const noexcept override { return width_ > 0 && height_ > 0 && !this->IsPendingDestroy(); }
+
+    void BeginDraw() override;
+    void EndDraw() override;
+    ID3D12GraphicsCommandList *GetCommandList() const override { return dx12Commands_->GetCommandList(); }
+
+    /// @brief ポストエフェクト用のパス切り替え処理
+    /// @details 現在の書き込み面をSRVとして参照可能な状態にしてバッファを進め、
+    ///          次の書き込み面への描画（深度書き込みなし）を開始する。
+    ///          BeginDraw と EndDraw の間でのみ呼び出すこと。
+    void NextPass();
+
+    /// @brief 現在の書き込み面を再度レンダーターゲットとして設定する
+    /// @details ポストエフェクトが内部レンダーターゲットへ描画した後、
+    ///          描画先をこのバッファへ戻すために呼ぶ（クリアは行わない）。
+    void RebindWriteTarget();
+
+    //==================================================
+    // ハンドルとリソース取得
+    //==================================================
 
     /// @brief Depth(読み取り面)をテクスチャ(SRV)として参照するためのハンドル（未作成なら空）
     D3D12_GPU_DESCRIPTOR_HANDLE GetDepthSrvHandle() const noexcept;
@@ -84,73 +98,38 @@ public:
     DepthStencilResource *GetDepthStencil() const noexcept { return depthStencils_[GetDsvReadIndex()].get(); }
     ShaderResourceResource *GetShaderResource() const noexcept { return shaderResources_[GetRtvReadIndex()].get(); }
 
-    /// @brief ポストエフェクトコンポーネント登録
-    bool RegisterPostEffectComponent(std::unique_ptr<IPostEffectComponent> component);
+    /// @brief 深度書き込みの有効/無効を設定（ポストエフェクト用や2D描画用。次のBeginDrawから反映される）
+    /// @param enable true の場合、深度書き込みを有効にする。false の場合、深度書き込みを無効にする。
+    void SetDepthWriteEnabled(bool enable) noexcept { isDepthWriteEnabled_ = enable; }
 
-    /// @brief 登録済みポストエフェクトコンポーネントを全て取得
-    const std::vector<std::unique_ptr<IPostEffectComponent>> &GetPostEffectComponents() const { return postEffectComponents_; }
-
-    /// @brief Renderer用: 登録済みポストエフェクトをレンダーパスとして列挙（参照で返す、キャッシュ有り）
-    const std::vector<PostEffectPass> &BuildPostEffectPasses(Passkey<Renderer>) const;
-
-    /// @brief 外部（またはコンポーネント）からキャッシュを無効化するためのメソッド
-    /// @note フレームごとにパスが変わるコンポーネントがある場合は、そのコンポーネントから
-    ///       このメソッドを呼んでキャッシュを破棄してください。
-    void InvalidatePostEffectPasses();
-
-    /// @brief Renderer が定数/インスタンスバッファキャッシュ等で使う擬似キー
-    HWND GetCacheKey() const noexcept { return reinterpret_cast<HWND>(const_cast<ScreenBuffer *>(this)); }
-
-    void AttachToRenderer(const std::string &passName = "");
-    void DetachFromRenderer();
-
-    /// @brief Renderer 用: 記録中コマンドリスト取得（AllBeginRecord 後）
-    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>) const noexcept { return dx12Commands_->GetCommandList(); }
-
-    /// @brief Renderer 用: 現在フレームで記録開始されているか
-    bool IsRecording(Passkey<Renderer>) const noexcept;
-
-    /// @brief Renderer 用: この ScreenBuffer に対する「カスタム記録」を開始したことをマークする
-    /// @details PostEffectPass::beginRecordFunction が設定され、その関数内で
-    ///          ScreenBuffer の DX12Commands を直接使ってコマンドを記録する場合に
-    ///          Renderer から呼び出して sRecordStates の started フラグを設定するためのメソッド。
-    void MarkRecordingStarted(Passkey<Renderer>);
-
-    /// @brief Renderer 用: この ScreenBuffer の記録を開始（深度を上書きしない用途向けに制御可能）
-    /// @param disableDepthWrite true の場合、Depth への書き込み/クリアを行わず Color のみをターゲットにする
-    ID3D12GraphicsCommandList *BeginRecord(Passkey<Renderer>, bool disableDepthWrite);
-
-    /// @brief Renderer 用: この ScreenBuffer の記録を終了
-    bool EndRecord(Passkey<Renderer>, bool discard = false);
-
-    /// @brief Renderer 用: DX12Commands 取得（ポストエフェクト等で使用）
-    DX12Commands *GetDX12Commands(Passkey<Renderer>) const noexcept { return dx12Commands_; }
-
-#if defined(USE_IMGUI)
-    /// @brief デバッグ用: 生成済み ScreenBuffer の内容を表示する ImGui ウィンドウを描画
-    static void ShowImGuiScreenBuffersWindow();
-#endif
+    /// @brief バッファサイズの変更を通知する（GPUリソースの再生成は即時には行わない）
+    /// @details 呼び出した時点では新しいサイズを記憶するだけで、実際のGPUリソース再生成は
+    ///          BeginDraw（内部的にはBeginRecord）でそのリソースが実際に使用される際、
+    ///          そのリソース単体のみを対象に行われる（ダブルバッファの全リソースを一括で
+    ///          作り直すと、まだ使われていない方のバッファまで空の状態になり、その内容が
+    ///          そのまま画面に一瞬表示されてちらつく問題があったため）。
+    ///          TextureManagerへの登録名・ハンドルはそのまま維持される（サイズはこのオブジェクトから
+    ///          毎回取得されるため再登録は不要）。BeginDraw/EndDraw の外側から呼ぶこと。
+    /// @return 成功した場合はtrue、失敗した場合（未初期化・サイズが0等）はfalseを返す
+    bool Resize(std::uint32_t width, std::uint32_t height);
 
 private:
-    std::optional<ScreenBufferPass> CreateScreenPass(const std::string &passName);
-
     static inline DirectXCommon *sDirectXCommon_ = nullptr;
-    static inline Renderer* sRenderer = nullptr;
-    static constexpr size_t kBufferCount_ = 2;
+    static constexpr size_t kBufferCount = 2;
 
     ScreenBuffer() = default;
 
     size_t GetRtvWriteIndex() const noexcept { return rtvWriteIndex_; }
-    size_t GetRtvReadIndex() const noexcept { return (rtvWriteIndex_ + 1) % kBufferCount_; }
+    size_t GetRtvReadIndex() const noexcept { return (rtvWriteIndex_ + 1) % kBufferCount; }
     size_t GetDsvWriteIndex() const noexcept { return dsvWriteIndex_; }
-    size_t GetDsvReadIndex() const noexcept { return (dsvWriteIndex_ + 1) % kBufferCount_; }
+    size_t GetDsvReadIndex() const noexcept { return (dsvWriteIndex_ + 1) % kBufferCount; }
 
     void AdvanceFrameBufferIndex(bool updateRtv, bool updateDsv) noexcept {
         if (updateRtv) {
-            rtvWriteIndex_ = (rtvWriteIndex_ + 1) % kBufferCount_;
+            rtvWriteIndex_ = (rtvWriteIndex_ + 1) % kBufferCount;
         }
         if (updateDsv) {
-            dsvWriteIndex_ = (dsvWriteIndex_ + 1) % kBufferCount_;
+            dsvWriteIndex_ = (dsvWriteIndex_ + 1) % kBufferCount;
         }
     }
 
@@ -167,6 +146,23 @@ private:
     /// @brief コマンド記録終了
     bool EndRecord(bool discard = false);
 
+    /// @brief 指定インデックスのRenderTarget/ShaderResourceが現在の width_/height_ と異なるサイズの
+    ///        場合のみ、そのインデックスのリソースだけを新しいサイズで作り直す
+    /// @details RenderTarget用とDepthStencil用でインデックスの進み方が異なる場合があるため
+    ///          （深度書き込み無効時はDSVインデックスが進まない）、それぞれ独立して管理する
+    void EnsureRenderTargetSize(size_t index, ID3D12GraphicsCommandList *cmd);
+    /// @brief 指定インデックスのDepthStencilが現在の width_/height_ と異なるサイズの場合のみ、
+    ///        そのインデックスのリソースだけを新しいサイズで作り直す
+    void EnsureDepthStencilSize(size_t index, ID3D12GraphicsCommandList *cmd);
+
+    /// @brief TextureManager への登録（名前が空の場合は自動生成）
+    void RegisterToTextureManager(const std::string &name);
+    /// @brief TextureManager からの登録解除
+    void UnregisterFromTextureManager();
+
+    std::string name_;
+    std::uint32_t textureHandle_ = 0;
+
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;
 
@@ -176,23 +172,25 @@ private:
     size_t rtvWriteIndex_ = 0;
     size_t dsvWriteIndex_ = 0;
 
+    bool isDepthWriteEnabled_ = true;
     bool isLastBeginDisableDepthWrite_ = false;
     bool isFirstBeginRecord_ = true;
 
-    std::unique_ptr<RenderTargetResource> renderTargets_[kBufferCount_];
-    std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount_];
-    std::unique_ptr<ShaderResourceResource> shaderResources_[kBufferCount_];
+    std::unique_ptr<RenderTargetResource> renderTargets_[kBufferCount];
+    std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount];
+    std::unique_ptr<ShaderResourceResource> shaderResources_[kBufferCount];
 
-    std::vector<std::unique_ptr<IPostEffectComponent>> postEffectComponents_;
+    // 各インデックスのRenderTarget/DepthStencilが実際にGPU上で確保されているサイズ
+    // （width_/height_とは異なる場合がある。Resize()は即時にはGPUリソースを作り直さず、
+    // このサイズとの差分をEnsureRenderTargetSize/EnsureDepthStencilSizeで検知して
+    // 使用時に1バッファずつ作り直す。RTVとDSVでインデックスの進み方が異なることがあるため別々に持つ）
+    std::uint32_t rtBufferWidth_[kBufferCount]{};
+    std::uint32_t rtBufferHeight_[kBufferCount]{};
+    std::uint32_t dsBufferWidth_[kBufferCount]{};
+    std::uint32_t dsBufferHeight_[kBufferCount]{};
 
     int commandSlotIndex_ = -1;
     DX12Commands *dx12Commands_ = nullptr;
-
-    Renderer::PersistentScreenPassHandle persistentScreenPassHandle_;
-
-    // キャッシュ：mutable にして const メソッド内から更新可能にする
-    mutable std::vector<PostEffectPass> cachedPostEffectPasses_;
-    mutable bool cachedPostEffectPassesDirty_ = true;
 };
 
 } // namespace KashipanEngine

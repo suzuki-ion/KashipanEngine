@@ -1,16 +1,14 @@
 #include "GameEngine.h"
 #include "EngineSettings.h"
 #include "Core/Window.h"
-#include "Graphics/Renderer.h"
+#include "Scene/SceneContext.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
 #include "Utilities/TimeUtils.h"
-#include "Objects/GameObjects/3D/Model.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
+#include "Graphics/ComputeCommandProcessor.h"
 #include "AppInitialize.h"
-
-#include "Scene/SceneBase.h"
 
 #include <cstdint>
 #include <algorithm>
@@ -108,20 +106,12 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     //--------- インスタンス生成 ---------//
 
-    sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
-
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
-
-    if (graphicsEngine_) {
-        auto* renderer = graphicsEngine_->GetRenderer(Passkey<GameEngine>{});
-        ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, renderer);
-        Object2DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
-        Object3DBase::SetRenderer(Passkey<GameEngine>{}, renderer);
-    }
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
@@ -129,15 +119,17 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, "Assets");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, "Assets");
-    Model::SetModelManager(Passkey<GameEngine>{}, modelManager_.get());
+    materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, "Assets");
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
+    inputCommand_->LoadFromJSON(InputCommand::kDefaultSaveFilePath);
+    sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
 
     context_.engine = this;
     context_.sceneManager = sceneManager_.get();
     context_.inputCommand = inputCommand_.get();
 
-    SceneBase::SetEnginePointers(
+    Scene::SetEnginePointers(
         Passkey<GameEngine>{},
         audioManager_.get(),
         modelManager_.get(),
@@ -145,6 +137,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         samplerManager_.get(),
         textureManager_.get(),
         animationManager_.get(),
+        materialManager_.get(),
         input_.get(),
         inputCommand_.get());
 
@@ -165,7 +158,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     //--------- ゲームループ終了条件 ---------//
 
-    gameLoopEndConditionFunction_ = []() {
+    gameLoopEndConditionFunction_ = [this]() {
 #ifdef USE_IMGUI
         if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             return Window::GetWindowCount() == 0;
@@ -174,7 +167,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
             return Window::GetWindow("ImGui Window") == nullptr;
         }
 #else
-        return Window::GetWindowCount() == 0;
+        return isGameLoopRunning_ == false;
 #endif
     };
 
@@ -194,7 +187,12 @@ GameEngine::~GameEngine() {
     Window::AllDestroy({});
     ScreenBuffer::AllDestroy({});
     ShadowMapBuffer::AllDestroy({});
+    ComputeCommandProcessor::Finalize(Passkey<GameEngine>{});
 
+    sceneManager_.reset();
+    if (inputCommand_) {
+        inputCommand_->SaveToJSON(InputCommand::kDefaultSaveFilePath);
+    }
     inputCommand_.reset();
     input_.reset();
 
@@ -202,16 +200,13 @@ GameEngine::~GameEngine() {
     imguiManager_.reset();
 #endif
 
+    materialManager_.reset();
     audioManager_.reset();
     animationManager_.reset();
     skeletonManager_.reset();
     modelManager_.reset();
     samplerManager_.reset();
     textureManager_.reset();
-
-    ScreenBuffer::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    Object2DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
-    Object3DBase::SetRenderer(Passkey<GameEngine>{}, nullptr);
 
     graphicsEngine_.reset();
     directXCommon_.reset();
@@ -252,25 +247,10 @@ void GameEngine::GameLoopUpdate() {
 #endif
 
     if (sceneManager_) {
-        if (auto *scene = sceneManager_->GetCurrentScene()) {
-            if (!isGameLoopPaused_ || isNextFrameRequested_) {
-                scene->Update();
-                if (isNextFrameRequested_) {
-                    isNextFrameRequested_ = false;
-                }
-            }
+        sceneManager_->Update(Passkey<GameEngine>{});
 #if defined(USE_IMGUI)
-            scene->ShowImGui();
+        sceneManager_->ShowImGui(Passkey<GameEngine>{});
 #endif
-        }
-    }
-
-    if (!isGameLoopRunning_ || isGameLoopPaused_) {
-#if defined(USE_IMGUI)
-        const auto endTp = std::chrono::high_resolution_clock::now();
-        updateMs_ = std::chrono::duration<float, std::milli>(endTp - beginTp).count();
-#endif
-        return;
     }
 
 #if defined(USE_IMGUI)
@@ -287,43 +267,19 @@ void GameEngine::GameLoopDraw() {
     directXCommon_->BeginDraw({});
     Window::Draw({});
 
-    graphicsEngine_->RenderFrame({});
+    {
+        SceneContext *sceneContext = nullptr;
+        if (sceneManager_) {
+            if (const auto *currentScene = sceneManager_->GetCurrentScene()) {
+                sceneContext = currentScene->GetSceneContext();
+            }
+        }
+        graphicsEngine_->RenderFrame({}, sceneContext);
+    }
 
 #if defined(USE_IMGUI)
     if (imguiManager_) {
         DrawProfilingImGui();
-
-        if (graphicsEngine_) {
-            if (auto *renderer = graphicsEngine_->GetRenderer({})) {
-                renderer->ShowImGuiCpuTimersWindow();
-            }
-        }
-
-        if (input_) {
-            input_->ShowImGui();
-        }
-        if (inputCommand_) {
-            inputCommand_->ShowImGui();
-        }
-
-        ScreenBuffer::ShowImGuiScreenBuffersWindow();
-        ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow();
-
-        ImGui::Begin("GameLoop Control");
-        if (isGameLoopPaused_) {
-            if (ImGui::Button("Resume Game Loop")) {
-                GameLoopResume();
-            }
-            if (ImGui::Button("Step Frame")) {
-                isNextFrameRequested_ = true;
-            }
-        } else {
-            if (ImGui::Button("Pause Game Loop")) {
-                GameLoopPause();
-            }
-        }
-        ImGui::End();
-
         imguiManager_->Render({});
     }
 #endif
@@ -338,7 +294,14 @@ void GameEngine::GameLoopDraw() {
 }
 
 int GameEngine::Execute(PasskeyForGameEngineMain) {
+    static size_t windowCount = 0;
+
     while (!gameLoopEndConditionFunction_()) {
+#if !defined(USE_IMGUI)
+        // シーンやスクリプトからの終了要求でゲームループを抜ける
+        // （エディタービルドでは再生停止要求としてScene側で消費されるため、ここでは見ない）
+        if (sIsExitGameLoopRequested) break;
+#endif
         GameLoopUpdate();
         GameLoopDraw();
 
@@ -349,26 +312,13 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
         directXCommon_->AllDestroyPendingSwapChains({});
+
+        if (windowCount > Window::GetWindowCount()) {
+            isGameLoopRunning_ = Window::GetWindowCount() != 0;
+        }
+        windowCount = Window::GetWindowCount();
     }
     return 0;
-}
-
-void GameEngine::GameLoopRun() {
-    isGameLoopRunning_ = true;
-    isGameLoopPaused_ = false;
-}
-
-void GameEngine::GameLoopEnd() {
-    isGameLoopRunning_ = false;
-    isGameLoopPaused_ = false;
-}
-
-void GameEngine::GameLoopPause() {
-    isGameLoopPaused_ = true;
-}
-
-void GameEngine::GameLoopResume() {
-    isGameLoopPaused_ = false;
 }
 
 } // namespace KashipanEngine

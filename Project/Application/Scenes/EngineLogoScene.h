@@ -5,7 +5,7 @@ namespace KashipanEngine {
 
 class Rect;
 
-class EngineLogoScene final : public SceneBase {
+class EngineLogoScene final : public Scene {
 public:
     EngineLogoScene(const std::string &nextSceneName = "TitleScene");
     ~EngineLogoScene() override;

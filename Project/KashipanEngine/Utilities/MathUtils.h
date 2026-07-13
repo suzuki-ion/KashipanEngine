@@ -9,15 +9,19 @@
 #include "MathUtils/FractalNoise.h"
 #include "MathUtils/SphericalCoordinates.h"
 
-#define M_PI 3.14159265358979323846f
+/// @brief 円周率を任意の型で取得する
+template <typename T>
+constexpr T GetPI() noexcept {
+    return static_cast<T>(3.14159265358979323846);
+}
 
 template<typename T>
 T ToDegrees(T radians) {
-    static const T constant = static_cast<T>(180.0f / M_PI);
+    static const T constant = static_cast<T>(180.0f / GetPI<T>());
     return radians * constant;
 }
 template <typename T>
 T ToRadians(T degrees) {
-    static const T constant = static_cast<T>(M_PI / 180.0f);
+    static const T constant = static_cast<T>(GetPI<T>() / 180.0f);
     return degrees * constant;
 }

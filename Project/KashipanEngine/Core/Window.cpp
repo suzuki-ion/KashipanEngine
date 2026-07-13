@@ -6,7 +6,6 @@
 #include <algorithm>
 
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
-#include "Graphics/Renderer.h"
 
 namespace KashipanEngine {
 
@@ -191,8 +190,6 @@ void Window::Draw(Passkey<GameEngine>) {
         if (window->GetWindowType() == WindowType::Overlay && window->GetWindowHandle()) {
             RedrawWindow(window->GetWindowHandle(), nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN);
         }
-
-        if (window->dx12SwapChain_) window->dx12SwapChain_->BeginDraw(Passkey<Window>{});
     }
 }
 
@@ -212,8 +209,6 @@ Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t he
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForHwnd, hwnd, windowWidth, windowHeight);
-    auto cmdList = sWindowMap[hwnd]->dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{});
-    sRenderer->RegisterWindow(Passkey<Window>{}, hwnd, cmdList);
 
     Log(Translation("engine.window.create.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -259,8 +254,6 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
     sWindowMap[hwnd]->RegisterWindowEvent<WindowDefaultEvent::ClickThroughEvent>(clickThrough);
-    auto cmdList = sWindowMap[hwnd]->dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{});
-    sRenderer->RegisterWindow(Passkey<Window>{}, hwnd, cmdList);
 
     Log(Translation("engine.window.create.overlay.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -291,6 +284,19 @@ void Window::DestroyNotify() {
 std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam) {
     LogScope scope;
     messages_[msg] = { msg, wparam, lparam };
+
+    // メッセージの横取り: 受信の記録だけ行い、既定イベント・DefWindowProcを実行しない
+    // （記録は行われるため、WindowObjectコンポーネント経由のOnWindowMessage通知には届く）
+    if (interceptedMessages_.contains(msg)) {
+        return std::optional<LRESULT>(0);
+    }
+    // WM_CLOSE横取り時は、Xボタン・Alt+F4等のSC_CLOSEを既定イベント（確認ダイアログ）へ渡さず
+    // DefWindowProcへ流す（DefWindowProcがWM_CLOSEを発行し、上の横取り処理で捕捉される）
+    // ※wparamの下位4ビットはシステム予約のためマスクして比較する
+    if (msg == WM_SYSCOMMAND && (wparam & 0xFFF0) == SC_CLOSE && interceptedMessages_.contains(WM_CLOSE)) {
+        return std::nullopt;
+    }
+
     // Intercept Alt+Enter (WM_SYSKEYDOWN + VK_RETURN) to toggle fullscreen appearance
     if (msg == WM_SYSKEYDOWN && wparam == VK_RETURN) {
         // lParam bit29 indicates the ALT key is down; also accept GetKeyState as fallback
@@ -405,6 +411,8 @@ void Window::SetWindowTitle(const std::string &title) {
 
 void Window::SetWindowSize(int32_t width, int32_t height) {
     LogScope scope;
+    if (width <= 0 || height <= 0) return;
+    if (size_.clientWidth == width && size_.clientHeight == height) return;
     size_.clientWidth = width;
     size_.clientHeight = height;
     CalculateAspectRatio();
@@ -482,6 +490,18 @@ void Window::ClearWindowParent(bool applyNative) { LogScope scope; DetachFromPar
 void Window::ClearWindowChild(bool applyNative) { LogScope scope; DetachAllChildrenUnsafe(applyNative); }
 
 void Window::UnregisterWindowEvent(UINT msg) { LogScope scope; eventHandlers_.erase(msg); }
+
+ID3D12GraphicsCommandList *Window::GetCommandList() const {
+    return dx12SwapChain_ ? dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{}) : nullptr;
+}
+
+void Window::BeginDraw() {
+    if (dx12SwapChain_) dx12SwapChain_->BeginDraw(Passkey<Window>{});
+}
+
+void Window::EndDraw() {
+    if (dx12SwapChain_) dx12SwapChain_->EndDraw(Passkey<Window>{});
+}
 
 const WindowMessage &Window::GetWindowMessage(UINT msg) const {
     static const WindowMessage kEmptyMessage{ WM_NULL, 0, 0 };

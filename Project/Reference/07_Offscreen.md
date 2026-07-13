@@ -107,4 +107,4 @@ ScreenBuffer::DestroyNotify(sb);
 - 参照：`KashipanEngine/Graphics/ShadowMapBuffer.h` / `.cpp`
 - デバッグ表示：`ShadowMapBuffer::ShowImGuiShadowMapBuffersWindow()`（`USE_IMGUI` 時）
 
-`Object3DBase` は `AttachToRenderer(ShadowMapBuffer*, ...)` を持ち、シャドウマップ向けの永続パス登録に対応します。
+`EmptyObject` は `AttachToRenderer(ShadowMapBuffer*, ...)` を持ち、シャドウマップ向けの永続パス登録に対応します。

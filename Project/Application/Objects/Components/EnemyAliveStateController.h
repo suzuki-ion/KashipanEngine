@@ -4,10 +4,10 @@
 
 namespace KashipanEngine {
 
-class EnemyAliveStateController : public IObjectComponent3D {
+class EnemyAliveStateController : public IObjectComponent {
 public:
     EnemyAliveStateController()
-        : IObjectComponent3D("EnemyAliveStateController", 1) {}
+        : IObjectComponent("EnemyAliveStateController", 1) {}
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         return std::make_unique<EnemyAliveStateController>();
@@ -48,6 +48,6 @@ private:
     const float playerCollisionThreshold_ = 0.5f; // プレイヤーとの衝突とみなす法線の閾値
 };
 
-REGISTER_COMPONENT_OBJECT3D(EnemyAliveStateController)
+REGISTER_COMPONENT_OBJECT(EnemyAliveStateController)
 
 } // namespace KashipanEngine

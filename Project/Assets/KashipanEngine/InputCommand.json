@@ -1,0 +1,321 @@
+{
+    "Cancel": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Escape",
+            "state": "Trigger"
+        },
+        {
+            "button": "B",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "button": "Back",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
+    "DebugSceneChange": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "F1",
+            "state": "Trigger"
+        }
+    ],
+    "Pause": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Escape",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "P",
+            "state": "Trigger"
+        },
+        {
+            "button": "Start",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
+    "PlayerJump": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "button": "A",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
+    "PlayerMoveDown": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "S",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Down",
+            "state": "Down"
+        },
+        {
+            "button": "DPadDown",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Down"
+        },
+        {
+            "analog": "LeftStickY",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": true,
+            "state": "Down",
+            "threshold": -0.20000000298023224
+        }
+    ],
+    "PlayerMoveLeft": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "A",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Left",
+            "state": "Down"
+        },
+        {
+            "button": "DPadLeft",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Down"
+        },
+        {
+            "analog": "LeftStickX",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": true,
+            "state": "Down",
+            "threshold": -0.20000000298023224
+        }
+    ],
+    "PlayerMoveRight": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Right",
+            "state": "Down"
+        },
+        {
+            "button": "DPadRight",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Down"
+        },
+        {
+            "analog": "LeftStickX",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Down",
+            "threshold": 0.20000000298023224
+        }
+    ],
+    "PlayerMoveUp": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "W",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Up",
+            "state": "Down"
+        },
+        {
+            "button": "DPadUp",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Down"
+        },
+        {
+            "analog": "LeftStickY",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Down",
+            "threshold": 0.20000000298023224
+        }
+    ],
+    "SelectDown": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "S",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Down",
+            "state": "Trigger"
+        },
+        {
+            "button": "DPadDown",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "analog": "LeftStickY",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": true,
+            "state": "Trigger",
+            "threshold": -0.20000000298023224
+        }
+    ],
+    "SelectLeft": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "A",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Left",
+            "state": "Trigger"
+        },
+        {
+            "button": "DPadLeft",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "analog": "LeftStickX",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": true,
+            "state": "Trigger",
+            "threshold": -0.20000000298023224
+        }
+    ],
+    "SelectRight": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Right",
+            "state": "Trigger"
+        },
+        {
+            "button": "DPadRight",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "analog": "LeftStickX",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Trigger",
+            "threshold": 0.20000000298023224
+        }
+    ],
+    "SelectUp": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "W",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Up",
+            "state": "Trigger"
+        },
+        {
+            "button": "DPadUp",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "analog": "LeftStickY",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Trigger",
+            "threshold": 0.20000000298023224
+        }
+    ],
+    "Submit": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Enter",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "button": "A",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ]
+}

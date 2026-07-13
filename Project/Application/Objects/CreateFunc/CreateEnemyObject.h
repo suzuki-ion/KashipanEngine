@@ -5,7 +5,7 @@
 
 namespace KashipanEngine {
 
-std::unique_ptr<Object3DBase> CreateEnemyObject(SceneContext *context, const Vector3 &position = Vector3::Zero()) {
+std::unique_ptr<EmptyObject> CreateEnemyObject(SceneContext *context, const Vector3 &position = Vector3::Zero()) {
     auto *sceneDefaultVariables = context->GetComponent<SceneDefaultVariables>();
     auto *screenBuffer3D = sceneDefaultVariables ? sceneDefaultVariables->GetScreenBuffer3D() : nullptr;
 
@@ -20,7 +20,7 @@ std::unique_ptr<Object3DBase> CreateEnemyObject(SceneContext *context, const Vec
     if (auto *mat = enemy->GetComponent3D<Material3D>()) {
         mat->SetColor(Vector4(1.0f, 0.0f, 0.0f, 1.0f));
     }
-    enemy->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+    enemy->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
 
     return std::move(enemy);
 }

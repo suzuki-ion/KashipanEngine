@@ -24,7 +24,7 @@
 		// 頂点シェーダ
 		"Vertex": {
 			// HLSL ファイルパス
-			"Path": "Shaders/Object3D/Object3D_VS.hlsl",
+			"Path": "Shaders/Object/Object_VS.hlsl",
 			// エントリポイント (既定: main)
 			"EntryPoint": "VSMain",
 			// ターゲットプロファイル (例: vs_6_6 / vs_5_0)
@@ -41,7 +41,7 @@
 
 		// ピクセルシェーダ
 		"Pixel": {
-			"Path": "Shaders/Object3D/Object3D_PS.hlsl",
+			"Path": "Shaders/Object/Object_PS.hlsl",
 			"EntryPoint": "PSMain",
 			"TargetProfile": "ps_6_6",
 			"Macros": [

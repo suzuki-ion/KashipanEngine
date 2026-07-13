@@ -50,6 +50,26 @@ bool IsDirectoryExist(const std::string &directoryPath) {
     return std::filesystem::exists(dirPath) && std::filesystem::is_directory(dirPath);
 }
 
+bool CreateDirectories(const std::string &directoryPath) {
+    if (directoryPath.empty()) return true;
+    std::error_code ec;
+    const std::filesystem::path dirPath(directoryPath);
+    if (std::filesystem::exists(dirPath, ec)) {
+        return std::filesystem::is_directory(dirPath, ec);
+    }
+    std::filesystem::create_directories(dirPath, ec);
+    return !ec;
+}
+
+bool EnsureParentDirectoryExists(const std::string &filePath) {
+    std::error_code ec;
+    const std::filesystem::path parent = std::filesystem::path(filePath).parent_path();
+    if (parent.empty()) return true; // カレントディレクトリ直下
+    if (std::filesystem::exists(parent, ec)) return true;
+    std::filesystem::create_directories(parent, ec);
+    return !ec;
+}
+
 DirectoryData GetDirectoryData(const std::string &directoryPath, bool isRecursive, bool isFullPath) {
     std::filesystem::path dirPath(directoryPath);
     return BuildDirectoryData(dirPath, isRecursive, isFullPath);

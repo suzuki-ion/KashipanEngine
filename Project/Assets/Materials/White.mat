@@ -5,8 +5,8 @@
         "y": 1.0,
         "z": 1.0
     },
-    "enableLighting": false,
-    "enableShadowMapProjection": false,
+    "enableLighting": true,
+    "enableShadowMapProjection": true,
     "environmentCoefficient": 1.0,
     "environmentFile": "",
     "name": "White",

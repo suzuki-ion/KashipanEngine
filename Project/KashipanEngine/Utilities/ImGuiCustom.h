@@ -1,4 +1,5 @@
 #pragma once
+#ifdef USE_IMGUI
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <string>
@@ -460,3 +461,5 @@ inline void ShowValue(const char *label, const std::any &value, const UiOptions 
 }
 
 } // namespace ImGuiCustom
+
+#endif // USE_IMGUI

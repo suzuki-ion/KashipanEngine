@@ -199,6 +199,15 @@ public:
     /// @brief オブジェクトのアクティブ状態取得
     bool IsActive() const;
 
+    /// @brief EditorOnly（エディター専用）フラグを設定する
+    /// @details EditorOnlyのオブジェクトはエディターのシーンビューにのみ描画され、
+    ///          再生開始時・エディター無しビルドでのシーン読み込み時に（子孫ごと）削除される
+    void SetEditorOnly(bool editorOnly) { isEditorOnly_ = editorOnly; }
+    /// @brief EditorOnlyフラグを取得する（自身のフラグのみ。祖先は考慮しない）
+    bool IsEditorOnly() const noexcept { return isEditorOnly_; }
+    /// @brief 自身または祖先のいずれかがEditorOnlyかどうか（描画の除外判定用）
+    bool IsEditorOnlyInHierarchy() const;
+
     //==================================================
     // JSON保存/読み込み系メソッド
     //==================================================
@@ -294,6 +303,8 @@ private:
     bool isSaveEnabled_ = true;
 
     bool isActive_ = true;
+    /// @brief EditorOnly（エディター専用）フラグ
+    bool isEditorOnly_ = false;
 };
 
 } // namespace KashipanEngine

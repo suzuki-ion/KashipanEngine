@@ -498,39 +498,6 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Render\SceneRenderer.cpp">
       <Filter>KashipanEngine\Scene\Components\Render</Filter>
     </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\EditorSettings.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneSaver.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Scene.cpp">
       <Filter>KashipanEngine\Scene</Filter>
     </ClCompile>
@@ -625,7 +592,6 @@
       <Filter>KashipanEngine\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\AssetEditorWindows.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\contextmgr\contextmgr.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\datetime\datetime.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\debugger\debugger.cpp" />
@@ -645,6 +611,18 @@
     <ClCompile Include="Externals\angelscript\include\add_on\scriptstdstring\scriptstdstring_utils.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\serializer\serializer.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\weakref\weakref.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\AssetEditorWindows.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\EditorSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneSaver.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\AppInitialize.h">
@@ -1148,6 +1126,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\IWindowObjectComponent.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\NormalWindowObject.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
@@ -1169,6 +1150,9 @@
     <ClCompile Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.cpp">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClCompile>
+    <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Text.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -1273,51 +1257,6 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\SceneComponentHeader.h">
       <Filter>KashipanEngine\Scene\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\ComponentAddMenu.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\AssetsWindow.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\EditorSettings.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectPayload.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h">
-      <Filter>KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Scene.h">
       <Filter>KashipanEngine\Scene</Filter>
@@ -1481,7 +1420,6 @@
     <ClInclude Include="MyStd\VectorMap.h">
       <Filter>MyStd</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Scene\Editor\AssetEditorWindows.h" />
     <ClInclude Include="KashipanEngine\Utilities\AssetDragDropPayload.h" />
     <ClInclude Include="KashipanEngine\Graphics\Renderer\EditorDebugDraw.h" />
     <ClInclude Include="Externals\angelscript\include\add_on\autowrapper\aswrappedcall.h" />
@@ -1710,6 +1648,22 @@
     <ClInclude Include="Externals\utf8\utf8\cpp20.h" />
     <ClInclude Include="Externals\utf8\utf8\unchecked.h" />
     <ClInclude Include="Externals\utf8\utf8.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\AssetEditorWindows.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\AssetsWindow.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\ComponentAddMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorSettings.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectPayload.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

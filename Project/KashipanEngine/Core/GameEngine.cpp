@@ -158,7 +158,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     //--------- ゲームループ終了条件 ---------//
 
-    gameLoopEndConditionFunction_ = []() {
+    gameLoopEndConditionFunction_ = [this]() {
 #ifdef USE_IMGUI
         if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             return Window::GetWindowCount() == 0;
@@ -167,7 +167,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
             return Window::GetWindow("ImGui Window") == nullptr;
         }
 #else
-        return Window::GetWindowCount() == 0;
+        return isGameLoopRunning_ == false;
 #endif
     };
 
@@ -294,7 +294,14 @@ void GameEngine::GameLoopDraw() {
 }
 
 int GameEngine::Execute(PasskeyForGameEngineMain) {
+    static size_t windowCount = 0;
+
     while (!gameLoopEndConditionFunction_()) {
+#if !defined(USE_IMGUI)
+        // シーンやスクリプトからの終了要求でゲームループを抜ける
+        // （エディタービルドでは再生停止要求としてScene側で消費されるため、ここでは見ない）
+        if (sIsExitGameLoopRequested) break;
+#endif
         GameLoopUpdate();
         GameLoopDraw();
 
@@ -305,6 +312,11 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
         directXCommon_->AllDestroyPendingSwapChains({});
+
+        if (windowCount > Window::GetWindowCount()) {
+            isGameLoopRunning_ = Window::GetWindowCount() != 0;
+        }
+        windowCount = Window::GetWindowCount();
     }
     return 0;
 }

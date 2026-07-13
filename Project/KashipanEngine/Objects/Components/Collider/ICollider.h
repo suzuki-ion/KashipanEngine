@@ -38,13 +38,22 @@ public:
     bool IsTrigger() const noexcept { return isTrigger_; }
     void SetTrigger(bool isTrigger) noexcept { isTrigger_ = isTrigger; }
 
-    /// @brief 他のICollider（通常は複製元）からTransform同期設定をコピーする（Cloneで使用）
+    /// @brief 連続衝突判定（CCD）が有効かどうか
+    bool IsContinuousDetection() const noexcept { return continuousDetection_; }
+    /// @brief 連続衝突判定（CCD）の有効/無効を設定する
+    /// @details 有効にすると、前フレーム位置から現在位置までの移動経路を形状サイズ以下の刻みに分割して
+    ///          中間位置でも判定するため、高速移動で他のコライダーをすり抜けた場合でも
+    ///          衝突イベント（OnCollisionEnter等）が発生する。高速に動く弾丸や小さいオブジェクトに使用する
+    void SetContinuousDetection(bool enabled) noexcept { continuousDetection_ = enabled; }
+
+    /// @brief 他のICollider（通常は複製元）からTransform同期設定・判定設定をコピーする（Cloneで使用）
     void CopySyncSettingsFrom(const ICollider &other) {
         for (int i = 0; i < 3; ++i) {
             syncPosition_[i] = other.syncPosition_[i];
             syncRotation_[i] = other.syncRotation_[i];
             syncScale_[i] = other.syncScale_[i];
         }
+        continuousDetection_ = other.continuousDetection_;
     }
 
     //==================================================
@@ -122,6 +131,10 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ImGui::Checkbox("IsTrigger", &isTrigger_);
+        ImGui::Checkbox("Continuous Detection", &continuousDetection_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", "高速移動時のすり抜けでも衝突イベントを発生させる（連続衝突判定）");
+        }
         ImGui::Separator();
         ImGui::TextUnformatted("Sync With Transform");
         if (is2D_) {
@@ -147,6 +160,7 @@ protected:
     JSON SaveToJson() const override {
         JSON json = JSON::object();
         json["isTrigger"] = isTrigger_;
+        json["continuousDetection"] = continuousDetection_;
         json["syncPosition"] = { syncPosition_[0], syncPosition_[1], syncPosition_[2] };
         json["syncRotation"] = { syncRotation_[0], syncRotation_[1], syncRotation_[2] };
         json["syncScale"] = { syncScale_[0], syncScale_[1], syncScale_[2] };
@@ -155,6 +169,7 @@ protected:
 
     bool LoadFromJson(const JSON &json) override {
         isTrigger_ = json.value("isTrigger", false);
+        continuousDetection_ = json.value("continuousDetection", false);
         if (json.contains("syncPosition") && json["syncPosition"].is_array() && json["syncPosition"].size() == 3) {
             for (int i = 0; i < 3; ++i) syncPosition_[i] = json["syncPosition"][i].get<bool>();
         }
@@ -171,6 +186,8 @@ private:
     Shape shape_;
     bool is2D_ = false;
     bool isTrigger_ = false;
+    /// @brief 連続衝突判定（CCD）の有効/無効
+    bool continuousDetection_ = false;
 
     // Transform同期設定（位置・回転はデフォルトで追従、スケールは既存挙動を変えないためデフォルト非追従）
     bool syncPosition_[3] = { true, true, true };

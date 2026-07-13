@@ -176,6 +176,15 @@ bool IsTargetMatch(EmptyObject *targetObject, bool hasTargetSpecified, IRenderTa
     return std::find(targets.begin(), targets.end(), target) != targets.end();
 }
 
+/// @brief EditorOnlyオブジェクト（祖先を含む）のコンポーネントを、エディター用以外の描画先から除外するか
+/// @details ライト・カメラがEditorOnlyオブジェクトに付いている場合、エディターのシーンビュー以外へは適用しない
+bool IsExcludedAsEditorOnly(const IObjectComponent *component, const IRenderTarget *target, const SceneRenderer *sceneRenderer) {
+    if (!component || !sceneRenderer) return false;
+    if (target == sceneRenderer->GetEditorTarget()) return false;
+    const EmptyObject *owner = component->GetOwnerObject();
+    return owner && owner->IsEditorOnlyInHierarchy();
+}
+
 } // namespace
 
 Renderer::Renderer(Passkey<GraphicsEngine>, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
@@ -498,6 +507,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         } else {
             for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
                 if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+                if (IsExcludedAsEditorOnly(cameraRenderer, target, sceneRenderer)) continue;
                 if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
                 if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
                 cameraViewProjection = cameraRenderer->GetViewProjectionMatrix();
@@ -519,6 +529,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             if (!lightRenderer || !lightRenderer->IsActive()) continue;
             auto *light = lightRenderer->GetLight();
             if (!light || !light->IsActive() || !light->IsCastShadows()) continue;
+            if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
             if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
             if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
             candidates.push_back(lightRenderer);
@@ -1179,6 +1190,8 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
     } else
     for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        // EditorOnlyオブジェクトのカメラはエディター用以外の描画先にはバインドしない
+        if (IsExcludedAsEditorOnly(cameraRenderer, target, sceneRenderer)) continue;
         // パイプライン指定がある場合は一致するパイプラインのみバインド
         if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
         // 描画先指定がある場合は一致する描画先のみバインド
@@ -1219,6 +1232,8 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
     std::vector<DirectionalLightElement> directionalLights;
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
+        // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
+        if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
         if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
         if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
         if (!lightRenderer->IsRenderTargetIncluded(target)) continue;

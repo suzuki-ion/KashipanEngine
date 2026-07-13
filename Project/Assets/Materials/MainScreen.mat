@@ -5,11 +5,11 @@
         "y": 1.0,
         "z": 1.0
     },
-    "enableLighting": true,
+    "enableLighting": false,
     "enableShadowMapProjection": false,
     "environmentCoefficient": 1.0,
     "environmentFile": "",
-    "name": "ScreenBuffer2Mat",
+    "name": "MainScreen",
     "samplerHandle": 0,
     "shininess": 32.0,
     "specularColor": {
@@ -18,7 +18,7 @@
         "y": 1.0,
         "z": 1.0
     },
-    "textureFile": "ScreenBuffer_1",
+    "textureFile": "ScreenBuffer_0",
     "uvTransform": {
         "m00": 1.0,
         "m01": 0.0,

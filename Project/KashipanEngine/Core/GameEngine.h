@@ -65,7 +65,25 @@ public:
         gameLoopEndConditionFunction_ = func;
     }
 
+    //==================================================
+    // ゲームループの終了要求
+    //==================================================
+    // シーン・シーンコンテキスト・スクリプトなど、GameEngineへの参照を持たない場所から
+    // ゲームループの終了を指示するための静的なフラグ。
+    // 非エディタービルドではゲームループ（アプリケーション）が終了する。
+    // エディタービルド（USE_IMGUI）ではエディター自体は閉じず、再生停止（PlayStop）の要求として扱われる。
+
+    /// @brief ゲームループの終了を要求する（エディター実行時は再生停止の要求になる）
+    static void RequestExitGameLoop() noexcept { sIsExitGameLoopRequested = true; }
+    /// @brief ゲームループの終了要求が出ているかを取得する
+    static bool IsExitGameLoopRequested() noexcept { return sIsExitGameLoopRequested; }
+    /// @brief ゲームループの終了要求を取り下げる（エディターが要求を消費する際にも使用する）
+    static void ClearExitGameLoopRequest() noexcept { sIsExitGameLoopRequested = false; }
+
 private:
+    /// @brief ゲームループの終了要求フラグ
+    static inline bool sIsExitGameLoopRequested = false;
+
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();
     /// @brief ゲームループ描画処理
@@ -130,6 +148,7 @@ private:
 
     /// @brief ゲームループ終了条件関数
     std::function<bool()> gameLoopEndConditionFunction_;
+    bool isGameLoopRunning_ = true;
 
     /// @brief ウィンドウ配列
     std::vector<Window *> windows_;

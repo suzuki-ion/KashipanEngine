@@ -1,5 +1,7 @@
 #include "Scene/Components/Script/ScriptBindings.h"
 
+#include <atomic>
+#include <cstdint>
 #include <fstream>
 #include <map>
 #include <string_view>
@@ -7,10 +9,12 @@
 
 #include <angelscript.h>
 #include <add_on/scriptarray/scriptarray.h>
+#include <add_on/scriptdictionary/scriptdictionary.h>
 #include <asbind20/asbind.hpp>
 
 #include "Assets/AudioManager.h"
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Core/Window.h"
 #include "Debug/Logger.h"
 #include "Input/InputCommand.h"
 #include "Math/Matrix3x3.h"
@@ -23,6 +27,7 @@
 #include "Objects/ObjectContext.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
+#include "Utilities/FileIO/JSON.h"
 #include "Utilities/MathUtils/Easings.h"
 #include "Utilities/MyAny.h"
 #include "Utilities/RandomValue.h"
@@ -63,6 +68,7 @@
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraController.h"
 #include "Objects/Components/Render/CameraRenderer.h"
+#include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
@@ -73,6 +79,7 @@
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/ScriptComponent.h"
+#include "Objects/Components/TargetLookAt.h"
 #include "Objects/Components/Text.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Velocity.h"
@@ -320,6 +327,31 @@ auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
     return binder;
 }
 
+/// @brief Collider（ICollider基底）型を参照型として登録する
+/// @details HitInfoのselfCollider/otherColliderで「どのコライダー同士が衝突したか」を
+///          受け渡すための共通型。各コライダー型はopImplCastでこの型へ暗黙変換でき、
+///          cast<BoxCollider>(hit.otherCollider) のように具体型へダウンキャストもできる
+void RegisterColliderBaseType(asIScriptEngine *engine) {
+    asbind20::ref_class<ICollider>(engine, "Collider", asOBJ_NOCOUNT)
+        .method("bool IsActive() const", static_cast<bool (ICollider::*)() const>(&ICollider::IsActive))
+        .method("void SetActive(bool)", static_cast<void (ICollider::*)(bool)>(&ICollider::SetActive))
+        .method("const string &GetComponentType() const", static_cast<const std::string &(ICollider::*)() const>(&ICollider::GetComponentType))
+        .method("void SetTag(const string &in)", static_cast<void (ICollider::*)(const std::string &)>(&ICollider::SetTag))
+        .method("Tag GetTag() const", [](const ICollider &collider) -> Tag { return collider.GetTag(); })
+        .method("const string &GetTagName() const", [](const ICollider &collider) -> const std::string & { return collider.GetTagName(); })
+        .method("bool IsTrigger() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsTrigger))
+        .method("void SetTrigger(bool)", static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetTrigger))
+        .method("bool IsContinuousDetection() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsContinuousDetection))
+        .method("void SetContinuousDetection(bool)", static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetContinuousDetection))
+        .method("bool Is2D() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::Is2D));
+}
+
+/// @brief Collider@ から具体的なコライダー型へのダウンキャスト（cast<T>用）
+template <typename T>
+T *ColliderDownCast(ICollider *collider) {
+    return dynamic_cast<T *>(collider);
+}
+
 /// @brief コライダー型を登録する（ICollider共通のメソッドを追加で登録する）
 template <typename T>
 auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
@@ -327,8 +359,95 @@ auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
     binder
         .method("bool IsTrigger() const", static_cast<bool (T::*)() const noexcept>(&T::IsTrigger))
         .method("void SetTrigger(bool)", static_cast<void (T::*)(bool) noexcept>(&T::SetTrigger))
-        .method("bool Is2D() const", static_cast<bool (T::*)() const noexcept>(&T::Is2D));
+        .method("bool IsContinuousDetection() const", static_cast<bool (T::*)() const noexcept>(&T::IsContinuousDetection))
+        .method("void SetContinuousDetection(bool)", static_cast<void (T::*)(bool) noexcept>(&T::SetContinuousDetection))
+        .method("bool Is2D() const", static_cast<bool (T::*)() const noexcept>(&T::Is2D))
+        // 基底のCollider型への暗黙変換（HitInfoのselfCollider/otherColliderとの比較用）
+        .method("Collider@ opImplCast()", [](T &collider) -> ICollider * { return &collider; });
+    // cast<具体型>(Collider@) によるダウンキャスト
+    engine->RegisterObjectMethod("Collider", (std::string(name) + "@ opCast()").c_str(),
+        asFUNCTION((ColliderDownCast<T>)), asCALL_CDECL_OBJLAST);
     return binder;
+}
+
+/// @brief WindowObject（IWindowObjectComponent基底）型を参照型として登録する
+/// @details WindowMessageInfoのsourceComponentで「どのウィンドウコンポーネントからの通知か」を
+///          受け渡すための共通型。NormalWindowObject/OverlayWindowObjectはopImplCastでこの型へ
+///          暗黙変換でき、cast<NormalWindowObject>(info.sourceComponent) のように具体型へダウンキャストもできる
+void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
+    asbind20::ref_class<IWindowObjectComponent>(engine, "WindowObject", asOBJ_NOCOUNT)
+        .method("bool IsActive() const", static_cast<bool (IWindowObjectComponent::*)() const>(&IWindowObjectComponent::IsActive))
+        .method("void SetActive(bool)", static_cast<void (IWindowObjectComponent::*)(bool)>(&IWindowObjectComponent::SetActive))
+        .method("const string &GetComponentType() const", static_cast<const std::string &(IWindowObjectComponent::*)() const>(&IWindowObjectComponent::GetComponentType))
+        .method("void SetTag(const string &in)", static_cast<void (IWindowObjectComponent::*)(const std::string &)>(&IWindowObjectComponent::SetTag))
+        .method("Tag GetTag() const", [](const IWindowObjectComponent &component) -> Tag { return component.GetTag(); })
+        .method("const string &GetTagName() const", [](const IWindowObjectComponent &component) -> const std::string & { return component.GetTagName(); })
+        .method("void SetTitle(const string &in)", &IWindowObjectComponent::SetTitle)
+        .method("const string &GetTitle() const", &IWindowObjectComponent::GetTitle)
+        .method("void SetSize(uint, uint)", &IWindowObjectComponent::SetSize)
+        .method("int GetClientWidth() const", [](const IWindowObjectComponent &component) -> int {
+            Window *window = component.GetWindow();
+            return (window && Window::IsExist(window)) ? window->GetClientWidth() : 0;
+        })
+        .method("int GetClientHeight() const", [](const IWindowObjectComponent &component) -> int {
+            Window *window = component.GetWindow();
+            return (window && Window::IsExist(window)) ? window->GetClientHeight() : 0;
+        })
+        .method("bool IsWindowFocused() const", [](const IWindowObjectComponent &component) -> bool {
+            Window *window = component.GetWindow();
+            return (window && Window::IsExist(window)) ? window->IsFocused() : false;
+        })
+        .method("bool IsWindowMinimized() const", [](const IWindowObjectComponent &component) -> bool {
+            Window *window = component.GetWindow();
+            return (window && Window::IsExist(window)) ? window->IsMinimized() : false;
+        });
+}
+
+/// @brief WindowObject@ から具体的なウィンドウコンポーネント型へのダウンキャスト（cast<T>用）
+template <typename T>
+T *WindowObjectDownCast(IWindowObjectComponent *component) {
+    return dynamic_cast<T *>(component);
+}
+
+/// @brief よく使うウィンドウメッセージ定数（WM_*）をスクリプトへ登録する
+void RegisterWindowMessageConstants(asIScriptEngine *engine) {
+    static const std::pair<const char *, asUINT> kConstants[] = {
+        { "WM_ACTIVATE", WM_ACTIVATE },
+        { "WM_CLOSE", WM_CLOSE },
+        { "WM_DESTROY", WM_DESTROY },
+        { "WM_MOVE", WM_MOVE },
+        { "WM_SIZE", WM_SIZE },
+        { "WM_SIZING", WM_SIZING },
+        { "WM_ENTERSIZEMOVE", WM_ENTERSIZEMOVE },
+        { "WM_EXITSIZEMOVE", WM_EXITSIZEMOVE },
+        { "WM_SETFOCUS", WM_SETFOCUS },
+        { "WM_KILLFOCUS", WM_KILLFOCUS },
+        { "WM_KEYDOWN", WM_KEYDOWN },
+        { "WM_KEYUP", WM_KEYUP },
+        { "WM_SYSKEYDOWN", WM_SYSKEYDOWN },
+        { "WM_SYSKEYUP", WM_SYSKEYUP },
+        { "WM_CHAR", WM_CHAR },
+        { "WM_MOUSEMOVE", WM_MOUSEMOVE },
+        { "WM_LBUTTONDOWN", WM_LBUTTONDOWN },
+        { "WM_LBUTTONUP", WM_LBUTTONUP },
+        { "WM_LBUTTONDBLCLK", WM_LBUTTONDBLCLK },
+        { "WM_RBUTTONDOWN", WM_RBUTTONDOWN },
+        { "WM_RBUTTONUP", WM_RBUTTONUP },
+        { "WM_RBUTTONDBLCLK", WM_RBUTTONDBLCLK },
+        { "WM_MBUTTONDOWN", WM_MBUTTONDOWN },
+        { "WM_MBUTTONUP", WM_MBUTTONUP },
+        { "WM_MOUSEWHEEL", WM_MOUSEWHEEL },
+        { "WM_MOUSEHWHEEL", WM_MOUSEHWHEEL },
+        { "WM_DROPFILES", WM_DROPFILES },
+        { "WM_PAINT", WM_PAINT },
+    };
+    // RegisterGlobalPropertyへは値のアドレスを渡すため、静的領域に値を保持する
+    static asUINT sValues[std::size(kConstants)];
+    for (size_t i = 0; i < std::size(kConstants); ++i) {
+        sValues[i] = kConstants[i].second;
+        const std::string decl = std::string("const uint ") + kConstants[i].first;
+        engine->RegisterGlobalProperty(decl.c_str(), &sValues[i]);
+    }
 }
 
 /// @brief Light::Type をスクリプト用の LightType 列挙型として登録する
@@ -365,6 +484,18 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetAcceleration(const Vector3 &in)", &Velocity::SetAcceleration)
         .method("const Vector3 &GetAcceleration() const", &Velocity::GetAcceleration)
         .method("void AddVelocity(const Vector3 &in)", &Velocity::AddVelocity);
+
+    // TargetLookAtの回転モード
+    engine->RegisterEnum("TargetLookAtMode");
+    engine->RegisterEnumValue("TargetLookAtMode", "SyncRotation", static_cast<int>(TargetLookAt::RotationMode::SyncRotation));
+    engine->RegisterEnumValue("TargetLookAtMode", "LookAt", static_cast<int>(TargetLookAt::RotationMode::LookAt));
+    RegisterComponentType<TargetLookAt>(engine, "TargetLookAt")
+        .method("void SetTargetObject(Object@)", [](TargetLookAt &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("Object@ GetTargetObject() const", &TargetLookAt::GetTargetObject)
+        .method("void SetRotationOffset(const Vector3 &in)", &TargetLookAt::SetRotationOffset)
+        .method("const Vector3 &GetRotationOffset() const", &TargetLookAt::GetRotationOffset)
+        .method("void SetRotationMode(TargetLookAtMode)", &TargetLookAt::SetRotationMode)
+        .method("TargetLookAtMode GetRotationMode() const", &TargetLookAt::GetRotationMode);
 
     RegisterComponentType<AudioSource>(engine, "AudioSource")
         .method("uint Play()", &AudioSource::Play)
@@ -558,12 +689,21 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("Vector3 GetWorldDirection() const", &LightRenderer::GetWorldDirection);
 
     RegisterComponentType<NormalWindowObject>(engine, "NormalWindowObject")
-        .method("void SetTitle(const string &in)", &NormalWindowObject::SetTitle)
-        .method("void SetSize(uint, uint)", &NormalWindowObject::SetSize);
+        .method("void SetTitle(const string &in)", static_cast<void (NormalWindowObject::*)(const std::string &)>(&NormalWindowObject::SetTitle))
+        .method("const string &GetTitle() const", static_cast<const std::string &(NormalWindowObject::*)() const noexcept>(&NormalWindowObject::GetTitle))
+        .method("void SetSize(uint, uint)", static_cast<void (NormalWindowObject::*)(std::uint32_t, std::uint32_t)>(&NormalWindowObject::SetSize))
+        // 基底のWindowObject型への暗黙変換（WindowMessageInfoのsourceComponentとの比較用）
+        .method("WindowObject@ opImplCast()", [](NormalWindowObject &component) -> IWindowObjectComponent * { return &component; });
+    engine->RegisterObjectMethod("WindowObject", "NormalWindowObject@ opCast()",
+        asFUNCTION((WindowObjectDownCast<NormalWindowObject>)), asCALL_CDECL_OBJLAST);
 
     RegisterComponentType<OverlayWindowObject>(engine, "OverlayWindowObject")
-        .method("void SetTitle(const string &in)", &OverlayWindowObject::SetTitle)
-        .method("void SetSize(uint, uint)", &OverlayWindowObject::SetSize);
+        .method("void SetTitle(const string &in)", static_cast<void (OverlayWindowObject::*)(const std::string &)>(&OverlayWindowObject::SetTitle))
+        .method("const string &GetTitle() const", static_cast<const std::string &(OverlayWindowObject::*)() const noexcept>(&OverlayWindowObject::GetTitle))
+        .method("void SetSize(uint, uint)", static_cast<void (OverlayWindowObject::*)(std::uint32_t, std::uint32_t)>(&OverlayWindowObject::SetSize))
+        .method("WindowObject@ opImplCast()", [](OverlayWindowObject &component) -> IWindowObjectComponent * { return &component; });
+    engine->RegisterObjectMethod("WindowObject", "OverlayWindowObject@ opCast()",
+        asFUNCTION((WindowObjectDownCast<OverlayWindowObject>)), asCALL_CDECL_OBJLAST);
 
     RegisterComponentType<ScreenBufferObject>(engine, "ScreenBufferObject")
         .method("void SetName(const string &in)", &ScreenBufferObject::SetName)
@@ -980,7 +1120,17 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .property("Vector3 normal", &ScriptHitInfo::normal)
         .property("float penetration", &ScriptHitInfo::penetration)
         .property("Object@ selfObject", &ScriptHitInfo::selfObject)
-        .property("Object@ otherObject", &ScriptHitInfo::otherObject);
+        .property("Object@ otherObject", &ScriptHitInfo::otherObject)
+        .property("Collider@ selfCollider", &ScriptHitInfo::selfCollider)
+        .property("Collider@ otherCollider", &ScriptHitInfo::otherCollider);
+
+    // ウィンドウメッセージ通知（OnWindowMessage）へ渡す情報
+    asbind20::value_class<ScriptWindowMessageInfo>(engine, "WindowMessageInfo")
+        .behaviours_by_traits()
+        .property("WindowObject@ sourceComponent", &ScriptWindowMessageInfo::sourceComponent)
+        .property("uint message", &ScriptWindowMessageInfo::message)
+        .property("uint64 wParam", &ScriptWindowMessageInfo::wparam)
+        .property("int64 lParam", &ScriptWindowMessageInfo::lparam);
 
     asbind20::ref_class<SceneContext>(engine, "Scene", asOBJ_NOCOUNT)
         .method("const string &GetName() const", &SceneContext::GetName)
@@ -1022,11 +1172,496 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("bool HasGlobalVariable(const string &in)", [](SceneContext &scene, const std::string &key) -> bool {
             return scene.GetGlobalSceneVariable(key) != nullptr;
         })
-        .method("bool RemoveGlobalVariable(const string &in)", &SceneContext::RemoveGlobalSceneVariable);
+        .method("bool RemoveGlobalVariable(const string &in)", &SceneContext::RemoveGlobalSceneVariable)
+        // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
+        .method("void RequestExitGameLoop()", &SceneContext::RequestExitGameLoop);
 
     // スクリプト側でコンポーネントの動作を定義するためのインターフェース
     // （ScriptComponentはこのインターフェースを実装したクラスを探して実行する）
     engine->RegisterInterface("ScriptComponentBehavior");
+}
+
+//==================================================
+// JSON（スクリプトからのjsonファイル保存・読み込み）
+//==================================================
+
+/// @brief スクリプト用のJSON値ラッパー（参照カウント式の参照型）
+/// @details 内部にJSON（nlohmann::json）を1つ保持する。GetJson/Atは部分木のコピーを持つ
+///          新しいインスタンスを返すため、子のJsonへの変更は親へ反映されない
+///          （変更後にSetJsonで書き戻すこと）。
+class ScriptJsonValue final {
+public:
+    ScriptJsonValue() = default;
+    explicit ScriptJsonValue(JSON value) : data(std::move(value)) {}
+
+    void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
+    void Release() {
+        if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
+    }
+
+    /// @brief 保持しているJSON値（未設定時はnull。オブジェクトのキー設定/配列へのPushで型が確定する）
+    JSON data;
+
+private:
+    ~ScriptJsonValue() = default;
+    std::atomic<int> refCount_{1};
+};
+
+/// @brief std::stringの配列から array<string>@ を構築する（Json::GetKeys用）
+CScriptArray *MakeStringArray(const std::vector<std::string> &values) {
+    asIScriptContext *context = asGetActiveContext();
+    asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
+    if (!engine) return nullptr;
+
+    asITypeInfo *arrayType = engine->GetTypeInfoByDecl("array<string>");
+    if (!arrayType) return nullptr;
+
+    CScriptArray *array = CScriptArray::Create(arrayType, static_cast<asUINT>(values.size()));
+    if (!array) return nullptr;
+    for (asUINT i = 0; i < values.size(); ++i) {
+        array->SetValue(i, const_cast<std::string *>(&values[i]));
+    }
+    return array;
+}
+
+/// @brief 汎用変換（?&in/?&out）の再帰深度上限（自己参照による無限再帰を防ぐ）
+constexpr int kMaxJsonConversionDepth = 16;
+
+bool GenericToJson(asIScriptEngine *engine, const void *ref, int typeId, JSON &out, int depth);
+bool JsonToGeneric(asIScriptEngine *engine, const JSON &value, void *ref, int typeId, int depth);
+
+/// @brief ?&in で渡された値をJSONへ変換する
+/// @details 対応型: プリミティブ / string / Vector2-4 / Quaternion / Json / array<対応型> / dictionary。
+///          array・dictionary・Jsonはハンドルでも実体でも受け付ける
+bool GenericToJson(asIScriptEngine *engine, const void *ref, int typeId, JSON &out, int depth) {
+    if (!engine || !ref || depth > kMaxJsonConversionDepth) return false;
+
+    // ハンドルで渡された場合は実体へデリファレンスする（nullハンドルはJSONのnullにする）
+    if (typeId & asTYPEID_OBJHANDLE) {
+        ref = *static_cast<void *const *>(ref);
+        if (!ref) {
+            out = nullptr;
+            return true;
+        }
+        typeId &= ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+    }
+
+    switch (typeId) {
+    case asTYPEID_BOOL:   out = *static_cast<const bool *>(ref); return true;
+    case asTYPEID_INT8:   out = static_cast<std::int64_t>(*static_cast<const std::int8_t *>(ref)); return true;
+    case asTYPEID_INT16:  out = static_cast<std::int64_t>(*static_cast<const std::int16_t *>(ref)); return true;
+    case asTYPEID_INT32:  out = static_cast<std::int64_t>(*static_cast<const std::int32_t *>(ref)); return true;
+    case asTYPEID_INT64:  out = *static_cast<const std::int64_t *>(ref); return true;
+    case asTYPEID_UINT8:  out = static_cast<std::uint64_t>(*static_cast<const std::uint8_t *>(ref)); return true;
+    case asTYPEID_UINT16: out = static_cast<std::uint64_t>(*static_cast<const std::uint16_t *>(ref)); return true;
+    case asTYPEID_UINT32: out = static_cast<std::uint64_t>(*static_cast<const std::uint32_t *>(ref)); return true;
+    case asTYPEID_UINT64: out = *static_cast<const std::uint64_t *>(ref); return true;
+    case asTYPEID_FLOAT:  out = *static_cast<const float *>(ref); return true;
+    case asTYPEID_DOUBLE: out = *static_cast<const double *>(ref); return true;
+    default: break;
+    }
+
+    if (typeId == gSceneVariableTypeIds.stringTypeId) { out = *static_cast<const std::string *>(ref); return true; }
+    if (typeId == gSceneVariableTypeIds.vector2TypeId) { out = ToJSON(*static_cast<const Vector2 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector3TypeId) { out = ToJSON(*static_cast<const Vector3 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.vector4TypeId) { out = ToJSON(*static_cast<const Vector4 *>(ref)); return true; }
+    if (typeId == gSceneVariableTypeIds.quaternionTypeId) { out = ToJSON(*static_cast<const Quaternion *>(ref)); return true; }
+
+    asITypeInfo *typeInfo = engine->GetTypeInfoById(typeId);
+    if (!typeInfo || !typeInfo->GetName()) return false;
+    const std::string_view typeName = typeInfo->GetName();
+
+    if (typeName == "Json") {
+        out = static_cast<const ScriptJsonValue *>(ref)->data;
+        return true;
+    }
+
+    if (typeName == "array") {
+        // 要素型が対応外の場合は配列全体を失敗にする
+        const auto *array = static_cast<const CScriptArray *>(ref);
+        const int subTypeId = array->GetElementTypeId();
+        JSON jsonArray = JSON::array();
+        for (asUINT i = 0; i < array->GetSize(); ++i) {
+            JSON element;
+            if (!GenericToJson(engine, array->At(i), subTypeId, element, depth + 1)) return false;
+            jsonArray.push_back(std::move(element));
+        }
+        out = std::move(jsonArray);
+        return true;
+    }
+
+    if (typeName == "dictionary") {
+        // 辞書は動的型付けのため、変換できない型の値だけスキップしてオブジェクトを作る
+        const auto *dictionary = static_cast<const CScriptDictionary *>(ref);
+        JSON jsonObject = JSON::object();
+        for (auto it = dictionary->begin(); it != dictionary->end(); ++it) {
+            const int valueTypeId = it.GetTypeId();
+            JSON element;
+            if (valueTypeId == asTYPEID_INT64) {
+                asINT64 v = 0;
+                if (!it.GetValue(v)) continue;
+                element = static_cast<std::int64_t>(v);
+            } else if (valueTypeId == asTYPEID_DOUBLE) {
+                double v = 0.0;
+                if (!it.GetValue(v)) continue;
+                element = v;
+            } else if (valueTypeId == asTYPEID_BOOL) {
+                bool v = false;
+                if (!it.GetValue(&v, asTYPEID_BOOL)) continue;
+                element = v;
+            } else {
+                // オブジェクト型（string/数学型/array/dictionary/Json）。
+                // GetAddressOfValue は非ハンドルなら実体、ハンドルならハンドルのアドレスを返す
+                if (!GenericToJson(engine, it.GetAddressOfValue(), valueTypeId, element, depth + 1)) continue;
+            }
+            jsonObject[it.GetKey()] = std::move(element);
+        }
+        out = std::move(jsonObject);
+        return true;
+    }
+
+    return false;
+}
+
+/// @brief JSON配列から復元先のarray要素型を推定する（dictionaryの値として復元する場合用）
+/// @return 推定できた場合はarrayの型情報、混在・空配列などで推定できない場合はnullptr
+asITypeInfo *InferArrayTypeForJson(asIScriptEngine *engine, const JSON &jsonArray) {
+    if (!jsonArray.is_array() || jsonArray.empty()) return nullptr;
+
+    auto allOf = [&jsonArray](auto predicate) {
+        for (const auto &element : jsonArray) {
+            if (!predicate(element)) return false;
+        }
+        return true;
+    };
+
+    const char *decl = nullptr;
+    if (allOf([](const JSON &v) { return v.is_boolean(); })) decl = "array<bool>";
+    else if (allOf([](const JSON &v) { return v.is_number_integer() || v.is_number_unsigned(); })) decl = "array<int64>";
+    else if (allOf([](const JSON &v) { return v.is_number(); })) decl = "array<double>";
+    else if (allOf([](const JSON &v) { return v.is_string(); })) decl = "array<string>";
+    else if (allOf([](const JSON &v) { return v.is_object(); })) decl = "array<dictionary@>";
+    if (!decl) return nullptr;
+    return engine->GetTypeInfoByDecl(decl);
+}
+
+/// @brief JSONの値を ?&out の変数へ書き戻す
+/// @details 対応型はGenericToJsonと同じ。array<T>はサイズを合わせてから各要素を書き込み、
+///          dictionaryは内容をクリアしてからJSONオブジェクトの値を型に応じて格納する
+bool JsonToGeneric(asIScriptEngine *engine, const JSON &value, void *ref, int typeId, int depth) {
+    if (!engine || !ref || depth > kMaxJsonConversionDepth) return false;
+
+    // ハンドル変数が渡された場合は実体へ書き込む（nullハンドルはarray/dictionary/Jsonなら生成する）
+    if (typeId & asTYPEID_OBJHANDLE) {
+        void **handleRef = static_cast<void **>(ref);
+        const int bareTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+        if (*handleRef == nullptr) {
+            asITypeInfo *typeInfo = engine->GetTypeInfoById(bareTypeId);
+            if (!typeInfo || !typeInfo->GetName()) return false;
+            const std::string_view typeName = typeInfo->GetName();
+            void *created = nullptr;
+            if (typeName == "array") created = CScriptArray::Create(typeInfo);
+            else if (typeName == "dictionary") created = CScriptDictionary::Create(engine);
+            else if (typeName == "Json") created = new ScriptJsonValue();
+            if (!created) return false;
+            *handleRef = created;
+        }
+        ref = *handleRef;
+        typeId = bareTypeId;
+    }
+
+    switch (typeId) {
+    case asTYPEID_BOOL:
+        if (!value.is_boolean()) return false;
+        *static_cast<bool *>(ref) = value.get<bool>();
+        return true;
+    case asTYPEID_INT8: case asTYPEID_INT16: case asTYPEID_INT32: case asTYPEID_INT64:
+    case asTYPEID_UINT8: case asTYPEID_UINT16: case asTYPEID_UINT32: case asTYPEID_UINT64:
+    case asTYPEID_FLOAT: case asTYPEID_DOUBLE: {
+        if (!value.is_number()) return false;
+        const double asDouble = value.get<double>();
+        const std::int64_t asInt = value.is_number_float() ? static_cast<std::int64_t>(asDouble) : value.get<std::int64_t>();
+        switch (typeId) {
+        case asTYPEID_INT8:   *static_cast<std::int8_t *>(ref) = static_cast<std::int8_t>(asInt); break;
+        case asTYPEID_INT16:  *static_cast<std::int16_t *>(ref) = static_cast<std::int16_t>(asInt); break;
+        case asTYPEID_INT32:  *static_cast<std::int32_t *>(ref) = static_cast<std::int32_t>(asInt); break;
+        case asTYPEID_INT64:  *static_cast<std::int64_t *>(ref) = asInt; break;
+        case asTYPEID_UINT8:  *static_cast<std::uint8_t *>(ref) = static_cast<std::uint8_t>(asInt); break;
+        case asTYPEID_UINT16: *static_cast<std::uint16_t *>(ref) = static_cast<std::uint16_t>(asInt); break;
+        case asTYPEID_UINT32: *static_cast<std::uint32_t *>(ref) = static_cast<std::uint32_t>(asInt); break;
+        case asTYPEID_UINT64: *static_cast<std::uint64_t *>(ref) = static_cast<std::uint64_t>(asInt); break;
+        case asTYPEID_FLOAT:  *static_cast<float *>(ref) = static_cast<float>(asDouble); break;
+        case asTYPEID_DOUBLE: *static_cast<double *>(ref) = asDouble; break;
+        default: break;
+        }
+        return true;
+    }
+    default: break;
+    }
+
+    try {
+        if (typeId == gSceneVariableTypeIds.stringTypeId) {
+            if (!value.is_string()) return false;
+            *static_cast<std::string *>(ref) = value.get<std::string>();
+            return true;
+        }
+        if (typeId == gSceneVariableTypeIds.vector2TypeId) { *static_cast<Vector2 *>(ref) = FromJSON<Vector2>(value); return true; }
+        if (typeId == gSceneVariableTypeIds.vector3TypeId) { *static_cast<Vector3 *>(ref) = FromJSON<Vector3>(value); return true; }
+        if (typeId == gSceneVariableTypeIds.vector4TypeId) { *static_cast<Vector4 *>(ref) = FromJSON<Vector4>(value); return true; }
+        if (typeId == gSceneVariableTypeIds.quaternionTypeId) { *static_cast<Quaternion *>(ref) = FromJSON<Quaternion>(value); return true; }
+    } catch (const std::exception &) {
+        return false;
+    }
+
+    asITypeInfo *typeInfo = engine->GetTypeInfoById(typeId);
+    if (!typeInfo || !typeInfo->GetName()) return false;
+    const std::string_view typeName = typeInfo->GetName();
+
+    if (typeName == "Json") {
+        static_cast<ScriptJsonValue *>(ref)->data = value;
+        return true;
+    }
+
+    if (typeName == "array") {
+        if (!value.is_array()) return false;
+        auto *array = static_cast<CScriptArray *>(ref);
+        const int subTypeId = array->GetElementTypeId();
+        array->Resize(static_cast<asUINT>(value.size()));
+        for (asUINT i = 0; i < array->GetSize(); ++i) {
+            if (!JsonToGeneric(engine, value[i], array->At(i), subTypeId, depth + 1)) return false;
+        }
+        return true;
+    }
+
+    if (typeName == "dictionary") {
+        if (!value.is_object()) return false;
+        auto *dictionary = static_cast<CScriptDictionary *>(ref);
+        dictionary->DeleteAll();
+        const int dictionaryTypeId = typeInfo->GetTypeId();
+        for (auto it = value.begin(); it != value.end(); ++it) {
+            const JSON &element = it.value();
+            if (element.is_boolean()) {
+                bool v = element.get<bool>();
+                dictionary->Set(it.key(), &v, asTYPEID_BOOL);
+            } else if (element.is_number_integer() || element.is_number_unsigned()) {
+                const asINT64 v = element.get<std::int64_t>();
+                dictionary->Set(it.key(), v);
+            } else if (element.is_number_float()) {
+                const double v = element.get<double>();
+                dictionary->Set(it.key(), v);
+            } else if (element.is_string()) {
+                std::string v = element.get<std::string>();
+                dictionary->Set(it.key(), &v, gSceneVariableTypeIds.stringTypeId);
+            } else if (element.is_object()) {
+                // ネストしたオブジェクトは辞書として復元する
+                // （数学型として保存されたものも辞書になる点に注意。Setはハンドルをaddrefするため生成分を手放す）
+                CScriptDictionary *child = CScriptDictionary::Create(engine);
+                if (child) {
+                    if (JsonToGeneric(engine, element, child, dictionaryTypeId, depth + 1)) {
+                        void *handle = child;
+                        dictionary->Set(it.key(), &handle, dictionaryTypeId | asTYPEID_OBJHANDLE);
+                    }
+                    child->Release();
+                }
+            } else if (element.is_array()) {
+                // 要素型を推定できた配列のみ復元する（混在型・空配列はスキップ）
+                asITypeInfo *arrayType = InferArrayTypeForJson(engine, element);
+                if (arrayType) {
+                    CScriptArray *child = CScriptArray::Create(arrayType);
+                    if (child) {
+                        if (JsonToGeneric(engine, element, child, arrayType->GetTypeId(), depth + 1)) {
+                            void *handle = child;
+                            dictionary->Set(it.key(), &handle, arrayType->GetTypeId() | asTYPEID_OBJHANDLE);
+                        }
+                        child->Release();
+                    }
+                }
+            }
+            // nullはスキップ（dictionaryにnullの表現が無いため）
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/// @brief Json型（参照型）とファイル入出力のグローバル関数を登録する
+void RegisterJsonBindings(asIScriptEngine *engine) {
+    asbind20::ref_class<ScriptJsonValue>(engine, "Json")
+        .default_factory()
+        .addref(&ScriptJsonValue::AddRef)
+        .release(&ScriptJsonValue::Release)
+        // 型判定
+        .method("bool IsNull() const", [](const ScriptJsonValue &j) -> bool { return j.data.is_null(); })
+        .method("bool IsObject() const", [](const ScriptJsonValue &j) -> bool { return j.data.is_object(); })
+        .method("bool IsArray() const", [](const ScriptJsonValue &j) -> bool { return j.data.is_array(); })
+        .method("bool IsString() const", [](const ScriptJsonValue &j) -> bool { return j.data.is_string(); })
+        .method("bool IsNumber() const", [](const ScriptJsonValue &j) -> bool { return j.data.is_number(); })
+        .method("bool IsBool() const", [](const ScriptJsonValue &j) -> bool { return j.data.is_boolean(); })
+        // オブジェクト操作
+        .method("bool Has(const string &in key) const", [](const ScriptJsonValue &j, const std::string &key) -> bool {
+            return j.data.is_object() && j.data.contains(key);
+        })
+        .method("bool Remove(const string &in key)", [](ScriptJsonValue &j, const std::string &key) -> bool {
+            if (!j.data.is_object()) return false;
+            return j.data.erase(key) > 0;
+        })
+        .method("void Clear()", [](ScriptJsonValue &j) { j.data = JSON(); })
+        .method("array<string>@ GetKeys() const", [](const ScriptJsonValue &j) -> CScriptArray * {
+            std::vector<std::string> keys;
+            if (j.data.is_object()) {
+                for (auto it = j.data.begin(); it != j.data.end(); ++it) keys.push_back(it.key());
+            }
+            return MakeStringArray(keys);
+        })
+        // 値の設定（オブジェクトのキーへ設定。null状態から呼ぶとオブジェクトになる）
+        .method("void SetBool(const string &in key, bool value)", [](ScriptJsonValue &j, const std::string &key, bool v) {
+            try { j.data[key] = v; } catch (const std::exception &) {}
+        })
+        .method("void SetInt(const string &in key, int64 value)", [](ScriptJsonValue &j, const std::string &key, std::int64_t v) {
+            try { j.data[key] = v; } catch (const std::exception &) {}
+        })
+        .method("void SetFloat(const string &in key, double value)", [](ScriptJsonValue &j, const std::string &key, double v) {
+            try { j.data[key] = v; } catch (const std::exception &) {}
+        })
+        .method("void SetString(const string &in key, const string &in value)", [](ScriptJsonValue &j, const std::string &key, const std::string &v) {
+            try { j.data[key] = v; } catch (const std::exception &) {}
+        })
+        .method("void SetVector2(const string &in key, const Vector2 &in value)", [](ScriptJsonValue &j, const std::string &key, const Vector2 &v) {
+            try { j.data[key] = ToJSON(v); } catch (const std::exception &) {}
+        })
+        .method("void SetVector3(const string &in key, const Vector3 &in value)", [](ScriptJsonValue &j, const std::string &key, const Vector3 &v) {
+            try { j.data[key] = ToJSON(v); } catch (const std::exception &) {}
+        })
+        .method("void SetVector4(const string &in key, const Vector4 &in value)", [](ScriptJsonValue &j, const std::string &key, const Vector4 &v) {
+            try { j.data[key] = ToJSON(v); } catch (const std::exception &) {}
+        })
+        .method("void SetQuaternion(const string &in key, const Quaternion &in value)", [](ScriptJsonValue &j, const std::string &key, const Quaternion &v) {
+            try { j.data[key] = ToJSON(v); } catch (const std::exception &) {}
+        })
+        .method("void SetJson(const string &in key, const Json &in value)", [](ScriptJsonValue &j, const std::string &key, const ScriptJsonValue &v) {
+            try { j.data[key] = v.data; } catch (const std::exception &) {}
+        })
+        .method("void SetNull(const string &in key)", [](ScriptJsonValue &j, const std::string &key) {
+            try { j.data[key] = nullptr; } catch (const std::exception &) {}
+        })
+        // 汎用のSet/Get（array<T>・dictionaryを含む全対応型を型に応じて変換する）
+        .method("bool Set(const string &in key, const ?&in value)", [](ScriptJsonValue &j, const std::string &key, void *ref, int typeId) -> bool {
+            asIScriptContext *context = asGetActiveContext();
+            if (!context) return false;
+            JSON converted;
+            if (!GenericToJson(context->GetEngine(), ref, typeId, converted, 0)) return false;
+            try { j.data[key] = std::move(converted); } catch (const std::exception &) { return false; }
+            return true;
+        })
+        .method("bool Get(const string &in key, ?&out value) const", [](const ScriptJsonValue &j, const std::string &key, void *ref, int typeId) -> bool {
+            if (!j.data.is_object() || !j.data.contains(key)) return false;
+            asIScriptContext *context = asGetActiveContext();
+            if (!context) return false;
+            try { return JsonToGeneric(context->GetEngine(), j.data[key], ref, typeId, 0); } catch (const std::exception &) { return false; }
+        })
+        // 値の取得（キーが無い/型が合わない場合はデフォルト値を返す）
+        .method("bool GetBool(const string &in key, bool defaultValue = false) const", [](const ScriptJsonValue &j, const std::string &key, bool def) -> bool {
+            if (j.data.is_object() && j.data.contains(key) && j.data[key].is_boolean()) return j.data[key].get<bool>();
+            return def;
+        })
+        .method("int64 GetInt(const string &in key, int64 defaultValue = 0) const", [](const ScriptJsonValue &j, const std::string &key, std::int64_t def) -> std::int64_t {
+            if (j.data.is_object() && j.data.contains(key) && j.data[key].is_number()) return j.data[key].get<std::int64_t>();
+            return def;
+        })
+        .method("double GetFloat(const string &in key, double defaultValue = 0) const", [](const ScriptJsonValue &j, const std::string &key, double def) -> double {
+            if (j.data.is_object() && j.data.contains(key) && j.data[key].is_number()) return j.data[key].get<double>();
+            return def;
+        })
+        .method("string GetString(const string &in key, const string &in defaultValue = \"\") const", [](const ScriptJsonValue &j, const std::string &key, const std::string &def) -> std::string {
+            if (j.data.is_object() && j.data.contains(key) && j.data[key].is_string()) return j.data[key].get<std::string>();
+            return def;
+        })
+        .method("Vector2 GetVector2(const string &in key, const Vector2 &in defaultValue = Vector2()) const", [](const ScriptJsonValue &j, const std::string &key, const Vector2 &def) -> Vector2 {
+            try { if (j.data.is_object() && j.data.contains(key)) return FromJSON<Vector2>(j.data[key]); } catch (const std::exception &) {}
+            return def;
+        })
+        .method("Vector3 GetVector3(const string &in key, const Vector3 &in defaultValue = Vector3()) const", [](const ScriptJsonValue &j, const std::string &key, const Vector3 &def) -> Vector3 {
+            try { if (j.data.is_object() && j.data.contains(key)) return FromJSON<Vector3>(j.data[key]); } catch (const std::exception &) {}
+            return def;
+        })
+        .method("Vector4 GetVector4(const string &in key, const Vector4 &in defaultValue = Vector4()) const", [](const ScriptJsonValue &j, const std::string &key, const Vector4 &def) -> Vector4 {
+            try { if (j.data.is_object() && j.data.contains(key)) return FromJSON<Vector4>(j.data[key]); } catch (const std::exception &) {}
+            return def;
+        })
+        .method("Quaternion GetQuaternion(const string &in key, const Quaternion &in defaultValue = Quaternion()) const", [](const ScriptJsonValue &j, const std::string &key, const Quaternion &def) -> Quaternion {
+            try { if (j.data.is_object() && j.data.contains(key)) return FromJSON<Quaternion>(j.data[key]); } catch (const std::exception &) {}
+            return def;
+        })
+        .method("Json@ GetJson(const string &in key) const", [](const ScriptJsonValue &j, const std::string &key) -> ScriptJsonValue * {
+            if (!j.data.is_object() || !j.data.contains(key)) return nullptr;
+            return new ScriptJsonValue(j.data[key]);
+        })
+        // 配列操作（null状態からPushすると配列になる）
+        .method("uint Size() const", [](const ScriptJsonValue &j) -> asUINT { return static_cast<asUINT>(j.data.size()); })
+        .method("Json@ At(uint index) const", [](const ScriptJsonValue &j, asUINT index) -> ScriptJsonValue * {
+            if (!j.data.is_array() || index >= j.data.size()) return nullptr;
+            return new ScriptJsonValue(j.data[index]);
+        })
+        .method("void PushBool(bool value)", [](ScriptJsonValue &j, bool v) {
+            try { j.data.push_back(v); } catch (const std::exception &) {}
+        })
+        .method("void PushInt(int64 value)", [](ScriptJsonValue &j, std::int64_t v) {
+            try { j.data.push_back(v); } catch (const std::exception &) {}
+        })
+        .method("void PushFloat(double value)", [](ScriptJsonValue &j, double v) {
+            try { j.data.push_back(v); } catch (const std::exception &) {}
+        })
+        .method("void PushString(const string &in value)", [](ScriptJsonValue &j, const std::string &v) {
+            try { j.data.push_back(v); } catch (const std::exception &) {}
+        })
+        .method("void PushJson(const Json &in value)", [](ScriptJsonValue &j, const ScriptJsonValue &v) {
+            try { j.data.push_back(v.data); } catch (const std::exception &) {}
+        })
+        // 汎用のPush（array<T>・dictionaryを含む全対応型を型に応じて変換して配列へ追加する）
+        .method("bool Push(const ?&in value)", [](ScriptJsonValue &j, void *ref, int typeId) -> bool {
+            asIScriptContext *context = asGetActiveContext();
+            if (!context) return false;
+            JSON converted;
+            if (!GenericToJson(context->GetEngine(), ref, typeId, converted, 0)) return false;
+            try { j.data.push_back(std::move(converted)); } catch (const std::exception &) { return false; }
+            return true;
+        })
+        // 直接値の取得（this自身が数値・文字列等の場合。Atで取り出した配列要素向け）
+        .method("bool AsBool(bool defaultValue = false) const", [](const ScriptJsonValue &j, bool def) -> bool {
+            return j.data.is_boolean() ? j.data.get<bool>() : def;
+        })
+        .method("int64 AsInt(int64 defaultValue = 0) const", [](const ScriptJsonValue &j, std::int64_t def) -> std::int64_t {
+            return j.data.is_number() ? j.data.get<std::int64_t>() : def;
+        })
+        .method("double AsFloat(double defaultValue = 0) const", [](const ScriptJsonValue &j, double def) -> double {
+            return j.data.is_number() ? j.data.get<double>() : def;
+        })
+        .method("string AsString(const string &in defaultValue = \"\") const", [](const ScriptJsonValue &j, const std::string &def) -> std::string {
+            return j.data.is_string() ? j.data.get<std::string>() : def;
+        })
+        // 文字列化・パース
+        .method("string ToString(int indent = -1) const", [](const ScriptJsonValue &j, int indent) -> std::string {
+            return j.data.dump(indent, ' ', false, JSON::error_handler_t::replace);
+        })
+        .method("bool Parse(const string &in text)", [](ScriptJsonValue &j, const std::string &text) -> bool {
+            j.data = JSON::parse(text, nullptr, false);
+            if (j.data.is_discarded()) {
+                j.data = JSON();
+                return false;
+            }
+            return true;
+        });
+
+    asbind20::global(engine)
+        .function("Json@ LoadJsonFile(const string &in path)", [](const std::string &path) -> ScriptJsonValue * {
+            JSON data = LoadJSON(path);
+            if (data.is_discarded()) return nullptr;
+            return new ScriptJsonValue(std::move(data));
+        })
+        .function("bool SaveJsonFile(const string &in path, const Json &in data, int indent = 4)", [](const std::string &path, const ScriptJsonValue &data, int indent) -> bool {
+            return SaveJSON(data.data, path, indent);
+        });
 }
 
 //==================================================
@@ -1116,6 +1751,8 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("float GetDeltaTime()", &GetDeltaTime)
         .function("float GetGameSpeed()", &GetGameSpeed)
         .function("void SetGameSpeed(float)", &SetGameSpeed)
+        // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
+        .function("void RequestExitGameLoop()", []() { Scene::RequestExitGameLoop(); })
         // 入力コマンド
         .function("bool IsCommandTriggered(const string &in)", [](const std::string &action) -> bool {
             auto *command = gCurrentSceneContext ? gCurrentSceneContext->GetInputCommand() : nullptr;
@@ -1256,13 +1893,20 @@ bool GenerateScriptPredefinedFile(asIScriptEngine *engine, const std::string &fi
 
         out += "class " + typeName + " {\n";
 
-        // コンストラクタ/ファクトリ
+        // コンストラクタ/ファクトリ（値型のコンストラクタはビヘイビア、参照型のファクトリは別途列挙する）
         const asUINT behaviourCount = typeInfo->GetBehaviourCount();
         for (asUINT b = 0; b < behaviourCount; ++b) {
             asEBehaviours behaviour = asBEHAVE_CONSTRUCT;
             const asIScriptFunction *function = typeInfo->GetBehaviourByIndex(b, &behaviour);
             if (!function) continue;
             if (behaviour != asBEHAVE_CONSTRUCT && behaviour != asBEHAVE_FACTORY) continue;
+            const std::string decl = MakeConstructorDeclaration(typeInfo->GetName(), function, (flags & asOBJ_TEMPLATE) != 0);
+            if (!decl.empty()) out += "\t" + decl + ";\n";
+        }
+        const asUINT factoryCount = typeInfo->GetFactoryCount();
+        for (asUINT f = 0; f < factoryCount; ++f) {
+            const asIScriptFunction *function = typeInfo->GetFactoryByIndex(f);
+            if (!function) continue;
             const std::string decl = MakeConstructorDeclaration(typeInfo->GetName(), function, (flags & asOBJ_TEMPLATE) != 0);
             if (!decl.empty()) out += "\t" + decl + ";\n";
         }
@@ -1338,10 +1982,18 @@ void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     RegisterTagType(engine);
     // Transform は Object::GetTransform() が参照するため、Object/Scene より先に登録する
     RegisterTransformType(engine);
+    // Collider（ICollider基底）は HitInfo の selfCollider/otherCollider が参照するため、
+    // Object/Scene（HitInfoを含む）より先に登録する
+    RegisterColliderBaseType(engine);
+    // WindowObject（IWindowObjectComponent基底）は WindowMessageInfo の sourceComponent が参照するため、
+    // Object/Scene（WindowMessageInfoを含む）より先に登録する
+    RegisterWindowObjectBaseType(engine);
+    RegisterWindowMessageConstants(engine);
     // Object/Scene はここで一度に登録する。以降に登録するコンポーネント（MeshRenderer等）は
     // Object@/Scene@ をパラメータ/戻り値として自由に参照できる（型・メソッドとも登録済みのため）
     RegisterObjectTypes(engine);
     RegisterComponentTypes(engine);
+    RegisterJsonBindings(engine);
     RegisterEasingBindings(engine);
     RegisterRandomBindings(engine);
     RegisterGlobalFunctions(engine);

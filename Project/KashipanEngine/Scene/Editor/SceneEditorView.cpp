@@ -4,22 +4,28 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <limits>
 #include <numbers>
 #include <type_traits>
 #include <variant>
 
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Scene/Editor/SceneObjectHierarchy.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
+#include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
+#include "Objects/Components/Render/MeshRenderer.h"
+#include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
 #include "Objects/Components/Transform.h"
+#include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Math/Quaternion.h"
 #include "Utilities/MathUtils.h"
@@ -55,12 +61,12 @@ SceneEditorView::~SceneEditorView() {
     screenBuffer_ = nullptr;
 }
 
-void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands) {
+void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
     EnsureResources();
     UpdateCameraBuffer();
     RegisterEditorTarget();
     UpdateEditorDebugDraw();
-    ShowSceneViewWindow(selectedObjects, commands);
+    ShowSceneViewWindow(selectedObjects, commands, hierarchy);
 }
 
 void SceneEditorView::EnsureResources() {
@@ -125,7 +131,7 @@ void SceneEditorView::RegisterEditorTarget() {
     }
 }
 
-void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands) {
+void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
     if (!ImGui::Begin("Scene View")) {
         ImGui::End();
         return;
@@ -194,6 +200,9 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
 
     //--------- カメラ操作（画像上でのマウス操作） ---------//
     HandleCameraInput();
+
+    //--------- クリックによるオブジェクト選択 ---------//
+    HandleObjectPicking(hierarchy, imagePos, drawSize);
 
     // グリッド線・当たり判定のワイヤーフレームは screenBuffer_ へGPUで直接描画される
     // （UpdateEditorDebugDraw で設定済み。DebugGrid/DebugLinesパイプライン参照）
@@ -349,7 +358,116 @@ Vector3 UnprojectNdc(const Matrix4x4 &invViewProjection, float ndcX, float ndcY,
     if (std::abs(w) < 1e-6f) w = 1e-6f;
     return Vector3(x / w, y / w, z / w);
 }
+
+/// @brief 点を行列で変換する（行ベクトル規約、w除算あり）
+Vector3 TransformPoint(const Vector3 &p, const Matrix4x4 &m) {
+    const float x = p.x * m.m[0][0] + p.y * m.m[1][0] + p.z * m.m[2][0] + m.m[3][0];
+    const float y = p.x * m.m[0][1] + p.y * m.m[1][1] + p.z * m.m[2][1] + m.m[3][1];
+    const float z = p.x * m.m[0][2] + p.y * m.m[1][2] + p.z * m.m[2][2] + m.m[3][2];
+    float w = p.x * m.m[0][3] + p.y * m.m[1][3] + p.z * m.m[2][3] + m.m[3][3];
+    if (std::abs(w) < 1e-8f) w = 1e-8f;
+    return Vector3(x / w, y / w, z / w);
+}
+
+/// @brief 線分（origin + dir*t, t∈[0,1]）と三角形の交差判定（Möller–Trumbore法、両面判定）
+/// @param outT 交差した場合、線分上のパラメータt（0=始点、1=終点）
+bool SegmentIntersectsTriangle(const Vector3 &origin, const Vector3 &dir,
+    const Vector3 &v0, const Vector3 &v1, const Vector3 &v2, float &outT) {
+    constexpr float kEpsilon = 1e-8f;
+    const Vector3 edge1 = v1 - v0;
+    const Vector3 edge2 = v2 - v0;
+    const Vector3 pvec = dir.Cross(edge2);
+    const float det = edge1.Dot(pvec);
+    if (std::abs(det) < kEpsilon) return false;
+
+    const float invDet = 1.0f / det;
+    const Vector3 tvec = origin - v0;
+    const float u = tvec.Dot(pvec) * invDet;
+    if (u < 0.0f || u > 1.0f) return false;
+
+    const Vector3 qvec = tvec.Cross(edge1);
+    const float v = dir.Dot(qvec) * invDet;
+    if (v < 0.0f || u + v > 1.0f) return false;
+
+    const float t = edge2.Dot(qvec) * invDet;
+    if (t < 0.0f || t > 1.0f) return false;
+
+    outT = t;
+    return true;
+}
 } // namespace
+
+void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!hierarchy || !context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    // シーンビュー画像の上にマウスがある状態での、ドラッグを伴わない左クリック（離した瞬間）で選択する
+    if (!ImGui::IsItemHovered()) return;
+    if (!ImGui::IsMouseReleased(ImGuiMouseButton_Left)) return;
+    // カメラ操作等のドラッグ後のリリースでは選択しない（Unityと同様、微小な移動はクリック扱い）
+    constexpr float kClickMoveThreshold = 3.0f;
+    if (ImGui::GetIO().MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] > kClickMoveThreshold * kClickMoveThreshold) return;
+    // ギズモを操作している/ギズモの上をクリックした場合は選択を変えない
+    if (ImGuizmo::IsUsing() || ImGuizmo::IsOver()) return;
+
+    // クリック位置からカメラの近平面→遠平面を貫く線分を作る（tがそのまま奥行き順の比較に使える）
+    const ImVec2 mouse = ImGui::GetMousePos();
+    const float ndcX = ((mouse.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+    const float ndcY = -(((mouse.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+    const Matrix4x4 invViewProjection = (view_ * projection_).Inverse();
+    const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+    const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+
+    EmptyObject *picked = nullptr;
+    float nearestT = std::numeric_limits<float>::max();
+
+    for (const auto &objPtr : context_->GetSceneObjects()) {
+        EmptyObject *obj = objPtr.get();
+        if (!obj || !obj->IsActive()) continue;
+
+        // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRendererを持つ）だけを選択候補にする
+        auto *meshFilter = obj->GetComponent<MeshFilter>();
+        if (!meshFilter || !meshFilter->HasMesh()) continue;
+        auto *meshRenderer = obj->GetComponent<MeshRenderer>();
+        auto *skinnedMeshRenderer = obj->GetComponent<SkinnedMeshRenderer>();
+        const bool hasVisibleRenderer =
+            (meshRenderer && meshRenderer->IsActive()) ||
+            (skinnedMeshRenderer && skinnedMeshRenderer->IsActive());
+        if (!hasVisibleRenderer) continue;
+
+        auto *transform = obj->GetComponent<Transform>();
+        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+
+        // レイをオブジェクトのローカル空間へ変換して三角形と判定する
+        // （アフィン変換では線分上のパラメータtが保存されるため、tはワールド空間の奥行き比較にそのまま使える）
+        const Matrix4x4 invWorld = world.Inverse();
+        const Vector3 localStart = TransformPoint(rayStart, invWorld);
+        const Vector3 localDir = TransformPoint(rayEnd, invWorld) - localStart;
+
+        const auto &model = ModelManager::GetModelData(meshFilter->GetMeshHandle());
+        const auto &vertices = model.GetVertices();
+        const auto &indices = model.GetIndices();
+        for (size_t i = 0; i + 2 < indices.size(); i += 3) {
+            const auto &a = vertices[indices[i]];
+            const auto &b = vertices[indices[i + 1]];
+            const auto &c = vertices[indices[i + 2]];
+            float t = 0.0f;
+            if (SegmentIntersectsTriangle(localStart, localDir,
+                    Vector3(a.px, a.py, a.pz), Vector3(b.px, b.py, b.pz), Vector3(c.px, c.py, c.pz), t)) {
+                if (t < nearestT) {
+                    nearestT = t;
+                    picked = obj;
+                }
+            }
+        }
+    }
+
+    // Ctrlクリックはトグル追加、通常クリックは単一選択（何もない場所なら選択解除）
+    const bool additive = ImGui::IsKeyDown(ImGuiMod_Ctrl);
+    if (picked) {
+        hierarchy->SelectObject(picked, additive);
+    } else if (!additive) {
+        hierarchy->SelectObject(nullptr, false);
+    }
+}
 
 void SceneEditorView::DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &imageSize) {
     if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;

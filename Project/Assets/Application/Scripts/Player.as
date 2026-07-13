@@ -20,22 +20,22 @@ float Clampf(float value, float min, float max) {
 
 class Player : ScriptComponentBehavior {
     // --- PlayerMovement 相当のパラメータ ---
-    [SerializeField]
+    [SerializeField, Tooltip("移動速度")]
     float moveSpeed = 0.1f;
-    [SerializeField]
+    [SerializeField, Tooltip("ジャンプ力")]
     float jumpPower = 16.0f;
-    [SerializeField]
+    [SerializeField, Tooltip("重力")]
     float gravity = 0.2f;
-    [SerializeField]
+    [SerializeField, Tooltip("横方向の減速")]
     float lateralDeceleration = 0.1f;
-    [SerializeField]
+    [SerializeField, Tooltip("最小速度")]
     Vector3 minVelocity = Vector3(-8.0f, -16.0f, -8.0f);
-    [SerializeField]
+    [SerializeField, Tooltip("最大速度")]
     Vector3 maxVelocity = Vector3(8.0f, 16.0f, 8.0f);
 
     // --- PlayerCollision 相当のパラメータ ---
     // 法線のy成分がこの値以上なら地面と判定する
-    [SerializeField]
+    [SerializeField, Tooltip("地面との接触判定閾値")]
     float groundedThreshold = 0.4f;
 
     // --- 実行時状態（保存不要） ---
@@ -126,8 +126,6 @@ class Player : ScriptComponentBehavior {
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
         if (hit.otherObject.GetName() == "Ground") {
-            // 法線が上向きなら地面に接触しているとみなす
-            isGrounded = hit.normal.y > groundedThreshold;
         } else if (hit.otherObject.GetName() == "Enemy") {
             isCollidingWithEnemy = true;
         }
@@ -136,6 +134,9 @@ class Player : ScriptComponentBehavior {
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
         if (hit.otherObject.GetName() == "Ground") {
+            // 法線が上向きなら地面に接触しているとみなす
+            isGrounded = hit.normal.y > groundedThreshold;
+            
             // 衝突判定から押し戻しベクトルを計算してプレイヤーを押し戻す
             Transform@ tf = GetTransform();
             if (tf !is null) {

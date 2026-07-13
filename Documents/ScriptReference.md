@@ -15,18 +15,21 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 4. [SerializeField（変数のインスペクター編集・保存）](#serializefield変数のインスペクター編集保存)
     - [表示用の属性（Unity互換）](#表示用の属性unity互換)
     - [System.Serializable（クラスのシリアライズ）](#systemserializableクラスのシリアライズ)
+    - [配列（array&lt;T&gt;）](#配列arrayt)
 5. [コンポーネントの取得・追加・削除](#コンポーネントの取得追加削除)
 6. [グローバル関数](#グローバル関数)
 7. [オブジェクト・シーン型](#オブジェクトシーン型)
     - [Tag（タグ）](#tagタグ)
 8. [シーン変数（スクリプト間の値の受け渡し）](#シーン変数スクリプト間の値の受け渡し)
-9. [コンポーネント型](#コンポーネント型)
-10. [数学型](#数学型)
-11. [Math名前空間](#math名前空間)
-12. [Easing（イージング）](#easingイージング)
-13. [Random（乱数）](#random乱数)
-14. [サンプルスクリプト](#サンプルスクリプト)
-15. [注意事項](#注意事項)
+9. [dictionary（辞書型）](#dictionary辞書型)
+10. [Json（JSONファイルの保存・読み込み）](#jsonjsonファイルの保存読み込み)
+11. [コンポーネント型](#コンポーネント型)
+12. [数学型](#数学型)
+13. [Math名前空間](#math名前空間)
+14. [Easing（イージング）](#easingイージング)
+15. [Random（乱数）](#random乱数)
+16. [サンプルスクリプト](#サンプルスクリプト)
+17. [注意事項](#注意事項)
 
 ---
 
@@ -41,7 +44,7 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 - スクリプトは `ScriptComponent` ごとに独立したモジュールとしてコンパイルされます。
 - インスペクターの `Reload` ボタンでスクリプトを再コンパイルできます（`[SerializeField]` 付き変数の値は維持されます）。
 - コンパイルエラー・実行時例外はエンジンのログとインスペクターに出力されます（ビルド失敗時はコンパイラのエラーメッセージもインスペクターに表示されます）。
-- 標準アドオンの `string`（文字列）と `array`（配列）が使用できます。
+- 標準アドオンの `string`（文字列）・`array`（配列）・`dictionary`（[辞書型](#dictionary辞書型)）が使用できます。
 
 ### VSCodeでのコード補完（as.predefined）
 
@@ -79,6 +82,7 @@ class Player : ScriptComponentBehavior {
     void OnCollisionEnter(const HitInfo &in hit) {}  // 衝突開始時
     void OnCollisionStay(const HitInfo &in hit) {}   // 衝突継続中（毎フレーム）
     void OnCollisionExit(const HitInfo &in hit) {}   // 衝突終了時
+    void OnWindowMessage(const WindowMessageInfo &in info) {} // ウィンドウメッセージ受信時
 }
 ```
 
@@ -90,8 +94,13 @@ class Player : ScriptComponentBehavior {
 | `void OnCollisionEnter(const HitInfo &in)` | 同オブジェクトのコライダーが他のコライダーと衝突を開始したとき |
 | `void OnCollisionStay(const HitInfo &in)` | 衝突が継続している間、毎フレーム |
 | `void OnCollisionExit(const HitInfo &in)` | 衝突が終了したとき |
+| `void OnWindowMessage(const WindowMessageInfo &in)` | 同オブジェクトのWindowObject系コンポーネントのウィンドウがメッセージを受信したとき（[詳細](#ウィンドウメッセージonwindowmessage)） |
 
 衝突イベントは同オブジェクトに付いている全ての `ICollider` 派生コンポーネント（2D/3D両方）が対象です。C++側で既に衝突コールバックが設定されている場合、そのコールバックが先に呼ばれた後にスクリプト側が呼ばれます。
+
+高速に移動するオブジェクトが相手をすり抜けて衝突イベントが発生しない場合は、コライダーの[連続衝突判定（CCD）](#連続衝突判定ccd)を有効にしてください。
+
+ウィンドウメッセージイベントは同オブジェクトに付いている全ての `NormalWindowObject` / `OverlayWindowObject` コンポーネントが対象です（[詳細](#ウィンドウメッセージonwindowmessage)）。
 
 ### HitInfo
 
@@ -103,6 +112,23 @@ class Player : ScriptComponentBehavior {
 | `penetration` | `float` | めり込み量 |
 | `selfObject` | `Object@` | 自身のオブジェクト |
 | `otherObject` | `Object@` | 衝突相手のオブジェクト |
+| `selfCollider` | `Collider@` | 衝突判定を行った自身のコライダーコンポーネント |
+| `otherCollider` | `Collider@` | 衝突相手のコライダーコンポーネント |
+
+`selfCollider` / `otherCollider` で「どのコライダーコンポーネント同士の衝突なのか」を特定できます。1つのオブジェクトに複数のコライダーが付いている場合の判別や、相手コライダーのトリガー状態・タグの確認に使用してください。`Collider` は全コライダー型の基底型です（[詳細](#collider基底型)）。
+
+### WindowMessageInfo
+
+`OnWindowMessage` へ渡されるウィンドウメッセージ情報です。
+
+| プロパティ | 型 | 内容 |
+|---|---|---|
+| `sourceComponent` | `WindowObject@` | 通知元のウィンドウコンポーネント |
+| `message` | `uint` | メッセージ種別（`WM_SIZE` / `WM_KEYDOWN` など） |
+| `wParam` | `uint64` | メッセージの追加情報（WPARAM） |
+| `lParam` | `int64` | メッセージの追加情報（LPARAM） |
+
+`sourceComponent` で「どのウィンドウコンポーネントからの通知か」を特定できます。`WindowObject` はウィンドウ系コンポーネントの基底型です（[詳細](#windowobject基底型)）。
 
 ## SerializeField（変数のインスペクター編集・保存）
 
@@ -134,6 +160,7 @@ int stageNo = 1;
 | 文字列 | `string` |
 | 数学型 | `Vector2` / `Vector3` / `Vector4` / `Quaternion` |
 | クラス | [System.Serializable](#systemserializableクラスのシリアライズ) を付けたスクリプトクラス |
+| 配列 | 上記対応型の `array<T>`（[詳細](#配列arrayt)。ネスト配列・Serializableクラスの配列も可） |
 
 上記以外の型に付けた場合、インスペクターには `(unsupported type)` と表示され、保存対象になりません。
 
@@ -195,6 +222,42 @@ class Player : ScriptComponentBehavior {
     JumpSettings jump;
 }
 ```
+
+### 配列（array&lt;T&gt;）
+
+対応型の `array<T>` にも `[SerializeField]` を付けられます。要素はJSON配列としてシーンへ保存されます。
+
+```angelscript
+class Player : ScriptComponentBehavior {
+    [SerializeField]
+    array<int> scores;
+
+    [SerializeField, Range(0, 100)]      // Rangeなどの編集用属性は各要素に適用される
+    array<float> weights;
+
+    [SerializeField]
+    array<Vector3> waypoints;
+
+    [SerializeField]
+    array<array<int>> grid;              // ネスト配列も可
+
+    [SerializeField]
+    array<JumpSettings> presets;         // [System.Serializable]クラスの配列も可
+}
+```
+
+インスペクターでは配列がツリー表示され、以下の操作ができます。
+
+- **Size** 入力での一括リサイズ
+- **＋** ボタンで末尾へ要素を追加
+- 各要素の **−** ボタンでその要素を削除
+- 各要素の編集（`Range` / `ColorPicker` / `TextArea` 等の編集用属性は各要素へ引き継がれます。`Header` / `Space` / `Tooltip` は配列自体に表示されます）
+
+補足:
+
+- 要素型が未対応の配列（コンポーネントハンドルの配列など）はシリアライズ対象になりません。
+- ネストの深さ制限（8段）はSerializableクラスと共有です。
+- `array<T@>`（ハンドル）で宣言したSerializableクラス配列のnull要素は、シーン読込時・エディターでの要素追加時に自動でインスタンスが生成されます。通常は `array<T>` で宣言すれば十分です。
 
 ## コンポーネントの取得・追加・削除
 
@@ -260,6 +323,14 @@ GetComponent(tf);
 | `float GetGameSpeed()` | ゲームスピードを取得する |
 | `void SetGameSpeed(float)` | ゲームスピードを設定する |
 
+### ゲームループ制御
+
+| 関数 | 説明 |
+|---|---|
+| `void RequestExitGameLoop()` | ゲームループの終了を要求する |
+
+ゲーム実行時（エディター無しビルド）はゲームループを抜けてアプリケーションが終了します。**エディター上ではエディター自体は閉じず、再生停止（Stopボタンと同じ動作）として扱われる**ため、ゲーム終了の動作確認にも安全に使用できます。`Scene` 型の `RequestExitGameLoop()` メソッドも同じ動作です。
+
 ### 入力コマンド
 
 エンジンの `InputCommand`（`Assets/KashipanEngine/InputCommand.json` に保存される入力バインディング）を評価します。
@@ -323,6 +394,7 @@ GetComponent(tf);
 | `bool ChangeToNextScene()` | 次のシーンへ切り替える |
 | `bool HasNextSceneName() const` | 次のシーン名が設定されているかを取得する |
 | `void ClearNextSceneName()` | 次のシーン名をクリアする |
+| `void RequestExitGameLoop()` | ゲームループの終了を要求する（[詳細](#ゲームループ制御)） |
 | `bool SetVariable(const string &in key, ?&in value)` | シーン変数を設定する（[詳細](#シーン変数スクリプト間の値の受け渡し)） |
 | `bool GetVariable(const string &in key, ?&out value)` | シーン変数を取得する |
 | `bool HasVariable(const string &in key)` | シーン変数が存在するかどうか |
@@ -392,6 +464,175 @@ GetScene().GetGlobalVariable("score", score);
 - `SetVariable`/`SetGlobalVariable` は同じキーへ再度呼び出すと値を上書きします（型が変わっても構いません）。
 - `GetVariable`/`GetGlobalVariable` は、キーが存在しない場合、または既存の値と渡した変数の型が異なる場合に `false` を返します（`value` は変更されません）。
 - 対応している型は `[SerializeField]` と同じです: `bool` / `int` / `uint` / `float` / `double` / `string` / `Vector2` / `Vector3` / `Vector4` / `Quaternion`。
+
+## dictionary（辞書型）
+
+AngelScript標準アドオンの辞書型です。文字列のキーに任意の型の値を関連付けて保持します。
+
+```angelscript
+dictionary dict;
+dict.set("hp", 100);
+dict.set("name", "Player");
+dict.set("position", Vector3(1.0f, 2.0f, 3.0f));
+
+// 取得（キーが無い、または型が合わない場合はfalse）
+int hp;
+if (dict.get("hp", hp)) {
+    Log("HP: " + hp);
+}
+
+// キーの存在確認・削除
+if (dict.exists("name")) {
+    dict.delete("name");
+}
+
+// キー一覧の列挙
+array<string>@ keys = dict.getKeys();
+for (uint i = 0; i < keys.length(); i++) {
+    Log(keys[i]);
+}
+
+// 初期化リスト構文・インデックスアクセスも使用できる
+dictionary levels = {{"stage1", 10}, {"stage2", 25}};
+int64 score = int64(levels["stage1"]);
+```
+
+| メソッド | 説明 |
+|---|---|
+| `void set(const string &in key, const ?&in value)` | 値を設定する（既存キーは上書き。型が変わっても構わない） |
+| `bool get(const string &in key, ?&out value) const` | 値を取得する（キーが無い/型が合わない場合は `false`） |
+| `bool exists(const string &in key) const` | キーが存在するかどうか |
+| `bool delete(const string &in key)` | キーを削除する |
+| `void deleteAll()` | 全てのキーを削除する |
+| `bool isEmpty() const` | 空かどうか |
+| `uint getSize() const` | 要素数を取得する |
+| `array<string>@ getKeys() const` | 全キーの配列を取得する |
+
+- 値としてプリミティブ型・数学型・文字列のほか、ハンドル（`array@` や `dictionary@` 自身など）も保持できるため、ネストしたデータ構造も作れます。
+- `foreach (auto value, auto key : dict)` によるループにも対応しています。
+- 辞書の内容は `[SerializeField]` やシーン変数の対象外です。永続化したい場合は [Json](#jsonjsonファイルの保存読み込み) を使用してください。`Json.Set("key", dict)` / `Json.Get("key", dict)` で辞書ごとJSONへ変換してファイルへ保存・復元できます（[詳細](#配列辞書との相互変換汎用setgetpush)）。
+
+## Json（JSONファイルの保存・読み込み）
+
+`Json` 型（参照型）を使って、スクリプトからjsonファイルの保存・読み込みやJSONテキストの生成・解析ができます。セーブデータやゲーム設定・レベルデータの入出力に使用できます。
+
+```angelscript
+// 保存
+Json@ json = Json();
+json.SetString("name", "Player");
+json.SetInt("hp", 100);
+json.SetVector3("position", Vector3(1.0f, 2.0f, 3.0f));
+
+Json@ inventory = Json();
+inventory.PushString("sword");
+inventory.PushString("shield");
+json.SetJson("inventory", inventory);   // ネストしたオブジェクト・配列
+
+if (SaveJsonFile("SaveData/save1.json", json)) {
+    Log("保存しました");
+}
+
+// 読み込み
+Json@ loaded = LoadJsonFile("SaveData/save1.json");
+if (loaded !is null) {
+    string name = loaded.GetString("name");
+    int64 hp = loaded.GetInt("hp", 100);            // 第2引数はキーが無い場合のデフォルト値
+    Vector3 pos = loaded.GetVector3("position");
+
+    Json@ items = loaded.GetJson("inventory");
+    if (items !is null) {
+        for (uint i = 0; i < items.Size(); i++) {
+            Log("item: " + items.At(i).AsString());
+        }
+    }
+}
+```
+
+### グローバル関数
+
+| 関数 | 説明 |
+|---|---|
+| `Json@ LoadJsonFile(const string &in path)` | jsonファイルを読み込む（失敗時は `null`） |
+| `bool SaveJsonFile(const string &in path, const Json &in data, int indent = 4)` | jsonファイルへ保存する（保存先フォルダが無い場合は自動生成される） |
+
+パスは実行ディレクトリ（`Assets` フォルダと同じ階層）基準の相対パス、または絶対パスで指定します。
+
+### Jsonのメンバ
+
+| メンバ | 説明 |
+|---|---|
+| `Json()` | 空のJson値を作成する（null状態。キー設定でオブジェクトに、Pushで配列になる） |
+| `bool IsNull() / IsObject() / IsArray() / IsString() / IsNumber() / IsBool() const` | 保持している値の型判定 |
+| `bool Has(const string &in key) const` | キーが存在するかどうか |
+| `bool Remove(const string &in key)` | キーを削除する |
+| `void Clear()` | 内容を破棄してnull状態に戻す |
+| `array<string>@ GetKeys() const` | オブジェクトの全キーを取得する |
+| `void SetBool/SetInt/SetFloat/SetString(const string &in key, 値)` | キーへ値を設定する（`bool` / `int64` / `double` / `string`） |
+| `void SetVector2/SetVector3/SetVector4/SetQuaternion(const string &in key, 値)` | キーへ数学型を設定する（`{"x": ..., "y": ...}` 形式で保存される） |
+| `void SetJson(const string &in key, const Json &in value)` | キーへ別のJson（オブジェクト・配列）を設定する |
+| `void SetNull(const string &in key)` | キーへnullを設定する |
+| `bool Set(const string &in key, const ?&in value)` | キーへ任意の対応型を設定する（`array<T>` / `dictionary` を含む。[詳細](#配列辞書との相互変換汎用setgetpush)） |
+| `bool Get(const string &in key, ?&out value) const` | キーの値を任意の対応型へ読み込む（`array<T>` / `dictionary` を含む） |
+| `bool GetBool(key, bool defaultValue = false) const` | 値を取得する（キーが無い/型が合わない場合はデフォルト値） |
+| `int64 GetInt(key, int64 defaultValue = 0) const` | 同上（整数） |
+| `double GetFloat(key, double defaultValue = 0) const` | 同上（実数） |
+| `string GetString(key, const string &in defaultValue = "") const` | 同上（文字列） |
+| `Vector2/Vector3/Vector4/Quaternion GetVector2/GetVector3/GetVector4/GetQuaternion(key, デフォルト値)` | 同上（数学型） |
+| `Json@ GetJson(const string &in key) const` | ネストしたJsonを取得する（キーが無い場合は `null`） |
+| `uint Size() const` | 配列・オブジェクトの要素数を取得する |
+| `Json@ At(uint index) const` | 配列の要素を取得する（範囲外・配列以外は `null`） |
+| `void PushBool/PushInt/PushFloat/PushString(値)` | 配列へ値を追加する |
+| `void PushJson(const Json &in value)` | 配列へ別のJsonを追加する |
+| `bool Push(const ?&in value)` | 配列へ任意の対応型を追加する（`array<T>` / `dictionary` を含む） |
+| `bool AsBool/AsInt/AsFloat/AsString(デフォルト値) const` | 自身が保持する値を直接取得する（`At` で取り出した配列要素向け） |
+| `string ToString(int indent = -1) const` | JSONテキストへ変換する（`indent >= 0` で整形出力） |
+| `bool Parse(const string &in text)` | JSONテキストを解析して内容を置き換える（失敗時は `false` でnull状態になる） |
+
+- `GetJson` / `At` は**部分木のコピー**を持つ新しいインスタンスを返します。取得した子Jsonへの変更は親へ反映されないため、変更後は `SetJson` / `PushJson` で書き戻してください。
+- 数値はJSONの仕様どおり整数・実数の区別なく保存されます。`GetInt` / `GetFloat` はどちらの数値でも取得できます。
+
+### 配列・辞書との相互変換（汎用Set/Get/Push）
+
+`Set` / `Get` / `Push` は渡した変数の型に応じて自動変換する汎用版です。`array<T>` はJSON配列、`dictionary` はJSONオブジェクトとして再帰的に変換されるため、まとまったデータをそのまま保存・復元できます。
+
+```angelscript
+Json@ json = Json();
+
+// array<T> → JSON配列（ネスト配列もOK）
+array<int> scores = {10, 20, 30};
+array<Vector3> waypoints = {Vector3(0,0,0), Vector3(1,0,2)};
+json.Set("scores", scores);
+json.Set("waypoints", waypoints);
+
+// dictionary → JSONオブジェクト（ネストした辞書・配列も変換される）
+dictionary save;
+save.set("hp", 100);
+save.set("name", "Player");
+json.Set("data", save);
+
+SaveJsonFile("SaveData/save1.json", json);
+
+// 読み込み（逆方向の変換）
+Json@ loaded = LoadJsonFile("SaveData/save1.json");
+if (loaded !is null) {
+    array<int> loadedScores;
+    loaded.Get("scores", loadedScores);      // JSON配列 → array<int>
+
+    dictionary loadedData;
+    loaded.Get("data", loadedData);          // JSONオブジェクト → dictionary
+
+    int64 hp;
+    loadedData.get("hp", hp);
+}
+```
+
+対応型: プリミティブ全種（`int8`〜`uint64` 含む） / `string` / `Vector2`〜`Vector4` / `Quaternion` / `Json` / それらの `array<T>`（ネスト可） / `dictionary`。
+
+- `Get` へ `array<T>@` や `dictionary@` の**nullハンドル**を渡した場合は自動で生成されます。
+- 保存時、`dictionary` 内の変換できない値（コンポーネントハンドル等）は**スキップ**されます。`array<T>` は要素型が未対応の場合、全体が失敗して `false` が返ります。
+- `dictionary` への読み込み時、数値は `int64` / `double` として格納されます。ネストしたJSONオブジェクトは `dictionary@`、JSON配列は要素型を推定した `array<T>@`（全要素が整数なら `array<int64>` 等）として復元されます。型が混在する配列・空配列は推定できないためスキップされます。
+- 数学型（`{"x": ..., "y": ...}` 形式）として保存した値を `dictionary` へ読み込むと、判別できないためネスト辞書として復元されます。数学型として取り出したい場合は `GetVector3` 等を使用してください。
+- 自己参照などによる無限再帰を防ぐため、変換は16段までに制限されています。
 
 ## コンポーネント型
 
@@ -558,6 +799,34 @@ GetScene().GetGlobalVariable("score", score);
 | `void SetRotateStrength(float)` / `float GetRotateStrength() const` | 回転追従の強さ（0.0～1.0） |
 | `void SetFovLerpFactor(float)` / `float GetFovLerpFactor() const` | 画角遷移の強さ（0.0～1.0） |
 
+### TargetLookAt
+
+指定オブジェクトへ向き続ける（ビルボードのような動作をする）コンポーネント。回転の決め方は `TargetLookAtMode` 列挙型で2種類から選択できます。
+
+- `TargetLookAtMode::SyncRotation` — ターゲットの**ワールド回転と同期**する。カメラをターゲットにすると常に画面と正対する**ビルボード**になる
+- `TargetLookAtMode::LookAt` — 自身の**+Z軸が常にターゲットの方向を向く**よう回転する
+
+どちらのモードでも回転オフセット（オイラー角、ラジアン）を追加で適用できます。ターゲットが未指定・存在しない場合は回転を変更しません。インスペクターではターゲットをヒエラルキーからのD&Dでも指定できます。
+
+| メソッド | 説明 |
+|---|---|
+| `void SetTargetObject(Object@)` | ターゲットオブジェクトを設定する |
+| `Object@ GetTargetObject() const` | ターゲットオブジェクトを取得する（無い場合は `null`） |
+| `void SetRotationOffset(const Vector3 &in)` / `const Vector3 &GetRotationOffset() const` | 回転オフセット（オイラー角、ラジアン） |
+| `void SetRotationMode(TargetLookAtMode)` / `TargetLookAtMode GetRotationMode() const` | 回転モード |
+
+```angelscript
+class Billboard : ScriptComponentBehavior {
+    void Start() {
+        TargetLookAt@ lookAt;
+        if (AddComponent(lookAt)) {
+            lookAt.SetTargetObject(FindObject("MainCamera"));
+            lookAt.SetRotationMode(TargetLookAtMode::SyncRotation); // カメラと正対し続ける
+        }
+    }
+}
+```
+
 ### Light / LightRenderer
 
 `LightType` 列挙型（`Directional` / `Point` / `Spot`）が使用できます。
@@ -582,9 +851,59 @@ GetScene().GetGlobalVariable("score", score);
 
 | メソッド | Window系(Normal/Overlay) | Buffer系(ScreenBuffer/ShadowMap) | 説明 |
 |---|:-:|:-:|---|
-| `void SetTitle(const string &in)` | o | - | ウィンドウタイトルの設定 |
+| `void SetTitle(const string &in)` / `const string &GetTitle() const` | o | - | ウィンドウタイトルの設定/取得 |
 | `void SetName(const string &in)` / `const string &GetName() const` | - | o | 管理用名前（TextureManagerへの登録名）の設定/取得 |
 | `void SetSize(uint width, uint height)` | o | o | サイズの設定（バッファ系は既存バッファを実際にリサイズする） |
+
+Window系コンポーネントは共通の基底型 `WindowObject` を持ち、ウィンドウが受信したメッセージをスクリプトの `OnWindowMessage` へ通知できます（[詳細](#ウィンドウメッセージonwindowmessage)）。
+
+#### WindowObject（基底型）
+
+`NormalWindowObject` / `OverlayWindowObject` の基底となる参照型です。`WindowMessageInfo` の `sourceComponent` として受け取れます。コンポーネント共通メソッド（`IsActive` / `GetComponentType` / `GetTag` 等）に加えて以下が使用できます。
+
+| メソッド | 説明 |
+|---|---|
+| `void SetTitle(const string &in)` / `const string &GetTitle() const` | ウィンドウタイトル |
+| `void SetSize(uint width, uint height)` | ウィンドウサイズを設定する |
+| `int GetClientWidth() const` / `int GetClientHeight() const` | クライアント領域のサイズを取得する（ウィンドウ未生成時は0） |
+| `bool IsWindowFocused() const` | ウィンドウにフォーカスがあるかどうか |
+| `bool IsWindowMinimized() const` | ウィンドウが最小化されているかどうか |
+
+- `NormalWindowObject` / `OverlayWindowObject` のハンドルは `WindowObject@` へ**暗黙的に変換**できます。
+- `cast<NormalWindowObject>(windowObject)` のように**具体的な型へダウンキャスト**できます（型が異なる場合は `null` が返ります）。
+
+#### ウィンドウメッセージ（OnWindowMessage）
+
+WindowObject系コンポーネントが付いているオブジェクトに `ScriptComponent` を追加すると、ウィンドウが受信したWindowsメッセージ（`WM_*`）を `OnWindowMessage(const WindowMessageInfo &in)` メソッドで受け取れます（[WindowMessageInfo](#windowmessageinfo)）。
+
+- 通知は毎フレーム、そのフレームにウィンドウが受信したメッセージに対して行われます。**メッセージ種別ごとに最後の1件**が対象で、通知順は不定です。
+- 同オブジェクトに複数のウィンドウコンポーネントがある場合は全てが通知対象です。どのウィンドウからの通知かは `sourceComponent` で判別できます。
+- 主要なメッセージは以下のグローバル定数（`const uint`）として登録されています。これら以外のメッセージも `message` の数値で判定できます。
+  - ウィンドウ状態: `WM_ACTIVATE` / `WM_CLOSE` / `WM_DESTROY` / `WM_MOVE` / `WM_SIZE` / `WM_SIZING` / `WM_ENTERSIZEMOVE` / `WM_EXITSIZEMOVE` / `WM_SETFOCUS` / `WM_KILLFOCUS` / `WM_PAINT`
+  - キーボード: `WM_KEYDOWN` / `WM_KEYUP` / `WM_SYSKEYDOWN` / `WM_SYSKEYUP` / `WM_CHAR`
+  - マウス: `WM_MOUSEMOVE` / `WM_LBUTTONDOWN` / `WM_LBUTTONUP` / `WM_LBUTTONDBLCLK` / `WM_RBUTTONDOWN` / `WM_RBUTTONUP` / `WM_RBUTTONDBLCLK` / `WM_MBUTTONDOWN` / `WM_MBUTTONUP` / `WM_MOUSEWHEEL` / `WM_MOUSEHWHEEL`
+  - その他: `WM_DROPFILES`
+
+```angelscript
+class WindowWatcher : ScriptComponentBehavior {
+    void OnWindowMessage(const WindowMessageInfo &in info) {
+        if (info.message == WM_SIZE) {
+            Log("リサイズ: " + info.sourceComponent.GetClientWidth() + " x " + info.sourceComponent.GetClientHeight());
+        }
+        if (info.message == WM_KILLFOCUS) {
+            Log("フォーカスを失った: " + info.sourceComponent.GetTitle());
+        }
+
+        // 複数のウィンドウコンポーネントがある場合、
+        // どのコンポーネントからの通知かをハンドル比較で判別できる
+        NormalWindowObject@ mainWindow;
+        GetComponent(mainWindow);
+        if (info.sourceComponent is mainWindow) {
+            // メインウィンドウのメッセージ
+        }
+    }
+}
+```
 
 ### コライダー（BoxCollider / SphereCollider / CapsuleCollider / MeshCollider / RayCollider / Box2DCollider / Circle2DCollider / Capsule2DCollider / Ray2DCollider）
 
@@ -593,7 +912,64 @@ GetScene().GetGlobalVariable("score", score);
 | メソッド | 説明 |
 |---|---|
 | `bool IsTrigger() const` / `void SetTrigger(bool)` | トリガー（すり抜け）かどうか |
+| `bool IsContinuousDetection() const` / `void SetContinuousDetection(bool)` | 連続衝突判定（CCD）が有効かどうか（[詳細](#連続衝突判定ccd)） |
 | `bool Is2D() const` | 2D用コライダーかどうか |
+
+#### 連続衝突判定（CCD）
+
+高速に移動するオブジェクトは、1フレームの移動量が形状のサイズを超えると相手のコライダーを「すり抜けて」しまい、衝突イベントが発生しないことがあります。連続衝突判定を有効にすると、前フレーム位置から現在位置までの**移動経路を形状サイズ以下の刻みに分割して中間位置でも判定**するため、すり抜けても `OnCollisionEnter` 等のイベントが正しく発生します。
+
+- インスペクターの「**Continuous Detection**」チェックボックス、またはスクリプトの `SetContinuousDetection(true)` で有効にします（2D/3Dどちらのコライダーにも対応）。
+- 移動量が形状の最小半径以下の間はスイープ判定が走らないため、通常の速度では追加コストはほぼありません。高速に動く弾丸や小さいオブジェクトにだけ有効にしてください。
+- 経路の分割数には上限（16分割）があるため、1フレームで形状サイズの16倍を超えるような極端な移動では取りこぼす可能性があります。
+- **テレポート**（リスポーン等の瞬間移動）でも移動経路上の判定が走る点に注意してください。瞬間移動させる場合は、移動前にCCDを無効にするか、コライダーを一時的に無効化してください。
+
+```angelscript
+class Bullet : ScriptComponentBehavior {
+    void Start() {
+        SphereCollider@ collider;
+        if (GetComponent(collider)) {
+            collider.SetContinuousDetection(true); // 高速移動してもすり抜けを検出できるようにする
+        }
+    }
+}
+```
+
+#### Collider（基底型）
+
+全コライダー型の基底となる参照型です。`HitInfo` の `selfCollider` / `otherCollider` として受け取れます。コンポーネント共通メソッド（`IsActive` / `GetComponentType` / `GetTag` 等）と、コライダー共通の `IsTrigger` / `SetTrigger` / `IsContinuousDetection` / `SetContinuousDetection` / `Is2D` が使用できます。
+
+- 各コライダー型のハンドルは `Collider@` へ**暗黙的に変換**できます。
+- `cast<BoxCollider>(collider)` のように**具体的な型へダウンキャスト**できます（型が異なる場合は `null` が返ります）。
+
+```angelscript
+class Player : ScriptComponentBehavior {
+    void OnCollisionEnter(const HitInfo &in hit) {
+        if (hit.otherCollider is null) return;
+
+        // 相手コライダーのトリガー状態やタグで判別する
+        // （タグはオブジェクトとは別に、コライダー単位でも設定できる）
+        if (hit.otherCollider.IsTrigger()) return;
+        if (hit.otherCollider.GetTag() == Tag("DamageZone")) {
+            Log("ダメージゾーンに接触");
+        }
+
+        // 種類名での判別
+        if (hit.otherCollider.GetComponentType() == "SphereCollider") {
+            // 具体的な型へのダウンキャスト
+            SphereCollider@ sphere = cast<SphereCollider>(hit.otherCollider);
+        }
+
+        // 自オブジェクトに複数のコライダーが付いている場合、
+        // どのコライダーで衝突したのかをハンドル比較で判別できる
+        BoxCollider@ attackCollider;
+        GetComponent(attackCollider);
+        if (hit.selfCollider is attackCollider) {
+            Log("攻撃判定がヒット");
+        }
+    }
+}
+```
 
 ### ポストプロセスエフェクト
 

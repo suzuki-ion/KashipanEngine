@@ -28,7 +28,18 @@ std::unique_ptr<EmptyObject> EmptyObject::Clone() const {
     }
     newObj->SetActive(isActive_);
     newObj->SetSaveEnabled(isSaveEnabled_);
+    newObj->SetEditorOnly(isEditorOnly_);
     return newObj;
+}
+
+bool EmptyObject::IsEditorOnlyInHierarchy() const {
+    const EmptyObject *current = this;
+    while (current) {
+        if (current->isEditorOnly_) return true;
+        auto *transform = current->GetComponent<Transform>();
+        current = transform ? transform->GetParentObject() : nullptr;
+    }
+    return false;
 }
 
 IObjectComponent *EmptyObject::GetComponent(const IObjectComponent *component) const {
@@ -172,6 +183,7 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
     json["name"] = name_;
     json["tag"] = tagName_;
     json["isActive"] = isActive_;
+    json["editorOnly"] = isEditorOnly_;
     json["objectID"] = objectID_.ToString();
 
     // updateComponents_ はUpdateループ用のリストで、オブジェクトが非アクティブだと空になるため
@@ -203,6 +215,7 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     name_ = json.value("name", "EmptyObject");
     SetTag(json.value("tag", std::string{}));
     isActive_ = json.value("isActive", true);
+    isEditorOnly_ = json.value("editorOnly", false);
     objectID_ = UUID128(json.value("objectID", ""));
     const auto &componentsJson = json.value("components", JSON::array());
     std::vector<std::pair<IObjectComponent *, JSON>> loadedComponents;

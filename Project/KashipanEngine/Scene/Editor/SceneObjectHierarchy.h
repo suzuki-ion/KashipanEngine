@@ -3,8 +3,10 @@
 #include <imgui.h>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
 
@@ -33,6 +35,38 @@ public:
         selectedObject_ = nullptr;
         selectedObjects_.clear();
         selectionAnchorObject_ = nullptr;
+    }
+
+    /// @brief 選択中オブジェクトのUUID一覧を取得する（Undo/Redo後の選択復元用。先頭がプライマリ）
+    std::vector<UUID128> GetSelectedObjectIDs() const;
+    /// @brief UUID一覧から選択状態を復元する（シーンに存在しなくなったオブジェクトはスキップされる）
+    /// @details Undo/Redoによるオブジェクトの削除/再生成でポインタが変わっても、UUIDで再解決して選択を引き継ぐ
+    void RestoreSelection(const std::vector<UUID128> &objectIDs);
+
+    /// @brief ヒエラルキー外（シーンビューのクリック等）からの選択操作
+    /// @param obj 選択するオブジェクト（nullptrかつadditive=falseの場合は選択解除）
+    /// @param additive trueの場合、既存の選択集合へトグル追加/削除する（Ctrlクリック相当）
+    void SelectObject(EmptyObject *obj, bool additive = false) {
+        if (!obj) {
+            if (!additive) ClearSelection();
+            return;
+        }
+        if (additive) {
+            if (selectedObjects_.contains(obj)) {
+                selectedObjects_.erase(obj);
+                if (selectedObject_ == obj) {
+                    selectedObject_ = selectedObjects_.empty() ? nullptr : *selectedObjects_.begin();
+                }
+            } else {
+                selectedObjects_.insert(obj);
+                selectedObject_ = obj;
+            }
+        } else {
+            selectedObjects_.clear();
+            selectedObjects_.insert(obj);
+            selectedObject_ = obj;
+        }
+        selectionAnchorObject_ = obj;
     }
 
 private:

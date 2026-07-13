@@ -55,6 +55,29 @@ bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *>
 }
 } // namespace
 
+std::vector<UUID128> SceneObjectHierarchy::GetSelectedObjectIDs() const {
+    std::vector<UUID128> ids;
+    ids.reserve(selectedObjects_.size());
+    // 先頭にプライマリ（最後に操作したオブジェクト）を入れ、復元時にプライマリを維持する
+    if (selectedObject_) ids.push_back(selectedObject_->GetObjectID());
+    for (auto *obj : selectedObjects_) {
+        if (obj && obj != selectedObject_) ids.push_back(obj->GetObjectID());
+    }
+    return ids;
+}
+
+void SceneObjectHierarchy::RestoreSelection(const std::vector<UUID128> &objectIDs) {
+    ClearSelection();
+    if (!editorContext_) return;
+    for (const auto &id : objectIDs) {
+        EmptyObject *obj = editorContext_->GetSceneObject(id);
+        if (!obj) continue; // Undo/Redoで削除されたオブジェクトはスキップ
+        selectedObjects_.insert(obj);
+        if (!selectedObject_) selectedObject_ = obj; // 先頭（プライマリ）を維持する
+    }
+    selectionAnchorObject_ = selectedObject_;
+}
+
 void SceneObjectHierarchy::ShowImGui() {
     // このフレームの表示順はShowObjectItemの呼び出し毎に積み直す（Shift範囲選択の計算に使う）
     visibleOrderThisFrame_.clear();
@@ -155,13 +178,16 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
         ImGui::SetNextItemOpen(storedOpen, ImGuiCond_Once);
     }
 
-    // 非アクティブなオブジェクトは灰色の文字で表示する
+    // 非アクティブなオブジェクトは灰色、EditorOnlyオブジェクト（祖先を含む）は水色の文字で表示する
     const bool isInactive = !item.object->IsActive();
+    const bool isEditorOnly = !isInactive && item.object->IsEditorOnlyInHierarchy();
     if (isInactive) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    } else if (isEditorOnly) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.8f, 1.0f, 1.0f));
     }
     const bool isOpen = ImGui::TreeNodeEx(item.name.c_str(), flags);
-    if (isInactive) {
+    if (isInactive || isEditorOnly) {
         ImGui::PopStyleColor();
     }
     if (!item.children.empty() && isOpen != storedOpen) {
@@ -299,6 +325,15 @@ void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bo
         }
         if (ImGui::MenuItem("Skinned Mesh Object")) {
             CreateTemplateObject("Skinned Mesh Object", { "MeshFilter", "SkinnedMeshRenderer" }, referenceObject, asChild);
+        }
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("2D")) {
+        if (ImGui::MenuItem("Sprite Object")) {
+            CreateTemplateObject("Sprite Object", { "MeshFilter", "SpriteRenderer" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem("Camera 2D Object")) {
+            CreateTemplateObject("Camera 2D Object", { "Camera2D", "CameraRenderer" }, referenceObject, asChild);
         }
         ImGui::EndMenu();
     }

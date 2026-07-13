@@ -3,6 +3,7 @@
 #include <angelscript.h>
 #include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptstdstring/scriptstdstring.h>
+#include <add_on/scriptdictionary/scriptdictionary.h>
 #include <add_on/scripthelper/scripthelper.h>
 
 #include "Debug/Logger.h"
@@ -48,6 +49,8 @@ void SceneScriptEngine::Initialize() {
     engine_->SetMessageCallback(asFUNCTION(MessageCallback), nullptr, asCALL_CDECL);
     RegisterScriptArray(engine_, true);
     RegisterStdString(engine_);
+    // 辞書型（dictionary）。string/arrayを使用するため両者の登録後に呼ぶ
+    RegisterScriptDictionary(engine_);
     RegisterExceptionRoutines(engine_);
     RegisterEngineScriptBindings(engine_);
 

@@ -4,6 +4,10 @@
 
 namespace KashipanEngine {
 
+const EmptyObject *IObjectComponent::GetOwnerObject() const {
+    return objectContext_ ? objectContext_->GetOwner() : nullptr;
+}
+
 bool IObjectComponent::IsActive() const {
     bool ownerActive = objectContext_ ? objectContext_->GetOwner()->IsActive() : true;
     return isActive_ && ownerActive;

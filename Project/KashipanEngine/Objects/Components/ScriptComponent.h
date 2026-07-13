@@ -18,6 +18,7 @@ namespace KashipanEngine {
 
 class SceneScriptEngine;
 class ICollider;
+class IWindowObjectComponent;
 class EmptyObject;
 
 /// @brief AngelScriptのスクリプトファイルをコンパイルして実行するオブジェクトコンポーネント
@@ -27,11 +28,14 @@ class EmptyObject;
 ///          - void Update() : 毎フレーム
 ///          - void End()    : 終了時（コンポーネント削除・非アクティブ化・リロード時）
 ///          - void OnCollisionEnter/Stay/Exit(const HitInfo &in) : 同オブジェクトのコライダーの衝突時
+///          - void OnWindowMessage(const WindowMessageInfo &in) : 同オブジェクトのWindowObject系
+///            コンポーネントのウィンドウがメッセージを受信した時（通知元コンポーネント情報付き）
 ///          クラスのメンバ変数やグローバル変数に `[SerializeField]` メタデータを付けると、
 ///          ImGuiのインスペクター上で編集でき、シーンへの保存/読込の対象になる。
 ///          対応型: bool / int / uint / float / double / string / Vector2 / Vector3 / Vector4 / Quaternion
 ///          および [System.Serializable] を付けたスクリプトクラス（public変数は自動対象、
-///          private/protected変数は [SerializeField] が必要）
+///          private/protected変数は [SerializeField] が必要）、
+///          これら対応型の array<T>（ネスト配列・Serializableクラスの配列も可）
 ///          表示用の属性（Unity互換）: [Range(min, max)] [TextArea(minLines, maxLines)] [Multiline]
 ///          [ColorPicker]（Vector4を色として編集） [Header("見出し")] [Space(高さpx)] [Tooltip("説明")]
 ///          `[SerializeField, Range(1, 10)]` のように1つのブロックへカンマ区切りでまとめて記述できる
@@ -95,12 +99,16 @@ private:
         uint32_t propertyIndex = 0;
         /// @brief [System.Serializable] が付いたスクリプトクラス型かどうか
         bool isScriptObject = false;
+        /// @brief array<T> 型かどうか（trueの場合、children[0]が要素のフィールド情報になる）
+        bool isArray = false;
         FieldAttributes attributes;
-        /// @brief isScriptObject の場合のサブフィールド
+        /// @brief isScriptObject の場合のサブフィールド（isArray の場合は要素のフィールド情報1件）
         std::vector<SerializedField> children;
     };
     /// @brief コライダーへ設定した衝突コールバックのフック情報（定義はcpp内）
     struct ColliderHooks;
+    /// @brief WindowObject系コンポーネントへ設定したメッセージコールバックのフック情報（定義はcpp内）
+    struct WindowObjectHooks;
 
     SceneScriptEngine *GetSceneScriptEngine() const;
     SceneScriptEngine *GetOrAddSceneScriptEngine() const;
@@ -113,7 +121,11 @@ private:
     void CallMethod(asIScriptFunction *method);
     /// @brief Behaviorインスタンスの衝突メソッドを HitInfo 引数付きで実行する
     void CallCollisionMethod(asIScriptFunction *method, const Vector3 &normal, float penetration,
-        EmptyObject *selfObject, EmptyObject *otherObject);
+        EmptyObject *selfObject, EmptyObject *otherObject,
+        ICollider *selfCollider, ICollider *otherCollider);
+    /// @brief Behaviorインスタンスのウィンドウメッセージメソッドを WindowMessageInfo 引数付きで実行する
+    void CallWindowMessageMethod(asIScriptFunction *method, IWindowObjectComponent *sourceComponent,
+        std::uint32_t message, std::uint64_t wparam, std::int64_t lparam);
 
     /// @brief 同オブジェクトのコライダー数を数える
     size_t CountColliders() const;
@@ -122,12 +134,21 @@ private:
     /// @brief 設定した衝突コールバックを元に戻す
     void UnhookColliders();
 
+    /// @brief 同オブジェクトのWindowObject系コンポーネント数を数える
+    size_t CountWindowObjects() const;
+    /// @brief 同オブジェクトの全WindowObject系コンポーネントへメッセージコールバックを設定する（既存のコールバックはチェーンされる）
+    void HookWindowObjects();
+    /// @brief 設定したメッセージコールバックを元に戻す
+    void UnhookWindowObjects();
+
     /// @brief 指定タイプIDがシリアライズ対応のプリミティブ/数学型かを判定する
     bool IsSupportedFieldType(int typeId) const;
     /// @brief [SerializeField] 付き変数（グローバル変数とBehaviorクラスのメンバ変数）を収集する
     void CollectSerializedFields(CScriptBuilder &builder);
     /// @brief フィールドが [System.Serializable] クラス型の場合に子フィールドを再帰的に収集する
     void CollectSerializableChildren(SerializedField &field, CScriptBuilder &builder, asIScriptEngine *engine, int depth);
+    /// @brief フィールドが array<T> 型の場合に要素のフィールド情報を構築する（要素型が未対応なら何もしない）
+    void SetupArrayField(SerializedField &field, CScriptBuilder &builder, asIScriptEngine *engine, int depth);
     /// @brief フィールドの現在値をJSONへ変換する（Serializableクラスはネストしたオブジェクトになる）
     JSON CaptureField(const SerializedField &field, void *address) const;
     /// @brief JSONの値をフィールドへ適用する
@@ -154,6 +175,7 @@ private:
     asIScriptFunction *onCollisionEnterMethod_ = nullptr;
     asIScriptFunction *onCollisionStayMethod_ = nullptr;
     asIScriptFunction *onCollisionExitMethod_ = nullptr;
+    asIScriptFunction *onWindowMessageMethod_ = nullptr;
 
     std::string lastError_;
     /// @brief 直近のビルド失敗時のコンパイルメッセージ（成功時は空）
@@ -172,6 +194,8 @@ private:
     /// @brief コライダーへ設定した衝突コールバックのフック情報
     /// @details 不完全型を保持するためshared_ptrを使用（デリータが型消去されるため宣言時に完全型が不要）
     std::shared_ptr<ColliderHooks> colliderHooks_;
+    /// @brief WindowObject系コンポーネントへ設定したメッセージコールバックのフック情報
+    std::shared_ptr<WindowObjectHooks> windowObjectHooks_;
     /// @brief 衝突コールバックのラムダから自身の生存確認を行うためのトークン
     std::shared_ptr<ScriptComponent *> aliveToken_ = std::make_shared<ScriptComponent *>(this);
 };

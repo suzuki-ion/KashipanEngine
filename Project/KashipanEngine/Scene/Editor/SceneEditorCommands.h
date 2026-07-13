@@ -306,16 +306,43 @@ public:
     bool Undo();
     bool Redo();
 
-    bool CanUndo() const noexcept { return !undoStack_.empty(); }
-    bool CanRedo() const noexcept { return !redoStack_.empty(); }
-    std::string GetUndoName() const { return CanUndo() ? undoStack_.back()->GetName() : ""; }
-    std::string GetRedoName() const { return CanRedo() ? redoStack_.back()->GetName() : ""; }
+    bool CanUndo() const noexcept { return !GetActiveUndoStack().empty(); }
+    bool CanRedo() const noexcept { return !GetActiveRedoStack().empty(); }
+    std::string GetUndoName() const { return CanUndo() ? GetActiveUndoStack().back()->GetName() : ""; }
+    std::string GetRedoName() const { return CanRedo() ? GetActiveRedoStack().back()->GetName() : ""; }
 
     /// @brief 履歴を全消去する（シーンロード時など）
     void Clear() {
         undoStack_.clear();
         redoStack_.clear();
+        playUndoStack_.clear();
+        playRedoStack_.clear();
     }
+
+    //==================================================
+    // 再生セッション（ゲームループ再生中のコマンド分離）
+    //==================================================
+    // 再生中に積まれたコマンドは、停止時のシーン復元によって対象の状態ごと巻き戻されるため
+    // 編集時の履歴とは互換性が無い。再生中は専用の一時履歴へ積み、停止時にまとめて破棄する。
+    // これにより、編集時の履歴は再生を跨いでもそのまま使用でき、
+    // 再生中に編集時のコマンドをUndoしてシーン状態を壊すことも防げる。
+
+    /// @brief 再生セッションを開始する（以後のコマンドは再生用の一時履歴へ積まれる）
+    void BeginPlaySession() {
+        if (isPlaySession_) return;
+        isPlaySession_ = true;
+        playUndoStack_.clear();
+        playRedoStack_.clear();
+    }
+    /// @brief 再生セッションを終了し、再生中に積まれたコマンドを破棄する（編集時の履歴へ戻る）
+    void EndPlaySession() {
+        if (!isPlaySession_) return;
+        isPlaySession_ = false;
+        playUndoStack_.clear();
+        playRedoStack_.clear();
+    }
+    /// @brief 再生セッション中かどうか
+    bool IsPlaySession() const noexcept { return isPlaySession_; }
 
     /// @brief 履歴表示ImGui（ウィンドウのBegin/Endは呼ばない）
     void ShowHistoryImGui();
@@ -325,9 +352,19 @@ private:
 
     void PushToUndoStack(std::unique_ptr<IEditorCommand> command);
 
+    /// @brief 現在有効なUndo/Redoスタックを取得する（再生セッション中は再生用の一時履歴）
+    std::vector<std::unique_ptr<IEditorCommand>> &GetActiveUndoStack() noexcept { return isPlaySession_ ? playUndoStack_ : undoStack_; }
+    std::vector<std::unique_ptr<IEditorCommand>> &GetActiveRedoStack() noexcept { return isPlaySession_ ? playRedoStack_ : redoStack_; }
+    const std::vector<std::unique_ptr<IEditorCommand>> &GetActiveUndoStack() const noexcept { return isPlaySession_ ? playUndoStack_ : undoStack_; }
+    const std::vector<std::unique_ptr<IEditorCommand>> &GetActiveRedoStack() const noexcept { return isPlaySession_ ? playRedoStack_ : redoStack_; }
+
     SceneEditorContext *context_ = nullptr;
     std::vector<std::unique_ptr<IEditorCommand>> undoStack_;
     std::vector<std::unique_ptr<IEditorCommand>> redoStack_;
+    /// @brief 再生セッション中の一時履歴（停止時に破棄される）
+    std::vector<std::unique_ptr<IEditorCommand>> playUndoStack_;
+    std::vector<std::unique_ptr<IEditorCommand>> playRedoStack_;
+    bool isPlaySession_ = false;
 };
 
 } // namespace KashipanEngine

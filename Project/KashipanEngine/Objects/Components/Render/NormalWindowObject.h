@@ -1,19 +1,20 @@
-﻿#pragma once
+#pragma once
 #include <algorithm>
 #include <cstdint>
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
+#include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Transform.h"
 #include "Core/Window.h"
 
 namespace KashipanEngine {
 
-class NormalWindowObject final : public IObjectComponent {
+class NormalWindowObject final : public IWindowObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(NormalWindowObject, 0xFF, )
-    COMPONENT_CATEGORY("Render", "RenderTarget")
-        ~NormalWindowObject() override = default;
+    NormalWindowObject()
+        : IWindowObjectComponent("NormalWindowObject", 0xFF, GetComponentTypeID<NormalWindowObject>(), "Normal Window") {}
+    ~NormalWindowObject() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<NormalWindowObject>();
@@ -21,16 +22,6 @@ public:
         ptr->width_ = width_;
         ptr->height_ = height_;
         return ptr;
-    }
-
-    Window *GetWindow() const noexcept { return window_; }
-    void SetTitle(const std::string &title) {
-        if (window_ && Window::IsExist(window_)) window_->SetWindowTitle(title);
-        title_ = title;
-    }
-    void SetSize(std::uint32_t width, std::uint32_t height) {
-        width_ = width;
-        height_ = height;
     }
 
 protected:
@@ -41,6 +32,9 @@ protected:
         Update();
     }
     void Update() override {
+        // ウィンドウが受信したメッセージをコールバック（スクリプト等）へ通知する
+        DispatchWindowMessages();
+
         if (!window_ || !Window::IsExist(window_)) return;
         auto *tr = GetOwnerObjectContext()->GetComponent<Transform>();
         if (!tr) return;
@@ -48,7 +42,7 @@ protected:
         auto worldMatrix = tr->GetWorldMatrix();
         Vector3 pos(worldMatrix.m[3][0], worldMatrix.m[3][1], worldMatrix.m[3][2]);
         Vector3 scale(
-            Vector3(worldMatrix.m[0][0], worldMatrix.m[0][1], worldMatrix.m[0][2]).Length(), 
+            Vector3(worldMatrix.m[0][0], worldMatrix.m[0][1], worldMatrix.m[0][2]).Length(),
             Vector3(worldMatrix.m[1][0], worldMatrix.m[1][1], worldMatrix.m[1][2]).Length(),
             Vector3(worldMatrix.m[2][0], worldMatrix.m[2][1], worldMatrix.m[2][2]).Length()
         );
@@ -102,12 +96,6 @@ protected:
         height_ = json.value("height", 720u);
         return true;
     }
-
-private:
-    Window *window_ = nullptr;
-    std::string title_ = "Normal Window";
-    std::uint32_t width_ = 1280;
-    std::uint32_t height_ = 720;
 };
 
 REGISTER_COMPONENT_OBJECT(NormalWindowObject);

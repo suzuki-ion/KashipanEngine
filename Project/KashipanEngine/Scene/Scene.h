@@ -103,6 +103,12 @@ public:
     void RequestStepFrame() { isStepFrameRequested_ = true; }
 #endif
 
+    /// @brief ゲームループの終了を要求する
+    /// @details 非エディタービルドではゲームループ（アプリケーション）が終了する。
+    ///          エディタービルドではエディター自体は閉じず、再生停止（PlayStop）の要求として扱われる。
+    ///          定義はGameEngineの完全な型定義が必要なためScene.cppにある
+    static void RequestExitGameLoop();
+
     /// @brief シーンの保存
     /// @return シーンのJSONデータ
     JSON SaveToJSON() const;
@@ -242,6 +248,10 @@ protected:
 
     /// @brief シーン内のオブジェクトをすべて削除
     void ClearSceneObjects();
+
+    /// @brief EditorOnlyオブジェクトを（子孫ごと）すべて削除する
+    /// @details 再生開始時（PlayStart）と、エディター無しビルドでのシーン読み込み時に呼ばれる
+    void DeleteEditorOnlyObjects();
 
     //==================================================
     // オブジェクト単体のJSONスナップショット（エディターのUndo/Redo用）

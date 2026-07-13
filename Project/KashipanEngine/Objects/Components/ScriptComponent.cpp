@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <string_view>
 
 #include <angelscript.h>
+#include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptbuilder/scriptbuilder.h>
 #include <add_on/scripthelper/scripthelper.h>
 
@@ -14,6 +16,7 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Objects/Components/Collider/ICollider.h"
+#include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Scene/Components/Script/SceneScriptEngine.h"
 #include "Scene/Components/Script/ScriptBindings.h"
 #include "Utilities/FileIO/Directory.h"
@@ -246,6 +249,15 @@ struct ScriptComponent::ColliderHooks {
     std::vector<Entry> entries;
 };
 
+/// @brief WindowObject系コンポーネントへ設定したメッセージコールバックのフック情報
+struct ScriptComponent::WindowObjectHooks {
+    struct Entry {
+        IWindowObjectComponent *component = nullptr;
+        IWindowObjectComponent::WindowMessageCallback prevCallback;
+    };
+    std::vector<Entry> entries;
+};
+
 ScriptComponent::~ScriptComponent() {
     // コライダー側のコールバックはaliveToken_の失効により無効化されるため、ここでの解除は不要
     ReleaseScript();
@@ -285,6 +297,7 @@ void ScriptComponent::ReleaseScript() {
     onCollisionEnterMethod_ = nullptr;
     onCollisionStayMethod_ = nullptr;
     onCollisionExitMethod_ = nullptr;
+    onWindowMessageMethod_ = nullptr;
     serializedFields_.clear();
 
     if (context_) {
@@ -311,6 +324,7 @@ bool ScriptComponent::Reload() {
         CallMethod(endMethod_);
     }
     UnhookColliders();
+    UnhookWindowObjects();
     ReleaseScript();
     lastError_.clear();
     buildErrorMessages_.clear();
@@ -426,6 +440,7 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
     onCollisionEnterMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionEnter(const HitInfo &in)");
     onCollisionStayMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionStay(const HitInfo &in)");
     onCollisionExitMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionExit(const HitInfo &in)");
+    onWindowMessageMethod_ = behaviorType_->GetMethodByDecl("void OnWindowMessage(const WindowMessageInfo &in)");
     return true;
 }
 
@@ -446,7 +461,8 @@ void ScriptComponent::CallMethod(asIScriptFunction *method) {
 }
 
 void ScriptComponent::CallCollisionMethod(asIScriptFunction *method, const Vector3 &normal, float penetration,
-    EmptyObject *selfObject, EmptyObject *otherObject) {
+    EmptyObject *selfObject, EmptyObject *otherObject,
+    ICollider *selfCollider, ICollider *otherCollider) {
     if (!method || !context_ || !behaviorObject_) return;
 
     ScriptHitInfo hitInfo;
@@ -454,10 +470,33 @@ void ScriptComponent::CallCollisionMethod(asIScriptFunction *method, const Vecto
     hitInfo.penetration = penetration;
     hitInfo.selfObject = selfObject;
     hitInfo.otherObject = otherObject;
+    hitInfo.selfCollider = selfCollider;
+    hitInfo.otherCollider = otherCollider;
 
     if (context_->Prepare(method) < 0) return;
     context_->SetObject(behaviorObject_);
     context_->SetArgObject(0, &hitInfo);
+    ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+    const int r = context_->Execute();
+    if (r != asEXECUTION_FINISHED) {
+        lastError_ = GetExceptionInfo(context_);
+        Log("AngelScript: " + lastError_, LogSeverity::Error);
+    }
+}
+
+void ScriptComponent::CallWindowMessageMethod(asIScriptFunction *method, IWindowObjectComponent *sourceComponent,
+    std::uint32_t message, std::uint64_t wparam, std::int64_t lparam) {
+    if (!method || !context_ || !behaviorObject_) return;
+
+    ScriptWindowMessageInfo messageInfo;
+    messageInfo.sourceComponent = sourceComponent;
+    messageInfo.message = message;
+    messageInfo.wparam = wparam;
+    messageInfo.lparam = lparam;
+
+    if (context_->Prepare(method) < 0) return;
+    context_->SetObject(behaviorObject_);
+    context_->SetArgObject(0, &messageInfo);
     ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
     const int r = context_->Execute();
     if (r != asEXECUTION_FINISHED) {
@@ -490,7 +529,8 @@ void ScriptComponent::HookColliders() {
             if (prev) prev(hit);
             if (auto alive = weakSelf.lock()) {
                 ScriptComponent *self = *alive;
-                self->CallCollisionMethod(self->*methodMember, hit.normal, hit.penetration, hit.selfObject, hit.otherObject);
+                self->CallCollisionMethod(self->*methodMember, hit.normal, hit.penetration,
+                    hit.selfObject, hit.otherObject, hit.selfCollider, hit.otherCollider);
             }
         };
     };
@@ -499,7 +539,8 @@ void ScriptComponent::HookColliders() {
             if (prev) prev(hit);
             if (auto alive = weakSelf.lock()) {
                 ScriptComponent *self = *alive;
-                self->CallCollisionMethod(self->*methodMember, hit.normal, hit.penetration, hit.selfObject, hit.otherObject);
+                self->CallCollisionMethod(self->*methodMember, hit.normal, hit.penetration,
+                    hit.selfObject, hit.otherObject, hit.selfCollider, hit.otherCollider);
             }
         };
     };
@@ -544,9 +585,65 @@ void ScriptComponent::UnhookColliders() {
     colliderHooks_->entries.clear();
 }
 
+size_t ScriptComponent::CountWindowObjects() const {
+    auto *objectContext = GetOwnerObjectContext();
+    if (!objectContext) return 0;
+    size_t count = 0;
+    for (const auto &pair : objectContext->GetAllComponents()) {
+        if (dynamic_cast<IWindowObjectComponent *>(pair.first.get())) ++count;
+    }
+    return count;
+}
+
+void ScriptComponent::HookWindowObjects() {
+    UnhookWindowObjects();
+    auto *objectContext = GetOwnerObjectContext();
+    if (!objectContext) return;
+    if (!windowObjectHooks_) windowObjectHooks_ = std::make_shared<WindowObjectHooks>();
+
+    // コライダーのフックと同様に、コンポーネント破棄後の呼び出しに備えて
+    // aliveToken_経由で生存確認をしてから呼び出す
+    const std::weak_ptr<ScriptComponent *> weakSelf(aliveToken_);
+
+    for (const auto &pair : objectContext->GetAllComponents()) {
+        auto *windowObject = dynamic_cast<IWindowObjectComponent *>(pair.first.get());
+        if (!windowObject) continue;
+
+        WindowObjectHooks::Entry entry;
+        entry.component = windowObject;
+        entry.prevCallback = windowObject->GetOnWindowMessage();
+
+        windowObject->SetOnWindowMessage(
+            [weakSelf, prev = entry.prevCallback](const IWindowObjectComponent::WindowMessageEvent &event) {
+                if (prev) prev(event);
+                if (auto alive = weakSelf.lock()) {
+                    ScriptComponent *self = *alive;
+                    self->CallWindowMessageMethod(self->onWindowMessageMethod_, event.sourceComponent,
+                        static_cast<std::uint32_t>(event.message),
+                        static_cast<std::uint64_t>(event.wparam),
+                        static_cast<std::int64_t>(event.lparam));
+                }
+            });
+
+        windowObjectHooks_->entries.push_back(std::move(entry));
+    }
+}
+
+void ScriptComponent::UnhookWindowObjects() {
+    if (!windowObjectHooks_) return;
+    auto *objectContext = GetOwnerObjectContext();
+    for (auto &entry : windowObjectHooks_->entries) {
+        // コンポーネントが既に削除されている場合はポインタが無効なため触らない
+        if (!objectContext || !objectContext->GetComponent(entry.component)) continue;
+        entry.component->SetOnWindowMessage(entry.prevCallback);
+    }
+    windowObjectHooks_->entries.clear();
+}
+
 void ScriptComponent::Initialize() {
     if (Reload()) {
         HookColliders();
+        HookWindowObjects();
         CallMethod(startMethod_);
     }
 }
@@ -554,6 +651,7 @@ void ScriptComponent::Initialize() {
 void ScriptComponent::Finalize() {
     CallMethod(endMethod_);
     UnhookColliders();
+    UnhookWindowObjects();
     ReleaseScript();
 }
 
@@ -562,6 +660,11 @@ void ScriptComponent::Update() {
     const size_t hookedCount = colliderHooks_ ? colliderHooks_->entries.size() : 0;
     if (behaviorObject_ && CountColliders() != hookedCount) {
         HookColliders();
+    }
+    // WindowObject系コンポーネントも同様に追従する
+    const size_t hookedWindowCount = windowObjectHooks_ ? windowObjectHooks_->entries.size() : 0;
+    if (behaviorObject_ && CountWindowObjects() != hookedWindowCount) {
+        HookWindowObjects();
     }
     CallMethod(updateMethod_);
 }
@@ -597,7 +700,8 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
         field.typeId = typeId;
         field.address = address;
         field.attributes = std::move(attrs);
-        CollectSerializableChildren(field, builder, engine, 0);
+        SetupArrayField(field, builder, engine, 0);
+        if (!field.isArray) CollectSerializableChildren(field, builder, engine, 0);
         serializedFields_.push_back(std::move(field));
     }
 
@@ -621,7 +725,8 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
             field.typeId = typeId;
             field.address = address;
             field.attributes = std::move(attrs);
-            CollectSerializableChildren(field, builder, engine, 0);
+            SetupArrayField(field, builder, engine, 0);
+            if (!field.isArray) CollectSerializableChildren(field, builder, engine, 0);
             serializedFields_.push_back(std::move(field));
         }
     }
@@ -658,14 +763,63 @@ void ScriptComponent::CollectSerializableChildren(SerializedField &field, CScrip
         child.typeId = propTypeId;
         child.propertyIndex = i;
         child.attributes = std::move(attrs);
-        CollectSerializableChildren(child, builder, engine, depth + 1);
-        if (!child.isScriptObject && !IsSupportedFieldType(child.typeId)) continue;
+        SetupArrayField(child, builder, engine, depth + 1);
+        if (!child.isArray) CollectSerializableChildren(child, builder, engine, depth + 1);
+        if (!child.isArray && !child.isScriptObject && !IsSupportedFieldType(child.typeId)) continue;
         field.children.push_back(std::move(child));
     }
 }
 
+void ScriptComponent::SetupArrayField(SerializedField &field, CScriptBuilder &builder, asIScriptEngine *engine, int depth) {
+    // Serializableクラスと同じ深度制限を共有する（array<array<...>>やクラス配列の無限展開を防ぐ）
+    constexpr int kMaxSerializableDepth = 8;
+    if (!engine || depth >= kMaxSerializableDepth) return;
+    if (IsSupportedFieldType(field.typeId)) return;
+
+    asITypeInfo *type = engine->GetTypeInfoById(field.typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+    if (!type || !type->GetName() || std::string_view(type->GetName()) != "array") return;
+
+    // 要素のフィールド情報を構築する（名前は表示時にインデックスへ書き換えられる）
+    SerializedField element;
+    element.name = "[0]";
+    element.typeId = type->GetSubTypeId() & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+    // Range等の編集用属性は各要素へ引き継ぐ（Header/Space/Tooltipは配列自体にのみ表示する）
+    element.attributes = field.attributes;
+    element.attributes.header.clear();
+    element.attributes.hasSpace = false;
+    element.attributes.tooltip.clear();
+
+    SetupArrayField(element, builder, engine, depth + 1);
+    if (!element.isArray) CollectSerializableChildren(element, builder, engine, depth + 1);
+
+    // 要素型が未対応の場合は配列自体をシリアライズ対象にしない
+    if (!element.isArray && !element.isScriptObject && !IsSupportedFieldType(element.typeId)) return;
+
+    field.isArray = true;
+    field.children.clear();
+    field.children.push_back(std::move(element));
+}
+
 JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) const {
     if (!address) return JSON();
+
+    if (field.isArray) {
+        // 配列はハンドルとして格納されているため参照先を解決し、各要素をJSON配列へ書き出す
+        CScriptArray *array = *static_cast<CScriptArray **>(address);
+        if (!array || field.children.empty()) return JSON();
+        const SerializedField &element = field.children[0];
+        const int subTypeId = array->GetElementTypeId();
+        // 非ハンドルのオブジェクト要素（Serializableクラス・ネスト配列）はAtが実体ポインタを
+        // 返すため、ハンドル格納形式（ポインタへのポインタ）を期待する再帰処理に合わせて包み直す
+        const bool wrapElement = (element.isArray || element.isScriptObject) && !(subTypeId & asTYPEID_OBJHANDLE);
+        JSON jsonArray = JSON::array();
+        for (asUINT i = 0; i < array->GetSize(); ++i) {
+            void *at = array->At(i);
+            void *wrapped = at;
+            jsonArray.push_back(at ? CaptureField(element, wrapElement ? static_cast<void *>(&wrapped) : at) : JSON());
+        }
+        return jsonArray;
+    }
 
     if (field.isScriptObject) {
         // Serializableクラスはハンドルとして格納されているため、参照先を解決してから
@@ -708,6 +862,40 @@ JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) 
 
 void ScriptComponent::ApplyField(const SerializedField &field, void *address, const JSON &value) {
     if (!address) return;
+
+    if (field.isArray) {
+        if (!value.is_array() || field.children.empty()) return;
+        auto **arraySlot = static_cast<CScriptArray **>(address);
+        asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
+        if (!*arraySlot) {
+            // array<T>@ で宣言されたnullハンドルは配列を生成してから書き込む
+            if (!engine) return;
+            asITypeInfo *type = engine->GetTypeInfoById(field.typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+            if (!type) return;
+            *arraySlot = CScriptArray::Create(type);
+            if (!*arraySlot) return;
+        }
+        CScriptArray *array = *arraySlot;
+        const SerializedField &element = field.children[0];
+        const int subTypeId = array->GetElementTypeId();
+        const bool wrapElement = (element.isArray || element.isScriptObject) && !(subTypeId & asTYPEID_OBJHANDLE);
+        array->Resize(static_cast<asUINT>(value.size()));
+        for (asUINT i = 0; i < array->GetSize(); ++i) {
+            // array<T@> 宣言のnull要素は、適用する値がある場合のみ生成する
+            if ((subTypeId & asTYPEID_OBJHANDLE) && element.isScriptObject && engine) {
+                void **slot = static_cast<void **>(array->At(i));
+                if (slot && !*slot && value[i].is_object()) {
+                    asITypeInfo *elementType = engine->GetTypeInfoById(subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+                    if (elementType) *slot = engine->CreateScriptObject(elementType);
+                }
+            }
+            void *at = array->At(i);
+            if (!at) continue;
+            void *wrapped = at;
+            ApplyField(element, wrapElement ? static_cast<void *>(&wrapped) : at, value[i]);
+        }
+        return;
+    }
 
     if (field.isScriptObject) {
         if (!value.is_object()) return;
@@ -779,6 +967,7 @@ void ScriptComponent::ShowImGui() {
     if (ImGui::Button("Reload")) {
         if (Reload()) {
             HookColliders();
+            HookWindowObjects();
             CallMethod(startMethod_);
         }
     }
@@ -789,6 +978,7 @@ void ScriptComponent::ShowImGui() {
             startMethod_ ? "o" : "-", updateMethod_ ? "o" : "-", endMethod_ ? "o" : "-");
         ImGui::Text("OnCollision Enter: %s / Stay: %s / Exit: %s",
             onCollisionEnterMethod_ ? "o" : "-", onCollisionStayMethod_ ? "o" : "-", onCollisionExitMethod_ ? "o" : "-");
+        ImGui::Text("OnWindowMessage: %s", onWindowMessageMethod_ ? "o" : "-");
     }
     if (!lastError_.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", lastError_.c_str());
@@ -823,6 +1013,65 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
 
     if (!address) return;
     const char *label = field.name.c_str();
+
+    if (field.isArray) {
+        CScriptArray *array = *static_cast<CScriptArray **>(address);
+        if (!array || field.children.empty()) {
+            ImGui::Text("%s: (null)", label);
+            return;
+        }
+        const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
+        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+        if (!isOpen) return;
+
+        SerializedField &element = field.children[0];
+        const int subTypeId = array->GetElementTypeId();
+        const bool wrapElement = (element.isArray || element.isScriptObject) && !(subTypeId & asTYPEID_OBJHANDLE);
+        asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
+
+        // array<T@> 宣言の配列はリサイズ直後の要素がnullで編集できないため、その場で生成する
+        const auto createHandleElements = [&]() {
+            if (!(subTypeId & asTYPEID_OBJHANDLE) || !element.isScriptObject || !engine) return;
+            asITypeInfo *elementType = engine->GetTypeInfoById(subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+            if (!elementType) return;
+            for (asUINT i = 0; i < array->GetSize(); ++i) {
+                void **slot = static_cast<void **>(array->At(i));
+                if (slot && !*slot) *slot = engine->CreateScriptObject(elementType);
+            }
+        };
+
+        int size = static_cast<int>(array->GetSize());
+        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
+        if (ImGui::InputInt("Size", &size)) {
+            array->Resize(static_cast<asUINT>(std::max(0, size)));
+            createHandleElements();
+        }
+
+        int removeIndex = -1;
+        for (asUINT i = 0; i < array->GetSize(); ++i) {
+            ImGui::PushID(static_cast<int>(i));
+            if (ImGui::SmallButton("-")) removeIndex = static_cast<int>(i);
+            ImGui::SameLine();
+            element.name = "[" + std::to_string(i) + "]";
+            void *at = array->At(i);
+            void *wrapped = at;
+            if (at) {
+                DrawFieldImGui(element, wrapElement ? static_cast<void *>(&wrapped) : at);
+            } else {
+                ImGui::Text("%s: (null)", element.name.c_str());
+            }
+            ImGui::PopID();
+        }
+        if (ImGui::SmallButton("+")) {
+            array->Resize(array->GetSize() + 1);
+            createHandleElements();
+        }
+        if (removeIndex >= 0) {
+            array->RemoveAt(static_cast<asUINT>(removeIndex));
+        }
+        ImGui::TreePop();
+        return;
+    }
 
     if (field.isScriptObject) {
         // [System.Serializable] クラスはツリーで子フィールドを表示する
@@ -924,6 +1173,7 @@ bool ScriptComponent::LoadFromJson(const JSON &json) {
     if (IsActive()) {
         if (Reload()) {
             HookColliders();
+            HookWindowObjects();
             CallMethod(startMethod_);
         }
     } else if (!serializedFields_.empty()) {

@@ -421,15 +421,32 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Externals\imgui\imgui.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_demo.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_draw.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_stdlib.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_tables.cpp" />
-    <ClCompile Include="Externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Externals\imgui\imgui.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_demo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_draw.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_stdlib.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_tables.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_widgets.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
@@ -511,20 +528,44 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Render\SceneRenderer.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\AssetEditorWindows.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\EditorSettings.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneSaver.cpp" />
-    <ClCompile Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\AssetEditorWindows.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\EditorSettings.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneSaver.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\SceneEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Scene.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
@@ -667,16 +708,36 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="Externals\Common\CmdLineHelpers.h" />
     <ClInclude Include="Externals\Common\d3dx12.h" />
     <ClInclude Include="Externals\DirectXTex\DirectXTex.h" />
-    <ClInclude Include="Externals\imgui\ImGuizmo.h" />
-    <ClInclude Include="Externals\imgui\imconfig.h" />
-    <ClInclude Include="Externals\imgui\imgui.h" />
-    <ClInclude Include="Externals\imgui\imgui_impl_dx12.h" />
-    <ClInclude Include="Externals\imgui\imgui_impl_win32.h" />
-    <ClInclude Include="Externals\imgui\imgui_internal.h" />
-    <ClInclude Include="Externals\imgui\imgui_stdlib.h" />
-    <ClInclude Include="Externals\imgui\imstb_rectpack.h" />
-    <ClInclude Include="Externals\imgui\imstb_textedit.h" />
-    <ClInclude Include="Externals\imgui\imstb_truetype.h" />
+    <ClInclude Include="Externals\imgui\ImGuizmo.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imconfig.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imgui.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imgui_impl_dx12.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imgui_impl_win32.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imgui_internal.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imgui_stdlib.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imstb_rectpack.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imstb_textedit.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Externals\imgui\imstb_truetype.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Externals\nlohmann\json.hpp" />
     <ClInclude Include="Externals\nlohmann\json_fwd.hpp" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\Body.h" />
@@ -954,11 +1015,13 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\IWindowObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\NormalWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\OverlayWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ShadowMapObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Text.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\ScriptComponent.h" />
@@ -994,22 +1057,54 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Render\SceneRenderer.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneComponentHeader.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\ComponentAddMenu.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\AssetsWindow.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\AssetEditorWindows.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\EditorSettings.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectPayload.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h" />
-    <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\AssetEditorWindows.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\AssetsWindow.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\ComponentAddMenu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorSettings.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectPayload.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Scene.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneEditor.h" />

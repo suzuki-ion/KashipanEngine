@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -49,9 +50,114 @@ public:
     void SetOnWindowMessage(WindowMessageCallback callback) { onWindowMessage_ = std::move(callback); }
     const WindowMessageCallback &GetOnWindowMessage() const noexcept { return onWindowMessage_; }
 
+    //==================================================
+    // メッセージの横取り（インターセプト）
+    //==================================================
+
+    /// @brief 指定のメッセージを横取りするかを設定する
+    /// @details 横取り対象のメッセージはウィンドウの既定処理（エンジン既定イベント・DefWindowProc）が
+    ///          実行されなくなり、OnWindowMessage通知だけが行われる。ウィンドウの処理を中断して
+    ///          ゲーム側の処理へ差し替えたいメッセージにのみ使用する。
+    ///          WM_CLOSEを横取りするとXボタン・Alt+F4でウィンドウが閉じなくなるため、
+    ///          ゲーム側の処理が済んでから CloseWindow() で明示的に閉じること。
+    ///          WM_NCHITTESTやWM_SYSCOMMAND等を横取りするとウィンドウの基本動作
+    ///          （ドラッグ移動・リサイズ・最小化等）が壊れる点に注意
+    /// @return 設定できた場合はtrue（WM_DESTROY等の横取り不可メッセージはfalse）
+    bool SetMessageIntercepted(std::uint32_t msg, bool enabled) {
+        if (!Window::IsInterceptableMessage(msg)) return false;
+        if (enabled) interceptedMessages_.insert(msg);
+        else interceptedMessages_.erase(msg);
+        if (window_ && Window::IsExist(window_)) window_->SetMessageIntercepted(msg, enabled);
+        return true;
+    }
+    /// @brief 指定のメッセージを横取りするかを取得する
+    bool IsMessageIntercepted(std::uint32_t msg) const { return interceptedMessages_.contains(msg); }
+
+    /// @brief ウィンドウを閉じる（破棄予約する）
+    /// @details WM_CLOSEを横取りしている場合に、ゲーム側の処理が済んでから実際に閉じるために使う
+    void CloseWindow() {
+        if (window_ && Window::IsExist(window_)) window_->DestroyNotify();
+    }
+
 protected:
     IWindowObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID, std::string defaultTitle)
         : IObjectComponent(typeName, maxCount, componentTypeID), title_(std::move(defaultTitle)) {}
+
+    /// @brief 横取り設定を所有ウィンドウへ適用する（派生クラスのInitializeでウィンドウ生成後に呼ぶ）
+    void ApplyInterceptedMessages() {
+        if (!window_ || !Window::IsExist(window_)) return;
+        for (const auto msg : interceptedMessages_) {
+            window_->SetMessageIntercepted(msg, true);
+        }
+    }
+
+    /// @brief 横取り設定をJSON（数値配列）へ保存する（派生クラスのSaveToJsonから呼ぶ）
+    JSON SaveInterceptedMessagesJson() const {
+        JSON json = JSON::array();
+        for (const auto msg : interceptedMessages_) {
+            json.push_back(msg);
+        }
+        return json;
+    }
+    /// @brief 横取り設定をJSON（数値配列）から読み込み、ウィンドウが生成済みなら適用する
+    void LoadInterceptedMessagesJson(const JSON &json) {
+        // 既にウィンドウへ適用済みの分は一旦解除してから読み込む
+        if (window_ && Window::IsExist(window_)) {
+            for (const auto msg : interceptedMessages_) {
+                window_->SetMessageIntercepted(msg, false);
+            }
+        }
+        interceptedMessages_.clear();
+        if (json.is_array()) {
+            for (const auto &value : json) {
+                if (value.is_number_integer() || value.is_number_unsigned()) {
+                    const auto msg = value.get<std::uint32_t>();
+                    if (Window::IsInterceptableMessage(msg)) interceptedMessages_.insert(msg);
+                }
+            }
+        }
+        ApplyInterceptedMessages();
+    }
+
+#if defined(USE_IMGUI)
+    /// @brief 横取りメッセージの編集UI（派生クラスのShowImGuiから呼ぶ）
+    void ShowInterceptedMessagesImGui() {
+        if (!ImGui::TreeNode("Intercepted Messages")) return;
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextDisabled("横取り対象のメッセージは既定処理が実行されず、スクリプトのOnWindowMessage通知のみ行われます");
+        ImGui::PopTextWrapPos();
+
+        bool interceptClose = IsMessageIntercepted(WM_CLOSE);
+        if (ImGui::Checkbox("Intercept Close (WM_CLOSE)", &interceptClose)) {
+            SetMessageIntercepted(WM_CLOSE, interceptClose);
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Xボタン・Alt+F4で閉じなくなります。スクリプトからCloseWindow()で閉じてください");
+        }
+
+        std::uint32_t removeTarget = 0;
+        bool hasRemoveTarget = false;
+        for (const auto msg : interceptedMessages_) {
+            ImGui::PushID(static_cast<int>(msg));
+            ImGui::Text("0x%04X (%u)", msg, msg);
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Remove")) {
+                removeTarget = msg;
+                hasRemoveTarget = true;
+            }
+            ImGui::PopID();
+        }
+        if (hasRemoveTarget) SetMessageIntercepted(removeTarget, false);
+
+        ImGui::SetNextItemWidth(120.0f);
+        ImGui::InputInt("##InterceptMsgInput", &pendingInterceptMessage_, 0);
+        ImGui::SameLine();
+        if (ImGui::Button("Add") && pendingInterceptMessage_ > 0) {
+            SetMessageIntercepted(static_cast<std::uint32_t>(pendingInterceptMessage_), true);
+        }
+        ImGui::TreePop();
+    }
+#endif
 
     /// @brief このフレームにウィンドウが受信したメッセージをコールバックへ通知する（派生クラスのUpdateから呼ぶ）
     /// @details メッセージはウィンドウがメッセージ種別ごとに最後の1件を保持したものが対象で、通知順は不定。
@@ -80,9 +186,15 @@ protected:
     std::string title_;
     std::uint32_t width_ = 1280;
     std::uint32_t height_ = 720;
+    /// @brief 横取り対象のメッセージ（ウィンドウ再生成時にも引き継ぐためコンポーネント側でも保持する）
+    std::unordered_set<std::uint32_t> interceptedMessages_;
 
 private:
     WindowMessageCallback onWindowMessage_;
+#if defined(USE_IMGUI)
+    /// @brief ImGuiのメッセージ番号入力用の一時値
+    int pendingInterceptMessage_ = 0;
+#endif
 };
 
 } // namespace KashipanEngine

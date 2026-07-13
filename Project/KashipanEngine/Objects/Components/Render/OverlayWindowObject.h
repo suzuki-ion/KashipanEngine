@@ -21,6 +21,7 @@ public:
         ptr->title_ = title_;
         ptr->width_ = width_;
         ptr->height_ = height_;
+        ptr->interceptedMessages_ = interceptedMessages_;
         return ptr;
     }
 
@@ -28,6 +29,8 @@ protected:
     void Initialize() override {
         if (window_) return;
         window_ = Window::CreateOverlay(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_));
+        // メッセージの横取り設定を生成したウィンドウへ適用する
+        ApplyInterceptedMessages();
         // 位置やサイズの適用のために一回Updateを呼ぶ
         Update();
     }
@@ -71,6 +74,7 @@ protected:
         int h = static_cast<int>(height_);
         if (ImGuiCustom::EditValue("Width", w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
         if (ImGuiCustom::EditValue("Height", h)) height_ = static_cast<std::uint32_t>(std::max(1, h));
+        ShowInterceptedMessagesImGui();
     }
 #endif
 
@@ -79,6 +83,7 @@ protected:
         json["title"] = title_;
         json["width"] = width_;
         json["height"] = height_;
+        json["interceptedMessages"] = SaveInterceptedMessagesJson();
         return json;
     }
 
@@ -86,6 +91,7 @@ protected:
         title_ = json.value("title", std::string{ "Overlay Window" });
         width_ = json.value("width", 1280u);
         height_ = json.value("height", 720u);
+        LoadInterceptedMessagesJson(json.value("interceptedMessages", JSON::array()));
         return true;
     }
 };

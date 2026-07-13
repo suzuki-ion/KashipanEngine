@@ -385,6 +385,9 @@ void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
         .method("void SetTitle(const string &in)", &IWindowObjectComponent::SetTitle)
         .method("const string &GetTitle() const", &IWindowObjectComponent::GetTitle)
         .method("void SetSize(uint, uint)", &IWindowObjectComponent::SetSize)
+        .method("bool SetMessageIntercepted(uint msg, bool enabled)", &IWindowObjectComponent::SetMessageIntercepted)
+        .method("bool IsMessageIntercepted(uint msg) const", &IWindowObjectComponent::IsMessageIntercepted)
+        .method("void CloseWindow()", &IWindowObjectComponent::CloseWindow)
         .method("int GetClientWidth() const", [](const IWindowObjectComponent &component) -> int {
             Window *window = component.GetWindow();
             return (window && Window::IsExist(window)) ? window->GetClientWidth() : 0;
@@ -692,6 +695,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetTitle(const string &in)", static_cast<void (NormalWindowObject::*)(const std::string &)>(&NormalWindowObject::SetTitle))
         .method("const string &GetTitle() const", static_cast<const std::string &(NormalWindowObject::*)() const noexcept>(&NormalWindowObject::GetTitle))
         .method("void SetSize(uint, uint)", static_cast<void (NormalWindowObject::*)(std::uint32_t, std::uint32_t)>(&NormalWindowObject::SetSize))
+        .method("bool SetMessageIntercepted(uint msg, bool enabled)", static_cast<bool (NormalWindowObject::*)(std::uint32_t, bool)>(&NormalWindowObject::SetMessageIntercepted))
+        .method("bool IsMessageIntercepted(uint msg) const", static_cast<bool (NormalWindowObject::*)(std::uint32_t) const>(&NormalWindowObject::IsMessageIntercepted))
+        .method("void CloseWindow()", static_cast<void (NormalWindowObject::*)()>(&NormalWindowObject::CloseWindow))
         // 基底のWindowObject型への暗黙変換（WindowMessageInfoのsourceComponentとの比較用）
         .method("WindowObject@ opImplCast()", [](NormalWindowObject &component) -> IWindowObjectComponent * { return &component; });
     engine->RegisterObjectMethod("WindowObject", "NormalWindowObject@ opCast()",
@@ -701,6 +707,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetTitle(const string &in)", static_cast<void (OverlayWindowObject::*)(const std::string &)>(&OverlayWindowObject::SetTitle))
         .method("const string &GetTitle() const", static_cast<const std::string &(OverlayWindowObject::*)() const noexcept>(&OverlayWindowObject::GetTitle))
         .method("void SetSize(uint, uint)", static_cast<void (OverlayWindowObject::*)(std::uint32_t, std::uint32_t)>(&OverlayWindowObject::SetSize))
+        .method("bool SetMessageIntercepted(uint msg, bool enabled)", static_cast<bool (OverlayWindowObject::*)(std::uint32_t, bool)>(&OverlayWindowObject::SetMessageIntercepted))
+        .method("bool IsMessageIntercepted(uint msg) const", static_cast<bool (OverlayWindowObject::*)(std::uint32_t) const>(&OverlayWindowObject::IsMessageIntercepted))
+        .method("void CloseWindow()", static_cast<void (OverlayWindowObject::*)()>(&OverlayWindowObject::CloseWindow))
         .method("WindowObject@ opImplCast()", [](OverlayWindowObject &component) -> IWindowObjectComponent * { return &component; });
     engine->RegisterObjectMethod("WindowObject", "OverlayWindowObject@ opCast()",
         asFUNCTION((WindowObjectDownCast<OverlayWindowObject>)), asCALL_CDECL_OBJLAST);

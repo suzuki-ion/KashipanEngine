@@ -394,6 +394,9 @@ class WindowObject {
 	void SetTitle(const string&in);
 	const string& GetTitle() const;
 	void SetSize(uint, uint);
+	bool SetMessageIntercepted(uint msg, bool enabled);
+	bool IsMessageIntercepted(uint msg) const;
+	void CloseWindow();
 	int GetClientWidth() const;
 	int GetClientHeight() const;
 	bool IsWindowFocused() const;
@@ -812,6 +815,9 @@ class NormalWindowObject {
 	void SetTitle(const string&in);
 	const string& GetTitle() const;
 	void SetSize(uint, uint);
+	bool SetMessageIntercepted(uint msg, bool enabled);
+	bool IsMessageIntercepted(uint msg) const;
+	void CloseWindow();
 	WindowObject@ opImplCast();
 }
 
@@ -825,6 +831,9 @@ class OverlayWindowObject {
 	void SetTitle(const string&in);
 	const string& GetTitle() const;
 	void SetSize(uint, uint);
+	bool SetMessageIntercepted(uint msg, bool enabled);
+	bool IsMessageIntercepted(uint msg) const;
+	void CloseWindow();
 	WindowObject@ opImplCast();
 }
 

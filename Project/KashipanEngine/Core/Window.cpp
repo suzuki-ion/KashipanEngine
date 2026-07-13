@@ -284,6 +284,19 @@ void Window::DestroyNotify() {
 std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam) {
     LogScope scope;
     messages_[msg] = { msg, wparam, lparam };
+
+    // メッセージの横取り: 受信の記録だけ行い、既定イベント・DefWindowProcを実行しない
+    // （記録は行われるため、WindowObjectコンポーネント経由のOnWindowMessage通知には届く）
+    if (interceptedMessages_.contains(msg)) {
+        return std::optional<LRESULT>(0);
+    }
+    // WM_CLOSE横取り時は、Xボタン・Alt+F4等のSC_CLOSEを既定イベント（確認ダイアログ）へ渡さず
+    // DefWindowProcへ流す（DefWindowProcがWM_CLOSEを発行し、上の横取り処理で捕捉される）
+    // ※wparamの下位4ビットはシステム予約のためマスクして比較する
+    if (msg == WM_SYSCOMMAND && (wparam & 0xFFF0) == SC_CLOSE && interceptedMessages_.contains(WM_CLOSE)) {
+        return std::nullopt;
+    }
+
     // Intercept Alt+Enter (WM_SYSKEYDOWN + VK_RETURN) to toggle fullscreen appearance
     if (msg == WM_SYSKEYDOWN && wparam == VK_RETURN) {
         // lParam bit29 indicates the ALT key is down; also accept GetKeyState as fallback

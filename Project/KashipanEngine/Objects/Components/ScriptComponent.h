@@ -33,6 +33,8 @@ class EmptyObject;
 ///          クラスのメンバ変数やグローバル変数に `[SerializeField]` メタデータを付けると、
 ///          ImGuiのインスペクター上で編集でき、シーンへの保存/読込の対象になる。
 ///          対応型: bool / int / uint / float / double / string / Vector2 / Vector3 / Vector4 / Quaternion
+///          / Object（シーン内オブジェクトへの参照。インスペクターでコンボからの選択、
+///          およびヒエラルキーからのドラッグ&ドロップで指定できる）
 ///          および [System.Serializable] を付けたスクリプトクラス（public変数は自動対象、
 ///          private/protected変数は [SerializeField] が必要）、
 ///          これら対応型の array<T>（ネスト配列・Serializableクラスの配列も可）
@@ -58,6 +60,19 @@ public:
 
     /// @brief 直近のコンパイル/実行時エラー内容を取得する（無い場合は空文字）
     const std::string &GetLastError() const noexcept { return lastError_; }
+
+    /// @brief このスクリプトの [SerializeField] 付き変数を名前で取得する（スクリプト間のデータ受け渡し用）
+    /// @details シーン変数と異なり、他オブジェクトの ScriptComponent を GetComponent で取得した上で
+    ///          直接読み書きする経路。対応型は [SerializeField] と同じプリミティブ/数学型/Object@のみで、
+    ///          array<T> や [System.Serializable] クラスは非対応（モジュールをまたぐと型が一致しないため）
+    /// @param name 変数名
+    /// @param ref 書き込み先のアドレス
+    /// @param typeId 書き込み先の型ID
+    /// @return 名前・型が一致する変数が見つかった場合は true
+    bool GetVariable(const std::string &name, void *ref, int typeId) const;
+    /// @brief このスクリプトの [SerializeField] 付き変数へ名前で値を設定する（スクリプト間のデータ受け渡し用）
+    /// @details 対応型・非対応型はGetVariableと同じ
+    bool SetVariable(const std::string &name, void *ref, int typeId);
 
     /// @brief スクリプト変数に付与された属性（Unity互換メタデータ）
     struct FieldAttributes {
@@ -143,6 +158,10 @@ private:
 
     /// @brief 指定タイプIDがシリアライズ対応のプリミティブ/数学型かを判定する
     bool IsSupportedFieldType(int typeId) const;
+    /// @brief 指定タイプIDがObject型（ハンドル修飾の有無を問わない）かを判定する
+    bool IsObjectFieldType(int typeId) const;
+    /// @brief 単純な値型（プリミティブ/数学型/Object@）のフィールド値を型IDに応じてコピーする
+    void CopyLeafFieldValue(int typeId, void *dst, const void *src) const;
     /// @brief [SerializeField] 付き変数（グローバル変数とBehaviorクラスのメンバ変数）を収集する
     void CollectSerializedFields(CScriptBuilder &builder);
     /// @brief フィールドが [System.Serializable] クラス型の場合に子フィールドを再帰的に収集する
@@ -190,6 +209,7 @@ private:
     int vector3TypeId_ = 0;
     int vector4TypeId_ = 0;
     int quaternionTypeId_ = 0;
+    int objectTypeId_ = 0;
 
     /// @brief コライダーへ設定した衝突コールバックのフック情報
     /// @details 不完全型を保持するためshared_ptrを使用（デリータが型消去されるため宣言時に完全型が不要）

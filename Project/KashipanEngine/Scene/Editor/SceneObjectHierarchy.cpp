@@ -4,6 +4,7 @@
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Objects/Components/Comment.h"
 #include "Objects/Components/Transform.h"
 
 namespace KashipanEngine {
@@ -30,12 +31,16 @@ std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(const std::ve
         if (!json.contains("components")) continue;
         for (auto &compJson : json["components"]) {
             if (compJson.value("type", "") != "Transform" || !compJson.contains("data")) continue;
+            // Transformの実データはSaveToJsonInterfaceにより data["customData"] 以下（parent/translate等）に
+            // 格納される（dataの直下ではない）ため、customData側を書き換える必要がある
             auto &data = compJson["data"];
+            if (!data.contains("customData")) continue;
+            auto &customData = data["customData"];
             const int parentIndex = result[i].parentIndexInSubtree;
             if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < freshIDs.size()) {
-                data["parent"] = freshIDs[static_cast<size_t>(parentIndex)].ToString();
+                customData["parent"] = freshIDs[static_cast<size_t>(parentIndex)].ToString();
             } else if (!preserveRootParent) {
-                data.erase("parent");
+                customData.erase("parent");
             }
         }
     }
@@ -189,6 +194,10 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     const bool isOpen = ImGui::TreeNodeEx(item.name.c_str(), flags);
     if (isInactive || isEditorOnly) {
         ImGui::PopStyleColor();
+    }
+    // Commentコンポーネントが付いている場合、カーソルを合わせた際にその内容をツールチップ表示する
+    if (auto *comment = item.object->GetComponent<Comment>(); comment && !comment->GetComment().empty() && ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", comment->GetComment().c_str());
     }
     if (!item.children.empty() && isOpen != storedOpen) {
         EditorSettings::SetBool(settingsKey, isOpen);
@@ -411,6 +420,13 @@ void SceneObjectHierarchy::CreateTemplateObject(const std::string &objectName, c
 void SceneObjectHierarchy::HandleKeyboardShortcuts() {
     // ヒエラルキーウィンドウにフォーカスがある時のみ有効にする（テキスト入力中などに誤爆させないため）
     if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) return;
+
+    // Delete: 選択中オブジェクトを削除する（テキスト入力中の誤爆を避けるためIsAnyItemActive時は無視する）
+    if (ImGui::IsKeyPressed(ImGuiKey_Delete, false) && !ImGui::IsAnyItemActive()) {
+        if (!selectedObjects_.empty()) DeleteObjects(GetSelectionRoots());
+        return;
+    }
+
     if (!ImGui::IsKeyDown(ImGuiMod_Ctrl)) return;
 
     if (ImGui::IsKeyPressed(ImGuiKey_C, false)) {

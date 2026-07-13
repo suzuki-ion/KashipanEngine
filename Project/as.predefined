@@ -577,6 +577,8 @@ class ScriptComponent {
 	void SetScriptPath(const string&in);
 	const string& GetScriptPath() const;
 	bool Reload();
+	bool GetVariable(const string&in, ?&out) const;
+	bool SetVariable(const string&in, ?&in);
 }
 
 class MeshFilter {
@@ -615,6 +617,17 @@ class Text {
 	const string& GetText() const;
 	void SetColor(const Vector4&in);
 	const Vector4& GetColor() const;
+}
+
+class Comment {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void SetComment(const string&in);
+	const string& GetComment() const;
 }
 
 class ComputeShaderProcessing {

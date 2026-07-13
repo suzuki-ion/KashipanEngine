@@ -37,6 +37,7 @@
 // オブジェクトコンポーネント（全種類をスクリプトへ登録する）
 #include "Objects/Components/Animator.h"
 #include "Objects/Components/AudioListener.h"
+#include "Objects/Components/Comment.h"
 #include "Objects/Components/AudioSource.h"
 #include "Objects/Components/Collider/Box2DCollider.h"
 #include "Objects/Components/Collider/BoxCollider.h"
@@ -546,7 +547,15 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
         .method("void SetScriptPath(const string &in)", &ScriptComponent::SetScriptPath)
         .method("const string &GetScriptPath() const", &ScriptComponent::GetScriptPath)
-        .method("bool Reload()", &ScriptComponent::Reload);
+        .method("bool Reload()", &ScriptComponent::Reload)
+        // 他オブジェクトのScriptComponentを取得した上で、その[SerializeField]変数を名前で直接読み書きする
+        // （シーン変数を介さないスクリプト間のデータ受け渡し用。対応型はSerializeFieldと同じプリミティブ/数学型/Object@のみ）
+        .method("bool GetVariable(const string &in, ?&out) const", [](const ScriptComponent &self, const std::string &name, void *ref, int typeId) -> bool {
+            return self.GetVariable(name, ref, typeId);
+        })
+        .method("bool SetVariable(const string &in, ?&in)", [](ScriptComponent &self, const std::string &name, void *ref, int typeId) -> bool {
+            return self.SetVariable(name, ref, typeId);
+        });
 
     RegisterComponentType<MeshFilter>(engine, "MeshFilter")
         .method("void SetMeshHandle(uint)", [](MeshFilter &c, uint32_t handle) { c.SetMeshHandle(handle); })
@@ -564,6 +573,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetText() const", &Text::GetText)
         .method("void SetColor(const Vector4 &in)", &Text::SetColor)
         .method("const Vector4 &GetColor() const", &Text::GetColor);
+
+    RegisterComponentType<Comment>(engine, "Comment")
+        .method("void SetComment(const string &in)", &Comment::SetComment)
+        .method("const string &GetComment() const", &Comment::GetComment);
 
     RegisterComponentType<ComputeShaderProcessing>(engine, "ComputeShaderProcessing")
         .method("void SetPipelineName(const string &in)", &ComputeShaderProcessing::SetPipelineName)

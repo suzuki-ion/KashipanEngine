@@ -17,9 +17,15 @@
 #include "Math/Vector4.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Render/IWindowObjectComponent.h"
+#include "Objects/EmptyObject.h"
 #include "Scene/Components/Script/SceneScriptEngine.h"
 #include "Scene/Components/Script/ScriptBindings.h"
+#include "Scene/SceneContext.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Utilities/UUID128.h"
+#if defined(USE_IMGUI)
+#include "Objects/Components/Render/TargetObjectSelector.h"
+#endif
 
 namespace KashipanEngine {
 
@@ -369,6 +375,7 @@ bool ScriptComponent::Reload() {
     vector3TypeId_ = engine->GetTypeIdByDecl("Vector3");
     vector4TypeId_ = engine->GetTypeIdByDecl("Vector4");
     quaternionTypeId_ = engine->GetTypeIdByDecl("Quaternion");
+    objectTypeId_ = engine->GetTypeIdByDecl("Object");
 
     context_ = engine->CreateContext();
 
@@ -673,7 +680,13 @@ bool ScriptComponent::IsSupportedFieldType(int typeId) const {
     return typeId == asTYPEID_BOOL || typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32 ||
            typeId == asTYPEID_FLOAT || typeId == asTYPEID_DOUBLE ||
            typeId == stringTypeId_ || typeId == vector2TypeId_ || typeId == vector3TypeId_ ||
-           typeId == vector4TypeId_ || typeId == quaternionTypeId_;
+           typeId == vector4TypeId_ || typeId == quaternionTypeId_ || IsObjectFieldType(typeId);
+}
+
+bool ScriptComponent::IsObjectFieldType(int typeId) const {
+    // 配列要素として収集される際はSetupArrayFieldでハンドル修飾が外されるため、
+    // ハンドルの有無に関わらず素の型IDだけで比較する
+    return objectTypeId_ != 0 && (typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == objectTypeId_;
 }
 
 void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
@@ -856,6 +869,9 @@ JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) 
         return ToJSON(*static_cast<Vector4 *>(address));
     } else if (field.typeId == quaternionTypeId_) {
         return ToJSON(*static_cast<Quaternion *>(address));
+    } else if (IsObjectFieldType(field.typeId)) {
+        EmptyObject *object = *static_cast<EmptyObject **>(address);
+        return object ? ToJSON(object->GetObjectID()) : JSON();
     }
     return JSON();
 }
@@ -930,6 +946,12 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
             *static_cast<Vector4 *>(address) = FromJSON<Vector4>(value);
         } else if (field.typeId == quaternionTypeId_) {
             *static_cast<Quaternion *>(address) = FromJSON<Quaternion>(value);
+        } else if (IsObjectFieldType(field.typeId)) {
+            // UUIDから参照先オブジェクトを解決する（見つからない場合はnullのまま）
+            auto *sceneContext = GetOwnerSceneContext();
+            *static_cast<EmptyObject **>(address) = (sceneContext && value.is_string())
+                ? sceneContext->GetSceneObject(FromJSON<UUID128>(value))
+                : nullptr;
         }
     } catch (const JSON::exception &) {
         // 型が合わない保存値（スクリプト側の型変更後など）は無視して既定値のままにする
@@ -954,6 +976,55 @@ void ScriptComponent::ApplyFieldValuesFromJson(const JSON &json) {
         if (!json.contains(field.name)) continue;
         ApplyField(field, field.address, json[field.name]);
     }
+}
+
+void ScriptComponent::CopyLeafFieldValue(int typeId, void *dst, const void *src) const {
+    if (typeId == asTYPEID_BOOL) {
+        *static_cast<bool *>(dst) = *static_cast<const bool *>(src);
+    } else if (typeId == asTYPEID_INT32) {
+        *static_cast<int32_t *>(dst) = *static_cast<const int32_t *>(src);
+    } else if (typeId == asTYPEID_UINT32) {
+        *static_cast<uint32_t *>(dst) = *static_cast<const uint32_t *>(src);
+    } else if (typeId == asTYPEID_FLOAT) {
+        *static_cast<float *>(dst) = *static_cast<const float *>(src);
+    } else if (typeId == asTYPEID_DOUBLE) {
+        *static_cast<double *>(dst) = *static_cast<const double *>(src);
+    } else if (typeId == stringTypeId_) {
+        *static_cast<std::string *>(dst) = *static_cast<const std::string *>(src);
+    } else if (typeId == vector2TypeId_) {
+        *static_cast<Vector2 *>(dst) = *static_cast<const Vector2 *>(src);
+    } else if (typeId == vector3TypeId_) {
+        *static_cast<Vector3 *>(dst) = *static_cast<const Vector3 *>(src);
+    } else if (typeId == vector4TypeId_) {
+        *static_cast<Vector4 *>(dst) = *static_cast<const Vector4 *>(src);
+    } else if (typeId == quaternionTypeId_) {
+        *static_cast<Quaternion *>(dst) = *static_cast<const Quaternion *>(src);
+    } else if (IsObjectFieldType(typeId)) {
+        *static_cast<EmptyObject **>(dst) = *static_cast<EmptyObject *const *>(src);
+    }
+}
+
+bool ScriptComponent::GetVariable(const std::string &name, void *ref, int typeId) const {
+    if (!ref) return false;
+    for (const auto &field : serializedFields_) {
+        if (field.name != name || field.typeId != typeId) continue;
+        // array<T>や[System.Serializable]クラスはモジュールをまたぐと型が一致しないため対象外
+        if (field.isArray || field.isScriptObject || !field.address) return false;
+        CopyLeafFieldValue(typeId, ref, field.address);
+        return true;
+    }
+    return false;
+}
+
+bool ScriptComponent::SetVariable(const std::string &name, void *ref, int typeId) {
+    if (!ref) return false;
+    for (auto &field : serializedFields_) {
+        if (field.name != name || field.typeId != typeId) continue;
+        if (field.isArray || field.isScriptObject || !field.address) return false;
+        CopyLeafFieldValue(typeId, field.address, ref);
+        return true;
+    }
+    return false;
 }
 
 #if defined(USE_IMGUI)
@@ -1148,6 +1219,17 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         }
     } else if (field.typeId == quaternionTypeId_) {
         ImGuiCustom::EditValue(label, *static_cast<Quaternion *>(address), { .vSpeed = 0.01f });
+    } else if (IsObjectFieldType(field.typeId)) {
+        auto *objectSlot = static_cast<EmptyObject **>(address);
+        auto *sceneContext = GetOwnerSceneContext();
+        UUID128 targetId = *objectSlot ? (*objectSlot)->GetObjectID() : UUID128();
+        if (sceneContext) {
+            if (TargetObjectSelector::ShowSelector(label, sceneContext, targetId, true, false)) {
+                *objectSlot = sceneContext->GetSceneObject(targetId);
+            }
+        } else {
+            ImGui::Text("%s: (SceneContext未設定)", label);
+        }
     } else {
         ImGui::Text("%s: (unsupported type)", label);
     }

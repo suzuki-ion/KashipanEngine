@@ -1012,6 +1012,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\AudioListener.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Comment.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>

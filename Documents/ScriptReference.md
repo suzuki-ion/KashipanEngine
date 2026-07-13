@@ -13,6 +13,7 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 2. [ファイルの分割（#include）](#ファイルの分割include)
 3. [ScriptComponentBehavior（ライフサイクル）](#scriptcomponentbehaviorライフサイクル)
 4. [SerializeField（変数のインスペクター編集・保存）](#serializefield変数のインスペクター編集保存)
+    - [Object参照（シーン内オブジェクトの指定）](#object参照シーン内オブジェクトの指定)
     - [表示用の属性（Unity互換）](#表示用の属性unity互換)
     - [System.Serializable（クラスのシリアライズ）](#systemserializableクラスのシリアライズ)
     - [配列（array&lt;T&gt;）](#配列arrayt)
@@ -21,6 +22,7 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 7. [オブジェクト・シーン型](#オブジェクトシーン型)
     - [Tag（タグ）](#tagタグ)
 8. [シーン変数（スクリプト間の値の受け渡し）](#シーン変数スクリプト間の値の受け渡し)
+    - [ScriptComponent経由のスクリプト間データ受け渡し](#scriptcomponent経由のスクリプト間データ受け渡し)
 9. [dictionary（辞書型）](#dictionary辞書型)
 10. [Json（JSONファイルの保存・読み込み）](#jsonjsonファイルの保存読み込み)
 11. [コンポーネント型](#コンポーネント型)
@@ -159,10 +161,35 @@ int stageNo = 1;
 | プリミティブ | `bool` / `int` / `uint` / `float` / `double` |
 | 文字列 | `string` |
 | 数学型 | `Vector2` / `Vector3` / `Vector4` / `Quaternion` |
+| オブジェクト参照 | `Object@`（[詳細](#object参照シーン内オブジェクトの指定)） |
 | クラス | [System.Serializable](#systemserializableクラスのシリアライズ) を付けたスクリプトクラス |
 | 配列 | 上記対応型の `array<T>`（[詳細](#配列arrayt)。ネスト配列・Serializableクラスの配列も可） |
 
 上記以外の型に付けた場合、インスペクターには `(unsupported type)` と表示され、保存対象になりません。
+
+### Object参照（シーン内オブジェクトの指定）
+
+`Object@` 型の変数に `[SerializeField]` を付けると、インスペクター上でシーン内の他オブジェクトを参照として指定できます。
+
+```angelscript
+class CameraRig : ScriptComponentBehavior {
+    [SerializeField, Tooltip("追従対象のオブジェクト")]
+    Object@ target;
+
+    void Update() {
+        if (target is null) return;
+        Transform@ targetTf;
+        if (target.GetComponent(@targetTf)) {
+            // targetTf を使った処理
+        }
+    }
+}
+```
+
+- インスペクターにはコンボボックスが表示され、シーン内オブジェクトから選択できます。
+- ヒエラルキーウィンドウのオブジェクトをインスペクターの当該フィールドへドラッグ&ドロップして指定することもできます。
+- 内部的にはオブジェクトのUUIDとして保存されるため、シーンの保存/読込やスクリプトの`Reload`をまたいでも参照が維持されます（参照先オブジェクト自体が削除された場合は `null` になります）。
+- `array<Object@>` として複数のオブジェクトをまとめて参照することもできます。
 
 ### 表示用の属性（Unity互換）
 
@@ -263,40 +290,43 @@ class Player : ScriptComponentBehavior {
 
 取得/追加したいコンポーネント型のハンドル変数（または配列）を引数に渡すと、型に応じたコンポーネントが取得/生成されます。
 
+> **重要**: `GetComponent` / `AddComponent` / `RemoveComponent` は任意の型を受け取れるようAngelScriptの汎用引数（`?&out` / `?&in`）で実装されています。この仕組みでは、**渡す変数がハンドル型であっても呼び出し側で明示的に `@` を付けないとハンドルとして扱われません**（`GetComponent(vel)` ではなく `GetComponent(@vel)`）。`@` を付け忘れると、渡した型の値そのものを構築しようとして `No default constructor for object of type '...'.` / `No appropriate opAssign method found in '...' for value assignment` というコンパイルエラーになります（コンポーネント型は値としての構築・代入をサポートしていないため）。これはAngelScript自体の仕様（`dictionary.Set(key, @handle)` 等と同じ）であり、下記の例は全て `@` を付けています。
+
 ```angelscript
 // 単体取得: 最初に見つかったコンポーネントを取得
 Velocity@ vel;
-if (GetOwnerObject().GetComponent(vel)) {
+if (GetOwnerObject().GetComponent(@vel)) {
     vel.AddVelocity(Vector3(0.0f, 5.0f, 0.0f));
 }
 
-// 全件取得: array<T@> を渡す
-array<AudioSource@> sources;
-GetOwnerObject().GetComponents(sources);
-for (uint i = 0; i < sources.length(); i++) {
-    sources[i].Stop();
+// 全件取得: array<T@>@（配列自体もハンドルで宣言し、@ を付けて渡す）
+array<AudioSource@>@ sources;
+if (GetOwnerObject().GetComponents(@sources)) {
+    for (uint i = 0; i < sources.length(); i++) {
+        sources[i].Stop();
+    }
 }
 
 // 追加: 渡した変数の型のコンポーネントを新規生成して追加する
 BoxCollider@ col;
-if (GetOwnerObject().AddComponent(col)) {
+if (GetOwnerObject().AddComponent(@col)) {
     col.SetTrigger(true);
 }
 
 // 削除: 既に取得済みのハンドルを渡すとそのインスタンスを削除する
-GetOwnerObject().RemoveComponent(col);
+GetOwnerObject().RemoveComponent(@col);
 
 // グローバル版は自身のオブジェクトが対象（obj.GetComponent(...) 等の省略形）
 Transform@ tf;
-GetComponent(tf);
+GetComponent(@tf);
 ```
 
 | 関数 | 戻り値 | 説明 |
 |---|---|---|
-| `bool Object::GetComponent(?&out)` | 見つかった場合 `true` | 型に一致する最初のコンポーネントをハンドルへ格納 |
-| `bool Object::GetComponents(?&out)` | 成功した場合 `true` | 型に一致する全コンポーネントを `array<T@>` へ格納（0個でも配列は生成される） |
-| `bool Object::AddComponent(?&out)` | 追加できた場合 `true` | 渡した変数の型のコンポーネントを新規生成して追加し、ハンドルへ格納する（最大追加数を超える等で失敗する場合がある） |
-| `bool Object::RemoveComponent(?&in)` | 削除できた場合 `true` | 渡したハンドルが指すコンポーネントインスタンスを削除する |
+| `bool Object::GetComponent(?&out)` | 見つかった場合 `true` | 型に一致する最初のコンポーネントをハンドルへ格納（`@変数` で呼び出すこと） |
+| `bool Object::GetComponents(?&out)` | 成功した場合 `true` | 型に一致する全コンポーネントを `array<T@>` へ格納（0個でも配列は生成される。配列自体も `array<T@>@` とハンドルで宣言し `@変数` で呼び出すこと） |
+| `bool Object::AddComponent(?&out)` | 追加できた場合 `true` | 渡した変数の型のコンポーネントを新規生成して追加し、ハンドルへ格納する（最大追加数を超える等で失敗する場合がある。`@変数` で呼び出すこと） |
+| `bool Object::RemoveComponent(?&in)` | 削除できた場合 `true` | 渡したハンドルが指すコンポーネントインスタンスを削除する（`@変数` で呼び出すこと） |
 | `bool GetComponent(?&out)` | 同上 | 自身のオブジェクトを対象にした省略形 |
 | `bool GetComponents(?&out)` | 同上 | 自身のオブジェクトを対象にした省略形 |
 | `bool AddComponent(?&out)` | 同上 | 自身のオブジェクトを対象にした省略形 |
@@ -443,7 +473,12 @@ class Player : ScriptComponentBehavior {
 
 ## シーン変数（スクリプト間の値の受け渡し）
 
-`ScriptComponent` は1つにつき独立したスクリプトモジュールとしてコンパイルされるため、あるスクリプトのグローバル変数やクラスのメンバー変数に、別のスクリプトから直接アクセスすることはできません。異なるスクリプト間で値をやり取りしたい場合は、`Scene` のシーン変数を経由します。
+`ScriptComponent` は1つにつき独立したスクリプトモジュールとしてコンパイルされるため、あるスクリプトのグローバル変数やクラスのメンバー変数に、別のスクリプトから同じ型として直接アクセスすることはできません。スクリプト間で値をやり取りする方法は主に2つあります。
+
+- **シーン変数**（このセクション）: `Scene` が持つキー・バリューの共有領域を経由する方法。相手のオブジェクトを意識せず、緩く値をやり取りしたい場合に向いています
+- **[ScriptComponent経由の直接アクセス](#scriptcomponent経由のスクリプト間データ受け渡し)**: 相手オブジェクトの `ScriptComponent` を取得し、`[SerializeField]` 変数を名前で直接読み書きする方法。相手のオブジェクトが分かっている場合に向いています
+
+### シーン変数
 
 ```angelscript
 // scriptA.as（敵を倒した側）
@@ -464,6 +499,42 @@ GetScene().GetGlobalVariable("score", score);
 - `SetVariable`/`SetGlobalVariable` は同じキーへ再度呼び出すと値を上書きします（型が変わっても構いません）。
 - `GetVariable`/`GetGlobalVariable` は、キーが存在しない場合、または既存の値と渡した変数の型が異なる場合に `false` を返します（`value` は変更されません）。
 - 対応している型は `[SerializeField]` と同じです: `bool` / `int` / `uint` / `float` / `double` / `string` / `Vector2` / `Vector3` / `Vector4` / `Quaternion`。
+
+### ScriptComponent経由のスクリプト間データ受け渡し
+
+相手のオブジェクトが分かっている場合は、シーン変数を経由せずに相手オブジェクトの `ScriptComponent` を取得して、`[SerializeField]` 変数を名前で直接取得・設定できます。
+
+```angelscript
+// scriptA.as（相手を直接操作する側）
+Object@ enemy = GetScene().GetObject("Enemy");
+if (enemy !is null) {
+    ScriptComponent@ sc;
+    if (enemy.GetComponent(@sc)) {
+        float hp;
+        if (sc.GetVariable("hp", hp)) {
+            Log("敵のHP: " + hp);
+            sc.SetVariable("hp", hp - 10.0f);
+        }
+    }
+}
+```
+
+```angelscript
+// scriptB.as（Enemyオブジェクト側。hpはSerializeFieldが付いているので外部から読み書きできる）
+class Enemy : ScriptComponentBehavior {
+    [SerializeField]
+    float hp = 100.0f;
+}
+```
+
+| メソッド | 説明 |
+|---|---|
+| `bool GetVariable(const string &in name, ?&out) const` | 指定名の `[SerializeField]` 変数の現在値を取得する |
+| `bool SetVariable(const string &in name, ?&in)` | 指定名の `[SerializeField]` 変数へ値を設定する |
+
+- 取得・設定できるのは相手スクリプトの **`[SerializeField]` が付いた変数のみ**です（インスペクターに公開されている＝外部から触ってよいと明示された変数、という既存の意味をそのまま利用しています）
+- 対応している型はシーン変数と同じプリミティブ/数学型に加えて `Object@`（[詳細](#object参照シーン内オブジェクトの指定)）です。`array<T>` や `[System.Serializable]` クラスは対象外です（スクリプトごとに独立したモジュールとしてコンパイルされるため、同じ名前・同じ形のクラスでも型が一致せず安全に受け渡せないため）
+- 変数名が存在しない、または渡した変数と型が一致しない場合は `false` を返すだけで、例外にはなりません（値は変更されません）
 
 ## dictionary（辞書型）
 
@@ -710,6 +781,8 @@ if (loaded !is null) {
 |---|---|
 | `void SetScriptPath(const string &in)` / `const string &GetScriptPath() const` | スクリプトパスの設定/取得 |
 | `bool Reload()` | スクリプトを再コンパイルする |
+| `bool GetVariable(const string &in, ?&out) const` | 指定名の `[SerializeField]` 変数の現在値を取得する（[詳細](#scriptcomponent経由のスクリプト間データ受け渡し)） |
+| `bool SetVariable(const string &in, ?&in)` | 指定名の `[SerializeField]` 変数へ値を設定する（[詳細](#scriptcomponent経由のスクリプト間データ受け渡し)） |
 
 ### MeshFilter
 
@@ -819,7 +892,7 @@ if (loaded !is null) {
 class Billboard : ScriptComponentBehavior {
     void Start() {
         TargetLookAt@ lookAt;
-        if (AddComponent(lookAt)) {
+        if (AddComponent(@lookAt)) {
             lookAt.SetTargetObject(FindObject("MainCamera"));
             lookAt.SetRotationMode(TargetLookAtMode::SyncRotation); // カメラと正対し続ける
         }
@@ -901,7 +974,7 @@ class WindowWatcher : ScriptComponentBehavior {
         // 複数のウィンドウコンポーネントがある場合、
         // どのコンポーネントからの通知かをハンドル比較で判別できる
         NormalWindowObject@ mainWindow;
-        GetComponent(mainWindow);
+        GetComponent(@mainWindow);
         if (info.sourceComponent is mainWindow) {
             // メインウィンドウのメッセージ
         }
@@ -924,7 +997,7 @@ class WindowWatcher : ScriptComponentBehavior {
 class GameWindow : ScriptComponentBehavior {
     void Start() {
         NormalWindowObject@ window;
-        GetComponent(window);
+        GetComponent(@window);
         window.SetMessageIntercepted(WM_CLOSE, true); // Xボタンで閉じずにスクリプトへ通知する
     }
 
@@ -962,7 +1035,7 @@ class GameWindow : ScriptComponentBehavior {
 class Bullet : ScriptComponentBehavior {
     void Start() {
         SphereCollider@ collider;
-        if (GetComponent(collider)) {
+        if (GetComponent(@collider)) {
             collider.SetContinuousDetection(true); // 高速移動してもすり抜けを検出できるようにする
         }
     }
@@ -997,7 +1070,7 @@ class Player : ScriptComponentBehavior {
         // 自オブジェクトに複数のコライダーが付いている場合、
         // どのコライダーで衝突したのかをハンドル比較で判別できる
         BoxCollider@ attackCollider;
-        GetComponent(attackCollider);
+        GetComponent(@attackCollider);
         if (hit.selfCollider is attackCollider) {
             Log("攻撃判定がヒット");
         }
@@ -1188,7 +1261,7 @@ class Player : ScriptComponentBehavior {
 
     void Start() {
         Log("Player start: " + GetOwnerObject().GetName());
-        GetComponent(velocity);
+        GetComponent(@velocity);
     }
 
     void Update() {

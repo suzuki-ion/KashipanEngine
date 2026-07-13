@@ -42,7 +42,7 @@ obj->SetName("PlayerRoot");
 
 ```cpp
 if (auto* sb = screenBuffer3D) {
-    obj->AttachToRenderer(sb, "Object3D.Solid.BlendNormal");
+    obj->AttachToRenderer(sb, "Object.Solid.BlendNormal");
 }
 ```
 

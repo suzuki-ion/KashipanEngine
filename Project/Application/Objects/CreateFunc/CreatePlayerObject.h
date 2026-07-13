@@ -7,7 +7,7 @@
 
 namespace KashipanEngine {
 
-std::unique_ptr<Object3DBase> CreatePlayerObject(SceneContext *context) {
+std::unique_ptr<EmptyObject> CreatePlayerObject(SceneContext *context) {
     auto *sceneDefaultVariables = context->GetComponent<SceneDefaultVariables>();
     auto *screenBuffer3D = sceneDefaultVariables ? sceneDefaultVariables->GetScreenBuffer3D() : nullptr;
 
@@ -22,7 +22,7 @@ std::unique_ptr<Object3DBase> CreatePlayerObject(SceneContext *context) {
         tr->SetScale(Vector3(1.0f, 1.0f, 1.0f));
     }
 
-    player->AttachToRenderer(screenBuffer3D, "Object3D.Solid.BlendNormal");
+    player->AttachToRenderer(screenBuffer3D, "Object.Solid.BlendNormal");
 
     return std::move(player);
 }

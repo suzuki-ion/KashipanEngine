@@ -3,8 +3,8 @@
 ## Reference
 
 - `01_AppInitialize.md` - `AppInitialize`（アプリ側初期化）
-- `02_GameObjects.md` - ゲームオブジェクト（`Object2DBase` / `Object3DBase`）
-- `03_ObjectComponents.md` - ゲームオブジェクト用コンポーネント（`IObjectComponent2D` / `IObjectComponent3D`）
+- `02_GameObjects.md` - ゲームオブジェクト（`Object2DBase` / `EmptyObject`）
+- `03_ObjectComponents.md` - ゲームオブジェクト用コンポーネント（`IObjectComponent2D` / `IObjectComponent`）
 - `04_Scenes.md` - シーン（`SceneBase` / `SceneManager`）
 - `05_SceneComponents.md` - シーン用コンポーネント（`ISceneComponent`）
 - `06_Window.md` - ウィンドウ（`Window`）

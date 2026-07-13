@@ -7,225 +7,106 @@
 #include <typeindex>
 #include <type_traits>
 
-#include "Objects/Object2DBase.h"
-#include "Objects/Object3DBase.h"
+#include "Objects/EmptyObject.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
-/// @brief ゲームオブジェクトコンテキストインターフェースクラス
-class IObjectContext {
+/// @brief ゲームオブジェクトコンテキスト
+class ObjectContext final {
 public:
-    virtual ~IObjectContext() = default;
-    virtual const std::string &GetName() const = 0;
-};
+    ObjectContext(Passkey<EmptyObject>, EmptyObject *owner) : owner_(owner) {}
+    ~ObjectContext() = default;
 
-/// @brief 2Dゲームオブジェクトコンテキストクラス
-class Object2DContext : public IObjectContext {
-public:
-    Object2DContext(Passkey<Object2DBase>, Object2DBase *owner) : owner_(owner) {}
-    ~Object2DContext() = default;
+    ObjectContext(const ObjectContext &) = delete;
+    ObjectContext &operator=(const ObjectContext &) = delete;
+    ObjectContext(ObjectContext &&) = delete;
+    ObjectContext &operator=(ObjectContext &&) = delete;
 
-    Object2DContext(const Object2DContext &) = delete;
-    Object2DContext &operator=(const Object2DContext &) = delete;
-    Object2DContext(Object2DContext &&) = delete;
-    Object2DContext &operator=(Object2DContext &&) = delete;
-
-    Object2DBase *GetOwner() const { return owner_; }
-
-    /// @brief オブジェクト名の取得
-    const std::string &GetName() const override;
-
-    /// @brief 頂点データの取得
-    template<typename T>
-    std::span<T> GetVertexData() const { return owner_->template GetVertexData<T>(); }
-
-    /// @brief 頂点データの設定
-    template<typename T>
-    void SetVertexData(const std::span<T> &data) { owner_->template SetVertexData<T>(data); }
-
-    /// @brief 名前から一致するコンポーネントを取得
-    std::vector<IObjectComponent2D *> GetComponents(const std::string &componentName) const;
-
-    /// @brief コンポーネントの登録（生成）
-    /// @tparam T コンポーネント型
-    /// @tparam Args コンストラクタ引数型
-    /// @param args コンストラクタ引数
-    /// @return 登録に成功した場合は true
-    template<typename T, typename... Args>
-    bool RegisterComponent(Args &&... args) {
-        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
-        if (!owner_) return false;
-        return owner_->template RegisterComponent<T>(std::forward<Args>(args)...);
-    }
-    /// @brief 既存コンポーネントの登録
-    /// @param comp 既存コンポーネント（ムーブされる）
-    /// @return 登録に成功した場合は true
-    bool RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
-        if (!owner_) return false;
-        return owner_->RegisterComponent(std::move(comp));
-    }
-    /// @brief 既存コンポーネントの登録
-    /// @param comp 既存コンポーネント（ムーブされる）
-    /// @return 登録に成功した場合は true
-    bool RegisterComponent(std::unique_ptr<IObjectComponent2D> comp) {
-        if (!owner_) return false;
-        return owner_->RegisterComponent(std::move(comp));
-    }
-
-    /// @brief 名前から一致する最初のコンポーネントを取得
-    IObjectComponent2D *GetComponent(const std::string &componentName) const;
-
-    /// @brief 名前から一致する最初のコンポーネントを取得（型付き）
-    template<typename T>
-    T *GetComponent(const std::string &componentName) const {
-        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
-        auto *base = GetComponent(componentName);
-        return base ? static_cast<T *>(base) : nullptr;
-    }
-
-    /// @brief 型から一致するコンポーネントを取得
-    template<typename T>
-    std::vector<T *> GetComponents() const {
-        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
-        if (!owner_) return {};
-        return owner_->template GetComponents2D<T>();
-    }
-
-    /// @brief 名前から一致するコンポーネントを取得（型付き）
-    template<typename T>
-    std::vector<T *> GetComponents(const std::string &componentName) const {
-        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
-        auto baseList = GetComponents(componentName);
-        std::vector<T *> result;
-        result.reserve(baseList.size());
-        for (auto *c : baseList) {
-            result.push_back(static_cast<T *>(c));
-        }
-        return result;
-    }
-
-    /// @brief 型から一致する最初のコンポーネントを取得
-    template<typename T>
-    T *GetComponent() const {
-        static_assert(std::is_base_of_v<IObjectComponent2D, T>, "T must derive from IObjectComponent2D");
-        if (!owner_) return nullptr;
-        return owner_->template GetComponent2D<T>();
-    }
-
-    /// @brief コンポーネントの存在チェック
-    size_t HasComponents(const std::string &componentName) const;
-
-    /// @brief オブジェクトのシーンコンテキストの取得
-    SceneContext *GetOwnerSceneContext() const {
-        return owner_->sceneContext_;
-    }
-
-private:
-    Object2DBase *owner_ = nullptr;
-};
-
-/// @brief 3Dゲームオブジェクトコンテキストクラス
-class Object3DContext : public IObjectContext {
-public:
-    Object3DContext(Passkey<Object3DBase>, Object3DBase *owner) : owner_(owner) {}
-    ~Object3DContext() = default;
-
-    Object3DContext(const Object3DContext &) = delete;
-    Object3DContext &operator=(const Object3DContext &) = delete;
-    Object3DContext(Object3DContext &&) = delete;
-    Object3DContext &operator=(Object3DContext &&) = delete;
-
-    Object3DBase *GetOwner() const { return owner_; }
-
-    /// @brief オブジェクト名の取得
-    const std::string &GetName() const override;
-
-    /// @brief 頂点データの取得
-    template<typename T>
-    std::span<T> GetVertexData() const { return owner_->template GetVertexData<T>(); }
-
-    /// @brief 頂点データの設定
-    template<typename T>
-    void SetVertexDataImpl(const std::span<T> &data) { owner_->template SetVertexData<T>(data); }
+    const EmptyObject *GetOwner() const { return owner_; }
+    const std::string &GetName() const { return owner_->GetName(); }
 
     //==================================================
-    // Component getters (similar to Object3DBase)
+    // コンポーネント取得系メソッド
     //==================================================
 
-    /// @brief コンポーネントの登録（生成）
-    /// @tparam T コンポーネント型
-    /// @tparam Args コンストラクタ引数型
-    /// @param args コンストラクタ引数
-    /// @return 登録に成功した場合は true
-    template<typename T, typename... Args>
-    bool RegisterComponent(Args &&... args) {
-        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
-        if (!owner_) return false;
-        return owner_->template RegisterComponent<T>(std::forward<Args>(args)...);
-    }
-    /// @brief 既存コンポーネントの登録
-    /// @param comp 既存コンポーネント（ムーブされる）
-    /// @return 登録に成功した場合は true
-    bool RegisterComponent(std::unique_ptr<IObjectComponent> comp) {
-        if (!owner_) return false;
-        return owner_->RegisterComponent(std::move(comp));
-    }
-
-    /// @brief 他コンポーネントの取得（名前）
-    std::vector<IObjectComponent3D *> GetComponents(const std::string &componentName) const;
-
-    /// @brief 名前から一致する最初のコンポーネントを取得
-    IObjectComponent3D *GetComponent(const std::string &componentName) const;
-
-    /// @brief 名前から一致する最初のコンポーネントを取得（型付き）
+    /// @brief 型から一致するコンポーネント一覧を取得
+    /// @tparam T コンポーネントの型
+    /// @return 一致するコンポーネントのリスト（存在しない場合は空のリスト）
     template<typename T>
-    T *GetComponent(const std::string &componentName) const {
-        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
-        auto *base = GetComponent(componentName);
-        return base ? static_cast<T *>(base) : nullptr;
-    }
-
-    /// @brief 型から一致するコンポーネントを取得
-    template<typename T>
-    std::vector<T *> GetComponents() const {
-        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
-        if (!owner_) return {};
-        return owner_->template GetComponents3D<T>();
-    }
-
-    /// @brief 名前から一致するコンポーネントを取得（型付き）
-    template<typename T>
-    std::vector<T *> GetComponents(const std::string &componentName) const {
-        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
-        auto baseList = GetComponents(componentName);
-        std::vector<T *> result;
-        result.reserve(baseList.size());
-        for (auto *c : baseList) {
-            result.push_back(static_cast<T *>(c));
-        }
-        return result;
-    }
-
+    std::vector<T *> GetComponents() const { return owner_->GetComponents<T>(); }
     /// @brief 型から一致する最初のコンポーネントを取得
+    /// @tparam T 取得したいコンポーネント型
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
     template<typename T>
-    T *GetComponent() const {
-        static_assert(std::is_base_of_v<IObjectComponent3D, T>, "T must derive from IObjectComponent3D");
-        if (!owner_) return nullptr;
-        return owner_->template GetComponent3D<T>();
-    }
+    T *GetComponent() const { return owner_->GetComponent<T>(); }
+    /// @brief ポインタからコンポーネントを取得
+    /// @param component コンポーネントのポインタ
+    /// @return コンポーネント（存在しない場合は nullptr）
+    IObjectComponent *GetComponent(const IObjectComponent *component) const { return owner_->GetComponent(component); }
+    /// @brief 型からコンポーネントの個数を確認
+    /// @tparam T コンポーネントの型
+    /// @return 一致するコンポーネントの個数
+    template<typename T>
+    size_t HasComponents() const { return owner_->HasComponents<T>(); }
+    /// @brief ポインタからコンポーネントの個数を確認
+    /// @param component コンポーネントのポインタ
+    /// @return 一致するコンポーネントの個数
+    size_t HasComponent(const IObjectComponent *component) const { return owner_->HasComponent(component); }
+    /// @brief 全コンポーネントの取得（コンポーネント本体と追加順のペアのリスト）
+    const std::vector<std::pair<std::unique_ptr<IObjectComponent>, size_t>> &GetAllComponents() const { return owner_->GetAllComponents(); }
 
-    /// @brief コンポーネントの存在チェック
-    size_t HasComponents(const std::string &componentName) const;
+    //==================================================
+    // コンポーネント追加系メソッド
+    //==================================================
 
-    /// @brief オブジェクトのシーンコンテキストの取得
-    SceneContext *GetOwnerSceneContext() const {
-        return owner_->sceneContext_;
-    }
+    /// @brief 既存コンポーネントの追加
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
+    IObjectComponent *AddComponent(std::unique_ptr<IObjectComponent> comp) { return owner_->AddComponent(std::move(comp)); }
+    /// @brief 既存コンポーネントの追加
+    /// @tparam T コンポーネントの型
+    /// @param comp 既存コンポーネント（ムーブされる）
+    /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
+    template<typename T>
+    T *AddComponent(std::unique_ptr<T> comp) { return owner_->AddComponent<T>(std::move(comp)); }
+    /// @brief コンポーネントの追加（生成）
+    /// @tparam T コンポーネントの型
+    /// @tparam Args コンポーネントのコンストラクタ引数の型
+    /// @param args コンポーネントのコンストラクタ引数
+    /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
+    template<typename T, typename... Args>
+    T *AddComponent(Args&&... args) { return owner_->AddComponent<T>(std::forward<Args>(args)...); }
+
+    //==================================================
+    // コンポーネント削除系メソッド
+    //==================================================
+
+    /// @brief ポインタからコンポーネントを削除
+    /// @param component 削除したいコンポーネントのポインタ
+    /// @return 削除に成功した場合は true
+    bool RemoveComponent(const IObjectComponent *component) { return owner_->RemoveComponent(component); }
+    /// @brief 型から一致する最初のコンポーネントを削除
+    /// @tparam T 削除したいコンポーネントの型
+    /// @return 削除に成功した場合は true
+    template<typename T>
+    bool RemoveComponent() { return owner_->RemoveComponent<T>(); }
+    /// @brief 型から一致する全てのコンポーネントを削除
+    /// @tparam T 削除したいコンポーネントの型
+    /// @return 削除に成功した場合は true
+    template <typename T>
+    bool RemoveComponents() { return owner_->RemoveComponents<T>(); }
+
+    /// @brief オブジェクトIDの取得
+    const UUID128 &GetObjectID() const { return owner_->GetObjectID(); }
+    /// @brief オブジェクトの保存の可否取得
+    bool IsSaveEnabled() const { return owner_->IsSaveEnabled(); }
+    /// @brief オブジェクトのアクティブ状態取得
+    bool IsActive() const { return owner_->IsActive(); }
 
 private:
-    Object3DBase *owner_ = nullptr;
+    EmptyObject *owner_ = nullptr;
 };
 
 } // namespace KashipanEngine

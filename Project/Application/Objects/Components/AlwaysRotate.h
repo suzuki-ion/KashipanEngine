@@ -4,10 +4,10 @@
 
 namespace KashipanEngine {
 
-class AlwaysRotate final : public IObjectComponent3D {
+class AlwaysRotate final : public IObjectComponent {
 public:
     explicit AlwaysRotate(const Vector3 &angularVelocity = Vector3{0.0f, 0.0f, 1.0f})
-        : IObjectComponent3D("AlwaysRotate", 1), angularVelocity_(angularVelocity) {}
+        : IObjectComponent("AlwaysRotate", 1), angularVelocity_(angularVelocity) {}
 
     ~AlwaysRotate() override = default;
 
@@ -38,6 +38,6 @@ private:
     Vector3 angularVelocity_{0.0f, 0.0f, 1.0f};
 };
 
-REGISTER_COMPONENT_OBJECT3D(AlwaysRotate);
+REGISTER_COMPONENT_OBJECT(AlwaysRotate);
 
 } // namespace KashipanEngine

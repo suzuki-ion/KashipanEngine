@@ -1,4 +1,5 @@
-#include "INI.h"
+﻿#include "INI.h"
+#include "Directory.h"
 #include <fstream>
 
 namespace KashipanEngine {
@@ -46,6 +47,8 @@ INIData LoadINIFile(const std::string &filePath) {
 }
 
 void SaveINIFile(const INIData &iniData) {
+    // 保存先フォルダが存在しない場合は作成する
+    EnsureParentDirectoryExists(iniData.filePath);
     std::ofstream file(iniData.filePath);
     if (!file.is_open()) {
         return;

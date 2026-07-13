@@ -13,14 +13,14 @@ struct Material {
 #include "../Common/ShadowMap.hlsli"
 #include "Object3D.hlsli"
 
-ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
-
 StructuredBuffer<PointLight> gPointLights : register(t4);
 StructuredBuffer<SpotLight> gSpotLights : register(t5);
+StructuredBuffer<DirectionalLight> gDirectionalLights : register(t6);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
 	uint gSpotLightCount;
+	uint gDirectionalLightCount;
 };
 #endif
 
@@ -87,7 +87,10 @@ PSOutput main(VSOutput input) {
 #endif
 
 #ifdef Object3D
-    float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+    float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	if (mat.useTexture > 0.5f) {
+		textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+	}
 	float4 baseColor = mat.color * textureColor;
 	float4 lightingColor = float4(0,0,0,0);
 	float4 envColor = float4(0,0,0,0);
@@ -95,13 +98,25 @@ PSOutput main(VSOutput input) {
 		lightingColor = float4(1,1,1,1);
 	}
 
-	// Directional
-	if (gDirectionalLight.enabled && mat.enableLighting) {
-		float lam = HalfLambert(input.normal, -gDirectionalLight.direction);
-		float spec = BlinnPhongReflection(input.normal, gDirectionalLight.direction, input.worldPosition, mat.shininess);
-		float4 diffuse = gDirectionalLight.color * lam * gDirectionalLight.intensity;
-		float4 speculer = gDirectionalLight.color * gDirectionalLight.intensity * spec * mat.specularColor;
-		lightingColor += diffuse + speculer;
+	// Directional lights
+	if (mat.enableLighting) {
+		for (uint i = 0; i < gDirectionalLightCount; ++i) {
+			DirectionalLight light = gDirectionalLights[i];
+			if (!light.enabled) {
+				continue;
+			}
+			float lam = HalfLambert(input.normal, -light.direction);
+			float spec = BlinnPhongReflection(input.normal, light.direction, input.worldPosition, mat.shininess);
+			float4 diffuse = light.color * lam * light.intensity;
+			float4 speculer = light.color * light.intensity * spec * mat.specularColor;
+			// このライトが影を生成する場合、カスケードシャドウマップから影係数を求めて
+			// このライトの寄与のみを減衰させる
+			float shadow = 1.0f;
+			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+				shadow = ComputeDirectionalShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.direction);
+			}
+			lightingColor += (diffuse + speculer) * shadow;
+		}
 	}
 
 	// Point lights
@@ -124,7 +139,12 @@ PSOutput main(VSOutput input) {
 			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity * atten;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
-			lightingColor += diffuse + speculer;
+			// このライトが影を生成する場合、キューブシャドウマップから影係数を求める
+			float shadow = 1.0f;
+			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+				shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.position);
+			}
+			lightingColor += (diffuse + speculer) * shadow;
 		}
 	}
 
@@ -152,10 +172,15 @@ PSOutput main(VSOutput input) {
 			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity * atten;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
-			lightingColor += diffuse + speculer;
+			// このライトが影を生成する場合、シャドウマップから影係数を求める
+			float shadow = 1.0f;
+			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+				shadow = ComputeSpotShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, lightDir);
+			}
+			lightingColor += (diffuse + speculer) * shadow;
 		}
 	}
-	
+
 	// Environment map
 	if (mat.enableEnvironmentMapping) {
 		float3 cameraToPosition = input.worldPosition - gCamera3D.eyePosition.xyz;
@@ -166,11 +191,6 @@ PSOutput main(VSOutput input) {
 
 	output.color = baseColor * lightingColor + envColor;
 
-	if (mat.enableShadowMapProjection) {
-		float shadow = ComputeShadowFactor(input.worldPosition);
-		output.color *= shadow;
-	}
-	
 	output.color.a = mat.color.a * textureColor.a;
 	if (output.color.a < 0.01f) {
 		discard;

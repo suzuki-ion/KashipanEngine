@@ -105,6 +105,8 @@ std::unique_ptr<SkeletonTransform> ConvertTransform(const aiMatrix4x4 &m) {
     transform->SetScale(Vector3(scaling.x, scaling.y, scaling.z));
     transform->SetRotate(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
     transform->SetTranslate(Vector3(translation.x, translation.y, translation.z));
+    // インポート直後（未アニメーション）のTRSをバインドポーズとして記憶しておく
+    transform->CaptureBindPose();
     return std::move(transform);
 }
 
@@ -146,6 +148,33 @@ void CollectBones(const aiScene *scene, Skeleton &skeleton) {
     }
 }
 
+/// @brief ノードから見て直近のジョイント祖先を探しつつ、間に挟まる非ジョイントノード
+///        （Armature等の空ノード）の変換を累積する
+/// @param startNode 探索を開始するノード（通常は対象ジョイントの直接の親）
+/// @param skeleton スケルトン
+/// @param outJointAncestorIndex 見つかったジョイント祖先のインデックス（見つからない場合は-1のまま）
+/// @return 非ジョイント祖先ノードの累積変換（Assimp規約。ジョイント祖先やシーンルート自体の変換は含まない）
+aiMatrix4x4 AccumulateNonJointAncestors(const aiNode *startNode, const Skeleton &skeleton, int32_t &outJointAncestorIndex) {
+    outJointAncestorIndex = -1;
+    std::vector<aiMatrix4x4> chain;
+    for (const aiNode *cur = startNode; cur; cur = cur->mParent) {
+        const std::string curName = cur->mName.C_Str();
+        const auto it = skeleton.jointNameToIndexMap.find(curName);
+        if (it != skeleton.jointNameToIndexMap.end()) {
+            outJointAncestorIndex = it->second;
+            break;
+        }
+        chain.push_back(cur->mTransformation);
+    }
+    // chainは近い祖先から遠い祖先の順に格納されているため、遠い祖先から順に左から掛け合わせる
+    // （Assimpは列ベクトル規約 v'=M*v のため、シーンルートに近い変換ほど左側に来る）
+    aiMatrix4x4 accumulated;
+    for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
+        accumulated = accumulated * (*it);
+    }
+    return accumulated;
+}
+
 void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
     if (!node) return;
 
@@ -155,18 +184,24 @@ void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
 
     if (jointIndex >= 0) {
         SkeletonJoint &joint = skeleton.joints[static_cast<size_t>(jointIndex)];
-        joint.transform = ConvertTransform(node->mTransformation);
-        joint.skeletonSpaceTransform = ConvertTransform(node->mTransformation);
 
-        if (node->mParent) {
-            const std::string parentName = node->mParent->mName.C_Str();
-            const auto parentIt = skeleton.jointNameToIndexMap.find(parentName);
-            if (parentIt != skeleton.jointNameToIndexMap.end()) {
-                joint.parentIndex = parentIt->second;
-                skeleton.joints[static_cast<size_t>(parentIt->second)].childrenIndices.push_back(jointIndex);
-                auto *parentTransform = skeleton.joints[static_cast<size_t>(parentIt->second)].transform.get();
-                joint.transform->SetParent(parentTransform);
-            }
+        // 直接の親がジョイントとは限らない（Armature等の空ノードが間に挟まることがある）ため、
+        // ジョイントではない祖先ノードの変換をこのジョイント自身のローカル変換へ畳み込んでおく。
+        // そうしないとバインドポーズの時点で既に位置・スケールがずれてしまう。
+        int32_t jointAncestorIndex = -1;
+        const aiMatrix4x4 ancestorAccumulated = node->mParent
+            ? AccumulateNonJointAncestors(node->mParent, skeleton, jointAncestorIndex)
+            : aiMatrix4x4{};
+        const aiMatrix4x4 effectiveLocal = ancestorAccumulated * node->mTransformation;
+
+        joint.transform = ConvertTransform(effectiveLocal);
+        joint.skeletonSpaceTransform = ConvertTransform(effectiveLocal);
+
+        if (jointAncestorIndex >= 0) {
+            joint.parentIndex = jointAncestorIndex;
+            skeleton.joints[static_cast<size_t>(jointAncestorIndex)].childrenIndices.push_back(jointIndex);
+            auto *parentTransform = skeleton.joints[static_cast<size_t>(jointAncestorIndex)].transform.get();
+            joint.transform->SetParent(parentTransform);
         }
     }
 
@@ -350,6 +385,50 @@ const bool SkeletonManager::UpdateSkeletonJointTransforms(SkeletonHandle handle)
         }
     }
     return true;
+}
+
+Skeleton SkeletonManager::CloneSkeleton(SkeletonHandle handle) {
+    Skeleton out{};
+    if (handle == kInvalidHandle) return out;
+
+    auto it = sSkeletons.find(handle);
+    if (it == sSkeletons.end()) return out;
+
+    const Skeleton &src = it->second.data.GetSkeleton();
+    out.rootJointIndex = src.rootJointIndex;
+    out.jointNameToIndexMap = src.jointNameToIndexMap;
+    out.joints.resize(src.joints.size());
+    for (size_t i = 0; i < src.joints.size(); ++i) {
+        const SkeletonJoint &srcJoint = src.joints[i];
+        SkeletonJoint &dstJoint = out.joints[i];
+        dstJoint.name = srcJoint.name;
+        dstJoint.childrenIndices = srcJoint.childrenIndices;
+        dstJoint.parentIndex = srcJoint.parentIndex;
+        dstJoint.transform = srcJoint.transform ? srcJoint.transform->Clone() : nullptr;
+        dstJoint.skeletonSpaceTransform = srcJoint.skeletonSpaceTransform ? srcJoint.skeletonSpaceTransform->Clone() : nullptr;
+    }
+    // 複製したTransform同士で親子関係を張り直す（Clone()は親を複製しないため）
+    for (SkeletonJoint &joint : out.joints) {
+        if (!joint.parentIndex.has_value() || !joint.transform) continue;
+        const auto parentIndex = static_cast<size_t>(*joint.parentIndex);
+        if (parentIndex >= out.joints.size()) continue;
+        joint.transform->SetParent(out.joints[parentIndex].transform.get());
+    }
+    return out;
+}
+
+void SkeletonManager::ResetAllSkeletonsToBindPose() {
+    for (auto &kv : sSkeletons) {
+        const Skeleton &skeleton = kv.second.data.GetSkeleton();
+        for (auto &joint : skeleton.joints) {
+            if (auto *t = joint.transform.get()) {
+                t->ResetToBindPose();
+            }
+            if (auto *t = joint.skeletonSpaceTransform.get()) {
+                t->ResetToBindPose();
+            }
+        }
+    }
 }
 
 } // namespace KashipanEngine

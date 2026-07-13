@@ -13,6 +13,8 @@ struct DirectionalLight {
 	float4 color;
 	float3 direction;
 	float intensity;
+	// 影を生成するライトのシャドウスロット番号（影を生成しない場合は -1）
+	int shadowMapIndex;
 };
 
 struct PointLight {
@@ -22,6 +24,8 @@ struct PointLight {
 	float radius;
 	float intensity;
 	float decay;
+	// 影を生成するライトのシャドウスロット番号（影を生成しない場合は -1）
+	int shadowMapIndex;
 };
 
 struct SpotLight {
@@ -34,4 +38,6 @@ struct SpotLight {
 	float outerAngle;
 	float intensity;
 	float decay;
+	// 影を生成するライトのシャドウスロット番号（影を生成しない場合は -1）
+	int shadowMapIndex;
 };

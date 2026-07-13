@@ -68,6 +68,10 @@ public:
     KeyframeAnimator();
     ~KeyframeAnimator() override = default;
 
+    std::unique_ptr<ISceneComponent> Clone() const override {
+        return std::make_unique<KeyframeAnimator>();
+    }
+
     void Initialize() override;
     void Finalize() override;
     void Update() override;

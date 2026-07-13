@@ -12,5 +12,6 @@
 	"RasterizerState": { "UsePreset": "Solid" },
 	"BlendState": { "UsePreset": "Normal" },
 	"DepthStencilState": { "UsePreset": "DepthEnable" },
-	"PipelineState": { "UsePreset": "Triangle" }
+	"PipelineState": { "UsePreset": "Triangle" },
+	"RenderPriority": 1
 }

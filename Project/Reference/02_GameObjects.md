@@ -1,12 +1,12 @@
-﻿# ゲームオブジェクト（`Object2DBase` / `Object3DBase`）
+﻿# ゲームオブジェクト（`Object2DBase` / `EmptyObject`）
 
 KashipanEngine の「オブジェクト」は、
 - `Object2DBase`（2D）
-- `Object3DBase`（3D）
+- `EmptyObject`（3D）
 
 を基底として作成します。
 
-オブジェクトの振る舞いは「オブジェクトコンポーネント（`IObjectComponent2D` / `IObjectComponent3D`）」として登録し、`Update()` で順に更新されます。
+オブジェクトの振る舞いは「オブジェクトコンポーネント（`IObjectComponent2D` / `IObjectComponent`）」として登録し、`Update()` で順に更新されます。
 
 ---
 
@@ -73,7 +73,7 @@ sprite->SetPivotPoint(0.5f, 0.5f);
   - `void SetUniqueBatchKey()`
   - `std::uint64_t GetInstanceBatchKey() const`
 
-### `Object3DBase`（概念は `Object2DBase` と同様）
+### `EmptyObject`（概念は `Object2DBase` と同様）
 - 3D は描画先として `ShadowMapBuffer` もサポートします（`AttachToRenderer(ShadowMapBuffer*, ...)`）。
 
 ---
@@ -125,11 +125,11 @@ constexpr std::uint64_t kEnemyBatchKey = 100;
 
 auto enemy1 = std::make_unique<KashipanEngine::Box>();
 enemy1->SetBatchKey(kEnemyBatchKey);
-enemy1->AttachToRenderer(screenBuffer, "Object3D.Solid.BlendNormal");
+enemy1->AttachToRenderer(screenBuffer, "Object.Solid.BlendNormal");
 
 auto enemy2 = std::make_unique<KashipanEngine::Box>();
 enemy2->SetBatchKey(kEnemyBatchKey);
-enemy2->AttachToRenderer(screenBuffer, "Object3D.Solid.BlendNormal");
+enemy2->AttachToRenderer(screenBuffer, "Object.Solid.BlendNormal");
 
 // enemy1 と enemy2 は 1 回の描画コールでまとめて描画される
 ```

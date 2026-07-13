@@ -17,7 +17,7 @@ public:
         if (cameraName_.empty()) return;
 
         auto *ctx = GetOwnerContext();
-        auto *camera = ctx ? static_cast<Camera3D *>(ctx->GetObject3D(cameraName_)) : nullptr;
+        auto *camera = ctx ? static_cast<Camera3D *>(ctx->GetObject(cameraName_)) : nullptr;
         if (!camera) return;
 
         const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
@@ -91,8 +91,8 @@ public:
     float GetLerpFactorRotate() const { return lerpFactorRotate_; }
     float GetLerpFactorFov() const { return lerpFactorFov_; }
 
-    void SetFollowTarget(Object3DBase *target) { followTarget_ = target; }
-    Object3DBase *GetFollowTarget() const { return followTarget_; }
+    void SetFollowTarget(EmptyObject *target) { followTarget_ = target; }
+    EmptyObject *GetFollowTarget() const { return followTarget_; }
 
     void SetFollowOffset(const Vector3 &v) { followOffset_ = v; }
     const Vector3 &GetFollowOffset() const { return followOffset_; }
@@ -113,7 +113,7 @@ public:
     void RecalculateOffsetFromCurrentCamera() {
         if (cameraName_.empty() || !followTarget_) return;
         auto *ctx = GetOwnerContext();
-        auto *camera = ctx ? static_cast<Camera3D *>(ctx->GetObject3D(cameraName_)) : nullptr;
+        auto *camera = ctx ? static_cast<Camera3D *>(ctx->GetObject(cameraName_)) : nullptr;
         if (!camera) return;
 
         auto *camTr = camera->GetComponent3D<Transform3D>();
@@ -166,7 +166,7 @@ public:
 private:
     std::string cameraName_;
 
-    Object3DBase *followTarget_ = nullptr;
+    EmptyObject *followTarget_ = nullptr;
 
     Vector3 followOffset_{0.0f, 0.0f, 0.0f};
 

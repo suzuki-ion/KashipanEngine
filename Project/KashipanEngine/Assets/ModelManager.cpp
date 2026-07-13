@@ -1,5 +1,6 @@
 #include "ModelManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Assets/PrimitiveMeshGenerator.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/FileIO/Directory.h"
@@ -16,6 +17,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <filesystem>
 #include <functional>
 #include <unordered_map>
@@ -67,6 +69,19 @@ std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::stri
     return NormalizePathSlashes(rel.string());
 }
 
+Matrix4x4 ConvertMatrix(const aiMatrix4x4& m) {
+    // Assimpの行列は列ベクトル規約(v' = M * v)で定義されているが、本エンジンのMatrix4x4は
+    // 行ベクトル規約(v' = v * M)で乗算するため、そのまま乗算に使えるよう転置して格納する
+    // （SkeletonManager側はDecompose()でTRSへ分解してから本エンジン独自の規約で再構築しているため
+    // この転置は不要だが、GPUスキニングではボーンオフセット行列をそのまま乗算に使うため必須）。
+    Matrix4x4 out{};
+    out.m[0][0] = m.a1; out.m[1][0] = m.a2; out.m[2][0] = m.a3; out.m[3][0] = m.a4;
+    out.m[0][1] = m.b1; out.m[1][1] = m.b2; out.m[2][1] = m.b3; out.m[3][1] = m.b4;
+    out.m[0][2] = m.c1; out.m[1][2] = m.c2; out.m[2][2] = m.c3; out.m[3][2] = m.c4;
+    out.m[0][3] = m.d1; out.m[1][3] = m.d2; out.m[2][3] = m.d3; out.m[3][3] = m.d4;
+    return out;
+}
+
 Handle RegisterEntry(ModelEntry&& entry) {
     // Handle 0 is invalid. Use compact increasing handle.
     const Handle handle = static_cast<Handle>(sModels.size() + 1u);
@@ -84,6 +99,7 @@ Handle RegisterEntry(ModelEntry&& entry) {
 ModelManager::ModelManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
+    PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes();
     LoadAllFromAssetsFolder();
 }
 
@@ -229,6 +245,72 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
                 dst.indices_.push_back(baseVertex + face.mIndices[j]);
             }
         }
+
+        // ボーン（スキンウェイト）の抽出。SkinnedMeshRenderer のGPUスキニングで使用する
+        for (unsigned int bi = 0; bi < mesh->mNumBones; ++bi) {
+            const aiBone* bone = mesh->mBones[bi];
+            if (!bone) continue;
+            const std::string boneName = bone->mName.C_Str();
+            if (boneName.empty()) continue;
+
+            auto& cluster = dst.skinClusters_[boneName];
+            cluster.inverseBindPoseMatrix = ConvertMatrix(bone->mOffsetMatrix);
+            cluster.vertexWeights.reserve(cluster.vertexWeights.size() + bone->mNumWeights);
+            for (unsigned int wi = 0; wi < bone->mNumWeights; ++wi) {
+                const auto& w = bone->mWeights[wi];
+                ModelData::VertexWeightData vw;
+                vw.weight = w.mWeight;
+                vw.vertexIndex = baseVertex + w.mVertexId;
+                cluster.vertexWeights.push_back(vw);
+            }
+        }
+
+        // BlendShape（モーフターゲット）の頂点差分抽出。SkinnedMeshRenderer のGPUスキニングで使用する
+        for (unsigned int ai = 0; ai < mesh->mNumAnimMeshes; ++ai) {
+            const aiAnimMesh* animMesh = mesh->mAnimMeshes[ai];
+            if (!animMesh) continue;
+            const std::string shapeName = animMesh->mName.length > 0
+                ? std::string(animMesh->mName.C_Str())
+                : ("BlendShape" + std::to_string(ai));
+
+            // 同名のBlendShapeが既にあれば追記する（複数メッシュに分かれたモデル用）
+            ModelData::BlendShapeData* target = nullptr;
+            for (auto& bs : dst.blendShapes_) {
+                if (bs.name == shapeName) {
+                    target = &bs;
+                    break;
+                }
+            }
+            if (!target) {
+                dst.blendShapes_.push_back(ModelData::BlendShapeData{});
+                target = &dst.blendShapes_.back();
+                target->name = shapeName;
+            }
+
+            const bool hasAnimNormals = animMesh->HasNormals() && hasNormals;
+            const unsigned int animVertexCount = std::min(animMesh->mNumVertices, mesh->mNumVertices);
+            constexpr float kEpsilon = 1e-6f;
+            for (unsigned int vi = 0; vi < animVertexCount; ++vi) {
+                const aiVector3D& basePos = mesh->mVertices[vi];
+                const aiVector3D& morphPos = animMesh->mVertices[vi];
+                Vector3 deltaPos(morphPos.x - basePos.x, morphPos.y - basePos.y, morphPos.z - basePos.z);
+                Vector3 deltaNormal(0.0f, 0.0f, 0.0f);
+                if (hasAnimNormals) {
+                    const aiVector3D& baseNormal = mesh->mNormals[vi];
+                    const aiVector3D& morphNormal = animMesh->mNormals[vi];
+                    deltaNormal = Vector3(morphNormal.x - baseNormal.x, morphNormal.y - baseNormal.y, morphNormal.z - baseNormal.z);
+                }
+                if (std::abs(deltaPos.x) < kEpsilon && std::abs(deltaPos.y) < kEpsilon && std::abs(deltaPos.z) < kEpsilon &&
+                    std::abs(deltaNormal.x) < kEpsilon && std::abs(deltaNormal.y) < kEpsilon && std::abs(deltaNormal.z) < kEpsilon) {
+                    continue;
+                }
+                ModelData::BlendShapeVertexDelta delta;
+                delta.deltaPosition = deltaPos;
+                delta.deltaNormal = deltaNormal;
+                delta.vertexIndex = baseVertex + vi;
+                target->deltas.push_back(delta);
+            }
+        }
     };
 
     std::function<void(const aiNode*)> appendNodeMeshes;
@@ -261,6 +343,30 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
     return handle;
 }
 
+ModelManager::ModelHandle ModelManager::RegisterProceduralMesh(const std::string& name, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices) {
+    LogScope scope;
+    const std::string normalizedName = NormalizePathSlashes(name);
+
+    // 同名で登録済みの場合は再登録せず既存のハンドルを返す
+    auto it = sAssetPathToHandle.find(normalizedName);
+    if (it != sAssetPathToHandle.end()) return it->second;
+
+    ModelEntry entry{};
+    entry.fullPath = normalizedName;
+    entry.assetPath = normalizedName;
+    entry.fileName = normalizedName;
+    entry.data.assetRelativePath_ = normalizedName;
+    entry.data.vertices_ = std::move(vertices);
+    entry.data.indices_ = std::move(indices);
+
+    const auto handle = RegisterEntry(std::move(entry));
+    if (handle == kInvalidHandle) {
+        Log(Translation("engine.model.loading.failed.register") + normalizedName, LogSeverity::Error);
+        return kInvalidHandle;
+    }
+    return handle;
+}
+
 ModelManager::ModelHandle ModelManager::GetModelHandleFromFileName(const std::string& fileName) {
     LogScope scope;
     auto it = sFileNameToHandle.find(fileName);
@@ -279,6 +385,30 @@ ModelManager::ModelHandle ModelManager::GetModelHandleFromAssetPath(const std::s
         return kInvalidHandle;
     }
     return it->second;
+}
+
+bool ModelManager::RenameModel(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const Handle handle = pathIt->second;
+    auto entryIt = sModels.find(handle);
+    if (entryIt == sModels.end()) return false;
+
+    ModelEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fullPath = "Assets/" + normalizedNew;
+    entry.data.assetRelativePath_ = normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
 }
 
 const ModelData &ModelManager::GetModelData(ModelHandle handle) {

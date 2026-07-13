@@ -1,6 +1,6 @@
-﻿# ゲームオブジェクト用コンポーネント（`IObjectComponent2D` / `IObjectComponent3D`）
+﻿# ゲームオブジェクト用コンポーネント（`IObjectComponent2D` / `IObjectComponent`）
 
-オブジェクトの振る舞いは `IObjectComponent` 派生として実装し、`Object2DBase` / `Object3DBase` に登録して利用します。
+オブジェクトの振る舞いは `IObjectComponent` 派生として実装し、`Object2DBase` / `EmptyObject` に登録して利用します。
 
 - 基底：`KashipanEngine/Objects/IObjectComponent.h`
 - コンポーネントは `Initialize` / `Update` / `Finalize` を持ち、必要ならシェーダ変数バインドにも参加できます。
@@ -29,8 +29,8 @@
 ### 2D/3D
 - `class IObjectComponent2D : public IObjectComponent`
   - `Object2DContext* GetOwner2DContext() const`（protected）
-- `class IObjectComponent3D : public IObjectComponent`
-  - `Object3DContext* GetOwner3DContext() const`（protected）
+- `class IObjectComponent : public IObjectComponent`
+  - `ObjectContext* GetOwner3DContext() const`（protected）
 
 ---
 
@@ -70,7 +70,7 @@ public:
 
 ## コンポーネント間参照（`ObjectContext`）
 
-`Object2DContext` / `Object3DContext` は、所有者（`Object*Base`）の
+`Object2DContext` / `ObjectContext` は、所有者（`Object*Base`）の
 - `GetComponent*`
 - `GetComponents*`
 - `HasComponents*`

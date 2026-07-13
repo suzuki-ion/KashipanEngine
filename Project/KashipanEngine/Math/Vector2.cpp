@@ -86,20 +86,8 @@ bool Vector2::operator!=(const Vector2 &vector) const noexcept {
     return x != vector.x || y != vector.y;
 }
 
-constexpr float Vector2::Dot(const Vector2 &vector) const noexcept {
-    return KashipanEngine::MathUtils::Dot(*this, vector);
-}
-
-constexpr float Vector2::Cross(const Vector2 &vector) const noexcept {
-    return KashipanEngine::MathUtils::Cross(*this, vector);
-}
-
 float Vector2::Length() const noexcept {
     return KashipanEngine::MathUtils::Length(*this);
-}
-
-constexpr float Vector2::LengthSquared() const noexcept {
-    return KashipanEngine::MathUtils::LengthSquared(*this);
 }
 
 Vector2 Vector2::Normalize() const {
@@ -124,18 +112,4 @@ Vector2 Vector2::Refrection(const Vector2 &normal) const noexcept {
 
 float Vector2::Distance(const Vector2 &vector) const noexcept {
     return KashipanEngine::MathUtils::Distance(*this, vector);
-}
-
-inline constexpr Vector2 operator*(const Matrix3x3 &matrix, const Vector2 &vector) noexcept {
-    return Vector2(
-        matrix.m[0][0] * vector.x + matrix.m[1][0] * vector.y + matrix.m[2][0],
-        matrix.m[0][1] * vector.x + matrix.m[1][1] * vector.y + matrix.m[2][1]
-    );
-}
-
-inline constexpr Vector2 operator*(const Vector2 &vector, const Matrix3x3 &matrix) noexcept {
-    return Vector2(
-        vector.x * matrix.m[0][0] + vector.y * matrix.m[0][1] + matrix.m[0][2],
-        vector.x * matrix.m[1][0] + vector.y * matrix.m[1][1] + matrix.m[1][2]
-    );
 }

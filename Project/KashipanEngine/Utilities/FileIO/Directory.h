@@ -15,6 +15,16 @@ struct DirectoryData final {
 /// @param directoryPath ディレクトリパス
 bool IsDirectoryExist(const std::string &directoryPath);
 
+/// @brief ディレクトリを作成する（中間ディレクトリもまとめて作成）
+/// @param directoryPath ディレクトリパス
+/// @return 作成に成功したか既に存在する場合は true
+bool CreateDirectories(const std::string &directoryPath);
+
+/// @brief 指定ファイルパスの親ディレクトリが存在しない場合に作成する
+/// @param filePath ファイルパス
+/// @return 親ディレクトリが存在する（作成できた）場合は true
+bool EnsureParentDirectoryExists(const std::string &filePath);
+
 /// @brief ディレクトリ情報取得
 /// @param directoryPath ディレクトリパス
 /// @param isRecursive 再帰的にサブディレクトリ内も検索するかどうか

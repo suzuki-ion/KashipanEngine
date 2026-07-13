@@ -146,17 +146,7 @@ void DX12SwapChain::BeginDrawInternal() {
     isDrawing_ = true;
 }
 
-void DX12SwapChain::BeginDraw(Passkey<Window>) {
-    BeginDrawInternal();
-}
-
-#if defined(USE_IMGUI)
-void DX12SwapChain::BeginDraw(Passkey<ImGuiManager>) {
-    BeginDrawInternal();
-}
-#endif
-
-void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
+void DX12SwapChain::EndDrawInternal() {
     if (!isCreated_ || !isDrawing_) return;
     backBuffers_[currentBufferIndex_]->TransitionToNext();
 
@@ -167,6 +157,24 @@ void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
     sDirectXCommon->AddRecordCommandList(Passkey<DX12SwapChain>{}, commands_->GetCommandList());
 
     isDrawing_ = false;
+}
+
+void DX12SwapChain::BeginDraw(Passkey<Window>) {
+    BeginDrawInternal();
+}
+
+#if defined(USE_IMGUI)
+void DX12SwapChain::BeginDraw(Passkey<ImGuiManager>) {
+    BeginDrawInternal();
+}
+#endif
+
+void DX12SwapChain::EndDraw(Passkey<Window>) {
+    EndDrawInternal();
+}
+
+void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
+    EndDrawInternal();
 }
 
 void DX12SwapChain::Present(Passkey<DirectXCommon>) {

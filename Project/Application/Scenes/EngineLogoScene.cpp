@@ -11,7 +11,7 @@
 namespace KashipanEngine {
 
 EngineLogoScene::EngineLogoScene(const std::string &nextSceneName)
-    : SceneBase("EngineLogoScene") {
+    : Scene("EngineLogoScene") {
     SetNextSceneName(nextSceneName);
 }
 

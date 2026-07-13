@@ -48,7 +48,14 @@ void PrintJSON(const JSON &json, const std::string &title = "JSON Data");
 
 // 各種型のJSON変換関数
 inline JSON ToJSON(const bool &value) { return JSON(value); }
-inline JSON ToJSON(const int &value) { return JSON(value); }
+inline JSON ToJSON(const int8_t &value) { return JSON(value); }
+inline JSON ToJSON(const uint8_t &value) { return JSON(value); }
+inline JSON ToJSON(const int16_t &value) { return JSON(value); }
+inline JSON ToJSON(const uint16_t &value) { return JSON(value); }
+inline JSON ToJSON(const int32_t &value) { return JSON(value); }
+inline JSON ToJSON(const uint32_t &value) { return JSON(value); }
+inline JSON ToJSON(const int64_t &value) { return JSON(value); }
+inline JSON ToJSON(const uint64_t &value) { return JSON(value); }
 inline JSON ToJSON(const float &value) { return JSON(value); }
 inline JSON ToJSON(const double &value) { return JSON(value); }
 inline JSON ToJSON(const std::string &value) { return JSON(value); }

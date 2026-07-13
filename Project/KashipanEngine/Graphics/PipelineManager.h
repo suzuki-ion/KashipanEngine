@@ -30,8 +30,14 @@ public:
 
     /// @brief パイプライン情報の取得
     const PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }
+    const PipelineInfo &GetPipeline(const std::string &pipelineName) const { return pipelineInfos_.at(pipelineName); }
     /// @brief パイプラインの存在確認
     bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
+
+    /// @brief 読み込み済みの描画用パイプライン名一覧を取得（ImGuiでの選択用）
+    static const std::vector<std::string> &GetLoadedRenderPipelineNames();
+    /// @brief 読み込み済みのコンピュート用パイプライン名一覧を取得（ImGuiでの選択用）
+    static const std::vector<std::string> &GetLoadedComputePipelineNames();
 
     /// @brief 指定のコマンドリストにパイプラインをセット（差分管理は PipelineBinder 側で行う想定）
     void ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName);

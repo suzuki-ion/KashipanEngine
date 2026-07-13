@@ -13,8 +13,8 @@
 #include "Assets/SkeletonManager.h"
 #include "Assets/AudioManager.h"
 #include "Assets/AnimationManager.h"
-#include "Objects/Object2DBase.h"
-#include "Objects/Object3DBase.h"
+#include "Assets/MaterialManager.h"
+#include "Objects/EmptyObject.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Graphics/ScreenBuffer.h"
@@ -60,21 +60,30 @@ public:
     /// @return 実行結果コード
     int Execute(PasskeyForGameEngineMain);
 
-    /// @brief ゲームループ実行関数
-    void GameLoopRun();
-    /// @brief ゲームループ終了関数
-    void GameLoopEnd();
-    /// @brief ゲームループ一時停止関数
-    void GameLoopPause();
-    /// @brief ゲームループ再開関数
-    void GameLoopResume();
-
     /// @brief ゲームループ終了条件設定
     void SetGameLoopEndCondition(const std::function<bool()> &func) {
         gameLoopEndConditionFunction_ = func;
     }
 
+    //==================================================
+    // ゲームループの終了要求
+    //==================================================
+    // シーン・シーンコンテキスト・スクリプトなど、GameEngineへの参照を持たない場所から
+    // ゲームループの終了を指示するための静的なフラグ。
+    // 非エディタービルドではゲームループ（アプリケーション）が終了する。
+    // エディタービルド（USE_IMGUI）ではエディター自体は閉じず、再生停止（PlayStop）の要求として扱われる。
+
+    /// @brief ゲームループの終了を要求する（エディター実行時は再生停止の要求になる）
+    static void RequestExitGameLoop() noexcept { sIsExitGameLoopRequested = true; }
+    /// @brief ゲームループの終了要求が出ているかを取得する
+    static bool IsExitGameLoopRequested() noexcept { return sIsExitGameLoopRequested; }
+    /// @brief ゲームループの終了要求を取り下げる（エディターが要求を消費する際にも使用する）
+    static void ClearExitGameLoopRequest() noexcept { sIsExitGameLoopRequested = false; }
+
 private:
+    /// @brief ゲームループの終了要求フラグ
+    static inline bool sIsExitGameLoopRequested = false;
+
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();
     /// @brief ゲームループ描画処理
@@ -129,21 +138,17 @@ private:
     std::unique_ptr<AudioManager> audioManager_;
     /// @brief アニメーション管理クラス
     std::unique_ptr<AnimationManager> animationManager_;
+    /// @brief マテリアル管理クラス
+    std::unique_ptr<MaterialManager> materialManager_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス
     std::unique_ptr<ImGuiManager> imguiManager_;
 #endif
 
-    /// @brief ゲームループ実行フラグ
-    bool isGameLoopRunning_ = false;
-    /// @brief ゲームループ一時停止フラグ
-    bool isGameLoopPaused_ = false;
-    /// @brief フレーム単位で進める要求フラグ（ポーズ中のみ有効）
-    bool isNextFrameRequested_ = false;
-
     /// @brief ゲームループ終了条件関数
     std::function<bool()> gameLoopEndConditionFunction_;
+    bool isGameLoopRunning_ = true;
 
     /// @brief ウィンドウ配列
     std::vector<Window *> windows_;

@@ -1,0 +1,16 @@
+{
+	"PipelineType": "Render",
+	"Name": "DebugGrid",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "DebugGrid.Vertex" },
+		"Pixel": { "UsePreset": "DebugGrid.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "DoubleSidedCulling" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthEnableToMaskZero" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

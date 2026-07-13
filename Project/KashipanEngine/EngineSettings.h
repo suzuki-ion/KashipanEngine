@@ -28,7 +28,8 @@ struct EngineSettings {
         int32_t defaultMaxFPS = 60;
         std::string pipelineSettingsPath = "";
         UINT rtvDescriptorHeapSize = 64;
-        UINT dsvDescriptorHeapSize = 64;
+        // シャドウマップ配列がスライスごとにDSVを使用するため余裕を持たせている
+        UINT dsvDescriptorHeapSize = 256;
         UINT srvDescriptorHeapSize = 512;
     };
     //--------- エンジンの翻訳ファイル設定 ---------//

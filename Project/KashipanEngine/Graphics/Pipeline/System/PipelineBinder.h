@@ -21,12 +21,13 @@ public:
         if (!commandList_ || !manager_ || !manager_->HasPipeline(name)) return;
         if (invalidated_ || name != currentName_) {
             const auto &info = manager_->GetPipeline(name);
-            // トポロジ設定
-            commandList_->IASetPrimitiveTopology(info.TopologyType());
-            // ルートシグネチャ（Render のみ）
             const auto &set = info.GetPipelineSet();
             if (info.Type() == PipelineType::Render) {
+                // トポロジ・ルートシグネチャはRenderパイプラインのみ設定する
+                commandList_->IASetPrimitiveTopology(info.TopologyType());
                 commandList_->SetGraphicsRootSignature(set.RootSignature());
+            } else {
+                commandList_->SetComputeRootSignature(set.RootSignature());
             }
             // PSO
             commandList_->SetPipelineState(set.PipelineState());

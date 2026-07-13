@@ -17,6 +17,7 @@
 #include <mfreadwrite.h>
 
 #include <xaudio2.h>
+#include <xaudio2fx.h>
 #include <wrl.h>
 
 #include <algorithm>
@@ -61,7 +62,18 @@ struct PlayEntry final {
     bool paused = false;
     bool loop = false;
     double startTimeSec = 0.0;
+    uint32_t sourceChannels = 0;
 };
+
+XAUDIO2_FILTER_TYPE ToXAudio2FilterType(AudioManager::FilterType type) {
+    switch (type) {
+    case AudioManager::FilterType::HighPass: return HighPassFilter;
+    case AudioManager::FilterType::BandPass: return BandPassFilter;
+    case AudioManager::FilterType::Notch:    return NotchFilter;
+    case AudioManager::FilterType::LowPass:
+    default:                                 return LowPassFilter;
+    }
+}
 
 std::unordered_map<SoundHandle, SoundEntry> sSounds;
 FileMap<SoundHandle> sAssetPathToHandle;
@@ -69,6 +81,10 @@ FileMap<SoundHandle> sFileNameToHandle;
 
 Microsoft::WRL::ComPtr<IXAudio2> sXaudio2;
 IXAudio2MasteringVoice* sMasterVoice = nullptr;
+// 全AudioSource共有のリバーブ送り先(モノ入力の共有バス)。初期化に失敗した場合は nullptr のままとなり、
+// リバーブ関連APIはすべて何もせず false を返す
+IXAudio2SubmixVoice* sReverbSubmixVoice = nullptr;
+Microsoft::WRL::ComPtr<IUnknown> sReverbEffect;
 bool sMfStarted = false;
 
 static constexpr size_t kMaxSimultaneousPlays = 64;
@@ -198,6 +214,7 @@ void StopVoice(PlayEntry& p) {
     p.sound = AudioManager::kInvalidSoundHandle;
     p.paused = false;
     p.startTimeSec = 0.0;
+    p.sourceChannels = 0;
 }
 
 bool EnsureAudioInitialized() {
@@ -216,6 +233,36 @@ bool EnsureAudioInitialized() {
         Log(Translation("engine.audio.init.failed.mastervoice"), LogSeverity::Error);
         sXaudio2.Reset();
         return false;
+    }
+
+    {
+        // 全AudioSource共有のリバーブ送り先バス(モノ入力)を作成する。失敗してもオーディオ全体の初期化は継続する
+        Microsoft::WRL::ComPtr<IUnknown> reverbEffect;
+        HRESULT reverbHr = CreateAudioReverb(&reverbEffect);
+        if (SUCCEEDED(reverbHr) && reverbEffect) {
+            XAUDIO2_EFFECT_DESCRIPTOR effectDescriptor{};
+            effectDescriptor.InitialState = TRUE;
+            effectDescriptor.OutputChannels = 1;
+            effectDescriptor.pEffect = reverbEffect.Get();
+            XAUDIO2_EFFECT_CHAIN effectChain{ 1, &effectDescriptor };
+
+            XAUDIO2_VOICE_DETAILS masterDetails{};
+            sMasterVoice->GetVoiceDetails(&masterDetails);
+
+            reverbHr = sXaudio2->CreateSubmixVoice(&sReverbSubmixVoice, 1, masterDetails.InputSampleRate, 0, 0, nullptr, &effectChain);
+            if (SUCCEEDED(reverbHr) && sReverbSubmixVoice) {
+                sReverbEffect = reverbEffect;
+                XAUDIO2FX_REVERB_I3DL2_PARAMETERS i3dl2Preset = XAUDIO2FX_I3DL2_PRESET_MEDIUMROOM;
+                XAUDIO2FX_REVERB_PARAMETERS reverbParams{};
+                ReverbConvertI3DL2ToNative(&i3dl2Preset, &reverbParams);
+                sReverbSubmixVoice->SetEffectParameters(0, &reverbParams, sizeof(reverbParams));
+            } else {
+                sReverbSubmixVoice = nullptr;
+                Log(Translation("engine.audio.init.failed.reverb"), LogSeverity::Warning);
+            }
+        } else {
+            Log(Translation("engine.audio.init.failed.reverb"), LogSeverity::Warning);
+        }
     }
 
     hr = MFStartup(MF_VERSION);
@@ -258,6 +305,12 @@ void FinalizeAudio() {
         MFShutdown();
         sMfStarted = false;
     }
+
+    if (sReverbSubmixVoice) {
+        sReverbSubmixVoice->DestroyVoice();
+        sReverbSubmixVoice = nullptr;
+    }
+    sReverbEffect.Reset();
 
     if (sMasterVoice) {
         sMasterVoice->DestroyVoice();
@@ -479,6 +532,38 @@ SoundHandle AudioManager::GetSoundHandleFromAssetPath(const std::string &assetPa
     return it->second;
 }
 
+std::vector<std::string> AudioManager::GetLoadedSoundAssetPaths() {
+    LogScope scope;
+    std::vector<std::string> out;
+    out.reserve(sSounds.size());
+    for (const auto& kv : sSounds) out.push_back(kv.second.assetPath);
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+bool AudioManager::RenameSound(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const SoundHandle handle = pathIt->second;
+    auto entryIt = sSounds.find(handle);
+    if (entryIt == sSounds.end()) return false;
+
+    SoundEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fullPath = "Assets/" + normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
+}
+
 AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop,
     double startTimeSec, double endTimeSec) {
     PlayParams params{};
@@ -542,8 +627,19 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     playEntry.paused = false;
     playEntry.loop = params.loop;
     playEntry.startTimeSec = startSec;
+    playEntry.sourceChannels = wfex.nChannels;
 
-    HRESULT hr = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex);
+    // マスターボイスに加え、共有リバーブバスが使用可能ならそちらへも常時送る
+    // (通常のウェットレベルは0で開始し、SetReverbSendで必要な時だけ送り量を上げる)
+    XAUDIO2_SEND_DESCRIPTOR sendDescriptors[2] = {
+        { 0, sMasterVoice },
+        { 0, sReverbSubmixVoice },
+    };
+    const UINT32 sendCount = sReverbSubmixVoice ? 2u : 1u;
+    XAUDIO2_VOICE_SENDS sendList{ sendCount, sendDescriptors };
+
+    HRESULT hr = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex, XAUDIO2_VOICE_USEFILTER,
+        XAUDIO2_DEFAULT_FREQ_RATIO, nullptr, &sendList);
     if (FAILED(hr) || !playEntry.voice) {
         playEntry.sound = kInvalidSoundHandle;
         ReleasePlayIndex(idx);
@@ -578,6 +674,12 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     const float volume = std::clamp(params.volume, 0.0f, 1.0f);
     playEntry.voice->SetVolume(volume);
     playEntry.voice->SetFrequencyRatio(SemitonesToFrequencyRatio(params.pitch));
+
+    if (sReverbSubmixVoice) {
+        // リバーブバスへの送り量は既定で0(ドライのみ)にしておく。必要な時だけSetReverbSendで引き上げる
+        std::vector<float> silentMatrix(static_cast<size_t>(playEntry.sourceChannels), 0.0f);
+        playEntry.voice->SetOutputMatrix(sReverbSubmixVoice, playEntry.sourceChannels, 1, silentMatrix.data());
+    }
 
     hr = playEntry.voice->Start();
     if (FAILED(hr)) {
@@ -720,6 +822,82 @@ bool AudioManager::SetPitch(PlayHandle play, float pitch) {
     const float ratio = SemitonesToFrequencyRatio(pitch);
     p.voice->SetFrequencyRatio(ratio);
     return true;
+}
+
+bool AudioManager::SetPan(PlayHandle play, float pan) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.voice || !sMasterVoice || p.sourceChannels == 0) return false;
+
+    XAUDIO2_VOICE_DETAILS masterDetails{};
+    sMasterVoice->GetVoiceDetails(&masterDetails);
+    const uint32_t destChannels = masterDetails.InputChannels;
+    const uint32_t srcChannels = p.sourceChannels;
+    if (destChannels == 0) return false;
+
+    std::vector<float> matrix(static_cast<size_t>(srcChannels) * destChannels, 0.0f);
+    if (destChannels >= 2) {
+        pan = std::clamp(pan, -1.0f, 1.0f);
+        const float angle = (pan + 1.0f) * 0.25f * 3.14159265358979323846f;
+        const float leftGain = std::cos(angle);
+        const float rightGain = std::sin(angle);
+        // SetOutputMatrixのpLevelMatrix仕様: 送出元チャンネルSから送出先チャンネルDへの係数は
+        // pLevelMatrix[S + SourceChannels * D] に格納する(SourceChannelsが最も内側で変化する)
+        for (uint32_t s = 0; s < srcChannels; ++s) {
+            matrix[static_cast<size_t>(s) + static_cast<size_t>(srcChannels) * 0] = leftGain;
+            matrix[static_cast<size_t>(s) + static_cast<size_t>(srcChannels) * 1] = rightGain;
+        }
+    } else {
+        std::fill(matrix.begin(), matrix.end(), 1.0f);
+    }
+
+    const HRESULT hr = p.voice->SetOutputMatrix(sMasterVoice, srcChannels, destChannels, matrix.data());
+    if (FAILED(hr)) {
+        Log(Translation("engine.audio.play.failed.setoutputmatrix"), LogSeverity::Warning);
+    }
+    return SUCCEEDED(hr);
+}
+
+bool AudioManager::SetFilter(PlayHandle play, FilterType type, float frequency, float oneOverQ) {
+    LogScope scope;
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.voice) return false;
+
+    XAUDIO2_FILTER_PARAMETERS params{};
+    params.Type = ToXAudio2FilterType(type);
+    params.Frequency = std::clamp(frequency, 0.0005f, XAUDIO2_MAX_FILTER_FREQUENCY);
+    params.OneOverQ = std::clamp(oneOverQ, 0.0005f, XAUDIO2_MAX_FILTER_ONEOVERQ);
+    const HRESULT hr = p.voice->SetFilterParameters(&params);
+    return SUCCEEDED(hr);
+}
+
+bool AudioManager::SetReverbSend(PlayHandle play, float wetLevel) {
+    LogScope scope;
+    if (!sReverbSubmixVoice) return false;
+
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return false;
+    if (idx >= sPlays.size() || !sPlays[idx]) return false;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.voice || p.sourceChannels == 0) return false;
+
+    wetLevel = std::clamp(wetLevel, 0.0f, 1.0f);
+    // リバーブ送り先(共有バス)の入力チャンネル数は1(モノ)固定
+    const std::vector<float> matrix(static_cast<size_t>(p.sourceChannels), wetLevel);
+    const HRESULT hr = p.voice->SetOutputMatrix(sReverbSubmixVoice, p.sourceChannels, 1, matrix.data());
+    return SUCCEEDED(hr);
 }
 
 bool AudioManager::IsPlaying(PlayHandle play) {

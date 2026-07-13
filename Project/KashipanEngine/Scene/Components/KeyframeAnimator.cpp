@@ -7,8 +7,7 @@
 #include "Assets/AnimationManager.h"
 #include "Assets/SkeletonManager.h"
 #include "Scene/SceneContext.h"
-#include "Objects/Components/2D/Transform2D.h"
-#include "Objects/Components/3D/Transform3D.h"
+#include "Objects/Components/Transform.h"
 
 #include "Utilities/TimeUtils.h"
 
@@ -157,22 +156,14 @@ bool KeyframeAnimator::PlayFromAnimationHandle(uint32_t handle, const std::strin
     if (handle == AnimationManager::kInvalidHandle) return false;
     if (objectName.empty()) return false;
 
-    auto *ctx = GetOwnerContext();
+    auto *ctx = GetOwnerSceneContext();
     if (!ctx) return false;
 
-    Transform2D *transform2D = nullptr;
-    Transform3D *transform3D = nullptr;
-
-    if (auto *obj2D = ctx->GetObject2D(objectName)) {
-        transform2D = obj2D->GetComponent2D<Transform2D>();
+    Transform *transform = nullptr;
+    if (auto *obj = ctx->GetSceneObject(objectName)) {
+        transform = obj->GetComponent<Transform>();
     }
-    if (!transform2D) {
-        if (auto *obj3D = ctx->GetObject3D(objectName)) {
-            transform3D = obj3D->GetComponent3D<Transform3D>();
-        }
-    }
-
-    if (!transform2D && !transform3D) return false;
+    if (!transform) return false;
 
     const auto &data = AnimationManager::GetAnimationData(handle);
     if (data.GetClipCount() == 0) return false;
@@ -191,139 +182,74 @@ bool KeyframeAnimator::PlayFromAnimationHandle(uint32_t handle, const std::strin
         timeline.keys = src.keys;
         timeline.loop = loop;
 
-        if (transform2D) {
+        if (transform) {
             if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.X")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto t = transform2D->GetTranslate();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto t = transform->GetTranslate();
                     t.x = v;
-                    transform2D->SetTranslate(t);
+                    transform->SetTranslate(t);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.Y")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto t = transform2D->GetTranslate();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto t = transform->GetTranslate();
                     t.y = v;
-                    transform2D->SetTranslate(t);
+                    transform->SetTranslate(t);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.Z")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto t = transform2D->GetTranslate();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto t = transform->GetTranslate();
                     t.z = v;
-                    transform2D->SetTranslate(t);
+                    transform->SetTranslate(t);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.X")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto s = transform2D->GetScale();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto s = transform->GetScale();
                     s.x = v;
-                    transform2D->SetScale(s);
+                    transform->SetScale(s);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.Y")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto s = transform2D->GetScale();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto s = transform->GetScale();
                     s.y = v;
-                    transform2D->SetScale(s);
+                    transform->SetScale(s);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.Z")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto s = transform2D->GetScale();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto s = transform->GetScale();
                     s.z = v;
-                    transform2D->SetScale(s);
+                    transform->SetScale(s);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.X")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto r = transform2D->GetRotate();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto r = transform->GetRotate();
                     r.x = v;
-                    transform2D->SetRotate(r);
+                    transform->SetRotate(r);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.Y")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto r = transform2D->GetRotate();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto r = transform->GetRotate();
                     r.y = v;
-                    transform2D->SetRotate(r);
+                    transform->SetRotate(r);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.Z")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform2D](float v) {
-                    if (!transform2D) return;
-                    auto r = transform2D->GetRotate();
+                timeline.applyFunctions.push_back(std::function<void(float)>([transform](float v) {
+                    if (!transform) return;
+                    auto r = transform->GetRotate();
                     r.z = v;
-                    transform2D->SetRotate(r);
-                }));
-            }
-        } else if (transform3D) {
-            if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.X")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto t = transform3D->GetTranslate();
-                    t.x = v;
-                    transform3D->SetTranslate(t);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.Y")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto t = transform3D->GetTranslate();
-                    t.y = v;
-                    transform3D->SetTranslate(t);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Translate.Z")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto t = transform3D->GetTranslate();
-                    t.z = v;
-                    transform3D->SetTranslate(t);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.X")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto s = transform3D->GetScale();
-                    s.x = v;
-                    transform3D->SetScale(s);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.Y")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto s = transform3D->GetScale();
-                    s.y = v;
-                    transform3D->SetScale(s);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Scale.Z")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto s = transform3D->GetScale();
-                    s.z = v;
-                    transform3D->SetScale(s);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.X")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto r = transform3D->GetRotate();
-                    r.x = v;
-                    transform3D->SetRotate(r);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.Y")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto r = transform3D->GetRotate();
-                    r.y = v;
-                    transform3D->SetRotate(r);
-                }));
-            } else if (timeline.valueType == KeyframeValueType::Float && timeline.name.ends_with(".Rotate.Z")) {
-                timeline.applyFunctions.push_back(std::function<void(float)>([transform3D](float v) {
-                    if (!transform3D) return;
-                    auto r = transform3D->GetRotate();
-                    r.z = v;
-                    transform3D->SetRotate(r);
+                    transform->SetRotate(r);
                 }));
             } else if (timeline.valueType == KeyframeValueType::Quaternion && (timeline.name.ends_with(".Rotate") || timeline.name.ends_with(".RotateQuat"))) {
-                timeline.applyFunctions.push_back(std::function<void(const Quaternion &)>([transform3D](const Quaternion &v) {
-                    if (!transform3D) return;
-                    transform3D->SetRotateQuaternion(v);
+                timeline.applyFunctions.push_back(std::function<void(const Quaternion &)>([transform](const Quaternion &v) {
+                    if (!transform) return;
+                    transform->SetRotateQuaternion(v);
                 }));
             }
         }
@@ -463,7 +389,7 @@ bool KeyframeAnimator::PlayFromAnimationAndSkeletonHandle(uint32_t animationHand
 }
 
 KeyframeAnimator::KeyframeAnimator()
-    : ISceneComponent("KeyframeAnimator", 1) {
+    : ISceneComponent("KeyframeAnimator", 1, GetComponentTypeID<KeyframeAnimator>()) {
 }
 
 void KeyframeAnimator::Initialize() {

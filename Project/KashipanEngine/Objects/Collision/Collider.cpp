@@ -367,6 +367,56 @@ inline HitInfo3D ComputeHit3D(const ColliderInfo3D::ShapeVariant &a, const Colli
     return HitInfo3D{};
 }
 
+//==================================================
+// 連続衝突判定（CCD）用ヘルパー
+//==================================================
+
+/// @brief スイープの1ステップあたりの許容移動量の下限（縮退形状・点などの保険）
+constexpr float kMinSweepStep = 0.05f;
+/// @brief スイープの最大分割数（テレポート等の巨大な移動でも計算量が爆発しないよう制限する）
+constexpr int kMaxSweepSubsteps = 16;
+
+/// @brief 2D形状の最小半径（この距離以下の移動ならすり抜けは起きないとみなせる量）を求める
+float ComputeMinHalfExtent2D(const ColliderInfo2D::ShapeVariant &shape) {
+    const auto bounds = ComputeBounds2D(shape);
+    if (!bounds) return kMinSweepStep;
+    const float width = bounds->maxX - bounds->minX;
+    const float height = bounds->maxY - bounds->minY;
+    return std::max(kMinSweepStep, std::min(width, height) * 0.5f);
+}
+
+/// @brief 3D形状の最小半径を求める
+float ComputeMinHalfExtent3D(const ColliderInfo3D::ShapeVariant &shape) {
+    const auto bounds = ComputeBounds3D(shape);
+    if (!bounds) return kMinSweepStep;
+    const Vector3 size = bounds->max - bounds->min;
+    return std::max(kMinSweepStep, std::min({ size.x, size.y, size.z }) * 0.5f);
+}
+
+/// @brief 2D形状を平行移動した複製を返す（スイープの中間位置の判定用）
+ColliderInfo2D::ShapeVariant TranslateShape2D(const ColliderInfo2D::ShapeVariant &shape, const Vector2 &offset) {
+    ColliderInfo2D::ShapeVariant result = shape;
+    std::visit(
+        [&](auto &s) {
+            using S = std::decay_t<decltype(s)>;
+            if constexpr (std::is_same_v<S, Math::Point2D>) {
+                s.position += offset;
+            } else if constexpr (std::is_same_v<S, Math::Circle>) {
+                s.center += offset;
+            } else if constexpr (std::is_same_v<S, Math::Rect>) {
+                s.center += offset;
+            } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
+                s.start += offset;
+                s.end += offset;
+            } else if constexpr (std::is_same_v<S, Math::Capsule2D>) {
+                s.start += offset;
+                s.end += offset;
+            }
+        },
+        result);
+    return result;
+}
+
 } // namespace
 
 Collider::Collider() {
@@ -602,10 +652,14 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     HitInfo2D hiA = hitInfo;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
+    hiA.selfCollider = ea->info.sourceCollider;
+    hiA.otherCollider = eb->info.sourceCollider;
 
     HitInfo2D hiB = hitInfo;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
+    hiB.selfCollider = eb->info.sourceCollider;
+    hiB.otherCollider = ea->info.sourceCollider;
     // hitInfo.normal は ComputeHit(A, B) により「BからAへ向かう方向
     // （Aの押し出し方向）」で計算されるため、B側が受け取る法線
     // （AからBへ向かう＝Bの押し出し方向）はその逆向きになる。
@@ -636,11 +690,15 @@ void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA,
     HitInfo3D hiA = hitInfoA;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
+    hiA.selfCollider = ea->info.sourceCollider;
+    hiA.otherCollider = eb->info.sourceCollider;
     hiA.normal = hitInfoA.normal;
 
     HitInfo3D hiB = hitInfoB;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
+    hiB.selfCollider = eb->info.sourceCollider;
+    hiB.otherCollider = ea->info.sourceCollider;
     hiB.normal = hitInfoB.normal;
 
     const bool isHitNow = hitInfoA.isHit && hitInfoB.isHit;
@@ -663,8 +721,17 @@ void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA,
 void Collider::Update2D() {
     std::vector<std::uint64_t> cur;
 
+    // 連続衝突判定（スイープ）でのみ検出できるヒットを先に収集しておく
+    // （現在位置で重なっているペアは通常判定のヒット情報を優先する）
+    std::unordered_map<std::uint64_t, HitInfo2D> continuousHits;
+    CollectContinuousHits2D(continuousHits);
+
     const auto pairs = BuildCandidatePairs2D(colliders2D_);
     cur.reserve(pairs.size());
+
+    // このフレームでDispatch済みのペア（Exitの発火漏れ・二重発火防止用）
+    std::vector<std::uint64_t> processedPairs;
+    processedPairs.reserve(pairs.size());
 
     for (const auto &pair : pairs) {
         const auto &ai = colliders2D_[pair.a];
@@ -676,17 +743,119 @@ void Collider::Update2D() {
             continue;
         }
 
-        const HitInfo2D hi = ComputeHit2D(ai.info.shape, bi.info.shape);
+        HitInfo2D hi = ComputeHit2D(ai.info.shape, bi.info.shape);
         const std::uint64_t key = MakePairKey(ai.id, bi.id);
+
+        // 現在位置で重なっていなくても、スイープで通過が検出されていればヒット扱いにする
+        if (!hi.isHit) {
+            auto ccdIt = continuousHits.find(key);
+            if (ccdIt != continuousHits.end()) {
+                hi = ccdIt->second;
+                // スイープのHitInfoは小さいID側を自分として計算されているため、順序が逆なら法線を反転する
+                if (ai.id > bi.id) hi.normal = -hi.normal;
+            }
+        }
+        continuousHits.erase(key);
 
         const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
         Dispatch2D(ai.id, bi.id, hi, wasHit);
+        processedPairs.push_back(key);
 
         if (hi.isHit) cur.push_back(key);
     }
 
+    // 候補ペアに挙がらなかったスイープヒット（高速移動で現在位置が既に離れている場合）を発火する
+    for (const auto &[key, hi] : continuousHits) {
+        const ColliderID a = static_cast<ColliderID>(key >> 32);
+        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
+        const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
+        Dispatch2D(a, b, hi, wasHit);
+        processedPairs.push_back(key);
+        cur.push_back(key);
+    }
+
+    // 前フレームは接触していたが、今フレームの候補に挙がらなかった（高速に離れた）ペアのExitを発火する
+    std::sort(processedPairs.begin(), processedPairs.end());
+    for (const auto key : prevPairs2D_) {
+        if (std::binary_search(processedPairs.begin(), processedPairs.end(), key)) continue;
+        const ColliderID a = static_cast<ColliderID>(key >> 32);
+        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
+        Dispatch2D(a, b, HitInfo2D{}, true);
+    }
+
     std::sort(cur.begin(), cur.end());
     prevPairs2D_ = std::move(cur);
+
+    RecordPrevPositions2D();
+}
+
+void Collider::CollectContinuousHits2D(std::unordered_map<std::uint64_t, HitInfo2D> &outHits) {
+    for (auto &entry : colliders2D_) {
+        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
+        if (!entry.hasPrevPosition) continue;
+
+        const auto bounds = ComputeBounds2D(entry.info.shape);
+        if (!bounds) continue;
+        const Vector2 currentCenter((bounds->minX + bounds->maxX) * 0.5f, (bounds->minY + bounds->maxY) * 0.5f);
+        const Vector2 prevCenter(entry.prevPosition.x, entry.prevPosition.y);
+        const Vector2 delta = currentCenter - prevCenter;
+        const float distance = delta.Length();
+
+        // 1フレームの移動量が形状の最小半径以下なら、すり抜けは起きない（通常判定で検出できる）
+        const float maxStep = ComputeMinHalfExtent2D(entry.info.shape);
+        if (distance <= maxStep) continue;
+
+        const int substeps = std::min(kMaxSweepSubsteps, static_cast<int>(std::ceil(distance / maxStep)));
+
+        for (const auto &other : colliders2D_) {
+            if (other.id == entry.id || !other.info.enabled) continue;
+            if (!ShouldTest(entry.info.attribute, entry.info.ignoreAttribute, other.info.attribute) ||
+                !ShouldTest(other.info.attribute, other.info.ignoreAttribute, entry.info.attribute)) {
+                continue;
+            }
+            const std::uint64_t key = MakePairKey(entry.id, other.id);
+            if (outHits.contains(key)) continue; // 両方CCDの場合の二重スイープを防ぐ
+
+            // 移動経路の中間位置（終端は通常判定が受け持つ）を時刻順に判定し、最初のヒットを採用する
+            for (int i = 1; i < substeps; ++i) {
+                const float t = static_cast<float>(i) / static_cast<float>(substeps);
+                // 中間位置 = prev + delta*t。現在形状からの相対移動量へ変換して平行移動する
+                const Vector2 offset = delta * (t - 1.0f);
+                const auto sweptShape = TranslateShape2D(entry.info.shape, offset);
+                // ComputeHitは(自分, 相手)の順で「相手→自分」向きの法線を返すため、
+                // Dispatch側がID昇順で解釈できるよう小さいID側を自分として計算する
+                const HitInfo2D hit = (entry.id < other.id)
+                    ? ComputeHit2D(sweptShape, other.info.shape)
+                    : ComputeHit2D(other.info.shape, sweptShape);
+                if (hit.isHit) {
+                    outHits.emplace(key, hit);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void Collider::RecordPrevPositions2D() {
+    for (auto &entry : colliders2D_) {
+        entry.hasPrevPosition = false;
+        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
+        const auto bounds = ComputeBounds2D(entry.info.shape);
+        if (!bounds) continue;
+        entry.prevPosition = Vector3((bounds->minX + bounds->maxX) * 0.5f, (bounds->minY + bounds->maxY) * 0.5f, 0.0f);
+        entry.hasPrevPosition = true;
+    }
+}
+
+void Collider::RecordPrevPositions3D() {
+    for (auto &entry : colliders3D_) {
+        if (entry.info.continuousDetection && entry.info.enabled && entry.runtime.body) {
+            entry.prevPosition = FromRp3d(entry.runtime.body->getTransform().getPosition());
+            entry.hasPrevPosition = true;
+        } else {
+            entry.hasPrevPosition = false;
+        }
+    }
 }
 
 void Collider::Update3D() {
@@ -799,6 +968,37 @@ void Collider::Update3D() {
     Collector collector(colliderIdByHandle, infoById, frameEvents3D_, curPairs3D_);
     physicsWorld_->testCollision(collector);
 
+    // 連続衝突判定（CCD）: 1フレームで形状サイズを超えて移動したコライダーは、
+    // 移動経路の中間位置（終端は上の通常判定で検出済み）でも判定してすり抜けを検出する。
+    // イベントは同じCollectorへ追加され、重複ペアは後段のsort/uniqueとhitMapの
+    // emplace（先勝ち）によって通常判定・より早い時刻のヒットが優先される。
+    // なお、テレポート（リスポーン等）でも経路上の判定が走るため、瞬間移動させる場合は
+    // 移動前にCCDを無効にするか、コライダーを一度無効化すること。
+    for (auto &entry : colliders3D_) {
+        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
+        if (!entry.runtime.body || !entry.runtime.collider) continue;
+        if (!entry.hasPrevPosition) continue;
+
+        const reactphysics3d::Transform currentTransform = entry.runtime.body->getTransform();
+        const Vector3 currentPosition = FromRp3d(currentTransform.getPosition());
+        const Vector3 delta = currentPosition - entry.prevPosition;
+        const float distance = delta.Length();
+
+        // 1フレームの移動量が形状の最小半径以下なら、すり抜けは起きない（通常判定で検出できる）
+        const float maxStep = ComputeMinHalfExtent3D(entry.info.shape);
+        if (distance <= maxStep) continue;
+
+        const int substeps = std::min(kMaxSweepSubsteps, static_cast<int>(std::ceil(distance / maxStep)));
+        for (int i = 1; i < substeps; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(substeps);
+            const Vector3 sweptPosition = entry.prevPosition + delta * t;
+            entry.runtime.body->setTransform(
+                reactphysics3d::Transform(ToRp3d(sweptPosition), currentTransform.getOrientation()));
+            physicsWorld_->testCollision(entry.runtime.body, collector);
+        }
+        entry.runtime.body->setTransform(currentTransform);
+    }
+
     std::sort(curPairs3D_.begin(), curPairs3D_.end());
     curPairs3D_.erase(std::unique(curPairs3D_.begin(), curPairs3D_.end()), curPairs3D_.end());
 
@@ -824,6 +1024,8 @@ void Collider::Update3D() {
     }
 
     prevPairs3D_ = curPairs3D_;
+
+    RecordPrevPositions3D();
 }
 
 const Collider::Entry<ColliderInfo2D> *Collider::Find2D(ColliderID id) const {

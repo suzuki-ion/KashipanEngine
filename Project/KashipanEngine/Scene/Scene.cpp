@@ -1,4 +1,5 @@
 #include "Scene/Scene.h"
+#include "Core/GameEngine.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -35,6 +36,10 @@ void Scene::SetEnginePointers(
     sMaterialManager = materialManager;
     sInput = input;
     sInputCommand = inputCommand;
+}
+
+void Scene::RequestExitGameLoop() {
+    GameEngine::RequestExitGameLoop();
 }
 
 Scene::Scene(const std::string &sceneName)
@@ -74,6 +79,10 @@ void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
 void Scene::PlayStart() {
     if (isPlaying_) return;
     editModeSnapshot_ = SaveToJSON();
+
+    // EditorOnlyオブジェクトは再生中のシーンには存在させない（子孫ごと削除される）。
+    // スナップショットには保存済みのため、PlayStopでの復元時に元へ戻る
+    DeleteEditorOnlyObjects();
 
     // 物理ボディは生成された時点の位置のまま追従しないため、エディターでの移動を反映してから再生を開始する
     // （反映しないと、生成時点の古い位置へUpdateで引き戻されてしまう）
@@ -176,6 +185,11 @@ bool Scene::LoadFromJSON(const JSON &json) {
         EmptyObject *obj = createdObjects[i];
         obj->LoadFromJson(Passkey<Scene>{}, objData);
     }
+#if !defined(USE_IMGUI)
+    // エディター無しビルドではEditorOnlyオブジェクトをシーンに存在させない
+    // （エディターありの場合は再生開始時（PlayStart）に削除される）
+    DeleteEditorOnlyObjects();
+#endif
     // シーン変数を追加
     for (const auto &varData : json.value("sceneVariables", std::vector<JSON>())) {
         std::string key = varData.value("key", "");
@@ -282,6 +296,18 @@ bool Scene::DeleteObject(EmptyObject *obj) {
     RemoveObjectFromMaps(obj);
     objects_.erase(it);
     return true;
+}
+
+void Scene::DeleteEditorOnlyObjects() {
+    // DeleteObjectで子孫が道連れに削除されobjects_が変化するため、先に対象を収集する
+    std::vector<EmptyObject *> editorOnlyObjects;
+    for (const auto &object : objects_) {
+        if (object && object->IsEditorOnly()) editorOnlyObjects.push_back(object.get());
+    }
+    for (auto *object : editorOnlyObjects) {
+        // 先に削除された親の子孫だった場合、DeleteObjectは再検索に失敗して安全にfalseを返す
+        DeleteObject(object);
+    }
 }
 
 bool Scene::ReleaseObject(EmptyObject *obj) {

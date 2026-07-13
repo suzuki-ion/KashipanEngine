@@ -4,6 +4,7 @@
 
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
@@ -55,6 +56,10 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
         if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
         const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
 
+        // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する
+        const EmptyObject *ownerObject = renderer->GetOwnerObject();
+        const bool editorOnly = ownerObject && ownerObject->IsEditorOnlyInHierarchy();
+
         auto *targetObject = renderer->GetTargetObject();
         SceneRenderer::CollectRenderTargets(targetObject, targets);
         // エディター用描画先には全てのMeshRenderer/SpriteRendererを描画する
@@ -63,6 +68,7 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
         }
         for (auto *target : targets) {
             if (!target || !target->IsRenderTargetAvailable()) continue;
+            if (editorOnly && target != editorTarget) continue;
             // エディター用描画先には除外設定に関わらず常に描画する
             if (target != editorTarget && !renderer->IsRenderTargetIncluded(target)) continue;
             if (target != editorTarget) {
@@ -185,6 +191,10 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
             const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
 
+            // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する
+            const EmptyObject *ownerObject = renderer->GetOwnerObject();
+            const bool editorOnly = ownerObject && ownerObject->IsEditorOnlyInHierarchy();
+
             auto *targetObject = renderer->GetTargetObject();
             SceneRenderer::CollectRenderTargets(targetObject, targets);
             if (editorTarget_ && editorTarget_->IsRenderTargetAvailable()) {
@@ -192,6 +202,7 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             }
             for (auto *target : targets) {
                 if (!target || !target->IsRenderTargetAvailable()) continue;
+                if (editorOnly && target != editorTarget_) continue;
                 if (target != editorTarget_ && !renderer->IsRenderTargetIncluded(target)) continue;
                 if (target != editorTarget_) {
                     targetOwners_[target] = targetObject;

@@ -28,11 +28,13 @@ void SceneManager::Update(Passkey<GameEngine>) {
     }
 }
 
+#ifdef USE_IMGUI
 void SceneManager::ShowImGui(Passkey<GameEngine>) {
     if (currentScene_) {
         currentScene_->ShowImGuiInterface(Passkey<SceneManager>());
     }
 }
+#endif // USE_IMGUI
 
 bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     if (!hasPendingSceneChange_) return false;

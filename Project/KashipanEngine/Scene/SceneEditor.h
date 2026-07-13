@@ -67,6 +67,9 @@ private:
     // シーン新規作成の確認モーダル用
     bool isNewSceneRequested_ = false;
     std::string newSceneName_;
+
+    /// @brief 前フレームの再生状態（コマンド履歴の再生セッション切り替えの検知用）
+    bool wasPlaying_ = false;
 };
 
 } // namespace KashipanEngine

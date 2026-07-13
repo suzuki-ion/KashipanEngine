@@ -32,6 +32,8 @@ std::string sAssetsRootPath;
 std::unordered_map<MaterialHandle, MaterialEntry> sMaterials;
 FileMap<MaterialHandle> sNameToHandle;
 FileMap<MaterialHandle> sFileNameToHandle;
+/// @brief 次に割り当てるマテリアルハンドル（削除済みハンドルは使い回さず単調増加させる）
+MaterialHandle sNextHandle = 1;
 
 std::string NormalizePathSlashes(std::string s) {
     std::replace(s.begin(), s.end(), '\\', '/');
@@ -120,9 +122,13 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
 }
 
 MaterialHandle RegisterEntry(MaterialEntry&& entry) {
-    const MaterialHandle handle = static_cast<MaterialHandle>(sMaterials.size() + 1u);
-    if (handle == MaterialManager::kInvalidHandle) return MaterialManager::kInvalidHandle;
-    if (sMaterials.find(handle) != sMaterials.end()) return MaterialManager::kInvalidHandle;
+    // ハンドルは使い回さず単調増加で採番する。
+    // 以前は sMaterials.size() + 1 で採番していたため、マテリアルを削除した後に新規登録すると
+    // 生き残っている既存ハンドルと衝突して kInvalidHandle が返り、以後の新規追加が全て失敗していた。
+    while (sNextHandle == MaterialManager::kInvalidHandle || sMaterials.contains(sNextHandle)) {
+        ++sNextHandle;
+    }
+    const MaterialHandle handle = sNextHandle++;
 
     sFileNameToHandle[entry.fileName] = handle;
     sNameToHandle[entry.material.name] = handle;
@@ -148,12 +154,14 @@ void MaterialManager::InitializeMaterialManager() {
     sMaterials.clear();
     sNameToHandle.clear();
     sFileNameToHandle.clear();
+    sNextHandle = 1;
 }
 
 void MaterialManager::FinalizeMaterialManager() {
     sMaterials.clear();
     sNameToHandle.clear();
     sFileNameToHandle.clear();
+    sNextHandle = 1;
 }
 
 void MaterialManager::LoadAllFromAssetsFolder() {

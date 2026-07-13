@@ -5,6 +5,7 @@
 
 #include "Assets/AudioManager.h"
 #include "Assets/MaterialManager.h"
+#include "Core/GameEngine.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Debug/Logger.h"
@@ -59,6 +60,31 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
 SceneEditor::~SceneEditor() = default;
 
 void SceneEditor::ShowImGui() {
+    // スクリプトやシーンからのゲームループ終了要求は、エディター上では再生停止として消費する
+    // （エディター自体は閉じない。Stopボタンと同様にUUIDで選択を退避してから復元する）
+    if (GameEngine::IsExitGameLoopRequested()) {
+        GameEngine::ClearExitGameLoopRequest();
+        if (context_->IsPlaying()) {
+            const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
+            context_->PlayStop();
+            objectHierarchy_->RestoreSelection(selectedIDs);
+        }
+    }
+
+    // 再生状態の変化を監視して、コマンド履歴の再生セッションを切り替える。
+    // 再生中に積まれたコマンドは停止時のシーン復元と整合しないため、停止時にまとめて破棄され、
+    // 編集時のUndo/Redo履歴は再生を跨いでもそのまま使用できる。
+    // （ボタン以外の経路で再生状態が変わっても追従できるよう、フレーム毎の状態変化で検知する）
+    const bool isPlaying = context_->IsPlaying();
+    if (isPlaying != wasPlaying_) {
+        if (isPlaying) {
+            commands_->BeginPlaySession();
+        } else {
+            commands_->EndPlaySession();
+        }
+        wasPlaying_ = isPlaying;
+    }
+
     ShowMainWindow();
     HandleShortcuts();
 
@@ -66,7 +92,7 @@ void SceneEditor::ShowImGui() {
     if (isShowObjectInspector_) objectInspector_->ShowImGui();
     if (isShowComponentInspector_) componentInspector_->ShowImGui();
     if (isShowVariablesMenu_) variablesMenu_->ShowImGui();
-    if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObjects(), commands_.get());
+    if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObjects(), commands_.get(), objectHierarchy_.get());
     if (isShowAssets_) assetsWindow_->ShowImGui();
 
     //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
@@ -205,14 +231,17 @@ void SceneEditor::ShowPlayControls() {
     ImGui::Separator();
     if (!context_->IsPlaying()) {
         if (ImGui::Button("Play")) {
+            // 再生開始でオブジェクトのポインタ等が変わりうるため、UUIDで選択を控えて復元する
+            const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
             context_->PlayStart();
-            // 再生開始でオブジェクトのポインタ等が変わりうるため選択をクリアする
-            objectHierarchy_->ClearSelection();
+            objectHierarchy_->RestoreSelection(selectedIDs);
         }
     } else {
         if (ImGui::Button("Stop")) {
+            // 停止時はスナップショットからシーンが再構築されるため、UUIDで選択を復元する
+            const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
             context_->PlayStop();
-            objectHierarchy_->ClearSelection();
+            objectHierarchy_->RestoreSelection(selectedIDs);
         }
         ImGui::SameLine();
         if (context_->IsPaused()) {
@@ -272,14 +301,17 @@ void SceneEditor::HandleShortcuts() {
 }
 
 void SceneEditor::PerformUndo() {
+    // オブジェクトの削除/再生成でポインタが変わる可能性があるため、
+    // UUIDで選択を控えてから実行し、実行後にUUIDから再解決して選択を復元する
+    const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
     commands_->Undo();
-    // オブジェクトの削除/再生成でポインタが変わる可能性があるため選択をクリアする
-    objectHierarchy_->ClearSelection();
+    objectHierarchy_->RestoreSelection(selectedIDs);
 }
 
 void SceneEditor::PerformRedo() {
+    const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
     commands_->Redo();
-    objectHierarchy_->ClearSelection();
+    objectHierarchy_->RestoreSelection(selectedIDs);
 }
 
 } // namespace KashipanEngine

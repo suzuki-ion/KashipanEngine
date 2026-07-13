@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <string>
 
 #include "Math/Vector3.h"
@@ -10,6 +11,8 @@ namespace KashipanEngine {
 class EmptyObject;
 class ObjectContext;
 class SceneContext;
+class ICollider;
+class IWindowObjectComponent;
 
 /// @brief スクリプトの衝突コールバックへ渡す衝突情報（スクリプト側の HitInfo 型）
 struct ScriptHitInfo final {
@@ -17,6 +20,17 @@ struct ScriptHitInfo final {
     float penetration = 0.0f;
     EmptyObject *selfObject = nullptr;
     EmptyObject *otherObject = nullptr;
+    ICollider *selfCollider = nullptr;
+    ICollider *otherCollider = nullptr;
+};
+
+/// @brief スクリプトのウィンドウメッセージコールバックへ渡す情報（スクリプト側の WindowMessageInfo 型）
+struct ScriptWindowMessageInfo final {
+    /// @brief 通知元のウィンドウコンポーネント（どのコンポーネントのウィンドウかの識別用）
+    IWindowObjectComponent *sourceComponent = nullptr;
+    std::uint32_t message = 0;
+    std::uint64_t wparam = 0;
+    std::int64_t lparam = 0;
 };
 
 /// @brief エンジンの機能をAngelScriptへ登録する

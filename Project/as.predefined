@@ -7,6 +7,11 @@ enum LightType {
 	Spot = 2
 }
 
+enum TargetLookAtMode {
+	SyncRotation = 0,
+	LookAt = 1
+}
+
 enum EaseType {
 	Linear = 0,
 	EaseInQuad = 1,
@@ -54,6 +59,9 @@ enum EaseType {
 funcdef bool less(const T&in a, const T&in b);
 
 class array<T> {
+	array();
+	array(uint length);
+	array(uint length, const T&in value);
 	T& opIndex(uint index);
 	const T& opIndex(uint index) const;
 	uint opForBegin() const;
@@ -128,6 +136,47 @@ class string {
 	void insert(uint pos, const string&in other);
 	void erase(uint pos, int count = -1);
 	int regexFind(const string&in regex, uint start = 0, uint&out lengthOfMatch = void) const;
+}
+
+class dictionaryValue {
+	dictionaryValue();
+	dictionaryValue& opAssign(const dictionaryValue&in);
+	dictionaryValue& opHndlAssign(const ?&in);
+	dictionaryValue& opHndlAssign(const dictionaryValue&in);
+	dictionaryValue& opAssign(const ?&in);
+	dictionaryValue& opAssign(double);
+	dictionaryValue& opAssign(int64);
+	void opCast(?&out);
+	void opConv(?&out);
+	int64 opConv();
+	double opConv();
+}
+
+class dictionary {
+	dictionary();
+	dictionary& opAssign(const dictionary&in);
+	void set(const string&in, const ?&in);
+	bool get(const string&in, ?&out) const;
+	void set(const string&in, const int64&in);
+	bool get(const string&in, int64&out) const;
+	void set(const string&in, const double&in);
+	bool get(const string&in, double&out) const;
+	bool exists(const string&in) const;
+	bool isEmpty() const;
+	uint getSize() const;
+	bool delete(const string&in);
+	void deleteAll();
+	string[]@ getKeys() const;
+	dictionaryValue& opIndex(const string&in);
+	const dictionaryValue& opIndex(const string&in) const;
+	dictionaryIter@ opForBegin() const;
+	bool opForEnd(dictionaryIter@) const;
+	dictionaryIter@ opForNext(dictionaryIter@) const;
+	const dictionaryValue& opForValue0(dictionaryIter@) const;
+	const string& opForValue1(dictionaryIter@) const;
+}
+
+class dictionaryIter {
 }
 
 class Vector2 {
@@ -312,6 +361,47 @@ class Transform {
 	const Matrix4x4& GetWorldMatrix();
 }
 
+class Collider {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	bool IsTrigger() const;
+	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
+	bool Is2D() const;
+	BoxCollider@ opCast();
+	SphereCollider@ opCast();
+	CapsuleCollider@ opCast();
+	MeshCollider@ opCast();
+	RayCollider@ opCast();
+	Box2DCollider@ opCast();
+	Circle2DCollider@ opCast();
+	Capsule2DCollider@ opCast();
+	Ray2DCollider@ opCast();
+}
+
+class WindowObject {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void SetTitle(const string&in);
+	const string& GetTitle() const;
+	void SetSize(uint, uint);
+	int GetClientWidth() const;
+	int GetClientHeight() const;
+	bool IsWindowFocused() const;
+	bool IsWindowMinimized() const;
+	NormalWindowObject@ opCast();
+	OverlayWindowObject@ opCast();
+}
+
 class Object {
 	const string& GetName() const;
 	void SetName(const string&in);
@@ -334,7 +424,19 @@ class HitInfo {
 	float penetration;
 	Object@ selfObject;
 	Object@ otherObject;
+	Collider@ selfCollider;
+	Collider@ otherCollider;
 	HitInfo& opAssign(const HitInfo&in);
+}
+
+class WindowMessageInfo {
+	WindowMessageInfo();
+	WindowMessageInfo(const WindowMessageInfo&in);
+	WindowObject@ sourceComponent;
+	uint message;
+	uint64 wParam;
+	int64 lParam;
+	WindowMessageInfo& opAssign(const WindowMessageInfo&in);
 }
 
 class Scene {
@@ -356,6 +458,7 @@ class Scene {
 	bool GetGlobalVariable(const string&in, ?&out);
 	bool HasGlobalVariable(const string&in);
 	bool RemoveGlobalVariable(const string&in);
+	void RequestExitGameLoop();
 }
 
 interface ScriptComponentBehavior {
@@ -373,6 +476,21 @@ class Velocity {
 	void SetAcceleration(const Vector3&in);
 	const Vector3& GetAcceleration() const;
 	void AddVelocity(const Vector3&in);
+}
+
+class TargetLookAt {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void SetTargetObject(Object@);
+	Object@ GetTargetObject() const;
+	void SetRotationOffset(const Vector3&in);
+	const Vector3& GetRotationOffset() const;
+	void SetRotationMode(TargetLookAtMode);
+	TargetLookAtMode GetRotationMode() const;
 }
 
 class AudioSource {
@@ -692,7 +810,9 @@ class NormalWindowObject {
 	Tag GetTag() const;
 	const string& GetTagName() const;
 	void SetTitle(const string&in);
+	const string& GetTitle() const;
 	void SetSize(uint, uint);
+	WindowObject@ opImplCast();
 }
 
 class OverlayWindowObject {
@@ -703,7 +823,9 @@ class OverlayWindowObject {
 	Tag GetTag() const;
 	const string& GetTagName() const;
 	void SetTitle(const string&in);
+	const string& GetTitle() const;
 	void SetSize(uint, uint);
+	WindowObject@ opImplCast();
 }
 
 class ScreenBufferObject {
@@ -739,7 +861,10 @@ class BoxCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class SphereCollider {
@@ -751,7 +876,10 @@ class SphereCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class CapsuleCollider {
@@ -763,7 +891,10 @@ class CapsuleCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class MeshCollider {
@@ -775,7 +906,10 @@ class MeshCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class RayCollider {
@@ -787,7 +921,10 @@ class RayCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class Box2DCollider {
@@ -799,7 +936,10 @@ class Box2DCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class Circle2DCollider {
@@ -811,7 +951,10 @@ class Circle2DCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class Capsule2DCollider {
@@ -823,7 +966,10 @@ class Capsule2DCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class Ray2DCollider {
@@ -835,7 +981,10 @@ class Ray2DCollider {
 	const string& GetTagName() const;
 	bool IsTrigger() const;
 	void SetTrigger(bool);
+	bool IsContinuousDetection() const;
+	void SetContinuousDetection(bool);
 	bool Is2D() const;
+	Collider@ opImplCast();
 }
 
 class BloomEffect {
@@ -1050,6 +1199,84 @@ class VignetteEffect {
 	void SetSmoothness(float);
 }
 
+class Json {
+	Json();
+	bool IsNull() const;
+	bool IsObject() const;
+	bool IsArray() const;
+	bool IsString() const;
+	bool IsNumber() const;
+	bool IsBool() const;
+	bool Has(const string&in key) const;
+	bool Remove(const string&in key);
+	void Clear();
+	string[]@ GetKeys() const;
+	void SetBool(const string&in key, bool value);
+	void SetInt(const string&in key, int64 value);
+	void SetFloat(const string&in key, double value);
+	void SetString(const string&in key, const string&in value);
+	void SetVector2(const string&in key, const Vector2&in value);
+	void SetVector3(const string&in key, const Vector3&in value);
+	void SetVector4(const string&in key, const Vector4&in value);
+	void SetQuaternion(const string&in key, const Quaternion&in value);
+	void SetJson(const string&in key, const Json&in value);
+	void SetNull(const string&in key);
+	bool Set(const string&in key, const ?&in value);
+	bool Get(const string&in key, ?&out value) const;
+	bool GetBool(const string&in key, bool defaultValue = false) const;
+	int64 GetInt(const string&in key, int64 defaultValue = 0) const;
+	double GetFloat(const string&in key, double defaultValue = 0) const;
+	string GetString(const string&in key, const string&in defaultValue = "") const;
+	Vector2 GetVector2(const string&in key, const Vector2&in defaultValue = Vector2()) const;
+	Vector3 GetVector3(const string&in key, const Vector3&in defaultValue = Vector3()) const;
+	Vector4 GetVector4(const string&in key, const Vector4&in defaultValue = Vector4()) const;
+	Quaternion GetQuaternion(const string&in key, const Quaternion&in defaultValue = Quaternion()) const;
+	Json@ GetJson(const string&in key) const;
+	uint Size() const;
+	Json@ At(uint index) const;
+	void PushBool(bool value);
+	void PushInt(int64 value);
+	void PushFloat(double value);
+	void PushString(const string&in value);
+	void PushJson(const Json&in value);
+	bool Push(const ?&in value);
+	bool AsBool(bool defaultValue = false) const;
+	int64 AsInt(int64 defaultValue = 0) const;
+	double AsFloat(double defaultValue = 0) const;
+	string AsString(const string&in defaultValue = "") const;
+	string ToString(int indent = -1) const;
+	bool Parse(const string&in text);
+}
+
+const uint WM_ACTIVATE;
+const uint WM_CLOSE;
+const uint WM_DESTROY;
+const uint WM_MOVE;
+const uint WM_SIZE;
+const uint WM_SIZING;
+const uint WM_ENTERSIZEMOVE;
+const uint WM_EXITSIZEMOVE;
+const uint WM_SETFOCUS;
+const uint WM_KILLFOCUS;
+const uint WM_KEYDOWN;
+const uint WM_KEYUP;
+const uint WM_SYSKEYDOWN;
+const uint WM_SYSKEYUP;
+const uint WM_CHAR;
+const uint WM_MOUSEMOVE;
+const uint WM_LBUTTONDOWN;
+const uint WM_LBUTTONUP;
+const uint WM_LBUTTONDBLCLK;
+const uint WM_RBUTTONDOWN;
+const uint WM_RBUTTONUP;
+const uint WM_RBUTTONDBLCLK;
+const uint WM_MBUTTONDOWN;
+const uint WM_MBUTTONUP;
+const uint WM_MOUSEWHEEL;
+const uint WM_MOUSEHWHEEL;
+const uint WM_DROPFILES;
+const uint WM_PAINT;
+
 uint scan(const string&in str, ?&out...);
 string format(const string&in fmt, const ?&in...);
 string formatInt(int64 val, const string&in options = "", uint width = 0);
@@ -1060,12 +1287,15 @@ uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
 double parseFloat(const string&in, uint&out byteCount = 0);
 void throw(const string&in);
 string getExceptionInfo();
+Json@ LoadJsonFile(const string&in path);
+bool SaveJsonFile(const string&in path, const Json&in data, int indent = 4);
 void Log(const string&in);
 void LogWarning(const string&in);
 void LogError(const string&in);
 float GetDeltaTime();
 float GetGameSpeed();
 void SetGameSpeed(float);
+void RequestExitGameLoop();
 bool IsCommandTriggered(const string&in);
 float GetCommandValue(const string&in);
 uint PlayAudio(const string&in, float volume = 1.0f);

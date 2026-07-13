@@ -297,6 +297,8 @@ public:
     bool HasMessage(UINT msg) const { return messages_.find(msg) != messages_.end(); }
     /// @brief 指定のメッセージの情報を取得
     const WindowMessage &GetWindowMessage(UINT msg) const;
+    /// @brief このフレームに受信したメッセージ一覧を取得する（メッセージ種別ごとに最後の1件を保持）
+    const std::unordered_map<UINT, WindowMessage> &GetMessages() const noexcept { return messages_; }
 
     // 親子取得
     Window *GetParentWindow() const noexcept { return parentWindow_; }

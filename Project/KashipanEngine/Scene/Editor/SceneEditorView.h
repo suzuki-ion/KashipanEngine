@@ -17,6 +17,7 @@ namespace KashipanEngine {
 
 class SceneEditor;
 class SceneEditorCommands;
+class SceneObjectHierarchy;
 class ScreenBuffer;
 class ConstantBufferResource;
 class CameraRenderer;
@@ -36,7 +37,8 @@ public:
     /// @brief シーンビューの描画（毎フレーム呼ぶ）
     /// @param selectedObjects 選択中のシーンオブジェクト集合（ギズモ表示対象）
     /// @param commands ギズモ操作をUndo/Redo履歴へ積むためのコマンド管理
-    void ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands);
+    /// @param hierarchy クリックピッキングの選択結果を反映するヒエラルキー（nullptr可）
+    void ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy);
 
 private:
     /// @brief gCamera3D 定数バッファと同レイアウトの構造体
@@ -54,8 +56,13 @@ private:
     void UpdateCameraBuffer();
     /// @brief SceneRenderer へエディター描画先として登録する
     void RegisterEditorTarget();
-    void ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands);
+    void ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy);
     void HandleCameraInput();
+    /// @brief シーンビュー画像上の左クリックでオブジェクトを選択する（メッシュ三角形との正確なレイ交差判定）
+    /// @details クリック位置からエディターカメラのレイを飛ばし、MeshFilterを持つ描画対象オブジェクトの
+    ///          三角形と交差判定して最も手前のオブジェクトを選択する。Ctrlクリックでトグル追加、
+    ///          何もない場所のクリックで選択解除（Unityのシーンビューと同じ挙動）
+    void HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief グリッド表示・当たり判定ワイヤーフレームの描画設定を構築し、SceneRendererへ登録する
     /// @details 実際の描画はGPU側（DebugGrid/DebugLinesパイプライン）でscreenBuffer_へ直接行われる
     void UpdateEditorDebugDraw();

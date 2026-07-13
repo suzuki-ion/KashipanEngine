@@ -244,36 +244,43 @@ void SceneEditorCommands::PushExecuted(std::unique_ptr<IEditorCommand> command) 
 }
 
 bool SceneEditorCommands::Undo() {
-    if (undoStack_.empty() || !context_) return false;
-    auto command = std::move(undoStack_.back());
-    undoStack_.pop_back();
+    auto &undoStack = GetActiveUndoStack();
+    if (undoStack.empty() || !context_) return false;
+    auto command = std::move(undoStack.back());
+    undoStack.pop_back();
     const bool succeeded = command->Undo(context_);
-    redoStack_.push_back(std::move(command));
+    GetActiveRedoStack().push_back(std::move(command));
     return succeeded;
 }
 
 bool SceneEditorCommands::Redo() {
-    if (redoStack_.empty() || !context_) return false;
-    auto command = std::move(redoStack_.back());
-    redoStack_.pop_back();
+    auto &redoStack = GetActiveRedoStack();
+    if (redoStack.empty() || !context_) return false;
+    auto command = std::move(redoStack.back());
+    redoStack.pop_back();
     const bool succeeded = command->Execute(context_);
-    undoStack_.push_back(std::move(command));
+    GetActiveUndoStack().push_back(std::move(command));
     return succeeded;
 }
 
 void SceneEditorCommands::ShowHistoryImGui() {
-    ImGui::Text("Undo Stack: %d", static_cast<int>(undoStack_.size()));
-    for (auto it = undoStack_.rbegin(); it != undoStack_.rend(); ++it) {
+    const auto &undoStack = GetActiveUndoStack();
+    if (isPlaySession_) {
+        ImGui::TextDisabled("(Playing: commands are discarded on stop)");
+    }
+    ImGui::Text("Undo Stack: %d", static_cast<int>(undoStack.size()));
+    for (auto it = undoStack.rbegin(); it != undoStack.rend(); ++it) {
         ImGui::BulletText("%s", (*it)->GetName().c_str());
     }
 }
 
 void SceneEditorCommands::PushToUndoStack(std::unique_ptr<IEditorCommand> command) {
-    undoStack_.push_back(std::move(command));
-    if (undoStack_.size() > kMaxHistory) {
-        undoStack_.erase(undoStack_.begin());
+    auto &undoStack = GetActiveUndoStack();
+    undoStack.push_back(std::move(command));
+    if (undoStack.size() > kMaxHistory) {
+        undoStack.erase(undoStack.begin());
     }
-    redoStack_.clear();
+    GetActiveRedoStack().clear();
 }
 
 } // namespace KashipanEngine

@@ -78,6 +78,10 @@ public:
     /// @brief タグの文字列を取得する（表示・保存用）
     const std::string &GetTagName() const noexcept { return tagName_; }
 
+    /// @brief 所属オブジェクトを取得する（未所属の場合は nullptr）
+    /// @details ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
+    const EmptyObject *GetOwnerObject() const;
+
     /// @brief 初期化処理
     /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
     ///          アクティブかつ allowInitialize が true の場合のみ実行される。

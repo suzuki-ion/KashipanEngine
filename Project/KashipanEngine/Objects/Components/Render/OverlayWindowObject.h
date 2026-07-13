@@ -1,19 +1,20 @@
-﻿#pragma once
+#pragma once
 #include <algorithm>
 #include <cstdint>
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
+#include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Transform.h"
 #include "Core/Window.h"
 
 namespace KashipanEngine {
 
-class OverlayWindowObject final : public IObjectComponent {
+class OverlayWindowObject final : public IWindowObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(OverlayWindowObject, 0xFF, )
-    COMPONENT_CATEGORY("Render", "RenderTarget")
-        ~OverlayWindowObject() override = default;
+    OverlayWindowObject()
+        : IWindowObjectComponent("OverlayWindowObject", 0xFF, GetComponentTypeID<OverlayWindowObject>(), "Overlay Window") {}
+    ~OverlayWindowObject() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<OverlayWindowObject>();
@@ -21,16 +22,6 @@ public:
         ptr->width_ = width_;
         ptr->height_ = height_;
         return ptr;
-    }
-
-    Window *GetWindow() const noexcept { return window_; }
-    void SetTitle(const std::string &title) {
-        if (window_ && Window::IsExist(window_)) window_->SetWindowTitle(title);
-        title_ = title;
-    }
-    void SetSize(std::uint32_t width, std::uint32_t height) {
-        width_ = width;
-        height_ = height;
     }
 
 protected:
@@ -41,6 +32,9 @@ protected:
         Update();
     }
     void Update() override {
+        // ウィンドウが受信したメッセージをコールバック（スクリプト等）へ通知する
+        DispatchWindowMessages();
+
         if (!window_ || !Window::IsExist(window_)) return;
         auto *tr = GetOwnerObjectContext()->GetComponent<Transform>();
         if (!tr) return;
@@ -94,12 +88,6 @@ protected:
         height_ = json.value("height", 720u);
         return true;
     }
-
-private:
-    Window *window_ = nullptr;
-    std::string title_ = "Overlay Window";
-    std::uint32_t width_ = 1280;
-    std::uint32_t height_ = 720;
 };
 
 REGISTER_COMPONENT_OBJECT(OverlayWindowObject);

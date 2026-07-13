@@ -73,7 +73,7 @@ class Player : ScriptComponentBehavior {
         // 使用したら PlayerCollision::Update() 相当としてリセットする
         bool enemyContact = isCollidingWithEnemy;
         isCollidingWithEnemy = false;
-        if (enemyContact && hitNormal.y < 0.5f) {
+        if (enemyContact && hitNormal.y > groundedThreshold) {
             isJumping = true;
         }
 

@@ -855,7 +855,7 @@ class Billboard : ScriptComponentBehavior {
 | `void SetName(const string &in)` / `const string &GetName() const` | - | o | 管理用名前（TextureManagerへの登録名）の設定/取得 |
 | `void SetSize(uint width, uint height)` | o | o | サイズの設定（バッファ系は既存バッファを実際にリサイズする） |
 
-Window系コンポーネントは共通の基底型 `WindowObject` を持ち、ウィンドウが受信したメッセージをスクリプトの `OnWindowMessage` へ通知できます（[詳細](#ウィンドウメッセージonwindowmessage)）。
+Window系コンポーネントは共通の基底型 `WindowObject` を持ち、ウィンドウが受信したメッセージをスクリプトの `OnWindowMessage` へ通知できます（[詳細](#ウィンドウメッセージonwindowmessage)）。また、メッセージ種別ごとにウィンドウの既定処理を中断してゲーム側の処理へ差し替える[メッセージの横取り](#メッセージの横取りインターセプト)が使用できます。
 
 #### WindowObject（基底型）
 
@@ -868,6 +868,9 @@ Window系コンポーネントは共通の基底型 `WindowObject` を持ち、�
 | `int GetClientWidth() const` / `int GetClientHeight() const` | クライアント領域のサイズを取得する（ウィンドウ未生成時は0） |
 | `bool IsWindowFocused() const` | ウィンドウにフォーカスがあるかどうか |
 | `bool IsWindowMinimized() const` | ウィンドウが最小化されているかどうか |
+| `bool SetMessageIntercepted(uint msg, bool enabled)` | メッセージを横取りするかを設定する（[詳細](#メッセージの横取りインターセプト)） |
+| `bool IsMessageIntercepted(uint msg) const` | メッセージを横取りするかを取得する |
+| `void CloseWindow()` | ウィンドウを閉じる（`WM_CLOSE` 横取り時にゲーム側の処理後に閉じるために使う） |
 
 - `NormalWindowObject` / `OverlayWindowObject` のハンドルは `WindowObject@` へ**暗黙的に変換**できます。
 - `cast<NormalWindowObject>(windowObject)` のように**具体的な型へダウンキャスト**できます（型が異なる場合は `null` が返ります）。
@@ -878,6 +881,7 @@ WindowObject系コンポーネントが付いているオブジェクトに `Scr
 
 - 通知は毎フレーム、そのフレームにウィンドウが受信したメッセージに対して行われます。**メッセージ種別ごとに最後の1件**が対象で、通知順は不定です。
 - 同オブジェクトに複数のウィンドウコンポーネントがある場合は全てが通知対象です。どのウィンドウからの通知かは `sourceComponent` で判別できます。
+- 通知はウィンドウの既定処理が実行された後の**事後通知**です。既定処理を実行させずゲーム側の処理へ差し替えたい場合は[メッセージの横取り](#メッセージの横取りインターセプト)を使用してください。
 - 主要なメッセージは以下のグローバル定数（`const uint`）として登録されています。これら以外のメッセージも `message` の数値で判定できます。
   - ウィンドウ状態: `WM_ACTIVATE` / `WM_CLOSE` / `WM_DESTROY` / `WM_MOVE` / `WM_SIZE` / `WM_SIZING` / `WM_ENTERSIZEMOVE` / `WM_EXITSIZEMOVE` / `WM_SETFOCUS` / `WM_KILLFOCUS` / `WM_PAINT`
   - キーボード: `WM_KEYDOWN` / `WM_KEYUP` / `WM_SYSKEYDOWN` / `WM_SYSKEYUP` / `WM_CHAR`
@@ -900,6 +904,36 @@ class WindowWatcher : ScriptComponentBehavior {
         GetComponent(mainWindow);
         if (info.sourceComponent is mainWindow) {
             // メインウィンドウのメッセージ
+        }
+    }
+}
+```
+
+#### メッセージの横取り（インターセプト）
+
+`SetMessageIntercepted(msg, true)` で登録したメッセージは、**ウィンドウの既定処理（エンジン既定のイベント処理・OSの既定処理）が実行されなくなり**、`OnWindowMessage` への通知だけが行われます。メッセージ種別ごとに「そのままウィンドウの処理を通す」か「ウィンドウの処理を中断してゲーム側の処理に差し替える」かを選択できます。
+
+- 設定はスクリプトの `SetMessageIntercepted(uint msg, bool enabled)`、またはインスペクターの「**Intercepted Messages**」セクション（`WM_CLOSE` 用のチェックボックスと、メッセージ番号指定での追加/削除）から行えます。設定はシーンへ保存され、ウィンドウの再生成時にも引き継がれます。
+- **`WM_CLOSE` を横取りすると、Xボタン・Alt+F4でウィンドウが閉じなくなります**（既定の確認ダイアログも出ません）。代わりにスクリプトへ `WM_CLOSE` が通知されるため、セーブや確認UIなどゲーム側の処理を行い、閉じてよくなったら `CloseWindow()` で明示的に閉じてください。
+- `WM_KEYDOWN` / `WM_CHAR` / マウス系などの入力メッセージは安全に横取りできます（OSの既定処理を止めたい場合に使用。例: `WM_SYSKEYDOWN` を横取りしてAltキーのメニュー起動やAlt+Enterのフルスクリーン切替を無効化する）。
+- **注意**: `WM_NCHITTEST` / `WM_PAINT` / `WM_SETCURSOR` / `WM_SYSCOMMAND` 全体などを横取りすると、ドラッグ移動・リサイズ・最小化・描画といったウィンドウの基本動作が壊れます（Win32の仕様）。ゲーム側で処理したいメッセージにのみ使用してください。
+- `WM_DESTROY` / `WM_NCDESTROY` / `WM_QUIT` は横取りできません（`SetMessageIntercepted` が `false` を返します）。
+- 通知の仕様は通常の `OnWindowMessage` と同じです（フレーム毎・メッセージ種別ごとに最後の1件・順序不定）。同フレームに同種メッセージが複数来た場合の個別処理はできません。
+
+```angelscript
+class GameWindow : ScriptComponentBehavior {
+    void Start() {
+        NormalWindowObject@ window;
+        GetComponent(window);
+        window.SetMessageIntercepted(WM_CLOSE, true); // Xボタンで閉じずにスクリプトへ通知する
+    }
+
+    void OnWindowMessage(const WindowMessageInfo &in info) {
+        if (info.message == WM_CLOSE) {
+            // セーブや終了確認UIなど、ゲーム側の処理をここで行う
+            Log("閉じる操作を検知しました");
+            // 閉じてよければ明示的に閉じる（呼ばなければウィンドウは開いたまま）
+            info.sourceComponent.CloseWindow();
         }
     }
 }

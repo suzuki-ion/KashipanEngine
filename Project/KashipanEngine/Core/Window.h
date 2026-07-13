@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <optional>
 #include <variant>
@@ -300,6 +301,32 @@ public:
     /// @brief このフレームに受信したメッセージ一覧を取得する（メッセージ種別ごとに最後の1件を保持）
     const std::unordered_map<UINT, WindowMessage> &GetMessages() const noexcept { return messages_; }
 
+    //==================================================
+    // メッセージの横取り（インターセプト）
+    //==================================================
+
+    /// @brief 指定のメッセージが横取り可能かどうか（ウィンドウ破棄系のメッセージは不可）
+    static bool IsInterceptableMessage(UINT msg) noexcept {
+        return msg != WM_DESTROY && msg != WM_NCDESTROY && msg != WM_QUIT;
+    }
+
+    /// @brief 指定のメッセージを横取りするかを設定する
+    /// @details 横取り対象のメッセージは受信の記録（HasMessage/GetMessages等）だけを行い、
+    ///          エンジン既定のイベント処理とOSの既定処理（DefWindowProc）を実行しない。
+    ///          WM_CLOSEを横取りした場合、タイトルバーのXボタンやAlt+F4（WM_SYSCOMMANDのSC_CLOSE）は
+    ///          既定イベント（確認ダイアログ）を経由せずWM_CLOSEとして横取りされる。
+    ///          WM_NCHITTESTやWM_SYSCOMMAND全体等を横取りするとウィンドウの基本動作
+    ///          （ドラッグ移動・リサイズ等）が壊れる点に注意すること
+    /// @return 設定できた場合はtrue（横取り不可のメッセージはfalse）
+    bool SetMessageIntercepted(UINT msg, bool enabled) {
+        if (!IsInterceptableMessage(msg)) return false;
+        if (enabled) interceptedMessages_.insert(msg);
+        else interceptedMessages_.erase(msg);
+        return true;
+    }
+    /// @brief 指定のメッセージを横取りするかを取得する
+    bool IsMessageIntercepted(UINT msg) const { return interceptedMessages_.contains(msg); }
+
     // 親子取得
     Window *GetParentWindow() const noexcept { return parentWindow_; }
     const std::vector<Window *> &GetChildWindows() const noexcept { return childWindows_; }
@@ -379,6 +406,8 @@ private:
     WindowSize size_{};
     // メッセージ関連
     std::unordered_map<UINT, WindowMessage> messages_;
+    // 横取り対象のメッセージ（既定処理を実行しないメッセージ種別の集合）
+    std::unordered_set<UINT> interceptedMessages_;
     
     // DX12スワップチェーン
     DX12SwapChain *dx12SwapChain_ = nullptr;

@@ -43,6 +43,12 @@ public:
     /// @details Undo/Redoによるオブジェクトの削除/再生成でポインタが変わっても、UUIDで再解決して選択を引き継ぐ
     void RestoreSelection(const std::vector<UUID128> &objectIDs);
 
+    /// @brief Delete/Ctrl+C/Ctrl+V/Ctrl+Shift+V/Ctrl+Dのショートカット操作を処理する
+    /// @details 呼び出し元のImGuiウィンドウ（Begin/End内）にフォーカスがある場合のみ動作する。
+    ///          ヒエラルキー自身のほか、シーンビュー等の他のエディターウィンドウからも
+    ///          そのウィンドウ内で呼ぶことで、同じショートカット操作を有効にできる
+    void HandleKeyboardShortcuts();
+
     /// @brief ヒエラルキー外（シーンビューのクリック等）からの選択操作
     /// @param obj 選択するオブジェクト（nullptrかつadditive=falseの場合は選択解除）
     /// @param additive trueの場合、既存の選択集合へトグル追加/削除する（Ctrlクリック相当）
@@ -117,8 +123,6 @@ private:
     /// @brief Shift範囲選択の確定処理（ツリー全体の表示順が確定した後に呼ぶ必要がある）
     void ApplyPendingRangeSelect();
 
-    /// @brief Ctrl+C/Ctrl+V/Ctrl+Shift+V/Ctrl+Dのショートカット操作を処理する
-    void HandleKeyboardShortcuts();
     /// @brief 現在の選択集合から、他の選択オブジェクトの子孫であるものを除いたトップレベルの一覧を返す
     /// @details 親と子の両方が選択されている場合、親の削除/複製で子孫も連動するため二重処理を避ける
     std::vector<EmptyObject *> GetSelectionRoots() const;

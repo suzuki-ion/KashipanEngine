@@ -977,6 +977,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Animator.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioListener.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Comment.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />

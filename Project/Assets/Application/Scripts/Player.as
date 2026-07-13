@@ -1,16 +1,3 @@
-// Application/Objects/Components/PlayerCollision.h / PlayerMovement.h / PlayerInputHandler.h / PlayerEnemyJump.h の移植版
-//
-// 旧エンジンでは上記4つが別々のコンポーネントだったが、現エンジンでは1オブジェクトにつき
-// ScriptComponentBehaviorを実装したクラスは1つしか実行されないため、このスクリプトへ統合している。
-//
-// 前提（エディター側で設定が必要）:
-//   - このスクリプトを持つオブジェクトに SphereCollider（半径0.5、中心(0,0,0)推奨）を追加しておくこと
-//     （地面/敵との当たり判定に使用する。現エンジンのスクリプトからはコライダーの追加はできない）
-//   - InputCommand に "PlayerMoveLeft" / "PlayerMoveRight" / "PlayerJump" を登録しておくこと
-//   - 地面のオブジェクト名は "Ground"、敵のオブジェクト名は "Enemy" である前提（元コードと同じ判定方法）
-//
-// 元コードの CollisionAttribute（Player同士は衝突しない等の判定）は、現エンジンのコライダーが
-// 属性/無視属性の指定に対応していないため再現していない。
 
 float Clampf(float value, float min, float max) {
     if (value < min) return min;
@@ -50,6 +37,11 @@ class Player : ScriptComponentBehavior {
     bool isMoveRight = false;
     float moveLeftInput = 0.0f;
     float moveRightInput = 0.0f;
+
+    Tag groundColliderTag = Tag("GroundBox");
+    Tag enemyColliderTag = Tag("EnemySphere");
+
+    Tag audioSourcePlayerLandingTag = Tag("PlayerLanding");
 
     void Start() {
         Log("Player start: " + GetOwnerObject().GetName());
@@ -125,17 +117,30 @@ class Player : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherObject.GetName() == "Ground") {
-        } else if (hit.otherObject.GetName() == "Enemy") {
+        if (hit.otherCollider.GetTag() == groundColliderTag) {
+            array<AudioSource@>@ audioSources;
+            if (GetComponents(@audioSources)) {
+                for (uint i = 0; i < audioSources.length(); i++) {
+                    AudioSource@ audioSource = audioSources[i];
+                        audioSource.Play();
+                }
+            }
+        } else if (hit.otherCollider.GetTag() == enemyColliderTag) {
             isCollidingWithEnemy = true;
         }
     }
 
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherObject.GetName() == "Ground") {
+        if (hit.otherCollider.GetTag() == groundColliderTag) {
             // 法線が上向きなら地面に接触しているとみなす
             isGrounded = hit.normal.y > groundedThreshold;
+
+            // もし地面にVelocityコンポーネントが付いていたら、そのVelocityをプレイヤーに加算する
+            Velocity@ groundVelocity;
+            if (hit.otherObject.GetComponent(@groundVelocity)) {
+                velocity += groundVelocity.GetVelocity();
+            }
             
             // 衝突判定から押し戻しベクトルを計算してプレイヤーを押し戻す
             Transform@ tf = GetTransform();
@@ -155,7 +160,7 @@ class Player : ScriptComponentBehavior {
 
     void OnCollisionExit(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherObject.GetName() == "Ground") {
+        if (hit.otherCollider.GetTag() == groundColliderTag) {
             isGrounded = false;
         }
     }

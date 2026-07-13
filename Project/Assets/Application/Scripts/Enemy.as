@@ -1,25 +1,15 @@
-// Application/Objects/Components/EnemyCollision.h / EnemyAliveStateController.h の移植版
-// （EnemyMovement.h は中身が空のスタブだったため移植対象なし）
-//
-// 前提（エディター側で設定が必要）:
-//   - このスクリプトを持つオブジェクトに SphereCollider（半径0.5、中心(0,0,0)推奨）を追加しておくこと
-//   - 地面のオブジェクト名は "Ground"、プレイヤーのオブジェクト名は "Player" である前提（元コードと同じ判定方法）
-//
-// 元コードでは死亡判定後にParticleManagerでヒットエフェクトを生成していたが、
-// 現エンジンにはParticleManagerが存在しないため省略している。
-// また、元コードの死亡状態(IsAlive)はシーン側（GameScene.cpp）が毎フレーム監視して
-// オブジェクトの削除・再スポーンを行っていたが、シーン側のロジックは今回の移植対象外のため、
-// このスクリプトでは死亡時に自身を非アクティブ化するところまでを行う。
-
 class Enemy : ScriptComponentBehavior {
     // プレイヤーとの衝突とみなす法線の閾値（この値未満＝上から踏まれた場合に死亡）
-    [SerializeField]
-    float playerCollisionThreshold = 0.5f;
+    [SerializeField, Tooltip("プレイヤーとの衝突判定閾値")]
+    float playerCollisionThreshold = 0.4f;
 
     bool isGrounded = false;
     bool isCollidingWithPlayer = false;
     Vector3 hitNormal = Vector3(0.0f, 0.0f, 0.0f);
     bool isAlive = true;
+
+    Tag groundColliderTag = Tag("GroundBox");
+    Tag playerColliderTag = Tag("PlayerSphere");
 
     void Start() {
         Log("Enemy start: " + GetOwnerObject().GetName());
@@ -42,10 +32,10 @@ class Enemy : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherObject.GetName() == "Ground") {
+        if (hit.otherCollider.GetTag() == groundColliderTag) {
             // 法線が上向きなら地面に接触しているとみなす
             isGrounded = hit.normal.y > 0.5f;
-        } else if (hit.otherObject.GetName() == "Player") {
+        } else if (hit.otherCollider.GetTag() == playerColliderTag) {
             isCollidingWithPlayer = true;
             // プレイヤーにダメージを与えるなどの処理をここに追加
         }
@@ -54,7 +44,7 @@ class Enemy : ScriptComponentBehavior {
 
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherObject.GetName() == "Ground") {
+        if (hit.otherCollider.GetTag() == groundColliderTag) {
             // 衝突判定から押し戻しベクトルを計算してエネミーを押し戻す
             Transform@ tf = GetTransform();
             if (tf !is null) {
@@ -62,7 +52,7 @@ class Enemy : ScriptComponentBehavior {
                 pushBack.z = 0.0f;
                 tf.SetTranslate(tf.GetTranslate() + pushBack);
             }
-        } else if (hit.otherObject.GetName() == "Player") {
+        } else if (hit.otherCollider.GetTag() == playerColliderTag) {
             // プレイヤーにダメージを与えるなどの処理をここに追加
         }
         hitNormal = hit.normal;
@@ -70,9 +60,9 @@ class Enemy : ScriptComponentBehavior {
 
     void OnCollisionExit(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherObject.GetName() == "Ground") {
+        if (hit.otherCollider.GetTag() == groundColliderTag) {
             isGrounded = false;
-        } else if (hit.otherObject.GetName() == "Player") {
+        } else if (hit.otherCollider.GetTag() == playerColliderTag) {
             isCollidingWithPlayer = false;
             // プレイヤーとの接触が終了したときの処理をここに追加
         }

@@ -137,6 +137,10 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
         return;
     }
 
+    // シーンビューにフォーカスがある間も、ヒエラルキーと同じショートカット
+    // （Ctrl+C/Ctrl+V/Ctrl+Shift+V/Ctrl+D）で選択中オブジェクトを操作できるようにする
+    if (hierarchy) hierarchy->HandleKeyboardShortcuts();
+
     //--------- ギズモ操作の切り替えツールバー ---------//
     if (ImGui::RadioButton("Translate", gizmoOperation_ == ImGuizmo::TRANSLATE)) gizmoOperation_ = ImGuizmo::TRANSLATE;
     ImGui::SameLine();

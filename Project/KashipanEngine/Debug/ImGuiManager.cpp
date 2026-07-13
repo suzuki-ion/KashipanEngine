@@ -14,6 +14,7 @@
 #include <imgui_impl_dx12.h>
 
 #include <d3d12.h>
+#include <unordered_map>
 
 namespace KashipanEngine {
 
@@ -22,7 +23,27 @@ DXGI_FORMAT ToDxgiFormat_WindowsSwapChain() {
     return DXGI_FORMAT_B8G8R8A8_UNORM;
 }
 
-std::unique_ptr<DescriptorHandleInfo> sImGuiLegacySrv;
+// ImGuiの内部テクスチャ（フォントアトラス等）用SRVディスクリプタの割り当て先ヒープ。
+// Dear ImGui 1.92以降はフォントのグリフを実際に描画された時点で遅延読み込みするため、
+// 未表示だった文字（例: スクロールで初めて見えたログの日本語文字）が新たに描画される度に
+// アトラステクスチャが再構築され、複数のテクスチャが同時に生存しうる。
+// そのため単一ディスクリプタ（レガシーモード）ではなく、必要な数だけ動的に確保できる
+// ようにする必要がある（ImGuiSrvDescriptorAllocFn/FreeFn参照）
+SRVHeap *sImGuiSrvHeap = nullptr;
+// GPUディスクリプタハンドルのポインタ値をキーに、確保済みディスクリプタを保持する
+// （キーで解放対象を特定する。unique_ptrの破棄でDescriptorHeapBaseへ返却される）
+std::unordered_map<UINT64, std::unique_ptr<DescriptorHandleInfo>> sImGuiTextureDescriptors;
+
+void ImGuiSrvDescriptorAllocFn(ImGui_ImplDX12_InitInfo *, D3D12_CPU_DESCRIPTOR_HANDLE *outCpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE *outGpuHandle) {
+    auto handle = sImGuiSrvHeap->AllocateDescriptorHandle();
+    *outCpuHandle = handle->cpuHandle;
+    *outGpuHandle = handle->gpuHandle;
+    sImGuiTextureDescriptors.emplace(handle->gpuHandle.ptr, std::move(handle));
+}
+
+void ImGuiSrvDescriptorFreeFn(ImGui_ImplDX12_InitInfo *, D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle) {
+    sImGuiTextureDescriptors.erase(gpuHandle.ptr);
+}
 
 HWND PlatformHwndFromViewport(ImGuiViewport* vp) {
     if (!vp) return nullptr;
@@ -92,7 +113,10 @@ void ImGuiManager::ShutdownInternal() {
     }
 
     ImGui::DestroyContext();
-    sImGuiLegacySrv.reset();
+    // ImGui_ImplDX12_Shutdown() の中でImGuiが保持する全テクスチャの解放（SrvDescriptorFreeFn呼び出し）が
+    // 行われるため通常は空になっているはずだが、念のため残りがあればここでヒープへ返却しておく
+    sImGuiTextureDescriptors.clear();
+    sImGuiSrvHeap = nullptr;
 
     SetMainHwnd(nullptr);
     isInitialized_ = false;
@@ -122,10 +146,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         if (!device || !srvHeap) {
             return;
         }
-
-        if (!sImGuiLegacySrv) {
-            sImGuiLegacySrv = srvHeap->AllocateDescriptorHandle();
-        }
+        sImGuiSrvHeap = srvHeap;
 
         ImGui_ImplDX12_InitInfo info{};
         info.Device = device;
@@ -135,11 +156,10 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         info.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
         info.SrvDescriptorHeap = srvHeap->GetDescriptorHeap();
-        info.SrvDescriptorAllocFn = nullptr;
-        info.SrvDescriptorFreeFn = nullptr;
-
-        info.LegacySingleSrvCpuDescriptor = sImGuiLegacySrv->cpuHandle;
-        info.LegacySingleSrvGpuDescriptor = sImGuiLegacySrv->gpuHandle;
+        // フォントアトラスの遅延グリフ読み込みで複数テクスチャが同時に生存しうるため、
+        // 単一ディスクリプタのレガシーモードではなく、共有SRVヒープから動的に確保する
+        info.SrvDescriptorAllocFn = &ImGuiSrvDescriptorAllocFn;
+        info.SrvDescriptorFreeFn = &ImGuiSrvDescriptorFreeFn;
 
         if (!ImGui_ImplDX12_Init(&info)) {
             return;

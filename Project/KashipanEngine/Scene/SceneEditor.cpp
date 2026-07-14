@@ -21,8 +21,37 @@
 #include "Scene/Editor/SceneObjectInspector.h"
 #include "Scene/Editor/SceneSaver.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
+#include "Utilities/FileIO.h"
+#include "Utilities/TemplateLiteral.h"
+#include "Utilities/TimeUtils.h"
+#include <iomanip>
+#include <sstream>
 
 namespace KashipanEngine {
+
+namespace {
+/// @brief 自動保存のファイル名をTemplateLiteralから構築する（拡張子が無ければ .json を付与する）
+std::string RenderAutoSaveFileName(const std::string &nameFormat, const std::string &sceneName) {
+    auto pad2 = [](int v) { std::ostringstream os; os << std::setw(2) << std::setfill('0') << v; return os.str(); };
+    auto pad4 = [](int v) { std::ostringstream os; os << std::setw(4) << std::setfill('0') << v; return os.str(); };
+
+    TemplateLiteral tpl(nameFormat);
+    tpl.Set("SceneName", sceneName);
+    const TimeRecord t = GetNowTime();
+    tpl.Set("Year", pad4(t.year));
+    tpl.Set("Month", pad2(t.month));
+    tpl.Set("Day", pad2(t.day));
+    tpl.Set("Hour", pad2(t.hour));
+    tpl.Set("Minute", pad2(t.minute));
+    tpl.Set("Second", pad2(static_cast<int>(t.second)));
+
+    std::string name = tpl.Render();
+    if (name.size() < 5 || name.substr(name.size() - 5) != ".json") {
+        name += ".json";
+    }
+    return name;
+}
+} // namespace
 
 SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     context_ = context;
@@ -55,6 +84,10 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowLoggerWindow_ = EditorSettings::GetBool("sceneEditor.showLogger", true);
     isShowInputStateWindow_ = EditorSettings::GetBool("sceneEditor.showInputState", false);
     isShowInputCommandEditorWindow_ = EditorSettings::GetBool("sceneEditor.showInputCommandEditor", false);
+
+    // 自動保存の設定を復元する（再起動後も維持される）
+    autoSaveIntervalMinutes_ = EditorSettings::GetFloat("sceneEditor.autoSaveIntervalMinutes", 1.0f);
+    autoSaveNameFormat_ = EditorSettings::GetString("sceneEditor.autoSaveNameFormat", "${SceneName}");
 }
 
 SceneEditor::~SceneEditor() = default;
@@ -87,6 +120,7 @@ void SceneEditor::ShowImGui() {
 
     ShowMainWindow();
     HandleShortcuts();
+    HandleAutoSave();
 
     if (isShowHierarchy_) objectHierarchy_->ShowImGui();
     if (isShowObjectInspector_) objectInspector_->ShowImGui();
@@ -124,6 +158,10 @@ void SceneEditor::ShowMainWindow() {
             }
             if (ImGui::MenuItem("Load Scene...")) {
                 loader_->Open();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Auto Save Settings...")) {
+                isAutoSaveSettingsRequested_ = true;
             }
             ImGui::EndMenu();
         }
@@ -218,6 +256,7 @@ void SceneEditor::ShowMainWindow() {
         commands_->Clear();
         objectHierarchy_->ClearSelection();
     }
+    ShowAutoSaveSettingsModal();
 
     ImGui::End();
 
@@ -312,6 +351,43 @@ void SceneEditor::PerformRedo() {
     const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
     commands_->Redo();
     objectHierarchy_->RestoreSelection(selectedIDs);
+}
+
+void SceneEditor::HandleAutoSave() {
+    float intervalMinutes = autoSaveIntervalMinutes_;
+    if (intervalMinutes < 0.1f) intervalMinutes = 0.1f;
+
+    autoSaveElapsedTime_ += GetDeltaTime();
+    if (autoSaveElapsedTime_ < intervalMinutes * 60.0f) return;
+    autoSaveElapsedTime_ = 0.0f;
+
+    const std::string fileName = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
+    const std::string filePath = "Assets/KashipanEngine/LastSceneBackup/" + fileName;
+    SaveJSON(context_->SaveSceneToJSON(), filePath);
+}
+
+void SceneEditor::ShowAutoSaveSettingsModal() {
+    if (isAutoSaveSettingsRequested_) {
+        ImGui::OpenPopup("Auto Save Settings");
+        isAutoSaveSettingsRequested_ = false;
+    }
+    if (ImGui::BeginPopupModal("Auto Save Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::DragFloat("Interval (minutes)", &autoSaveIntervalMinutes_, 0.1f, 0.1f, 120.0f, "%.1f")) {
+            EditorSettings::SetFloat("sceneEditor.autoSaveIntervalMinutes", autoSaveIntervalMinutes_);
+        }
+        if (ImGui::InputText("Name Format", &autoSaveNameFormat_)) {
+            EditorSettings::SetString("sceneEditor.autoSaveNameFormat", autoSaveNameFormat_);
+        }
+        ImGui::TextDisabled("Placeholders: ${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}");
+
+        const std::string preview = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
+        ImGui::Text("Preview: Assets/KashipanEngine/LastSceneBackup/%s", preview.c_str());
+
+        if (ImGui::Button("Close", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 }
 
 } // namespace KashipanEngine

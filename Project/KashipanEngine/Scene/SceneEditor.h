@@ -33,6 +33,10 @@ private:
     void HandleShortcuts();
     void PerformUndo();
     void PerformRedo();
+    /// @brief 設定した間隔でシーンを "Assets/KashipanEngine/LastSceneBackup/" 以下へ自動保存する
+    void HandleAutoSave();
+    /// @brief 自動保存の間隔・保存名（TemplateLiteral）を設定するモーダル
+    void ShowAutoSaveSettingsModal();
 
     SceneEditorContext *context_ = nullptr;
 
@@ -70,6 +74,15 @@ private:
 
     /// @brief 前フレームの再生状態（コマンド履歴の再生セッション切り替えの検知用）
     bool wasPlaying_ = false;
+
+    /// @brief 自動保存の前回保存からの経過時間（秒）
+    float autoSaveElapsedTime_ = 0.0f;
+    /// @brief 自動保存の間隔（分）。エディター上で変更可能で、再起動後も維持される
+    float autoSaveIntervalMinutes_ = 1.0f;
+    /// @brief 自動保存のファイル名テンプレート（TemplateLiteralの `${name}` 記法。拡張子は自動付与）
+    std::string autoSaveNameFormat_ = "${SceneName}";
+    /// @brief 自動保存設定モーダルの表示要求
+    bool isAutoSaveSettingsRequested_ = false;
 };
 
 } // namespace KashipanEngine

@@ -1,10 +1,4 @@
 
-float Clampf(float value, float min, float max) {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
-}
-
 class Player : ScriptComponentBehavior {
     // --- PlayerMovement 相当のパラメータ ---
     [SerializeField, Tooltip("移動速度")]
@@ -142,8 +136,8 @@ class Player : ScriptComponentBehavior {
         wasJumping = isJumping;
 
         // 速度の適用
-        velocity.x = Clampf(velocity.x, minVelocity.x, maxVelocity.x);
-        velocity.y = Clampf(velocity.y, minVelocity.y, maxVelocity.y);
+        velocity.x = Clamp(velocity.x, minVelocity.x, maxVelocity.x);
+        velocity.y = Clamp(velocity.y, minVelocity.y, maxVelocity.y);
         // 地面の速度は自分のvelocityとは別に、移動量にだけその場で加算する
         tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundVelocity * dt);
 

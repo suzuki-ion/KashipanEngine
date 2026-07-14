@@ -482,7 +482,11 @@ void RegisterTransformType(asIScriptEngine *engine) {
         .method("const Quaternion &GetRotateQuaternion() const", &Transform::GetRotateQuaternion)
         .method("void SetScale(const Vector3 &in)", &Transform::SetScale)
         .method("const Vector3 &GetScale() const", &Transform::GetScale)
-        .method("const Matrix4x4 &GetWorldMatrix()", &Transform::GetWorldMatrix);
+        .method("const Matrix4x4 &GetWorldMatrix()", &Transform::GetWorldMatrix)
+        .method("Vector3 GetWorldPosition()", &Transform::GetWorldPosition)
+        .method("Vector3 GetWorldRotate() const", &Transform::GetWorldRotate)
+        .method("Quaternion GetWorldRotateQuaternion() const", &Transform::GetWorldRotateQuaternion)
+        .method("Vector3 GetWorldScale()", &Transform::GetWorldScale);
 }
 
 void RegisterComponentTypes(asIScriptEngine *engine) {
@@ -505,7 +509,11 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const Vector3 &GetPreviousRotate() const", &PreTransform::GetPreviousRotate)
         .method("const Quaternion &GetPreviousRotateQuaternion() const", &PreTransform::GetPreviousRotateQuaternion)
         .method("const Vector3 &GetPreviousScale() const", &PreTransform::GetPreviousScale)
-        .method("const Matrix4x4 &GetPreviousWorldMatrix() const", &PreTransform::GetPreviousWorldMatrix);
+        .method("const Matrix4x4 &GetPreviousWorldMatrix() const", &PreTransform::GetPreviousWorldMatrix)
+        .method("const Vector3 &GetPreviousWorldPosition() const", &PreTransform::GetPreviousWorldPosition)
+        .method("const Vector3 &GetPreviousWorldRotate() const", &PreTransform::GetPreviousWorldRotate)
+        .method("const Quaternion &GetPreviousWorldRotateQuaternion() const", &PreTransform::GetPreviousWorldRotateQuaternion)
+        .method("const Vector3 &GetPreviousWorldScale() const", &PreTransform::GetPreviousWorldScale);
 
     // TargetLookAtの回転モード（ParticleSystemのビルボード設定でも使うため先に登録する）
     engine->RegisterEnum("TargetLookAtMode");
@@ -1804,7 +1812,13 @@ void RegisterMathUtilBindings(asIScriptEngine *engine) {
     asbind20::global(engine)
         .function("float GetPI()", &GetPI<float>)
         .function("float ToDegrees(float)", &ToDegrees<float>)
+        .function("Vector2 ToDegrees(const Vector2 &in)", &ToDegrees<Vector2>)
+        .function("Vector3 ToDegrees(const Vector3 &in)", &ToDegrees<Vector3>)
+        .function("Vector4 ToDegrees(const Vector4 &in)", &ToDegrees<Vector4>)
         .function("float ToRadians(float)", &ToRadians<float>)
+        .function("Vector2 ToRadians(const Vector2 &in)", &ToRadians<Vector2>)
+        .function("Vector3 ToRadians(const Vector3 &in)", &ToRadians<Vector3>)
+        .function("Vector4 ToRadians(const Vector4 &in)", &ToRadians<Vector4>)
         .function("float Clamp(float, float, float)",
             static_cast<float (*)(float, float, float)>(&Clamp))
         .function("Vector2 Clamp(const Vector2 &in, const Vector2 &in, const Vector2 &in)",

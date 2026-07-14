@@ -13,7 +13,7 @@ namespace KashipanEngine {
 ///          ParticleSystemBase を参照。既定のメッシュは "PrimitiveMesh-UVSphere"。
 class ParticleSystem3D final : public ParticleSystemBase {
 public:
-    ParticleSystem3D() : ParticleSystemBase("ParticleSystem3D", 0xFF, GetComponentTypeID<ParticleSystem3D>()) {
+    ParticleSystem3D() : ParticleSystemBase("ParticleSystem3D", 0xFF, GetComponentTypeID<ParticleSystem3D>(), false) {
         if (meshAssetPath_.empty()) meshAssetPath_ = "PrimitiveMesh-UVSphere";
         if (pipelineName_.empty()) pipelineName_ = "Object3D.Solid.BlendNormal";
     }

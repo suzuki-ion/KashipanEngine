@@ -13,7 +13,7 @@ namespace KashipanEngine {
 ///          ParticleSystemBase を参照。既定のメッシュは "PrimitiveMesh-Circle2D"。
 class ParticleSystem2D final : public ParticleSystemBase {
 public:
-    ParticleSystem2D() : ParticleSystemBase("ParticleSystem2D", 0xFF, GetComponentTypeID<ParticleSystem2D>()) {
+    ParticleSystem2D() : ParticleSystemBase("ParticleSystem2D", 0xFF, GetComponentTypeID<ParticleSystem2D>(), true) {
         if (meshAssetPath_.empty()) meshAssetPath_ = "PrimitiveMesh-Circle2D";
         if (pipelineName_.empty()) pipelineName_ = "Object2D.DoubleSidedCulling.BlendNormal";
     }

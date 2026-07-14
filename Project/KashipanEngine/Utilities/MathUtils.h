@@ -18,12 +18,12 @@ constexpr T GetPI() noexcept {
 
 template<typename T>
 T ToDegrees(T radians) {
-    static const T constant = static_cast<T>(180.0f / GetPI<T>());
+    static const float constant = 180.0f / GetPI<float>();
     return radians * constant;
 }
 template <typename T>
 T ToRadians(T degrees) {
-    static const T constant = static_cast<T>(GetPI<T>() / 180.0f);
+    static const float constant = GetPI<float>() / 180.0f;
     return degrees * constant;
 }
 

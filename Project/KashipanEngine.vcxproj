@@ -1154,6 +1154,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.h" />
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.h" />
+    <ClInclude Include="KashipanEngine\Utilities\RandomizableValue.h" />
     <ClInclude Include="KashipanEngine\Utilities\RandomValue.h" />
     <ClInclude Include="KashipanEngine\Utilities\SourceLocation.h" />
     <ClInclude Include="KashipanEngine\Utilities\TemplateLiteral.h" />

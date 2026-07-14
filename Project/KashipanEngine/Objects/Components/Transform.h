@@ -129,7 +129,28 @@ public:
         return rotateQuat_;
     }
 
+    /// @brief 親を合成したワールド回転を取得する（オイラー角、ラジアン）
+    Vector3 GetWorldRotate() const {
+        Quaternion worldQuat = GetWorldRotateQuaternion();
+        return worldQuat.MakeEuler();
+    }
+
     const Vector3 &GetScale() const { return scale_; }
+
+    /// @brief 親を合成したワールド座標を取得する
+    Vector3 GetWorldPosition() {
+        const Matrix4x4 &world = GetWorldMatrix();
+        return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
+    }
+
+    /// @brief 親を合成したワールドスケールを取得する（各軸方向ベクトルの長さから算出。非一様スケール併用時のせん断は考慮しない）
+    Vector3 GetWorldScale() {
+        const Matrix4x4 &world = GetWorldMatrix();
+        const Vector3 axisX(world.m[0][0], world.m[0][1], world.m[0][2]);
+        const Vector3 axisY(world.m[1][0], world.m[1][1], world.m[1][2]);
+        const Vector3 axisZ(world.m[2][0], world.m[2][1], world.m[2][2]);
+        return Vector3(axisX.Length(), axisY.Length(), axisZ.Length());
+    }
 
     const Matrix4x4 &GetWorldMatrix() {
         if (IsWorldMatrixDirty()) {

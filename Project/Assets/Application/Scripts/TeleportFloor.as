@@ -8,6 +8,11 @@
 class TeleportFloor : ScriptComponentBehavior {
     [SerializeField, Tooltip("テレポート先のオブジェクト（このオブジェクトの現在位置へ移動させる）")]
     Object@ targetObject;
+    [SerializeField, Tooltip("テレポート先座標（オブジェクト指定が無い場合はこの座標へ移動させる）")]
+    Vector3 targetPosition;
+    [SerializeField, Tooltip("テレポート座標のオフセット（targetObjectの座標に加算される）")]
+    Vector3 offset;
+
     [SerializeField, Tooltip("テレポート除外タグ（このタグを持つオブジェクトはテレポートしない）")]
     array<string>@ excludeTags = null;
 
@@ -30,12 +35,20 @@ class TeleportFloor : ScriptComponentBehavior {
             }
         }
         
+        if (targetObject is null) {
+            Transform@ otherTransform;
+            if (!hit.otherObject.GetComponent(@otherTransform)) return;
+
+            otherTransform.SetTranslate(targetPosition + offset);
+            return;
+        }
+        
         Transform@ targetTransform;
         if (!targetObject.GetComponent(@targetTransform)) return;
 
         Transform@ otherTransform;
         if (!hit.otherObject.GetComponent(@otherTransform)) return;
 
-        otherTransform.SetTranslate(targetTransform.GetTranslate());
+        otherTransform.SetTranslate(targetTransform.GetTranslate() + offset);
     }
 }

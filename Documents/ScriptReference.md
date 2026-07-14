@@ -360,6 +360,15 @@ GetComponent(@tf);
 | `float GetGameSpeed()` | ゲームスピードを取得する |
 | `void SetGameSpeed(float)` | ゲームスピードを設定する |
 
+### 数学
+
+| 関数 | 説明 |
+|---|---|
+| `float GetPI()` | 円周率を取得する |
+| `float ToDegrees(float radians)` | ラジアンから度に変換する |
+| `float ToRadians(float degrees)` | 度からラジアンに変換する |
+| `float/Vector2/Vector3/Vector4 Clamp(value, min, max)` | `value` を `min`～`max` の範囲に収める |
+
 ### ゲームループ制御
 
 | 関数 | 説明 |

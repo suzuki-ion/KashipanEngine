@@ -685,11 +685,21 @@ void SceneEditorView::AppendCollider2DShape(std::vector<DebugLineVertex> &out, c
                 hasPrev = true;
             }
         } else if constexpr (std::is_same_v<T, Math::Rect>) {
+            const float c = std::cos(shape.rotation);
+            const float s = std::sin(shape.rotation);
+            const Vector2 ex{ shape.halfSize.x * c, shape.halfSize.x * s };
+            const Vector2 ey{ -shape.halfSize.y * s, shape.halfSize.y * c };
+            const Vector2 localCorners[4] = {
+                shape.center - ex - ey,
+                shape.center + ex - ey,
+                shape.center + ex + ey,
+                shape.center - ex + ey,
+            };
             const Vector3 corners[4] = {
-                Vector3(shape.center.x - shape.halfSize.x, shape.center.y - shape.halfSize.y, worldZ),
-                Vector3(shape.center.x + shape.halfSize.x, shape.center.y - shape.halfSize.y, worldZ),
-                Vector3(shape.center.x + shape.halfSize.x, shape.center.y + shape.halfSize.y, worldZ),
-                Vector3(shape.center.x - shape.halfSize.x, shape.center.y + shape.halfSize.y, worldZ),
+                Vector3(localCorners[0].x, localCorners[0].y, worldZ),
+                Vector3(localCorners[1].x, localCorners[1].y, worldZ),
+                Vector3(localCorners[2].x, localCorners[2].y, worldZ),
+                Vector3(localCorners[3].x, localCorners[3].y, worldZ),
             };
             for (int i = 0; i < 4; ++i) {
                 const int next = (i + 1) % 4;

@@ -47,7 +47,10 @@ Vector3 ICollider::GetSyncedOwnerRotationEuler() const {
     Vector3 rot{ 0.0f, 0.0f, 0.0f };
     auto *objectContext = GetOwnerObjectContext();
     auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-    if (transform) rot = transform->GetRotate();
+    if (transform) {
+        Quaternion worldRotate = transform->GetWorldRotateQuaternion();
+        rot = worldRotate.MakeEuler();
+    }
     if (!syncRotation_[0]) rot.x = 0.0f;
     if (!syncRotation_[1]) rot.y = 0.0f;
     if (!syncRotation_[2]) rot.z = 0.0f;
@@ -55,7 +58,7 @@ Vector3 ICollider::GetSyncedOwnerRotationEuler() const {
 }
 
 Quaternion ICollider::GetSyncedOwnerRotation() const {
-    // 全軸同期の場合はTransformのクォータニオンをそのまま使う。
+    // 全軸同期の場合はTransformのワールド回転クォータニオンをそのまま使う。
     // オイラー角を経由すると、分解(Quaternion::MakeEuler)と再構成(Quaternion::MakeRotateEuler)の
     // 回転順が一致しないため、ImGuizmoのようにクォータニオンで直接回転を設定した場合に
     // 軸ごと反転したような結果になってしまう（インスペクターのオイラー角入力経由だと、
@@ -63,7 +66,7 @@ Quaternion ICollider::GetSyncedOwnerRotation() const {
     if (syncRotation_[0] && syncRotation_[1] && syncRotation_[2]) {
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-        return transform ? transform->GetRotateQuaternion() : Quaternion::Identity();
+        return transform ? transform->GetWorldRotateQuaternion() : Quaternion::Identity();
     }
     if (!syncRotation_[0] && !syncRotation_[1] && !syncRotation_[2]) {
         return Quaternion::Identity();

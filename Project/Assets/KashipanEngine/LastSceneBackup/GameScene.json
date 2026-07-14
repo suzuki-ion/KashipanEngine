@@ -2276,7 +2276,7 @@
                 {
                     "data": {
                         "customData": {
-                            "comment": "デバッグ用のためだけに存在するライト。\nこれがないとエディター上のシーンビューが真っ暗になる。"
+                            "comment": "全体を照らすためだけの平行光源"
                         },
                         "isActive": true,
                         "priority": 1,
@@ -2299,7 +2299,7 @@
             ],
             "editorOnly": false,
             "isActive": true,
-            "name": "SceneViewLight",
+            "name": "SceneLight",
             "objectID": "550feb48-e0df-4008-a7b1-b82a13b5f5dc",
             "tag": ""
         },
@@ -9057,7 +9057,7 @@
                             },
                             "translate": {
                                 "x": 111.15776062011719,
-                                "y": 62.80561828613281,
+                                "y": 62.54600143432617,
                                 "z": 16.0
                             }
                         },
@@ -12466,7 +12466,7 @@
                             "translate": {
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": -16.0
+                                "z": 0.0
                             }
                         },
                         "isActive": true,
@@ -12577,7 +12577,7 @@
                             "translate": {
                                 "x": 0.0,
                                 "y": 0.18912506103515625,
-                                "z": -16.0
+                                "z": 0.0
                             }
                         },
                         "isActive": true,
@@ -12699,7 +12699,7 @@
                             "translate": {
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": -16.0
                             }
                         },
                         "isActive": true,

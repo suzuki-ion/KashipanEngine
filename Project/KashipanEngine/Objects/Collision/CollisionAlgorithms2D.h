@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace KashipanEngine {
 namespace CollisionAlgorithms2D {
@@ -30,10 +31,52 @@ inline Vector2 ClosestPointOnSegment(const Math::Segment2D &s, const Vector2 &p)
     return s.start + ab * t;
 }
 
-inline Vector2 ClosestPointOnRect(const Math::Rect &r, const Vector2 &p) {
-    const float x = Clamp(p.x, r.center.x - r.halfSize.x, r.center.x + r.halfSize.x);
-    const float y = Clamp(p.y, r.center.y - r.halfSize.y, r.center.y + r.halfSize.y);
-    return Vector2{x, y};
+inline Vector2 ClosestPointOnRectLocal(const Vector2 &halfSize, const Vector2 &localP) {
+    return Vector2{Clamp(localP.x, -halfSize.x, halfSize.x), Clamp(localP.y, -halfSize.y, halfSize.y)};
+}
+
+/// @brief ベクトルをcos/sinで回転させる
+inline Vector2 RotateVector2(const Vector2 &v, float cosA, float sinA) {
+    return Vector2(v.x * cosA - v.y * sinA, v.x * sinA + v.y * cosA);
+}
+
+/// @brief ワールド座標の点を矩形のローカル空間（矩形中心が原点、回転無し）に変換する
+inline Vector2 WorldToRectLocal(const Math::Rect &r, const Vector2 &worldPoint) {
+    const Vector2 d = worldPoint - r.center;
+    if (r.rotation == 0.0f) return d;
+    return RotateVector2(d, std::cos(-r.rotation), std::sin(-r.rotation));
+}
+
+/// @brief 矩形のローカル空間の向き（法線等、平行移動を伴わない量）をワールド空間へ変換する
+inline Vector2 RectLocalDirectionToWorld(const Math::Rect &r, const Vector2 &localDir) {
+    if (r.rotation == 0.0f) return localDir;
+    return RotateVector2(localDir, std::cos(r.rotation), std::sin(r.rotation));
+}
+
+/// @brief 矩形（OBB）の2つの軸（ワールド方向）と4頂点（ワールド座標）を求める
+inline void GetRectAxesAndCorners(const Math::Rect &r, Vector2 axes[2], Vector2 corners[4]) {
+    const float c = std::cos(r.rotation);
+    const float s = std::sin(r.rotation);
+    axes[0] = Vector2(c, s);
+    axes[1] = Vector2(-s, c);
+    const Vector2 ex = axes[0] * r.halfSize.x;
+    const Vector2 ey = axes[1] * r.halfSize.y;
+    corners[0] = r.center - ex - ey;
+    corners[1] = r.center + ex - ey;
+    corners[2] = r.center + ex + ey;
+    corners[3] = r.center - ex + ey;
+}
+
+inline void ProjectOntoAxis(const Vector2 corners[4], const Vector2 &axis, float &outMin, float &outMax) {
+    float minP = MathUtils::Dot(corners[0], axis);
+    float maxP = minP;
+    for (int i = 1; i < 4; ++i) {
+        const float p = MathUtils::Dot(corners[i], axis);
+        minP = std::min(minP, p);
+        maxP = std::max(maxP, p);
+    }
+    outMin = minP;
+    outMax = maxP;
 }
 
 inline float Clamp01f(float v) { return std::clamp(v, 0.0f, 1.0f); }
@@ -143,21 +186,30 @@ inline bool Intersects(const Math::Circle &a, const Math::Circle &b) {
 }
 
 inline bool Intersects(const Math::Rect &r, const Math::Point2D &p) {
-    const Vector2 d = p.position - r.center;
-    return std::abs(d.x) <= r.halfSize.x && std::abs(d.y) <= r.halfSize.y;
+    const Vector2 local = WorldToRectLocal(r, p.position);
+    return std::abs(local.x) <= r.halfSize.x && std::abs(local.y) <= r.halfSize.y;
 }
 inline bool Intersects(const Math::Point2D &p, const Math::Rect &r) { return Intersects(r, p); }
 
 inline bool Intersects(const Math::Rect &a, const Math::Rect &b) {
-    const Vector2 d = b.center - a.center;
-    return std::abs(d.x) <= (a.halfSize.x + b.halfSize.x) && std::abs(d.y) <= (a.halfSize.y + b.halfSize.y);
+    Vector2 axesA[2], cornersA[4];
+    Vector2 axesB[2], cornersB[4];
+    GetRectAxesAndCorners(a, axesA, cornersA);
+    GetRectAxesAndCorners(b, axesB, cornersB);
+    const Vector2 axes[4] = {axesA[0], axesA[1], axesB[0], axesB[1]};
+    for (const auto &axis : axes) {
+        float minA, maxA, minB, maxB;
+        ProjectOntoAxis(cornersA, axis, minA, maxA);
+        ProjectOntoAxis(cornersB, axis, minB, maxB);
+        if (maxA < minB || maxB < minA) return false;
+    }
+    return true;
 }
 
 inline bool Intersects(const Math::Circle &c, const Math::Rect &r) {
-    const float closestX = Clamp(c.center.x, r.center.x - r.halfSize.x, r.center.x + r.halfSize.x);
-    const float closestY = Clamp(c.center.y, r.center.y - r.halfSize.y, r.center.y + r.halfSize.y);
-    const Vector2 closest{closestX, closestY};
-    return DistanceSquared(c.center, closest) <= c.radius * c.radius;
+    const Vector2 localCenter = WorldToRectLocal(r, c.center);
+    const Vector2 closestLocal = ClosestPointOnRectLocal(r.halfSize, localCenter);
+    return DistanceSquared(localCenter, closestLocal) <= c.radius * c.radius;
 }
 inline bool Intersects(const Math::Rect &r, const Math::Circle &c) { return Intersects(c, r); }
 
@@ -212,54 +264,65 @@ inline HitInfo ComputeHit(const Math::Circle &a, const Math::Circle &b) {
 }
 
 inline HitInfo ComputeHit(const Math::Rect &a, const Math::Rect &b) {
-    const Vector2 d = b.center - a.center;
-    const float px = (a.halfSize.x + b.halfSize.x) - std::abs(d.x);
-    const float py = (a.halfSize.y + b.halfSize.y) - std::abs(d.y);
-    if (px < 0.0f || py < 0.0f) return MakeNoHit();
+    Vector2 axesA[2], cornersA[4];
+    Vector2 axesB[2], cornersB[4];
+    GetRectAxesAndCorners(a, axesA, cornersA);
+    GetRectAxesAndCorners(b, axesB, cornersB);
+    const Vector2 axes[4] = {axesA[0], axesA[1], axesB[0], axesB[1]};
 
-    if (px < py) {
-        const float sx = (d.x >= 0.0f) ? 1.0f : -1.0f;
-        return MakeHit(Vector2{sx, 0.0f}, px);
+    float bestOverlap = std::numeric_limits<float>::max();
+    Vector2 bestAxis{1.0f, 0.0f};
+
+    for (const auto &axis : axes) {
+        float minA, maxA, minB, maxB;
+        ProjectOntoAxis(cornersA, axis, minA, maxA);
+        ProjectOntoAxis(cornersB, axis, minB, maxB);
+        const float overlap = std::min(maxA, maxB) - std::max(minA, minB);
+        if (overlap < 0.0f) return MakeNoHit();
+        if (overlap < bestOverlap) {
+            bestOverlap = overlap;
+            bestAxis = axis;
+        }
     }
 
-    const float sy = (d.y >= 0.0f) ? 1.0f : -1.0f;
-    return MakeHit(Vector2{0.0f, sy}, py);
+    const Vector2 d = b.center - a.center;
+    if (MathUtils::Dot(d, bestAxis) < 0.0f) bestAxis = bestAxis * -1.0f;
+    return MakeHit(bestAxis, bestOverlap);
 }
 
 inline HitInfo ComputeHit(const Math::Circle &c, const Math::Rect &r) {
-    const float closestX = Clamp(c.center.x, r.center.x - r.halfSize.x, r.center.x + r.halfSize.x);
-    const float closestY = Clamp(c.center.y, r.center.y - r.halfSize.y, r.center.y + r.halfSize.y);
-    const Vector2 closest{closestX, closestY};
+    const Vector2 localCenter = WorldToRectLocal(r, c.center);
+    const Vector2 closestLocal = ClosestPointOnRectLocal(r.halfSize, localCenter);
 
-    const Vector2 v = c.center - closest;
-    const float dist2 = MathUtils::LengthSquared(v);
+    const Vector2 vLocal = localCenter - closestLocal;
+    const float dist2 = MathUtils::LengthSquared(vLocal);
     const float rr = c.radius * c.radius;
     if (dist2 > rr) return MakeNoHit();
 
     const float dist = std::sqrt(std::max(0.0f, dist2));
 
-    // If center is inside rect, pick minimal axis push-out
-    const bool inside = (c.center.x >= r.center.x - r.halfSize.x && c.center.x <= r.center.x + r.halfSize.x) &&
-                        (c.center.y >= r.center.y - r.halfSize.y && c.center.y <= r.center.y + r.halfSize.y);
+    // 中心が矩形内部にある場合は最小軸方向への押し出しを選ぶ
+    const bool inside = (localCenter.x >= -r.halfSize.x && localCenter.x <= r.halfSize.x) &&
+                        (localCenter.y >= -r.halfSize.y && localCenter.y <= r.halfSize.y);
 
     if (inside) {
-        const float left = c.center.x - (r.center.x - r.halfSize.x);
-        const float right = (r.center.x + r.halfSize.x) - c.center.x;
-        const float down = c.center.y - (r.center.y - r.halfSize.y);
-        const float up = (r.center.y + r.halfSize.y) - c.center.y;
+        const float left = localCenter.x - (-r.halfSize.x);
+        const float right = r.halfSize.x - localCenter.x;
+        const float down = localCenter.y - (-r.halfSize.y);
+        const float up = r.halfSize.y - localCenter.y;
 
         float minAxis = left;
-        Vector2 n{-1.0f, 0.0f};
-        if (right < minAxis) { minAxis = right; n = Vector2{1.0f, 0.0f}; }
-        if (down < minAxis) { minAxis = down; n = Vector2{0.0f, -1.0f}; }
-        if (up < minAxis) { minAxis = up; n = Vector2{0.0f, 1.0f}; }
+        Vector2 nLocal{-1.0f, 0.0f};
+        if (right < minAxis) { minAxis = right; nLocal = Vector2{1.0f, 0.0f}; }
+        if (down < minAxis) { minAxis = down; nLocal = Vector2{0.0f, -1.0f}; }
+        if (up < minAxis) { minAxis = up; nLocal = Vector2{0.0f, 1.0f}; }
 
-        return MakeHit(n, c.radius + minAxis);
+        return MakeHit(RectLocalDirectionToWorld(r, nLocal), c.radius + minAxis);
     }
 
-    const Vector2 n = NormalizeSafe(v, Vector2{1.0f, 0.0f});
+    const Vector2 nLocal = NormalizeSafe(vLocal, Vector2{1.0f, 0.0f});
     const float penetration = c.radius - dist;
-    return MakeHit(n, penetration);
+    return MakeHit(RectLocalDirectionToWorld(r, nLocal), penetration);
 }
 
 inline HitInfo ComputeHit(const Math::Rect &r, const Math::Circle &c) {
@@ -290,16 +353,16 @@ inline HitInfo ComputeHit(const Math::Point2D &p, const Math::Circle &c) {
 }
 
 inline HitInfo ComputeHit(const Math::Rect &r, const Math::Point2D &p) {
-    if (!Intersects(r, p)) return MakeNoHit();
-    const Vector2 d = p.position - r.center;
-    const float px = r.halfSize.x - std::abs(d.x);
-    const float py = r.halfSize.y - std::abs(d.y);
+    const Vector2 local = WorldToRectLocal(r, p.position);
+    if (std::abs(local.x) > r.halfSize.x || std::abs(local.y) > r.halfSize.y) return MakeNoHit();
+    const float px = r.halfSize.x - std::abs(local.x);
+    const float py = r.halfSize.y - std::abs(local.y);
     if (px < py) {
-        const float sx = (d.x >= 0.0f) ? 1.0f : -1.0f;
-        return MakeHit(Vector2{sx, 0.0f}, px);
+        const float sx = (local.x >= 0.0f) ? 1.0f : -1.0f;
+        return MakeHit(RectLocalDirectionToWorld(r, Vector2{sx, 0.0f}), px);
     }
-    const float sy = (d.y >= 0.0f) ? 1.0f : -1.0f;
-    return MakeHit(Vector2{0.0f, sy}, py);
+    const float sy = (local.y >= 0.0f) ? 1.0f : -1.0f;
+    return MakeHit(RectLocalDirectionToWorld(r, Vector2{0.0f, sy}), py);
 }
 inline HitInfo ComputeHit(const Math::Point2D &p, const Math::Rect &r) {
     HitInfo hi = ComputeHit(r, p);
@@ -389,22 +452,26 @@ inline HitInfo ComputeHit(const Math::Circle &c, const Math::Capsule2D &cap) {
 }
 
 inline HitInfo ComputeHit(const Math::Capsule2D &cap, const Math::Rect &r) {
-    const Math::Segment2D seg{cap.start, cap.end};
-    // 矩形に対して、各端点および線分自体の最近接点を使って近似的に判定する
-    Vector2 bestP = cap.start;
-    Vector2 bestQ = ClosestPointOnRect(r, cap.start);
+    // 矩形のローカル空間（矩形中心が原点、回転無し）に持ち込んで、軸並行の矩形として判定する
+    const Vector2 localStart = WorldToRectLocal(r, cap.start);
+    const Vector2 localEnd = WorldToRectLocal(r, cap.end);
+    const Math::Segment2D localSeg{localStart, localEnd};
+
+    // 各端点および線分自体の最近接点を使って近似的に判定する
+    Vector2 bestP = localStart;
+    Vector2 bestQ = ClosestPointOnRectLocal(r.halfSize, localStart);
     float bestD2 = MathUtils::LengthSquared(bestP - bestQ);
 
     {
-        const Vector2 q = ClosestPointOnRect(r, cap.end);
-        const float d2 = MathUtils::LengthSquared(cap.end - q);
-        if (d2 < bestD2) { bestD2 = d2; bestP = cap.end; bestQ = q; }
+        const Vector2 q = ClosestPointOnRectLocal(r.halfSize, localEnd);
+        const float d2 = MathUtils::LengthSquared(localEnd - q);
+        if (d2 < bestD2) { bestD2 = d2; bestP = localEnd; bestQ = q; }
     }
 
-    // 矩形中心から線分への最近接点もサンプルする
+    // 矩形中心（ローカル原点）から線分への最近接点もサンプルする
+    const Vector2 pOnSeg = ClosestPointOnSegment(localSeg, Vector2{0.0f, 0.0f});
     {
-        const Vector2 pOnSeg = ClosestPointOnSegment(seg, r.center);
-        const Vector2 q = ClosestPointOnRect(r, pOnSeg);
+        const Vector2 q = ClosestPointOnRectLocal(r.halfSize, pOnSeg);
         const float d2 = MathUtils::LengthSquared(pOnSeg - q);
         if (d2 < bestD2) { bestD2 = d2; bestP = pOnSeg; bestQ = q; }
     }
@@ -413,14 +480,15 @@ inline HitInfo ComputeHit(const Math::Capsule2D &cap, const Math::Rect &r) {
     const float rsum = cap.radius;
     if (bestD2 > rsum * rsum) {
         // 線分が矩形内部を貫通している（距離0）場合でもヒット扱いにしたい
-        if (!Intersects(r, Math::Point2D{ClosestPointOnSegment(seg, r.center)})) {
+        const bool insideLocal = std::abs(pOnSeg.x) <= r.halfSize.x && std::abs(pOnSeg.y) <= r.halfSize.y;
+        if (!insideLocal) {
             return MakeNoHit();
         }
     }
 
     const float dist = std::sqrt(std::max(0.0f, bestD2));
-    const Vector2 n = NormalizeSafe(d, Vector2{1.0f, 0.0f});
-    return MakeHit(n, rsum - dist);
+    const Vector2 nLocal = NormalizeSafe(d, Vector2{1.0f, 0.0f});
+    return MakeHit(RectLocalDirectionToWorld(r, nLocal), rsum - dist);
 }
 
 inline HitInfo ComputeHit(const Math::Rect &r, const Math::Capsule2D &cap) {

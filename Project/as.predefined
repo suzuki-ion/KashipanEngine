@@ -495,6 +495,20 @@ class Rotation {
 	void AddAngularVelocity(const Vector3&in);
 }
 
+class PreTransform {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	const Vector3& GetPreviousTranslate() const;
+	const Vector3& GetPreviousRotate() const;
+	const Quaternion& GetPreviousRotateQuaternion() const;
+	const Vector3& GetPreviousScale() const;
+	const Matrix4x4& GetPreviousWorldMatrix() const;
+}
+
 class ParticleSystem2D {
 	bool IsActive() const;
 	void SetActive(bool);
@@ -1371,6 +1385,13 @@ void throw(const string&in);
 string getExceptionInfo();
 Json@ LoadJsonFile(const string&in path);
 bool SaveJsonFile(const string&in path, const Json&in data, int indent = 4);
+float GetPI();
+float ToDegrees(float);
+float ToRadians(float);
+float Clamp(float, float, float);
+Vector2 Clamp(const Vector2&in, const Vector2&in, const Vector2&in);
+Vector3 Clamp(const Vector3&in, const Vector3&in, const Vector3&in);
+Vector4 Clamp(const Vector4&in, const Vector4&in, const Vector4&in);
 void Log(const string&in);
 void LogWarning(const string&in);
 void LogError(const string&in);

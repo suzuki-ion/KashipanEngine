@@ -82,7 +82,26 @@ std::optional<Bounds2D> ComputeBounds2D(const ColliderInfo2D::ShapeVariant &shap
             } else if constexpr (std::is_same_v<S, Math::Circle>) {
                 return Bounds2D{s.center.x - s.radius, s.center.y - s.radius, s.center.x + s.radius, s.center.y + s.radius};
             } else if constexpr (std::is_same_v<S, Math::Rect>) {
-                return Bounds2D{s.center.x - s.halfSize.x, s.center.y - s.halfSize.y, s.center.x + s.halfSize.x, s.center.y + s.halfSize.y};
+                if (s.rotation == 0.0f) {
+                    return Bounds2D{s.center.x - s.halfSize.x, s.center.y - s.halfSize.y, s.center.x + s.halfSize.x, s.center.y + s.halfSize.y};
+                }
+                // 回転している場合は4頂点を実際に回転させ、それを包むAABBを求める
+                const float c = std::cos(s.rotation);
+                const float sn = std::sin(s.rotation);
+                const Vector2 ex{s.halfSize.x * c, s.halfSize.x * sn};
+                const Vector2 ey{-s.halfSize.y * sn, s.halfSize.y * c};
+                const Vector2 corners[4] = {
+                    s.center - ex - ey, s.center + ex - ey,
+                    s.center + ex + ey, s.center - ex + ey};
+                Vector2 minV = corners[0];
+                Vector2 maxV = corners[0];
+                for (int i = 1; i < 4; ++i) {
+                    minV.x = std::min(minV.x, corners[i].x);
+                    minV.y = std::min(minV.y, corners[i].y);
+                    maxV.x = std::max(maxV.x, corners[i].x);
+                    maxV.y = std::max(maxV.y, corners[i].y);
+                }
+                return Bounds2D{minV.x, minV.y, maxV.x, maxV.y};
             } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
                 return Bounds2D{
                     std::min(s.start.x, s.end.x),

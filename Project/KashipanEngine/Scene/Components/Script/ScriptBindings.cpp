@@ -28,7 +28,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/JSON.h"
-#include "Utilities/MathUtils/Easings.h"
+#include "Utilities/MathUtils.h"
 #include "Utilities/MyAny.h"
 #include "Utilities/RandomValue.h"
 #include "Utilities/TimeUtils.h"
@@ -1796,6 +1796,26 @@ void RegisterEasingBindings(asIScriptEngine *engine) {
 }
 
 //==================================================
+// 数学ユーティリティ（Utilities/MathUtils.h）
+//==================================================
+
+/// @brief 角度変換・円周率・Clampをグローバル関数として登録する
+void RegisterMathUtilBindings(asIScriptEngine *engine) {
+    asbind20::global(engine)
+        .function("float GetPI()", &GetPI<float>)
+        .function("float ToDegrees(float)", &ToDegrees<float>)
+        .function("float ToRadians(float)", &ToRadians<float>)
+        .function("float Clamp(float, float, float)",
+            static_cast<float (*)(float, float, float)>(&Clamp))
+        .function("Vector2 Clamp(const Vector2 &in, const Vector2 &in, const Vector2 &in)",
+            static_cast<Vector2 (*)(const Vector2 &, const Vector2 &, const Vector2 &)>(&Clamp))
+        .function("Vector3 Clamp(const Vector3 &in, const Vector3 &in, const Vector3 &in)",
+            static_cast<Vector3 (*)(const Vector3 &, const Vector3 &, const Vector3 &)>(&Clamp))
+        .function("Vector4 Clamp(const Vector4 &in, const Vector4 &in, const Vector4 &in)",
+            static_cast<Vector4 (*)(const Vector4 &, const Vector4 &, const Vector4 &)>(&Clamp));
+}
+
+//==================================================
 // 乱数（Utilities/RandomValue.h）
 //==================================================
 
@@ -2068,6 +2088,7 @@ void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     RegisterComponentTypes(engine);
     RegisterJsonBindings(engine);
     RegisterEasingBindings(engine);
+    RegisterMathUtilBindings(engine);
     RegisterRandomBindings(engine);
     RegisterGlobalFunctions(engine);
 }

@@ -481,6 +481,66 @@ class Velocity {
 	void AddVelocity(const Vector3&in);
 }
 
+class Rotation {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void SetAngularVelocity(const Vector3&in);
+	const Vector3& GetAngularVelocity() const;
+	void SetAngularAcceleration(const Vector3&in);
+	const Vector3& GetAngularAcceleration() const;
+	void AddAngularVelocity(const Vector3&in);
+}
+
+class ParticleSystem2D {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void Play();
+	void Stop();
+	bool IsPlaying() const;
+	void Clear();
+	void SetEmissionRate(float);
+	float GetEmissionRate() const;
+	void SetMaxParticles(int);
+	int GetMaxParticles() const;
+	void SetBillboard(bool);
+	bool IsBillboard() const;
+	void SetBillboardTarget(Object@);
+	Object@ GetBillboardTarget() const;
+	void SetBillboardRotationMode(TargetLookAtMode);
+	TargetLookAtMode GetBillboardRotationMode() const;
+}
+
+class ParticleSystem3D {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void Play();
+	void Stop();
+	bool IsPlaying() const;
+	void Clear();
+	void SetEmissionRate(float);
+	float GetEmissionRate() const;
+	void SetMaxParticles(int);
+	int GetMaxParticles() const;
+	void SetBillboard(bool);
+	bool IsBillboard() const;
+	void SetBillboardTarget(Object@);
+	Object@ GetBillboardTarget() const;
+	void SetBillboardRotationMode(TargetLookAtMode);
+	TargetLookAtMode GetBillboardRotationMode() const;
+}
+
 class TargetLookAt {
 	bool IsActive() const;
 	void SetActive(bool);

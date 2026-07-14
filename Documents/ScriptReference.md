@@ -254,22 +254,28 @@ class Player : ScriptComponentBehavior {
 
 対応型の `array<T>` にも `[SerializeField]` を付けられます。要素はJSON配列としてシーンへ保存されます。
 
+> **重要: 必ず `array<T>@ 変数名 = null;` のように、明示的なハンドル構文＋`null`初期値で宣言してください。**
+> `array<T> 変数名;` や `array<T> 変数名 = array<T>();`（`@`を書かない値的構文）で宣言すると、
+> スクリプトクラスのコンストラクタ内で `array<T>` のファクトリが呼び出される際にAngelScript側のGC追跡が
+> 壊れ、インスペクター表示時のクラッシュや、エンジン終了時の二重解放クラッシュを引き起こします。
+> `= null` から始めれば、エンジン側（`ScriptComponent`）がその場で安全に空の配列を生成します。
+
 ```angelscript
 class Player : ScriptComponentBehavior {
     [SerializeField]
-    array<int> scores;
+    array<int>@ scores = null;
 
     [SerializeField, Range(0, 100)]      // Rangeなどの編集用属性は各要素に適用される
-    array<float> weights;
+    array<float>@ weights = null;
 
     [SerializeField]
-    array<Vector3> waypoints;
+    array<Vector3>@ waypoints = null;
 
     [SerializeField]
-    array<array<int>> grid;              // ネスト配列も可
+    array<array<int>>@ grid = null;      // ネスト配列も可（内側の要素型はこれまで通りでよい）
 
     [SerializeField]
-    array<JumpSettings> presets;         // [System.Serializable]クラスの配列も可
+    array<JumpSettings>@ presets = null; // [System.Serializable]クラスの配列も可
 }
 ```
 
@@ -284,7 +290,8 @@ class Player : ScriptComponentBehavior {
 
 - 要素型が未対応の配列（コンポーネントハンドルの配列など）はシリアライズ対象になりません。
 - ネストの深さ制限（8段）はSerializableクラスと共有です。
-- `array<T@>`（ハンドル）で宣言したSerializableクラス配列のnull要素は、シーン読込時・エディターでの要素追加時に自動でインスタンスが生成されます。通常は `array<T>` で宣言すれば十分です。
+- `array<T@>`（ハンドル）で宣言したSerializableクラス配列のnull要素は、シーン読込時・エディターでの要素追加時に自動でインスタンスが生成されます。
+- 万一 `@ = null` を付け忘れて壊れたハンドルが検出された場合、エンジン側で自動的に新しい空の配列へ差し替えて動作は継続しますが（クラッシュはしません）、この場合もエンジン終了時に別のクラッシュが起きる可能性があるため、必ず上記の宣言方法に従ってください。
 
 ## コンポーネントの取得・追加・削除
 
@@ -735,6 +742,31 @@ if (loaded !is null) {
 | `void SetVelocity(const Vector3 &in)` / `const Vector3 &GetVelocity() const` | 速度の設定/取得（単位/秒） |
 | `void SetAcceleration(const Vector3 &in)` / `const Vector3 &GetAcceleration() const` | 加速度の設定/取得（単位/秒²） |
 | `void AddVelocity(const Vector3 &in)` | 速度に加算する |
+
+### Rotation
+
+`Velocity` の回転版。毎フレーム、角加速度を角速度へ、角速度を `Transform` の回転（オイラー角・ラジアン）へ自動的に適用する。
+
+| メソッド | 説明 |
+|---|---|
+| `void SetAngularVelocity(const Vector3 &in)` / `const Vector3 &GetAngularVelocity() const` | 角速度の設定/取得（ラジアン/秒） |
+| `void SetAngularAcceleration(const Vector3 &in)` / `const Vector3 &GetAngularAcceleration() const` | 角加速度の設定/取得（ラジアン/秒²） |
+| `void AddAngularVelocity(const Vector3 &in)` | 角速度に加算する |
+
+### ParticleSystem2D / ParticleSystem3D
+
+付与されたオブジェクトの子オブジェクトとして、一定間隔でパーティクル用オブジェクトを生成するコンポーネント。生成した各パーティクルには`Velocity`（初速・重力）と描画コンポーネント（2Dは`MeshFilter`+`SpriteRenderer`、3Dは`MeshFilter`+`MeshRenderer`）が自動で追加され、寿命に応じてスケールが変化しながら消える。詳細なパラメータ（発生間隔・寿命・初速範囲・重力・スケール変化・描画先/メッシュ/マテリアル）はインスペクターから設定する。
+
+| メソッド | 説明 |
+|---|---|
+| `void Play()` / `void Stop()` | パーティクルの生成を開始/停止する（生成済みのパーティクルはStopしても寿命まで残る） |
+| `bool IsPlaying() const` | 生成中かどうか |
+| `void Clear()` | 生存中の全パーティクルを即座に削除する |
+| `void SetEmissionRate(float)` / `float GetEmissionRate() const` | 1秒あたりの生成数の設定/取得 |
+| `void SetMaxParticles(int)` / `int GetMaxParticles() const` | 同時に存在できる最大パーティクル数の設定/取得 |
+| `void SetBillboard(bool)` / `bool IsBillboard() const` | ビルボード化（常に指定オブジェクトの方を向く）の有効/無効の設定/取得 |
+| `void SetBillboardTarget(Object@)` / `Object@ GetBillboardTarget() const` | ビルボードの向き先オブジェクトの設定/取得（未設定の場合はシーン内のカメラを自動で使う） |
+| `void SetBillboardRotationMode(TargetLookAtMode)` / `TargetLookAtMode GetBillboardRotationMode() const` | ビルボードの向き方の設定/取得（`TargetLookAtMode::SyncRotation` / `TargetLookAtMode::LookAt`。[詳細](#targetlookat)） |
 
 ### AudioSource
 

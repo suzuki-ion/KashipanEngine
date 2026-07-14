@@ -695,6 +695,20 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
     if (!module) return;
     asIScriptEngine *engine = module->GetEngine();
 
+    // AngelScriptの実装依存の問題で、array<T>メンバがコンストラクタ実行直後は
+    // 正しく構築されない（ハンドルスロットが無関係なメモリを指してしまう）ケースがあるため、
+    // 収集したタイミングで一度実体を検証し、不正な場合は安全な新しい配列で置き換えておく
+    // （置き換え前の値は実体が特定できないため解放せず、静かに破棄する）
+    auto ensureValidArrayHandle = [engine, this](const SerializedField &field, void *address) {
+        auto *slot = static_cast<CScriptArray **>(address);
+        if (*slot && IsArrayHandleValid(*slot, field.typeId)) return;
+        if (!engine) return;
+        asITypeInfo *type = engine->GetTypeInfoById(field.typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+        if (!type) return;
+        Log("ScriptComponent: array<T>フィールド '" + field.name + "' のハンドルが不正だったため、新しい空の配列で再生成しました", LogSeverity::Warning);
+        *slot = CScriptArray::Create(type);
+    };
+
     // グローバル変数
     const asUINT varCount = module->GetGlobalVarCount();
     for (asUINT i = 0; i < varCount; ++i) {
@@ -714,6 +728,7 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
         field.address = address;
         field.attributes = std::move(attrs);
         SetupArrayField(field, builder, engine, 0);
+        if (field.isArray) ensureValidArrayHandle(field, address);
         if (!field.isArray) CollectSerializableChildren(field, builder, engine, 0);
         serializedFields_.push_back(std::move(field));
     }
@@ -739,6 +754,7 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
             field.address = address;
             field.attributes = std::move(attrs);
             SetupArrayField(field, builder, engine, 0);
+            if (field.isArray) ensureValidArrayHandle(field, address);
             if (!field.isArray) CollectSerializableChildren(field, builder, engine, 0);
             serializedFields_.push_back(std::move(field));
         }
@@ -813,13 +829,22 @@ void ScriptComponent::SetupArrayField(SerializedField &field, CScriptBuilder &bu
     field.children.push_back(std::move(element));
 }
 
+bool ScriptComponent::IsArrayHandleValid(CScriptArray *array, int fieldTypeId) const {
+    if (!array) return false;
+    asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
+    if (!engine) return false;
+    asITypeInfo *expectedType = engine->GetTypeInfoById(fieldTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+    asITypeInfo *actualType = array->GetArrayObjectType();
+    return expectedType && actualType && expectedType == actualType;
+}
+
 JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) const {
     if (!address) return JSON();
 
     if (field.isArray) {
         // 配列はハンドルとして格納されているため参照先を解決し、各要素をJSON配列へ書き出す
         CScriptArray *array = *static_cast<CScriptArray **>(address);
-        if (!array || field.children.empty()) return JSON();
+        if (!array || field.children.empty() || !IsArrayHandleValid(array, field.typeId)) return JSON();
         const SerializedField &element = field.children[0];
         const int subTypeId = array->GetElementTypeId();
         // 非ハンドルのオブジェクト要素（Serializableクラス・ネスト配列）はAtが実体ポインタを
@@ -883,8 +908,9 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
         if (!value.is_array() || field.children.empty()) return;
         auto **arraySlot = static_cast<CScriptArray **>(address);
         asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
-        if (!*arraySlot) {
-            // array<T>@ で宣言されたnullハンドルは配列を生成してから書き込む
+        if (!*arraySlot || !IsArrayHandleValid(*arraySlot, field.typeId)) {
+            // array<T>@ で宣言されたnullハンドル、または不正なハンドルの場合は
+            // 新しく配列を生成してから書き込む（不正な値は実体が特定できないため解放しない）
             if (!engine) return;
             asITypeInfo *type = engine->GetTypeInfoById(field.typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
             if (!type) return;
@@ -1089,6 +1115,10 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         CScriptArray *array = *static_cast<CScriptArray **>(address);
         if (!array || field.children.empty()) {
             ImGui::Text("%s: (null)", label);
+            return;
+        }
+        if (!IsArrayHandleValid(array, field.typeId)) {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s: (invalid array data)", label);
             return;
         }
         const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);

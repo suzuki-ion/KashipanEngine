@@ -462,6 +462,9 @@
     <ClCompile Include="KashipanEngine\Objects\Components\Collider\ICollider.cpp">
       <Filter>KashipanEngine\Objects\Components\Collider</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\PreTransform.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.cpp">
       <Filter>KashipanEngine\Objects\Components\Compute</Filter>
     </ClCompile>
@@ -490,6 +493,9 @@
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp">
+      <Filter>KashipanEngine\Scene\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\ScenePreTransform.cpp">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp">
@@ -1153,6 +1159,21 @@
     <ClCompile Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.cpp">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClCompile>
+    <ClInclude Include="KashipanEngine\Objects\Components\ParticleSystemBase.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\ParticleSystem2D.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\ParticleSystem3D.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PreTransform.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Rotation.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -1235,6 +1256,9 @@
       <Filter>KashipanEngine</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\SceneObjectCollider.h">
+      <Filter>KashipanEngine\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\ScenePreTransform.h">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h">

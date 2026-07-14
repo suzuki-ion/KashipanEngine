@@ -1405,6 +1405,9 @@
     <ClInclude Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.h">
       <Filter>KashipanEngine\Utilities\Plugin\Thread</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\RandomizableValue.h">
+      <Filter>KashipanEngine\Utilities</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\RandomValue.h">
       <Filter>KashipanEngine\Utilities</Filter>
     </ClInclude>

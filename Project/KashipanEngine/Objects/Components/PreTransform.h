@@ -11,7 +11,7 @@ namespace KashipanEngine {
 ///          以後 ScenePreTransform が毎フレーム最後（全オブジェクト・全シーンコンポーネントの更新後）に
 ///          現在のTransformの値を「前フレームの値」としてこのコンポーネントへ書き込む。
 ///          モーションブラー等のGPU用途（ワールド行列）と、スクリプトからの補間・速度計算用途
-///          （ローカルの位置・回転・スケール）の両方に対応する。
+///          （ローカル/ワールドそれぞれの位置・回転・スケール）の両方に対応する。
 class PreTransform final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(PreTransform, 0xFF, )
@@ -25,6 +25,10 @@ public:
         ptr->previousRotateQuaternion_ = previousRotateQuaternion_;
         ptr->previousScale_ = previousScale_;
         ptr->previousWorldMatrix_ = previousWorldMatrix_;
+        ptr->previousWorldPosition_ = previousWorldPosition_;
+        ptr->previousWorldRotate_ = previousWorldRotate_;
+        ptr->previousWorldRotateQuaternion_ = previousWorldRotateQuaternion_;
+        ptr->previousWorldScale_ = previousWorldScale_;
         return ptr;
     }
 
@@ -38,6 +42,15 @@ public:
     const Vector3 &GetPreviousScale() const noexcept { return previousScale_; }
     /// @brief 前フレームのワールド行列を取得する（モーションブラー等のGPU用途）
     const Matrix4x4 &GetPreviousWorldMatrix() const noexcept { return previousWorldMatrix_; }
+
+    /// @brief 前フレームのワールド座標を取得する
+    const Vector3 &GetPreviousWorldPosition() const noexcept { return previousWorldPosition_; }
+    /// @brief 前フレームのワールド回転（オイラー角、ラジアン）を取得する
+    const Vector3 &GetPreviousWorldRotate() const noexcept { return previousWorldRotate_; }
+    /// @brief 前フレームのワールド回転（クォータニオン）を取得する
+    const Quaternion &GetPreviousWorldRotateQuaternion() const noexcept { return previousWorldRotateQuaternion_; }
+    /// @brief 前フレームのワールドスケールを取得する
+    const Vector3 &GetPreviousWorldScale() const noexcept { return previousWorldScale_; }
 
     /// @brief 同オブジェクトのTransformの現在値を読み取り、前フレームの値として上書きする
     /// @details ScenePreTransformが毎フレーム最後に呼び出す（定義はTransformの完全な型が必要なため
@@ -55,6 +68,10 @@ protected:
         ImGui::Text("Previous Translate: (%.3f, %.3f, %.3f)", previousTranslate_.x, previousTranslate_.y, previousTranslate_.z);
         ImGui::Text("Previous Rotate (rad): (%.3f, %.3f, %.3f)", previousRotate_.x, previousRotate_.y, previousRotate_.z);
         ImGui::Text("Previous Scale: (%.3f, %.3f, %.3f)", previousScale_.x, previousScale_.y, previousScale_.z);
+        ImGui::Spacing();
+        ImGui::Text("Previous World Position: (%.3f, %.3f, %.3f)", previousWorldPosition_.x, previousWorldPosition_.y, previousWorldPosition_.z);
+        ImGui::Text("Previous World Rotate (rad): (%.3f, %.3f, %.3f)", previousWorldRotate_.x, previousWorldRotate_.y, previousWorldRotate_.z);
+        ImGui::Text("Previous World Scale: (%.3f, %.3f, %.3f)", previousWorldScale_.x, previousWorldScale_.y, previousWorldScale_.z);
     }
 #endif
 
@@ -64,6 +81,11 @@ private:
     Quaternion previousRotateQuaternion_ = Quaternion::Identity();
     Vector3 previousScale_{ 1.0f, 1.0f, 1.0f };
     Matrix4x4 previousWorldMatrix_ = Matrix4x4::Identity();
+
+    Vector3 previousWorldPosition_{ 0.0f, 0.0f, 0.0f };
+    Vector3 previousWorldRotate_{ 0.0f, 0.0f, 0.0f };
+    Quaternion previousWorldRotateQuaternion_ = Quaternion::Identity();
+    Vector3 previousWorldScale_{ 1.0f, 1.0f, 1.0f };
 };
 
 REGISTER_COMPONENT_OBJECT(PreTransform)

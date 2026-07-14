@@ -16,6 +16,10 @@ void PreTransform::CaptureCurrentAsPrevious() {
     previousRotateQuaternion_ = transform->GetRotateQuaternion();
     previousScale_ = transform->GetScale();
     previousWorldMatrix_ = transform->GetWorldMatrix();
+    previousWorldPosition_ = transform->GetWorldPosition();
+    previousWorldRotate_ = transform->GetWorldRotate();
+    previousWorldRotateQuaternion_ = transform->GetWorldRotateQuaternion();
+    previousWorldScale_ = transform->GetWorldScale();
 }
 
 void PreTransform::Initialize() {

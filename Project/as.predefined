@@ -359,6 +359,10 @@ class Transform {
 	void SetScale(const Vector3&in);
 	const Vector3& GetScale() const;
 	const Matrix4x4& GetWorldMatrix();
+	Vector3 GetWorldPosition();
+	Vector3 GetWorldRotate() const;
+	Quaternion GetWorldRotateQuaternion() const;
+	Vector3 GetWorldScale();
 }
 
 class Collider {
@@ -507,6 +511,10 @@ class PreTransform {
 	const Quaternion& GetPreviousRotateQuaternion() const;
 	const Vector3& GetPreviousScale() const;
 	const Matrix4x4& GetPreviousWorldMatrix() const;
+	const Vector3& GetPreviousWorldPosition() const;
+	const Vector3& GetPreviousWorldRotate() const;
+	const Quaternion& GetPreviousWorldRotateQuaternion() const;
+	const Vector3& GetPreviousWorldScale() const;
 }
 
 class ParticleSystem2D {
@@ -1387,7 +1395,13 @@ Json@ LoadJsonFile(const string&in path);
 bool SaveJsonFile(const string&in path, const Json&in data, int indent = 4);
 float GetPI();
 float ToDegrees(float);
+Vector2 ToDegrees(const Vector2&in);
+Vector3 ToDegrees(const Vector3&in);
+Vector4 ToDegrees(const Vector4&in);
 float ToRadians(float);
+Vector2 ToRadians(const Vector2&in);
+Vector3 ToRadians(const Vector3&in);
+Vector4 ToRadians(const Vector4&in);
 float Clamp(float, float, float);
 Vector2 Clamp(const Vector2&in, const Vector2&in, const Vector2&in);
 Vector3 Clamp(const Vector3&in, const Vector3&in, const Vector3&in);

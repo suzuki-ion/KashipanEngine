@@ -4,9 +4,6 @@
 // （Player側はVelocityコンポーネントの値を見て地面の動きに追従するため、
 //   ここで直接Transformを書き換えると乗っているプレイヤーが追従できない）
 
-// 度からラジアンへの変換係数（TransformのRotateはラジアン基準のため）
-const float kDegToRad = 3.14159265358979f / 180.0f;
-
 class MoveGround : ScriptComponentBehavior {
     [SerializeField, Tooltip("移動範囲 min（開始位置からのオフセット）")]
     Vector3 moveRangeMin = Vector3(0.0f, 0.0f, 0.0f);
@@ -112,8 +109,8 @@ class MoveGround : ScriptComponentBehavior {
         } else {
             // rotateRangeMin/Max は度指定なので、ラジアンであるTransformの回転と
             // 比較できるようにここでラジアンへ変換する
-            Vector3 rotateRangeMinRad = rotateRangeMin * kDegToRad;
-            Vector3 rotateRangeMaxRad = rotateRangeMax * kDegToRad;
+            Vector3 rotateRangeMinRad = ToRadians(rotateRangeMin);
+            Vector3 rotateRangeMaxRad = ToRadians(rotateRangeMax);
 
             Vector3 rotateOffset = tf.GetRotate() - initialRotation;
             Vector3 newRotateDirection(
@@ -134,9 +131,9 @@ class MoveGround : ScriptComponentBehavior {
                 rotateStopTimer = rotateStopDuration;
             } else if (hasRotation) {
                 rotation.SetAngularVelocity(Vector3(
-                    rotateSpeed.x * kDegToRad * rotateDirection.x,
-                    rotateSpeed.y * kDegToRad * rotateDirection.y,
-                    rotateSpeed.z * kDegToRad * rotateDirection.z));
+                    ToRadians(rotateSpeed.x) * rotateDirection.x,
+                    ToRadians(rotateSpeed.y) * rotateDirection.y,
+                    ToRadians(rotateSpeed.z) * rotateDirection.z));
             }
         }
     }

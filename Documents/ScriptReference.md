@@ -743,6 +743,10 @@ if (loaded !is null) {
 | `void SetRotateQuaternion(const Quaternion &in)` / `const Quaternion &GetRotateQuaternion() const` | 回転の設定/取得（クォータニオン） |
 | `void SetScale(const Vector3 &in)` / `const Vector3 &GetScale() const` | スケールの設定/取得 |
 | `const Matrix4x4 &GetWorldMatrix()` | ワールド行列を取得する（必要なら再計算される） |
+| `Vector3 GetWorldPosition()` | 親を合成したワールド座標を取得する |
+| `Vector3 GetWorldRotate() const` | 親を合成したワールド回転を取得する（オイラー角・ラジアン） |
+| `Quaternion GetWorldRotateQuaternion() const` | 親を合成したワールド回転を取得する（クォータニオン） |
+| `Vector3 GetWorldScale()` | 親を合成したワールドスケールを取得する |
 
 ### Velocity
 
@@ -762,13 +766,29 @@ if (loaded !is null) {
 | `void SetAngularAcceleration(const Vector3 &in)` / `const Vector3 &GetAngularAcceleration() const` | 角加速度の設定/取得（ラジアン/秒²） |
 | `void AddAngularVelocity(const Vector3 &in)` | 角速度に加算する |
 
-### ParticleSystem2D / ParticleSystem3D
+### PreTransform
 
-付与されたオブジェクトの子オブジェクトとして、一定間隔でパーティクル用オブジェクトを生成するコンポーネント。生成した各パーティクルには`Velocity`（初速・重力）と描画コンポーネント（2Dは`MeshFilter`+`SpriteRenderer`、3Dは`MeshFilter`+`MeshRenderer`）が自動で追加され、寿命に応じてスケールが変化しながら消える。詳細なパラメータ（発生間隔・寿命・初速範囲・重力・スケール変化・描画先/メッシュ/マテリアル）はインスペクターから設定する。
+1フレーム前のTransform情報を保持するコンポーネント。オブジェクトに追加すると、シーン側で毎フレーム最後（全オブジェクト・全シーンコンポーネントの更新後）に自動で値が更新される。ローカル/ワールドそれぞれの位置・回転・スケールを取得できるため、補間や速度計算、モーションブラー等に使用できる。
 
 | メソッド | 説明 |
 |---|---|
-| `void Play()` / `void Stop()` | パーティクルの生成を開始/停止する（生成済みのパーティクルはStopしても寿命まで残る） |
+| `const Vector3 &GetPreviousTranslate() const` | 前フレームのローカル座標を取得する |
+| `const Vector3 &GetPreviousRotate() const` | 前フレームのローカル回転を取得する（オイラー角・ラジアン） |
+| `const Quaternion &GetPreviousRotateQuaternion() const` | 前フレームのローカル回転を取得する（クォータニオン） |
+| `const Vector3 &GetPreviousScale() const` | 前フレームのローカルスケールを取得する |
+| `const Matrix4x4 &GetPreviousWorldMatrix() const` | 前フレームのワールド行列を取得する（モーションブラー等のGPU用途） |
+| `const Vector3 &GetPreviousWorldPosition() const` | 前フレームのワールド座標を取得する |
+| `const Vector3 &GetPreviousWorldRotate() const` | 前フレームのワールド回転を取得する（オイラー角・ラジアン） |
+| `const Quaternion &GetPreviousWorldRotateQuaternion() const` | 前フレームのワールド回転を取得する（クォータニオン） |
+| `const Vector3 &GetPreviousWorldScale() const` | 前フレームのワールドスケールを取得する |
+
+### ParticleSystem2D / ParticleSystem3D
+
+指定した生成方法（自身の子/他オブジェクトの子/自身のワールド座標/指定座標のいずれか）で、一定間隔でパーティクル用オブジェクトを生成するコンポーネント。生成した各パーティクルには`Velocity`（初速・加速度）、`Rotation`（初期回転速度・回転加速度。度数法で指定した値はラジアンへ変換して適用される）と描画コンポーネント（2Dは`MeshFilter`+`SpriteRenderer`、3Dは`MeshFilter`+`MeshRenderer`）が自動で追加され、寿命に応じてスケールが変化しながら消える。寿命・初速・加速度・開始/終了スケール・初期回転・回転速度・回転加速度・一回のスポーン数は、パラメータごとに「固定値」か「Min〜Maxのランダム範囲」かを選べる。Loopを無効にして再生した場合、Total Spawn Countで指定した数だけスポーンすると自動的に停止する。スポーン範囲の形状（Point/Box/Sphere/Capsule、2DはRect/Circle）を含め、詳細なパラメータはインスペクターから設定する。
+
+| メソッド | 説明 |
+|---|---|
+| `void Play()` / `void Stop()` | パーティクルの生成を開始/停止する（生成済みのパーティクルはStopしても寿命まで残る。停止中にPlayを呼ぶと総発生数カウントがリセットされる） |
 | `bool IsPlaying() const` | 生成中かどうか |
 | `void Clear()` | 生存中の全パーティクルを即座に削除する |
 | `void SetEmissionRate(float)` / `float GetEmissionRate() const` | 1秒あたりの生成数の設定/取得 |

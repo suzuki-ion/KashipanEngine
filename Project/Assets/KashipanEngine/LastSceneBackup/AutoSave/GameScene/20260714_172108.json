@@ -68,7 +68,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": 2.999873161315918,
+                                "y": 2.9998743534088135,
                                 "z": -16.0
                             }
                         },
@@ -182,9 +182,9 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 108.6750717163086,
-                                "y": 64.11578369140625,
-                                "z": -2.1777280778678687e-07
+                                "x": 0.0,
+                                "y": 0.9998729228973389,
+                                "z": -2.2428507406857534e-07
                             }
                         },
                         "isActive": true,
@@ -773,7 +773,7 @@
                             },
                             "translate": {
                                 "x": 81.05665588378906,
-                                "y": 44.584598541259766,
+                                "y": 44.58870315551758,
                                 "z": -1.1010958189672237e-07
                             }
                         },
@@ -2260,7 +2260,7 @@
                             "decay": 2.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 0.25,
+                            "intensity": 0.20000000298023224,
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowDistance": 100.0,
@@ -6381,10 +6381,10 @@
                         "customData": {
                             "parent": "bd16456f-dc67-4b49-9f08-468a5d9ea789",
                             "rotate": {
-                                "w": 1.0,
+                                "w": 0.900306761264801,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": 0.4352559447288513
                             },
                             "scale": {
                                 "x": 4.0,
@@ -8935,185 +8935,44 @@
                 {
                     "data": {
                         "customData": {
-                            "acceleration": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
                             "billboard": true,
                             "billboardRotationMode": 1,
                             "billboardTargetObjectID": "66779b41-4774-4de5-be40-a882e63feea6",
                             "emissionRate": 8.0,
                             "endScale": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "fixedSpawnPosition": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "initialRotation": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
+                            "gravity": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
                             },
-                            "initialRotationSpeed": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
+                            "initialVelocityMax": {
+                                "x": 2.0,
+                                "y": 2.0,
+                                "z": 2.0
                             },
-                            "initialVelocity": {
-                                "max": {
-                                    "x": 1.0,
-                                    "y": 3.0,
-                                    "z": 1.0
-                                },
-                                "min": {
-                                    "x": -1.0,
-                                    "y": 1.0,
-                                    "z": -1.0
-                                },
-                                "randomize": true,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 1.0,
-                                    "z": 0.0
-                                }
+                            "initialVelocityMin": {
+                                "x": -2.0,
+                                "y": -2.0,
+                                "z": -2.0
                             },
-                            "lifetime": {
-                                "max": 1.0,
-                                "min": 1.0,
-                                "randomize": false,
-                                "value": 1.0
-                            },
+                            "lifetimeMax": 2.0,
+                            "lifetimeMin": 1.0,
                             "loop": true,
                             "materialName": "ParticleWhite",
                             "maxParticles": 64,
                             "meshAssetPath": "PrimitiveMesh-Tetrahedron",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,
-                            "rotationAcceleration": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "spawnBoxSizeMax": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "spawnBoxSizeMin": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "spawnCapsuleHeightMax": 1.0,
-                            "spawnCapsuleHeightMin": 0.0,
-                            "spawnCapsuleRadiusMax": 0.5,
-                            "spawnCapsuleRadiusMin": 0.0,
-                            "spawnCenter": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "spawnCount": {
-                                "max": 1,
-                                "min": 1,
-                                "randomize": false,
-                                "value": 1
-                            },
-                            "spawnOrigin": 0,
-                            "spawnParentObjectID": "",
-                            "spawnShape": 0,
-                            "spawnSphereRadiusMax": 1.0,
-                            "spawnSphereRadiusMin": 0.0,
                             "startScale": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
+                                "x": 0.5,
+                                "y": 0.5,
+                                "z": 0.5
                             },
-                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
-                            "totalSpawnCount": 100
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                         },
                         "isActive": true,
                         "priority": 1,
@@ -9207,195 +9066,6 @@
                         "tag": ""
                     },
                     "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "acceleration": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "billboard": false,
-                            "billboardRotationMode": 0,
-                            "billboardTargetObjectID": "",
-                            "emissionRate": 8.0,
-                            "endScale": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "fixedSpawnPosition": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "initialRotation": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "initialRotationSpeed": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "initialVelocity": {
-                                "max": {
-                                    "x": 1.0,
-                                    "y": 3.0,
-                                    "z": 1.0
-                                },
-                                "min": {
-                                    "x": -1.0,
-                                    "y": 1.0,
-                                    "z": -1.0
-                                },
-                                "randomize": true,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 1.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "lifetime": {
-                                "max": 1.0,
-                                "min": 1.0,
-                                "randomize": false,
-                                "value": 1.0
-                            },
-                            "loop": true,
-                            "materialName": "White",
-                            "maxParticles": 16,
-                            "meshAssetPath": "PrimitiveMesh-Tetrahedron",
-                            "pipelineName": "Object3D.Solid.BlendNormal",
-                            "playOnStart": true,
-                            "rotationAcceleration": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "spawnBoxSizeMax": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "spawnBoxSizeMin": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "spawnCapsuleHeightMax": 0.009999999776482582,
-                            "spawnCapsuleHeightMin": 0.0,
-                            "spawnCapsuleRadiusMax": 0.5,
-                            "spawnCapsuleRadiusMin": 0.44999998807907104,
-                            "spawnCenter": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "spawnCount": {
-                                "max": 1,
-                                "min": 1,
-                                "randomize": false,
-                                "value": 1
-                            },
-                            "spawnOrigin": 0,
-                            "spawnParentObjectID": "",
-                            "spawnShape": 3,
-                            "spawnSphereRadiusMax": 1.0,
-                            "spawnSphereRadiusMin": 0.0,
-                            "startScale": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
-                            "totalSpawnCount": 100
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "ParticleSystem3D"
                 }
             ],
             "editorOnly": false,
@@ -10552,10 +10222,10 @@
                         "customData": {
                             "parent": "7c4451a8-4c6e-4ba7-936e-855838c283dd",
                             "rotate": {
-                                "w": 1.0,
+                                "w": 0.900306761264801,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": 0.4352559447288513
                             },
                             "scale": {
                                 "x": 4.0,
@@ -10729,10 +10399,10 @@
                         "customData": {
                             "parent": "844c251a-9ab1-4c55-ba8a-443c4c488ae7",
                             "rotate": {
-                                "w": 1.0,
+                                "w": 0.900306761264801,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": 0.4352559447288513
                             },
                             "scale": {
                                 "x": 4.0,
@@ -10917,7 +10587,7 @@
                                 "z": 5.0
                             },
                             "translate": {
-                                "x": 0.0,
+                                "x": 5.78911828994751,
                                 "y": 0.0,
                                 "z": 0.0
                             }
@@ -11030,7 +10700,7 @@
                                 "z": 0.0
                             },
                             "velocity": {
-                                "x": 0.0,
+                                "x": -4.0,
                                 "y": 0.0,
                                 "z": 0.0
                             }
@@ -11208,8 +10878,8 @@
                         "customData": {
                             "parent": "f08c65d3-f675-40af-bfe6-1da935169ab6",
                             "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
+                                "w": -0.11234297603368759,
+                                "x": -0.9936695098876953,
                                 "y": 0.0,
                                 "z": 0.0
                             },
@@ -12099,7 +11769,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": 0.0,
+                                "y": -8.0,
                                 "z": 0.0
                             }
                         },
@@ -12509,10 +12179,10 @@
                         "customData": {
                             "parent": "66779b41-4774-4de5-be40-a882e63feea6",
                             "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "w": 0.6472874283790588,
+                                "x": 0.5233588218688965,
+                                "y": 0.18223662674427032,
+                                "z": 0.5233587622642517
                             },
                             "scale": {
                                 "x": 1.0,
@@ -12955,185 +12625,44 @@
                 {
                     "data": {
                         "customData": {
-                            "acceleration": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
                             "billboard": true,
                             "billboardRotationMode": 1,
                             "billboardTargetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
-                            "emissionRate": 8.0,
+                            "emissionRate": 281.20001220703125,
                             "endScale": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "fixedSpawnPosition": {
                                 "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "initialRotation": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
+                            "gravity": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
                             },
-                            "initialRotationSpeed": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
+                            "initialVelocityMax": {
+                                "x": 1.0,
+                                "y": 3.0,
+                                "z": 1.0
                             },
-                            "initialVelocity": {
-                                "max": {
-                                    "x": 1.0,
-                                    "y": 3.0,
-                                    "z": 1.0
-                                },
-                                "min": {
-                                    "x": -1.0,
-                                    "y": 1.0,
-                                    "z": -1.0
-                                },
-                                "randomize": true,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 1.0,
-                                    "z": 0.0
-                                }
+                            "initialVelocityMin": {
+                                "x": -1.0,
+                                "y": 2.0,
+                                "z": -1.0
                             },
-                            "lifetime": {
-                                "max": 1.0,
-                                "min": 1.0,
-                                "randomize": false,
-                                "value": 1.0
-                            },
+                            "lifetimeMax": 1.0,
+                            "lifetimeMin": 1.0,
                             "loop": true,
                             "materialName": "White",
                             "maxParticles": 16,
                             "meshAssetPath": "PrimitiveMesh-Tetrahedron",
                             "pipelineName": "Object3D.Solid.BlendNormal",
-                            "playOnStart": true,
-                            "rotationAcceleration": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "spawnBoxSizeMax": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "spawnBoxSizeMin": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "spawnCapsuleHeightMax": 0.009999999776482582,
-                            "spawnCapsuleHeightMin": 0.0,
-                            "spawnCapsuleRadiusMax": 0.5,
-                            "spawnCapsuleRadiusMin": 0.44999998807907104,
-                            "spawnCenter": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "spawnCount": {
-                                "max": 1,
-                                "min": 1,
-                                "randomize": false,
-                                "value": 1
-                            },
-                            "spawnOrigin": 0,
-                            "spawnParentObjectID": "",
-                            "spawnShape": 3,
-                            "spawnSphereRadiusMax": 1.0,
-                            "spawnSphereRadiusMin": 0.0,
+                            "playOnStart": false,
                             "startScale": {
-                                "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "randomize": false,
-                                "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                }
+                                "x": 0.25,
+                                "y": 0.25,
+                                "z": 0.25
                             },
-                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
-                            "totalSpawnCount": 100
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13416,6 +12945,2722 @@
             "isActive": true,
             "name": "PointLight",
             "objectID": "98d47b1a-2248-4487-bda5-d0120aaaf26b",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.9012929797172546,
+                                "x": -0.11623504012823105,
+                                "y": 0.4138975441455841,
+                                "z": 0.05337820202112198
+                            },
+                            "scale": {
+                                "x": 0.02386295795440674,
+                                "y": 0.02386295795440674,
+                                "z": 0.02386295795440674
+                            },
+                            "translate": {
+                                "x": -1.8653671741485596,
+                                "y": -0.645054042339325,
+                                "z": -1.602672815322876
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -1.1616768836975098,
+                                "y": -0.4017140865325928,
+                                "z": -0.9980809688568115
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.8576235771179199,
+                                "x": -0.1468534916639328,
+                                "y": -0.48579448461532593,
+                                "z": -0.08318407088518143
+                            },
+                            "scale": {
+                                "x": 0.06618723273277283,
+                                "y": 0.06618723273277283,
+                                "z": 0.06618723273277283
+                            },
+                            "translate": {
+                                "x": 2.454448938369751,
+                                "y": -1.0096395015716553,
+                                "z": -1.4713971614837646
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 1.6565089225769043,
+                                "y": -0.6814062595367432,
+                                "z": -0.993046760559082
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.6785462498664856,
+                                "x": -0.07842418551445007,
+                                "y": -0.7255295515060425,
+                                "z": -0.08385435491800308
+                            },
+                            "scale": {
+                                "x": 0.03341728448867798,
+                                "y": 0.03341728448867798,
+                                "z": 0.03341728448867798
+                            },
+                            "translate": {
+                                "x": 2.3031349182128906,
+                                "y": -0.5407934784889221,
+                                "z": 0.15430772304534912
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 1.8699414730072021,
+                                "y": -0.43907642364501953,
+                                "z": 0.12528419494628906
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.5611605644226074,
+                                "x": -0.23358920216560364,
+                                "y": -0.7330861687660217,
+                                "z": -0.30515506863594055
+                            },
+                            "scale": {
+                                "x": 0.048431068658828735,
+                                "y": 0.048431068658828735,
+                                "z": 0.048431068658828735
+                            },
+                            "translate": {
+                                "x": 1.3855328559875488,
+                                "y": -1.4453723430633545,
+                                "z": 0.37471678853034973
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 1.2577428817749023,
+                                "y": -1.312063455581665,
+                                "z": 0.34015607833862305
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.8258932828903198,
+                                "x": 0.3637203574180603,
+                                "y": 0.39428046345710754,
+                                "z": -0.1736396849155426
+                            },
+                            "scale": {
+                                "x": 0.09603440761566162,
+                                "y": 0.09603440761566162,
+                                "z": 0.09603440761566162
+                            },
+                            "translate": {
+                                "x": -0.6463029384613037,
+                                "y": 0.9082413911819458,
+                                "z": -0.5226269364356995
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.658858060836792,
+                                "y": 0.9258847236633301,
+                                "z": -0.5327794551849365
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.7970569729804993,
+                                "x": 0.5585726499557495,
+                                "y": 0.1879909783601761,
+                                "z": -0.1317429095506668
+                            },
+                            "scale": {
+                                "x": 0.10357847809791565,
+                                "y": 0.10357847809791565,
+                                "z": 0.10357847809791565
+                            },
+                            "translate": {
+                                "x": -0.1675574779510498,
+                                "y": 1.0327450037002563,
+                                "z": -0.33544963598251343
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.19698762893676758,
+                                "y": 1.2141387462615967,
+                                "z": -0.39436864852905273
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.795902669429779,
+                                "x": 0.21566517651081085,
+                                "y": -0.5460191965103149,
+                                "z": 0.14795444905757904
+                            },
+                            "scale": {
+                                "x": 0.2243945300579071,
+                                "y": 0.2243945300579071,
+                                "z": 0.2243945300579071
+                            },
+                            "translate": {
+                                "x": 1.360584020614624,
+                                "y": 0.8529518842697144,
+                                "z": -0.5249175429344177
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 1.8679325580596924,
+                                "y": 1.1710095405578613,
+                                "z": -0.7206542491912842
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.8402306437492371,
+                                "x": 0.49357137084007263,
+                                "y": -0.19357195496559143,
+                                "z": 0.11370875686407089
+                            },
+                            "scale": {
+                                "x": 0.08747267723083496,
+                                "y": 0.08747267723083496,
+                                "z": 0.08747267723083496
+                            },
+                            "translate": {
+                                "x": 0.27231746912002563,
+                                "y": 1.1164594888687134,
+                                "z": -0.5596479177474976
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.42393362522125244,
+                                "y": 0.7861584424972534,
+                                "z": -0.8712390661239624
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.7944890260696411,
+                                "x": 0.5261321663856506,
+                                "y": 0.2528519630432129,
+                                "z": -0.16744543612003326
+                            },
+                            "scale": {
+                                "x": 0.08747267723083496,
+                                "y": 0.08747267723083496,
+                                "z": 0.08747267723083496
+                            },
+                            "translate": {
+                                "x": -0.18176884949207306,
+                                "y": 0.7418854236602783,
+                                "z": -0.25664642453193665
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.2829709053039551,
+                                "y": 0.20303553342819214,
+                                "z": -0.3995375633239746
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.17992107570171356,
+                                "x": 0.10509296506643295,
+                                "y": 0.844535768032074,
+                                "z": -0.49329835176467896
+                            },
+                            "scale": {
+                                "x": 0.08941033482551575,
+                                "y": 0.08941033482551575,
+                                "z": 0.08941033482551575
+                            },
+                            "translate": {
+                                "x": -0.18489551544189453,
+                                "y": 0.8043975830078125,
+                                "z": 0.41425392031669617
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.2912783622741699,
+                                "y": 0.32669979333877563,
+                                "z": 0.6526020765304565
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.16696015000343323,
+                                "x": 0.0882929190993309,
+                                "y": 0.8680920004844666,
+                                "z": -0.4590699076652527
+                            },
+                            "scale": {
+                                "x": 0.09130685031414032,
+                                "y": 0.09130685031414032,
+                                "z": 0.09130685031414032
+                            },
+                            "translate": {
+                                "x": -0.17326918244361877,
+                                "y": 0.6858490109443665,
+                                "z": 0.4337901473045349
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.2762868404388428,
+                                "y": 0.1645590364933014,
+                                "z": 0.6917014122009277
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": -0.39505404233932495,
+                                "x": -0.32545486092567444,
+                                "y": 0.6630509495735168,
+                                "z": -0.5462369918823242
+                            },
+                            "scale": {
+                                "x": 0.09130685031414032,
+                                "y": 0.09130685031414032,
+                                "z": 0.09130685031414032
+                            },
+                            "translate": {
+                                "x": 0.13566748797893524,
+                                "y": 0.7910464406013489,
+                                "z": 0.0734337717294693
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.21632897853851318,
+                                "y": 0.33230191469192505,
+                                "z": 0.11709403991699219
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": -0.16788139939308167,
+                                "x": -0.11583877354860306,
+                                "y": 0.8057756423950195,
+                                "z": -0.5559881925582886
+                            },
+                            "scale": {
+                                "x": 0.09321622550487518,
+                                "y": 0.09321622550487518,
+                                "z": 0.09321622550487518
+                            },
+                            "translate": {
+                                "x": 0.1517339050769806,
+                                "y": 1.0008156299591064,
+                                "z": 0.3483286499977112
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.24493873119354248,
+                                "y": 0.6980074644088745,
+                                "z": 0.562294602394104
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": -0.23586449027061462,
+                                "x": -0.12958160042762756,
+                                "y": 0.8441076874732971,
+                                "z": -0.46374431252479553
+                            },
+                            "scale": {
+                                "x": 0.09513077139854431,
+                                "y": 0.09513077139854431,
+                                "z": 0.09513077139854431
+                            },
+                            "translate": {
+                                "x": 0.3052157759666443,
+                                "y": 0.9266366958618164,
+                                "z": 0.5035049915313721
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.4987757205963135,
+                                "y": 0.608036994934082,
+                                "z": 0.82281494140625
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.5805261731147766,
+                                "x": 0.4752923846244812,
+                                "y": -0.5115460157394409,
+                                "z": 0.418816477060318
+                            },
+                            "scale": {
+                                "x": 0.09513077139854431,
+                                "y": 0.09513077139854431,
+                                "z": 0.09513077139854431
+                            },
+                            "translate": {
+                                "x": 0.23735211789608002,
+                                "y": 1.1882951259613037,
+                                "z": -0.030104348435997963
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.3878747224807739,
+                                "y": 1.0356320142745972,
+                                "z": -0.04919576644897461
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": -0.4047311842441559,
+                                "x": 0.06648287177085876,
+                                "y": 0.8999549150466919,
+                                "z": 0.14783044159412384
+                            },
+                            "scale": {
+                                "x": 0.2992917597293854,
+                                "y": 0.2992917597293854,
+                                "z": 0.2992917597293854
+                            },
+                            "translate": {
+                                "x": 0.9520851969718933,
+                                "y": -0.4296826720237732,
+                                "z": 0.8444364070892334
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 1.5767598152160645,
+                                "y": -0.7116026878356934,
+                                "z": 1.3984811305999756
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.7140040993690491,
+                                "x": 0.41787439584732056,
+                                "y": 0.48483431339263916,
+                                "z": -0.28375163674354553
+                            },
+                            "scale": {
+                                "x": 0.0970175564289093,
+                                "y": 0.0970175564289093,
+                                "z": 0.0970175564289093
+                            },
+                            "translate": {
+                                "x": -0.5464702844619751,
+                                "y": 1.0466852188110352,
+                                "z": -0.2168506383895874
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.9050159454345703,
+                                "y": 0.8393301963806152,
+                                "z": -0.35912883281707764
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.37095117568969727,
+                                "x": 0.2235155999660492,
+                                "y": 0.7720342874526978,
+                                "z": -0.4651871919631958
+                            },
+                            "scale": {
+                                "x": 0.09904403984546661,
+                                "y": 0.09904403984546661,
+                                "z": 0.09904403984546661
+                            },
+                            "translate": {
+                                "x": -0.32002416253089905,
+                                "y": 0.775544285774231,
+                                "z": 0.25613707304000854
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.537311315536499,
+                                "y": 0.42034047842025757,
+                                "z": 0.4300466775894165
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": -0.38648343086242676,
+                                "x": -0.1951441615819931,
+                                "y": 0.8046597838401794,
+                                "z": -0.40629076957702637
+                            },
+                            "scale": {
+                                "x": 0.09904403984546661,
+                                "y": 0.09904403984546661,
+                                "z": 0.09904403984546661
+                            },
+                            "translate": {
+                                "x": 0.47771692276000977,
+                                "y": 0.8295395374298096,
+                                "z": 0.38257694244384766
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.8020726442337036,
+                                "y": 0.5109969973564148,
+                                "z": 0.6423354148864746
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": -0.21117164194583893,
+                                "x": -0.1169111430644989,
+                                "y": 0.8490030169487,
+                                "z": -0.47003430128097534
+                            },
+                            "scale": {
+                                "x": 0.10109926760196686,
+                                "y": 0.10109926760196686,
+                                "z": 0.10109926760196686
+                            },
+                            "translate": {
+                                "x": 0.22802504897117615,
+                                "y": 0.7771556973457336,
+                                "z": 0.43002671003341675
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.38812255859375,
+                                "y": 0.45316118001937866,
+                                "z": 0.7319507598876953
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": -0.4029025137424469,
+                                "x": -0.2849642038345337,
+                                "y": 0.7100904583930969,
+                                "z": -0.5022315382957458
+                            },
+                            "scale": {
+                                "x": 0.10312306880950928,
+                                "y": 0.10312306880950928,
+                                "z": 0.10312306880950928
+                            },
+                            "translate": {
+                                "x": 0.2647990882396698,
+                                "y": 0.8731235861778259,
+                                "z": 0.15822407603263855
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.4569042921066284,
+                                "y": 0.6488449573516846,
+                                "z": 0.2730116844177246
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.8413392901420593,
+                                "x": 0.5040056705474854,
+                                "y": -0.16750465333461761,
+                                "z": 0.10034392029047012
+                            },
+                            "scale": {
+                                "x": 0.10511238873004913,
+                                "y": 0.10511238873004913,
+                                "z": 0.10511238873004913
+                            },
+                            "translate": {
+                                "x": 0.18726123869419098,
+                                "y": 0.9136762619018555,
+                                "z": -0.451650470495224
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.32760941982269287,
+                                "y": 0.7526708245277405,
+                                "z": -0.7901525497436523
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": 0.7057861685752869,
+                                "x": 0.3918018639087677,
+                                "y": -0.516036868095398,
+                                "z": 0.2864666283130646
+                            },
+                            "scale": {
+                                "x": 0.10511238873004913,
+                                "y": 0.10511238873004913,
+                                "z": 0.10511238873004913
+                            },
+                            "translate": {
+                                "x": 0.5712875723838806,
+                                "y": 0.962123692035675,
+                                "z": -0.1818278729915619
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.9994548559188843,
+                                "y": 0.8374285697937012,
+                                "z": -0.3181037902832031
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2c49956b-7720-41dc-ad9b-5584e2ed2860",
+                            "rotate": {
+                                "w": -0.4297437071800232,
+                                "x": -0.35131439566612244,
+                                "y": 0.6439970135688782,
+                                "z": -0.5264659523963928
+                            },
+                            "scale": {
+                                "x": 0.10710024833679199,
+                                "y": 0.10710024833679199,
+                                "z": 0.10710024833679199
+                            },
+                            "translate": {
+                                "x": 0.1255045384168625,
+                                "y": 0.6699334979057312,
+                                "z": 0.052162643522024155
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.2227383852005005,
+                                "y": 0.35537242889404297,
+                                "z": 0.0925753116607666
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "2c49956b-7720-41dc-ad9b-5584e2ed2860"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "White",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": -0.42952218651771545,
+                                "x": -0.15823861956596375,
+                                "y": 0.8342704772949219,
+                                "z": -0.30735036730766296
+                            },
+                            "scale": {
+                                "x": 0.3536820709705353,
+                                "y": 0.3536820709705353,
+                                "z": 0.3536820709705353
+                            },
+                            "translate": {
+                                "x": 0.39489832520484924,
+                                "y": 0.41361570358276367,
+                                "z": 0.28185299038887024
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 0.8200960159301758,
+                                "y": 0.8589668273925781,
+                                "z": 0.5853316783905029
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.5431492924690247,
+                                "x": 0.21254035830497742,
+                                "y": -0.7564377188682556,
+                                "z": 0.29600247740745544
+                            },
+                            "scale": {
+                                "x": 0.3461587131023407,
+                                "y": 0.3461587131023407,
+                                "z": 0.3461587131023407
+                            },
+                            "translate": {
+                                "x": 0.5227348804473877,
+                                "y": 0.5098162293434143,
+                                "z": 0.17633244395256042
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 1.4935977458953857,
+                                "y": 1.4566857814788818,
+                                "z": 0.5038304328918457
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.93448805809021,
+                                "x": 0.1591474562883377,
+                                "y": -0.31392034888267517,
+                                "z": 0.05346202850341797
+                            },
+                            "scale": {
+                                "x": 0.42218533158302307,
+                                "y": 0.42218533158302307,
+                                "z": 0.42218533158302307
+                            },
+                            "translate": {
+                                "x": 0.28811904788017273,
+                                "y": 0.16740214824676514,
+                                "z": -0.3804439902305603
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": 1.276933193206787,
+                                "y": 0.7419202327728271,
+                                "z": -1.6861140727996826
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "rotate": {
+                                "w": 0.44597217440605164,
+                                "x": -0.3195137679576874,
+                                "y": 0.6796472072601318,
+                                "z": 0.48692867159843445
+                            },
+                            "scale": {
+                                "x": 0.44845426082611084,
+                                "y": 0.44845426082611084,
+                                "z": 0.44845426082611084
+                            },
+                            "translate": {
+                                "x": -0.05415193364024162,
+                                "y": -0.17379023134708405,
+                                "z": 0.023496797308325768
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "velocity": {
+                                "x": -0.5132417678833008,
+                                "y": -1.6471507549285889,
+                                "z": 0.22269821166992188
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Velocity"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "66779b41-4774-4de5-be40-a882e63feea6"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "ParticleWhite",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Particle",
+            "objectID": "",
             "tag": ""
         }
     ],

@@ -482,8 +482,20 @@ bool Scene::ChangeToNextScene() {
 
 void Scene::UpdateSceneObjects() {
     if (objects_.empty()) return;
+
+    // Update中に他のオブジェクトが生成/削除されても objects_ 自体の
+    // イテレータが無効化されないよう、事前にポインタのスナップショットを取ってから回す
+    // （ParticleSystem等、Update中に子オブジェクトを生成・削除するコンポーネントのため）
+    std::vector<EmptyObject *> snapshot;
+    snapshot.reserve(objects_.size());
     for (const auto &obj : objects_) {
-        if (obj && obj->IsActive()) {
+        if (obj) snapshot.push_back(obj.get());
+    }
+
+    for (EmptyObject *obj : snapshot) {
+        // このフレーム中に別のオブジェクトのUpdateから削除されていたらスキップする
+        if (!GetSceneObject(obj)) continue;
+        if (obj->IsActive()) {
             obj->UpdateInterface(Passkey<Scene>());
         }
     }

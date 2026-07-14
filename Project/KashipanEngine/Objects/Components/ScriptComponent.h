@@ -12,6 +12,7 @@ class asIScriptFunction;
 class asIScriptObject;
 class asITypeInfo;
 class CScriptBuilder;
+class CScriptArray;
 struct Vector3;
 
 namespace KashipanEngine {
@@ -37,7 +38,11 @@ class EmptyObject;
 ///          およびヒエラルキーからのドラッグ&ドロップで指定できる）
 ///          および [System.Serializable] を付けたスクリプトクラス（public変数は自動対象、
 ///          private/protected変数は [SerializeField] が必要）、
-///          これら対応型の array<T>（ネスト配列・Serializableクラスの配列も可）
+///          これら対応型の array<T>（ネスト配列・Serializableクラスの配列も可。ただし
+///          `array<T>@ 変数名 = null;` のように必ず明示的なハンドル構文＋null初期値で宣言すること。
+///          `array<T> 変数名;` 等の値的構文はAngelScript側のGC追跡が壊れ、インスペクター表示時や
+///          エンジン終了時にクラッシュする。壊れたハンドルは検出時に自動で新しい空配列へ差し替えるが、
+///          根本原因はAngelScript側にあるため必ずnull初期値で宣言すること）
 ///          表示用の属性（Unity互換）: [Range(min, max)] [TextArea(minLines, maxLines)] [Multiline]
 ///          [ColorPicker]（Vector4を色として編集） [Header("見出し")] [Space(高さpx)] [Tooltip("説明")]
 ///          `[SerializeField, Range(1, 10)]` のように1つのブロックへカンマ区切りでまとめて記述できる
@@ -168,6 +173,10 @@ private:
     void CollectSerializableChildren(SerializedField &field, CScriptBuilder &builder, asIScriptEngine *engine, int depth);
     /// @brief フィールドが array<T> 型の場合に要素のフィールド情報を構築する（要素型が未対応なら何もしない）
     void SetupArrayField(SerializedField &field, CScriptBuilder &builder, asIScriptEngine *engine, int depth);
+    /// @brief array<T> ハンドルが実際にそのフィールドの型として妥当かを検証する
+    /// @details 何らかの理由でハンドルスロットの内容が壊れている場合、GetSize()等の呼び出しが
+    ///          不正なメモリアクセスでクラッシュするため、呼び出し前に必ずこれで確認する
+    bool IsArrayHandleValid(CScriptArray *array, int fieldTypeId) const;
     /// @brief フィールドの現在値をJSONへ変換する（Serializableクラスはネストしたオブジェクトになる）
     JSON CaptureField(const SerializedField &field, void *address) const;
     /// @brief JSONの値をフィールドへ適用する

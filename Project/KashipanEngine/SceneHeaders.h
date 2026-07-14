@@ -6,6 +6,7 @@
 #include "Scene/Components/KeyframeAnimator.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/SceneObjectCollider.h"
+#include "Scene/Components/ScenePreTransform.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
 #include "Scene/SceneManager.h"

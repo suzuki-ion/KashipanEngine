@@ -81,6 +81,10 @@
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/Components/TargetLookAt.h"
+#include "Objects/Components/ParticleSystem2D.h"
+#include "Objects/Components/ParticleSystem3D.h"
+#include "Objects/Components/PreTransform.h"
+#include "Objects/Components/Rotation.h"
 #include "Objects/Components/Text.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Velocity.h"
@@ -489,10 +493,57 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const Vector3 &GetAcceleration() const", &Velocity::GetAcceleration)
         .method("void AddVelocity(const Vector3 &in)", &Velocity::AddVelocity);
 
-    // TargetLookAtの回転モード
+    RegisterComponentType<Rotation>(engine, "Rotation")
+        .method("void SetAngularVelocity(const Vector3 &in)", &Rotation::SetAngularVelocity)
+        .method("const Vector3 &GetAngularVelocity() const", &Rotation::GetAngularVelocity)
+        .method("void SetAngularAcceleration(const Vector3 &in)", &Rotation::SetAngularAcceleration)
+        .method("const Vector3 &GetAngularAcceleration() const", &Rotation::GetAngularAcceleration)
+        .method("void AddAngularVelocity(const Vector3 &in)", &Rotation::AddAngularVelocity);
+
+    RegisterComponentType<PreTransform>(engine, "PreTransform")
+        .method("const Vector3 &GetPreviousTranslate() const", &PreTransform::GetPreviousTranslate)
+        .method("const Vector3 &GetPreviousRotate() const", &PreTransform::GetPreviousRotate)
+        .method("const Quaternion &GetPreviousRotateQuaternion() const", &PreTransform::GetPreviousRotateQuaternion)
+        .method("const Vector3 &GetPreviousScale() const", &PreTransform::GetPreviousScale)
+        .method("const Matrix4x4 &GetPreviousWorldMatrix() const", &PreTransform::GetPreviousWorldMatrix);
+
+    // TargetLookAtの回転モード（ParticleSystemのビルボード設定でも使うため先に登録する）
     engine->RegisterEnum("TargetLookAtMode");
     engine->RegisterEnumValue("TargetLookAtMode", "SyncRotation", static_cast<int>(TargetLookAt::RotationMode::SyncRotation));
     engine->RegisterEnumValue("TargetLookAtMode", "LookAt", static_cast<int>(TargetLookAt::RotationMode::LookAt));
+
+    RegisterComponentType<ParticleSystem2D>(engine, "ParticleSystem2D")
+        .method("void Play()", [](ParticleSystem2D &self) { self.Play(); })
+        .method("void Stop()", [](ParticleSystem2D &self) { self.Stop(); })
+        .method("bool IsPlaying() const", [](const ParticleSystem2D &self) -> bool { return self.IsPlaying(); })
+        .method("void Clear()", [](ParticleSystem2D &self) { self.Clear(); })
+        .method("void SetEmissionRate(float)", [](ParticleSystem2D &self, float rate) { self.SetEmissionRate(rate); })
+        .method("float GetEmissionRate() const", [](const ParticleSystem2D &self) -> float { return self.GetEmissionRate(); })
+        .method("void SetMaxParticles(int)", [](ParticleSystem2D &self, int count) { self.SetMaxParticles(count); })
+        .method("int GetMaxParticles() const", [](const ParticleSystem2D &self) -> int { return self.GetMaxParticles(); })
+        .method("void SetBillboard(bool)", [](ParticleSystem2D &self, bool enabled) { self.SetBillboard(enabled); })
+        .method("bool IsBillboard() const", [](const ParticleSystem2D &self) -> bool { return self.IsBillboard(); })
+        .method("void SetBillboardTarget(Object@)", [](ParticleSystem2D &self, EmptyObject *obj) { self.SetBillboardTarget(obj); })
+        .method("Object@ GetBillboardTarget() const", [](const ParticleSystem2D &self) -> EmptyObject * { return self.GetBillboardTarget(); })
+        .method("void SetBillboardRotationMode(TargetLookAtMode)", [](ParticleSystem2D &self, TargetLookAt::RotationMode mode) { self.SetBillboardRotationMode(mode); })
+        .method("TargetLookAtMode GetBillboardRotationMode() const", [](const ParticleSystem2D &self) -> TargetLookAt::RotationMode { return self.GetBillboardRotationMode(); });
+
+    RegisterComponentType<ParticleSystem3D>(engine, "ParticleSystem3D")
+        .method("void Play()", [](ParticleSystem3D &self) { self.Play(); })
+        .method("void Stop()", [](ParticleSystem3D &self) { self.Stop(); })
+        .method("bool IsPlaying() const", [](const ParticleSystem3D &self) -> bool { return self.IsPlaying(); })
+        .method("void Clear()", [](ParticleSystem3D &self) { self.Clear(); })
+        .method("void SetEmissionRate(float)", [](ParticleSystem3D &self, float rate) { self.SetEmissionRate(rate); })
+        .method("float GetEmissionRate() const", [](const ParticleSystem3D &self) -> float { return self.GetEmissionRate(); })
+        .method("void SetMaxParticles(int)", [](ParticleSystem3D &self, int count) { self.SetMaxParticles(count); })
+        .method("int GetMaxParticles() const", [](const ParticleSystem3D &self) -> int { return self.GetMaxParticles(); })
+        .method("void SetBillboard(bool)", [](ParticleSystem3D &self, bool enabled) { self.SetBillboard(enabled); })
+        .method("bool IsBillboard() const", [](const ParticleSystem3D &self) -> bool { return self.IsBillboard(); })
+        .method("void SetBillboardTarget(Object@)", [](ParticleSystem3D &self, EmptyObject *obj) { self.SetBillboardTarget(obj); })
+        .method("Object@ GetBillboardTarget() const", [](const ParticleSystem3D &self) -> EmptyObject * { return self.GetBillboardTarget(); })
+        .method("void SetBillboardRotationMode(TargetLookAtMode)", [](ParticleSystem3D &self, TargetLookAt::RotationMode mode) { self.SetBillboardRotationMode(mode); })
+        .method("TargetLookAtMode GetBillboardRotationMode() const", [](const ParticleSystem3D &self) -> TargetLookAt::RotationMode { return self.GetBillboardRotationMode(); });
+
     RegisterComponentType<TargetLookAt>(engine, "TargetLookAt")
         .method("void SetTargetObject(Object@)", [](TargetLookAt &c, EmptyObject *obj) { c.SetTargetObject(obj); })
         .method("Object@ GetTargetObject() const", &TargetLookAt::GetTargetObject)

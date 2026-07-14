@@ -160,9 +160,6 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     // インデックスではなくオブジェクトをIDにすることで、
     // オブジェクトの追加/削除があっても開閉状態が別のオブジェクトへずれないようにする
     ImGui::PushID(item.object);
-    for (size_t i = 0; i < item.depth; ++i) {
-        ImGui::Indent();
-    }
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
     if (item.children.empty()) {
@@ -250,9 +247,6 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
         ImGui::TreePop();
     }
 
-    for (size_t i = 0; i < item.depth; ++i) {
-        ImGui::Unindent();
-    }
     ImGui::PopID();
 }
 

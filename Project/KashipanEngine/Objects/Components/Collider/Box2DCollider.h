@@ -30,6 +30,7 @@ public:
         const Vector3 scale = GetSyncedOwnerScale();
         rect.center = Vector2(GetSyncedOwnerPosition()) + RotateOffsetBySyncedRotation2D(center_);
         rect.halfSize = Vector2(size_.x * scale.x, size_.y * scale.y) * 0.5f;
+        rect.rotation = GetSyncedOwnerRotationEuler().z;
         info.shape = rect;
         info.ownerObject = GetOwnerObjectContext() ? const_cast<EmptyObject *>(GetOwnerObjectContext()->GetOwner()) : nullptr;
         return info;

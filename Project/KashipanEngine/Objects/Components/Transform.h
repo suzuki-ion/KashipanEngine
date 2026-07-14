@@ -117,6 +117,18 @@ public:
     /// @return クォータニオン
     const Quaternion &GetRotateQuaternion() const { return rotateQuat_; }
 
+    /// @brief 親を合成したワールド回転を取得する（クォータニオン）
+    /// @details 親のローカル回転を再帰的に合成する近似値（スケールの歪みは無視する）。
+    ///          コライダー等、真のワールド回転が必要な箇所から使用する
+    Quaternion GetWorldRotateQuaternion() const {
+        auto *parentObj = TryGetParentObject();
+        auto *parentTransform = parentObj ? parentObj->GetComponent<Transform>() : nullptr;
+        if (parentTransform) {
+            return (rotateQuat_ * parentTransform->GetWorldRotateQuaternion()).Normalize();
+        }
+        return rotateQuat_;
+    }
+
     const Vector3 &GetScale() const { return scale_; }
 
     const Matrix4x4 &GetWorldMatrix() {

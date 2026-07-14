@@ -147,13 +147,15 @@ class Player : ScriptComponentBehavior {
         // 地面の速度は自分のvelocityとは別に、移動量にだけその場で加算する
         tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundVelocity * dt);
 
-        // 次フレームの境目誤判定防止用フラグをリセットする
+        // 次フレームの誤判定防止用フラグをリセットする
         groundedThisPhysicsFrame = false;
+        isGrounded = false;
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
         if (hit.otherCollider.GetTag() == enemyColliderTag) {
+            isCollidingWithEnemy = true;
         }
     }
 
@@ -166,7 +168,9 @@ class Player : ScriptComponentBehavior {
             groundedThisPhysicsFrame = true;
 
             // 法線が上向きなら地面に接触しているとみなす
-            isGrounded = hit.normal.y > groundedThreshold;
+            if (!isGrounded) {
+                isGrounded = hit.normal.y > groundedThreshold;
+            }
 
             // もし地面にVelocityコンポーネントが付いていたら、その速度を記録しておき
             // Update()側で移動量に加算する（velocity本体に加算すると接地中に蓄積し続けてしまうため）
@@ -183,14 +187,12 @@ class Player : ScriptComponentBehavior {
                 Vector3 pushBack = hit.normal * hit.penetration;
                 pushBack.z = 0.0f;
                 // 着地判定がある場合はY方向だけ押し戻す
-                if (isGrounded) {
+                if (hit.normal.y > groundedThreshold) {
                     pushBack.x = 0.0f;
                     pushBack.z = 0.0f;
                 }
                 tf.SetTranslate(tf.GetTranslate() + pushBack);
             }
-        } else if (hit.otherCollider.GetTag() == enemyColliderTag) {
-            isCollidingWithEnemy = hit.normal.y > groundedThreshold;
         }
         hitNormal = hit.normal;
     }

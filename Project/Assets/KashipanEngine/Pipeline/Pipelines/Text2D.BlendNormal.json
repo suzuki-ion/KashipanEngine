@@ -1,0 +1,16 @@
+{
+	"PipelineType": "Render",
+	"Name": "Text2D.BlendNormal",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Object2D.Vertex" },
+		"Pixel": { "UsePreset": "TextSDF.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "DoubleSidedCulling" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

@@ -88,26 +88,26 @@ void SceneObjectHierarchy::ShowImGui() {
     visibleOrderThisFrame_.clear();
     RebuildObjectItems();
 
-    ImGui::Begin("Scene Object Hierarchy");
+    if (ImGui::Begin("Scene Object Hierarchy")) {
+        HandleKeyboardShortcuts();
 
-    HandleKeyboardShortcuts();
-
-    if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {
-        size_t index = 0;
-        for (size_t i = 0; i < objectItems_.size(); ++i) {
-            ShowObjectItem(objectItems_[i], index);
-            ++index;
+        if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {
+            size_t index = 0;
+            for (size_t i = 0; i < objectItems_.size(); ++i) {
+                ShowObjectItem(objectItems_[i], index);
+                ++index;
+            }
         }
+
+        // Shift範囲選択はツリー全体の表示順（visibleOrderThisFrame_）が確定してからでないと
+        // 対象範囲を計算できないため、全アイテムの描画後にまとめて適用する
+        ApplyPendingRangeSelect();
+
+        ShowHierarchyContextMenu();
+        ApplyDragAndDrop();
+
+        ImGui::End();
     }
-
-    // Shift範囲選択はツリー全体の表示順（visibleOrderThisFrame_）が確定してからでないと
-    // 対象範囲を計算できないため、全アイテムの描画後にまとめて適用する
-    ApplyPendingRangeSelect();
-
-    ShowHierarchyContextMenu();
-    ApplyDragAndDrop();
-
-    ImGui::End();
 }
 
 void SceneObjectHierarchy::RebuildObjectItems() {
@@ -334,6 +334,9 @@ void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bo
     if (ImGui::BeginMenu("2D")) {
         if (ImGui::MenuItem("Sprite Object")) {
             CreateTemplateObject("Sprite Object", { "MeshFilter", "SpriteRenderer" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem("Text Object")) {
+            CreateTemplateObject("Text Object", { "TextRenderer" }, referenceObject, asChild);
         }
         if (ImGui::MenuItem("Camera 2D Object")) {
             CreateTemplateObject("Camera 2D Object", { "Camera2D", "CameraRenderer" }, referenceObject, asChild);

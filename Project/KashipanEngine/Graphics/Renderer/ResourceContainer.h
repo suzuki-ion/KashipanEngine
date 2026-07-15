@@ -8,6 +8,7 @@
 #include "Assets/ModelManager.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/Resources/IndexBufferResource.h"
+#include "Graphics/Resources/RWStructuredBufferResource.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
 #include "Graphics/Resources/UnorderedAccessResource.h"
 #include "Graphics/Resources/VertexBufferResource.h"
@@ -158,10 +159,39 @@ public:
         return raw;
     }
 
+    /// @brief キーに対応するSRV付きRWStructuredBufferを取得（容量不足の場合は作り直す）
+    /// @details Computeシェーダーで書き込んだ後、別パスでStructuredBuffer(SRV)として読む用途向け
+    ///          （例: Forward+のタイルライトインデックスバッファ）。作り直された場合は
+    ///          前フレームまでの内容は失われる
+    RWStructuredBufferResource *GetOrCreateRWStructuredBufferSrv(const std::string &key, size_t elementStride, size_t elementCount) {
+        if (elementStride == 0 || elementCount == 0) return nullptr;
+        auto it = rwStructuredBuffers_.find(key);
+        if (it != rwStructuredBuffers_.end() &&
+            it->second.elementStride == elementStride &&
+            it->second.capacity >= elementCount) {
+            return it->second.buffer.get();
+        }
+
+        // 再確保時は余裕を持った容量にする
+        size_t capacity = elementCount;
+        if (it != rwStructuredBuffers_.end() && it->second.elementStride == elementStride) {
+            capacity = std::max(elementCount, it->second.capacity * 2);
+        }
+
+        RWStructuredBufferEntry entry;
+        entry.elementStride = elementStride;
+        entry.capacity = capacity;
+        entry.buffer = std::make_unique<RWStructuredBufferResource>(elementStride, capacity, true);
+        auto *raw = entry.buffer.get();
+        rwStructuredBuffers_[key] = std::move(entry);
+        return raw;
+    }
+
     /// @brief 保持している全リソースを解放する
     void Clear() {
         meshBuffers_.clear();
         structuredBuffers_.clear();
+        rwStructuredBuffers_.clear();
         constantBuffers_.clear();
         vertexBuffers_.clear();
         uavTextures_.clear();
@@ -170,6 +200,11 @@ public:
 private:
     struct StructuredBufferEntry {
         std::unique_ptr<StructuredBufferResource> buffer;
+        size_t elementStride = 0;
+        size_t capacity = 0;
+    };
+    struct RWStructuredBufferEntry {
+        std::unique_ptr<RWStructuredBufferResource> buffer;
         size_t elementStride = 0;
         size_t capacity = 0;
     };
@@ -190,6 +225,7 @@ private:
 
     std::unordered_map<ModelManager::ModelHandle, std::unique_ptr<MeshBuffers>> meshBuffers_;
     std::unordered_map<std::string, StructuredBufferEntry> structuredBuffers_;
+    std::unordered_map<std::string, RWStructuredBufferEntry> rwStructuredBuffers_;
     std::unordered_map<std::string, ConstantBufferEntry> constantBuffers_;
     std::unordered_map<std::string, VertexBufferEntry> vertexBuffers_;
     std::unordered_map<std::string, UAVTextureEntry> uavTextures_;

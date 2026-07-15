@@ -3,6 +3,7 @@
 #include <vector>
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/ModelManager.h"
+#include "Scene/Components/Render/SceneRenderer.h"
 
 namespace KashipanEngine {
 
@@ -20,7 +21,15 @@ public:
         return std::make_unique<MeshFilter>(meshHandle_);
     }
 
-    void SetMeshHandle(ModelManager::ModelHandle handle) { meshHandle_ = handle; }
+    /// @brief メッシュハンドルを設定する
+    /// @details MeshRenderer/SpriteRendererはこのハンドルを描画リストのソートキーに使うため、
+    ///          変更時はSceneRendererのキャッシュを再構築させる
+    void SetMeshHandle(ModelManager::ModelHandle handle) {
+        meshHandle_ = handle;
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+        if (sceneRenderer) sceneRenderer->MarkDrawListDirty();
+    }
     ModelManager::ModelHandle GetMeshHandle() const noexcept { return meshHandle_; }
     bool HasMesh() const noexcept { return meshHandle_ != ModelManager::kInvalidHandle; }
 
@@ -35,7 +44,7 @@ protected:
             if (entry.handle == meshHandle_) currentPath = entry.assetPath;
         }
         if (ImGuiCustom::SelectString("Mesh", currentPath, modelPaths, true)) {
-            meshHandle_ = currentPath.empty() ? ModelManager::kInvalidHandle : ModelManager::GetModelHandleFromAssetPath(currentPath);
+            SetMeshHandle(currentPath.empty() ? ModelManager::kInvalidHandle : ModelManager::GetModelHandleFromAssetPath(currentPath));
         }
     }
 #endif

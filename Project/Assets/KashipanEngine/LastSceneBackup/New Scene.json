@@ -4,7 +4,8 @@
             "data": {
                 "data": {},
                 "isActive": true,
-                "priority": 1000
+                "priority": 1000,
+                "tag": ""
             },
             "type": "SceneRenderer"
         },
@@ -12,9 +13,19 @@
             "data": {
                 "data": {},
                 "isActive": true,
-                "priority": 500
+                "priority": 500,
+                "tag": ""
             },
             "type": "SceneAudioPlayer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneScriptEngine"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
@@ -43,7 +54,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -53,7 +65,8 @@
                             "used": true
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "AudioListener"
                 },
@@ -68,7 +81,8 @@
                             "orthographic": false
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Camera3D"
                 },
@@ -83,14 +97,17 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 950
+                        "priority": 950,
+                        "tag": ""
                     },
                     "type": "CameraRenderer"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "Camera",
-            "objectID": "efcdc0c3-11c7-4dec-bab6-a5583a114f2d"
+            "objectID": "efcdc0c3-11c7-4dec-bab6-a5583a114f2d",
+            "tag": ""
         },
         {
             "components": [
@@ -115,7 +132,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -135,14 +153,129 @@
                             "volume": 1.0
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "AudioSource"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "Object",
-            "objectID": "eb13064b-e5c1-46cc-a36b-27cd95e3dfe6"
+            "objectID": "eb13064b-e5c1-46cc-a36b-27cd95e3dfe6",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 256.0,
+                                "y": 1.0,
+                                "z": 256.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": -1.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 7
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Ground",
+            "objectID": "b27bb806-1a1b-444b-acf8-57dcdd2e4ccc",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "enableCastShadow": false,
+                                "lightNumX": 0,
+                                "lightNumY": 0,
+                                "objectNumX": 128,
+                                "objectNumY": 128
+                            },
+                            "scriptPath": "Assets\\Application\\Scripts\\LightTestScript.as"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScriptComponent"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "EmptyObject",
+            "objectID": "8ad0698a-ea0e-42f1-9d2b-3a17f92a6961",
+            "tag": ""
         }
     ],
     "sceneVariables": [

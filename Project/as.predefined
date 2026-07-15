@@ -7,6 +7,18 @@ enum LightType {
 	Spot = 2
 }
 
+enum TextHorizontalAlign {
+	Left = 0,
+	Center = 1,
+	Right = 2
+}
+
+enum TextVerticalAlign {
+	Top = 0,
+	Middle = 1,
+	Bottom = 2
+}
+
 enum TargetLookAtMode {
 	SyncRotation = 0,
 	LookAt = 1
@@ -688,7 +700,7 @@ class Animator {
 	bool GetPlayOnStart() const;
 }
 
-class Text {
+class TextRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
 	const string& GetComponentType() const;
@@ -697,8 +709,30 @@ class Text {
 	const string& GetTagName() const;
 	void SetText(const string&in);
 	const string& GetText() const;
+	void SetFontName(const string&in);
+	const string& GetFontName() const;
+	void SetFontSize(float);
+	float GetFontSize() const;
 	void SetColor(const Vector4&in);
 	const Vector4& GetColor() const;
+	void SetHorizontalAlign(TextHorizontalAlign);
+	TextHorizontalAlign GetHorizontalAlign() const;
+	void SetVerticalAlign(TextVerticalAlign);
+	TextVerticalAlign GetVerticalAlign() const;
+	void SetDefaultCharacterAnchor(const Vector2&in);
+	const Vector2& GetDefaultCharacterAnchor() const;
+	void SetDefaultCharacterPivot(const Vector2&in);
+	const Vector2& GetDefaultCharacterPivot() const;
+	void SetTargetObject(Object@);
+	void SetPipelineName(const string&in);
+	const string& GetPipelineName() const;
+	uint64 GetCharacterCount() const;
+	void SetCharacterOffset(uint64, const Vector2&in);
+	Vector2 GetCharacterOffset(uint64) const;
+	void SetCharacterRotation(uint64, float);
+	float GetCharacterRotation(uint64) const;
+	void SetCharacterScale(uint64, const Vector2&in);
+	Vector2 GetCharacterScale(uint64) const;
 }
 
 class Comment {
@@ -883,6 +917,8 @@ class Light {
 	float GetShadowDistance() const;
 	void SetShadowMapResolution(uint);
 	uint GetShadowMapResolution() const;
+	void SetShadowBias(float);
+	float GetShadowBias() const;
 }
 
 class LightRenderer {

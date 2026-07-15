@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 
 #include "Utilities/Passkeys.h"
@@ -24,6 +25,9 @@ public:
 
     /// @brief レンダラーのGPUリソース全開放
     void ReleaseRendererResources(Passkey<GameEngine>);
+
+    /// @brief 直近のRenderFrameで実際に発行されたドローコール数（パフォーマンス調査用）
+    std::uint32_t GetLastFrameDrawCallCount() const;
 
 private:
     GraphicsEngine(const GraphicsEngine&) = delete;

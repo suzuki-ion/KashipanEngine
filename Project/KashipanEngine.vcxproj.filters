@@ -270,6 +270,9 @@
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\FontManager.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
@@ -677,6 +680,9 @@
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\FontManager.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h">
@@ -1132,6 +1138,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\TextRenderer.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
@@ -1175,9 +1184,6 @@
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h">
-      <Filter>KashipanEngine\Objects\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Components\Text.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h">

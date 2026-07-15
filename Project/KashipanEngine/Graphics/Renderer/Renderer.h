@@ -44,12 +44,26 @@ public:
     /// @brief GPUリソースの全開放
     void ReleaseAllResources(Passkey<GraphicsEngine>);
 
+    /// @brief 直近のRenderFrameで実際に発行されたDrawIndexedInstanced呼び出し回数
+    /// @details パフォーマンス調査用（インスタンシングでバッチがまとまらず想定より
+    ///          ドローコールが分割されていないかを確認する目的）
+    std::uint32_t GetLastFrameDrawCallCount() const { return drawCallCount_; }
+
     /// @brief カスケードシャドウ（Directionalライト）のカスケード数
     static constexpr std::uint32_t kShadowCascadeCount = 4;
     /// @brief 1描画先で同時に影を生成できるライト数の上限（定数バッファサイズによる実質上限）
     static constexpr std::uint32_t kMaxShadowLightsPerTarget = 16;
     /// @brief 1ライトあたりのビュー射影行列の最大数（ポイントライトのキューブ6面が最大）
     static constexpr std::uint32_t kMaxShadowViewProjections = 6;
+
+    //==================================================
+    // Forward+（タイルドライトカリング）
+    //==================================================
+
+    /// @brief ライトカリングのタイルサイズ（ピクセル）
+    static constexpr std::uint32_t kTileSize = 16;
+    /// @brief 1タイルあたりに保持できるライトの最大数
+    static constexpr std::uint32_t kMaxLightsPerTile = 256;
 
 private:
     /// @brief シャドウマップ描画ジョブ1件分のデータ
@@ -89,6 +103,14 @@ private:
     ///          後続の描画パスで頂点バッファとして参照できるようにする
     void ProcessSkinning(SceneContext *sceneContext);
 
+    /// @brief タイル単位のライトカリング（Forward+）を実行する
+    /// @details 描画リスト構築後、RenderShadowMaps/RenderToTargetより前に呼ぶ。3D描画に使われる
+    ///          (描画先, パイプライン名) の組ごとに、Point/Spotライトをタイル分割してカリングし、
+    ///          結果をタイルごとのライトインデックス配列としてGPUへ書き出す。
+    ///          BindLightBuffersAndShadowMapが同じキーでこの結果を読み出してバインドする
+    void ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
+        std::span<const SceneRenderer::DrawEntry> drawList);
+
     /// @brief 単一の描画先への描画処理
     void RenderToTarget(IRenderTarget *target,
         std::span<const SceneRenderer::DrawEntry> entries,
@@ -98,6 +120,14 @@ private:
     void DrawBatch(IRenderTarget *target,
         PipelineBinder &pipelineBinder,
         std::span<const SceneRenderer::DrawEntry> batch,
+        SceneRenderer *sceneRenderer);
+
+    /// @brief TextRendererの専用描画パス
+    /// @details 文字ごとにアトラス内UVが異なるためDrawBatchのバッチングには乗せず、
+    ///          (パイプライン名, フォントハンドル) の組ごとに全TextRendererの文字インスタンスを
+    ///          まとめて1回のDrawIndexedInstancedで描画する。RenderToTargetの通常バッチ描画の後に呼ぶ
+    void RenderTextRenderers(IRenderTarget *target,
+        PipelineBinder &pipelineBinder,
         SceneRenderer *sceneRenderer);
 
     /// @brief 指定描画先・パイプラインに対するカメラ・ライトの定数バッファバインド
@@ -159,6 +189,9 @@ private:
     /// @brief シャドウパス記録用のコマンドスロット
     int shadowCommandSlotIndex_ = -1;
     DX12Commands *shadowCommands_ = nullptr;
+
+    /// @brief 直近のRenderFrameで発行されたDrawIndexedInstanced呼び出し回数（RenderFrame冒頭でリセットする）
+    std::uint32_t drawCallCount_ = 0;
 };
 
 } // namespace KashipanEngine

@@ -25,6 +25,7 @@ public:
         ptr->castShadows_ = castShadows_;
         ptr->shadowDistance_ = shadowDistance_;
         ptr->shadowMapResolution_ = shadowMapResolution_;
+        ptr->shadowBias_ = shadowBias_;
         return ptr;
     }
 
@@ -44,6 +45,10 @@ public:
     void SetShadowDistance(float shadowDistance) { shadowDistance_ = shadowDistance; }
     /// @brief シャドウマップの解像度（1カスケードあたり）を設定
     void SetShadowMapResolution(std::uint32_t resolution) { shadowMapResolution_ = resolution; }
+    /// @brief 影の深度バイアス係数を設定（自動計算されるテクセル基準バイアスへの倍率。1.0が既定）
+    /// @details 小さくすると影が実際の位置に近づく代わりにシャドウアクネ（自己遮蔽の縞模様）が出やすくなり、
+    ///          大きくすると影がオブジェクトから浮くピーターパン現象が出やすくなる
+    void SetShadowBias(float bias) { shadowBias_ = bias; }
 
     Type GetType() const noexcept { return type_; }
     const Vector4 &GetColor() const noexcept { return color_; }
@@ -56,6 +61,7 @@ public:
     bool IsCastShadows() const noexcept { return castShadows_; }
     float GetShadowDistance() const noexcept { return shadowDistance_; }
     std::uint32_t GetShadowMapResolution() const noexcept { return shadowMapResolution_; }
+    float GetShadowBias() const noexcept { return shadowBias_; }
 
 protected:
 #if defined(USE_IMGUI)
@@ -92,6 +98,10 @@ protected:
             if (ImGui::Combo("Shadow Resolution", &current, resolutionItems, 4)) {
                 shadowMapResolution_ = kResolutions[current];
             }
+            ImGui::DragFloat("Shadow Bias", &shadowBias_, 0.01f, 0.0f, 5.0f);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("自動計算されるテクセル基準の深度バイアスへの倍率(既定1.0)。\n下げると影が近づく代わりにシャドウアクネが出やすく、上げると影が浮きやすくなる");
+            }
         }
     }
 #endif
@@ -101,7 +111,7 @@ protected:
             {"radius", radius_}, {"distance", distance_}, {"decay", decay_},
             {"innerAngle", innerAngle_}, {"outerAngle", outerAngle_},
             {"castShadows", castShadows_}, {"shadowDistance", shadowDistance_},
-            {"shadowMapResolution", shadowMapResolution_}
+            {"shadowMapResolution", shadowMapResolution_}, {"shadowBias", shadowBias_}
         };
     }
     bool LoadFromJson(const JSON &json) override {
@@ -116,6 +126,7 @@ protected:
         castShadows_ = json.value("castShadows", false);
         shadowDistance_ = json.value("shadowDistance", 100.0f);
         shadowMapResolution_ = json.value("shadowMapResolution", 2048u);
+        shadowBias_ = json.value("shadowBias", 1.0f);
         return true;
     }
 private:
@@ -134,6 +145,8 @@ private:
     bool castShadows_ = false;
     float shadowDistance_ = 100.0f;
     std::uint32_t shadowMapResolution_ = 2048;
+    /// @brief 自動計算されるテクセル基準の深度バイアスへの倍率（既定1.0）
+    float shadowBias_ = 1.0f;
 };
 
 REGISTER_COMPONENT_OBJECT(Light)

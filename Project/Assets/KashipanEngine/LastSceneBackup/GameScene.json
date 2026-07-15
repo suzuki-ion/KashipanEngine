@@ -938,6 +938,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 12.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 1
@@ -1278,6 +1279,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -2225,15 +2227,15 @@
                     "data": {
                         "customData": {
                             "rotate": {
-                                "w": 0.7071068286895752,
-                                "x": 0.7071068286895752,
+                                "w": 0.9238795042037964,
+                                "x": 0.3826834559440613,
                                 "y": 0.0,
                                 "z": 0.0
                             },
                             "scale": {
                                 "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "y": 1.0000025033950806,
+                                "z": 1.0000025033950806
                             },
                             "translate": {
                                 "x": 0.0,
@@ -2250,21 +2252,22 @@
                 {
                     "data": {
                         "customData": {
-                            "castShadows": false,
+                            "castShadows": true,
                             "color": {
                                 "w": 1.0,
-                                "x": 1.0,
-                                "y": 1.0,
+                                "x": 0.8146461248397827,
+                                "y": 0.7599999904632568,
                                 "z": 1.0
                             },
                             "decay": 2.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 0.25,
+                            "intensity": 0.10000000149011612,
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
-                            "shadowDistance": 100.0,
-                            "shadowMapResolution": 2048,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 256.0,
+                            "shadowMapResolution": 512,
                             "type": 0
                         },
                         "isActive": true,
@@ -6900,15 +6903,29 @@
                             "title": "Normal Window",
                             "width": 1920
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 1,
                         "tag": ""
                     },
                     "type": "NormalWindowObject"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 720,
+                            "isShowViewer": true,
+                            "name": "ScreenBuffer_1",
+                            "width": 1280
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScreenBufferObject"
                 }
             ],
             "editorOnly": false,
-            "isActive": false,
+            "isActive": true,
             "name": "Window Object",
             "objectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
             "tag": ""
@@ -7045,6 +7062,73 @@
             "isActive": true,
             "name": "Sprite Object",
             "objectID": "3d37c934-87d3-4a19-b820-39551d78e15c",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 3.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 128.0,
+                                "y": 512.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "defaultCharacterAnchor": {
+                                "x": 0.5,
+                                "y": 0.5
+                            },
+                            "defaultCharacterPivot": {
+                                "x": 0.5,
+                                "y": 0.5
+                            },
+                            "fontName": "NotoSansJP-Regular",
+                            "fontSize": 64.0,
+                            "horizontalAlign": 0,
+                            "pipelineName": "Text2D.BlendNormal",
+                            "targetObjectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
+                            "text": "text",
+                            "verticalAlign": 0
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "TextRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Text Object",
+            "objectID": "8423b57a-292c-43eb-99c0-b6ab8ebc7d4d",
             "tag": ""
         },
         {
@@ -7212,6 +7296,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -7346,6 +7431,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -7600,6 +7686,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -8274,6 +8361,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 12.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 1
@@ -8982,16 +9070,16 @@
                             },
                             "initialRotation": {
                                 "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 360.0,
+                                    "y": 360.0,
+                                    "z": 360.0
                                 },
                                 "min": {
                                     "x": 0.0,
                                     "y": 0.0,
                                     "z": 0.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -9000,16 +9088,16 @@
                             },
                             "initialRotationSpeed": {
                                 "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
                                 },
                                 "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": -1.0,
+                                    "y": -1.0,
+                                    "z": -1.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -9018,14 +9106,14 @@
                             },
                             "initialVelocity": {
                                 "max": {
-                                    "x": 1.0,
-                                    "y": 3.0,
-                                    "z": 1.0
+                                    "x": 2.0,
+                                    "y": 2.0,
+                                    "z": 2.0
                                 },
                                 "min": {
-                                    "x": -1.0,
-                                    "y": 1.0,
-                                    "z": -1.0
+                                    "x": -2.0,
+                                    "y": -2.0,
+                                    "z": -2.0
                                 },
                                 "randomize": true,
                                 "value": {
@@ -9107,9 +9195,9 @@
                                 },
                                 "randomize": false,
                                 "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 0.5,
+                                    "y": 0.5,
+                                    "z": 0.5
                                 }
                             },
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
@@ -9137,6 +9225,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 1
@@ -9258,16 +9347,16 @@
                             },
                             "initialRotation": {
                                 "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 360.0,
+                                    "y": 360.0,
+                                    "z": 360.0
                                 },
                                 "min": {
                                     "x": 0.0,
                                     "y": 0.0,
                                     "z": 0.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -9276,16 +9365,16 @@
                             },
                             "initialRotationSpeed": {
                                 "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
                                 },
                                 "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": -1.0,
+                                    "y": -1.0,
+                                    "z": -1.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -9294,14 +9383,14 @@
                             },
                             "initialVelocity": {
                                 "max": {
-                                    "x": 1.0,
-                                    "y": 3.0,
-                                    "z": 1.0
+                                    "x": 0.0,
+                                    "y": -1.0,
+                                    "z": 0.0
                                 },
                                 "min": {
-                                    "x": -1.0,
-                                    "y": 1.0,
-                                    "z": -1.0
+                                    "x": 0.0,
+                                    "y": -3.0,
+                                    "z": 0.0
                                 },
                                 "randomize": true,
                                 "value": {
@@ -9356,7 +9445,7 @@
                             "spawnCapsuleRadiusMin": 0.44999998807907104,
                             "spawnCenter": {
                                 "x": 0.0,
-                                "y": 0.0,
+                                "y": 2.0,
                                 "z": 0.0
                             },
                             "spawnCount": {
@@ -9383,9 +9472,9 @@
                                 },
                                 "randomize": false,
                                 "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 0.25,
+                                    "y": 0.25,
+                                    "z": 0.25
                                 }
                             },
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
@@ -9449,6 +9538,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -9643,6 +9733,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -9837,6 +9928,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -10068,6 +10160,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -10262,6 +10355,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -10456,6 +10550,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6283185482025146,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -11603,6 +11698,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.8377580642700195,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -11797,6 +11893,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.8377580642700195,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -11991,6 +12088,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.8377580642700195,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -12687,6 +12785,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.8377580642700195,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 2
@@ -12942,6 +13041,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 4.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 1
@@ -13002,16 +13102,16 @@
                             },
                             "initialRotation": {
                                 "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 360.0,
+                                    "y": 360.0,
+                                    "z": 360.0
                                 },
                                 "min": {
                                     "x": 0.0,
                                     "y": 0.0,
                                     "z": 0.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -13020,16 +13120,16 @@
                             },
                             "initialRotationSpeed": {
                                 "max": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
                                 },
                                 "min": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": -1.0,
+                                    "y": -1.0,
+                                    "z": -1.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -13038,14 +13138,14 @@
                             },
                             "initialVelocity": {
                                 "max": {
-                                    "x": 1.0,
+                                    "x": 0.0,
                                     "y": 3.0,
-                                    "z": 1.0
+                                    "z": 0.0
                                 },
                                 "min": {
-                                    "x": -1.0,
+                                    "x": 0.0,
                                     "y": 1.0,
-                                    "z": -1.0
+                                    "z": 0.0
                                 },
                                 "randomize": true,
                                 "value": {
@@ -13127,9 +13227,9 @@
                                 },
                                 "randomize": false,
                                 "value": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
+                                    "x": 0.25,
+                                    "y": 0.25,
+                                    "z": 0.25
                                 }
                             },
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
@@ -13241,6 +13341,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 12.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 1
@@ -13315,6 +13416,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 12.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 1
@@ -13389,6 +13491,7 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 12.0,
+                            "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 2048,
                             "type": 1

@@ -2,17 +2,17 @@
 
 namespace KashipanEngine {
 
-RWStructuredBufferResource::RWStructuredBufferResource(size_t elementStride, size_t elementCount)
+RWStructuredBufferResource::RWStructuredBufferResource(size_t elementStride, size_t elementCount, bool createSrv)
     : IGraphicsResource(ResourceViewType::UAV) {
-    Initialize(elementStride, elementCount);
+    Initialize(elementStride, elementCount, createSrv);
 }
 
-bool RWStructuredBufferResource::Recreate(size_t elementStride, size_t elementCount) {
+bool RWStructuredBufferResource::Recreate(size_t elementStride, size_t elementCount, bool createSrv) {
     ResetResourceForRecreate();
-    return Initialize(elementStride, elementCount);
+    return Initialize(elementStride, elementCount, createSrv);
 }
 
-bool RWStructuredBufferResource::Initialize(size_t elementStride, size_t elementCount) {
+bool RWStructuredBufferResource::Initialize(size_t elementStride, size_t elementCount, bool createSrv) {
     LogScope scope;
     if (!GetDevice()) {
         Log(Translation("engine.graphics.resource.create.device.null"), LogSeverity::Warning);
@@ -40,15 +40,39 @@ bool RWStructuredBufferResource::Initialize(size_t elementStride, size_t element
     bufDesc.SampleDesc.Count = 1;
     bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
-    // Computeシェーダーの書き込み(UAV)と後続描画パスでの頂点バッファ読み取り(VBV)を
-    // ルートディスクリプタ経由(SetComputeRootUnorderedAccessView)で切り替えるため両状態を保持する
+    // Computeシェーダーの書き込み(UAV)と後続パスでの読み取りを切り替えるため両状態を保持する。
+    // createSrv=falseの場合（スキニング用途）は後続を頂点バッファ(VBV)として読み、
+    // createSrv=trueの場合（ライトカリング等）は後続をStructuredBuffer(SRV)として読む
     ClearTransitionStates();
     AddTransitionState(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    AddTransitionState(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    if (createSrv) {
+        AddTransitionState(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    } else {
+        AddTransitionState(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    }
 
     CreateResource(L"RW Structured Buffer Resource", &heapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, nullptr);
     if (!GetResource()) {
         return false;
+    }
+
+    if (createSrv) {
+        auto *srvHeap = GetSRVHeap();
+        if (srvHeap) {
+            auto handle = srvHeap->AllocateDescriptorHandle();
+
+            D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+            srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+            srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            srvDesc.Buffer.FirstElement = 0;
+            srvDesc.Buffer.NumElements = static_cast<UINT>(elementCount_);
+            srvDesc.Buffer.StructureByteStride = static_cast<UINT>(elementStride_);
+            srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+            GetDevice()->CreateShaderResourceView(GetResource(), &srvDesc, handle->cpuHandle);
+            SetDescriptorHandleInfo(std::move(handle));
+        }
     }
 
     return true;

@@ -3,9 +3,12 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <functional>
 #include <map>
+#include <utility>
 #include <vector>
 
+#include "Assets/FontManager.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
@@ -18,6 +21,7 @@
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Objects/Components/Compute/ComputeShaderProcessing.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
@@ -26,6 +30,8 @@
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
+#include "Objects/Components/Render/TextRenderer.h"
+#include "Assets/ModelManager.h"
 #include "Graphics/Resources/RWStructuredBufferResource.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/Components/Compute/SceneComputeProcessor.h"
@@ -54,6 +60,14 @@ struct Material2DElement {
     Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
     Matrix4x4 uvTransform = Matrix4x4::Identity();
     float useTexture = 1.0f;
+    float padding[3]{};
+};
+
+/// @brief gMaterials 構造化バッファ（Text2D、TextSDFPS.hlslのTextCharacterElement）と同レイアウトの構造体
+struct TextCharacterElement {
+    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector4 uvRect{ 0.0f, 0.0f, 0.0f, 0.0f };
+    float boldWeight = 0.0f;
     float padding[3]{};
 };
 
@@ -132,6 +146,19 @@ struct LightCameraConstantData {
     float padding[3]{};
 };
 
+/// @brief TileCullingConstants 定数バッファ（ライトカリングCompute/Object3Dピクセルシェーダー共通）と同レイアウトの構造体
+#pragma pack(push, 4)
+struct TileCullingConstants {
+    Vector2 screenSize{ 0.0f, 0.0f };
+    std::uint32_t tileCountX = 0;
+    std::uint32_t tileCountY = 0;
+    std::uint32_t pointLightCount = 0;
+    std::uint32_t spotLightCount = 0;
+    std::uint32_t maxLightsPerTile = 0;
+    std::uint32_t tileSize = 16;
+};
+#pragma pack(pop)
+
 /// @brief シャドウマップ比較用サンプラーのハンドルを取得する（初回に作成）
 SamplerManager::SamplerHandle GetShadowSamplerCmpHandle() {
     static SamplerManager::SamplerHandle sHandle = [] {
@@ -185,6 +212,85 @@ bool IsExcludedAsEditorOnly(const IObjectComponent *component, const IRenderTarg
     return owner && owner->IsEditorOnlyInHierarchy();
 }
 
+/// @brief 指定の描画先・パイプラインに適用されるPoint/Spot/Directionalライトを収集する
+/// @details BindLightBuffersAndShadowMapとProcessLightCullingの両方から使われる（ライトの絞り込み条件は完全に一致させる）
+/// @param findShadowIndex ライトが影を生成する場合のシャドウマップスロット番号を返すコールバック（呼び出し側が用意する）
+void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *target, const std::string &pipelineName,
+    const std::function<std::int32_t(const LightRenderer *)> &findShadowIndex,
+    std::vector<PointLightElement> &pointLights,
+    std::vector<SpotLightElement> &spotLights,
+    std::vector<DirectionalLightElement> &directionalLights) {
+    for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
+        if (!lightRenderer || !lightRenderer->IsActive()) continue;
+        // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
+        if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
+        if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
+        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
+        auto *light = lightRenderer->GetLight();
+        if (!light) {
+            // Light コンポーネントが無い場合は既定値のディレクショナルライトとして扱う
+            DirectionalLightElement element;
+            element.enabled = 1u;
+            element.direction = lightRenderer->GetWorldDirection();
+            directionalLights.push_back(element);
+            continue;
+        }
+
+        if (light->GetType() == Light::Type::Directional) {
+            DirectionalLightElement element;
+            element.enabled = light->IsActive() ? 1u : 0u;
+            element.color = light->GetColor();
+            element.direction = lightRenderer->GetWorldDirection();
+            element.intensity = light->GetIntensity();
+            element.shadowMapIndex = findShadowIndex(lightRenderer);
+            directionalLights.push_back(element);
+        } else if (light->GetType() == Light::Type::Point) {
+            PointLightElement element;
+            element.enabled = light->IsActive() ? 1u : 0u;
+            element.color = light->GetColor();
+            element.position = lightRenderer->GetWorldPosition();
+            element.radius = light->GetRadius();
+            element.intensity = light->GetIntensity();
+            element.decay = light->GetDecay();
+            element.shadowMapIndex = findShadowIndex(lightRenderer);
+            pointLights.push_back(element);
+        } else if (light->GetType() == Light::Type::Spot) {
+            SpotLightElement element;
+            element.enabled = light->IsActive() ? 1u : 0u;
+            element.color = light->GetColor();
+            element.position = lightRenderer->GetWorldPosition();
+            element.distance = light->GetDistance();
+            element.direction = lightRenderer->GetWorldDirection();
+            element.innerAngle = light->GetInnerAngle();
+            element.outerAngle = light->GetOuterAngle();
+            element.intensity = light->GetIntensity();
+            element.decay = light->GetDecay();
+            element.shadowMapIndex = findShadowIndex(lightRenderer);
+            spotLights.push_back(element);
+        }
+    }
+}
+
+/// @brief 指定の描画先・パイプラインに適用されるカメラの定数バッファを解決する（複数該当する場合は最後に一致したもの）
+ConstantBufferResource *ResolveCameraConstantBuffer(SceneRenderer *sceneRenderer, IRenderTarget *target, const std::string &pipelineName) {
+    if (auto *editorCameraBuffer = sceneRenderer->GetEditorCameraBuffer(target)) {
+        return editorCameraBuffer;
+    }
+    ConstantBufferResource *result = nullptr;
+    for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
+        if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        if (IsExcludedAsEditorOnly(cameraRenderer, target, sceneRenderer)) continue;
+        if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
+        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
+        if (auto *constantBuffer = cameraRenderer->GetConstantBuffer()) {
+            result = constantBuffer;
+        }
+    }
+    return result;
+}
+
 } // namespace
 
 Renderer::Renderer(Passkey<GraphicsEngine>, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
@@ -202,6 +308,7 @@ Renderer::~Renderer() {
 }
 
 void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) {
+    drawCallCount_ = 0;
     if (!sceneContext || !pipelineManager_) return;
 
     // Computeシェーダー処理は他の描画パスより先に実行し、結果を後続パスから参照できるようにする
@@ -221,6 +328,9 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     }
 
     const auto &drawList = sceneRenderer->BuildSortedDrawList(Passkey<Renderer>{}, pipelineManager_);
+
+    // Forward+のタイルライトカリング（3D描画で使われる (描画先,パイプライン) の組ごとに実行する）
+    ProcessLightCulling(sceneContext, sceneRenderer, drawList);
 
     // 今フレームで描画される描画先ごとに、その描画先で使うカメラ・ライトからシャドウマップを生成する
     // （他の描画パスより先に実行する）
@@ -377,6 +487,110 @@ void Renderer::ProcessSkinning(SceneContext *sceneContext) {
 
         // 後続の描画パスで頂点バッファとして読めるように状態遷移しておく
         outputBuffer->TransitionTo(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    }
+
+    ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
+}
+
+void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
+    std::span<const SceneRenderer::DrawEntry> drawList) {
+    if (!sceneContext || !sceneRenderer) return;
+    if (!pipelineManager_->HasPipeline("LightCulling") || pipelineManager_->GetPipeline("LightCulling").Type() != PipelineType::Compute) return;
+
+    // 3D描画（Object3D.*）に使われる (描画先, パイプライン名) の組を重複無く収集する
+    // （2D/Skybox/デバッグ/ポストプロセスのパイプラインはライティングを行わないため対象外）
+    std::vector<std::pair<IRenderTarget *, std::string>> targetPipelinePairs;
+    for (const auto &entry : drawList) {
+        if (!entry.target || entry.pipelineName.rfind("Object3D.", 0) != 0) continue;
+        const bool alreadyAdded = std::any_of(targetPipelinePairs.begin(), targetPipelinePairs.end(),
+            [&](const auto &pair) { return pair.first == entry.target && pair.second == entry.pipelineName; });
+        if (!alreadyAdded) targetPipelinePairs.emplace_back(entry.target, entry.pipelineName);
+    }
+    if (targetPipelinePairs.empty()) return;
+
+    auto *commandList = ComputeCommandProcessor::BeginRecord(Passkey<Renderer>{});
+    if (!commandList) return;
+
+    // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
+    PipelineBinder pipelineBinder(commandList, pipelineManager_);
+    pipelineBinder.Invalidate();
+
+    for (const auto &[target, pipelineName] : targetPipelinePairs) {
+        const std::uint32_t width = target->GetRenderTargetWidth();
+        const std::uint32_t height = target->GetRenderTargetHeight();
+        if (width == 0 || height == 0) continue;
+        const std::uint32_t tileCountX = (width + kTileSize - 1) / kTileSize;
+        const std::uint32_t tileCountY = (height + kTileSize - 1) / kTileSize;
+
+        auto *cameraConstantBuffer = ResolveCameraConstantBuffer(sceneRenderer, target, pipelineName);
+        if (!cameraConstantBuffer) continue;
+
+        // この描画先・パイプラインで影を生成するライトの割り当て（RenderShadowMapsは後で実行されるため、
+        // シャドウスロット自体はここでは未確定。ライトカリングは影の有無に関係なく行えるため -1 固定でよい）
+        const auto noShadow = [](const LightRenderer *) -> std::int32_t { return -1; };
+
+        std::vector<PointLightElement> pointLights;
+        std::vector<SpotLightElement> spotLights;
+        std::vector<DirectionalLightElement> directionalLights;
+        CollectLightsForTarget(sceneRenderer, target, pipelineName, noShadow, pointLights, spotLights, directionalLights);
+        // ライトが0個でも必ずディスパッチする（gTileLightIndicesはDEFAULTヒープ上のUAVでCPUから初期化できないため、
+        // ここで確実に書き込んでおかないとBindLightBuffersAndShadowMap側で未初期化のバッファを読むことになる）
+
+        auto pointKey = MakeBatchKey(target, pipelineName, 0, 0, "pointLights");
+        auto *pointBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
+            pointKey, sizeof(PointLightElement), std::max<size_t>(1, pointLights.size()));
+        auto spotKey = MakeBatchKey(target, pipelineName, 0, 0, "spotLights");
+        auto *spotBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
+            spotKey, sizeof(SpotLightElement), std::max<size_t>(1, spotLights.size()));
+        if (!pointBuffer || !spotBuffer) continue;
+        if (auto *mapped = static_cast<PointLightElement *>(pointBuffer->Map())) {
+            if (pointLights.empty()) mapped[0] = PointLightElement{};
+            else std::memcpy(mapped, pointLights.data(), sizeof(PointLightElement) * pointLights.size());
+        }
+        if (auto *mapped = static_cast<SpotLightElement *>(spotBuffer->Map())) {
+            if (spotLights.empty()) mapped[0] = SpotLightElement{};
+            else std::memcpy(mapped, spotLights.data(), sizeof(SpotLightElement) * spotLights.size());
+        }
+
+        TileCullingConstants constants;
+        constants.screenSize = Vector2(static_cast<float>(width), static_cast<float>(height));
+        constants.tileCountX = tileCountX;
+        constants.tileCountY = tileCountY;
+        constants.pointLightCount = static_cast<std::uint32_t>(pointLights.size());
+        constants.spotLightCount = static_cast<std::uint32_t>(spotLights.size());
+        constants.maxLightsPerTile = kMaxLightsPerTile;
+        constants.tileSize = kTileSize;
+        auto constantsKey = MakeBatchKey(target, pipelineName, 0, 0, "tileCullingConstants");
+        auto *constantsBuffer = resourceContainer_->GetOrCreateConstantBuffer(constantsKey, sizeof(TileCullingConstants));
+        if (!constantsBuffer) continue;
+        if (auto *mapped = constantsBuffer->Map()) {
+            std::memcpy(mapped, &constants, sizeof(constants));
+        }
+
+        const size_t tileElementCount = static_cast<size_t>(tileCountX) * tileCountY * (1 + kMaxLightsPerTile);
+        auto tileKey = MakeBatchKey(target, pipelineName, 0, 0, "tileLightIndices");
+        auto *tileBuffer = resourceContainer_->GetOrCreateRWStructuredBufferSrv(tileKey, sizeof(std::uint32_t), tileElementCount);
+        if (!tileBuffer) continue;
+
+        pipelineBinder.UsePipeline("LightCulling");
+        auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "LightCulling");
+        shaderBinder.SetCommandList(commandList);
+
+        tileBuffer->SetCommandList(commandList);
+        tileBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        shaderBinder.Bind("Compute:TileCullingConstants", constantsBuffer);
+        shaderBinder.Bind("Compute:gCamera3D", cameraConstantBuffer);
+        shaderBinder.Bind("Compute:gPointLights", pointBuffer);
+        shaderBinder.Bind("Compute:gSpotLights", spotBuffer);
+        shaderBinder.Bind("Compute:gTileLightIndices", tileBuffer);
+
+        const std::uint32_t groupX = (tileCountX + 7) / 8;
+        const std::uint32_t groupY = (tileCountY + 7) / 8;
+        commandList->Dispatch(std::max(1u, groupX), std::max(1u, groupY), 1);
+
+        // 後続の描画パスでピクセルシェーダーからStructuredBufferとして読めるように状態遷移しておく
+        tileBuffer->TransitionTo(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
     ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
@@ -642,7 +856,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                         // カスケードの大きさに関わらずワールド空間で一定（テクセル比例）のバイアスになり、
                         // 影が浮くピーターパン現象を防ぐ
                         const float texelWorldSize = (radius * 2.0f) / static_cast<float>(resolution);
-                        job.cascadeBiasScales[c] = texelWorldSize / (backDistance + radius);
+                        job.cascadeBiasScales[c] = (texelWorldSize / (backDistance + radius)) * light->GetShadowBias();
                     }
                 } else if (type == Light::Type::Spot) {
                     //--------- Spot: ライト位置からコーン方向への透視投影1面 ---------//
@@ -660,7 +874,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                     // 1テクセルのワールドサイズに比例したNDC深度バイアスになる
                     // （透視投影はNDC深度が非線形のため、定数NDCバイアスだと遠方で影が大きく浮いてしまう）
                     job.perspectiveBiasScale = (2.0f * std::tan(fovY * 0.5f) / static_cast<float>(resolution))
-                        * (nearZ * farZ / (farZ - nearZ));
+                        * (nearZ * farZ / (farZ - nearZ)) * light->GetShadowBias();
                 } else {
                     //--------- Point: ライト位置からキューブ6面（画角90度）の透視投影 ---------//
                     job.lightType = 2;
@@ -671,7 +885,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                     lightProjection.MakePerspectiveFovMatrix(1.5707963f, 1.0f, nearZ, farZ);
                     // 深度バイアス係数（Spotと同様。画角90度なので tan(fov/2) = 1）
                     job.perspectiveBiasScale = (2.0f / static_cast<float>(resolution))
-                        * (nearZ * farZ / (farZ - nearZ));
+                        * (nearZ * farZ / (farZ - nearZ)) * light->GetShadowBias();
                     // 面の並び順はシェーダー側の面選択（+X,-X,+Y,-Y,+Z,-Z）と一致させること
                     const Vector3 kFaceDirections[6] = {
                         Vector3(1.0f, 0.0f, 0.0f), Vector3(-1.0f, 0.0f, 0.0f),
@@ -925,6 +1139,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 }
                 pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());
                 commandList->DrawIndexedInstanced(batch.meshBuffers->indexCount, batch.instanceCount, 0, 0, 0);
+                ++drawCallCount_;
             }
         }
     }
@@ -1020,6 +1235,9 @@ void Renderer::RenderToTarget(IRenderTarget *target,
         DrawBatch(target, pipelineBinder, entries.subspan(begin, end - begin), sceneRenderer);
         begin = end;
     }
+
+    // TextRenderer（文字ごとにアトラス内UVが異なるため通常のバッチには乗らない）は専用パスで描画する
+    RenderTextRenderers(target, pipelineBinder, sceneRenderer);
 
     // ScreenBuffer の場合は所有オブジェクトのポストプロセスを適用
     if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
@@ -1174,6 +1392,119 @@ void Renderer::DrawBatch(IRenderTarget *target,
     }
     pipelineBinder.SetIndexBuffer(meshBuffers->indexBuffer.get());
     commandList->DrawIndexedInstanced(meshBuffers->indexCount, instanceCount, 0, 0, 0);
+    ++drawCallCount_;
+}
+
+void Renderer::RenderTextRenderers(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer) {
+    if (!target || !sceneRenderer) return;
+
+    //--------- このターゲットに適用されるTextRendererを収集する（CollectSortableEntriesと同じフィルタ条件） ---------//
+    struct TextTargetEntry {
+        TextRenderer *renderer = nullptr;
+        std::string pipelineName;
+    };
+    std::vector<TextTargetEntry> applicable;
+    std::vector<IRenderTarget *> collectedTargets;
+    auto *editorTarget = sceneRenderer->GetEditorTarget();
+
+    for (auto *renderer : sceneRenderer->GetTextRenderers()) {
+        if (!renderer || !renderer->IsActive()) continue;
+        const std::string &pipelineName = renderer->GetPipelineName();
+        if (pipelineName.empty() || !pipelineManager_->HasPipeline(pipelineName)) continue;
+
+        if (IsExcludedAsEditorOnly(renderer, target, sceneRenderer)) continue;
+
+        auto *targetObject = renderer->GetTargetObject();
+        SceneRenderer::CollectRenderTargets(targetObject, collectedTargets);
+        if (editorTarget && editorTarget->IsRenderTargetAvailable()) {
+            collectedTargets.push_back(editorTarget);
+        }
+
+        bool matches = false;
+        for (auto *candidate : collectedTargets) {
+            if (candidate != target || !target->IsRenderTargetAvailable()) continue;
+            if (target != editorTarget && !renderer->IsRenderTargetIncluded(target)) continue;
+            matches = true;
+            break;
+        }
+        if (!matches) continue;
+
+        applicable.push_back(TextTargetEntry{ renderer, pipelineName });
+    }
+    if (applicable.empty()) return;
+
+    //--------- (パイプライン名, フォントハンドル) ごとにグループ化して文字インスタンスをまとめる ---------//
+    std::map<std::pair<std::string, FontManager::FontHandle>, std::vector<TextRenderer::RenderCharacterInstance>> groups;
+    for (const auto &entry : applicable) {
+        const auto fontHandle = entry.renderer->GetFontHandle();
+        if (fontHandle == FontManager::kInvalidHandle) continue;
+        auto instances = entry.renderer->GetRenderInstances();
+        if (instances.empty()) continue;
+        auto &bucket = groups[std::make_pair(entry.pipelineName, fontHandle)];
+        bucket.insert(bucket.end(), instances.begin(), instances.end());
+    }
+    if (groups.empty()) return;
+
+    static const ModelManager::ModelHandle kRect2DMeshHandle = ModelManager::GetModelHandleFromAssetPath("PrimitiveMesh-Rect2D");
+    const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(kRect2DMeshHandle);
+    if (!meshBuffers || !meshBuffers->vertexBuffer || !meshBuffers->indexBuffer) return;
+
+    auto *commandList = target->GetCommandList();
+
+    for (const auto &[key, instances] : groups) {
+        const std::string &pipelineName = key.first;
+        const FontManager::FontHandle fontHandle = key.second;
+        if (instances.empty()) continue;
+
+        pipelineBinder.UsePipeline(pipelineName);
+        auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
+        shaderBinder.SetCommandList(commandList);
+
+        // カメラの定数バッファバインド（ライト関連バッファも一緒にバインドされるが、
+        // Text2DのシェーダーはgPointLights等を参照しないため無害。Object2D系の描画と同じ扱い）
+        BindCameraAndLights(commandList, target, pipelineName, sceneRenderer);
+
+        const std::uint32_t instanceCount = static_cast<std::uint32_t>(instances.size());
+
+        // ワールド行列のインスタンスバッファ
+        {
+            auto key2 = MakeBatchKey(target, pipelineName, kRect2DMeshHandle, fontHandle, "text_transform");
+            auto *instanceBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key2, sizeof(Matrix4x4), instanceCount);
+            if (!instanceBuffer) continue;
+            auto *mapped = static_cast<Matrix4x4 *>(instanceBuffer->Map());
+            if (!mapped) continue;
+            for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                mapped[i] = instances[i].worldMatrix;
+            }
+            shaderBinder.Bind("Vertex:gTransformationMatrices", instanceBuffer);
+        }
+
+        // 文字ごとの色・UV矩形・SDFパラメータ
+        {
+            auto key2 = MakeBatchKey(target, pipelineName, kRect2DMeshHandle, fontHandle, "text_material");
+            auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key2, sizeof(TextCharacterElement), instanceCount);
+            if (!materialBuffer) continue;
+            auto *mapped = static_cast<TextCharacterElement *>(materialBuffer->Map());
+            if (!mapped) continue;
+            for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                const auto &src = instances[i];
+                TextCharacterElement dst;
+                dst.color = src.color;
+                dst.uvRect = Vector4(src.u0, src.v0, src.u1, src.v1);
+                dst.boldWeight = src.boldWeight;
+                mapped[i] = dst;
+            }
+            shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
+        }
+
+        TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", FontManager::GetAtlasTextureHandle(fontHandle));
+        SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
+
+        pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
+        pipelineBinder.SetIndexBuffer(meshBuffers->indexBuffer.get());
+        commandList->DrawIndexedInstanced(meshBuffers->indexCount, instanceCount, 0, 0, 0);
+        ++drawCallCount_;
+    }
 }
 
 void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
@@ -1230,57 +1561,7 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
     std::vector<PointLightElement> pointLights;
     std::vector<SpotLightElement> spotLights;
     std::vector<DirectionalLightElement> directionalLights;
-    for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
-        if (!lightRenderer || !lightRenderer->IsActive()) continue;
-        // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
-        if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
-        if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
-        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
-        if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
-        auto *light = lightRenderer->GetLight();
-        if (!light) {
-            // Light コンポーネントが無い場合は既定値のディレクショナルライトとして扱う
-            DirectionalLightElement element;
-            element.enabled = 1u;
-            element.direction = lightRenderer->GetWorldDirection();
-            directionalLights.push_back(element);
-            continue;
-        }
-
-        if (light->GetType() == Light::Type::Directional) {
-            DirectionalLightElement element;
-            element.enabled = light->IsActive() ? 1u : 0u;
-            element.color = light->GetColor();
-            element.direction = lightRenderer->GetWorldDirection();
-            element.intensity = light->GetIntensity();
-            // このライトが影を生成する場合はシャドウマップのスロット番号を対応付ける
-            element.shadowMapIndex = findShadowIndex(lightRenderer);
-            directionalLights.push_back(element);
-        } else if (light->GetType() == Light::Type::Point) {
-            PointLightElement element;
-            element.enabled = light->IsActive() ? 1u : 0u;
-            element.color = light->GetColor();
-            element.position = lightRenderer->GetWorldPosition();
-            element.radius = light->GetRadius();
-            element.intensity = light->GetIntensity();
-            element.decay = light->GetDecay();
-            element.shadowMapIndex = findShadowIndex(lightRenderer);
-            pointLights.push_back(element);
-        } else if (light->GetType() == Light::Type::Spot) {
-            SpotLightElement element;
-            element.enabled = light->IsActive() ? 1u : 0u;
-            element.color = light->GetColor();
-            element.position = lightRenderer->GetWorldPosition();
-            element.distance = light->GetDistance();
-            element.direction = lightRenderer->GetWorldDirection();
-            element.innerAngle = light->GetInnerAngle();
-            element.outerAngle = light->GetOuterAngle();
-            element.intensity = light->GetIntensity();
-            element.decay = light->GetDecay();
-            element.shadowMapIndex = findShadowIndex(lightRenderer);
-            spotLights.push_back(element);
-        }
-    }
+    CollectLightsForTarget(sceneRenderer, target, pipelineName, findShadowIndex, pointLights, spotLights, directionalLights);
 
     //--------- ライト個数の定数バッファ ---------//
     {
@@ -1388,6 +1669,27 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
         }
     }
     SamplerManager::BindSampler(&shaderBinder, "Pixel:gShadowSamplerCmp", GetShadowSamplerCmpHandle());
+
+    //--------- Forward+ タイルライトカリング結果（ProcessLightCullingが計算済みのものを読むだけ） ---------//
+    if (pipelineName.rfind("Object3D.", 0) == 0) {
+        const std::uint32_t width = target ? target->GetRenderTargetWidth() : 0;
+        const std::uint32_t height = target ? target->GetRenderTargetHeight() : 0;
+        const std::uint32_t tileCountX = (width + kTileSize - 1) / kTileSize;
+        const std::uint32_t tileCountY = (height + kTileSize - 1) / kTileSize;
+        if (tileCountX > 0 && tileCountY > 0) {
+            const size_t tileElementCount = static_cast<size_t>(tileCountX) * tileCountY * (1 + kMaxLightsPerTile);
+            auto tileKey = MakeBatchKey(target, pipelineName, 0, 0, "tileLightIndices");
+            auto *tileBuffer = resourceContainer_->GetOrCreateRWStructuredBufferSrv(tileKey, sizeof(std::uint32_t), tileElementCount);
+            if (tileBuffer) {
+                shaderBinder.Bind("Pixel:gTileLightIndices", tileBuffer);
+            }
+            auto constantsKey = MakeBatchKey(target, pipelineName, 0, 0, "tileCullingConstants");
+            auto *tileConstantsBuffer = resourceContainer_->GetOrCreateConstantBuffer(constantsKey, sizeof(TileCullingConstants));
+            if (tileConstantsBuffer) {
+                shaderBinder.Bind("Pixel:TileCullingConstants", tileConstantsBuffer);
+            }
+        }
+    }
 }
 
 void Renderer::RenderEditorDebugOverlay(ScreenBuffer *screenBuffer,

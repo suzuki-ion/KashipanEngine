@@ -1,7 +1,9 @@
 ﻿#pragma once
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "Assets/ModelManager.h"
@@ -17,6 +19,7 @@ class ConstantBufferResource;
 class EmptyObject;
 class MeshRenderer;
 class SpriteRenderer;
+class TextRenderer;
 class SkinnedMeshRenderer;
 class CameraRenderer;
 class LightRenderer;
@@ -43,6 +46,21 @@ public:
         RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
     };
 
+    /// @brief DrawEntryにソートキー（描画先種別順・パイプライン優先度）を付随させた中間データ
+    struct RankedDrawEntry {
+        DrawEntry entry;
+        int kindOrder = 0;
+        std::int32_t pipelinePriority = 0;
+    };
+
+    /// @brief キャッシュ対象（targetObjectID未指定＝エディター用描画先のみに描画するMesh/SpriteRenderer）
+    ///        1件分のキャッシュ。パイプライン名解決・ソートキー算出はキャッシュ構築時のみ行い、
+    ///        毎フレームはアクティブ状態の再確認とワールド行列の再計算のみ行う
+    struct CachedRankedEntry {
+        RankedDrawEntry ranked;
+        std::variant<MeshRenderer *, SpriteRenderer *> source;
+    };
+
     SCENE_COMPONENT_CONSTRUCTOR(SceneRenderer, 1, SetUpdatePriority(1000);)
     COMPONENT_CATEGORY("Render")
     ~SceneRenderer() override = default;
@@ -59,6 +77,8 @@ public:
     void UnregisterMeshRenderer(const MeshRenderer *renderer);
     void RegisterSpriteRenderer(SpriteRenderer *renderer);
     void UnregisterSpriteRenderer(const SpriteRenderer *renderer);
+    void RegisterTextRenderer(TextRenderer *renderer);
+    void UnregisterTextRenderer(const TextRenderer *renderer);
     void RegisterSkinnedMeshRenderer(SkinnedMeshRenderer *renderer);
     void UnregisterSkinnedMeshRenderer(const SkinnedMeshRenderer *renderer);
     void RegisterCameraRenderer(CameraRenderer *renderer);
@@ -68,6 +88,7 @@ public:
 
     const std::vector<MeshRenderer *> &GetMeshRenderers() const noexcept { return meshRenderers_; }
     const std::vector<SpriteRenderer *> &GetSpriteRenderers() const noexcept { return spriteRenderers_; }
+    const std::vector<TextRenderer *> &GetTextRenderers() const noexcept { return textRenderers_; }
     const std::vector<SkinnedMeshRenderer *> &GetSkinnedMeshRenderers() const noexcept { return skinnedMeshRenderers_; }
     const std::vector<CameraRenderer *> &GetCameraRenderers() const noexcept { return cameraRenderers_; }
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
@@ -80,6 +101,13 @@ public:
     /// @details 描画先→パイプラインの描画優先度→メッシュ→マテリアルの順でソートされる
     /// @param pipelineManager パイプラインの描画優先度取得用
     const std::vector<DrawEntry> &BuildSortedDrawList(Passkey<Renderer>, PipelineManager *pipelineManager);
+
+    /// @brief 描画リストのキャッシュを次回のBuildSortedDrawList呼び出し時に再構築させる
+    /// @details パイプライン名・メッシュ・マテリアル・描画先対象の指定など、ソート結果に影響する
+    ///          プロパティが変更された際にMesh/SpriteRenderer側から呼ばれる。
+    ///          アクティブ状態の切り替えやワールド行列の変化はキャッシュ有無に関わらず毎フレーム
+    ///          再確認されるため、ここでの呼び出しは不要
+    void MarkDrawListDirty() noexcept { drawListDirty_ = true; }
 
     /// @brief 描画先からその描画先を所有するオブジェクトを取得（BuildSortedDrawList 後に有効）
     EmptyObject *GetTargetOwner(const IRenderTarget *target) const {
@@ -109,6 +137,10 @@ public:
     /// @param cameraInfo エディターカメラの情報（シャドウマップ計算用。未指定の場合は無効扱い）
     void SetEditorTarget(IRenderTarget *target, ConstantBufferResource *cameraBuffer,
         const EditorCameraInfo &cameraInfo = {}) {
+        if (editorTarget_ != target) {
+            // キャッシュ済みエントリは全てeditorTarget_を指しているため、対象が変わったら作り直す
+            drawListDirty_ = true;
+        }
         editorTarget_ = target;
         editorCameraBuffer_ = cameraBuffer;
         editorCameraInfo_ = cameraInfo;
@@ -137,12 +169,22 @@ protected:
 private:
     std::vector<MeshRenderer *> meshRenderers_;
     std::vector<SpriteRenderer *> spriteRenderers_;
+    std::vector<TextRenderer *> textRenderers_;
     std::vector<SkinnedMeshRenderer *> skinnedMeshRenderers_;
     std::vector<CameraRenderer *> cameraRenderers_;
     std::vector<LightRenderer *> lightRenderers_;
 
     std::vector<DrawEntry> sortedDrawList_;
     std::unordered_map<const IRenderTarget *, EmptyObject *> targetOwners_;
+
+    /// @brief キャッシュ（targetObjectID未指定のMesh/SpriteRenderer分）の再構築が必要かどうか
+    /// @details 初回は必ず構築されるようtrueで開始する
+    bool drawListDirty_ = true;
+    /// @brief キャッシュ済みエントリ（常にeditorTarget_のみに対して描画する。ソート済み）
+    std::vector<CachedRankedEntry> cachedEntries_;
+
+    /// @brief drawListDirty_==trueの場合にcachedEntries_を作り直す
+    void RebuildCachedEntries(PipelineManager *pipelineManager);
 
     IRenderTarget *editorTarget_ = nullptr;
     ConstantBufferResource *editorCameraBuffer_ = nullptr;

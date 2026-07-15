@@ -25,4 +25,8 @@ void GraphicsEngine::ReleaseRendererResources(Passkey<GameEngine>) {
     renderer_->ReleaseAllResources({});
 }
 
+std::uint32_t GraphicsEngine::GetLastFrameDrawCallCount() const {
+    return renderer_->GetLastFrameDrawCallCount();
+}
+
 } // namespace KashipanEngine

@@ -23,6 +23,7 @@ class TextRenderer;
 class SkinnedMeshRenderer;
 class CameraRenderer;
 class LightRenderer;
+class ParticleSystemBase;
 class IRenderTarget;
 class PipelineManager;
 class Renderer;
@@ -85,6 +86,9 @@ public:
     void UnregisterCameraRenderer(const CameraRenderer *renderer);
     void RegisterLightRenderer(LightRenderer *renderer);
     void UnregisterLightRenderer(const LightRenderer *renderer);
+    /// @brief GPU Simulation有効なParticleSystem2D/3Dを登録する（ParticleSystemBase::Initialize/SwitchSimulationModeから呼ばれる）
+    void RegisterGpuParticleEmitter(ParticleSystemBase *emitter);
+    void UnregisterGpuParticleEmitter(const ParticleSystemBase *emitter);
 
     const std::vector<MeshRenderer *> &GetMeshRenderers() const noexcept { return meshRenderers_; }
     const std::vector<SpriteRenderer *> &GetSpriteRenderers() const noexcept { return spriteRenderers_; }
@@ -92,6 +96,7 @@ public:
     const std::vector<SkinnedMeshRenderer *> &GetSkinnedMeshRenderers() const noexcept { return skinnedMeshRenderers_; }
     const std::vector<CameraRenderer *> &GetCameraRenderers() const noexcept { return cameraRenderers_; }
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
+    const std::vector<ParticleSystemBase *> &GetGpuParticleEmitters() const noexcept { return gpuParticleEmitters_; }
 
     /// @brief 登録済みの全SkinnedMeshRendererのアニメーション姿勢をバインドポーズへ戻す
     /// @details ゲームループ停止時（Scene::PlayStop）に呼ばれる
@@ -173,6 +178,7 @@ private:
     std::vector<SkinnedMeshRenderer *> skinnedMeshRenderers_;
     std::vector<CameraRenderer *> cameraRenderers_;
     std::vector<LightRenderer *> lightRenderers_;
+    std::vector<ParticleSystemBase *> gpuParticleEmitters_;
 
     std::vector<DrawEntry> sortedDrawList_;
     std::unordered_map<const IRenderTarget *, EmptyObject *> targetOwners_;

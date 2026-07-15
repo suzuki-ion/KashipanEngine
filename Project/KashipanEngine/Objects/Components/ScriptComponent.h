@@ -25,7 +25,8 @@ class EmptyObject;
 /// @brief AngelScriptのスクリプトファイルをコンパイルして実行するオブジェクトコンポーネント
 /// @details スクリプト内で ScriptComponentBehavior インターフェースを実装したクラスを定義すると、
 ///          そのクラスがインスタンス化され、以下のメソッドが呼び出される。
-///          - void Start()  : 初期化時に一度だけ
+///          - void Awake()  : インスタンス生成時（コンポーネントとしてアタッチされた時。Reload成功時も含む）に一度だけ
+///          - void Start()  : ゲームループ中、そのインスタンスに対して最初にUpdate()が呼ばれる直前に一度だけ
 ///          - void Update() : 毎フレーム
 ///          - void End()    : 終了時（コンポーネント削除・非アクティブ化・リロード時）
 ///          - void OnCollisionEnter/Stay/Exit(const HitInfo &in) : 同オブジェクトのコライダーの衝突時
@@ -197,9 +198,12 @@ private:
     /// @brief ScriptComponentBehaviorを実装したスクリプトクラスのインスタンス
     asIScriptObject *behaviorObject_ = nullptr;
     asITypeInfo *behaviorType_ = nullptr;
+    asIScriptFunction *awakeMethod_ = nullptr;
     asIScriptFunction *startMethod_ = nullptr;
     asIScriptFunction *updateMethod_ = nullptr;
     asIScriptFunction *endMethod_ = nullptr;
+    /// @brief このインスタンスに対して既にStart()を呼び終えたか（次回Update()で一度だけ呼ぶための管理用）
+    bool startCalled_ = false;
     asIScriptFunction *onCollisionEnterMethod_ = nullptr;
     asIScriptFunction *onCollisionStayMethod_ = nullptr;
     asIScriptFunction *onCollisionExitMethod_ = nullptr;

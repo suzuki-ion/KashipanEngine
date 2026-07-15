@@ -24,6 +24,7 @@
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Objects/Components/Compute/ComputeShaderProcessing.h"
+#include "Objects/Components/ParticleSystemBase.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/Light.h"
@@ -33,9 +34,12 @@
 #include "Objects/Components/Render/TextRenderer.h"
 #include "Assets/ModelManager.h"
 #include "Graphics/Resources/RWStructuredBufferResource.h"
+#include "Graphics/Resources/StructuredBufferResource.h"
 #include "Objects/EmptyObject.h"
+#include "Objects/Components/Transform.h"
 #include "Scene/Components/Compute/SceneComputeProcessor.h"
 #include "Scene/SceneContext.h"
+#include "Utilities/TimeUtils.h"
 
 namespace KashipanEngine {
 
@@ -305,6 +309,11 @@ Renderer::~Renderer() {
         shadowCommandSlotIndex_ = -1;
         shadowCommands_ = nullptr;
     }
+    if (directXCommon_ && particleComputeCommandSlotIndex_ >= 0) {
+        directXCommon_->ReleaseCommandObjects(Passkey<Renderer>{}, particleComputeCommandSlotIndex_);
+        particleComputeCommandSlotIndex_ = -1;
+        particleComputeCommands_ = nullptr;
+    }
 }
 
 void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) {
@@ -315,6 +324,8 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     ProcessComputeShaders(sceneContext);
     // GPUスキニングも描画リスト構築より先に実行し、スキニング結果を描画パスから参照できるようにする
     ProcessSkinning(sceneContext);
+    // GPUパーティクルも同様に描画リスト構築より先に実行する
+    ProcessGpuParticles(sceneContext);
 
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
@@ -490,6 +501,141 @@ void Renderer::ProcessSkinning(SceneContext *sceneContext) {
     }
 
     ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
+}
+
+void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
+    // デバッグ用: どこで早期returnしているかを一度だけログに出す（GPUパーティクルが描画されない問題の調査用）
+    static bool sLoggedEmittersEmpty = false;
+    static bool sLoggedSpawnPipelineMissing = false;
+    static bool sLoggedUpdatePipelineMissing = false;
+    static bool sLoggedDispatching = false;
+
+    if (!sceneContext || !pipelineManager_ || !directXCommon_) return;
+    auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
+    const auto &emitters = sceneRenderer->GetGpuParticleEmitters();
+    if (emitters.empty()) {
+        if (!sLoggedEmittersEmpty) {
+            sLoggedEmittersEmpty = true;
+            char buf[128];
+            std::snprintf(buf, sizeof(buf), "[ProcessGpuParticles] emitters is empty (sceneRenderer=%p)", static_cast<const void *>(sceneRenderer));
+            Log(buf, LogSeverity::Warning);
+        }
+        return;
+    }
+    if (!pipelineManager_->HasPipeline("ParticleSpawn") || pipelineManager_->GetPipeline("ParticleSpawn").Type() != PipelineType::Compute) {
+        if (!sLoggedSpawnPipelineMissing) {
+            sLoggedSpawnPipelineMissing = true;
+            Log("[ProcessGpuParticles] \"ParticleSpawn\" compute pipeline not found/loaded", LogSeverity::Warning);
+        }
+        return;
+    }
+    if (!pipelineManager_->HasPipeline("ParticleUpdate") || pipelineManager_->GetPipeline("ParticleUpdate").Type() != PipelineType::Compute) {
+        if (!sLoggedUpdatePipelineMissing) {
+            sLoggedUpdatePipelineMissing = true;
+            Log("[ProcessGpuParticles] \"ParticleUpdate\" compute pipeline not found/loaded", LogSeverity::Warning);
+        }
+        return;
+    }
+    if (!sLoggedDispatching) {
+        sLoggedDispatching = true;
+        char buf[128];
+        std::snprintf(buf, sizeof(buf), "[ProcessGpuParticles] dispatching for %zu emitter(s)", emitters.size());
+        Log(buf, LogSeverity::Info);
+    }
+
+    // GPUパーティクル専用のコマンドリストを使う（ComputeCommandProcessorの共有コマンドリストは
+    // 同一フレーム中に複数回Begin/EndRecordされる設計のため、共有すると他フェーズのBeginRecord内の
+    // Reset()で本フェーズが記録した内容が提出前に上書きされてしまう）
+    if (particleComputeCommandSlotIndex_ < 0) {
+        particleComputeCommandSlotIndex_ = directXCommon_->AcquireCommandObjects(Passkey<Renderer>{});
+        particleComputeCommands_ = (particleComputeCommandSlotIndex_ >= 0)
+            ? directXCommon_->GetCommandObjects(Passkey<Renderer>{}, particleComputeCommandSlotIndex_)
+            : nullptr;
+    }
+    if (!particleComputeCommands_) return;
+    auto *commandList = particleComputeCommands_->BeginRecord();
+    if (!commandList) return;
+
+    PipelineBinder pipelineBinder(commandList, pipelineManager_);
+    pipelineBinder.Invalidate();
+
+    const float deltaTime = GetDeltaTime();
+
+    for (auto *emitter : emitters) {
+        if (!emitter || !emitter->IsActive()) continue;
+
+        auto *particleBuffer = emitter->GetGpuParticleBuffer(Passkey<Renderer>{});
+        auto *instanceMatrixBuffer = emitter->GetGpuInstanceMatrixBuffer(Passkey<Renderer>{});
+        auto *spawnRequestBuffer = emitter->GetGpuSpawnRequestBuffer(Passkey<Renderer>{});
+        auto *spawnConstantBuffer = emitter->GetGpuSpawnConstantBuffer(Passkey<Renderer>{});
+        auto *updateConstantBuffer = emitter->GetGpuUpdateConstantBuffer(Passkey<Renderer>{});
+        if (!particleBuffer || !instanceMatrixBuffer || !spawnRequestBuffer || !spawnConstantBuffer || !updateConstantBuffer) continue;
+
+        particleBuffer->SetCommandList(commandList);
+        instanceMatrixBuffer->SetCommandList(commandList);
+        particleBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        instanceMatrixBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        const std::uint32_t spawnCount = emitter->GetGpuSpawnCount(Passkey<Renderer>{});
+        if (spawnCount > 0) {
+            pipelineBinder.UsePipeline("ParticleSpawn");
+            auto &spawnShaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "ParticleSpawn");
+            spawnShaderBinder.SetCommandList(commandList);
+
+            GPUParticleSpawnConstants spawnConstants;
+            spawnConstants.spawnCount = spawnCount;
+            void *mappedSpawnConstants = spawnConstantBuffer->Map();
+            if (mappedSpawnConstants) std::memcpy(mappedSpawnConstants, &spawnConstants, sizeof(spawnConstants));
+
+            spawnShaderBinder.Bind("Compute:ParticleSpawnConstants", spawnConstantBuffer);
+            spawnShaderBinder.Bind("Compute:gSpawnRequests", spawnRequestBuffer);
+            spawnShaderBinder.Bind("Compute:gParticles", particleBuffer);
+
+            const std::uint32_t spawnGroupCount = std::max<std::uint32_t>(1, (spawnCount + 63) / 64);
+            commandList->Dispatch(spawnGroupCount, 1, 1);
+
+            // ParticleUpdateが直後にgParticlesを読み書きするため、書き込み完了を待つUAVバリアを挟む
+            D3D12_RESOURCE_BARRIER uavBarrier{};
+            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarrier.UAV.pResource = particleBuffer->GetResource();
+            commandList->ResourceBarrier(1, &uavBarrier);
+        }
+
+        const std::uint32_t particleCount = emitter->GetGpuParticleCapacity(Passkey<Renderer>{});
+        if (particleCount == 0) continue;
+
+        pipelineBinder.UsePipeline("ParticleUpdate");
+        auto &updateShaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "ParticleUpdate");
+        updateShaderBinder.SetCommandList(commandList);
+
+        GPUParticleUpdateConstants updateConstants;
+        updateConstants.deltaTime = deltaTime;
+        updateConstants.particleCount = particleCount;
+        updateConstants.billboard = emitter->IsBillboard() ? 1u : 0u;
+        updateConstants.billboardMode = static_cast<std::uint32_t>(emitter->GetBillboardRotationMode());
+        if (emitter->IsBillboard()) {
+            auto *cameraObject = emitter->ResolveBillboardCameraObject(Passkey<Renderer>{});
+            auto *cameraTransform = cameraObject ? cameraObject->GetComponent<Transform>() : nullptr;
+            if (cameraTransform) updateConstants.cameraWorldMatrix = cameraTransform->GetWorldMatrix();
+        }
+        void *mappedUpdateConstants = updateConstantBuffer->Map();
+        if (mappedUpdateConstants) std::memcpy(mappedUpdateConstants, &updateConstants, sizeof(updateConstants));
+
+        updateShaderBinder.Bind("Compute:ParticleUpdateConstants", updateConstantBuffer);
+        updateShaderBinder.Bind("Compute:gParticles", particleBuffer);
+        updateShaderBinder.Bind("Compute:gInstanceMatrices", instanceMatrixBuffer);
+
+        const std::uint32_t updateGroupCount = std::max<std::uint32_t>(1, (particleCount + 63) / 64);
+        commandList->Dispatch(updateGroupCount, 1, 1);
+
+        // 後続の描画パスでSRVとして読めるように状態遷移しておく
+        instanceMatrixBuffer->TransitionTo(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
+
+    if (particleComputeCommands_->EndRecord()) {
+        directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, particleComputeCommands_->GetCommandList());
+    }
 }
 
 void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
@@ -1239,6 +1385,9 @@ void Renderer::RenderToTarget(IRenderTarget *target,
     // TextRenderer（文字ごとにアトラス内UVが異なるため通常のバッチには乗らない）は専用パスで描画する
     RenderTextRenderers(target, pipelineBinder, sceneRenderer);
 
+    // GPU Simulation有効なParticleSystem2D/3D（ProcessGpuParticlesが結果を書き込み済み）も専用パスで描画する
+    RenderGpuParticles(target, pipelineBinder, sceneRenderer);
+
     // ScreenBuffer の場合は所有オブジェクトのポストプロセスを適用
     if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
         auto *screenBuffer = static_cast<ScreenBuffer *>(target);
@@ -1499,6 +1648,126 @@ void Renderer::RenderTextRenderers(IRenderTarget *target, PipelineBinder &pipeli
 
         TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", FontManager::GetAtlasTextureHandle(fontHandle));
         SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
+
+        pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
+        pipelineBinder.SetIndexBuffer(meshBuffers->indexBuffer.get());
+        commandList->DrawIndexedInstanced(meshBuffers->indexCount, instanceCount, 0, 0, 0);
+        ++drawCallCount_;
+    }
+}
+
+void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer) {
+    if (!target || !sceneRenderer) return;
+    const auto &emitters = sceneRenderer->GetGpuParticleEmitters();
+    if (emitters.empty()) return;
+
+    auto *editorTarget = sceneRenderer->GetEditorTarget();
+    auto *commandList = target->GetCommandList();
+
+    for (auto *emitter : emitters) {
+        if (!emitter || !emitter->IsActive()) continue;
+        const std::string &pipelineName = emitter->GetPipelineName();
+        if (pipelineName.empty() || !pipelineManager_->HasPipeline(pipelineName)) continue;
+        if (IsExcludedAsEditorOnly(emitter, target, sceneRenderer)) continue;
+
+        std::vector<IRenderTarget *> collectedTargets;
+        auto *targetObject = emitter->GetTargetObject();
+        SceneRenderer::CollectRenderTargets(targetObject, collectedTargets);
+        if (editorTarget && editorTarget->IsRenderTargetAvailable()) {
+            collectedTargets.push_back(editorTarget);
+        }
+        bool matches = false;
+        for (auto *candidate : collectedTargets) {
+            if (candidate != target || !target->IsRenderTargetAvailable()) continue;
+            if (target != editorTarget && !emitter->IsRenderTargetIncluded(target)) continue;
+            matches = true;
+            break;
+        }
+        if (!matches) continue;
+
+        const auto meshHandle = emitter->GetMeshHandle();
+        if (meshHandle == ModelManager::kInvalidHandle) continue;
+        const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(meshHandle);
+        if (!meshBuffers || !meshBuffers->vertexBuffer || !meshBuffers->indexBuffer) continue;
+
+        auto *instanceMatrixBuffer = emitter->GetGpuInstanceMatrixBuffer(Passkey<Renderer>{});
+        if (!instanceMatrixBuffer) continue;
+        const std::uint32_t instanceCount = emitter->GetGpuParticleCapacity(Passkey<Renderer>{});
+        if (instanceCount == 0) continue;
+
+        const bool isObject2D = pipelineName.rfind("Object2D", 0) == 0;
+
+        pipelineBinder.UsePipeline(pipelineName);
+        auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
+        shaderBinder.SetCommandList(commandList);
+
+        BindCameraAndLights(commandList, target, pipelineName, sceneRenderer);
+
+        instanceMatrixBuffer->SetCommandList(commandList);
+        shaderBinder.Bind("Vertex:gTransformationMatrices", instanceMatrixBuffer);
+
+        // マテリアルはDrawBatchと同じくバッチ全体で1つ（パーティクルごとの色は無し）
+        {
+            const auto materialHandle = emitter->GetMaterialHandle();
+            auto *material = MaterialManager::GetMaterial(materialHandle);
+            if (material) material->ResolveTextureHandles();
+
+            auto key = MakeBatchKey(target, pipelineName, meshHandle, materialHandle, "gpu_particle_material");
+            if (isObject2D) {
+                Material2DElement element;
+                if (material) {
+                    element.color = material->color;
+                    element.uvTransform = material->uvTransform;
+                    element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+                }
+                auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(Material2DElement), instanceCount);
+                if (materialBuffer) {
+                    auto *mapped = static_cast<Material2DElement *>(materialBuffer->Map());
+                    if (mapped) {
+                        for (std::uint32_t i = 0; i < instanceCount; ++i) mapped[i] = element;
+                        shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
+                    }
+                }
+            } else {
+                MaterialElement element;
+                if (material) {
+                    element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
+                    element.enableEnvironmentMapping = (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+                    element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
+                    element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+                    element.color = material->color;
+                    element.uvTransform = material->uvTransform;
+                    element.shininess = material->shininess;
+                    element.specularColor = material->specularColor;
+                    element.environmentCoefficient = material->environmentCoefficient;
+                }
+                auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
+                if (materialBuffer) {
+                    auto *mapped = static_cast<MaterialElement *>(materialBuffer->Map());
+                    if (mapped) {
+                        for (std::uint32_t i = 0; i < instanceCount; ++i) mapped[i] = element;
+                        shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
+                    }
+                }
+            }
+
+            if (material && material->textureHandle != TextureManager::kInvalidHandle) {
+                TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", material->textureHandle);
+            } else {
+                const auto fallbackHandle = TextureManager::GetTextureFromFileName("white1x1.png");
+                if (fallbackHandle != TextureManager::kInvalidHandle) {
+                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackHandle);
+                }
+            }
+            if (material && material->environmentHandle != TextureManager::kInvalidHandle) {
+                TextureManager::BindTexture(&shaderBinder, "Pixel:gEnvironmentMap", material->environmentHandle);
+            }
+            if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
+                SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
+            } else {
+                SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
+            }
+        }
 
         pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
         pipelineBinder.SetIndexBuffer(meshBuffers->indexBuffer.get());

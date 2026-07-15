@@ -103,6 +103,12 @@ private:
     ///          後続の描画パスで頂点バッファとして参照できるようにする
     void ProcessSkinning(SceneContext *sceneContext);
 
+    /// @brief GPU Simulation有効なParticleSystem2D/3Dに対してコンピュートシェーダー
+    ///        （ParticleSpawn→ParticleUpdate）を実行する
+    /// @details 描画リスト構築より先に実行し、gInstanceMatricesを後続のRenderGpuParticlesが
+    ///          頂点シェーダーのgTransformationMatricesとしてそのまま参照する
+    void ProcessGpuParticles(SceneContext *sceneContext);
+
     /// @brief タイル単位のライトカリング（Forward+）を実行する
     /// @details 描画リスト構築後、RenderShadowMaps/RenderToTargetより前に呼ぶ。3D描画に使われる
     ///          (描画先, パイプライン名) の組ごとに、Point/Spotライトをタイル分割してカリングし、
@@ -127,6 +133,16 @@ private:
     ///          (パイプライン名, フォントハンドル) の組ごとに全TextRendererの文字インスタンスを
     ///          まとめて1回のDrawIndexedInstancedで描画する。RenderToTargetの通常バッチ描画の後に呼ぶ
     void RenderTextRenderers(IRenderTarget *target,
+        PipelineBinder &pipelineBinder,
+        SceneRenderer *sceneRenderer);
+
+    /// @brief GPU Simulation有効なParticleSystem2D/3Dの専用描画パス
+    /// @details ProcessGpuParticlesが書き込んだgInstanceMatricesをSRVとして
+    ///          そのままgTransformationMatricesにバインドし、既存のObject2D/Object3D
+    ///          頂点シェーダーを無改造で利用する。常にプール容量分描画し、死亡中の
+    ///          パーティクルはスケール0の行列で非表示になる（コンパクションは行わない）。
+    ///          RenderToTargetの通常バッチ描画・RenderTextRenderersの後に呼ぶ
+    void RenderGpuParticles(IRenderTarget *target,
         PipelineBinder &pipelineBinder,
         SceneRenderer *sceneRenderer);
 
@@ -189,6 +205,15 @@ private:
     /// @brief シャドウパス記録用のコマンドスロット
     int shadowCommandSlotIndex_ = -1;
     DX12Commands *shadowCommands_ = nullptr;
+
+    /// @brief GPUパーティクル用コンピュートディスパッチ記録専用のコマンドスロット
+    /// @details ComputeCommandProcessorの共有コマンドリストは1フレーム中に複数回
+    ///          （ComputeShaderProcessing/Skinning/LightCullingなど）Begin/EndRecordされる
+    ///          設計になっており、同じコマンドリストを使い回すとBeginRecord内のReset()で
+    ///          直前のフェーズが記録した（まだ提出されていない）内容が上書きされてしまう。
+    ///          GPUパーティクルのDispatchは専用のコマンドリストへ独立して記録することでこれを回避する
+    int particleComputeCommandSlotIndex_ = -1;
+    DX12Commands *particleComputeCommands_ = nullptr;
 
     /// @brief 直近のRenderFrameで発行されたDrawIndexedInstanced呼び出し回数（RenderFrame冒頭でリセットする）
     std::uint32_t drawCallCount_ = 0;

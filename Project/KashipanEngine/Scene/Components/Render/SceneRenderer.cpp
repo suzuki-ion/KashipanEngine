@@ -190,6 +190,17 @@ void SceneRenderer::UnregisterTextRenderer(const TextRenderer *renderer) {
     if (it != textRenderers_.end()) textRenderers_.erase(it);
 }
 
+void SceneRenderer::RegisterGpuParticleEmitter(ParticleSystemBase *emitter) {
+    if (!emitter) return;
+    if (std::find(gpuParticleEmitters_.begin(), gpuParticleEmitters_.end(), emitter) != gpuParticleEmitters_.end()) return;
+    gpuParticleEmitters_.push_back(emitter);
+}
+
+void SceneRenderer::UnregisterGpuParticleEmitter(const ParticleSystemBase *emitter) {
+    auto it = std::find(gpuParticleEmitters_.begin(), gpuParticleEmitters_.end(), emitter);
+    if (it != gpuParticleEmitters_.end()) gpuParticleEmitters_.erase(it);
+}
+
 void SceneRenderer::RegisterSkinnedMeshRenderer(SkinnedMeshRenderer *renderer) {
     if (!renderer) return;
     if (std::find(skinnedMeshRenderers_.begin(), skinnedMeshRenderers_.end(), renderer) != skinnedMeshRenderers_.end()) return;

@@ -441,6 +441,7 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
     }
     behaviorObject_->AddRef();
 
+    awakeMethod_ = behaviorType_->GetMethodByDecl("void Awake()");
     startMethod_ = behaviorType_->GetMethodByDecl("void Start()");
     updateMethod_ = behaviorType_->GetMethodByDecl("void Update()");
     endMethod_ = behaviorType_->GetMethodByDecl("void End()");
@@ -448,6 +449,8 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
     onCollisionStayMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionStay(const HitInfo &in)");
     onCollisionExitMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionExit(const HitInfo &in)");
     onWindowMessageMethod_ = behaviorType_->GetMethodByDecl("void OnWindowMessage(const WindowMessageInfo &in)");
+    // 新しいインスタンスなので、Start()は次回のUpdate()で改めて一度だけ呼ぶ
+    startCalled_ = false;
     return true;
 }
 
@@ -651,7 +654,7 @@ void ScriptComponent::Initialize() {
     if (Reload()) {
         HookColliders();
         HookWindowObjects();
-        CallMethod(startMethod_);
+        CallMethod(awakeMethod_);
     }
 }
 
@@ -663,6 +666,12 @@ void ScriptComponent::Finalize() {
 }
 
 void ScriptComponent::Update() {
+    // このインスタンスにとって最初のUpdate()である場合、Start()を一度だけ先に呼ぶ
+    if (behaviorObject_ && !startCalled_) {
+        startCalled_ = true;
+        CallMethod(startMethod_);
+    }
+
     // 実行中に追加/削除されたコライダーへ追従するため、数が変わったらフックし直す
     const size_t hookedCount = colliderHooks_ ? colliderHooks_->entries.size() : 0;
     if (behaviorObject_ && CountColliders() != hookedCount) {
@@ -1065,14 +1074,14 @@ void ScriptComponent::ShowImGui() {
         if (Reload()) {
             HookColliders();
             HookWindowObjects();
-            CallMethod(startMethod_);
+            CallMethod(awakeMethod_);
         }
     }
 
     ImGui::Text("Behavior: %s", behaviorType_ ? behaviorType_->GetName() : "(None)");
     if (behaviorObject_) {
-        ImGui::Text("Start: %s / Update: %s / End: %s",
-            startMethod_ ? "o" : "-", updateMethod_ ? "o" : "-", endMethod_ ? "o" : "-");
+        ImGui::Text("Awake: %s / Start: %s / Update: %s / End: %s",
+            awakeMethod_ ? "o" : "-", startMethod_ ? "o" : "-", updateMethod_ ? "o" : "-", endMethod_ ? "o" : "-");
         ImGui::Text("OnCollision Enter: %s / Stay: %s / Exit: %s",
             onCollisionEnterMethod_ ? "o" : "-", onCollisionStayMethod_ ? "o" : "-", onCollisionExitMethod_ ? "o" : "-");
         ImGui::Text("OnWindowMessage: %s", onWindowMessageMethod_ ? "o" : "-");
@@ -1286,7 +1295,7 @@ bool ScriptComponent::LoadFromJson(const JSON &json) {
         if (Reload()) {
             HookColliders();
             HookWindowObjects();
-            CallMethod(startMethod_);
+            CallMethod(awakeMethod_);
         }
     } else if (!serializedFields_.empty()) {
         // 既にビルド済み（Initialize後に読み込まれた）の場合はその場で反映する

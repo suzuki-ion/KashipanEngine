@@ -17,6 +17,8 @@ class Player : ScriptComponentBehavior {
     float groundedThreshold = 0.4f;
     [SerializeField, Tooltip("敵との接触判定閾値")]
     float enemyCollisionThreshold = 0.4f;
+    [SerializeField, Tooltip("プレイヤーが滑り始める地面の傾き閾値")]
+    float slideThreshold = 0.5f;
 
     // --- 実行時状態（保存不要） ---
     Vector3 velocity = Vector3(0.0f, 0.0f, 0.0f);
@@ -26,88 +28,22 @@ class Player : ScriptComponentBehavior {
     Vector3 groundHitNormal = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 groundVelocity = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
-
     bool isJumping = false;
     bool wasJumping = false;
-
     float moveDirection = 0.0f;
 
     Tag groundColliderTag = Tag("GroundBox");
     Tag enemyColliderTag = Tag("EnemySphere");
-
     Tag audioSourcePlayerLandingTag = Tag("PlayerLanding");
-
-    void Start() {
-        Log("Player start: " + GetOwnerObject().GetName());
-    }
 
     void Update() {
         const float dt = GetDeltaTime() * GetGameSpeed();
-        Transform@ tf = GetTransform();
-        if (tf is null) return;
-
-        // 左右移動入力
-        moveDirection = 0.0f;
-        if (IsCommandTriggered("PlayerMoveLeft")) {
-            moveDirection = GetCommandValue("PlayerMoveLeft");
-        }
-        if (IsCommandTriggered("PlayerMoveRight")) {
-            moveDirection = GetCommandValue("PlayerMoveRight");
-        }
-        // ジャンプ入力
-        isJumping = IsCommandTriggered("PlayerJump");
-
-        // 敵に接触している状態で、かつ法線が上向きならジャンプ状態にする
-        if (isCollidingWithEnemy && enemyHitNormal.y > enemyCollisionThreshold) {
-            isJumping = true;
-        }
-
-        // 地面着地時の着地音再生
-        if (isGrounded && !wasGrounded) {
-            array<AudioSource@>@ audioSources;
-            if (GetComponents(@audioSources)) {
-                for (uint i = 0; i < audioSources.length(); i++) {
-                    if (audioSources[i].GetTag() == audioSourcePlayerLandingTag) {
-                        audioSources[i].Play();
-                    }
-                }
-            }
-        }
-        wasGrounded = isGrounded;
-
-        // 移動時の法線方向を計算する
-        Vector3 targetNormal;
-        if (isGrounded) {
-            Vector3 tangent(groundHitNormal.y, -groundHitNormal.x, 0.0f);
-            targetNormal = tangent.Normalize();
-        } else {
-            targetNormal = Vector3(1.0f, 0.0f, 0.0f);
-        }
-
-        // 左右移動
-        if (moveDirection < 0.0f || moveDirection > 0.0f) {
-            velocity -= targetNormal * moveSpeed * moveDirection;
-        } else {
-            velocity.x = Easing::Lerp(velocity.x, 0.0f, lateralDeceleration);
-            if (isGrounded && !isJumping && !wasJumping) {
-                velocity.y = Easing::Lerp(velocity.y, 0.0f, lateralDeceleration);
-            }
-        }
-
-        // 重力とジャンプ
-        if (!(isGrounded || isCollidingWithEnemy)) {
-            velocity.y -= gravity * dt * 60.0f;
-        }
-        if ((isGrounded || isCollidingWithEnemy) && isJumping && !wasJumping) {
-            velocity.y = jumpPower;
-        }
-        wasJumping = isJumping;
-
-        // 速度の適用
-        velocity.x = Clamp(velocity.x, minVelocity.x, maxVelocity.x);
-        velocity.y = Clamp(velocity.y, minVelocity.y, maxVelocity.y);
-        // 地面の速度は自分のvelocityとは別に、移動量にだけその場で加算する
-        tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundVelocity * dt);
+        
+        InputEvent();
+        Landing();
+        LateralMovement();
+        Jumping(dt);
+        ApplyVelocity(dt);
 
         isGrounded = false;
         isCollidingWithEnemy = false;
@@ -164,7 +100,80 @@ class Player : ScriptComponentBehavior {
         }
     }
 
-    void End() {
-        Log("Player end");
+    //==================================================
+    // 内部処理
+    //==================================================
+
+    void InputEvent() {
+        // 左右移動入力
+        moveDirection = 0.0f;
+        if (IsCommandTriggered("PlayerMoveLeft")) {
+            moveDirection = GetCommandValue("PlayerMoveLeft");
+        }
+        if (IsCommandTriggered("PlayerMoveRight")) {
+            moveDirection = GetCommandValue("PlayerMoveRight");
+        }
+        // ジャンプ入力
+        isJumping = IsCommandTriggered("PlayerJump");
+    }
+
+    void Landing() {
+        // 着地時の処理（着地音再生など）
+        array<AudioSource@>@ audioSources;
+        if (GetComponents(@audioSources)) {
+            for (uint i = 0; i < audioSources.length(); i++) {
+                if (audioSources[i].GetTag() == audioSourcePlayerLandingTag) {
+                    audioSources[i].Play();
+                }
+            }
+        }
+        wasGrounded = isGrounded;
+    }
+
+    void LateralMovement() {
+        // 移動時の法線方向を計算する
+        Vector3 targetNormal;
+        if (isGrounded) {
+            Vector3 tangent(groundHitNormal.y, -groundHitNormal.x, 0.0f);
+            targetNormal = tangent.Normalize();
+        } else {
+            targetNormal = Vector3(1.0f, 0.0f, 0.0f);
+        }
+
+        // 左右移動
+        if (moveDirection < 0.0f || moveDirection > 0.0f) {
+            velocity -= targetNormal * moveSpeed * moveDirection;
+        } else {
+            velocity.x = Easing::Lerp(velocity.x, 0.0f, lateralDeceleration);
+            if (isGrounded && !isJumping && !wasJumping) {
+                velocity.y = Easing::Lerp(velocity.y, 0.0f, lateralDeceleration);
+            }
+        }
+    }
+
+    void Jumping(const float dt = GetDeltaTime() * GetGameSpeed()) {
+        // 敵に接触している状態で、かつ法線が上向きならジャンプ状態にする
+        if (isCollidingWithEnemy && enemyHitNormal.y > enemyCollisionThreshold) {
+            isJumping = true;
+        }
+
+        // 重力とジャンプ
+        if (!(isGrounded || isCollidingWithEnemy)) {
+            velocity.y -= gravity * dt * 60.0f;
+        }
+        if ((isGrounded || isCollidingWithEnemy) && isJumping && !wasJumping) {
+            velocity.y = jumpPower;
+        }
+        wasJumping = isJumping;
+    }
+
+    void ApplyVelocity(const float dt = GetDeltaTime() * GetGameSpeed()) {
+        Transform@ tf = GetTransform();
+        if (tf is null) return;
+        // 速度の適用
+        velocity.x = Clamp(velocity.x, minVelocity.x, maxVelocity.x);
+        velocity.y = Clamp(velocity.y, minVelocity.y, maxVelocity.y);
+        // 地面の速度は自分のvelocityとは別に、移動量にだけその場で加算する
+        tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundVelocity * dt);
     }
 }

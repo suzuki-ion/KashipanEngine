@@ -4,7 +4,8 @@
             "data": {
                 "data": {},
                 "isActive": true,
-                "priority": 1000
+                "priority": 1000,
+                "tag": ""
             },
             "type": "SceneRenderer"
         }
@@ -19,10 +20,10 @@
                         "customData": {
                             "parent": "4aeae184-8b78-4af0-bc21-da2f9467b1d5",
                             "rotate": {
-                                "w": 0.7071067094802856,
+                                "w": 1.0,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.7071068286895752
+                                "z": 0.0
                             },
                             "scale": {
                                 "x": 0.9999673366546631,
@@ -36,7 +37,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 0
+                        "priority": 0,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -46,7 +48,8 @@
                             "meshHandle": 11
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "MeshFilter"
                 },
@@ -61,14 +64,17 @@
                             "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
-                        "priority": 2
+                        "priority": 2,
+                        "tag": ""
                     },
                     "type": "MeshRenderer"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "TestObject",
-            "objectID": "c6e243c1-ec22-4c9a-8009-e4a5e9f93a8f"
+            "objectID": "c6e243c1-ec22-4c9a-8009-e4a5e9f93a8f",
+            "tag": ""
         },
         {
             "components": [
@@ -88,13 +94,14 @@
                                 "z": 0.999994695186615
                             },
                             "translate": {
-                                "x": 0.3840338885784149,
+                                "x": 0.9265947937965393,
                                 "y": 1.6760259866714478,
                                 "z": -7.015614032745361
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -104,7 +111,8 @@
                             "meshHandle": 14
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "MeshFilter"
                 },
@@ -123,7 +131,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Velocity"
                 },
@@ -135,14 +144,17 @@
                             "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
-                        "priority": 900
+                        "priority": 900,
+                        "tag": ""
                     },
                     "type": "MeshRenderer"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "EmptyObject",
-            "objectID": "f1029f3e-37b2-4140-9bff-0e4575564d14"
+            "objectID": "f1029f3e-37b2-4140-9bff-0e4575564d14",
+            "tag": ""
         },
         {
             "components": [
@@ -150,30 +162,32 @@
                     "data": {
                         "customData": {
                             "rotate": {
-                                "w": 0.7071068286895752,
-                                "x": 0.7071068286895752,
-                                "y": 0.0,
-                                "z": 0.0
+                                "w": 0.8295944333076477,
+                                "x": 0.5341389179229736,
+                                "y": 0.15462493896484375,
+                                "z": 0.05059443414211273
                             },
                             "scale": {
-                                "x": 0.9999970197677612,
-                                "y": 1.0000052452087402,
-                                "z": 1.0000053644180298
+                                "x": 0.9999960064888,
+                                "y": 1.000004768371582,
+                                "z": 1.000004768371582
                             },
                             "translate": {
-                                "x": -0.25860047340393066,
-                                "y": -0.06802450120449066,
-                                "z": 0.05529458820819855
+                                "x": -0.2585941553115845,
+                                "y": -0.06802377849817276,
+                                "z": 0.05529419332742691
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
                 {
                     "data": {
                         "customData": {
+                            "castShadows": false,
                             "color": {
                                 "w": 1.0,
                                 "x": 1.0,
@@ -186,10 +200,14 @@
                             "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
+                            "shadowBias": 1.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
                             "type": 0
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Light"
                 },
@@ -200,14 +218,17 @@
                             "targetObjectID": ""
                         },
                         "isActive": true,
-                        "priority": 950
+                        "priority": 950,
+                        "tag": ""
                     },
                     "type": "LightRenderer"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "DebugSceneLight",
-            "objectID": "d5583855-2a86-4e8e-80ad-cf7d45956628"
+            "objectID": "d5583855-2a86-4e8e-80ad-cf7d45956628",
+            "tag": ""
         },
         {
             "components": [
@@ -232,9 +253,24 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 0,
+                        "tag": ""
                     },
                     "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 2048,
+                            "isShowViewer": false,
+                            "name": "ShadowMapBuffer_0",
+                            "width": 2048
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ShadowMapObject"
                 },
                 {
                     "data": {
@@ -245,7 +281,8 @@
                             "width": 1280
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 2,
+                        "tag": ""
                     },
                     "type": "ScreenBufferObject"
                 },
@@ -253,12 +290,13 @@
                     "data": {
                         "customData": {
                             "height": 720,
-                            "isShowViewer": true,
+                            "isShowViewer": false,
                             "name": "ScreenBuffer_6",
                             "width": 1280
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 3,
+                        "tag": ""
                     },
                     "type": "ScreenBufferObject"
                 },
@@ -273,18 +311,101 @@
                                 0.17846155166625977,
                                 1.0
                             ],
+                            "excludedScreenBuffers": [],
                             "thickness": 1.0,
                             "threshold": 0.10000000149011612
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 4,
+                        "tag": ""
                     },
                     "type": "OutlineEffect"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "ScreenBuffer",
-            "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
+            "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 1.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 1.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "aspectRatio": 1.7777777910232544,
+                            "farClip": 1000.0,
+                            "fovY": 0.44999998807907104,
+                            "nearClip": 0.10000000149011612,
+                            "orthoSize": 10.0,
+                            "orthographic": false
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Camera3D"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "DirectionalLight",
+            "objectID": "7b453c6e-6c17-49f7-b716-a5e74bc4efe5",
+            "tag": ""
         },
         {
             "components": [
@@ -310,7 +431,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -325,7 +447,8 @@
                             "orthographic": false
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Camera3D"
                 },
@@ -340,7 +463,8 @@
                             "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "CameraRenderer"
                 },
@@ -351,7 +475,16 @@
                                 {
                                     "followPositionX": true,
                                     "followPositionY": true,
-                                    "followPositionZ": true,
+                                    "followPositionZ": false,
+                                    "followRotationX": false,
+                                    "followRotationY": false,
+                                    "followRotationZ": false,
+                                    "objectID": "c6e243c1-ec22-4c9a-8009-e4a5e9f93a8f"
+                                },
+                                {
+                                    "followPositionX": true,
+                                    "followPositionY": true,
+                                    "followPositionZ": false,
                                     "followRotationX": false,
                                     "followRotationY": false,
                                     "followRotationZ": false,
@@ -383,17 +516,20 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "targetFovY": 0.44999998807907104
+                            "targetFovY": 0.6000000238418579
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "CameraController"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "Camera3D",
-            "objectID": "a47798a2-a2a3-4514-a7c7-bb75c0ad7aa7"
+            "objectID": "a47798a2-a2a3-4514-a7c7-bb75c0ad7aa7",
+            "tag": ""
         },
         {
             "components": [
@@ -419,13 +555,15 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
                 {
                     "data": {
                         "customData": {
+                            "castShadows": false,
                             "color": {
                                 "w": 1.0,
                                 "x": 1.0,
@@ -438,10 +576,14 @@
                             "intensity": 1.6699999570846558,
                             "outerAngle": 0.6000000238418579,
                             "radius": 13.800000190734863,
+                            "shadowBias": 1.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
                             "type": 1
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Light"
                 },
@@ -452,14 +594,17 @@
                             "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "LightRenderer"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "PointLight",
-            "objectID": "5a20b59b-3f11-438b-8e5f-1ebbbf59d3a0"
+            "objectID": "5a20b59b-3f11-438b-8e5f-1ebbbf59d3a0",
+            "tag": ""
         },
         {
             "components": [
@@ -485,14 +630,77 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "TestParentObject",
-            "objectID": "4aeae184-8b78-4af0-bc21-da2f9467b1d5"
+            "objectID": "4aeae184-8b78-4af0-bc21-da2f9467b1d5",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 4.0,
+                                "y": 4.0,
+                                "z": 4.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 7
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Default",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Ground",
+            "objectID": "81efa5e0-8fc3-4d55-be5a-9db4f8a345a7",
+            "tag": ""
         },
         {
             "components": [
@@ -517,7 +725,8 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "Transform"
                 },
@@ -530,7 +739,8 @@
                             "width": 1280
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "ScreenBufferObject"
                 },
@@ -551,38 +761,302 @@
                                 1.0
                             ],
                             "edgeThickness": 0.10000000149011612,
+                            "excludedScreenBuffers": [],
                             "maskTexture": "Application/Image/noise0.png",
-                            "maskThreshold": 0.5099999904632568
+                            "maskThreshold": 0.5149999856948853
                         },
                         "isActive": true,
-                        "priority": 1
+                        "priority": 1,
+                        "tag": ""
                     },
                     "type": "DissolveEffect"
                 }
             ],
+            "editorOnly": false,
             "isActive": true,
             "name": "ScreenBuffer2",
-            "objectID": "7ee66625-9d8c-4e22-8cf6-3598988ffed3"
+            "objectID": "7ee66625-9d8c-4e22-8cf6-3598988ffed3",
+            "tag": ""
         },
         {
-            "isActive": false,
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": -10.979999542236328,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 720,
+                            "interceptedMessages": [],
+                            "title": "Normal Window",
+                            "width": 1280
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "NormalWindowObject"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 720,
+                            "isShowViewer": true,
+                            "name": "ScreenBuffer_5",
+                            "width": 1280
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScreenBufferObject"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
             "name": "Window",
-            "objectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3"
+            "objectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3",
+            "tag": ""
         },
         {
-            "isActive": false,
-            "name": "Camera3D(1)",
-            "objectID": "a4211086-7732-474d-bd4d-d3dadbb3f94d"
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "farClip": 1000.0,
+                            "height": 720.0,
+                            "nearClip": 0.0,
+                            "width": 1280.0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Camera2D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera2D",
+                                "Pixel:gCamera2D"
+                            ],
+                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                            "targetObjectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3"
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "CameraRenderer"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera2D",
+                                "Pixel:gCamera2D"
+                            ],
+                            "pipelineName": "Text2D.BlendNormal",
+                            "targetObjectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3"
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "CameraRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Camera2D",
+            "objectID": "a4211086-7732-474d-bd4d-d3dadbb3f94d",
+            "tag": ""
         },
         {
-            "isActive": false,
-            "name": "Light",
-            "objectID": "c3097fdd-2d0d-4e38-9652-e40005ca4b5e"
-        },
-        {
-            "isActive": false,
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 128.0,
+                                "y": 128.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 128.0,
+                                "y": 128.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshHandle": 6
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "anchor": {
+                                "x": 0.5,
+                                "y": 0.5
+                            },
+                            "materialName": "White",
+                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                            "pivot": {
+                                "x": 0.5,
+                                "y": 0.5
+                            },
+                            "targetObjectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "SpriteRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
             "name": "EmptyObject",
-            "objectID": "59a0e127-4f21-40ab-be99-6c3b111b2845"
+            "objectID": "59a0e127-4f21-40ab-be99-6c3b111b2845",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 128.0,
+                                "y": 128.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "defaultCharacterAnchor": {
+                                "x": 0.5,
+                                "y": 0.5
+                            },
+                            "defaultCharacterPivot": {
+                                "x": 0.5,
+                                "y": 0.5
+                            },
+                            "fontName": "NotoSansJP-Regular",
+                            "fontSize": 256.0,
+                            "horizontalAlign": 0,
+                            "pipelineName": "Text2D.BlendNormal",
+                            "targetObjectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3",
+                            "text": "",
+                            "verticalAlign": 0
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "TextRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Text Object",
+            "objectID": "c2c1ddd3-f2e2-49a7-8986-760cafffc454",
+            "tag": ""
         }
     ],
     "sceneVariables": [

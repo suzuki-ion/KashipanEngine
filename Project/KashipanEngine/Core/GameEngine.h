@@ -8,6 +8,7 @@
 #include "Core/DirectXCommon.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Assets/TextureManager.h"
+#include "Assets/FontManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/SkeletonManager.h"
@@ -128,6 +129,8 @@ private:
 
     /// @brief テクスチャ管理クラス
     std::unique_ptr<TextureManager> textureManager_;
+    /// @brief フォント管理クラス
+    std::unique_ptr<FontManager> fontManager_;
     /// @brief サンプラ管理クラス
     std::unique_ptr<SamplerManager> samplerManager_;
     /// @brief モデル管理クラス

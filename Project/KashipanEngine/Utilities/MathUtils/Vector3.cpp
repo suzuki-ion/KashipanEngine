@@ -99,7 +99,7 @@ Vector3 CatmullRomPosition(const std::vector<Vector3> &points, float t, bool isL
     return CatmullRomInterpolation(p0, p1, p2, p3, t2);
 }
 
-constexpr float Dot(const Vector3 &vector1, const Vector3 &vector2) noexcept {
+float Dot(const Vector3 &vector1, const Vector3 &vector2) noexcept {
     return vector1.x * vector2.x + vector1.y * vector2.y + vector1.z * vector2.z;
 }
 
@@ -115,7 +115,7 @@ float Length(const Vector3 &vector) noexcept {
     return std::sqrt(LengthSquared(vector));
 }
 
-constexpr float LengthSquared(const Vector3 &vector) noexcept {
+float LengthSquared(const Vector3 &vector) noexcept {
     return Dot(vector, vector);
 }
 

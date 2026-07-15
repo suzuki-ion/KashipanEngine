@@ -77,6 +77,9 @@ void GameEngine::DrawProfilingImGui() {
         ImGui::Text("FPS: %.2f", fps_);
         ImGui::Text("Update: %.3f ms", updateMs_);
         ImGui::Text("Draw: %.3f ms", drawMs_);
+        if (graphicsEngine_) {
+            ImGui::Text("Draw Calls: %u", graphicsEngine_->GetLastFrameDrawCallCount());
+        }
         ImGui::Separator();
         ImGui::SliderInt("Profiling Sample Count", &profilingSampleCount_, 1, 600);
         ImGui::Text("Averages (%zu samples)", avgUpdateMs_.GetCount());
@@ -114,6 +117,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
+    fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
     skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, "Assets");
@@ -206,6 +210,7 @@ GameEngine::~GameEngine() {
     skeletonManager_.reset();
     modelManager_.reset();
     samplerManager_.reset();
+    fontManager_.reset();
     textureManager_.reset();
 
     graphicsEngine_.reset();

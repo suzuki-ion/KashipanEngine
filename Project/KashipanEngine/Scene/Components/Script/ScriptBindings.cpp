@@ -79,13 +79,13 @@
 #include "Objects/Components/Render/ShadowMapObject.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
+#include "Objects/Components/Render/TextRenderer.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/Components/TargetLookAt.h"
 #include "Objects/Components/ParticleSystem2D.h"
 #include "Objects/Components/ParticleSystem3D.h"
 #include "Objects/Components/PreTransform.h"
 #include "Objects/Components/Rotation.h"
-#include "Objects/Components/Text.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Velocity.h"
 
@@ -466,12 +466,26 @@ void RegisterLightTypeEnum(asIScriptEngine *engine) {
     engine->RegisterEnumValue("LightType", "Spot", static_cast<int>(Light::Type::Spot));
 }
 
+/// @brief TextRenderer::HorizontalAlign/VerticalAlign をスクリプト用の列挙型として登録する
+void RegisterTextRendererEnums(asIScriptEngine *engine) {
+    engine->RegisterEnum("TextHorizontalAlign");
+    engine->RegisterEnumValue("TextHorizontalAlign", "Left", static_cast<int>(TextRenderer::HorizontalAlign::Left));
+    engine->RegisterEnumValue("TextHorizontalAlign", "Center", static_cast<int>(TextRenderer::HorizontalAlign::Center));
+    engine->RegisterEnumValue("TextHorizontalAlign", "Right", static_cast<int>(TextRenderer::HorizontalAlign::Right));
+
+    engine->RegisterEnum("TextVerticalAlign");
+    engine->RegisterEnumValue("TextVerticalAlign", "Top", static_cast<int>(TextRenderer::VerticalAlign::Top));
+    engine->RegisterEnumValue("TextVerticalAlign", "Middle", static_cast<int>(TextRenderer::VerticalAlign::Middle));
+    engine->RegisterEnumValue("TextVerticalAlign", "Bottom", static_cast<int>(TextRenderer::VerticalAlign::Bottom));
+}
+
 /// @brief Transformコンポーネントを登録する
 /// @details Object::GetTransform() が Transform@ を返すため、Object/Scene（RegisterObjectTypes）より
 ///          先に登録しておく必要がある。gComponentTypeBindings のクリアもここで行う（最初に呼ばれるため）
 void RegisterTransformType(asIScriptEngine *engine) {
     gComponentTypeBindings.clear();
     RegisterLightTypeEnum(engine);
+    RegisterTextRendererEnums(engine);
 
     RegisterComponentType<Transform>(engine, "Transform")
         .method("void SetTranslate(const Vector3 &in)", &Transform::SetTranslate)
@@ -627,11 +641,53 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetPlayOnStart(bool)", &Animator::SetPlayOnStart)
         .method("bool GetPlayOnStart() const", &Animator::GetPlayOnStart);
 
-    RegisterComponentType<Text>(engine, "Text")
-        .method("void SetText(const string &in)", &Text::SetText)
-        .method("const string &GetText() const", &Text::GetText)
-        .method("void SetColor(const Vector4 &in)", &Text::SetColor)
-        .method("const Vector4 &GetColor() const", &Text::GetColor);
+    RegisterComponentType<TextRenderer>(engine, "TextRenderer")
+        .method("void SetText(const string &in)", &TextRenderer::SetText)
+        .method("const string &GetText() const", &TextRenderer::GetText)
+        .method("void SetFontName(const string &in)", &TextRenderer::SetFontName)
+        .method("const string &GetFontName() const", &TextRenderer::GetFontName)
+        .method("void SetFontSize(float)", &TextRenderer::SetFontSize)
+        .method("float GetFontSize() const", &TextRenderer::GetFontSize)
+        .method("void SetColor(const Vector4 &in)", &TextRenderer::SetColor)
+        .method("const Vector4 &GetColor() const", &TextRenderer::GetColor)
+        .method("void SetHorizontalAlign(TextHorizontalAlign)", [](TextRenderer &c, int align) {
+            c.SetHorizontalAlign(static_cast<TextRenderer::HorizontalAlign>(align));
+        })
+        .method("TextHorizontalAlign GetHorizontalAlign() const", [](const TextRenderer &c) -> int {
+            return static_cast<int>(c.GetHorizontalAlign());
+        })
+        .method("void SetVerticalAlign(TextVerticalAlign)", [](TextRenderer &c, int align) {
+            c.SetVerticalAlign(static_cast<TextRenderer::VerticalAlign>(align));
+        })
+        .method("TextVerticalAlign GetVerticalAlign() const", [](const TextRenderer &c) -> int {
+            return static_cast<int>(c.GetVerticalAlign());
+        })
+        .method("void SetDefaultCharacterAnchor(const Vector2 &in)", &TextRenderer::SetDefaultCharacterAnchor)
+        .method("const Vector2 &GetDefaultCharacterAnchor() const", &TextRenderer::GetDefaultCharacterAnchor)
+        .method("void SetDefaultCharacterPivot(const Vector2 &in)", &TextRenderer::SetDefaultCharacterPivot)
+        .method("const Vector2 &GetDefaultCharacterPivot() const", &TextRenderer::GetDefaultCharacterPivot)
+        .method("void SetTargetObject(Object@)", [](TextRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("void SetPipelineName(const string &in)", &TextRenderer::SetPipelineName)
+        .method("const string &GetPipelineName() const", &TextRenderer::GetPipelineName)
+        .method("uint64 GetCharacterCount() const", [](const TextRenderer &c) -> uint64_t { return static_cast<uint64_t>(c.GetCharacterCount()); })
+        .method("void SetCharacterOffset(uint64, const Vector2 &in)", [](TextRenderer &c, uint64_t index, const Vector2 &offset) {
+            c.SetCharacterOffset(static_cast<size_t>(index), offset);
+        })
+        .method("Vector2 GetCharacterOffset(uint64) const", [](const TextRenderer &c, uint64_t index) -> Vector2 {
+            return c.GetCharacterOffset(static_cast<size_t>(index));
+        })
+        .method("void SetCharacterRotation(uint64, float)", [](TextRenderer &c, uint64_t index, float rotation) {
+            c.SetCharacterRotation(static_cast<size_t>(index), rotation);
+        })
+        .method("float GetCharacterRotation(uint64) const", [](const TextRenderer &c, uint64_t index) -> float {
+            return c.GetCharacterRotation(static_cast<size_t>(index));
+        })
+        .method("void SetCharacterScale(uint64, const Vector2 &in)", [](TextRenderer &c, uint64_t index, const Vector2 &scale) {
+            c.SetCharacterScale(static_cast<size_t>(index), scale);
+        })
+        .method("Vector2 GetCharacterScale(uint64) const", [](const TextRenderer &c, uint64_t index) -> Vector2 {
+            return c.GetCharacterScale(static_cast<size_t>(index));
+        });
 
     RegisterComponentType<Comment>(engine, "Comment")
         .method("void SetComment(const string &in)", &Comment::SetComment)
@@ -753,7 +809,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetShadowDistance(float)", &Light::SetShadowDistance)
         .method("float GetShadowDistance() const", &Light::GetShadowDistance)
         .method("void SetShadowMapResolution(uint)", &Light::SetShadowMapResolution)
-        .method("uint GetShadowMapResolution() const", &Light::GetShadowMapResolution);
+        .method("uint GetShadowMapResolution() const", &Light::GetShadowMapResolution)
+        .method("void SetShadowBias(float)", &Light::SetShadowBias)
+        .method("float GetShadowBias() const", &Light::GetShadowBias);
 
     RegisterComponentType<LightRenderer>(engine, "LightRenderer")
         .method("void SetPipelineName(const string &in)", &LightRenderer::SetPipelineName)

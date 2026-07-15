@@ -29,26 +29,28 @@ int GetRenderTargetKindOrder(RenderTargetKind kind) {
     }
 }
 
-/// @brief ソートキー計算用の中間データ
-struct SortableEntry {
-    SceneRenderer::DrawEntry entry;
-    int kindOrder = 0;
-    std::int32_t pipelinePriority = 0;
-};
+/// @brief ソートキー計算用の中間データ（SceneRenderer::RankedDrawEntryそのもの。
+///        キャッシュ側と同じ型にしておくことでマージ処理を共有できる）
+using SortableEntry = SceneRenderer::RankedDrawEntry;
 
 /// @brief MeshRenderer/SpriteRenderer いずれの一覧からも同じ手順でDrawEntryを収集する
 /// @details 両コンポーネントは GetPipelineName/GetMeshHandle/GetMaterialHandle/GetWorldMatrix/
 ///          GetTargetObject/IsRenderTargetIncluded という同じ形の公開APIを持つため、
 ///          共通の基底クラスを介さずテンプレートで共有する。
+/// @param onlyCustomTarget trueの場合、targetObjectID（描画先を明示指定するID）が有効なレンダラーのみを
+///        対象にする。falseの場合はtargetObjectID未指定（＝エディター用描画先にのみ描画される）の
+///        レンダラーのみを対象にする。両者は排他なので、毎フレーム両方呼んでも重複は発生しない
 template <typename RendererT>
 void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     PipelineManager *pipelineManager,
     IRenderTarget *editorTarget,
     std::vector<SortableEntry> &sortableEntries,
-    std::unordered_map<const IRenderTarget *, EmptyObject *> &targetOwners) {
+    std::unordered_map<const IRenderTarget *, EmptyObject *> &targetOwners,
+    bool onlyCustomTarget) {
     std::vector<IRenderTarget *> targets;
     for (auto *renderer : renderers) {
         if (!renderer) continue;
+        if (renderer->GetTargetObjectID().IsValid() != onlyCustomTarget) continue;
         if (!renderer->IsActive()) continue;
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
 
@@ -87,6 +89,46 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     }
 }
 
+/// @brief 描画先→パイプライン優先度→パイプライン名→メッシュ→マテリアルの順で比較する
+bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
+    if (a.kindOrder != b.kindOrder) return a.kindOrder < b.kindOrder;
+    if (a.entry.target != b.entry.target) return a.entry.target < b.entry.target;
+    if (a.pipelinePriority != b.pipelinePriority) return a.pipelinePriority < b.pipelinePriority;
+    if (a.entry.pipelineName != b.entry.pipelineName) return a.entry.pipelineName < b.entry.pipelineName;
+    if (a.entry.meshHandle != b.entry.meshHandle) return a.entry.meshHandle < b.entry.meshHandle;
+    return a.entry.materialHandle < b.entry.materialHandle;
+}
+
+/// @brief キャッシュ対象（targetObjectID未指定＝エディター用描画先にのみ描画するMesh/SpriteRenderer）を収集する
+/// @details targetObjectIDが有効なレンダラーは描画先コンポーネントの変化を都度確認する必要があるため対象外
+///          （BuildSortedDrawList側で毎フレーム別途収集される）。アクティブ状態はここではフィルタしない
+///          （非アクティブなレンダラーも一旦キャッシュしておき、毎フレームの再確認で除外することで、
+///          再アクティブ化した際にも次回のダーティ再構築を待たずに描画リストへ反映されるようにするため）
+template <typename RendererT>
+void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
+    PipelineManager *pipelineManager,
+    IRenderTarget *editorTarget,
+    std::vector<SceneRenderer::CachedRankedEntry> &out) {
+    for (auto *renderer : renderers) {
+        if (!renderer) continue;
+        if (renderer->GetTargetObjectID().IsValid()) continue;
+        if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
+
+        const std::string &pipelineName = renderer->GetPipelineName();
+        if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
+
+        SceneRenderer::CachedRankedEntry cached;
+        cached.ranked.entry.target = editorTarget;
+        cached.ranked.entry.pipelineName = pipelineName;
+        cached.ranked.entry.meshHandle = renderer->GetMeshHandle();
+        cached.ranked.entry.materialHandle = renderer->GetMaterialHandle();
+        cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
+        cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+        cached.source = renderer;
+        out.push_back(std::move(cached));
+    }
+}
+
 } // namespace
 
 void SceneRenderer::CollectRenderTargets(EmptyObject *targetObject, std::vector<IRenderTarget *> &out) {
@@ -111,22 +153,41 @@ void SceneRenderer::RegisterMeshRenderer(MeshRenderer *renderer) {
     if (!renderer) return;
     if (std::find(meshRenderers_.begin(), meshRenderers_.end(), renderer) != meshRenderers_.end()) return;
     meshRenderers_.push_back(renderer);
+    drawListDirty_ = true;
 }
 
 void SceneRenderer::UnregisterMeshRenderer(const MeshRenderer *renderer) {
     auto it = std::find(meshRenderers_.begin(), meshRenderers_.end(), renderer);
-    if (it != meshRenderers_.end()) meshRenderers_.erase(it);
+    if (it != meshRenderers_.end()) {
+        meshRenderers_.erase(it);
+        drawListDirty_ = true;
+    }
 }
 
 void SceneRenderer::RegisterSpriteRenderer(SpriteRenderer *renderer) {
     if (!renderer) return;
     if (std::find(spriteRenderers_.begin(), spriteRenderers_.end(), renderer) != spriteRenderers_.end()) return;
     spriteRenderers_.push_back(renderer);
+    drawListDirty_ = true;
 }
 
 void SceneRenderer::UnregisterSpriteRenderer(const SpriteRenderer *renderer) {
     auto it = std::find(spriteRenderers_.begin(), spriteRenderers_.end(), renderer);
-    if (it != spriteRenderers_.end()) spriteRenderers_.erase(it);
+    if (it != spriteRenderers_.end()) {
+        spriteRenderers_.erase(it);
+        drawListDirty_ = true;
+    }
+}
+
+void SceneRenderer::RegisterTextRenderer(TextRenderer *renderer) {
+    if (!renderer) return;
+    if (std::find(textRenderers_.begin(), textRenderers_.end(), renderer) != textRenderers_.end()) return;
+    textRenderers_.push_back(renderer);
+}
+
+void SceneRenderer::UnregisterTextRenderer(const TextRenderer *renderer) {
+    auto it = std::find(textRenderers_.begin(), textRenderers_.end(), renderer);
+    if (it != textRenderers_.end()) textRenderers_.erase(it);
 }
 
 void SceneRenderer::RegisterSkinnedMeshRenderer(SkinnedMeshRenderer *renderer) {
@@ -168,15 +229,34 @@ void SceneRenderer::UnregisterLightRenderer(const LightRenderer *renderer) {
     if (it != lightRenderers_.end()) lightRenderers_.erase(it);
 }
 
+void SceneRenderer::RebuildCachedEntries(PipelineManager *pipelineManager) {
+    cachedEntries_.clear();
+    if (!pipelineManager || !editorTarget_) return;
+    CollectCacheableEntries(meshRenderers_, pipelineManager, editorTarget_, cachedEntries_);
+    CollectCacheableEntries(spriteRenderers_, pipelineManager, editorTarget_, cachedEntries_);
+    std::stable_sort(cachedEntries_.begin(), cachedEntries_.end(),
+        [](const CachedRankedEntry &a, const CachedRankedEntry &b) {
+            return CompareSortableEntry(a.ranked, b.ranked);
+        });
+}
+
 const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(Passkey<Renderer>, PipelineManager *pipelineManager) {
     sortedDrawList_.clear();
     targetOwners_.clear();
     if (!pipelineManager) return sortedDrawList_;
 
-    std::vector<SortableEntry> sortableEntries;
-    sortableEntries.reserve(meshRenderers_.size() + spriteRenderers_.size() + skinnedMeshRenderers_.size());
-    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, sortableEntries, targetOwners_);
-    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, sortableEntries, targetOwners_);
+    if (drawListDirty_) {
+        RebuildCachedEntries(pipelineManager);
+        drawListDirty_ = false;
+    }
+
+    // targetObjectID指定あり（カスタム描画先を持つ）Mesh/SpriteRenderer、およびSkinnedMeshRendererは、
+    // 描画先コンポーネントの変化・GPUスキニング有効性など動的な要素を都度確認する必要があるため、
+    // キャッシュ対象にせず毎フレーム収集する（targetObjectID未指定＝エディター用描画先のみに描画する
+    // 分はcachedEntries_側でまとめて扱うため、ここでは重複しない）
+    std::vector<SortableEntry> freshEntries;
+    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true);
+    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true);
 
     // SkinnedMeshRendererはGPUスキニング結果バッファ(skinnedVertexBuffer)を追加で持つため、
     // MeshRenderer/SpriteRendererと形が異なりCollectSortableEntriesは使わず個別に収集する
@@ -216,26 +296,50 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                 sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = pipelinePriority;
-                sortableEntries.push_back(sortable);
+                freshEntries.push_back(sortable);
             }
         }
     }
 
     // 描画先→パイプライン優先度→パイプライン名→メッシュ→マテリアルの順でソート
-    std::stable_sort(sortableEntries.begin(), sortableEntries.end(),
-        [](const SortableEntry &a, const SortableEntry &b) {
-            if (a.kindOrder != b.kindOrder) return a.kindOrder < b.kindOrder;
-            if (a.entry.target != b.entry.target) return a.entry.target < b.entry.target;
-            if (a.pipelinePriority != b.pipelinePriority) return a.pipelinePriority < b.pipelinePriority;
-            if (a.entry.pipelineName != b.entry.pipelineName) return a.entry.pipelineName < b.entry.pipelineName;
-            if (a.entry.meshHandle != b.entry.meshHandle) return a.entry.meshHandle < b.entry.meshHandle;
-            return a.entry.materialHandle < b.entry.materialHandle;
-        });
+    std::stable_sort(freshEntries.begin(), freshEntries.end(), CompareSortableEntry);
 
-    sortedDrawList_.reserve(sortableEntries.size());
-    for (const auto &sortable : sortableEntries) {
-        sortedDrawList_.push_back(sortable.entry);
+    // キャッシュ分（targetObjectID未指定のMesh/SpriteRenderer）はアクティブ状態を毎フレーム再確認しつつ
+    // ワールド行列を更新する。並び順自体はRebuildCachedEntriesで確定済みのため、ハッシュマップ検索・
+    // 文字列コピー・再ソートを毎フレーム行う必要がない
+    std::vector<SortableEntry> cachedLive;
+    if (editorTarget_ && editorTarget_->IsRenderTargetAvailable()) {
+        cachedLive.reserve(cachedEntries_.size());
+        for (auto &cached : cachedEntries_) {
+            const bool active = std::visit([](auto *r) { return r && r->IsActive(); }, cached.source);
+            if (!active) continue;
+            SortableEntry ranked = cached.ranked;
+            ranked.entry.worldMatrix = std::visit([](auto *r) { return r->GetWorldMatrix(); }, cached.source);
+            cachedLive.push_back(std::move(ranked));
+        }
     }
+
+    // キャッシュ済み（ソート済み）分と毎フレーム収集した分をマージする（両方ソート済みなのでO(n)）
+    sortedDrawList_.reserve(cachedLive.size() + freshEntries.size());
+    size_t cachedIndex = 0, freshIndex = 0;
+    while (cachedIndex < cachedLive.size() && freshIndex < freshEntries.size()) {
+        if (CompareSortableEntry(freshEntries[freshIndex], cachedLive[cachedIndex])) {
+            sortedDrawList_.push_back(std::move(freshEntries[freshIndex].entry));
+            ++freshIndex;
+        } else {
+            sortedDrawList_.push_back(std::move(cachedLive[cachedIndex].entry));
+            ++cachedIndex;
+        }
+    }
+    while (cachedIndex < cachedLive.size()) {
+        sortedDrawList_.push_back(std::move(cachedLive[cachedIndex].entry));
+        ++cachedIndex;
+    }
+    while (freshIndex < freshEntries.size()) {
+        sortedDrawList_.push_back(std::move(freshEntries[freshIndex].entry));
+        ++freshIndex;
+    }
+
     return sortedDrawList_;
 }
 
@@ -243,9 +347,12 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
 void SceneRenderer::ShowImGui() {
     ImGui::Text("MeshRenderers: %d", static_cast<int>(meshRenderers_.size()));
     ImGui::Text("SpriteRenderers: %d", static_cast<int>(spriteRenderers_.size()));
+    ImGui::Text("TextRenderers: %d", static_cast<int>(textRenderers_.size()));
     ImGui::Text("SkinnedMeshRenderers: %d", static_cast<int>(skinnedMeshRenderers_.size()));
     ImGui::Text("CameraRenderers: %d", static_cast<int>(cameraRenderers_.size()));
     ImGui::Text("LightRenderers: %d", static_cast<int>(lightRenderers_.size()));
+    ImGui::Text("Cached Draw Entries: %d (dirty: %s)",
+        static_cast<int>(cachedEntries_.size()), drawListDirty_ ? "yes" : "no");
 }
 #endif
 

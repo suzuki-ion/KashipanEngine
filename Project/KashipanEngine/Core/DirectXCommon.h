@@ -26,6 +26,7 @@ class Window;
 class GraphicsEngine;
 class Renderer;
 class TextureManager;
+class FontManager;
 class SamplerManager;
 class ScreenBuffer;
 class ShadowMapBuffer;
@@ -64,6 +65,9 @@ public:
 
     /// @brief D3D12デバイス取得（TextureManager 用）
     ID3D12Device* GetDeviceForTextureManager(Passkey<TextureManager>) const { return dx12Device_->GetDevice(); }
+
+    /// @brief D3D12デバイス取得（FontManager 用）
+    ID3D12Device* GetDeviceForFontManager(Passkey<FontManager>) const { return dx12Device_->GetDevice(); }
     /// @brief コマンドキュー取得（TextureManager 用）
     ID3D12CommandQueue* GetCommandQueueForTextureManager(Passkey<TextureManager>) const { return dx12CommandQueue_->GetCommandQueue(); }
     /// @brief SRV ヒープ取得（TextureManager 用）
@@ -82,6 +86,10 @@ public:
     /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（TextureManager 用）
     /// @param record コマンド記録関数（Close は内部で行う）
     void ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
+
+    /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（FontManager 用。グリフアトラスのアップロードに使用）
+    /// @param record コマンド記録関数（Close は内部で行う）
+    void ExecuteOneShotCommandsForFontManager(Passkey<FontManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
 
     /// @brief フレーム終端で実行するコマンドリストを登録
     void AddRecordCommandList(Passkey<DX12SwapChain>, ID3D12CommandList* list);

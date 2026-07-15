@@ -1,0 +1,9 @@
+{
+	"BaseName": "LightCulling",
+	"Compute": {
+		"Name": "CS",
+		"Path": "LightCulling/LightCullingCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

@@ -22,6 +22,18 @@ cbuffer LightCounts : register(b3) {
 	uint gSpotLightCount;
 	uint gDirectionalLightCount;
 };
+
+// Forward+ タイルライトカリングの結果（Point/Spotのみ。Directionalは対象外で従来通り全件ループする）
+StructuredBuffer<uint> gTileLightIndices : register(t3);
+cbuffer TileCullingConstants : register(b4) {
+	float2 gScreenSize;
+	uint gTileCountX;
+	uint gTileCountY;
+	uint gPointLightCountForCulling;
+	uint gSpotLightCountForCulling;
+	uint gMaxLightsPerTile;
+	uint gTileSize;
+};
 #endif
 
 Texture2D gTexture : register(t0);
@@ -119,65 +131,70 @@ PSOutput main(VSOutput input) {
 		}
 	}
 
-	// Point lights
+	// Point/Spot lights（Forward+: このピクセルが属するタイルのライトインデックスリストだけをループする）
 	if (mat.enableLighting) {
-		for (uint i = 0; i < gPointLightCount; ++i) {
-			PointLight light = gPointLights[i];
-			if (!light.enabled) {
-				continue;
+		uint2 tileCoord = uint2(input.position.xy) / max(gTileSize, 1u);
+		tileCoord = min(tileCoord, uint2(gTileCountX - 1, gTileCountY - 1));
+		uint tileIndex = tileCoord.y * gTileCountX + tileCoord.x;
+		uint tileBase = tileIndex * (1 + gMaxLightsPerTile);
+		uint tileLightCount = gTileLightIndices[tileBase];
+
+		for (uint t = 0; t < tileLightCount; ++t) {
+			uint packedIndex = gTileLightIndices[tileBase + 1 + t];
+			bool isSpot = (packedIndex & 0x80000000) != 0;
+			uint lightIndex = packedIndex & 0x7FFFFFFF;
+
+			if (!isSpot) {
+				PointLight light = gPointLights[lightIndex];
+				if (!light.enabled) continue;
+
+				float3 toLight = light.position - input.worldPosition;
+				float dist = length(toLight);
+				if (dist > light.radius) continue;
+
+				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
+				if (atten <= 0.0f) continue;
+
+				float lam = HalfLambert(input.normal, lightDir);
+				float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
+				float4 diffuse = light.color * lam * light.intensity * atten;
+				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+				// このライトが影を生成する場合、キューブシャドウマップから影係数を求める
+				float shadow = 1.0f;
+				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+					shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.position);
+				}
+				lightingColor += (diffuse + speculer) * shadow;
+			} else {
+				SpotLight light = gSpotLights[lightIndex];
+				if (!light.enabled) continue;
+
+				float3 toLight = light.position - input.worldPosition;
+				float dist = length(toLight);
+				if (dist > light.distance) continue;
+
+				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float theta = dot(-lightDir, normalize(light.direction));
+				float inner = cos(light.innerAngle);
+				float outer = cos(light.outerAngle);
+				float spot = saturate((theta - outer) / (inner - outer));
+				if (spot <= 0.0f) continue;
+
+				float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * spot;
+				if (atten <= 0.0f) continue;
+
+				float lam = HalfLambert(input.normal, lightDir);
+				float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
+				float4 diffuse = light.color * lam * light.intensity * atten;
+				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+				// このライトが影を生成する場合、シャドウマップから影係数を求める
+				float shadow = 1.0f;
+				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+					shadow = ComputeSpotShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, lightDir);
+				}
+				lightingColor += (diffuse + speculer) * shadow;
 			}
-			
-			float3 toLight = light.position - input.worldPosition;
-			float dist = length(toLight);
-			if (dist > light.radius) continue;
-
-			float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
-			float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
-			if (atten <= 0.0f) continue;
-
-			float lam = HalfLambert(input.normal, lightDir);
-			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
-			float4 diffuse = light.color * lam * light.intensity * atten;
-			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
-			// このライトが影を生成する場合、キューブシャドウマップから影係数を求める
-			float shadow = 1.0f;
-			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
-				shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.position);
-			}
-			lightingColor += (diffuse + speculer) * shadow;
-		}
-	}
-
-	// Spot lights
-	if (mat.enableLighting) {
-		for (uint i = 0; i < gSpotLightCount; ++i) {
-			SpotLight light = gSpotLights[i];
-			if (!light.enabled) continue;
-			
-			float3 toLight = light.position - input.worldPosition;
-			float dist = length(toLight);
-			if (dist > light.distance) continue;
-
-			float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
-			float theta = dot(-lightDir, normalize(light.direction));
-			float inner = cos(light.innerAngle);
-			float outer = cos(light.outerAngle);
-			float spot = saturate((theta - outer) / (inner - outer));
-			if (spot <= 0.0f) continue;
-
-			float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * spot;
-			if (atten <= 0.0f) continue;
-
-			float lam = HalfLambert(input.normal, lightDir);
-			float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
-			float4 diffuse = light.color * lam * light.intensity * atten;
-			float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
-			// このライトが影を生成する場合、シャドウマップから影係数を求める
-			float shadow = 1.0f;
-			if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
-				shadow = ComputeSpotShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, lightDir);
-			}
-			lightingColor += (diffuse + speculer) * shadow;
 		}
 	}
 

@@ -49,9 +49,13 @@ public:
     /// @brief 描画先オブジェクトを設定（描画先コンポーネントが付与されたオブジェクト）
     void SetTargetObject(const EmptyObject *targetObject) {
         targetObjectID_ = targetObject ? targetObject->GetObjectID() : UUID128();
+        MarkDrawListDirty();
     }
     /// @brief 描画先オブジェクトをUUIDから設定
-    void SetTargetObject(const UUID128 &targetObjectID) { targetObjectID_ = targetObjectID; }
+    void SetTargetObject(const UUID128 &targetObjectID) {
+        targetObjectID_ = targetObjectID;
+        MarkDrawListDirty();
+    }
     /// @brief 描画先オブジェクトのUUIDを取得
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     /// @brief 描画先オブジェクトを取得（存在しない場合は nullptr）
@@ -71,14 +75,21 @@ public:
     // パイプライン・マテリアル指定
     //==================================================
 
-    void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
+    void SetPipelineName(const std::string &pipelineName) {
+        pipelineName_ = pipelineName;
+        MarkDrawListDirty();
+    }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
 
     void SetMaterialName(const std::string &materialName) {
         materialName_ = materialName;
         materialHandle_ = MaterialManager::kInvalidHandle;
+        MarkDrawListDirty();
     }
-    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandle_ = materialHandle; }
+    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) {
+        materialHandle_ = materialHandle;
+        MarkDrawListDirty();
+    }
     const std::string &GetMaterialName() const noexcept { return materialName_; }
     /// @brief マテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
     MaterialManager::MaterialHandle GetMaterialHandle() const noexcept {
@@ -170,11 +181,15 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
-        TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        if (TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_)) {
+            MarkDrawListDirty();
+        }
         // 対象オブジェクトが持つ描画先ごとに描画する/しないを選択する
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
         // パイプラインとマテリアルは読み込み済みのものから選択する
-        ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
+        if (ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
+            MarkDrawListDirty();
+        }
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
         std::vector<std::string> materialNames;
         for (const auto &entry : materialEntries) {
@@ -182,6 +197,7 @@ protected:
         }
         if (ImGuiCustom::SelectString("Material", materialName_, materialNames)) {
             materialHandle_ = MaterialManager::kInvalidHandle;
+            MarkDrawListDirty();
         }
         // Assetsウィンドウからのマテリアルファイルドラッグ&ドロップも受け付ける
         if (std::string droppedPath; AcceptAssetDragDropTarget(kMaterialAssetDragDropType, droppedPath)) {
@@ -189,6 +205,7 @@ protected:
                 if (entry.assetPath == droppedPath) {
                     materialName_ = entry.material.name;
                     materialHandle_ = MaterialManager::kInvalidHandle;
+                    MarkDrawListDirty();
                     break;
                 }
             }
@@ -227,10 +244,21 @@ protected:
         }
         anchor_ = json.contains("anchor") ? FromJSON<Vector2>(json["anchor"]) : Vector2(0.5f, 0.5f);
         pivot_ = json.contains("pivot") ? FromJSON<Vector2>(json["pivot"]) : Vector2(0.5f, 0.5f);
+        // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
+        MarkDrawListDirty();
         return true;
     }
 
 private:
+    /// @brief パイプライン名・マテリアル・描画先指定など、描画リストのソート結果に影響するプロパティを
+    ///        変更した際に呼ぶ（SceneRendererが未登録の場合は何もしない。登録済みなら次回のBuildSortedDrawList
+    ///        でキャッシュが再構築される）
+    void MarkDrawListDirty() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+        if (sceneRenderer) sceneRenderer->MarkDrawListDirty();
+    }
+
     SceneRenderer *GetOrAddSceneRenderer() const {
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;

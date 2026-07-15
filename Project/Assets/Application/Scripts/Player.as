@@ -1,6 +1,5 @@
 
 class Player : ScriptComponentBehavior {
-    // --- PlayerMovement 相当のパラメータ ---
     [SerializeField, Tooltip("移動速度")]
     float moveSpeed = 0.1f;
     [SerializeField, Tooltip("ジャンプ力")]
@@ -14,35 +13,24 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("最大速度")]
     Vector3 maxVelocity = Vector3(8.0f, 16.0f, 8.0f);
 
-    // --- PlayerCollision 相当のパラメータ ---
-    // 法線のy成分がこの値以上なら地面と判定する
     [SerializeField, Tooltip("地面との接触判定閾値")]
     float groundedThreshold = 0.4f;
+    [SerializeField, Tooltip("敵との接触判定閾値")]
+    float enemyCollisionThreshold = 0.4f;
 
     // --- 実行時状態（保存不要） ---
     Vector3 velocity = Vector3(0.0f, 0.0f, 0.0f);
     bool isGrounded = false;
-    // 直前フレームのisGrounded（着地の瞬間＝false→trueを検知するため）
     bool wasGrounded = false;
-    // このフレーム中に地面用コライダーのOnCollisionStayが1回でも呼ばれたか。
-    // 地面が複数のコライダーに分かれている場合、境目をまたぐ瞬間は
-    // 「Aからは離れたがBとはまだ接触している」ことがあり、Stay(B)より後に
-    // Exit(A)が呼ばれてisGroundedを誤ってfalseに戻してしまうことがある
-    // （Dispatch側は同フレーム内で必ずStay→Exitの順に呼ぶため、このフラグで防止する）
-    bool groundedThisPhysicsFrame = false;
     bool isCollidingWithEnemy = false;
-    Vector3 hitNormal = Vector3(0.0f, 0.0f, 0.0f);
-    // 乗っている地面(Velocityコンポーネント付き)の現在の速度。
-    // プレイヤー自身のvelocityには合算せず、移動量にだけ毎フレーム加算することで
-    // 地面の速度にそのまま追従させる（velocityに加算すると接地中ずっと蓄積され続けてしまう）
+    Vector3 groundHitNormal = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 groundVelocity = Vector3(0.0f, 0.0f, 0.0f);
+    Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
 
     bool isJumping = false;
     bool wasJumping = false;
-    bool isMoveLeft = false;
-    bool isMoveRight = false;
-    float moveLeftInput = 0.0f;
-    float moveRightInput = 0.0f;
+
+    float moveDirection = 0.0f;
 
     Tag groundColliderTag = Tag("GroundBox");
     Tag enemyColliderTag = Tag("EnemySphere");
@@ -54,39 +42,27 @@ class Player : ScriptComponentBehavior {
     }
 
     void Update() {
-        // --- PlayerInputHandler 相当 ---
-        if (IsCommandTriggered("PlayerMoveLeft")) {
-            isMoveLeft = true;
-            moveLeftInput = GetCommandValue("PlayerMoveLeft");
-        } else {
-            isMoveLeft = false;
-            moveLeftInput = 0.0f;
-        }
-        if (IsCommandTriggered("PlayerMoveRight")) {
-            isMoveRight = true;
-            moveRightInput = GetCommandValue("PlayerMoveRight");
-        } else {
-            isMoveRight = false;
-            moveRightInput = 0.0f;
-        }
-        isJumping = IsCommandTriggered("PlayerJump");
-
+        const float dt = GetDeltaTime() * GetGameSpeed();
         Transform@ tf = GetTransform();
         if (tf is null) return;
 
-        // --- PlayerEnemyJump 相当（敵の上に乗ったら踏みつけジャンプ） ---
-        // isCollidingWithEnemy は「このフレーム中に敵と衝突した」というパルスなので、
-        // 使用したら PlayerCollision::Update() 相当としてリセットする
-        bool enemyContact = isCollidingWithEnemy;
-        isCollidingWithEnemy = false;
-        if (enemyContact && hitNormal.y > groundedThreshold) {
+        // 左右移動入力
+        moveDirection = 0.0f;
+        if (IsCommandTriggered("PlayerMoveLeft")) {
+            moveDirection = GetCommandValue("PlayerMoveLeft");
+        }
+        if (IsCommandTriggered("PlayerMoveRight")) {
+            moveDirection = GetCommandValue("PlayerMoveRight");
+        }
+        // ジャンプ入力
+        isJumping = IsCommandTriggered("PlayerJump");
+
+        // 敵に接触している状態で、かつ法線が上向きならジャンプ状態にする
+        if (isCollidingWithEnemy && enemyHitNormal.y > enemyCollisionThreshold) {
             isJumping = true;
         }
 
-        // 着地の瞬間（isGroundedがfalse→trueに変わった時）にのみ着地音を鳴らす。
-        // OnCollisionEnterで鳴らすと、地面が複数のコライダーに分かれている場合に
-        // セグメントの境目を跨ぐたびに新規接触として扱われ、歩いているだけで
-        // 何度も音が鳴ってしまうため、状態遷移で判定する
+        // 地面着地時の着地音再生
         if (isGrounded && !wasGrounded) {
             array<AudioSource@>@ audioSources;
             if (GetComponents(@audioSources)) {
@@ -99,22 +75,18 @@ class Player : ScriptComponentBehavior {
         }
         wasGrounded = isGrounded;
 
-        // --- PlayerMovement 相当 ---
-        float dt = GetDeltaTime() * GetGameSpeed();
-
+        // 移動時の法線方向を計算する
         Vector3 targetNormal;
         if (isGrounded) {
-            Vector3 tangent(hitNormal.y, -hitNormal.x, 0.0f);
+            Vector3 tangent(groundHitNormal.y, -groundHitNormal.x, 0.0f);
             targetNormal = tangent.Normalize();
         } else {
             targetNormal = Vector3(1.0f, 0.0f, 0.0f);
         }
 
         // 左右移動
-        if (isMoveLeft) {
-            velocity -= targetNormal * moveSpeed * moveLeftInput;
-        } else if (isMoveRight) {
-            velocity += targetNormal * moveSpeed * moveRightInput;
+        if (moveDirection < 0.0f || moveDirection > 0.0f) {
+            velocity -= targetNormal * moveSpeed * moveDirection;
         } else {
             velocity.x = Easing::Lerp(velocity.x, 0.0f, lateralDeceleration);
             if (isGrounded && !isJumping && !wasJumping) {
@@ -123,14 +95,10 @@ class Player : ScriptComponentBehavior {
         }
 
         // 重力とジャンプ
-        // 重力はdt（経過秒数）を掛けてフレームレートに依存しないようにする。
-        // 元々は「1フレームあたり」の値として調整されていたため、60fps基準で
-        // 換算が変わらないよう *60 でスケールしている（フレームレートが
-        // 変動するとジャンプの高さや滞空時間が安定しなかった原因の一つ）
-        if (!(isGrounded || enemyContact)) {
+        if (!(isGrounded || isCollidingWithEnemy)) {
             velocity.y -= gravity * dt * 60.0f;
         }
-        if ((isGrounded || enemyContact) && isJumping && !wasJumping) {
+        if ((isGrounded || isCollidingWithEnemy) && isJumping && !wasJumping) {
             velocity.y = jumpPower;
         }
         wasJumping = isJumping;
@@ -141,29 +109,28 @@ class Player : ScriptComponentBehavior {
         // 地面の速度は自分のvelocityとは別に、移動量にだけその場で加算する
         tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundVelocity * dt);
 
-        // 次フレームの誤判定防止用フラグをリセットする
-        groundedThisPhysicsFrame = false;
         isGrounded = false;
+        isCollidingWithEnemy = false;
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherCollider.GetTag() == enemyColliderTag) {
-            isCollidingWithEnemy = true;
+        if (hit.otherCollider.GetTag() == groundColliderTag) {
+        } else if (hit.otherCollider.GetTag() == enemyColliderTag) {
+            if (!isCollidingWithEnemy) {
+                isCollidingWithEnemy = true;
+                enemyHitNormal = hit.normal;
+            }
         }
     }
 
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
         if (hit.otherCollider.GetTag() == groundColliderTag) {
-            // 地面が複数のコライダーに分かれているため、このフレーム中に
-            // 少なくとも1回は地面と接触したことを記録しておく
-            // （OnCollisionExitでの誤ったisGrounded解除を防ぐため）
-            groundedThisPhysicsFrame = true;
-
             // 法線が上向きなら地面に接触しているとみなす
             if (!isGrounded) {
                 isGrounded = hit.normal.y > groundedThreshold;
+                groundHitNormal = hit.normal;
             }
 
             // もし地面にVelocityコンポーネントが付いていたら、その速度を記録しておき
@@ -183,24 +150,17 @@ class Player : ScriptComponentBehavior {
                 // 着地判定がある場合はY方向だけ押し戻す
                 if (hit.normal.y > groundedThreshold) {
                     pushBack.x = 0.0f;
-                    pushBack.z = 0.0f;
                 }
                 tf.SetTranslate(tf.GetTranslate() + pushBack);
             }
         }
-        hitNormal = hit.normal;
     }
 
     void OnCollisionExit(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
         if (hit.otherCollider.GetTag() == groundColliderTag) {
-            // 同フレーム中に別の地面コライダーとの接触(OnCollisionStay)が
-            // 既に記録されていれば、実際には地面から離れていないので無視する
-            // （地面セグメントの境目を跨ぐ瞬間、AのExitがBのStayより後に届くことがある）
-            if (!groundedThisPhysicsFrame) {
-                isGrounded = false;
-                groundVelocity = Vector3(0.0f, 0.0f, 0.0f);
-            }
+            isGrounded = false;
+            groundVelocity = Vector3(0.0f, 0.0f, 0.0f);
         }
     }
 

@@ -49,6 +49,6 @@ class TeleportFloor : ScriptComponentBehavior {
         Transform@ otherTransform;
         if (!hit.otherObject.GetComponent(@otherTransform)) return;
 
-        otherTransform.SetTranslate(targetTransform.GetTranslate() + offset);
+        otherTransform.SetTranslate(targetTransform.GetWorldPosition() + offset);
     }
 }

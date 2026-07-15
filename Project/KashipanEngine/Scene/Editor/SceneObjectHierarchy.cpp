@@ -105,9 +105,8 @@ void SceneObjectHierarchy::ShowImGui() {
 
         ShowHierarchyContextMenu();
         ApplyDragAndDrop();
-
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 void SceneObjectHierarchy::RebuildObjectItems() {

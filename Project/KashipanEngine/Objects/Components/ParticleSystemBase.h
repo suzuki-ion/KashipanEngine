@@ -1,10 +1,16 @@
 #pragma once
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <functional>
+#include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Rotation.h"
 #include "Objects/Components/TargetLookAt.h"
@@ -12,13 +18,19 @@
 #include "Objects/Components/Velocity.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneContext.h"
+#include "Scene/Components/Render/SceneRenderer.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
+#include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
+#include "Graphics/Resources/ConstantBufferResource.h"
+#include "Graphics/Resources/RWStructuredBufferResource.h"
+#include "Graphics/Resources/StructuredBufferResource.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Utilities/MathUtils.h"
+#include "Utilities/Passkeys.h"
 #include "Utilities/RandomizableValue.h"
 #include "Utilities/RandomValue.h"
 #include "Utilities/UUID128.h"
@@ -28,6 +40,71 @@
 
 namespace KashipanEngine {
 
+class Renderer;
+
+/// @brief GPUシミュレーション用の永続パーティクル状態（コンピュートシェーダーが読み書きする）
+/// @details HLSL側の同名構造体（ParticleUpdateCS.hlsl）とバイト単位で一致させること
+struct GPUParticleData final {
+    Vector3 position{ 0.0f, 0.0f, 0.0f };
+    float age = 0.0f;
+    Vector3 velocity{ 0.0f, 0.0f, 0.0f };
+    float lifetime = 1.0f;
+    Vector3 acceleration{ 0.0f, 0.0f, 0.0f };
+    std::uint32_t alive = 0;
+    Vector3 rotation{ 0.0f, 0.0f, 0.0f };
+    float _pad0 = 0.0f;
+    Vector3 angularVelocity{ 0.0f, 0.0f, 0.0f };
+    float _pad1 = 0.0f;
+    Vector3 angularAcceleration{ 0.0f, 0.0f, 0.0f };
+    float _pad2 = 0.0f;
+    Vector3 startScale{ 1.0f, 1.0f, 1.0f };
+    float _pad3 = 0.0f;
+    Vector3 endScale{ 0.0f, 0.0f, 0.0f };
+    float _pad4 = 0.0f;
+};
+
+/// @brief GPUシミュレーション用の新規スポーンリクエスト（CPUが今フレーム発生分だけ書き込む）
+/// @details HLSL側の同名構造体（ParticleSpawnCS.hlsl）とバイト単位で一致させること
+struct GPUParticleSpawnRequest final {
+    std::uint32_t slotIndex = 0;
+    float lifetime = 1.0f;
+    float _pad0 = 0.0f;
+    float _pad1 = 0.0f;
+    Vector3 position{ 0.0f, 0.0f, 0.0f };
+    float _pad2 = 0.0f;
+    Vector3 velocity{ 0.0f, 0.0f, 0.0f };
+    float _pad3 = 0.0f;
+    Vector3 acceleration{ 0.0f, 0.0f, 0.0f };
+    float _pad4 = 0.0f;
+    Vector3 rotation{ 0.0f, 0.0f, 0.0f };
+    float _pad5 = 0.0f;
+    Vector3 angularVelocity{ 0.0f, 0.0f, 0.0f };
+    float _pad6 = 0.0f;
+    Vector3 angularAcceleration{ 0.0f, 0.0f, 0.0f };
+    float _pad7 = 0.0f;
+    Vector3 startScale{ 1.0f, 1.0f, 1.0f };
+    float _pad8 = 0.0f;
+    Vector3 endScale{ 0.0f, 0.0f, 0.0f };
+    float _pad9 = 0.0f;
+};
+
+/// @brief "ParticleUpdate"パイプラインの定数バッファ（HLSL側 ParticleUpdateConstants と一致させること）
+struct GPUParticleUpdateConstants final {
+    float deltaTime = 0.0f;
+    std::uint32_t particleCount = 0;
+    std::uint32_t billboard = 0;
+    std::uint32_t billboardMode = 0;
+    Matrix4x4 cameraWorldMatrix = Matrix4x4::Identity();
+};
+
+/// @brief "ParticleSpawn"パイプラインの定数バッファ（HLSL側 ParticleSpawnConstants と一致させること）
+struct GPUParticleSpawnConstants final {
+    std::uint32_t spawnCount = 0;
+    std::uint32_t _pad0 = 0;
+    std::uint32_t _pad1 = 0;
+    std::uint32_t _pad2 = 0;
+};
+
 /// @brief ParticleSystem2D / ParticleSystem3D 共通のパーティクル生成・寿命管理ロジックを持つ基底クラス
 /// @details このクラス自体はコンポーネントとして登録されない（登録・COMPONENT_CATEGORYの実体は
 ///          このクラスで宣言し、Add Componentメニュー等では派生クラス名で表示される）。
@@ -36,6 +113,13 @@ namespace KashipanEngine {
 ///          寿命が来たら削除する。描画コンポーネントの追加方法（2D/3Dどちらを使うか）だけが
 ///          派生クラスごとに異なるため、生成直後のパーティクルへ描画コンポーネントを
 ///          追加するコールバック（setupVisual）だけを派生クラスから受け取る。
+///
+///          パーティクルオブジェクトは事前に Max Particles 分だけプールとして生成しておき、
+///          発生・消滅は SetActive の有効/無効切り替えで管理する（生成・削除の繰り返しを避けるため）。
+///          GPU Simulation を有効にした場合は、このオブジェクトプールを一切使わず、
+///          コンピュートシェーダー（ParticleSpawn/ParticleUpdateパイプライン）が
+///          位置・回転・スケール・寿命を計算し、専用の描画パス（Renderer::RenderGpuParticles）が
+///          その結果を直接インスタンス描画する。
 class ParticleSystemBase : public IObjectComponent {
 public:
     COMPONENT_CATEGORY("Effect")
@@ -73,20 +157,19 @@ public:
     bool IsPlaying() const noexcept { return isPlaying_; }
     /// @brief 現在生存中の全パーティクルを即座に削除する
     void Clear() {
-        auto *sceneContext = GetOwnerSceneContext();
-        for (auto &particle : particles_) {
-            if (sceneContext && sceneContext->GetSceneObject(particle.object)) {
-                sceneContext->DeleteObject(particle.object);
-            }
+        for (size_t i = 0; i < slots_.size(); ++i) {
+            if (!slots_[i].active) continue;
+            slots_[i].active = false;
+            if (i < pool_.size() && pool_[i]) pool_[i]->SetActive(false);
+            freeIndices_.push_back(static_cast<int>(i));
         }
-        particles_.clear();
         spawnTimer_ = 0.0f;
         totalEmittedCount_ = 0;
     }
 
     void SetEmissionRate(float rate) noexcept { emissionRate_ = rate; }
     float GetEmissionRate() const noexcept { return emissionRate_; }
-    void SetMaxParticles(int count) noexcept { maxParticles_ = count; }
+    void SetMaxParticles(int count) noexcept { maxParticles_ = std::max(0, count); }
     int GetMaxParticles() const noexcept { return maxParticles_; }
     /// @brief Loopが無効の場合に、この数だけスポーンしたら自動的に再生を停止する
     void SetTotalSpawnCount(int count) noexcept { totalSpawnCount_ = count; }
@@ -121,6 +204,61 @@ public:
     void SetBillboardRotationMode(TargetLookAt::RotationMode mode) noexcept { billboardRotationMode_ = mode; }
     TargetLookAt::RotationMode GetBillboardRotationMode() const noexcept { return billboardRotationMode_; }
 
+    /// @brief GPUシミュレーション（コンピュートシェーダーによる移動・寿命計算）の有効/無効を設定する
+    /// @details 切り替え時に現在のシミュレーション方式のリソースを破棄し、新しい方式を初期化する
+    void SetGPUSimulation(bool enabled) {
+        if (gpuSimulation_ == enabled) return;
+        gpuSimulation_ = enabled;
+        SwitchSimulationMode();
+    }
+    bool IsGPUSimulation() const noexcept { return gpuSimulation_; }
+
+    //==================================================
+    // 描画情報取得（メッシュ/パイプライン/マテリアルはCPU/GPU両モードで共通）
+    //==================================================
+
+    const std::string &GetPipelineName() const noexcept { return pipelineName_; }
+    MaterialManager::MaterialHandle GetMaterialHandle() const {
+        return MaterialManager::GetMaterialHandleFromName(materialName_);
+    }
+    ModelManager::ModelHandle GetMeshHandle() const {
+        return ModelManager::GetModelHandleFromAssetPath(meshAssetPath_);
+    }
+    EmptyObject *GetTargetObject() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
+        return sceneContext->GetSceneObject(targetObjectID_);
+    }
+    bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        if (!target) return false;
+        return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
+    }
+
+    //==================================================
+    // Renderer専用: GPUパーティクル用リソース取得（Passkey<Renderer>限定）
+    //==================================================
+
+    RWStructuredBufferResource *GetGpuParticleBuffer(Passkey<Renderer>) const noexcept { return gpuParticleBuffer_.get(); }
+    RWStructuredBufferResource *GetGpuInstanceMatrixBuffer(Passkey<Renderer>) const noexcept { return gpuInstanceMatrixBuffer_.get(); }
+    StructuredBufferResource *GetGpuSpawnRequestBuffer(Passkey<Renderer>) const noexcept { return gpuSpawnRequestBuffer_.get(); }
+    ConstantBufferResource *GetGpuSpawnConstantBuffer(Passkey<Renderer>) const noexcept { return gpuSpawnConstantBuffer_.get(); }
+    ConstantBufferResource *GetGpuUpdateConstantBuffer(Passkey<Renderer>) const noexcept { return gpuUpdateConstantBuffer_.get(); }
+    std::uint32_t GetGpuSpawnCount(Passkey<Renderer>) const noexcept { return gpuFrameSpawnCount_; }
+    /// @brief 実際に確保済みのGPUバッファの要素数を返す
+    /// @details maxParticles_をそのまま返すと、ShowImGui（Update後）でMax Particlesが変更された
+    ///          フレームに限り、まだEnsureGpuCapacity()が反映されていない（バッファは旧サイズのままの）
+    ///          状態でRendererがこの値をDispatch/Draw件数に使ってしまい、実際のバッファ容量を超えた
+    ///          範囲へUAV書き込みが発生して（Device Removedやメモリ破壊の原因になる）しまう。
+    ///          実際に確保済みのバッファの要素数を返すことで、常に両者を一致させる
+    std::uint32_t GetGpuParticleCapacity(Passkey<Renderer>) const noexcept {
+        return gpuParticleBuffer_ ? static_cast<std::uint32_t>(gpuParticleBuffer_->GetElementCount()) : 0;
+    }
+    /// @brief ビルボードの向き先（明示指定がなければシーン内のカメラを自動解決）をRendererから取得する
+    EmptyObject *ResolveBillboardCameraObject(Passkey<Renderer>) const {
+        EmptyObject *target = GetBillboardTarget();
+        return target ? target : ResolveBillboardCameraObject();
+    }
+
 protected:
     /// @brief ビルボード化（常にカメラの方を向かせる）に使うカメラオブジェクトを解決する
     /// @details 2D/3Dでどのカメラコンポーネント（Camera2D/Camera3D）を探すかが異なるため、
@@ -149,15 +287,37 @@ protected:
     /// @brief 派生クラスのInitializeから呼ぶ
     void InitializeBase() {
         if (playOnStart_) isPlaying_ = true;
+        if (gpuSimulation_) {
+            InitializeGpuResources();
+            auto *sceneRenderer = GetOrAddSceneRenderer();
+            if (sceneRenderer) {
+                sceneRenderer->RegisterGpuParticleEmitter(this);
+                char buf[128];
+                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] InitializeBase: GPU particle emitter registered (this=%p, sceneRenderer=%p)", static_cast<const void *>(this), static_cast<const void *>(sceneRenderer));
+                Log(buf, LogSeverity::Info);
+            } else {
+                char buf[128];
+                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] InitializeBase: GPU simulation is on, but SceneRenderer could not be resolved (this=%p)", static_cast<const void *>(this));
+                Log(buf, LogSeverity::Warning);
+            }
+        }
     }
-    /// @brief 派生クラスのFinalizeから呼ぶ（生存中のパーティクルを全て削除する）
+    /// @brief 派生クラスのFinalizeから呼ぶ（生存中のパーティクル・プール・GPUリソースを全て破棄する）
     void FinalizeBase() {
         Clear();
+        DestroyCpuPool();
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+        if (sceneRenderer) sceneRenderer->UnregisterGpuParticleEmitter(this);
+        DestroyGpuResources();
     }
 
     /// @brief 派生クラスのUpdateから呼ぶ。新規生成した子オブジェクトへ描画コンポーネントを
-    ///        追加してもらうため、生成直後に setupVisual(生成したEmptyObject*) を呼び出す
+    ///        追加してもらうため、プール生成時に一度だけ setupVisual(生成したEmptyObject*) を呼び出す
+    ///        （GPU Simulation有効時はこちらは呼ばず、代わりにUpdateParticlesGPUを呼ぶこと）
     void UpdateParticles(const std::function<void(EmptyObject *)> &setupVisual) {
+        EnsurePoolSize(maxParticles_, setupVisual);
+
         const float dt = GetDeltaTime();
         auto *sceneContext = GetOwnerSceneContext();
 
@@ -175,8 +335,8 @@ protected:
                         isPlaying_ = false;
                         break;
                     }
-                    if (static_cast<int>(particles_.size()) < maxParticles_) {
-                        SpawnParticle(setupVisual);
+                    if (!freeIndices_.empty()) {
+                        SpawnParticle();
                     }
                 }
                 if (!isPlaying_) break;
@@ -184,25 +344,85 @@ protected:
         }
 
         // --- 寿命管理・スケール変化 ---
-        for (size_t i = 0; i < particles_.size();) {
-            auto &particle = particles_[i];
-            if (!sceneContext || !sceneContext->GetSceneObject(particle.object)) {
+        for (size_t i = 0; i < slots_.size(); ++i) {
+            if (!slots_[i].active) continue;
+            auto *particleObject = pool_[i];
+            if (!particleObject || !sceneContext || !sceneContext->GetSceneObject(particleObject)) {
                 // 何らかの理由で既に削除されている（エディタ操作等）
-                particles_.erase(particles_.begin() + i);
+                slots_[i].active = false;
+                freeIndices_.push_back(static_cast<int>(i));
                 continue;
             }
-            particle.age += dt;
-            if (particle.age >= particle.lifetime) {
-                sceneContext->DeleteObject(particle.object);
-                particles_.erase(particles_.begin() + i);
+            slots_[i].age += dt;
+            if (slots_[i].age >= slots_[i].lifetime) {
+                particleObject->SetActive(false);
+                slots_[i].active = false;
+                freeIndices_.push_back(static_cast<int>(i));
                 continue;
             }
-            if (auto *transform = particle.object->GetComponent<Transform>()) {
-                const float t = particle.lifetime > 0.0f ? particle.age / particle.lifetime : 1.0f;
-                transform->SetScale(Vector3::Lerp(particle.startScale, particle.endScale, t));
+            if (auto *transform = particleObject->GetComponent<Transform>()) {
+                const float t = slots_[i].lifetime > 0.0f ? slots_[i].age / slots_[i].lifetime : 1.0f;
+                transform->SetScale(Vector3::Lerp(slots_[i].startScale, slots_[i].endScale, t));
             }
-            ++i;
         }
+    }
+
+    /// @brief GPU Simulation有効時に派生クラスのUpdateから呼ぶ。発生タイミングの計算・スポーン
+    ///        パラメータの抽選はCPU側で行い、実際の移動・寿命計算はコンピュートシェーダーへ委ねる
+    void UpdateParticlesGPU() {
+        if (!gpuParticleBuffer_ || !gpuInstanceMatrixBuffer_) InitializeGpuResources();
+        const std::uint32_t capacity = static_cast<std::uint32_t>(std::max(0, maxParticles_));
+        if (capacity == 0) { gpuFrameSpawnCount_ = 0; return; }
+
+        const float dt = GetDeltaTime();
+        auto *owner = ResolveMutableOwner();
+
+        std::vector<GPUParticleSpawnRequest> requests;
+
+        if (isPlaying_ && emissionRate_ > 0.0f && owner) {
+            const float interval = 1.0f / emissionRate_;
+            spawnTimer_ += dt;
+            while (spawnTimer_ >= interval) {
+                spawnTimer_ -= interval;
+                const int count = std::max(1, spawnCount_.Get());
+                for (int i = 0; i < count; ++i) {
+                    if (!loop_ && totalEmittedCount_ >= totalSpawnCount_) {
+                        isPlaying_ = false;
+                        break;
+                    }
+                    if (requests.size() >= capacity) break;
+
+                    EmptyObject *parentObject = nullptr;
+                    Vector3 basePosition{ 0.0f, 0.0f, 0.0f };
+                    ResolveSpawnAnchor(owner, parentObject, basePosition);
+                    // GPUモードではパーティクルオブジェクト自体が存在しないため、
+                    // 親を設定する代わりに生成時点の親のワールド座標をスナップショットとして使う
+                    // （以後は親の動きに追従しない。事前確認済みの仕様）
+                    if (parentObject) basePosition = basePosition + GetObjectWorldPosition(parentObject);
+
+                    GPUParticleSpawnRequest request;
+                    request.slotIndex = gpuRingCursor_;
+                    gpuRingCursor_ = (gpuRingCursor_ + 1) % capacity;
+                    request.position = basePosition + ComputeSpawnOffset();
+                    request.velocity = initialVelocity_.Get();
+                    request.acceleration = acceleration_.Get();
+                    request.lifetime = std::max(0.01f, lifetime_.Get());
+                    const Vector3 rotationDegrees = initialRotation_.Get();
+                    request.rotation = Vector3(ToRadians(rotationDegrees.x), ToRadians(rotationDegrees.y), ToRadians(rotationDegrees.z));
+                    const Vector3 rotationSpeedDegrees = initialRotationSpeed_.Get();
+                    request.angularVelocity = Vector3(ToRadians(rotationSpeedDegrees.x), ToRadians(rotationSpeedDegrees.y), ToRadians(rotationSpeedDegrees.z));
+                    const Vector3 rotationAccelDegrees = rotationAcceleration_.Get();
+                    request.angularAcceleration = Vector3(ToRadians(rotationAccelDegrees.x), ToRadians(rotationAccelDegrees.y), ToRadians(rotationAccelDegrees.z));
+                    request.startScale = startScale_.Get();
+                    request.endScale = endScale_.Get();
+                    requests.push_back(request);
+                    ++totalEmittedCount_;
+                }
+                if (!isPlaying_) break;
+            }
+        }
+
+        UploadGpuSpawnRequests(requests);
     }
 
     /// @brief SerializeField相当の値を他インスタンスからコピーする（Cloneで使用。実行時状態はコピーしない）
@@ -241,6 +461,7 @@ protected:
         spawnCapsuleRadiusMax_ = other.spawnCapsuleRadiusMax_;
         spawnCapsuleHeightMin_ = other.spawnCapsuleHeightMin_;
         spawnCapsuleHeightMax_ = other.spawnCapsuleHeightMax_;
+        gpuSimulation_ = other.gpuSimulation_;
     }
 
     JSON SaveBaseFieldsJson() const {
@@ -279,6 +500,7 @@ protected:
         json["spawnCapsuleRadiusMax"] = spawnCapsuleRadiusMax_;
         json["spawnCapsuleHeightMin"] = spawnCapsuleHeightMin_;
         json["spawnCapsuleHeightMax"] = spawnCapsuleHeightMax_;
+        json["gpuSimulation"] = gpuSimulation_;
         return json;
     }
 
@@ -317,6 +539,7 @@ protected:
         spawnCapsuleRadiusMax_ = json.value("spawnCapsuleRadiusMax", 0.5f);
         spawnCapsuleHeightMin_ = json.value("spawnCapsuleHeightMin", 0.0f);
         spawnCapsuleHeightMax_ = json.value("spawnCapsuleHeightMax", 1.0f);
+        SetGPUSimulation(json.value("gpuSimulation", false));
     }
 
 #if defined(USE_IMGUI)
@@ -423,6 +646,9 @@ protected:
         if (ImGui::Combo("Origin", &originIndex, kOriginLabels, 4)) {
             spawnOrigin_ = static_cast<SpawnOrigin>(originIndex);
         }
+        if (gpuSimulation_ && (spawnOrigin_ == SpawnOrigin::ChildOfSelf || spawnOrigin_ == SpawnOrigin::ChildOfOther)) {
+            ImGui::TextDisabled("(GPUモードでは生成時点の座標のみ記録され、以後は親を追従しません)");
+        }
         switch (spawnOrigin_) {
         case SpawnOrigin::ChildOfOther:
             TargetObjectSelector::ShowSelector("Parent Object", GetOwnerSceneContext(), spawnParentObjectID_, true, false);
@@ -447,13 +673,28 @@ protected:
         }
         ImGui::SameLine();
         if (ImGui::Button("Clear")) Clear();
-        ImGui::Text("Live Particles: %zu", particles_.size());
+        if (gpuSimulation_) {
+            ImGui::Text("GPU Simulation: capacity %d", maxParticles_);
+        } else {
+            ImGui::Text("Live Particles: %d", maxParticles_ - static_cast<int>(freeIndices_.size()));
+        }
         ImGui::Text("Total Emitted: %d", totalEmittedCount_);
+
+        bool gpuSimulationLocal = gpuSimulation_;
+        if (ImGui::Checkbox("GPU Simulation", &gpuSimulationLocal)) {
+            SetGPUSimulation(gpuSimulationLocal);
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("有効にすると、パーティクルオブジェクトを一切生成せず、コンピュートシェーダーが\n移動・寿命計算を行う（Max Particlesが多いほど効果が大きい）");
+        }
 
         ImGui::Checkbox("Play On Start", &playOnStart_);
         ImGui::Checkbox("Loop", &loop_);
-        ImGui::DragFloat("Emission Rate", &emissionRate_, 0.1f, 0.0f, 1000.0f);
-        ImGui::DragInt("Max Particles", &maxParticles_, 1.0f, 0, 10000);
+        ImGui::DragFloat("Emission Rate", &emissionRate_, 0.1f, 0.0f);
+        int maxParticlesLocal = maxParticles_;
+        if (ImGui::DragInt("Max Particles", &maxParticlesLocal, 1.0f, 0)) {
+            SetMaxParticles(maxParticlesLocal);
+        }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("同時に生存できるパーティクルの最大数");
         }
@@ -586,9 +827,163 @@ protected:
     float spawnCapsuleHeightMin_ = 0.0f;
     float spawnCapsuleHeightMax_ = 1.0f;
 
+    /// @brief GPUシミュレーション（コンピュートシェーダーによる移動・寿命計算）が有効か
+    bool gpuSimulation_ = false;
+
+    /// @brief GPUパーティクル描画パスが対象外とする描画先名（現状ImGui/JSONからは編集不可、常に空）
+    std::unordered_set<std::string> excludedRenderTargetNames_;
+
 private:
     /// @brief 2Dパーティクルシステムかどうか（true: Rect/Circleのみ選択可、Capsule非対応）
     const bool is2D_;
+
+    //==================================================
+    // CPUオブジェクトプール
+    //==================================================
+
+    struct ParticleSlot {
+        bool active = false;
+        float age = 0.0f;
+        float lifetime = 1.0f;
+        Vector3 startScale{ 1.0f, 1.0f, 1.0f };
+        Vector3 endScale{ 0.0f, 0.0f, 0.0f };
+    };
+    std::vector<EmptyObject *> pool_;
+    std::vector<ParticleSlot> slots_;
+    std::vector<int> freeIndices_;
+
+    /// @brief プールを指定サイズへ伸縮する。拡張分は setupVisual を一度だけ実行してから非アクティブ化する
+    void EnsurePoolSize(int desiredSize, const std::function<void(EmptyObject *)> &setupVisual) {
+        desiredSize = std::max(0, desiredSize);
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext) return;
+
+        while (static_cast<int>(pool_.size()) < desiredSize) {
+            auto *particleObj = sceneContext->CreateEmptyObject("Particle");
+            if (!particleObj) break;
+            if (setupVisual) setupVisual(particleObj);
+            if (!particleObj->GetComponent<Velocity>()) particleObj->AddComponent<Velocity>();
+            if (!particleObj->GetComponent<Rotation>()) particleObj->AddComponent<Rotation>();
+            particleObj->SetActive(false);
+            freeIndices_.push_back(static_cast<int>(pool_.size()));
+            pool_.push_back(particleObj);
+            slots_.push_back(ParticleSlot{});
+        }
+        while (static_cast<int>(pool_.size()) > desiredSize) {
+            const int removeIndex = static_cast<int>(pool_.size()) - 1;
+            if (slots_[removeIndex].active) {
+                pool_[removeIndex]->SetActive(false);
+                slots_[removeIndex].active = false;
+            }
+            sceneContext->DeleteObject(pool_[removeIndex]);
+            pool_.pop_back();
+            slots_.pop_back();
+            freeIndices_.erase(std::remove(freeIndices_.begin(), freeIndices_.end(), removeIndex), freeIndices_.end());
+        }
+    }
+
+    /// @brief プールオブジェクトを全て破棄する（コンポーネント破棄時に呼ぶ）
+    void DestroyCpuPool() {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (sceneContext) {
+            for (auto *obj : pool_) {
+                if (obj && sceneContext->GetSceneObject(obj)) sceneContext->DeleteObject(obj);
+            }
+        }
+        pool_.clear();
+        slots_.clear();
+        freeIndices_.clear();
+    }
+
+    //==================================================
+    // GPUシミュレーション用リソース
+    //==================================================
+
+    std::unique_ptr<RWStructuredBufferResource> gpuParticleBuffer_;
+    std::unique_ptr<RWStructuredBufferResource> gpuInstanceMatrixBuffer_;
+    std::unique_ptr<StructuredBufferResource> gpuSpawnRequestBuffer_;
+    std::unique_ptr<ConstantBufferResource> gpuSpawnConstantBuffer_;
+    std::unique_ptr<ConstantBufferResource> gpuUpdateConstantBuffer_;
+    /// @brief 次に使うスロット（リングバッファ。プール枯渇時は最古の生存パーティクルを上書きする仕様）
+    std::uint32_t gpuRingCursor_ = 0;
+    /// @brief 直近のUpdateParticlesGPUで書き込んだスポーン要求数（Rendererがこの数だけSpawnパイプラインを実行する）
+    std::uint32_t gpuFrameSpawnCount_ = 0;
+
+    void InitializeGpuResources() {
+        const size_t capacity = static_cast<size_t>(std::max(1, maxParticles_));
+        gpuParticleBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(GPUParticleData), capacity, false);
+        gpuInstanceMatrixBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(Matrix4x4), capacity, true);
+        gpuSpawnRequestBuffer_ = std::make_unique<StructuredBufferResource>(sizeof(GPUParticleSpawnRequest), capacity);
+        gpuSpawnConstantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(GPUParticleSpawnConstants));
+        gpuUpdateConstantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(GPUParticleUpdateConstants));
+        gpuRingCursor_ = 0;
+        gpuFrameSpawnCount_ = 0;
+    }
+
+    void DestroyGpuResources() {
+        gpuParticleBuffer_.reset();
+        gpuInstanceMatrixBuffer_.reset();
+        gpuSpawnRequestBuffer_.reset();
+        gpuSpawnConstantBuffer_.reset();
+        gpuUpdateConstantBuffer_.reset();
+        gpuRingCursor_ = 0;
+        gpuFrameSpawnCount_ = 0;
+    }
+
+    /// @brief Max Particles変更などでGPUバッファの容量が実際の設定と合わなくなった場合に再生成する
+    void EnsureGpuCapacity() {
+        if (!gpuSimulation_) return;
+        const size_t desired = static_cast<size_t>(std::max(1, maxParticles_));
+        if (gpuParticleBuffer_ && gpuParticleBuffer_->GetElementCount() == desired) return;
+        InitializeGpuResources();
+    }
+
+    void UploadGpuSpawnRequests(const std::vector<GPUParticleSpawnRequest> &requests) {
+        EnsureGpuCapacity();
+        gpuFrameSpawnCount_ = static_cast<std::uint32_t>(requests.size());
+        if (requests.empty() || !gpuSpawnRequestBuffer_) return;
+        void *mapped = gpuSpawnRequestBuffer_->Map();
+        if (!mapped) return;
+        std::memcpy(mapped, requests.data(), requests.size() * sizeof(GPUParticleSpawnRequest));
+    }
+
+    /// @brief GPU/CPUシミュレーション方式の切り替え時に、現在の方式のリソースを破棄し新方式を初期化する
+    void SwitchSimulationMode() {
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+        if (gpuSimulation_) {
+            Clear();
+            DestroyCpuPool();
+            InitializeGpuResources();
+            if (!sceneRenderer) sceneRenderer = GetOrAddSceneRenderer();
+            if (sceneRenderer) {
+                sceneRenderer->RegisterGpuParticleEmitter(this);
+                char buf[128];
+                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] SwitchSimulationMode: GPU particle emitter registered (this=%p, sceneRenderer=%p)", static_cast<const void *>(this), static_cast<const void *>(sceneRenderer));
+                Log(buf, LogSeverity::Info);
+            } else {
+                char buf[128];
+                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] SwitchSimulationMode: sceneContext=%p, could not resolve/create SceneRenderer (this=%p)", static_cast<const void *>(sceneContext), static_cast<const void *>(this));
+                Log(buf, LogSeverity::Warning);
+            }
+        } else {
+            if (sceneRenderer) sceneRenderer->UnregisterGpuParticleEmitter(this);
+            DestroyGpuResources();
+            // CPUプールは次回UpdateParticles呼び出し時にEnsurePoolSizeで再構築される
+        }
+    }
+
+    SceneRenderer *GetOrAddSceneRenderer() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext) return nullptr;
+        auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
+        if (!sceneRenderer) sceneRenderer = sceneContext->AddComponent<SceneRenderer>();
+        return sceneRenderer;
+    }
+
+    //==================================================
+    // スポーン位置・親の解決（CPU/GPU共通ロジック）
+    //==================================================
 
     /// @brief 現在のスポーン形状設定に基づき、オーナー位置からのランダムなオフセットを求める
     Vector3 ComputeSpawnOffset() const {
@@ -744,6 +1139,7 @@ private:
     }
 
     /// @brief 現在のSpawnOrigin設定に基づき、パーティクルの親オブジェクト（無ければnullptr）とワールド基準位置を求める
+    /// @details GPUモードでは outParent は「生成時点の座標を取るためだけ」に使われ、実際の親付けは行われない
     void ResolveSpawnAnchor(EmptyObject *owner, EmptyObject *&outParent, Vector3 &outBasePosition) const {
         auto *sceneContext = GetOwnerSceneContext();
         switch (spawnOrigin_) {
@@ -769,12 +1165,14 @@ private:
         }
     }
 
-    void SpawnParticle(const std::function<void(EmptyObject *)> &setupVisual) {
-        auto *sceneContext = GetOwnerSceneContext();
+    void SpawnParticle() {
+        if (freeIndices_.empty()) return;
         auto *owner = ResolveMutableOwner();
-        if (!sceneContext || !owner) return;
+        if (!owner) return;
 
-        auto *particleObj = sceneContext->CreateEmptyObject("Particle");
+        const int slotIndex = freeIndices_.back();
+        freeIndices_.pop_back();
+        auto *particleObj = pool_[slotIndex];
         if (!particleObj) return;
 
         EmptyObject *parentObject = nullptr;
@@ -786,56 +1184,52 @@ private:
         const Vector3 rotationDegrees = initialRotation_.Get();
 
         if (auto *transform = particleObj->GetComponent<Transform>()) {
-            if (parentObject) transform->SetParentObject(parentObject);
+            // 前回の生存時に別の親が設定されていた場合の取り残しを防ぐため、
+            // 親付けしない生成方式の場合は明示的にnullptrへ戻す
+            transform->SetParentObject(parentObject);
             transform->SetScale(chosenStartScale);
             transform->SetTranslate(basePosition + ComputeSpawnOffset());
             transform->SetRotate(Vector3(ToRadians(rotationDegrees.x), ToRadians(rotationDegrees.y), ToRadians(rotationDegrees.z)));
         }
 
-        if (setupVisual) setupVisual(particleObj);
+        particleObj->SetActive(true);
 
-        if (auto *velocity = particleObj->AddComponent<Velocity>()) {
+        if (auto *velocity = particleObj->GetComponent<Velocity>()) {
             velocity->SetVelocity(initialVelocity_.Get());
             velocity->SetAcceleration(acceleration_.Get());
         }
 
         const Vector3 rotationSpeedDegrees = initialRotationSpeed_.Get();
         const Vector3 rotationAccelDegrees = rotationAcceleration_.Get();
-        if (auto *rotation = particleObj->AddComponent<Rotation>()) {
+        if (auto *rotation = particleObj->GetComponent<Rotation>()) {
             rotation->SetAngularVelocity(Vector3(ToRadians(rotationSpeedDegrees.x), ToRadians(rotationSpeedDegrees.y), ToRadians(rotationSpeedDegrees.z)));
             rotation->SetAngularAcceleration(Vector3(ToRadians(rotationAccelDegrees.x), ToRadians(rotationAccelDegrees.y), ToRadians(rotationAccelDegrees.z)));
         }
 
         if (billboard_) {
-            if (auto *lookAt = particleObj->AddComponent<TargetLookAt>()) {
+            auto *lookAt = particleObj->GetComponent<TargetLookAt>();
+            if (!lookAt) lookAt = particleObj->AddComponent<TargetLookAt>();
+            if (lookAt) {
                 lookAt->SetRotationMode(billboardRotationMode_);
                 // 向き先が明示的に指定されていればそれを使い、未設定ならシーン内のカメラを自動で使う
                 EmptyObject *billboardTarget = GetBillboardTarget();
                 if (!billboardTarget) billboardTarget = ResolveBillboardCameraObject();
-                if (billboardTarget) lookAt->SetTargetObject(billboardTarget);
+                lookAt->SetTargetObject(billboardTarget);
             }
+        } else {
+            particleObj->RemoveComponent<TargetLookAt>();
         }
 
-        ParticleInstance instance;
-        instance.object = particleObj;
-        instance.lifetime = std::max(0.01f, lifetime_.Get());
-        instance.age = 0.0f;
-        instance.startScale = chosenStartScale;
-        instance.endScale = chosenEndScale;
-        particles_.push_back(instance);
+        slots_[slotIndex].active = true;
+        slots_[slotIndex].age = 0.0f;
+        slots_[slotIndex].lifetime = std::max(0.01f, lifetime_.Get());
+        slots_[slotIndex].startScale = chosenStartScale;
+        slots_[slotIndex].endScale = chosenEndScale;
         ++totalEmittedCount_;
     }
 
     float spawnTimer_ = 0.0f;
     int totalEmittedCount_ = 0;
-    struct ParticleInstance {
-        EmptyObject *object = nullptr;
-        float age = 0.0f;
-        float lifetime = 1.0f;
-        Vector3 startScale{ 1.0f, 1.0f, 1.0f };
-        Vector3 endScale{ 0.0f, 0.0f, 0.0f };
-    };
-    std::vector<ParticleInstance> particles_;
 };
 
 } // namespace KashipanEngine

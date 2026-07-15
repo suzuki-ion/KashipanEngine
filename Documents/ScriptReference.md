@@ -78,7 +78,8 @@ class Player : ScriptComponentBehavior {
 
 ```angelscript
 class Player : ScriptComponentBehavior {
-    void Start() {}                                  // 初期化時に一度だけ
+    void Awake() {}                                  // インスタンス生成時に一度だけ
+    void Start() {}                                  // ゲームループ中、最初のUpdate()の直前に一度だけ
     void Update() {}                                 // 毎フレーム
     void End() {}                                    // 終了時
     void OnCollisionEnter(const HitInfo &in hit) {}  // 衝突開始時
@@ -90,7 +91,8 @@ class Player : ScriptComponentBehavior {
 
 | メソッド | 呼び出しタイミング |
 |---|---|
-| `void Start()` | コンポーネントの初期化時（スクリプトのコンパイル成功後）、およびReload成功後に一度 |
+| `void Awake()` | コンポーネントの初期化時（スクリプトのコンパイル成功後、インスタンス生成直後）、およびReload成功後に一度（UnityのAwake相当） |
+| `void Start()` | ゲームループ中、そのインスタンスに対して最初にUpdate()が呼ばれる直前に一度だけ（UnityのStart相当。非アクティブのまま一度もUpdate()が呼ばれなければ実行されない） |
 | `void Update()` | 毎フレーム |
 | `void End()` | コンポーネントの削除・非アクティブ化・Reload時 |
 | `void OnCollisionEnter(const HitInfo &in)` | 同オブジェクトのコライダーが他のコライダーと衝突を開始したとき |

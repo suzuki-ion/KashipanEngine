@@ -30,6 +30,10 @@ protected:
     void Finalize() override { FinalizeBase(); }
 
     void Update() override {
+        if (IsGPUSimulation()) {
+            UpdateParticlesGPU();
+            return;
+        }
         UpdateParticles([this](EmptyObject *particle) {
             if (auto *filter = particle->AddComponent<MeshFilter>()) {
                 filter->SetMeshHandle(ModelManager::GetModelHandleFromAssetPath(meshAssetPath_));

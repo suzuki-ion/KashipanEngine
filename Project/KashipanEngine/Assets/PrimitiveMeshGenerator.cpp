@@ -31,14 +31,17 @@ Vertex MakeVertex(const Vector3 &position, const Vector3 &normal, float u, float
 
 /// @brief p0,p1,p2,p3 を外側から見て反時計回り(CCW)の順で渡すと、平坦な法線を計算した上で
 ///        そのままの順でインデックスを積む（このエンジンの既定は反時計回りが表面のため）
+/// @details p0→p1、p0→p3 はそれぞれ呼び出し側の基底ベクトル（GetPlaneBasisのuAxis/vAxis）に
+///          沿った辺になる想定で、texcoord.xがuAxis方向、texcoord.yがvAxis方向（上が0、下が1）に
+///          対応するようUVを割り当てる（標準的な「U=横方向、V=縦方向（上原点）」の対応）
 void AddQuad(std::vector<Vertex> &verts, std::vector<uint32_t> &idx,
     const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3) {
     const Vector3 normal = (p1 - p0).Cross(p2 - p0).Normalize();
     const uint32_t base = static_cast<uint32_t>(verts.size());
     verts.push_back(MakeVertex(p0, normal, 0.0f, 1.0f));
-    verts.push_back(MakeVertex(p1, normal, 1.0f, 1.0f));
+    verts.push_back(MakeVertex(p1, normal, 0.0f, 0.0f));
     verts.push_back(MakeVertex(p2, normal, 1.0f, 0.0f));
-    verts.push_back(MakeVertex(p3, normal, 0.0f, 0.0f));
+    verts.push_back(MakeVertex(p3, normal, 1.0f, 1.0f));
     idx.push_back(base + 0); idx.push_back(base + 1); idx.push_back(base + 2);
     idx.push_back(base + 0); idx.push_back(base + 2); idx.push_back(base + 3);
 }
@@ -112,7 +115,8 @@ void GenerateCircle(std::vector<Vertex> &verts, std::vector<uint32_t> &idx, char
     for (int i = 0; i < segments; ++i) {
         const float theta = 2.0f * pi * static_cast<float>(i) / static_cast<float>(segments);
         const Vector3 p = basis.uAxis * (radius * std::cos(theta)) + basis.vAxis * (radius * std::sin(theta));
-        verts.push_back(MakeVertex(p, basis.normal, 0.5f + 0.5f * std::cos(theta), 0.5f + 0.5f * std::sin(theta)));
+        // AddQuadと同じ規約（U=uAxis方向、V=vAxis方向は上が0・下が1）に合わせるため、Vはvサイン成分を反転する
+        verts.push_back(MakeVertex(p, basis.normal, 0.5f + 0.5f * std::cos(theta), 0.5f - 0.5f * std::sin(theta)));
     }
     for (int i = 0; i < segments; ++i) {
         const uint32_t a = firstRim + static_cast<uint32_t>(i);

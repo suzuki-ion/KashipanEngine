@@ -316,7 +316,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": 50.38864517211914,
+                                "y": 61.41828918457031,
                                 "z": 0.0
                             }
                         },
@@ -368,7 +368,7 @@
                             "billboard": false,
                             "billboardRotationMode": 0,
                             "billboardTargetObjectID": "",
-                            "emissionRate": 65536.0,
+                            "emissionRate": 100000.0,
                             "endScale": {
                                 "max": {
                                     "x": 0.0,
@@ -404,7 +404,7 @@
                                     "y": 0.0,
                                     "z": 0.0
                                 },
-                                "randomize": true,
+                                "randomize": false,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -422,7 +422,7 @@
                                     "y": -8.0,
                                     "z": -8.0
                                 },
-                                "randomize": true,
+                                "randomize": false,
                                 "value": {
                                     "x": 0.0,
                                     "y": 0.0,
@@ -451,12 +451,12 @@
                                 "max": 32.0,
                                 "min": 16.0,
                                 "randomize": false,
-                                "value": 1.0
+                                "value": 2.0
                             },
                             "loop": true,
                             "materialName": "White",
                             "maxParticles": 1000000,
-                            "meshAssetPath": "PrimitiveMesh-Triangle2D",
+                            "meshAssetPath": "PrimitiveMesh-Box",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,
                             "rotationAcceleration": {
@@ -483,9 +483,9 @@
                                 "z": 64.0
                             },
                             "spawnBoxSizeMin": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": 64.0,
+                                "y": 48.0,
+                                "z": 48.0
                             },
                             "spawnCapsuleHeightMax": 1.0,
                             "spawnCapsuleHeightMin": 0.0,
@@ -520,9 +520,9 @@
                                 },
                                 "randomize": false,
                                 "value": {
-                                    "x": 1.0,
-                                    "y": 1.0,
-                                    "z": 1.0
+                                    "x": 0.5,
+                                    "y": 0.5,
+                                    "z": 0.5
                                 }
                             },
                             "targetObjectID": "",

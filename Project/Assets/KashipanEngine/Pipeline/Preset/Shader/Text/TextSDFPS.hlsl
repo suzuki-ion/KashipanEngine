@@ -23,12 +23,7 @@ PSOutput main(VSOutput input) {
 	PSOutput output;
 	TextCharacterElement ch = gMaterials[input.instanceId];
 
-	// 共有クアッドメッシュ(Rect2D)のUVはtexcoord.xがローカルY軸、texcoord.yが反転したローカルX軸に
-	// 対応する（PrimitiveMeshGenerator::AddQuad/GeneratePlaneの頂点順による）ため、
-	// アトラス内矩形をそのままlerpすると文字が90度回転して見える。軸を入れ替えて正しく対応させる。
-	float2 uv;
-	uv.x = lerp(ch.uvRect.z, ch.uvRect.x, input.texcoord.y);
-	uv.y = lerp(ch.uvRect.w, ch.uvRect.y, input.texcoord.x);
+	float2 uv = lerp(ch.uvRect.xy, ch.uvRect.zw, input.texcoord);
 	float distance = gTexture.Sample(gSampler, uv).r;
 
 	// SDFは128(0.5相当)が輪郭。ピクセル微分（fwidth）で画面上のアンチエイリアス幅を求め、

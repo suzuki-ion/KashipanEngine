@@ -315,8 +315,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 50.38864517211914,
+                                "x": 23.86585235595703,
+                                "y": 10.34941291809082,
                                 "z": 0.0
                             }
                         },
@@ -350,18 +350,18 @@
                             "acceleration": {
                                 "max": {
                                     "x": 0.0,
-                                    "y": 0.0,
+                                    "y": -16.0,
                                     "z": 0.0
                                 },
                                 "min": {
                                     "x": 0.0,
-                                    "y": -2.0,
+                                    "y": -8.0,
                                     "z": 0.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
-                                    "y": -2.0,
+                                    "y": 0.0,
                                     "z": 0.0
                                 }
                             },
@@ -432,31 +432,31 @@
                             "initialVelocity": {
                                 "max": {
                                     "x": 16.0,
-                                    "y": 16.0,
+                                    "y": 32.0,
                                     "z": 16.0
                                 },
                                 "min": {
-                                    "x": -16.0,
+                                    "x": -64.0,
                                     "y": 8.0,
                                     "z": -16.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
-                                    "y": 0.0,
+                                    "y": 1.0,
                                     "z": 0.0
                                 }
                             },
                             "lifetime": {
-                                "max": 32.0,
-                                "min": 16.0,
+                                "max": 1.0,
+                                "min": 1.0,
                                 "randomize": false,
                                 "value": 1.0
                             },
                             "loop": true,
                             "materialName": "White",
-                            "maxParticles": 1000000,
-                            "meshAssetPath": "PrimitiveMesh-Triangle2D",
+                            "maxParticles": 262144,
+                            "meshAssetPath": "PrimitiveMesh-Triangle-XY",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,
                             "rotationAcceleration": {
@@ -478,9 +478,9 @@
                                 }
                             },
                             "spawnBoxSizeMax": {
-                                "x": 64.0,
-                                "y": 64.0,
-                                "z": 64.0
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
                             },
                             "spawnBoxSizeMin": {
                                 "x": 0.0,
@@ -504,7 +504,7 @@
                             },
                             "spawnOrigin": 0,
                             "spawnParentObjectID": "",
-                            "spawnShape": 1,
+                            "spawnShape": 0,
                             "spawnSphereRadiusMax": 1.0,
                             "spawnSphereRadiusMin": 0.0,
                             "startScale": {

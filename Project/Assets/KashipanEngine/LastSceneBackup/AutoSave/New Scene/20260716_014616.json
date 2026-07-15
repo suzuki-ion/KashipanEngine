@@ -316,7 +316,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": 50.38864517211914,
+                                "y": 92.6153564453125,
                                 "z": 0.0
                             }
                         },
@@ -368,7 +368,7 @@
                             "billboard": false,
                             "billboardRotationMode": 0,
                             "billboardTargetObjectID": "",
-                            "emissionRate": 65536.0,
+                            "emissionRate": 100000.0,
                             "endScale": {
                                 "max": {
                                     "x": 0.0,
@@ -451,12 +451,12 @@
                                 "max": 32.0,
                                 "min": 16.0,
                                 "randomize": false,
-                                "value": 1.0
+                                "value": 2.0
                             },
                             "loop": true,
                             "materialName": "White",
                             "maxParticles": 1000000,
-                            "meshAssetPath": "PrimitiveMesh-Triangle2D",
+                            "meshAssetPath": "PrimitiveMesh-Tetrahedron",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,
                             "rotationAcceleration": {
@@ -483,13 +483,13 @@
                                 "z": 64.0
                             },
                             "spawnBoxSizeMin": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": 64.0,
+                                "y": 48.0,
+                                "z": 48.0
                             },
-                            "spawnCapsuleHeightMax": 1.0,
+                            "spawnCapsuleHeightMax": 64.0,
                             "spawnCapsuleHeightMin": 0.0,
-                            "spawnCapsuleRadiusMax": 0.5,
+                            "spawnCapsuleRadiusMax": 64.0,
                             "spawnCapsuleRadiusMin": 0.0,
                             "spawnCenter": {
                                 "x": 0.0,
@@ -504,9 +504,9 @@
                             },
                             "spawnOrigin": 0,
                             "spawnParentObjectID": "",
-                            "spawnShape": 1,
-                            "spawnSphereRadiusMax": 1.0,
-                            "spawnSphereRadiusMin": 0.0,
+                            "spawnShape": 3,
+                            "spawnSphereRadiusMax": 64.0,
+                            "spawnSphereRadiusMin": 48.0,
                             "startScale": {
                                 "max": {
                                     "x": 1.0,

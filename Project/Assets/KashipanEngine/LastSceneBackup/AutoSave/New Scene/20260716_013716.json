@@ -316,7 +316,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": 50.38864517211914,
+                                "y": 25.596708297729492,
                                 "z": 0.0
                             }
                         },
@@ -440,17 +440,17 @@
                                     "y": 8.0,
                                     "z": -16.0
                                 },
-                                "randomize": false,
+                                "randomize": true,
                                 "value": {
                                     "x": 0.0,
-                                    "y": 0.0,
+                                    "y": 1.0,
                                     "z": 0.0
                                 }
                             },
                             "lifetime": {
                                 "max": 32.0,
                                 "min": 16.0,
-                                "randomize": false,
+                                "randomize": true,
                                 "value": 1.0
                             },
                             "loop": true,
@@ -478,9 +478,9 @@
                                 }
                             },
                             "spawnBoxSizeMax": {
-                                "x": 64.0,
-                                "y": 64.0,
-                                "z": 64.0
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
                             },
                             "spawnBoxSizeMin": {
                                 "x": 0.0,
@@ -504,7 +504,7 @@
                             },
                             "spawnOrigin": 0,
                             "spawnParentObjectID": "",
-                            "spawnShape": 1,
+                            "spawnShape": 0,
                             "spawnSphereRadiusMax": 1.0,
                             "spawnSphereRadiusMin": 0.0,
                             "startScale": {

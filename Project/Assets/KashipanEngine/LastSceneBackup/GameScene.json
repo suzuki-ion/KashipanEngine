@@ -223,7 +223,8 @@
                                     "y": -32.0,
                                     "z": -8.0
                                 },
-                                "moveSpeed": 0.5
+                                "moveSpeed": 0.5,
+                                "slideThreshold": 0.5
                             },
                             "scriptPath": "Assets\\Application\\Scripts\\Player.as"
                         },
@@ -6964,9 +6965,9 @@
                     "data": {
                         "customData": {
                             "farClip": 1000.0,
-                            "height": 1920.0,
+                            "height": 1080.0,
                             "nearClip": 0.0,
-                            "width": 1080.0
+                            "width": 1920.0
                         },
                         "isActive": true,
                         "priority": 1,
@@ -7004,19 +7005,19 @@
                         "customData": {
                             "parent": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
                             "rotate": {
-                                "w": 0.7071068286895752,
+                                "w": 1.0,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.7071068286895752
+                                "z": 0.0
                             },
                             "scale": {
                                 "x": 1920.0,
-                                "y": -1080.0,
+                                "y": 1080.0,
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 540.0,
-                                "y": 960.0,
+                                "x": 960.0,
+                                "y": 540.0,
                                 "z": 0.0
                             }
                         },
@@ -7079,7 +7080,7 @@
                             },
                             "scale": {
                                 "x": 1.0,
-                                "y": 3.0,
+                                "y": 1.0,
                                 "z": 1.0
                             },
                             "translate": {
@@ -9042,10 +9043,10 @@
                                     "z": 0.0
                                 }
                             },
-                            "billboard": true,
+                            "billboard": false,
                             "billboardRotationMode": 1,
                             "billboardTargetObjectID": "66779b41-4774-4de5-be40-a882e63feea6",
-                            "emissionRate": 8.0,
+                            "emissionRate": 4096.0,
                             "endScale": {
                                 "max": {
                                     "x": 0.0,
@@ -9069,6 +9070,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -9131,7 +9133,7 @@
                             },
                             "loop": true,
                             "materialName": "ParticleWhite",
-                            "maxParticles": 64,
+                            "maxParticles": 65536,
                             "meshAssetPath": "PrimitiveMesh-Tetrahedron",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,

@@ -9043,7 +9043,7 @@
                                     "z": 0.0
                                 }
                             },
-                            "billboard": false,
+                            "billboard": true,
                             "billboardRotationMode": 1,
                             "billboardTargetObjectID": "66779b41-4774-4de5-be40-a882e63feea6",
                             "emissionRate": 8.0,
@@ -9070,7 +9070,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -9133,7 +9133,7 @@
                             },
                             "loop": true,
                             "materialName": "ParticleWhite",
-                            "maxParticles": 16,
+                            "maxParticles": 409,
                             "meshAssetPath": "PrimitiveMesh-Tetrahedron",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,

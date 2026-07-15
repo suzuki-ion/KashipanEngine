@@ -451,7 +451,7 @@
                                 "max": 32.0,
                                 "min": 16.0,
                                 "randomize": false,
-                                "value": 1.0
+                                "value": 2.0
                             },
                             "loop": true,
                             "materialName": "White",

@@ -3,12 +3,16 @@
 #include <iostream>
 #include "JSON.h"
 #include "Directory.h"
+#include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 
 JSON LoadJSON(const std::string &filename) {
     JSON jsonData;
-    std::fstream jsonFile(filename);
+    // std::fstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
+    // 非ASCII文字を含むパスが開けない。path版のコンストラクタ（内部でネイティブのワイド文字列を使う）
+    // へ渡すことで回避する
+    std::fstream jsonFile(Utf8StringToPath(filename));
     jsonData = JSON::parse(jsonFile, nullptr, false, true);
     return jsonData;
 }
@@ -19,7 +23,7 @@ bool SaveJSON(const JSON &jsonData, const std::string &filepath, int indent) {
         if (!EnsureParentDirectoryExists(filepath)) {
             return false;
         }
-        std::ofstream file(filepath);
+        std::ofstream file(Utf8StringToPath(filepath));
         if (!file.is_open()) {
             return false;
         }
@@ -97,7 +101,7 @@ bool ValidateJSONStructure(const JSON &json, const std::vector<std::string> &req
 
 bool IsJSONFileValid(const std::string &filepath) {
     try {
-        std::ifstream file(filepath);
+        std::ifstream file(Utf8StringToPath(filepath));
         if (!file.is_open()) {
             return false;
         }

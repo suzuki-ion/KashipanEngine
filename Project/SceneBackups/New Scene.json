@@ -76,7 +76,7 @@
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowBias": 0.0,
-                            "shadowDistance": 1000.0,
+                            "shadowDistance": 1024.0,
                             "shadowMapResolution": 4096,
                             "type": 0
                         },
@@ -257,7 +257,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": -1.0,
+                                "y": -0.5,
                                 "z": 0.0
                             }
                         },
@@ -282,6 +282,9 @@
                     "data": {
                         "customData": {
                             "materialName": "Default",
+                            "materialNames": [
+                                "Default"
+                            ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": ""
                         },

@@ -1,7 +1,9 @@
 #include "SkeletonManager.h"
+#include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/CaseInsensitive.h"
 
 #include "Debug/Logger.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/Translation.h"
 
@@ -51,15 +53,15 @@ bool HasSupportedSkeletonExtension(const std::filesystem::path &p) {
 }
 
 std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
 }
 
 Handle RegisterEntry(SkeletonEntry &&entry) {
@@ -259,18 +261,22 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
         }
     }
 
-    std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
 
     if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.skeleton.loading.failed.notfound") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.skeleton.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
     if (!HasSupportedSkeletonExtension(p)) {
-        Log(Translation("engine.skeleton.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.skeleton.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
     Assimp::Importer importer;
+    // Assimpの既定IOSystemはWindows上でfopen（現在のANSIコードページ）を使うため、
+    // コードページで表現できない文字を含むパス（多言語のファイル名等）を開けない。
+    // _wfopenベースの独自IOSystemに差し替えることで回避する（Importerが所有権を持つ）
+    importer.SetIOHandler(new AssimpUtf8IOSystem());
     constexpr unsigned int flags =
         aiProcess_MakeLeftHanded |
         aiProcess_FlipWindingOrder |
@@ -283,16 +289,16 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
         aiProcess_SortByPType |
         aiProcess_FlipUVs;
 
-    const aiScene *scene = importer.ReadFile(p.string(), flags);
+    const aiScene *scene = importer.ReadFile(PathToUtf8String(p), flags);
     if (!scene || !scene->mRootNode) {
-        Log(Translation("engine.skeleton.loading.failed.assimp") + p.string() + " msg=" + importer.GetErrorString(), LogSeverity::Warning);
+        Log(Translation("engine.skeleton.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + importer.GetErrorString(), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
     SkeletonEntry entry{};
-    entry.fullPath = NormalizePathSlashes(p.string());
+    entry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
     entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
-    entry.fileName = p.filename().string();
+    entry.fileName = PathToUtf8String(p.filename());
     entry.data.assetRelativePath_ = entry.assetPath;
 
     entry.data.rootNode_ = BuildNode(scene->mRootNode);
@@ -301,7 +307,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
     skeleton.rootJointIndex = -1;
     CollectBones(scene, skeleton);
     if (skeleton.joints.empty()) {
-        Log(Translation("engine.skeleton.loading.failed.noskeleton") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.skeleton.loading.failed.noskeleton") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
     BuildJointHierarchy(scene->mRootNode, skeleton);
@@ -319,11 +325,11 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidHandle) {
-        Log(Translation("engine.skeleton.loading.failed.register") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.skeleton.loading.failed.register") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
-    Log(Translation("engine.skeleton.loading.succeeded") + p.string(), LogSeverity::Info);
+    Log(Translation("engine.skeleton.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
 

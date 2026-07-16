@@ -1,0 +1,4859 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            },
+            "type": "SceneRenderer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 500,
+                "tag": ""
+            },
+            "type": "SceneAudioPlayer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneScriptEngine"
+        }
+    ],
+    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneName": "New Scene",
+    "sceneObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 0.8844818472862244,
+                                "x": 0.3990025520324707,
+                                "y": 0.09255000203847885,
+                                "z": 0.22343546152114868
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 1.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 128.0,
+                            "shadowMapResolution": 4096,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "2de9ebd8-8ab7-4f2b-8107-b6259dd6d0de",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "used": true
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "AudioListener"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "aspectRatio": 1.7777777910232544,
+                            "farClip": 1000.0,
+                            "fovY": 0.44999998807907104,
+                            "nearClip": 2.2899999618530273,
+                            "orthoSize": 10.0,
+                            "orthographic": false
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Camera3D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera3D",
+                                "Pixel:gCamera3D"
+                            ],
+                            "pipelineName": "",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "CameraRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Camera",
+            "objectID": "efcdc0c3-11c7-4dec-bab6-a5583a114f2d",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": -0.19277799129486084,
+                                "y": 0.0,
+                                "z": -1.9603263139724731
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "effectFrequency": 1.0,
+                            "effectQ": 1.0,
+                            "effectType": 0,
+                            "enableSpatialAudio": true,
+                            "loop": true,
+                            "maxDistance": 25.0,
+                            "minDistance": 1.0,
+                            "pitch": 0.0,
+                            "reverbMix": 0.30000001192092896,
+                            "soundName": "Application/Sound/bgmGameScene.mp3",
+                            "volume": 1.0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "AudioSource"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Object",
+            "objectID": "eb13064b-e5c1-46cc-a36b-27cd95e3dfe6",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 256.0,
+                                "y": 1.0,
+                                "z": 256.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": -0.5,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "PrimitiveMesh-Box"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Default",
+                            "materialNames": [
+                                "Default"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Ground",
+            "objectID": "b27bb806-1a1b-444b-acf8-57dcdd2e4ccc",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "enableCastShadow": false,
+                                "lightNumX": 0,
+                                "lightNumY": 0,
+                                "objectNumX": 128,
+                                "objectNumY": 64
+                            },
+                            "scriptPath": "Assets\\Application\\Scripts\\LightTestScript.as"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScriptComponent"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": false,
+            "name": "EmptyObject",
+            "objectID": "8ad0698a-ea0e-42f1-9d2b-3a17f92a6961",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower",
+            "objectID": "f25cee28-9570-4fb3-a8e3-d27e495d9e32",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 23.724170684814453,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower",
+            "objectID": "4fd5ee18-d3cd-430e-a161-f07c320f316d",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "f25cee28-9570-4fb3-a8e3-d27e495d9e32",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Bell_Tower.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Bell_Tower_Stone_Light",
+                            "materialNames": [
+                                "Bell_Tower_Stone_Light",
+                                "Bell_Tower_Stone_Dark",
+                                "Bell_Tower_Wood",
+                                "Bell_Tower_Beige",
+                                "Bell_Tower_Wood_Side",
+                                "Bell_Tower_Windows",
+                                "Bell_Tower_Wood_Light",
+                                "Bell_Tower_Bell",
+                                "Bell_Tower_RoofTiles",
+                                "Bell_Tower_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower_Cube.296",
+            "objectID": "2458b5b4-1a8a-4635-a1f5-0297bf04a893",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 4.905631065368652,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith",
+            "objectID": "4cfc27de-d49a-4875-87d8-fda6b3048e05",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4cfc27de-d49a-4875-87d8-fda6b3048e05",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Blacksmith.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Blacksmith_Plaster",
+                            "materialNames": [
+                                "Blacksmith_Plaster",
+                                "Blacksmith_Wood_Light",
+                                "Blacksmith_Wood_Side",
+                                "Blacksmith_Stone_Light",
+                                "Blacksmith_Stone_Dark",
+                                "Blacksmith_Wood",
+                                "Blacksmith_Windows",
+                                "Blacksmith_RoofTiles_Red"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith_Cube.000",
+            "objectID": "d3052f72-92bd-4e38-97a8-f3486a94f063",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 8.542755126953125,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1",
+            "objectID": "c5087529-43b1-4e05-b5e8-14c0fcaf1718",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "c5087529-43b1-4e05-b5e8-14c0fcaf1718",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_1.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_1_Plaster",
+                            "materialNames": [
+                                "House_1_Plaster",
+                                "House_1_Wood",
+                                "House_1_Wood_Side",
+                                "House_1_Windows",
+                                "House_1_Wood_Light",
+                                "House_1_Stone_Dark",
+                                "House_1_Stone",
+                                "House_1_RoofTiles",
+                                "House_1_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1_Cube.145",
+            "objectID": "a0ed0b33-6022-4d8d-914a-230dd8a82212",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 11.745071411132813,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2",
+            "objectID": "7b1aebcf-55ea-4ad9-9050-a7b7aed3acc9",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "7b1aebcf-55ea-4ad9-9050-a7b7aed3acc9",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_2.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_2_Beige",
+                            "materialNames": [
+                                "House_2_Beige",
+                                "House_2_Wood",
+                                "House_2_Stone_Dark",
+                                "House_2_Windows",
+                                "House_2_Wood_Light",
+                                "House_2_RoofTiles",
+                                "House_2_Stone_Light",
+                                "House_2_Wood_Side",
+                                "House_2_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2_Cylinder.021",
+            "objectID": "374f6345-5463-478a-b132-3d13c1fb9b16",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 5.516042232513428
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3",
+            "objectID": "97b88673-fe39-4a6e-86fd-757f35ba1a4e",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "97b88673-fe39-4a6e-86fd-757f35ba1a4e",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_3.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_3_Stone_Dark",
+                            "materialNames": [
+                                "House_3_Stone_Dark",
+                                "House_3_Stone",
+                                "House_3_Wood",
+                                "House_3_Wood_Side",
+                                "House_3_Wood_Light",
+                                "House_3_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3_Cube.305",
+            "objectID": "d22c1e3f-54ef-44fb-a984-fb259b4aef73",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 3.309842109680176,
+                                "y": 0.0,
+                                "z": 5.8992486000061035
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4",
+            "objectID": "2db4ec0c-765d-4b85-bb19-b1f879661e42",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "2db4ec0c-765d-4b85-bb19-b1f879661e42",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_4.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_4_Stone_Light",
+                            "materialNames": [
+                                "House_4_Stone_Light",
+                                "House_4_Stone_Dark",
+                                "House_4_Wood",
+                                "House_4_Wood_Side",
+                                "House_4_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4_Cube.037",
+            "objectID": "6cb28aea-4b60-4715-a31c-29411931378e",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 7.592835903167725,
+                                "y": 0.0,
+                                "z": 6.287685394287109
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn",
+            "objectID": "4b95112f-7b10-4f8f-8af9-13c1b8969b55",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4b95112f-7b10-4f8f-8af9-13c1b8969b55",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Inn.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Inn_Wood",
+                            "materialNames": [
+                                "Inn_Wood",
+                                "Inn_Stone_Dark",
+                                "Inn_RoofTiles_Red",
+                                "Inn_Plaster",
+                                "Inn_Stone_Light",
+                                "Inn_Windows",
+                                "Inn_Wood_Light",
+                                "Inn_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn_Cube.393",
+            "objectID": "cb95814a-2252-4527-94b8-74f5e6277ba8",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 12.47270679473877,
+                                "y": 0.0,
+                                "z": 6.4770660400390625
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill",
+            "objectID": "f10140d1-836a-42df-a801-5e09dcc7f92e",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 12.47270679473877,
+                                "y": 0.0,
+                                "z": 18.63223648071289
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill",
+            "objectID": "d2f7c135-24f1-42c7-b90d-32044a486da5",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "f10140d1-836a-42df-a801-5e09dcc7f92e",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Cube.128"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_RoofTiles",
+                            "materialNames": [
+                                "Mill_RoofTiles",
+                                "Mill_Stone_Light",
+                                "Mill_Stone_Dark",
+                                "Mill_Wood",
+                                "Mill_Windows",
+                                "Mill_Wood_Light",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Green",
+                                "Mill_Stone",
+                                "Mill_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Cube.128",
+            "objectID": "16723388-88da-4f01-8bd2-7966b4b883a6",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "f10140d1-836a-42df-a801-5e09dcc7f92e",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Blades_Cube.007"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_Wood",
+                            "materialNames": [
+                                "Mill_Wood",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Blades_Cube.007",
+            "objectID": "7248f08c-8924-4677-8588-9728c353a9dd",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 16.291900634765625,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill",
+            "objectID": "24295806-4be7-4cd7-9895-01342aa0130c",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "24295806-4be7-4cd7-9895-01342aa0130c",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Sawmill.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Sawmill_RoofTiles_Red",
+                            "materialNames": [
+                                "Sawmill_RoofTiles_Red",
+                                "Sawmill_Plaster",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_DarkWood",
+                                "Sawmill_Metal",
+                                "Sawmill_Windows",
+                                "Sawmill_Wood",
+                                "Sawmill_Wood_Light",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_Stone_Dark",
+                                "Sawmill_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill_Cube.047",
+            "objectID": "4325d489-1ea0-47d1-8903-0009a4e05318",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 19.59856605529785,
+                                "y": 0.0,
+                                "z": 7.361486434936523
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable",
+            "objectID": "830274e5-9e51-45e8-84d3-bb84c0d6052e",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "830274e5-9e51-45e8-84d3-bb84c0d6052e",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Stable.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Stable_Beige",
+                            "materialNames": [
+                                "Stable_Beige",
+                                "Stable_Wood",
+                                "Stable_Wood_Side",
+                                "Stable_Stone_Dark",
+                                "Stable_RoofTiles",
+                                "Stable_Windows",
+                                "Stable_Wood_Light",
+                                "Stable_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable_Cube.195",
+            "objectID": "97e549d0-0fef-4a85-a151-991d7530dec0",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "d2f7c135-24f1-42c7-b90d-32044a486da5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Cube.128"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_RoofTiles",
+                            "materialNames": [
+                                "Mill_RoofTiles",
+                                "Mill_Stone_Light",
+                                "Mill_Stone_Dark",
+                                "Mill_Wood",
+                                "Mill_Windows",
+                                "Mill_Wood_Light",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Green",
+                                "Mill_Stone",
+                                "Mill_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Cube.128",
+            "objectID": "f636a133-0679-4f74-8a0e-2034e367b3ef",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "d2f7c135-24f1-42c7-b90d-32044a486da5",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Blades_Cube.007"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_Wood",
+                            "materialNames": [
+                                "Mill_Wood",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Blades_Cube.007",
+            "objectID": "5df5911f-f144-4339-a73e-a26e3fa88820",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 4.905631065368652,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith",
+            "objectID": "0d075f00-3a5a-47d1-8fa0-f3bd239628f7",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "0d075f00-3a5a-47d1-8fa0-f3bd239628f7",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Blacksmith.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Blacksmith_Plaster",
+                            "materialNames": [
+                                "Blacksmith_Plaster",
+                                "Blacksmith_Wood_Light",
+                                "Blacksmith_Wood_Side",
+                                "Blacksmith_Stone_Light",
+                                "Blacksmith_Stone_Dark",
+                                "Blacksmith_Wood",
+                                "Blacksmith_Windows",
+                                "Blacksmith_RoofTiles_Red"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith_Cube.000",
+            "objectID": "98ebb8aa-2473-496f-9f48-96d4aad46f08",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower",
+            "objectID": "0a7f5787-5be4-4db4-8a17-5f9c1559acc0",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "0a7f5787-5be4-4db4-8a17-5f9c1559acc0",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Bell_Tower.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Bell_Tower_Stone_Light",
+                            "materialNames": [
+                                "Bell_Tower_Stone_Light",
+                                "Bell_Tower_Stone_Dark",
+                                "Bell_Tower_Wood",
+                                "Bell_Tower_Beige",
+                                "Bell_Tower_Wood_Side",
+                                "Bell_Tower_Windows",
+                                "Bell_Tower_Wood_Light",
+                                "Bell_Tower_Bell",
+                                "Bell_Tower_RoofTiles",
+                                "Bell_Tower_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower_Cube.296",
+            "objectID": "ad2b5212-af6c-4d45-b690-118e180245f2",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 7.592835903167725,
+                                "y": 0.0,
+                                "z": 18.442855834960938
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn",
+            "objectID": "e6246888-a91d-449b-ba6f-23830ec0ea2a",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "e6246888-a91d-449b-ba6f-23830ec0ea2a",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Inn.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Inn_Wood",
+                            "materialNames": [
+                                "Inn_Wood",
+                                "Inn_Stone_Dark",
+                                "Inn_RoofTiles_Red",
+                                "Inn_Plaster",
+                                "Inn_Stone_Light",
+                                "Inn_Windows",
+                                "Inn_Wood_Light",
+                                "Inn_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn_Cube.393",
+            "objectID": "5428f4d0-d661-47b1-8d5a-15c1ad01e2c6",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 8.542755126953125,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1",
+            "objectID": "0b1a65d7-cd97-4827-ba0b-ce8462fff5e8",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "0b1a65d7-cd97-4827-ba0b-ce8462fff5e8",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_1.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_1_Plaster",
+                            "materialNames": [
+                                "House_1_Plaster",
+                                "House_1_Wood",
+                                "House_1_Wood_Side",
+                                "House_1_Windows",
+                                "House_1_Wood_Light",
+                                "House_1_Stone_Dark",
+                                "House_1_Stone",
+                                "House_1_RoofTiles",
+                                "House_1_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1_Cube.145",
+            "objectID": "c10f7c11-6cf0-4d70-a267-eac6f9df63da",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 17.67121124267578
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3",
+            "objectID": "df7c4988-7609-4136-bc41-9b171598975e",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "df7c4988-7609-4136-bc41-9b171598975e",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_3.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_3_Stone_Dark",
+                            "materialNames": [
+                                "House_3_Stone_Dark",
+                                "House_3_Stone",
+                                "House_3_Wood",
+                                "House_3_Wood_Side",
+                                "House_3_Wood_Light",
+                                "House_3_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3_Cube.305",
+            "objectID": "6a432c8c-0edb-4e38-82a4-cc3e9efeba74",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 11.745071411132813,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2",
+            "objectID": "c7ccbd34-55e7-4bae-a382-951b5f1ec29f",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "c7ccbd34-55e7-4bae-a382-951b5f1ec29f",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_2.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_2_Beige",
+                            "materialNames": [
+                                "House_2_Beige",
+                                "House_2_Wood",
+                                "House_2_Stone_Dark",
+                                "House_2_Windows",
+                                "House_2_Wood_Light",
+                                "House_2_RoofTiles",
+                                "House_2_Stone_Light",
+                                "House_2_Wood_Side",
+                                "House_2_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2_Cylinder.021",
+            "objectID": "64a0ffa8-fe8b-4cc7-938b-3966f5ed7c9d",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 3.309842109680176,
+                                "y": 0.0,
+                                "z": 18.05441665649414
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4",
+            "objectID": "56ae14c9-e900-41de-b6c4-2a0916288ffd",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "56ae14c9-e900-41de-b6c4-2a0916288ffd",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_4.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_4_Stone_Light",
+                            "materialNames": [
+                                "House_4_Stone_Light",
+                                "House_4_Stone_Dark",
+                                "House_4_Wood",
+                                "House_4_Wood_Side",
+                                "House_4_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4_Cube.037",
+            "objectID": "6ddaa03c-bdf4-48e7-bb8b-7ada240a2436",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 16.291900634765625,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill",
+            "objectID": "d37c134c-2365-412b-8c8d-e11cbc818220",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "d37c134c-2365-412b-8c8d-e11cbc818220",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Sawmill.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Sawmill_RoofTiles_Red",
+                            "materialNames": [
+                                "Sawmill_RoofTiles_Red",
+                                "Sawmill_Plaster",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_DarkWood",
+                                "Sawmill_Metal",
+                                "Sawmill_Windows",
+                                "Sawmill_Wood",
+                                "Sawmill_Wood_Light",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_Stone_Dark",
+                                "Sawmill_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill_Cube.047",
+            "objectID": "9aba528a-7116-42ea-83f3-d075e96b86ee",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 19.59856605529785,
+                                "y": 0.0,
+                                "z": 19.516658782958984
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable",
+            "objectID": "78e8081c-090f-423d-8f70-b32dcf7f3f93",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "78e8081c-090f-423d-8f70-b32dcf7f3f93",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Stable.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Stable_Beige",
+                            "materialNames": [
+                                "Stable_Beige",
+                                "Stable_Wood",
+                                "Stable_Wood_Side",
+                                "Stable_Stone_Dark",
+                                "Stable_RoofTiles",
+                                "Stable_Windows",
+                                "Stable_Wood_Light",
+                                "Stable_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable_Cube.195",
+            "objectID": "8a5264e1-fa72-44de-9901-db5109410324",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4fd5ee18-d3cd-430e-a161-f07c320f316d",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Bell_Tower.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Bell_Tower_Stone_Light",
+                            "materialNames": [
+                                "Bell_Tower_Stone_Light",
+                                "Bell_Tower_Stone_Dark",
+                                "Bell_Tower_Wood",
+                                "Bell_Tower_Beige",
+                                "Bell_Tower_Wood_Side",
+                                "Bell_Tower_Windows",
+                                "Bell_Tower_Wood_Light",
+                                "Bell_Tower_Bell",
+                                "Bell_Tower_RoofTiles",
+                                "Bell_Tower_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower_Cube.296",
+            "objectID": "f0be89df-b357-4f57-b529-a103c7715308",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 28.62980079650879,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith",
+            "objectID": "99094bae-c154-4cad-9dda-7e93a9de4262",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "99094bae-c154-4cad-9dda-7e93a9de4262",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Blacksmith.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Blacksmith_Plaster",
+                            "materialNames": [
+                                "Blacksmith_Plaster",
+                                "Blacksmith_Wood_Light",
+                                "Blacksmith_Wood_Side",
+                                "Blacksmith_Stone_Light",
+                                "Blacksmith_Stone_Dark",
+                                "Blacksmith_Wood",
+                                "Blacksmith_Windows",
+                                "Blacksmith_RoofTiles_Red"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith_Cube.000",
+            "objectID": "5de6920a-48bf-4498-b405-9f91ce6b0a34",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 32.26692581176758,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1",
+            "objectID": "30ba1364-4853-424e-bd5e-ac5016c8371d",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "30ba1364-4853-424e-bd5e-ac5016c8371d",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_1.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_1_Plaster",
+                            "materialNames": [
+                                "House_1_Plaster",
+                                "House_1_Wood",
+                                "House_1_Wood_Side",
+                                "House_1_Windows",
+                                "House_1_Wood_Light",
+                                "House_1_Stone_Dark",
+                                "House_1_Stone",
+                                "House_1_RoofTiles",
+                                "House_1_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1_Cube.145",
+            "objectID": "d9001f91-a515-4bd7-ab40-72a75c3ac55a",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 35.4692497253418,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2",
+            "objectID": "75d573ea-aed4-44c7-8d9e-0bf48e7cb835",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "75d573ea-aed4-44c7-8d9e-0bf48e7cb835",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_2.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_2_Beige",
+                            "materialNames": [
+                                "House_2_Beige",
+                                "House_2_Wood",
+                                "House_2_Stone_Dark",
+                                "House_2_Windows",
+                                "House_2_Wood_Light",
+                                "House_2_RoofTiles",
+                                "House_2_Stone_Light",
+                                "House_2_Wood_Side",
+                                "House_2_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2_Cylinder.021",
+            "objectID": "d7ccf462-bf42-4989-968b-6e8eda842d4f",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 31.317005157470703,
+                                "y": 0.0,
+                                "z": 18.442855834960938
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn",
+            "objectID": "8b8fff54-0325-43ff-a50f-c5af97033e99",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "8b8fff54-0325-43ff-a50f-c5af97033e99",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Inn.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Inn_Wood",
+                            "materialNames": [
+                                "Inn_Wood",
+                                "Inn_Stone_Dark",
+                                "Inn_RoofTiles_Red",
+                                "Inn_Plaster",
+                                "Inn_Stone_Light",
+                                "Inn_Windows",
+                                "Inn_Wood_Light",
+                                "Inn_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn_Cube.393",
+            "objectID": "b9e1e858-1543-4518-8a76-44943acaf316",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 23.724170684814453,
+                                "y": 0.0,
+                                "z": 5.516042232513428
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3",
+            "objectID": "c0b8d6f6-121d-4bca-bd98-938c07135a1b",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "c0b8d6f6-121d-4bca-bd98-938c07135a1b",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_3.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_3_Stone_Dark",
+                            "materialNames": [
+                                "House_3_Stone_Dark",
+                                "House_3_Stone",
+                                "House_3_Wood",
+                                "House_3_Wood_Side",
+                                "House_3_Wood_Light",
+                                "House_3_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3_Cube.305",
+            "objectID": "4cf85836-42c4-490a-90b6-7e160605de2b",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 27.034011840820313,
+                                "y": 0.0,
+                                "z": 5.8992486000061035
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4",
+            "objectID": "4cdb3f41-30cc-4796-9b5c-d9cd0c6a955a",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4cdb3f41-30cc-4796-9b5c-d9cd0c6a955a",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_4.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_4_Stone_Light",
+                            "materialNames": [
+                                "House_4_Stone_Light",
+                                "House_4_Stone_Dark",
+                                "House_4_Wood",
+                                "House_4_Wood_Side",
+                                "House_4_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4_Cube.037",
+            "objectID": "9a0f3889-da3d-4b4b-8b86-ca4e26e3576b",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 31.317005157470703,
+                                "y": 0.0,
+                                "z": 6.287685394287109
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn",
+            "objectID": "495dd932-5ced-4ff7-af1b-6d1f8fde6edd",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "495dd932-5ced-4ff7-af1b-6d1f8fde6edd",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Inn.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Inn_Wood",
+                            "materialNames": [
+                                "Inn_Wood",
+                                "Inn_Stone_Dark",
+                                "Inn_RoofTiles_Red",
+                                "Inn_Plaster",
+                                "Inn_Stone_Light",
+                                "Inn_Windows",
+                                "Inn_Wood_Light",
+                                "Inn_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Inn_Cube.393",
+            "objectID": "9a2a0d9a-eecf-4475-a5b5-957c07816008",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 36.19688034057617,
+                                "y": 0.0,
+                                "z": 6.4770660400390625
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill",
+            "objectID": "21e09fbd-316c-4d89-88a3-c9f893a16f92",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "21e09fbd-316c-4d89-88a3-c9f893a16f92",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Cube.128"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_RoofTiles",
+                            "materialNames": [
+                                "Mill_RoofTiles",
+                                "Mill_Stone_Light",
+                                "Mill_Stone_Dark",
+                                "Mill_Wood",
+                                "Mill_Windows",
+                                "Mill_Wood_Light",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Green",
+                                "Mill_Stone",
+                                "Mill_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Cube.128",
+            "objectID": "95789253-6308-48fb-a4b6-8fd89a4be6b0",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "21e09fbd-316c-4d89-88a3-c9f893a16f92",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Blades_Cube.007"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_Wood",
+                            "materialNames": [
+                                "Mill_Wood",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Blades_Cube.007",
+            "objectID": "22236fb2-f7d7-4eee-9a3d-b4091ee921a5",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 36.19688034057617,
+                                "y": 0.0,
+                                "z": 18.63223648071289
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill",
+            "objectID": "09adb7b1-d52b-4406-9972-6a6aa406c121",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "09adb7b1-d52b-4406-9972-6a6aa406c121",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Cube.128"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_RoofTiles",
+                            "materialNames": [
+                                "Mill_RoofTiles",
+                                "Mill_Stone_Light",
+                                "Mill_Stone_Dark",
+                                "Mill_Wood",
+                                "Mill_Windows",
+                                "Mill_Wood_Light",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Green",
+                                "Mill_Stone",
+                                "Mill_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Cube.128",
+            "objectID": "6690d62c-6ff6-40d1-abf8-50d08fa8d07f",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "09adb7b1-d52b-4406-9972-6a6aa406c121",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Mill.obj:Mill_Blades_Cube.007"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Mill_Wood",
+                            "materialNames": [
+                                "Mill_Wood",
+                                "Mill_Plaster",
+                                "Mill_Wood_Side",
+                                "Mill_Wood_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mill_Blades_Cube.007",
+            "objectID": "71e24f00-944d-4aa2-9737-7ae8a98a626a",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 43.3227424621582,
+                                "y": 0.0,
+                                "z": 19.516658782958984
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable",
+            "objectID": "16000793-cf6b-4d0b-86c1-627936665938",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "16000793-cf6b-4d0b-86c1-627936665938",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Stable.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Stable_Beige",
+                            "materialNames": [
+                                "Stable_Beige",
+                                "Stable_Wood",
+                                "Stable_Wood_Side",
+                                "Stable_Stone_Dark",
+                                "Stable_RoofTiles",
+                                "Stable_Windows",
+                                "Stable_Wood_Light",
+                                "Stable_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable_Cube.195",
+            "objectID": "a5adb9ee-b8a4-4d48-a1ac-c72e75f502e3",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 40.01607894897461,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill",
+            "objectID": "73b6b198-afee-4a64-923c-0eb497aecf41",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "73b6b198-afee-4a64-923c-0eb497aecf41",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Sawmill.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Sawmill_RoofTiles_Red",
+                            "materialNames": [
+                                "Sawmill_RoofTiles_Red",
+                                "Sawmill_Plaster",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_DarkWood",
+                                "Sawmill_Metal",
+                                "Sawmill_Windows",
+                                "Sawmill_Wood",
+                                "Sawmill_Wood_Light",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_Stone_Dark",
+                                "Sawmill_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill_Cube.047",
+            "objectID": "dd6d7928-ff2f-4b20-b0ab-148e62991273",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 43.3227424621582,
+                                "y": 0.0,
+                                "z": 7.361486434936523
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable",
+            "objectID": "a6cd1ba3-a49e-4da1-8264-4ba776febe04",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "a6cd1ba3-a49e-4da1-8264-4ba776febe04",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Stable.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Stable_Beige",
+                            "materialNames": [
+                                "Stable_Beige",
+                                "Stable_Wood",
+                                "Stable_Wood_Side",
+                                "Stable_Stone_Dark",
+                                "Stable_RoofTiles",
+                                "Stable_Windows",
+                                "Stable_Wood_Light",
+                                "Stable_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Stable_Cube.195",
+            "objectID": "04dafb0b-2d8a-49fc-82d9-fa09fa5a0173",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 28.62980079650879,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith",
+            "objectID": "fd2e8da9-d1f2-405e-984f-43bd2e9e0b32",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "fd2e8da9-d1f2-405e-984f-43bd2e9e0b32",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Blacksmith.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Blacksmith_Plaster",
+                            "materialNames": [
+                                "Blacksmith_Plaster",
+                                "Blacksmith_Wood_Light",
+                                "Blacksmith_Wood_Side",
+                                "Blacksmith_Stone_Light",
+                                "Blacksmith_Stone_Dark",
+                                "Blacksmith_Wood",
+                                "Blacksmith_Windows",
+                                "Blacksmith_RoofTiles_Red"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Blacksmith_Cube.000",
+            "objectID": "4f0db25e-8cc3-4585-a9f0-ccd03ae836b8",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 23.724170684814453,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower",
+            "objectID": "26ae389f-f819-4609-8bf2-61830ac35281",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "26ae389f-f819-4609-8bf2-61830ac35281",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Bell_Tower.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Bell_Tower_Stone_Light",
+                            "materialNames": [
+                                "Bell_Tower_Stone_Light",
+                                "Bell_Tower_Stone_Dark",
+                                "Bell_Tower_Wood",
+                                "Bell_Tower_Beige",
+                                "Bell_Tower_Wood_Side",
+                                "Bell_Tower_Windows",
+                                "Bell_Tower_Wood_Light",
+                                "Bell_Tower_Bell",
+                                "Bell_Tower_RoofTiles",
+                                "Bell_Tower_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Bell_Tower_Cube.296",
+            "objectID": "460ecc14-e6f9-42e7-92a3-1d161381a050",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 32.26692581176758,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1",
+            "objectID": "70ce18f0-4983-432b-8372-4c5c989ff3f4",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "70ce18f0-4983-432b-8372-4c5c989ff3f4",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_1.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_1_Plaster",
+                            "materialNames": [
+                                "House_1_Plaster",
+                                "House_1_Wood",
+                                "House_1_Wood_Side",
+                                "House_1_Windows",
+                                "House_1_Wood_Light",
+                                "House_1_Stone_Dark",
+                                "House_1_Stone",
+                                "House_1_RoofTiles",
+                                "House_1_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_1_Cube.145",
+            "objectID": "cce410bf-5290-44ba-8e16-b3143ae4026d",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 23.724170684814453,
+                                "y": 0.0,
+                                "z": 17.67121124267578
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3",
+            "objectID": "6ef9e3fd-415b-4a1d-92f4-24ae0f330383",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "6ef9e3fd-415b-4a1d-92f4-24ae0f330383",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_3.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_3_Stone_Dark",
+                            "materialNames": [
+                                "House_3_Stone_Dark",
+                                "House_3_Stone",
+                                "House_3_Wood",
+                                "House_3_Wood_Side",
+                                "House_3_Wood_Light",
+                                "House_3_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_3_Cube.305",
+            "objectID": "dad3976b-f7c3-4534-92c4-9b9f2fbfb739",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 35.4692497253418,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2",
+            "objectID": "208d04c3-d127-4025-a096-edcde554c7bf",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "208d04c3-d127-4025-a096-edcde554c7bf",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_2.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_2_Beige",
+                            "materialNames": [
+                                "House_2_Beige",
+                                "House_2_Wood",
+                                "House_2_Stone_Dark",
+                                "House_2_Windows",
+                                "House_2_Wood_Light",
+                                "House_2_RoofTiles",
+                                "House_2_Stone_Light",
+                                "House_2_Wood_Side",
+                                "House_2_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_2_Cylinder.021",
+            "objectID": "0654b049-a2c7-45e2-b520-93cc8ca798bd",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 27.034011840820313,
+                                "y": 0.0,
+                                "z": 18.05441665649414
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4",
+            "objectID": "70ea3bdf-6af0-412f-aea1-b7482695ffa1",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "70ea3bdf-6af0-412f-aea1-b7482695ffa1",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_4.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "House_4_Stone_Light",
+                            "materialNames": [
+                                "House_4_Stone_Light",
+                                "House_4_Stone_Dark",
+                                "House_4_Wood",
+                                "House_4_Wood_Side",
+                                "House_4_Stone"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "House_4_Cube.037",
+            "objectID": "758646cf-53cf-4a94-8c51-a569e0cf9450",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 40.01607894897461,
+                                "y": 0.0,
+                                "z": 12.155168533325195
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill",
+            "objectID": "a185884e-c72c-49e5-ba5c-aec16c369331",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "a185884e-c72c-49e5-ba5c-aec16c369331",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Sawmill.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "materialName": "Sawmill_RoofTiles_Red",
+                            "materialNames": [
+                                "Sawmill_RoofTiles_Red",
+                                "Sawmill_Plaster",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_DarkWood",
+                                "Sawmill_Metal",
+                                "Sawmill_Windows",
+                                "Sawmill_Wood",
+                                "Sawmill_Wood_Light",
+                                "Sawmill_Wood_Side",
+                                "Sawmill_Stone_Dark",
+                                "Sawmill_Stone_Light"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sawmill_Cube.047",
+            "objectID": "30581ea8-97f7-4495-b4d3-805d9d095f69",
+            "tag": ""
+        }
+    ],
+    "sceneVariables": [
+        {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
+        },
+        {
+            "key": "testInt",
+            "type": "Int32",
+            "value": 0
+        }
+    ]
+}

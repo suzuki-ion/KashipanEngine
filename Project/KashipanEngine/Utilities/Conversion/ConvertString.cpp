@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <filesystem>
 #include <string>
 #include "ConvertString.h"
 
@@ -52,6 +53,16 @@ std::string ShiftJISToUTF8(const std::string &sjis) {
     std::string utf8(utf8Size, '\0');
     WideCharToMultiByte(CP_UTF8, 0, utf16.c_str(), -1, &utf8[0], utf8Size, nullptr, nullptr);
     return utf8;
+}
+
+std::string PathToUtf8String(const std::filesystem::path &path) {
+    const auto u8 = path.u8string();
+    return std::string(reinterpret_cast<const char *>(u8.data()), u8.size());
+}
+
+std::filesystem::path Utf8StringToPath(const std::string &utf8String) {
+    return std::filesystem::path(
+        std::u8string(reinterpret_cast<const char8_t *>(utf8String.data()), utf8String.size()));
 }
 
 std::vector<char32_t> Utf8ToCodepoints(const std::string &utf8) {

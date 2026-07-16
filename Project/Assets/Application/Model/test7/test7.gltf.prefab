@@ -34,7 +34,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "test7",
-                "objectID": "2f1203d3-7b03-46ec-aea8-1de821edcf3f",
+                "objectID": "65c7225b-d39c-4eef-9505-8ac2fb401d44",
                 "tag": ""
             },
             "parentIndex": -1
@@ -82,7 +82,12 @@
                     {
                         "data": {
                             "customData": {
-                                "materialName": "test7_Material"
+                                "materialName": "test7_Material",
+                                "materialNames": [
+                                    "test7_Material",
+                                    "test7_Material.face",
+                                    "test7_Material.015"
+                                ]
                             },
                             "isActive": true,
                             "priority": 900,
@@ -94,7 +99,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "body",
-                "objectID": "4179e0a6-afc6-4a46-904a-693c5382aa35",
+                "objectID": "cadf0719-3857-4649-a03f-560cb679e984",
                 "tag": ""
             },
             "parentIndex": 0
@@ -132,7 +137,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "bone",
-                "objectID": "d31c81bc-d216-4685-8d2b-33cb40176371",
+                "objectID": "bcc865a5-b5f3-4f1b-9c54-bd7480281341",
                 "tag": ""
             },
             "parentIndex": 0
@@ -170,7 +175,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Hip",
-                "objectID": "0925e3f0-fba3-42c6-ba7a-6683e46e6797",
+                "objectID": "e3f2d12c-f1cf-4b35-9913-71b2fc70736c",
                 "tag": ""
             },
             "parentIndex": 2
@@ -208,7 +213,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Spine.001",
-                "objectID": "71f3a7b2-2017-4d45-97d3-e113fc415dd7",
+                "objectID": "77cbe9d4-ce05-45b8-8154-dd8756e59b93",
                 "tag": ""
             },
             "parentIndex": 3
@@ -246,7 +251,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Spine.002",
-                "objectID": "9990da3b-a3bf-44d1-a1c8-0a3508352668",
+                "objectID": "8a713870-db91-4e80-a18d-39bcab2a0bcd",
                 "tag": ""
             },
             "parentIndex": 4
@@ -284,7 +289,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Neck",
-                "objectID": "0668a41a-b914-4f4c-aec4-68faeb1d3c65",
+                "objectID": "76f2b7eb-c9fb-48c6-a5b5-22972ee33cff",
                 "tag": ""
             },
             "parentIndex": 5
@@ -322,7 +327,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Head",
-                "objectID": "411da794-e955-4f20-88a0-1254b11fd616",
+                "objectID": "6e23dcec-0338-4b53-b5db-59c332e0611d",
                 "tag": ""
             },
             "parentIndex": 6
@@ -360,7 +365,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "frontHair.001",
-                "objectID": "92e1e70f-606c-4a6c-a6c6-21f804bc278a",
+                "objectID": "dafc76a7-335b-43b1-8430-278591ab8684",
                 "tag": ""
             },
             "parentIndex": 7
@@ -398,7 +403,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "frontHair.002",
-                "objectID": "f62fca1c-3760-4a19-9b9c-d68c02bd2883",
+                "objectID": "9829edc3-a382-4df1-bb65-3a6995f0c489",
                 "tag": ""
             },
             "parentIndex": 8
@@ -436,7 +441,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "sideHair_R.002",
-                "objectID": "8b3a7e1a-a634-4041-9a5b-1ffa1b86cec6",
+                "objectID": "e1f0d35b-224a-4f97-9ce3-f4b57322bee0",
                 "tag": ""
             },
             "parentIndex": 7
@@ -474,7 +479,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "sideHair_L.002",
-                "objectID": "23784000-dd76-46e6-8313-95580e76658d",
+                "objectID": "0101d0e3-940d-4352-8f6f-e6e5c5da31f8",
                 "tag": ""
             },
             "parentIndex": 10
@@ -512,7 +517,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "sideHair_R.001",
-                "objectID": "f8d48e65-0f5e-4bae-bc8b-88a32f9b4576",
+                "objectID": "3fbead79-4f3e-4ab0-ac9d-c129abb0c1dd",
                 "tag": ""
             },
             "parentIndex": 7
@@ -550,7 +555,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "sideHair_R.003",
-                "objectID": "c43ddc8a-582f-4e4d-a53a-1e90e7e52fa9",
+                "objectID": "7cd4177f-a90a-4605-b1ee-1591ebf9291d",
                 "tag": ""
             },
             "parentIndex": 12
@@ -588,7 +593,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ponytail.001",
-                "objectID": "71998c5d-d283-4ec3-92d0-d609288a284a",
+                "objectID": "386a87ef-4d9e-4349-9475-a180902a45b7",
                 "tag": ""
             },
             "parentIndex": 7
@@ -626,7 +631,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ponytail.002",
-                "objectID": "a3973bb8-4327-4245-bbc3-d6934b99d2d4",
+                "objectID": "858249c1-3877-4a83-9481-e81e68a20178",
                 "tag": ""
             },
             "parentIndex": 14
@@ -664,7 +669,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ponytail.003",
-                "objectID": "fafeb737-5736-4eaf-a9bf-ce5f609e7eb9",
+                "objectID": "f39beff9-112c-4651-9f43-946e4f917ee4",
                 "tag": ""
             },
             "parentIndex": 15
@@ -702,7 +707,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ponytail.004",
-                "objectID": "338a047a-33ec-47b0-902a-e5210bd9cc05",
+                "objectID": "4165a9e7-c89f-4a43-bb45-2eafe1f3fb3f",
                 "tag": ""
             },
             "parentIndex": 16
@@ -740,7 +745,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ponytail.005",
-                "objectID": "74d8bac9-72bb-4dd9-a2ff-ccec5e17ba10",
+                "objectID": "5bca0e27-3481-44bf-80d6-41f13f9c3fea",
                 "tag": ""
             },
             "parentIndex": 17
@@ -778,7 +783,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ponytail.006",
-                "objectID": "edada964-64ff-430f-b6a1-e53240eed969",
+                "objectID": "c5b49d43-d41a-4a70-8796-b75a207bfc76",
                 "tag": ""
             },
             "parentIndex": 18
@@ -816,7 +821,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Shoulder_L",
-                "objectID": "8a616061-7539-44d2-b223-288f287ca176",
+                "objectID": "d56bafa9-0689-418c-be2f-a7e9b574dfb0",
                 "tag": ""
             },
             "parentIndex": 5
@@ -854,7 +859,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Arm_L",
-                "objectID": "bb6ce5c0-89fe-447d-b4cc-7bbc01189d63",
+                "objectID": "190759b4-f842-4ac1-9e79-5ccdd1f308a2",
                 "tag": ""
             },
             "parentIndex": 20
@@ -892,7 +897,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ForeArm_L",
-                "objectID": "f8fedde1-e684-45ad-a8d8-8a807da5faa1",
+                "objectID": "c71b2f05-cc70-47a5-b96c-acd8f77f9506",
                 "tag": ""
             },
             "parentIndex": 21
@@ -930,7 +935,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Hand_L",
-                "objectID": "bb28efcc-17d0-44a4-ac02-d74f4a83ae9a",
+                "objectID": "a03db23d-d2f5-400e-a461-1b7b9d23d7c4",
                 "tag": ""
             },
             "parentIndex": 22
@@ -968,7 +973,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Thumb_L.001",
-                "objectID": "7489780d-3542-42f6-a9b4-901931882906",
+                "objectID": "69166ca4-088b-4648-b7e8-fa326da2615d",
                 "tag": ""
             },
             "parentIndex": 23
@@ -1006,7 +1011,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Thumb_L.002",
-                "objectID": "6b78988b-600b-41c5-8f89-e7737f624cf5",
+                "objectID": "8c3a3c70-f6c8-43b4-945a-04eb7a6c24e4",
                 "tag": ""
             },
             "parentIndex": 24
@@ -1044,7 +1049,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Thumb_L.003",
-                "objectID": "da81f649-e484-436f-a365-53c08a4cf7bf",
+                "objectID": "9d96aa54-686a-46c9-b08f-407512e29232",
                 "tag": ""
             },
             "parentIndex": 25
@@ -1082,7 +1087,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Index_L.001",
-                "objectID": "b1e8ff65-fffe-449d-9013-49059d9e575d",
+                "objectID": "2747bff3-edeb-42c5-9179-c15d1b57ba56",
                 "tag": ""
             },
             "parentIndex": 23
@@ -1120,7 +1125,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Index_L.002",
-                "objectID": "16a1f5c7-d095-4417-bf98-805735bf114e",
+                "objectID": "5b926d36-1376-4ed7-9662-80316fbd50d2",
                 "tag": ""
             },
             "parentIndex": 27
@@ -1158,7 +1163,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Index_L.003",
-                "objectID": "cf715309-f76d-4c4c-a002-0481b64b61fe",
+                "objectID": "e39599d2-6a42-442c-8c47-66897cc44224",
                 "tag": ""
             },
             "parentIndex": 28
@@ -1196,7 +1201,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Middle_L.001",
-                "objectID": "f46bf3d0-c172-403e-b05a-673b449b3461",
+                "objectID": "c91bbe7b-5106-405c-9f43-f48764db15d0",
                 "tag": ""
             },
             "parentIndex": 23
@@ -1234,7 +1239,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Middle_L.002",
-                "objectID": "65a650c8-ffce-4912-acd7-656718e67d7b",
+                "objectID": "38a8413e-424b-409c-bd4b-c0bd39f2032d",
                 "tag": ""
             },
             "parentIndex": 30
@@ -1272,7 +1277,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Middle_L.003",
-                "objectID": "eba6c133-01bd-41e2-b4a7-9aaaf163e90b",
+                "objectID": "40b0e07c-47b6-4d78-80d9-5f863ae34905",
                 "tag": ""
             },
             "parentIndex": 31
@@ -1310,7 +1315,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Ring_L.001",
-                "objectID": "56572d79-9f25-4930-a906-d5a26a719232",
+                "objectID": "751335a5-48c5-4095-bc95-3d5c91cb8859",
                 "tag": ""
             },
             "parentIndex": 23
@@ -1348,7 +1353,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Ring_L.002",
-                "objectID": "5354f7ba-c62e-46ea-87b2-164c2c2e5421",
+                "objectID": "cd98820f-1cdf-4f57-860f-27bf853b8c4c",
                 "tag": ""
             },
             "parentIndex": 33
@@ -1386,7 +1391,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Ring_L.003",
-                "objectID": "2530f0bb-8228-4f23-82e0-4bdf3d5fa39d",
+                "objectID": "75fdd9a6-487d-4508-b355-85dba625b79b",
                 "tag": ""
             },
             "parentIndex": 34
@@ -1424,7 +1429,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Little_L.001",
-                "objectID": "3b62ffe9-c528-4101-ab44-a62c801df2ed",
+                "objectID": "aae58885-ee29-4804-ad87-89cd7535ea24",
                 "tag": ""
             },
             "parentIndex": 23
@@ -1462,7 +1467,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Little_L.002",
-                "objectID": "eef66e45-8dda-4a9e-8f91-9562d1e56d1e",
+                "objectID": "760e4c6d-761b-48ab-a140-2b97978f11fb",
                 "tag": ""
             },
             "parentIndex": 36
@@ -1500,7 +1505,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Little_L.003",
-                "objectID": "e0fcbf3a-eb85-448c-af33-82f05a3f4d0e",
+                "objectID": "d1cb8192-ca25-4362-9bad-550c1c18a87c",
                 "tag": ""
             },
             "parentIndex": 37
@@ -1538,7 +1543,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Shoulder_R",
-                "objectID": "627c542a-0a3a-4a16-b88a-221a7e2fce26",
+                "objectID": "05cf2a80-7edf-4d9e-8349-9c458a5497e5",
                 "tag": ""
             },
             "parentIndex": 5
@@ -1576,7 +1581,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Arm_R",
-                "objectID": "7e5a4e98-b831-452f-9c06-3f953e6638e3",
+                "objectID": "7f366d04-420e-4a84-a83f-c28391f95513",
                 "tag": ""
             },
             "parentIndex": 39
@@ -1614,7 +1619,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "ForeArm_R",
-                "objectID": "82ee4d09-5c98-4525-b345-1b7628678bd9",
+                "objectID": "d85cb486-a282-4cf2-8f0d-aa6be50d4c1f",
                 "tag": ""
             },
             "parentIndex": 40
@@ -1652,7 +1657,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Hand_R",
-                "objectID": "b0b8620f-f547-4c28-83a3-3bf612c6d2f5",
+                "objectID": "a90c62dc-81ac-4207-8d6e-5278c0fc54d5",
                 "tag": ""
             },
             "parentIndex": 41
@@ -1690,7 +1695,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Thumb_R.001",
-                "objectID": "47a836ad-4453-4558-b4b7-1512816c1792",
+                "objectID": "f04f5593-b766-4aa2-b58c-87f5e2641b61",
                 "tag": ""
             },
             "parentIndex": 42
@@ -1728,7 +1733,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Thumb_R.002",
-                "objectID": "2fb6a978-3ea7-4937-b4a8-15e3ce2584b4",
+                "objectID": "f9658da0-f13c-48f0-904c-f1e412662089",
                 "tag": ""
             },
             "parentIndex": 43
@@ -1766,7 +1771,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Thumb_R.003",
-                "objectID": "e5545481-2356-46e7-ac41-c5bd7679659b",
+                "objectID": "e5da7e77-4d98-450f-9105-14427158fc9f",
                 "tag": ""
             },
             "parentIndex": 44
@@ -1804,7 +1809,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Index_R.001",
-                "objectID": "ba0994fe-ac21-46f1-ab97-de0809f9d73f",
+                "objectID": "6cfdb586-6e43-480b-9d21-b740ffb147c2",
                 "tag": ""
             },
             "parentIndex": 42
@@ -1842,7 +1847,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Index_R.002",
-                "objectID": "378c667f-1329-40a2-af19-d29f9ba572c6",
+                "objectID": "e05cb7fe-7543-491d-87d3-4743f82f164e",
                 "tag": ""
             },
             "parentIndex": 46
@@ -1880,7 +1885,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Index_R.003",
-                "objectID": "8b66fcd9-a701-4ff4-9ba2-bab4e9fdf731",
+                "objectID": "e9933cf6-22d3-4771-af49-8faa3029d841",
                 "tag": ""
             },
             "parentIndex": 47
@@ -1918,7 +1923,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Middle_R.001",
-                "objectID": "9faf2397-dbb0-4f8c-b045-372b918ac64c",
+                "objectID": "28638788-6fe2-40e7-9737-3d08a84f6cee",
                 "tag": ""
             },
             "parentIndex": 42
@@ -1956,7 +1961,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Middle_R.002",
-                "objectID": "786f754c-1ad0-49f6-9a6a-57e5c3c66864",
+                "objectID": "ea4f22ae-6408-4ae3-812f-93920fe52b77",
                 "tag": ""
             },
             "parentIndex": 49
@@ -1994,7 +1999,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Middle_R.003",
-                "objectID": "2cf2a5f8-d096-4846-93a5-92f5a528d71f",
+                "objectID": "889b6a64-c14e-4eb8-9040-56be091c90e4",
                 "tag": ""
             },
             "parentIndex": 50
@@ -2032,7 +2037,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Ring_R.001",
-                "objectID": "82a87e7e-24d8-458f-b99e-08e48e6ca16e",
+                "objectID": "fa44dd93-0de7-4c6a-ae99-bcb885d4e918",
                 "tag": ""
             },
             "parentIndex": 42
@@ -2070,7 +2075,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Ring_R.002",
-                "objectID": "f8825260-649f-4802-a23e-ab2f3ca4cd4a",
+                "objectID": "3290ab20-92a3-46f4-9084-356c9e51c5a9",
                 "tag": ""
             },
             "parentIndex": 52
@@ -2108,7 +2113,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Ring_R.003",
-                "objectID": "7633b7d7-94a6-486a-8628-e4193e8c92e4",
+                "objectID": "0e48a069-7a0c-4f32-bc27-77c37b41ab57",
                 "tag": ""
             },
             "parentIndex": 53
@@ -2146,7 +2151,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Little_R.001",
-                "objectID": "b131ed36-31ea-4e98-becd-8f788ed6b4f2",
+                "objectID": "67ad071d-5eee-4293-9897-2128bb6add41",
                 "tag": ""
             },
             "parentIndex": 42
@@ -2184,7 +2189,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Little_R.002",
-                "objectID": "17332e41-1629-4b6d-b154-b5ec12eb88b2",
+                "objectID": "dbd7581f-ee5c-410d-829a-b0b480ac7f48",
                 "tag": ""
             },
             "parentIndex": 55
@@ -2222,7 +2227,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Little_R.003",
-                "objectID": "abccd385-2fc9-422b-bc00-61c85227b68b",
+                "objectID": "96661a97-c9bd-4ad7-a1d9-c44c71adef71",
                 "tag": ""
             },
             "parentIndex": 56
@@ -2260,7 +2265,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "UpLeg_L",
-                "objectID": "ef6480f5-2d34-4ef2-a312-0cd32ce6e960",
+                "objectID": "e19f5a1e-8cd1-48f0-8e73-dc5f112ee530",
                 "tag": ""
             },
             "parentIndex": 3
@@ -2298,7 +2303,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Leg_L",
-                "objectID": "492b114c-121e-4d9e-b9a6-2e5bbe001b98",
+                "objectID": "b6b53b22-88ac-4d5c-a2e4-aa2528d90e6d",
                 "tag": ""
             },
             "parentIndex": 58
@@ -2336,7 +2341,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "UpLeg_R",
-                "objectID": "c6be7096-bbc1-44bd-af4b-cd8c4263e2a8",
+                "objectID": "c02e0c27-92bd-4d04-8c3c-75365edd95fa",
                 "tag": ""
             },
             "parentIndex": 3
@@ -2374,7 +2379,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Leg_R",
-                "objectID": "95507fb1-55e2-4844-8b9a-c7425e861b22",
+                "objectID": "ea8d7eaf-adce-47d6-b5c5-2d8f9a7edce6",
                 "tag": ""
             },
             "parentIndex": 60
@@ -2412,7 +2417,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Knee_IK_L",
-                "objectID": "d6fb4f52-4047-4fa4-af6b-17ee5033a5d5",
+                "objectID": "24f95767-59af-47a1-9a93-bb11d4773c74",
                 "tag": ""
             },
             "parentIndex": 2
@@ -2450,7 +2455,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Knee_IK_R",
-                "objectID": "5f281826-5f39-4a9f-b3c8-14910c029976",
+                "objectID": "9c35267e-4323-4a00-a0bb-1d7587571426",
                 "tag": ""
             },
             "parentIndex": 2
@@ -2488,7 +2493,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Leg_IK_L",
-                "objectID": "d830484b-4475-41a4-8989-a6cc4663a1f7",
+                "objectID": "cc1d7514-a0c9-47e0-b6f8-75745a754853",
                 "tag": ""
             },
             "parentIndex": 2
@@ -2526,7 +2531,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Leg_IK_R",
-                "objectID": "60089533-87fd-4096-922e-c664ac8ca345",
+                "objectID": "e1841487-2727-462a-beec-f35d7e9b2033",
                 "tag": ""
             },
             "parentIndex": 2
@@ -2564,7 +2569,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Elbow_IK_L",
-                "objectID": "93d317dd-e2b5-462d-ab2b-a9d1891470ab",
+                "objectID": "7a83c87c-0ac8-4175-a2c1-0b6b5865ba10",
                 "tag": ""
             },
             "parentIndex": 2
@@ -2602,7 +2607,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Elbow_IK_R",
-                "objectID": "bbd5ca92-882f-4c8f-847a-166dbcca6081",
+                "objectID": "63be3c6d-e695-483f-a645-1893f40aadcc",
                 "tag": ""
             },
             "parentIndex": 2
@@ -2640,7 +2645,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Hand_IK_L",
-                "objectID": "168c5f59-276f-4b71-89da-e9ebad2051d2",
+                "objectID": "c0c30384-ff91-42ff-95c5-732a1cc23b96",
                 "tag": ""
             },
             "parentIndex": 2
@@ -2678,7 +2683,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Hand_IK_R",
-                "objectID": "7d889dc7-337d-4915-8682-c8c7fedcc3d6",
+                "objectID": "b076cc2e-350a-4583-b878-fe0989e24333",
                 "tag": ""
             },
             "parentIndex": 2

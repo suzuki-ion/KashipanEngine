@@ -7,6 +7,7 @@
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Core/Window.h"
+#include "Scene/RenderTargetCarryOverRegistry.h"
 
 namespace KashipanEngine {
 
@@ -89,6 +90,31 @@ protected:
         for (const auto msg : interceptedMessages_) {
             window_->SetMessageIntercepted(msg, true);
         }
+    }
+
+    /// @brief 所有ウィンドウを破棄する（派生クラスのFinalizeから呼ぶ）
+    /// @details シーン切り替え中は即座に破棄せず、次のシーンの同名ウィンドウコンポーネントへの
+    ///          引き継ぎ候補として預ける（切り替え中でなければ登録側が即座に破棄する）
+    /// @param kind このコンポーネント種別に対応する引き継ぎプールの種別
+    void DepositWindowForCarryOver(RenderTargetCarryOverRegistry::Kind kind) {
+        if (window_ && Window::IsExist(window_)) {
+            RenderTargetCarryOverRegistry::Deposit(kind, title_, window_,
+                [w = window_] { if (Window::IsExist(w)) w->DestroyNotify(); });
+        }
+        window_ = nullptr;
+    }
+    /// @brief 前のシーンから引き継がれたウィンドウがあれば、Initializeで生成済みのウィンドウと
+    ///        差し替えて引き取る（派生クラスのLoadFromJsonでtitle_確定後に呼ぶ）
+    /// @param kind このコンポーネント種別に対応する引き継ぎプールの種別
+    /// @return 引き継ぎが行われた場合は true
+    bool TryClaimCarriedOverWindow(RenderTargetCarryOverRegistry::Kind kind) {
+        if (title_.empty()) return false;
+        auto *claimed = static_cast<Window *>(RenderTargetCarryOverRegistry::Claim(kind, title_));
+        if (!claimed) return false;
+        if (window_ && Window::IsExist(window_)) window_->DestroyNotify();
+        window_ = claimed;
+        window_->SetWindowTitle(title_);
+        return true;
     }
 
     /// @brief 横取り設定をJSON（数値配列）へ保存する（派生クラスのSaveToJsonから呼ぶ）

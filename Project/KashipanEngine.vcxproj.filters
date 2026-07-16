@@ -513,6 +513,9 @@
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp">
       <Filter>KashipanEngine\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.cpp">
+      <Filter>KashipanEngine\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp">
       <Filter>KashipanEngine\Utilities\Conversion</Filter>
     </ClCompile>
@@ -688,6 +691,9 @@
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\AssimpUtf8IOSystem.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h">
@@ -1312,6 +1318,9 @@
       <Filter>KashipanEngine\Scene</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h">
+      <Filter>KashipanEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.h">
       <Filter>KashipanEngine\Scene</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\UtilitiesHeaders.h">

@@ -1,0 +1,115 @@
+{
+    "name": "House_2",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "House_2",
+                "objectID": "aa804222-f2d3-48d7-a36c-c101600f2329",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/House_2.obj"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "House_2_Beige",
+                                "materialNames": [
+                                    "House_2_Beige",
+                                    "House_2_Wood",
+                                    "House_2_Stone_Dark",
+                                    "House_2_Windows",
+                                    "House_2_Wood_Light",
+                                    "House_2_RoofTiles",
+                                    "House_2_Stone_Light",
+                                    "House_2_Wood_Side",
+                                    "House_2_Stone"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "House_2_Cylinder.021",
+                "objectID": "24938a6e-d709-4565-97ec-b63c38c0eeb9",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true
+}

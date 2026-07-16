@@ -1,0 +1,114 @@
+{
+    "name": "Blacksmith",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Blacksmith",
+                "objectID": "8a054888-aeb3-4dd7-b5a3-ac66f6d5b13c",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/Medieval Village Pack - Dec 2020/Buildings/Blacksmith.obj"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "Blacksmith_Plaster",
+                                "materialNames": [
+                                    "Blacksmith_Plaster",
+                                    "Blacksmith_Wood_Light",
+                                    "Blacksmith_Wood_Side",
+                                    "Blacksmith_Stone_Light",
+                                    "Blacksmith_Stone_Dark",
+                                    "Blacksmith_Wood",
+                                    "Blacksmith_Windows",
+                                    "Blacksmith_RoofTiles_Red"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Blacksmith_Cube.000",
+                "objectID": "d3fddd87-f071-4037-ae7d-7f8c8111c729",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true
+}

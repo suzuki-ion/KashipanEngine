@@ -1115,31 +1115,52 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         MaterialManager::MaterialHandle materialHandle = MaterialManager::kInvalidHandle;
         Matrix4x4 worldMatrix;
         RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
+        /// @brief 描画するインデックス範囲（サブメッシュ。indexCount==0の場合はメッシュ全体）
+        std::uint32_t indexStart = 0;
+        std::uint32_t indexCount = 0;
     };
     std::vector<ShadowDrawSource> sources;
     const auto isShadowCastingPipeline = [](const std::string &name) {
         // 3Dオブジェクト描画用パイプラインのみ対象（シャドウマップ用パイプライン自体は除外）
         return name.rfind("Object3D", 0) == 0 && name.rfind("Object3D.ShadowMap", 0) != 0;
     };
+    // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1件収集する
+    const auto appendShadowSources = [&sources](auto *renderer, RWStructuredBufferResource *skinnedVertexBuffer) {
+        const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
+        const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
+        for (size_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex) {
+            ShadowDrawSource source;
+            source.meshHandle = renderer->GetMeshHandle();
+            source.materialHandle = renderer->GetMaterialHandleAt(subMeshIndex);
+            source.worldMatrix = renderer->GetWorldMatrix();
+            source.skinnedVertexBuffer = skinnedVertexBuffer;
+            if (!subMeshes.empty()) {
+                source.indexStart = subMeshes[subMeshIndex].indexStart;
+                source.indexCount = subMeshes[subMeshIndex].indexCount;
+            }
+            sources.push_back(source);
+        }
+    };
     for (auto *renderer : sceneRenderer->GetMeshRenderers()) {
         if (!renderer || !renderer->IsActive()) continue;
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
         if (!isShadowCastingPipeline(renderer->GetPipelineName())) continue;
-        sources.push_back({ renderer->GetMeshHandle(), renderer->GetMaterialHandle(), renderer->GetWorldMatrix(), nullptr });
+        appendShadowSources(renderer, nullptr);
     }
     for (auto *renderer : sceneRenderer->GetSkinnedMeshRenderers()) {
         if (!renderer || !renderer->IsActive()) continue;
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
         if (!renderer->HasValidSkinningData()) continue;
         if (!isShadowCastingPipeline(renderer->GetPipelineName())) continue;
-        sources.push_back({ renderer->GetMeshHandle(), renderer->GetMaterialHandle(), renderer->GetWorldMatrix(), renderer->GetSkinnedVertexBuffer() });
+        appendShadowSources(renderer, renderer->GetSkinnedVertexBuffer());
     }
 
-    // 同一（メッシュ・マテリアル）をまとめてインスタンシング描画できるようにソート
+    // 同一（メッシュ・サブメッシュ・マテリアル）をまとめてインスタンシング描画できるようにソート
     std::stable_sort(sources.begin(), sources.end(),
         [](const ShadowDrawSource &a, const ShadowDrawSource &b) {
             if (a.skinnedVertexBuffer != b.skinnedVertexBuffer) return a.skinnedVertexBuffer < b.skinnedVertexBuffer;
             if (a.meshHandle != b.meshHandle) return a.meshHandle < b.meshHandle;
+            if (a.indexStart != b.indexStart) return a.indexStart < b.indexStart;
             return a.materialHandle < b.materialHandle;
         });
 
@@ -1174,6 +1195,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         std::uint32_t textureHandle = TextureManager::kInvalidHandle;
         SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
         std::uint32_t instanceCount = 0;
+        /// @brief 描画するインデックス範囲（サブメッシュ。indexCount==0の場合はメッシュ全体）
+        std::uint32_t indexStart = 0;
+        std::uint32_t indexCount = 0;
     };
     std::vector<PreparedShadowBatch> batches;
     const auto fallbackTextureHandle = TextureManager::GetTextureFromFileName("white1x1.png");
@@ -1186,7 +1210,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             while (end < sources.size() &&
                    sources[end].meshHandle == first.meshHandle &&
                    sources[end].materialHandle == first.materialHandle &&
-                   sources[end].skinnedVertexBuffer == first.skinnedVertexBuffer) {
+                   sources[end].skinnedVertexBuffer == first.skinnedVertexBuffer &&
+                   sources[end].indexStart == first.indexStart &&
+                   sources[end].indexCount == first.indexCount) {
                 ++end;
             }
             const std::uint32_t instanceCount = static_cast<std::uint32_t>(end - begin);
@@ -1202,6 +1228,8 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             batch.meshBuffers = meshBuffers;
             batch.skinnedVertexBuffer = first.skinnedVertexBuffer;
             batch.instanceCount = instanceCount;
+            batch.indexStart = first.indexStart;
+            batch.indexCount = first.indexCount;
 
             // ワールド行列のインスタンスバッファ（カスケード間で内容は共通）
             char key[64];
@@ -1309,7 +1337,8 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                     pipelineBinder.SetVertexBuffer(batch.meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
                 }
                 pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());
-                commandList->DrawIndexedInstanced(batch.meshBuffers->indexCount, batch.instanceCount, 0, 0, 0);
+                const std::uint32_t drawIndexCount = batch.indexCount > 0 ? batch.indexCount : batch.meshBuffers->indexCount;
+                commandList->DrawIndexedInstanced(drawIndexCount, batch.instanceCount, batch.indexStart, 0, 0);
                 ++drawCallCount_;
             }
         }
@@ -1387,7 +1416,7 @@ void Renderer::RenderToTarget(IRenderTarget *target,
         RenderEditorBackground(static_cast<ScreenBuffer *>(target), pipelineBinder, sceneRenderer);
     }
 
-    // 同一（パイプライン・メッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
+    // 同一（パイプライン・メッシュ・サブメッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
     size_t begin = 0;
     while (begin < entries.size()) {
         const auto &first = entries[begin];
@@ -1397,6 +1426,8 @@ void Renderer::RenderToTarget(IRenderTarget *target,
             if (other.pipelineName != first.pipelineName ||
                 other.meshHandle != first.meshHandle ||
                 other.materialHandle != first.materialHandle ||
+                other.indexStart != first.indexStart ||
+                other.indexCount != first.indexCount ||
                 other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
                 break;
             }
@@ -1457,7 +1488,11 @@ void Renderer::DrawBatch(IRenderTarget *target,
 
     // ワールド行列のインスタンスバッファ
     {
-        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, "transform");
+        // サブメッシュ（同一メッシュ・同一マテリアルでもインデックス範囲が異なる）ごとに
+        // 別バッファを使うよう、キーにインデックス範囲を含める
+        char transformSuffix[48];
+        std::snprintf(transformSuffix, sizeof(transformSuffix), "transform|%u", first.indexStart);
+        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, transformSuffix);
         if (first.skinnedVertexBuffer) {
             // SkinnedMeshRendererのエントリはインスタンス結合されず必ずinstanceCount=1で
             // 個別にDrawBatchが呼ばれるが、同じメッシュ/マテリアル/パイプライン/描画先を
@@ -1488,7 +1523,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
             material->ResolveTextureHandles();
         }
 
-        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, "material");
+        char materialSuffix[48];
+        std::snprintf(materialSuffix, sizeof(materialSuffix), "material|%u", first.indexStart);
+        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, materialSuffix);
         if (first.skinnedVertexBuffer) {
             // 上記の変換行列バッファと同じ理由で、スキニングインスタンスごとに専用バッファを使う
             char suffix[32];
@@ -1565,7 +1602,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
         pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
     }
     pipelineBinder.SetIndexBuffer(meshBuffers->indexBuffer.get());
-    commandList->DrawIndexedInstanced(meshBuffers->indexCount, instanceCount, 0, 0, 0);
+    // サブメッシュ範囲が指定されている場合はその範囲のみ描画する（indexCount==0はメッシュ全体）
+    const std::uint32_t drawIndexCount = first.indexCount > 0 ? first.indexCount : meshBuffers->indexCount;
+    commandList->DrawIndexedInstanced(drawIndexCount, instanceCount, first.indexStart, 0, 0);
     ++drawCallCount_;
 }
 

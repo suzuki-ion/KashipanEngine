@@ -5,6 +5,7 @@
 
 #include "Debug/Logger.h"
 #include "Utilities/Translation.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 
 #if defined(USE_IMGUI)
@@ -156,15 +157,15 @@ bool HasSupportedAudioExtension(const std::filesystem::path& p) {
 }
 
 std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
 }
 
 SoundHandle RegisterEntry(SoundEntry&& entry) {
@@ -478,18 +479,18 @@ SoundHandle AudioManager::Load(const std::string& filePath) {
 
     if (!EnsureAudioInitialized()) return kInvalidSoundHandle;
 
-    const std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
     if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.audio.loading.failed.notfound") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.audio.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidSoundHandle;
     }
 
     if (!HasSupportedAudioExtension(p)) {
-        Log(Translation("engine.audio.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.audio.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidSoundHandle;
     }
 
-    const std::string full = NormalizePathSlashes(p.string());
+    const std::string full = NormalizePathSlashes(PathToUtf8String(p));
     const std::string asset = MakeAssetRelativePath(assetsRootPath_, full);
 
     {
@@ -500,21 +501,21 @@ SoundHandle AudioManager::Load(const std::string& filePath) {
     SoundEntry entry{};
     entry.fullPath = full;
     entry.assetPath = asset;
-    entry.fileName = p.filename().string();
+    entry.fileName = PathToUtf8String(p.filename());
 
     const std::wstring wpath(p.wstring());
     if (!DecodeToPcm(wpath, entry.wfex, entry.buffer)) {
-        Log(Translation("engine.audio.loading.failed.decode") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.audio.loading.failed.decode") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidSoundHandle;
     }
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidSoundHandle) {
-        Log(Translation("engine.audio.loading.failed.register") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.audio.loading.failed.register") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidSoundHandle;
     }
 
-    Log(Translation("engine.audio.loading.succeeded") + p.string(), LogSeverity::Info);
+    Log(Translation("engine.audio.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
 
@@ -556,7 +557,7 @@ bool AudioManager::RenameSound(const std::string &oldAssetPath, const std::strin
 
     const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
-    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
     entry.fullPath = "Assets/" + normalizedNew;
 
     sAssetPathToHandle[normalizedNew] = handle;

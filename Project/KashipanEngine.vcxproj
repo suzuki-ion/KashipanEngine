@@ -98,7 +98,7 @@
       <PreprocessorDefinitions>DEBUG_BUILD;USE_IMGUI;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -135,7 +135,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <PreprocessorDefinitions>RELEASE_BUILD;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -171,7 +171,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <PreprocessorDefinitions>DEVELOPMENT_BUILD;USE_IMGUI;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -580,6 +580,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Scene\SceneEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Scene.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Dialogs\MessageDialog.cpp" />
@@ -876,6 +877,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
     <ClInclude Include="KashipanEngine\Assets\FontManager.h" />
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h" />
+    <ClInclude Include="KashipanEngine\Assets\AssimpUtf8IOSystem.h" />
     <ClInclude Include="KashipanEngine\Assets\ModelManager.h" />
     <ClInclude Include="KashipanEngine\Assets\PrimitiveMeshGenerator.h" />
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
@@ -1136,6 +1138,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Scene\SceneEditor.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneEditorContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.h" />
     <ClInclude Include="KashipanEngine\UtilitiesHeaders.h" />
     <ClInclude Include="KashipanEngine\Utilities\AssetDragDropPayload.h" />
     <ClInclude Include="KashipanEngine\Utilities\Conversion\ConvertColor.h" />

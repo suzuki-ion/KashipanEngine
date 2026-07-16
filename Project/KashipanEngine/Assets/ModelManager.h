@@ -57,6 +57,16 @@ public:
         std::vector<BlendShapeVertexDelta> deltas;
     };
 
+    /// @brief サブメッシュ1つ分の情報（マテリアルごとのインデックス範囲。Unityのサブメッシュに相当）
+    /// @details 頂点・インデックスバッファは全サブメッシュで共有され、
+    ///          描画時にインデックス範囲を指定して個別のマテリアルで描画される
+    struct SubMesh final {
+        uint32_t indexStart = 0;
+        uint32_t indexCount = 0;
+        /// @brief materials_内のインデックス（モデルファイル内のマテリアル番号）
+        uint32_t materialIndex = 0;
+    };
+
 private:
     friend class ModelManager;
     friend class Model;
@@ -74,6 +84,10 @@ private:
 
     std::vector<MaterialData> materials_;
 
+    // サブメッシュ（マテリアルごとのインデックス範囲）一覧。
+    // 空の場合はメッシュ全体を1つのサブメッシュとして扱う（プリミティブメッシュ等）
+    std::vector<SubMesh> subMeshes_;
+
     std::string assetRelativePath_;
 
 public:
@@ -84,6 +98,10 @@ public:
     const std::string &GetAssetRelativePath() const noexcept { return assetRelativePath_; }
     uint32_t GetMaterialCount() const noexcept { return static_cast<uint32_t>(materials_.size()); }
     const MaterialData *GetMaterial(uint32_t idx) const noexcept { return idx < materials_.size() ? &materials_[idx] : nullptr; }
+
+    /// @brief サブメッシュ（マテリアルごとのインデックス範囲）一覧を取得
+    /// @details 空の場合はメッシュ全体を1つのサブメッシュとして扱うこと
+    const std::vector<SubMesh> &GetSubMeshes() const noexcept { return subMeshes_; }
 
     /// @brief ジョイント名からスキンウェイトデータへのマップを取得（SkinnedMeshRenderer用）
     const std::unordered_map<std::string, JointWeightData> &GetSkinClusters() const noexcept { return skinClusters_; }

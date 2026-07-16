@@ -1,6 +1,7 @@
 #include "SkinnedMeshRenderer.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <unordered_map>
 
@@ -499,17 +500,34 @@ void SkinnedMeshRenderer::ShowImGui() {
     for (const auto &entry : materialEntries) {
         materialNames.push_back(entry.material.name);
     }
-    if (ImGuiCustom::SelectString("Material", materialName_, materialNames)) {
-        materialHandle_ = MaterialManager::kInvalidHandle;
+
+    // マテリアルスロット（メッシュのサブメッシュ数に合わせて表示する）
+    const auto meshHandleForSlots = GetMeshHandle();
+    if (meshHandleForSlots != ModelManager::kInvalidHandle) {
+        const size_t subMeshCount = std::max<size_t>(1, ModelManager::GetModelData(meshHandleForSlots).GetSubMeshes().size());
+        if (materialNames_.size() != subMeshCount) SetMaterialSlotCount(subMeshCount);
     }
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kMaterialAssetDragDropType, droppedPath)) {
-        for (const auto &entry : materialEntries) {
-            if (entry.assetPath == droppedPath) {
-                materialName_ = entry.material.name;
-                materialHandle_ = MaterialManager::kInvalidHandle;
-                break;
+    for (size_t i = 0; i < materialNames_.size(); ++i) {
+        ImGui::PushID(static_cast<int>(i));
+        char label[32];
+        if (materialNames_.size() == 1) {
+            std::snprintf(label, sizeof(label), "Material");
+        } else {
+            std::snprintf(label, sizeof(label), "Material %zu", i);
+        }
+        if (ImGuiCustom::SelectString(label, materialNames_[i], materialNames)) {
+            materialHandles_[i] = MaterialManager::kInvalidHandle;
+        }
+        if (std::string droppedPath; AcceptAssetDragDropTarget(kMaterialAssetDragDropType, droppedPath)) {
+            for (const auto &entry : materialEntries) {
+                if (entry.assetPath == droppedPath) {
+                    materialNames_[i] = entry.material.name;
+                    materialHandles_[i] = MaterialManager::kInvalidHandle;
+                    break;
+                }
             }
         }
+        ImGui::PopID();
     }
 
     ImGui::Separator();
@@ -554,7 +572,9 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
     json["targetObjectID"] = ToJSON(targetObjectID_);
     json["rootBoneObjectID"] = ToJSON(rootBoneObjectID_);
     json["pipelineName"] = pipelineName_;
-    json["materialName"] = materialName_;
+    // 後方互換のため単一の"materialName"（スロット0）も併記する
+    json["materialName"] = materialNames_.front();
+    json["materialNames"] = materialNames_;
     for (const auto &name : excludedRenderTargetNames_) {
         json["excludedRenderTargetNames"].push_back(name);
     }
@@ -586,8 +606,13 @@ bool SkinnedMeshRenderer::LoadFromJson(const JSON &json) {
         rootBoneObjectID_ = UUID128();
     }
     pipelineName_ = json.value("pipelineName", std::string{ "Object3D.Solid.BlendNormal" });
-    materialName_ = json.value("materialName", std::string{ "Default" });
-    materialHandle_ = MaterialManager::kInvalidHandle;
+    if (json.contains("materialNames") && json["materialNames"].is_array() && !json["materialNames"].empty()) {
+        materialNames_ = json["materialNames"].get<std::vector<std::string>>();
+    } else {
+        // 旧形式（単一の"materialName"）との後方互換
+        materialNames_ = { json.value("materialName", std::string{ "Default" }) };
+    }
+    materialHandles_.assign(materialNames_.size(), MaterialManager::kInvalidHandle);
     excludedRenderTargetNames_.clear();
     for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
         excludedRenderTargetNames_.insert(name);

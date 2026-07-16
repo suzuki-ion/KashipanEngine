@@ -40,6 +40,9 @@ public:
         std::string pipelineName;
         ModelManager::ModelHandle meshHandle = ModelManager::kInvalidHandle;
         MaterialManager::MaterialHandle materialHandle = MaterialManager::kInvalidHandle;
+        /// @brief 描画するインデックス範囲（サブメッシュ。indexCount==0の場合はメッシュ全体を描画する）
+        std::uint32_t indexStart = 0;
+        std::uint32_t indexCount = 0;
         Matrix4x4 worldMatrix = Matrix4x4::Identity();
         /// @brief SkinnedMeshRendererから作られたエントリのみ非null。
         ///        非nullの場合、頂点バッファは静的メッシュではなくこのGPUスキニング結果を使用し、

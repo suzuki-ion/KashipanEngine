@@ -49,12 +49,19 @@ public:
     ///          そのウィンドウ内で呼ぶことで、同じショートカット操作を有効にできる
     void HandleKeyboardShortcuts();
 
-    /// @brief プレハブ等のノード列（pre-order、先頭が根）をシーンのルート直下へ配置する
+    /// @brief プレハブ等のノード列（pre-order、先頭が根）をシーンへ配置する
     /// @details 新しいobjectIDの割り当て・Undo対応・配置後の選択まで行う。
     ///          同じノード列を複数回渡してもUUIDは衝突しない
     /// @param nodes 配置するノード列（PrefabUtility::LoadPrefabNodes等で構築したもの）
     /// @param name Undo履歴に表示する名前（プレハブ名等）
-    void InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name);
+    /// @param attachParent 配置先の親オブジェクト（nullptrの場合はルート直下）
+    void InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
+        EmptyObject *attachParent = nullptr);
+    /// @brief プレハブファイル（.prefab）を読み込んでシーンへ配置する
+    /// @param filePath プレハブファイルのパス（実行ディレクトリからの相対パス）
+    /// @param attachParent 配置先の親オブジェクト（nullptrの場合はルート直下）
+    /// @return 配置に成功した場合は true
+    bool InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent = nullptr);
 
     /// @brief ヒエラルキー外（シーンビューのクリック等）からの選択操作
     /// @param obj 選択するオブジェクト（nullptrかつadditive=falseの場合は選択解除）
@@ -171,6 +178,11 @@ private:
     // コピー＆ペースト用クリップボード（部分木のJSONスナップショット。pre-order、先頭が根）
     std::vector<PasteObjectCommand::Node> clipboardNodes_;
     std::string clipboardRootName_;
+
+    // Assetsウィンドウからのプレハブドロップ要求（ツリーの描画が終わってから処理する）
+    bool hasPendingPrefabDrop_ = false;
+    std::string pendingPrefabDropPath_;
+    EmptyObject *pendingPrefabDropParent_ = nullptr;
 };
 
 } // namespace KashipanEngine

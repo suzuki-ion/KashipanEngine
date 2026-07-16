@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <unordered_map>
 
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/Resources/RWStructuredBufferResource.h"
@@ -166,6 +167,66 @@ void SkinnedMeshRenderer::Update() {
     // 経過のみを行う（ゲームループ停止/一時停止中はUpdate自体が呼ばれないため、その間は自動的に静止する）。
     if (vertexCount_ == 0) return;
     AdvanceAnimation(GetDeltaTime() * GetGameSpeed());
+
+    // アニメーション再生中は、シーン上のアーマチュア用オブジェクトの位置をジョイント姿勢と紐づけする
+    if (isPlaying_ && !animationClipName_.empty()) {
+        SyncArmatureObjects();
+    }
+}
+
+void SkinnedMeshRenderer::SyncArmatureObjects() {
+    if (skeletonInstance_.joints.empty()) return;
+    auto *sceneContext = GetOwnerSceneContext();
+    if (!sceneContext) return;
+
+    // 検索の起点: Root Boneが設定されていればそのオブジェクト、無ければ所有オブジェクトの最上位の祖先
+    // （モデルのプレハブではアーマチュアとメッシュオブジェクトが同じルートの子孫になっているため）
+    EmptyObject *searchRoot = GetRootBoneObject();
+    if (!searchRoot) {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *owner = objectContext ? const_cast<EmptyObject *>(objectContext->GetOwner()) : nullptr;
+        if (!owner) return;
+        searchRoot = owner;
+        while (true) {
+            auto *transform = searchRoot->GetComponent<Transform>();
+            EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
+            if (!parent) break;
+            searchRoot = parent;
+        }
+    }
+
+    // 起点の子孫（起点自身を含む）を名前で引けるようにする
+    std::unordered_map<std::string, EmptyObject *> nameToObject;
+    for (const auto &objPtr : sceneContext->GetSceneObjects()) {
+        EmptyObject *obj = objPtr.get();
+        if (!obj) continue;
+        EmptyObject *cursor = obj;
+        bool isInSubtree = false;
+        while (cursor) {
+            if (cursor == searchRoot) {
+                isInSubtree = true;
+                break;
+            }
+            auto *transform = cursor->GetComponent<Transform>();
+            cursor = transform ? transform->GetParentObject() : nullptr;
+        }
+        if (!isInSubtree) continue;
+        nameToObject.emplace(obj->GetName(), obj);
+    }
+    if (nameToObject.empty()) return;
+
+    // ジョイントのローカルTRSを同名オブジェクトのTransformへ書き込む
+    // （プレハブのアーマチュア階層はモデルのノード階層と同じ構造のため、ローカル値が1:1で対応する）
+    for (const auto &joint : skeletonInstance_.joints) {
+        if (!joint.transform) continue;
+        auto it = nameToObject.find(joint.name);
+        if (it == nameToObject.end()) continue;
+        auto *transform = it->second->GetComponent<Transform>();
+        if (!transform) continue;
+        transform->SetTranslate(joint.transform->GetTranslate());
+        transform->SetRotateQuaternion(joint.transform->GetRotate());
+        transform->SetScale(joint.transform->GetScale());
+    }
 }
 
 void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {

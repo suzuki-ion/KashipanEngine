@@ -314,6 +314,35 @@ Renderer::~Renderer() {
         particleComputeCommandSlotIndex_ = -1;
         particleComputeCommands_ = nullptr;
     }
+    if (directXCommon_ && skinningCommandSlotIndex_ >= 0) {
+        directXCommon_->ReleaseCommandObjects(Passkey<Renderer>{}, skinningCommandSlotIndex_);
+        skinningCommandSlotIndex_ = -1;
+        skinningCommands_ = nullptr;
+    }
+    if (directXCommon_ && lightCullingCommandSlotIndex_ >= 0) {
+        directXCommon_->ReleaseCommandObjects(Passkey<Renderer>{}, lightCullingCommandSlotIndex_);
+        lightCullingCommandSlotIndex_ = -1;
+        lightCullingCommands_ = nullptr;
+    }
+}
+
+ID3D12GraphicsCommandList *Renderer::BeginDedicatedComputeCommandList(int &slotIndex, DX12Commands *&commands) {
+    if (!directXCommon_) return nullptr;
+    if (slotIndex < 0) {
+        slotIndex = directXCommon_->AcquireCommandObjects(Passkey<Renderer>{});
+        commands = (slotIndex >= 0)
+            ? directXCommon_->GetCommandObjects(Passkey<Renderer>{}, slotIndex)
+            : nullptr;
+    }
+    if (!commands) return nullptr;
+    return commands->BeginRecord();
+}
+
+void Renderer::EndDedicatedComputeCommandList(DX12Commands *commands) {
+    if (!commands || !directXCommon_) return;
+    if (commands->EndRecord()) {
+        directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, commands->GetCommandList());
+    }
 }
 
 void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) {
@@ -452,7 +481,9 @@ void Renderer::ProcessSkinning(SceneContext *sceneContext) {
     if (renderers.empty()) return;
     if (!pipelineManager_->HasPipeline("Skinning") || pipelineManager_->GetPipeline("Skinning").Type() != PipelineType::Compute) return;
 
-    auto *commandList = ComputeCommandProcessor::BeginRecord(Passkey<Renderer>{});
+    // スキニング専用のコマンドリストへ記録する（ComputeCommandProcessorの共有コマンドリストは
+    // 後続フェーズのBeginRecord内のReset()で記録内容が提出前に上書きされてしまうため使わない）
+    auto *commandList = BeginDedicatedComputeCommandList(skinningCommandSlotIndex_, skinningCommands_);
     if (!commandList) return;
 
     // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
@@ -500,7 +531,7 @@ void Renderer::ProcessSkinning(SceneContext *sceneContext) {
         outputBuffer->TransitionTo(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
     }
 
-    ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
+    EndDedicatedComputeCommandList(skinningCommands_);
 }
 
 void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
@@ -545,16 +576,8 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
     }
 
     // GPUパーティクル専用のコマンドリストを使う（ComputeCommandProcessorの共有コマンドリストは
-    // 同一フレーム中に複数回Begin/EndRecordされる設計のため、共有すると他フェーズのBeginRecord内の
-    // Reset()で本フェーズが記録した内容が提出前に上書きされてしまう）
-    if (particleComputeCommandSlotIndex_ < 0) {
-        particleComputeCommandSlotIndex_ = directXCommon_->AcquireCommandObjects(Passkey<Renderer>{});
-        particleComputeCommands_ = (particleComputeCommandSlotIndex_ >= 0)
-            ? directXCommon_->GetCommandObjects(Passkey<Renderer>{}, particleComputeCommandSlotIndex_)
-            : nullptr;
-    }
-    if (!particleComputeCommands_) return;
-    auto *commandList = particleComputeCommands_->BeginRecord();
+    // 他フェーズのBeginRecord内のReset()で記録内容が提出前に上書きされてしまうため使わない）
+    auto *commandList = BeginDedicatedComputeCommandList(particleComputeCommandSlotIndex_, particleComputeCommands_);
     if (!commandList) return;
 
     PipelineBinder pipelineBinder(commandList, pipelineManager_);
@@ -654,7 +677,9 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
     }
     if (targetPipelinePairs.empty()) return;
 
-    auto *commandList = ComputeCommandProcessor::BeginRecord(Passkey<Renderer>{});
+    // ライトカリング専用のコマンドリストへ記録する（ComputeCommandProcessorの共有コマンドリストを
+    // 複数フェーズで使い回すと、BeginRecord内のReset()で他フェーズの記録内容が提出前に消えてしまうため）
+    auto *commandList = BeginDedicatedComputeCommandList(lightCullingCommandSlotIndex_, lightCullingCommands_);
     if (!commandList) return;
 
     // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
@@ -739,7 +764,7 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         tileBuffer->TransitionTo(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
-    ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
+    EndDedicatedComputeCommandList(lightCullingCommands_);
 }
 
 void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *sceneRenderer,

@@ -1,5 +1,7 @@
 #include "SceneObjectHierarchy.h"
+#include <imgui_internal.h>
 #include <algorithm>
+#include <filesystem>
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/PrefabUtility.h"
@@ -7,6 +9,8 @@
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/Transform.h"
+#include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/FileIO/JSON.h"
 
 namespace KashipanEngine {
 
@@ -72,8 +76,30 @@ void SceneObjectHierarchy::ShowImGui() {
 
         ShowHierarchyContextMenu();
         ApplyDragAndDrop();
+
+        // ウィンドウの空き領域へのプレハブドロップ（ルート直下へ配置する）。
+        // アイテム上のドロップはアイテム側のターゲット（矩形が小さい方）が優先される
+        if (ImGuiWindow *window = ImGui::GetCurrentWindow(); window &&
+            ImGui::BeginDragDropTargetCustom(window->InnerRect, window->ID)) {
+            if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(kPrefabAssetDragDropType)) {
+                IM_ASSERT(payload->DataSize == sizeof(AssetDragDropPayload));
+                const auto *assetPayload = static_cast<const AssetDragDropPayload *>(payload->Data);
+                pendingPrefabDropPath_ = assetPayload->assetPath;
+                pendingPrefabDropParent_ = nullptr;
+                hasPendingPrefabDrop_ = true;
+            }
+            ImGui::EndDragDropTarget();
+        }
     }
     ImGui::End();
+
+    // プレハブのドロップ要求はツリーの描画が終わってから処理する
+    if (hasPendingPrefabDrop_) {
+        hasPendingPrefabDrop_ = false;
+        InstantiatePrefabFile(pendingPrefabDropPath_, pendingPrefabDropParent_);
+        pendingPrefabDropPath_.clear();
+        pendingPrefabDropParent_ = nullptr;
+    }
 }
 
 void SceneObjectHierarchy::RebuildObjectItems() {
@@ -486,11 +512,23 @@ void SceneObjectHierarchy::CollectSubtreeNodes(EmptyObject *obj, int parentIndex
     PrefabUtility::CollectSubtreeNodes(editorContext_, obj, parentIndex, out);
 }
 
-void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name) {
+void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
+    EmptyObject *attachParent) {
     if (nodes.empty() || !editorContext_) return;
     auto prepared = PrepareNodesForInstantiation(nodes, /*preserveRootParent=*/false);
     ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
-        std::move(prepared), nullptr, MAXSIZE_T, name, "Instantiate Prefab"));
+        std::move(prepared), attachParent, MAXSIZE_T, name, "Instantiate Prefab"));
+}
+
+bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent) {
+    if (filePath.empty() || !editorContext_) return false;
+    const JSON prefabJson = LoadJSON(filePath);
+    auto nodes = PrefabUtility::LoadPrefabNodes(prefabJson);
+    if (nodes.empty()) return false;
+    const std::string prefabName = prefabJson.value("name",
+        std::filesystem::path(filePath).stem().string());
+    InstantiateNodes(nodes, prefabName, attachParent);
+    return true;
 }
 
 void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command) {
@@ -559,6 +597,15 @@ void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
                 dragDropPayload_.objectTarget = objItem->object;
                 dragDropPayload_.position = dropPosition;
             }
+        }
+        // Assetsウィンドウからのプレハブファイルのドロップも受け付ける（対象オブジェクトの子として配置する）。
+        // ツリーの走査中にシーンへオブジェクトを追加しないよう、要求のみ記録してShowImGuiの最後で処理する
+        if (const ImGuiPayload *prefabPayload = ImGui::AcceptDragDropPayload(kPrefabAssetDragDropType)) {
+            IM_ASSERT(prefabPayload->DataSize == sizeof(AssetDragDropPayload));
+            const auto *assetPayload = static_cast<const AssetDragDropPayload *>(prefabPayload->Data);
+            pendingPrefabDropPath_ = assetPayload->assetPath;
+            pendingPrefabDropParent_ = objItem->object;
+            hasPendingPrefabDrop_ = true;
         }
         ImGui::EndDragDropTarget();
     }

@@ -4,6 +4,7 @@
 
 #include "Debug/Logger.h"
 #include "Math/Quaternion.h"
+#include "Math/Vector4.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
@@ -23,6 +24,7 @@
 #include <cmath>
 #include <filesystem>
 #include <functional>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -414,10 +416,11 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     const std::string &baseFileName, const std::vector<ModelData::MaterialData> &materials) {
     if (!scene || !scene->mRootNode) return;
 
-    // メッシュを持つノードの情報（サブメッシュのアセットパスとスキニング有無）
+    // メッシュを持つノードの情報（サブメッシュのアセットパス・スキニング有無・使用マテリアル）
     struct MeshNodeInfo {
         std::string meshAssetPath;
         bool skinned = false;
+        unsigned int materialIndex = 0;
     };
     std::unordered_map<const aiNode *, MeshNodeInfo> meshNodeInfos;
 
@@ -435,14 +438,14 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
             meshNodes.push_back(node);
 
             bool skinned = false;
+            unsigned int materialIndex = 0;
             for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
                 const unsigned int meshIdx = node->mMeshes[i];
-                if (meshIdx < scene->mNumMeshes && scene->mMeshes[meshIdx] && scene->mMeshes[meshIdx]->mNumBones > 0) {
-                    skinned = true;
-                    break;
-                }
+                if (meshIdx >= scene->mNumMeshes || !scene->mMeshes[meshIdx]) continue;
+                if (i == 0) materialIndex = scene->mMeshes[meshIdx]->mMaterialIndex;
+                if (scene->mMeshes[meshIdx]->mNumBones > 0) skinned = true;
             }
-            meshNodeInfos[node] = MeshNodeInfo{ std::string(), skinned };
+            meshNodeInfos[node] = MeshNodeInfo{ std::string(), skinned, materialIndex };
         }
         for (unsigned int c = 0; c < node->mNumChildren; ++c) collect(node->mChildren[c]);
     };
@@ -477,14 +480,67 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     }
 
 #if defined(USE_IMGUI)
+    const std::string modelName = std::filesystem::path(baseFileName).stem().string();
+
+    // モデルが使用するマテリアルを自動生成する（.matファイルをモデルの隣へ書き出す）。
+    // ModelManagerはMaterialManagerより先に初期化されるため、ここではファイルとして書き出すだけにして、
+    // 後から初期化されるMaterialManagerのAssetsフォルダ走査で読み込ませる。
+    // 既に.matファイルが存在する場合はユーザーの編集を保護するため上書きしない
+    const std::string modelDir = std::filesystem::path(modelFullPath).parent_path().generic_string();
+    std::unordered_map<unsigned int, std::string> materialIndexToName;
+    for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
+        aiString aiName;
+        std::string matName;
+        if (scene->mMaterials[mi] && AI_SUCCESS == scene->mMaterials[mi]->Get(AI_MATKEY_NAME, aiName)) {
+            matName = aiName.C_Str();
+        }
+        if (matName.empty()) matName = "Material" + std::to_string(mi);
+        // ファイル名に使えない文字を除去し、モデル名を前置してモデル間の名前重複を避ける
+        constexpr std::string_view kInvalidChars = "\\/:*?\"<>|";
+        for (auto &c : matName) {
+            if (kInvalidChars.find(c) != std::string_view::npos) c = '_';
+        }
+        const std::string uniqueName = modelName + "_" + matName;
+        materialIndexToName[mi] = uniqueName;
+
+        const std::string matFilePath = modelDir + "/" + uniqueName + ".mat";
+        std::error_code matEc;
+        if (std::filesystem::exists(matFilePath, matEc)) continue;
+
+        // MaterialManager::SaveMaterialと同じスキーマで書き出す
+        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        std::string textureFile;
+        if (mi < materials.size()) {
+            color = Vector4(materials[mi].baseColor[0], materials[mi].baseColor[1],
+                materials[mi].baseColor[2], materials[mi].baseColor[3]);
+            if (!materials[mi].diffuseTexturePath.empty()) {
+                // MaterialManagerのtextureFileはファイル名単体で管理される
+                textureFile = std::filesystem::path(materials[mi].diffuseTexturePath).filename().string();
+            }
+        }
+        JSON matJson = JSON::object();
+        matJson["name"] = uniqueName;
+        matJson["color"] = ToJSON(color);
+        matJson["uvTransform"] = ToJSON(Matrix4x4::Identity());
+        matJson["textureFile"] = textureFile;
+        matJson["environmentFile"] = "";
+        matJson["samplerHandle"] = static_cast<std::uint32_t>(0);
+        matJson["shininess"] = 32.0f;
+        matJson["specularColor"] = ToJSON(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        matJson["environmentCoefficient"] = 1.0f;
+        matJson["enableLighting"] = true;
+        matJson["enableShadowMapProjection"] = true;
+        if (SaveJSON(matJson, matFilePath)) {
+            Log("ModelManager: Generated material file: " + matFilePath, LogSeverity::Info);
+        }
+    }
+
     // エディタービルドでは、ノード階層（アーマチュア・メッシュオブジェクト）を再現するプレハブを
     // モデルの隣（"モデルファイル名.prefab"）へ自動生成する。
     // 既にプレハブが存在する場合はユーザーの編集を保護するため上書きしない
     const std::string prefabPath = modelFullPath + ".prefab";
     std::error_code ec;
     if (std::filesystem::exists(prefabPath, ec)) return;
-
-    const std::string modelName = std::filesystem::path(baseFileName).stem().string();
 
     JSON prefab;
     prefab["prefab"] = true;
@@ -536,8 +592,13 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
             JSON meshFilterData;
             meshFilterData["meshAssetPath"] = it->second.meshAssetPath;
             object["components"].push_back(makeComponentJson("MeshFilter", 1, std::move(meshFilterData)));
+            // 自動生成したマテリアルを適用した状態にしておく
+            JSON rendererData = JSON::object();
+            if (auto matIt = materialIndexToName.find(it->second.materialIndex); matIt != materialIndexToName.end()) {
+                rendererData["materialName"] = matIt->second;
+            }
             object["components"].push_back(makeComponentJson(
-                it->second.skinned ? "SkinnedMeshRenderer" : "MeshRenderer", 900, JSON::object()));
+                it->second.skinned ? "SkinnedMeshRenderer" : "MeshRenderer", 900, std::move(rendererData)));
         }
 
         JSON entryJson;

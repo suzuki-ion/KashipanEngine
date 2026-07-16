@@ -206,14 +206,31 @@ private:
     int shadowCommandSlotIndex_ = -1;
     DX12Commands *shadowCommands_ = nullptr;
 
+    //==================================================
+    // フェーズ専用コンピュートコマンドリスト
+    //==================================================
+    // ComputeCommandProcessorの共有コマンドリストを複数フェーズで使い回すと、
+    // 各フェーズのBeginRecord内のReset()で直前のフェーズが記録した（まだ提出されていない）
+    // 内容が上書きされてしまう（実際にGPUパーティクルとスキニングのDispatchが
+    // 後続のLightCullingのReset()で消えて実行されない不具合が起きていた）。
+    // そのため、コンピュートディスパッチを行う各フェーズは専用のコマンドリストへ
+    // 独立して記録する（ComputeCommandProcessorはComputeShaderProcessing専用に戻す）。
+
+    /// @brief 専用コンピュートコマンドリストを（未取得ならプールから取得して）記録開始する
+    /// @return 記録可能なコマンドリスト（取得・記録開始に失敗した場合はnullptr）
+    ID3D12GraphicsCommandList *BeginDedicatedComputeCommandList(int &slotIndex, DX12Commands *&commands);
+    /// @brief 専用コマンドリストの記録を終了し、フレームの提出リストへ追加する
+    void EndDedicatedComputeCommandList(DX12Commands *commands);
+
     /// @brief GPUパーティクル用コンピュートディスパッチ記録専用のコマンドスロット
-    /// @details ComputeCommandProcessorの共有コマンドリストは1フレーム中に複数回
-    ///          （ComputeShaderProcessing/Skinning/LightCullingなど）Begin/EndRecordされる
-    ///          設計になっており、同じコマンドリストを使い回すとBeginRecord内のReset()で
-    ///          直前のフェーズが記録した（まだ提出されていない）内容が上書きされてしまう。
-    ///          GPUパーティクルのDispatchは専用のコマンドリストへ独立して記録することでこれを回避する
     int particleComputeCommandSlotIndex_ = -1;
     DX12Commands *particleComputeCommands_ = nullptr;
+    /// @brief GPUスキニング用コンピュートディスパッチ記録専用のコマンドスロット
+    int skinningCommandSlotIndex_ = -1;
+    DX12Commands *skinningCommands_ = nullptr;
+    /// @brief タイルドライトカリング用コンピュートディスパッチ記録専用のコマンドスロット
+    int lightCullingCommandSlotIndex_ = -1;
+    DX12Commands *lightCullingCommands_ = nullptr;
 
     /// @brief 直近のRenderFrameで発行されたDrawIndexedInstanced呼び出し回数（RenderFrame冒頭でリセットする）
     std::uint32_t drawCallCount_ = 0;

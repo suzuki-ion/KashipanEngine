@@ -1,0 +1,104 @@
+{
+    "name": "House_1_Baked",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "House_1_Baked",
+                "objectID": "a2b990fa-598e-4698-8751-c10585c1699a",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/House_1_Baked.obj"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "House_1_Baked_House_1_Cube.145_Merged"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "House_1_Cube.145",
+                "objectID": "aa85a684-ad97-460e-a15b-d9352a3f2fc6",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true
+}

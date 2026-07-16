@@ -210,12 +210,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
 
     // Assetsウィンドウからのプレハブファイル（.prefab）のD&Dでシーンへ配置する
     if (std::string droppedPath; AcceptAssetDragDropTarget(kPrefabAssetDragDropType, droppedPath)) {
-        const JSON prefabJson = LoadJSON(droppedPath);
-        auto nodes = PrefabUtility::LoadPrefabNodes(prefabJson);
-        if (!nodes.empty() && hierarchy) {
-            const std::string prefabName = prefabJson.value("name",
-                std::filesystem::path(droppedPath).stem().string());
-            hierarchy->InstantiateNodes(nodes, prefabName);
+        if (hierarchy) {
+            hierarchy->InstantiatePrefabFile(droppedPath);
         }
     }
 

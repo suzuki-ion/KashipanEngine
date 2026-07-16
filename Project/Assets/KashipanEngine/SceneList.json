@@ -1,9 +1,13 @@
 {
-    "startupScene": "GameScene",
     "scenes": [
         {
-            "name": "GameScene",
-            "filePath": "Assets/Scenes/GameScene.json"
+            "filePath": "Assets/Scenes/GameScene.json",
+            "name": "GameScene"
+        },
+        {
+            "filePath": "Assets/Scenes/TestScene.json",
+            "name": "TestScene"
         }
-    ]
+    ],
+    "startupScene": "GameScene"
 }

@@ -1,6 +1,7 @@
 #include "SceneRenderer.h"
 
 #include <algorithm>
+#include <type_traits>
 
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
@@ -32,6 +33,18 @@ int GetRenderTargetKindOrder(RenderTargetKind kind) {
 /// @brief ソートキー計算用の中間データ（SceneRenderer::RankedDrawEntryそのもの。
 ///        キャッシュ側と同じ型にしておくことでマージ処理を共有できる）
 using SortableEntry = SceneRenderer::RankedDrawEntry;
+
+/// @brief レンダラーとサブメッシュ番号からマテリアルハンドルを取得する
+/// @details マテリアルスロットを持たないSpriteRendererは常に単一マテリアルを返す
+template <typename RendererT>
+MaterialManager::MaterialHandle GetMaterialHandleForSubMesh(const RendererT *renderer, size_t subMeshIndex) {
+    if constexpr (std::is_same_v<RendererT, MeshRenderer> || std::is_same_v<RendererT, SkinnedMeshRenderer>) {
+        return renderer->GetMaterialHandleAt(subMeshIndex);
+    } else {
+        (void)subMeshIndex;
+        return renderer->GetMaterialHandle();
+    }
+}
 
 /// @brief MeshRenderer/SpriteRenderer いずれの一覧からも同じ手順でDrawEntryを収集する
 /// @details 両コンポーネントは GetPipelineName/GetMeshHandle/GetMaterialHandle/GetWorldMatrix/
@@ -68,6 +81,10 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
         if (editorTarget && editorTarget->IsRenderTargetAvailable()) {
             targets.push_back(editorTarget);
         }
+        // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1エントリ作る
+        const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
+        const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
+
         for (auto *target : targets) {
             if (!target || !target->IsRenderTargetAvailable()) continue;
             if (editorOnly && target != editorTarget) continue;
@@ -76,26 +93,34 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
             if (target != editorTarget) {
                 targetOwners[target] = targetObject;
             }
-            SortableEntry sortable;
-            sortable.entry.target = target;
-            sortable.entry.pipelineName = pipelineName;
-            sortable.entry.meshHandle = renderer->GetMeshHandle();
-            sortable.entry.materialHandle = renderer->GetMaterialHandle();
-            sortable.entry.worldMatrix = renderer->GetWorldMatrix();
-            sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
-            sortable.pipelinePriority = pipelinePriority;
-            sortableEntries.push_back(sortable);
+            for (size_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex) {
+                SortableEntry sortable;
+                sortable.entry.target = target;
+                sortable.entry.pipelineName = pipelineName;
+                sortable.entry.meshHandle = renderer->GetMeshHandle();
+                sortable.entry.materialHandle = GetMaterialHandleForSubMesh(renderer, subMeshIndex);
+                if (!subMeshes.empty()) {
+                    sortable.entry.indexStart = subMeshes[subMeshIndex].indexStart;
+                    sortable.entry.indexCount = subMeshes[subMeshIndex].indexCount;
+                }
+                sortable.entry.worldMatrix = renderer->GetWorldMatrix();
+                sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
+                sortable.pipelinePriority = pipelinePriority;
+                sortableEntries.push_back(sortable);
+            }
         }
     }
 }
 
-/// @brief 描画先→パイプライン優先度→パイプライン名→メッシュ→マテリアルの順で比較する
+/// @brief 描画先→パイプライン優先度→パイプライン名→メッシュ→サブメッシュ→マテリアルの順で比較する
 bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
     if (a.kindOrder != b.kindOrder) return a.kindOrder < b.kindOrder;
     if (a.entry.target != b.entry.target) return a.entry.target < b.entry.target;
     if (a.pipelinePriority != b.pipelinePriority) return a.pipelinePriority < b.pipelinePriority;
     if (a.entry.pipelineName != b.entry.pipelineName) return a.entry.pipelineName < b.entry.pipelineName;
     if (a.entry.meshHandle != b.entry.meshHandle) return a.entry.meshHandle < b.entry.meshHandle;
+    if (a.entry.indexStart != b.entry.indexStart) return a.entry.indexStart < b.entry.indexStart;
+    if (a.entry.indexCount != b.entry.indexCount) return a.entry.indexCount < b.entry.indexCount;
     return a.entry.materialHandle < b.entry.materialHandle;
 }
 
@@ -117,15 +142,24 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
         const std::string &pipelineName = renderer->GetPipelineName();
         if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
 
-        SceneRenderer::CachedRankedEntry cached;
-        cached.ranked.entry.target = editorTarget;
-        cached.ranked.entry.pipelineName = pipelineName;
-        cached.ranked.entry.meshHandle = renderer->GetMeshHandle();
-        cached.ranked.entry.materialHandle = renderer->GetMaterialHandle();
-        cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
-        cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
-        cached.source = renderer;
-        out.push_back(std::move(cached));
+        // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1エントリ作る
+        const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
+        const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
+        for (size_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex) {
+            SceneRenderer::CachedRankedEntry cached;
+            cached.ranked.entry.target = editorTarget;
+            cached.ranked.entry.pipelineName = pipelineName;
+            cached.ranked.entry.meshHandle = renderer->GetMeshHandle();
+            cached.ranked.entry.materialHandle = GetMaterialHandleForSubMesh(renderer, subMeshIndex);
+            if (!subMeshes.empty()) {
+                cached.ranked.entry.indexStart = subMeshes[subMeshIndex].indexStart;
+                cached.ranked.entry.indexCount = subMeshes[subMeshIndex].indexCount;
+            }
+            cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
+            cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+            cached.source = renderer;
+            out.push_back(std::move(cached));
+        }
     }
 }
 
@@ -291,6 +325,10 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             if (editorTarget_ && editorTarget_->IsRenderTargetAvailable()) {
                 targets.push_back(editorTarget_);
             }
+            // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1エントリ作る
+            const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
+            const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
+
             for (auto *target : targets) {
                 if (!target || !target->IsRenderTargetAvailable()) continue;
                 if (editorOnly && target != editorTarget_) continue;
@@ -298,16 +336,22 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                 if (target != editorTarget_) {
                     targetOwners_[target] = targetObject;
                 }
-                SortableEntry sortable;
-                sortable.entry.target = target;
-                sortable.entry.pipelineName = pipelineName;
-                sortable.entry.meshHandle = renderer->GetMeshHandle();
-                sortable.entry.materialHandle = renderer->GetMaterialHandle();
-                sortable.entry.worldMatrix = renderer->GetWorldMatrix();
-                sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
-                sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
-                sortable.pipelinePriority = pipelinePriority;
-                freshEntries.push_back(sortable);
+                for (size_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex) {
+                    SortableEntry sortable;
+                    sortable.entry.target = target;
+                    sortable.entry.pipelineName = pipelineName;
+                    sortable.entry.meshHandle = renderer->GetMeshHandle();
+                    sortable.entry.materialHandle = renderer->GetMaterialHandleAt(subMeshIndex);
+                    if (!subMeshes.empty()) {
+                        sortable.entry.indexStart = subMeshes[subMeshIndex].indexStart;
+                        sortable.entry.indexCount = subMeshes[subMeshIndex].indexCount;
+                    }
+                    sortable.entry.worldMatrix = renderer->GetWorldMatrix();
+                    sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
+                    sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
+                    sortable.pipelinePriority = pipelinePriority;
+                    freshEntries.push_back(sortable);
+                }
             }
         }
     }

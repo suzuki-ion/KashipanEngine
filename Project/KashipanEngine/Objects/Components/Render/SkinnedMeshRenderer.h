@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -65,8 +66,8 @@ public:
         ptr->targetObjectID_ = targetObjectID_;
         ptr->rootBoneObjectID_ = rootBoneObjectID_;
         ptr->pipelineName_ = pipelineName_;
-        ptr->materialName_ = materialName_;
-        ptr->materialHandle_ = materialHandle_;
+        ptr->materialNames_ = materialNames_;
+        ptr->materialHandles_ = materialHandles_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->quality_ = quality_;
         ptr->blendShapes_ = blendShapes_;
@@ -103,17 +104,42 @@ public:
     void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
 
-    void SetMaterialName(const std::string &materialName) {
-        materialName_ = materialName;
-        materialHandle_ = MaterialManager::kInvalidHandle;
+    void SetMaterialName(const std::string &materialName) { SetMaterialNameAt(0, materialName); }
+    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandles_[0] = materialHandle; }
+    const std::string &GetMaterialName() const noexcept { return materialNames_.front(); }
+    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept { return GetMaterialHandleAt(0); }
+
+    //==================================================
+    // マテリアルスロット（サブメッシュごとのマテリアル。Unityと同様スロットi＝サブメッシュi）
+    //==================================================
+
+    /// @brief マテリアルスロット数を取得（常に1以上）
+    size_t GetMaterialSlotCount() const noexcept { return materialNames_.size(); }
+    /// @brief マテリアルスロット数を変更する（追加分は最後のスロットと同じマテリアルで埋める）
+    void SetMaterialSlotCount(size_t count) {
+        if (count < 1) count = 1;
+        if (count == materialNames_.size()) return;
+        materialNames_.resize(count, materialNames_.back());
+        materialHandles_.resize(count, MaterialManager::kInvalidHandle);
     }
-    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandle_ = materialHandle; }
-    const std::string &GetMaterialName() const noexcept { return materialName_; }
-    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept {
-        if (materialHandle_ == MaterialManager::kInvalidHandle && !materialName_.empty()) {
-            materialHandle_ = MaterialManager::GetMaterialHandleFromName(materialName_);
+    /// @brief 指定スロットのマテリアル名を設定する（スロットが足りない場合は拡張される）
+    void SetMaterialNameAt(size_t slot, const std::string &materialName) {
+        if (slot >= materialNames_.size()) SetMaterialSlotCount(slot + 1);
+        materialNames_[slot] = materialName;
+        materialHandles_[slot] = MaterialManager::kInvalidHandle;
+    }
+    /// @brief 指定スロットのマテリアル名を取得する（範囲外は最後のスロットを返す）
+    const std::string &GetMaterialNameAt(size_t slot) const noexcept {
+        return materialNames_[std::min(slot, materialNames_.size() - 1)];
+    }
+    /// @brief 指定スロットのマテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
+    /// @details スロット数を超えるサブメッシュは最後のスロットのマテリアルで描画される（Unityと同様）
+    MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept {
+        const size_t index = std::min(slot, materialNames_.size() - 1);
+        if (materialHandles_[index] == MaterialManager::kInvalidHandle && !materialNames_[index].empty()) {
+            materialHandles_[index] = MaterialManager::GetMaterialHandleFromName(materialNames_[index]);
         }
-        return materialHandle_;
+        return materialHandles_[index];
     }
 
     //==================================================
@@ -287,8 +313,10 @@ private:
     /// @brief Root Boneオブジェクト（設定時はこのオブジェクトのTransformに沿ってメッシュが動く）
     UUID128 rootBoneObjectID_{};
     std::string pipelineName_ = "Object3D.Solid.BlendNormal";
-    std::string materialName_ = "Default";
-    mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
+    /// @brief マテリアルスロット（サブメッシュごとのマテリアル名。常に1要素以上）
+    std::vector<std::string> materialNames_{ "Default" };
+    /// @brief materialNames_と対応するハンドルのキャッシュ（未解決はkInvalidHandle）
+    mutable std::vector<MaterialManager::MaterialHandle> materialHandles_{ MaterialManager::kInvalidHandle };
     std::unordered_set<std::string> excludedRenderTargetNames_;
 
     SkinQuality quality_ = SkinQuality::Auto;

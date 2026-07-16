@@ -13,6 +13,7 @@
 #include "Debug/Logger.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/RawFile.h"
 
@@ -114,15 +115,15 @@ bool HasSupportedFontExtension(const std::filesystem::path &p) {
 }
 
 std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
 }
 
 /// @brief アトラス内にwidth×heightの矩形を確保する（シェルフパッキング）
@@ -208,17 +209,17 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
     LogScope scope;
     if (filePath.empty()) return kInvalidHandle;
 
-    const std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
     if (!std::filesystem::exists(p)) {
-        Log("フォントファイルが見つかりません: " + p.string(), LogSeverity::Warning);
+        Log("フォントファイルが見つかりません: " + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
     if (!HasSupportedFontExtension(p)) {
-        Log("未対応のフォント拡張子です: " + p.string(), LogSeverity::Warning);
+        Log("未対応のフォント拡張子です: " + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
-    const std::string full = NormalizePathSlashes(p.string());
+    const std::string full = NormalizePathSlashes(PathToUtf8String(p));
     const std::string asset = MakeAssetRelativePath(sAssetsRootPath, full);
 
     // 既に読み込み済みかチェック
@@ -229,7 +230,7 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
 
     RawFileData raw = LoadFile(full);
     if (raw.data.empty()) {
-        Log("フォントファイルの読み込みに失敗しました: " + p.string(), LogSeverity::Warning);
+        Log("フォントファイルの読み込みに失敗しました: " + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
@@ -239,14 +240,14 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
     auto info = std::make_unique<stbtt_fontinfo>();
     const int offset = stbtt_GetFontOffsetForIndex(entry.fileData.data(), 0);
     if (offset < 0 || !stbtt_InitFont(info.get(), entry.fileData.data(), offset)) {
-        Log("フォントの解析に失敗しました: " + p.string(), LogSeverity::Error);
+        Log("フォントの解析に失敗しました: " + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
     entry.fullPath = full;
     entry.assetPath = asset;
-    entry.fileName = p.filename().string();
-    entry.name = p.stem().string();
+    entry.fileName = PathToUtf8String(p.filename());
+    entry.name = PathToUtf8String(p.stem());
     entry.info = std::move(info);
     entry.atlasSize = 512;
     entry.atlasPixels.assign(static_cast<size_t>(entry.atlasSize) * entry.atlasSize, 0);

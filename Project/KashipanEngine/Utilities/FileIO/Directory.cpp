@@ -1,16 +1,20 @@
 #include "Directory.h"
 #include <filesystem>
 
+#include "Utilities/Conversion/ConvertString.h"
+
 namespace KashipanEngine {
 
 namespace {
 
 /// @brief ファイル名取得用
+/// @details path::string()はWindows上でANSIコードページを使うため、非ASCII文字を含む
+///          ファイル名が文字化けする。常にPathToUtf8Stringで変換すること
 std::string GetFileName(const std::filesystem::path &filePath, bool isFullPath) {
     if (isFullPath) {
-        return filePath.string();
+        return PathToUtf8String(filePath);
     } else {
-        return filePath.filename().string();
+        return PathToUtf8String(filePath.filename());
     }
 }
 
@@ -19,9 +23,9 @@ DirectoryData BuildDirectoryData(const std::filesystem::path &directoryPath, boo
     DirectoryData data{};
 
     // ディレクトリ名（ルート等で空の場合はフルパスを設定）
-    data.directoryName = directoryPath.filename().string();
+    data.directoryName = PathToUtf8String(directoryPath.filename());
     if (data.directoryName.empty()) {
-        data.directoryName = directoryPath.string();
+        data.directoryName = PathToUtf8String(directoryPath);
     }
 
     // ディレクトリが存在しない場合は空のまま返す
@@ -46,14 +50,14 @@ DirectoryData BuildDirectoryData(const std::filesystem::path &directoryPath, boo
 } // namespace
 
 bool IsDirectoryExist(const std::string &directoryPath) {
-    std::filesystem::path dirPath(directoryPath);
+    const std::filesystem::path dirPath = Utf8StringToPath(directoryPath);
     return std::filesystem::exists(dirPath) && std::filesystem::is_directory(dirPath);
 }
 
 bool CreateDirectories(const std::string &directoryPath) {
     if (directoryPath.empty()) return true;
     std::error_code ec;
-    const std::filesystem::path dirPath(directoryPath);
+    const std::filesystem::path dirPath = Utf8StringToPath(directoryPath);
     if (std::filesystem::exists(dirPath, ec)) {
         return std::filesystem::is_directory(dirPath, ec);
     }
@@ -63,7 +67,7 @@ bool CreateDirectories(const std::string &directoryPath) {
 
 bool EnsureParentDirectoryExists(const std::string &filePath) {
     std::error_code ec;
-    const std::filesystem::path parent = std::filesystem::path(filePath).parent_path();
+    const std::filesystem::path parent = Utf8StringToPath(filePath).parent_path();
     if (parent.empty()) return true; // カレントディレクトリ直下
     if (std::filesystem::exists(parent, ec)) return true;
     std::filesystem::create_directories(parent, ec);
@@ -71,7 +75,7 @@ bool EnsureParentDirectoryExists(const std::string &filePath) {
 }
 
 DirectoryData GetDirectoryData(const std::string &directoryPath, bool isRecursive, bool isFullPath) {
-    std::filesystem::path dirPath(directoryPath);
+    const std::filesystem::path dirPath = Utf8StringToPath(directoryPath);
     return BuildDirectoryData(dirPath, isRecursive, isFullPath);
 }
 
@@ -80,7 +84,7 @@ DirectoryData GetDirectoryDataByExtension(const DirectoryData &directoryData, co
     filteredData.directoryName = directoryData.directoryName;
     // ファイルをフィルタリング
     for (const auto &file : directoryData.files) {
-        std::filesystem::path filePath(file);
+        const std::filesystem::path filePath = Utf8StringToPath(file);
         std::string fileExt = filePath.extension().string();
         for (const auto &ext : extensions) {
             if (fileExt == ext) {

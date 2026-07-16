@@ -1,0 +1,14 @@
+images: 5
+{'name': '颜.png', 'mimeType': 'image/png', 'bufferView': 185}
+{'name': '髮1.png', 'mimeType': 'image/png', 'bufferView': 186}
+{'name': '体1.png', 'mimeType': 'image/png', 'bufferView': 187}
+{'name': '肌.png', 'mimeType': 'image/png', 'bufferView': 188}
+{'name': 'spa_h.png', 'mimeType': 'image/png', 'bufferView': 189}
+materials: 23
+{'name': '颜', 'pbrMetallicRoughness': {'baseColorTexture': {'index': 0}, 'metallicFactor': 0, 'roughnessFactor': 0.4}, 'doubleSided': True}
+{'name': '颜2', 'pbrMetallicRoughness': {'baseColorTexture': {'index': 0}, 'metallicFactor': 0, 'roughnessFactor': 0.4}, 'doubleSided': True}
+{'name': '齿', 'pbrMetallicRoughness': {'baseColorTexture': {'index': 0}, 'metallicFactor': 0, 'roughnessFactor': 0.4}, 'doubleSided': True}
+{'name': '口舌', 'pbrMetallicRoughness': {'baseColorTexture': {'index': 0}, 'metallicFactor': 0, 'roughnessFactor': 0.4}, 'doubleSided': True}
+{'name': '二重', 'pbrMetallicRoughness': {'baseColorTexture': {'index': 0}, 'metallicFactor': 0, 'roughnessFactor': 0.4}, 'doubleSided': True}
+asset: {'generator': 'qmuntal/gltf', 'version': '2.0'}
+extensionsUsed: None

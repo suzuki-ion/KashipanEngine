@@ -1,5 +1,9 @@
 ﻿#pragma once
+#include <algorithm>
+#include <cstdio>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
@@ -31,8 +35,8 @@ public:
         auto ptr = std::make_unique<MeshRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
-        ptr->materialName_ = materialName_;
-        ptr->materialHandle_ = materialHandle_;
+        ptr->materialNames_ = materialNames_;
+        ptr->materialHandles_ = materialHandles_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         return ptr;
     }
@@ -76,22 +80,48 @@ public:
     }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
 
-    void SetMaterialName(const std::string &materialName) {
-        materialName_ = materialName;
-        materialHandle_ = MaterialManager::kInvalidHandle;
-        MarkDrawListDirty();
-    }
+    void SetMaterialName(const std::string &materialName) { SetMaterialNameAt(0, materialName); }
     void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) {
-        materialHandle_ = materialHandle;
+        materialHandles_[0] = materialHandle;
         MarkDrawListDirty();
     }
-    const std::string &GetMaterialName() const noexcept { return materialName_; }
+    const std::string &GetMaterialName() const noexcept { return materialNames_.front(); }
     /// @brief マテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
-    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept {
-        if (materialHandle_ == MaterialManager::kInvalidHandle && !materialName_.empty()) {
-            materialHandle_ = MaterialManager::GetMaterialHandleFromName(materialName_);
+    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept { return GetMaterialHandleAt(0); }
+
+    //==================================================
+    // マテリアルスロット（サブメッシュごとのマテリアル。Unityと同様スロットi＝サブメッシュi）
+    //==================================================
+
+    /// @brief マテリアルスロット数を取得（常に1以上）
+    size_t GetMaterialSlotCount() const noexcept { return materialNames_.size(); }
+    /// @brief マテリアルスロット数を変更する（追加分は最後のスロットと同じマテリアルで埋める）
+    void SetMaterialSlotCount(size_t count) {
+        if (count < 1) count = 1;
+        if (count == materialNames_.size()) return;
+        materialNames_.resize(count, materialNames_.back());
+        materialHandles_.resize(count, MaterialManager::kInvalidHandle);
+        MarkDrawListDirty();
+    }
+    /// @brief 指定スロットのマテリアル名を設定する（スロットが足りない場合は拡張される）
+    void SetMaterialNameAt(size_t slot, const std::string &materialName) {
+        if (slot >= materialNames_.size()) SetMaterialSlotCount(slot + 1);
+        materialNames_[slot] = materialName;
+        materialHandles_[slot] = MaterialManager::kInvalidHandle;
+        MarkDrawListDirty();
+    }
+    /// @brief 指定スロットのマテリアル名を取得する（範囲外は最後のスロットを返す）
+    const std::string &GetMaterialNameAt(size_t slot) const noexcept {
+        return materialNames_[std::min(slot, materialNames_.size() - 1)];
+    }
+    /// @brief 指定スロットのマテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
+    /// @details スロット数を超えるサブメッシュは最後のスロットのマテリアルで描画される（Unityと同様）
+    MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept {
+        const size_t index = std::min(slot, materialNames_.size() - 1);
+        if (materialHandles_[index] == MaterialManager::kInvalidHandle && !materialNames_[index].empty()) {
+            materialHandles_[index] = MaterialManager::GetMaterialHandleFromName(materialNames_[index]);
         }
-        return materialHandle_;
+        return materialHandles_[index];
     }
 
     //==================================================
@@ -147,20 +177,37 @@ protected:
         for (const auto &entry : materialEntries) {
             materialNames.push_back(entry.material.name);
         }
-        if (ImGuiCustom::SelectString("Material", materialName_, materialNames)) {
-            materialHandle_ = MaterialManager::kInvalidHandle;
-            MarkDrawListDirty();
+
+        // マテリアルスロット（メッシュのサブメッシュ数に合わせて表示する）
+        const auto meshHandle = GetMeshHandle();
+        if (meshHandle != ModelManager::kInvalidHandle) {
+            const size_t subMeshCount = std::max<size_t>(1, ModelManager::GetModelData(meshHandle).GetSubMeshes().size());
+            if (materialNames_.size() != subMeshCount) SetMaterialSlotCount(subMeshCount);
         }
-        // Assetsウィンドウからのマテリアルファイルドラッグ&ドロップも受け付ける
-        if (std::string droppedPath; AcceptAssetDragDropTarget(kMaterialAssetDragDropType, droppedPath)) {
-            for (const auto &entry : materialEntries) {
-                if (entry.assetPath == droppedPath) {
-                    materialName_ = entry.material.name;
-                    materialHandle_ = MaterialManager::kInvalidHandle;
-                    MarkDrawListDirty();
-                    break;
+        for (size_t i = 0; i < materialNames_.size(); ++i) {
+            ImGui::PushID(static_cast<int>(i));
+            char label[32];
+            if (materialNames_.size() == 1) {
+                std::snprintf(label, sizeof(label), "Material");
+            } else {
+                std::snprintf(label, sizeof(label), "Material %zu", i);
+            }
+            if (ImGuiCustom::SelectString(label, materialNames_[i], materialNames)) {
+                materialHandles_[i] = MaterialManager::kInvalidHandle;
+                MarkDrawListDirty();
+            }
+            // Assetsウィンドウからのマテリアルファイルドラッグ&ドロップも受け付ける
+            if (std::string droppedPath; AcceptAssetDragDropTarget(kMaterialAssetDragDropType, droppedPath)) {
+                for (const auto &entry : materialEntries) {
+                    if (entry.assetPath == droppedPath) {
+                        materialNames_[i] = entry.material.name;
+                        materialHandles_[i] = MaterialManager::kInvalidHandle;
+                        MarkDrawListDirty();
+                        break;
+                    }
                 }
             }
+            ImGui::PopID();
         }
     }
 #endif
@@ -169,7 +216,9 @@ protected:
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
-        json["materialName"] = materialName_;
+        // 後方互換のため単一の"materialName"（スロット0）も併記する
+        json["materialName"] = materialNames_.front();
+        json["materialNames"] = materialNames_;
         for (const auto &name : excludedRenderTargetNames_) {
             json["excludedRenderTargetNames"].push_back(name);
         }
@@ -183,8 +232,13 @@ protected:
             targetObjectID_ = UUID128();
         }
         pipelineName_ = json.value("pipelineName", std::string{ "Object3D.Solid.BlendNormal" });
-        materialName_ = json.value("materialName", std::string{ "Default" });
-        materialHandle_ = MaterialManager::kInvalidHandle;
+        if (json.contains("materialNames") && json["materialNames"].is_array() && !json["materialNames"].empty()) {
+            materialNames_ = json["materialNames"].get<std::vector<std::string>>();
+        } else {
+            // 旧形式（単一の"materialName"）との後方互換
+            materialNames_ = { json.value("materialName", std::string{ "Default" }) };
+        }
+        materialHandles_.assign(materialNames_.size(), MaterialManager::kInvalidHandle);
         excludedRenderTargetNames_.clear();
         for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
             excludedRenderTargetNames_.insert(name);
@@ -216,8 +270,10 @@ private:
 
     UUID128 targetObjectID_{};
     std::string pipelineName_ = "Object3D.Solid.BlendNormal";
-    std::string materialName_ = "Default";
-    mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
+    /// @brief マテリアルスロット（サブメッシュごとのマテリアル名。常に1要素以上）
+    std::vector<std::string> materialNames_{ "Default" };
+    /// @brief materialNames_と対応するハンドルのキャッシュ（未解決はkInvalidHandle）
+    mutable std::vector<MaterialManager::MaterialHandle> materialHandles_{ MaterialManager::kInvalidHandle };
     /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合
     std::unordered_set<std::string> excludedRenderTargetNames_;
 };

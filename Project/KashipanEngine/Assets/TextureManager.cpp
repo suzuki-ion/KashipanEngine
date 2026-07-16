@@ -85,15 +85,57 @@ bool HasSupportedImageExtension(const std::filesystem::path& p) {
 }
 
 std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
+}
+
+/// @brief 現在アクティブなTextureManagerインスタンス（ModelManager等からのテクスチャ登録用）
+TextureManager* sActiveInstance = nullptr;
+
+/// @brief デコード直後の画像を目的フォーマットへ変換し、ミップチェインを生成する
+/// @details ディスク読み込み（LoadTextureFromFile）・メモリ読み込み（LoadTextureFromMemory）の
+///          両方から共有される後処理
+DirectX::ScratchImage ConvertAndGenerateMips(DirectX::ScratchImage scratch, const DirectX::TexMetadata& meta, DXGI_FORMAT dstFormat) {
+    DirectX::ScratchImage converted;
+    if (meta.format != dstFormat) {
+        const HRESULT hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
+        if (FAILED(hr)) return DirectX::ScratchImage();
+    }
+    DirectX::ScratchImage finalImage = (meta.format == dstFormat) ? std::move(scratch) : std::move(converted);
+
+    // ミップマップ生成
+    DirectX::ScratchImage mipChain;
+    if (DirectX::IsCompressed(finalImage.GetMetadata().format)) {
+        // 圧縮形式の場合はミップマップ生成をスキップ
+        mipChain = std::move(finalImage);
+    } else {
+        HRESULT hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
+        if (FAILED(hr)) {
+            // ミップマップ生成に失敗した場合は元画像をそのまま使う
+            const DirectX::Image *baseImg = finalImage.GetImages();
+            if (!baseImg || !baseImg->pixels) {
+                return DirectX::ScratchImage();
+            }
+            hr = mipChain.InitializeFromImage(*baseImg);
+            if (FAILED(hr)) {
+                return DirectX::ScratchImage();
+            }
+        }
+    }
+
+    const DirectX::Image* img0 = mipChain.GetImages();
+    if (!img0 || !img0->pixels) {
+        return DirectX::ScratchImage();
+    }
+
+    return mipChain;
 }
 
 Handle RegisterEntry(TextureEntry&& entry) {
@@ -211,16 +253,22 @@ TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon
         sDevice = directXCommon_->GetDeviceForTextureManager(Passkey<TextureManager>{});
         sSrvHeap = directXCommon_->GetSRVHeapForTextureManager(Passkey<TextureManager>{});
     }
+    sActiveInstance = this;
     LoadAllFromAssetsFolder();
 }
 
 TextureManager::~TextureManager() {
     LogScope scope;
+    if (sActiveInstance == this) sActiveInstance = nullptr;
     sTextures.clear();
     sFileNameToHandle.clear();
     sAssetPathToHandle.clear();
     sSrvHeap = nullptr;
     sDevice = nullptr;
+}
+
+TextureManager* TextureManager::GetActiveInstance(Passkey<ModelManager>) {
+    return sActiveInstance;
 }
 
 void TextureManager::LoadAllFromAssetsFolder() {
@@ -269,7 +317,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         Log(Translation("engine.texture.loading.failed.loadfile") + filePath, LogSeverity::Error);
         return kInvalidHandle;
 	}
-    std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
 
 	// メタデータからテクスチャ情報を取得
     const auto &mmeta = mipChain->GetMetadata();
@@ -278,9 +326,9 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     const DirectX::Image* img0 = mipChain->GetImages();
 
     TextureEntry entry{};
-    entry.fullPath = NormalizePathSlashes(p.string());
+    entry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
     entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
-    entry.fileName = p.filename().string();
+    entry.fileName = PathToUtf8String(p.filename());
     entry.width = static_cast<UINT>(img0->width);
     entry.height = static_cast<UINT>(img0->height);
     entry.format = mmeta.format;
@@ -350,7 +398,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     {
         auto *desc = entry.texture->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});
         if (!desc) {
-            Log(Translation("engine.texture.loading.failed.createresource") + p.string(), LogSeverity::Error);
+            Log(Translation("engine.texture.loading.failed.createresource") + PathToUtf8String(p), LogSeverity::Error);
             return kInvalidHandle;
         }
         entry.srvGpuPtr = desc->gpuHandle.ptr;
@@ -433,7 +481,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         nullptr,
         IID_PPV_ARGS(entry.upload.GetAddressOf()));
     if (FAILED(hr)) {
-        Log(Translation("engine.texture.loading.failed.createupload") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.texture.loading.failed.createupload") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
@@ -443,7 +491,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         D3D12_RANGE range{ 0, 0 };
         hr = entry.upload->Map(0, &range, &mapped);
         if (FAILED(hr) || !mapped) {
-            Log(Translation("engine.texture.loading.failed.map") + p.string(), LogSeverity::Error);
+            Log(Translation("engine.texture.loading.failed.map") + PathToUtf8String(p), LogSeverity::Error);
             return kInvalidHandle;
         }
         uint8_t* dstAll = static_cast<uint8_t*>(mapped);
@@ -496,11 +544,11 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidHandle) {
-        Log(Translation("engine.texture.loading.failed.register") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.texture.loading.failed.register") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
-    Log(Translation("engine.texture.loading.succeeded") + p.string(), LogSeverity::Info);
+    Log(Translation("engine.texture.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
 
@@ -519,26 +567,26 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         }
     }
 
-    std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
 
     if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.texture.loading.failed.notfound") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.texture.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
     if (!HasSupportedImageExtension(p)) {
-        Log(Translation("engine.texture.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.texture.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
 
     if (!directXCommon_ || !sDevice || !sSrvHeap) {
-        Log(Translation("engine.texture.loading.failed.notinitialized") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.texture.loading.failed.notinitialized") + PathToUtf8String(p), LogSeverity::Error);
         return DirectX::ScratchImage();
     }
 
     DirectX::TexMetadata meta{};
     DirectX::ScratchImage scratch;
 
-    const std::wstring wpath = ConvertString(p.string());
+    const std::wstring wpath = ConvertString(PathToUtf8String(p));
 
     HRESULT hr = E_FAIL;
     const std::string ext = ToLower(p.extension().string());
@@ -552,11 +600,10 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         hr = DirectX::LoadFromWICFile(wpath.c_str(), DirectX::WIC_FLAGS_FORCE_RGB, &meta, scratch);
     }
     if (FAILED(hr)) {
-        Log(Translation("engine.texture.loading.failed.decode") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.texture.loading.failed.decode") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
 
-    DirectX::ScratchImage converted;
     DXGI_FORMAT dstFormat;
     if (ext == ".hdr" || ext == ".tga") {
         dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -569,38 +616,37 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     }
 
-    if (meta.format != dstFormat) {
-        hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
-        if (FAILED(hr)) return DirectX::ScratchImage();
-    }
-    DirectX::ScratchImage finalImage = (meta.format == dstFormat) ? std::move(scratch) : std::move(converted);
+    return ConvertAndGenerateMips(std::move(scratch), meta, dstFormat);
+}
 
-    // ミップマップ生成
-    DirectX::ScratchImage mipChain;
-    if (DirectX::IsCompressed(finalImage.GetMetadata().format)) {
-        // 圧縮形式の場合はミップマップ生成をスキップ
-        mipChain = std::move(finalImage);
-    } else {
-        hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
-        if (FAILED(hr)) {
-            // ミップマップ生成に失敗した場合は元画像をそのまま使う
-            const DirectX::Image *baseImg = finalImage.GetImages();
-            if (!baseImg || !baseImg->pixels) {
-                return DirectX::ScratchImage();
-            }
-            hr = mipChain.InitializeFromImage(*baseImg);
-            if (FAILED(hr)) {
-                return DirectX::ScratchImage();
-            }
-        }
-    }
+DirectX::ScratchImage TextureManager::LoadTextureFromMemory(const void* data, size_t dataSize) {
+    if (!data || dataSize == 0) return DirectX::ScratchImage();
+    if (!directXCommon_ || !sDevice || !sSrvHeap) return DirectX::ScratchImage();
 
-    const DirectX::Image* img0 = mipChain.GetImages();
-    if (!img0 || !img0->pixels) {
+    DirectX::TexMetadata meta{};
+    DirectX::ScratchImage scratch;
+    // glTF等の埋め込みテクスチャは常にWICが認識できる圧縮形式（PNG/JPEG）のため、
+    // ファイル拡張子を問わずWICメモリデコードのみで対応する
+    HRESULT hr = DirectX::LoadFromWICMemory(static_cast<const uint8_t*>(data), dataSize, DirectX::WIC_FLAGS_FORCE_RGB, &meta, scratch);
+    if (FAILED(hr)) {
+        Log(Translation("engine.texture.loading.failed.decode") + std::string("(memory)"), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
 
-    return mipChain;
+    return ConvertAndGenerateMips(std::move(scratch), meta, DXGI_FORMAT_R8G8B8A8_UNORM);
+}
+
+TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const std::string& registerPath, const void* data, size_t dataSize) {
+    if (registerPath.empty()) return kInvalidHandle;
+
+    const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(assetsRootPath_, registerPath));
+    if (existing != kInvalidHandle) return existing;
+
+    DirectX::ScratchImage mipChain = LoadTextureFromMemory(data, dataSize);
+    if (mipChain.GetImageCount() == 0) return kInvalidHandle;
+
+    mipMapContainer_.AddMipMap(registerPath, std::move(mipChain));
+    return LoadTexture(registerPath);
 }
 
 TextureManager::TextureHandle TextureManager::GetTexture(TextureHandle handle) {
@@ -655,7 +701,7 @@ bool TextureManager::RenameTexture(const std::string &oldAssetPath, const std::s
 
     const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
-    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
     entry.fullPath = "Assets/" + normalizedNew;
 
     sAssetPathToHandle[normalizedNew] = handle;

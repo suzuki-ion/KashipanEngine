@@ -45,7 +45,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 11
+                            "meshAssetPath": "PrimitiveMesh-Triangle2D"
                         },
                         "isActive": true,
                         "priority": 1,
@@ -60,6 +60,9 @@
                                 "ScreenBuffer_6"
                             ],
                             "materialName": "ScreenBuffer2Mat",
+                            "materialNames": [
+                                "ScreenBuffer2Mat"
+                            ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
@@ -108,7 +111,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 14
+                            "meshAssetPath": "PrimitiveMesh-Circle-YZ"
                         },
                         "isActive": true,
                         "priority": 1,
@@ -140,6 +143,9 @@
                     "data": {
                         "customData": {
                             "materialName": "ScreenBuffer2Mat",
+                            "materialNames": [
+                                "ScreenBuffer2Mat"
+                            ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
@@ -674,7 +680,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 7
+                            "meshAssetPath": "PrimitiveMesh-Box"
                         },
                         "isActive": true,
                         "priority": 1,
@@ -686,6 +692,9 @@
                     "data": {
                         "customData": {
                             "materialName": "Default",
+                            "materialNames": [
+                                "Default"
+                            ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": ""
                         },
@@ -735,7 +744,7 @@
                         "customData": {
                             "height": 720,
                             "isShowViewer": true,
-                            "name": "ScreenBuffer_1",
+                            "name": "ScreenBuffer_1_1",
                             "width": 1280
                         },
                         "isActive": true,
@@ -955,7 +964,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshHandle": 6
+                            "meshAssetPath": "PrimitiveMesh-Rect2D"
                         },
                         "isActive": true,
                         "priority": 1,

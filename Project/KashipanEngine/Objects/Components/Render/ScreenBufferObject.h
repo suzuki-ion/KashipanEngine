@@ -5,6 +5,7 @@
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Scene/RenderTargetCarryOverRegistry.h"
 
 namespace KashipanEngine {
 
@@ -51,8 +52,11 @@ protected:
         }
     }
     void Finalize() override {
+        // シーン切り替え中は即座に破棄せず、次のシーンの同名コンポーネントへの
+        // 引き継ぎ候補として預ける（切り替え中でなければ登録側が即座に破棄する）
         if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
-            buffer_->DestroyNotify();
+            RenderTargetCarryOverRegistry::Deposit(RenderTargetCarryOverRegistry::Kind::ScreenBuffer, name_, buffer_,
+                [b = buffer_] { if (ScreenBuffer::IsExist(b)) b->DestroyNotify(); });
         }
         buffer_ = nullptr;
     }
@@ -123,6 +127,25 @@ protected:
         const std::uint32_t loadedWidth = json.value("width", 1280u);
         const std::uint32_t loadedHeight = json.value("height", 720u);
         isShowViewer_ = json.value("isShowViewer", false);
+
+        // シーン切り替え中、前のシーンで同名のScreenBufferObjectが使用していたバッファが
+        // 引き継ぎプールに残っていれば、新規作成せずそちらを再利用する
+        if (!loadedName.empty()) {
+            if (auto *carried = static_cast<ScreenBuffer *>(
+                    RenderTargetCarryOverRegistry::Claim(RenderTargetCarryOverRegistry::Kind::ScreenBuffer, loadedName))) {
+                if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
+                    buffer_->DestroyNotify();
+                }
+                buffer_ = carried;
+                if (buffer_->GetWidth() != loadedWidth || buffer_->GetHeight() != loadedHeight) {
+                    buffer_->Resize(loadedWidth, loadedHeight);
+                }
+                name_ = buffer_->GetRenderTargetName();
+                width_ = loadedWidth;
+                height_ = loadedHeight;
+                return true;
+            }
+        }
 
         // AddComponent() の時点で Initialize() が先に呼ばれ、
         // この関数が読み込むより前にデフォルト値（空の名前・既定サイズ）で

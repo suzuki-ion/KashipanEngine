@@ -1,5 +1,6 @@
 #include "Scene/SceneManager.h"
 #include "Debug/Logger.h"
+#include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Utilities/FileIO/JSON.h"
 
 #include <algorithm>
@@ -132,6 +133,10 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         return false;
     }
 
+    // 描画先コンポーネント（ScreenBufferObject/NormalWindowObject等）が、
+    // 破棄されるバッファ/ウィンドウを次のシーンの同名コンポーネントへ引き継げるようにする
+    RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<SceneManager>{});
+
     // 変更前のシーンを終了処理して破棄する
     if (currentScene_) {
         currentScene_->FinalizeInterface(Passkey<SceneManager>());
@@ -160,6 +165,9 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         currentScene_->SetSceneManager(Passkey<SceneManager>(), this);
         currentScene_->InitializeInterface(Passkey<SceneManager>());
     }
+
+    // 新しいシーン側で引き取られなかった描画先リソースをここで実際に破棄する
+    RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>{});
 
     pendingSceneName_.clear();
     return true;

@@ -16,11 +16,18 @@
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/SceneEditorContext.h"
 #include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
 
 namespace KashipanEngine {
 
 namespace {
+/// @brief パス区切り文字をすべて '/' へ統一する
+std::string NormalizePathSlashes(std::string s) {
+    std::replace(s.begin(), s.end(), '\\', '/');
+    return s;
+}
+
 /// @brief 実行ディレクトリ("."）からの相対パスを、TextureManagerが管理する
 ///        Assetsルートからの相対パスへ変換する（先頭の "Assets/" を取り除く）
 std::string ToAssetsRelativePath(const std::string &cwdRelativePath) {
@@ -164,15 +171,15 @@ void AssetsWindow::RefreshFolderTree() {
 
 void AssetsWindow::BuildFolderNode(FolderNode &node) {
     std::error_code ec;
-    const std::filesystem::path base = node.path.empty() ? "." : node.path;
+    const std::filesystem::path base = node.path.empty() ? std::filesystem::path(".") : Utf8StringToPath(node.path);
     for (const auto &entry : std::filesystem::directory_iterator(base, ec)) {
         if (!entry.is_directory()) continue;
-        const std::string name = entry.path().filename().string();
+        const std::string name = PathToUtf8String(entry.path().filename());
         // 隠しフォルダは表示しない
         if (!name.empty() && name.front() == '.') continue;
         auto child = std::make_unique<FolderNode>();
         child->name = name;
-        child->path = entry.path().lexically_relative(".").generic_string();
+        child->path = NormalizePathSlashes(PathToUtf8String(entry.path().lexically_relative(".")));
         BuildFolderNode(*child);
         node.children.push_back(std::move(child));
     }
@@ -183,12 +190,12 @@ void AssetsWindow::BuildFolderNode(FolderNode &node) {
 void AssetsWindow::RefreshFileList() {
     files_.clear();
     std::error_code ec;
-    const std::filesystem::path base = currentFolder_.empty() ? "." : currentFolder_;
+    const std::filesystem::path base = currentFolder_.empty() ? std::filesystem::path(".") : Utf8StringToPath(currentFolder_);
     for (const auto &entry : std::filesystem::directory_iterator(base, ec)) {
         FileEntry file;
-        file.name = entry.path().filename().string();
+        file.name = PathToUtf8String(entry.path().filename());
         if (!file.name.empty() && file.name.front() == '.') continue;
-        file.path = entry.path().lexically_relative(".").generic_string();
+        file.path = NormalizePathSlashes(PathToUtf8String(entry.path().lexically_relative(".")));
         if (entry.is_directory()) {
             file.isFolder = true;
         } else {
@@ -436,7 +443,7 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
     // 既存ファイルと重複しない名前を付ける（Unityの複製と同様に連番を付与する）
     const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
     std::string filePath = folder + baseName + PrefabUtility::kPrefabExtension;
-    for (int suffix = 1; std::filesystem::exists(filePath); ++suffix) {
+    for (int suffix = 1; std::filesystem::exists(Utf8StringToPath(filePath)); ++suffix) {
         filePath = folder + baseName + "_" + std::to_string(suffix) + PrefabUtility::kPrefabExtension;
     }
 
@@ -456,7 +463,7 @@ bool AssetsWindow::ShowCreateFileModal() {
         ImGui::InputText("File Name", &newFileName_);
         const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
         const std::string fullPath = folder + newFileName_ + createFileExtension_;
-        const bool alreadyExists = !newFileName_.empty() && std::filesystem::exists(fullPath);
+        const bool alreadyExists = !newFileName_.empty() && std::filesystem::exists(Utf8StringToPath(fullPath));
         if (alreadyExists) {
             ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A file with this name already exists.");
         }
@@ -497,15 +504,15 @@ void AssetsWindow::ShowRenameModal() {
         ImGui::InputText("New Name", &renameBuffer_);
         ImGui::BeginDisabled(renameBuffer_.empty());
         if (ImGui::Button("Rename", ImVec2(120, 0))) {
-            const std::filesystem::path oldPath = contextMenuTargetPath_;
-            const std::filesystem::path newPath = oldPath.parent_path() / renameBuffer_;
+            const std::filesystem::path oldPath = Utf8StringToPath(contextMenuTargetPath_);
+            const std::filesystem::path newPath = oldPath.parent_path() / Utf8StringToPath(renameBuffer_);
             std::error_code ec;
             std::filesystem::rename(oldPath, newPath, ec);
             if (!ec) {
                 // 実ファイルのリネームに成功したら、対応するマネージャーの登録名/パスも追従させる
                 // （リネーム前に既に読み込まれていなかった場合は各RenameXxxは何もせずfalseを返すだけ）
-                const std::string oldAssetPath = ToAssetsRelativePath(oldPath.lexically_relative(".").generic_string());
-                const std::string newAssetPath = ToAssetsRelativePath(newPath.lexically_relative(".").generic_string());
+                const std::string oldAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(oldPath.lexically_relative("."))));
+                const std::string newAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative("."))));
                 const std::string ext = ToLowerExtension(newPath);
                 if (IsTextureExtension(ext)) {
                     TextureManager::RenameTexture(oldAssetPath, newAssetPath);
@@ -542,7 +549,7 @@ void AssetsWindow::ShowDeleteConfirmModal() {
         ImGui::TextUnformatted("This action cannot be undone.");
         if (ImGui::Button("Delete", ImVec2(120, 0))) {
             std::error_code ec;
-            std::filesystem::remove(contextMenuTargetPath_, ec);
+            std::filesystem::remove(Utf8StringToPath(contextMenuTargetPath_), ec);
             RefreshFileList();
             ImGui::CloseCurrentPopup();
         }

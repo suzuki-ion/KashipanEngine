@@ -3,6 +3,7 @@
 
 #include "Debug/Logger.h"
 #include "Utilities/Translation.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/AssetDragDropPayload.h"
@@ -52,15 +53,15 @@ bool HasSupportedMaterialExtension(const std::filesystem::path& p) {
 }
 
 std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
 }
 
 bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material& outMaterial) {
@@ -72,7 +73,7 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
         if (json.contains("name") && json["name"].is_string()) {
             outMaterial.name = FromJSON<std::string>(json["name"]);
         } else {
-            outMaterial.name = std::filesystem::path(filePath).stem().string();
+            outMaterial.name = PathToUtf8String(Utf8StringToPath(filePath).stem());
         }
 
         // 色
@@ -186,18 +187,18 @@ MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string&
     LogScope scope;
     if (filePath.empty()) return kInvalidHandle;
 
-    const std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
     if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.material.loading.failed.notfound") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.material.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
     if (!HasSupportedMaterialExtension(p)) {
-        Log(Translation("engine.material.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.material.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
-    const std::string full = NormalizePathSlashes(p.string());
+    const std::string full = NormalizePathSlashes(PathToUtf8String(p));
     const std::string asset = MakeAssetRelativePath(sAssetsRootPath, full);
 
     // 既に読み込み済みかチェック
@@ -209,21 +210,21 @@ MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string&
     MaterialEntry entry{};
     entry.fullPath = full;
     entry.assetPath = asset;
-    entry.fileName = p.filename().string();
+    entry.fileName = PathToUtf8String(p.filename());
     entry.material = Material{};
 
     if (!LoadMaterialFromJSON(full, entry.material)) {
-        Log(Translation("engine.material.loading.failed.parse") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.material.loading.failed.parse") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidHandle) {
-        Log(Translation("engine.material.loading.failed.register") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.material.loading.failed.register") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
-    Log(Translation("engine.material.loading.succeeded") + p.string(), LogSeverity::Info);
+    Log(Translation("engine.material.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
 
@@ -260,14 +261,14 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     json["enableShadowMapProjection"] = material.enableShadowMapProjection;
 
     std::error_code ec;
-    std::filesystem::create_directories(std::filesystem::path(savePath).parent_path(), ec);
+    std::filesystem::create_directories(Utf8StringToPath(savePath).parent_path(), ec);
     SaveJSON(json, savePath);
 
     // 保存先が変わった場合はエントリ情報を更新する
     if (it->second.fullPath != savePath) {
         it->second.fullPath = savePath;
         it->second.assetPath = MakeAssetRelativePath(sAssetsRootPath, savePath);
-        it->second.fileName = std::filesystem::path(savePath).filename().string();
+        it->second.fileName = PathToUtf8String(Utf8StringToPath(savePath).filename());
     }
     return true;
 }
@@ -318,7 +319,7 @@ bool MaterialManager::RenameMaterialFile(const std::string &oldAssetPath, const 
 
     const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
-    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
     entry.fullPath = sAssetsRootPath + "/" + normalizedNew;
 
     sFileNameToHandle[entry.fileName] = entryIt->first;
@@ -342,7 +343,7 @@ MaterialHandle MaterialManager::RegisterMaterial(const std::string &name, const 
     MaterialEntry entry{};
     entry.fullPath = NormalizePathSlashes(filePath);
     entry.assetPath = MakeAssetRelativePath(sAssetsRootPath, entry.fullPath);
-    entry.fileName = std::filesystem::path(filePath).filename().string();
+    entry.fileName = PathToUtf8String(Utf8StringToPath(filePath).filename());
     entry.material = material;
     return RegisterEntry(std::move(entry));
 }

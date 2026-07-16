@@ -14,6 +14,7 @@ namespace KashipanEngine {
 class GameEngine;
 class DirectXCommon;
 class ShaderVariableBinder;
+class ModelManager;
 
 /// @brief テクスチャ管理クラス
 class TextureManager final {
@@ -75,6 +76,21 @@ public:
 	/// @brief 指定ファイルパスのテクスチャを読み込む（Assets ルートからの相対 or フルパス）
 	/// @return 読み込んだテクスチャの `ScratchImage`（失敗時は空の `ScratchImage`）
 	DirectX::ScratchImage LoadTextureFromFile(const std::string& filePath);
+
+    /// @brief メモリ上の画像データ（PNG/JPEG等、WICが認識できる形式）をデコードする
+    /// @details glTF等、モデルファイル内部に埋め込まれたテクスチャ（bufferView参照）用
+    /// @return デコードされたミップチェイン（失敗時は空の `ScratchImage`）
+    DirectX::ScratchImage LoadTextureFromMemory(const void *data, size_t dataSize);
+
+    /// @brief メモリ上の画像データからテクスチャを読み込み登録する
+    /// @param registerPath 管理用の仮想パス（実ファイルは存在しない。例: "モデルのアセットパス:埋め込み画像名"）
+    /// @return 登録したテクスチャのハンドル（失敗時は `kInvalidHandle`。同じregisterPathで登録済みの場合は既存のハンドルを返す）
+    TextureHandle RegisterTextureFromMemory(const std::string &registerPath, const void *data, size_t dataSize);
+
+    /// @brief 現在アクティブなTextureManagerインスタンスを取得する
+    /// @details ModelManager等、他のManagerからのテクスチャ登録用。
+    ///          エンジン実行中は常に唯一のTextureManagerが動いている前提。
+    static TextureManager *GetActiveInstance(Passkey<ModelManager>);
 
     /// @brief ハンドルからテクスチャ(SRV index)を取得
     static TextureHandle GetTexture(TextureHandle handle);

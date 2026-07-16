@@ -61,10 +61,7 @@ protected:
         }
     }
     void Finalize() override {
-        if (window_ && Window::IsExist(window_)) {
-            window_->DestroyNotify();
-        }
-        window_ = nullptr;
+        DepositWindowForCarryOver(RenderTargetCarryOverRegistry::Kind::OverlayWindow);
     }
 
 #if defined(USE_IMGUI)
@@ -91,6 +88,13 @@ protected:
         title_ = json.value("title", std::string{ "Overlay Window" });
         width_ = json.value("width", 1280u);
         height_ = json.value("height", 720u);
+        // 前のシーンから引き継がれたウィンドウがあればそちらを使う。
+        // 無い場合はInitializeで生成済みの既定ウィンドウのタイトルを実際の設定値へ合わせる
+        if (!TryClaimCarriedOverWindow(RenderTargetCarryOverRegistry::Kind::OverlayWindow)) {
+            if (window_ && Window::IsExist(window_)) {
+                window_->SetWindowTitle(title_);
+            }
+        }
         LoadInterceptedMessagesJson(json.value("interceptedMessages", JSON::array()));
         return true;
     }

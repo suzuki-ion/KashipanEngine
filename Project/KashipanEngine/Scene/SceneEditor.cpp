@@ -16,11 +16,13 @@
 #include "Scene/Editor/SceneComponentInspector.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneEditorView.h"
+#include "Scene/Editor/SceneListEditor.h"
 #include "Scene/Editor/SceneLoder.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
 #include "Scene/Editor/SceneObjectInspector.h"
 #include "Scene/Editor/SceneSaver.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
+#include "Scene/SceneBackupPath.h"
 #include "Utilities/FileIO.h"
 #include "Utilities/TemplateLiteral.h"
 #include "Utilities/TimeUtils.h"
@@ -61,9 +63,10 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     componentInspector_ = std::make_unique<SceneComponentInspector>(Passkey<SceneEditor>{}, context_);
     variablesMenu_ = std::make_unique<SceneVariablesMenu>(Passkey<SceneEditor>{}, context_);
     sceneView_ = std::make_unique<SceneEditorView>(Passkey<SceneEditor>{}, context_);
-    assetsWindow_ = std::make_unique<AssetsWindow>(Passkey<SceneEditor>{});
+    assetsWindow_ = std::make_unique<AssetsWindow>(Passkey<SceneEditor>{}, context_);
     saver_ = std::make_unique<SceneSaver>(Passkey<SceneEditor>{}, context_);
     loader_ = std::make_unique<SceneLoader>(Passkey<SceneEditor>{}, context_);
+    sceneListEditor_ = std::make_unique<SceneListEditor>(Passkey<SceneEditor>{}, context_);
 
     objectHierarchy_->SetCommands(commands_.get());
     objectInspector_->SetCommands(commands_.get());
@@ -75,6 +78,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowComponentInspector_ = EditorSettings::GetBool("sceneEditor.showComponentInspector", true);
     isShowVariablesMenu_ = EditorSettings::GetBool("sceneEditor.showVariablesMenu", true);
     isShowAssets_ = EditorSettings::GetBool("sceneEditor.showAssets", true);
+    isShowSceneList_ = EditorSettings::GetBool("sceneEditor.showSceneList", false);
 
     isShowLoadedTexturesWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedTextures", false);
     isShowLoadedModelsWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedModels", false);
@@ -128,6 +132,7 @@ void SceneEditor::ShowImGui() {
     if (isShowVariablesMenu_) variablesMenu_->ShowImGui();
     if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObjects(), commands_.get(), objectHierarchy_.get());
     if (isShowAssets_) assetsWindow_->ShowImGui();
+    if (isShowSceneList_) sceneListEditor_->ShowImGui();
 
     //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
     if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
@@ -194,6 +199,9 @@ void SceneEditor::ShowMainWindow() {
             }
             if (ImGui::MenuItem("Assets", nullptr, &isShowAssets_)) {
                 EditorSettings::SetBool("sceneEditor.showAssets", isShowAssets_);
+            }
+            if (ImGui::MenuItem("Scene List", nullptr, &isShowSceneList_)) {
+                EditorSettings::SetBool("sceneEditor.showSceneList", isShowSceneList_);
             }
             ImGui::EndMenu();
         }
@@ -362,7 +370,7 @@ void SceneEditor::HandleAutoSave() {
     autoSaveElapsedTime_ = 0.0f;
 
     const std::string fileName = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
-    const std::string filePath = "Assets/KashipanEngine/LastSceneBackup/" + fileName;
+    const std::string filePath = kSceneBackupDirectory + fileName;
     SaveJSON(context_->SaveSceneToJSON(), filePath);
 }
 
@@ -381,7 +389,7 @@ void SceneEditor::ShowAutoSaveSettingsModal() {
         ImGui::TextDisabled("Placeholders: ${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}");
 
         const std::string preview = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
-        ImGui::Text("Preview: Assets/KashipanEngine/LastSceneBackup/%s", preview.c_str());
+        ImGui::Text("Preview: %s%s", kSceneBackupDirectory, preview.c_str());
 
         if (ImGui::Button("Close", ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();

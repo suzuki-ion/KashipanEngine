@@ -2,6 +2,7 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include <filesystem>
+#include "Scene/SceneBackupPath.h"
 #include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
@@ -52,7 +53,7 @@ void SceneLoader::RefreshFileList() {
     sceneFiles_.clear();
     static const char *kSearchFolders[] = {
         "Assets/Scenes",
-        "Assets/KashipanEngine/LastSceneBackup",
+        kSceneBackupDirectory,
     };
     for (const auto *folder : kSearchFolders) {
         std::error_code ec;

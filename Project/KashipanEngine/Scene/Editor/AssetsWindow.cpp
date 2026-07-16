@@ -11,6 +11,10 @@
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
+#include "Objects/EmptyObject.h"
+#include "Scene/Editor/PrefabUtility.h"
+#include "Scene/Editor/SceneObjectPayload.h"
+#include "Scene/SceneEditorContext.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/FileIO/JSON.h"
 
@@ -49,7 +53,8 @@ bool IsModelExtension(const std::string &ext) {
 }
 } // namespace
 
-AssetsWindow::AssetsWindow(Passkey<SceneEditor>) {
+AssetsWindow::AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext)
+    : editorContext_(editorContext) {
     RefreshFolderTree();
 }
 
@@ -80,6 +85,16 @@ void AssetsWindow::ShowImGui() {
     ShowFileGrid();
     ImGui::EndChild();
 
+    // ヒエラルキーからオブジェクトをD&Dすると、現在開いているフォルダへ.prefabファイルを生成する
+    if (ImGui::BeginDragDropTarget()) {
+        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(kSceneObjectDragDropType)) {
+            IM_ASSERT(payload->DataSize == sizeof(SceneObjectDragDropPayload));
+            const auto *dndPayload = static_cast<const SceneObjectDragDropPayload *>(payload->Data);
+            CreatePrefabFromObject(dndPayload->object);
+        }
+        ImGui::EndDragDropTarget();
+    }
+
     ImGui::End();
 
     //--------- 新規作成・リネーム・削除確認モーダル ---------//
@@ -92,7 +107,7 @@ void AssetsWindow::ShowImGui() {
 }
 
 bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
-    static const std::array<const char *, 36> kSupported = {
+    static const std::array<const char *, 38> kSupported = {
         // テクスチャ（TextureManager対応形式）
         ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp",
         // モデル（ModelManager対応形式）
@@ -103,6 +118,10 @@ bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
         ".json",
         // マテリアル
         ".mat",
+        // プレハブ
+        ".prefab",
+        // スクリプト（AngelScript）
+        ".as",
         // シェーダー
         ".hlsl", ".hlsli",
         // フォント・翻訳・テキスト
@@ -121,6 +140,9 @@ unsigned int AssetsWindow::ExtensionColor(const std::string &ext) {
     if (in({ ".wav", ".mp3", ".ogg", ".flac", ".aac", ".m4a", ".wma" })) return IM_COL32(192, 144, 64, 255);                                    // サウンド: 橙
     if (in({ ".json" })) return IM_COL32(176, 176, 96, 255);                                                                                    // JSON: 黄
     if (in({ ".mat" })) return IM_COL32(96, 176, 176, 255);                                                                                     // マテリアル: 水色
+    if (in({ ".prefab" })) return IM_COL32(112, 144, 224, 255);                                                                                 // プレハブ: 青紫
+    if (in({ ".as" })) return IM_COL32(176, 112, 112, 255);                                                                                     // スクリプト: 赤
+
     if (in({ ".hlsl", ".hlsli" })) return IM_COL32(160, 96, 176, 255);                                                                          // シェーダー: 紫
     return IM_COL32(128, 128, 128, 255);
 }
@@ -245,14 +267,20 @@ void AssetsWindow::ShowFileGrid() {
         }
         (void)activated;
 
-        // テクスチャ/マテリアルファイルはコンポーネントのフィールドへD&Dで直接指定できるようにする
-        if (!file.isFolder && (IsTextureExtension(file.extension) || file.extension == ".mat")) {
+        // テクスチャ/マテリアル/スクリプト/プレハブファイルはD&Dでコンポーネントのフィールド指定や
+        // シーンへの配置ができるようにする
+        if (!file.isFolder && (IsTextureExtension(file.extension) || file.extension == ".mat" || file.extension == ".as" || file.extension == ".prefab")) {
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-                const std::string assetRelativePath = ToAssetsRelativePath(file.path);
                 if (IsTextureExtension(file.extension)) {
-                    SetAssetDragDropPayload(kTextureAssetDragDropType, assetRelativePath);
+                    SetAssetDragDropPayload(kTextureAssetDragDropType, ToAssetsRelativePath(file.path));
+                } else if (file.extension == ".mat") {
+                    SetAssetDragDropPayload(kMaterialAssetDragDropType, ToAssetsRelativePath(file.path));
+                } else if (file.extension == ".prefab") {
+                    // プレハブは読み込みに使う実行ディレクトリからの相対パスで渡す
+                    SetAssetDragDropPayload(kPrefabAssetDragDropType, file.path);
                 } else {
-                    SetAssetDragDropPayload(kMaterialAssetDragDropType, assetRelativePath);
+                    // スクリプトはScriptComponentのScript Pathと同じ形式（"Assets/"プレフィックス付き）で渡す
+                    SetAssetDragDropPayload(kScriptAssetDragDropType, file.path);
                 }
                 ImGui::Text("%s", file.name.c_str());
                 ImGui::EndDragDropSource();
@@ -335,7 +363,8 @@ void AssetsWindow::ShowGridBackgroundContextMenu() {
 
 void AssetsWindow::OpenFileEditor(const FileEntry &file) {
     if (file.isFolder) return;
-    if (file.extension == ".json") {
+    if (file.extension == ".json" || file.extension == ".prefab") {
+        // .prefabの中身はただのJSONのため、JSONエディターでそのまま開ける
         for (auto &editor : jsonEditors_) {
             if (editor && editor->GetFilePath() == file.path) return;
         }
@@ -388,6 +417,32 @@ void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
         [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), imagePreviews_.end());
     audioPreviews_.erase(std::remove_if(audioPreviews_.begin(), audioPreviews_.end(),
         [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), audioPreviews_.end());
+}
+
+void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
+    if (!obj || !editorContext_) return;
+
+    const JSON prefabJson = PrefabUtility::BuildPrefabJson(editorContext_, obj);
+    if (prefabJson.empty()) return;
+
+    // ファイル名に使えない文字をオブジェクト名から取り除く
+    std::string baseName = obj->GetName();
+    constexpr std::string_view kInvalidChars = "\\/:*?\"<>|";
+    for (auto &c : baseName) {
+        if (kInvalidChars.find(c) != std::string_view::npos) c = '_';
+    }
+    if (baseName.empty()) baseName = "Prefab";
+
+    // 既存ファイルと重複しない名前を付ける（Unityの複製と同様に連番を付与する）
+    const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
+    std::string filePath = folder + baseName + PrefabUtility::kPrefabExtension;
+    for (int suffix = 1; std::filesystem::exists(filePath); ++suffix) {
+        filePath = folder + baseName + "_" + std::to_string(suffix) + PrefabUtility::kPrefabExtension;
+    }
+
+    if (SaveJSON(prefabJson, filePath)) {
+        RefreshFileList();
+    }
 }
 
 bool AssetsWindow::ShowCreateFileModal() {

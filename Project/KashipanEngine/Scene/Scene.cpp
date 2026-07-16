@@ -1,4 +1,5 @@
 #include "Scene/Scene.h"
+#include "Scene/SceneBackupPath.h"
 #include "Core/GameEngine.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
@@ -57,7 +58,7 @@ Scene::Scene(const JSON &sceneData) : Scene(std::string("Unnamed Scene")) {
 
 Scene::~Scene() {
     json sceneData = SaveToJSON();
-    std::string filePath = "Assets/KashipanEngine/LastSceneBackup/" + name_ + ".json";
+    std::string filePath = std::string(kSceneBackupDirectory) + name_ + ".json";
     SaveJSON(sceneData, filePath);
     ClearSceneObjects();
     ClearSceneComponents();

@@ -10,6 +10,13 @@ namespace KashipanEngine {
 inline constexpr const char *kTextureAssetDragDropType = "DND_ASSET_TEXTURE";
 /// @brief Assetsウィンドウからのマテリアルファイルドラッグのペイロード型名
 inline constexpr const char *kMaterialAssetDragDropType = "DND_ASSET_MATERIAL";
+/// @brief Assetsウィンドウからのスクリプトファイル（.as）ドラッグのペイロード型名
+/// @details スクリプトのパスはテクスチャ等と異なり、実行ディレクトリからの相対パス
+///          （"Assets/" プレフィックス付き。ScriptComponentのScript Pathと同じ形式）で渡す
+inline constexpr const char *kScriptAssetDragDropType = "DND_ASSET_SCRIPT";
+/// @brief Assetsウィンドウからのプレハブファイル（.prefab）ドラッグのペイロード型名
+/// @details パスは実行ディレクトリからの相対パス（"Assets/" プレフィックス付き）で渡す
+inline constexpr const char *kPrefabAssetDragDropType = "DND_ASSET_PREFAB";
 
 /// @brief Assetsウィンドウからのアセットファイルドラッグ用ペイロード
 /// @details assetPath はAssetsルートからの相対パス（TextureManager/MaterialManager等の

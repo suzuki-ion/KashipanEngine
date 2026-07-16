@@ -1,0 +1,9 @@
+{
+    "startupScene": "GameScene",
+    "scenes": [
+        {
+            "name": "GameScene",
+            "filePath": "Assets/Scenes/GameScene.json"
+        }
+    ]
+}

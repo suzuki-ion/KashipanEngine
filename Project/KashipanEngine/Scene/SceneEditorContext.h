@@ -19,6 +19,9 @@ public:
     const std::string &GetName() const { return owner_->GetName(); }
     void SetName(const std::string &name) { owner_->name_ = name; }
 
+    /// @brief シーンマネージャーを取得する（シーン登録情報の編集・シーン切り替え用）
+    SceneManager *GetSceneManager() const { return owner_->sceneManager_; }
+
     //==================================================
     // シーンの保存・読込
     //==================================================

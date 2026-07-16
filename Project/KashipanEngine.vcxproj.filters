@@ -627,6 +627,8 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\PrefabUtility.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\SceneListEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
@@ -1294,6 +1296,9 @@
     <ClInclude Include="KashipanEngine\Scene\Scene.h">
       <Filter>KashipanEngine\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\SceneBackupPath.h">
+      <Filter>KashipanEngine\Scene</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneContext.h">
       <Filter>KashipanEngine\Scene</Filter>
     </ClInclude>
@@ -1693,6 +1698,8 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\PrefabUtility.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />

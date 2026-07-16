@@ -97,13 +97,13 @@
     "PlayerMoveLeft": [
         {
             "device": "Keyboard",
-            "invertValue": false,
+            "invertValue": true,
             "key": "A",
             "state": "Down"
         },
         {
             "device": "Keyboard",
-            "invertValue": false,
+            "invertValue": true,
             "key": "Left",
             "state": "Down"
         },
@@ -111,7 +111,7 @@
             "button": "DPadLeft",
             "controllerIndex": 0,
             "device": "ControllerButton",
-            "invertValue": false,
+            "invertValue": true,
             "state": "Down"
         },
         {
@@ -126,13 +126,13 @@
     "PlayerMoveRight": [
         {
             "device": "Keyboard",
-            "invertValue": true,
+            "invertValue": false,
             "key": "D",
             "state": "Down"
         },
         {
             "device": "Keyboard",
-            "invertValue": true,
+            "invertValue": false,
             "key": "Right",
             "state": "Down"
         },
@@ -140,14 +140,14 @@
             "button": "DPadRight",
             "controllerIndex": 0,
             "device": "ControllerButton",
-            "invertValue": true,
+            "invertValue": false,
             "state": "Down"
         },
         {
             "analog": "LeftStickX",
             "controllerIndex": 0,
             "device": "ControllerAnalog",
-            "invertValue": true,
+            "invertValue": false,
             "state": "Down",
             "threshold": 0.20000000298023224
         }

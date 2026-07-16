@@ -4,12 +4,14 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <filesystem>
 #include <limits>
 #include <numbers>
 #include <type_traits>
 #include <variant>
 
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -30,6 +32,7 @@
 #include "Math/Quaternion.h"
 #include "Utilities/MathUtils.h"
 #include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/FileIO/JSON.h"
 
 namespace KashipanEngine {
 
@@ -40,6 +43,7 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     showLightMarkers_ = EditorSettings::GetBool("sceneView.showLightMarkers", true);
     showCameraMarkers_ = EditorSettings::GetBool("sceneView.showCameraMarkers", true);
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
+    showBoneGizmos_ = EditorSettings::GetBool("sceneView.showBoneGizmos", false);
 
     // 背景設定を復元する（再起動後も維持される）
     backgroundColor_.x = EditorSettings::GetFloat("sceneView.backgroundColor.r", 0.0f);
@@ -160,6 +164,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     if (ImGui::Checkbox("Cameras", &showCameraMarkers_)) EditorSettings::SetBool("sceneView.showCameraMarkers", showCameraMarkers_);
     ImGui::SameLine();
     if (ImGui::Checkbox("Colliders", &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
+    ImGui::SameLine();
+    if (ImGui::Checkbox("Bones", &showBoneGizmos_)) EditorSettings::SetBool("sceneView.showBoneGizmos", showBoneGizmos_);
 
     //--------- 背景設定（単色 or テクスチャ） ---------//
     if (ImGui::ColorEdit4("Background Color", &backgroundColor_.x)) {
@@ -201,6 +207,17 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     const ImVec2 drawSize = avail;
     const ImVec2 imagePos = ImGui::GetCursorScreenPos();
     ImGui::Image(static_cast<ImTextureID>(screenBuffer_->GetSrvHandle().ptr), drawSize);
+
+    // Assetsウィンドウからのプレハブファイル（.prefab）のD&Dでシーンへ配置する
+    if (std::string droppedPath; AcceptAssetDragDropTarget(kPrefabAssetDragDropType, droppedPath)) {
+        const JSON prefabJson = LoadJSON(droppedPath);
+        auto nodes = PrefabUtility::LoadPrefabNodes(prefabJson);
+        if (!nodes.empty() && hierarchy) {
+            const std::string prefabName = prefabJson.value("name",
+                std::filesystem::path(droppedPath).stem().string());
+            hierarchy->InstantiateNodes(nodes, prefabName);
+        }
+    }
 
     //--------- カメラ操作（画像上でのマウス操作） ---------//
     HandleCameraInput();
@@ -274,6 +291,14 @@ void SceneEditorView::UpdateEditorDebugDraw() {
     if (showCameraMarkers_) {
         AppendCameraFrustumLines(settings.lines);
     }
+    if (showLightMarkers_) {
+        // ライトの向きはImGuiのオーバーレイではなく、エンジン側のデバッグライン描画で行う
+        // （オブジェクトとの前後関係が正しく表現される）
+        AppendLightDirectionLines(settings.lines);
+    }
+    if (showBoneGizmos_) {
+        AppendSkeletonBoneLines(settings.lines);
+    }
 
     sceneRenderer->SetEditorDebugDraw(std::move(settings));
 }
@@ -337,16 +362,8 @@ void SceneEditorView::DrawLightMarkers(const ImVec2 &imagePos, const ImVec2 &ima
             }
         }
 
-        // 方向を持つライトは向きを線で表示する
-        if (lightType == Light::Type::Directional || lightType == Light::Type::Spot) {
-            const Vector3 direction = lightRenderer->GetWorldDirection();
-            const float length = (lightType == Light::Type::Spot && light) ? light->GetDistance() : 2.0f;
-            ImVec2 tip;
-            if (ProjectToImage(position + direction * length, imagePos, imageSize, tip)) {
-                drawList->AddLine(center, tip, color, 2.0f);
-                drawList->AddCircleFilled(tip, 3.0f, color);
-            }
-        }
+        // ライトの向きの線はImGuiではなくエンジン側のデバッグライン描画で行う
+        // （AppendLightDirectionLines参照。ここではアイコンのみ描画する）
     }
 
     drawList->PopClipRect();
@@ -533,6 +550,76 @@ void SceneEditorView::AppendCameraFrustumLines(std::vector<DebugLineVertex> &out
             out.push_back({ farCorners[next], kFarColor });
             out.push_back({ nearCorners[i], kNearColor });
             out.push_back({ farCorners[i], kFarColor });
+        }
+    }
+}
+
+void SceneEditorView::AppendLightDirectionLines(std::vector<DebugLineVertex> &out) {
+    if (!context_) return;
+    auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
+
+    for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
+        if (!lightRenderer || !lightRenderer->IsActive()) continue;
+        auto *light = lightRenderer->GetLight();
+        const auto lightType = light ? light->GetType() : Light::Type::Directional;
+        // 方向を持つライトのみ向きの線を描画する
+        if (lightType != Light::Type::Directional && lightType != Light::Type::Spot) continue;
+
+        Vector4 color{ 1.0f, 0.86f, 0.38f, 1.0f };
+        if (light) {
+            const Vector4 &lightColor = light->GetColor();
+            color = Vector4(
+                std::clamp(lightColor.x, 0.0f, 1.0f),
+                std::clamp(lightColor.y, 0.0f, 1.0f),
+                std::clamp(lightColor.z, 0.0f, 1.0f),
+                1.0f);
+        }
+
+        const Vector3 position = lightRenderer->GetWorldPosition();
+        const Vector3 direction = lightRenderer->GetWorldDirection();
+        const float length = (lightType == Light::Type::Spot && light) ? light->GetDistance() : 2.0f;
+        const Vector3 tip = position + direction * length;
+        out.push_back({ position, color });
+        out.push_back({ tip, color });
+        // 先端に小さな球を描いて向きの終端を示す
+        AppendWireSphere3D(out, tip, 0.06f, color);
+    }
+}
+
+void SceneEditorView::AppendSkeletonBoneLines(std::vector<DebugLineVertex> &out) {
+    if (!context_) return;
+    auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
+
+    constexpr Vector4 kBoneColor{ 0.55f, 0.92f, 0.55f, 1.0f };
+    constexpr Vector4 kJointColor{ 0.35f, 0.75f, 1.0f, 1.0f };
+
+    for (auto *skinnedMeshRenderer : sceneRenderer->GetSkinnedMeshRenderers()) {
+        if (!skinnedMeshRenderer || !skinnedMeshRenderer->IsActive()) continue;
+        const auto joints = skinnedMeshRenderer->GetDebugJointInfos();
+        if (joints.empty()) continue;
+
+        // ジョイント球の半径はスケルトン全体の大きさに応じて自動調整する
+        Vector3 minPos = joints.front().position;
+        Vector3 maxPos = joints.front().position;
+        for (const auto &joint : joints) {
+            minPos.x = std::min(minPos.x, joint.position.x);
+            minPos.y = std::min(minPos.y, joint.position.y);
+            minPos.z = std::min(minPos.z, joint.position.z);
+            maxPos.x = std::max(maxPos.x, joint.position.x);
+            maxPos.y = std::max(maxPos.y, joint.position.y);
+            maxPos.z = std::max(maxPos.z, joint.position.z);
+        }
+        const float diagonal = (maxPos - minPos).Length();
+        const float jointRadius = std::clamp(diagonal * 0.01f, 0.005f, 0.1f);
+
+        for (const auto &joint : joints) {
+            AppendWireSphere3D(out, joint.position, jointRadius, kJointColor);
+            if (joint.parentIndex >= 0 && static_cast<size_t>(joint.parentIndex) < joints.size()) {
+                out.push_back({ joints[static_cast<size_t>(joint.parentIndex)].position, kBoneColor });
+                out.push_back({ joint.position, kBoneColor });
+            }
         }
     }
 }

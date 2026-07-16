@@ -75,6 +75,10 @@ private:
     void AppendRayGizmo(std::vector<DebugLineVertex> &out, const Vector3 &origin, const Vector3 &direction, float length, const Vector4 &color);
     /// @brief シーン上のCameraRendererが付いたオブジェクトの視錐台をワールド空間の線分として追加する
     void AppendCameraFrustumLines(std::vector<DebugLineVertex> &out);
+    /// @brief 方向を持つライト（Directional/Spot）の向きをワールド空間の線分として追加する
+    void AppendLightDirectionLines(std::vector<DebugLineVertex> &out);
+    /// @brief シーン上のSkinnedMeshRendererのスケルトンのボーンを線と球（ジョイント）として追加する
+    void AppendSkeletonBoneLines(std::vector<DebugLineVertex> &out);
     /// @brief ワールド座標をシーンビュー画像上のスクリーン座標へ変換する
     /// @param clampToVisibleArea true の場合、NDC範囲を大きく超える点は false を返す（アイコン表示等、
     ///        画面外の点をそもそも描画したくない場合用）。線分の描画では端点がこの範囲外でも
@@ -133,6 +137,7 @@ private:
     bool showLightMarkers_ = true;
     bool showCameraMarkers_ = true;
     bool showColliderGizmos_ = true;
+    bool showBoneGizmos_ = false;
 
     // シーンビューの背景設定（再起動後も維持される）
     Vector4 backgroundColor_{ 0.0f, 0.0f, 0.0f, 1.0f };

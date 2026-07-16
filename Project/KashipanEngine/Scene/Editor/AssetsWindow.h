@@ -10,14 +10,16 @@
 
 namespace KashipanEngine {
 
+class EmptyObject;
 class SceneEditor;
+class SceneEditorContext;
 
 /// @brief Unity の Assets ウィンドウ風のファイルブラウザ
 /// @details 実行中のディレクトリ以下から、エンジンが対応している形式のファイルを表示する。
 ///          左側にフォルダツリー、右側に選択中フォルダ内のファイルをグリッド表示する。
 class AssetsWindow final {
 public:
-    AssetsWindow(Passkey<SceneEditor>);
+    AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext);
     ~AssetsWindow() = default;
 
     void ShowImGui();
@@ -64,6 +66,10 @@ private:
     void ShowRenameModal();
     /// @brief 削除確認モーダルを表示する
     void ShowDeleteConfirmModal();
+    /// @brief ヒエラルキーからD&Dされたオブジェクトを、現在開いているフォルダへ.prefabファイルとして保存する
+    void CreatePrefabFromObject(EmptyObject *obj);
+
+    SceneEditorContext *editorContext_ = nullptr;
 
     FolderNode rootFolder_;
     std::string currentFolder_;

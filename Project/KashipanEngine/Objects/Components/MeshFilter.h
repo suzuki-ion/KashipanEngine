@@ -51,12 +51,20 @@ protected:
 
     JSON SaveToJson() const override {
         JSON json = JSON::object();
-        json["meshHandle"] = meshHandle_;
+        // ハンドル値はモデルの読み込み順や数で変わってしまうため、
+        // Assetsルートからの相対パス（文字列）で保存する
+        json["meshAssetPath"] = HasMesh() ? ModelManager::GetModelData(meshHandle_).GetAssetRelativePath() : std::string();
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
-        meshHandle_ = json.value("meshHandle", ModelManager::kInvalidHandle);
+        if (json.contains("meshAssetPath")) {
+            const std::string assetPath = json.value("meshAssetPath", std::string());
+            meshHandle_ = assetPath.empty() ? ModelManager::kInvalidHandle : ModelManager::GetModelHandleFromAssetPath(assetPath);
+        } else {
+            // 旧形式（ハンドル値の直接保存）との後方互換
+            meshHandle_ = json.value("meshHandle", ModelManager::kInvalidHandle);
+        }
         return true;
     }
 

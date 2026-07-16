@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Objects/Components/Comment.h"
@@ -10,42 +11,8 @@
 namespace KashipanEngine {
 
 namespace {
-/// @brief クリップボードのノード列を貼り付け用に複製し、全ノードへ新しいobjectIDを割り当てて
-///        部分木内部の親子参照（Transformの"parent"）を新IDへ張り替える。
-///        同じクリップボードから複数回貼り付けてもUUIDが衝突しないよう、貼り付けの都度呼び出すこと。
-/// @param preserveRootParent trueの場合、ルートノード（parentIndexInSubtree<0）の"parent"参照は
-///        元のまま変更しない（複製時に、複製元と同じ親へ自動的に接続されるようにするため）。
-///        falseの場合はルートノードの"parent"を消去する（PasteObjectCommand側でattachParentへ接続する）。
-std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent) {
-    std::vector<PasteObjectCommand::Node> result = source;
-
-    std::vector<UUID128> freshIDs;
-    freshIDs.reserve(result.size());
-    for (size_t i = 0; i < result.size(); ++i) {
-        freshIDs.emplace_back(true);
-    }
-
-    for (size_t i = 0; i < result.size(); ++i) {
-        JSON &json = result[i].json;
-        json["objectID"] = freshIDs[i].ToString();
-        if (!json.contains("components")) continue;
-        for (auto &compJson : json["components"]) {
-            if (compJson.value("type", "") != "Transform" || !compJson.contains("data")) continue;
-            // Transformの実データはSaveToJsonInterfaceにより data["customData"] 以下（parent/translate等）に
-            // 格納される（dataの直下ではない）ため、customData側を書き換える必要がある
-            auto &data = compJson["data"];
-            if (!data.contains("customData")) continue;
-            auto &customData = data["customData"];
-            const int parentIndex = result[i].parentIndexInSubtree;
-            if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < freshIDs.size()) {
-                customData["parent"] = freshIDs[static_cast<size_t>(parentIndex)].ToString();
-            } else if (!preserveRootParent) {
-                customData.erase("parent");
-            }
-        }
-    }
-    return result;
-}
+// ノード列の新ID割り当て・親子参照の張り替えはPrefabUtility::PrepareNodesForInstantiationを使用する
+using PrefabUtility::PrepareNodesForInstantiation;
 
 /// @brief objがcandidatesのいずれかの子孫であるかをTransformの親参照チェーンから判定する
 bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *> &candidates) {
@@ -516,19 +483,14 @@ void SceneObjectHierarchy::DeleteObjects(const std::vector<EmptyObject *> &objs)
 }
 
 void SceneObjectHierarchy::CollectSubtreeNodes(EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) const {
-    if (!obj || !editorContext_) return;
-    const int myIndex = static_cast<int>(out.size());
-    out.push_back({ editorContext_->SaveObjectToJson(obj), parentIndex });
+    PrefabUtility::CollectSubtreeNodes(editorContext_, obj, parentIndex, out);
+}
 
-    // 子オブジェクトをTransformの親参照から探す（RebuildObjectItemsが使う手法と同じ）
-    for (const auto &objPtr : editorContext_->GetSceneObjects()) {
-        EmptyObject *candidate = objPtr.get();
-        if (!candidate || candidate == obj) continue;
-        auto *candidateTransform = candidate->GetComponent<Transform>();
-        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
-            CollectSubtreeNodes(candidate, myIndex, out);
-        }
-    }
+void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name) {
+    if (nodes.empty() || !editorContext_) return;
+    auto prepared = PrepareNodesForInstantiation(nodes, /*preserveRootParent=*/false);
+    ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
+        std::move(prepared), nullptr, MAXSIZE_T, name, "Instantiate Prefab"));
 }
 
 void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command) {

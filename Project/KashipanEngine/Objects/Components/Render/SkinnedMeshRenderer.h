@@ -63,6 +63,7 @@ public:
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<SkinnedMeshRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
+        ptr->rootBoneObjectID_ = rootBoneObjectID_;
         ptr->pipelineName_ = pipelineName_;
         ptr->materialName_ = materialName_;
         ptr->materialHandle_ = materialHandle_;
@@ -122,6 +123,20 @@ public:
     void SetQuality(SkinQuality quality) { quality_ = quality; }
     SkinQuality GetQuality() const noexcept { return quality_; }
 
+    /// @brief Root Boneオブジェクトを設定する（Unityと同様）
+    /// @details 設定するとメッシュの描画位置がこのオブジェクトのTransformに沿って動く。
+    ///          未設定（無効なUUID）の場合は所有オブジェクト自身のTransformを使う
+    void SetRootBoneObject(const EmptyObject *rootBoneObject) {
+        rootBoneObjectID_ = rootBoneObject ? rootBoneObject->GetObjectID() : UUID128();
+    }
+    void SetRootBoneObject(const UUID128 &rootBoneObjectID) { rootBoneObjectID_ = rootBoneObjectID; }
+    const UUID128 &GetRootBoneObjectID() const noexcept { return rootBoneObjectID_; }
+    EmptyObject *GetRootBoneObject() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext || !rootBoneObjectID_.IsValid()) return nullptr;
+        return sceneContext->GetSceneObject(rootBoneObjectID_);
+    }
+
     const std::vector<BlendShapeWeight> &GetBlendShapes() const noexcept { return blendShapes_; }
     void SetBlendShapeWeight(const std::string &name, float weight);
     float GetBlendShapeWeight(const std::string &name) const;
@@ -167,6 +182,12 @@ public:
     }
 
     Matrix4x4 GetWorldMatrix() const {
+        // Root Boneが設定されている場合は、そのオブジェクトのTransformに沿って動く（Unityと同様）
+        if (auto *rootBone = GetRootBoneObject()) {
+            if (auto *rootBoneTransform = rootBone->GetComponent<Transform>()) {
+                return rootBoneTransform->GetWorldMatrix();
+            }
+        }
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         return transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
@@ -203,6 +224,17 @@ public:
             boneMatricesBuffer_ && skinningConstants_ && skinnedVertexBuffer_ &&
             blendShapeDeltasBuffer_ && blendShapeWeightsBuffer_;
     }
+
+#if defined(USE_IMGUI)
+    /// @brief デバッグ描画用のジョイント情報（ワールド座標と親ジョイントのインデックス）
+    struct DebugJointInfo {
+        Vector3 position{ 0.0f, 0.0f, 0.0f };
+        int32_t parentIndex = -1;
+    };
+    /// @brief デバッグ描画用に、このコンポーネントのスケルトンインスタンスの
+    ///        全ジョイントの現在のワールド座標を取得する（ボーンの線・球表示用）
+    std::vector<DebugJointInfo> GetDebugJointInfos();
+#endif
 
     /// @brief GPUスキニング用リソースを最新の状態へ更新する（メッシュ解決・静的バッファ構築・
     ///        現在のスケルトン姿勢からのボーン行列パレット/BlendShapeウェイトのアップロード）
@@ -246,6 +278,8 @@ private:
     void UpdateSkinningBuffers();
 
     UUID128 targetObjectID_{};
+    /// @brief Root Boneオブジェクト（設定時はこのオブジェクトのTransformに沿ってメッシュが動く）
+    UUID128 rootBoneObjectID_{};
     std::string pipelineName_ = "Object3D.Solid.BlendNormal";
     std::string materialName_ = "Default";
     mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;

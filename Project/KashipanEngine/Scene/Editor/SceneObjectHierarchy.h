@@ -49,6 +49,13 @@ public:
     ///          そのウィンドウ内で呼ぶことで、同じショートカット操作を有効にできる
     void HandleKeyboardShortcuts();
 
+    /// @brief プレハブ等のノード列（pre-order、先頭が根）をシーンのルート直下へ配置する
+    /// @details 新しいobjectIDの割り当て・Undo対応・配置後の選択まで行う。
+    ///          同じノード列を複数回渡してもUUIDは衝突しない
+    /// @param nodes 配置するノード列（PrefabUtility::LoadPrefabNodes等で構築したもの）
+    /// @param name Undo履歴に表示する名前（プレハブ名等）
+    void InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name);
+
     /// @brief ヒエラルキー外（シーンビューのクリック等）からの選択操作
     /// @param obj 選択するオブジェクト（nullptrかつadditive=falseの場合は選択解除）
     /// @param additive trueの場合、既存の選択集合へトグル追加/削除する（Ctrlクリック相当）

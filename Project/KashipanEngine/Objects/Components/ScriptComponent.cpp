@@ -25,6 +25,7 @@
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
+#include "Utilities/AssetDragDropPayload.h"
 #endif
 
 namespace KashipanEngine {
@@ -1065,6 +1066,18 @@ bool ScriptComponent::SetVariable(const std::string &name, void *ref, int typeId
 #if defined(USE_IMGUI)
 void ScriptComponent::ShowImGui() {
     ImGuiCustom::SelectString("Script Path", scriptPath_, GetAvailableScriptPaths(), true);
+    // Assetsウィンドウからのスクリプトファイル（.as）のドラッグ&ドロップも受け付ける
+    // （ドロップ時はそのまま適用＝リロードまで行う）
+    if (std::string droppedPath; AcceptAssetDragDropTarget(kScriptAssetDragDropType, droppedPath)) {
+        // スクリプトパス一覧・シーンJSONはバックスラッシュ区切りで統一されているため合わせる
+        std::replace(droppedPath.begin(), droppedPath.end(), '/', '\\');
+        scriptPath_ = droppedPath;
+        if (Reload()) {
+            HookColliders();
+            HookWindowObjects();
+            CallMethod(awakeMethod_);
+        }
+    }
     ImGui::SameLine();
     if (ImGui::Button("Refresh List")) {
         RefreshAvailableScriptPaths();

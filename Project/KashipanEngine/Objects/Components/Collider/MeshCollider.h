@@ -100,14 +100,24 @@ protected:
     JSON SaveToJson() const override {
         JSON json = ICollider::SaveToJson();
         json["convex"] = convex_;
-        json["meshHandle"] = explicitMeshHandle_;
+        // ハンドル値はモデルの読み込み順や数で変わってしまうため、
+        // Assetsルートからの相対パス（文字列）で保存する
+        json["meshAssetPath"] = (explicitMeshHandle_ != ModelManager::kInvalidHandle)
+            ? ModelManager::GetModelData(explicitMeshHandle_).GetAssetRelativePath()
+            : std::string();
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
         ICollider::LoadFromJson(json);
         convex_ = json.value("convex", true);
-        explicitMeshHandle_ = json.value("meshHandle", ModelManager::kInvalidHandle);
+        if (json.contains("meshAssetPath")) {
+            const std::string assetPath = json.value("meshAssetPath", std::string());
+            explicitMeshHandle_ = assetPath.empty() ? ModelManager::kInvalidHandle : ModelManager::GetModelHandleFromAssetPath(assetPath);
+        } else {
+            // 旧形式（ハンドル値の直接保存）との後方互換
+            explicitMeshHandle_ = json.value("meshHandle", ModelManager::kInvalidHandle);
+        }
         return true;
     }
 

@@ -16,6 +16,7 @@ class SceneEditorView;
 class AssetsWindow;
 class SceneSaver;
 class SceneLoader;
+class SceneListEditor;
 
 class SceneEditor final {
 public:
@@ -33,7 +34,7 @@ private:
     void HandleShortcuts();
     void PerformUndo();
     void PerformRedo();
-    /// @brief 設定した間隔でシーンを "Assets/KashipanEngine/LastSceneBackup/" 以下へ自動保存する
+    /// @brief 設定した間隔でシーンを kSceneBackupDirectory（"SceneBackups/"）以下へ自動保存する
     void HandleAutoSave();
     /// @brief 自動保存の間隔・保存名（TemplateLiteral）を設定するモーダル
     void ShowAutoSaveSettingsModal();
@@ -49,6 +50,7 @@ private:
     std::unique_ptr<AssetsWindow> assetsWindow_;
     std::unique_ptr<SceneSaver> saver_;
     std::unique_ptr<SceneLoader> loader_;
+    std::unique_ptr<SceneListEditor> sceneListEditor_;
 
     bool isShowSceneView_ = true;
     bool isShowHierarchy_ = true;
@@ -56,6 +58,7 @@ private:
     bool isShowComponentInspector_ = true;
     bool isShowVariablesMenu_ = true;
     bool isShowAssets_ = true;
+    bool isShowSceneList_ = false;
 
     // デバッグ用ウィンドウ表示フラグ（旧ImGuiManagerから移設）
     bool isShowLoadedTexturesWindow_ = false;

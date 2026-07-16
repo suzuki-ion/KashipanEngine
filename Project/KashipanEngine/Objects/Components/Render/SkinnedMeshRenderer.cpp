@@ -196,8 +196,11 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
     }
 
     vertexCount_ = modelData.GetVertexCount();
-    skeletonHandle_ = SkeletonManager::GetSkeletonHandleFromAssetPath(modelData.GetAssetRelativePath());
-    animationHandle_ = AnimationManager::GetAnimationHandleFromAssetPath(modelData.GetAssetRelativePath());
+    // サブメッシュ（"モデルパス:ノード名"）の場合もスケルトン・アニメーションはモデルファイル単位で
+    // 管理されているため、元のモデルファイルのアセットパスで解決する
+    const std::string baseAssetPath = ModelManager::GetBaseAssetPath(modelData.GetAssetRelativePath());
+    skeletonHandle_ = SkeletonManager::GetSkeletonHandleFromAssetPath(baseAssetPath);
+    animationHandle_ = AnimationManager::GetAnimationHandleFromAssetPath(baseAssetPath);
     // SkeletonManagerが保持する共有アセット本体ではなく、このコンポーネント専用に複製した
     // スケルトンを使う（同じスケルトンアセットを参照する複数のSkinnedMeshRendererが
     // 互いのアニメーション再生状態に干渉しないようにするため）
@@ -393,7 +396,8 @@ std::vector<std::string> SkinnedMeshRenderer::GetAvailableAnimationClipNames() c
     const auto meshHandle = GetMeshHandle();
     if (meshHandle == ModelManager::kInvalidHandle) return names;
     const auto &modelData = ModelManager::GetModelData(meshHandle);
-    const auto animHandle = AnimationManager::GetAnimationHandleFromAssetPath(modelData.GetAssetRelativePath());
+    const auto animHandle = AnimationManager::GetAnimationHandleFromAssetPath(
+        ModelManager::GetBaseAssetPath(modelData.GetAssetRelativePath()));
     if (animHandle == AnimationManager::kInvalidHandle) return names;
     const auto &animData = AnimationManager::GetAnimationData(animHandle);
     for (const auto &clip : animData.GetClips()) {
@@ -403,9 +407,31 @@ std::vector<std::string> SkinnedMeshRenderer::GetAvailableAnimationClipNames() c
 }
 
 #if defined(USE_IMGUI)
+std::vector<SkinnedMeshRenderer::DebugJointInfo> SkinnedMeshRenderer::GetDebugJointInfos() {
+    std::vector<DebugJointInfo> result;
+    if (skeletonInstance_.joints.empty()) return result;
+
+    // ジョイントのスケルトン空間行列に、描画に使うワールド行列（Root Bone考慮済み）を掛けて
+    // シーン上のワールド座標を得る
+    const Matrix4x4 world = GetWorldMatrix();
+    result.reserve(skeletonInstance_.joints.size());
+    for (auto &joint : skeletonInstance_.joints) {
+        DebugJointInfo info;
+        if (joint.transform) {
+            const Matrix4x4 m = joint.transform->GetWorldMatrix() * world;
+            info.position = Vector3(m.m[3][0], m.m[3][1], m.m[3][2]);
+        }
+        info.parentIndex = joint.parentIndex.value_or(-1);
+        result.push_back(info);
+    }
+    return result;
+}
+
 void SkinnedMeshRenderer::ShowImGui() {
     TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
     TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
+    // Root Bone（Unityと同様。設定するとメッシュの描画位置がこのオブジェクトに沿って動く）
+    TargetObjectSelector::ShowSelector("Root Bone", GetOwnerSceneContext(), rootBoneObjectID_);
     ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
     const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
     std::vector<std::string> materialNames;
@@ -465,6 +491,7 @@ void SkinnedMeshRenderer::ShowImGui() {
 JSON SkinnedMeshRenderer::SaveToJson() const {
     JSON json = JSON::object();
     json["targetObjectID"] = ToJSON(targetObjectID_);
+    json["rootBoneObjectID"] = ToJSON(rootBoneObjectID_);
     json["pipelineName"] = pipelineName_;
     json["materialName"] = materialName_;
     for (const auto &name : excludedRenderTargetNames_) {
@@ -491,6 +518,11 @@ bool SkinnedMeshRenderer::LoadFromJson(const JSON &json) {
         targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
     } else {
         targetObjectID_ = UUID128();
+    }
+    if (json.contains("rootBoneObjectID")) {
+        rootBoneObjectID_ = FromJSON<UUID128>(json["rootBoneObjectID"]);
+    } else {
+        rootBoneObjectID_ = UUID128();
     }
     pipelineName_ = json.value("pipelineName", std::string{ "Object3D.Solid.BlendNormal" });
     materialName_ = json.value("materialName", std::string{ "Default" });

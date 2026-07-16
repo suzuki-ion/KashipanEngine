@@ -9,6 +9,10 @@
 #include "Math/Vector3.h"
 #include "Utilities/Passkeys.h"
 
+struct aiScene;
+struct aiNode;
+struct aiMesh;
+
 namespace KashipanEngine {
 
 class GameEngine;
@@ -131,6 +135,13 @@ public:
     /// @brief Assetsルートからの相対パスからモデルハンドルを取得
     static ModelHandle GetModelHandleFromAssetPath(const std::string& assetPath);
 
+    /// @brief サブメッシュのアセットパス（"モデルパス:ノード名"）から元のモデルファイルのアセットパスを取得する
+    /// @details 複数のメッシュノードを持つモデルは、ノード単位のサブメッシュが "モデルパス:ノード名" の
+    ///          形式で個別登録される。スケルトンやアニメーションはモデルファイル単位で管理されるため、
+    ///          それらの解決にはこの関数で得た元のパスを使うこと。
+    ///          区切り文字が含まれない通常のパスはそのまま返す
+    static std::string GetBaseAssetPath(const std::string& assetPath);
+
     /// @brief 読み込み済みモデルのファイル名/パス登録をリネーム後の値へ更新する
     /// @details 実ファイルを外部（Assetsウィンドウ等）でリネーム/移動した後に呼ぶこと。
     ///          このメソッド自体はファイルの実体は操作しない。
@@ -161,6 +172,18 @@ private:
     static std::vector<ModelHandle> GetAllImGuiModels();
     static std::vector<ModelListEntry> GetImGuiModelListEntries();
 #endif
+
+    /// @brief Assimpのメッシュ1つ分（頂点・インデックス・スキンウェイト・BlendShape）をModelDataへ追記する
+    static void AppendMeshToModelData(const aiMesh *mesh, ModelData &dst);
+    /// @brief ノード分解によるサブメッシュ登録と、モデル階層のプレハブ（.prefab）自動生成を行う
+    /// @details メッシュを持つノードが複数ある場合、各ノードのメッシュを "モデルパス:ノード名" の
+    ///          アセットパスで個別登録する（Unityのモデル内サブアセットに相当）。
+    ///          さらにエディタービルドでは、モデルのノード階層（アーマチュア・メッシュオブジェクト）を
+    ///          そのまま再現するプレハブファイルをモデルの隣（"モデルファイル名.prefab"）へ生成する
+    ///          （既にプレハブが存在する場合はユーザーの編集を保護するため上書きしない）
+    void RegisterNodeDecompositionAndPrefab(const aiScene *scene,
+        const std::string &modelFullPath, const std::string &baseAssetPath,
+        const std::string &baseFileName, const std::vector<ModelData::MaterialData> &materials);
 
     void LoadAllFromAssetsFolder();
 

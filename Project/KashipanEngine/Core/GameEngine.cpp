@@ -128,6 +128,9 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
     inputCommand_->LoadFromJSON(InputCommand::kDefaultSaveFilePath);
     sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
+    // シーンリスト定義ファイルが存在する場合は、記載されたシーンを自動登録する
+    // （AppInitializeでのRegisterScene呼び出しが無くてもシーンを定義できるようにするため）
+    sceneManager_->LoadSceneList();
 
     context_.engine = this;
     context_.sceneManager = sceneManager_.get();
@@ -176,6 +179,12 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     };
 
     AppInitialize(context_);
+
+    // AppInitializeでシーン切り替えが指定されなかった場合は、
+    // シーンリスト定義ファイルのスタートアップシーンへ自動的に切り替える
+    if (sceneManager_ && !sceneManager_->HasPendingSceneChange()) {
+        sceneManager_->ChangeToStartupScene();
+    }
 
     LogSeparator();
     Log(Translation("engine.initialize.end"));

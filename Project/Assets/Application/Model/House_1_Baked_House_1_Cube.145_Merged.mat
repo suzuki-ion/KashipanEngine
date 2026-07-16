@@ -1,0 +1,40 @@
+{
+    "color": {
+        "w": 1.0,
+        "x": 0.6000000238418579,
+        "y": 0.6000000238418579,
+        "z": 0.6000000238418579
+    },
+    "enableLighting": true,
+    "enableShadowMapProjection": true,
+    "environmentCoefficient": 1.0,
+    "environmentFile": "",
+    "name": "House_1_Baked_House_1_Cube.145_Merged",
+    "samplerHandle": 0,
+    "shininess": 32.0,
+    "specularColor": {
+        "w": 1.0,
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "textureFile": "House_1_Cube.145_Baked_Color.png",
+    "uvTransform": {
+        "m00": 1.0,
+        "m01": 0.0,
+        "m02": 0.0,
+        "m03": 0.0,
+        "m10": 0.0,
+        "m11": 1.0,
+        "m12": 0.0,
+        "m13": 0.0,
+        "m20": 0.0,
+        "m21": 0.0,
+        "m22": 1.0,
+        "m23": 0.0,
+        "m30": 0.0,
+        "m31": 0.0,
+        "m32": 0.0,
+        "m33": 1.0
+    }
+}

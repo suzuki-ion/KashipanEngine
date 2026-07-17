@@ -76,7 +76,7 @@
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowBias": 0.0,
-                            "shadowDistance": 1024.0,
+                            "shadowDistance": 1000.0,
                             "shadowMapResolution": 4096,
                             "type": 0
                         },
@@ -257,7 +257,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": -0.5,
+                                "y": -1.0,
                                 "z": 0.0
                             }
                         },
@@ -332,6 +332,62 @@
                 {
                     "data": {
                         "customData": {
+                            "angularAcceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "angularVelocity": {
+                                "x": 0.0,
+                                "y": 1.25,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Rotation"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "EmptyObject",
+            "objectID": "d4e3ab71-95ae-4191-a531-0c4eb71ca63c",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "945226ea-487c-44a9-b7d6-f9b1a99ee352",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 4.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "fields": {
                                 "enableCastShadow": false,
                                 "lightNumX": 0,
@@ -341,17 +397,283 @@
                             },
                             "scriptPath": "Assets\\Application\\Scripts\\LightTestScript.as"
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 1,
                         "tag": ""
                     },
                     "type": "ScriptComponent"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "acceleration": {
+                                "max": {
+                                    "x": 0.0,
+                                    "y": 8.0,
+                                    "z": 0.0
+                                },
+                                "min": {
+                                    "x": 0.0,
+                                    "y": 4.0,
+                                    "z": 0.0
+                                },
+                                "randomize": true,
+                                "value": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "billboard": false,
+                            "billboardRotationMode": 0,
+                            "billboardTargetObjectID": "",
+                            "emissionRate": 100000.0,
+                            "endScale": {
+                                "max": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "min": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "randomize": false,
+                                "value": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                }
+                            },
+                            "fixedSpawnPosition": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "gpuSimulation": true,
+                            "initialRotation": {
+                                "max": {
+                                    "x": 360.0,
+                                    "y": 360.0,
+                                    "z": 360.0
+                                },
+                                "min": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "randomize": true,
+                                "value": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "initialRotationSpeed": {
+                                "max": {
+                                    "x": 4.0,
+                                    "y": 4.0,
+                                    "z": 4.0
+                                },
+                                "min": {
+                                    "x": -4.0,
+                                    "y": -4.0,
+                                    "z": -4.0
+                                },
+                                "randomize": true,
+                                "value": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "initialVelocity": {
+                                "max": {
+                                    "x": 8.0,
+                                    "y": 4.0,
+                                    "z": 8.0
+                                },
+                                "min": {
+                                    "x": -8.0,
+                                    "y": 2.0,
+                                    "z": -8.0
+                                },
+                                "randomize": true,
+                                "value": {
+                                    "x": 0.0,
+                                    "y": 1.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "lifetime": {
+                                "max": 4.0,
+                                "min": 2.0,
+                                "randomize": true,
+                                "value": 1.0
+                            },
+                            "loop": true,
+                            "materialName": "White",
+                            "maxParticles": 200000,
+                            "meshAssetPath": "PrimitiveMesh-Dodecahedron",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "playOnStart": true,
+                            "rotationAcceleration": {
+                                "max": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "min": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "randomize": false,
+                                "value": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "spawnBoxSizeMax": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "spawnBoxSizeMin": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "spawnCapsuleHeightMax": 1.0,
+                            "spawnCapsuleHeightMin": 0.0,
+                            "spawnCapsuleRadiusMax": 0.5,
+                            "spawnCapsuleRadiusMin": 0.0,
+                            "spawnCenter": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "spawnCount": {
+                                "max": 1,
+                                "min": 1,
+                                "randomize": false,
+                                "value": 1
+                            },
+                            "spawnOrigin": 0,
+                            "spawnParentObjectID": "",
+                            "spawnShape": 0,
+                            "spawnSphereRadiusMax": 1.0,
+                            "spawnSphereRadiusMin": 0.0,
+                            "startScale": {
+                                "max": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "min": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "randomize": false,
+                                "value": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                }
+                            },
+                            "targetObjectID": "",
+                            "totalSpawnCount": 100
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ParticleSystem3D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "angularAcceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "angularVelocity": {
+                                "x": 0.0,
+                                "y": 2.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Rotation"
                 }
             ],
             "editorOnly": false,
-            "isActive": false,
+            "isActive": true,
             "name": "EmptyObject",
             "objectID": "8ad0698a-ea0e-42f1-9d2b-3a17f92a6961",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "d4e3ab71-95ae-4191-a531-0c4eb71ca63c",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 8.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "angularAcceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "angularVelocity": {
+                                "x": 0.0,
+                                "y": 2.299999952316284,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Rotation"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "EmptyObject",
+            "objectID": "945226ea-487c-44a9-b7d6-f9b1a99ee352",
             "tag": ""
         }
     ],
@@ -370,6 +692,15 @@
             "key": "testInt",
             "type": "Int32",
             "value": 0
+        },
+        {
+            "key": "checkPoint",
+            "type": "Vector3",
+            "value": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
         }
     ]
 }

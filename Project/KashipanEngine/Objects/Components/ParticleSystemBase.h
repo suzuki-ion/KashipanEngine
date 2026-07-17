@@ -95,6 +95,10 @@ struct GPUParticleUpdateConstants final {
     std::uint32_t billboard = 0;
     std::uint32_t billboardMode = 0;
     Matrix4x4 cameraWorldMatrix = Matrix4x4::Identity();
+    /// @brief 親への追従用。SpawnOrigin::ChildOfSelf/ChildOfOtherの場合、パーティクルは
+    ///        親のローカル空間で位置・速度・回転をシミュレーションし、この行列を掛けて
+    ///        ワールド空間へ変換する（恒等行列の場合は従来通りワールド空間そのまま）
+    Matrix4x4 parentWorldMatrix = Matrix4x4::Identity();
 };
 
 /// @brief "ParticleSpawn"パイプラインの定数バッファ（HLSL側 ParticleSpawnConstants と一致させること）
@@ -258,6 +262,18 @@ public:
         EmptyObject *target = GetBillboardTarget();
         return target ? target : ResolveBillboardCameraObject();
     }
+    /// @brief GPUモードで親への追従に使う「現在のスポーン元の親オブジェクト」を解決する
+    /// @details ResolveSpawnAnchorと同じ判定を使う（SpawnOrigin::ChildOfSelf/ChildOfOtherの場合のみ
+    ///          非nullptrを返す）。AtOwnerPosition/AtFixedPositionの場合はnullptr
+    ///          （親追従なし＝恒等行列扱い）を返す
+    EmptyObject *ResolveGpuFollowParent(Passkey<Renderer>) const {
+        auto *owner = ResolveMutableOwner();
+        if (!owner) return nullptr;
+        EmptyObject *parent = nullptr;
+        Vector3 unusedBasePosition{ 0.0f, 0.0f, 0.0f };
+        ResolveSpawnAnchor(owner, parent, unusedBasePosition);
+        return parent;
+    }
 
 protected:
     /// @brief ビルボード化（常にカメラの方を向かせる）に使うカメラオブジェクトを解決する
@@ -392,13 +408,14 @@ protected:
                     }
                     if (requests.size() >= capacity) break;
 
-                    EmptyObject *parentObject = nullptr;
+                    // ResolveSpawnAnchorが返す親（ChildOfSelf/ChildOfOtherの場合）は、GPUモードでは
+                    // ここでは使わない。position/velocity/rotationは親のローカル空間のまま保持し、
+                    // 毎フレームのUpdateパイプラインが親の現在のワールド行列（ResolveGpuFollowParent
+                    // 経由でRendererが取得）を掛けてワールド空間へ変換するため、ここでワールド座標へ
+                    // 焼き込んではいけない（焼き込むとその場に固定され、親の動き・回転に追従しなくなる）
+                    EmptyObject *unusedParentObject = nullptr;
                     Vector3 basePosition{ 0.0f, 0.0f, 0.0f };
-                    ResolveSpawnAnchor(owner, parentObject, basePosition);
-                    // GPUモードではパーティクルオブジェクト自体が存在しないため、
-                    // 親を設定する代わりに生成時点の親のワールド座標をスナップショットとして使う
-                    // （以後は親の動きに追従しない。事前確認済みの仕様）
-                    if (parentObject) basePosition = basePosition + GetObjectWorldPosition(parentObject);
+                    ResolveSpawnAnchor(owner, unusedParentObject, basePosition);
 
                     GPUParticleSpawnRequest request;
                     request.slotIndex = gpuRingCursor_;
@@ -647,7 +664,8 @@ protected:
             spawnOrigin_ = static_cast<SpawnOrigin>(originIndex);
         }
         if (gpuSimulation_ && (spawnOrigin_ == SpawnOrigin::ChildOfSelf || spawnOrigin_ == SpawnOrigin::ChildOfOther)) {
-            ImGui::TextDisabled("(GPUモードでは生成時点の座標のみ記録され、以後は親を追従しません)");
+            ImGui::TextDisabled("(GPUモードでは親のワールド行列を毎フレーム反映し、位置・回転・スケールとも追従します。\n"
+                "ビルボード有効時は見た目を常にカメラへ向けるため、親の回転は追従先の平行移動にのみ反映されます)");
         }
         switch (spawnOrigin_) {
         case SpawnOrigin::ChildOfOther:

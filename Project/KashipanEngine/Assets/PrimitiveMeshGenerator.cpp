@@ -126,6 +126,35 @@ void GenerateCircle(std::vector<Vertex> &verts, std::vector<uint32_t> &idx, char
     }
 }
 
+/// @brief 円プリミティブ（半径0.5）。画像を放射状に巻き付けるUV
+///        （画像の上端が中心に集まり、下端が円周に来る極座標的なUV展開。通常のGenerateCircleは
+///        画像を円形にくり抜くようなUVだが、こちらは画像自体が円形に変形して見える）
+void GenerateCircleCircularUV(std::vector<Vertex> &verts, std::vector<uint32_t> &idx, char orientation) {
+    const PlaneBasis basis = GetPlaneBasis(orientation);
+    constexpr int segments = 32;
+    const float radius = 0.5f;
+    const float pi = GetPI<float>();
+
+    // 中心点はどの三角形からも参照されるためuが一意に定まらない（全周の角度が中心の1点に収束する）。
+    // 三角形ごとに中心頂点を複製し、その扇形の中間角度をuとして割り当てる
+    for (int i = 0; i < segments; ++i) {
+        const float theta0 = 2.0f * pi * static_cast<float>(i) / static_cast<float>(segments);
+        const float theta1 = 2.0f * pi * static_cast<float>(i + 1) / static_cast<float>(segments);
+        const float u0 = static_cast<float>(i) / static_cast<float>(segments);
+        const float u1 = static_cast<float>(i + 1) / static_cast<float>(segments);
+
+        const Vector3 p0 = basis.uAxis * (radius * std::cos(theta0)) + basis.vAxis * (radius * std::sin(theta0));
+        const Vector3 p1 = basis.uAxis * (radius * std::cos(theta1)) + basis.vAxis * (radius * std::sin(theta1));
+
+        const uint32_t base = static_cast<uint32_t>(verts.size());
+        verts.push_back(MakeVertex(Vector3::Zero(), basis.normal, (u0 + u1) * 0.5f, 0.0f)); // 中心=画像の上端(v=0)
+        verts.push_back(MakeVertex(p0, basis.normal, u0, 1.0f)); // 円周=画像の下端(v=1)
+        verts.push_back(MakeVertex(p1, basis.normal, u1, 1.0f));
+        // GenerateCircleと同じ順（中心,a,b）でCCW(外側から見て)になる
+        idx.push_back(base + 0); idx.push_back(base + 1); idx.push_back(base + 2);
+    }
+}
+
 /// @brief 立方体プリミティブ（1辺1）
 void GenerateBox(std::vector<Vertex> &verts, std::vector<uint32_t> &idx) {
     const float h = 0.5f;
@@ -158,6 +187,26 @@ void GenerateTetrahedron(std::vector<Vertex> &verts, std::vector<uint32_t> &idx)
     AddTriangle(verts, idx, v0, v2, v3);
     AddTriangle(verts, idx, v0, v3, v1);
     AddTriangle(verts, idx, v1, v3, v2);
+}
+
+/// @brief 正八面体プリミティブ（中心から各頂点までの距離0.5）
+void GenerateOctahedron(std::vector<Vertex> &verts, std::vector<uint32_t> &idx) {
+    const float h = 0.5f;
+    const Vector3 top(0.0f, h, 0.0f);
+    const Vector3 bottom(0.0f, -h, 0.0f);
+    // 赤道上の4頂点（+X,+Z,-X,-Zの順に隣接する）
+    const Vector3 equator[4] = {
+        Vector3(h, 0.0f, 0.0f),
+        Vector3(0.0f, 0.0f, h),
+        Vector3(-h, 0.0f, 0.0f),
+        Vector3(0.0f, 0.0f, -h),
+    };
+    for (int i = 0; i < 4; ++i) {
+        const Vector3 &cur = equator[i];
+        const Vector3 &next = equator[(i + 1) % 4];
+        AddTriangle(verts, idx, top, next, cur);
+        AddTriangle(verts, idx, bottom, cur, next);
+    }
 }
 
 /// @brief 円柱プリミティブ（半径0.5・高さ1・Y軸沿い）。closedCapsがtrueの場合は上下に蓋を付ける
@@ -223,6 +272,59 @@ void GenerateCylinder(std::vector<Vertex> &verts, std::vector<uint32_t> &idx, bo
             const uint32_t b = firstRim + static_cast<uint32_t>((i + 1) % segments);
             idx.push_back(centerIndex); idx.push_back(a); idx.push_back(b);
         }
+    }
+}
+
+/// @brief 円錐プリミティブ（半径0.5・高さ1・Y軸沿い、頂点が上）。側面はスムーズシェーディング、底面は平らな蓋
+void GenerateCone(std::vector<Vertex> &verts, std::vector<uint32_t> &idx) {
+    constexpr int segments = 32;
+    const float radius = 0.5f;
+    const float height = 1.0f;
+    const float halfHeight = 0.5f;
+    const float pi = GetPI<float>();
+
+    const Vector3 apex(0.0f, halfHeight, 0.0f);
+
+    // 側面（スムーズシェーディング）。法線は正規化した(height*cosθ, radius, height*sinθ)
+    for (int i = 0; i < segments; ++i) {
+        const float theta0 = 2.0f * pi * static_cast<float>(i) / static_cast<float>(segments);
+        const float theta1 = 2.0f * pi * static_cast<float>(i + 1) / static_cast<float>(segments);
+        const float thetaMid = (theta0 + theta1) * 0.5f;
+        const Vector3 base0(radius * std::cos(theta0), -halfHeight, radius * std::sin(theta0));
+        const Vector3 base1(radius * std::cos(theta1), -halfHeight, radius * std::sin(theta1));
+        const Vector3 n0 = Vector3(height * std::cos(theta0), radius, height * std::sin(theta0)).Normalize();
+        const Vector3 n1 = Vector3(height * std::cos(theta1), radius, height * std::sin(theta1)).Normalize();
+        const Vector3 nApex = Vector3(height * std::cos(thetaMid), radius, height * std::sin(thetaMid)).Normalize();
+
+        const float u0 = static_cast<float>(i) / static_cast<float>(segments);
+        const float u1 = static_cast<float>(i + 1) / static_cast<float>(segments);
+
+        const uint32_t base = static_cast<uint32_t>(verts.size());
+        verts.push_back(MakeVertex(base0, n0, u0, 1.0f));
+        verts.push_back(MakeVertex(apex, nApex, (u0 + u1) * 0.5f, 0.0f));
+        verts.push_back(MakeVertex(base1, n1, u1, 1.0f));
+        // (base0,apex,base1)はCCW(外側から見て)の順で並ぶため、そのままの順で積む
+        idx.push_back(base + 0); idx.push_back(base + 1); idx.push_back(base + 2);
+    }
+
+    // 底面の蓋
+    const Vector3 bottomCenter(0.0f, -halfHeight, 0.0f);
+    const Vector3 bottomNormal(0.0f, -1.0f, 0.0f);
+    const Vector3 bottomU(1.0f, 0.0f, 0.0f);
+    const Vector3 bottomV(0.0f, 0.0f, 1.0f);
+
+    const uint32_t centerIndex = static_cast<uint32_t>(verts.size());
+    verts.push_back(MakeVertex(bottomCenter, bottomNormal, 0.5f, 0.5f));
+    const uint32_t firstRim = centerIndex + 1;
+    for (int i = 0; i < segments; ++i) {
+        const float theta = 2.0f * pi * static_cast<float>(i) / static_cast<float>(segments);
+        const Vector3 p = bottomCenter + bottomU * (radius * std::cos(theta)) + bottomV * (radius * std::sin(theta));
+        verts.push_back(MakeVertex(p, bottomNormal, 0.5f + 0.5f * std::cos(theta), 0.5f + 0.5f * std::sin(theta)));
+    }
+    for (int i = 0; i < segments; ++i) {
+        const uint32_t a = firstRim + static_cast<uint32_t>(i);
+        const uint32_t b = firstRim + static_cast<uint32_t>((i + 1) % segments);
+        idx.push_back(centerIndex); idx.push_back(a); idx.push_back(b);
     }
 }
 
@@ -343,6 +445,78 @@ void GenerateICOSphere(std::vector<Vertex> &verts, std::vector<uint32_t> &idx) {
     idx = std::move(mesh.indices);
 }
 
+/// @brief 正二十面体プリミティブ（外接球半径0.5、ICOSphereと異なり分割・平滑化せず各面を平坦シェーディングする）
+void GenerateIcosahedronFlat(std::vector<Vertex> &verts, std::vector<uint32_t> &idx) {
+    const float radius = 0.5f;
+    const RawMesh mesh = GenerateIcosahedron(); // 各頂点は単位球面上に正規化済み、面はCCW(外側から見て)
+
+    for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3) {
+        const Vector3 p0 = mesh.positions[mesh.indices[i + 0]] * radius;
+        const Vector3 p1 = mesh.positions[mesh.indices[i + 1]] * radius;
+        const Vector3 p2 = mesh.positions[mesh.indices[i + 2]] * radius;
+        AddTriangle(verts, idx, p0, p1, p2);
+    }
+}
+
+/// @brief 正十二面体プリミティブ（外接球半径0.5）
+/// @details 正二十面体の双対として構築する（正二十面体の各面の重心＝正十二面体の頂点、
+///          正二十面体の各頂点の周りにある5つの面＝正十二面体の五角形の面になる）。
+///          既に検証済みの正二十面体データを流用することで、複雑な五角形面の座標や
+///          頂点順を個別に用意せずに正しい形状を構築できる
+void GenerateDodecahedron(std::vector<Vertex> &verts, std::vector<uint32_t> &idx) {
+    const float radius = 0.5f;
+    const RawMesh ico = GenerateIcosahedron();
+    const size_t faceCount = ico.indices.size() / 3;
+
+    // 正二十面体の各面の重心（単位球面上に正規化）＝正十二面体の頂点
+    std::vector<Vector3> dualVerts(faceCount);
+    for (size_t f = 0; f < faceCount; ++f) {
+        const Vector3 &p0 = ico.positions[ico.indices[f * 3 + 0]];
+        const Vector3 &p1 = ico.positions[ico.indices[f * 3 + 1]];
+        const Vector3 &p2 = ico.positions[ico.indices[f * 3 + 2]];
+        dualVerts[f] = ((p0 + p1 + p2) / 3.0f).Normalize();
+    }
+
+    // 正二十面体の各頂点について、それを共有する5つの面（＝正十二面体の五角形の頂点）を集めて
+    // 五角形面を作る
+    for (size_t v = 0; v < ico.positions.size(); ++v) {
+        std::vector<size_t> adjacentFaces;
+        for (size_t f = 0; f < faceCount; ++f) {
+            if (ico.indices[f * 3 + 0] == v || ico.indices[f * 3 + 1] == v || ico.indices[f * 3 + 2] == v) {
+                adjacentFaces.push_back(f);
+            }
+        }
+
+        // vを中心とした接平面上での角度順に並べ替える（五角形の頂点順を確定させるため）
+        const Vector3 vAxis = ico.positions[v];
+        Vector3 tangent = vAxis.Cross(Vector3(0.0f, 1.0f, 0.0f));
+        if (tangent.Length() < 1e-4f) tangent = vAxis.Cross(Vector3(1.0f, 0.0f, 0.0f));
+        tangent = tangent.Normalize();
+        const Vector3 bitangent = vAxis.Cross(tangent).Normalize();
+
+        std::sort(adjacentFaces.begin(), adjacentFaces.end(), [&](size_t a, size_t b) {
+            const Vector3 da = dualVerts[a] - vAxis;
+            const Vector3 db = dualVerts[b] - vAxis;
+            const float angleA = std::atan2(da.Dot(bitangent), da.Dot(tangent));
+            const float angleB = std::atan2(db.Dot(bitangent), db.Dot(tangent));
+            return angleA < angleB;
+        });
+
+        // 五角形を扇形に3分割する。vAxis方向（=外向き法線）と面の法線が一致するよう頂点順を補正する
+        for (size_t i = 1; i + 1 < adjacentFaces.size(); ++i) {
+            const Vector3 p0 = dualVerts[adjacentFaces[0]] * radius;
+            const Vector3 p1 = dualVerts[adjacentFaces[i]] * radius;
+            const Vector3 p2 = dualVerts[adjacentFaces[i + 1]] * radius;
+            const Vector3 faceNormal = (p1 - p0).Cross(p2 - p0);
+            if (faceNormal.Dot(vAxis) < 0.0f) {
+                AddTriangle(verts, idx, p0, p2, p1);
+            } else {
+                AddTriangle(verts, idx, p0, p1, p2);
+            }
+        }
+    }
+}
+
 void RegisterMesh(const std::string &name, std::vector<Vertex> vertices, std::vector<uint32_t> indices) {
     ModelManager::RegisterProceduralMesh("PrimitiveMesh-" + name, std::move(vertices), std::move(indices));
 }
@@ -429,19 +603,45 @@ void PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes() {
         RegisterMesh("Circle2D", std::move(verts), std::move(idx));
     }
     {
+        // Circle2Dと同じジオメトリだが、画像を放射状に巻き付ける（上端が中心）UVを持つ
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GenerateCircleCircularUV(verts, idx, 'Y');
+        RegisterMesh("Circle2D-CircularUV", std::move(verts), std::move(idx));
+    }
+    {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;
         GenerateTetrahedron(verts, idx);
         RegisterMesh("Tetrahedron", std::move(verts), std::move(idx));
     }
     {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GenerateOctahedron(verts, idx);
+        RegisterMesh("Octahedron", std::move(verts), std::move(idx));
+    }
+    {
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GenerateDodecahedron(verts, idx);
+        RegisterMesh("Dodecahedron", std::move(verts), std::move(idx));
+    }
+    {
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GenerateIcosahedronFlat(verts, idx);
+        RegisterMesh("Icosahedron", std::move(verts), std::move(idx));
+    }
+    {
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
         GenerateCylinder(verts, idx, true);
-        RegisterMesh("CylinderClosed", std::move(verts), std::move(idx));
+        RegisterMesh("Cylinder-Closed", std::move(verts), std::move(idx));
     }
     {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;
         GenerateCylinder(verts, idx, false);
-        RegisterMesh("CylinderOpened", std::move(verts), std::move(idx));
+        RegisterMesh("Cylinder-Opened", std::move(verts), std::move(idx));
+    }
+    {
+        std::vector<Vertex> verts; std::vector<uint32_t> idx;
+        GenerateCone(verts, idx);
+        RegisterMesh("Cone", std::move(verts), std::move(idx));
     }
 }
 

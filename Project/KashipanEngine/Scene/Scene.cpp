@@ -243,7 +243,13 @@ const TypeInfo &Scene::GetGlobalSceneVariableTypeInfo(const std::string &key) {
 EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &objectID, size_t index) {
     auto newObj = std::make_unique<EmptyObject>(Passkey<Scene>{}, sceneContext_.get(), name);
     auto newObjPtr = newObj.get();
-    newObjPtr->SetObjectID(objectID);
+    // objectIDが未指定（無効なUUID）の場合、EmptyObjectのコンストラクタで自動生成された
+    // 有効なUUIDをそのまま使う。ここで無条件に上書きすると、IDを指定しない全ての呼び出し
+    // （スクリプトのCreateObject等）が同じ無効UUIDを共有することになり、UUIDベースの検索・削除
+    // （ヒエラルキーの削除コマンド等）が正しく機能しなくなる
+    if (objectID.IsValid()) {
+        newObjPtr->SetObjectID(objectID);
+    }
     if (index >= objects_.size()) {
         objects_.push_back(std::move(newObj));
     } else {

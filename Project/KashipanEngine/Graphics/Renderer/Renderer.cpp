@@ -1150,12 +1150,14 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     };
     for (auto *renderer : sceneRenderer->GetMeshRenderers()) {
         if (!renderer || !renderer->IsActive()) continue;
+        if (!renderer->GetCastShadows()) continue;
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
         if (!isShadowCastingPipeline(renderer->GetPipelineName())) continue;
         appendShadowSources(renderer, nullptr);
     }
     for (auto *renderer : sceneRenderer->GetSkinnedMeshRenderers()) {
         if (!renderer || !renderer->IsActive()) continue;
+        if (!renderer->GetCastShadows()) continue;
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
         if (!renderer->HasValidSkinningData()) continue;
         if (!isShadowCastingPipeline(renderer->GetPipelineName())) continue;
@@ -1287,6 +1289,74 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         }
     }
 
+    //--------- GPUパーティクルの影キャスターを収集する ---------//
+    // GPUパーティクルは通常描画（RenderGpuParticles）と同じ考え方で、CPU側にワールド行列を
+    // 持たない（gpuInstanceMatrixBuffer_をそのままgTransformationMatricesとしてバインドする）。
+    // マテリアルはエミッター全体で1つのため、instanceCount分だけ複製したバッファを用意する
+    // （通常のMeshRenderer由来バッチと違い、他のエミッターとまとめてインスタンシングはできない）
+    struct PreparedGpuParticleShadowBatch {
+        const ResourceContainer::MeshBuffers *meshBuffers = nullptr;
+        RWStructuredBufferResource *transformBuffer = nullptr;
+        StructuredBufferResource *materialBuffer = nullptr;
+        std::uint32_t textureHandle = TextureManager::kInvalidHandle;
+        SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
+        std::uint32_t instanceCount = 0;
+    };
+    std::vector<PreparedGpuParticleShadowBatch> gpuParticleBatches;
+    {
+        std::uint32_t emitterIndex = 0;
+        for (auto *emitter : sceneRenderer->GetGpuParticleEmitters()) {
+            if (!emitter || !emitter->IsActive() || !emitter->IsGPUSimulation() || !emitter->GetCastShadows()) continue;
+
+            const auto meshHandle = emitter->GetMeshHandle();
+            if (meshHandle == ModelManager::kInvalidHandle) continue;
+            const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(meshHandle);
+            if (!meshBuffers || !meshBuffers->vertexBuffer || !meshBuffers->indexBuffer) continue;
+
+            auto *instanceMatrixBuffer = emitter->GetGpuInstanceMatrixBuffer(Passkey<Renderer>{});
+            if (!instanceMatrixBuffer) continue;
+            const std::uint32_t instanceCount = emitter->GetGpuParticleCapacity(Passkey<Renderer>{});
+            if (instanceCount == 0) continue;
+
+            PreparedGpuParticleShadowBatch batch;
+            batch.meshBuffers = meshBuffers;
+            batch.transformBuffer = instanceMatrixBuffer;
+            batch.instanceCount = instanceCount;
+
+            auto *material = MaterialManager::GetMaterial(emitter->GetMaterialHandle());
+            if (material) material->ResolveTextureHandles();
+            MaterialElement element;
+            if (material) {
+                element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
+                element.enableEnvironmentMapping = 0.0f;
+                element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
+                element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
+                element.color = material->color;
+                element.uvTransform = material->uvTransform;
+                element.shininess = material->shininess;
+                element.specularColor = material->specularColor;
+                element.environmentCoefficient = material->environmentCoefficient;
+                batch.textureHandle = material->textureHandle;
+                batch.samplerHandle = material->samplerHandle;
+            }
+            char key[64];
+            std::snprintf(key, sizeof(key), "ShadowPass|gpuParticle|%u|material", emitterIndex);
+            batch.materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
+            if (batch.materialBuffer) {
+                if (auto *mapped = static_cast<MaterialElement *>(batch.materialBuffer->Map())) {
+                    for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                        mapped[i] = element;
+                    }
+                }
+            }
+
+            if (batch.materialBuffer) {
+                gpuParticleBatches.push_back(batch);
+                ++emitterIndex;
+            }
+        }
+    }
+
     //--------- シャドウマップ配列を深度書き込み状態にして全スライスを一括クリア ---------//
     shadowMapArray_->SetCommandList(commandList);
     shadowMapArray_->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE);
@@ -1346,6 +1416,30 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());
                 const std::uint32_t drawIndexCount = batch.indexCount > 0 ? batch.indexCount : batch.meshBuffers->indexCount;
                 commandList->DrawIndexedInstanced(drawIndexCount, batch.instanceCount, batch.indexStart, 0, 0);
+                ++drawCallCount_;
+            }
+
+            for (const auto &batch : gpuParticleBatches) {
+                shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
+                batch.transformBuffer->SetCommandList(commandList);
+                shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
+                shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
+                if (batch.textureHandle != TextureManager::kInvalidHandle) {
+                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
+                } else if (fallbackTextureHandle != TextureManager::kInvalidHandle) {
+                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackTextureHandle);
+                }
+                if (batch.samplerHandle != SamplerManager::kInvalidHandle) {
+                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", batch.samplerHandle);
+                } else {
+                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
+                }
+
+                pipelineBinder.SetVertexBuffer(batch.meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
+                pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());
+                // 死んでいるパーティクルはgpuInstanceMatrixBuffer_内でスケール0の行列になっているため、
+                // 追加のカリング無しでcapacity件（常にMax Particles分）そのままインスタンス描画する
+                commandList->DrawIndexedInstanced(batch.meshBuffers->indexCount, batch.instanceCount, 0, 0, 0);
                 ++drawCallCount_;
             }
         }

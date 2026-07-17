@@ -495,6 +495,10 @@ void SkinnedMeshRenderer::ShowImGui() {
     // Root Bone（Unityと同様。設定するとメッシュの描画位置がこのオブジェクトに沿って動く）
     TargetObjectSelector::ShowSelector("Root Bone", GetOwnerSceneContext(), rootBoneObjectID_);
     ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
+    ImGui::Checkbox("Cast Shadows", &castShadows_);
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる");
+    }
     const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
     std::vector<std::string> materialNames;
     for (const auto &entry : materialEntries) {
@@ -578,6 +582,7 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
     for (const auto &name : excludedRenderTargetNames_) {
         json["excludedRenderTargetNames"].push_back(name);
     }
+    json["castShadows"] = castShadows_;
     json["quality"] = static_cast<int>(quality_);
     json["animationClipName"] = animationClipName_;
     json["playOnStart"] = playOnStart_;
@@ -617,6 +622,7 @@ bool SkinnedMeshRenderer::LoadFromJson(const JSON &json) {
     for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
         excludedRenderTargetNames_.insert(name);
     }
+    castShadows_ = json.value("castShadows", true);
     quality_ = static_cast<SkinQuality>(json.value("quality", static_cast<int>(SkinQuality::Auto)));
     animationClipName_ = json.value("animationClipName", std::string{});
     playOnStart_ = json.value("playOnStart", true);

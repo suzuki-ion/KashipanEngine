@@ -281,6 +281,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -306,62 +307,6 @@
                 {
                     "data": {
                         "customData": {
-                            "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "scale": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "translate": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Transform"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "angularAcceleration": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "angularVelocity": {
-                                "x": 0.0,
-                                "y": 1.25,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Rotation"
-                }
-            ],
-            "editorOnly": false,
-            "isActive": true,
-            "name": "EmptyObject",
-            "objectID": "d4e3ab71-95ae-4191-a531-0c4eb71ca63c",
-            "tag": ""
-        },
-        {
-            "components": [
-                {
-                    "data": {
-                        "customData": {
-                            "parent": "945226ea-487c-44a9-b7d6-f9b1a99ee352",
                             "rotate": {
                                 "w": 1.0,
                                 "x": 0.0,
@@ -427,7 +372,8 @@
                             "billboard": false,
                             "billboardRotationMode": 0,
                             "billboardTargetObjectID": "",
-                            "emissionRate": 100000.0,
+                            "castShadows": false,
+                            "emissionRate": 1000000.0,
                             "endScale": {
                                 "max": {
                                     "x": 0.0,
@@ -490,14 +436,14 @@
                             },
                             "initialVelocity": {
                                 "max": {
-                                    "x": 8.0,
-                                    "y": 4.0,
-                                    "z": 8.0
+                                    "x": 0.0,
+                                    "y": 16.0,
+                                    "z": 0.0
                                 },
                                 "min": {
-                                    "x": -8.0,
-                                    "y": 2.0,
-                                    "z": -8.0
+                                    "x": 0.0,
+                                    "y": 8.0,
+                                    "z": 0.0
                                 },
                                 "randomize": true,
                                 "value": {
@@ -514,8 +460,8 @@
                             },
                             "loop": true,
                             "materialName": "White",
-                            "maxParticles": 200000,
-                            "meshAssetPath": "PrimitiveMesh-Dodecahedron",
+                            "maxParticles": 2000000,
+                            "meshAssetPath": "PrimitiveMesh-Triangle2D",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,
                             "rotationAcceleration": {
@@ -537,14 +483,14 @@
                                 }
                             },
                             "spawnBoxSizeMax": {
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
+                                "x": 64.0,
+                                "y": 16.0,
+                                "z": 64.0
                             },
                             "spawnBoxSizeMin": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": 48.0,
+                                "y": 16.0,
+                                "z": 48.0
                             },
                             "spawnCapsuleHeightMax": 1.0,
                             "spawnCapsuleHeightMin": 0.0,
@@ -561,9 +507,9 @@
                                 "randomize": false,
                                 "value": 1
                             },
-                            "spawnOrigin": 0,
+                            "spawnOrigin": 3,
                             "spawnParentObjectID": "",
-                            "spawnShape": 0,
+                            "spawnShape": 1,
                             "spawnSphereRadiusMax": 1.0,
                             "spawnSphereRadiusMin": 0.0,
                             "startScale": {
@@ -618,6 +564,61 @@
             "isActive": true,
             "name": "EmptyObject",
             "objectID": "8ad0698a-ea0e-42f1-9d2b-3a17f92a6961",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "angularAcceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "angularVelocity": {
+                                "x": 0.0,
+                                "y": 1.25,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Rotation"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": false,
+            "name": "EmptyObject",
+            "objectID": "d4e3ab71-95ae-4191-a531-0c4eb71ca63c",
             "tag": ""
         },
         {

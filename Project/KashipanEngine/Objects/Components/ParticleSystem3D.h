@@ -42,6 +42,7 @@ protected:
                 renderer->SetTargetObject(targetObjectID_);
                 renderer->SetPipelineName(pipelineName_);
                 renderer->SetMaterialName(materialName_);
+                renderer->SetCastShadows(castShadows_);
             }
         });
     }

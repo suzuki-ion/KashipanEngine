@@ -75,6 +75,7 @@ public:
         ptr->playOnStart_ = playOnStart_;
         ptr->loop_ = loop_;
         ptr->playbackSpeed_ = playbackSpeed_;
+        ptr->castShadows_ = castShadows_;
         return ptr;
     }
 
@@ -103,6 +104,10 @@ public:
 
     void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
+
+    /// @brief シャドウマッピングのシャドウキャスターとして扱うかを設定する
+    void SetCastShadows(bool enabled) noexcept { castShadows_ = enabled; }
+    bool GetCastShadows() const noexcept { return castShadows_; }
 
     void SetMaterialName(const std::string &materialName) { SetMaterialNameAt(0, materialName); }
     void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandles_[0] = materialHandle; }
@@ -318,6 +323,8 @@ private:
     /// @brief materialNames_と対応するハンドルのキャッシュ（未解決はkInvalidHandle）
     mutable std::vector<MaterialManager::MaterialHandle> materialHandles_{ MaterialManager::kInvalidHandle };
     std::unordered_set<std::string> excludedRenderTargetNames_;
+    /// @brief シャドウマッピングのシャドウキャスターとして扱うか
+    bool castShadows_ = true;
 
     SkinQuality quality_ = SkinQuality::Auto;
     std::vector<BlendShapeWeight> blendShapes_;

@@ -11,6 +11,10 @@ cbuffer ParticleUpdateConstants : register(b0)
     uint gBillboard;
     uint gBillboardMode; // 0: SyncRotation（カメラ回転をコピー）, 1: LookAt（+Z軸がカメラを向く）
     float4x4 gCameraWorldMatrix;
+    // 親への追従用。SpawnOrigin::ChildOfSelf/ChildOfOtherの場合、particle.position等は
+    // 親のローカル空間の値として保持されており、この行列を掛けてワールド空間へ変換する
+    // （親を持たない場合は恒等行列で、particle.positionは元々ワールド空間の値になる）
+    float4x4 gParentWorldMatrix;
 };
 
 struct GPUParticleData
@@ -153,9 +157,14 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
     float t = particle.lifetime > 0.0f ? saturate(particle.age / particle.lifetime) : 1.0f;
     float3 scale = lerp(particle.startScale, particle.endScale, t);
 
-    float4x4 rotateMatrix;
+    float4x4 world;
     if (gBillboard != 0)
     {
+        // ビルボードは常にワールド空間でカメラの方を向かせたいため、親の回転・スケールは
+        // 適用せず平行移動のみ追従させる（回転まで適用すると常にカメラを向く効果が崩れるため）
+        float3 worldPosition = mul(float4(particle.position, 1.0f), gParentWorldMatrix).xyz;
+
+        float4x4 rotateMatrix;
         if (gBillboardMode == 0)
         {
             // SyncRotation: カメラのワールド回転（上3x3）をそのままコピーする
@@ -169,7 +178,7 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         {
             // LookAt: 自身からカメラ方向へ+Z軸を向ける
             float3 cameraPosition = float3(gCameraWorldMatrix._41, gCameraWorldMatrix._42, gCameraWorldMatrix._43);
-            float3 direction = cameraPosition - particle.position;
+            float3 direction = cameraPosition - worldPosition;
             if (dot(direction, direction) > 1.0e-12f)
             {
                 rotateMatrix = MakeLookRotationMatrix(normalize(direction));
@@ -181,15 +190,20 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
                 rotateMatrix = mul(rotateMatrix, MakeRotateZMatrix(particle.rotation.z));
             }
         }
+
+        world = mul(mul(MakeScaleMatrix(scale), rotateMatrix), MakeTranslateMatrix(worldPosition));
     }
     else
     {
-        rotateMatrix = MakeRotateXMatrix(particle.rotation.x);
+        float4x4 rotateMatrix = MakeRotateXMatrix(particle.rotation.x);
         rotateMatrix = mul(rotateMatrix, MakeRotateYMatrix(particle.rotation.y));
         rotateMatrix = mul(rotateMatrix, MakeRotateZMatrix(particle.rotation.z));
-    }
 
-    float4x4 world = mul(mul(MakeScaleMatrix(scale), rotateMatrix), MakeTranslateMatrix(particle.position));
+        // 親のローカル空間でのTRSを組み立ててから、親のワールド行列を掛けて
+        // 回転・スケールも含めて完全に追従させる（親が無い場合は恒等行列なのでそのままワールド空間になる）
+        float4x4 localWorld = mul(mul(MakeScaleMatrix(scale), rotateMatrix), MakeTranslateMatrix(particle.position));
+        world = mul(localWorld, gParentWorldMatrix);
+    }
 
     TransformationMatrix result;
     result.world = world;

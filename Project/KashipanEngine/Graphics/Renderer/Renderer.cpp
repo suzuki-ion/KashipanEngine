@@ -642,6 +642,13 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
             auto *cameraTransform = cameraObject ? cameraObject->GetComponent<Transform>() : nullptr;
             if (cameraTransform) updateConstants.cameraWorldMatrix = cameraTransform->GetWorldMatrix();
         }
+        // SpawnOrigin::ChildOfSelf/ChildOfOtherの場合、パーティクルは親のローカル空間で
+        // シミュレーションされているため、毎フレーム親の現在のワールド行列を渡して追従させる
+        // （親が無い場合はデフォルトの恒等行列のまま＝従来通りワールド空間として扱われる）
+        if (auto *followParent = emitter->ResolveGpuFollowParent(Passkey<Renderer>{})) {
+            auto *followParentTransform = followParent->GetComponent<Transform>();
+            if (followParentTransform) updateConstants.parentWorldMatrix = followParentTransform->GetWorldMatrix();
+        }
         void *mappedUpdateConstants = updateConstantBuffer->Map();
         if (mappedUpdateConstants) std::memcpy(mappedUpdateConstants, &updateConstants, sizeof(updateConstants));
 

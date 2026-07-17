@@ -38,6 +38,7 @@ public:
         ptr->materialNames_ = materialNames_;
         ptr->materialHandles_ = materialHandles_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
+        ptr->castShadows_ = castShadows_;
         return ptr;
     }
 
@@ -79,6 +80,10 @@ public:
         MarkDrawListDirty();
     }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
+
+    /// @brief シャドウマッピングのシャドウキャスターとして扱うかを設定する
+    void SetCastShadows(bool enabled) noexcept { castShadows_ = enabled; }
+    bool GetCastShadows() const noexcept { return castShadows_; }
 
     void SetMaterialName(const std::string &materialName) { SetMaterialNameAt(0, materialName); }
     void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) {
@@ -172,6 +177,10 @@ protected:
         if (ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
             MarkDrawListDirty();
         }
+        ImGui::Checkbox("Cast Shadows", &castShadows_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる");
+        }
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
         std::vector<std::string> materialNames;
         for (const auto &entry : materialEntries) {
@@ -222,6 +231,7 @@ protected:
         for (const auto &name : excludedRenderTargetNames_) {
             json["excludedRenderTargetNames"].push_back(name);
         }
+        json["castShadows"] = castShadows_;
         return json;
     }
 
@@ -243,6 +253,7 @@ protected:
         for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
             excludedRenderTargetNames_.insert(name);
         }
+        castShadows_ = json.value("castShadows", true);
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
         MarkDrawListDirty();
         return true;
@@ -276,6 +287,8 @@ private:
     mutable std::vector<MaterialManager::MaterialHandle> materialHandles_{ MaterialManager::kInvalidHandle };
     /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合
     std::unordered_set<std::string> excludedRenderTargetNames_;
+    /// @brief シャドウマッピングのシャドウキャスターとして扱うか
+    bool castShadows_ = true;
 };
 
 REGISTER_COMPONENT_OBJECT(MeshRenderer)

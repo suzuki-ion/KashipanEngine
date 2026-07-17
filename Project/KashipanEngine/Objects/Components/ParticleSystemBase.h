@@ -208,6 +208,15 @@ public:
     void SetBillboardRotationMode(TargetLookAt::RotationMode mode) noexcept { billboardRotationMode_ = mode; }
     TargetLookAt::RotationMode GetBillboardRotationMode() const noexcept { return billboardRotationMode_; }
 
+    /// @brief シャドウマッピングのシャドウキャスターとして扱うかを設定する
+    /// @details CPUモード（3D）では生成する各パーティクルのMeshRendererへそのまま伝播する
+    ///          （プール生成時に一度だけ適用されるため、生存中のパーティクルには反映されない。
+    ///          Pipeline/Material等、他のMeshRenderer設定と同じ挙動）。
+    ///          GPUモードではRendererのシャドウ描画パスがこのフラグを見て対象に含めるかを判断する。
+    ///          2D（SpriteRenderer）はそもそもシャドウを落とせないため実質的に影響しない
+    void SetCastShadows(bool enabled) noexcept { castShadows_ = enabled; }
+    bool GetCastShadows() const noexcept { return castShadows_; }
+
     /// @brief GPUシミュレーション（コンピュートシェーダーによる移動・寿命計算）の有効/無効を設定する
     /// @details 切り替え時に現在のシミュレーション方式のリソースを破棄し、新しい方式を初期化する
     void SetGPUSimulation(bool enabled) {
@@ -289,6 +298,7 @@ protected:
         ADD_MEMBER_VARIABLE(maxParticles_);
         ADD_MEMBER_VARIABLE(totalSpawnCount_);
         ADD_MEMBER_VARIABLE(billboard_);
+        ADD_MEMBER_VARIABLE(castShadows_);
         ADD_MEMBER_VARIABLE(spawnCenter_);
         ADD_MEMBER_VARIABLE(spawnBoxSizeMin_);
         ADD_MEMBER_VARIABLE(spawnBoxSizeMax_);
@@ -468,6 +478,7 @@ protected:
         billboard_ = other.billboard_;
         billboardTargetObjectID_ = other.billboardTargetObjectID_;
         billboardRotationMode_ = other.billboardRotationMode_;
+        castShadows_ = other.castShadows_;
         spawnShape_ = other.spawnShape_;
         spawnCenter_ = other.spawnCenter_;
         spawnBoxSizeMin_ = other.spawnBoxSizeMin_;
@@ -507,6 +518,7 @@ protected:
         json["billboard"] = billboard_;
         json["billboardTargetObjectID"] = ToJSON(billboardTargetObjectID_);
         json["billboardRotationMode"] = static_cast<int>(billboardRotationMode_);
+        json["castShadows"] = castShadows_;
         json["spawnShape"] = static_cast<int>(spawnShape_);
         json["spawnCenter"] = ToJSON(spawnCenter_);
         json["spawnBoxSizeMin"] = ToJSON(spawnBoxSizeMin_);
@@ -546,6 +558,7 @@ protected:
         billboard_ = json.value("billboard", false);
         if (json.contains("billboardTargetObjectID")) billboardTargetObjectID_ = FromJSON<UUID128>(json["billboardTargetObjectID"]);
         billboardRotationMode_ = static_cast<TargetLookAt::RotationMode>(json.value("billboardRotationMode", 0));
+        castShadows_ = json.value("castShadows", true);
         spawnShape_ = static_cast<SpawnShape>(json.value("spawnShape", 0));
         if (json.contains("spawnCenter")) spawnCenter_ = FromJSON<Vector3>(json["spawnCenter"]);
         if (json.contains("spawnBoxSizeMin")) spawnBoxSizeMin_ = FromJSON<Vector3>(json["spawnBoxSizeMin"]);
@@ -754,6 +767,13 @@ protected:
         }
         ImGuiCustom::SelectString("Material", materialName_, materialNames);
 
+        ImGui::Checkbox("Cast Shadows", &castShadows_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("有効にすると、生成したパーティクルがシャドウマッピングのシャドウキャスターとして扱われる\n"
+                "（CPUモード: 各パーティクルのMeshRendererへ伝播。プール生成時のみ適用されるため、\n"
+                "生存中のパーティクルには即座に反映されない。GPUモード: 毎フレーム反映される）");
+        }
+
         ImGui::Checkbox("Billboard", &billboard_);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("有効にすると、生成した各パーティクルが指定オブジェクトの方を向く（TargetLookAtを利用）");
@@ -829,6 +849,8 @@ protected:
     UUID128 billboardTargetObjectID_;
     /// @brief ビルボードの向き方（TargetLookAtと同じ2種類）
     TargetLookAt::RotationMode billboardRotationMode_ = TargetLookAt::RotationMode::SyncRotation;
+    /// @brief シャドウマッピングのシャドウキャスターとして扱うか
+    bool castShadows_ = true;
 
     // スポーン範囲（Point以外はMin/Max間の領域にランダムスポーンする）
     SpawnShape spawnShape_ = SpawnShape::Point;

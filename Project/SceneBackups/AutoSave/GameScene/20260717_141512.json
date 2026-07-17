@@ -44,15 +44,6 @@
                 "tag": ""
             },
             "type": "SceneAudioPlayer"
-        },
-        {
-            "data": {
-                "data": {},
-                "isActive": true,
-                "priority": 1001,
-                "tag": ""
-            },
-            "type": "ScenePreTransform"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
@@ -76,8 +67,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 2.999873161315918,
+                                "x": 104.15396118164063,
+                                "y": 53.99392318725586,
                                 "z": -16.0
                             }
                         },
@@ -191,8 +182,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 108.39784240722656,
-                                "y": 63.45305252075195,
+                                "x": 104.15548706054688,
+                                "y": 51.99384307861328,
                                 "z": 0.0
                             }
                         },
@@ -381,7 +372,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -683,7 +674,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Enemy",
             "objectID": "cc78ac43-69ad-4d7a-8821-cf1710643fb7",
             "tag": ""
@@ -825,7 +816,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Enemy",
             "objectID": "1df1bea7-77fc-4446-bbc5-0e98e57c7dfe",
             "tag": ""
@@ -967,7 +958,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Enemy",
             "objectID": "da5f2c80-7bb8-43fb-9bf6-00d116e0223a",
             "tag": ""
@@ -991,7 +982,7 @@
                             },
                             "translate": {
                                 "x": 81.05665588378906,
-                                "y": 44.584598541259766,
+                                "y": 44.58870315551758,
                                 "z": -1.1010958189672237e-07
                             }
                         },
@@ -7069,10 +7060,10 @@
                         "customData": {
                             "parent": "bd16456f-dc67-4b49-9f08-468a5d9ea789",
                             "rotate": {
-                                "w": 1.0,
+                                "w": -0.681366503238678,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": -0.7319424152374268
                             },
                             "scale": {
                                 "x": 4.0,
@@ -11315,10 +11306,10 @@
                         "customData": {
                             "parent": "7c4451a8-4c6e-4ba7-936e-855838c283dd",
                             "rotate": {
-                                "w": 1.0,
+                                "w": -0.681366503238678,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": -0.7319424152374268
                             },
                             "scale": {
                                 "x": 4.0,
@@ -11498,10 +11489,10 @@
                         "customData": {
                             "parent": "844c251a-9ab1-4c55-ba8a-443c4c488ae7",
                             "rotate": {
-                                "w": 1.0,
+                                "w": -0.681366503238678,
                                 "x": 0.0,
                                 "y": 0.0,
-                                "z": 0.0
+                                "z": -0.7319424152374268
                             },
                             "scale": {
                                 "x": 4.0,
@@ -11692,7 +11683,7 @@
                                 "z": 5.0
                             },
                             "translate": {
-                                "x": 0.0,
+                                "x": 6.0,
                                 "y": 0.0,
                                 "z": 0.0
                             }
@@ -11992,8 +11983,8 @@
                         "customData": {
                             "parent": "f08c65d3-f675-40af-bfe6-1da935169ab6",
                             "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
+                                "w": -0.5481126308441162,
+                                "x": 0.8364045023918152,
                                 "y": 0.0,
                                 "z": 0.0
                             },
@@ -12916,7 +12907,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": 0.0,
+                                "y": -8.0,
                                 "z": 0.0
                             }
                         },
@@ -13341,10 +13332,10 @@
                         "customData": {
                             "parent": "66779b41-4774-4de5-be40-a882e63feea6",
                             "rotate": {
-                                "w": 1.0,
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "w": 0.07579920440912247,
+                                "x": -0.7048469185829163,
+                                "y": 0.02522328868508339,
+                                "z": -0.7048469185829163
                             },
                             "scale": {
                                 "x": 1.0,
@@ -13707,12 +13698,12 @@
                             },
                             "scale": {
                                 "x": 1.0,
-                                "y": 1.0,
+                                "y": 0.20000000298023224,
                                 "z": 1.0
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": -0.5,
+                                "y": 0.0,
                                 "z": 0.0
                             }
                         },
@@ -13725,7 +13716,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13842,7 +13833,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -13943,7 +13934,7 @@
                             "spawnCapsuleRadiusMin": 0.49000000953674316,
                             "spawnCenter": {
                                 "x": 0.0,
-                                "y": 0.5,
+                                "y": 0.0,
                                 "z": 0.0
                             },
                             "spawnCount": {
@@ -13983,26 +13974,6 @@
                         "tag": ""
                     },
                     "type": "ParticleSystem3D"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "angularAcceleration": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "angularVelocity": {
-                                "x": 0.0,
-                                "y": 4.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Rotation"
                 },
                 {
                     "data": {
@@ -14179,7 +14150,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -14320,26 +14291,6 @@
                         "tag": ""
                     },
                     "type": "ParticleSystem3D"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "angularAcceleration": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "angularVelocity": {
-                                "x": 0.0,
-                                "y": 4.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Rotation"
                 }
             ],
             "editorOnly": false,
@@ -14793,7 +14744,7 @@
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": 0.0,
+                                "y": -7.5,
                                 "z": 0.0
                             }
                         },

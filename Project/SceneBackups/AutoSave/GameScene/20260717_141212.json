@@ -44,15 +44,6 @@
                 "tag": ""
             },
             "type": "SceneAudioPlayer"
-        },
-        {
-            "data": {
-                "data": {},
-                "isActive": true,
-                "priority": 1001,
-                "tag": ""
-            },
-            "type": "ScenePreTransform"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
@@ -191,8 +182,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 108.39784240722656,
-                                "y": 63.45305252075195,
+                                "x": 0.0,
+                                "y": 2.0,
                                 "z": 0.0
                             }
                         },
@@ -381,7 +372,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -7214,7 +7205,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -11460,7 +11451,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -11643,7 +11634,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -11891,7 +11882,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -11954,7 +11945,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -12137,7 +12128,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13114,7 +13105,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13177,7 +13168,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13240,7 +13231,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13303,7 +13294,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13707,12 +13698,12 @@
                             },
                             "scale": {
                                 "x": 1.0,
-                                "y": 1.0,
+                                "y": 0.20000000298023224,
                                 "z": 1.0
                             },
                             "translate": {
                                 "x": 0.0,
-                                "y": -0.5,
+                                "y": 0.0,
                                 "z": 0.0
                             }
                         },
@@ -13725,7 +13716,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -13842,7 +13833,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -13943,7 +13934,7 @@
                             "spawnCapsuleRadiusMin": 0.49000000953674316,
                             "spawnCenter": {
                                 "x": 0.0,
-                                "y": 0.5,
+                                "y": 0.0,
                                 "z": 0.0
                             },
                             "spawnCount": {
@@ -13983,26 +13974,6 @@
                         "tag": ""
                     },
                     "type": "ParticleSystem3D"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "angularAcceleration": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "angularVelocity": {
-                                "x": 0.0,
-                                "y": 4.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Rotation"
                 },
                 {
                     "data": {
@@ -14179,7 +14150,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -14320,26 +14291,6 @@
                         "tag": ""
                     },
                     "type": "ParticleSystem3D"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "angularAcceleration": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "angularVelocity": {
-                                "x": 0.0,
-                                "y": 4.0,
-                                "z": 0.0
-                            }
-                        },
-                        "isActive": true,
-                        "priority": 1,
-                        "tag": ""
-                    },
-                    "type": "Rotation"
                 }
             ],
             "editorOnly": false,
@@ -14991,7 +14942,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -15054,7 +15005,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -15117,7 +15068,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,
@@ -15180,7 +15131,7 @@
                 {
                     "data": {
                         "customData": {
-                            "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            "meshAssetPath": ""
                         },
                         "isActive": true,
                         "priority": 1,

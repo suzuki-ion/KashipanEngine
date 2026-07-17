@@ -7,7 +7,8 @@ namespace KashipanEngine {
 ///          ModelManagerの構築時（LoadAllFromAssetsFolderと同じタイミング）に一度だけ呼ばれる想定。
 class PrimitiveMeshGenerator {
 public:
-    /// @brief UVSphere/ICOSphere/Plane/Box/Triangle/Circle/Tetrahedron/CylinderClosed/CylinderOpened を登録する
+    /// @brief UVSphere/ICOSphere/Plane/Box/Triangle/Circle/Circle-CircularUV/Tetrahedron/Octahedron/
+    ///        Dodecahedron/Icosahedron/Cylinder-Closed/Cylinder-Opened/Cone を登録する
     /// @details 同名で登録済みの場合は ModelManager::RegisterProceduralMesh 側で再登録がスキップされる
     static void RegisterBuiltinPrimitiveMeshes();
 };

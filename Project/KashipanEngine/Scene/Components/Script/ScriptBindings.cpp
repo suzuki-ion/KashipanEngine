@@ -1,7 +1,10 @@
 #include "Scene/Components/Script/ScriptBindings.h"
 
+#include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <map>
 #include <string_view>
@@ -1888,6 +1891,37 @@ void RegisterMathUtilBindings(asIScriptEngine *engine) {
 }
 
 //==================================================
+// 数学関数（<cmath>のラッパー）
+//==================================================
+
+/// @brief abs/sqrt/pow/三角関数など、標準的な数学関数をグローバル関数として登録する
+void RegisterMathFunctionBindings(asIScriptEngine *engine) {
+    asbind20::global(engine)
+        .function("float Abs(float)", [](float value) -> float { return std::abs(value); })
+        .function("int Abs(int)", [](int value) -> int { return std::abs(value); })
+        .function("float Sqrt(float)", [](float value) -> float { return std::sqrt(value); })
+        .function("float Pow(float, float)", [](float base, float exponent) -> float { return std::pow(base, exponent); })
+        .function("float Floor(float)", [](float value) -> float { return std::floor(value); })
+        .function("float Ceil(float)", [](float value) -> float { return std::ceil(value); })
+        .function("float Round(float)", [](float value) -> float { return std::round(value); })
+        .function("float Sign(float)", [](float value) -> float { return static_cast<float>((value > 0.0f) - (value < 0.0f)); })
+        .function("float Min(float, float)", [](float a, float b) -> float { return std::min(a, b); })
+        .function("float Max(float, float)", [](float a, float b) -> float { return std::max(a, b); })
+        .function("int Min(int, int)", [](int a, int b) -> int { return std::min(a, b); })
+        .function("int Max(int, int)", [](int a, int b) -> int { return std::max(a, b); })
+        .function("float Sin(float)", [](float radians) -> float { return std::sin(radians); })
+        .function("float Cos(float)", [](float radians) -> float { return std::cos(radians); })
+        .function("float Tan(float)", [](float radians) -> float { return std::tan(radians); })
+        .function("float Asin(float)", [](float value) -> float { return std::asin(value); })
+        .function("float Acos(float)", [](float value) -> float { return std::acos(value); })
+        .function("float Atan(float)", [](float value) -> float { return std::atan(value); })
+        .function("float Atan2(float, float)", [](float y, float x) -> float { return std::atan2(y, x); })
+        .function("float Exp(float)", [](float value) -> float { return std::exp(value); })
+        .function("float Ln(float)", [](float value) -> float { return std::log(value); })
+        .function("float Log10(float)", [](float value) -> float { return std::log10(value); });
+}
+
+//==================================================
 // 乱数（Utilities/RandomValue.h）
 //==================================================
 
@@ -2161,6 +2195,7 @@ void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     RegisterJsonBindings(engine);
     RegisterEasingBindings(engine);
     RegisterMathUtilBindings(engine);
+    RegisterMathFunctionBindings(engine);
     RegisterRandomBindings(engine);
     RegisterGlobalFunctions(engine);
 }

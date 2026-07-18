@@ -68,6 +68,25 @@ enum EaseType {
 	EaseOutInBounce = 40
 }
 
+enum WFCDirection {
+	Up = 0,
+	Down = 1,
+	Left = 2,
+	Right = 3,
+	Front = 4,
+	Back = 5
+}
+
+enum RoomType {
+	Start = 0,
+	Goal = 1,
+	Normal = 2,
+	Branch = 3,
+	Building = 4,
+	GimmickDepth = 5,
+	Treasure = 6
+}
+
 funcdef bool less(const T&in a, const T&in b);
 
 class array<T> {
@@ -1388,6 +1407,67 @@ class Json {
 	bool Parse(const string&in text);
 }
 
+class WaveFunctionCollapse {
+	WaveFunctionCollapse();
+	void SetSeed(uint seed);
+	uint GetSeed() const;
+	void SetGridSize(uint width, uint height, uint depth);
+	uint GetGridWidth() const;
+	uint GetGridHeight() const;
+	uint GetGridDepth() const;
+	bool RegisterTile(uint id);
+	bool RemoveTile(uint tileID);
+	bool AddTileConnection(uint tileID, WFCDirection direction, uint connectedTileID);
+	bool FixTile(uint x, uint y, uint z, uint tileID);
+	bool TryGetFixedTile(uint x, uint y, uint z, uint&out tileID) const;
+	bool SetStartPosition(uint x, uint y, uint z);
+	bool TryGetStartPosition(uint&out x, uint&out y, uint&out z) const;
+	bool Solve();
+	bool TryGetResolvedTile(uint x, uint y, uint z, uint&out tileID) const;
+	Json@ SaveToJson() const;
+	bool LoadFromJson(const Json&in json);
+}
+
+class StageGraphGenerator {
+	StageGraphGenerator();
+	void SetSeed(uint seed);
+	uint GetSeed() const;
+	void SetGridSize(uint width, uint height, uint depth);
+	uint GetGridWidth() const;
+	uint GetGridHeight() const;
+	uint GetGridDepth() const;
+	void SetBranchProbability(float probability);
+	float GetBranchProbability() const;
+	bool AddSideRoomType(RoomType type, float weight);
+	void ClearSideRoomTypes();
+	void Generate();
+	uint GetRoomCount() const;
+	uint GetRoomID(uint index) const;
+	RoomType GetRoomType(uint index) const;
+	uint GetRoomX(uint index) const;
+	uint GetRoomY(uint index) const;
+	uint GetRoomZ(uint index) const;
+	uint GetRoomConnectionCount(uint index) const;
+	uint GetRoomConnectedRoomID(uint index, uint connectionIndex) const;
+	bool TryGetStartRoomID(uint&out roomID) const;
+	bool TryGetGoalRoomID(uint&out roomID) const;
+}
+
+class StageGridBuilder {
+	StageGridBuilder();
+	void SetRoomSize(uint sizeX, uint sizeY, uint sizeZ);
+	void SetRoomSpacing(uint spacing);
+	void SetCorridorWidth(uint width);
+	void SetTileWorldSize(float size);
+	void SetRoomTileID(RoomType type, uint tileID);
+	void SetDefaultRoomTileID(uint tileID);
+	void SetCorridorTileID(uint tileID);
+	bool Build(const StageGraphGenerator&in graph, WaveFunctionCollapse@ wfc);
+	bool TryGetRoomGridCenter(const StageGraphGenerator&in graph, uint roomID, uint&out x, uint&out y, uint&out z) const;
+	bool TryGetRoomWorldCenter(const StageGraphGenerator&in graph, uint roomID, Vector3&out position) const;
+	void GetRequiredGridSize(const StageGraphGenerator&in graph, uint&out width, uint&out height, uint&out depth) const;
+}
+
 const uint WM_ACTIVATE;
 const uint WM_CLOSE;
 const uint WM_DESTROY;
@@ -1476,6 +1556,7 @@ float GetCommandValue(const string&in);
 uint PlayAudio(const string&in, float volume = 1.0f);
 bool StopAudio(uint);
 bool IsAudioPlaying(uint);
+uint GetModelHandleFromAssetPath(const string&in);
 Object@ GetOwnerObject();
 Transform@ GetTransform();
 Scene@ GetScene();

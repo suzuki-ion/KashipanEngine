@@ -16,6 +16,7 @@
 #include <asbind20/asbind.hpp>
 
 #include "Assets/AudioManager.h"
+#include "Assets/ModelManager.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Core/Window.h"
 #include "Debug/Logger.h"
@@ -34,8 +35,11 @@
 #include "Utilities/MathUtils.h"
 #include "Utilities/MyAny.h"
 #include "Utilities/RandomValue.h"
+#include "Utilities/StageGraphGenerator.h"
+#include "Utilities/StageGridBuilder.h"
 #include "Utilities/TimeUtils.h"
 #include "Utilities/ValueType.h"
+#include "Utilities/WaveFunctionCollapse.h"
 
 // オブジェクトコンポーネント（全種類をスクリプトへ登録する）
 #include "Objects/Components/Animator.h"
@@ -1922,6 +1926,290 @@ void RegisterMathFunctionBindings(asIScriptEngine *engine) {
 }
 
 //==================================================
+// 波動関数崩壊アルゴリズム（Utilities/WaveFunctionCollapse.h）
+//==================================================
+
+/// @brief スクリプト用のWaveFunctionCollapseラッパー（参照カウント式の参照型）
+/// @details 内部にWaveFunctionCollapseを1つ保持するだけの薄いラッパー。C++側のクラス自体には
+///          参照カウントを持たせず、スクリプトから生成・保持できるようにするためだけにここで包む
+class ScriptWaveFunctionCollapse final {
+public:
+    ScriptWaveFunctionCollapse() = default;
+
+    void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
+    void Release() {
+        if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
+    }
+
+    WaveFunctionCollapse data;
+
+private:
+    ~ScriptWaveFunctionCollapse() = default;
+    std::atomic<int> refCount_{1};
+};
+
+/// @brief WFCDirection列挙とWaveFunctionCollapse型（参照型）を登録する
+/// @details Direction引数はAngelScriptの列挙（4バイト int）とC++側の
+///          enum class Direction（1バイト uint8_t）でサイズが異なるため、
+///          ネイティブ呼び出し規約での直接受け渡しはできない。そのためラムダ側は
+///          uintで受け取り、内部でDirectionへキャストしてから本体を呼び出す
+void RegisterWaveFunctionCollapseBindings(asIScriptEngine *engine) {
+    engine->RegisterEnum("WFCDirection");
+    engine->RegisterEnumValue("WFCDirection", "Up", static_cast<int>(WaveFunctionCollapse::Direction::Up));
+    engine->RegisterEnumValue("WFCDirection", "Down", static_cast<int>(WaveFunctionCollapse::Direction::Down));
+    engine->RegisterEnumValue("WFCDirection", "Left", static_cast<int>(WaveFunctionCollapse::Direction::Left));
+    engine->RegisterEnumValue("WFCDirection", "Right", static_cast<int>(WaveFunctionCollapse::Direction::Right));
+    engine->RegisterEnumValue("WFCDirection", "Front", static_cast<int>(WaveFunctionCollapse::Direction::Front));
+    engine->RegisterEnumValue("WFCDirection", "Back", static_cast<int>(WaveFunctionCollapse::Direction::Back));
+
+    asbind20::ref_class<ScriptWaveFunctionCollapse>(engine, "WaveFunctionCollapse")
+        .default_factory()
+        .addref(&ScriptWaveFunctionCollapse::AddRef)
+        .release(&ScriptWaveFunctionCollapse::Release)
+        .method("void SetSeed(uint seed)", [](ScriptWaveFunctionCollapse &self, std::uint32_t seed) {
+            self.data.SetSeed(seed);
+        })
+        .method("uint GetSeed() const", [](const ScriptWaveFunctionCollapse &self) -> std::uint32_t {
+            return self.data.GetSeed();
+        })
+        .method("void SetGridSize(uint width, uint height, uint depth)",
+            [](ScriptWaveFunctionCollapse &self, std::uint32_t width, std::uint32_t height, std::uint32_t depth) {
+                self.data.SetGridSize(width, height, depth);
+            })
+        .method("uint GetGridWidth() const", [](const ScriptWaveFunctionCollapse &self) -> std::uint32_t {
+            return self.data.GetGridWidth();
+        })
+        .method("uint GetGridHeight() const", [](const ScriptWaveFunctionCollapse &self) -> std::uint32_t {
+            return self.data.GetGridHeight();
+        })
+        .method("uint GetGridDepth() const", [](const ScriptWaveFunctionCollapse &self) -> std::uint32_t {
+            return self.data.GetGridDepth();
+        })
+        .method("bool RegisterTile(uint id)", [](ScriptWaveFunctionCollapse &self, std::uint32_t id) -> bool {
+            return self.data.RegisterTile(id);
+        })
+        .method("bool RemoveTile(uint tileID)", [](ScriptWaveFunctionCollapse &self, std::uint32_t tileID) -> bool {
+            return self.data.RemoveTile(tileID);
+        })
+        .method("bool AddTileConnection(uint tileID, WFCDirection direction, uint connectedTileID)",
+            [](ScriptWaveFunctionCollapse &self, std::uint32_t tileID, std::uint32_t direction, std::uint32_t connectedTileID) -> bool {
+                return self.data.AddTileConnection(tileID, static_cast<WaveFunctionCollapse::Direction>(direction), connectedTileID);
+            })
+        .method("bool FixTile(uint x, uint y, uint z, uint tileID)",
+            [](ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::uint32_t tileID) -> bool {
+                return self.data.FixTile(x, y, z, tileID);
+            })
+        .method("bool TryGetFixedTile(uint x, uint y, uint z, uint &out tileID) const",
+            [](const ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::uint32_t &tileID) -> bool {
+                auto fixed = self.data.GetFixedTile(x, y, z);
+                if (!fixed) return false;
+                tileID = *fixed;
+                return true;
+            })
+        .method("bool SetStartPosition(uint x, uint y, uint z)",
+            [](ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z) -> bool {
+                return self.data.SetStartPosition(x, y, z);
+            })
+        .method("bool TryGetStartPosition(uint &out x, uint &out y, uint &out z) const",
+            [](const ScriptWaveFunctionCollapse &self, std::uint32_t &x, std::uint32_t &y, std::uint32_t &z) -> bool {
+                auto position = self.data.GetStartPosition();
+                if (!position) return false;
+                x = (*position)[0];
+                y = (*position)[1];
+                z = (*position)[2];
+                return true;
+            })
+        .method("bool Solve()", [](ScriptWaveFunctionCollapse &self) -> bool { return self.data.Solve(); })
+        .method("bool TryGetResolvedTile(uint x, uint y, uint z, uint &out tileID) const",
+            [](const ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::uint32_t &tileID) -> bool {
+                auto resolved = self.data.GetResolvedTile(x, y, z);
+                if (!resolved) return false;
+                tileID = *resolved;
+                return true;
+            })
+        .method("Json@ SaveToJson() const", [](const ScriptWaveFunctionCollapse &self) -> ScriptJsonValue * {
+            return new ScriptJsonValue(self.data.SaveToJson());
+        })
+        .method("bool LoadFromJson(const Json &in json)", [](ScriptWaveFunctionCollapse &self, const ScriptJsonValue &json) -> bool {
+            return self.data.LoadFromJson(json.data);
+        });
+}
+
+//==================================================
+// ステージ生成（Utilities/StageGraphGenerator.h, Utilities/StageGridBuilder.h）
+//==================================================
+
+/// @brief スクリプト用のStageGraphGeneratorラッパー（参照カウント式の参照型）
+class ScriptStageGraphGenerator final {
+public:
+    ScriptStageGraphGenerator() = default;
+
+    void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
+    void Release() {
+        if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
+    }
+
+    StageGraphGenerator data;
+
+private:
+    ~ScriptStageGraphGenerator() = default;
+    std::atomic<int> refCount_{1};
+};
+
+/// @brief スクリプト用のStageGridBuilderラッパー（参照カウント式の参照型）
+class ScriptStageGridBuilder final {
+public:
+    ScriptStageGridBuilder() = default;
+
+    void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
+    void Release() {
+        if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
+    }
+
+    StageGridBuilder data;
+
+private:
+    ~ScriptStageGridBuilder() = default;
+    std::atomic<int> refCount_{1};
+};
+
+/// @brief RoomType列挙、StageGraphGenerator型、StageGridBuilder型を登録する
+/// @details WaveFunctionCollapseと同じ理由（列挙のサイズ差）で、RoomType引数を取るメソッドは
+///          ラムダ側でuintとして受け取り、内部でRoomTypeへキャストする
+void RegisterStageGenerationBindings(asIScriptEngine *engine) {
+    engine->RegisterEnum("RoomType");
+    engine->RegisterEnumValue("RoomType", "Start", static_cast<int>(RoomType::Start));
+    engine->RegisterEnumValue("RoomType", "Goal", static_cast<int>(RoomType::Goal));
+    engine->RegisterEnumValue("RoomType", "Normal", static_cast<int>(RoomType::Normal));
+    engine->RegisterEnumValue("RoomType", "Branch", static_cast<int>(RoomType::Branch));
+    engine->RegisterEnumValue("RoomType", "Building", static_cast<int>(RoomType::Building));
+    engine->RegisterEnumValue("RoomType", "GimmickDepth", static_cast<int>(RoomType::GimmickDepth));
+    engine->RegisterEnumValue("RoomType", "Treasure", static_cast<int>(RoomType::Treasure));
+
+    asbind20::ref_class<ScriptStageGraphGenerator>(engine, "StageGraphGenerator")
+        .default_factory()
+        .addref(&ScriptStageGraphGenerator::AddRef)
+        .release(&ScriptStageGraphGenerator::Release)
+        .method("void SetSeed(uint seed)", [](ScriptStageGraphGenerator &self, std::uint32_t seed) {
+            self.data.SetSeed(seed);
+        })
+        .method("uint GetSeed() const", [](const ScriptStageGraphGenerator &self) -> std::uint32_t {
+            return self.data.GetSeed();
+        })
+        .method("void SetGridSize(uint width, uint height, uint depth)",
+            [](ScriptStageGraphGenerator &self, std::uint32_t width, std::uint32_t height, std::uint32_t depth) {
+                self.data.SetGridSize(width, height, depth);
+            })
+        .method("uint GetGridWidth() const", [](const ScriptStageGraphGenerator &self) -> std::uint32_t { return self.data.GetGridWidth(); })
+        .method("uint GetGridHeight() const", [](const ScriptStageGraphGenerator &self) -> std::uint32_t { return self.data.GetGridHeight(); })
+        .method("uint GetGridDepth() const", [](const ScriptStageGraphGenerator &self) -> std::uint32_t { return self.data.GetGridDepth(); })
+        .method("void SetBranchProbability(float probability)", [](ScriptStageGraphGenerator &self, float probability) {
+            self.data.SetBranchProbability(probability);
+        })
+        .method("float GetBranchProbability() const", [](const ScriptStageGraphGenerator &self) -> float {
+            return self.data.GetBranchProbability();
+        })
+        .method("bool AddSideRoomType(RoomType type, float weight)",
+            [](ScriptStageGraphGenerator &self, std::uint32_t type, float weight) -> bool {
+                return self.data.AddSideRoomType(static_cast<RoomType>(type), weight);
+            })
+        .method("void ClearSideRoomTypes()", [](ScriptStageGraphGenerator &self) { self.data.ClearSideRoomTypes(); })
+        .method("void Generate()", [](ScriptStageGraphGenerator &self) { self.data.Generate(); })
+        .method("uint GetRoomCount() const", [](const ScriptStageGraphGenerator &self) -> std::uint32_t {
+            return static_cast<std::uint32_t>(self.data.GetRoomCount());
+        })
+        .method("uint GetRoomID(uint index) const", [](const ScriptStageGraphGenerator &self, std::uint32_t index) -> std::uint32_t {
+            const RoomNode *room = self.data.GetRoomByIndex(index);
+            return room ? room->id : 0;
+        })
+        .method("RoomType GetRoomType(uint index) const", [](const ScriptStageGraphGenerator &self, std::uint32_t index) -> std::uint32_t {
+            const RoomNode *room = self.data.GetRoomByIndex(index);
+            return static_cast<std::uint32_t>(room ? room->type : RoomType::Branch);
+        })
+        .method("uint GetRoomX(uint index) const", [](const ScriptStageGraphGenerator &self, std::uint32_t index) -> std::uint32_t {
+            const RoomNode *room = self.data.GetRoomByIndex(index);
+            return room ? room->x : 0;
+        })
+        .method("uint GetRoomY(uint index) const", [](const ScriptStageGraphGenerator &self, std::uint32_t index) -> std::uint32_t {
+            const RoomNode *room = self.data.GetRoomByIndex(index);
+            return room ? room->y : 0;
+        })
+        .method("uint GetRoomZ(uint index) const", [](const ScriptStageGraphGenerator &self, std::uint32_t index) -> std::uint32_t {
+            const RoomNode *room = self.data.GetRoomByIndex(index);
+            return room ? room->z : 0;
+        })
+        .method("uint GetRoomConnectionCount(uint index) const", [](const ScriptStageGraphGenerator &self, std::uint32_t index) -> std::uint32_t {
+            const RoomNode *room = self.data.GetRoomByIndex(index);
+            return room ? static_cast<std::uint32_t>(room->connectedRoomIDs.size()) : 0;
+        })
+        .method("uint GetRoomConnectedRoomID(uint index, uint connectionIndex) const",
+            [](const ScriptStageGraphGenerator &self, std::uint32_t index, std::uint32_t connectionIndex) -> std::uint32_t {
+                const RoomNode *room = self.data.GetRoomByIndex(index);
+                if (!room || connectionIndex >= room->connectedRoomIDs.size()) return 0;
+                return room->connectedRoomIDs[connectionIndex];
+            })
+        .method("bool TryGetStartRoomID(uint &out roomID) const", [](const ScriptStageGraphGenerator &self, std::uint32_t &roomID) -> bool {
+            auto id = self.data.GetStartRoomID();
+            if (!id) return false;
+            roomID = *id;
+            return true;
+        })
+        .method("bool TryGetGoalRoomID(uint &out roomID) const", [](const ScriptStageGraphGenerator &self, std::uint32_t &roomID) -> bool {
+            auto id = self.data.GetGoalRoomID();
+            if (!id) return false;
+            roomID = *id;
+            return true;
+        });
+
+    asbind20::ref_class<ScriptStageGridBuilder>(engine, "StageGridBuilder")
+        .default_factory()
+        .addref(&ScriptStageGridBuilder::AddRef)
+        .release(&ScriptStageGridBuilder::Release)
+        .method("void SetRoomSize(uint sizeX, uint sizeY, uint sizeZ)",
+            [](ScriptStageGridBuilder &self, std::uint32_t sizeX, std::uint32_t sizeY, std::uint32_t sizeZ) {
+                self.data.SetRoomSize(sizeX, sizeY, sizeZ);
+            })
+        .method("void SetRoomSpacing(uint spacing)", [](ScriptStageGridBuilder &self, std::uint32_t spacing) {
+            self.data.SetRoomSpacing(spacing);
+        })
+        .method("void SetCorridorWidth(uint width)", [](ScriptStageGridBuilder &self, std::uint32_t width) {
+            self.data.SetCorridorWidth(width);
+        })
+        .method("void SetTileWorldSize(float size)", [](ScriptStageGridBuilder &self, float size) {
+            self.data.SetTileWorldSize(size);
+        })
+        .method("void SetRoomTileID(RoomType type, uint tileID)",
+            [](ScriptStageGridBuilder &self, std::uint32_t type, std::uint32_t tileID) {
+                self.data.SetRoomTileID(static_cast<RoomType>(type), tileID);
+            })
+        .method("void SetDefaultRoomTileID(uint tileID)", [](ScriptStageGridBuilder &self, std::uint32_t tileID) {
+            self.data.SetDefaultRoomTileID(tileID);
+        })
+        .method("void SetCorridorTileID(uint tileID)", [](ScriptStageGridBuilder &self, std::uint32_t tileID) {
+            self.data.SetCorridorTileID(tileID);
+        })
+        .method("bool Build(const StageGraphGenerator &in graph, WaveFunctionCollapse@ wfc)",
+            [](const ScriptStageGridBuilder &self, const ScriptStageGraphGenerator &graph, ScriptWaveFunctionCollapse *wfc) -> bool {
+                if (!wfc) return false;
+                return self.data.Build(graph.data, wfc->data);
+            })
+        .method("bool TryGetRoomGridCenter(const StageGraphGenerator &in graph, uint roomID, uint &out x, uint &out y, uint &out z) const",
+            [](const ScriptStageGridBuilder &self, const ScriptStageGraphGenerator &graph, std::uint32_t roomID,
+                std::uint32_t &x, std::uint32_t &y, std::uint32_t &z) -> bool {
+                return self.data.GetRoomGridCenter(graph.data, roomID, x, y, z);
+            })
+        .method("bool TryGetRoomWorldCenter(const StageGraphGenerator &in graph, uint roomID, Vector3 &out position) const",
+            [](const ScriptStageGridBuilder &self, const ScriptStageGraphGenerator &graph, std::uint32_t roomID, Vector3 &position) -> bool {
+                return self.data.GetRoomWorldCenter(graph.data, roomID, position);
+            })
+        .method("void GetRequiredGridSize(const StageGraphGenerator &in graph, uint &out width, uint &out height, uint &out depth) const",
+            [](const ScriptStageGridBuilder &self, const ScriptStageGraphGenerator &graph,
+                std::uint32_t &width, std::uint32_t &height, std::uint32_t &depth) {
+                self.data.GetRequiredGridSize(graph.data, width, height, depth);
+            });
+}
+
+//==================================================
 // 乱数（Utilities/RandomValue.h）
 //==================================================
 
@@ -1972,6 +2260,8 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         })
         .function("bool StopAudio(uint)", [](uint32_t play) -> bool { return AudioManager::Stop(play); })
         .function("bool IsAudioPlaying(uint)", [](uint32_t play) -> bool { return AudioManager::IsPlaying(play); })
+        // モデル
+        .function("uint GetModelHandleFromAssetPath(const string &in)", &ModelManager::GetModelHandleFromAssetPath)
         // 実行コンテキスト
         .function("Object@ GetOwnerObject()", []() -> EmptyObject * {
             // ObjectContext::GetOwner はconstポインタを返すが、スクリプトからは自身のオブジェクトを操作できてよい
@@ -2196,6 +2486,10 @@ void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     RegisterEasingBindings(engine);
     RegisterMathUtilBindings(engine);
     RegisterMathFunctionBindings(engine);
+    // WaveFunctionCollapseはJson型（SaveToJson/LoadFromJson）を参照するため、Json登録より後に呼ぶ
+    RegisterWaveFunctionCollapseBindings(engine);
+    // StageGridBuilderはWaveFunctionCollapse型・Vector3型を参照するため、それらの登録より後に呼ぶ
+    RegisterStageGenerationBindings(engine);
     RegisterRandomBindings(engine);
     RegisterGlobalFunctions(engine);
 }

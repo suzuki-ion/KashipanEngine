@@ -30,8 +30,10 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 13. [Math名前空間](#math名前空間)
 14. [Easing（イージング）](#easingイージング)
 15. [Random（乱数）](#random乱数)
-16. [サンプルスクリプト](#サンプルスクリプト)
-17. [注意事項](#注意事項)
+16. [WaveFunctionCollapse（波動関数崩壊アルゴリズム）](#wavefunctioncollapse波動関数崩壊アルゴリズム)
+17. [StageGraphGenerator / StageGridBuilder（ステージの部屋グラフ生成）](#stagegraphgenerator--stagegridbuilderステージの部屋グラフ生成)
+18. [サンプルスクリプト](#サンプルスクリプト)
+19. [注意事項](#注意事項)
 
 ---
 
@@ -397,6 +399,12 @@ GetComponent(@tf);
 | `bool IsAudioPlaying(uint playHandle)` | 再生中かどうかを取得する |
 
 ※オブジェクトに紐づいた再生（3D空間音響など）は `AudioSource` コンポーネントを使用してください。
+
+### モデル
+
+| 関数 | 説明 |
+|---|---|
+| `uint GetModelHandleFromAssetPath(const string &in path)` | アセットパス（例: `"PrimitiveMesh-Box"` 等）からモデルハンドルを取得する。`MeshFilter::SetMeshHandle` へそのまま渡せる |
 
 ### 実行コンテキスト
 
@@ -1309,6 +1317,169 @@ if (Random::Bool(0.1f)) { // 10%の確率でtrue
 | `float Random::Float(float min, float max)` | `min`以上`max`以下のランダムな浮動小数点数を取得する |
 | `double Random::Double(double min, double max)` | `min`以上`max`以下のランダムな倍精度浮動小数点数を取得する |
 | `bool Random::Bool(float trueProbability = 0.5f)` | `trueProbability`（0.0～1.0）の確率で `true` を返す |
+
+## WaveFunctionCollapse（波動関数崩壊アルゴリズム）
+
+`WaveFunctionCollapse` 型（参照型）を使うと、いわゆる「波動関数崩壊法（WFC）」でタイルベースのマップを自動生成できます。タイルの登録・接続情報の設定・グリッドサイズ/固定タイル/開始位置の指定・崩壊解決（`Solve`）まで一通りスクリプトから行えます。
+
+```angelscript
+WaveFunctionCollapse@ wfc = WaveFunctionCollapse();
+wfc.SetSeed(12345);
+wfc.SetGridSize(10, 1, 10); // 2次元的に使う場合はYを1にする
+
+// タイルを登録し、方向ごとに接続可能なタイルIDを追加する
+const uint kGrass = 0;
+const uint kWater = 1;
+wfc.RegisterTile(kGrass);
+wfc.RegisterTile(kWater);
+wfc.AddTileConnection(kGrass, WFCDirection::Right, kGrass);
+wfc.AddTileConnection(kGrass, WFCDirection::Left, kGrass);
+wfc.AddTileConnection(kWater, WFCDirection::Right, kWater);
+wfc.AddTileConnection(kWater, WFCDirection::Left, kWater);
+// 接続は片方向の宣言のため、逆方向（WaterのLeftにGrassを許可する 等）も必要なら別途追加する
+
+wfc.FixTile(0, 0, 0, kGrass); // 座標(0,0,0)を草地で固定する
+wfc.SetStartPosition(0, 0, 0);
+
+if (wfc.Solve()) {
+    for (uint x = 0; x < wfc.GetGridWidth(); x++) {
+        for (uint z = 0; z < wfc.GetGridDepth(); z++) {
+            uint tileID;
+            if (wfc.TryGetResolvedTile(x, 0, z, tileID)) {
+                // tileIDに応じてオブジェクトを配置する
+            }
+        }
+    }
+} else {
+    LogWarning("WFCの解決に失敗しました（矛盾が発生）");
+}
+
+// シード・タイル定義・固定タイル等をJSONへ保存/復元できる
+Json@ json = wfc.SaveToJson();
+SaveJsonFile("SaveData/wfc.json", json);
+```
+
+### WFCDirection
+
+タイルの接続方向を表す列挙です。`Up` / `Down` / `Left` / `Right` / `Front` / `Back` の6方向。
+
+### WaveFunctionCollapseのメンバ
+
+| メンバ | 説明 |
+|---|---|
+| `WaveFunctionCollapse()` | 新規インスタンスを作成する |
+| `void SetSeed(uint seed) / uint GetSeed() const` | 乱数シード値の設定・取得 |
+| `void SetGridSize(uint width, uint height, uint depth)` | グリッドサイズを設定する（変更すると既存の固定タイル・開始位置はクリアされる） |
+| `uint GetGridWidth/GetGridHeight/GetGridDepth() const` | 現在のグリッドサイズを取得する |
+| `bool RegisterTile(uint id)` | 接続情報を持たない空のタイルを登録する（同じIDが既に登録済みの場合は`false`） |
+| `bool RemoveTile(uint tileID)` | 登録済みのタイルを削除する（そのタイルで固定・確定済みだったセルは解除される） |
+| `bool AddTileConnection(uint tileID, WFCDirection direction, uint connectedTileID)` | 指定タイルの指定方向へ接続可能なタイルIDを1つ追加する（タイルが未登録の場合は`false`） |
+| `bool FixTile(uint x, uint y, uint z, uint tileID)` | 指定座標のタイルを固定する（`Solve`実行時の確定制約になる） |
+| `bool TryGetFixedTile(uint x, uint y, uint z, uint &out tileID) const` | 指定座標に固定されているタイルIDを取得する（固定されていない場合は`false`） |
+| `bool SetStartPosition(uint x, uint y, uint z)` | 崩壊を開始する座標を指定する |
+| `bool TryGetStartPosition(uint &out x, uint &out y, uint &out z) const` | 指定済みの開始座標を取得する（未指定の場合は`false`） |
+| `bool Solve()` | 波動関数崩壊アルゴリズムを実行し、グリッド全体のタイルを確定させる（矛盾が発生した場合は`false`） |
+| `bool TryGetResolvedTile(uint x, uint y, uint z, uint &out tileID) const` | `Solve`で確定したタイルIDを取得する |
+| `Json@ SaveToJson() const` | シード・グリッドサイズ・登録タイル・固定タイル・開始座標をJsonへ保存する |
+| `bool LoadFromJson(const Json &in json)` | `SaveToJson`で保存したJsonから状態を復元する |
+
+- 接続方向は片方向の宣言です。「AのRightにBを許可する」からといって「BのLeftにAを許可する」が自動で成立するわけではないため、必要な組み合わせは両方向とも`AddTileConnection`で設定してください。
+- `Solve`は矛盾（候補が0件になるセル）が発生した場合、バックトラックせずその時点で`false`を返します。タイルの接続定義やシードによっては失敗することがあるため、戻り値は必ず確認してください。
+- `SetStartPosition`を指定していると、`Solve`実行時に最初の1マスをその座標から崩壊させます（以降は残り候補数が最小のセルがランダムに選ばれます）。未指定の場合は最初から残り候補数最小のセルが選ばれます。
+- `SaveToJson`/`LoadFromJson`は`Solve`の確定結果（`TryGetResolvedTile`で取得できる値）は保存しません。復元後に再度`Solve`を呼び出してください。
+
+## StageGraphGenerator / StageGridBuilder（ステージの部屋グラフ生成）
+
+「必ずスタートからゴールまで繋がる」ステージを自動生成するための2つの型です。役割が分かれています。
+
+- **StageGraphGenerator**: 抽象的な「部屋グラフ」（スタート→ゴールのメインルートと、そこから枝分かれする行き止まりの部屋）をランダム生成する。座標はあくまで抽象的な部屋グリッド上のもの（タイル座標ではない）。
+- **StageGridBuilder**: `StageGraphGenerator` が生成したグラフを、実際のタイルサイズに展開して `WaveFunctionCollapse` へ固定タイルとして書き込む。部屋同士の隙間のうち通路にならない部分は固定されないため、`WaveFunctionCollapse::Solve()` で壁等の装飾として埋められる。
+
+```angelscript
+// 1. 部屋グラフを生成する（スタート→ゴールは必ず繋がる）
+StageGraphGenerator@ graph = StageGraphGenerator();
+graph.SetSeed(12345);
+graph.SetGridSize(6, 3, 2); // メインルートの長さ・上下スロット数・奥行スロット数
+graph.SetBranchProbability(0.35f);
+graph.AddSideRoomType(RoomType::Building, 1.0f);      // 建物入口（重み1.0）
+graph.AddSideRoomType(RoomType::GimmickDepth, 1.0f);  // 奥行ギミック（重み1.0）
+graph.AddSideRoomType(RoomType::Treasure, 1.5f);      // 収集アイテム部屋（重み1.5、出やすい）
+graph.Generate();
+
+// 2. WaveFunctionCollapseへタイルを登録しておく（事前準備。詳細は前節を参照）
+WaveFunctionCollapse@ wfc = WaveFunctionCollapse();
+// ...RegisterTile / AddTileConnection...
+
+// 3. 部屋グラフを実際のタイルグリッドへ展開する（部屋・通路タイルを固定する）
+StageGridBuilder@ builder = StageGridBuilder();
+builder.SetRoomSize(3, 2, 3);      // 部屋1つ分のタイルサイズ
+builder.SetRoomSpacing(1);         // 部屋同士の隙間（通路にならない部分はWFCの装飾対象）
+builder.SetCorridorWidth(1);       // 通路の太さ
+builder.SetTileWorldSize(2.0f);    // タイル1個分のワールド座標上のサイズ
+builder.SetDefaultRoomTileID(0);   // 個別設定していない部屋種別に使う既定タイル
+builder.SetRoomTileID(RoomType::Treasure, 3);
+builder.SetCorridorTileID(4);
+
+if (builder.Build(graph, wfc)) {
+    // 4. 部屋・通路以外の隙間をWaveFunctionCollapseで解決する
+    if (wfc.Solve()) {
+        // 5. 部屋種別ごとにオブジェクトを配置する例（宝箱部屋にマーカーを置く）
+        uint roomCount = graph.GetRoomCount();
+        for (uint i = 0; i < roomCount; i++) {
+            if (graph.GetRoomType(i) != RoomType::Treasure) continue;
+            Vector3 pos;
+            if (builder.TryGetRoomWorldCenter(graph, graph.GetRoomID(i), pos)) {
+                // posの位置に宝箱オブジェクトを生成する、等
+            }
+        }
+    }
+}
+```
+
+### RoomType
+
+部屋の意味的な種別を表す列挙です。`Start` / `Goal` / `Normal`（メインルート上の通常の部屋） / `Branch`（種別未指定の寄り道） / `Building`（建物入口） / `GimmickDepth`（奥行ギミック） / `Treasure`（収集アイテム部屋）。
+
+### StageGraphGeneratorのメンバ
+
+| メンバ | 説明 |
+|---|---|
+| `StageGraphGenerator()` | 新規インスタンスを作成する |
+| `void SetSeed(uint seed) / uint GetSeed() const` | 乱数シード値の設定・取得 |
+| `void SetGridSize(uint width, uint height, uint depth)` | 抽象部屋グリッドのサイズを設定する（width=メインルートの進行方向、height=上下、depth=奥行） |
+| `uint GetGridWidth/GetGridHeight/GetGridDepth() const` | 現在の抽象部屋グリッドサイズを取得する |
+| `void SetBranchProbability(float probability) / float GetBranchProbability() const` | メインルートの各部屋から寄り道部屋が生成される確率（0.0～1.0） |
+| `bool AddSideRoomType(RoomType type, float weight)` | 寄り道部屋の種別候補を重み付きで登録する（未登録の場合は全て`RoomType::Branch`になる） |
+| `void ClearSideRoomTypes()` | 登録済みの寄り道部屋種別候補をすべて削除する |
+| `void Generate()` | 部屋グラフを生成する（既存の生成結果は破棄される。グリッド幅2未満、または高さ・奥行が0の場合は何も生成しない） |
+| `uint GetRoomCount() const` | 生成された部屋の数を取得する |
+| `uint GetRoomID(uint index) const` | 生成順でindex番目の部屋のIDを取得する |
+| `RoomType GetRoomType(uint index) const` | index番目の部屋の種別を取得する |
+| `uint GetRoomX/GetRoomY/GetRoomZ(uint index) const` | index番目の部屋の抽象グリッド座標を取得する |
+| `uint GetRoomConnectionCount(uint index) const` | index番目の部屋が接続している部屋の数を取得する |
+| `uint GetRoomConnectedRoomID(uint index, uint connectionIndex) const` | index番目の部屋のconnectionIndex番目の接続先部屋IDを取得する |
+| `bool TryGetStartRoomID(uint &out roomID) const / bool TryGetGoalRoomID(uint &out roomID) const` | スタート/ゴールの部屋IDを取得する（未生成の場合は`false`） |
+
+### StageGridBuilderのメンバ
+
+| メンバ | 説明 |
+|---|---|
+| `StageGridBuilder()` | 新規インスタンスを作成する |
+| `void SetRoomSize(uint sizeX, uint sizeY, uint sizeZ)` | 部屋1つ分が占めるタイルサイズを設定する |
+| `void SetRoomSpacing(uint spacing)` | 隣接する部屋ブロックの間に空ける隙間（タイル数）を設定する |
+| `void SetCorridorWidth(uint width)` | 部屋同士を繋ぐ通路の太さ（タイル数）を設定する（RoomSpacingを超える値は隙間の幅で切り詰められる） |
+| `void SetTileWorldSize(float size)` | タイル1個分に対応する実際のワールド座標上のサイズを設定する |
+| `void SetRoomTileID(RoomType type, uint tileID)` | 部屋種別ごとに固定するタイルIDを設定する |
+| `void SetDefaultRoomTileID(uint tileID)` | `SetRoomTileID` で個別設定されていない部屋種別に使う既定のタイルID（必須） |
+| `void SetCorridorTileID(uint tileID)` | 部屋同士を繋ぐ通路に固定するタイルID（必須） |
+| `bool Build(const StageGraphGenerator &in graph, WaveFunctionCollapse@ wfc)` | 部屋グラフの内容をwfcへ展開する（`wfc.SetGridSize`を内部で呼び出すため、既存の固定タイル等はクリアされる） |
+| `bool TryGetRoomGridCenter(const StageGraphGenerator &in graph, uint roomID, uint &out x, uint &out y, uint &out z) const` | 部屋の中心タイル座標を取得する |
+| `bool TryGetRoomWorldCenter(const StageGraphGenerator &in graph, uint roomID, Vector3 &out position) const` | 部屋の中心位置をワールド座標として取得する |
+| `void GetRequiredGridSize(const StageGraphGenerator &in graph, uint &out width, uint &out height, uint &out depth) const` | Buildで実際に必要となるWaveFunctionCollapseのグリッドサイズを取得する |
+
+- `Build`を呼ぶ前に、使用する全タイルID（部屋種別ごとのタイル・通路タイル）を`wfc.RegisterTile`で登録しておく必要があります（`Build`自体はタイルの登録を行いません）。
+- 部屋グラフの辺は、抽象グリッド上で隣接する部屋同士のみを想定しています。それ以外（隣接していない部屋同士の接続）がある場合、`Build`は`false`を返します（`StageGraphGenerator`が生成するグラフは常にこの条件を満たします）。
+- `SetRoomSpacing(0)`を指定すると部屋同士が直接接するため、通路タイルは使われません。
 
 ## サンプルスクリプト
 

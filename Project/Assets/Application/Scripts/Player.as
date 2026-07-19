@@ -220,8 +220,11 @@ class Player : ScriptComponentBehavior {
                     groundSlideVelocity = groundSlideVelocity.Normalize() * maxSlideSpeed;
                 }
             }
-        } else {
-            // 緩い地面・空中では滑り速度を減衰させる
+        } else if ((isGrounded && !isOnSteepSlope) ||
+                  (moveDirection < 0.0f && groundSlideVelocity.x > 0.0f) ||
+                  (moveDirection > 0.0f && groundSlideVelocity.x < 0.0f)) {
+            // 傾斜でない地面に接地しているか、プレイヤーの移動入力があるとき（滑る方向に対して反対の入力があるとき）だけ減速する。
+            // ジャンプ中や空中（地面に接していない）ときはリセットせず、滑り速度をそのまま保持する
             groundSlideVelocity = Math::Lerp(groundSlideVelocity, Vector3(0.0f, 0.0f, 0.0f), lateralDeceleration);
         }
     }

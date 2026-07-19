@@ -22,6 +22,7 @@
 #include "Scene/Editor/SceneObjectInspector.h"
 #include "Scene/Editor/SceneSaver.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
+#include "Scene/Components/Script/EditorToolManager.h"
 #include "Scene/SceneBackupPath.h"
 #include "Utilities/FileIO.h"
 #include "Utilities/TemplateLiteral.h"
@@ -122,9 +123,15 @@ void SceneEditor::ShowImGui() {
         wasPlaying_ = isPlaying;
     }
 
+    // エディターツールスクリプトの読み込み（初回のみ）と、ツール内GetScene()用のシーンコンテキスト設定
+    EditorToolManager::GetInstance().BeginFrame(context_->GetSceneContext());
+
     ShowMainWindow();
     HandleShortcuts();
     HandleAutoSave();
+
+    // エディターツールスクリプトのウィンドウ表示・Update呼び出し
+    EditorToolManager::GetInstance().UpdateTools();
 
     if (isShowHierarchy_) objectHierarchy_->ShowImGui();
     if (isShowObjectInspector_) objectInspector_->ShowImGui();
@@ -235,6 +242,8 @@ void SceneEditor::ShowMainWindow() {
             ImGui::MenuItem("ImGui Demo Window", nullptr, &isShowImGuiDemoWindow_);
             ImGui::EndMenu();
         }
+        // エディターツールスクリプトの[MenuItem("MenuBar/...")]で追加された項目
+        EditorToolManager::GetInstance().ShowMenuBarItems();
         ImGui::EndMainMenuBar();
     }
 

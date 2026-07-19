@@ -1589,6 +1589,54 @@ namespace Easing {
 	Vector4 EasedGAB(const Vector4&in, const Vector4&in, float, EaseType, EaseType);
 }
 
+namespace ImGui {
+	void Text(const string&in);
+	void TextColored(const Vector4&in color, const string&in);
+	void TextWrapped(const string&in);
+	void TextDisabled(const string&in);
+	void BulletText(const string&in);
+	bool Button(const string&in, float width = 0, float height = 0);
+	bool SmallButton(const string&in);
+	bool Checkbox(const string&in, bool&inout value);
+	bool RadioButton(const string&in, bool active);
+	bool Selectable(const string&in, bool selected = false);
+	bool InputText(const string&in, string&inout text);
+	bool InputTextMultiline(const string&in, string&inout text, float width = 0, float height = 0);
+	bool DragInt(const string&in, int&inout value, float speed = 1.0f, int min = 0, int max = 0);
+	bool DragFloat(const string&in, float&inout value, float speed = 1.0f, float min = 0, float max = 0);
+	bool SliderInt(const string&in, int&inout value, int min, int max);
+	bool SliderFloat(const string&in, float&inout value, float min, float max);
+	bool DragVector2(const string&in, Vector2&inout value, float speed = 1.0f);
+	bool DragVector3(const string&in, Vector3&inout value, float speed = 1.0f);
+	bool DragVector4(const string&in, Vector4&inout value, float speed = 1.0f);
+	bool ColorEdit3(const string&in, Vector3&inout color);
+	bool ColorEdit4(const string&in, Vector4&inout color);
+	bool Combo(const string&in, int&inout currentIndex, const string[]&in items);
+	void ProgressBar(float fraction, const string&in overlay = "");
+	void Separator();
+	void SameLine(float offsetX = 0.0f, float spacing = -1.0f);
+	void NewLine();
+	void Spacing();
+	void Indent(float width = 0.0f);
+	void Unindent(float width = 0.0f);
+	void SetNextItemWidth(float width);
+	void PushID(int id);
+	void PushID(const string&in id);
+	void PopID();
+	void BeginDisabled(bool disabled = true);
+	void EndDisabled();
+	bool BeginChild(const string&in id, float width = 0, float height = 0, bool border = false);
+	void EndChild();
+	bool TreeNode(const string&in);
+	void TreePop();
+	bool CollapsingHeader(const string&in);
+	bool IsItemHovered();
+	bool IsItemClicked(int button = 0);
+	bool IsItemActive();
+	void SetTooltip(const string&in);
+	Vector2 GetContentRegionAvail();
+}
+
 namespace Math {
 	Vector2 Lerp(const Vector2&in, const Vector2&in, float);
 	Vector2 Slerp(const Vector2&in, const Vector2&in, float);

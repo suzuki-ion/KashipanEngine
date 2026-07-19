@@ -480,6 +480,12 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp">
       <Filter>KashipanEngine\Scene\Components\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.cpp">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClCompile>
@@ -1286,6 +1292,12 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h">
       <Filter>KashipanEngine\Scene\Components\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\EditorToolManager.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>

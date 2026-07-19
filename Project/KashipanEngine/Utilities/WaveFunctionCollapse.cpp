@@ -38,40 +38,43 @@ void WaveFunctionCollapse::SetGridSize(std::uint32_t width, std::uint32_t height
 }
 
 bool WaveFunctionCollapse::RegisterTile(const Tile &tile) {
-    return tiles_.emplace(tile.id, tile).second;
+    if (tile.name.empty()) {
+        return false;
+    }
+    return tiles_.emplace(tile.name, tile).second;
 }
 
-bool WaveFunctionCollapse::RegisterTile(std::uint32_t id) {
+bool WaveFunctionCollapse::RegisterTile(const std::string &name) {
     Tile tile;
-    tile.id = id;
+    tile.name = name;
     return RegisterTile(tile);
 }
 
-bool WaveFunctionCollapse::AddTileConnection(std::uint32_t tileID, Direction direction, std::uint32_t connectedTileID) {
-    auto it = tiles_.find(tileID);
+bool WaveFunctionCollapse::AddTileConnection(const std::string &tileName, Direction direction, const std::string &connectedTileName) {
+    auto it = tiles_.find(tileName);
     if (it == tiles_.end()) {
         return false;
     }
     auto &connections = it->second.connections[static_cast<std::size_t>(direction)];
-    if (std::find(connections.begin(), connections.end(), connectedTileID) == connections.end()) {
-        connections.push_back(connectedTileID);
+    if (std::find(connections.begin(), connections.end(), connectedTileName) == connections.end()) {
+        connections.push_back(connectedTileName);
     }
     return true;
 }
 
-bool WaveFunctionCollapse::RemoveTile(std::uint32_t tileID) {
-    if (tiles_.erase(tileID) == 0) {
+bool WaveFunctionCollapse::RemoveTile(const std::string &tileName) {
+    if (tiles_.erase(tileName) == 0) {
         return false;
     }
 
     for (auto &plane : grid_) {
         for (auto &row : plane) {
             for (auto &cell : row) {
-                if (cell.fixedTileID == tileID) {
-                    cell.fixedTileID.reset();
+                if (cell.fixedTileName == tileName) {
+                    cell.fixedTileName.reset();
                 }
-                if (cell.resolvedTileID == tileID) {
-                    cell.resolvedTileID.reset();
+                if (cell.resolvedTileName == tileName) {
+                    cell.resolvedTileName.reset();
                 }
             }
         }
@@ -79,19 +82,19 @@ bool WaveFunctionCollapse::RemoveTile(std::uint32_t tileID) {
     return true;
 }
 
-bool WaveFunctionCollapse::FixTile(std::uint32_t x, std::uint32_t y, std::uint32_t z, std::uint32_t tileID) {
-    if (!IsInBounds(x, y, z) || !tiles_.contains(tileID)) {
+bool WaveFunctionCollapse::FixTile(std::uint32_t x, std::uint32_t y, std::uint32_t z, const std::string &tileName) {
+    if (!IsInBounds(x, y, z) || !tiles_.contains(tileName)) {
         return false;
     }
-    grid_[x][y][z].fixedTileID = tileID;
+    grid_[x][y][z].fixedTileName = tileName;
     return true;
 }
 
-std::optional<std::uint32_t> WaveFunctionCollapse::GetFixedTile(std::uint32_t x, std::uint32_t y, std::uint32_t z) const {
+std::optional<std::string> WaveFunctionCollapse::GetFixedTile(std::uint32_t x, std::uint32_t y, std::uint32_t z) const {
     if (!IsInBounds(x, y, z)) {
         return std::nullopt;
     }
-    return grid_[x][y][z].fixedTileID;
+    return grid_[x][y][z].fixedTileName;
 }
 
 bool WaveFunctionCollapse::SetStartPosition(std::uint32_t x, std::uint32_t y, std::uint32_t z) {
@@ -102,11 +105,11 @@ bool WaveFunctionCollapse::SetStartPosition(std::uint32_t x, std::uint32_t y, st
     return true;
 }
 
-std::optional<std::uint32_t> WaveFunctionCollapse::GetResolvedTile(std::uint32_t x, std::uint32_t y, std::uint32_t z) const {
+std::optional<std::string> WaveFunctionCollapse::GetResolvedTile(std::uint32_t x, std::uint32_t y, std::uint32_t z) const {
     if (!IsInBounds(x, y, z)) {
         return std::nullopt;
     }
-    return grid_[x][y][z].resolvedTileID;
+    return grid_[x][y][z].resolvedTileName;
 }
 
 bool WaveFunctionCollapse::Solve() {
@@ -117,18 +120,43 @@ bool WaveFunctionCollapse::Solve() {
     for (auto &plane : grid_) {
         for (auto &row : plane) {
             for (auto &cell : row) {
-                cell.resolvedTileID.reset();
+                cell.resolvedTileName.reset();
             }
         }
     }
 
-    std::vector<std::uint32_t> allTileIDs;
-    allTileIDs.reserve(tiles_.size());
-    for (const auto &[id, tile] : tiles_) {
-        allTileIDs.push_back(id);
+    // 候補集合の演算（ソート・積集合）を文字列比較で行うと遅いため、
+    // Solve内ではタイル名を一時的な整数インデックスへ変換して処理する
+    std::vector<const Tile *> tileList;
+    std::unordered_map<std::string, std::uint32_t> nameToIndex;
+    tileList.reserve(tiles_.size());
+    nameToIndex.reserve(tiles_.size());
+    for (const auto &[name, tile] : tiles_) {
+        nameToIndex.emplace(name, static_cast<std::uint32_t>(tileList.size()));
+        tileList.push_back(&tile);
+    }
+    const std::uint32_t tileCount = static_cast<std::uint32_t>(tileList.size());
+
+    // 各タイルの方向別接続リストをインデックスへ変換しておく（未登録名の接続先は無視する）
+    std::vector<std::array<std::vector<std::uint32_t>, kDirectionCount>> connectionIndices(tileCount);
+    for (std::uint32_t t = 0; t < tileCount; ++t) {
+        for (std::size_t dir = 0; dir < kDirectionCount; ++dir) {
+            auto &indices = connectionIndices[t][dir];
+            for (const auto &connectedName : tileList[t]->connections[dir]) {
+                auto it = nameToIndex.find(connectedName);
+                if (it != nameToIndex.end()) {
+                    indices.push_back(it->second);
+                }
+            }
+            std::sort(indices.begin(), indices.end());
+            indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
+        }
     }
 
-    // 各セルの残り候補タイルID一覧（波動関数の重ね合わせ状態）
+    std::vector<std::uint32_t> allTileIndices(tileCount);
+    for (std::uint32_t t = 0; t < tileCount; ++t) allTileIndices[t] = t;
+
+    // 各セルの残り候補タイルインデックス一覧（波動関数の重ね合わせ状態）
     using Possibilities = std::vector<std::vector<std::vector<std::vector<std::uint32_t>>>>;
     Possibilities possibilities(width_,
         std::vector<std::vector<std::vector<std::uint32_t>>>(height_,
@@ -138,11 +166,17 @@ bool WaveFunctionCollapse::Solve() {
     for (std::uint32_t x = 0; x < width_; ++x) {
         for (std::uint32_t y = 0; y < height_; ++y) {
             for (std::uint32_t z = 0; z < depth_; ++z) {
-                if (auto fixed = grid_[x][y][z].fixedTileID) {
-                    possibilities[x][y][z] = { *fixed };
+                if (const auto &fixed = grid_[x][y][z].fixedTileName) {
+                    auto it = nameToIndex.find(*fixed);
+                    if (it == nameToIndex.end()) {
+                        // FixTile/RemoveTileの整合性維持により通常起こらないが、念のため未登録名は全候補として扱う
+                        possibilities[x][y][z] = allTileIndices;
+                        continue;
+                    }
+                    possibilities[x][y][z] = { it->second };
                     queue.push_back({ x, y, z });
                 } else {
-                    possibilities[x][y][z] = allTileIDs;
+                    possibilities[x][y][z] = allTileIndices;
                 }
             }
         }
@@ -164,7 +198,7 @@ bool WaveFunctionCollapse::Solve() {
 
             std::vector<std::uint32_t> allowed;
             for (std::uint32_t candidate : possibilities[x][y][z]) {
-                const auto &connections = tiles_.at(candidate).connections[dir];
+                const auto &connections = connectionIndices[candidate][dir];
                 allowed.insert(allowed.end(), connections.begin(), connections.end());
             }
             std::sort(allowed.begin(), allowed.end());
@@ -187,15 +221,6 @@ bool WaveFunctionCollapse::Solve() {
         }
         return true;
     };
-
-    // possibilitiesは常にソート済みで扱う（set_intersectionのため）
-    for (std::uint32_t x = 0; x < width_; ++x) {
-        for (std::uint32_t y = 0; y < height_; ++y) {
-            for (std::uint32_t z = 0; z < depth_; ++z) {
-                std::sort(possibilities[x][y][z].begin(), possibilities[x][y][z].end());
-            }
-        }
-    }
 
     std::size_t head = 0;
     while (head < queue.size()) {
@@ -264,7 +289,7 @@ bool WaveFunctionCollapse::Solve() {
     for (std::uint32_t x = 0; x < width_; ++x) {
         for (std::uint32_t y = 0; y < height_; ++y) {
             for (std::uint32_t z = 0; z < depth_; ++z) {
-                grid_[x][y][z].resolvedTileID = possibilities[x][y][z].front();
+                grid_[x][y][z].resolvedTileName = tileList[possibilities[x][y][z].front()]->name;
             }
         }
     }
@@ -279,9 +304,9 @@ JSON WaveFunctionCollapse::SaveToJson() const {
     json["gridDepth"] = depth_;
 
     JSON tilesJson = JSON::array();
-    for (const auto &[id, tile] : tiles_) {
+    for (const auto &[name, tile] : tiles_) {
         JSON tileJson = JSON::object();
-        tileJson["id"] = tile.id;
+        tileJson["name"] = tile.name;
         JSON connectionsJson = JSON::object();
         for (std::size_t dir = 0; dir < kDirectionCount; ++dir) {
             connectionsJson[kDirectionKeys[dir]] = tile.connections[dir];
@@ -295,12 +320,12 @@ JSON WaveFunctionCollapse::SaveToJson() const {
     for (std::uint32_t x = 0; x < width_; ++x) {
         for (std::uint32_t y = 0; y < height_; ++y) {
             for (std::uint32_t z = 0; z < depth_; ++z) {
-                if (auto fixed = grid_[x][y][z].fixedTileID) {
+                if (const auto &fixed = grid_[x][y][z].fixedTileName) {
                     JSON entry = JSON::object();
                     entry["x"] = x;
                     entry["y"] = y;
                     entry["z"] = z;
-                    entry["tileID"] = *fixed;
+                    entry["tileName"] = *fixed;
                     fixedTilesJson.push_back(entry);
                 }
             }
@@ -336,12 +361,12 @@ bool WaveFunctionCollapse::LoadFromJson(const JSON &json) {
     if (json.contains("tiles")) {
         for (const auto &tileJson : json.at("tiles")) {
             Tile tile;
-            tile.id = tileJson.at("id").get<std::uint32_t>();
+            tile.name = tileJson.value("name", std::string{});
             if (tileJson.contains("connections")) {
                 const auto &connectionsJson = tileJson.at("connections");
                 for (std::size_t dir = 0; dir < kDirectionCount; ++dir) {
                     if (connectionsJson.contains(kDirectionKeys[dir])) {
-                        tile.connections[dir] = connectionsJson.at(kDirectionKeys[dir]).get<std::vector<std::uint32_t>>();
+                        tile.connections[dir] = connectionsJson.at(kDirectionKeys[dir]).get<std::vector<std::string>>();
                     }
                 }
             }
@@ -355,7 +380,7 @@ bool WaveFunctionCollapse::LoadFromJson(const JSON &json) {
                 entry.at("x").get<std::uint32_t>(),
                 entry.at("y").get<std::uint32_t>(),
                 entry.at("z").get<std::uint32_t>(),
-                entry.at("tileID").get<std::uint32_t>());
+                entry.value("tileName", std::string{}));
         }
     }
 

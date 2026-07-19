@@ -524,6 +524,8 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ScenePreTransform.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
@@ -1074,6 +1076,8 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Scene\Components\SceneObjectCollider.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScenePreTransform.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\EditorToolManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h" />

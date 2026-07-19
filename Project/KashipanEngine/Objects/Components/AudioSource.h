@@ -10,13 +10,49 @@
 namespace KashipanEngine {
 
 /// @brief 音声を再生するコンポーネント
-/// @details 使用する音声・ボリューム・ピッチ・ループ・Min/Max Distance・フィルターエフェクトの設定を持つ。
+/// @details 使用する音声・ボリューム・ピッチ・ループ・Min/Max Distance・各種エフェクトの設定を持つ。
+///          エフェクトはフィルター/リバーブ/エコー/イコライザー/リミッターを個別に有効化でき、複数同時にかけられる。
 ///          自動パン/ローパスフィルター(enableSpatialAudio)が有効な場合、使用中のAudioListenerとの
 ///          位置関係からSceneAudioPlayerが毎フレーム左右への振り分けと音の籠り具合を自動で更新する。
 class AudioSource final : public IObjectComponent {
 public:
-    /// @brief 手動で設定するエフェクトの種別
-    enum class EffectType { None, LowPass, HighPass, BandPass, Notch, Reverb };
+    /// @brief フィルターエフェクトの種別
+    enum class FilterKind { LowPass, HighPass, BandPass, Notch };
+
+    /// @brief フィルターエフェクト（特定の周波数帯域を削る）の設定
+    struct FilterEffect final {
+        bool enabled = false;
+        FilterKind kind = FilterKind::LowPass;
+        /// @brief 正規化カットオフ周波数（0に近いほど強くかかり、1.0でほぼ無効）
+        float frequency = 1.0f;
+        /// @brief 共鳴の鋭さ(1/Q)。小さいほどカットオフ付近が強調される
+        float q = 1.0f;
+    };
+
+    /// @brief リバーブ（残響）エフェクトの設定
+    struct ReverbEffect final {
+        bool enabled = false;
+        /// @brief 共有リバーブバスへの送り量（0.0:残響無し ～ 1.0:最大）
+        float mix = 0.3f;
+    };
+
+    /// @brief エコー（やまびこ）エフェクトの設定
+    struct EchoEffect final {
+        bool enabled = false;
+        AudioManager::EchoParams params{};
+    };
+
+    /// @brief 4バンドイコライザーエフェクトの設定
+    struct EqEffect final {
+        bool enabled = false;
+        AudioManager::EqParams params{};
+    };
+
+    /// @brief マスタリングリミッター（音割れ防止の圧縮）エフェクトの設定
+    struct LimiterEffect final {
+        bool enabled = false;
+        AudioManager::LimiterParams params{};
+    };
 
     OBJECT_COMPONENT_CONSTRUCTOR(AudioSource, 0xFF, )
     COMPONENT_CATEGORY("Audio")
@@ -30,10 +66,11 @@ public:
         ptr->loop_ = loop_;
         ptr->minDistance_ = minDistance_;
         ptr->maxDistance_ = maxDistance_;
-        ptr->effectType_ = effectType_;
-        ptr->effectFrequency_ = effectFrequency_;
-        ptr->effectQ_ = effectQ_;
-        ptr->reverbMix_ = reverbMix_;
+        ptr->filter_ = filter_;
+        ptr->reverb_ = reverb_;
+        ptr->echo_ = echo_;
+        ptr->eq_ = eq_;
+        ptr->limiter_ = limiter_;
         ptr->enableSpatialAudio_ = enableSpatialAudio_;
         return ptr;
     }
@@ -58,7 +95,9 @@ public:
         currentPlayHandle_ = AudioManager::Play(params);
         if (currentPlayHandle_ != AudioManager::kInvalidPlayHandle) {
             AudioManager::SetPan(currentPlayHandle_, 0.0f);
-            ApplyEffects(0.0f);
+            lastMuffleAmount_ = 0.0f;
+            ApplyChainEffects();
+            ApplyFilterAndReverb(0.0f);
         }
         return currentPlayHandle_;
     }
@@ -110,15 +149,24 @@ public:
     void SetMaxDistance(float maxDistance) { maxDistance_ = std::max(0.0f, maxDistance); }
     float GetMaxDistance() const noexcept { return maxDistance_; }
 
-    void SetEffectType(EffectType effectType) { effectType_ = effectType; }
-    EffectType GetEffectType() const noexcept { return effectType_; }
-    void SetEffectFrequency(float effectFrequency) { effectFrequency_ = std::clamp(effectFrequency, 0.0005f, 1.0f); }
-    float GetEffectFrequency() const noexcept { return effectFrequency_; }
-    void SetEffectQ(float effectQ) { effectQ_ = std::clamp(effectQ, 0.0005f, 1.5f); }
-    float GetEffectQ() const noexcept { return effectQ_; }
-    /// @brief リバーブの送り量(ウェットレベル)を設定する（EffectType::Reverb選択時のみ有効）
-    void SetReverbMix(float reverbMix) { reverbMix_ = std::clamp(reverbMix, 0.0f, 1.0f); }
-    float GetReverbMix() const noexcept { return reverbMix_; }
+    //==================================================
+    // エフェクト（複数同時にかけられる。各エフェクトはenabledで個別に有効/無効を切り替える）
+    //==================================================
+
+    void SetFilterEffect(const FilterEffect &effect) { filter_ = effect; ClampEffectParams(); ReapplyEffects(); }
+    const FilterEffect &GetFilterEffect() const noexcept { return filter_; }
+
+    void SetReverbEffect(const ReverbEffect &effect) { reverb_ = effect; ClampEffectParams(); ReapplyEffects(); }
+    const ReverbEffect &GetReverbEffect() const noexcept { return reverb_; }
+
+    void SetEchoEffect(const EchoEffect &effect) { echo_ = effect; ClampEffectParams(); ReapplyEffects(); }
+    const EchoEffect &GetEchoEffect() const noexcept { return echo_; }
+
+    void SetEqEffect(const EqEffect &effect) { eq_ = effect; ClampEffectParams(); ReapplyEffects(); }
+    const EqEffect &GetEqEffect() const noexcept { return eq_; }
+
+    void SetLimiterEffect(const LimiterEffect &effect) { limiter_ = effect; ClampEffectParams(); ReapplyEffects(); }
+    const LimiterEffect &GetLimiterEffect() const noexcept { return limiter_; }
 
     /// @brief AudioListenerとの位置関係から自動でパン/ローパスフィルターを適用するかどうかを設定する
     void SetEnableSpatialAudio(bool enable) { enableSpatialAudio_ = enable; }
@@ -170,7 +218,8 @@ public:
 
         AudioManager::SetVolume(currentPlayHandle_, volume_ * attenuation);
         AudioManager::SetPan(currentPlayHandle_, pan);
-        ApplyEffects(muffleAmount);
+        lastMuffleAmount_ = muffleAmount;
+        ApplyFilterAndReverb(muffleAmount);
     }
 
 protected:
@@ -188,6 +237,10 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        auto tooltip = [](const char *text) {
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", text);
+        };
+
         if (ImGuiCustom::SelectString("Sound", soundName_, AudioManager::GetLoadedSoundAssetPaths(), true)) {
             soundHandle_ = AudioManager::kInvalidSoundHandle;
         }
@@ -197,14 +250,96 @@ protected:
         ImGui::DragFloat("Min Distance", &minDistance_, 0.1f, 0.0f, maxDistance_);
         ImGui::DragFloat("Max Distance", &maxDistance_, 0.1f, minDistance_, 10000.0f);
 
-        int effectType = static_cast<int>(effectType_);
-        const char *effectItems[] = { "None", "LowPass", "HighPass", "BandPass", "Notch", "Reverb" };
-        if (ImGui::Combo("Effect", &effectType, effectItems, 6)) effectType_ = static_cast<EffectType>(effectType);
-        if (effectType_ == EffectType::Reverb) {
-            ImGui::DragFloat("Reverb Mix", &reverbMix_, 0.005f, 0.0f, 1.0f);
-        } else if (effectType_ != EffectType::None) {
-            ImGui::DragFloat("Effect Frequency", &effectFrequency_, 0.005f, 0.0005f, 1.0f);
-            ImGui::DragFloat("Effect Q", &effectQ_, 0.01f, 0.0005f, 1.5f);
+        ImGui::Separator();
+        ImGui::Text("Effects");
+        tooltip("各エフェクトは個別に有効/無効を切り替えられ、複数同時にかけられる");
+        bool changed = false;
+
+        // フィルター
+        changed |= ImGui::Checkbox("Filter", &filter_.enabled);
+        tooltip("特定の周波数帯域を削るフィルター。音を籠らせたり、軽くしたりできる");
+        if (filter_.enabled) {
+            ImGui::Indent();
+            int kind = static_cast<int>(filter_.kind);
+            const char *kindItems[] = { "LowPass", "HighPass", "BandPass", "Notch" };
+            if (ImGui::Combo("Filter Type", &kind, kindItems, 4)) {
+                filter_.kind = static_cast<FilterKind>(kind);
+                changed = true;
+            }
+            tooltip("LowPass: 高音を削って籠らせる\nHighPass: 低音を削って軽くする\nBandPass: カットオフ周波数付近のみを通す\nNotch: カットオフ周波数付近のみを削る");
+            changed |= ImGui::DragFloat("Frequency", &filter_.frequency, 0.005f, 0.0005f, 1.0f);
+            tooltip("正規化カットオフ周波数。0に近いほど強くかかり、1.0でほぼ無効");
+            changed |= ImGui::DragFloat("Q (Resonance)", &filter_.q, 0.01f, 0.0005f, 1.5f);
+            tooltip("共鳴の鋭さ(1/Q)。小さいほどカットオフ周波数付近の音が強調される");
+            ImGui::Unindent();
+        }
+
+        // リバーブ
+        changed |= ImGui::Checkbox("Reverb", &reverb_.enabled);
+        tooltip("残響。ホールや洞窟の中で鳴っているような響きを付加する");
+        if (reverb_.enabled) {
+            ImGui::Indent();
+            changed |= ImGui::DragFloat("Reverb Mix", &reverb_.mix, 0.005f, 0.0f, 1.0f);
+            tooltip("残響への送り量。大きいほど響きが強くなる（0.0: 残響無し ～ 1.0: 最大）");
+            ImGui::Unindent();
+        }
+
+        // エコー
+        changed |= ImGui::Checkbox("Echo", &echo_.enabled);
+        tooltip("やまびこ。遅延した音を繰り返し重ねる");
+        if (echo_.enabled) {
+            ImGui::Indent();
+            changed |= ImGui::DragFloat("Wet/Dry Mix", &echo_.params.wetDryMix, 0.005f, 0.0f, 1.0f);
+            tooltip("原音とエコー音の混合比（0.0: 原音のみ ～ 1.0: エコー音のみ）");
+            changed |= ImGui::DragFloat("Feedback", &echo_.params.feedback, 0.005f, 0.0f, 1.0f);
+            tooltip("エコーの繰り返し量。大きいほど長く繰り返される（1.0で減衰しない）");
+            changed |= ImGui::DragFloat("Delay (ms)", &echo_.params.delayMs, 1.0f, 1.0f, 2000.0f);
+            tooltip("エコーの遅延時間（ミリ秒）");
+            ImGui::Unindent();
+        }
+
+        // イコライザー
+        changed |= ImGui::Checkbox("Equalizer", &eq_.enabled);
+        tooltip("4バンドイコライザー。周波数帯域ごとに音量を増減できる");
+        if (eq_.enabled) {
+            ImGui::Indent();
+            for (int band = 0; band < 4; ++band) {
+                ImGui::PushID(band);
+                ImGui::Text("Band %d", band + 1);
+                changed |= ImGui::DragFloat("Frequency (Hz)", &eq_.params.frequencyCenter[band], 10.0f, 20.0f, 20000.0f);
+                tooltip("このバンドの中心周波数（Hz）");
+                changed |= ImGui::DragFloat("Gain", &eq_.params.gain[band], 0.01f, 0.126f, 7.94f);
+                tooltip("このバンドの増幅率。1.0で等倍、小さいほど削り、大きいほど持ち上げる");
+                changed |= ImGui::DragFloat("Bandwidth", &eq_.params.bandwidth[band], 0.01f, 0.1f, 2.0f);
+                tooltip("このバンドの帯域幅（中心周波数を基準としたオクターブ幅）。大きいほど広い範囲に影響する");
+                ImGui::PopID();
+            }
+            ImGui::Unindent();
+        }
+
+        // リミッター
+        changed |= ImGui::Checkbox("Limiter", &limiter_.enabled);
+        tooltip("マスタリングリミッター。音量が大きくなりすぎないよう圧縮し、音割れを防ぐ");
+        if (limiter_.enabled) {
+            ImGui::Indent();
+            int release = static_cast<int>(limiter_.params.release);
+            if (ImGui::DragInt("Release", &release, 0.1f, 1, 20)) {
+                limiter_.params.release = static_cast<uint32_t>(release);
+                changed = true;
+            }
+            tooltip("圧縮を解除するまでの時間。大きいほどゆっくり戻る");
+            int loudness = static_cast<int>(limiter_.params.loudness);
+            if (ImGui::DragInt("Loudness", &loudness, 1.0f, 1, 1800)) {
+                limiter_.params.loudness = static_cast<uint32_t>(loudness);
+                changed = true;
+            }
+            tooltip("音量の閾値。小さいほど強く圧縮される");
+            ImGui::Unindent();
+        }
+
+        if (changed) {
+            ClampEffectParams();
+            ReapplyEffects();
         }
 
         ImGui::Checkbox("Auto Pan / Muffle (Spatial Audio)", &enableSpatialAudio_);
@@ -225,13 +360,34 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        JSON effects = JSON::object();
+        effects["filter"] = JSON{
+            {"enabled", filter_.enabled}, {"kind", static_cast<int>(filter_.kind)},
+            {"frequency", filter_.frequency}, {"q", filter_.q}
+        };
+        effects["reverb"] = JSON{ {"enabled", reverb_.enabled}, {"mix", reverb_.mix} };
+        effects["echo"] = JSON{
+            {"enabled", echo_.enabled}, {"wetDryMix", echo_.params.wetDryMix},
+            {"feedback", echo_.params.feedback}, {"delayMs", echo_.params.delayMs}
+        };
+        effects["eq"] = JSON{
+            {"enabled", eq_.enabled},
+            {"frequencyCenter", std::vector<float>(eq_.params.frequencyCenter, eq_.params.frequencyCenter + 4)},
+            {"gain", std::vector<float>(eq_.params.gain, eq_.params.gain + 4)},
+            {"bandwidth", std::vector<float>(eq_.params.bandwidth, eq_.params.bandwidth + 4)}
+        };
+        effects["limiter"] = JSON{
+            {"enabled", limiter_.enabled},
+            {"release", limiter_.params.release}, {"loudness", limiter_.params.loudness}
+        };
+
         return JSON{
             {"soundName", soundName_}, {"volume", volume_}, {"pitch", pitch_}, {"loop", loop_},
             {"minDistance", minDistance_}, {"maxDistance", maxDistance_},
-            {"effectType", static_cast<int>(effectType_)}, {"effectFrequency", effectFrequency_}, {"effectQ", effectQ_},
-            {"reverbMix", reverbMix_}, {"enableSpatialAudio", enableSpatialAudio_}
+            {"effects", effects}, {"enableSpatialAudio", enableSpatialAudio_}
         };
     }
+
     bool LoadFromJson(const JSON &json) override {
         soundName_ = json.value("soundName", std::string{});
         soundHandle_ = AudioManager::kInvalidSoundHandle;
@@ -240,11 +396,63 @@ protected:
         loop_ = json.value("loop", false);
         minDistance_ = json.value("minDistance", 1.0f);
         maxDistance_ = json.value("maxDistance", 25.0f);
-        effectType_ = static_cast<EffectType>(json.value("effectType", 0));
-        effectFrequency_ = json.value("effectFrequency", 1.0f);
-        effectQ_ = json.value("effectQ", 1.0f);
-        reverbMix_ = json.value("reverbMix", 0.3f);
         enableSpatialAudio_ = json.value("enableSpatialAudio", false);
+
+        filter_ = FilterEffect{};
+        reverb_ = ReverbEffect{};
+        echo_ = EchoEffect{};
+        eq_ = EqEffect{};
+        limiter_ = LimiterEffect{};
+
+        if (json.contains("effects")) {
+            const auto &effects = json.at("effects");
+            if (effects.contains("filter")) {
+                const auto &filterJson = effects.at("filter");
+                filter_.enabled = filterJson.value("enabled", false);
+                filter_.kind = static_cast<FilterKind>(filterJson.value("kind", 0));
+                filter_.frequency = filterJson.value("frequency", 1.0f);
+                filter_.q = filterJson.value("q", 1.0f);
+            }
+            if (effects.contains("reverb")) {
+                const auto &reverbJson = effects.at("reverb");
+                reverb_.enabled = reverbJson.value("enabled", false);
+                reverb_.mix = reverbJson.value("mix", 0.3f);
+            }
+            if (effects.contains("echo")) {
+                const auto &echoJson = effects.at("echo");
+                echo_.enabled = echoJson.value("enabled", false);
+                echo_.params.wetDryMix = echoJson.value("wetDryMix", 0.5f);
+                echo_.params.feedback = echoJson.value("feedback", 0.5f);
+                echo_.params.delayMs = echoJson.value("delayMs", 500.0f);
+            }
+            if (effects.contains("eq")) {
+                const auto &eqJson = effects.at("eq");
+                eq_.enabled = eqJson.value("enabled", false);
+                LoadFloat4(eqJson, "frequencyCenter", eq_.params.frequencyCenter);
+                LoadFloat4(eqJson, "gain", eq_.params.gain);
+                LoadFloat4(eqJson, "bandwidth", eq_.params.bandwidth);
+            }
+            if (effects.contains("limiter")) {
+                const auto &limiterJson = effects.at("limiter");
+                limiter_.enabled = limiterJson.value("enabled", false);
+                limiter_.params.release = limiterJson.value("release", 6u);
+                limiter_.params.loudness = limiterJson.value("loudness", 1000u);
+            }
+        } else if (json.contains("effectType")) {
+            // 旧形式（単一エフェクト）からの移行: 0=None, 1=LowPass, 2=HighPass, 3=BandPass, 4=Notch, 5=Reverb
+            const int legacyType = json.value("effectType", 0);
+            if (legacyType >= 1 && legacyType <= 4) {
+                filter_.enabled = true;
+                filter_.kind = static_cast<FilterKind>(legacyType - 1);
+                filter_.frequency = json.value("effectFrequency", 1.0f);
+                filter_.q = json.value("effectQ", 1.0f);
+            } else if (legacyType == 5) {
+                reverb_.enabled = true;
+                reverb_.mix = json.value("reverbMix", 0.3f);
+            }
+        }
+
+        ClampEffectParams();
         return true;
     }
 
@@ -269,33 +477,71 @@ private:
         return soundHandle_;
     }
 
-    static AudioManager::FilterType ToFilterType(EffectType type) {
-        switch (type) {
-        case EffectType::HighPass: return AudioManager::FilterType::HighPass;
-        case EffectType::BandPass: return AudioManager::FilterType::BandPass;
-        case EffectType::Notch:    return AudioManager::FilterType::Notch;
-        case EffectType::LowPass:
-        case EffectType::None:
-        case EffectType::Reverb:
-        default:                  return AudioManager::FilterType::LowPass;
+    static AudioManager::FilterType ToFilterType(FilterKind kind) {
+        switch (kind) {
+        case FilterKind::HighPass: return AudioManager::FilterType::HighPass;
+        case FilterKind::BandPass: return AudioManager::FilterType::BandPass;
+        case FilterKind::Notch:    return AudioManager::FilterType::Notch;
+        case FilterKind::LowPass:
+        default:                   return AudioManager::FilterType::LowPass;
         }
     }
 
-    /// @brief 手動エフェクトの設定に、距離・向きによる籠り具合(muffleAmount, 0=クリア～1=最大)を重ねて適用する
-    /// @details フィルター系エフェクト(LowPass/HighPass/BandPass/Notch)はmuffleAmountでカットオフ周波数を狭め、
-    ///          Reverbは別経路(共有リバーブバス)への送り量として適用する。フィルターとリバーブは併用しない
-    void ApplyEffects(float muffleAmount) const {
+    static void LoadFloat4(const JSON &json, const char *key, float (&out)[4]) {
+        if (!json.contains(key) || !json.at(key).is_array()) return;
+        const auto &arrayJson = json.at(key);
+        for (size_t i = 0; i < 4 && i < arrayJson.size(); ++i) {
+            if (arrayJson[i].is_number()) out[i] = arrayJson[i].get<float>();
+        }
+    }
+
+    /// @brief 各エフェクトのパラメータを有効範囲へクランプする
+    void ClampEffectParams() {
+        filter_.frequency = std::clamp(filter_.frequency, 0.0005f, 1.0f);
+        filter_.q = std::clamp(filter_.q, 0.0005f, 1.5f);
+        reverb_.mix = std::clamp(reverb_.mix, 0.0f, 1.0f);
+        echo_.params.wetDryMix = std::clamp(echo_.params.wetDryMix, 0.0f, 1.0f);
+        echo_.params.feedback = std::clamp(echo_.params.feedback, 0.0f, 1.0f);
+        echo_.params.delayMs = std::clamp(echo_.params.delayMs, 1.0f, 2000.0f);
+        for (int band = 0; band < 4; ++band) {
+            eq_.params.frequencyCenter[band] = std::clamp(eq_.params.frequencyCenter[band], 20.0f, 20000.0f);
+            eq_.params.gain[band] = std::clamp(eq_.params.gain[band], 0.126f, 7.94f);
+            eq_.params.bandwidth[band] = std::clamp(eq_.params.bandwidth[band], 0.1f, 2.0f);
+        }
+        limiter_.params.release = std::clamp(limiter_.params.release, 1u, 20u);
+        limiter_.params.loudness = std::clamp(limiter_.params.loudness, 1u, 1800u);
+    }
+
+    /// @brief フィルターとリバーブの設定に、距離・向きによる籠り具合(muffleAmount, 0=クリア～1=最大)を重ねて適用する
+    /// @details フィルター無効時もspatial audioの籠り表現のためLowPassとして適用する。
+    ///          リバーブは別経路(共有リバーブバス)への送り量として適用するため、フィルターと併用できる
+    void ApplyFilterAndReverb(float muffleAmount) const {
         if (currentPlayHandle_ == AudioManager::kInvalidPlayHandle) return;
 
-        const bool isFilterEffect = effectType_ != EffectType::None && effectType_ != EffectType::Reverb;
-        const AudioManager::FilterType filterType = isFilterEffect ? ToFilterType(effectType_) : AudioManager::FilterType::LowPass;
-        const float baseFrequency = isFilterEffect ? effectFrequency_ : 1.0f;
+        const AudioManager::FilterType filterType = filter_.enabled ? ToFilterType(filter_.kind) : AudioManager::FilterType::LowPass;
+        const float baseFrequency = filter_.enabled ? filter_.frequency : 1.0f;
         const float muffleFactor = 1.0f - muffleAmount * 0.95f;
         const float frequency = std::clamp(baseFrequency * muffleFactor, 0.0005f, 1.0f);
-        const float oneOverQ = isFilterEffect ? effectQ_ : 1.0f;
+        const float oneOverQ = filter_.enabled ? filter_.q : 1.0f;
         AudioManager::SetFilter(currentPlayHandle_, filterType, frequency, oneOverQ);
 
-        AudioManager::SetReverbSend(currentPlayHandle_, effectType_ == EffectType::Reverb ? reverbMix_ : 0.0f);
+        AudioManager::SetReverbSend(currentPlayHandle_, reverb_.enabled ? reverb_.mix : 0.0f);
+    }
+
+    /// @brief エフェクトチェーン系(EQ/エコー/リミッター)の設定を適用する
+    /// @details 毎フレーム呼ぶ必要はなく、再生開始時と設定変更時のみ呼べばよい
+    void ApplyChainEffects() const {
+        if (currentPlayHandle_ == AudioManager::kInvalidPlayHandle) return;
+        AudioManager::SetEqEffect(currentPlayHandle_, eq_.enabled, eq_.params);
+        AudioManager::SetEchoEffect(currentPlayHandle_, echo_.enabled, echo_.params);
+        AudioManager::SetLimiterEffect(currentPlayHandle_, limiter_.enabled, limiter_.params);
+    }
+
+    /// @brief 再生中であれば全エフェクトの設定を反映し直す（設定変更時用）
+    void ReapplyEffects() const {
+        if (currentPlayHandle_ == AudioManager::kInvalidPlayHandle) return;
+        ApplyChainEffects();
+        ApplyFilterAndReverb(lastMuffleAmount_);
     }
 
     std::string soundName_;
@@ -305,11 +551,14 @@ private:
     bool loop_ = false;
     float minDistance_ = 1.0f;
     float maxDistance_ = 25.0f;
-    EffectType effectType_ = EffectType::None;
-    float effectFrequency_ = 1.0f;
-    float effectQ_ = 1.0f;
-    float reverbMix_ = 0.3f;
+    FilterEffect filter_;
+    ReverbEffect reverb_;
+    EchoEffect echo_;
+    EqEffect eq_;
+    LimiterEffect limiter_;
     bool enableSpatialAudio_ = false;
+    /// @brief 直近のspatial audioによる籠り具合（設定変更時の再適用でフィルターへ重ねるために保持する）
+    float lastMuffleAmount_ = 0.0f;
 
     AudioManager::PlayHandle currentPlayHandle_ = AudioManager::kInvalidPlayHandle;
 };

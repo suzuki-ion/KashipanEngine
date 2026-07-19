@@ -37,15 +37,11 @@ class StageGenerator : ScriptComponentBehavior {
 
     bool generated = false;
 
-    // タイルID（この例専用の割り当て。実際のゲームではタイルセットに応じて設計し直すこと）
-    uint32 kRoomFloor = 0;
-    uint32 kBuildingFloor = 1;
-    uint32 kGimmickFloor = 2;
-    uint32 kTreasureFloor = 3;
-    uint32 kCorridorFloor = 4;
-    uint32 kWall = 5;
-    uint32 kEmpty = 6;
-    uint32 kTileCount = 7;
+    // タイル名（この例専用の割り当て。実際のゲームではタイルセットに応じて設計し直すこと）
+    array<string> tileNames = {
+        "RoomFloor", "BuildingFloor", "GimmickFloor", "TreasureFloor",
+        "CorridorFloor", "Wall", "Empty"
+    };
 
     void Start() {
         if (generated) return;
@@ -67,17 +63,17 @@ class StageGenerator : ScriptComponentBehavior {
         // 2. WaveFunctionCollapseへタイルを登録する
         WaveFunctionCollapse@ wfc = WaveFunctionCollapse();
         wfc.SetSeed(seed);
-        for (uint32 i = 0; i < kTileCount; ++i) {
-            wfc.RegisterTile(i);
+        for (uint32 i = 0; i < tileNames.length(); ++i) {
+            wfc.RegisterTile(tileNames[i]);
         }
-        for (uint32 a = 0; a < kTileCount; ++a) {
-            for (uint32 b = 0; b < kTileCount; ++b) {
-                wfc.AddTileConnection(a, WFCDirection::Up, b);
-                wfc.AddTileConnection(a, WFCDirection::Down, b);
-                wfc.AddTileConnection(a, WFCDirection::Left, b);
-                wfc.AddTileConnection(a, WFCDirection::Right, b);
-                wfc.AddTileConnection(a, WFCDirection::Front, b);
-                wfc.AddTileConnection(a, WFCDirection::Back, b);
+        for (uint32 a = 0; a < tileNames.length(); ++a) {
+            for (uint32 b = 0; b < tileNames.length(); ++b) {
+                wfc.AddTileConnection(tileNames[a], WFCDirection::Up, tileNames[b]);
+                wfc.AddTileConnection(tileNames[a], WFCDirection::Down, tileNames[b]);
+                wfc.AddTileConnection(tileNames[a], WFCDirection::Left, tileNames[b]);
+                wfc.AddTileConnection(tileNames[a], WFCDirection::Right, tileNames[b]);
+                wfc.AddTileConnection(tileNames[a], WFCDirection::Front, tileNames[b]);
+                wfc.AddTileConnection(tileNames[a], WFCDirection::Back, tileNames[b]);
             }
         }
 
@@ -87,11 +83,11 @@ class StageGenerator : ScriptComponentBehavior {
         builder.SetRoomSpacing(roomSpacing);
         builder.SetCorridorWidth(corridorWidth);
         builder.SetTileWorldSize(tileWorldSize);
-        builder.SetDefaultRoomTileID(kRoomFloor);
-        builder.SetRoomTileID(RoomType::Building, kBuildingFloor);
-        builder.SetRoomTileID(RoomType::GimmickDepth, kGimmickFloor);
-        builder.SetRoomTileID(RoomType::Treasure, kTreasureFloor);
-        builder.SetCorridorTileID(kCorridorFloor);
+        builder.SetDefaultRoomTileName("RoomFloor");
+        builder.SetRoomTileName(RoomType::Building, "BuildingFloor");
+        builder.SetRoomTileName(RoomType::GimmickDepth, "GimmickFloor");
+        builder.SetRoomTileName(RoomType::Treasure, "TreasureFloor");
+        builder.SetCorridorTileName("CorridorFloor");
 
         if (!builder.Build(graph, wfc)) {
             LogError("StageGenerator: グリッド展開に失敗しました");
@@ -113,9 +109,9 @@ class StageGenerator : ScriptComponentBehavior {
         for (uint32 x = 0; x < gw; ++x) {
             for (uint32 y = 0; y < gh; ++y) {
                 for (uint32 z = 0; z < gd; ++z) {
-                    uint32 tileID;
-                    if (!wfc.TryGetResolvedTile(x, y, z, tileID)) continue;
-                    if (tileID == kEmpty) continue; // 何も置かない
+                    string tileName;
+                    if (!wfc.TryGetResolvedTile(x, y, z, tileName)) continue;
+                    if (tileName == "Empty") continue; // 何も置かない
 
                     Object@ tileObject = GetScene().CreateObject("StageTile");
                     MeshFilter@ meshFilter;

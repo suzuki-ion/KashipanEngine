@@ -22,6 +22,9 @@ public:
     /// @brief シーンマネージャーを取得する（シーン登録情報の編集・シーン切り替え用）
     SceneManager *GetSceneManager() const { return owner_->sceneManager_; }
 
+    /// @brief シーンコンテキストを取得する（エディターツールスクリプトのGetScene()用）
+    SceneContext *GetSceneContext() const { return owner_->GetSceneContext(); }
+
     //==================================================
     // シーンの保存・読込
     //==================================================

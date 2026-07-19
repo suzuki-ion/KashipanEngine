@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <unordered_map>
 
 #include "Math/Vector3.h"
@@ -16,7 +17,7 @@ namespace KashipanEngine {
 ///          そのままタイルグリッド上の物理的な連結性として保証する。部屋の隙間のうち通路
 ///          にならない部分は固定されないため、WaveFunctionCollapse::Solve()で壁等の装飾
 ///          として埋められる
-/// @note 事前にwfc側で使用する全タイルID（部屋種別ごとのタイル・通路タイル）を
+/// @note 事前にwfc側で使用する全タイル名（部屋種別ごとのタイル・通路タイル）を
 ///       RegisterTileで登録しておく必要がある（Build()はタイルの登録は行わない）
 class StageGridBuilder final {
 public:
@@ -37,19 +38,19 @@ public:
     /// @brief タイル1個分に対応する実際のワールド座標上のサイズ
     void SetTileWorldSize(float size);
 
-    /// @brief 部屋種別ごとに固定するタイルIDを設定する
-    void SetRoomTileID(RoomType type, std::uint32_t tileID);
+    /// @brief 部屋種別ごとに固定するタイル名を設定する
+    void SetRoomTileName(RoomType type, const std::string &tileName);
 
-    /// @brief SetRoomTileIDで個別設定されていない部屋種別に使う既定のタイルID
-    void SetDefaultRoomTileID(std::uint32_t tileID);
+    /// @brief SetRoomTileNameで個別設定されていない部屋種別に使う既定のタイル名
+    void SetDefaultRoomTileName(const std::string &tileName);
 
-    /// @brief 部屋同士を繋ぐ通路に固定するタイルID
-    void SetCorridorTileID(std::uint32_t tileID);
+    /// @brief 部屋同士を繋ぐ通路に固定するタイル名
+    void SetCorridorTileName(const std::string &tileName);
 
     /// @brief 部屋グラフの内容をwfcへ展開する
     /// @details wfc.SetGridSizeを内部で呼び出すため、既存のwfcの固定タイル・生成開始座標は
-    ///          クリアされる。事前にwfc.RegisterTileで使用する全タイルIDを登録しておくこと
-    /// @return 展開できた場合はtrue（デフォルトタイルID未設定、対応する部屋タイルID未設定、
+    ///          クリアされる。事前にwfc.RegisterTileで使用する全タイル名を登録しておくこと
+    /// @return 展開できた場合はtrue（デフォルトタイル名未設定、対応する部屋タイル名未設定、
     ///         タイルが未登録、部屋グラフが未生成、部屋同士が抽象グリッド上で隣接していない
     ///         等の場合はfalse）
     bool Build(const StageGraphGenerator &graph, WaveFunctionCollapse &wfc) const;
@@ -78,9 +79,9 @@ private:
     std::uint32_t corridorWidth_ = 1;
     float tileWorldSize_ = 1.0f;
 
-    std::unordered_map<RoomType, std::uint32_t> roomTileIDs_;
-    std::optional<std::uint32_t> defaultRoomTileID_;
-    std::optional<std::uint32_t> corridorTileID_;
+    std::unordered_map<RoomType, std::string> roomTileNames_;
+    std::optional<std::string> defaultRoomTileName_;
+    std::optional<std::string> corridorTileName_;
 };
 
 } // namespace KashipanEngine

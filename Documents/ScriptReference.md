@@ -5,6 +5,8 @@ KashipanEngineに組み込まれたAngelScriptの利用方法と、スクリプ�
 - スクリプト言語: [AngelScript](https://www.angelcode.com/angelscript/)
 - 対象コンポーネント: `ScriptComponent`（オブジェクトコンポーネント） / `SceneScriptEngine`（シーンコンポーネント）
 
+エディター拡張用スクリプト（`EditorTools`フォルダ、メニュー項目や専用ウィンドウの追加）については [EditorToolScriptReference.md](EditorToolScriptReference.md) を参照してください。
+
 ---
 
 ## 目次
@@ -1328,25 +1330,23 @@ wfc.SetSeed(12345);
 wfc.SetGridSize(10, 1, 10); // 2次元的に使う場合はYを1にする
 
 // タイルを登録し、方向ごとに接続可能なタイルIDを追加する
-const uint kGrass = 0;
-const uint kWater = 1;
-wfc.RegisterTile(kGrass);
-wfc.RegisterTile(kWater);
-wfc.AddTileConnection(kGrass, WFCDirection::Right, kGrass);
-wfc.AddTileConnection(kGrass, WFCDirection::Left, kGrass);
-wfc.AddTileConnection(kWater, WFCDirection::Right, kWater);
-wfc.AddTileConnection(kWater, WFCDirection::Left, kWater);
+wfc.RegisterTile("Grass");
+wfc.RegisterTile("Water");
+wfc.AddTileConnection("Grass", WFCDirection::Right, "Grass");
+wfc.AddTileConnection("Grass", WFCDirection::Left, "Grass");
+wfc.AddTileConnection("Water", WFCDirection::Right, "Water");
+wfc.AddTileConnection("Water", WFCDirection::Left, "Water");
 // 接続は片方向の宣言のため、逆方向（WaterのLeftにGrassを許可する 等）も必要なら別途追加する
 
-wfc.FixTile(0, 0, 0, kGrass); // 座標(0,0,0)を草地で固定する
+wfc.FixTile(0, 0, 0, "Grass"); // 座標(0,0,0)を草地で固定する
 wfc.SetStartPosition(0, 0, 0);
 
 if (wfc.Solve()) {
     for (uint x = 0; x < wfc.GetGridWidth(); x++) {
         for (uint z = 0; z < wfc.GetGridDepth(); z++) {
-            uint tileID;
-            if (wfc.TryGetResolvedTile(x, 0, z, tileID)) {
-                // tileIDに応じてオブジェクトを配置する
+            string tileName;
+            if (wfc.TryGetResolvedTile(x, 0, z, tileName)) {
+                // tileNameに応じてオブジェクトを配置する
             }
         }
     }
@@ -1371,15 +1371,15 @@ SaveJsonFile("SaveData/wfc.json", json);
 | `void SetSeed(uint seed) / uint GetSeed() const` | 乱数シード値の設定・取得 |
 | `void SetGridSize(uint width, uint height, uint depth)` | グリッドサイズを設定する（変更すると既存の固定タイル・開始位置はクリアされる） |
 | `uint GetGridWidth/GetGridHeight/GetGridDepth() const` | 現在のグリッドサイズを取得する |
-| `bool RegisterTile(uint id)` | 接続情報を持たない空のタイルを登録する（同じIDが既に登録済みの場合は`false`） |
-| `bool RemoveTile(uint tileID)` | 登録済みのタイルを削除する（そのタイルで固定・確定済みだったセルは解除される） |
-| `bool AddTileConnection(uint tileID, WFCDirection direction, uint connectedTileID)` | 指定タイルの指定方向へ接続可能なタイルIDを1つ追加する（タイルが未登録の場合は`false`） |
-| `bool FixTile(uint x, uint y, uint z, uint tileID)` | 指定座標のタイルを固定する（`Solve`実行時の確定制約になる） |
-| `bool TryGetFixedTile(uint x, uint y, uint z, uint &out tileID) const` | 指定座標に固定されているタイルIDを取得する（固定されていない場合は`false`） |
+| `bool RegisterTile(const string &in name)` | 接続情報を持たない空のタイルを登録する（名前が空、または同名のタイルが登録済みの場合は`false`） |
+| `bool RemoveTile(const string &in tileName)` | 登録済みのタイルを削除する（そのタイルで固定・確定済みだったセルは解除される） |
+| `bool AddTileConnection(const string &in tileName, WFCDirection direction, const string &in connectedTileName)` | 指定タイルの指定方向へ接続可能なタイル名を1つ追加する（タイルが未登録の場合は`false`） |
+| `bool FixTile(uint x, uint y, uint z, const string &in tileName)` | 指定座標のタイルを固定する（`Solve`実行時の確定制約になる） |
+| `bool TryGetFixedTile(uint x, uint y, uint z, string &out tileName) const` | 指定座標に固定されているタイル名を取得する（固定されていない場合は`false`） |
 | `bool SetStartPosition(uint x, uint y, uint z)` | 崩壊を開始する座標を指定する |
 | `bool TryGetStartPosition(uint &out x, uint &out y, uint &out z) const` | 指定済みの開始座標を取得する（未指定の場合は`false`） |
 | `bool Solve()` | 波動関数崩壊アルゴリズムを実行し、グリッド全体のタイルを確定させる（矛盾が発生した場合は`false`） |
-| `bool TryGetResolvedTile(uint x, uint y, uint z, uint &out tileID) const` | `Solve`で確定したタイルIDを取得する |
+| `bool TryGetResolvedTile(uint x, uint y, uint z, string &out tileName) const` | `Solve`で確定したタイル名を取得する |
 | `Json@ SaveToJson() const` | シード・グリッドサイズ・登録タイル・固定タイル・開始座標をJsonへ保存する |
 | `bool LoadFromJson(const Json &in json)` | `SaveToJson`で保存したJsonから状態を復元する |
 
@@ -1416,9 +1416,9 @@ builder.SetRoomSize(3, 2, 3);      // 部屋1つ分のタイルサイズ
 builder.SetRoomSpacing(1);         // 部屋同士の隙間（通路にならない部分はWFCの装飾対象）
 builder.SetCorridorWidth(1);       // 通路の太さ
 builder.SetTileWorldSize(2.0f);    // タイル1個分のワールド座標上のサイズ
-builder.SetDefaultRoomTileID(0);   // 個別設定していない部屋種別に使う既定タイル
-builder.SetRoomTileID(RoomType::Treasure, 3);
-builder.SetCorridorTileID(4);
+builder.SetDefaultRoomTileName("RoomFloor"); // 個別設定していない部屋種別に使う既定タイル
+builder.SetRoomTileName(RoomType::Treasure, "TreasureFloor");
+builder.SetCorridorTileName("CorridorFloor");
 
 if (builder.Build(graph, wfc)) {
     // 4. 部屋・通路以外の隙間をWaveFunctionCollapseで解決する
@@ -1469,15 +1469,15 @@ if (builder.Build(graph, wfc)) {
 | `void SetRoomSpacing(uint spacing)` | 隣接する部屋ブロックの間に空ける隙間（タイル数）を設定する |
 | `void SetCorridorWidth(uint width)` | 部屋同士を繋ぐ通路の太さ（タイル数）を設定する（RoomSpacingを超える値は隙間の幅で切り詰められる） |
 | `void SetTileWorldSize(float size)` | タイル1個分に対応する実際のワールド座標上のサイズを設定する |
-| `void SetRoomTileID(RoomType type, uint tileID)` | 部屋種別ごとに固定するタイルIDを設定する |
-| `void SetDefaultRoomTileID(uint tileID)` | `SetRoomTileID` で個別設定されていない部屋種別に使う既定のタイルID（必須） |
-| `void SetCorridorTileID(uint tileID)` | 部屋同士を繋ぐ通路に固定するタイルID（必須） |
+| `void SetRoomTileName(RoomType type, const string &in tileName)` | 部屋種別ごとに固定するタイル名を設定する |
+| `void SetDefaultRoomTileName(const string &in tileName)` | `SetRoomTileName` で個別設定されていない部屋種別に使う既定のタイル名（必須） |
+| `void SetCorridorTileName(const string &in tileName)` | 部屋同士を繋ぐ通路に固定するタイル名（必須） |
 | `bool Build(const StageGraphGenerator &in graph, WaveFunctionCollapse@ wfc)` | 部屋グラフの内容をwfcへ展開する（`wfc.SetGridSize`を内部で呼び出すため、既存の固定タイル等はクリアされる） |
 | `bool TryGetRoomGridCenter(const StageGraphGenerator &in graph, uint roomID, uint &out x, uint &out y, uint &out z) const` | 部屋の中心タイル座標を取得する |
 | `bool TryGetRoomWorldCenter(const StageGraphGenerator &in graph, uint roomID, Vector3 &out position) const` | 部屋の中心位置をワールド座標として取得する |
 | `void GetRequiredGridSize(const StageGraphGenerator &in graph, uint &out width, uint &out height, uint &out depth) const` | Buildで実際に必要となるWaveFunctionCollapseのグリッドサイズを取得する |
 
-- `Build`を呼ぶ前に、使用する全タイルID（部屋種別ごとのタイル・通路タイル）を`wfc.RegisterTile`で登録しておく必要があります（`Build`自体はタイルの登録を行いません）。
+- `Build`を呼ぶ前に、使用する全タイル名（部屋種別ごとのタイル・通路タイル）を`wfc.RegisterTile`で登録しておく必要があります（`Build`自体はタイルの登録を行いません）。
 - 部屋グラフの辺は、抽象グリッド上で隣接する部屋同士のみを想定しています。それ以外（隣接していない部屋同士の接続）がある場合、`Build`は`false`を返します（`StageGraphGenerator`が生成するグラフは常にこの条件を満たします）。
 - `SetRoomSpacing(0)`を指定すると部屋同士が直接接するため、通路タイルは使われません。
 

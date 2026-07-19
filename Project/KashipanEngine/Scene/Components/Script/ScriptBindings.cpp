@@ -31,6 +31,9 @@
 #include "Objects/ObjectContext.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
+#if defined(USE_IMGUI)
+#include "Scene/Components/Script/EditorToolManager.h"
+#endif
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/MathUtils.h"
 #include "Utilities/MyAny.h"
@@ -1325,6 +1328,10 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
     // スクリプト側でコンポーネントの動作を定義するためのインターフェース
     // （ScriptComponentはこのインターフェースを実装したクラスを探して実行する）
     engine->RegisterInterface("ScriptComponentBehavior");
+
+    // エディターツール用スクリプトのインターフェース
+    // （EditorToolManagerがEditorToolsフォルダの.asからこのインターフェースを実装したクラスを探して実行する）
+    engine->RegisterInterface("EditorTool");
 }
 
 //==================================================
@@ -1985,25 +1992,25 @@ void RegisterWaveFunctionCollapseBindings(asIScriptEngine *engine) {
         .method("uint GetGridDepth() const", [](const ScriptWaveFunctionCollapse &self) -> std::uint32_t {
             return self.data.GetGridDepth();
         })
-        .method("bool RegisterTile(uint id)", [](ScriptWaveFunctionCollapse &self, std::uint32_t id) -> bool {
-            return self.data.RegisterTile(id);
+        .method("bool RegisterTile(const string &in name)", [](ScriptWaveFunctionCollapse &self, const std::string &name) -> bool {
+            return self.data.RegisterTile(name);
         })
-        .method("bool RemoveTile(uint tileID)", [](ScriptWaveFunctionCollapse &self, std::uint32_t tileID) -> bool {
-            return self.data.RemoveTile(tileID);
+        .method("bool RemoveTile(const string &in tileName)", [](ScriptWaveFunctionCollapse &self, const std::string &tileName) -> bool {
+            return self.data.RemoveTile(tileName);
         })
-        .method("bool AddTileConnection(uint tileID, WFCDirection direction, uint connectedTileID)",
-            [](ScriptWaveFunctionCollapse &self, std::uint32_t tileID, std::uint32_t direction, std::uint32_t connectedTileID) -> bool {
-                return self.data.AddTileConnection(tileID, static_cast<WaveFunctionCollapse::Direction>(direction), connectedTileID);
+        .method("bool AddTileConnection(const string &in tileName, WFCDirection direction, const string &in connectedTileName)",
+            [](ScriptWaveFunctionCollapse &self, const std::string &tileName, std::uint32_t direction, const std::string &connectedTileName) -> bool {
+                return self.data.AddTileConnection(tileName, static_cast<WaveFunctionCollapse::Direction>(direction), connectedTileName);
             })
-        .method("bool FixTile(uint x, uint y, uint z, uint tileID)",
-            [](ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::uint32_t tileID) -> bool {
-                return self.data.FixTile(x, y, z, tileID);
+        .method("bool FixTile(uint x, uint y, uint z, const string &in tileName)",
+            [](ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, const std::string &tileName) -> bool {
+                return self.data.FixTile(x, y, z, tileName);
             })
-        .method("bool TryGetFixedTile(uint x, uint y, uint z, uint &out tileID) const",
-            [](const ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::uint32_t &tileID) -> bool {
+        .method("bool TryGetFixedTile(uint x, uint y, uint z, string &out tileName) const",
+            [](const ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::string &tileName) -> bool {
                 auto fixed = self.data.GetFixedTile(x, y, z);
                 if (!fixed) return false;
-                tileID = *fixed;
+                tileName = *fixed;
                 return true;
             })
         .method("bool SetStartPosition(uint x, uint y, uint z)",
@@ -2020,11 +2027,11 @@ void RegisterWaveFunctionCollapseBindings(asIScriptEngine *engine) {
                 return true;
             })
         .method("bool Solve()", [](ScriptWaveFunctionCollapse &self) -> bool { return self.data.Solve(); })
-        .method("bool TryGetResolvedTile(uint x, uint y, uint z, uint &out tileID) const",
-            [](const ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::uint32_t &tileID) -> bool {
+        .method("bool TryGetResolvedTile(uint x, uint y, uint z, string &out tileName) const",
+            [](const ScriptWaveFunctionCollapse &self, std::uint32_t x, std::uint32_t y, std::uint32_t z, std::string &tileName) -> bool {
                 auto resolved = self.data.GetResolvedTile(x, y, z);
                 if (!resolved) return false;
-                tileID = *resolved;
+                tileName = *resolved;
                 return true;
             })
         .method("Json@ SaveToJson() const", [](const ScriptWaveFunctionCollapse &self) -> ScriptJsonValue * {
@@ -2178,15 +2185,15 @@ void RegisterStageGenerationBindings(asIScriptEngine *engine) {
         .method("void SetTileWorldSize(float size)", [](ScriptStageGridBuilder &self, float size) {
             self.data.SetTileWorldSize(size);
         })
-        .method("void SetRoomTileID(RoomType type, uint tileID)",
-            [](ScriptStageGridBuilder &self, std::uint32_t type, std::uint32_t tileID) {
-                self.data.SetRoomTileID(static_cast<RoomType>(type), tileID);
+        .method("void SetRoomTileName(RoomType type, const string &in tileName)",
+            [](ScriptStageGridBuilder &self, std::uint32_t type, const std::string &tileName) {
+                self.data.SetRoomTileName(static_cast<RoomType>(type), tileName);
             })
-        .method("void SetDefaultRoomTileID(uint tileID)", [](ScriptStageGridBuilder &self, std::uint32_t tileID) {
-            self.data.SetDefaultRoomTileID(tileID);
+        .method("void SetDefaultRoomTileName(const string &in tileName)", [](ScriptStageGridBuilder &self, const std::string &tileName) {
+            self.data.SetDefaultRoomTileName(tileName);
         })
-        .method("void SetCorridorTileID(uint tileID)", [](ScriptStageGridBuilder &self, std::uint32_t tileID) {
-            self.data.SetCorridorTileID(tileID);
+        .method("void SetCorridorTileName(const string &in tileName)", [](ScriptStageGridBuilder &self, const std::string &tileName) {
+            self.data.SetCorridorTileName(tileName);
         })
         .method("bool Build(const StageGraphGenerator &in graph, WaveFunctionCollapse@ wfc)",
             [](const ScriptStageGridBuilder &self, const ScriptStageGraphGenerator &graph, ScriptWaveFunctionCollapse *wfc) -> bool {
@@ -2240,6 +2247,30 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("void SetGameSpeed(float)", &SetGameSpeed)
         // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
         .function("void RequestExitGameLoop()", []() { Scene::RequestExitGameLoop(); })
+        // エディターツールのウィンドウ操作（[EditorWindow]で用意されたウィンドウが対象。
+        // エディター無効ビルドでは何もしない）
+        .function("void OpenEditorWindow(const string &in)", [](const std::string &name) {
+#if defined(USE_IMGUI)
+            EditorToolManager::GetInstance().OpenWindow(name);
+#else
+            (void)name;
+#endif
+        })
+        .function("void CloseEditorWindow(const string &in)", [](const std::string &name) {
+#if defined(USE_IMGUI)
+            EditorToolManager::GetInstance().CloseWindow(name);
+#else
+            (void)name;
+#endif
+        })
+        .function("bool IsEditorWindowOpen(const string &in)", [](const std::string &name) -> bool {
+#if defined(USE_IMGUI)
+            return EditorToolManager::GetInstance().IsWindowOpen(name);
+#else
+            (void)name;
+            return false;
+#endif
+        })
         // 入力コマンド
         .function("bool IsCommandTriggered(const string &in)", [](const std::string &action) -> bool {
             auto *command = gCurrentSceneContext ? gCurrentSceneContext->GetInputCommand() : nullptr;

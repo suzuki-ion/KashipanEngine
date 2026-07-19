@@ -23,16 +23,16 @@ void StageGridBuilder::SetTileWorldSize(float size) {
     tileWorldSize_ = size;
 }
 
-void StageGridBuilder::SetRoomTileID(RoomType type, std::uint32_t tileID) {
-    roomTileIDs_[type] = tileID;
+void StageGridBuilder::SetRoomTileName(RoomType type, const std::string &tileName) {
+    roomTileNames_[type] = tileName;
 }
 
-void StageGridBuilder::SetDefaultRoomTileID(std::uint32_t tileID) {
-    defaultRoomTileID_ = tileID;
+void StageGridBuilder::SetDefaultRoomTileName(const std::string &tileName) {
+    defaultRoomTileName_ = tileName;
 }
 
-void StageGridBuilder::SetCorridorTileID(std::uint32_t tileID) {
-    corridorTileID_ = tileID;
+void StageGridBuilder::SetCorridorTileName(const std::string &tileName) {
+    corridorTileName_ = tileName;
 }
 
 std::uint32_t StageGridBuilder::OriginOf(std::uint32_t slot, std::uint32_t cellSize) const {
@@ -50,7 +50,7 @@ void StageGridBuilder::GetRequiredGridSize(const StageGraphGenerator &graph,
 }
 
 bool StageGridBuilder::Build(const StageGraphGenerator &graph, WaveFunctionCollapse &wfc) const {
-    if (!defaultRoomTileID_ || !corridorTileID_ || graph.GetRoomCount() == 0) {
+    if (!defaultRoomTileName_ || !corridorTileName_ || graph.GetRoomCount() == 0) {
         return false;
     }
 
@@ -62,20 +62,20 @@ bool StageGridBuilder::Build(const StageGraphGenerator &graph, WaveFunctionColla
 
     wfc.SetGridSize(totalWidth, totalHeight, totalDepth);
 
-    auto tileIDForType = [&](RoomType type) -> std::optional<std::uint32_t> {
-        auto it = roomTileIDs_.find(type);
-        if (it != roomTileIDs_.end()) {
+    auto tileNameForType = [&](RoomType type) -> std::optional<std::string> {
+        auto it = roomTileNames_.find(type);
+        if (it != roomTileNames_.end()) {
             return it->second;
         }
-        return defaultRoomTileID_;
+        return defaultRoomTileName_;
     };
 
     auto fixBox = [&](std::uint32_t x0, std::uint32_t x1, std::uint32_t y0, std::uint32_t y1,
-        std::uint32_t z0, std::uint32_t z1, std::uint32_t tileID) -> bool {
+        std::uint32_t z0, std::uint32_t z1, const std::string &tileName) -> bool {
         for (std::uint32_t x = x0; x < x1; ++x) {
             for (std::uint32_t y = y0; y < y1; ++y) {
                 for (std::uint32_t z = z0; z < z1; ++z) {
-                    if (!wfc.FixTile(x, y, z, tileID)) {
+                    if (!wfc.FixTile(x, y, z, tileName)) {
                         return false;
                     }
                 }
@@ -85,14 +85,14 @@ bool StageGridBuilder::Build(const StageGraphGenerator &graph, WaveFunctionColla
     };
 
     for (const RoomNode &room : graph.GetRooms()) {
-        const auto tileID = tileIDForType(room.type);
-        if (!tileID) {
+        const auto tileName = tileNameForType(room.type);
+        if (!tileName) {
             return false;
         }
         const std::uint32_t x0 = OriginOf(room.x, roomSizeX_);
         const std::uint32_t y0 = OriginOf(room.y, roomSizeY_);
         const std::uint32_t z0 = OriginOf(room.z, roomSizeZ_);
-        if (!fixBox(x0, x0 + roomSizeX_, y0, y0 + roomSizeY_, z0, z0 + roomSizeZ_, *tileID)) {
+        if (!fixBox(x0, x0 + roomSizeX_, y0, y0 + roomSizeY_, z0, z0 + roomSizeZ_, *tileName)) {
             return false;
         }
     }
@@ -151,7 +151,7 @@ bool StageGridBuilder::Build(const StageGraphGenerator &graph, WaveFunctionColla
                 std::tie(y0, y1) = centeredRange(ay0, roomSizeY_, corridorWidth_);
             }
 
-            if (!fixBox(x0, x1, y0, y1, z0, z1, *corridorTileID_)) {
+            if (!fixBox(x0, x1, y0, y1, z0, z1, *corridorTileName_)) {
                 return false;
             }
         }

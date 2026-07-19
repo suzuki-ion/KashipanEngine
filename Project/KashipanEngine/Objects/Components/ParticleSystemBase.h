@@ -257,6 +257,16 @@ public:
     ConstantBufferResource *GetGpuSpawnConstantBuffer(Passkey<Renderer>) const noexcept { return gpuSpawnConstantBuffer_.get(); }
     ConstantBufferResource *GetGpuUpdateConstantBuffer(Passkey<Renderer>) const noexcept { return gpuUpdateConstantBuffer_.get(); }
     std::uint32_t GetGpuSpawnCount(Passkey<Renderer>) const noexcept { return gpuFrameSpawnCount_; }
+    /// @brief このフレームにUpdateParticlesGPUが実行されたか（＝シミュレーションを進めてよいか）を取得し、フラグをリセットする
+    /// @details シーンのポーズ中・停止中はコンポーネントのUpdateが呼ばれずこのフラグが立たない。
+    ///          RendererはRenderFrameのたびにProcessGpuParticlesを呼ぶが、この値がfalseの場合は
+    ///          スポーン/更新のDispatchを丸ごとスキップする（CPUパーティクルはUpdateスキップで
+    ///          自然に止まるのに対し、GPUパーティクルだけが実時間で動き続けるのを防ぐため）
+    bool ConsumeGpuFrameUpdated(Passkey<Renderer>) noexcept {
+        const bool updated = gpuUpdatedThisFrame_;
+        gpuUpdatedThisFrame_ = false;
+        return updated;
+    }
     /// @brief 実際に確保済みのGPUバッファの要素数を返す
     /// @details maxParticles_をそのまま返すと、ShowImGui（Update後）でMax Particlesが変更された
     ///          フレームに限り、まだEnsureGpuCapacity()が反映されていない（バッファは旧サイズのままの）
@@ -396,6 +406,9 @@ protected:
     /// @brief GPU Simulation有効時に派生クラスのUpdateから呼ぶ。発生タイミングの計算・スポーン
     ///        パラメータの抽選はCPU側で行い、実際の移動・寿命計算はコンピュートシェーダーへ委ねる
     void UpdateParticlesGPU() {
+        // このフレームはゲームループが動いている（ポーズ中でない）ことをRendererへ伝える
+        gpuUpdatedThisFrame_ = true;
+
         if (!gpuParticleBuffer_ || !gpuInstanceMatrixBuffer_) InitializeGpuResources();
         const std::uint32_t capacity = static_cast<std::uint32_t>(std::max(0, maxParticles_));
         if (capacity == 0) { gpuFrameSpawnCount_ = 0; return; }
@@ -948,6 +961,8 @@ private:
     std::uint32_t gpuRingCursor_ = 0;
     /// @brief 直近のUpdateParticlesGPUで書き込んだスポーン要求数（Rendererがこの数だけSpawnパイプラインを実行する）
     std::uint32_t gpuFrameSpawnCount_ = 0;
+    /// @brief このフレームにUpdateParticlesGPUが実行されたか（ポーズ検出用。RendererがConsumeGpuFrameUpdatedで消費する）
+    bool gpuUpdatedThisFrame_ = false;
 
     void InitializeGpuResources() {
         const size_t capacity = static_cast<size_t>(std::max(1, maxParticles_));

@@ -191,8 +191,8 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 108.39784240722656,
-                                "y": 63.45305252075195,
+                                "x": 0.0,
+                                "y": 1.0,
                                 "z": 0.0
                             }
                         },
@@ -284,15 +284,55 @@
                 {
                     "data": {
                         "customData": {
-                            "effectFrequency": 1.0,
-                            "effectQ": 1.0,
-                            "effectType": 5,
+                            "effects": {
+                                "echo": {
+                                    "delayMs": 500.0,
+                                    "enabled": false,
+                                    "feedback": 0.5,
+                                    "wetDryMix": 0.5
+                                },
+                                "eq": {
+                                    "bandwidth": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "enabled": false,
+                                    "frequencyCenter": [
+                                        100.0,
+                                        800.0,
+                                        2000.0,
+                                        10000.0
+                                    ],
+                                    "gain": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ]
+                                },
+                                "filter": {
+                                    "enabled": false,
+                                    "frequency": 1.0,
+                                    "kind": 0,
+                                    "q": 1.0
+                                },
+                                "limiter": {
+                                    "enabled": false,
+                                    "loudness": 1000,
+                                    "release": 6
+                                },
+                                "reverb": {
+                                    "enabled": true,
+                                    "mix": 1.0
+                                }
+                            },
                             "enableSpatialAudio": false,
                             "loop": false,
                             "maxDistance": 25.0,
                             "minDistance": 1.0,
                             "pitch": 0.0,
-                            "reverbMix": 1.0,
                             "soundName": "Application/Sound/seSoftLanding.mp3",
                             "volume": 1.0
                         },
@@ -357,6 +397,7 @@
                             "billboard": false,
                             "billboardRotationMode": 0,
                             "billboardTargetObjectID": "",
+                            "castShadows": true,
                             "emissionRate": 64.0,
                             "endScale": {
                                 "max": {
@@ -526,6 +567,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -590,7 +632,13 @@
                     "data": {
                         "customData": {
                             "fields": {
-                                "playerCollisionThreshold": 0.4000000059604645
+                                "gravity": 0.20000000298023224,
+                                "groundStickSpeed": 2.0,
+                                "groundedThreshold": 0.4000000059604645,
+                                "maxFallSpeed": 16.0,
+                                "moveDirection": 1.0,
+                                "moveSpeed": 2.0,
+                                "playerCollisionThreshold": 0.6000000238418579
                             },
                             "scriptPath": "Assets\\Application\\Scripts\\Enemy.as"
                         },
@@ -636,15 +684,55 @@
                 {
                     "data": {
                         "customData": {
-                            "effectFrequency": 1.0,
-                            "effectQ": 1.0,
-                            "effectType": 5,
+                            "effects": {
+                                "echo": {
+                                    "delayMs": 500.0,
+                                    "enabled": false,
+                                    "feedback": 0.5,
+                                    "wetDryMix": 0.5
+                                },
+                                "eq": {
+                                    "bandwidth": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "enabled": false,
+                                    "frequencyCenter": [
+                                        100.0,
+                                        800.0,
+                                        2000.0,
+                                        10000.0
+                                    ],
+                                    "gain": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ]
+                                },
+                                "filter": {
+                                    "enabled": false,
+                                    "frequency": 1.0,
+                                    "kind": 0,
+                                    "q": 1.0
+                                },
+                                "limiter": {
+                                    "enabled": false,
+                                    "loudness": 1000,
+                                    "release": 6
+                                },
+                                "reverb": {
+                                    "enabled": true,
+                                    "mix": 1.0
+                                }
+                            },
                             "enableSpatialAudio": false,
                             "loop": false,
                             "maxDistance": 25.0,
                             "minDistance": 1.0,
                             "pitch": 0.0,
-                            "reverbMix": 1.0,
                             "soundName": "Application/Sound/seSoftLanding.mp3",
                             "volume": 1.0
                         },
@@ -668,6 +756,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -732,6 +821,12 @@
                     "data": {
                         "customData": {
                             "fields": {
+                                "gravity": 0.20000000298023224,
+                                "groundStickSpeed": 2.0,
+                                "groundedThreshold": 0.4000000059604645,
+                                "maxFallSpeed": 16.0,
+                                "moveDirection": 1.0,
+                                "moveSpeed": 2.0,
                                 "playerCollisionThreshold": 0.4000000059604645
                             },
                             "scriptPath": "Assets\\Application\\Scripts\\Enemy.as"
@@ -778,15 +873,55 @@
                 {
                     "data": {
                         "customData": {
-                            "effectFrequency": 1.0,
-                            "effectQ": 1.0,
-                            "effectType": 5,
+                            "effects": {
+                                "echo": {
+                                    "delayMs": 500.0,
+                                    "enabled": false,
+                                    "feedback": 0.5,
+                                    "wetDryMix": 0.5
+                                },
+                                "eq": {
+                                    "bandwidth": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "enabled": false,
+                                    "frequencyCenter": [
+                                        100.0,
+                                        800.0,
+                                        2000.0,
+                                        10000.0
+                                    ],
+                                    "gain": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ]
+                                },
+                                "filter": {
+                                    "enabled": false,
+                                    "frequency": 1.0,
+                                    "kind": 0,
+                                    "q": 1.0
+                                },
+                                "limiter": {
+                                    "enabled": false,
+                                    "loudness": 1000,
+                                    "release": 6
+                                },
+                                "reverb": {
+                                    "enabled": true,
+                                    "mix": 1.0
+                                }
+                            },
                             "enableSpatialAudio": false,
                             "loop": false,
                             "maxDistance": 25.0,
                             "minDistance": 1.0,
                             "pitch": 0.0,
-                            "reverbMix": 1.0,
                             "soundName": "Application/Sound/seSoftLanding.mp3",
                             "volume": 1.0
                         },
@@ -810,6 +945,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -874,6 +1010,12 @@
                     "data": {
                         "customData": {
                             "fields": {
+                                "gravity": 0.20000000298023224,
+                                "groundStickSpeed": 2.0,
+                                "groundedThreshold": 0.4000000059604645,
+                                "maxFallSpeed": 16.0,
+                                "moveDirection": 1.0,
+                                "moveSpeed": 2.0,
                                 "playerCollisionThreshold": 0.4000000059604645
                             },
                             "scriptPath": "Assets\\Application\\Scripts\\Enemy.as"
@@ -920,15 +1062,55 @@
                 {
                     "data": {
                         "customData": {
-                            "effectFrequency": 1.0,
-                            "effectQ": 1.0,
-                            "effectType": 5,
+                            "effects": {
+                                "echo": {
+                                    "delayMs": 500.0,
+                                    "enabled": false,
+                                    "feedback": 0.5,
+                                    "wetDryMix": 0.5
+                                },
+                                "eq": {
+                                    "bandwidth": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "enabled": false,
+                                    "frequencyCenter": [
+                                        100.0,
+                                        800.0,
+                                        2000.0,
+                                        10000.0
+                                    ],
+                                    "gain": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ]
+                                },
+                                "filter": {
+                                    "enabled": false,
+                                    "frequency": 1.0,
+                                    "kind": 0,
+                                    "q": 1.0
+                                },
+                                "limiter": {
+                                    "enabled": false,
+                                    "loudness": 1000,
+                                    "release": 6
+                                },
+                                "reverb": {
+                                    "enabled": true,
+                                    "mix": 1.0
+                                }
+                            },
                             "enableSpatialAudio": false,
                             "loop": false,
                             "maxDistance": 25.0,
                             "minDistance": 1.0,
                             "pitch": 0.0,
-                            "reverbMix": 1.0,
                             "soundName": "Application/Sound/seSoftLanding.mp3",
                             "volume": 1.0
                         },
@@ -952,6 +1134,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -1016,6 +1199,12 @@
                     "data": {
                         "customData": {
                             "fields": {
+                                "gravity": 0.20000000298023224,
+                                "groundStickSpeed": 2.0,
+                                "groundedThreshold": 0.4000000059604645,
+                                "maxFallSpeed": 16.0,
+                                "moveDirection": 1.0,
+                                "moveSpeed": 2.0,
                                 "playerCollisionThreshold": 0.4000000059604645
                             },
                             "scriptPath": "Assets\\Application\\Scripts\\Enemy.as"
@@ -1062,15 +1251,55 @@
                 {
                     "data": {
                         "customData": {
-                            "effectFrequency": 1.0,
-                            "effectQ": 1.0,
-                            "effectType": 5,
+                            "effects": {
+                                "echo": {
+                                    "delayMs": 500.0,
+                                    "enabled": false,
+                                    "feedback": 0.5,
+                                    "wetDryMix": 0.5
+                                },
+                                "eq": {
+                                    "bandwidth": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    "enabled": false,
+                                    "frequencyCenter": [
+                                        100.0,
+                                        800.0,
+                                        2000.0,
+                                        10000.0
+                                    ],
+                                    "gain": [
+                                        1.0,
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ]
+                                },
+                                "filter": {
+                                    "enabled": false,
+                                    "frequency": 1.0,
+                                    "kind": 0,
+                                    "q": 1.0
+                                },
+                                "limiter": {
+                                    "enabled": false,
+                                    "loudness": 1000,
+                                    "release": 6
+                                },
+                                "reverb": {
+                                    "enabled": true,
+                                    "mix": 1.0
+                                }
+                            },
                             "enableSpatialAudio": false,
                             "loop": false,
                             "maxDistance": 25.0,
                             "minDistance": 1.0,
                             "pitch": 0.0,
-                            "reverbMix": 1.0,
                             "soundName": "Application/Sound/seSoftLanding.mp3",
                             "volume": 1.0
                         },
@@ -1094,6 +1323,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -1305,6 +1535,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -1368,6 +1599,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -2754,6 +2986,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -2817,6 +3050,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -2880,6 +3114,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -2943,6 +3178,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3006,6 +3242,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3179,6 +3416,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3279,6 +3517,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3379,6 +3618,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3479,6 +3719,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3579,6 +3820,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3679,6 +3921,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3779,6 +4022,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3879,6 +4123,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -3979,6 +4224,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4079,6 +4325,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4179,6 +4426,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4279,6 +4527,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4379,6 +4628,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4479,6 +4729,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4579,6 +4830,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4679,6 +4931,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4779,6 +5032,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4879,6 +5133,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4979,6 +5234,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5079,6 +5335,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5179,6 +5436,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5279,6 +5537,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5379,6 +5638,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5479,6 +5739,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5542,6 +5803,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5642,6 +5904,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5742,6 +6005,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5842,6 +6106,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5942,6 +6207,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6042,6 +6308,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6142,6 +6409,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6242,6 +6510,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6342,6 +6611,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6442,6 +6712,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6542,6 +6813,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6642,6 +6914,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6742,6 +7015,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6842,6 +7116,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6942,6 +7217,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7042,6 +7318,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7162,6 +7439,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7225,6 +7503,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7577,6 +7856,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7837,6 +8117,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7979,6 +8260,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8117,6 +8399,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8255,6 +8538,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8318,6 +8602,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8381,6 +8666,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8519,6 +8805,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8582,6 +8869,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8645,6 +8933,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8708,6 +8997,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8771,6 +9061,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8834,6 +9125,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8897,6 +9189,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8960,6 +9253,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9023,6 +9317,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9086,6 +9381,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9224,6 +9520,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9287,6 +9584,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9350,6 +9648,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9413,6 +9712,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9476,6 +9776,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9539,6 +9840,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9602,6 +9904,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9665,6 +9968,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9728,6 +10032,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9791,6 +10096,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9864,6 +10170,7 @@
                             "billboard": false,
                             "billboardRotationMode": 1,
                             "billboardTargetObjectID": "66779b41-4774-4de5-be40-a882e63feea6",
+                            "castShadows": true,
                             "emissionRate": 8.0,
                             "endScale": {
                                 "max": {
@@ -10060,6 +10367,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10246,6 +10554,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10309,6 +10618,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10447,6 +10757,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10510,6 +10821,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10685,6 +10997,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10748,6 +11061,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10886,6 +11200,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10949,6 +11264,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11087,6 +11403,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11150,6 +11467,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11288,6 +11606,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11408,6 +11727,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11471,6 +11791,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11591,6 +11912,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11654,6 +11976,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11839,6 +12162,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11902,6 +12226,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11965,6 +12290,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12085,6 +12411,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12148,6 +12475,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12211,6 +12539,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12274,6 +12603,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12337,6 +12667,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12475,6 +12806,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12538,6 +12870,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12676,6 +13009,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12739,6 +13073,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12877,6 +13212,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13062,6 +13398,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13125,6 +13462,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13188,6 +13526,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13251,6 +13590,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13314,6 +13654,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13397,6 +13738,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13460,6 +13802,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13598,6 +13941,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13818,6 +14162,7 @@
                             "billboard": false,
                             "billboardRotationMode": 0,
                             "billboardTargetObjectID": "",
+                            "castShadows": true,
                             "emissionRate": 8.0,
                             "endScale": {
                                 "max": {
@@ -14007,6 +14352,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14155,6 +14501,7 @@
                             "billboard": false,
                             "billboardRotationMode": 0,
                             "billboardTargetObjectID": "",
+                            "castShadows": true,
                             "emissionRate": 8.0,
                             "endScale": {
                                 "max": {
@@ -14616,6 +14963,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14754,6 +15102,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14939,6 +15288,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15002,6 +15352,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15065,6 +15416,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15128,6 +15480,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15191,6 +15544,7 @@
                 {
                     "data": {
                         "customData": {
+                            "castShadows": true,
                             "materialName": "White",
                             "materialNames": [
                                 "White"

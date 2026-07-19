@@ -502,6 +502,9 @@ class Scene {
 interface ScriptComponentBehavior {
 }
 
+interface EditorTool {
+}
+
 class Velocity {
 	bool IsActive() const;
 	void SetActive(bool);
@@ -1415,15 +1418,15 @@ class WaveFunctionCollapse {
 	uint GetGridWidth() const;
 	uint GetGridHeight() const;
 	uint GetGridDepth() const;
-	bool RegisterTile(uint id);
-	bool RemoveTile(uint tileID);
-	bool AddTileConnection(uint tileID, WFCDirection direction, uint connectedTileID);
-	bool FixTile(uint x, uint y, uint z, uint tileID);
-	bool TryGetFixedTile(uint x, uint y, uint z, uint&out tileID) const;
+	bool RegisterTile(const string&in name);
+	bool RemoveTile(const string&in tileName);
+	bool AddTileConnection(const string&in tileName, WFCDirection direction, const string&in connectedTileName);
+	bool FixTile(uint x, uint y, uint z, const string&in tileName);
+	bool TryGetFixedTile(uint x, uint y, uint z, string&out tileName) const;
 	bool SetStartPosition(uint x, uint y, uint z);
 	bool TryGetStartPosition(uint&out x, uint&out y, uint&out z) const;
 	bool Solve();
-	bool TryGetResolvedTile(uint x, uint y, uint z, uint&out tileID) const;
+	bool TryGetResolvedTile(uint x, uint y, uint z, string&out tileName) const;
 	Json@ SaveToJson() const;
 	bool LoadFromJson(const Json&in json);
 }
@@ -1459,9 +1462,9 @@ class StageGridBuilder {
 	void SetRoomSpacing(uint spacing);
 	void SetCorridorWidth(uint width);
 	void SetTileWorldSize(float size);
-	void SetRoomTileID(RoomType type, uint tileID);
-	void SetDefaultRoomTileID(uint tileID);
-	void SetCorridorTileID(uint tileID);
+	void SetRoomTileName(RoomType type, const string&in tileName);
+	void SetDefaultRoomTileName(const string&in tileName);
+	void SetCorridorTileName(const string&in tileName);
 	bool Build(const StageGraphGenerator&in graph, WaveFunctionCollapse@ wfc);
 	bool TryGetRoomGridCenter(const StageGraphGenerator&in graph, uint roomID, uint&out x, uint&out y, uint&out z) const;
 	bool TryGetRoomWorldCenter(const StageGraphGenerator&in graph, uint roomID, Vector3&out position) const;
@@ -1551,6 +1554,9 @@ float GetDeltaTime();
 float GetGameSpeed();
 void SetGameSpeed(float);
 void RequestExitGameLoop();
+void OpenEditorWindow(const string&in);
+void CloseEditorWindow(const string&in);
+bool IsEditorWindowOpen(const string&in);
 bool IsCommandTriggered(const string&in);
 float GetCommandValue(const string&in);
 uint PlayAudio(const string&in, float volume = 1.0f);

@@ -32,6 +32,34 @@ public:
         Notch,
     };
 
+    /// @brief 4バンドイコライザーのパラメータ（FXEQ準拠）
+    struct EqParams final {
+        /// @brief 各バンドの中心周波数(Hz、20～20000)
+        float frequencyCenter[4] = { 100.0f, 800.0f, 2000.0f, 10000.0f };
+        /// @brief 各バンドの増幅率（1.0で等倍、0.126～7.94）
+        float gain[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        /// @brief 各バンドの帯域幅（中心周波数を基準としたオクターブ幅、0.1～2.0）
+        float bandwidth[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    };
+
+    /// @brief エコーのパラメータ（FXECHO準拠）
+    struct EchoParams final {
+        /// @brief 原音とエコー音の混合比（0.0:原音のみ ～ 1.0:エコー音のみ）
+        float wetDryMix = 0.5f;
+        /// @brief エコーの繰り返し量（0.0:繰り返し無し ～ 1.0:減衰しない）
+        float feedback = 0.5f;
+        /// @brief 遅延時間(ミリ秒、1～2000)
+        float delayMs = 500.0f;
+    };
+
+    /// @brief マスタリングリミッターのパラメータ（FXMASTERINGLIMITER準拠）
+    struct LimiterParams final {
+        /// @brief 圧縮を解除するまでの時間（サンプル数基準の係数、1～20）
+        uint32_t release = 6;
+        /// @brief 音量の閾値（値が小さいほど強く圧縮される、1～1800）
+        uint32_t loudness = 1000;
+    };
+
     struct PlayParams final {
         SoundHandle sound = kInvalidSoundHandle;
         float volume = 1.0f;
@@ -130,6 +158,18 @@ public:
     /// @param wetLevel リバーブの送り量 (0.0f: リバーブ無し ～ 1.0f: 最大)
     /// @return 成功した場合 true（リバーブ初期化に失敗している場合は false）
     static bool SetReverbSend(PlayHandle play, float wetLevel);
+
+    /// @brief 再生中の音声にかけるイコライザーの有効/無効とパラメータを設定する
+    /// @return 成功した場合 true（エフェクトチェーンの初期化に失敗している場合は false）
+    static bool SetEqEffect(PlayHandle play, bool enabled, const EqParams &params);
+
+    /// @brief 再生中の音声にかけるエコーの有効/無効とパラメータを設定する
+    /// @return 成功した場合 true（エフェクトチェーンの初期化に失敗している場合は false）
+    static bool SetEchoEffect(PlayHandle play, bool enabled, const EchoParams &params);
+
+    /// @brief 再生中の音声にかけるマスタリングリミッターの有効/無効とパラメータを設定する
+    /// @return 成功した場合 true（エフェクトチェーンの初期化に失敗している場合は false）
+    static bool SetLimiterEffect(PlayHandle play, bool enabled, const LimiterParams &params);
 
     /// @brief 再生中かどうか
     static bool IsPlaying(PlayHandle play);

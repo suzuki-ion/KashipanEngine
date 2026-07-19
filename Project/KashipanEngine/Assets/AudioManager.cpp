@@ -19,6 +19,7 @@
 
 #include <xaudio2.h>
 #include <xaudio2fx.h>
+#include <xapofx.h>
 #include <wrl.h>
 
 #include <algorithm>
@@ -64,7 +65,18 @@ struct PlayEntry final {
     bool loop = false;
     double startTimeSec = 0.0;
     uint32_t sourceChannels = 0;
+    /// @brief XAPOFXのエフェクトチェーン(EQ/エコー/リミッター)付きでボイスを生成できたかどうか
+    bool hasEffectChain = false;
+    /// @brief 各チェーンエフェクトの現在の有効状態（Enable/DisableEffectの冗長呼び出しを避けるためのキャッシュ）
+    bool eqEnabled = false;
+    bool echoEnabled = false;
+    bool limiterEnabled = false;
 };
+
+// ソースボイスのエフェクトチェーン内のスロット番号（CreateSourceVoiceに渡す並び順と一致させること）
+constexpr UINT32 kEffectSlotEq = 0;
+constexpr UINT32 kEffectSlotEcho = 1;
+constexpr UINT32 kEffectSlotLimiter = 2;
 
 XAUDIO2_FILTER_TYPE ToXAudio2FilterType(AudioManager::FilterType type) {
     switch (type) {
@@ -629,6 +641,10 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     playEntry.loop = params.loop;
     playEntry.startTimeSec = startSec;
     playEntry.sourceChannels = wfex.nChannels;
+    playEntry.hasEffectChain = false;
+    playEntry.eqEnabled = false;
+    playEntry.echoEnabled = false;
+    playEntry.limiterEnabled = false;
 
     // マスターボイスに加え、共有リバーブバスが使用可能ならそちらへも常時送る
     // (通常のウェットレベルは0で開始し、SetReverbSendで必要な時だけ送り量を上げる)
@@ -639,14 +655,32 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     const UINT32 sendCount = sReverbSubmixVoice ? 2u : 1u;
     XAUDIO2_VOICE_SENDS sendList{ sendCount, sendDescriptors };
 
+    // EQ/エコー/リミッターのエフェクトチェーンを全ボイスへ無効状態で付与しておく
+    // （SetEqEffect等の呼び出しで必要な時だけ有効化する。生成に失敗した場合はチェーン無しで続行する）
+    Microsoft::WRL::ComPtr<IUnknown> eqEffect;
+    Microsoft::WRL::ComPtr<IUnknown> echoEffect;
+    Microsoft::WRL::ComPtr<IUnknown> limiterEffect;
+    XAUDIO2_EFFECT_DESCRIPTOR effectDescriptors[3]{};
+    XAUDIO2_EFFECT_CHAIN effectChain{ 3, effectDescriptors };
+    XAUDIO2_EFFECT_CHAIN* effectChainPtr = nullptr;
+    if (SUCCEEDED(CreateFX(__uuidof(FXEQ), &eqEffect)) &&
+        SUCCEEDED(CreateFX(__uuidof(FXEcho), &echoEffect)) &&
+        SUCCEEDED(CreateFX(__uuidof(FXMasteringLimiter), &limiterEffect))) {
+        effectDescriptors[kEffectSlotEq] = { eqEffect.Get(), FALSE, wfex.nChannels };
+        effectDescriptors[kEffectSlotEcho] = { echoEffect.Get(), FALSE, wfex.nChannels };
+        effectDescriptors[kEffectSlotLimiter] = { limiterEffect.Get(), FALSE, wfex.nChannels };
+        effectChainPtr = &effectChain;
+    }
+
     HRESULT hr = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex, XAUDIO2_VOICE_USEFILTER,
-        XAUDIO2_DEFAULT_FREQ_RATIO, nullptr, &sendList);
+        XAUDIO2_DEFAULT_FREQ_RATIO, nullptr, &sendList, effectChainPtr);
     if (FAILED(hr) || !playEntry.voice) {
         playEntry.sound = kInvalidSoundHandle;
         ReleasePlayIndex(idx);
         Log(Translation("engine.audio.play.failed.createsourcevoice"), LogSeverity::Error);
         return kInvalidPlayHandle;
     }
+    playEntry.hasEffectChain = (effectChainPtr != nullptr);
 
     XAUDIO2_BUFFER buffer{};
     buffer.AudioBytes = static_cast<UINT32>(it->second.buffer.size());
@@ -899,6 +933,87 @@ bool AudioManager::SetReverbSend(PlayHandle play, float wetLevel) {
     const std::vector<float> matrix(static_cast<size_t>(p.sourceChannels), wetLevel);
     const HRESULT hr = p.voice->SetOutputMatrix(sReverbSubmixVoice, p.sourceChannels, 1, matrix.data());
     return SUCCEEDED(hr);
+}
+
+namespace {
+
+/// @brief チェーンエフェクト付きの再生中PlayEntryを取得する（無効なハンドル・チェーン無しの場合はnullptr）
+PlayEntry* GetPlayEntryWithEffectChain(PlayHandle play) {
+    size_t idx = static_cast<size_t>(-1);
+    if (!TryGetPlayIndex(play, idx)) return nullptr;
+    if (idx >= sPlays.size() || !sPlays[idx]) return nullptr;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return nullptr;
+
+    PlayEntry& p = *sPlays[idx];
+    if (!p.voice || !p.hasEffectChain) return nullptr;
+    return &p;
+}
+
+/// @brief チェーンエフェクトの有効状態を必要な時だけ切り替える
+/// @return 最終的にエフェクトが有効な場合 true
+bool ApplyEffectEnabledState(PlayEntry& p, UINT32 slot, bool& cachedEnabled, bool enabled) {
+    if (cachedEnabled == enabled) return enabled;
+    if (enabled) {
+        p.voice->EnableEffect(slot);
+    } else {
+        p.voice->DisableEffect(slot);
+    }
+    cachedEnabled = enabled;
+    return enabled;
+}
+
+} // namespace
+
+bool AudioManager::SetEqEffect(PlayHandle play, bool enabled, const EqParams &params) {
+    LogScope scope;
+    PlayEntry* p = GetPlayEntryWithEffectChain(play);
+    if (!p) return false;
+
+    if (!ApplyEffectEnabledState(*p, kEffectSlotEq, p->eqEnabled, enabled)) return true;
+
+    FXEQ_PARAMETERS eq{};
+    eq.FrequencyCenter0 = std::clamp(params.frequencyCenter[0], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.FrequencyCenter1 = std::clamp(params.frequencyCenter[1], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.FrequencyCenter2 = std::clamp(params.frequencyCenter[2], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.FrequencyCenter3 = std::clamp(params.frequencyCenter[3], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.Gain0 = std::clamp(params.gain[0], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Gain1 = std::clamp(params.gain[1], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Gain2 = std::clamp(params.gain[2], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Gain3 = std::clamp(params.gain[3], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Bandwidth0 = std::clamp(params.bandwidth[0], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    eq.Bandwidth1 = std::clamp(params.bandwidth[1], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    eq.Bandwidth2 = std::clamp(params.bandwidth[2], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    eq.Bandwidth3 = std::clamp(params.bandwidth[3], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    return SUCCEEDED(p->voice->SetEffectParameters(kEffectSlotEq, &eq, sizeof(eq)));
+}
+
+bool AudioManager::SetEchoEffect(PlayHandle play, bool enabled, const EchoParams &params) {
+    LogScope scope;
+    PlayEntry* p = GetPlayEntryWithEffectChain(play);
+    if (!p) return false;
+
+    if (!ApplyEffectEnabledState(*p, kEffectSlotEcho, p->echoEnabled, enabled)) return true;
+
+    FXECHO_PARAMETERS echo{};
+    echo.WetDryMix = std::clamp(params.wetDryMix, FXECHO_MIN_WETDRYMIX, FXECHO_MAX_WETDRYMIX);
+    echo.Feedback = std::clamp(params.feedback, FXECHO_MIN_FEEDBACK, FXECHO_MAX_FEEDBACK);
+    echo.Delay = std::clamp(params.delayMs, FXECHO_MIN_DELAY, FXECHO_MAX_DELAY);
+    return SUCCEEDED(p->voice->SetEffectParameters(kEffectSlotEcho, &echo, sizeof(echo)));
+}
+
+bool AudioManager::SetLimiterEffect(PlayHandle play, bool enabled, const LimiterParams &params) {
+    LogScope scope;
+    PlayEntry* p = GetPlayEntryWithEffectChain(play);
+    if (!p) return false;
+
+    if (!ApplyEffectEnabledState(*p, kEffectSlotLimiter, p->limiterEnabled, enabled)) return true;
+
+    FXMASTERINGLIMITER_PARAMETERS limiter{};
+    limiter.Release = std::clamp(params.release,
+        static_cast<uint32_t>(FXMASTERINGLIMITER_MIN_RELEASE), static_cast<uint32_t>(FXMASTERINGLIMITER_MAX_RELEASE));
+    limiter.Loudness = std::clamp(params.loudness,
+        static_cast<uint32_t>(FXMASTERINGLIMITER_MIN_LOUDNESS), static_cast<uint32_t>(FXMASTERINGLIMITER_MAX_LOUDNESS));
+    return SUCCEEDED(p->voice->SetEffectParameters(kEffectSlotLimiter, &limiter, sizeof(limiter)));
 }
 
 bool AudioManager::IsPlaying(PlayHandle play) {

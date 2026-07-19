@@ -7,6 +7,7 @@
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Scene/Components/Script/EditorToolManager.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/Transform.h"
 #include "Utilities/AssetDragDropPayload.h"
@@ -299,6 +300,8 @@ void SceneObjectHierarchy::ShowHierarchyContextMenu() {
         if (ImGui::MenuItem("Paste Object", "Ctrl+V", false, !clipboardNodes_.empty())) {
             PasteObject(nullptr, MAXSIZE_T);
         }
+        // エディターツールスクリプトの[MenuItem("Hierarchy/...")]で追加された項目
+        EditorToolManager::GetInstance().ShowHierarchyMenuItems();
         ImGui::EndPopup();
     }
 }

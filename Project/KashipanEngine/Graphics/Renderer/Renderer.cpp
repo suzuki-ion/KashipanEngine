@@ -587,6 +587,10 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
 
     for (auto *emitter : emitters) {
         if (!emitter || !emitter->IsActive()) continue;
+        // このフレームにコンポーネントのUpdateが実行されていない（＝シーンがポーズ/停止中の）場合は
+        // シミュレーションを進めない。ポーズ中もRenderFrame自体は毎フレーム走るため、ここでゲートしないと
+        // GPUパーティクルだけが実時間で動き続けてしまう
+        if (!emitter->ConsumeGpuFrameUpdated(Passkey<Renderer>{})) continue;
 
         auto *particleBuffer = emitter->GetGpuParticleBuffer(Passkey<Renderer>{});
         auto *instanceMatrixBuffer = emitter->GetGpuInstanceMatrixBuffer(Passkey<Renderer>{});

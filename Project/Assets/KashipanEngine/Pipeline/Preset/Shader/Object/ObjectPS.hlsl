@@ -133,6 +133,9 @@ PSOutput main(VSOutput input) {
 		lightingColor = float4(1,1,1,1);
 	}
 
+	// カメラへの方向（リムライトやローカルライトの鏡面反射で共通して使う）
+	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - input.worldPosition);
+
 	// Directional lights
 	if (mat.enableLighting) {
 		for (uint i = 0; i < gDirectionalLightCount; ++i) {
@@ -140,7 +143,8 @@ PSOutput main(VSOutput input) {
 			if (!light.enabled) {
 				continue;
 			}
-			float lam = HalfLambert(input.normal, -light.direction);
+			float3 toLightDir = -light.direction;
+			float lam = HalfLambert(input.normal, toLightDir);
 			float spec = BlinnPhongReflection(input.normal, light.direction, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor;
@@ -151,12 +155,20 @@ PSOutput main(VSOutput input) {
 				shadow = ComputeDirectionalShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.direction);
 			}
 			lightingColor += (diffuse + speculer) * shadow;
+
+			// リムライト: 視線に対して縁になる部分を、このライトが「カメラの逆側（背後）」にある
+			// ときほど強く縁取る（逆光時に輪郭が光る表現）。mat.rimIntensity=0（既定）では無効
+			if (mat.rimIntensity > 0.0f) {
+				float rimFactor = pow(saturate(1.0f - saturate(dot(input.normal, viewDir))), mat.rimPower);
+				float backlightMask = saturate(-dot(toLightDir, viewDir));
+				float3 rim = mat.rimColor.rgb * mat.rimIntensity * rimFactor * backlightMask * light.color.rgb * light.intensity * shadow;
+				lightingColor.rgb += rim;
+			}
 		}
 	}
 
 	// ローカルライト（Forward+: このピクセルが属するタイルのライトインデックスリストだけをループする）
 	if (mat.enableLighting) {
-		float3 viewDir = normalize(gCamera3D.eyePosition.xyz - input.worldPosition);
 		float3 reflectDir = reflect(-viewDir, input.normal);
 
 		uint2 tileCoord = uint2(input.position.xy) / max(gTileSize, 1u);

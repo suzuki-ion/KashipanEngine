@@ -1205,6 +1205,29 @@ class Ray2DCollider {
 	Collider@ opImplCast();
 }
 
+class AmbientOcclusionEffect {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	float GetRadius() const;
+	void SetRadius(float);
+	float GetIntensity() const;
+	void SetIntensity(float);
+	float GetPower() const;
+	void SetPower(float);
+	float GetBias() const;
+	void SetBias(float);
+	uint GetSampleCount() const;
+	void SetSampleCount(uint);
+	int GetBlurRadius() const;
+	void SetBlurRadius(int);
+	float GetDepthThreshold() const;
+	void SetDepthThreshold(float);
+}
+
 class BloomEffect {
 	bool IsActive() const;
 	void SetActive(bool);
@@ -1375,10 +1398,6 @@ class OutlineEffect {
 	void SetThickness(float);
 	Vector4 GetColor() const;
 	void SetColor(const Vector4&in);
-	float GetCameraNear() const;
-	void SetCameraNear(float);
-	float GetCameraFar() const;
-	void SetCameraFar(float);
 }
 
 class RadialBlurEffect {

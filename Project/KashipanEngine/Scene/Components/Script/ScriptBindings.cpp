@@ -64,6 +64,7 @@
 #include "Objects/Components/Collider/SphereCollider.h"
 #include "Objects/Components/Compute/ComputeShaderProcessing.h"
 #include "Objects/Components/MeshFilter.h"
+#include "Objects/Components/PostProcessing/AmbientOcclusionEffect.h"
 #include "Objects/Components/PostProcessing/BloomEffect.h"
 #include "Objects/Components/PostProcessing/BoxFilterEffect.h"
 #include "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
@@ -926,6 +927,22 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     //==================================================
     // それぞれ内部の Params 構造体を直接は公開せず、フィールドごとの Get/Set をラムダで提供する
 
+    RegisterComponentType<AmbientOcclusionEffect>(engine, "AmbientOcclusionEffect")
+        .method("float GetRadius() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().radius; })
+        .method("void SetRadius(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetPower() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().power; })
+        .method("void SetPower(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.power = v; e.SetParams(p); })
+        .method("float GetBias() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().bias; })
+        .method("void SetBias(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
+        .method("uint GetSampleCount() const", [](const AmbientOcclusionEffect &e) -> uint32_t { return e.GetParams().sampleCount; })
+        .method("void SetSampleCount(uint)", [](AmbientOcclusionEffect &e, uint32_t v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
+        .method("int GetBlurRadius() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().blurRadius; })
+        .method("void SetBlurRadius(int)", [](AmbientOcclusionEffect &e, int v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
+        .method("float GetDepthThreshold() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().depthThreshold; })
+        .method("void SetDepthThreshold(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); });
+
     RegisterComponentType<BloomEffect>(engine, "BloomEffect")
         .method("float GetThreshold() const", [](const BloomEffect &e) { return e.GetParams().threshold; })
         .method("void SetThreshold(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
@@ -1059,11 +1076,7 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             auto p = e.GetParams();
             p.color[0] = c.x; p.color[1] = c.y; p.color[2] = c.z; p.color[3] = c.w;
             e.SetParams(p);
-        })
-        .method("float GetCameraNear() const", [](const OutlineEffect &e) { return e.GetParams().cameraNear; })
-        .method("void SetCameraNear(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.cameraNear = v; e.SetParams(p); })
-        .method("float GetCameraFar() const", [](const OutlineEffect &e) { return e.GetParams().cameraFar; })
-        .method("void SetCameraFar(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.cameraFar = v; e.SetParams(p); });
+        });
 
     RegisterComponentType<RadialBlurEffect>(engine, "RadialBlurEffect")
         .method("float GetIntensity() const", [](const RadialBlurEffect &e) { return e.GetParams().intensity; })

@@ -18,6 +18,7 @@ namespace KashipanEngine {
 class GameEngine;
 class DirectXCommon;
 class Window;
+class Renderer;
 
 /// @brief オフスクリーンレンダリング用スクリーンバッファ
 class ScreenBuffer final : public IShaderTexture, public IRenderTarget {
@@ -86,6 +87,18 @@ public:
     /// @details ポストエフェクトが内部レンダーターゲットへ描画した後、
     ///          描画先をこのバッファへ戻すために呼ぶ（クリアは行わない）。
     void RebindWriteTarget();
+
+    /// @brief このフレームの描画（ポストエフェクト適用含む）が完了した時点のSRVハンドルを記録する
+    /// @details ScreenBufferObjectのビューア用ImGuiウィンドウは、Renderer::RenderFrame より前の
+    ///          タイミング（GameLoopUpdate側）で構築されるため、その場で GetSrvHandle() を呼ぶと
+    ///          今フレームのポストエフェクト適用が終わる前の読み取り面インデックスを参照してしまい、
+    ///          適用したポストエフェクトの数（NextPass呼び出し回数の偶奇）によっては
+    ///          エフェクト適用途中の中間結果を表示してしまう。
+    ///          Renderer側がこのフレームの描画完了直後（EndDraw後）に確定した正しいSRVハンドルを
+    ///          ここへ記録し、ビューアはこちらを参照することで常に「完成した最新フレーム」を表示する。
+    void SetPreviewSrvHandle(Passkey<Renderer>, D3D12_GPU_DESCRIPTOR_HANDLE handle) noexcept { previewSrvHandle_ = handle; }
+    /// @brief 直近で描画が完了した時点のSRVハンドルを取得（ビューア表示用）
+    D3D12_GPU_DESCRIPTOR_HANDLE GetPreviewSrvHandle() const noexcept { return previewSrvHandle_; }
 
     //==================================================
     // ハンドルとリソース取得
@@ -162,6 +175,8 @@ private:
 
     std::string name_;
     std::uint32_t textureHandle_ = 0;
+    /// @brief 直近で描画完了が確定した時点のSRVハンドル（ビューア用。SetPreviewSrvHandle参照）
+    D3D12_GPU_DESCRIPTOR_HANDLE previewSrvHandle_{};
 
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;

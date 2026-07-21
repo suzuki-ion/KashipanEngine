@@ -115,6 +115,12 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
         outMaterial.enableLighting = FromJSON<bool>(json["enableLighting"]);
         outMaterial.enableShadowMapProjection = FromJSON<bool>(json["enableShadowMapProjection"]);
 
+        if (json.contains("rimColor") && json["rimColor"].is_object()) {
+            outMaterial.rimColor = FromJSON<Vector4>(json["rimColor"]);
+        }
+        outMaterial.rimPower = FromJSON<float>(json.value("rimPower", 2.0f));
+        outMaterial.rimIntensity = FromJSON<float>(json.value("rimIntensity", 0.0f));
+
         return true;
     } catch (const std::exception& e) {
         Log(std::string("Failed to parse material JSON: ") + e.what(), LogSeverity::Warning);
@@ -259,6 +265,9 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     json["environmentCoefficient"] = material.environmentCoefficient;
     json["enableLighting"] = material.enableLighting;
     json["enableShadowMapProjection"] = material.enableShadowMapProjection;
+    json["rimColor"] = ToJSON(material.rimColor);
+    json["rimPower"] = material.rimPower;
+    json["rimIntensity"] = material.rimIntensity;
 
     std::error_code ec;
     std::filesystem::create_directories(Utf8StringToPath(savePath).parent_path(), ec);
@@ -529,6 +538,9 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::DragFloat("Shininess", &material.shininess, 0.1f, 0.0f, 1024.0f);
     ImGui::ColorEdit4("Specular Color", &material.specularColor.x);
     ImGui::DragFloat("Environment Coefficient", &material.environmentCoefficient, 0.01f, 0.0f, 1.0f);
+    ImGui::ColorEdit4("Rim Color", &material.rimColor.x);
+    ImGui::DragFloat("Rim Power", &material.rimPower, 0.05f, 0.1f, 16.0f);
+    ImGui::DragFloat("Rim Intensity", &material.rimIntensity, 0.01f, 0.0f, 10.0f);
     ImGui::Checkbox("Enable Lighting", &material.enableLighting);
     ImGui::Checkbox("Enable ShadowMap Projection", &material.enableShadowMapProjection);
     ImGuiCustom::EditValue("UV Transform", material.uvTransform);

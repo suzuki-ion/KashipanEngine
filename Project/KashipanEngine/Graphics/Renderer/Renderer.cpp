@@ -57,6 +57,9 @@ struct MaterialElement {
     float shininess = 32.0f;
     Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
     float environmentCoefficient = 0.0f;
+    Vector4 rimColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+    float rimPower = 2.0f;
+    float rimIntensity = 0.0f;
 };
 
 /// @brief gMaterials 構造化バッファ（Object2D）と同レイアウトの構造体
@@ -412,6 +415,36 @@ ConstantBufferResource *ResolveCameraConstantBuffer(SceneRenderer *sceneRenderer
         if (auto *constantBuffer = cameraRenderer->GetConstantBuffer()) {
             result = constantBuffer;
         }
+    }
+    return result;
+}
+
+/// @brief 指定の描画先に適用されるカメラの情報を解決する（AO等、深度からワールド座標を
+///        再構成したいポストエフェクト、Outline等、Near/Farの線形化が必要なポストエフェクト用）。
+///        ポストエフェクトは特定パイプラインに紐付かないため、ResolveCameraConstantBuffer と
+///        異なりパイプライン名による絞り込みは行わない
+IPostProcessComponent::CameraInfo ResolveCameraInfoForPostProcess(SceneRenderer *sceneRenderer, IRenderTarget *target) {
+    IPostProcessComponent::CameraInfo result;
+    if (const auto *editorInfo = sceneRenderer->GetEditorCameraInfo(target)) {
+        if (editorInfo->valid) {
+            result.valid = true;
+            result.viewProjection = editorInfo->viewProjection;
+            result.worldPosition = editorInfo->position;
+            result.nearClip = editorInfo->nearClip;
+            result.farClip = editorInfo->farClip;
+            return result;
+        }
+    }
+    for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
+        if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        if (IsExcludedAsEditorOnly(cameraRenderer, target, sceneRenderer)) continue;
+        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
+        result.valid = true;
+        result.viewProjection = cameraRenderer->GetViewProjectionMatrix();
+        result.worldPosition = cameraRenderer->GetWorldPosition();
+        result.nearClip = cameraRenderer->GetNearClip();
+        result.farClip = cameraRenderer->GetFarClip();
     }
     return result;
 }
@@ -1441,6 +1474,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 element.shininess = material->shininess;
                 element.specularColor = material->specularColor;
                 element.environmentCoefficient = material->environmentCoefficient;
+                element.rimColor = material->rimColor;
+                element.rimPower = material->rimPower;
+                element.rimIntensity = material->rimIntensity;
                 batch.textureHandle = material->textureHandle;
                 batch.samplerHandle = material->samplerHandle;
             }
@@ -1509,6 +1545,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 element.shininess = material->shininess;
                 element.specularColor = material->specularColor;
                 element.environmentCoefficient = material->environmentCoefficient;
+                element.rimColor = material->rimColor;
+                element.rimPower = material->rimPower;
+                element.rimIntensity = material->rimIntensity;
                 batch.textureHandle = material->textureHandle;
                 batch.samplerHandle = material->samplerHandle;
             }
@@ -1643,6 +1682,7 @@ void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
 
 void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
     const std::unordered_set<const IRenderTarget *> &renderedTargets) {
+    auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     for (const auto &object : sceneContext->GetSceneObjects()) {
         if (!object || !object->IsActive()) continue;
 
@@ -1668,8 +1708,10 @@ void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
             auto *commandList = buffer->GetCommandList();
             if (!commandList) continue;
             PipelineBinder pipelineBinder(commandList, pipelineManager_);
-            RenderPostProcess(buffer, pipelineBinder, object.get());
+            RenderPostProcess(buffer, pipelineBinder, object.get(), sceneRenderer);
             buffer->EndDraw();
+            // 今フレームの最終確定SRVをビューア用に記録する（詳細はScreenBuffer::SetPreviewSrvHandle参照）
+            buffer->SetPreviewSrvHandle(Passkey<Renderer>{}, buffer->GetSrvHandle());
         }
     }
 }
@@ -1723,13 +1765,18 @@ void Renderer::RenderToTarget(IRenderTarget *target,
         auto *screenBuffer = static_cast<ScreenBuffer *>(target);
         // エディター用描画先の場合、デバッグ表示（グリッド・当たり判定）をポストプロセスより先に描画する
         RenderEditorDebugOverlay(screenBuffer, pipelineBinder, sceneRenderer);
-        RenderPostProcess(screenBuffer, pipelineBinder, sceneRenderer->GetTargetOwner(target));
+        RenderPostProcess(screenBuffer, pipelineBinder, sceneRenderer->GetTargetOwner(target), sceneRenderer);
     }
 
     // ウィンドウのコマンドリストはこの後 ImGui 等の描画にも使われるため、
     // 描画終了処理はスワップチェーン側（DirectXCommon::EndDraw）に任せる
     if (target->GetRenderTargetKind() != RenderTargetKind::Window) {
         target->EndDraw();
+        if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
+            // 今フレームの最終確定SRVをビューア用に記録する（詳細はScreenBuffer::SetPreviewSrvHandle参照）
+            auto *screenBuffer = static_cast<ScreenBuffer *>(target);
+            screenBuffer->SetPreviewSrvHandle(Passkey<Renderer>{}, screenBuffer->GetSrvHandle());
+        }
     }
 }
 
@@ -1835,6 +1882,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 element.shininess = material->shininess;
                 element.specularColor = material->specularColor;
                 element.environmentCoefficient = material->environmentCoefficient;
+                element.rimColor = material->rimColor;
+                element.rimPower = material->rimPower;
+                element.rimIntensity = material->rimIntensity;
             }
             auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
             if (materialBuffer) {
@@ -2078,6 +2128,9 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
                     element.shininess = material->shininess;
                     element.specularColor = material->specularColor;
                     element.environmentCoefficient = material->environmentCoefficient;
+                    element.rimColor = material->rimColor;
+                    element.rimPower = material->rimPower;
+                    element.rimIntensity = material->rimIntensity;
                 }
                 auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
                 if (materialBuffer) {
@@ -2469,7 +2522,8 @@ void Renderer::RenderEditorBackground(ScreenBuffer *screenBuffer,
 
 void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
     PipelineBinder &pipelineBinder,
-    EmptyObject *ownerObject) {
+    EmptyObject *ownerObject,
+    SceneRenderer *sceneRenderer) {
     if (!screenBuffer || !ownerObject) return;
 
     auto postProcessComponents = ownerObject->GetComponents<IPostProcessComponent>();
@@ -2478,10 +2532,19 @@ void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
     auto *commandList = screenBuffer->GetCommandList();
     if (!commandList) return;
 
+    // このスクリーンバッファへ描画したカメラの情報（AOの座標再構成、Outlineの深度線形化等に使う）
+    IPostProcessComponent::CameraInfo cameraInfo;
+    if (sceneRenderer) {
+        cameraInfo = ResolveCameraInfoForPostProcess(sceneRenderer, screenBuffer);
+    }
+
     for (auto *component : postProcessComponents) {
         if (!component || !component->IsActive()) continue;
         // 除外設定されているスクリーンバッファには適用しない
         if (!component->IsScreenBufferIncluded(screenBuffer)) continue;
+
+        // ユーザーがカメラ設定（Near/Far等）を手動で複製せずに済むよう、カメラ情報を先に注入する
+        component->SetCameraInfoInterface(Passkey<Renderer>{}, cameraInfo);
 
         // 中間レンダーターゲットを使う多段パス等はコンポーネント側のカスタム描画で行う
         IPostProcessComponent::CustomRenderContext customContext;

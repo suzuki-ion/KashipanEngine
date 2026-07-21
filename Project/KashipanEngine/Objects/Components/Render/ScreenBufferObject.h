@@ -98,7 +98,11 @@ protected:
         if (ImGui::Begin(windowTitle.c_str(), &isShowViewer_)) {
             ImGui::Text("Size: %ux%u", buffer_->GetWidth(), buffer_->GetHeight());
 
-            const auto srvHandle = buffer_->GetSrvHandle();
+            // GetSrvHandle()はこの呼び出し時点の読み取り面を返すが、このImGui表示は
+            // Renderer::RenderFrame（今フレームのポストエフェクト適用）より前に呼ばれるため、
+            // 適用したポストエフェクトの数によっては適用途中の中間結果を指してしまうことがある。
+            // 代わりに、前フレームまでの描画完了時点で確定した正しいSRVを参照する
+            const auto srvHandle = buffer_->GetPreviewSrvHandle();
             if (srvHandle.ptr != 0) {
                 // アスペクト比を維持して表示領域にフィットさせる
                 const ImVec2 avail = ImGui::GetContentRegionAvail();

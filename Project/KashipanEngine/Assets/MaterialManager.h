@@ -33,6 +33,12 @@ public:
         float environmentCoefficient = 1.0f;
         bool enableLighting = true;
         bool enableShadowMapProjection = true;
+        /// @brief リムライト色（ライト方向を考慮した逆光縁取り）
+        Vector4 rimColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+        /// @brief リムの鋭さ（大きいほど縁が細くなる）
+        float rimPower = 2.0f;
+        /// @brief リムライトの強さ（0で無効。既定は無効のままにして既存マテリアルの見た目を変えない）
+        float rimIntensity = 0.0f;
 
         /// @brief テクスチャファイル名（読み込み時に未解決だった場合の遅延解決用）
         std::string textureFileName;

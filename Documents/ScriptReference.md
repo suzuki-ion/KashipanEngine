@@ -1224,6 +1224,7 @@ class Player : ScriptComponentBehavior {
 
 | コンポーネント | メソッド |
 |---|---|
+| `AmbientOcclusionEffect` | `GetRadius`/`SetRadius`, `GetIntensity`/`SetIntensity`, `GetPower`/`SetPower`, `GetBias`/`SetBias`（すべて`float`）, `GetSampleCount`/`SetSampleCount`（`uint`）, `GetBlurRadius`/`SetBlurRadius`（`int`）, `GetDepthThreshold`/`SetDepthThreshold`（`float`） |
 | `BloomEffect` | `GetThreshold`/`SetThreshold`, `GetSoftKnee`/`SetSoftKnee`, `GetIntensity`/`SetIntensity`, `GetBlurRadius`/`SetBlurRadius`（すべて`float`）, `GetIterations`/`SetIterations`（`uint`、ダウンサンプル段数1～16） |
 | `BoxFilterEffect` | `GetIntensity`/`SetIntensity`（`float`）, `GetHalfSizeX`/`GetHalfSizeY`（`int`）, `SetHalfSize(int, int)` |
 | `ChromaticAberrationEffect` | `GetDirection`/`SetDirection`（`Vector2`）, `GetStrength`/`SetStrength`（`float`） |
@@ -1234,7 +1235,7 @@ class Player : ScriptComponentBehavior {
 | `FXAAEffect` | `GetThreshold`/`SetThreshold`, `GetThresholdMin`/`SetThresholdMin`, `GetStrength`/`SetStrength`（すべて`float`） |
 | `GaussianFilterEffect` | `GetRadius`/`SetRadius`（`int`）, `GetSigma`/`SetSigma`（`float`） |
 | `GrayscaleEffect` | `GetIntensity`/`SetIntensity`（`float`） |
-| `OutlineEffect` | `GetThreshold`/`SetThreshold`, `GetThickness`/`SetThickness`（`float`）, `GetColor`/`SetColor`（`Vector4`）, `GetCameraNear`/`SetCameraNear`, `GetCameraFar`/`SetCameraFar`（`float`） |
+| `OutlineEffect` | `GetThreshold`/`SetThreshold`, `GetThickness`/`SetThickness`（`float`）, `GetColor`/`SetColor`（`Vector4`）。深度線形化に使うNear/Farはこのスクリーンバッファへ描画したカメラから自動解決されるため、手動設定は不要 |
 | `RadialBlurEffect` | `GetIntensity`/`SetIntensity`（`float`）, `GetSampleCount`/`SetSampleCount`（`int`）, `GetCenter`/`SetCenter`（`Vector2`）, `GetStartRadius`/`SetStartRadius`（`float`） |
 | `VignetteEffect` | `GetCenter`/`SetCenter`（`Vector2`）, `GetColor`/`SetColor`（`Vector4`）, `GetIntensity`/`SetIntensity`, `GetInnerRadius`/`SetInnerRadius`, `GetSmoothness`/`SetSmoothness`（`float`） |
 
@@ -1605,6 +1606,7 @@ class Player : ScriptComponentBehavior {
 - **数学型は値型**: `Vector3` 等を変数に代入するとコピーされます。`Transform` の座標を変更する場合は `GetTranslate()` で取得→変更→`SetTranslate()` で書き戻してください。
 - **文字列と数値の連結**: `"value=" + 1.0f` のような連結が可能です（scriptstdstringアドオンによる）。
 - **ポストプロセスエフェクトの内部Params構造体**: `BloomEffect`等が内部で持つ `Params` 構造体自体はスクリプトへ公開されていません。フィールドごとのGet/Setメソッドを使用してください。
+- **AmbientOcclusionEffectの前提**: 専用の法線バッファ（G-buffer）を持たないフォワードレンダリングのため、深度バッファのみからスクリーンスペースでワールド座標・法線を再構成する簡易SSAOとして実装されています。既にシェーディング済みの色へAOを乗算するため、間接光だけでなく鏡面成分にも多少影響します。また、このスクリーンバッファへ描画しているカメラ（`CameraRenderer`、またはエディター用描画先の場合はエディターカメラ）が解決できないフレームでは、AOは適用されず元の描画結果がそのまま残ります。
 - **`Object@` を要求する引数**: `MeshRenderer::SetTargetObject`や`CameraController::AddFollowTarget`のように `Object@` を引数に取るメソッドへ `null` を渡した場合は何もしません（クラッシュしません）。
 - **AddComponentの追加数上限**: コンポーネント種別ごとに1オブジェクトへ追加できる最大数が決まっており（例: `Transform`は1個まで）、上限を超えて`AddComponent`を呼ぶと失敗し`false`が返ります。
 - **CloneObjectの複製範囲**: `Scene.CloneObject`は対象オブジェクト自身が持つコンポーネントのみを複製します。子オブジェクトの複製や、親子関係（`Transform`の親設定）の引き継ぎは行われません。

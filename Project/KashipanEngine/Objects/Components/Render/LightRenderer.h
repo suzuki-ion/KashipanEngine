@@ -104,6 +104,34 @@ public:
         return direction;
     }
 
+    /// @brief ライトのワールド右方向（Transform の +X）を取得（Rect/Tubeの軸方向に使用）
+    Vector3 GetWorldRight() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        Vector3 right(1.0f, 0.0f, 0.0f);
+        if (transform) {
+            const Matrix4x4 &world = transform->GetWorldMatrix();
+            Vector3 axis(world.m[0][0], world.m[0][1], world.m[0][2]);
+            const float length = axis.Length();
+            if (length > 0.0f) right = axis * (1.0f / length);
+        }
+        return right;
+    }
+
+    /// @brief ライトのワールド上方向（Transform の +Y）を取得（Rectの高さ方向に使用）
+    Vector3 GetWorldUp() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        Vector3 up(0.0f, 1.0f, 0.0f);
+        if (transform) {
+            const Matrix4x4 &world = transform->GetWorldMatrix();
+            Vector3 axis(world.m[1][0], world.m[1][1], world.m[1][2]);
+            const float length = axis.Length();
+            if (length > 0.0f) up = axis * (1.0f / length);
+        }
+        return up;
+    }
+
 protected:
     void Initialize() override {
         auto *sceneRenderer = GetOrAddSceneRenderer();

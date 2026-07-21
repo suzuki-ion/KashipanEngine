@@ -1,11 +1,20 @@
 // Forward+ のタイルライトカリング用Computeシェーダー
-// 画面を16x16ピクセルのタイルへ分割し、タイルごとにPoint/Spotライトのビュー空間バウンディングボックスを
-// スクリーン空間の矩形へ投影してタイルの矩形と重なるかを判定する（深度プリパスを使わないため、
-// 近/遠平面での正確なクリップは行わず保守的に判定する）。ヒットしたライトのインデックスを
-// gTileLightIndices の該当タイル領域へ書き込む（先頭にヒット数、続けてインデックス列。
-// Spotライトのインデックスは最上位ビットを立てて区別する）。
+// 画面を16x16ピクセルのタイルへ分割し、タイルごとに（Directional以外の）全種別のライトの
+// ビュー空間バウンディングボックスをスクリーン空間の矩形へ投影してタイルの矩形と重なるかを判定する
+// （深度プリパスを使わないため、近/遠平面での正確なクリップは行わず保守的に判定する）。
+// ヒットしたライトのインデックスを gTileLightIndices の該当タイル領域へ書き込む（先頭にヒット数、
+// 続けてインデックス列。上位3bitがライト種別タグ、下位29bitが配列インデックス。ObjectPS.hlslの
+// LIGHT_TAG_* と一致させること）。
 
 #include "../Object/Object3D.hlsli"
+
+#define LIGHT_TAG_POINT  0u
+#define LIGHT_TAG_SPOT   1u
+#define LIGHT_TAG_SPHERE 2u
+#define LIGHT_TAG_DISC   3u
+#define LIGHT_TAG_RECT   4u
+#define LIGHT_TAG_TUBE   5u
+#define LIGHT_TAG_SHIFT  29u
 
 cbuffer TileCullingConstants : register(b1)
 {
@@ -14,12 +23,20 @@ cbuffer TileCullingConstants : register(b1)
     uint gTileCountY;
     uint gPointLightCount;
     uint gSpotLightCount;
+    uint gSphereLightCount;
+    uint gDiscLightCount;
+    uint gRectLightCount;
+    uint gTubeLightCount;
     uint gMaxLightsPerTile;
     uint gTileSize;
 };
 
 StructuredBuffer<PointLight> gPointLights : register(t0);
 StructuredBuffer<SpotLight> gSpotLights : register(t1);
+StructuredBuffer<SphereLight> gSphereLights : register(t2);
+StructuredBuffer<DiscLight> gDiscLights : register(t3);
+StructuredBuffer<RectLight> gRectLights : register(t4);
+StructuredBuffer<TubeLight> gTubeLights : register(t5);
 RWStructuredBuffer<uint> gTileLightIndices : register(u0);
 
 // ワールド空間の球（中心・半径）を包含するビュー空間AABBの8頂点をスクリーン空間へ投影し、
@@ -92,7 +109,7 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         {
             continue;
         }
-        gTileLightIndices[tileBase + 1 + count] = p;
+        gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_POINT << LIGHT_TAG_SHIFT) | p;
         ++count;
     }
 
@@ -110,7 +127,82 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         {
             continue;
         }
-        gTileLightIndices[tileBase + 1 + count] = s | 0x80000000;
+        gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_SPOT << LIGHT_TAG_SHIFT) | s;
+        ++count;
+    }
+
+    for (uint sp = 0; sp < gSphereLightCount && count < gMaxLightsPerTile; ++sp)
+    {
+        SphereLight light = gSphereLights[sp];
+        if (!light.enabled)
+        {
+            continue;
+        }
+        float2 lightMin, lightMax;
+        ProjectSphereToScreenRect(light.position, light.radius, lightMin, lightMax);
+        if (lightMax.x < tileMin.x || lightMin.x > tileMax.x || lightMax.y < tileMin.y || lightMin.y > tileMax.y)
+        {
+            continue;
+        }
+        gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_SPHERE << LIGHT_TAG_SHIFT) | sp;
+        ++count;
+    }
+
+    for (uint d = 0; d < gDiscLightCount && count < gMaxLightsPerTile; ++d)
+    {
+        DiscLight light = gDiscLights[d];
+        if (!light.enabled)
+        {
+            continue;
+        }
+        // 片面（半球）発光だが、簡略化のため保守的な包含球（半径distance）で判定する
+        float2 lightMin, lightMax;
+        ProjectSphereToScreenRect(light.position, light.distance, lightMin, lightMax);
+        if (lightMax.x < tileMin.x || lightMin.x > tileMax.x || lightMax.y < tileMin.y || lightMin.y > tileMax.y)
+        {
+            continue;
+        }
+        gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_DISC << LIGHT_TAG_SHIFT) | d;
+        ++count;
+    }
+
+    for (uint r = 0; r < gRectLightCount && count < gMaxLightsPerTile; ++r)
+    {
+        RectLight light = gRectLights[r];
+        if (!light.enabled)
+        {
+            continue;
+        }
+        // 矩形の対角も包含できるよう、半径distanceへ幅高さの半分を加えた保守的な包含球で判定する
+        float boundRadius = light.distance + max(light.width, light.height) * 0.5f;
+        float2 lightMin, lightMax;
+        ProjectSphereToScreenRect(light.position, boundRadius, lightMin, lightMax);
+        if (lightMax.x < tileMin.x || lightMin.x > tileMax.x || lightMax.y < tileMin.y || lightMin.y > tileMax.y)
+        {
+            continue;
+        }
+        gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_RECT << LIGHT_TAG_SHIFT) | r;
+        ++count;
+    }
+
+    for (uint tb = 0; tb < gTubeLightCount && count < gMaxLightsPerTile; ++tb)
+    {
+        TubeLight light = gTubeLights[tb];
+        if (!light.enabled)
+        {
+            continue;
+        }
+        // チューブの両端点を包含できるよう、中点・半径(radius + チューブ半長)の保守的な包含球で判定する
+        float3 center = (light.p0 + light.p1) * 0.5f;
+        float halfLength = length(light.p1 - light.p0) * 0.5f;
+        float boundRadius = light.radius + halfLength;
+        float2 lightMin, lightMax;
+        ProjectSphereToScreenRect(center, boundRadius, lightMin, lightMax);
+        if (lightMax.x < tileMin.x || lightMin.x > tileMax.x || lightMax.y < tileMin.y || lightMin.y > tileMax.y)
+        {
+            continue;
+        }
+        gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_TUBE << LIGHT_TAG_SHIFT) | tb;
         ++count;
     }
 

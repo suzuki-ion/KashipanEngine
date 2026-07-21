@@ -476,6 +476,10 @@ void RegisterLightTypeEnum(asIScriptEngine *engine) {
     engine->RegisterEnumValue("LightType", "Directional", static_cast<int>(Light::Type::Directional));
     engine->RegisterEnumValue("LightType", "Point", static_cast<int>(Light::Type::Point));
     engine->RegisterEnumValue("LightType", "Spot", static_cast<int>(Light::Type::Spot));
+    engine->RegisterEnumValue("LightType", "Rect", static_cast<int>(Light::Type::Rect));
+    engine->RegisterEnumValue("LightType", "Sphere", static_cast<int>(Light::Type::Sphere));
+    engine->RegisterEnumValue("LightType", "Disc", static_cast<int>(Light::Type::Disc));
+    engine->RegisterEnumValue("LightType", "Tube", static_cast<int>(Light::Type::Tube));
 }
 
 /// @brief TextRenderer::HorizontalAlign/VerticalAlign をスクリプト用の列挙型として登録する
@@ -843,6 +847,14 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("float GetInnerAngle() const", &Light::GetInnerAngle)
         .method("void SetOuterAngle(float)", &Light::SetOuterAngle)
         .method("float GetOuterAngle() const", &Light::GetOuterAngle)
+        .method("void SetSourceRadius(float)", &Light::SetSourceRadius)
+        .method("float GetSourceRadius() const", &Light::GetSourceRadius)
+        .method("void SetSourceWidth(float)", &Light::SetSourceWidth)
+        .method("float GetSourceWidth() const", &Light::GetSourceWidth)
+        .method("void SetSourceHeight(float)", &Light::SetSourceHeight)
+        .method("float GetSourceHeight() const", &Light::GetSourceHeight)
+        .method("void SetSourceLength(float)", &Light::SetSourceLength)
+        .method("float GetSourceLength() const", &Light::GetSourceLength)
         .method("void SetCastShadows(bool)", &Light::SetCastShadows)
         .method("bool IsCastShadows() const", &Light::IsCastShadows)
         .method("void SetShadowDistance(float)", &Light::SetShadowDistance)
@@ -850,7 +862,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetShadowMapResolution(uint)", &Light::SetShadowMapResolution)
         .method("uint GetShadowMapResolution() const", &Light::GetShadowMapResolution)
         .method("void SetShadowBias(float)", &Light::SetShadowBias)
-        .method("float GetShadowBias() const", &Light::GetShadowBias);
+        .method("float GetShadowBias() const", &Light::GetShadowBias)
+        .method("void SetShadowSoftness(float)", &Light::SetShadowSoftness)
+        .method("float GetShadowSoftness() const", &Light::GetShadowSoftness)
+        .method("float GetEffectiveShadowSoftness() const", &Light::GetEffectiveShadowSoftness);
 
     RegisterComponentType<LightRenderer>(engine, "LightRenderer")
         .method("void SetPipelineName(const string &in)", &LightRenderer::SetPipelineName)
@@ -858,7 +873,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("Light@ GetLight() const", &LightRenderer::GetLight)
         .method("LightType GetLightType() const", &LightRenderer::GetLightType)
         .method("Vector3 GetWorldPosition() const", &LightRenderer::GetWorldPosition)
-        .method("Vector3 GetWorldDirection() const", &LightRenderer::GetWorldDirection);
+        .method("Vector3 GetWorldDirection() const", &LightRenderer::GetWorldDirection)
+        .method("Vector3 GetWorldRight() const", &LightRenderer::GetWorldRight)
+        .method("Vector3 GetWorldUp() const", &LightRenderer::GetWorldUp);
 
     RegisterComponentType<NormalWindowObject>(engine, "NormalWindowObject")
         .method("void SetTitle(const string &in)", static_cast<void (NormalWindowObject::*)(const std::string &)>(&NormalWindowObject::SetTitle))

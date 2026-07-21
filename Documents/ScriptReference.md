@@ -1024,7 +1024,13 @@ class Billboard : ScriptComponentBehavior {
 
 ### Light / LightRenderer
 
-`LightType` 列挙型（`Directional` / `Point` / `Spot`）が使用できます。
+`LightType` 列挙型（`Directional` / `Point` / `Spot` / `Rect` / `Sphere` / `Disc` / `Tube`）が使用できます。
+
+`Rect`/`Sphere`/`Disc`/`Tube` は面光源（形状を持つ光源）です。真のLTC（Linearly Transformed Cosines）等の専用ルックアップテーブルは使わず、**形状上の代表点（representative point）法**（Karis "Real Shading in Unreal Engine 4" のsphere/tube近似をdisc/rectへ拡張したもの）で拡散・鏡面を近似します。拡散照明の減衰式自体はPoint/Spotと同じものを流用しており、面としての形状は主に鏡面ハイライトの広がりと影の柔らかさに表れます。
+
+- `Sphere`/`Tube`: 全方向に発光（Pointと同様、`Radius`が減衰範囲）。影はPointと同じキューブ6面（Tubeは中心点からの近似）
+- `Disc`/`Rect`: Transformの **+Z方向を法線とした片面発光**（Spotと同様、`Distance`が減衰範囲。コーン角の概念は無い）。影はSpotと同じ広角の単一透視投影で近似する
+- `Rect`は+X方向が幅、+Y方向が高さ
 
 | メソッド | Light | LightRenderer | 説明 |
 |---|:-:|:-:|---|
@@ -1034,13 +1040,25 @@ class Billboard : ScriptComponentBehavior {
 | `Light@ GetLight() const` | - | o | 同オブジェクトの `Light` コンポーネントを取得する |
 | `void SetColor(const Vector4 &in)` / `const Vector4 &GetColor() const` | o | - | 色 |
 | `void SetIntensity(float)` / `float GetIntensity() const` | o | - | 強度 |
-| `void SetRadius(float)` / `float GetRadius() const` | o | - | 半径（Point用） |
-| `void SetDistance(float)` / `float GetDistance() const` | o | - | 距離（Spot用） |
-| `void SetDecay(float)` / `float GetDecay() const` | o | - | 減衰（Point/Spot共通） |
+| `void SetRadius(float)` / `float GetRadius() const` | o | - | 減衰範囲（Point/Sphere/Tube用） |
+| `void SetDistance(float)` / `float GetDistance() const` | o | - | 減衰範囲（Spot/Disc/Rect用） |
+| `void SetDecay(float)` / `float GetDecay() const` | o | - | 減衰指数（Point/Spot/Sphere/Disc/Rect/Tube共通） |
 | `void SetInnerAngle(float)` / `float GetInnerAngle() const` | o | - | 内側角度（Spot用、ラジアン） |
 | `void SetOuterAngle(float)` / `float GetOuterAngle() const` | o | - | 外側角度（Spot用、ラジアン） |
+| `void SetSourceRadius(float)` / `float GetSourceRadius() const` | o | - | 面光源の物理的な半径（Sphere/Discの半径、Tubeの円柱半径） |
+| `void SetSourceWidth(float)` / `float GetSourceWidth() const` | o | - | Rectの幅（+X方向） |
+| `void SetSourceHeight(float)` / `float GetSourceHeight() const` | o | - | Rectの高さ（+Y方向） |
+| `void SetSourceLength(float)` / `float GetSourceLength() const` | o | - | Tubeの長さ（+X方向） |
+| `void SetShadowSoftness(float)` / `float GetShadowSoftness() const` | o | - | Directional/Point/Spotの半影ソフト化（PCSS）に使うワールド単位の光源サイズ（既定0=硬い影） |
+| `float GetEffectiveShadowSoftness() const` | o | - | 実際にPCSSへ使われる光源サイズ。Sphere/Disc/Tubeは`SourceRadius`、Rectは`max(Width,Height)/2`が自動的に返る |
 | `Vector3 GetWorldPosition() const` | - | o | ワールド座標を取得する |
-| `Vector3 GetWorldDirection() const` | - | o | ワールド方向（+Z）を取得する |
+| `Vector3 GetWorldDirection() const` | - | o | ワールド方向（+Z、発光面の法線）を取得する |
+| `Vector3 GetWorldRight() const` | - | o | ワールド右方向（+X、Rectの幅・Tubeの軸方向）を取得する |
+| `Vector3 GetWorldUp() const` | - | o | ワールド上方向（+Y、Rectの高さ方向）を取得する |
+
+#### 半影のソフト化（PCSS）
+
+`CastShadows`が有効なライトは、光源サイズに応じたソフトシャドウ（PCSS: Percentage-Closer Soft Shadows）が自動的にかかります。Sphere/Disc/Rect/Tubeは形状の物理サイズ（`SourceRadius`等）がそのまま光源サイズとして使われ、Directional/Point/Spotは既定で硬い影のままです（`SetShadowSoftness`で明示的にワールド単位の光源サイズを設定すると、そのライトにもソフトシャドウがかかります）。
 
 ### 描画先コンポーネント（NormalWindowObject / OverlayWindowObject / ScreenBufferObject / ShadowMapObject）
 

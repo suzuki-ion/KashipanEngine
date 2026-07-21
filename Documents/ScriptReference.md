@@ -1229,6 +1229,7 @@ class Player : ScriptComponentBehavior {
 | `BoxFilterEffect` | `GetIntensity`/`SetIntensity`（`float`）, `GetHalfSizeX`/`GetHalfSizeY`（`int`）, `SetHalfSize(int, int)` |
 | `ChromaticAberrationEffect` | `GetDirection`/`SetDirection`（`Vector2`）, `GetStrength`/`SetStrength`（`float`） |
 | `ColorAdjustEffect` | `GetBrightness`/`SetBrightness`, `GetContrast`/`SetContrast`, `GetSaturation`/`SetSaturation`, `GetTemperature`/`SetTemperature`（すべて`float`）, `GetColorBalance`/`SetColorBalance`（`Vector3`） |
+| `DepthOfFieldEffect` | `GetFocusDistance`/`SetFocusDistance`, `GetFocusRange`/`SetFocusRange`, `GetNearBlurDistance`/`SetNearBlurDistance`, `GetFarBlurDistance`/`SetFarBlurDistance`, `GetMaxBlurRadiusPixels`/`SetMaxBlurRadiusPixels`（すべて`float`）, `GetSampleCount`/`SetSampleCount`（`uint`）, `GetDilateRadius`/`SetDilateRadius`（`int`） |
 | `DissolveEffect` | `GetMaskThreshold`/`SetMaskThreshold`, `GetEdgeThickness`/`SetEdgeThickness`（`float`）, `GetBaseTexturePath`/`SetBaseTexturePath`, `GetMaskTexturePath`/`SetMaskTexturePath`（`string`、読み込み済みテクスチャのAssetsルートからの相対パス）, `GetBaseTextureColor`/`SetBaseTextureColor`, `GetEdgeColor`/`SetEdgeColor`（`Vector4`） |
 | `DitherEffect` | `GetIntensity`/`SetIntensity`（`float`）, `IsColorDither`/`SetColorDither`（`bool`） |
 | `DotMatrixEffect` | `GetDotSpacing`/`SetDotSpacing`, `GetDotRadius`/`SetDotRadius`, `GetThreshold`/`SetThreshold`, `GetIntensity`/`SetIntensity`（`float`）, `IsMonochrome`/`SetMonochrome`（`bool`） |
@@ -1607,6 +1608,7 @@ class Player : ScriptComponentBehavior {
 - **文字列と数値の連結**: `"value=" + 1.0f` のような連結が可能です（scriptstdstringアドオンによる）。
 - **ポストプロセスエフェクトの内部Params構造体**: `BloomEffect`等が内部で持つ `Params` 構造体自体はスクリプトへ公開されていません。フィールドごとのGet/Setメソッドを使用してください。
 - **AmbientOcclusionEffectの前提**: 専用の法線バッファ（G-buffer）を持たないフォワードレンダリングのため、深度バッファのみからスクリーンスペースでワールド座標・法線を再構成する簡易SSAOとして実装されています。既にシェーディング済みの色へAOを乗算するため、間接光だけでなく鏡面成分にも多少影響します。また、このスクリーンバッファへ描画しているカメラ（`CameraRenderer`、またはエディター用描画先の場合はエディターカメラ）が解決できないフレームでは、AOは適用されず元の描画結果がそのまま残ります。
+- **DepthOfFieldEffectの前提**: 深度とフォーカス距離からCoC（錯乱円）を近景・遠景に分けて求め、それぞれ別々にガザリングブラーしてから合成する方式です（前景の色が背景ボケへにじむ問題を避けるため）。近景CoCはダイレーション（最大値フィルタ）で膨張させ、前景ボケが物体本来のシルエットより外側にも自然に広がるようにしています。AO同様、カメラが解決できないフレームでは適用されません。近景・遠景ブラーとも単純な等重みガザリング（ボケ形状の厳密な再現やスキャッタ方式ではない）のため、非常に強いボケでは輪郭のにじみが多少目立つことがあります。
 - **`Object@` を要求する引数**: `MeshRenderer::SetTargetObject`や`CameraController::AddFollowTarget`のように `Object@` を引数に取るメソッドへ `null` を渡した場合は何もしません（クラッシュしません）。
 - **AddComponentの追加数上限**: コンポーネント種別ごとに1オブジェクトへ追加できる最大数が決まっており（例: `Transform`は1個まで）、上限を超えて`AddComponent`を呼ぶと失敗し`false`が返ります。
 - **CloneObjectの複製範囲**: `Scene.CloneObject`は対象オブジェクト自身が持つコンポーネントのみを複製します。子オブジェクトの複製や、親子関係（`Transform`の親設定）の引き継ぎは行われません。

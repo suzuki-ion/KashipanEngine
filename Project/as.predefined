@@ -1293,6 +1293,29 @@ class ColorAdjustEffect {
 	void SetColorBalance(const Vector3&in);
 }
 
+class DepthOfFieldEffect {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	float GetFocusDistance() const;
+	void SetFocusDistance(float);
+	float GetFocusRange() const;
+	void SetFocusRange(float);
+	float GetNearBlurDistance() const;
+	void SetNearBlurDistance(float);
+	float GetFarBlurDistance() const;
+	void SetFarBlurDistance(float);
+	float GetMaxBlurRadiusPixels() const;
+	void SetMaxBlurRadiusPixels(float);
+	uint GetSampleCount() const;
+	void SetSampleCount(uint);
+	int GetDilateRadius() const;
+	void SetDilateRadius(int);
+}
+
 class DissolveEffect {
 	bool IsActive() const;
 	void SetActive(bool);

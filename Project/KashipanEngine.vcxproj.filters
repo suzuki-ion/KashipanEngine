@@ -1119,6 +1119,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ColorAdjustEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DepthOfFieldEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DissolveEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>

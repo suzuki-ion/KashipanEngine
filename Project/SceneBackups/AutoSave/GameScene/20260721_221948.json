@@ -65,9 +65,9 @@
                         "customData": {
                             "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
                             "rotate": {
-                                "w": 1.0,
+                                "w": 0.965925931930542,
                                 "x": 0.0,
-                                "y": 0.0,
+                                "y": 0.2588190734386444,
                                 "z": 0.0
                             },
                             "scale": {
@@ -76,9 +76,9 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 0.0,
-                                "y": 3.0,
-                                "z": -16.0
+                                "x": -16.0,
+                                "y": 16.0,
+                                "z": -64.0
                             }
                         },
                         "isActive": true,
@@ -3670,7 +3670,7 @@
                             "nearBlurDistance": 5.0,
                             "sampleCount": 16
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 1,
                         "tag": ""
                     },

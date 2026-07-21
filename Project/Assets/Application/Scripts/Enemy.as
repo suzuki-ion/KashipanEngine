@@ -17,7 +17,10 @@ class Enemy : ScriptComponentBehavior {
     // --- 実行時状態（保存不要） ---
     bool isAlive = true;
     bool isCollidingWithPlayer = false;
-    Vector3 hitNormal = Vector3(0.0f, 0.0f, 0.0f);
+    // プレイヤーとの衝突法線専用（地面との衝突法線と混ざらないよう分離する。
+    // 混ぜると、常に接触している地面の法線[上向き]が後から上書きしてしまい、
+    // 踏まれた判定[下向きの法線]が消えてしまうバグの原因になる）
+    Vector3 playerHitNormal = Vector3(0.0f, 0.0f, 0.0f);
 
     // このフレームで実際に地面（床）と接触したか（生の値。次のOnCollisionコールバックまでの間だけ有効）。
     // 継ぎ目でつながった地面同士は境界付近で両方のコライダーに同時に触れるため、この値は途切れない
@@ -25,6 +28,9 @@ class Enemy : ScriptComponentBehavior {
     // 前フレームのhasGroundContact（接地→非接地に変わった瞬間＝地面の端に到達した瞬間を検出するため）
     bool wasGroundContact = false;
     Vector3 groundHitNormal = Vector3(0.0f, 1.0f, 0.0f);
+    // 接地中の地面の、前フレームからの実際の移動量（動く床への追従用。Velocityではなく
+    // PreTransformとの差分で求めるため、地面がどのような方法で動いていても追従できる）
+    Vector3 groundDelta = Vector3(0.0f, 0.0f, 0.0f);
     float velocityY = 0.0f;
 
     Tag groundColliderTag = Tag("GroundBox");
@@ -43,7 +49,7 @@ class Enemy : ScriptComponentBehavior {
         isCollidingWithPlayer = false;
 
         // プレイヤーと衝突しているかつ衝突の法線が上向きなら死亡状態にする
-        if (playerContact && hitNormal.y < playerCollisionThreshold) {
+        if (playerContact && playerHitNormal.y < playerCollisionThreshold) {
             isAlive = false;
             Log(GetOwnerObject().GetName() + " defeated!");
             GetOwnerObject().SetActive(false);
@@ -85,6 +91,8 @@ class Enemy : ScriptComponentBehavior {
             // 接地面へ押し付けて、継ぎ目の段差や下り坂で浮かないようにする
             translate.x += -groundHitNormal.x * groundStickSpeed * dt;
             translate.y += -groundHitNormal.y * groundStickSpeed * dt;
+            // 動く床への追従（既にdt分の実移動量なので、dtを掛けずにそのまま加算する）
+            translate += groundDelta;
         }
         tf.SetTranslate(translate);
     }
@@ -95,8 +103,8 @@ class Enemy : ScriptComponentBehavior {
             HandleGroundContact(hit);
         } else if (hit.otherCollider.GetTag() == playerColliderTag) {
             isCollidingWithPlayer = true;
+            playerHitNormal = hit.normal;
         }
-        hitNormal = hit.normal;
     }
 
     void OnCollisionStay(const HitInfo &in hit) {
@@ -118,7 +126,6 @@ class Enemy : ScriptComponentBehavior {
         } else if (hit.otherCollider.GetTag() == playerColliderTag) {
             // プレイヤーにダメージを与えるなどの処理をここに追加
         }
-        hitNormal = hit.normal;
     }
 
     void OnCollisionExit(const HitInfo &in hit) {
@@ -127,7 +134,6 @@ class Enemy : ScriptComponentBehavior {
             isCollidingWithPlayer = false;
             // プレイヤーとの接触が終了したときの処理をここに追加
         }
-        hitNormal = hit.normal;
     }
 
     // 地面コライダーとの接触を処理する（接地フラグの更新と、壁に当たった場合の反転）
@@ -136,6 +142,17 @@ class Enemy : ScriptComponentBehavior {
         if (isFloor) {
             hasGroundContact = true;
             groundHitNormal = hit.normal;
+
+            // 動く床への追従。地面のTransformとPreTransform（前フレームの値）との差分から
+            // 実際の移動量を求める（Velocityコンポーネントを見る方式と違い、地面がどんな方法で
+            // 動いていても＝スクリプトで直接Transformを書き換えていても追従できる）
+            Transform@ groundTransform;
+            PreTransform@ groundPreTransform;
+            if (hit.otherObject.GetComponent(@groundTransform) && hit.otherObject.GetComponent(@groundPreTransform)) {
+                groundDelta = groundTransform.GetTranslate() - groundPreTransform.GetPreviousTranslate();
+            } else {
+                groundDelta = Vector3(0.0f, 0.0f, 0.0f);
+            }
         } else if (Abs(hit.normal.y) < groundedThreshold) {
             // ほぼ真横の法線＝壁。進行方向を塞ぐ向きの壁に当たったら反転する
             if (Sign(hit.normal.x) == -Sign(moveDirection)) {

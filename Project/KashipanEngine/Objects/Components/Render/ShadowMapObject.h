@@ -11,7 +11,12 @@ namespace KashipanEngine {
 /// @brief シャドウマップバッファを描画先として表すコンポーネント
 class ShadowMapObject final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(ShadowMapObject, 0xFF, )
+    // 直接書き込み時は、セッターと同様に生成済みバッファへの反映（名前変更・リサイズ）も行う
+    OBJECT_COMPONENT_CONSTRUCTOR(ShadowMapObject, 0xFF,
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(name_, [this] { SetName(name_); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(width_, [this] { SetSize(width_, height_); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(height_, [this] { SetSize(width_, height_); });
+    )
     COMPONENT_CATEGORY("Render", "RenderTarget")
     ~ShadowMapObject() override = default;
 

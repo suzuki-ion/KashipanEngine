@@ -3,6 +3,7 @@
 #include <memory>
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include "Utilities/FileIO.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Utilities/MyAny.h"
@@ -27,10 +28,15 @@ class IObjectComponent {
     /// @brief コンポーネントの型ID設定用
     static inline size_t sComponentTypeID = 0;
 public:
-    /// @brief メンバー変数の情報（ImGuiなどからのアクセス用）
+    /// @brief メンバー変数の情報（ImGuiやKeyFrameAnimator等の外部からのアクセス用）
     struct MemberVariable {
         void *ptr = nullptr;
         TypeInfo typeInfo;
+        /// @brief 外部からptr経由で値を書き込んだ後に呼ぶコールバック（未設定の場合はnullptr）
+        /// @details セッターを迂回した直接書き込みで必要になる副作用（Transformのワールド行列
+        ///          キャッシュ無効化など）を、コンポーネント側がここに登録しておく。
+        ///          外部から値を書き込んだ側は、書き込み後に必ずこれを呼ぶこと
+        std::function<void()> onModified;
     };
     /// @brief コンポーネントの型IDを取得
     /// @tparam T コンポーネントの型
@@ -123,6 +129,22 @@ public:
         return true;
     }
 
+    /// @brief メンバ変数の取得（外部からの汎用アクセス用。ptr経由で書き込んだ後は必ずonModifiedを呼ぶこと）
+    /// @param key 変数のキー
+    /// @return メンバー変数の情報（存在しない場合は nullptr）
+    MemberVariable *GetMemberVariable(const std::string &key) {
+        auto it = memberVariables_.find(key);
+        if (it != memberVariables_.end()) {
+            return &it->second;
+        }
+        return nullptr;
+    }
+    /// @brief 全てのメンバー変数の取得
+    /// @return メンバー変数のマップ
+    const std::unordered_map<std::string, MemberVariable> &GetAllMemberVariables() const {
+        return memberVariables_;
+    }
+
 protected:
     IObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID)
         : kComponentType_(typeName), kMaxComponentCountPerObject_(maxCount), kComponentTypeID_(componentTypeID), updatePriority_(1) {}
@@ -167,27 +189,15 @@ protected:
     /// @brief メンバー変数を追加する
     /// @tparam T 変数の型
     /// @param key 変数のキー
-    /// @param ptr 変数のポインタ
+    /// @param variable 変数のポインタ
+    /// @param onModified 外部からptr経由で値を書き込まれた後に呼ばれるコールバック
+    ///                   （セッター迂回時に必要な副作用がある場合のみ指定する）
     template <typename T>
-    void AddMemberVariable(const std::string &key, T *variable) {
-        memberVariables_.insert_or_assign(key, MemberVariable{ static_cast<void *>(variable), GetValueType<T>() });
-    }
-    /// @brief メンバ変数の取得
-    /// @param key 変数のキー
-    /// @return メンバー変数の情報（存在しない場合は nullptr）
-    MemberVariable *GetMemberVariable(const std::string &key) {
-        auto it = memberVariables_.find(key);
-        if (it != memberVariables_.end()) {
-            return &it->second;
-        }
-        return nullptr;
-    }
-    /// @brief 全てのメンバー変数の取得
-    /// @return メンバー変数のマップ
-    const std::unordered_map<std::string, MemberVariable> &GetAllMemberVariables() const {
-        return memberVariables_;
+    void AddMemberVariable(const std::string &key, T *variable, std::function<void()> onModified = nullptr) {
+        memberVariables_.insert_or_assign(key, MemberVariable{ static_cast<void *>(variable), GetValueType<T>(), std::move(onModified) });
     }
 #define ADD_MEMBER_VARIABLE(var) AddMemberVariable(#var, &var)
+#define ADD_MEMBER_VARIABLE_WITH_CALLBACK(var, ...) AddMemberVariable(#var, &var, __VA_ARGS__)
 
 private:
     /// @brief コンポーネントの種類名

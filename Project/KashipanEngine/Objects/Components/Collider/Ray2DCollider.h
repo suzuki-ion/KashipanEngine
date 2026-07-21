@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
@@ -9,7 +9,10 @@ namespace KashipanEngine {
 /// @details オーナーオブジェクトのワールド座標を始点とし、指定した方向・長さの線分として扱われる
 class Ray2DCollider final : public ICollider {
 public:
-    Ray2DCollider() : ICollider("Ray2DCollider", Shape::Ray2D, true, GetComponentTypeID<Ray2DCollider>()) {}
+    Ray2DCollider() : ICollider("Ray2DCollider", Shape::Ray2D, true, GetComponentTypeID<Ray2DCollider>()) {
+        ADD_MEMBER_VARIABLE(direction_);
+        ADD_MEMBER_VARIABLE(length_);
+    }
     ~Ray2DCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

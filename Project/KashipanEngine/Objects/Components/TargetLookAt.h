@@ -21,7 +21,9 @@ namespace KashipanEngine {
 ///          どちらのモードでも回転オフセット（オイラー角）を追加で適用できる。
 class TargetLookAt final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(TargetLookAt, 1, )
+    OBJECT_COMPONENT_CONSTRUCTOR(TargetLookAt, 1,
+        ADD_MEMBER_VARIABLE(rotationOffset_);
+    )
     // カテゴリ名を"Transform"にすると、コンポーネント本体のTransform型（無カテゴリ、ルート直下に
     // 表示される）とAdd Componentメニュー上で同名の項目（サブメニューとリーフ項目）が重複し、
     // ImGuiのIDが衝突して警告が出るため、別名にしている

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -13,7 +13,11 @@ public:
         float strength = 1.0f;
     };
 
-    FXAAEffect() : IPostProcessComponent("FXAAEffect") {}
+    FXAAEffect() : IPostProcessComponent("FXAAEffect") {
+        ADD_MEMBER_VARIABLE(params_.threshold);
+        ADD_MEMBER_VARIABLE(params_.thresholdMin);
+        ADD_MEMBER_VARIABLE(params_.strength);
+    }
     ~FXAAEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

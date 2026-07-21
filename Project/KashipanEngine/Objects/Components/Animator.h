@@ -5,7 +5,10 @@ namespace KashipanEngine {
 
 class Animator final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(Animator, 1, )
+    OBJECT_COMPONENT_CONSTRUCTOR(Animator, 1,
+        ADD_MEMBER_VARIABLE(animationName_);
+        ADD_MEMBER_VARIABLE(playOnStart_);
+    )
     COMPONENT_CATEGORY("Animation")
     ~Animator() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {

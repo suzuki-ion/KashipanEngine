@@ -26,7 +26,18 @@ namespace KashipanEngine {
 ///          アンカー・ピボットはその単位クアッド内の正規化座標(0,0)=左下 ～ (1,1)=右上で指定する。
 class SpriteRenderer final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(SpriteRenderer, 0xFF, SetUpdatePriority(900);)
+    // pipelineName_/materialName_の直接書き込み時は、セッターと同様に描画リストの再構築
+    // （materialName_はハンドルの再解決も）を促す
+    OBJECT_COMPONENT_CONSTRUCTOR(SpriteRenderer, 0xFF,
+        SetUpdatePriority(900);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(pipelineName_, [this] { MarkDrawListDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(materialName_, [this] {
+            materialHandle_ = MaterialManager::kInvalidHandle;
+            MarkDrawListDirty();
+        });
+        ADD_MEMBER_VARIABLE(anchor_);
+        ADD_MEMBER_VARIABLE(pivot_);
+    )
     COMPONENT_CATEGORY("Render")
     ~SpriteRenderer() override = default;
 

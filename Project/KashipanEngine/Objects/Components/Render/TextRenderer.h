@@ -55,7 +55,23 @@ public:
         float boldWeight = 0.0f;
     };
 
-    OBJECT_COMPONENT_CONSTRUCTOR(TextRenderer, 0xFF, SetUpdatePriority(900);)
+    // 直接書き込み時もセッターと同様に形状/インスタンスの再構築を促す
+    OBJECT_COMPONENT_CONSTRUCTOR(TextRenderer, 0xFF,
+        SetUpdatePriority(900);
+        ADD_MEMBER_VARIABLE(pipelineName_);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(text_, [this] { MarkShapeDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(fontName_, [this] {
+            fontHandle_ = FontManager::kInvalidHandle;
+            MarkShapeDirty();
+        });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(fontSize_, [this] {
+            fontSize_ = std::max(0.01f, fontSize_);
+            MarkShapeDirty();
+        });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(color_, [this] { MarkShapeDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(defaultCharacterAnchor_, [this] { MarkInstancesDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(defaultCharacterPivot_, [this] { MarkInstancesDirty(); });
+    )
     COMPONENT_CATEGORY("Render")
     ~TextRenderer() override = default;
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include <vector>
 
@@ -15,7 +15,9 @@ namespace KashipanEngine {
 ///          メッシュを明示的に指定しない場合は、同オブジェクトのMeshFilterコンポーネントのメッシュを参照する。
 class MeshCollider final : public ICollider {
 public:
-    MeshCollider() : ICollider("MeshCollider", Shape::Mesh, false, GetComponentTypeID<MeshCollider>()) {}
+    MeshCollider() : ICollider("MeshCollider", Shape::Mesh, false, GetComponentTypeID<MeshCollider>()) {
+        ADD_MEMBER_VARIABLE(convex_);
+    }
     ~MeshCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

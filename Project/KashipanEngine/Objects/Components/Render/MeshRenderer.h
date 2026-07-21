@@ -27,7 +27,13 @@ namespace KashipanEngine {
 ///          指定オブジェクトに付与された全ての描画先に対して描画が行われる。
 class MeshRenderer final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 0xFF, SetUpdatePriority(900);)
+    // pipelineName_の直接書き込み時は、セッターと同様に描画リストの再構築を促す
+    // （マテリアルはスロット制のvector管理のため、要素アドレスが変わり得ずメンバ変数登録できない）
+    OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 0xFF,
+        SetUpdatePriority(900);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(pipelineName_, [this] { MarkDrawListDirty(); });
+        ADD_MEMBER_VARIABLE(castShadows_);
+    )
     COMPONENT_CATEGORY("Render")
     ~MeshRenderer() override = default;
 

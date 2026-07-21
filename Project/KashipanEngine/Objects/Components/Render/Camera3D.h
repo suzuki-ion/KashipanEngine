@@ -6,7 +6,14 @@ namespace KashipanEngine {
 /// @brief 3Dカメラ情報コンポーネント（射影パラメータの保持のみを行う）
 class Camera3D final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(Camera3D, 1, )
+    OBJECT_COMPONENT_CONSTRUCTOR(Camera3D, 1,
+        ADD_MEMBER_VARIABLE(fovY_);
+        ADD_MEMBER_VARIABLE(nearClip_);
+        ADD_MEMBER_VARIABLE(farClip_);
+        ADD_MEMBER_VARIABLE(aspectRatio_);
+        ADD_MEMBER_VARIABLE(orthographic_);
+        ADD_MEMBER_VARIABLE(orthoSize_);
+    )
     COMPONENT_CATEGORY("Render")
     ~Camera3D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {

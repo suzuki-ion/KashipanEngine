@@ -9,7 +9,11 @@ namespace KashipanEngine {
 
 class RigidBody2D final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(RigidBody2D, 1, )
+    OBJECT_COMPONENT_CONSTRUCTOR(RigidBody2D, 1,
+        ADD_MEMBER_VARIABLE(velocity_);
+        ADD_MEMBER_VARIABLE(mass_);
+        ADD_MEMBER_VARIABLE(useGravity_);
+    )
     COMPONENT_CATEGORY("Collision")
     ~RigidBody2D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -15,7 +15,13 @@ public:
         bool monochrome = false;
     };
 
-    DotMatrixEffect() : IPostProcessComponent("DotMatrixEffect") {}
+    DotMatrixEffect() : IPostProcessComponent("DotMatrixEffect") {
+        ADD_MEMBER_VARIABLE(params_.dotSpacing);
+        ADD_MEMBER_VARIABLE(params_.dotRadius);
+        ADD_MEMBER_VARIABLE(params_.threshold);
+        ADD_MEMBER_VARIABLE(params_.intensity);
+        ADD_MEMBER_VARIABLE(params_.monochrome);
+    }
     ~DotMatrixEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

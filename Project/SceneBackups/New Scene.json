@@ -321,6 +321,83 @@
                 {
                     "data": {
                         "customData": {
+                            "bindings": [
+                                {
+                                    "channel": 1,
+                                    "componentIndex": 0,
+                                    "componentType": "Rotation",
+                                    "isScriptVariable": false,
+                                    "parameterName": "angularVelocity_"
+                                }
+                            ],
+                            "commandName": "PlayerMoveRight",
+                            "conditionType": 0,
+                            "fixedValue": 1.0,
+                            "threshold": 0.5,
+                            "valueOffset": 0.0,
+                            "valueScale": 1.0,
+                            "valueSource": 0
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "InputCommandApplier"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "angularAcceleration": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "angularVelocity": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Rotation"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "animations": [
+                                {
+                                    "bindings": [
+                                        {
+                                            "channel": 1,
+                                            "componentIndex": 0,
+                                            "componentType": "Transform",
+                                            "isScriptVariable": false,
+                                            "parameterName": "translate_"
+                                        }
+                                    ],
+                                    "jsonPath": "Assets/Application/KeyframeAnimation.json",
+                                    "loop": true,
+                                    "name": "Anim0",
+                                    "playOnStart": true,
+                                    "playbackSpeed": 1.0,
+                                    "timeOffset": 0.0,
+                                    "valueOffset": 0.0,
+                                    "valueScale": 1.0
+                                }
+                            ]
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "KeyFrameAnimator"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "castShadows": true,
                             "materialName": "Default",
                             "materialNames": [
@@ -374,22 +451,17 @@
                     "data": {
                         "customData": {
                             "fields": {
-                                "branchProbability": 0.3499999940395355,
-                                "corridorWidth": 1,
-                                "depthSlots": 2,
-                                "mainLength": 6,
+                                "decorationChance": -0.029999999329447746,
                                 "pipelineName": "Object3D.Solid.BlendNormal",
-                                "roomSizeX": 8,
-                                "roomSizeY": 8,
-                                "roomSizeZ": 1,
-                                "roomSpacing": 1,
-                                "seed": 10443,
-                                "tileWorldSize": 2.0,
-                                "verticalSlots": 3
+                                "seed": 8618,
+                                "stepDepth": -0.5,
+                                "tileSize": 1.0,
+                                "wallHeight": 64,
+                                "wallWidth": 64
                             },
-                            "scriptPath": "Assets\\Application\\Scripts\\StageGenerator.as"
+                            "scriptPath": "Assets\\Application\\Scripts\\MountainWallGenerator.as"
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 1,
                         "tag": ""
                     },
@@ -416,11 +488,11 @@
                                     "z": 0.0
                                 }
                             },
-                            "billboard": false,
-                            "billboardRotationMode": 0,
-                            "billboardTargetObjectID": "",
+                            "billboard": true,
+                            "billboardRotationMode": 1,
+                            "billboardTargetObjectID": "efcdc0c3-11c7-4dec-bab6-a5583a114f2d",
                             "castShadows": true,
-                            "emissionRate": 4096.0,
+                            "emissionRate": 32468.0,
                             "endScale": {
                                 "max": {
                                     "x": 0.0,
@@ -444,7 +516,7 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "gpuSimulation": false,
+                            "gpuSimulation": true,
                             "initialRotation": {
                                 "max": {
                                     "x": 360.0,
@@ -507,7 +579,7 @@
                             },
                             "loop": true,
                             "materialName": "White",
-                            "maxParticles": 8192,
+                            "maxParticles": 65536,
                             "meshAssetPath": "PrimitiveMesh-Triangle2D",
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "playOnStart": true,
@@ -580,7 +652,7 @@
                             "targetObjectID": "",
                             "totalSpawnCount": 100
                         },
-                        "isActive": false,
+                        "isActive": true,
                         "priority": 1,
                         "tag": ""
                     },

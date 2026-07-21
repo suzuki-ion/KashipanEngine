@@ -46,6 +46,8 @@
 
 // オブジェクトコンポーネント（全種類をスクリプトへ登録する）
 #include "Objects/Components/Animator.h"
+#include "Objects/Components/KeyFrameAnimator.h"
+#include "Objects/Components/InputCommandApplier.h"
 #include "Objects/Components/AudioListener.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/AudioSource.h"
@@ -650,6 +652,33 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetAnimationName() const", &Animator::GetAnimationName)
         .method("void SetPlayOnStart(bool)", &Animator::SetPlayOnStart)
         .method("bool GetPlayOnStart() const", &Animator::GetPlayOnStart);
+
+    RegisterComponentType<KeyFrameAnimator>(engine, "KeyFrameAnimator")
+        .method("bool Play(const string &in name)", &KeyFrameAnimator::Play)
+        .method("bool Stop(const string &in name)", &KeyFrameAnimator::Stop)
+        .method("void PlayAll()", &KeyFrameAnimator::PlayAll)
+        .method("void StopAll()", &KeyFrameAnimator::StopAll)
+        .method("bool IsPlaying(const string &in name) const", &KeyFrameAnimator::IsPlaying)
+        .method("bool SetPlaybackSpeed(const string &in name, float speed)", &KeyFrameAnimator::SetPlaybackSpeed)
+        .method("float GetPlaybackSpeed(const string &in name) const", &KeyFrameAnimator::GetPlaybackSpeed)
+        .method("bool TryGetValue(const string &in name, float &out value) const", &KeyFrameAnimator::TryGetValue)
+        .method("uint GetAnimationCount() const", [](const KeyFrameAnimator &animator) -> std::uint32_t {
+            return static_cast<std::uint32_t>(animator.GetAnimationCount());
+        });
+
+    RegisterComponentType<InputCommandApplier>(engine, "InputCommandApplier")
+        .method("void SetCommandName(const string &in)", &InputCommandApplier::SetCommandName)
+        .method("const string &GetCommandName() const", &InputCommandApplier::GetCommandName)
+        .method("void SetThreshold(float)", &InputCommandApplier::SetThreshold)
+        .method("float GetThreshold() const", &InputCommandApplier::GetThreshold)
+        .method("void SetFixedValue(float)", &InputCommandApplier::SetFixedValue)
+        .method("float GetFixedValue() const", &InputCommandApplier::GetFixedValue)
+        .method("void SetValueScale(float)", &InputCommandApplier::SetValueScale)
+        .method("float GetValueScale() const", &InputCommandApplier::GetValueScale)
+        .method("void SetValueOffset(float)", &InputCommandApplier::SetValueOffset)
+        .method("float GetValueOffset() const", &InputCommandApplier::GetValueOffset)
+        .method("bool WasApplied() const", &InputCommandApplier::WasApplied)
+        .method("float GetLastValue() const", &InputCommandApplier::GetLastValue);
 
     RegisterComponentType<TextRenderer>(engine, "TextRenderer")
         .method("void SetText(const string &in)", &TextRenderer::SetText)

@@ -871,6 +871,55 @@ if (loaded !is null) {
 | `void SetAnimationName(const string &in)` / `const string &GetAnimationName() const` | 再生するアニメーション名の設定/取得 |
 | `void SetPlayOnStart(bool)` / `bool GetPlayOnStart() const` | 開始時に自動再生するかどうか |
 
+### KeyFrameAnimator
+
+キーフレームアニメーション（json）のfloat値を、同オブジェクトの他コンポーネントのパラメータへ毎フレーム適用するコンポーネントです。
+
+- アニメーションのjsonはエディターツールの **Keyframe Animation Editor**（メニューバーの Tools > Keyframe Animation Editor）で作成し、インスペクターの各アニメーションエントリの `Json Path` へ指定します。
+- 複数のアニメーションを登録でき、それぞれに再生速度・再生時オフセット（評価時刻へ加算・秒）・スケール（評価値にかける倍率）・デフォルト値オフセット（評価値へ加算）・ループ・自動再生を設定できます。適用値は `評価値 × Value Scale + Value Offset` です。
+- 適用先（Bindings・複数指定可）はインスペクターのコンボから選択します。候補は同オブジェクトの各コンポーネントのfloat系パラメータ（Vector型は成分単位）と、`ScriptComponent` の `[SerializeField]` 付き `float` 変数です。ImGuiのインスペクターで編集できるパラメータは全コンポーネントで候補として登録されています。
+- アニメーションはエントリの `Name` で識別します。スクリプトからは以下のメソッドで制御できます。
+
+| メソッド | 説明 |
+|---|---|
+| `bool Play(const string &in name)` | 指定した名前のアニメーションを先頭から再生する |
+| `bool Stop(const string &in name)` | 指定した名前のアニメーションを停止する（再生位置は保持） |
+| `void PlayAll()` / `void StopAll()` | 全アニメーションの再生/停止 |
+| `bool IsPlaying(const string &in name) const` | 再生中かどうか |
+| `bool SetPlaybackSpeed(const string &in name, float speed)` / `float GetPlaybackSpeed(const string &in name) const` | 再生速度倍率（負の値で逆再生） |
+| `bool TryGetValue(const string &in name, float &out value) const` | 最後に評価された値（値オフセット適用後）を取得する |
+| `uint GetAnimationCount() const` | 登録されているアニメーション数 |
+
+```angelscript
+KeyFrameAnimator@ animator;
+if (GetComponent(@animator)) {
+    animator.Play("DoorOpen");
+    float value;
+    if (animator.TryGetValue("DoorOpen", value)) {
+        // 再生中の評価値を独自の処理にも利用できる
+    }
+}
+```
+
+### InputCommandApplier
+
+InputCommandの入力を、同オブジェクトの他コンポーネントのパラメータへ適用するコンポーネントです。1つのオブジェクトへ複数アタッチでき、コマンド・条件ごとに別々の適用が行えます。
+
+- 毎フレーム `Command Name` の入力コマンドを評価し、**条件を満たしたフレームだけ**値をバインド先へ書き込みます。
+- 条件（Condition）: コマンドがtrue / コマンドがfalse / 入力値が閾値以上 / 入力値が閾値以下 / 入力値が閾値と等しい（誤差1e-6以内）
+- 書き込む値（Value Source）: 入力コマンドの評価値 or 固定値。適用値は `値 × Value Scale + Value Offset` です。
+- 適用先（Bindings・複数指定可）は `KeyFrameAnimator` と同じ仕組みで、同オブジェクトのコンポーネントのfloat系パラメータまたは `ScriptComponent` の `[SerializeField]` 付き `float` 変数をコンボから選択します。
+
+| メソッド | 説明 |
+|---|---|
+| `void SetCommandName(const string &in)` / `const string &GetCommandName() const` | 評価する入力コマンド名 |
+| `void SetThreshold(float)` / `float GetThreshold() const` | 入力値と比較する閾値 |
+| `void SetFixedValue(float)` / `float GetFixedValue() const` | 固定値モードで書き込む値 |
+| `void SetValueScale(float)` / `float GetValueScale() const` | 書き込む値にかけるスケール |
+| `void SetValueOffset(float)` / `float GetValueOffset() const` | 書き込む値へ加算するオフセット |
+| `bool WasApplied() const` | 前回のUpdateで条件を満たして値を適用したか |
+| `float GetLastValue() const` | 前回適用した値（Scale/Offset適用後） |
+
 ### Text
 
 | メソッド | 説明 |

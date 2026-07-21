@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector3.h"
@@ -7,7 +7,11 @@ namespace KashipanEngine {
 
 class CapsuleCollider final : public ICollider {
 public:
-    CapsuleCollider() : ICollider("CapsuleCollider", Shape::Capsule, false, GetComponentTypeID<CapsuleCollider>()) {}
+    CapsuleCollider() : ICollider("CapsuleCollider", Shape::Capsule, false, GetComponentTypeID<CapsuleCollider>()) {
+        ADD_MEMBER_VARIABLE(radius_);
+        ADD_MEMBER_VARIABLE(height_);
+        ADD_MEMBER_VARIABLE(center_);
+    }
     ~CapsuleCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Assets/TextureManager.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
@@ -17,7 +17,18 @@ public:
         float edgeColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     };
 
-    DissolveEffect() : IPostProcessComponent("DissolveEffect") {}
+    DissolveEffect() : IPostProcessComponent("DissolveEffect") {
+        ADD_MEMBER_VARIABLE(params_.maskThreshold);
+        ADD_MEMBER_VARIABLE(params_.edgeThickness);
+        AddMemberVariable("params_.baseTextureColor[0]", &params_.baseTextureColor[0]);
+        AddMemberVariable("params_.baseTextureColor[1]", &params_.baseTextureColor[1]);
+        AddMemberVariable("params_.baseTextureColor[2]", &params_.baseTextureColor[2]);
+        AddMemberVariable("params_.baseTextureColor[3]", &params_.baseTextureColor[3]);
+        AddMemberVariable("params_.edgeColor[0]", &params_.edgeColor[0]);
+        AddMemberVariable("params_.edgeColor[1]", &params_.edgeColor[1]);
+        AddMemberVariable("params_.edgeColor[2]", &params_.edgeColor[2]);
+        AddMemberVariable("params_.edgeColor[3]", &params_.edgeColor[3]);
+    }
     ~DissolveEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

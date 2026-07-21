@@ -104,8 +104,12 @@ EditorToolのエンジンには [ScriptReference.md](ScriptReference.md) に記�
 | レイアウト | `void Separator()` / `void SameLine(float offsetX = 0.0f, float spacing = -1.0f)` / `void NewLine()` / `void Spacing()` / `void Indent(float width = 0.0f)` / `void Unindent(float width = 0.0f)` / `void SetNextItemWidth(float width)` / `void PushID(int id)` / `void PushID(const string &in id)` / `void PopID()` / `void BeginDisabled(bool disabled = true)` / `void EndDisabled()` / `bool BeginChild(const string &in id, float width = 0, float height = 0, bool border = false)` / `void EndChild()` |
 | ツリー・折りたたみ | `bool TreeNode(const string &in)` / `void TreePop()` / `bool CollapsingHeader(const string &in)` |
 | 状態取得・その他 | `bool IsItemHovered()` / `bool IsItemClicked(int button = 0)` / `bool IsItemActive()` / `void SetTooltip(const string &in)` / `Vector2 GetContentRegionAvail()` |
+| 図形描画（現在のウィンドウの描画リストへ直接描く。スクリーン座標系） | `Vector2 GetCursorScreenPos()` / `void Dummy(const Vector2 &in size)` / `void DrawLine(const Vector2 &in p1, const Vector2 &in p2, const Vector4 &in color, float thickness = 1.0f)` / `void DrawRect(const Vector2 &in pMin, const Vector2 &in pMax, const Vector4 &in color, float thickness = 1.0f, float rounding = 0.0f)` / `void DrawRectFilled(const Vector2 &in pMin, const Vector2 &in pMax, const Vector4 &in color, float rounding = 0.0f)` / `void DrawCircleFilled(const Vector2 &in center, float radius, const Vector4 &in color, int segments = 0)` / `void DrawText(const Vector2 &in pos, const Vector4 &in color, const string &in text)` |
+| マウス入力（自作の直接描画UIをクリック/ドラッグ操作させる） | `Vector2 GetMousePos()` / `bool InvisibleButton(const string &in id, const Vector2 &in size)` |
 
 `Combo` は選択肢の一覧（`array<string>`）と現在のインデックス（`&inout`）を渡す簡易版（内部で`BeginCombo`/`Selectable`/`EndCombo`を組み立てる）。個別の`BeginCombo`/`EndCombo`は登録されていない。
+
+図形描画系は`ImGui::GetCursorScreenPos()`で描画開始位置（スクリーン座標）を取得し、`DrawLine`等で任意の図形を描いた後、実際に描いた領域のサイズを`ImGui::Dummy(size)`に渡してレイアウト領域を確保するのが基本パターン（`Dummy`を呼ばないと後続のウィジェットが描画内容に重なる）。クリック/ドラッグ操作を受け付けたい場合は`Dummy`の代わりに`InvisibleButton(id, size)`を同じ位置へ置く（レイアウト確保を兼ねる透明なボタンになる）。戻り値はクリックされた瞬間だけ`true`、`ImGui::IsItemActive()`はマウスボタンを押している間ずっと`true`になる（カーソルが領域外へ出てもドラッグ中は`true`のまま）ため、`GetMousePos()`と組み合わせて値をドラッグで書き換えるUIが作れる。グラフ・カーブエディター・ミニマップ等の自作UIに使う。実例は[`EditorTools/KeyframeAnimationEditor.as`](../EditorTools/KeyframeAnimationEditor.as)の`ShowCurveSection()`（キーフレームの点をドラッグして値を編集する）を参照。
 
 ## サンプルスクリプト
 
@@ -159,7 +163,10 @@ class HierarchyTool : EditorTool {
 }
 ```
 
-より実践的な例として、[`EditorTools/WfcTileEditor.as`](../EditorTools/WfcTileEditor.as)（[WaveFunctionCollapse](ScriptReference.md#wavefunctioncollapse波動関数崩壊アルゴリズム)用タイル定義のグリッドエディター、`Json`の保存/読み込み・動的な接続編集を含む）も参照。
+より実践的な例として、以下の同梱ツールも参照:
+
+- [`EditorTools/WfcTileEditor.as`](../EditorTools/WfcTileEditor.as) — [WaveFunctionCollapse](ScriptReference.md#wavefunctioncollapse波動関数崩壊アルゴリズム)用タイル定義のグリッドエディター（`Json`の保存/読み込み・動的な接続編集を含む）
+- [`EditorTools/KeyframeAnimationEditor.as`](../EditorTools/KeyframeAnimationEditor.as) — `KeyFrameAnimator`コンポーネント用のキーフレームjson作成エディター（イージング選択コンボ・評価値プレビューを含む）
 
 ## 注意事項
 

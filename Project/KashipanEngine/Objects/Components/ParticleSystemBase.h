@@ -318,6 +318,49 @@ protected:
         ADD_MEMBER_VARIABLE(spawnCapsuleRadiusMax_);
         ADD_MEMBER_VARIABLE(spawnCapsuleHeightMin_);
         ADD_MEMBER_VARIABLE(spawnCapsuleHeightMax_);
+        ADD_MEMBER_VARIABLE(playOnStart_);
+        ADD_MEMBER_VARIABLE(loop_);
+        ADD_MEMBER_VARIABLE(fixedSpawnPosition_);
+        ADD_MEMBER_VARIABLE(meshAssetPath_);
+        ADD_MEMBER_VARIABLE(pipelineName_);
+        ADD_MEMBER_VARIABLE(materialName_);
+        // RandomizableValue<T>（固定値/ランダム範囲切り替え付きの値）はサブフィールド単位で登録する
+        ADD_MEMBER_VARIABLE(spawnCount_.randomize);
+        ADD_MEMBER_VARIABLE(spawnCount_.value);
+        ADD_MEMBER_VARIABLE(spawnCount_.min);
+        ADD_MEMBER_VARIABLE(spawnCount_.max);
+        ADD_MEMBER_VARIABLE(lifetime_.randomize);
+        ADD_MEMBER_VARIABLE(lifetime_.value);
+        ADD_MEMBER_VARIABLE(lifetime_.min);
+        ADD_MEMBER_VARIABLE(lifetime_.max);
+        ADD_MEMBER_VARIABLE(initialVelocity_.randomize);
+        ADD_MEMBER_VARIABLE(initialVelocity_.value);
+        ADD_MEMBER_VARIABLE(initialVelocity_.min);
+        ADD_MEMBER_VARIABLE(initialVelocity_.max);
+        ADD_MEMBER_VARIABLE(acceleration_.randomize);
+        ADD_MEMBER_VARIABLE(acceleration_.value);
+        ADD_MEMBER_VARIABLE(acceleration_.min);
+        ADD_MEMBER_VARIABLE(acceleration_.max);
+        ADD_MEMBER_VARIABLE(startScale_.randomize);
+        ADD_MEMBER_VARIABLE(startScale_.value);
+        ADD_MEMBER_VARIABLE(startScale_.min);
+        ADD_MEMBER_VARIABLE(startScale_.max);
+        ADD_MEMBER_VARIABLE(endScale_.randomize);
+        ADD_MEMBER_VARIABLE(endScale_.value);
+        ADD_MEMBER_VARIABLE(endScale_.min);
+        ADD_MEMBER_VARIABLE(endScale_.max);
+        ADD_MEMBER_VARIABLE(initialRotation_.randomize);
+        ADD_MEMBER_VARIABLE(initialRotation_.value);
+        ADD_MEMBER_VARIABLE(initialRotation_.min);
+        ADD_MEMBER_VARIABLE(initialRotation_.max);
+        ADD_MEMBER_VARIABLE(initialRotationSpeed_.randomize);
+        ADD_MEMBER_VARIABLE(initialRotationSpeed_.value);
+        ADD_MEMBER_VARIABLE(initialRotationSpeed_.min);
+        ADD_MEMBER_VARIABLE(initialRotationSpeed_.max);
+        ADD_MEMBER_VARIABLE(rotationAcceleration_.randomize);
+        ADD_MEMBER_VARIABLE(rotationAcceleration_.value);
+        ADD_MEMBER_VARIABLE(rotationAcceleration_.min);
+        ADD_MEMBER_VARIABLE(rotationAcceleration_.max);
     }
 
     /// @brief 派生クラスのInitializeから呼ぶ

@@ -150,17 +150,59 @@ void RegisterImGuiScriptBindings(asIScriptEngine *engine) {
         .function("bool CollapsingHeader(const string &in)", [](const std::string &label) -> bool {
             return ImGui::CollapsingHeader(label.c_str());
         })
+        .function("bool InvisibleButton(const string &in id, const Vector2 &in size)",
+            [](const std::string &id, const Vector2 &size) -> bool {
+                return ImGui::InvisibleButton(id.c_str(), ImVec2(size.x, size.y));
+            })
         //--------- 状態取得・その他 ---------//
         .function("bool IsItemHovered()", []() -> bool { return ImGui::IsItemHovered(); })
         .function("bool IsItemClicked(int button = 0)", [](int button) -> bool { return ImGui::IsItemClicked(button); })
         .function("bool IsItemActive()", []() -> bool { return ImGui::IsItemActive(); })
+        .function("Vector2 GetMousePos()", []() -> Vector2 {
+            const ImVec2 p = ImGui::GetMousePos();
+            return Vector2(p.x, p.y);
+        })
         .function("void SetTooltip(const string &in)", [](const std::string &text) {
             ImGui::SetTooltip("%s", text.c_str());
         })
         .function("Vector2 GetContentRegionAvail()", []() -> Vector2 {
             const ImVec2 avail = ImGui::GetContentRegionAvail();
             return Vector2(avail.x, avail.y);
-        });
+        })
+        //--------- 図形描画（現在のウィンドウの描画リストへ直接描く。スクリーン座標系） ---------//
+        .function("Vector2 GetCursorScreenPos()", []() -> Vector2 {
+            const ImVec2 p = ImGui::GetCursorScreenPos();
+            return Vector2(p.x, p.y);
+        })
+        .function("void Dummy(const Vector2 &in size)", [](const Vector2 &size) {
+            // 直接描画した領域の分だけ、以降のウィジェットを配置する高さ/幅を確保する
+            ImGui::Dummy(ImVec2(size.x, size.y));
+        })
+        .function("void DrawLine(const Vector2 &in p1, const Vector2 &in p2, const Vector4 &in color, float thickness = 1.0f)",
+            [](const Vector2 &p1, const Vector2 &p2, const Vector4 &color, float thickness) {
+                ImGui::GetWindowDrawList()->AddLine(ImVec2(p1.x, p1.y), ImVec2(p2.x, p2.y),
+                    ImGui::ColorConvertFloat4ToU32(ImVec4(color.x, color.y, color.z, color.w)), thickness);
+            })
+        .function("void DrawRect(const Vector2 &in pMin, const Vector2 &in pMax, const Vector4 &in color, float thickness = 1.0f, float rounding = 0.0f)",
+            [](const Vector2 &pMin, const Vector2 &pMax, const Vector4 &color, float thickness, float rounding) {
+                ImGui::GetWindowDrawList()->AddRect(ImVec2(pMin.x, pMin.y), ImVec2(pMax.x, pMax.y),
+                    ImGui::ColorConvertFloat4ToU32(ImVec4(color.x, color.y, color.z, color.w)), rounding, 0, thickness);
+            })
+        .function("void DrawRectFilled(const Vector2 &in pMin, const Vector2 &in pMax, const Vector4 &in color, float rounding = 0.0f)",
+            [](const Vector2 &pMin, const Vector2 &pMax, const Vector4 &color, float rounding) {
+                ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(pMin.x, pMin.y), ImVec2(pMax.x, pMax.y),
+                    ImGui::ColorConvertFloat4ToU32(ImVec4(color.x, color.y, color.z, color.w)), rounding);
+            })
+        .function("void DrawCircleFilled(const Vector2 &in center, float radius, const Vector4 &in color, int segments = 0)",
+            [](const Vector2 &center, float radius, const Vector4 &color, int segments) {
+                ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(center.x, center.y), radius,
+                    ImGui::ColorConvertFloat4ToU32(ImVec4(color.x, color.y, color.z, color.w)), segments);
+            })
+        .function("void DrawText(const Vector2 &in pos, const Vector4 &in color, const string &in text)",
+            [](const Vector2 &pos, const Vector4 &color, const std::string &text) {
+                ImGui::GetWindowDrawList()->AddText(ImVec2(pos.x, pos.y),
+                    ImGui::ColorConvertFloat4ToU32(ImVec4(color.x, color.y, color.z, color.w)), text.c_str());
+            });
 }
 
 } // namespace KashipanEngine

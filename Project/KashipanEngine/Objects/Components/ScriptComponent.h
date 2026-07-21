@@ -80,6 +80,13 @@ public:
     /// @details 対応型・非対応型はGetVariableと同じ
     bool SetVariable(const std::string &name, void *ref, int typeId);
 
+    /// @brief [SerializeField] 付きのfloat型変数の名前一覧を取得する（KeyFrameAnimator等の適用先列挙用）
+    /// @details スクリプトが未ビルドの場合は空のリストを返す
+    std::vector<std::string> GetFloatVariableNames() const;
+    /// @brief float型の [SerializeField] 変数へ名前で値を設定する（AngelScriptの型ID指定が不要な簡易版）
+    /// @return 名前が一致するfloat型変数が見つかった場合は true
+    bool SetFloatVariable(const std::string &name, float value);
+
     /// @brief スクリプト変数に付与された属性（Unity互換メタデータ）
     struct FieldAttributes {
         bool serializeField = false;  ///< [SerializeField]

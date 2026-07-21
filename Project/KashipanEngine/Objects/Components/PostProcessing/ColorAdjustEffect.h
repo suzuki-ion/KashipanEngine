@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -15,7 +15,15 @@ public:
         float colorBalance[3] = { 0.0f, 0.0f, 0.0f };
     };
 
-    ColorAdjustEffect() : IPostProcessComponent("ColorAdjustEffect") {}
+    ColorAdjustEffect() : IPostProcessComponent("ColorAdjustEffect") {
+        ADD_MEMBER_VARIABLE(params_.brightness);
+        ADD_MEMBER_VARIABLE(params_.contrast);
+        ADD_MEMBER_VARIABLE(params_.saturation);
+        ADD_MEMBER_VARIABLE(params_.temperature);
+        AddMemberVariable("params_.colorBalance[0]", &params_.colorBalance[0]);
+        AddMemberVariable("params_.colorBalance[1]", &params_.colorBalance[1]);
+        AddMemberVariable("params_.colorBalance[2]", &params_.colorBalance[2]);
+    }
     ~ColorAdjustEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

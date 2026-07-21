@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -13,7 +13,11 @@ public:
         float strength = 0.0025f;
     };
 
-    ChromaticAberrationEffect() : IPostProcessComponent("ChromaticAberrationEffect") {}
+    ChromaticAberrationEffect() : IPostProcessComponent("ChromaticAberrationEffect") {
+        ADD_MEMBER_VARIABLE(params_.directionX);
+        ADD_MEMBER_VARIABLE(params_.directionY);
+        ADD_MEMBER_VARIABLE(params_.strength);
+    }
     ~ChromaticAberrationEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

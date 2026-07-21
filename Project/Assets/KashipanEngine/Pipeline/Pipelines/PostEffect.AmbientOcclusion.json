@@ -1,0 +1,16 @@
+{
+	"PipelineType": "Render",
+	"Name": "PostEffect.AmbientOcclusion",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "AmbientOcclusion.Vertex" },
+		"Pixel": { "UsePreset": "AmbientOcclusion.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

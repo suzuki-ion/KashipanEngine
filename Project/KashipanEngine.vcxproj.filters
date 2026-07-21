@@ -1104,6 +1104,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\MeshFilter.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\AmbientOcclusionEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BloomEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>

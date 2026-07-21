@@ -118,7 +118,7 @@
                                 }
                             ],
                             "fovLerpFactor": 0.10000000149011612,
-                            "moveLerpAll": 0.10000000149011612,
+                            "moveLerpAll": 0.05000000074505806,
                             "moveLerpPerAxis": {
                                 "x": 0.10000000149011612,
                                 "y": 0.10000000149011612,
@@ -149,6 +149,23 @@
                         "tag": ""
                     },
                     "type": "CameraController"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "rotationMode": 1,
+                            "rotationOffset": {
+                                "x": -0.13962633907794952,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "targetObjectID": "1acacda4-8a0b-4b0d-9627-63a60150004d"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "TargetLookAt"
                 },
                 {
                     "data": {
@@ -568,9 +585,9 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
-                            "materialName": "White",
+                            "materialName": "EntityMaterial",
                             "materialNames": [
-                                "White"
+                                "EntityMaterial"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -757,9 +774,9 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
-                            "materialName": "White",
+                            "materialName": "EnemyMaterial",
                             "materialNames": [
-                                "White"
+                                "EnemyMaterial"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -946,9 +963,9 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
-                            "materialName": "White",
+                            "materialName": "EnemyMaterial",
                             "materialNames": [
-                                "White"
+                                "EnemyMaterial"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -1135,9 +1152,9 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
-                            "materialName": "White",
+                            "materialName": "EnemyMaterial",
                             "materialNames": [
-                                "White"
+                                "EnemyMaterial"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -1324,9 +1341,9 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
-                            "materialName": "White",
+                            "materialName": "EnemyMaterial",
                             "materialNames": [
-                                "White"
+                                "EnemyMaterial"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -1513,9 +1530,9 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
-                            "materialName": "White",
+                            "materialName": "EnemyMaterial",
                             "materialNames": [
-                                "White"
+                                "EnemyMaterial"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -1702,9 +1719,9 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
-                            "materialName": "White",
+                            "materialName": "EnemyMaterial",
                             "materialNames": [
-                                "White"
+                                "EnemyMaterial"
                             ],
                             "pipelineName": "Object3D.Solid.BlendNormal",
                             "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -1761,12 +1778,12 @@
                                 "y": 1.0,
                                 "z": 1.0
                             },
-                            "decay": 3.0,
+                            "decay": 4.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 0.5,
+                            "intensity": 2.0,
                             "outerAngle": 0.6000000238418579,
-                            "radius": 12.0,
+                            "radius": 2.0,
                             "shadowBias": 1.0,
                             "shadowDistance": 100.0,
                             "shadowMapResolution": 512,
@@ -1775,7 +1792,7 @@
                             "sourceLength": 1.0,
                             "sourceRadius": 0.5,
                             "sourceWidth": 1.0,
-                            "type": 1
+                            "type": 4
                         },
                         "isActive": true,
                         "priority": 1,
@@ -1797,7 +1814,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "SphereLight",
             "objectID": "d66f1aa6-012b-46f1-9a57-19b05240dc45",
             "tag": ""
@@ -3425,8 +3442,8 @@
                     "data": {
                         "customData": {
                             "rotate": {
-                                "w": 0.9848078489303589,
-                                "x": 0.17364820837974548,
+                                "w": 1.0,
+                                "x": 0.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
@@ -3460,7 +3477,7 @@
                             "decay": 2.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 0.05000000074505806,
+                            "intensity": 0.07000000029802322,
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowBias": 0.0,
@@ -3515,6 +3532,96 @@
                     "data": {
                         "customData": {
                             "rotate": {
+                                "w": -4.371138828673793e-08,
+                                "x": 1.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 0.9999942183494568,
+                                "z": 0.9999942183494568
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 2.841869592666626,
+                                "z": 1.0343568325042725
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 0.7843137383460999,
+                                "y": 0.7843137383460999,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.20000000298023224,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 256.0,
+                            "shadowMapResolution": 512,
+                            "shadowSoftness": 0.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "comment": "全体を照らすためだけの平行光源"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Comment"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "SceneLight",
+            "objectID": "7e8ea4e5-8197-4530-a7da-e41db827825d",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
                                 "w": 1.0,
                                 "x": 0.0,
                                 "y": 0.0,
@@ -3554,6 +3661,76 @@
                 {
                     "data": {
                         "customData": {
+                            "bias": 0.20000000298023224,
+                            "blurRadius": 8,
+                            "depthThreshold": 16.0,
+                            "excludedScreenBuffers": [],
+                            "intensity": 3.0,
+                            "power": 2.0,
+                            "radius": 4.0,
+                            "sampleCount": 32
+                        },
+                        "isActive": true,
+                        "priority": 2,
+                        "tag": ""
+                    },
+                    "type": "AmbientOcclusionEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "brightness": 0.0,
+                            "colorBalance": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "contrast": 1.0,
+                            "excludedScreenBuffers": [],
+                            "saturation": 4.0,
+                            "temperature": 2.0
+                        },
+                        "isActive": false,
+                        "priority": 3,
+                        "tag": ""
+                    },
+                    "type": "ColorAdjustEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "color": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                            "excludedScreenBuffers": [],
+                            "thickness": 1.0,
+                            "threshold": 0.5
+                        },
+                        "isActive": false,
+                        "priority": 4,
+                        "tag": ""
+                    },
+                    "type": "OutlineEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "excludedScreenBuffers": [],
+                            "radius": 1,
+                            "sigma": 1.0
+                        },
+                        "isActive": false,
+                        "priority": 5,
+                        "tag": ""
+                    },
+                    "type": "GaussianFilterEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "direction": [
                                 1.0,
                                 0.0
@@ -3562,7 +3739,7 @@
                             "strength": 0.0020000000949949026
                         },
                         "isActive": true,
-                        "priority": 3,
+                        "priority": 6,
                         "tag": ""
                     },
                     "type": "ChromaticAberrationEffect"
@@ -3570,15 +3747,15 @@
                 {
                     "data": {
                         "customData": {
-                            "blurRadius": 2.0,
+                            "blurRadius": 1.0,
                             "excludedScreenBuffers": [],
-                            "intensity": 0.4000000059604645,
+                            "intensity": 0.25,
                             "iterations": 4,
                             "softKnee": 1.0,
-                            "threshold": 0.800000011920929
+                            "threshold": 0.699999988079071
                         },
                         "isActive": true,
-                        "priority": 4,
+                        "priority": 7,
                         "tag": ""
                     },
                     "type": "BloomEffect"
@@ -3598,11 +3775,11 @@
                             },
                             "excludedScreenBuffers": [],
                             "innerRadius": 0.30000001192092896,
-                            "intensity": 1.0,
+                            "intensity": 0.5,
                             "smoothness": 0.30000001192092896
                         },
                         "isActive": true,
-                        "priority": 5,
+                        "priority": 8,
                         "tag": ""
                     },
                     "type": "VignetteEffect"
@@ -23432,7 +23609,7 @@
                                 "value": 1.0
                             },
                             "loop": true,
-                            "materialName": "White",
+                            "materialName": "EntityMaterial",
                             "maxParticles": 8192,
                             "meshAssetPath": "PrimitiveMesh-Box",
                             "pipelineName": "Object3D.Solid.BlendNormal",
@@ -25452,6 +25629,86 @@
             "isActive": true,
             "name": "TubeLight",
             "objectID": "6ea0f27e-7ac9-42eb-996b-8b1f05e88c95",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 3.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.5,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 12.0,
+                            "shadowBias": 1.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "shadowSoftness": 0.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 1
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "e105ce18-5e90-4a21-8354-88c1a9868aa3",
             "tag": ""
         }
     ],

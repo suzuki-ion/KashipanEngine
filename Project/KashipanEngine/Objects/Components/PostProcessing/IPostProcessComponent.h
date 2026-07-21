@@ -8,6 +8,8 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Assets/SamplerManager.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
 
 namespace KashipanEngine {
 
@@ -65,7 +67,24 @@ public:
         std::function<ShaderVariableBinder &(const std::string &)> getShaderBinder;
     };
 
+    /// @brief このスクリーンバッファへ実際に描画したカメラの情報
+    /// @details 深度バッファからワールド座標を再構成したい（AO等）、あるいは深度の線形化に
+    ///          Near/Farが必要（Outline等）ポストエフェクトが、ユーザーにカメラ設定の手動複製を
+    ///          要求せずに済むよう Renderer が解決して注入する。該当するカメラが見つからなかった
+    ///          場合は valid=false（この場合、RenderCustom側は何もせず false を返し、
+    ///          BuildPasses側は近似できないことを踏まえた既定値で処理すること）。
+    struct CameraInfo {
+        bool valid = false;
+        Matrix4x4 viewProjection = Matrix4x4::Identity();
+        Vector3 worldPosition{ 0.0f, 0.0f, 0.0f };
+        float nearClip = 0.1f;
+        float farClip = 1000.0f;
+    };
+
     virtual ~IPostProcessComponent() = default;
+
+    /// @brief カメラ情報の注入（Renderer から BuildPasses/RenderCustom より前に毎フレーム呼ばれる）
+    void SetCameraInfoInterface(Passkey<Renderer>, const CameraInfo &info) { cameraInfo_ = info; }
 
     /// @brief ポストエフェクトパス情報の構築（Renderer から呼ばれる）
     std::vector<PassInfo> BuildPassesInterface(Passkey<Renderer>) { return BuildPasses(); }
@@ -104,6 +123,9 @@ protected:
         auto *screenBufferObject = objectContext->GetComponent<ScreenBufferObject>();
         return screenBufferObject ? screenBufferObject->GetScreenBuffer() : nullptr;
     }
+
+    /// @brief Rendererが注入した、このスクリーンバッファへ描画したカメラの情報を取得する
+    const CameraInfo &GetCameraInfo() const noexcept { return cameraInfo_; }
 
 #if defined(USE_IMGUI)
     /// @brief 適用先ScreenBufferObjectの除外設定UI（派生クラスは自身のShowImGui()の先頭でこれを呼ぶこと）
@@ -157,6 +179,8 @@ protected:
 private:
     /// @brief 適用対象から除外するスクリーンバッファ名（GetRenderTargetName()）の集合
     std::unordered_set<std::string> excludedScreenBufferNames_;
+    /// @brief Rendererから注入された、このスクリーンバッファへ描画したカメラの情報
+    CameraInfo cameraInfo_;
 };
 
 } // namespace KashipanEngine

@@ -11,8 +11,6 @@ public:
         float threshold = 0.1f;
         float thickness = 1.0f;
         float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        float cameraNear = 0.1f;
-        float cameraFar = 1000.0f;
     };
 
     OutlineEffect() : IPostProcessComponent("OutlineEffect") {
@@ -41,8 +39,10 @@ protected:
         ImGui::DragFloat("Threshold", &params_.threshold, 0.001f, 0.0f, 10.0f, "%.4f");
         ImGui::DragFloat("Thickness", &params_.thickness, 0.1f, 0.0f, 16.0f, "%.1f");
         ImGui::ColorEdit4("Color", params_.color);
-        ImGui::DragFloat("Camera Near", &params_.cameraNear, 0.01f, 0.0001f, 100.0f, "%.4f");
-        ImGui::DragFloat("Camera Far", &params_.cameraFar, 1.0f, 0.1f, 100000.0f, "%.1f");
+        if (!GetCameraInfo().valid) {
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+                "No camera resolved for this ScreenBuffer yet: depth linearization may be inaccurate.");
+        }
     }
 #endif
 
@@ -51,8 +51,6 @@ protected:
         json["threshold"] = params_.threshold;
         json["thickness"] = params_.thickness;
         json["color"] = { params_.color[0], params_.color[1], params_.color[2], params_.color[3] };
-        json["cameraNear"] = params_.cameraNear;
-        json["cameraFar"] = params_.cameraFar;
         return json;
     }
 
@@ -63,8 +61,7 @@ protected:
         if (json.contains("color") && json["color"].is_array() && json["color"].size() >= 4) {
             for (int i = 0; i < 4; ++i) params_.color[i] = json["color"][i].get<float>();
         }
-        params_.cameraNear = json.value("cameraNear", 0.1f);
-        params_.cameraFar = json.value("cameraFar", 1000.0f);
+        // 旧バージョンで保存されたcameraNear/cameraFarが残っていても、以後はカメラから自動解決するため無視する
         return true;
     }
 
@@ -75,8 +72,10 @@ protected:
         cbData_.threshold = std::max(0.0f, params_.threshold);
         cbData_.thickness = std::max(0.0f, params_.thickness);
         for (int i = 0; i < 4; ++i) cbData_.color[i] = params_.color[i];
-        cbData_.cameraNear = params_.cameraNear;
-        cbData_.cameraFar = params_.cameraFar;
+        // カメラのNear/FarはユーザーにOutline側で複製させず、実際に描画したカメラから自動解決する
+        const CameraInfo &cameraInfo = GetCameraInfo();
+        cbData_.cameraNear = cameraInfo.nearClip;
+        cbData_.cameraFar = cameraInfo.farClip;
         PassInfo pass;
         pass.pipelineName = "PostEffect.Outline";
         pass.constantBufferRequirements = {

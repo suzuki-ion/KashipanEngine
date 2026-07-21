@@ -52,7 +52,7 @@ public:
     /// @brief カスケードシャドウ（Directionalライト）のカスケード数
     static constexpr std::uint32_t kShadowCascadeCount = 4;
     /// @brief 1描画先で同時に影を生成できるライト数の上限（定数バッファサイズによる実質上限）
-    static constexpr std::uint32_t kMaxShadowLightsPerTarget = 16;
+    static constexpr std::uint32_t kMaxShadowLightsPerTarget = 32;
     /// @brief 1ライトあたりのビュー射影行列の最大数（ポイントライトのキューブ6面が最大）
     static constexpr std::uint32_t kMaxShadowViewProjections = 6;
 
@@ -160,9 +160,11 @@ private:
 
     /// @brief ScreenBuffer へのポストプロセス適用
     /// @param ownerObject ScreenBuffer を所有するオブジェクト（ポストエフェクトコンポーネントの取得元）
+    /// @param sceneRenderer このスクリーンバッファへ描画したカメラの情報を解決するために使う（AO等が使用）
     void RenderPostProcess(ScreenBuffer *screenBuffer,
         PipelineBinder &pipelineBinder,
-        EmptyObject *ownerObject);
+        EmptyObject *ownerObject,
+        SceneRenderer *sceneRenderer);
 
     /// @brief エディター用描画先にのみ、デバッグ表示（グリッド・当たり判定）を描画する
     /// @details target がエディター用描画先でない場合は何もしない

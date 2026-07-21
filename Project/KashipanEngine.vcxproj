@@ -1015,6 +1015,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\RigidBody3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\SphereCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\MeshFilter.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\AmbientOcclusionEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BoxFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ChromaticAberrationEffect.h" />

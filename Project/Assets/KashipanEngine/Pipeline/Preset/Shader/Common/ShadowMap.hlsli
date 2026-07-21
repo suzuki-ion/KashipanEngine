@@ -11,7 +11,7 @@
 // 半影のソフト化（PCSS）: 各ライトの pcssParams.x にワールド単位の光源サイズを持たせ、0より大きい場合は
 // ブロッカーサーチ＋可変半径PCFで光源サイズに応じたソフトシャドウを、0の場合は従来通りの固定3x3 PCFを行う。
 
-#define KE_MAX_SHADOW_LIGHTS 16
+#define KE_MAX_SHADOW_LIGHTS 32
 #define KE_SHADOW_CASCADE_COUNT 4
 
 struct ShadowLightData {

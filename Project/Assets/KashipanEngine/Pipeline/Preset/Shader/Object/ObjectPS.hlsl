@@ -11,19 +11,38 @@ struct Material {
 #ifdef Object3D
 #include "../Common/Material3D.hlsli"
 #include "../Common/ShadowMap.hlsli"
+#include "../Common/AreaLight.hlsli"
 #include "Object3D.hlsli"
 
 StructuredBuffer<PointLight> gPointLights : register(t4);
 StructuredBuffer<SpotLight> gSpotLights : register(t5);
 StructuredBuffer<DirectionalLight> gDirectionalLights : register(t6);
+StructuredBuffer<SphereLight> gSphereLights : register(t8);
+StructuredBuffer<DiscLight> gDiscLights : register(t9);
+StructuredBuffer<RectLight> gRectLights : register(t10);
+StructuredBuffer<TubeLight> gTubeLights : register(t11);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
 	uint gSpotLightCount;
 	uint gDirectionalLightCount;
+	uint gSphereLightCount;
+	uint gDiscLightCount;
+	uint gRectLightCount;
+	uint gTubeLightCount;
 };
 
-// Forward+ タイルライトカリングの結果（Point/Spotのみ。Directionalは対象外で従来通り全件ループする）
+// Forward+ タイルライトカリングの結果（Directional以外の全種別。Directionalは対象外で従来通り全件ループする）。
+// パックされたインデックスの上位3bitがライト種別タグ（LIGHT_TAG_*）、下位29bitが配列インデックス
+#define LIGHT_TAG_POINT  0u
+#define LIGHT_TAG_SPOT   1u
+#define LIGHT_TAG_SPHERE 2u
+#define LIGHT_TAG_DISC   3u
+#define LIGHT_TAG_RECT   4u
+#define LIGHT_TAG_TUBE   5u
+#define LIGHT_TAG_SHIFT  29u
+#define LIGHT_INDEX_MASK 0x1FFFFFFFu
+
 StructuredBuffer<uint> gTileLightIndices : register(t3);
 cbuffer TileCullingConstants : register(b4) {
 	float2 gScreenSize;
@@ -31,6 +50,10 @@ cbuffer TileCullingConstants : register(b4) {
 	uint gTileCountY;
 	uint gPointLightCountForCulling;
 	uint gSpotLightCountForCulling;
+	uint gSphereLightCountForCulling;
+	uint gDiscLightCountForCulling;
+	uint gRectLightCountForCulling;
+	uint gTubeLightCountForCulling;
 	uint gMaxLightsPerTile;
 	uint gTileSize;
 };
@@ -131,8 +154,11 @@ PSOutput main(VSOutput input) {
 		}
 	}
 
-	// Point/Spot lights（Forward+: このピクセルが属するタイルのライトインデックスリストだけをループする）
+	// ローカルライト（Forward+: このピクセルが属するタイルのライトインデックスリストだけをループする）
 	if (mat.enableLighting) {
+		float3 viewDir = normalize(gCamera3D.eyePosition.xyz - input.worldPosition);
+		float3 reflectDir = reflect(-viewDir, input.normal);
+
 		uint2 tileCoord = uint2(input.position.xy) / max(gTileSize, 1u);
 		tileCoord = min(tileCoord, uint2(gTileCountX - 1, gTileCountY - 1));
 		uint tileIndex = tileCoord.y * gTileCountX + tileCoord.x;
@@ -141,10 +167,10 @@ PSOutput main(VSOutput input) {
 
 		for (uint t = 0; t < tileLightCount; ++t) {
 			uint packedIndex = gTileLightIndices[tileBase + 1 + t];
-			bool isSpot = (packedIndex & 0x80000000) != 0;
-			uint lightIndex = packedIndex & 0x7FFFFFFF;
+			uint lightTag = packedIndex >> LIGHT_TAG_SHIFT;
+			uint lightIndex = packedIndex & LIGHT_INDEX_MASK;
 
-			if (!isSpot) {
+			if (lightTag == LIGHT_TAG_POINT) {
 				PointLight light = gPointLights[lightIndex];
 				if (!light.enabled) continue;
 
@@ -166,7 +192,7 @@ PSOutput main(VSOutput input) {
 					shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.position);
 				}
 				lightingColor += (diffuse + speculer) * shadow;
-			} else {
+			} else if (lightTag == LIGHT_TAG_SPOT) {
 				SpotLight light = gSpotLights[lightIndex];
 				if (!light.enabled) continue;
 
@@ -192,6 +218,123 @@ PSOutput main(VSOutput input) {
 				float shadow = 1.0f;
 				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
 					shadow = ComputeSpotShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, lightDir);
+				}
+				lightingColor += (diffuse + speculer) * shadow;
+			} else if (lightTag == LIGHT_TAG_SPHERE) {
+				SphereLight light = gSphereLights[lightIndex];
+				if (!light.enabled) continue;
+
+				float3 toLight = light.position - input.worldPosition;
+				float dist = length(toLight);
+				if (dist > light.radius) continue;
+
+				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
+				if (atten <= 0.0f) continue;
+
+				// 鏡面は形状上の代表点（反射ベクトルと球面の最近接点）への方向で評価し、
+				// 光源サイズに応じてハイライトを広げる（真のLTC等ではなく代表点法による近似）
+				float3 representativePoint = SphereRepresentativePoint(input.worldPosition, reflectDir, light.position, light.sourceRadius);
+				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
+
+				float lam = HalfLambert(input.normal, lightDir);
+				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float4 diffuse = light.color * lam * light.intensity * atten;
+				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+				float shadow = 1.0f;
+				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+					shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.position);
+				}
+				lightingColor += (diffuse + speculer) * shadow;
+			} else if (lightTag == LIGHT_TAG_DISC) {
+				DiscLight light = gDiscLights[lightIndex];
+				if (!light.enabled) continue;
+
+				float3 toLight = light.position - input.worldPosition;
+				float dist = length(toLight);
+				if (dist > light.distance) continue;
+
+				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float3 discNormal = normalize(light.direction);
+				// ディスクは片面発光。発光面の法線と表面へ向かう方向のなす角で正面/背面を判定する
+				float facing = saturate(dot(-lightDir, discNormal));
+				if (facing <= 0.0f) continue;
+
+				float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * facing;
+				if (atten <= 0.0f) continue;
+
+				float3 representativePoint = DiscRepresentativePoint(input.worldPosition, reflectDir, light.position, discNormal, light.sourceRadius);
+				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
+
+				float lam = HalfLambert(input.normal, lightDir);
+				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float4 diffuse = light.color * lam * light.intensity * atten;
+				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+				float shadow = 1.0f;
+				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+					shadow = ComputeSpotShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, lightDir);
+				}
+				lightingColor += (diffuse + speculer) * shadow;
+			} else if (lightTag == LIGHT_TAG_RECT) {
+				RectLight light = gRectLights[lightIndex];
+				if (!light.enabled) continue;
+
+				float3 toLight = light.position - input.worldPosition;
+				float dist = length(toLight);
+				if (dist > light.distance) continue;
+
+				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float3 rectNormal = normalize(light.direction);
+				// 矩形も片面発光
+				float facing = saturate(dot(-lightDir, rectNormal));
+				if (facing <= 0.0f) continue;
+
+				float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * facing;
+				if (atten <= 0.0f) continue;
+
+				float3 representativePoint = RectRepresentativePoint(input.worldPosition, reflectDir, light.position, rectNormal,
+					light.right, light.up, light.width * 0.5f, light.height * 0.5f);
+				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float sourceRadius = max(light.width, light.height) * 0.5f;
+				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, sourceRadius, dist);
+
+				float lam = HalfLambert(input.normal, lightDir);
+				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float4 diffuse = light.color * lam * light.intensity * atten;
+				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+				float shadow = 1.0f;
+				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+					shadow = ComputeSpotShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, lightDir);
+				}
+				lightingColor += (diffuse + speculer) * shadow;
+			} else if (lightTag == LIGHT_TAG_TUBE) {
+				TubeLight light = gTubeLights[lightIndex];
+				if (!light.enabled) continue;
+
+				// チューブ上の最近接点を代表点として、球ライトと同じ扱いで拡散・鏡面を求める
+				float3 closest = TubeClosestPoint(input.worldPosition, light.p0, light.p1);
+				float3 toLight = closest - input.worldPosition;
+				float dist = length(toLight);
+				if (dist > light.radius) continue;
+
+				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
+				if (atten <= 0.0f) continue;
+
+				float3 representativePoint = SphereRepresentativePoint(input.worldPosition, reflectDir, closest, light.sourceRadius);
+				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
+
+				float lam = HalfLambert(input.normal, lightDir);
+				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float4 diffuse = light.color * lam * light.intensity * atten;
+				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+				float shadow = 1.0f;
+				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+					float3 midpoint = (light.p0 + light.p1) * 0.5f;
+					shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, midpoint);
 				}
 				lightingColor += (diffuse + speculer) * shadow;
 			}

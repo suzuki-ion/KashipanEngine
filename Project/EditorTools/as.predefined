@@ -4,7 +4,11 @@
 enum LightType {
 	Directional = 0,
 	Point = 1,
-	Spot = 2
+	Spot = 2,
+	Rect = 3,
+	Sphere = 4,
+	Disc = 5,
+	Tube = 6
 }
 
 enum TextHorizontalAlign {
@@ -972,6 +976,14 @@ class Light {
 	float GetInnerAngle() const;
 	void SetOuterAngle(float);
 	float GetOuterAngle() const;
+	void SetSourceRadius(float);
+	float GetSourceRadius() const;
+	void SetSourceWidth(float);
+	float GetSourceWidth() const;
+	void SetSourceHeight(float);
+	float GetSourceHeight() const;
+	void SetSourceLength(float);
+	float GetSourceLength() const;
 	void SetCastShadows(bool);
 	bool IsCastShadows() const;
 	void SetShadowDistance(float);
@@ -980,6 +992,9 @@ class Light {
 	uint GetShadowMapResolution() const;
 	void SetShadowBias(float);
 	float GetShadowBias() const;
+	void SetShadowSoftness(float);
+	float GetShadowSoftness() const;
+	float GetEffectiveShadowSoftness() const;
 }
 
 class LightRenderer {
@@ -995,6 +1010,8 @@ class LightRenderer {
 	LightType GetLightType() const;
 	Vector3 GetWorldPosition() const;
 	Vector3 GetWorldDirection() const;
+	Vector3 GetWorldRight() const;
+	Vector3 GetWorldUp() const;
 }
 
 class NormalWindowObject {

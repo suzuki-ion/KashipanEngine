@@ -39,7 +39,9 @@ class Player : ScriptComponentBehavior {
     float airborneTime = 1000.0f;  // 最後に地面と接触してからの経過時間（秒）
     bool isCollidingWithEnemy = false;
     Vector3 groundHitNormal = Vector3(0.0f, 0.0f, 0.0f);
-    Vector3 groundVelocity = Vector3(0.0f, 0.0f, 0.0f);
+    // 接地中の地面の、前フレームからの実際の移動量（動く床への追従用。Velocityではなく
+    // PreTransformとの差分で求めるため、地面がどのような方法で動いていても追従できる）
+    Vector3 groundDelta = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 groundSlideVelocity = Vector3(0.0f, 0.0f, 0.0f);
     bool isJumping = false;
@@ -67,7 +69,7 @@ class Player : ScriptComponentBehavior {
         isCollidingWithEnemy = false;
         // 猶予時間も含めて完全に地面から離れたら、地面由来の情報をリセットする
         if (!isGrounded) {
-            groundVelocity = Vector3(0.0f, 0.0f, 0.0f);
+            groundDelta = Vector3(0.0f, 0.0f, 0.0f);
             isOnSteepSlope = false;
         }
     }
@@ -95,14 +97,17 @@ class Player : ScriptComponentBehavior {
                 isOnSteepSlope = hit.normal.y < slideThreshold;
             }
 
-            // もし地面にVelocityコンポーネントが付いていたら、その速度を記録しておき
-            // Update()側で移動量に加算する（velocity本体に加算すると接地中に蓄積し続けてしまうため）
+            // 動く床への追従。地面のTransformとPreTransform（前フレームの値）との差分から
+            // 実際の移動量を求めておき、Update()側で移動量に加算する（velocity本体に加算すると
+            // 接地中に蓄積し続けてしまうため）。Velocityコンポーネントを見る方式と違い、
+            // 地面がどんな方法で動いていても（スクリプトで直接Transformを書き換えていても）追従できる
             if (grounded) {
-                Velocity@ groundVelocityComponent;
-                if (hit.otherObject.GetComponent(@groundVelocityComponent)) {
-                    groundVelocity = groundVelocityComponent.GetVelocity();
+                Transform@ groundTransform;
+                PreTransform@ groundPreTransform;
+                if (hit.otherObject.GetComponent(@groundTransform) && hit.otherObject.GetComponent(@groundPreTransform)) {
+                    groundDelta = groundTransform.GetTranslate() - groundPreTransform.GetPreviousTranslate();
                 } else {
-                    groundVelocity = Vector3(0.0f, 0.0f, 0.0f);
+                    groundDelta = Vector3(0.0f, 0.0f, 0.0f);
                 }
             }
 
@@ -262,7 +267,8 @@ class Player : ScriptComponentBehavior {
             stick = groundHitNormal * (-groundStickSpeed);
             stick.z = 0.0f;
         }
-        // 地面の速度は自分のvelocityとは別に、移動量にだけその場で加算する
-        tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundVelocity * dt + groundSlideVelocity * dt + stick * dt);
+        // 地面の移動量は自分のvelocityとは別に、移動量にだけその場で加算する
+        // （groundDeltaは既にdt分の実移動量なので、dtを掛けずにそのまま加算する）
+        tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundDelta + groundSlideVelocity * dt + stick * dt);
     }
 }

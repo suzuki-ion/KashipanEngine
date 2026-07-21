@@ -13,7 +13,12 @@ namespace KashipanEngine {
 
 class RigidBody3D final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(RigidBody3D, 1, )
+    // 直接書き込み時は、セッターと同様に生成済みの物理ボディへも反映する
+    OBJECT_COMPONENT_CONSTRUCTOR(RigidBody3D, 1,
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(mass_, [this] { SetMass(mass_); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(useGravity_, [this] { SetUseGravity(useGravity_); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(interpolate_, [this] { SetInterpolate(interpolate_); });
+    )
     COMPONENT_CATEGORY("Collision")
     ~RigidBody3D() override = default;
 

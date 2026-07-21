@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -12,7 +12,10 @@ public:
         float sigma = 1.0f;
     };
 
-    GaussianFilterEffect() : IPostProcessComponent("GaussianFilterEffect") {}
+    GaussianFilterEffect() : IPostProcessComponent("GaussianFilterEffect") {
+        ADD_MEMBER_VARIABLE(params_.radius);
+        ADD_MEMBER_VARIABLE(params_.sigma);
+    }
     ~GaussianFilterEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

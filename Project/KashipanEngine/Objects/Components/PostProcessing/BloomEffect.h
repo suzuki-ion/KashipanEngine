@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -31,7 +31,13 @@ public:
         std::uint32_t iterations = 4; // ダウンサンプル段数 (1..16)
     };
 
-    BloomEffect() : IPostProcessComponent("BloomEffect") {}
+    BloomEffect() : IPostProcessComponent("BloomEffect") {
+        ADD_MEMBER_VARIABLE(params_.threshold);
+        ADD_MEMBER_VARIABLE(params_.softKnee);
+        ADD_MEMBER_VARIABLE(params_.intensity);
+        ADD_MEMBER_VARIABLE(params_.blurRadius);
+        ADD_MEMBER_VARIABLE(params_.iterations);
+    }
     ~BloomEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

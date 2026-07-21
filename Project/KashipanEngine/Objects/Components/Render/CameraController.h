@@ -23,7 +23,18 @@ namespace KashipanEngine {
 ///          オブジェクト自身のTransformを追従先として扱う。
 class CameraController final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(CameraController, 1, )
+    OBJECT_COMPONENT_CONSTRUCTOR(CameraController, 1,
+        ADD_MEMBER_VARIABLE(positionOffset_);
+        ADD_MEMBER_VARIABLE(rotationOffset_);
+        ADD_MEMBER_VARIABLE(targetFovY_);
+        ADD_MEMBER_VARIABLE(fovLerpFactor_);
+        ADD_MEMBER_VARIABLE(moveLerpFactor_.usePerAxis);
+        ADD_MEMBER_VARIABLE(moveLerpFactor_.all);
+        ADD_MEMBER_VARIABLE(moveLerpFactor_.perAxis);
+        ADD_MEMBER_VARIABLE(rotateLerpFactor_.usePerAxis);
+        ADD_MEMBER_VARIABLE(rotateLerpFactor_.all);
+        ADD_MEMBER_VARIABLE(rotateLerpFactor_.perAxis);
+    )
     COMPONENT_CATEGORY("Render")
     ~CameraController() override = default;
 

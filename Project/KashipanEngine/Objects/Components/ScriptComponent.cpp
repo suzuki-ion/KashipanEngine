@@ -1063,6 +1063,20 @@ bool ScriptComponent::SetVariable(const std::string &name, void *ref, int typeId
     return false;
 }
 
+std::vector<std::string> ScriptComponent::GetFloatVariableNames() const {
+    std::vector<std::string> names;
+    for (const auto &field : serializedFields_) {
+        if (field.isArray || field.isScriptObject || !field.address) continue;
+        if (field.typeId != asTYPEID_FLOAT) continue;
+        names.push_back(field.name);
+    }
+    return names;
+}
+
+bool ScriptComponent::SetFloatVariable(const std::string &name, float value) {
+    return SetVariable(name, &value, asTYPEID_FLOAT);
+}
+
 #if defined(USE_IMGUI)
 void ScriptComponent::ShowImGui() {
     ImGuiCustom::SelectString("Script Path", scriptPath_, GetAvailableScriptPaths(), true);

@@ -9,7 +9,10 @@ namespace KashipanEngine {
 
 class MeshFilter final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(MeshFilter, 1, )
+    // meshHandle_の直接書き込み時は、セッターと同様にSceneRendererの描画リスト再構築を促す
+    OBJECT_COMPONENT_CONSTRUCTOR(MeshFilter, 1,
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(meshHandle_, [this] { SetMeshHandle(meshHandle_); });
+    )
     COMPONENT_CATEGORY("Render")
     explicit MeshFilter(ModelManager::ModelHandle meshHandle)
         : MeshFilter() {

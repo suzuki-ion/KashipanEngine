@@ -4,6 +4,8 @@
 #include "Objects/Collision/CollisionAlgorithms2D.h"
 #include "Objects/Collision/CollisionAlgorithms3D.h"
 #include "Objects/Components/Animator.h"
+#include "Objects/Components/KeyFrameAnimator.h"
+#include "Objects/Components/InputCommandApplier.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/AudioListener.h"
 #include "Objects/Components/AudioSource.h"

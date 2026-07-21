@@ -722,6 +722,45 @@ class Animator {
 	bool GetPlayOnStart() const;
 }
 
+class KeyFrameAnimator {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	bool Play(const string&in name);
+	bool Stop(const string&in name);
+	void PlayAll();
+	void StopAll();
+	bool IsPlaying(const string&in name) const;
+	bool SetPlaybackSpeed(const string&in name, float speed);
+	float GetPlaybackSpeed(const string&in name) const;
+	bool TryGetValue(const string&in name, float&out value) const;
+	uint GetAnimationCount() const;
+}
+
+class InputCommandApplier {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void SetCommandName(const string&in);
+	const string& GetCommandName() const;
+	void SetThreshold(float);
+	float GetThreshold() const;
+	void SetFixedValue(float);
+	float GetFixedValue() const;
+	void SetValueScale(float);
+	float GetValueScale() const;
+	void SetValueOffset(float);
+	float GetValueOffset() const;
+	bool WasApplied() const;
+	float GetLastValue() const;
+}
+
 class TextRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
@@ -1630,11 +1669,20 @@ namespace ImGui {
 	bool TreeNode(const string&in);
 	void TreePop();
 	bool CollapsingHeader(const string&in);
+	bool InvisibleButton(const string&in id, const Vector2&in size);
 	bool IsItemHovered();
 	bool IsItemClicked(int button = 0);
 	bool IsItemActive();
+	Vector2 GetMousePos();
 	void SetTooltip(const string&in);
 	Vector2 GetContentRegionAvail();
+	Vector2 GetCursorScreenPos();
+	void Dummy(const Vector2&in size);
+	void DrawLine(const Vector2&in p1, const Vector2&in p2, const Vector4&in color, float thickness = 1.0f);
+	void DrawRect(const Vector2&in pMin, const Vector2&in pMax, const Vector4&in color, float thickness = 1.0f, float rounding = 0.0f);
+	void DrawRectFilled(const Vector2&in pMin, const Vector2&in pMax, const Vector4&in color, float rounding = 0.0f);
+	void DrawCircleFilled(const Vector2&in center, float radius, const Vector4&in color, int segments = 0);
+	void DrawText(const Vector2&in pos, const Vector4&in color, const string&in text);
 }
 
 namespace Math {

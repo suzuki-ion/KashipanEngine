@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -11,7 +11,9 @@ public:
         float intensity = 1.0f;
     };
 
-    GrayscaleEffect() : IPostProcessComponent("GrayscaleEffect") {}
+    GrayscaleEffect() : IPostProcessComponent("GrayscaleEffect") {
+        ADD_MEMBER_VARIABLE(params_.intensity);
+    }
     ~GrayscaleEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

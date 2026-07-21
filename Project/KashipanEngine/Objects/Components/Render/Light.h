@@ -9,7 +9,19 @@ namespace KashipanEngine {
 class Light final : public IObjectComponent {
 public:
     enum class Type { Directional, Point, Spot };
-    OBJECT_COMPONENT_CONSTRUCTOR(Light, 0xFF, )
+    OBJECT_COMPONENT_CONSTRUCTOR(Light, 0xFF,
+        ADD_MEMBER_VARIABLE(color_);
+        ADD_MEMBER_VARIABLE(intensity_);
+        ADD_MEMBER_VARIABLE(radius_);
+        ADD_MEMBER_VARIABLE(distance_);
+        ADD_MEMBER_VARIABLE(decay_);
+        ADD_MEMBER_VARIABLE(innerAngle_);
+        ADD_MEMBER_VARIABLE(outerAngle_);
+        ADD_MEMBER_VARIABLE(castShadows_);
+        ADD_MEMBER_VARIABLE(shadowDistance_);
+        ADD_MEMBER_VARIABLE(shadowMapResolution_);
+        ADD_MEMBER_VARIABLE(shadowBias_);
+    )
     COMPONENT_CATEGORY("Render")
     ~Light() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {

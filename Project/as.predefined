@@ -722,6 +722,45 @@ class Animator {
 	bool GetPlayOnStart() const;
 }
 
+class KeyFrameAnimator {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	bool Play(const string&in name);
+	bool Stop(const string&in name);
+	void PlayAll();
+	void StopAll();
+	bool IsPlaying(const string&in name) const;
+	bool SetPlaybackSpeed(const string&in name, float speed);
+	float GetPlaybackSpeed(const string&in name) const;
+	bool TryGetValue(const string&in name, float&out value) const;
+	uint GetAnimationCount() const;
+}
+
+class InputCommandApplier {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void SetCommandName(const string&in);
+	const string& GetCommandName() const;
+	void SetThreshold(float);
+	float GetThreshold() const;
+	void SetFixedValue(float);
+	float GetFixedValue() const;
+	void SetValueScale(float);
+	float GetValueScale() const;
+	void SetValueOffset(float);
+	float GetValueOffset() const;
+	bool WasApplied() const;
+	float GetLastValue() const;
+}
+
 class TextRenderer {
 	bool IsActive() const;
 	void SetActive(bool);

@@ -118,7 +118,7 @@
             "analog": "LeftStickX",
             "controllerIndex": 0,
             "device": "ControllerAnalog",
-            "invertValue": true,
+            "invertValue": false,
             "state": "Down",
             "threshold": -0.20000000298023224
         }

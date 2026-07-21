@@ -82,7 +82,12 @@ public:
 
 protected:
     IWindowObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID, std::string defaultTitle)
-        : IObjectComponent(typeName, maxCount, componentTypeID), title_(std::move(defaultTitle)) {}
+        : IObjectComponent(typeName, maxCount, componentTypeID), title_(std::move(defaultTitle)) {
+        // title_の直接書き込み時は、セッターと同様に生成済みウィンドウのタイトルへも反映する
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(title_, [this] { SetTitle(title_); });
+        ADD_MEMBER_VARIABLE(width_);
+        ADD_MEMBER_VARIABLE(height_);
+    }
 
     /// @brief 横取り設定を所有ウィンドウへ適用する（派生クラスのInitializeでウィンドウ生成後に呼ぶ）
     void ApplyInterceptedMessages() {

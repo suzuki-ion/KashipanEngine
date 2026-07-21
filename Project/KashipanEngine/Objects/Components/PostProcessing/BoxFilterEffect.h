@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -12,7 +12,11 @@ public:
         int halfSize[2] = { 2, 2 };
     };
 
-    BoxFilterEffect() : IPostProcessComponent("BoxFilterEffect") {}
+    BoxFilterEffect() : IPostProcessComponent("BoxFilterEffect") {
+        ADD_MEMBER_VARIABLE(params_.intensity);
+        AddMemberVariable("params_.halfSize[0]", &params_.halfSize[0]);
+        AddMemberVariable("params_.halfSize[1]", &params_.halfSize[1]);
+    }
     ~BoxFilterEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

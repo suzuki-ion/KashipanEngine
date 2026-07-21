@@ -10,7 +10,9 @@ namespace KashipanEngine {
 ///          オブジェクトヒエラルキーで対象オブジェクトにカーソルを合わせた際にツールチップとして表示される
 class Comment final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(Comment, 1, )
+    OBJECT_COMPONENT_CONSTRUCTOR(Comment, 1,
+        ADD_MEMBER_VARIABLE(comment_);
+    )
     COMPONENT_CATEGORY("Debug")
     ~Comment() override = default;
 

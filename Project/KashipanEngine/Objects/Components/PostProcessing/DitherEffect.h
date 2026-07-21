@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -12,7 +12,10 @@ public:
         bool color = true;
     };
 
-    DitherEffect() : IPostProcessComponent("DitherEffect") {}
+    DitherEffect() : IPostProcessComponent("DitherEffect") {
+        ADD_MEMBER_VARIABLE(params_.intensity);
+        ADD_MEMBER_VARIABLE(params_.color);
+    }
     ~DitherEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

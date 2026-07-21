@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Math/Vector4.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
@@ -16,7 +16,14 @@ public:
         float smoothness = 0.3f;
     };
 
-    VignetteEffect() : IPostProcessComponent("VignetteEffect") {}
+    VignetteEffect() : IPostProcessComponent("VignetteEffect") {
+        AddMemberVariable("params_.center[0]", &params_.center[0]);
+        AddMemberVariable("params_.center[1]", &params_.center[1]);
+        ADD_MEMBER_VARIABLE(params_.color);
+        ADD_MEMBER_VARIABLE(params_.intensity);
+        ADD_MEMBER_VARIABLE(params_.innerRadius);
+        ADD_MEMBER_VARIABLE(params_.smoothness);
+    }
     ~VignetteEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

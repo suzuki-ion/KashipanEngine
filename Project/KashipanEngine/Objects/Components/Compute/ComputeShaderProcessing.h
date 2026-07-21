@@ -35,7 +35,13 @@ public:
         std::vector<float> values;
     };
 
-    OBJECT_COMPONENT_CONSTRUCTOR(ComputeShaderProcessing, 0xFF, SetUpdatePriority(100);)
+    OBJECT_COMPONENT_CONSTRUCTOR(ComputeShaderProcessing, 0xFF,
+        SetUpdatePriority(100);
+        ADD_MEMBER_VARIABLE(pipelineName_);
+        ADD_MEMBER_VARIABLE(groupCountX_);
+        ADD_MEMBER_VARIABLE(groupCountY_);
+        ADD_MEMBER_VARIABLE(groupCountZ_);
+    )
     COMPONENT_CATEGORY("Compute")
     ~ComputeShaderProcessing() override = default;
 

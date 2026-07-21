@@ -57,7 +57,16 @@ struct BlendShapeWeight final {
 ///          毎フレームRendererから駆動される。
 class SkinnedMeshRenderer final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(SkinnedMeshRenderer, 0xFF, SetUpdatePriority(900);)
+    // animationClipName_の直接書き込み時は、セッターと同様に再生位置を先頭へ戻す
+    OBJECT_COMPONENT_CONSTRUCTOR(SkinnedMeshRenderer, 0xFF,
+        SetUpdatePriority(900);
+        ADD_MEMBER_VARIABLE(pipelineName_);
+        ADD_MEMBER_VARIABLE(castShadows_);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(animationClipName_, [this] { elapsedTime_ = 0.0f; });
+        ADD_MEMBER_VARIABLE(playOnStart_);
+        ADD_MEMBER_VARIABLE(loop_);
+        ADD_MEMBER_VARIABLE(playbackSpeed_);
+    )
     COMPONENT_CATEGORY("Render")
     ~SkinnedMeshRenderer() override = default;
 

@@ -6,7 +6,10 @@ namespace KashipanEngine {
 
 class BoxCollider final : public ICollider {
 public:
-    BoxCollider() : ICollider("BoxCollider", Shape::Box, false, GetComponentTypeID<BoxCollider>()) {}
+    BoxCollider() : ICollider("BoxCollider", Shape::Box, false, GetComponentTypeID<BoxCollider>()) {
+        ADD_MEMBER_VARIABLE(size_);
+        ADD_MEMBER_VARIABLE(center_);
+    }
     ~BoxCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

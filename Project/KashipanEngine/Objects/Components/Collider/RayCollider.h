@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <reactphysics3d/reactphysics3d.h>
 
 #include "Objects/Components/Collider/ICollider.h"
@@ -14,7 +14,10 @@ namespace KashipanEngine {
 ///          タイミングでシーンの物理ワールドへレイキャストを行い、結果を直接受け取る。
 class RayCollider final : public ICollider {
 public:
-    RayCollider() : ICollider("RayCollider", Shape::Ray, false, GetComponentTypeID<RayCollider>()) {}
+    RayCollider() : ICollider("RayCollider", Shape::Ray, false, GetComponentTypeID<RayCollider>()) {
+        ADD_MEMBER_VARIABLE(direction_);
+        ADD_MEMBER_VARIABLE(maxDistance_);
+    }
     ~RayCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

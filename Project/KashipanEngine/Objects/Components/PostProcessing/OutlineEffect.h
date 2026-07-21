@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 
@@ -15,7 +15,14 @@ public:
         float cameraFar = 1000.0f;
     };
 
-    OutlineEffect() : IPostProcessComponent("OutlineEffect") {}
+    OutlineEffect() : IPostProcessComponent("OutlineEffect") {
+        ADD_MEMBER_VARIABLE(params_.threshold);
+        ADD_MEMBER_VARIABLE(params_.thickness);
+        AddMemberVariable("params_.color[0]", &params_.color[0]);
+        AddMemberVariable("params_.color[1]", &params_.color[1]);
+        AddMemberVariable("params_.color[2]", &params_.color[2]);
+        AddMemberVariable("params_.color[3]", &params_.color[3]);
+    }
     ~OutlineEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

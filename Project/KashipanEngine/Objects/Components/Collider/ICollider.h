@@ -121,7 +121,11 @@ public:
 
 protected:
     ICollider(const std::string &typeName, Shape shape, bool is2D, size_t componentTypeID)
-        : IObjectComponent(typeName, 0xFF, componentTypeID), shape_(shape), is2D_(is2D) {}
+        : IObjectComponent(typeName, 0xFF, componentTypeID), shape_(shape), is2D_(is2D) {
+        // 共通のImGui編集パラメータを外部アクセス用に登録する（形状パラメータは各派生クラスで登録）
+        ADD_MEMBER_VARIABLE(isTrigger_);
+        ADD_MEMBER_VARIABLE(continuousDetection_);
+    }
 
     /// @brief SceneObjectColliderへ自身を登録する（定義はEmptyObject/SceneObjectColliderの完全な型が必要なためICollider.cppにある）
     void Initialize() override;

@@ -54,7 +54,32 @@ public:
         AudioManager::LimiterParams params{};
     };
 
-    OBJECT_COMPONENT_CONSTRUCTOR(AudioSource, 0xFF, )
+    // 直接書き込み時もセッター/ImGui編集時と同じ副作用（クランプ・再生中音声への反映）がかかるようにする
+    OBJECT_COMPONENT_CONSTRUCTOR(AudioSource, 0xFF,
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(soundName_, [this] { soundHandle_ = AudioManager::kInvalidSoundHandle; });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(volume_, [this] { volume_ = std::clamp(volume_, 0.0f, 1.0f); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(pitch_, [this] { SetPitch(pitch_); });
+        ADD_MEMBER_VARIABLE(loop_);
+        ADD_MEMBER_VARIABLE(minDistance_);
+        ADD_MEMBER_VARIABLE(maxDistance_);
+        ADD_MEMBER_VARIABLE(enableSpatialAudio_);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(filter_.enabled, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(filter_.frequency, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(filter_.q, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(reverb_.enabled, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(reverb_.mix, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(echo_.enabled, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(echo_.params.wetDryMix, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(echo_.params.feedback, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(echo_.params.delayMs, [this] { ClampEffectParams(); ReapplyEffects(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(eq_.enabled, [this] { ClampEffectParams(); ReapplyEffects(); });
+        for (int band = 0; band < 4; ++band) {
+            AddMemberVariable("eq_.frequencyCenter[" + std::to_string(band) + "]", &eq_.params.frequencyCenter[band],
+                [this] { ClampEffectParams(); ReapplyEffects(); });
+            AddMemberVariable("eq_.gain[" + std::to_string(band) + "]", &eq_.params.gain[band],
+                [this] { ClampEffectParams(); ReapplyEffects(); });
+        }
+    )
     COMPONENT_CATEGORY("Audio")
     ~AudioSource() override { Stop(); }
 

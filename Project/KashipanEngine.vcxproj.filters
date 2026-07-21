@@ -492,6 +492,15 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\ParameterBinding.cpp">
+      <Filter>KashipanEngine\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\InputCommandApplier.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
@@ -598,6 +607,9 @@
       <Filter>KashipanEngine\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\StageGridBuilder.cpp">
+      <Filter>KashipanEngine\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\KeyframeAnimation.cpp">
       <Filter>KashipanEngine\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\WaveFunctionCollapse.cpp">
@@ -1215,6 +1227,15 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Velocity.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\ParameterBinding.h">
+      <Filter>KashipanEngine\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\InputCommandApplier.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\KeyFrameAnimator.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\ScriptComponent.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -1456,6 +1477,9 @@
       <Filter>KashipanEngine\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\StageGridBuilder.h">
+      <Filter>KashipanEngine\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\KeyframeAnimation.h">
       <Filter>KashipanEngine\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\WaveFunctionCollapse.h">

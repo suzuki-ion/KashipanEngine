@@ -1,8 +1,9 @@
 // 指定した範囲内を往復しながら移動・回転する地面。
 // 実際に位置・回転を動かすのは Velocity / Rotation コンポーネントなので、
-// このスクリプトを付けるオブジェクトには Velocity と Rotation を追加しておくこと
-// （Player側はVelocityコンポーネントの値を見て地面の動きに追従するため、
-//   ここで直接Transformを書き換えると乗っているプレイヤーが追従できない）
+// このスクリプトを付けるオブジェクトには Velocity と Rotation を追加しておくこと。
+// また、Player/Enemyはこのオブジェクトの PreTransform（前フレームの値）との差分を見て
+// 地面の動きに追従するため、乗っているキャラクターを追従させたい場合は
+// PreTransform コンポーネントも追加しておくこと
 
 class MoveGround : ScriptComponentBehavior {
     [SerializeField, Tooltip("移動範囲 min（開始位置からのオフセット）")]

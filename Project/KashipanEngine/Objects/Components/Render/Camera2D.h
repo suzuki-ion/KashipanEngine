@@ -6,7 +6,12 @@ namespace KashipanEngine {
 /// @brief 2Dカメラ情報コンポーネント（射影パラメータの保持のみを行う）
 class Camera2D final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(Camera2D, 1, )
+    OBJECT_COMPONENT_CONSTRUCTOR(Camera2D, 1,
+        ADD_MEMBER_VARIABLE(width_);
+        ADD_MEMBER_VARIABLE(height_);
+        ADD_MEMBER_VARIABLE(nearClip_);
+        ADD_MEMBER_VARIABLE(farClip_);
+    )
     COMPONENT_CATEGORY("Render")
     ~Camera2D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {

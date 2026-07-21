@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
@@ -8,7 +8,10 @@ namespace KashipanEngine {
 /// @brief 2D用の円コライダー
 class Circle2DCollider final : public ICollider {
 public:
-    Circle2DCollider() : ICollider("Circle2DCollider", Shape::Circle2D, true, GetComponentTypeID<Circle2DCollider>()) {}
+    Circle2DCollider() : ICollider("Circle2DCollider", Shape::Circle2D, true, GetComponentTypeID<Circle2DCollider>()) {
+        ADD_MEMBER_VARIABLE(radius_);
+        ADD_MEMBER_VARIABLE(center_);
+    }
     ~Circle2DCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {

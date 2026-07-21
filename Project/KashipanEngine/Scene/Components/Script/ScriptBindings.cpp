@@ -69,6 +69,7 @@
 #include "Objects/Components/PostProcessing/BoxFilterEffect.h"
 #include "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
 #include "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+#include "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
 #include "Objects/Components/PostProcessing/DissolveEffect.h"
 #include "Objects/Components/PostProcessing/DitherEffect.h"
 #include "Objects/Components/PostProcessing/DotMatrixEffect.h"
@@ -989,6 +990,22 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetColorBalance(const Vector3 &in)", [](ColorAdjustEffect &e, const Vector3 &v) {
             auto p = e.GetParams(); p.colorBalance[0] = v.x; p.colorBalance[1] = v.y; p.colorBalance[2] = v.z; e.SetParams(p);
         });
+
+    RegisterComponentType<DepthOfFieldEffect>(engine, "DepthOfFieldEffect")
+        .method("float GetFocusDistance() const", [](const DepthOfFieldEffect &e) { return e.GetParams().focusDistance; })
+        .method("void SetFocusDistance(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.focusDistance = v; e.SetParams(p); })
+        .method("float GetFocusRange() const", [](const DepthOfFieldEffect &e) { return e.GetParams().focusRange; })
+        .method("void SetFocusRange(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.focusRange = v; e.SetParams(p); })
+        .method("float GetNearBlurDistance() const", [](const DepthOfFieldEffect &e) { return e.GetParams().nearBlurDistance; })
+        .method("void SetNearBlurDistance(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.nearBlurDistance = v; e.SetParams(p); })
+        .method("float GetFarBlurDistance() const", [](const DepthOfFieldEffect &e) { return e.GetParams().farBlurDistance; })
+        .method("void SetFarBlurDistance(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.farBlurDistance = v; e.SetParams(p); })
+        .method("float GetMaxBlurRadiusPixels() const", [](const DepthOfFieldEffect &e) { return e.GetParams().maxBlurRadiusPixels; })
+        .method("void SetMaxBlurRadiusPixels(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.maxBlurRadiusPixels = v; e.SetParams(p); })
+        .method("uint GetSampleCount() const", [](const DepthOfFieldEffect &e) -> uint32_t { return e.GetParams().sampleCount; })
+        .method("void SetSampleCount(uint)", [](DepthOfFieldEffect &e, uint32_t v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
+        .method("int GetDilateRadius() const", [](const DepthOfFieldEffect &e) { return e.GetParams().dilateRadius; })
+        .method("void SetDilateRadius(int)", [](DepthOfFieldEffect &e, int v) { auto p = e.GetParams(); p.dilateRadius = v; e.SetParams(p); });
 
     RegisterComponentType<DissolveEffect>(engine, "DissolveEffect")
         .method("float GetMaskThreshold() const", [](const DissolveEffect &e) { return e.GetParams().maskThreshold; })

@@ -1020,6 +1020,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BoxFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ChromaticAberrationEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ColorAdjustEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DepthOfFieldEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DissolveEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DitherEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\DotMatrixEffect.h" />

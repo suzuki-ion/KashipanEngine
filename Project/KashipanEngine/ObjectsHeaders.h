@@ -28,6 +28,7 @@
 #include "Objects/Components/PostProcessing/BoxFilterEffect.h"
 #include "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
 #include "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+#include "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
 #include "Objects/Components/PostProcessing/DissolveEffect.h"
 #include "Objects/Components/PostProcessing/DitherEffect.h"
 #include "Objects/Components/PostProcessing/DotMatrixEffect.h"

@@ -302,7 +302,7 @@
                             }
                         },
                         "isActive": true,
-                        "priority": 1,
+                        "priority": 0,
                         "tag": ""
                     },
                     "type": "Transform"
@@ -310,19 +310,33 @@
                 {
                     "data": {
                         "customData": {
-                            "height": 720,
+                            "height": 1080,
                             "isShowViewer": true,
                             "name": "ScreenBuffer_2",
                             "saveDirectory": "Screenshots",
                             "saveFileNamePrefix": "Screenshot",
                             "saveFormat": "png",
-                            "width": 1280
+                            "width": 1920
                         },
                         "isActive": true,
                         "priority": 1,
                         "tag": ""
                     },
                     "type": "ScreenBufferObject"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "excludedScreenBuffers": [],
+                            "strength": 2.0,
+                            "threshold": 0.0,
+                            "thresholdMin": 0.0
+                        },
+                        "isActive": true,
+                        "priority": 2,
+                        "tag": ""
+                    },
+                    "type": "FXAAEffect"
                 },
                 {
                     "data": {
@@ -337,7 +351,7 @@
                             "sampleCount": 64
                         },
                         "isActive": true,
-                        "priority": 1,
+                        "priority": 3,
                         "tag": ""
                     },
                     "type": "AmbientOcclusionEffect"
@@ -353,7 +367,7 @@
                             "threshold": 1.5
                         },
                         "isActive": true,
-                        "priority": 1,
+                        "priority": 4,
                         "tag": ""
                     },
                     "type": "BloomEffect"
@@ -377,7 +391,7 @@
                             "smoothness": 0.30000001192092896
                         },
                         "isActive": true,
-                        "priority": 1,
+                        "priority": 5,
                         "tag": ""
                     },
                     "type": "VignetteEffect"

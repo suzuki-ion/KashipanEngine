@@ -1,0 +1,1239 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            },
+            "type": "SceneRenderer"
+        }
+    ],
+    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneName": "LightTest",
+    "sceneObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 16.0,
+                                "y": -16.0,
+                                "z": 16.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "PrimitiveMesh-Box"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "materialName": "NoLightingWhite",
+                            "materialNames": [
+                                "NoLightingWhite"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mesh Object",
+            "objectID": "0dd4711a-48cf-4450-b7d7-02e228b893f2",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
+                            "rotate": {
+                                "w": 0.9635838866233826,
+                                "x": 0.0,
+                                "y": -0.2674065828323364,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 2.2960000038146973,
+                                "y": 1.343999981880188,
+                                "z": -5.905009746551514
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "aspectRatio": 1.7777777910232544,
+                            "farClip": 1000.0,
+                            "fovY": 1.0,
+                            "nearClip": 0.10000000149011612,
+                            "orthoSize": 10.0,
+                            "orthographic": false
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Camera3D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera3D",
+                                "Pixel:gCamera3D"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "CameraRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Camera Object",
+            "objectID": "31c22322-a468-4f25-969f-f8acb15a4452",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
+                            "rotate": {
+                                "w": 0.38268348574638367,
+                                "x": 0.9238796234130859,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 0.9999970197677612,
+                                "z": 0.9999970197677612
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 8.773351669311523,
+                                "z": 3.6117467061558273e-07
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 2.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 64.0,
+                            "shadowMapResolution": 2048,
+                            "shadowSoftness": 2.0,
+                            "sourceDepth": 1.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": false,
+            "name": "Light Object",
+            "objectID": "0db43071-06c8-4ebb-8ad3-1434886a7878",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 0.9999970197677612,
+                                "z": 0.9999970197677612
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 3.6117467061558273e-07
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 0.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 512.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 1.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 64.0,
+                            "shadowMapResolution": 2048,
+                            "shadowSoftness": 2.0,
+                            "sourceDepth": 128.0,
+                            "sourceHeight": 128.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 128.0,
+                            "type": 7
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "3df4257a-820b-4b38-bcae-f698115d04cb",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": false,
+            "name": "living_room",
+            "objectID": "43312360-411d-4989-b4e3-922d97b600d1",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "living_room",
+            "objectID": "0b3629f8-2ed9-4972-8b67-27c683793c93",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 1080,
+                            "isShowViewer": true,
+                            "name": "ScreenBuffer_2",
+                            "saveDirectory": "Screenshots",
+                            "saveFileNamePrefix": "Screenshot",
+                            "saveFormat": "png",
+                            "width": 1920
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScreenBufferObject"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bias": 0.0,
+                            "blurRadius": 0,
+                            "depthThreshold": 16.0,
+                            "excludedScreenBuffers": [],
+                            "intensity": 2.0,
+                            "power": 2.0,
+                            "radius": 2.0,
+                            "sampleCount": 64
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "AmbientOcclusionEffect"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Screen Buffer Object",
+            "objectID": "b4477903-d3dd-4f80-b9b3-7902102e6723",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "43312360-411d-4989-b4e3-922d97b600d1",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Default"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "living_room_LeftLight",
+                            "materialNames": [
+                                "living_room_LeftLight",
+                                "living_room_LeftLight",
+                                "living_room_LeftLight"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": false,
+            "name": "Default",
+            "objectID": "71f93f35-a303-44d7-b4a1-1f400db1ee3a",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "43312360-411d-4989-b4e3-922d97b600d1",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Mesh"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "living_room_BlindMaterial",
+                            "materialNames": [
+                                "living_room_BlindMaterial",
+                                "living_room_RadioPlastic",
+                                "living_room_Books",
+                                "living_room_DullSteel",
+                                "living_room_LampshaderOuter",
+                                "living_room_LargePicture",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_SofaLeather",
+                                "living_room_Apple",
+                                "living_room_Walls",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_RadioPlastic",
+                                "living_room_Cushion",
+                                "living_room_Books",
+                                "living_room_TableGlossy",
+                                "living_room_Books",
+                                "living_room_LoveLettersBack",
+                                "living_room_DullSteel",
+                                "living_room_Books",
+                                "living_room_TvScreen",
+                                "living_room_Books",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_SofaLeather",
+                                "living_room_BlindMaterial",
+                                "living_room_DullSteel",
+                                "living_room_Books",
+                                "living_room_LampStand",
+                                "living_room_Default",
+                                "living_room_Books",
+                                "living_room_SofaLeather",
+                                "living_room_DullSteel",
+                                "living_room_Books",
+                                "living_room_SmallPictureFrame",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_Picture2",
+                                "living_room_Magazine",
+                                "living_room_SmallPictureFrame",
+                                "living_room_TvBevel",
+                                "living_room_BlindMaterial",
+                                "living_room_RadioPlastic",
+                                "living_room_CeilingLampshade",
+                                "living_room_BlackMarble",
+                                "living_room_Trim",
+                                "living_room_Cushion1",
+                                "living_room_BlindMaterial",
+                                "living_room_Default",
+                                "living_room_Cushion1",
+                                "living_room_CandleHolders",
+                                "living_room_Books",
+                                "living_room_Apple",
+                                "living_room_DullSteel",
+                                "living_room_Picture",
+                                "living_room_Cushion3",
+                                "living_room_LoveLettersBack",
+                                "living_room_BlindMaterial",
+                                "living_room_Default",
+                                "living_room_LoveLettersBack",
+                                "living_room_SmallPictureFrame",
+                                "living_room_BlackWroughtIron",
+                                "living_room_RadioSurround",
+                                "living_room_SofaLeather",
+                                "living_room_BlackWroughtIron",
+                                "living_room_Ceramic",
+                                "living_room_CandleHolders",
+                                "living_room_SofaLeather",
+                                "living_room_Default",
+                                "living_room_DullSteel",
+                                "living_room_Books",
+                                "living_room_SofaLeather",
+                                "living_room_Apple",
+                                "living_room_TableGlossy",
+                                "living_room_Books",
+                                "living_room_Picture1",
+                                "living_room_Apple",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_DullSteel",
+                                "living_room_LoveLettersBack",
+                                "living_room_BlindMaterial",
+                                "living_room_Books",
+                                "living_room_BlindMaterial",
+                                "living_room_Picture4",
+                                "living_room_LoveLettersBack",
+                                "living_room_DullSteel",
+                                "living_room_RadioPlastic",
+                                "living_room_LoveLettersBack",
+                                "living_room_BlindMaterial",
+                                "living_room_SofaLeather",
+                                "living_room_Picture5",
+                                "living_room_SmallPictureFrame",
+                                "living_room_TableGlossy",
+                                "living_room_Walls",
+                                "living_room_Ceramic",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_RadioInside",
+                                "living_room_BlindMaterial",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_BlindMaterial",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_BlindMaterial",
+                                "living_room_BlackWroughtIron",
+                                "living_room_BlindMaterial",
+                                "living_room_RadiatorKnobOuter",
+                                "living_room_BlindMaterial",
+                                "living_room_DullSteel",
+                                "living_room_RadioSurround",
+                                "living_room_BlackWroughtIron",
+                                "living_room_DullSteel",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_BlackWroughtIron",
+                                "living_room_Walls",
+                                "living_room_Floor",
+                                "living_room_DullSteel",
+                                "living_room_Trim",
+                                "living_room_Walls",
+                                "living_room_DullSteel",
+                                "living_room_Walls",
+                                "living_room_SofaLeather",
+                                "living_room_RadioPlastic",
+                                "living_room_Carpet",
+                                "living_room_TableGlossy",
+                                "living_room_RadiatorPanelsEnamel",
+                                "living_room_Ceramic",
+                                "living_room_DullSteel"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mesh",
+            "objectID": "c12f2a13-937e-41ce-8705-fa9655780b0a",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "43312360-411d-4989-b4e3-922d97b600d1",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Back"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "living_room_BackLight",
+                            "materialNames": [
+                                "living_room_BackLight"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Back",
+            "objectID": "ebd2f49e-0102-4937-95c7-e961a0ac05cb",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "43312360-411d-4989-b4e3-922d97b600d1",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:WhitePaint"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "living_room_BackLight",
+                            "materialNames": [
+                                "living_room_BackLight"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "WhitePaint",
+            "objectID": "5ec3690f-45ac-4424-9522-545cfbe69c03",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "0b3629f8-2ed9-4972-8b67-27c683793c93",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Default"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "living_room_LeftLight",
+                            "materialNames": [
+                                "living_room_LeftLight",
+                                "living_room_LeftLight",
+                                "living_room_LeftLight"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": false,
+            "name": "Default",
+            "objectID": "0de89df0-f2fd-4332-b09c-7ef053dac8e9",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "0b3629f8-2ed9-4972-8b67-27c683793c93",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Mesh"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "NoLightingWhite",
+                            "materialNames": [
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite",
+                                "NoLightingWhite"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mesh",
+            "objectID": "11c795c4-9bc7-48b3-b82f-e49aa71b64ea",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "0b3629f8-2ed9-4972-8b67-27c683793c93",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Back"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "NoLightingWhite",
+                            "materialNames": [
+                                "NoLightingWhite"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Back",
+            "objectID": "f11de5b4-5411-41fb-9c39-e962569f919d",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "0b3629f8-2ed9-4972-8b67-27c683793c93",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:WhitePaint"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "NoLightingWhite",
+                            "materialNames": [
+                                "NoLightingWhite"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "WhitePaint",
+            "objectID": "812fb04f-4d4c-4b31-bc8d-f188b1b3e0bf",
+            "tag": ""
+        }
+    ],
+    "sceneVariables": [
+        {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
+        },
+        {
+            "key": "testInt",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "checkPoint",
+            "type": "Vector3",
+            "value": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        }
+    ]
+}

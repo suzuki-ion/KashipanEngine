@@ -61,6 +61,7 @@ struct MaterialElement {
     Vector4 rimColor{ 1.0f, 1.0f, 1.0f, 1.0f };
     float rimPower = 2.0f;
     float rimIntensity = 0.0f;
+    float useNormalMap = 0.0f;
 };
 
 /// @brief gMaterials 構造化バッファ（Object2D）と同レイアウトの構造体
@@ -169,6 +170,23 @@ struct TubeLightElement {
     float decay = 2.0f;
     std::int32_t shadowMapIndex = -1;
 };
+
+/// @brief gBoxLights 構造化バッファと同レイアウトの構造体
+struct BoxLightElement {
+    std::uint32_t enabled = 0;
+    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector3 position{ 0.0f, 0.0f, 0.0f };
+    float radius = 10.0f;
+    Vector3 right{ 1.0f, 0.0f, 0.0f };
+    float halfWidth = 0.5f;
+    Vector3 up{ 0.0f, 1.0f, 0.0f };
+    float halfHeight = 0.5f;
+    Vector3 forward{ 0.0f, 0.0f, 1.0f };
+    float halfDepth = 0.5f;
+    float intensity = 1.0f;
+    float decay = 2.0f;
+    std::int32_t shadowMapIndex = -1;
+};
 #pragma pack(pop)
 
 /// @brief LightCounts 定数バッファと同レイアウトの構造体
@@ -180,7 +198,7 @@ struct LightCountsData {
     std::uint32_t discLightCount = 0;
     std::uint32_t rectLightCount = 0;
     std::uint32_t tubeLightCount = 0;
-    std::uint32_t padding = 0;
+    std::uint32_t boxLightCount = 0;
 };
 
 /// @brief ShadowMapConstants 定数バッファ内の1ライト分のデータ（HLSL側の ShadowLightData と同レイアウト）
@@ -226,6 +244,7 @@ struct TileCullingConstants {
     std::uint32_t discLightCount = 0;
     std::uint32_t rectLightCount = 0;
     std::uint32_t tubeLightCount = 0;
+    std::uint32_t boxLightCount = 0;
     std::uint32_t maxLightsPerTile = 0;
     std::uint32_t tileSize = 16;
 };
@@ -332,7 +351,8 @@ void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *target,
     std::vector<SphereLightElement> &sphereLights,
     std::vector<DiscLightElement> &discLights,
     std::vector<RectLightElement> &rectLights,
-    std::vector<TubeLightElement> &tubeLights) {
+    std::vector<TubeLightElement> &tubeLights,
+    std::vector<BoxLightElement> &boxLights) {
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
@@ -434,6 +454,22 @@ void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *target,
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             tubeLights.push_back(element);
+        } else if (light->GetType() == Light::Type::Box) {
+            BoxLightElement element;
+            element.enabled = light->IsActive() ? 1u : 0u;
+            element.color = light->GetColor();
+            element.position = lightRenderer->GetWorldPosition();
+            element.radius = light->GetRadius();
+            element.right = lightRenderer->GetWorldRight();
+            element.halfWidth = light->GetSourceWidth() * 0.5f;
+            element.up = lightRenderer->GetWorldUp();
+            element.halfHeight = light->GetSourceHeight() * 0.5f;
+            element.forward = lightRenderer->GetWorldDirection();
+            element.halfDepth = light->GetSourceDepth() * 0.5f;
+            element.intensity = light->GetIntensity();
+            element.decay = light->GetDecay();
+            element.shadowMapIndex = findShadowIndex(lightRenderer);
+            boxLights.push_back(element);
         }
     }
 }
@@ -910,8 +946,9 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         std::vector<DiscLightElement> discLights;
         std::vector<RectLightElement> rectLights;
         std::vector<TubeLightElement> tubeLights;
+        std::vector<BoxLightElement> boxLights;
         CollectLightsForTarget(sceneRenderer, target, pipelineName, noShadow, pointLights, spotLights, directionalLights,
-            sphereLights, discLights, rectLights, tubeLights);
+            sphereLights, discLights, rectLights, tubeLights, boxLights);
         // ライトが0個でも必ずディスパッチする（gTileLightIndicesはDEFAULTヒープ上のUAVでCPUから初期化できないため、
         // ここで確実に書き込んでおかないとBindLightBuffersAndShadowMap側で未初期化のバッファを読むことになる）
 
@@ -933,7 +970,10 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         auto tubeKey = MakeBatchKey(target, pipelineName, 0, 0, "tubeLights");
         auto *tubeBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
             tubeKey, sizeof(TubeLightElement), std::max<size_t>(1, tubeLights.size()));
-        if (!pointBuffer || !spotBuffer || !sphereBuffer || !discBuffer || !rectBuffer || !tubeBuffer) continue;
+        auto boxKey = MakeBatchKey(target, pipelineName, 0, 0, "boxLights");
+        auto *boxBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
+            boxKey, sizeof(BoxLightElement), std::max<size_t>(1, boxLights.size()));
+        if (!pointBuffer || !spotBuffer || !sphereBuffer || !discBuffer || !rectBuffer || !tubeBuffer || !boxBuffer) continue;
         if (auto *mapped = static_cast<PointLightElement *>(pointBuffer->Map())) {
             if (pointLights.empty()) mapped[0] = PointLightElement{};
             else std::memcpy(mapped, pointLights.data(), sizeof(PointLightElement) * pointLights.size());
@@ -958,6 +998,10 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
             if (tubeLights.empty()) mapped[0] = TubeLightElement{};
             else std::memcpy(mapped, tubeLights.data(), sizeof(TubeLightElement) * tubeLights.size());
         }
+        if (auto *mapped = static_cast<BoxLightElement *>(boxBuffer->Map())) {
+            if (boxLights.empty()) mapped[0] = BoxLightElement{};
+            else std::memcpy(mapped, boxLights.data(), sizeof(BoxLightElement) * boxLights.size());
+        }
 
         TileCullingConstants constants;
         constants.screenSize = Vector2(static_cast<float>(width), static_cast<float>(height));
@@ -969,6 +1013,7 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         constants.discLightCount = static_cast<std::uint32_t>(discLights.size());
         constants.rectLightCount = static_cast<std::uint32_t>(rectLights.size());
         constants.tubeLightCount = static_cast<std::uint32_t>(tubeLights.size());
+        constants.boxLightCount = static_cast<std::uint32_t>(boxLights.size());
         constants.maxLightsPerTile = kMaxLightsPerTile;
         constants.tileSize = kTileSize;
         auto constantsKey = MakeBatchKey(target, pipelineName, 0, 0, "tileCullingConstants");
@@ -998,6 +1043,7 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         shaderBinder.Bind("Compute:gDiscLights", discBuffer);
         shaderBinder.Bind("Compute:gRectLights", rectBuffer);
         shaderBinder.Bind("Compute:gTubeLights", tubeBuffer);
+        shaderBinder.Bind("Compute:gBoxLights", boxBuffer);
         shaderBinder.Bind("Compute:gTileLightIndices", tileBuffer);
 
         const std::uint32_t groupX = (tileCountX + 7) / 8;
@@ -1074,7 +1120,8 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 case Light::Type::Directional: estimatedSlices += kShadowCascadeCount; break;
                 case Light::Type::Point:
                 case Light::Type::Sphere:
-                case Light::Type::Tube: estimatedSlices += 6; break;
+                case Light::Type::Tube:
+                case Light::Type::Box: estimatedSlices += 6; break;
                 default: estimatedSlices += 1; break;
             }
         }
@@ -1200,7 +1247,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             } else {
                 const std::uint32_t neededSlices =
                     (type == Light::Type::Directional) ? kShadowCascadeCount :
-                    (type == Light::Type::Point || type == Light::Type::Sphere || type == Light::Type::Tube) ? 6u : 1u;
+                    (type == Light::Type::Point || type == Light::Type::Sphere || type == Light::Type::Tube || type == Light::Type::Box) ? 6u : 1u;
                 if (nextSlice + neededSlices > kMaxShadowSlices) continue; // スライス予算切れ（優先度の低いライトから影を諦める）
 
                 ShadowJobData job{};
@@ -1298,9 +1345,11 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 } else {
                     //--------- Point/Sphere: ライト位置からキューブ6面（画角90度）の透視投影 ---------//
                     //--------- Tube: 中心点からのキューブ6面で近似し、遠平面をチューブの半長分拡張する ---------//
+                    //--------- Box: 中心点からのキューブ6面で近似し、遠平面をボックスの半対角分拡張する ---------//
                     job.lightType = 2;
                     const Vector3 lightPosition = lightRenderer->GetWorldPosition();
-                    const float rangeExtension = (type == Light::Type::Tube) ? (light->GetSourceLength() * 0.5f) : 0.0f;
+                    const float rangeExtension = (type == Light::Type::Tube) ? (light->GetSourceLength() * 0.5f) :
+                        (type == Light::Type::Box) ? Vector3(light->GetSourceWidth(), light->GetSourceHeight(), light->GetSourceDepth()).Length() * 0.5f : 0.0f;
                     const float nearZ = 0.05f;
                     const float farZ = std::max(nearZ + 0.1f, light->GetRadius() + rangeExtension);
                     Matrix4x4 lightProjection;
@@ -1560,6 +1609,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 element.rimColor = material->rimColor;
                 element.rimPower = material->rimPower;
                 element.rimIntensity = material->rimIntensity;
+                element.useNormalMap = 0.0f;
                 batch.textureHandle = material->textureHandle;
                 batch.samplerHandle = material->samplerHandle;
             }
@@ -1631,6 +1681,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 element.rimColor = material->rimColor;
                 element.rimPower = material->rimPower;
                 element.rimIntensity = material->rimIntensity;
+                element.useNormalMap = 0.0f;
                 batch.textureHandle = material->textureHandle;
                 batch.samplerHandle = material->samplerHandle;
             }
@@ -1975,6 +2026,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 element.rimColor = material->rimColor;
                 element.rimPower = material->rimPower;
                 element.rimIntensity = material->rimIntensity;
+                element.useNormalMap = (material->normalMapHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
             }
             std::vector<MaterialElement> elements(instanceCount, element);
             auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(MaterialElement), instanceCount, elements.data());
@@ -1994,6 +2046,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
         }
         if (material && material->environmentHandle != TextureManager::kInvalidHandle) {
             TextureManager::BindTexture(&shaderBinder, "Pixel:gEnvironmentMap", material->environmentHandle);
+        }
+        if (material && material->normalMapHandle != TextureManager::kInvalidHandle) {
+            TextureManager::BindTexture(&shaderBinder, "Pixel:gNormalMap", material->normalMapHandle);
         }
         if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
             SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
@@ -2218,6 +2273,7 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
                     element.rimColor = material->rimColor;
                     element.rimPower = material->rimPower;
                     element.rimIntensity = material->rimIntensity;
+                    element.useNormalMap = (material->normalMapHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
                 }
                 auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
                 if (materialBuffer) {
@@ -2239,6 +2295,9 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
             }
             if (material && material->environmentHandle != TextureManager::kInvalidHandle) {
                 TextureManager::BindTexture(&shaderBinder, "Pixel:gEnvironmentMap", material->environmentHandle);
+            }
+            if (material && material->normalMapHandle != TextureManager::kInvalidHandle) {
+                TextureManager::BindTexture(&shaderBinder, "Pixel:gNormalMap", material->normalMapHandle);
             }
             if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
                 SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
@@ -2325,8 +2384,9 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
     std::vector<DiscLightElement> discLights;
     std::vector<RectLightElement> rectLights;
     std::vector<TubeLightElement> tubeLights;
+    std::vector<BoxLightElement> boxLights;
     CollectLightsForTarget(sceneRenderer, target, pipelineName, findShadowIndex, pointLights, spotLights, directionalLights,
-        sphereLights, discLights, rectLights, tubeLights);
+        sphereLights, discLights, rectLights, tubeLights, boxLights);
 
     //--------- ライト個数の定数バッファ ---------//
     {
@@ -2338,6 +2398,7 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
         counts.discLightCount = static_cast<std::uint32_t>(discLights.size());
         counts.rectLightCount = static_cast<std::uint32_t>(rectLights.size());
         counts.tubeLightCount = static_cast<std::uint32_t>(tubeLights.size());
+        counts.boxLightCount = static_cast<std::uint32_t>(boxLights.size());
         auto key = MakeBatchKey(target, pipelineName, 0, 0, "lightCounts");
         auto *countsBuffer = resourceContainer_->GetOrCreateConstantBuffer(key, sizeof(LightCountsData));
         if (countsBuffer) {
@@ -2439,6 +2500,18 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
                 if (tubeLights.empty()) mapped[0] = TubeLightElement{};
                 else std::memcpy(mapped, tubeLights.data(), sizeof(TubeLightElement) * tubeLights.size());
                 shaderBinder.Bind("Pixel:gTubeLights", buffer);
+            }
+        }
+    }
+    {
+        auto key = MakeBatchKey(target, pipelineName, 0, 0, "boxLights");
+        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
+            key, sizeof(BoxLightElement), std::max<size_t>(1, boxLights.size()));
+        if (buffer) {
+            if (auto *mapped = static_cast<BoxLightElement *>(buffer->Map())) {
+                if (boxLights.empty()) mapped[0] = BoxLightElement{};
+                else std::memcpy(mapped, boxLights.data(), sizeof(BoxLightElement) * boxLights.size());
+                shaderBinder.Bind("Pixel:gBoxLights", buffer);
             }
         }
     }

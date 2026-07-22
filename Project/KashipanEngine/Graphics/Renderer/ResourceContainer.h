@@ -30,6 +30,7 @@ public:
         Vector4 position;
         Vector2 texcoord;
         Vector3 normal;
+        Vector3 tangent;
     };
 
     /// @brief メッシュ用GPUバッファ
@@ -67,6 +68,7 @@ public:
             vertices[i].position = Vector4(src.px, src.py, src.pz, 1.0f);
             vertices[i].texcoord = Vector2(src.u, src.v);
             vertices[i].normal = Vector3(src.nx, src.ny, src.nz);
+            vertices[i].tangent = Vector3(src.tx, src.ty, src.tz);
         }
         const auto &srcIndices = modelData.GetIndices();
 

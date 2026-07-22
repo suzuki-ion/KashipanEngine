@@ -482,6 +482,7 @@ void RegisterLightTypeEnum(asIScriptEngine *engine) {
     engine->RegisterEnumValue("LightType", "Sphere", static_cast<int>(Light::Type::Sphere));
     engine->RegisterEnumValue("LightType", "Disc", static_cast<int>(Light::Type::Disc));
     engine->RegisterEnumValue("LightType", "Tube", static_cast<int>(Light::Type::Tube));
+    engine->RegisterEnumValue("LightType", "Box", static_cast<int>(Light::Type::Box));
 }
 
 /// @brief TextRenderer::HorizontalAlign/VerticalAlign をスクリプト用の列挙型として登録する
@@ -857,6 +858,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("float GetSourceHeight() const", &Light::GetSourceHeight)
         .method("void SetSourceLength(float)", &Light::SetSourceLength)
         .method("float GetSourceLength() const", &Light::GetSourceLength)
+        .method("void SetSourceDepth(float)", &Light::SetSourceDepth)
+        .method("float GetSourceDepth() const", &Light::GetSourceDepth)
         .method("void SetCastShadows(bool)", &Light::SetCastShadows)
         .method("bool IsCastShadows() const", &Light::IsCastShadows)
         .method("void SetShadowDistance(float)", &Light::SetShadowDistance)

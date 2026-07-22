@@ -27,6 +27,8 @@ public:
         Matrix4x4 uvTransform = Matrix4x4::Identity();
         TextureManager::TextureHandle textureHandle = TextureManager::kInvalidHandle;
         TextureManager::TextureHandle environmentHandle = TextureManager::kInvalidHandle;
+        /// @brief 法線マップ（接空間の法線をRGB[0,1]にエンコードしたテクスチャ）。未設定の場合は無効
+        TextureManager::TextureHandle normalMapHandle = TextureManager::kInvalidHandle;
         SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
         float shininess = 32.0f;
         Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -44,6 +46,8 @@ public:
         std::string textureFileName;
         /// @brief 環境マップファイル名（読み込み時に未解決だった場合の遅延解決用）
         std::string environmentFileName;
+        /// @brief 法線マップファイル名（読み込み時に未解決だった場合の遅延解決用）
+        std::string normalMapFileName;
 
         /// @brief 未解決のテクスチャハンドルをファイル名から解決する
         /// @details 読み込み時に対象テクスチャが存在しなかった場合でも、
@@ -60,6 +64,11 @@ public:
             } else {
                 // すでにハンドルが有効な場合はテクスチャが削除されていないか確認するために再取得する
                 environmentHandle = TextureManager::GetTexture(environmentHandle);
+            }
+            if (normalMapHandle == TextureManager::kInvalidHandle && !normalMapFileName.empty()) {
+                normalMapHandle = TextureManager::GetTextureFromFileName(normalMapFileName);
+            } else {
+                normalMapHandle = TextureManager::GetTexture(normalMapHandle);
             }
         }
     };

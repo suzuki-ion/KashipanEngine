@@ -5,11 +5,20 @@
         "y": 0.0,
         "z": 0.0
     },
-    "enableLighting": false,
-    "enableShadowMapProjection": false,
+    "enableLighting": true,
+    "enableShadowMapProjection": true,
     "environmentCoefficient": 1.0,
     "environmentFile": "",
     "name": "Black",
+    "normalMapFile": "",
+    "rimColor": {
+        "w": 1.0,
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "rimIntensity": 1.0,
+    "rimPower": 2.0,
     "samplerHandle": 0,
     "shininess": 32.0,
     "specularColor": {

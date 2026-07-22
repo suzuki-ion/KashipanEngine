@@ -11,7 +11,9 @@ class Light final : public IObjectComponent {
 public:
     /// @brief Rect/Sphere/Disc/Tubeは面光源（形状を持つ光源）。真のLTC等ではなく、
     ///        形状上の代表点（representative point）法で近似する（Objects/Components/Render/AreaLight.hlsli参照）
-    enum class Type { Directional, Point, Spot, Rect, Sphere, Disc, Tube };
+    /// @details Boxは全方位（体積）発光。ボックス表面上の最近接点を代表点として使い、Tubeと同じ扱いで
+    ///          拡散・鏡面・減衰を求める。影もPoint/Sphere/Tubeと同じキューブ6面で近似する
+    enum class Type { Directional, Point, Spot, Rect, Sphere, Disc, Tube, Box };
     OBJECT_COMPONENT_CONSTRUCTOR(Light, 0xFF,
         ADD_MEMBER_VARIABLE(color_);
         ADD_MEMBER_VARIABLE(intensity_);
@@ -24,6 +26,7 @@ public:
         ADD_MEMBER_VARIABLE(sourceWidth_);
         ADD_MEMBER_VARIABLE(sourceHeight_);
         ADD_MEMBER_VARIABLE(sourceLength_);
+        ADD_MEMBER_VARIABLE(sourceDepth_);
         ADD_MEMBER_VARIABLE(castShadows_);
         ADD_MEMBER_VARIABLE(shadowDistance_);
         ADD_MEMBER_VARIABLE(shadowMapResolution_);
@@ -46,6 +49,7 @@ public:
         ptr->sourceWidth_ = sourceWidth_;
         ptr->sourceHeight_ = sourceHeight_;
         ptr->sourceLength_ = sourceLength_;
+        ptr->sourceDepth_ = sourceDepth_;
         ptr->castShadows_ = castShadows_;
         ptr->shadowDistance_ = shadowDistance_;
         ptr->shadowMapResolution_ = shadowMapResolution_;
@@ -72,6 +76,8 @@ public:
     void SetSourceHeight(float sourceHeight) { sourceHeight_ = sourceHeight; }
     /// @brief Tubeの長さ（Transformのローカル+X方向）を設定する
     void SetSourceLength(float sourceLength) { sourceLength_ = sourceLength; }
+    /// @brief Boxの奥行き（Transformのローカル+Z方向）を設定する
+    void SetSourceDepth(float sourceDepth) { sourceDepth_ = sourceDepth; }
     /// @brief このライトが影を作り出すかを設定
     /// @details Directional=カスケードシャドウ / Spot,Disc,Rect=1面（広角） / Point,Sphere,Tube=キューブ6面
     ///          のシャドウマップが自動生成される（Disc/Rectは片面発光を広角の単一透視投影で近似、
@@ -103,6 +109,7 @@ public:
     float GetSourceWidth() const noexcept { return sourceWidth_; }
     float GetSourceHeight() const noexcept { return sourceHeight_; }
     float GetSourceLength() const noexcept { return sourceLength_; }
+    float GetSourceDepth() const noexcept { return sourceDepth_; }
     bool IsCastShadows() const noexcept { return castShadows_; }
     float GetShadowDistance() const noexcept { return shadowDistance_; }
     std::uint32_t GetShadowMapResolution() const noexcept { return shadowMapResolution_; }
@@ -120,6 +127,8 @@ public:
             return sourceRadius_;
         case Type::Rect:
             return std::max(sourceWidth_, sourceHeight_) * 0.5f;
+        case Type::Box:
+            return std::max({ sourceWidth_, sourceHeight_, sourceDepth_ }) * 0.5f;
         default:
             return shadowSoftness_;
         }
@@ -129,8 +138,8 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         int t = static_cast<int>(type_);
-        const char *items[] = { "Directional", "Point", "Spot", "Rect", "Sphere", "Disc", "Tube" };
-        if (ImGui::Combo("Type", &t, items, 7)) type_ = static_cast<Type>(t);
+        const char *items[] = { "Directional", "Point", "Spot", "Rect", "Sphere", "Disc", "Tube", "Box" };
+        if (ImGui::Combo("Type", &t, items, 8)) type_ = static_cast<Type>(t);
         ImGui::ColorEdit4("Color", &color_.x);
         ImGui::DragFloat("Intensity", &intensity_, 0.01f, 0.0f);
         if (type_ == Type::Point) {
@@ -163,6 +172,14 @@ protected:
             ImGui::DragFloat("Source Height", &sourceHeight_, 0.01f, 0.001f, 100.0f);
             ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Transformの+Z方向が発光面の法線（片面発光）。+Xが幅、+Yが高さ方向");
+        } else if (type_ == Type::Box) {
+            ImGui::DragFloat("Radius (Range)", &radius_, 0.1f, 0.0f, 1000.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("ボックス表面からさらに届く減衰距離。ボックス内部・表面付近は減衰なし");
+            ImGui::DragFloat("Source Width", &sourceWidth_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat("Source Height", &sourceHeight_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat("Source Depth", &sourceDepth_, 0.01f, 0.001f, 100.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Transformのローカル+X/+Y/+Z方向の幅・高さ・奥行き（全方位発光する体積光源）");
+            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
         }
 
         ImGui::SeparatorText("Shadow");
@@ -204,6 +221,7 @@ protected:
             {"innerAngle", innerAngle_}, {"outerAngle", outerAngle_},
             {"sourceRadius", sourceRadius_}, {"sourceWidth", sourceWidth_},
             {"sourceHeight", sourceHeight_}, {"sourceLength", sourceLength_},
+            {"sourceDepth", sourceDepth_},
             {"castShadows", castShadows_}, {"shadowDistance", shadowDistance_},
             {"shadowMapResolution", shadowMapResolution_}, {"shadowBias", shadowBias_},
             {"shadowSoftness", shadowSoftness_}
@@ -222,6 +240,7 @@ protected:
         sourceWidth_ = json.value("sourceWidth", 1.0f);
         sourceHeight_ = json.value("sourceHeight", 1.0f);
         sourceLength_ = json.value("sourceLength", 1.0f);
+        sourceDepth_ = json.value("sourceDepth", 1.0f);
         castShadows_ = json.value("castShadows", false);
         shadowDistance_ = json.value("shadowDistance", 100.0f);
         shadowMapResolution_ = json.value("shadowMapResolution", 2048u);
@@ -246,6 +265,8 @@ private:
     float sourceWidth_ = 1.0f;
     float sourceHeight_ = 1.0f;
     float sourceLength_ = 1.0f;
+    // Boxの奥行き（ローカル+Z方向）
+    float sourceDepth_ = 1.0f;
     // シャドウ設定
     bool castShadows_ = false;
     float shadowDistance_ = 100.0f;

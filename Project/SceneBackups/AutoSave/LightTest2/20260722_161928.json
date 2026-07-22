@@ -1,0 +1,396 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            },
+            "type": "SceneRenderer"
+        }
+    ],
+    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneName": "LightTest2",
+    "sceneObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+                            "rotate": {
+                                "w": 0.8198537826538086,
+                                "x": 0.3142338991165161,
+                                "y": 0.4485381245613098,
+                                "z": -0.16706402599811554
+                            },
+                            "scale": {
+                                "x": 1.0000028610229492,
+                                "y": 0.9999986886978149,
+                                "z": 0.9999949932098389
+                            },
+                            "translate": {
+                                "x": -10.083291053771973,
+                                "y": 14.225424766540527,
+                                "z": -2.1546411514282227
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "aspectRatio": 1.7777777910232544,
+                            "farClip": 1000.0,
+                            "fovY": 1.0,
+                            "nearClip": 0.10000000149011612,
+                            "orthoSize": 10.0,
+                            "orthographic": false
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Camera3D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera3D",
+                                "Pixel:gCamera3D"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e"
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "CameraRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Camera Object",
+            "objectID": "d3b3f632-2c2c-46f3-abed-278bd0c7f6f8",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+                            "rotate": {
+                                "w": 0.5636932253837585,
+                                "x": 0.3235092759132385,
+                                "y": 0.6591624021530151,
+                                "z": -0.37828129529953003
+                            },
+                            "scale": {
+                                "x": 1.0000606775283813,
+                                "y": 1.0000163316726685,
+                                "z": 1.0000203847885132
+                            },
+                            "translate": {
+                                "x": -0.8049589395523071,
+                                "y": 1.2170045375823975,
+                                "z": 0.4349968135356903
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 2.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 64.0,
+                            "shadowMapResolution": 4096,
+                            "shadowSoftness": 8.0,
+                            "sourceDepth": 1.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "cbe443b0-d0d6-41fa-b29c-77f65c7335ea",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "sponza",
+            "objectID": "4b22e995-f16a-4d84-bffc-f2fa20edce2e",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 720,
+                            "isShowViewer": true,
+                            "name": "ScreenBuffer_2",
+                            "saveDirectory": "Screenshots",
+                            "saveFileNamePrefix": "Screenshot",
+                            "saveFormat": "png",
+                            "width": 1280
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScreenBufferObject"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bias": 0.019999999552965164,
+                            "blurRadius": 2,
+                            "depthThreshold": 0.5,
+                            "excludedScreenBuffers": [],
+                            "intensity": 2.0,
+                            "power": 2.0,
+                            "radius": 4.0,
+                            "sampleCount": 16
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "AmbientOcclusionEffect"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Screen Buffer Object",
+            "objectID": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "4b22e995-f16a-4d84-bffc-f2fa20edce2e",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "Application/Model/TestModels/sponza_obj/sponza.obj"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "materialName": "sponza_sp_00_luk_mali",
+                            "materialNames": [
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali",
+                                "sponza_sp_00_luk_mali"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "sponza.lwo",
+            "objectID": "1602cd59-12ca-4cbf-92dc-a53652d3e680",
+            "tag": ""
+        }
+    ],
+    "sceneVariables": [
+        {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
+        },
+        {
+            "key": "testInt",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "checkPoint",
+            "type": "Vector3",
+            "value": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        }
+    ]
+}

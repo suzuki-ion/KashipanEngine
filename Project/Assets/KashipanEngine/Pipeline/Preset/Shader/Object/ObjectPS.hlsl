@@ -21,6 +21,8 @@ StructuredBuffer<SphereLight> gSphereLights : register(t8);
 StructuredBuffer<DiscLight> gDiscLights : register(t9);
 StructuredBuffer<RectLight> gRectLights : register(t10);
 StructuredBuffer<TubeLight> gTubeLights : register(t11);
+StructuredBuffer<BoxLight> gBoxLights : register(t12);
+Texture2D gNormalMap : register(t13);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
@@ -30,6 +32,7 @@ cbuffer LightCounts : register(b3) {
 	uint gDiscLightCount;
 	uint gRectLightCount;
 	uint gTubeLightCount;
+	uint gBoxLightCount;
 };
 
 // Forward+ タイルライトカリングの結果（Directional以外の全種別。Directionalは対象外で従来通り全件ループする）。
@@ -40,6 +43,7 @@ cbuffer LightCounts : register(b3) {
 #define LIGHT_TAG_DISC   3u
 #define LIGHT_TAG_RECT   4u
 #define LIGHT_TAG_TUBE   5u
+#define LIGHT_TAG_BOX    6u
 #define LIGHT_TAG_SHIFT  29u
 #define LIGHT_INDEX_MASK 0x1FFFFFFFu
 
@@ -54,6 +58,7 @@ cbuffer TileCullingConstants : register(b4) {
 	uint gDiscLightCountForCulling;
 	uint gRectLightCountForCulling;
 	uint gTubeLightCountForCulling;
+	uint gBoxLightCountForCulling;
 	uint gMaxLightsPerTile;
 	uint gTileSize;
 };
@@ -136,6 +141,17 @@ PSOutput main(VSOutput input) {
 	// カメラへの方向（リムライトやローカルライトの鏡面反射で共通して使う）
 	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - input.worldPosition);
 
+	// 法線マップ: 接空間（TBN）で摂動した法線をライティング全体で使う。シャドウのバイアス計算
+	// （ShadowSlopeFactor）だけは、細かい凹凸に引きずられて不安定にならないよう幾何法線のまま使う
+	float3 shadingNormal = normalize(input.normal);
+	if (mat.useNormalMap > 0.5f) {
+		float3 t = normalize(input.tangent - shadingNormal * dot(shadingNormal, input.tangent)); // Gram-Schmidtで再直交化
+		float3 b = cross(shadingNormal, t);
+		float3x3 tbn = float3x3(t, b, shadingNormal);
+		float3 sampledNormal = gNormalMap.Sample(gSampler, transformedUV.xy).rgb * 2.0f - 1.0f;
+		shadingNormal = normalize(mul(sampledNormal, tbn));
+	}
+
 	// Directional lights
 	if (mat.enableLighting) {
 		for (uint i = 0; i < gDirectionalLightCount; ++i) {
@@ -144,8 +160,8 @@ PSOutput main(VSOutput input) {
 				continue;
 			}
 			float3 toLightDir = -light.direction;
-			float lam = HalfLambert(input.normal, toLightDir);
-			float spec = BlinnPhongReflection(input.normal, light.direction, input.worldPosition, mat.shininess);
+			float lam = HalfLambert(shadingNormal, toLightDir);
+			float spec = BlinnPhongReflection(shadingNormal, light.direction, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor;
 			// このライトが影を生成する場合、カスケードシャドウマップから影係数を求めて
@@ -159,7 +175,7 @@ PSOutput main(VSOutput input) {
 			// リムライト: 視線に対して縁になる部分を、このライトが「カメラの逆側（背後）」にある
 			// ときほど強く縁取る（逆光時に輪郭が光る表現）。mat.rimIntensity=0（既定）では無効
 			if (mat.rimIntensity > 0.0f) {
-				float rimFactor = pow(saturate(1.0f - saturate(dot(input.normal, viewDir))), mat.rimPower);
+				float rimFactor = pow(saturate(1.0f - saturate(dot(shadingNormal, viewDir))), mat.rimPower);
 				float backlightMask = saturate(-dot(toLightDir, viewDir));
 				float3 rim = mat.rimColor.rgb * mat.rimIntensity * rimFactor * backlightMask * light.color.rgb * light.intensity * shadow;
 				lightingColor.rgb += rim;
@@ -169,7 +185,7 @@ PSOutput main(VSOutput input) {
 
 	// ローカルライト（Forward+: このピクセルが属するタイルのライトインデックスリストだけをループする）
 	if (mat.enableLighting) {
-		float3 reflectDir = reflect(-viewDir, input.normal);
+		float3 reflectDir = reflect(-viewDir, shadingNormal);
 
 		uint2 tileCoord = uint2(input.position.xy) / max(gTileSize, 1u);
 		tileCoord = min(tileCoord, uint2(gTileCountX - 1, gTileCountY - 1));
@@ -194,8 +210,8 @@ PSOutput main(VSOutput input) {
 				float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
 				if (atten <= 0.0f) continue;
 
-				float lam = HalfLambert(input.normal, lightDir);
-				float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
+				float lam = HalfLambert(shadingNormal, lightDir);
+				float spec = BlinnPhongReflection(shadingNormal, lightDir, input.worldPosition, mat.shininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				// このライトが影を生成する場合、キューブシャドウマップから影係数を求める
@@ -222,8 +238,8 @@ PSOutput main(VSOutput input) {
 				float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * spot;
 				if (atten <= 0.0f) continue;
 
-				float lam = HalfLambert(input.normal, lightDir);
-				float spec = BlinnPhongReflection(input.normal, lightDir, input.worldPosition, mat.shininess);
+				float lam = HalfLambert(shadingNormal, lightDir);
+				float spec = BlinnPhongReflection(shadingNormal, lightDir, input.worldPosition, mat.shininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				// このライトが影を生成する場合、シャドウマップから影係数を求める
@@ -250,8 +266,8 @@ PSOutput main(VSOutput input) {
 				float3 specDir = normalize(input.worldPosition - representativePoint);
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
-				float lam = HalfLambert(input.normal, lightDir);
-				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float lam = HalfLambert(shadingNormal, lightDir);
+				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				float shadow = 1.0f;
@@ -280,8 +296,8 @@ PSOutput main(VSOutput input) {
 				float3 specDir = normalize(input.worldPosition - representativePoint);
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
-				float lam = HalfLambert(input.normal, lightDir);
-				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float lam = HalfLambert(shadingNormal, lightDir);
+				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				float shadow = 1.0f;
@@ -312,8 +328,8 @@ PSOutput main(VSOutput input) {
 				float sourceRadius = max(light.width, light.height) * 0.5f;
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, sourceRadius, dist);
 
-				float lam = HalfLambert(input.normal, lightDir);
-				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float lam = HalfLambert(shadingNormal, lightDir);
+				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				float shadow = 1.0f;
@@ -339,14 +355,44 @@ PSOutput main(VSOutput input) {
 				float3 specDir = normalize(input.worldPosition - representativePoint);
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
-				float lam = HalfLambert(input.normal, lightDir);
-				float spec = BlinnPhongReflection(input.normal, specDir, input.worldPosition, adjustedShininess);
+				float lam = HalfLambert(shadingNormal, lightDir);
+				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				float shadow = 1.0f;
 				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
 					float3 midpoint = (light.p0 + light.p1) * 0.5f;
 					shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, midpoint);
+				}
+				lightingColor += (diffuse + speculer) * shadow;
+			} else if (lightTag == LIGHT_TAG_BOX) {
+				BoxLight light = gBoxLights[lightIndex];
+				if (!light.enabled) continue;
+
+				// ボックス表面上の最近接点を代表点として、チューブライトと同じ扱いで拡散・鏡面・減衰を求める
+				// （内部・表面付近は最近接点=表面上のクランプ済み点となり減衰なし）
+				float3 halfExtents = float3(light.halfWidth, light.halfHeight, light.halfDepth);
+				float3 closest = BoxClosestPoint(input.worldPosition, light.position, light.right, light.up, light.forward, halfExtents);
+				float3 toLight = closest - input.worldPosition;
+				float dist = length(toLight);
+				if (dist > light.radius) continue;
+
+				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
+				if (atten <= 0.0f) continue;
+
+				float sourceRadius = max(max(light.halfWidth, light.halfHeight), light.halfDepth);
+				float3 representativePoint = SphereRepresentativePoint(input.worldPosition, reflectDir, closest, sourceRadius);
+				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, sourceRadius, dist);
+
+				float lam = HalfLambert(shadingNormal, lightDir);
+				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
+				float4 diffuse = light.color * lam * light.intensity * atten;
+				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
+				float shadow = 1.0f;
+				if (mat.enableShadowMapProjection && light.shadowMapIndex >= 0) {
+					shadow = ComputePointShadowFactor((uint)light.shadowMapIndex, input.worldPosition, input.normal, light.position);
 				}
 				lightingColor += (diffuse + speculer) * shadow;
 			}
@@ -356,7 +402,7 @@ PSOutput main(VSOutput input) {
 	// Environment map
 	if (mat.enableEnvironmentMapping) {
 		float3 cameraToPosition = input.worldPosition - gCamera3D.eyePosition.xyz;
-		float3 reflectDir = reflect(cameraToPosition, input.normal);
+		float3 reflectDir = reflect(cameraToPosition, shadingNormal);
 		envColor = gEnvironmentMap.Sample(gSampler, reflectDir);
 		envColor *= mat.environmentCoefficient;
 	}

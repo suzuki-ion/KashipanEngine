@@ -25,7 +25,23 @@ bool ImageExporter::SaveTextureToFile(ID3D12CommandQueue *commandQueue, ID3D12Re
         return false;
     }
 
-    const auto *img = image.GetImage(0, 0, 0);
+    // ScreenBufferは背景等の未描画ピクセルがalpha=0のまま残ることがある。
+    // 画面表示時はalphaが無視される（不透明ウィンドウ／エディターのアルファブレンドで背景色に馴染む）が、
+    // PNG等はalphaを保持するため、多くのビューアで透明部分が白系に合成され画面と見た目が変わってしまう。
+    // 保存画像は常に不透明として書き出す。
+    DirectX::ScratchImage opaqueImage;
+    hr = DirectX::TransformImage(image.GetImages(), image.GetImageCount(), image.GetMetadata(),
+        [](DirectX::XMVECTOR *outPixels, const DirectX::XMVECTOR *inPixels, size_t width, size_t) {
+            for (size_t x = 0; x < width; ++x) {
+                outPixels[x] = DirectX::XMVectorSetW(inPixels[x], 1.0f);
+            }
+        }, opaqueImage);
+    if (FAILED(hr)) {
+        Log("ImageExporter: alphaの補正に失敗しました。", LogSeverity::Warning);
+        return false;
+    }
+
+    const auto *img = opaqueImage.GetImage(0, 0, 0);
     if (!img) {
         Log("ImageExporter: キャプチャした画像が空です。", LogSeverity::Warning);
         return false;

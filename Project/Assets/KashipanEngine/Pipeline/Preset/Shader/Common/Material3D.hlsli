@@ -12,4 +12,6 @@ struct Material {
     float4 rimColor;
     float rimPower;
     float rimIntensity;
+    // 法線マップ使用フラグ（0=未使用）。gNormalMapはRGBが接空間の法線[0,1]エンコード
+    float useNormalMap;
 };

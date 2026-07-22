@@ -14,6 +14,7 @@
 #define LIGHT_TAG_DISC   3u
 #define LIGHT_TAG_RECT   4u
 #define LIGHT_TAG_TUBE   5u
+#define LIGHT_TAG_BOX    6u
 #define LIGHT_TAG_SHIFT  29u
 
 cbuffer TileCullingConstants : register(b1)
@@ -27,6 +28,7 @@ cbuffer TileCullingConstants : register(b1)
     uint gDiscLightCount;
     uint gRectLightCount;
     uint gTubeLightCount;
+    uint gBoxLightCount;
     uint gMaxLightsPerTile;
     uint gTileSize;
 };
@@ -37,6 +39,7 @@ StructuredBuffer<SphereLight> gSphereLights : register(t2);
 StructuredBuffer<DiscLight> gDiscLights : register(t3);
 StructuredBuffer<RectLight> gRectLights : register(t4);
 StructuredBuffer<TubeLight> gTubeLights : register(t5);
+StructuredBuffer<BoxLight> gBoxLights : register(t6);
 RWStructuredBuffer<uint> gTileLightIndices : register(u0);
 
 // ワールド空間の球（中心・半径）を包含するビュー空間AABBの8頂点をスクリーン空間へ投影し、
@@ -203,6 +206,25 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
             continue;
         }
         gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_TUBE << LIGHT_TAG_SHIFT) | tb;
+        ++count;
+    }
+
+    for (uint bx = 0; bx < gBoxLightCount && count < gMaxLightsPerTile; ++bx)
+    {
+        BoxLight light = gBoxLights[bx];
+        if (!light.enabled)
+        {
+            continue;
+        }
+        // ボックスの半対角（半幅・半高・半奥行きの合成長）に減衰範囲radiusを加えた保守的な包含球で判定する
+        float boundRadius = light.radius + length(float3(light.halfWidth, light.halfHeight, light.halfDepth));
+        float2 lightMin, lightMax;
+        ProjectSphereToScreenRect(light.position, boundRadius, lightMin, lightMax);
+        if (lightMax.x < tileMin.x || lightMin.x > tileMax.x || lightMax.y < tileMin.y || lightMin.y > tileMax.y)
+        {
+            continue;
+        }
+        gTileLightIndices[tileBase + 1 + count] = (LIGHT_TAG_BOX << LIGHT_TAG_SHIFT) | bx;
         ++count;
     }
 

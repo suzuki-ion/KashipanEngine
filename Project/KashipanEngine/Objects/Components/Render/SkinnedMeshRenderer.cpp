@@ -26,6 +26,7 @@ struct SkinCPUVertex {
     Vector4 position{ 0.0f, 0.0f, 0.0f, 1.0f };
     Vector2 texcoord{ 0.0f, 0.0f };
     Vector3 normal{ 0.0f, 0.0f, 0.0f };
+    Vector3 tangent{ 1.0f, 0.0f, 0.0f };
 };
 /// @brief 頂点ごとのボーンインデックス・ウェイト（HLSL側 SkinWeight と同一レイアウト）
 struct SkinCPUWeight {
@@ -276,6 +277,7 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
         cpuVertices[i].position = Vector4(src.px, src.py, src.pz, 1.0f);
         cpuVertices[i].texcoord = Vector2(src.u, src.v);
         cpuVertices[i].normal = Vector3(src.nx, src.ny, src.nz);
+        cpuVertices[i].tangent = Vector3(src.tx, src.ty, src.tz);
     }
     sourceVerticesBuffer_ = std::make_unique<StructuredBufferResource>(sizeof(SkinCPUVertex), vertexCount_, cpuVertices.data());
 

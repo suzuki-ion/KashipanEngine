@@ -517,7 +517,45 @@ void GenerateDodecahedron(std::vector<Vertex> &verts, std::vector<uint32_t> &idx
     }
 }
 
+/// @brief 三角形のUV差分から接線（タンジェント）を計算し、頂点ごとに蓄積した上で法線へ直交化する
+/// @details ミラーリングされたUV（ハンドネス反転）は考慮しない簡易実装。全プリミティブメッシュの
+///          UVはミラーリングを伴わないため、これで十分な精度が得られる。各Generate*関数を個別に
+///          変更せずに済むよう、頂点・インデックスが確定した後にこの1箇所だけで計算する
+void ComputeTangents(std::vector<Vertex> &verts, const std::vector<uint32_t> &indices) {
+    std::vector<Vector3> accum(verts.size(), Vector3::Zero());
+    for (size_t i = 0; i + 2 < indices.size(); i += 3) {
+        const uint32_t i0 = indices[i], i1 = indices[i + 1], i2 = indices[i + 2];
+        const Vector3 p0(verts[i0].px, verts[i0].py, verts[i0].pz);
+        const Vector3 p1(verts[i1].px, verts[i1].py, verts[i1].pz);
+        const Vector3 p2(verts[i2].px, verts[i2].py, verts[i2].pz);
+
+        const float du1 = verts[i1].u - verts[i0].u, dv1 = verts[i1].v - verts[i0].v;
+        const float du2 = verts[i2].u - verts[i0].u, dv2 = verts[i2].v - verts[i0].v;
+        const float det = du1 * dv2 - du2 * dv1;
+        if (std::fabs(det) < 1e-8f) continue; // UVが縮退した三角形は寄与させない
+
+        const float r = 1.0f / det;
+        const Vector3 tangent = ((p1 - p0) * dv2 - (p2 - p0) * dv1) * r;
+        accum[i0] = accum[i0] + tangent;
+        accum[i1] = accum[i1] + tangent;
+        accum[i2] = accum[i2] + tangent;
+    }
+
+    for (size_t i = 0; i < verts.size(); ++i) {
+        const Vector3 normal(verts[i].nx, verts[i].ny, verts[i].nz);
+        Vector3 t = accum[i] - normal * normal.Dot(accum[i]); // Gram-Schmidtで法線成分を除去
+        if (t.Length() < 1e-6f) {
+            // 隣接三角形の接線が打ち消し合う縮退頂点（扇の中心等）は、法線に垂直な適当な軸へフォールバックする
+            const Vector3 fallback = (std::fabs(normal.y) > 0.99f) ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 1.0f, 0.0f);
+            t = fallback.Cross(normal);
+        }
+        t = t.Normalize();
+        verts[i].tx = t.x; verts[i].ty = t.y; verts[i].tz = t.z;
+    }
+}
+
 void RegisterMesh(const std::string &name, std::vector<Vertex> vertices, std::vector<uint32_t> indices) {
+    ComputeTangents(vertices, indices);
     ModelManager::RegisterProceduralMesh("PrimitiveMesh-" + name, std::move(vertices), std::move(indices));
 }
 

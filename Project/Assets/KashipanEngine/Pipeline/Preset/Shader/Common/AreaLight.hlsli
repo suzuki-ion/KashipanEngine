@@ -84,3 +84,15 @@ inline float3 TubeClosestPoint(float3 worldPos, float3 p0, float3 p1) {
 	float t = saturate(dot(worldPos - p0, ab) / abLenSq);
 	return p0 + ab * t;
 }
+
+/// @brief 表面から見てボックス（直方体）上で最も近い点を返す（拡散・鏡面双方の基準点として使う）
+/// @details ワールド座標をボックスのローカル軸へ射影し、半径（半幅・半高・半奥行き）でクランプする。
+///          点がボックス内部にある場合は各軸ともクランプが効かないため、そのまま内部の点が返る
+///          （TubeClosestPointと同じ「最近接点法」をボックスへ拡張したもの）
+inline float3 BoxClosestPoint(float3 worldPos, float3 center, float3 right, float3 up, float3 forward, float3 halfExtents) {
+	float3 d = worldPos - center;
+	float x = clamp(dot(d, right), -halfExtents.x, halfExtents.x);
+	float y = clamp(dot(d, up), -halfExtents.y, halfExtents.y);
+	float z = clamp(dot(d, forward), -halfExtents.z, halfExtents.z);
+	return center + right * x + up * y + forward * z;
+}

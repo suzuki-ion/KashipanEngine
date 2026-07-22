@@ -187,6 +187,7 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
         aiProcess_FindInvalidData |
         aiProcess_TransformUVCoords |
         aiProcess_SortByPType |
+        aiProcess_CalcTangentSpace |
         aiProcess_FlipUVs;
 
     const aiScene* scene = importer.ReadFile(PathToUtf8String(p), flags);
@@ -295,6 +296,7 @@ void ModelManager::AppendMeshToModelData(const aiMesh* mesh, ModelData& dst) {
 
         const bool hasNormals = mesh->HasNormals();
         const bool hasUV0 = mesh->HasTextureCoords(0);
+        const bool hasTangents = mesh->HasTangentsAndBitangents();
 
         const uint32_t baseVertex = static_cast<uint32_t>(dst.vertices_.size());
 
@@ -315,6 +317,14 @@ void ModelManager::AppendMeshToModelData(const aiMesh* mesh, ModelData& dst) {
             if (hasUV0) {
                 v.u = mesh->mTextureCoords[0][i].x;
                 v.v = mesh->mTextureCoords[0][i].y;
+            }
+
+            // タンジェントが無いメッシュ（UV0が無い等）はModelData::Vertexの既定値のまま
+            // （法線マップ非使用のマテリアルでは参照されないため実害は無い）
+            if (hasTangents) {
+                v.tx = mesh->mTangents[i].x;
+                v.ty = mesh->mTangents[i].y;
+                v.tz = mesh->mTangents[i].z;
             }
 
             dst.vertices_.push_back(v);

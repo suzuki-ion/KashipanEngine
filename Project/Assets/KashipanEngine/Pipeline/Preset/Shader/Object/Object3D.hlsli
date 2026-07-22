@@ -4,6 +4,7 @@ struct VSOutput {
 	float4 position : SV_POSITION;
 	float2 texcoord : TEXCOORD;
 	float3 normal : NORMAL;
+	float3 tangent : TANGENT;
 	float3 worldPosition : WORLDPOSITION;
 	uint instanceId : INSTANCEID;
 };
@@ -90,6 +91,25 @@ struct TubeLight {
 	float radius;         // 減衰範囲（Pointのradiusと同じ意味）
 	float3 p1;            // チューブの端点1
 	float sourceRadius;   // チューブ（円柱）の物理的な半径
+	float intensity;
+	float decay;
+	int shadowMapIndex;
+};
+
+// 全方位（体積）発光のボックスライト。ボックス表面上の最近接点を代表点として、Tubeと同じ扱いで
+// 拡散・鏡面・減衰を求める（AreaLight.hlsli の BoxClosestPoint 参照）。影もPoint/Sphere/Tubeと
+// 同じキューブ6面（中心からの近似）で扱う
+struct BoxLight {
+	uint enabled;
+	float4 color;
+	float3 position;      // ボックス中心
+	float radius;         // ボックス表面からさらに届く減衰距離（Pointのradiusと同じ意味）
+	float3 right;         // ローカルX軸（正規化済み）
+	float halfWidth;
+	float3 up;            // ローカルY軸（正規化済み）
+	float halfHeight;
+	float3 forward;       // ローカルZ軸（正規化済み）
+	float halfDepth;
 	float intensity;
 	float decay;
 	int shadowMapIndex;

@@ -8,7 +8,8 @@ enum LightType {
 	Rect = 3,
 	Sphere = 4,
 	Disc = 5,
-	Tube = 6
+	Tube = 6,
+	Box = 7
 }
 
 enum TextHorizontalAlign {
@@ -984,6 +985,8 @@ class Light {
 	float GetSourceHeight() const;
 	void SetSourceLength(float);
 	float GetSourceLength() const;
+	void SetSourceDepth(float);
+	float GetSourceDepth() const;
 	void SetCastShadows(bool);
 	bool IsCastShadows() const;
 	void SetShadowDistance(float);
@@ -1056,6 +1059,13 @@ class ScreenBufferObject {
 	void SetName(const string&in);
 	const string& GetName() const;
 	void SetSize(uint, uint);
+	void SetSaveDirectory(const string&in);
+	const string& GetSaveDirectory() const;
+	void SetSaveFileNamePrefix(const string&in);
+	const string& GetSaveFileNamePrefix() const;
+	void SetSaveFormat(const string&in);
+	const string& GetSaveFormat() const;
+	bool RequestSave(const string&in filePath = "");
 }
 
 class ShadowMapObject {

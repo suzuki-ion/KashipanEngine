@@ -30,6 +30,10 @@ public:
         float nz = 0.0f;
         float u = 0.0f;
         float v = 0.0f;
+        // 法線マップ用の接線（タンジェント）。ローカル空間、+U方向に沿う
+        float tx = 1.0f;
+        float ty = 0.0f;
+        float tz = 0.0f;
     };
     struct MaterialData final {
         float baseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };

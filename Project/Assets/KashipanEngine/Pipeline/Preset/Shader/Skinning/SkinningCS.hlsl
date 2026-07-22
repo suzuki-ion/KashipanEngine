@@ -17,6 +17,7 @@ struct SkinVertex
     float4 position;
     float2 texcoord;
     float3 normal;
+    float3 tangent;
 };
 
 struct SkinWeight
@@ -75,6 +76,7 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
 
     float3 skinnedPosition = float3(0.0f, 0.0f, 0.0f);
     float3 skinnedNormal = float3(0.0f, 0.0f, 0.0f);
+    float3 skinnedTangent = float3(0.0f, 0.0f, 0.0f);
     float totalWeight = 0.0f;
 
     for (uint i = 0; i < boneCount; ++i)
@@ -87,6 +89,8 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         float4x4 boneMatrix = gBoneMatrices[boneIndices[i]];
         skinnedPosition += mul(float4(blendedPosition, 1.0f), boneMatrix).xyz * weight;
         skinnedNormal += mul(blendedNormal, (float3x3) boneMatrix) * weight;
+        // タンジェントはBlendShapeの差分を持たないため、バインドポーズのタンジェントをそのまま回転する
+        skinnedTangent += mul(src.tangent, (float3x3) boneMatrix) * weight;
         totalWeight += weight;
     }
 
@@ -95,12 +99,14 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
     {
         outVertex.position = float4(skinnedPosition / totalWeight, 1.0f);
         outVertex.normal = normalize(skinnedNormal);
+        outVertex.tangent = normalize(skinnedTangent);
     }
     else
     {
         // ウェイトが1つも無い頂点はBlendShape適用後のバインドポーズのまま出力する
         outVertex.position = float4(blendedPosition, 1.0f);
         outVertex.normal = normalize(blendedNormal);
+        outVertex.tangent = src.tangent;
     }
     outVertex.texcoord = src.texcoord;
 

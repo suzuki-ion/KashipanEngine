@@ -99,6 +99,11 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
             outMaterial.environmentHandle = TextureManager::GetTextureFromFileName(outMaterial.environmentFileName);
         }
 
+        if (json.contains("normalMapFile") && json["normalMapFile"].is_string()) {
+            outMaterial.normalMapFileName = FromJSON<std::string>(json["normalMapFile"]);
+            outMaterial.normalMapHandle = TextureManager::GetTextureFromFileName(outMaterial.normalMapFileName);
+        }
+
         // サンプラーハンドル
         if (json.contains("samplerHandle") && json["samplerHandle"].is_number_unsigned()) {
             outMaterial.samplerHandle = FromJSON<SamplerManager::SamplerHandle>(json["samplerHandle"]);
@@ -257,8 +262,11 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     if (textureFile.empty()) textureFile = material.textureFileName;
     std::string environmentFile = TextureManager::GetTextureFileName(material.environmentHandle);
     if (environmentFile.empty()) environmentFile = material.environmentFileName;
+    std::string normalMapFile = TextureManager::GetTextureFileName(material.normalMapHandle);
+    if (normalMapFile.empty()) normalMapFile = material.normalMapFileName;
     json["textureFile"] = textureFile;
     json["environmentFile"] = environmentFile;
+    json["normalMapFile"] = normalMapFile;
     json["samplerHandle"] = material.samplerHandle;
     json["shininess"] = material.shininess;
     json["specularColor"] = ToJSON(material.specularColor);
@@ -533,6 +541,19 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
         material.environmentHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
         material.environmentFileName = TextureManager::GetTextureFileName(material.environmentHandle);
+    }
+    std::string normalMapPath = TextureManager::GetTextureAssetPath(material.normalMapHandle);
+    if (normalMapPath.empty()) normalMapPath = material.normalMapFileName;
+    if (ImGuiCustom::SelectString("Normal Map", normalMapPath, texturePaths, true)) {
+        material.normalMapHandle = normalMapPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(normalMapPath);
+        material.normalMapFileName = TextureManager::GetTextureFileName(material.normalMapHandle);
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("接空間の法線をRGB[0,1]にエンコードしたテクスチャ（OpenGL規約、+Yが上）");
+    }
+    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
+        material.normalMapHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
+        material.normalMapFileName = TextureManager::GetTextureFileName(material.normalMapHandle);
     }
 
     ImGui::DragFloat("Shininess", &material.shininess, 0.1f, 0.0f, 1024.0f);

@@ -117,6 +117,17 @@ private:
     void ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
         std::span<const SceneRenderer::DrawEntry> drawList);
 
+    /// @brief 直前にカメラ・ライトをバインドした(パイプライン名, PipelineBinder世代)を記録するキャッシュ
+    /// @details 同一の描画先に対する一連の描画（DrawBatchのループ・RenderTextRenderers・
+    ///          RenderGpuParticles）の間で共有し、パイプラインが実際には切り替わっていない
+    ///          （ルート引数がまだ有効な）場合にカメラ・ライトの再バインドを省略するために使う。
+    ///          RenderToTarget呼び出しごとに新規に用意すること（フレーム・描画先をまたいで使い回さない）。
+    struct CameraLightsBindCache {
+        std::string pipelineName;
+        std::uint64_t generation = 0;
+        bool valid = false;
+    };
+
     /// @brief 単一の描画先への描画処理
     void RenderToTarget(IRenderTarget *target,
         std::span<const SceneRenderer::DrawEntry> entries,
@@ -126,7 +137,8 @@ private:
     void DrawBatch(IRenderTarget *target,
         PipelineBinder &pipelineBinder,
         std::span<const SceneRenderer::DrawEntry> batch,
-        SceneRenderer *sceneRenderer);
+        SceneRenderer *sceneRenderer,
+        CameraLightsBindCache &lightsCache);
 
     /// @brief TextRendererの専用描画パス
     /// @details 文字ごとにアトラス内UVが異なるためDrawBatchのバッチングには乗せず、
@@ -134,7 +146,8 @@ private:
     ///          まとめて1回のDrawIndexedInstancedで描画する。RenderToTargetの通常バッチ描画の後に呼ぶ
     void RenderTextRenderers(IRenderTarget *target,
         PipelineBinder &pipelineBinder,
-        SceneRenderer *sceneRenderer);
+        SceneRenderer *sceneRenderer,
+        CameraLightsBindCache &lightsCache);
 
     /// @brief GPU Simulation有効なParticleSystem2D/3Dの専用描画パス
     /// @details ProcessGpuParticlesが書き込んだgInstanceMatricesをSRVとして
@@ -144,13 +157,18 @@ private:
     ///          RenderToTargetの通常バッチ描画・RenderTextRenderersの後に呼ぶ
     void RenderGpuParticles(IRenderTarget *target,
         PipelineBinder &pipelineBinder,
-        SceneRenderer *sceneRenderer);
+        SceneRenderer *sceneRenderer,
+        CameraLightsBindCache &lightsCache);
 
     /// @brief 指定描画先・パイプラインに対するカメラ・ライトの定数バッファバインド
+    /// @details lightsCacheが直前と同じ(pipelineName, pipelineBinder.Generation())を指している場合、
+    ///          ルート引数はまだ有効なはずなので実際のバインド処理をスキップする
     void BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         IRenderTarget *target,
         const std::string &pipelineName,
-        SceneRenderer *sceneRenderer);
+        SceneRenderer *sceneRenderer,
+        PipelineBinder &pipelineBinder,
+        CameraLightsBindCache &lightsCache);
 
     /// @brief ポイント/スポットライトの構造化バッファ・個数定数・シャドウマップのバインド
     void BindLightBuffersAndShadowMap(IRenderTarget *target,

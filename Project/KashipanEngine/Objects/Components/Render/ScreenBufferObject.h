@@ -1,6 +1,8 @@
 #pragma once
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
+#include <ctime>
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -26,6 +28,9 @@ public:
         ptr->width_ = width_;
         ptr->height_ = height_;
         ptr->isShowViewer_ = isShowViewer_;
+        ptr->saveDirectory_ = saveDirectory_;
+        ptr->saveFileNamePrefix_ = saveFileNamePrefix_;
+        ptr->saveFormat_ = saveFormat_;
         return ptr;
     }
 
@@ -45,6 +50,31 @@ public:
         if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
             buffer_->Resize(width_, height_);
         }
+    }
+
+    //==================================================
+    // 画像ファイル保存
+    //==================================================
+
+    /// @brief 保存先ディレクトリを設定（次回以降のRequestSave()の自動生成パスに使われる）
+    void SetSaveDirectory(const std::string &directory) { saveDirectory_ = directory; }
+    const std::string &GetSaveDirectory() const noexcept { return saveDirectory_; }
+    /// @brief 保存ファイル名の接頭辞を設定
+    void SetSaveFileNamePrefix(const std::string &prefix) { saveFileNamePrefix_ = prefix; }
+    const std::string &GetSaveFileNamePrefix() const noexcept { return saveFileNamePrefix_; }
+    /// @brief 保存形式を設定（"png" / "jpg" / "bmp"）
+    void SetSaveFormat(const std::string &format) { saveFormat_ = format; }
+    const std::string &GetSaveFormat() const noexcept { return saveFormat_; }
+
+    /// @brief 直近で確定した描画結果を画像ファイルへ保存する（エディター・アプリケーション・
+    ///        スクリプトのいずれからも呼び出せる即時実行API。設定はJSONへ永続化されるが、
+    ///        この呼び出し自体はトリガーであり状態としては保持しない）
+    /// @param filePath 保存先パス（空の場合はSaveDirectory/SaveFileNamePrefix+タイムスタンプ+
+    ///        SaveFormatから自動生成する）
+    /// @return 成功した場合は true
+    bool RequestSave(const std::string &filePath = "") {
+        if (!buffer_ || !ScreenBuffer::IsExist(buffer_)) return false;
+        return buffer_->SaveToFile(filePath.empty() ? BuildAutoSavePath() : filePath);
     }
 
 protected:
@@ -81,6 +111,25 @@ protected:
         // 描画内容確認用ビューアウィンドウ
         if (ImGui::Button(isShowViewer_ ? "Close Viewer" : "Open Viewer")) {
             isShowViewer_ = !isShowViewer_;
+        }
+
+        if (ImGui::TreeNode("Save to File")) {
+            ImGui::InputText("Directory", &saveDirectory_);
+            ImGui::InputText("File Name Prefix", &saveFileNamePrefix_);
+            static const char *kFormats[] = { "png", "jpg", "bmp" };
+            int formatIndex = 0;
+            for (int i = 0; i < 3; ++i) {
+                if (saveFormat_ == kFormats[i]) { formatIndex = i; break; }
+            }
+            if (ImGui::Combo("Format", &formatIndex, kFormats, 3)) {
+                saveFormat_ = kFormats[formatIndex];
+            }
+            if (ImGui::Button("Save Screenshot")) {
+                if (!RequestSave()) {
+                    Log("ScreenBufferObject: failed to save screenshot.", LogSeverity::Warning);
+                }
+            }
+            ImGui::TreePop();
         }
     }
 
@@ -128,6 +177,9 @@ protected:
         json["width"] = width_;
         json["height"] = height_;
         json["isShowViewer"] = isShowViewer_;
+        json["saveDirectory"] = saveDirectory_;
+        json["saveFileNamePrefix"] = saveFileNamePrefix_;
+        json["saveFormat"] = saveFormat_;
         return json;
     }
 
@@ -136,6 +188,9 @@ protected:
         const std::uint32_t loadedWidth = json.value("width", 1280u);
         const std::uint32_t loadedHeight = json.value("height", 720u);
         isShowViewer_ = json.value("isShowViewer", false);
+        saveDirectory_ = json.value("saveDirectory", std::string("Screenshots"));
+        saveFileNamePrefix_ = json.value("saveFileNamePrefix", std::string("Screenshot"));
+        saveFormat_ = json.value("saveFormat", std::string("png"));
 
         // シーン切り替え中、前のシーンで同名のScreenBufferObjectが使用していたバッファが
         // 引き継ぎプールに残っていれば、新規作成せずそちらを再利用する
@@ -184,12 +239,38 @@ protected:
     }
 
 private:
+    /// @brief SaveDirectory/SaveFileNamePrefix/SaveFormatとタイムスタンプから保存先パスを組み立てる
+    std::string BuildAutoSavePath() const {
+        const auto now = std::chrono::system_clock::now();
+        const std::time_t t = std::chrono::system_clock::to_time_t(now);
+        std::tm tm{};
+#if defined(_WIN32)
+        localtime_s(&tm, &t);
+#else
+        localtime_r(&t, &tm);
+#endif
+        char timestamp[32]{};
+        std::strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tm);
+
+        std::string directory = saveDirectory_.empty() ? "." : saveDirectory_;
+        std::string prefix = saveFileNamePrefix_.empty() ? "Screenshot" : saveFileNamePrefix_;
+        std::string ext = saveFormat_.empty() ? "png" : saveFormat_;
+        return directory + "/" + prefix + "_" + timestamp + "." + ext;
+    }
+
     ScreenBuffer *buffer_ = nullptr;
     std::string name_;
     std::uint32_t width_ = 1280;
     std::uint32_t height_ = 720;
     /// @brief ビューアウィンドウ表示フラグ（シリアライズされ、再起動後も維持される）
     bool isShowViewer_ = false;
+
+    /// @brief RequestSave()の自動生成パスに使う保存先ディレクトリ
+    std::string saveDirectory_ = "Screenshots";
+    /// @brief RequestSave()の自動生成パスに使うファイル名の接頭辞
+    std::string saveFileNamePrefix_ = "Screenshot";
+    /// @brief RequestSave()の自動生成パスに使う保存形式（"png" / "jpg" / "bmp"）
+    std::string saveFormat_ = "png";
 };
 
 REGISTER_COMPONENT_OBJECT(ScreenBufferObject);

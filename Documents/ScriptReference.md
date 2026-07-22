@@ -1070,6 +1070,36 @@ class Billboard : ScriptComponentBehavior {
 
 Window系コンポーネントは共通の基底型 `WindowObject` を持ち、ウィンドウが受信したメッセージをスクリプトの `OnWindowMessage` へ通知できます（[詳細](#ウィンドウメッセージonwindowmessage)）。また、メッセージ種別ごとにウィンドウの既定処理を中断してゲーム側の処理へ差し替える[メッセージの横取り](#メッセージの横取りインターセプト)が使用できます。
 
+#### ScreenBufferObject（画像ファイル保存）
+
+`ScreenBufferObject` は、そのスクリーンバッファへ直近で描画が確定した内容（ポストエフェクト適用後の最終フレーム）を画像ファイルへ保存する機能を持ちます。エディターのインスペクター（「Save to File」欄）・アプリケーション実行時・スクリプトのいずれからも同じ仕組みで呼び出せます。
+
+| メソッド | 説明 |
+|---|---|
+| `bool RequestSave(const string &in filePath = "")` | 画像として保存する。`filePath` を省略した場合は `SaveDirectory`/`SaveFileNamePrefix` とタイムスタンプ、`SaveFormat` から自動生成したパスへ保存する |
+| `void SetSaveDirectory(const string &in)` / `const string &GetSaveDirectory() const` | 自動生成パスに使う保存先ディレクトリ（既定: `"Screenshots"`） |
+| `void SetSaveFileNamePrefix(const string &in)` / `const string &GetSaveFileNamePrefix() const` | 自動生成パスに使うファイル名の接頭辞（既定: `"Screenshot"`） |
+| `void SetSaveFormat(const string &in)` / `const string &GetSaveFormat() const` | 保存形式。`"png"` / `"jpg"` / `"bmp"`（既定: `"png"`）。`filePath` を明示的に指定した場合はその拡張子が優先される |
+
+- `RequestSave` はGPU側の完了を同期的に待つ（スコールする）ため、毎フレーム呼ぶような用途ではなくスクリーンショット等の単発利用を想定しています。
+- 保存対象は常に「そのフレームの描画が完全に確定した後の内容」です。ポストエフェクト適用途中の中間結果が保存されることはありません。
+- `SaveDirectory` / `SaveFileNamePrefix` / `SaveFormat` はシーンへ保存されますが、`RequestSave` の呼び出し自体は状態として保持されません（呼ぶたびに即座に保存が実行されます）。
+
+```angelscript
+// "Screenshot" という名前の入力コマンドをあらかじめ設定しておく必要があります
+class ScreenshotTaker : ScriptComponentBehavior {
+    void Update(float deltaTime) {
+        if (IsCommandTriggered("Screenshot")) {
+            ScreenBufferObject@ screenBuffer;
+            GetComponent(@screenBuffer);
+            if (screenBuffer !is null) {
+                screenBuffer.RequestSave(); // Screenshots/Screenshot_20260101_120000.png のように自動生成
+            }
+        }
+    }
+}
+```
+
 #### WindowObject（基底型）
 
 `NormalWindowObject` / `OverlayWindowObject` の基底となる参照型です。`WindowMessageInfo` の `sourceComponent` として受け取れます。コンポーネント共通メソッド（`IsActive` / `GetComponentType` / `GetTag` 等）に加えて以下が使用できます。

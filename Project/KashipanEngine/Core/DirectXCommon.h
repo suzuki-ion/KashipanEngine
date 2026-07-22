@@ -82,6 +82,8 @@ public:
 
     /// @brief D3D12デバイス取得（ScreenBuffer 用）
     ID3D12Device* GetDeviceForScreenBuffer(Passkey<ScreenBuffer>) const { return dx12Device_->GetDevice(); }
+    /// @brief コマンドキュー取得（ScreenBuffer 用。画像ファイル保存(ImageExporter)のキャプチャに使用）
+    ID3D12CommandQueue* GetCommandQueueForScreenBuffer(Passkey<ScreenBuffer>) const { return dx12CommandQueue_->GetCommandQueue(); }
 
     /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（TextureManager 用）
     /// @param record コマンド記録関数（Close は内部で行う）

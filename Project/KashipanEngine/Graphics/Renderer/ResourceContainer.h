@@ -1,5 +1,9 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -34,6 +38,9 @@ public:
         std::unique_ptr<IndexBufferResource> indexBuffer;
         std::uint32_t vertexCount = 0;
         std::uint32_t indexCount = 0;
+        /// @brief ローカル空間の境界球（シャドウマップのスライス単位カリング等に使用）
+        Vector3 boundsCenter{ 0.0f, 0.0f, 0.0f };
+        float boundsRadius = 0.0f;
     };
 
     ResourceContainer() = default;
@@ -70,6 +77,30 @@ public:
             sizeof(MeshVertex) * vertices.size(), vertices.data());
         buffers->indexBuffer = std::make_unique<IndexBufferResource>(
             sizeof(std::uint32_t) * srcIndices.size(), DXGI_FORMAT_R32_UINT, srcIndices.data());
+
+        // ローカル空間の境界球を計算する（AABBの中心を球の中心とし、頂点までの最大距離を半径とする）
+        {
+            Vector3 minP{ vertices[0].position.x, vertices[0].position.y, vertices[0].position.z };
+            Vector3 maxP = minP;
+            for (const auto &v : vertices) {
+                minP.x = std::min(minP.x, v.position.x);
+                minP.y = std::min(minP.y, v.position.y);
+                minP.z = std::min(minP.z, v.position.z);
+                maxP.x = std::max(maxP.x, v.position.x);
+                maxP.y = std::max(maxP.y, v.position.y);
+                maxP.z = std::max(maxP.z, v.position.z);
+            }
+            const Vector3 center{ (minP.x + maxP.x) * 0.5f, (minP.y + maxP.y) * 0.5f, (minP.z + maxP.z) * 0.5f };
+            float radiusSq = 0.0f;
+            for (const auto &v : vertices) {
+                const float dx = v.position.x - center.x;
+                const float dy = v.position.y - center.y;
+                const float dz = v.position.z - center.z;
+                radiusSq = std::max(radiusSq, dx * dx + dy * dy + dz * dz);
+            }
+            buffers->boundsCenter = center;
+            buffers->boundsRadius = std::sqrt(radiusSq);
+        }
 
         auto *raw = buffers.get();
         meshBuffers_.emplace(meshHandle, std::move(buffers));
@@ -187,6 +218,31 @@ public:
         return raw;
     }
 
+    /// @brief キーに対応する構造化バッファを取得し、内容(data, elementStride*elementCount バイト分)が
+    ///        前回このキーでアップロードした内容と完全に一致する場合はMap+memcpyを省略する
+    /// @details 動かない静的オブジェクトのみで構成されるバッチ（ワールド行列・マテリアル定数が
+    ///          毎フレーム同一）で、GPUへの再アップロードを丸ごと省略できるようにするためのもの。
+    ///          内容が変化するバッチでは比較コストが上乗せされるが、対象は元々毎フレームMap+memcpy
+    ///          していた小〜中規模の構造化バッファのみなので影響は小さい。
+    /// @return 対応するバッファ（内容不一致・新規作成時のみ実際に書き込み、一致すれば書き込まず返す）
+    StructuredBufferResource *GetOrUpdateStructuredBuffer(const std::string &key, size_t elementStride, size_t elementCount, const void *data) {
+        auto *buffer = GetOrCreateStructuredBuffer(key, elementStride, elementCount);
+        if (!buffer || !data || elementCount == 0) return buffer;
+
+        const size_t byteSize = elementStride * elementCount;
+        auto &cached = uploadCache_[key];
+        if (cached.size() == byteSize && std::memcmp(cached.data(), data, byteSize) == 0) {
+            return buffer;
+        }
+
+        if (auto *mapped = buffer->Map()) {
+            std::memcpy(mapped, data, byteSize);
+        }
+        cached.resize(byteSize);
+        std::memcpy(cached.data(), data, byteSize);
+        return buffer;
+    }
+
     /// @brief 保持している全リソースを解放する
     void Clear() {
         meshBuffers_.clear();
@@ -195,6 +251,7 @@ public:
         constantBuffers_.clear();
         vertexBuffers_.clear();
         uavTextures_.clear();
+        uploadCache_.clear();
     }
 
 private:
@@ -229,6 +286,8 @@ private:
     std::unordered_map<std::string, ConstantBufferEntry> constantBuffers_;
     std::unordered_map<std::string, VertexBufferEntry> vertexBuffers_;
     std::unordered_map<std::string, UAVTextureEntry> uavTextures_;
+    /// @brief GetOrUpdateStructuredBuffer用: キーごとの直近アップロード内容のCPU側コピー
+    std::unordered_map<std::string, std::vector<std::byte>> uploadCache_;
 };
 
 } // namespace KashipanEngine

@@ -1,5 +1,6 @@
 #include "ScreenBuffer.h"
 #include "Core/DirectXCommon.h"
+#include "Graphics/ImageExporter.h"
 #include "Graphics/Resources/IGraphicsResource.h"
 #include "Assets/TextureManager.h"
 #include "Debug/Logger.h"
@@ -21,6 +22,17 @@ std::uint32_t sAutoNameCounter = 0;
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
     const auto idx = GetRtvReadIndex();
     return shaderResources_[idx] ? shaderResources_[idx]->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
+}
+
+bool ScreenBuffer::SaveToFile(const std::string &filePath) const {
+    if (!sDirectXCommon_) return false;
+    auto *renderTarget = renderTargets_[previewRtvIndex_].get();
+    if (!renderTarget) return false;
+    auto *resource = renderTarget->GetResource();
+    if (!resource) return false;
+
+    auto *commandQueue = sDirectXCommon_->GetCommandQueueForScreenBuffer(Passkey<ScreenBuffer>{});
+    return ImageExporter::SaveTextureToFile(commandQueue, resource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, filePath);
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {

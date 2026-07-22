@@ -96,9 +96,24 @@ public:
     ///          エフェクト適用途中の中間結果を表示してしまう。
     ///          Renderer側がこのフレームの描画完了直後（EndDraw後）に確定した正しいSRVハンドルを
     ///          ここへ記録し、ビューアはこちらを参照することで常に「完成した最新フレーム」を表示する。
-    void SetPreviewSrvHandle(Passkey<Renderer>, D3D12_GPU_DESCRIPTOR_HANDLE handle) noexcept { previewSrvHandle_ = handle; }
+    void SetPreviewSrvHandle(Passkey<Renderer>, D3D12_GPU_DESCRIPTOR_HANDLE handle) noexcept {
+        previewSrvHandle_ = handle;
+        // この時点の読み取り面インデックスは確定済み（EndDraw後）のため、画像保存用にも記録しておく。
+        // インデックスのみ保持し、実体（renderTargets_[]）はリサイズで作り直されても都度引き直す
+        previewRtvIndex_ = GetRtvReadIndex();
+    }
     /// @brief 直近で描画が完了した時点のSRVハンドルを取得（ビューア表示用）
     D3D12_GPU_DESCRIPTOR_HANDLE GetPreviewSrvHandle() const noexcept { return previewSrvHandle_; }
+
+    /// @brief 直近で描画完了が確定した時点のレンダーターゲットを画像ファイルへ保存する
+    /// @details 内部でGPU完了を同期的に待つ（スコールする）ため、毎フレーム呼ぶ用途ではなく
+    ///          スクリーンショット等の単発利用を想定している。SetPreviewSrvHandleと同じ
+    ///          「フレーム描画完了直後に確定した面」を対象にするため、この呼び出しがどのタイミング
+    ///          （エディターのボタン、スクリプトのUpdate等、いずれもRenderer::RenderFrameより前）で
+    ///          行われても、ポストエフェクト適用途中の中間結果を保存してしまうことはない。
+    /// @param filePath 保存先パス（拡張子から形式判定。.png/.jpg/.jpeg/.bmp、それ以外はpng扱い）
+    /// @return 成功した場合は true
+    bool SaveToFile(const std::string &filePath) const;
 
     //==================================================
     // ハンドルとリソース取得
@@ -177,6 +192,8 @@ private:
     std::uint32_t textureHandle_ = 0;
     /// @brief 直近で描画完了が確定した時点のSRVハンドル（ビューア用。SetPreviewSrvHandle参照）
     D3D12_GPU_DESCRIPTOR_HANDLE previewSrvHandle_{};
+    /// @brief 直近で描画完了が確定した時点の読み取り面インデックス（画像保存用。SetPreviewSrvHandle参照）
+    size_t previewRtvIndex_ = 0;
 
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;

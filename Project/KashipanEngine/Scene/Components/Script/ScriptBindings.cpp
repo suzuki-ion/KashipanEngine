@@ -905,7 +905,14 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<ScreenBufferObject>(engine, "ScreenBufferObject")
         .method("void SetName(const string &in)", &ScreenBufferObject::SetName)
         .method("const string &GetName() const", &ScreenBufferObject::GetName)
-        .method("void SetSize(uint, uint)", &ScreenBufferObject::SetSize);
+        .method("void SetSize(uint, uint)", &ScreenBufferObject::SetSize)
+        .method("void SetSaveDirectory(const string &in)", &ScreenBufferObject::SetSaveDirectory)
+        .method("const string &GetSaveDirectory() const", &ScreenBufferObject::GetSaveDirectory)
+        .method("void SetSaveFileNamePrefix(const string &in)", &ScreenBufferObject::SetSaveFileNamePrefix)
+        .method("const string &GetSaveFileNamePrefix() const", &ScreenBufferObject::GetSaveFileNamePrefix)
+        .method("void SetSaveFormat(const string &in)", &ScreenBufferObject::SetSaveFormat)
+        .method("const string &GetSaveFormat() const", &ScreenBufferObject::GetSaveFormat)
+        .method("bool RequestSave(const string &in filePath = \"\")", &ScreenBufferObject::RequestSave);
 
     RegisterComponentType<ShadowMapObject>(engine, "ShadowMapObject")
         .method("void SetName(const string &in)", &ShadowMapObject::SetName)

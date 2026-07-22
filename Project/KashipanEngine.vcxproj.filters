@@ -417,6 +417,9 @@
     <ClCompile Include="KashipanEngine\Graphics\ComputeCommandProcessor.cpp">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\ImageExporter.cpp">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\ScreenBuffer.cpp">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
@@ -979,6 +982,9 @@
       <Filter>KashipanEngine\Graphics\Resources</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\ComputeCommandProcessor.h">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\ImageExporter.h">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h">

@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <functional>
@@ -246,6 +247,43 @@ SamplerManager::SamplerHandle GetShadowSamplerCmpHandle() {
         return SamplerManager::CreateSampler(desc);
     }();
     return sHandle;
+}
+
+/// @brief 視錐台の1平面。ワールド座標pが a*p.x+b*p.y+c*p.z+d >= 0 を満たせば視錐台の内側（この平面基準）
+struct FrustumPlane {
+    float a = 0.0f, b = 0.0f, c = 0.0f, d = 0.0f;
+};
+
+/// @brief ビュー射影行列（このエンジンの行ベクトル規約、D3DのNDC z範囲[0,1]）から視錐台の6平面を抽出する
+std::array<FrustumPlane, 6> ExtractFrustumPlanes(const Matrix4x4 &viewProjection) {
+    const auto &m = viewProjection.m;
+    const float c0[4] = { m[0][0], m[1][0], m[2][0], m[3][0] };
+    const float c1[4] = { m[0][1], m[1][1], m[2][1], m[3][1] };
+    const float c2[4] = { m[0][2], m[1][2], m[2][2], m[3][2] };
+    const float c3[4] = { m[0][3], m[1][3], m[2][3], m[3][3] };
+    const auto normalize = [](float a, float b, float c, float d) {
+        const float len = std::sqrt(a * a + b * b + c * c);
+        if (len > 1e-8f) { a /= len; b /= len; c /= len; d /= len; }
+        return FrustumPlane{ a, b, c, d };
+    };
+    std::array<FrustumPlane, 6> planes;
+    planes[0] = normalize(c3[0] + c0[0], c3[1] + c0[1], c3[2] + c0[2], c3[3] + c0[3]); // left   (x >= -w)
+    planes[1] = normalize(c3[0] - c0[0], c3[1] - c0[1], c3[2] - c0[2], c3[3] - c0[3]); // right  (x <=  w)
+    planes[2] = normalize(c3[0] + c1[0], c3[1] + c1[1], c3[2] + c1[2], c3[3] + c1[3]); // bottom (y >= -w)
+    planes[3] = normalize(c3[0] - c1[0], c3[1] - c1[1], c3[2] - c1[2], c3[3] - c1[3]); // top    (y <=  w)
+    planes[4] = normalize(c2[0], c2[1], c2[2], c2[3]);                                 // near   (D3D: z >= 0)
+    planes[5] = normalize(c3[0] - c2[0], c3[1] - c2[1], c3[2] - c2[2], c3[3] - c2[3]); // far    (D3D: z <= w)
+    return planes;
+}
+
+/// @brief 球が視錐台と交差する可能性があるか（完全に外側であることが確定した場合のみfalse。
+///        視錐台の角付近では偽陽性があり得るが偽陰性は無い、カリング用途では安全な近似）
+bool SphereIntersectsFrustum(const std::array<FrustumPlane, 6> &planes, const Vector3 &center, float radius) {
+    for (const auto &p : planes) {
+        const float dist = p.a * center.x + p.b * center.y + p.c * center.z + p.d;
+        if (dist < -radius) return false;
+    }
+    return true;
 }
 
 /// @brief バッファキャッシュキー生成（描画先＋パイプライン＋メッシュ＋マテリアルでバッチを識別）
@@ -1413,6 +1451,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         /// @brief 描画するインデックス範囲（サブメッシュ。indexCount==0の場合はメッシュ全体）
         std::uint32_t indexStart = 0;
         std::uint32_t indexCount = 0;
+        /// @brief バッチ内の全インスタンスを包含するワールド空間の集合境界球（スライス単位カリングに使う）
+        Vector3 boundsCenter{ 0.0f, 0.0f, 0.0f };
+        float boundsRadius = 0.0f;
     };
     std::vector<PreparedShadowBatch> batches;
     const auto fallbackTextureHandle = TextureManager::GetTextureFromFileName("white1x1.png");
@@ -1445,6 +1486,48 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             batch.instanceCount = instanceCount;
             batch.indexStart = first.indexStart;
             batch.indexCount = first.indexCount;
+
+            // ワールド空間の集合境界球を計算する（全スライス共通で1回だけ計算し、スライス単位の
+            // フラスタムカリングで「このバッチが完全に視錐台の外側にあるか」を判定するのに使う）
+            {
+                const auto transformPoint = [](const Matrix4x4 &world, const Vector3 &p) {
+                    return Vector3(
+                        p.x * world.m[0][0] + p.y * world.m[1][0] + p.z * world.m[2][0] + world.m[3][0],
+                        p.x * world.m[0][1] + p.y * world.m[1][1] + p.z * world.m[2][1] + world.m[3][1],
+                        p.x * world.m[0][2] + p.y * world.m[1][2] + p.z * world.m[2][2] + world.m[3][2]);
+                };
+                const auto maxAxisScale = [](const Matrix4x4 &world) {
+                    const auto lenSq = [](float x, float y, float z) { return x * x + y * y + z * z; };
+                    const float s0 = lenSq(world.m[0][0], world.m[0][1], world.m[0][2]);
+                    const float s1 = lenSq(world.m[1][0], world.m[1][1], world.m[1][2]);
+                    const float s2 = lenSq(world.m[2][0], world.m[2][1], world.m[2][2]);
+                    return std::sqrt(std::max({ s0, s1, s2 }));
+                };
+
+                std::vector<Vector3> instanceCenters(instanceCount);
+                std::vector<float> instanceRadii(instanceCount);
+                Vector3 avgCenter{ 0.0f, 0.0f, 0.0f };
+                for (size_t i = begin; i < end; ++i) {
+                    const Vector3 center = transformPoint(sources[i].worldMatrix, meshBuffers->boundsCenter);
+                    const float radius = meshBuffers->boundsRadius * maxAxisScale(sources[i].worldMatrix);
+                    instanceCenters[i - begin] = center;
+                    instanceRadii[i - begin] = radius;
+                    avgCenter.x += center.x; avgCenter.y += center.y; avgCenter.z += center.z;
+                }
+                avgCenter.x /= static_cast<float>(instanceCount);
+                avgCenter.y /= static_cast<float>(instanceCount);
+                avgCenter.z /= static_cast<float>(instanceCount);
+                float maxRadius = 0.0f;
+                for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                    const float dx = instanceCenters[i].x - avgCenter.x;
+                    const float dy = instanceCenters[i].y - avgCenter.y;
+                    const float dz = instanceCenters[i].z - avgCenter.z;
+                    const float dist = std::sqrt(dx * dx + dy * dy + dz * dz) + instanceRadii[i];
+                    maxRadius = std::max(maxRadius, dist);
+                }
+                batch.boundsCenter = avgCenter;
+                batch.boundsRadius = maxRadius;
+            }
 
             // ワールド行列のインスタンスバッファ（カスケード間で内容は共通）
             char key[64];
@@ -1603,7 +1686,13 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 std::memcpy(mapped, &constant, sizeof(constant));
             }
 
+            // このスライスの視錐台を抽出し、完全に外側にあるバッチは描画自体をスキップする
+            const auto frustumPlanes = ExtractFrustumPlanes(job.viewProjections[s]);
+
             for (const auto &batch : batches) {
+                if (!SphereIntersectsFrustum(frustumPlanes, batch.boundsCenter, batch.boundsRadius)) {
+                    continue;
+                }
                 shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
                 shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
                 shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
@@ -1732,6 +1821,10 @@ void Renderer::RenderToTarget(IRenderTarget *target,
         RenderEditorBackground(static_cast<ScreenBuffer *>(target), pipelineBinder, sceneRenderer);
     }
 
+    // 同一パイプライン・描画先が連続する間はカメラ・ライトの再バインドを省略するための共有キャッシュ
+    // （DrawBatchのループ・RenderTextRenderers・RenderGpuParticlesの全体で1つを使い回す）
+    CameraLightsBindCache lightsCache;
+
     // 同一（パイプライン・メッシュ・サブメッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
     size_t begin = 0;
     while (begin < entries.size()) {
@@ -1750,15 +1843,15 @@ void Renderer::RenderToTarget(IRenderTarget *target,
             ++end;
         }
 
-        DrawBatch(target, pipelineBinder, entries.subspan(begin, end - begin), sceneRenderer);
+        DrawBatch(target, pipelineBinder, entries.subspan(begin, end - begin), sceneRenderer, lightsCache);
         begin = end;
     }
 
     // TextRenderer（文字ごとにアトラス内UVが異なるため通常のバッチには乗らない）は専用パスで描画する
-    RenderTextRenderers(target, pipelineBinder, sceneRenderer);
+    RenderTextRenderers(target, pipelineBinder, sceneRenderer, lightsCache);
 
     // GPU Simulation有効なParticleSystem2D/3D（ProcessGpuParticlesが結果を書き込み済み）も専用パスで描画する
-    RenderGpuParticles(target, pipelineBinder, sceneRenderer);
+    RenderGpuParticles(target, pipelineBinder, sceneRenderer, lightsCache);
 
     // ScreenBuffer の場合は所有オブジェクトのポストプロセスを適用
     if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
@@ -1783,7 +1876,8 @@ void Renderer::RenderToTarget(IRenderTarget *target,
 void Renderer::DrawBatch(IRenderTarget *target,
     PipelineBinder &pipelineBinder,
     std::span<const SceneRenderer::DrawEntry> batch,
-    SceneRenderer *sceneRenderer) {
+    SceneRenderer *sceneRenderer,
+    CameraLightsBindCache &lightsCache) {
     if (batch.empty()) return;
 
     const auto &first = batch.front();
@@ -1802,8 +1896,8 @@ void Renderer::DrawBatch(IRenderTarget *target,
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
     shaderBinder.SetCommandList(commandList);
 
-    // カメラ・ライトの定数バッファバインド
-    BindCameraAndLights(commandList, target, pipelineName, sceneRenderer);
+    // カメラ・ライトの定数バッファバインド（直前と同じパイプラインのままなら内部でスキップされる）
+    BindCameraAndLights(commandList, target, pipelineName, sceneRenderer, pipelineBinder, lightsCache);
 
     const std::uint32_t instanceCount = static_cast<std::uint32_t>(batch.size());
 
@@ -1826,13 +1920,14 @@ void Renderer::DrawBatch(IRenderTarget *target,
             std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
             key += suffix;
         }
-        auto *instanceBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(Matrix4x4), instanceCount);
-        if (!instanceBuffer) return;
-        auto *mapped = static_cast<Matrix4x4 *>(instanceBuffer->Map());
-        if (!mapped) return;
+        // 動かない静的オブジェクトのみのバッチでは前フレームと内容が完全に一致するため、
+        // GetOrUpdateStructuredBufferが内容比較によりMap+memcpyを省略する
+        std::vector<Matrix4x4> transforms(instanceCount);
         for (size_t i = 0; i < batch.size(); ++i) {
-            mapped[i] = batch[i].worldMatrix;
+            transforms[i] = batch[i].worldMatrix;
         }
+        auto *instanceBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(Matrix4x4), instanceCount, transforms.data());
+        if (!instanceBuffer) return;
         shaderBinder.Bind("Vertex:gTransformationMatrices", instanceBuffer);
     }
 
@@ -1860,15 +1955,10 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 element.uvTransform = material->uvTransform;
                 element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
             }
-            auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(Material2DElement), instanceCount);
+            std::vector<Material2DElement> elements(instanceCount, element);
+            auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(Material2DElement), instanceCount, elements.data());
             if (materialBuffer) {
-                auto *mapped = static_cast<Material2DElement *>(materialBuffer->Map());
-                if (mapped) {
-                    for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                        mapped[i] = element;
-                    }
-                    shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
-                }
+                shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
             }
         } else {
             MaterialElement element;
@@ -1886,15 +1976,10 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 element.rimPower = material->rimPower;
                 element.rimIntensity = material->rimIntensity;
             }
-            auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
+            std::vector<MaterialElement> elements(instanceCount, element);
+            auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(MaterialElement), instanceCount, elements.data());
             if (materialBuffer) {
-                auto *mapped = static_cast<MaterialElement *>(materialBuffer->Map());
-                if (mapped) {
-                    for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                        mapped[i] = element;
-                    }
-                    shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
-                }
+                shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
             }
         }
 
@@ -1932,7 +2017,8 @@ void Renderer::DrawBatch(IRenderTarget *target,
     ++drawCallCount_;
 }
 
-void Renderer::RenderTextRenderers(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer) {
+void Renderer::RenderTextRenderers(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer,
+    CameraLightsBindCache &lightsCache) {
     if (!target || !sceneRenderer) return;
 
     //--------- このターゲットに適用されるTextRendererを収集する（CollectSortableEntriesと同じフィルタ条件） ---------//
@@ -1999,7 +2085,7 @@ void Renderer::RenderTextRenderers(IRenderTarget *target, PipelineBinder &pipeli
 
         // カメラの定数バッファバインド（ライト関連バッファも一緒にバインドされるが、
         // Text2DのシェーダーはgPointLights等を参照しないため無害。Object2D系の描画と同じ扱い）
-        BindCameraAndLights(commandList, target, pipelineName, sceneRenderer);
+        BindCameraAndLights(commandList, target, pipelineName, sceneRenderer, pipelineBinder, lightsCache);
 
         const std::uint32_t instanceCount = static_cast<std::uint32_t>(instances.size());
 
@@ -2044,7 +2130,8 @@ void Renderer::RenderTextRenderers(IRenderTarget *target, PipelineBinder &pipeli
     }
 }
 
-void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer) {
+void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer,
+    CameraLightsBindCache &lightsCache) {
     if (!target || !sceneRenderer) return;
     const auto &emitters = sceneRenderer->GetGpuParticleEmitters();
     if (emitters.empty()) return;
@@ -2089,7 +2176,7 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
         auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
         shaderBinder.SetCommandList(commandList);
 
-        BindCameraAndLights(commandList, target, pipelineName, sceneRenderer);
+        BindCameraAndLights(commandList, target, pipelineName, sceneRenderer, pipelineBinder, lightsCache);
 
         instanceMatrixBuffer->SetCommandList(commandList);
         shaderBinder.Bind("Vertex:gTransformationMatrices", instanceMatrixBuffer);
@@ -2170,7 +2257,20 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
 void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
     IRenderTarget *target,
     const std::string &pipelineName,
-    SceneRenderer *sceneRenderer) {
+    SceneRenderer *sceneRenderer,
+    PipelineBinder &pipelineBinder,
+    CameraLightsBindCache &lightsCache) {
+    // 直前のバインドと同じパイプラインのままで、かつその間にパイプラインの実切り替え
+    // （ルートシグネチャの変更）が一度も起きていなければ、ルート引数（カメラ・ライト）は
+    // まだ有効なはずなので再バインドをスキップする（同一(target, pipeline)のバッチが
+    // 連続する間、毎バッチ発生していたライト一覧再構築・GPUバッファ再アップロードを防ぐ）
+    if (lightsCache.valid && lightsCache.pipelineName == pipelineName && lightsCache.generation == pipelineBinder.Generation()) {
+        return;
+    }
+    lightsCache.pipelineName = pipelineName;
+    lightsCache.generation = pipelineBinder.Generation();
+    lightsCache.valid = true;
+
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
     shaderBinder.SetCommandList(commandList);
 

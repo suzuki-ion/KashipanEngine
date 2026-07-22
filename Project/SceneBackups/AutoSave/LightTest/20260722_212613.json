@@ -572,13 +572,13 @@
                 {
                     "data": {
                         "customData": {
-                            "height": 2160,
+                            "height": 1080,
                             "isShowViewer": true,
                             "name": "ScreenBuffer_2",
                             "saveDirectory": "Screenshots",
                             "saveFileNamePrefix": "Screenshot",
                             "saveFormat": "png",
-                            "width": 3840
+                            "width": 2560
                         },
                         "isActive": true,
                         "priority": 1,
@@ -605,11 +605,11 @@
                         "customData": {
                             "bias": 0.0,
                             "blurRadius": 8,
-                            "depthThreshold": 16.0,
+                            "depthThreshold": 0.20000000298023224,
                             "excludedScreenBuffers": [],
                             "intensity": 3.0,
-                            "power": 3.0,
-                            "radius": 1.0,
+                            "power": 2.0,
+                            "radius": 3.0,
                             "sampleCount": 64
                         },
                         "isActive": true,

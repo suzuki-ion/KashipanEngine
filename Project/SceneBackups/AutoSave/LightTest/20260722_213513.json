@@ -221,7 +221,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Light Object",
             "objectID": "0db43071-06c8-4ebb-8ad3-1434886a7878",
             "tag": ""
@@ -302,7 +302,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Light Object",
             "objectID": "d826ae47-6fb5-42c2-a8fe-cc41daa2cfcc",
             "tag": ""
@@ -383,7 +383,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Light Object",
             "objectID": "abaefc9a-df2c-4312-963c-3f7ca530353c",
             "tag": ""
@@ -430,7 +430,7 @@
                             "decay": 0.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 512.0,
+                            "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 1.0,
                             "shadowBias": 0.0,
@@ -444,7 +444,7 @@
                             "sourceWidth": 128.0,
                             "type": 7
                         },
-                        "isActive": false,
+                        "isActive": true,
                         "priority": 1,
                         "tag": ""
                     },
@@ -464,7 +464,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": false,
+            "isActive": true,
             "name": "Light Object",
             "objectID": "3df4257a-820b-4b38-bcae-f698115d04cb",
             "tag": ""
@@ -594,7 +594,7 @@
                             "threshold": 0.01600000075995922,
                             "thresholdMin": 0.030500000342726707
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 2,
                         "tag": ""
                     },
@@ -612,11 +612,27 @@
                             "radius": 1.0,
                             "sampleCount": 64
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 3,
                         "tag": ""
                     },
                     "type": "AmbientOcclusionEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "blurRadius": 1.0,
+                            "excludedScreenBuffers": [],
+                            "intensity": 0.75,
+                            "iterations": 4,
+                            "softKnee": 0.5,
+                            "threshold": 1.25
+                        },
+                        "isActive": false,
+                        "priority": 4,
+                        "tag": ""
+                    },
+                    "type": "BloomEffect"
                 },
                 {
                     "data": {
@@ -632,27 +648,11 @@
                             "saturation": 0.75,
                             "temperature": 0.5
                         },
-                        "isActive": true,
-                        "priority": 4,
-                        "tag": ""
-                    },
-                    "type": "ColorAdjustEffect"
-                },
-                {
-                    "data": {
-                        "customData": {
-                            "blurRadius": 1.0,
-                            "excludedScreenBuffers": [],
-                            "intensity": 0.75,
-                            "iterations": 4,
-                            "softKnee": 0.5,
-                            "threshold": 1.25
-                        },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 5,
                         "tag": ""
                     },
-                    "type": "BloomEffect"
+                    "type": "ColorAdjustEffect"
                 },
                 {
                     "data": {
@@ -672,7 +672,7 @@
                             "intensity": 0.0,
                             "smoothness": 0.30000001192092896
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 6,
                         "tag": ""
                     },

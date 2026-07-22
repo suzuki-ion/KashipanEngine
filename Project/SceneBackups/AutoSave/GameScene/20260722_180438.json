@@ -3706,13 +3706,13 @@
                 {
                     "data": {
                         "customData": {
-                            "brightness": 0.10000000149011612,
+                            "brightness": 0.0,
                             "colorBalance": [
                                 0.0,
                                 0.0,
                                 0.0
                             ],
-                            "contrast": 1.100000023841858,
+                            "contrast": 1.0,
                             "excludedScreenBuffers": [],
                             "saturation": 1.0,
                             "temperature": 0.0

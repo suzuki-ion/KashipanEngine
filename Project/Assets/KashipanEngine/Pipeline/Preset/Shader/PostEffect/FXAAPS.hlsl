@@ -51,14 +51,14 @@ float4 main(VSOutput input) : SV_TARGET {
 
 	float2 dir;
 	if (isHorizontal) {
-        // 水平方向にブラー
+        // 水平方向に走るエッジ（上下で輝度差が大きい）→ その勾配方向である垂直方向にブラー
 		float lumaN2 = Luma(gTexture.Sample(gSampler, uv + float2(0.0, -2.0 * px.y)).rgb);
 		float lumaS2 = Luma(gTexture.Sample(gSampler, uv + float2(0.0, 2.0 * px.y)).rgb);
 
 		float lumaSum = lumaN + lumaS + lumaN2 + lumaS2;
 		dir = float2(0.0, (lumaN2 + lumaN - lumaS2 - lumaS) / (abs(lumaSum) + 1e-4));
 	} else {
-        // 垂直方向にブラー
+        // 垂直方向に走るエッジ（左右で輝度差が大きい）→ その勾配方向である水平方向にブラー
 		float lumaW2 = Luma(gTexture.Sample(gSampler, uv + float2(-2.0 * px.x, 0.0)).rgb);
 		float lumaE2 = Luma(gTexture.Sample(gSampler, uv + float2(2.0 * px.x, 0.0)).rgb);
 
@@ -74,7 +74,10 @@ float4 main(VSOutput input) : SV_TARGET {
 
 	float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
 
-	dir = saturate(dir * rcpDirMin) * px;
+	// dirの各成分は負の値も取り得るため、符号を保ったまま大きさだけを[-8,8]相当に制限する
+	// （saturate()は[0,1]へクランプしてしまい、負方向の勾配を誤って0にしてしまうため使えない）
+	const float kSpanMax = 8.0;
+	dir = clamp(dir * rcpDirMin, -kSpanMax, kSpanMax) * px;
 
     // サブピクセルブレンド
 	float3 rgbA = 0.5 * (

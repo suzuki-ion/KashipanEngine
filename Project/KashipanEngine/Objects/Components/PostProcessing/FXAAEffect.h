@@ -33,9 +33,18 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Threshold", &params_.threshold, 0.001f, 0.0f, 1.0f, "%.4f");
-        ImGui::DragFloat("Threshold Min", &params_.thresholdMin, 0.0001f, 0.0f, 1.0f, "%.4f");
-        ImGui::DragFloat("Strength", &params_.strength, 0.01f, 0.0f, 4.0f, "%.3f");
+        ImGui::DragFloat("Threshold", &params_.threshold, 0.001f, 0.0f, 0.5f, "%.4f");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("エッジ検出の絶対しきい値。実用域はおよそ0.03〜0.16で、\nそれ以上はほぼ全てのエッジが無視されAAが効かなくなる");
+        }
+        ImGui::DragFloat("Threshold Min", &params_.thresholdMin, 0.0001f, 0.0f, 0.2f, "%.4f");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("周囲の最大輝度に対する相対しきい値。実用域はおよそ0.03〜0.08");
+        }
+        ImGui::DragFloat("Strength", &params_.strength, 0.01f, 0.0f, 1.0f, "%.3f");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("AA適用後の色への合成比率（0=無効、1=適用後の色をそのまま採用）");
+        }
     }
 #endif
 
@@ -61,7 +70,8 @@ protected:
         cbData_.texelSize[1] = (owner && owner->GetHeight() > 0) ? (1.0f / static_cast<float>(owner->GetHeight())) : 0.0f;
         cbData_.threshold = std::max(params_.threshold, 0.0f);
         cbData_.thresholdMin = std::max(params_.thresholdMin, 0.0f);
-        cbData_.strength = std::max(params_.strength, 0.0f);
+        // 1.0を超えるとlerpが外挿されFXAA自身のluma範囲チェックを飛び越えて色が破綻するため上限も設ける
+        cbData_.strength = std::clamp(params_.strength, 0.0f, 1.0f);
         PassInfo pass;
         pass.pipelineName = "PostEffect.FXAA";
         pass.constantBufferRequirements = {

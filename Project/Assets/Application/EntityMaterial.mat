@@ -10,6 +10,7 @@
     "environmentCoefficient": 1.0,
     "environmentFile": "",
     "name": "EntityMaterial",
+    "normalMapFile": "",
     "rimColor": {
         "w": 1.0,
         "x": 1.0,

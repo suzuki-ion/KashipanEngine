@@ -347,7 +347,7 @@
                             "depthThreshold": 16.0,
                             "excludedScreenBuffers": [],
                             "intensity": 0.0,
-                            "power": 0.10000000149011612,
+                            "power": 5.599999904632568,
                             "radius": 0.4000000059604645,
                             "sampleCount": 64
                         },

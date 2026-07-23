@@ -328,8 +328,8 @@
                     "data": {
                         "customData": {
                             "excludedScreenBuffers": [],
-                            "strength": 2.0,
-                            "subpixelBlend": 0.75,
+                            "strength": 0.9900000095367432,
+                            "subpixelBlend": 1.0,
                             "threshold": 0.0,
                             "thresholdMin": 0.0
                         },
@@ -342,13 +342,13 @@
                 {
                     "data": {
                         "customData": {
-                            "bias": 0.0,
+                            "bias": 0.05000000074505806,
                             "blurRadius": 8,
                             "depthThreshold": 16.0,
                             "excludedScreenBuffers": [],
-                            "intensity": 0.0,
-                            "power": 0.10000000149011612,
-                            "radius": 0.4000000059604645,
+                            "intensity": 2.0,
+                            "power": 2.0,
+                            "radius": 3.0,
                             "sampleCount": 64
                         },
                         "isActive": true,

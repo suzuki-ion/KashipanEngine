@@ -268,7 +268,7 @@
                             "decay": 2.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 0.5,
+                            "intensity": 1.0,
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowBias": 0.0,
@@ -342,14 +342,14 @@
                             "castShadows": true,
                             "color": {
                                 "w": 1.0,
-                                "x": 0.4738461375236511,
-                                "y": 0.6163126230239868,
-                                "z": 1.0
+                                "x": 0.12941177189350128,
+                                "y": 0.2705882489681244,
+                                "z": 0.6509804129600525
                             },
                             "decay": 2.0,
                             "distance": 10.0,
                             "innerAngle": 0.3499999940395355,
-                            "intensity": 0.20000000298023224,
+                            "intensity": 0.5,
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowBias": 0.0,
@@ -572,13 +572,13 @@
                 {
                     "data": {
                         "customData": {
-                            "height": 2160,
+                            "height": 1080,
                             "isShowViewer": true,
                             "name": "ScreenBuffer_2",
                             "saveDirectory": "Screenshots",
                             "saveFileNamePrefix": "Screenshot",
                             "saveFormat": "png",
-                            "width": 3840
+                            "width": 1920
                         },
                         "isActive": true,
                         "priority": 1,
@@ -591,8 +591,39 @@
                         "customData": {
                             "excludedScreenBuffers": [],
                             "strength": 1.0,
-                            "threshold": 0.01600000075995922,
-                            "thresholdMin": 0.030500000342726707
+                            "subpixelBlend": 1.0,
+                            "threshold": 0.0,
+                            "thresholdMin": 0.0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "FXAAEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "excludedScreenBuffers": [],
+                            "strength": 1.0,
+                            "subpixelBlend": 1.0,
+                            "threshold": 0.0,
+                            "thresholdMin": 0.0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "FXAAEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "excludedScreenBuffers": [],
+                            "strength": 1.0,
+                            "subpixelBlend": 1.0,
+                            "threshold": 0.0,
+                            "thresholdMin": 0.0
                         },
                         "isActive": true,
                         "priority": 2,

@@ -11,12 +11,14 @@ public:
         float threshold = 0.01f;
         float thresholdMin = 0.001f;
         float strength = 1.0f;
+        float subpixelBlend = 0.75f;
     };
 
     FXAAEffect() : IPostProcessComponent("FXAAEffect") {
         ADD_MEMBER_VARIABLE(params_.threshold);
         ADD_MEMBER_VARIABLE(params_.thresholdMin);
         ADD_MEMBER_VARIABLE(params_.strength);
+        ADD_MEMBER_VARIABLE(params_.subpixelBlend);
     }
     ~FXAAEffect() override = default;
 
@@ -45,6 +47,10 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("AA適用後の色への合成比率（0=無効、1=適用後の色をそのまま採用）");
         }
+        ImGui::DragFloat("Subpixel Blend", &params_.subpixelBlend, 0.01f, 0.0f, 1.0f, "%.3f");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("1ピクセル程度の孤立した明暗・細線に対するぼかしの強さ（0=無効、1=最大）。\n上げすぎると細部がぼやけやすくなる");
+        }
     }
 #endif
 
@@ -53,6 +59,7 @@ protected:
         json["threshold"] = params_.threshold;
         json["thresholdMin"] = params_.thresholdMin;
         json["strength"] = params_.strength;
+        json["subpixelBlend"] = params_.subpixelBlend;
         return json;
     }
 
@@ -61,6 +68,7 @@ protected:
         params_.threshold = json.value("threshold", 0.01f);
         params_.thresholdMin = json.value("thresholdMin", 0.001f);
         params_.strength = json.value("strength", 1.0f);
+        params_.subpixelBlend = json.value("subpixelBlend", 0.75f);
         return true;
     }
 
@@ -72,6 +80,7 @@ protected:
         cbData_.thresholdMin = std::max(params_.thresholdMin, 0.0f);
         // 1.0を超えるとlerpが外挿されFXAA自身のluma範囲チェックを飛び越えて色が破綻するため上限も設ける
         cbData_.strength = std::clamp(params_.strength, 0.0f, 1.0f);
+        cbData_.subpixelBlend = std::clamp(params_.subpixelBlend, 0.0f, 1.0f);
         PassInfo pass;
         pass.pipelineName = "PostEffect.FXAA";
         pass.constantBufferRequirements = {
@@ -87,6 +96,7 @@ private:
         float threshold = 0.0f;
         float thresholdMin = 0.0f;
         float strength = 0.0f;
+        float subpixelBlend = 0.0f;
     };
 
     Params params_{};

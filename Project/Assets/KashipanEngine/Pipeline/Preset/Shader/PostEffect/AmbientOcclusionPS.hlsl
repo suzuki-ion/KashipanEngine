@@ -43,15 +43,34 @@ float4 main(VSOutput input) : SV_Target0 {
 
 	float3 worldPos = ReconstructWorldPos(input.uv, rawDepth);
 
-	// 法線をスクリーンスペース微分から再構成する（頂点法線バッファが無いための近似）
-	float3 normal = normalize(cross(ddy(worldPos), ddx(worldPos)));
+	// 法線を深度から再構成する（頂点法線バッファが無いための近似）。
+	// ddx/ddyは常に片側固定の隣接ピクセルを機械的に見るため、物体のシルエット境界（背景や
+	// 手前の別ジオメトリとの深度の飛び）をまたぐピクセルでは全く無関係な深度差から接ベクトルを
+	// 作ってしまい、輪郭に沿った法線の破綻（AOのハロー状のノイズ）が出やすい。
+	// 左右・上下それぞれで中心により近い深度を持つ側だけを採用することで、境界をまたがない
+	// 側から接ベクトルを求める（同じ面上にある可能性が高い側を選ぶ）
+	float2 texel = gTexelSize;
+	float rawDepthL = gDepthTexture.Sample(gDepthSampler, input.uv - float2(texel.x, 0.0f)).r;
+	float rawDepthR = gDepthTexture.Sample(gDepthSampler, input.uv + float2(texel.x, 0.0f)).r;
+	float rawDepthU = gDepthTexture.Sample(gDepthSampler, input.uv - float2(0.0f, texel.y)).r;
+	float rawDepthD = gDepthTexture.Sample(gDepthSampler, input.uv + float2(0.0f, texel.y)).r;
+
+	float3 worldPosL = ReconstructWorldPos(input.uv - float2(texel.x, 0.0f), rawDepthL);
+	float3 worldPosR = ReconstructWorldPos(input.uv + float2(texel.x, 0.0f), rawDepthR);
+	float3 worldPosU = ReconstructWorldPos(input.uv - float2(0.0f, texel.y), rawDepthU);
+	float3 worldPosD = ReconstructWorldPos(input.uv + float2(0.0f, texel.y), rawDepthD);
+
+	float3 tangentX = (abs(rawDepthL - rawDepth) < abs(rawDepthR - rawDepth)) ? (worldPos - worldPosL) : (worldPosR - worldPos);
+	float3 tangentY = (abs(rawDepthU - rawDepth) < abs(rawDepthD - rawDepth)) ? (worldPos - worldPosU) : (worldPosD - worldPos);
+
+	float3 normal = normalize(cross(tangentY, tangentX));
 	float3 toCamera = normalize(gCameraWorldPosition - worldPos);
 	if (dot(normal, toCamera) < 0.0f) {
 		normal = -normal;
 	}
 
-	// 深度微分から求めた接ベクトルでTBNを構築する（ピクセル単位の回転はハッシュシードで与える）
-	float3 tangent = normalize(ddx(worldPos) - normal * dot(ddx(worldPos), normal));
+	// TBNを構築する（ピクセル単位の回転はハッシュシードで与える）
+	float3 tangent = normalize(tangentX - normal * dot(tangentX, normal));
 	if (!any(tangent)) {
 		tangent = normalize(cross(normal, float3(0.0f, 1.0f, 0.0f)));
 	}

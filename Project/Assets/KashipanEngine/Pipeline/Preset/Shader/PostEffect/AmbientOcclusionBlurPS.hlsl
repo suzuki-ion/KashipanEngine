@@ -1,5 +1,7 @@
 // AOのノイズ除去用ブラー（深度考慮版）。物体の境界をまたいで平滑化しないよう、
-// 中心と周辺サンプルの線形深度差がしきい値を超えるサンプルは重み0で除外する
+// 中心と周辺サンプルの線形深度差に応じて滑らかに重みを減衰させる
+// （しきい値での二値足切りだと、しきい値付近で重みが不連続に変化しブロック状のムラが出るため、
+//  しきい値は「打ち切り」ではなく「減衰の速さ」として使うガウス減衰にしている）
 #include "FullScreenTriangle.hlsli"
 #include "AmbientOcclusionBlurCB.hlsli"
 
@@ -30,13 +32,13 @@ float4 main(VSOutput input) : SV_Target0 {
 				continue;
 			}
 			float linearDepth = LinearizeDepth(rawDepth);
-			if (abs(linearDepth - centerLinearDepth) > gDepthThreshold) {
-				continue;
-			}
+			float depthDiff = linearDepth - centerLinearDepth;
+			float depthWeight = exp(-(depthDiff * depthDiff) / max(1e-6f, 2.0f * gDepthThreshold * gDepthThreshold));
 			float spatialWeight = exp(-float(x * x + y * y) / max(1.0f, float(gRadius * gRadius)));
+			float weight = spatialWeight * depthWeight;
 			float ao = gTexture.Sample(gSampler, uv).r;
-			sum += ao * spatialWeight;
-			wsum += spatialWeight;
+			sum += ao * weight;
+			wsum += weight;
 		}
 	}
 

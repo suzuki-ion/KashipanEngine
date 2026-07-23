@@ -3670,6 +3670,21 @@
                 {
                     "data": {
                         "customData": {
+                            "excludedScreenBuffers": [],
+                            "strength": 1.0,
+                            "subpixelBlend": 0.9900000095367432,
+                            "threshold": 0.009999999776482582,
+                            "thresholdMin": 0.0010000000474974513
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "FXAAEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "dilateRadius": 4,
                             "excludedScreenBuffers": [],
                             "farBlurDistance": 10.0,
@@ -3680,7 +3695,7 @@
                             "sampleCount": 16
                         },
                         "isActive": true,
-                        "priority": 1,
+                        "priority": 3,
                         "tag": ""
                     },
                     "type": "DepthOfFieldEffect"
@@ -3688,17 +3703,17 @@
                 {
                     "data": {
                         "customData": {
-                            "bias": 0.20000000298023224,
+                            "bias": 0.15000000596046448,
                             "blurRadius": 8,
                             "depthThreshold": 32.0,
                             "excludedScreenBuffers": [],
-                            "intensity": 2.5,
-                            "power": 2.0,
-                            "radius": 3.0,
-                            "sampleCount": 8
+                            "intensity": 3.0,
+                            "power": 3.0,
+                            "radius": 1.5,
+                            "sampleCount": 16
                         },
                         "isActive": true,
-                        "priority": 2,
+                        "priority": 4,
                         "tag": ""
                     },
                     "type": "AmbientOcclusionEffect"
@@ -3718,7 +3733,7 @@
                             "temperature": 0.0
                         },
                         "isActive": true,
-                        "priority": 3,
+                        "priority": 5,
                         "tag": ""
                     },
                     "type": "ColorAdjustEffect"

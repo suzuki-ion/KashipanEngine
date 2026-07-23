@@ -127,7 +127,7 @@
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowBias": 0.0,
-                            "shadowDistance": 128.0,
+                            "shadowDistance": 64.0,
                             "shadowMapResolution": 4096,
                             "shadowSoftness": 2.0,
                             "sourceDepth": 1.0,
@@ -328,7 +328,8 @@
                     "data": {
                         "customData": {
                             "excludedScreenBuffers": [],
-                            "strength": 2.0,
+                            "strength": 1.0,
+                            "subpixelBlend": 1.0,
                             "threshold": 0.0,
                             "thresholdMin": 0.0
                         },
@@ -343,7 +344,7 @@
                         "customData": {
                             "bias": 0.05000000074505806,
                             "blurRadius": 8,
-                            "depthThreshold": 1.0,
+                            "depthThreshold": 16.0,
                             "excludedScreenBuffers": [],
                             "intensity": 2.0,
                             "power": 2.0,

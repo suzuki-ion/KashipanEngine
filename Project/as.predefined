@@ -766,6 +766,18 @@ class InputCommandApplier {
 	float GetLastValue() const;
 }
 
+class SceneVariableApplier {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	void SetVariableName(const string&in);
+	const string& GetVariableName() const;
+	bool WasApplied() const;
+}
+
 class TextRenderer {
 	bool IsActive() const;
 	void SetActive(bool);
@@ -1416,6 +1428,23 @@ class GrayscaleEffect {
 	const string& GetTagName() const;
 	float GetIntensity() const;
 	void SetIntensity(float);
+}
+
+class MotionBlurEffect {
+	bool IsActive() const;
+	void SetActive(bool);
+	const string& GetComponentType() const;
+	void SetTag(const string&in);
+	Tag GetTag() const;
+	const string& GetTagName() const;
+	float GetIntensity() const;
+	void SetIntensity(float);
+	float GetVelocityScale() const;
+	void SetVelocityScale(float);
+	float GetMaxBlurPixels() const;
+	void SetMaxBlurPixels(float);
+	uint GetSamples() const;
+	void SetSamples(uint);
 }
 
 class OutlineEffect {

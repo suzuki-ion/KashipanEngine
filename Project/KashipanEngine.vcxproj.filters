@@ -504,6 +504,9 @@
     <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
@@ -1149,6 +1152,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\IPostProcessComponent.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\MotionBlurEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\OutlineEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>
@@ -1228,6 +1234,9 @@
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Rotation.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\SceneVariableApplier.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h">
@@ -2196,6 +2205,7 @@
     <None Include="Externals\DirectXTex\Shaders\Compiled\BC7Encode_TryMode456CS.inc" />
     <None Include="Externals\DirectXTex\Shaders\Compiled\BC7Encode_TryMode456CS_cs40.inc" />
     <None Include="Externals\DirectXTex\DirectXTex.inl" />
+    <None Include="..\.gitignore" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />

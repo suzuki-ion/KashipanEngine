@@ -23,6 +23,7 @@ vcpkg-configuration.json
 Dumps/
 Logs/
 VSTools/
+SceneBackups/
 
 # User-specific files
 *.rsuser

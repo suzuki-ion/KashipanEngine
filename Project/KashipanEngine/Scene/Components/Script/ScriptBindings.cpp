@@ -48,6 +48,7 @@
 #include "Objects/Components/Animator.h"
 #include "Objects/Components/KeyFrameAnimator.h"
 #include "Objects/Components/InputCommandApplier.h"
+#include "Objects/Components/SceneVariableApplier.h"
 #include "Objects/Components/AudioListener.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/AudioSource.h"
@@ -76,6 +77,7 @@
 #include "Objects/Components/PostProcessing/FXAAEffect.h"
 #include "Objects/Components/PostProcessing/GaussianFilterEffect.h"
 #include "Objects/Components/PostProcessing/GrayscaleEffect.h"
+#include "Objects/Components/PostProcessing/MotionBlurEffect.h"
 #include "Objects/Components/PostProcessing/OutlineEffect.h"
 #include "Objects/Components/PostProcessing/RadialBlurEffect.h"
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
@@ -687,6 +689,11 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool WasApplied() const", &InputCommandApplier::WasApplied)
         .method("float GetLastValue() const", &InputCommandApplier::GetLastValue);
 
+    RegisterComponentType<SceneVariableApplier>(engine, "SceneVariableApplier")
+        .method("void SetVariableName(const string &in)", &SceneVariableApplier::SetVariableName)
+        .method("const string &GetVariableName() const", &SceneVariableApplier::GetVariableName)
+        .method("bool WasApplied() const", &SceneVariableApplier::WasApplied);
+
     RegisterComponentType<TextRenderer>(engine, "TextRenderer")
         .method("void SetText(const string &in)", &TextRenderer::SetText)
         .method("const string &GetText() const", &TextRenderer::GetText)
@@ -1090,6 +1097,16 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<GrayscaleEffect>(engine, "GrayscaleEffect")
         .method("float GetIntensity() const", [](const GrayscaleEffect &e) { return e.GetParams().intensity; })
         .method("void SetIntensity(float)", [](GrayscaleEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); });
+
+    RegisterComponentType<MotionBlurEffect>(engine, "MotionBlurEffect")
+        .method("float GetIntensity() const", [](const MotionBlurEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](MotionBlurEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetVelocityScale() const", [](const MotionBlurEffect &e) { return e.GetParams().velocityScale; })
+        .method("void SetVelocityScale(float)", [](MotionBlurEffect &e, float v) { auto p = e.GetParams(); p.velocityScale = v; e.SetParams(p); })
+        .method("float GetMaxBlurPixels() const", [](const MotionBlurEffect &e) { return e.GetParams().maxBlurPixels; })
+        .method("void SetMaxBlurPixels(float)", [](MotionBlurEffect &e, float v) { auto p = e.GetParams(); p.maxBlurPixels = v; e.SetParams(p); })
+        .method("uint GetSamples() const", [](const MotionBlurEffect &e) -> uint32_t { return e.GetParams().samples; })
+        .method("void SetSamples(uint)", [](MotionBlurEffect &e, uint32_t v) { auto p = e.GetParams(); p.samples = v; e.SetParams(p); });
 
     RegisterComponentType<OutlineEffect>(engine, "OutlineEffect")
         .method("float GetThreshold() const", [](const OutlineEffect &e) { return e.GetParams().threshold; })

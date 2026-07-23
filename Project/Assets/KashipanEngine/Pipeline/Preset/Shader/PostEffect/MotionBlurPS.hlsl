@@ -9,9 +9,9 @@ float4 main(VSOutput input) : SV_Target0 {
 	float2 uv = input.uv;
 	float3 cur = gSceneTexture.Sample(gSampler, uv).rgb;
 
-	float2 velEncoded = gVelocityTexture.Sample(gSampler, uv).xy;
-	float2 velUv = velEncoded * 2.0f - 1.0f;
-	
+	// 速度バッファはfloatフォーマットでUV空間の符号付き速度をそのまま保持しているため、デコード不要
+	float2 velUv = gVelocityTexture.Sample(gSampler, uv).xy;
+
 	// Convert UV delta to pixel delta.
 	float2 velPixels = velUv / gInvResolution;
 	float speedPixels = length(velPixels);

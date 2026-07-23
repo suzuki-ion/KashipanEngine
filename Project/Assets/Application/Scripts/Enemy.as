@@ -13,6 +13,8 @@ class Enemy : ScriptComponentBehavior {
     float groundStickSpeed = 2.0f;
     [SerializeField, Tooltip("開始時の移動方向（正: +X方向、負: -X方向）")]
     float moveDirection = 1.0f;
+    [SerializeField, Tooltip("エッジセンサーが連続して地面を検知できなかった場合に反転するまでの猶予時間（秒）。継ぎ目をまたぐ一瞬だけセンサーが両方の床の隙間に入ってしまう誤検知を無視するためのもの")]
+    float edgeSensorMissTolerance = 0.05f;
 
     // --- 実行時状態（保存不要） ---
     bool isAlive = true;
@@ -33,8 +35,20 @@ class Enemy : ScriptComponentBehavior {
     Vector3 groundDelta = Vector3(0.0f, 0.0f, 0.0f);
     float velocityY = 0.0f;
 
+    // 進行方向側・逆方向側それぞれのエッジセンサー（足元の少し先・少し下を判定する専用コライダー）が
+    // このフレームで地面に触れているか（生の値）。本体コライダーとは別に判定することで、
+    // 実際に足を踏み外す前に「この先に地面が無い」ことを検知できる
+    bool hasEdgeSensorRightContact = false;
+    bool hasEdgeSensorLeftContact = false;
+    // 進行方向側のエッジセンサーが地面を検知できていない状態が続いている時間（秒）
+    float edgeSensorMissTimer = 0.0f;
+
     Tag groundColliderTag = Tag("GroundBox");
     Tag playerColliderTag = Tag("PlayerSphere");
+    // 自分自身のコライダーの判別用（HitInfo.selfColliderのタグと比較する）
+    Tag bodyColliderTag = Tag("EnemySphere");
+    Tag edgeSensorRightTag = Tag("EnemyEdgeSensorRight");
+    Tag edgeSensorLeftTag = Tag("EnemyEdgeSensorLeft");
 
     void Start() {
         Log("Enemy start: " + GetOwnerObject().GetName());
@@ -56,18 +70,45 @@ class Enemy : ScriptComponentBehavior {
             return;
         }
 
-        UpdateGroundEdgeTurn();
+        UpdateGroundEdgeTurn(dt);
         Move(dt);
 
         // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
         hasGroundContact = false;
+        hasEdgeSensorRightContact = false;
+        hasEdgeSensorLeftContact = false;
     }
 
-    // 地面との接触が「途切れた瞬間」（＝地面の端に到達した瞬間）にだけ移動方向を反転する。
-    // 継ぎ目でつながった地面同士は接触が途切れないため、このタイミングでは反転しない
-    // （マリオの赤ノコノコのように、繋がった地面の上ではそのまま歩き続ける）。
-    void UpdateGroundEdgeTurn() {
-        if (wasGroundContact && !hasGroundContact) {
+    // 進行方向の反転判定。
+    // 1) エッジセンサー方式（優先）: 現在の進行方向側のエッジセンサーが地面に触れていない状態が
+    //    edgeSensorMissTolerance秒以上続いたら、実際に足を踏み外す前にその場で反転する。
+    //    単発フレームでの検知漏れを猶予するのは、継ぎ目をまたぐ一瞬だけエッジセンサー（本体より
+    //    小さい判定範囲）がちょうど2枚の床の境界の隙間に重なってしまい、一時的に地面を検知できない
+    //    ことがあるため（本体コライダーはサイズが大きく境界をまたいでも接触が途切れないが、
+    //    エッジセンサーは小さいぶんこの影響を受けやすい）。継ぎ目ではすぐに反対側の床を検知できて
+    //    タイマーがリセットされるので反転までは至らない
+    // 2) 保険（フォールバック）: それでも検知できなかった場合に備え、本体コライダーの地面との接触が
+    //    「途切れた瞬間」にも従来どおり反転する（継ぎ目でつながった地面同士は接触が途切れないため、
+    //    このタイミングでは反転しない）
+    // 同一フレームで両方の条件を満たしても反転が二重に掛からないようにする
+    void UpdateGroundEdgeTurn(const float dt) {
+        bool turned = false;
+        if (hasGroundContact) {
+            bool leadingSensorGrounded = (moveDirection >= 0.0f) ? hasEdgeSensorRightContact : hasEdgeSensorLeftContact;
+            if (leadingSensorGrounded) {
+                edgeSensorMissTimer = 0.0f;
+            } else {
+                edgeSensorMissTimer += dt;
+                if (edgeSensorMissTimer >= edgeSensorMissTolerance) {
+                    moveDirection = -moveDirection;
+                    edgeSensorMissTimer = 0.0f;
+                    turned = true;
+                }
+            }
+        } else {
+            edgeSensorMissTimer = 0.0f;
+        }
+        if (!turned && wasGroundContact && !hasGroundContact) {
             moveDirection = -moveDirection;
         }
         wasGroundContact = hasGroundContact;
@@ -100,7 +141,7 @@ class Enemy : ScriptComponentBehavior {
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
         if (hit.otherCollider.GetTag() == groundColliderTag) {
-            HandleGroundContact(hit);
+            HandleGroundColliderHit(hit);
         } else if (hit.otherCollider.GetTag() == playerColliderTag) {
             isCollidingWithPlayer = true;
             playerHitNormal = hit.normal;
@@ -110,18 +151,20 @@ class Enemy : ScriptComponentBehavior {
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
         if (hit.otherCollider.GetTag() == groundColliderTag) {
-            HandleGroundContact(hit);
+            HandleGroundColliderHit(hit);
 
-            // 衝突判定から押し戻しベクトルを計算してエネミーを押し戻す
-            Transform@ tf = GetTransform();
-            if (tf !is null) {
-                Vector3 pushBack = hit.normal * hit.penetration;
-                pushBack.z = 0.0f;
-                // 床の押し戻しはY方向だけにして、横移動を妨げないようにする
-                if (hit.normal.y > groundedThreshold) {
-                    pushBack.x = 0.0f;
+            // 押し戻しは本体コライダーの接触のみ行う（エッジセンサーは判定専用で押し戻さない）
+            if (hit.selfCollider !is null && hit.selfCollider.GetTag() == bodyColliderTag) {
+                Transform@ tf = GetTransform();
+                if (tf !is null) {
+                    Vector3 pushBack = hit.normal * hit.penetration;
+                    pushBack.z = 0.0f;
+                    // 床の押し戻しはY方向だけにして、横移動を妨げないようにする
+                    if (hit.normal.y > groundedThreshold) {
+                        pushBack.x = 0.0f;
+                    }
+                    tf.SetTranslate(tf.GetTranslate() + pushBack);
                 }
-                tf.SetTranslate(tf.GetTranslate() + pushBack);
             }
         } else if (hit.otherCollider.GetTag() == playerColliderTag) {
             // プレイヤーにダメージを与えるなどの処理をここに追加
@@ -136,7 +179,21 @@ class Enemy : ScriptComponentBehavior {
         }
     }
 
-    // 地面コライダーとの接触を処理する（接地フラグの更新と、壁に当たった場合の反転）
+    // 地面コライダーとの接触を、接触したのが自分のどのコライダー（本体/右エッジセンサー/
+    // 左エッジセンサー）かで振り分ける
+    void HandleGroundColliderHit(const HitInfo &in hit) {
+        if (hit.selfCollider is null) return;
+        Tag selfTag = hit.selfCollider.GetTag();
+        if (selfTag == bodyColliderTag) {
+            HandleGroundContact(hit);
+        } else if (selfTag == edgeSensorRightTag) {
+            if (hit.normal.y > groundedThreshold) hasEdgeSensorRightContact = true;
+        } else if (selfTag == edgeSensorLeftTag) {
+            if (hit.normal.y > groundedThreshold) hasEdgeSensorLeftContact = true;
+        }
+    }
+
+    // 本体コライダーと地面コライダーとの接触を処理する（接地フラグの更新と、壁に当たった場合の反転）
     void HandleGroundContact(const HitInfo &in hit) {
         const bool isFloor = hit.normal.y > groundedThreshold;
         if (isFloor) {

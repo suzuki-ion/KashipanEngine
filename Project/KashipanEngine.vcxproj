@@ -205,6 +205,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\.gitignore" />
     <None Include=".editorconfig" />
     <None Include=".gitattributes" />
     <None Include="Assets\KashipanEngine\EngineSettings.json" />
@@ -525,6 +526,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Objects\ParameterBinding.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\InputCommandApplier.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ScenePreTransform.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp" />
@@ -1029,6 +1031,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\FXAAEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\GaussianFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\GrayscaleEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\IPostProcessComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\OutlineEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\RadialBlurEffect.h" />
@@ -1055,6 +1058,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\ParticleSystem3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PreTransform.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Rotation.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\SceneVariableApplier.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="KashipanEngine\Objects\ParameterBinding.h" />

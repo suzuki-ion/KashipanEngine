@@ -84,9 +84,9 @@
                         "customData": {
                             "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
                             "rotate": {
-                                "w": 0.9635838866233826,
+                                "w": 0.963583767414093,
                                 "x": 0.0,
-                                "y": -0.2674065828323364,
+                                "y": -0.26740655303001404,
                                 "z": 0.0
                             },
                             "scale": {
@@ -95,7 +95,7 @@
                                 "z": 1.0
                             },
                             "translate": {
-                                "x": 2.2960000038146973,
+                                "x": 2.5260000228881836,
                                 "y": 1.343999981880188,
                                 "z": -5.905009746551514
                             }
@@ -152,8 +152,8 @@
                         "customData": {
                             "parent": "b4477903-d3dd-4f80-b9b3-7902102e6723",
                             "rotate": {
-                                "w": 0.38268348574638367,
-                                "x": 0.9238796234130859,
+                                "w": 0.3826834261417389,
+                                "x": 0.9238795042037964,
                                 "y": 0.0,
                                 "z": 0.0
                             },
@@ -615,6 +615,21 @@
                         "tag": ""
                     },
                     "type": "FXAAEffect"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "excludedScreenBuffers": [],
+                            "intensity": 5.0,
+                            "maxBlurPixels": 229.0,
+                            "samples": 32,
+                            "velocityScale": 10.0
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MotionBlurEffect"
                 },
                 {
                     "data": {
@@ -1474,6 +1489,192 @@
             "isActive": true,
             "name": "WhitePaint",
             "objectID": "812fb04f-4d4c-4b31-bc8d-f188b1b3e0bf",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "height": 720,
+                            "isShowViewer": true,
+                            "name": "ScreenBuffer_3",
+                            "saveDirectory": "Screenshots",
+                            "saveFileNamePrefix": "Screenshot",
+                            "saveFormat": "png",
+                            "width": 1280
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScreenBufferObject"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Screen Buffer Object",
+            "objectID": "554e8b56-d662-4ae6-9839-65f9509d9268",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "554e8b56-d662-4ae6-9839-65f9509d9268",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "farClip": 1000.0,
+                            "height": 720.0,
+                            "nearClip": 0.0,
+                            "width": 1280.0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Camera2D"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "bindVariableNames": [
+                                "Vertex:gCamera2D",
+                                "Pixel:gCamera2D"
+                            ],
+                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                            "targetObjectID": "554e8b56-d662-4ae6-9839-65f9509d9268"
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "CameraRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Camera 2D Object",
+            "objectID": "c19aacb6-a784-49ff-85bb-8632deffe5a9",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "554e8b56-d662-4ae6-9839-65f9509d9268",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1280.0,
+                                "y": 720.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "PrimitiveMesh-Rect2D"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "anchor": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "materialName": "Test",
+                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                            "pivot": {
+                                "x": 0.5,
+                                "y": 0.5
+                            },
+                            "targetObjectID": "554e8b56-d662-4ae6-9839-65f9509d9268"
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "SpriteRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Sprite Object",
+            "objectID": "fa2423ce-5349-4084-859d-f7d56971b990",
             "tag": ""
         }
     ],

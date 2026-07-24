@@ -12,7 +12,7 @@ public:
         float sigma = 1.0f;
     };
 
-    GaussianFilterEffect() : IPostProcessComponent("GaussianFilterEffect") {
+    GaussianFilterEffect() : IPostProcessComponent("GaussianFilterEffect", GetComponentTypeID<GaussianFilterEffect>()) {
         ADD_MEMBER_VARIABLE(params_.radius);
         ADD_MEMBER_VARIABLE(params_.sigma);
     }

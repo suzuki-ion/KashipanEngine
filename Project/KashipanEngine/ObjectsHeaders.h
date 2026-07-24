@@ -60,6 +60,7 @@
 #include "Objects/Components/PreTransform.h"
 #include "Objects/Components/Rotation.h"
 #include "Objects/Components/SceneVariableApplier.h"
+#include "Objects/Components/Shake.h"
 #include "Objects/Components/TargetLookAt.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Velocity.h"

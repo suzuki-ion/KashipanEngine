@@ -31,7 +31,7 @@ public:
         std::uint32_t iterations = 4; // ダウンサンプル段数 (1..16)
     };
 
-    BloomEffect() : IPostProcessComponent("BloomEffect") {
+    BloomEffect() : IPostProcessComponent("BloomEffect", GetComponentTypeID<BloomEffect>()) {
         ADD_MEMBER_VARIABLE(params_.threshold);
         ADD_MEMBER_VARIABLE(params_.softKnee);
         ADD_MEMBER_VARIABLE(params_.intensity);
@@ -51,6 +51,7 @@ public:
 
 protected:
     void Finalize() override {
+        IPostProcessComponent::Finalize();
         pyramid_.clear();
         pyramidBlur_.clear();
         pyramidAccum_.clear();

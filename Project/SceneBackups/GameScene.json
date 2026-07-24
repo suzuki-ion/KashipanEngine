@@ -234,13 +234,29 @@
                     "data": {
                         "customData": {
                             "fields": {
+                                "currentHp": 3,
+                                "damageAmount": 1,
+                                "damageCooldown": 1.5,
+                                "damageFlashColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 0.20000000298023224,
+                                    "z": 0.20000000298023224
+                                },
+                                "damageFlashInterval": 0.10000000149011612,
                                 "enemyCollisionThreshold": 0.4000000059604645,
                                 "gravity": 0.800000011920929,
                                 "groundStickSpeed": -1.0,
                                 "groundedGraceTime": 0.10000000149011612,
                                 "groundedThreshold": 0.4000000059604645,
                                 "jumpPower": 20.0,
+                                "knockbackPower": {
+                                    "x": 4.0,
+                                    "y": 6.0,
+                                    "z": 0.0
+                                },
                                 "lateralDeceleration": 0.10000000149011612,
+                                "maxHp": 3,
                                 "maxSlideSpeed": 32.0,
                                 "maxVelocity": {
                                     "x": 8.0,
@@ -585,6 +601,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "EntityMaterial",
                             "materialNames": [
                                 "EntityMaterial"
@@ -849,6 +872,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "EnemyMaterial",
                             "materialNames": [
                                 "EnemyMaterial"
@@ -1113,6 +1143,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "EnemyMaterial",
                             "materialNames": [
                                 "EnemyMaterial"
@@ -1377,6 +1414,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "EnemyMaterial",
                             "materialNames": [
                                 "EnemyMaterial"
@@ -1641,6 +1685,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "EnemyMaterial",
                             "materialNames": [
                                 "EnemyMaterial"
@@ -1905,6 +1956,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "EnemyMaterial",
                             "materialNames": [
                                 "EnemyMaterial"
@@ -2169,6 +2227,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "EnemyMaterial",
                             "materialNames": [
                                 "EnemyMaterial"
@@ -2387,6 +2452,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -2451,6 +2523,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4095,6 +4174,57 @@
                             }
                         },
                         "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "cameraObject": "7fd3ee27-87c3-4476-880d-074c733ccb22",
+                                "playerObject": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                                "screenObject": "85df0137-8c99-4ccc-af31-59951bbae199"
+                            },
+                            "scriptPath": "Assets\\Application\\Scripts\\PostEffectController.as"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScriptComponent"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "PostEffectController",
+            "objectID": "e39e99a7-98aa-4477-853e-c370120983cd",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
                         "priority": 0,
                         "tag": ""
                     },
@@ -4153,8 +4283,8 @@
                             "dilateRadius": 4,
                             "excludedScreenBuffers": [],
                             "farBlurDistance": 10.0,
-                            "focusDistance": 24.0,
-                            "focusRange": 14.0,
+                            "focusDistance": 16.0,
+                            "focusRange": 4.0,
                             "maxBlurRadiusPixels": 16.0,
                             "nearBlurDistance": 5.0,
                             "sampleCount": 16
@@ -4310,6 +4440,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -4374,6 +4511,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -4438,6 +4582,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -4502,6 +4653,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4566,6 +4724,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4740,6 +4905,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4841,6 +5013,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -4942,6 +5121,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5043,6 +5229,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5144,6 +5337,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5245,6 +5445,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5346,6 +5553,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5447,6 +5661,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5548,6 +5769,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5649,6 +5877,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5750,6 +5985,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5851,6 +6093,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -5952,6 +6201,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6053,6 +6309,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6154,6 +6417,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6255,6 +6525,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6356,6 +6633,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6457,6 +6741,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6558,6 +6849,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6659,6 +6957,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6760,6 +7065,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6861,6 +7173,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -6962,6 +7281,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7063,6 +7389,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7164,6 +7497,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7265,6 +7605,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7366,6 +7713,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7467,6 +7821,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7568,6 +7929,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7632,6 +8000,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7733,6 +8108,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7834,6 +8216,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -7935,6 +8324,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8036,6 +8432,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8137,6 +8540,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8238,6 +8648,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8339,6 +8756,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8440,6 +8864,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8541,6 +8972,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8642,6 +9080,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8743,6 +9188,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8844,6 +9296,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -8945,6 +9404,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9046,6 +9512,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9147,6 +9620,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9248,6 +9728,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9349,6 +9836,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9450,6 +9944,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9551,6 +10052,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9652,6 +10160,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9782,6 +10297,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -9846,6 +10368,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10235,6 +10764,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10499,6 +11035,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10642,6 +11185,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -10868,6 +11418,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11013,6 +11570,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11158,6 +11722,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11222,6 +11793,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11367,6 +11945,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11512,6 +12097,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11576,6 +12168,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11640,6 +12239,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11704,6 +12310,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11768,6 +12381,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11832,6 +12452,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11896,6 +12523,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -11960,6 +12594,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12024,6 +12665,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12088,6 +12736,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12152,6 +12807,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12216,6 +12878,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12280,6 +12949,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12344,6 +13020,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12408,6 +13091,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12472,6 +13162,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12536,6 +13233,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12600,6 +13304,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12664,6 +13375,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12728,6 +13446,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12792,6 +13517,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12856,6 +13588,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12920,6 +13659,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -12984,6 +13730,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13048,6 +13801,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13112,6 +13872,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13176,6 +13943,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13240,6 +14014,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13304,6 +14085,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13368,6 +14156,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13432,6 +14227,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13496,6 +14298,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13560,6 +14369,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13624,6 +14440,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13688,6 +14511,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13752,6 +14582,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13816,6 +14653,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -13961,6 +14805,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14025,6 +14876,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14089,6 +14947,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14153,6 +15018,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14217,6 +15089,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14281,6 +15160,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14345,6 +15231,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14409,6 +15302,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14473,6 +15373,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14537,6 +15444,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -14814,6 +15728,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15064,6 +15985,20 @@
                         "tag": "CheckPoint"
                     },
                     "type": "BoxCollider"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "priority": 0
+                            },
+                            "scriptPath": "Assets\\Application\\Scripts\\Checkpoint.as"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScriptComponent"
                 }
             ],
             "editorOnly": false,
@@ -15218,6 +16153,20 @@
                         "tag": "CheckPoint"
                     },
                     "type": "BoxCollider"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "priority": 1
+                            },
+                            "scriptPath": "Assets\\Application\\Scripts\\Checkpoint.as"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScriptComponent"
                 }
             ],
             "editorOnly": false,
@@ -15291,6 +16240,20 @@
                         "tag": "CheckPoint"
                     },
                     "type": "BoxCollider"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "fields": {
+                                "priority": 2
+                            },
+                            "scriptPath": "Assets\\Application\\Scripts\\Checkpoint.as"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "ScriptComponent"
                 }
             ],
             "editorOnly": false,
@@ -15343,6 +16306,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15407,6 +16377,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15552,6 +16529,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15697,6 +16681,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -15960,6 +16951,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -16024,6 +17022,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -16169,6 +17174,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -16314,6 +17326,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -16459,6 +17478,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -16604,6 +17630,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -16749,6 +17782,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -16960,6 +18000,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17024,6 +18071,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17154,6 +18208,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17218,6 +18279,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17413,6 +18481,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17477,6 +18552,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17541,6 +18623,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17671,6 +18760,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17735,6 +18831,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17799,6 +18902,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17863,6 +18973,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -17927,6 +19044,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -18072,6 +19196,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -18217,6 +19348,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -18362,6 +19500,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -18507,6 +19652,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -18652,6 +19804,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -18928,6 +20087,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -18992,6 +20158,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -19056,6 +20229,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -19120,6 +20300,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -19184,6 +20371,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -19268,6 +20462,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -19332,6 +20533,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -19477,6 +20685,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -19975,6 +21190,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -20610,6 +21832,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -20755,6 +21984,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -21031,6 +22267,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -21095,6 +22338,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -21159,6 +22409,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -21223,6 +22480,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -21287,6 +22551,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -21659,6 +22930,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -22455,6 +23733,13 @@
                     "data": {
                         "customData": {
                             "castShadows": false,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -22650,6 +23935,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -22714,6 +24006,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -22778,6 +24077,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -22842,6 +24148,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -22906,6 +24219,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -22970,6 +24290,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -23034,6 +24361,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -23583,6 +24917,13 @@
                     "data": {
                         "customData": {
                             "castShadows": false,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -23970,6 +25311,13 @@
                     "data": {
                         "customData": {
                             "castShadows": false,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "Default",
                             "materialNames": [
                                 "Default"
@@ -24297,6 +25645,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -24361,6 +25716,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -24425,6 +25787,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -24489,6 +25858,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -24553,6 +25929,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -24698,6 +26081,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -24762,6 +26152,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -24944,6 +26341,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25008,6 +26412,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25072,6 +26483,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25136,6 +26554,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25200,6 +26625,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25264,6 +26696,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25409,6 +26848,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25591,6 +27037,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25655,6 +27108,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25719,6 +27179,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25783,6 +27250,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25847,6 +27321,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -25911,6 +27392,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -26056,6 +27544,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -26256,11 +27751,16 @@
             "value": 0
         },
         {
-            "key": "checkPoint",
+            "key": "CheckpointPriority",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "CheckpointPosition",
             "type": "Vector3",
             "value": {
-                "x": 0.0,
-                "y": 0.0,
+                "x": 30.629053115844727,
+                "y": 6.440534591674805,
                 "z": 0.0
             }
         }

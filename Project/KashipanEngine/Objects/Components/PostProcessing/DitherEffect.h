@@ -12,7 +12,7 @@ public:
         bool color = true;
     };
 
-    DitherEffect() : IPostProcessComponent("DitherEffect") {
+    DitherEffect() : IPostProcessComponent("DitherEffect", GetComponentTypeID<DitherEffect>()) {
         ADD_MEMBER_VARIABLE(params_.intensity);
         ADD_MEMBER_VARIABLE(params_.color);
     }

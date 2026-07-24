@@ -13,7 +13,7 @@ public:
         float strength = 0.0025f;
     };
 
-    ChromaticAberrationEffect() : IPostProcessComponent("ChromaticAberrationEffect") {
+    ChromaticAberrationEffect() : IPostProcessComponent("ChromaticAberrationEffect", GetComponentTypeID<ChromaticAberrationEffect>()) {
         ADD_MEMBER_VARIABLE(params_.directionX);
         ADD_MEMBER_VARIABLE(params_.directionY);
         ADD_MEMBER_VARIABLE(params_.strength);

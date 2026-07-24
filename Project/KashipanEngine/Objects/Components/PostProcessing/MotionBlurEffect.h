@@ -32,7 +32,7 @@ public:
         std::uint32_t samples = 8;     // ブラーのサンプル数
     };
 
-    MotionBlurEffect() : IPostProcessComponent("MotionBlurEffect") {
+    MotionBlurEffect() : IPostProcessComponent("MotionBlurEffect", GetComponentTypeID<MotionBlurEffect>()) {
         ADD_MEMBER_VARIABLE(params_.intensity);
         ADD_MEMBER_VARIABLE(params_.velocityScale);
         ADD_MEMBER_VARIABLE(params_.maxBlurPixels);
@@ -51,6 +51,7 @@ public:
 
 protected:
     void Finalize() override {
+        IPostProcessComponent::Finalize();
         velocity_ = {};
         velocityConstantBuffer_.reset();
         blurConstantBuffer_.reset();

@@ -14,7 +14,7 @@ public:
         float subpixelBlend = 0.75f;
     };
 
-    FXAAEffect() : IPostProcessComponent("FXAAEffect") {
+    FXAAEffect() : IPostProcessComponent("FXAAEffect", GetComponentTypeID<FXAAEffect>()) {
         ADD_MEMBER_VARIABLE(params_.threshold);
         ADD_MEMBER_VARIABLE(params_.thresholdMin);
         ADD_MEMBER_VARIABLE(params_.strength);

@@ -37,7 +37,7 @@ public:
         int dilateRadius = 4;            // 近景CoCダイレーションのサンプル半径（ピクセル）
     };
 
-    DepthOfFieldEffect() : IPostProcessComponent("DepthOfFieldEffect") {
+    DepthOfFieldEffect() : IPostProcessComponent("DepthOfFieldEffect", GetComponentTypeID<DepthOfFieldEffect>()) {
         ADD_MEMBER_VARIABLE(params_.focusDistance);
         ADD_MEMBER_VARIABLE(params_.focusRange);
         ADD_MEMBER_VARIABLE(params_.nearBlurDistance);
@@ -59,6 +59,7 @@ public:
 
 protected:
     void Finalize() override {
+        IPostProcessComponent::Finalize();
         coc_ = {};
         dilatedNear_ = {};
         farBlurred_ = {};

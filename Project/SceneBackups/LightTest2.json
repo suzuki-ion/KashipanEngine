@@ -113,12 +113,12 @@
                 {
                     "data": {
                         "customData": {
-                            "castShadows": true,
+                            "castShadows": false,
                             "color": {
                                 "w": 1.0,
                                 "x": 1.0,
-                                "y": 0.7843137383460999,
-                                "z": 0.7843137383460999
+                                "y": 1.0,
+                                "z": 1.0
                             },
                             "decay": 2.0,
                             "distance": 10.0,
@@ -127,7 +127,88 @@
                             "outerAngle": 0.6000000238418579,
                             "radius": 10.0,
                             "shadowBias": 0.0,
-                            "shadowDistance": 128.0,
+                            "shadowDistance": 64.0,
+                            "shadowMapResolution": 4096,
+                            "shadowSoftness": 2.0,
+                            "sourceDepth": 1.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": false,
+            "name": "Light Object",
+            "objectID": "cbe443b0-d0d6-41fa-b29c-77f65c7335ea",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+                            "rotate": {
+                                "w": 0.7071068286895752,
+                                "x": -0.7071068286895752,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0000625848770142,
+                                "y": 1.0000159740447998,
+                                "z": 1.0000193119049072
+                            },
+                            "translate": {
+                                "x": -0.8049335479736328,
+                                "y": 19.785310745239258,
+                                "z": 0.43499714136123657
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.4000000059604645,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 64.0,
                             "shadowMapResolution": 4096,
                             "shadowSoftness": 2.0,
                             "sourceDepth": 1.0,
@@ -159,7 +240,250 @@
             "editorOnly": false,
             "isActive": true,
             "name": "Light Object",
-            "objectID": "cbe443b0-d0d6-41fa-b29c-77f65c7335ea",
+            "objectID": "f621bd57-988c-4110-a112-2894d4a671ff",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+                            "rotate": {
+                                "w": 0.7071068286895752,
+                                "x": 0.0,
+                                "y": -0.7071068286895752,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0000625848770142,
+                                "y": 1.0000159740447998,
+                                "z": 1.0000193119049072
+                            },
+                            "translate": {
+                                "x": -0.8049335479736328,
+                                "y": 19.785310745239258,
+                                "z": 0.43499714136123657
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.4000000059604645,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 64.0,
+                            "shadowMapResolution": 4096,
+                            "shadowSoftness": 2.0,
+                            "sourceDepth": 1.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "8e394039-09e6-4786-9153-365892012d05",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+                            "rotate": {
+                                "w": 0.7071068286895752,
+                                "x": 0.7071068286895752,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0000625848770142,
+                                "y": 1.0000159740447998,
+                                "z": 1.0000193119049072
+                            },
+                            "translate": {
+                                "x": -0.8049335479736328,
+                                "y": 19.785310745239258,
+                                "z": 0.43499714136123657
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.4000000059604645,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 64.0,
+                            "shadowMapResolution": 4096,
+                            "shadowSoftness": 2.0,
+                            "sourceDepth": 1.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "bf06bd8c-10fb-4f59-8d3a-5535660fd923",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "9baf5fa3-0600-4e5d-80e5-4aaa28b28a3e",
+                            "rotate": {
+                                "w": 0.7071068286895752,
+                                "x": 0.0,
+                                "y": 0.7071068286895752,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0000625848770142,
+                                "y": 1.0000159740447998,
+                                "z": 1.0000193119049072
+                            },
+                            "translate": {
+                                "x": -0.8049335479736328,
+                                "y": 19.785310745239258,
+                                "z": 0.43499714136123657
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 0.4000000059604645,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 0.0,
+                            "shadowDistance": 64.0,
+                            "shadowMapResolution": 4096,
+                            "shadowSoftness": 2.0,
+                            "sourceDepth": 1.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "60a5277e-d03c-42a1-ba26-9674ba0d0401",
             "tag": ""
         },
         {
@@ -238,7 +562,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Light Object",
             "objectID": "79de42df-2497-41ea-81c1-89f2e445c57a",
             "tag": ""
@@ -328,8 +652,8 @@
                     "data": {
                         "customData": {
                             "excludedScreenBuffers": [],
-                            "strength": 2.0,
-                            "subpixelBlend": 0.75,
+                            "strength": 1.0,
+                            "subpixelBlend": 1.0,
                             "threshold": 0.0,
                             "thresholdMin": 0.0
                         },
@@ -342,13 +666,13 @@
                 {
                     "data": {
                         "customData": {
-                            "bias": 0.0,
+                            "bias": 0.10000000149011612,
                             "blurRadius": 8,
                             "depthThreshold": 16.0,
                             "excludedScreenBuffers": [],
-                            "intensity": 0.0,
-                            "power": 0.10000000149011612,
-                            "radius": 0.4000000059604645,
+                            "intensity": 4.0,
+                            "power": 4.0,
+                            "radius": 1.0,
                             "sampleCount": 64
                         },
                         "isActive": true,
@@ -367,7 +691,7 @@
                             "softKnee": 0.5,
                             "threshold": 1.5
                         },
-                        "isActive": true,
+                        "isActive": false,
                         "priority": 4,
                         "tag": ""
                     },
@@ -448,6 +772,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 0,
                             "materialName": "sponza_sp_00_luk_mali",
                             "materialNames": [
                                 "sponza_sp_00_luk_mali",
@@ -545,6 +876,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -560,7 +898,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Mesh Object",
             "objectID": "d1d5eeba-c9eb-41d5-9331-41b1385fc870",
             "tag": ""
@@ -608,6 +946,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -671,6 +1016,13 @@
                     "data": {
                         "customData": {
                             "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
                             "materialName": "White",
                             "materialNames": [
                                 "White"
@@ -686,7 +1038,7 @@
                 }
             ],
             "editorOnly": false,
-            "isActive": true,
+            "isActive": false,
             "name": "Mesh Object",
             "objectID": "676d325d-c758-4654-a910-3e0dbe5b146e",
             "tag": ""
@@ -876,6 +1228,20 @@
             "value": {
                 "x": 0.0,
                 "y": 0.0,
+                "z": 0.0
+            }
+        },
+        {
+            "key": "CheckpointPriority",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "CheckpointPosition",
+            "type": "Vector3",
+            "value": {
+                "x": 30.629053115844727,
+                "y": 6.440534591674805,
                 "z": 0.0
             }
         }

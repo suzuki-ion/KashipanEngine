@@ -11,6 +11,7 @@
 #include "Graphics/Renderer/EditorDebugDraw.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
+#include "Math/Vector4.h"
 #include "Scene/Components/SceneComponentHeader.h"
 
 namespace KashipanEngine {
@@ -24,6 +25,7 @@ class SkinnedMeshRenderer;
 class CameraRenderer;
 class LightRenderer;
 class ParticleSystemBase;
+class IPostProcessComponent;
 class IRenderTarget;
 class PipelineManager;
 class Renderer;
@@ -48,6 +50,11 @@ public:
         ///        非nullの場合、頂点バッファは静的メッシュではなくこのGPUスキニング結果を使用し、
         ///        インスタンス（バッチ）結合の対象にもならない（各インスタンスが専用の出力バッファを持つため）
         RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
+        /// @brief オブジェクト単位の色（MeshRendererのInstance Color）。MeshRenderer以外
+        ///        （SpriteRenderer/SkinnedMeshRenderer）からのエントリは既定値のまま（見た目に影響しない）
+        Vector4 instanceColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+        /// @brief instanceColorの適用方法（MeshRenderer::ColorBlendModeの値。0=Override,1=Multiply,2=Add,3=Subtract）
+        int instanceColorBlendMode = 1;
     };
 
     /// @brief DrawEntryにソートキー（描画先種別順・パイプライン優先度）を付随させた中間データ
@@ -92,6 +99,12 @@ public:
     /// @brief GPU Simulation有効なParticleSystem2D/3Dを登録する（ParticleSystemBase::Initialize/SwitchSimulationModeから呼ばれる）
     void RegisterGpuParticleEmitter(ParticleSystemBase *emitter);
     void UnregisterGpuParticleEmitter(const ParticleSystemBase *emitter);
+    /// @brief ポストエフェクトコンポーネントを登録する（IPostProcessComponent::Initialize/Finalizeから呼ばれる）
+    /// @details 派生クラスごとに個別のコンポーネント型として登録されているため、
+    ///          Rendererはこの一覧からオーナーオブジェクトで絞り込むことで、型を問わず
+    ///          「そのオブジェクトのポストエフェクト一覧」へ一括アクセスできる
+    void RegisterPostProcessComponent(IPostProcessComponent *component);
+    void UnregisterPostProcessComponent(const IPostProcessComponent *component);
 
     const std::vector<MeshRenderer *> &GetMeshRenderers() const noexcept { return meshRenderers_; }
     const std::vector<SpriteRenderer *> &GetSpriteRenderers() const noexcept { return spriteRenderers_; }
@@ -100,6 +113,9 @@ public:
     const std::vector<CameraRenderer *> &GetCameraRenderers() const noexcept { return cameraRenderers_; }
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
     const std::vector<ParticleSystemBase *> &GetGpuParticleEmitters() const noexcept { return gpuParticleEmitters_; }
+    const std::vector<IPostProcessComponent *> &GetPostProcessComponents() const noexcept { return postProcessComponents_; }
+    /// @brief 指定オーナーオブジェクトに付与されたポストエフェクトコンポーネントのみを取得する
+    std::vector<IPostProcessComponent *> GetPostProcessComponentsFor(const EmptyObject *ownerObject) const;
 
     /// @brief 登録済みの全SkinnedMeshRendererのアニメーション姿勢をバインドポーズへ戻す
     /// @details ゲームループ停止時（Scene::PlayStop）に呼ばれる
@@ -182,6 +198,7 @@ private:
     std::vector<CameraRenderer *> cameraRenderers_;
     std::vector<LightRenderer *> lightRenderers_;
     std::vector<ParticleSystemBase *> gpuParticleEmitters_;
+    std::vector<IPostProcessComponent *> postProcessComponents_;
 
     std::vector<DrawEntry> sortedDrawList_;
     std::unordered_map<const IRenderTarget *, EmptyObject *> targetOwners_;

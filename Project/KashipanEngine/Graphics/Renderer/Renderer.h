@@ -87,7 +87,7 @@ private:
     };
 
     /// @brief シーン内のComputeShaderProcessingコンポーネントを処理する（Dispatch実行）
-    /// @details 専用コマンドリスト（ComputeCommandProcessor）上で全てまとめて記録・実行される
+    /// @details ComputeCommandProcessorが管理するフレーム共有コマンドリストへ記録する
     void ProcessComputeShaders(SceneContext *sceneContext);
 
     /// @brief 描画先ごとのシャドウマップ描画パスを実行する
@@ -225,32 +225,6 @@ private:
     /// @brief シャドウパス記録用のコマンドスロット
     int shadowCommandSlotIndex_ = -1;
     DX12Commands *shadowCommands_ = nullptr;
-
-    //==================================================
-    // フェーズ専用コンピュートコマンドリスト
-    //==================================================
-    // ComputeCommandProcessorの共有コマンドリストを複数フェーズで使い回すと、
-    // 各フェーズのBeginRecord内のReset()で直前のフェーズが記録した（まだ提出されていない）
-    // 内容が上書きされてしまう（実際にGPUパーティクルとスキニングのDispatchが
-    // 後続のLightCullingのReset()で消えて実行されない不具合が起きていた）。
-    // そのため、コンピュートディスパッチを行う各フェーズは専用のコマンドリストへ
-    // 独立して記録する（ComputeCommandProcessorはComputeShaderProcessing専用に戻す）。
-
-    /// @brief 専用コンピュートコマンドリストを（未取得ならプールから取得して）記録開始する
-    /// @return 記録可能なコマンドリスト（取得・記録開始に失敗した場合はnullptr）
-    ID3D12GraphicsCommandList *BeginDedicatedComputeCommandList(int &slotIndex, DX12Commands *&commands);
-    /// @brief 専用コマンドリストの記録を終了し、フレームの提出リストへ追加する
-    void EndDedicatedComputeCommandList(DX12Commands *commands);
-
-    /// @brief GPUパーティクル用コンピュートディスパッチ記録専用のコマンドスロット
-    int particleComputeCommandSlotIndex_ = -1;
-    DX12Commands *particleComputeCommands_ = nullptr;
-    /// @brief GPUスキニング用コンピュートディスパッチ記録専用のコマンドスロット
-    int skinningCommandSlotIndex_ = -1;
-    DX12Commands *skinningCommands_ = nullptr;
-    /// @brief タイルドライトカリング用コンピュートディスパッチ記録専用のコマンドスロット
-    int lightCullingCommandSlotIndex_ = -1;
-    DX12Commands *lightCullingCommands_ = nullptr;
 
     /// @brief 直近のRenderFrameで発行されたDrawIndexedInstanced呼び出し回数（RenderFrame冒頭でリセットする）
     std::uint32_t drawCallCount_ = 0;

@@ -19,7 +19,8 @@ std::vector<HWND> sPendingDestroy;
 Window::Window(Passkey<Window>, WindowType windowType, const std::wstring &title, int32_t width, int32_t height, DWORD windowStyle, const std::wstring &iconPath) {
     LogScope scope;
     bool result = InitializeWindow(sWindowsAPI->WindowProc, windowType, title, width, height, windowStyle, iconPath);
-    if (!result) assert("Window initialization failed");
+    assert(result && "Window initialization failed");
+    if (!result) return;
     messages_.reserve(kMaxMessages);
     eventHandlers_.reserve(kMaxMessages);
 
@@ -205,6 +206,10 @@ Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t he
 
     auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Normal, windowTitle, windowWidth, windowHeight, windowStyle, windowIconPath);
     HWND hwnd = window->GetWindowHandle();
+    if (!hwnd) {
+        Log(Translation("engine.window.create.failed"), LogSeverity::Error);
+        return nullptr;
+    }
 
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
@@ -236,6 +241,10 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
 
     auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Overlay, windowTitle, windowWidth, windowHeight, style, windowIconPath);
     HWND hwnd = window->GetWindowHandle();
+    if (!hwnd) {
+        Log(Translation("engine.window.create.overlay.failed"), LogSeverity::Error);
+        return nullptr;
+    }
 
     ::SetWindowLong(hwnd, GWL_EXSTYLE, ::GetWindowLong(hwnd, GWL_EXSTYLE) | exStyle);
     ::SetWindowPos(hwnd,

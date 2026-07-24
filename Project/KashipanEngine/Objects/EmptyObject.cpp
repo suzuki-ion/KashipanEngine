@@ -268,7 +268,16 @@ void EmptyObject::Finalize() {
 void EmptyObject::Update() {
     RegenerateUpdateComponentsList();
     for (const auto &info : updateComponents_) {
-        info.component->UpdateInterface(Passkey<EmptyObject>());
+        // 先に更新されたコンポーネントが後続コンポーネントを削除する場合があるため、
+        // 呼び出し直前に所有状態・追加時ID・アクティブ状態を再確認する。
+        const auto it = componentsIndexByPointer_.find(info.component);
+        if (it == componentsIndexByPointer_.end() || it->second >= components_.size()) continue;
+        auto &[ownedComponent, addedID] = components_[it->second];
+        if (!ownedComponent || addedID != info.addedID) continue;
+        IObjectComponent *component = ownedComponent.get();
+        if (component && component->IsActive()) {
+            component->UpdateInterface(Passkey<EmptyObject>());
+        }
     }
 }
 

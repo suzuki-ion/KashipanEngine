@@ -30,7 +30,6 @@ class PostEffectController : ScriptComponentBehavior {
         // ポストエフェクトのパラメータを設定
         DepthOfFieldEffect@ dof = null;
         if (screenObject.GetComponent(@dof)) {
-            Log("aaaa");
             dof.SetFocusDistance(distance);
         }
     }

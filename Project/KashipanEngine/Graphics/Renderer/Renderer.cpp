@@ -16,45 +16,13 @@ Renderer::~Renderer() {
         shadowCommandSlotIndex_ = -1;
         shadowCommands_ = nullptr;
     }
-    if (directXCommon_ && particleComputeCommandSlotIndex_ >= 0) {
-        directXCommon_->ReleaseCommandObjects(Passkey<Renderer>{}, particleComputeCommandSlotIndex_);
-        particleComputeCommandSlotIndex_ = -1;
-        particleComputeCommands_ = nullptr;
-    }
-    if (directXCommon_ && skinningCommandSlotIndex_ >= 0) {
-        directXCommon_->ReleaseCommandObjects(Passkey<Renderer>{}, skinningCommandSlotIndex_);
-        skinningCommandSlotIndex_ = -1;
-        skinningCommands_ = nullptr;
-    }
-    if (directXCommon_ && lightCullingCommandSlotIndex_ >= 0) {
-        directXCommon_->ReleaseCommandObjects(Passkey<Renderer>{}, lightCullingCommandSlotIndex_);
-        lightCullingCommandSlotIndex_ = -1;
-        lightCullingCommands_ = nullptr;
-    }
-}
-
-ID3D12GraphicsCommandList *Renderer::BeginDedicatedComputeCommandList(int &slotIndex, DX12Commands *&commands) {
-    if (!directXCommon_) return nullptr;
-    if (slotIndex < 0) {
-        slotIndex = directXCommon_->AcquireCommandObjects(Passkey<Renderer>{});
-        commands = (slotIndex >= 0)
-            ? directXCommon_->GetCommandObjects(Passkey<Renderer>{}, slotIndex)
-            : nullptr;
-    }
-    if (!commands) return nullptr;
-    return commands->BeginRecord();
-}
-
-void Renderer::EndDedicatedComputeCommandList(DX12Commands *commands) {
-    if (!commands || !directXCommon_) return;
-    if (commands->EndRecord()) {
-        directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, commands->GetCommandList());
-    }
 }
 
 void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) {
     drawCallCount_ = 0;
     if (!sceneContext || !pipelineManager_) return;
+
+    ComputeCommandProcessor::BeginFrame(Passkey<Renderer>{});
 
     // Computeシェーダー処理は他の描画パスより先に実行し、結果を後続パスから参照できるようにする
     ProcessComputeShaders(sceneContext);
@@ -64,7 +32,10 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     ProcessGpuParticles(sceneContext);
 
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
-    if (!sceneRenderer) return;
+    if (!sceneRenderer) {
+        ComputeCommandProcessor::EndFrame(Passkey<Renderer>{});
+        return;
+    }
 
     // カメラの定数バッファは常に最新のTransformを反映する（ゲームループが停止/一時停止中でも
     // 描画自体は継続されるため、Update() 頼みだと停止中はカメラが固まって描画が崩れてしまう）
@@ -78,6 +49,9 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
     // Forward+のタイルライトカリング（3D描画で使われる (描画先,パイプライン) の組ごとに実行する）
     ProcessLightCulling(sceneContext, sceneRenderer, drawList);
+
+    // 全Computeフェーズを1本のコマンドリストとして閉じ、後続の描画より先に提出する
+    ComputeCommandProcessor::EndFrame(Passkey<Renderer>{});
 
     // 今フレームで描画される描画先ごとに、その描画先で使うカメラ・ライトからシャドウマップを生成する
     // （他の描画パスより先に実行する）

@@ -18,19 +18,23 @@ void ComputeCommandProcessor::Finalize(Passkey<GameEngine>) {
     sCommands_ = nullptr;
     sCommandSlotIndex_ = -1;
     sDirectXCommon_ = nullptr;
+    sFrameActive_ = false;
 }
 
-ID3D12GraphicsCommandList *ComputeCommandProcessor::BeginRecord(Passkey<Renderer>) {
-    if (!sCommands_) return nullptr;
+void ComputeCommandProcessor::BeginFrame(Passkey<Renderer>) {
+    sFrameActive_ = true;
+}
+
+ID3D12GraphicsCommandList *ComputeCommandProcessor::GetCommandList(Passkey<Renderer>) {
+    if (!sFrameActive_ || !sCommands_) return nullptr;
     return sCommands_->BeginRecord();
 }
 
-void ComputeCommandProcessor::EndRecord(Passkey<Renderer>) {
-    if (!sCommands_ || !sCommands_->IsRecording()) return;
-    if (!sCommands_->EndRecord()) return;
-    if (sDirectXCommon_) {
+void ComputeCommandProcessor::EndFrame(Passkey<Renderer>) {
+    if (sCommands_ && sCommands_->IsRecording() && sCommands_->EndRecord() && sDirectXCommon_) {
         sDirectXCommon_->AddRecordCommandList(Passkey<ComputeCommandProcessor>{}, sCommands_->GetCommandList());
     }
+    sFrameActive_ = false;
 }
 
 } // namespace KashipanEngine

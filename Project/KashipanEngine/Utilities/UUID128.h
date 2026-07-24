@@ -1,9 +1,10 @@
 #pragma once
+#include <charconv>
 #include <cstdint>
-#include <string>
+#include <iomanip>
 #include <random>
 #include <sstream>
-#include <iomanip>
+#include <string>
 
 namespace KashipanEngine {
 
@@ -57,18 +58,42 @@ private:
             ClearUUID();
             return;
         }
+
         std::string hexStr;
-        for (char c : uuidStr) {
-            if (c != '-') hexStr += c;
+        hexStr.reserve(32);
+        for (size_t i = 0; i < uuidStr.size(); ++i) {
+            const bool isHyphenPosition = i == 8 || i == 13 || i == 18 || i == 23;
+            if (isHyphenPosition) {
+                if (uuidStr[i] != '-') {
+                    ClearUUID();
+                    return;
+                }
+            } else {
+                if (uuidStr[i] == '-') {
+                    ClearUUID();
+                    return;
+                }
+                hexStr += uuidStr[i];
+            }
         }
-        if (hexStr.length() == 32) {
-            high_ = std::stoull(hexStr.substr(0, 16), nullptr, 16);
-            low_ = std::stoull(hexStr.substr(16, 16), nullptr, 16);
-            stringUUID_ = uuidStr;
-            isValid_ = true;
-        } else {
+
+        uint64_t parsedHigh = 0;
+        uint64_t parsedLow = 0;
+        const char *const begin = hexStr.data();
+        const char *const middle = begin + 16;
+        const char *const end = begin + hexStr.size();
+        const auto highResult = std::from_chars(begin, middle, parsedHigh, 16);
+        const auto lowResult = std::from_chars(middle, end, parsedLow, 16);
+        if (highResult.ec != std::errc{} || highResult.ptr != middle ||
+            lowResult.ec != std::errc{} || lowResult.ptr != end) {
             ClearUUID();
+            return;
         }
+
+        high_ = parsedHigh;
+        low_ = parsedLow;
+        stringUUID_ = uuidStr;
+        isValid_ = true;
     }
 
     void UUIDToString() {

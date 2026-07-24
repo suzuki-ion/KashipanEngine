@@ -14,8 +14,12 @@ Vector2 Lerp(const Vector2 &start, const Vector2 &end, float t) noexcept {
 Vector2 Slerp(const Vector2 &start, const Vector2 &end, float t) noexcept {
     Vector2 normalizedStart = Normalize(start);
     Vector2 normalizedEnd = Normalize(end);
-    float angle = std::acos(Dot(normalizedStart, normalizedEnd));
+    const float dotProduct = std::clamp(Dot(normalizedStart, normalizedEnd), -1.0f, 1.0f);
+    float angle = std::acos(dotProduct);
     float sinTheta = std::sin(angle);
+    if (std::abs(sinTheta) <= 1.0e-6f) {
+        return Normalize(Lerp(start, end, t));
+    }
 
     float t1 = std::sin(angle * (1.0f - t));
     float t2 = std::sin(angle * t);

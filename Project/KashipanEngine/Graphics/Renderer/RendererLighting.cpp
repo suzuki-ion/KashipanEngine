@@ -20,12 +20,10 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
     }
     if (targetPipelinePairs.empty()) return;
 
-    // ライトカリング専用のコマンドリストへ記録する（ComputeCommandProcessorの共有コマンドリストを
-    // 複数フェーズで使い回すと、BeginRecord内のReset()で他フェーズの記録内容が提出前に消えてしまうため）
-    auto *commandList = BeginDedicatedComputeCommandList(lightCullingCommandSlotIndex_, lightCullingCommands_);
+    auto *commandList = ComputeCommandProcessor::GetCommandList(Passkey<Renderer>{});
     if (!commandList) return;
 
-    // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
+    // 共有コマンドリスト上でもフェーズ開始時のパイプライン状態は明示的に作り直す
     PipelineBinder pipelineBinder(commandList, pipelineManager_);
     pipelineBinder.Invalidate();
 
@@ -158,7 +156,6 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         tileBuffer->TransitionTo(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
-    EndDedicatedComputeCommandList(lightCullingCommands_);
 }
 
 

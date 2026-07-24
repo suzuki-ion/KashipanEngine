@@ -11,10 +11,10 @@ void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
     const auto &components = sceneProcessor->GetComputeShaderProcessings();
     if (components.empty()) return;
 
-    auto *commandList = ComputeCommandProcessor::BeginRecord(Passkey<Renderer>{});
+    auto *commandList = ComputeCommandProcessor::GetCommandList(Passkey<Renderer>{});
     if (!commandList) return;
 
-    // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
+    // 共有コマンドリスト上でもフェーズ開始時のパイプライン状態は明示的に作り直す
     PipelineBinder pipelineBinder(commandList, pipelineManager_);
     pipelineBinder.Invalidate();
 
@@ -63,7 +63,6 @@ void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
         commandList->Dispatch(groupX, groupY, groupZ);
     }
 
-    ComputeCommandProcessor::EndRecord(Passkey<Renderer>{});
 }
 
 void Renderer::ProcessSkinning(SceneContext *sceneContext) {
@@ -74,12 +73,10 @@ void Renderer::ProcessSkinning(SceneContext *sceneContext) {
     if (renderers.empty()) return;
     if (!pipelineManager_->HasPipeline("Skinning") || pipelineManager_->GetPipeline("Skinning").Type() != PipelineType::Compute) return;
 
-    // スキニング専用のコマンドリストへ記録する（ComputeCommandProcessorの共有コマンドリストは
-    // 後続フェーズのBeginRecord内のReset()で記録内容が提出前に上書きされてしまうため使わない）
-    auto *commandList = BeginDedicatedComputeCommandList(skinningCommandSlotIndex_, skinningCommands_);
+    auto *commandList = ComputeCommandProcessor::GetCommandList(Passkey<Renderer>{});
     if (!commandList) return;
 
-    // 専用コマンドリストはフレームごとにReset()されるため、パイプラインバインド状態は毎回作り直す
+    // 共有コマンドリスト上でもフェーズ開始時のパイプライン状態は明示的に作り直す
     PipelineBinder pipelineBinder(commandList, pipelineManager_);
     pipelineBinder.Invalidate();
 
@@ -124,7 +121,6 @@ void Renderer::ProcessSkinning(SceneContext *sceneContext) {
         outputBuffer->TransitionTo(D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
     }
 
-    EndDedicatedComputeCommandList(skinningCommands_);
 }
 
 void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
@@ -134,7 +130,7 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
     static bool sLoggedUpdatePipelineMissing = false;
     static bool sLoggedDispatching = false;
 
-    if (!sceneContext || !pipelineManager_ || !directXCommon_) return;
+    if (!sceneContext || !pipelineManager_) return;
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
     const auto &emitters = sceneRenderer->GetGpuParticleEmitters();
@@ -168,9 +164,7 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
         Log(buf, LogSeverity::Info);
     }
 
-    // GPUパーティクル専用のコマンドリストを使う（ComputeCommandProcessorの共有コマンドリストは
-    // 他フェーズのBeginRecord内のReset()で記録内容が提出前に上書きされてしまうため使わない）
-    auto *commandList = BeginDedicatedComputeCommandList(particleComputeCommandSlotIndex_, particleComputeCommands_);
+    auto *commandList = ComputeCommandProcessor::GetCommandList(Passkey<Renderer>{});
     if (!commandList) return;
 
     PipelineBinder pipelineBinder(commandList, pipelineManager_);
@@ -260,9 +254,6 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
         instanceMatrixBuffer->TransitionTo(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
-    if (particleComputeCommands_->EndRecord()) {
-        directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, particleComputeCommands_->GetCommandList());
-    }
 }
 
 

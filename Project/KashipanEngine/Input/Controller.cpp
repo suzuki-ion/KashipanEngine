@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstring>
 #include <limits>
+#include <wrl/client.h>
 
 #pragma comment(lib, "gameinput.lib")
 
@@ -50,6 +51,7 @@ void Controller::OnDeviceChanged(void* dev, std::uint32_t currentStatus) {
     auto* device = static_cast<IGameInputDevice*>(dev);
     if (!device) return;
 
+    std::lock_guard lock(devicesMutex_);
     const bool connectedNow = (currentStatus & static_cast<std::uint32_t>(GameInputDeviceConnected)) != 0;
     const int existing = FindDeviceIndex(devices_, device);
 
@@ -79,6 +81,8 @@ Controller::~Controller() {
 }
 
 void Controller::Initialize() {
+    Finalize();
+
     if (!sGameInput) {
         const HRESULT hr = GameInputCreate(&sGameInput);
         if (FAILED(hr)) {
@@ -88,7 +92,10 @@ void Controller::Initialize() {
     }
 
     // ストレージをリセット
-    devices_.clear();
+    {
+        std::lock_guard lock(devicesMutex_);
+        devices_.clear();
+    }
     current_.clear();
     previous_.clear();
     connected_.clear();
@@ -115,20 +122,28 @@ void Controller::Initialize() {
 void Controller::Finalize() {
     // 先にコールバックを停止して、終了処理と競合しないようにする
     if (sGameInput && deviceCallbackToken_ != 0) {
-        sGameInput->UnregisterCallback(deviceCallbackToken_, 0);
+        const GameInputCallbackToken token = deviceCallbackToken_;
+        sGameInput->StopCallback(token);
+        // StopCallback後も実行中のコールバックは完了するまで残るため、
+        // UnregisterCallbackの成功を待ってからthisとデバイス一覧を破棄する。
+        while (!sGameInput->UnregisterCallback(token, 1'000'000)) {
+        }
         deviceCallbackToken_ = 0;
     }
 
     // 振動を停止し、保持しているデバイス参照を解放する
-    for (auto& e : devices_) {
-        auto* d = static_cast<IGameInputDevice*>(e.device);
-        if (!d) continue;
-        GameInputRumbleParams zero{};
-        d->SetRumbleState(&zero);
-        d->Release();
-        e.device = nullptr;
+    {
+        std::lock_guard lock(devicesMutex_);
+        for (auto& e : devices_) {
+            auto* d = static_cast<IGameInputDevice*>(e.device);
+            if (!d) continue;
+            GameInputRumbleParams zero{};
+            d->SetRumbleState(&zero);
+            d->Release();
+            e.device = nullptr;
+        }
+        devices_.clear();
     }
-    devices_.clear();
 
     current_.clear();
     previous_.clear();
@@ -181,7 +196,19 @@ void Controller::Update() {
     previous_ = current_;
     prevConnected_ = connected_;
 
-    const size_t count = devices_.size();
+    std::vector<Microsoft::WRL::ComPtr<IGameInputDevice>> devices;
+    {
+        std::lock_guard lock(devicesMutex_);
+        devices.reserve(devices_.size());
+        for (const auto &entry : devices_) {
+            auto *device = static_cast<IGameInputDevice *>(entry.device);
+            if (device) {
+                devices.emplace_back(device);
+            }
+        }
+    }
+
+    const size_t count = devices.size();
     current_.assign(count, PadState{});
     connected_.assign(count, false);
 
@@ -190,7 +217,7 @@ void Controller::Update() {
     }
 
     for (size_t i = 0; i < count; ++i) {
-        auto* device = static_cast<IGameInputDevice*>(devices_[i].device);
+        auto* device = devices[i].Get();
         if (!device || !IsDeviceConnected(device)) {
             connected_[i] = false;
             continue;
@@ -335,8 +362,12 @@ int Controller::GetDeltaRightStickY(int index) const {
 }
 
 void Controller::SetVibration(int index, int leftMotor, int rightMotor) {
-    if (!(index >= 0 && index < static_cast<int>(devices_.size()))) return;
-    auto* device = static_cast<IGameInputDevice*>(devices_[static_cast<size_t>(index)].device);
+    Microsoft::WRL::ComPtr<IGameInputDevice> device;
+    {
+        std::lock_guard lock(devicesMutex_);
+        if (!(index >= 0 && index < static_cast<int>(devices_.size()))) return;
+        device = static_cast<IGameInputDevice*>(devices_[static_cast<size_t>(index)].device);
+    }
     if (!device) return;
 
     const auto toFloat = [](int v) {
@@ -357,8 +388,12 @@ void Controller::SetVibration(int index, int leftMotor, int rightMotor) {
 }
 
 void Controller::StopVibration(int index) {
-    if (!(index >= 0 && index < static_cast<int>(devices_.size()))) return;
-    auto* device = static_cast<IGameInputDevice*>(devices_[static_cast<size_t>(index)].device);
+    Microsoft::WRL::ComPtr<IGameInputDevice> device;
+    {
+        std::lock_guard lock(devicesMutex_);
+        if (!(index >= 0 && index < static_cast<int>(devices_.size()))) return;
+        device = static_cast<IGameInputDevice*>(devices_[static_cast<size_t>(index)].device);
+    }
     if (!device) return;
 
     GameInputRumbleParams zero{};

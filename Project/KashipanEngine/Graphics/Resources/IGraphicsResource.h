@@ -1,4 +1,6 @@
 #pragma once
+#include <limits>
+
 #include "Core/DirectX/DescriptorHeaps/DescriptorHeapBase.h"
 #include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
@@ -122,7 +124,9 @@ protected:
     const ResourceViewType resourceViewType_ = ResourceViewType::None;
 
 private:
-    uint32_t resourceID_ = 0;
+    static constexpr uint32_t kInvalidResourceID = std::numeric_limits<uint32_t>::max();
+
+    uint32_t resourceID_ = kInvalidResourceID;
     ID3D12Resource *resource_ = nullptr;
     ID3D12GraphicsCommandList *commandList_ = nullptr;
     uint32_t currentStateIndex_ = 0;

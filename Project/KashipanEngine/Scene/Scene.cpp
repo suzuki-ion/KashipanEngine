@@ -137,7 +137,7 @@ JSON Scene::SaveToJSON() const {
         json["sceneComponents"].push_back(compJson);
     }
     for (const auto &obj : objects_) {
-        if (!obj) continue;
+        if (!obj || !obj->IsSaveEnabled()) continue;
         json["sceneObjects"].push_back(obj->SaveToJson(Passkey<Scene>{}));
     }
     for (const auto &varPair : sceneVariables_) {
@@ -523,7 +523,15 @@ void Scene::UpdateComponents() {
             return a.addedID < b.addedID;
         });
     for (const auto &info : updateComponents_) {
-        info.component->UpdateInterface(Passkey<Scene>());
+        // Update中に別のコンポーネントから削除されている可能性がある。
+        const auto it = componentsIndexByPointer_.find(info.component);
+        if (it == componentsIndexByPointer_.end() || it->second >= components_.size()) continue;
+        auto &[ownedComponent, addedID] = components_[it->second];
+        if (!ownedComponent || addedID != info.addedID) continue;
+        ISceneComponent *component = ownedComponent.get();
+        if (component && component->IsActive()) {
+            component->UpdateInterface(Passkey<Scene>());
+        }
     }
 }
 

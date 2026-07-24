@@ -1,5 +1,7 @@
 
 class Player : ScriptComponentBehavior {
+    [Header("プレイヤーの基本設定")]
+
     [SerializeField, Tooltip("移動速度")]
     float moveSpeed = 0.1f;
     [SerializeField, Tooltip("ジャンプ力")]
@@ -12,6 +14,8 @@ class Player : ScriptComponentBehavior {
     Vector3 minVelocity = Vector3(-8.0f, -16.0f, -8.0f);
     [SerializeField, Tooltip("最大速度")]
     Vector3 maxVelocity = Vector3(8.0f, 16.0f, 8.0f);
+
+    [Header("接地・滑りの設定")]
 
     [SerializeField, Tooltip("地面との接触判定閾値")]
     float groundedThreshold = 0.4f;
@@ -29,6 +33,8 @@ class Player : ScriptComponentBehavior {
     float slideAngleAcceleration = 2.0f;
     [SerializeField, Tooltip("急斜面を滑り落ちる最大速度")]
     float maxSlideSpeed = 10.0f;
+
+    [Header("プレイヤーの状態")]
 
     [SerializeField, Tooltip("最大HP")]
     int maxHp = 3;

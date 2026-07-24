@@ -10,6 +10,8 @@
 #include "Assets/SamplerManager.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
+#include "Scene/Components/Render/SceneRenderer.h"
+#include "Scene/SceneContext.h"
 
 namespace KashipanEngine {
 
@@ -21,8 +23,10 @@ class ShaderVariableBinder;
 /// @brief ポストエフェクト用オブジェクトコンポーネントの基底クラス
 /// @details ScreenBufferObject コンポーネントが付与されたオブジェクトへ付与することで、
 ///          そのスクリーンバッファに対してポストエフェクトがかけられる。
-///          オブジェクトへは IPostProcessComponent として登録されるように、
-///          コンポーネントIDは IPostProcessComponent から生成したIDで固定にしている。
+///          派生クラスは各々が個別のコンポーネント型（GetComponentTypeID<派生型>()）として
+///          登録される（コンストラクタでコンポーネントIDを指定すること）。Rendererから
+///          一括で「そのオブジェクトのポストエフェクト一覧」を取得できるよう、
+///          Initialize/FinalizeでSceneRendererへ自身を登録/解除する
 class IPostProcessComponent : public IObjectComponent {
 public:
     // 派生エフェクトは全て PostProcessing カテゴリに分類される
@@ -102,8 +106,28 @@ public:
     }
 
 protected:
-    IPostProcessComponent(const std::string &componentType, size_t maxComponentCountPerBuffer = 0xFF)
-        : IObjectComponent(componentType, maxComponentCountPerBuffer, GetComponentTypeID<IPostProcessComponent>()) {}
+    /// @param componentType コンポーネントの種類名（派生クラス名の文字列）
+    /// @param componentTypeID 派生クラス自身の型ID（派生クラスのコンストラクタで
+    ///        `GetComponentTypeID<派生型>()` を渡すこと。これにより各エフェクトが
+    ///        個別のコンポーネント型として `GetComponent<派生型>()` 等で取得できるようになる）
+    /// @param maxComponentCountPerBuffer 1オブジェクトに付与できる最大数
+    IPostProcessComponent(const std::string &componentType, size_t componentTypeID, size_t maxComponentCountPerBuffer = 0xFF)
+        : IObjectComponent(componentType, maxComponentCountPerBuffer, componentTypeID) {}
+
+    /// @brief SceneRendererへ自身を登録する（派生クラスがoverrideする場合は必ず
+    ///        `IPostProcessComponent::Initialize();` を呼ぶこと）
+    void Initialize() override {
+        auto *sceneRenderer = GetOrAddSceneRenderer();
+        if (sceneRenderer) sceneRenderer->RegisterPostProcessComponent(this);
+    }
+
+    /// @brief SceneRendererから自身の登録を解除する（派生クラスがoverrideする場合は必ず
+    ///        `IPostProcessComponent::Finalize();` を呼ぶこと）
+    void Finalize() override {
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+        if (sceneRenderer) sceneRenderer->UnregisterPostProcessComponent(this);
+    }
 
     /// @brief ポストエフェクトパス情報を構築する（派生クラスで実装）
     /// @return 実行するパスのリスト（1コンポーネントで複数パスを返してもよい）
@@ -177,6 +201,16 @@ protected:
     }
 
 private:
+    SceneRenderer *GetOrAddSceneRenderer() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext) return nullptr;
+        auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
+        if (!sceneRenderer) {
+            sceneRenderer = sceneContext->AddComponent<SceneRenderer>();
+        }
+        return sceneRenderer;
+    }
+
     /// @brief 適用対象から除外するスクリーンバッファ名（GetRenderTargetName()）の集合
     std::unordered_set<std::string> excludedScreenBufferNames_;
     /// @brief Rendererから注入された、このスクリーンバッファへ描画したカメラの情報

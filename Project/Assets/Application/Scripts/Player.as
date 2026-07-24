@@ -30,7 +30,24 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("急斜面を滑り落ちる最大速度")]
     float maxSlideSpeed = 10.0f;
 
+    [SerializeField, Tooltip("最大HP")]
+    int maxHp = 3;
+    [SerializeField, Tooltip("現在のHP")]
+    int currentHp = 3;
+    [SerializeField, Tooltip("敵との接触で受けるダメージ量")]
+    int damageAmount = 1;
+    [SerializeField, Tooltip("被ダメージ後、連続でダメージを受けないようにする無敵時間（秒）")]
+    float damageCooldown = 1.5f;
+    [SerializeField, Tooltip("被ダメージ時のノックバック速度（X: 敵と反対方向の横速度, Y: 上方向のポップ速度）")]
+    Vector3 knockbackPower = Vector3(4.0f, 6.0f, 0.0f);
+    [SerializeField, Tooltip("被ダメージ時の点滅色")]
+    Vector4 damageFlashColor = Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+    [SerializeField, Tooltip("被ダメージ時に点滅させる間隔（秒）")]
+    float damageFlashInterval = 0.1f;
+
     // --- 実行時状態（保存不要） ---
+    float damageCooldownTimer = 0.0f;
+    float damageFlashTimer = 0.0f;
     Vector3 velocity = Vector3(0.0f, 0.0f, 0.0f);
     bool isGrounded = false;       // 猶予時間を考慮した安定した接地状態
     bool wasGrounded = false;
@@ -42,6 +59,9 @@ class Player : ScriptComponentBehavior {
     // 接地中の地面の、前フレームからの実際の移動量（動く床への追従用。Velocityではなく
     // PreTransformとの差分で求めるため、地面がどのような方法で動いていても追従できる）
     Vector3 groundDelta = Vector3(0.0f, 0.0f, 0.0f);
+    // 動く床から離れた瞬間の床の速度（groundDelta / dt）。離れた後も他の床に接触するまで
+    // 慣性としてそのまま移動量に加算し続ける（急に静止した空中へ切り替わらないようにする）
+    Vector3 platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 groundSlideVelocity = Vector3(0.0f, 0.0f, 0.0f);
     bool isJumping = false;
@@ -58,11 +78,16 @@ class Player : ScriptComponentBehavior {
 
         InputEvent();
         UpdateGroundedState(dt);
+        UpdatePlatformInertia(dt);
         Landing();
         LateralMovement();
         Sliding(dt);
         Jumping(dt);
+        UpdateDamageCooldown(dt);
+        CheckEnemyDamage();
         ApplyVelocity(dt);
+        UpdateDamageFlash(dt);
+        CheckDeath();
 
         // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
         hasGroundContact = false;
@@ -95,6 +120,17 @@ class Player : ScriptComponentBehavior {
                 groundHitNormal = hit.normal;
                 // 接地面が閾値より急な斜面なら滑り状態にする
                 isOnSteepSlope = hit.normal.y < slideThreshold;
+            } else if (!grounded) {
+                // 壁・天井との接触。侵入方向（法線と逆向き）へ進もうとしている速度成分だけを
+                // 打ち消して、壁に張り付いたまま速度が蓄積し続けたり、天井に頭をぶつけても
+                // 上昇速度がそのまま残ってしまったりしないようにする
+                // （法線に沿った成分だけを除去するので、斜面沿いの滑り成分等はそのまま残る）
+                Vector3 wallNormal = hit.normal;
+                wallNormal.z = 0.0f;
+                float intoSurface = velocity.Dot(wallNormal);
+                if (intoSurface < 0.0f) {
+                    velocity = velocity - wallNormal * intoSurface;
+                }
             }
 
             // 動く床への追従。地面のTransformとPreTransform（前フレームの値）との差分から
@@ -158,6 +194,16 @@ class Player : ScriptComponentBehavior {
             airborneTime += dt;
         }
         isGrounded = (airborneTime <= groundedGraceTime);
+    }
+
+    // 動く床から離れた瞬間（wasGroundedがまだ更新される前＝Landing()より前に呼ぶ必要がある）に
+    // 床の移動量を速度へ変換して慣性として保持し、接地するまでそのまま移動し続けるようにする
+    void UpdatePlatformInertia(const float dt) {
+        if (isGrounded) {
+            platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
+        } else if (wasGrounded && dt > 0.0f) {
+            platformInertiaVelocity = groundDelta / dt;
+        }
     }
 
     void Landing() {
@@ -254,6 +300,83 @@ class Player : ScriptComponentBehavior {
         wasJumping = isJumping;
     }
 
+    void UpdateDamageCooldown(const float dt) {
+        if (damageCooldownTimer > 0.0f) {
+            damageCooldownTimer -= dt;
+        }
+    }
+
+    // 敵の上以外から触れた場合にダメージを受ける（上から踏んだ場合はJumping()側のバウンド処理に任せる）
+    void CheckEnemyDamage() {
+        if (damageCooldownTimer > 0.0f) return;
+        if (!isCollidingWithEnemy) return;
+        if (enemyHitNormal.y > enemyCollisionThreshold) return; // 上から接触＝踏みなのでダメージなし
+
+        TakeDamage(damageAmount, enemyHitNormal);
+    }
+
+    void TakeDamage(int amount, const Vector3 &in hitNormal) {
+        currentHp -= amount;
+        damageCooldownTimer = damageCooldown;
+        damageFlashTimer = damageCooldown;
+
+        // 敵と反対方向へノックバック（横方向は接触方向、縦方向は常に上向きへポップさせる）
+        float knockbackDirX = (hitNormal.x != 0.0f) ? Sign(hitNormal.x) : -Sign(moveDirection);
+        velocity.x = knockbackDirX * knockbackPower.x;
+        velocity.y = knockbackPower.y;
+    }
+
+    // 無敵時間中、プレイヤーの色を点滅させる
+    void UpdateDamageFlash(const float dt) {
+        if (damageFlashTimer <= 0.0f) return;
+        damageFlashTimer -= dt;
+
+        if (damageFlashTimer <= 0.0f) {
+            damageFlashTimer = 0.0f;
+            ResetDamageFlash();
+            return;
+        }
+
+        MeshRenderer@ meshRenderer;
+        if (!GetComponent(@meshRenderer)) return;
+        bool blinkOn = (int(damageFlashTimer / damageFlashInterval) % 2) == 0;
+        if (blinkOn) {
+            meshRenderer.SetInstanceColor(damageFlashColor);
+            meshRenderer.SetInstanceColorBlendMode(0); // Override
+        } else {
+            meshRenderer.SetInstanceColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            meshRenderer.SetInstanceColorBlendMode(1); // Multiply（見た目に影響しない）
+        }
+    }
+
+    void ResetDamageFlash() {
+        MeshRenderer@ meshRenderer;
+        if (!GetComponent(@meshRenderer)) return;
+        meshRenderer.SetInstanceColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        meshRenderer.SetInstanceColorBlendMode(1); // Multiply（見た目に影響しない）
+    }
+
+    // HPが0以下になった場合、シーン変数に保存されたチェックポイント座標からリスポーンする
+    void CheckDeath() {
+        if (currentHp > 0) return;
+
+        Transform@ tf = GetTransform();
+        Scene@ scene = GetScene();
+        Vector3 respawnPosition;
+        bool hasCheckpoint = (scene !is null) && scene.GetVariable("CheckpointPosition", respawnPosition);
+        if (tf !is null && hasCheckpoint) {
+            tf.SetTranslate(respawnPosition);
+        }
+
+        velocity = Vector3(0.0f, 0.0f, 0.0f);
+        groundSlideVelocity = Vector3(0.0f, 0.0f, 0.0f);
+        platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
+        currentHp = maxHp;
+        damageCooldownTimer = damageCooldown; // リスポーン直後の無敵猶予として流用
+        damageFlashTimer = 0.0f;
+        ResetDamageFlash();
+    }
+
     void ApplyVelocity(const float dt = GetDeltaTime() * GetGameSpeed()) {
         Transform@ tf = GetTransform();
         if (tf is null) return;
@@ -269,6 +392,6 @@ class Player : ScriptComponentBehavior {
         }
         // 地面の移動量は自分のvelocityとは別に、移動量にだけその場で加算する
         // （groundDeltaは既にdt分の実移動量なので、dtを掛けずにそのまま加算する）
-        tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundDelta + groundSlideVelocity * dt + stick * dt);
+        tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundDelta + groundSlideVelocity * dt + stick * dt + platformInertiaVelocity * dt);
     }
 }

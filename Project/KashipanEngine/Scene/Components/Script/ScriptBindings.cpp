@@ -49,6 +49,7 @@
 #include "Objects/Components/KeyFrameAnimator.h"
 #include "Objects/Components/InputCommandApplier.h"
 #include "Objects/Components/SceneVariableApplier.h"
+#include "Objects/Components/Shake.h"
 #include "Objects/Components/AudioListener.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/AudioSource.h"
@@ -694,6 +695,31 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetVariableName() const", &SceneVariableApplier::GetVariableName)
         .method("bool WasApplied() const", &SceneVariableApplier::WasApplied);
 
+    RegisterComponentType<Shake>(engine, "Shake")
+        .method("void Play(float = 0.0f)", &Shake::Play)
+        .method("void Stop()", &Shake::Stop)
+        .method("bool IsPlaying() const", &Shake::IsPlaying)
+        // ProcessTiming: 0=Immediate, 1=DeferredEnd
+        .method("void SetProcessTiming(int)", &Shake::SetProcessTimingInt)
+        .method("int GetProcessTiming() const", &Shake::GetProcessTimingInt)
+        // ApplyTarget: 0=ToTransform, 1=RenderOnly
+        .method("void SetApplyTarget(int)", &Shake::SetApplyTargetInt)
+        .method("int GetApplyTarget() const", &Shake::GetApplyTargetInt)
+        .method("void SetPositionEnable(bool, bool, bool)", &Shake::SetPositionEnable)
+        .method("void SetPositionAmplitude(const Vector3 &in)", &Shake::SetPositionAmplitude)
+        .method("const Vector3 &GetPositionAmplitude() const", &Shake::GetPositionAmplitude)
+        .method("void SetPositionSpeed(const Vector3 &in)", &Shake::SetPositionSpeed)
+        .method("const Vector3 &GetPositionSpeed() const", &Shake::GetPositionSpeed)
+        .method("void SetPositionEaseType(int)", &Shake::SetPositionEaseTypeInt)
+        .method("int GetPositionEaseType() const", &Shake::GetPositionEaseTypeInt)
+        .method("void SetRotationEnable(bool, bool, bool)", &Shake::SetRotationEnable)
+        .method("void SetRotationAmplitude(const Vector3 &in)", &Shake::SetRotationAmplitude)
+        .method("const Vector3 &GetRotationAmplitude() const", &Shake::GetRotationAmplitude)
+        .method("void SetRotationSpeed(const Vector3 &in)", &Shake::SetRotationSpeed)
+        .method("const Vector3 &GetRotationSpeed() const", &Shake::GetRotationSpeed)
+        .method("void SetRotationEaseType(int)", &Shake::SetRotationEaseTypeInt)
+        .method("int GetRotationEaseType() const", &Shake::GetRotationEaseTypeInt);
+
     RegisterComponentType<TextRenderer>(engine, "TextRenderer")
         .method("void SetText(const string &in)", &TextRenderer::SetText)
         .method("const string &GetText() const", &TextRenderer::GetText)
@@ -777,7 +803,12 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetMaterialName(const string &in)", &MeshRenderer::SetMaterialName)
         .method("const string &GetMaterialName() const", &MeshRenderer::GetMaterialName)
         .method("Object@ GetTargetObject() const", &MeshRenderer::GetTargetObject)
-        .method("void SetTargetObject(Object@)", [](MeshRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); });
+        .method("void SetTargetObject(Object@)", [](MeshRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("void SetInstanceColor(const Vector4 &in)", &MeshRenderer::SetInstanceColor)
+        .method("const Vector4 &GetInstanceColor() const", &MeshRenderer::GetInstanceColor)
+        // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
+        .method("void SetInstanceColorBlendMode(int)", [](MeshRenderer &c, int mode) { c.SetInstanceColorBlendMode(static_cast<MeshRenderer::ColorBlendMode>(mode)); })
+        .method("int GetInstanceColorBlendMode() const", [](const MeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); });
 
     RegisterComponentType<SkinnedMeshRenderer>(engine, "SkinnedMeshRenderer")
         .method("void SetPipelineName(const string &in)", &SkinnedMeshRenderer::SetPipelineName)
@@ -2407,6 +2438,14 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("Scene@ GetScene()", []() -> SceneContext * { return gCurrentSceneContext; })
         .function("Object@ FindObject(const string &in)", [](const std::string &name) -> EmptyObject * {
             return gCurrentSceneContext ? gCurrentSceneContext->GetSceneObject(name) : nullptr;
+        })
+        // objがまだシーン内に存在する有効なオブジェクトかどうかを判定する。
+        // Object型はasOBJ_NOCOUNTで参照カウントを持たないため、[SerializeField]等で保持した
+        // ハンドルの参照先が後から削除されるとダングリングポインタになり得る。この関数は
+        // 渡されたポインタの中身には一切触れず、シーンが保持する生存オブジェクト集合との
+        // アドレス一致だけで判定するため、削除済み（解放済みメモリ）を指していても安全に呼べる
+        .function("bool IsValidObject(Object@)", [](EmptyObject *obj) -> bool {
+            return gCurrentSceneContext && gCurrentSceneContext->GetSceneObject(obj) != nullptr;
         })
         // 自身のオブジェクトからのコンポーネント取得（obj.GetComponent(...)の省略形）
         .function("bool GetComponent(?&out)", [](void *ref, int typeId) -> bool {

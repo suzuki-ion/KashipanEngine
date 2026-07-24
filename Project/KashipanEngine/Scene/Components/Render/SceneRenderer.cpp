@@ -4,8 +4,11 @@
 #include <type_traits>
 
 #include "Graphics/IRenderTarget.h"
+#include "Math/Quaternion.h"
 #include "Graphics/PipelineManager.h"
 #include "Objects/EmptyObject.h"
+#include "Objects/Components/Shake.h"
+#include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
@@ -43,6 +46,56 @@ MaterialManager::MaterialHandle GetMaterialHandleForSubMesh(const RendererT *ren
     } else {
         (void)subMeshIndex;
         return renderer->GetMaterialHandle();
+    }
+}
+
+/// @brief インスタンスカラー（オブジェクト単位の色）を持つレンダラー（現状MeshRendererのみ）から取得する。
+///        持たない型（SpriteRenderer/SkinnedMeshRenderer）は既定値（白＋Multiply＝見た目に影響しない）を返す
+template <typename RendererT>
+Vector4 GetInstanceColorFor(const RendererT *renderer) {
+    if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+        return renderer->GetInstanceColor();
+    } else {
+        (void)renderer;
+        return Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+}
+template <typename RendererT>
+int GetInstanceColorBlendModeFor(const RendererT *renderer) {
+    if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+        return static_cast<int>(renderer->GetInstanceColorBlendMode());
+    } else {
+        (void)renderer;
+        return 1; // Multiply
+    }
+}
+
+/// @brief 同一オブジェクトのShakeコンポーネントがApplyTarget::RenderOnlyで再生中の場合、
+///        そのオブジェクト自身のピボット（ワールド座標）周りに回転オフセットを適用し、
+///        続けてワールド空間の位置オフセットを加算したワールド行列を返す。
+///        Transform自体は一切書き換えないため、対象を持たない/条件を満たさない場合は
+///        そのまま渡されたworldMatrixを返す
+template <typename RendererT>
+Matrix4x4 ApplyShakeRenderOffset(const RendererT *renderer, const Matrix4x4 &worldMatrix) {
+    if constexpr (std::is_same_v<RendererT, MeshRenderer> || std::is_same_v<RendererT, SpriteRenderer>) {
+        const EmptyObject *owner = renderer->GetOwnerObject();
+        const Shake *shake = owner ? owner->GetComponent<Shake>() : nullptr;
+        if (!shake || !shake->IsActive() || !shake->IsPlaying()) return worldMatrix;
+        if (shake->GetApplyTarget() != Shake::ApplyTarget::RenderOnly) return worldMatrix;
+
+        const Vector3 &posOffset = shake->GetCurrentPositionOffset();
+        const Vector3 &rotOffset = shake->GetCurrentRotationOffset();
+        if (posOffset.LengthSquared() < 1e-8f && rotOffset.LengthSquared() < 1e-8f) return worldMatrix;
+
+        const Vector3 pivot(worldMatrix.m[3][0], worldMatrix.m[3][1], worldMatrix.m[3][2]);
+        Matrix4x4 toOrigin; toOrigin.MakeTranslate(Vector3(-pivot.x, -pivot.y, -pivot.z));
+        Matrix4x4 rotate = Quaternion::MakeRotateEuler(rotOffset).MakeRotateMatrix();
+        Matrix4x4 backToPivot; backToPivot.MakeTranslate(pivot);
+        Matrix4x4 translateOffset; translateOffset.MakeTranslate(posOffset);
+        return worldMatrix * toOrigin * rotate * backToPivot * translateOffset;
+    } else {
+        (void)renderer;
+        return worldMatrix;
     }
 }
 
@@ -103,7 +156,9 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                     sortable.entry.indexStart = subMeshes[subMeshIndex].indexStart;
                     sortable.entry.indexCount = subMeshes[subMeshIndex].indexCount;
                 }
-                sortable.entry.worldMatrix = renderer->GetWorldMatrix();
+                sortable.entry.worldMatrix = ApplyShakeRenderOffset(renderer, renderer->GetWorldMatrix());
+                sortable.entry.instanceColor = GetInstanceColorFor(renderer);
+                sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = pipelinePriority;
                 sortableEntries.push_back(sortable);
@@ -155,6 +210,8 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
                 cached.ranked.entry.indexStart = subMeshes[subMeshIndex].indexStart;
                 cached.ranked.entry.indexCount = subMeshes[subMeshIndex].indexCount;
             }
+            cached.ranked.entry.instanceColor = GetInstanceColorFor(renderer);
+            cached.ranked.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
             cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
             cached.source = renderer;
@@ -233,6 +290,28 @@ void SceneRenderer::RegisterGpuParticleEmitter(ParticleSystemBase *emitter) {
 void SceneRenderer::UnregisterGpuParticleEmitter(const ParticleSystemBase *emitter) {
     auto it = std::find(gpuParticleEmitters_.begin(), gpuParticleEmitters_.end(), emitter);
     if (it != gpuParticleEmitters_.end()) gpuParticleEmitters_.erase(it);
+}
+
+void SceneRenderer::RegisterPostProcessComponent(IPostProcessComponent *component) {
+    if (!component) return;
+    if (std::find(postProcessComponents_.begin(), postProcessComponents_.end(), component) != postProcessComponents_.end()) return;
+    postProcessComponents_.push_back(component);
+}
+
+void SceneRenderer::UnregisterPostProcessComponent(const IPostProcessComponent *component) {
+    auto it = std::find(postProcessComponents_.begin(), postProcessComponents_.end(), component);
+    if (it != postProcessComponents_.end()) postProcessComponents_.erase(it);
+}
+
+std::vector<IPostProcessComponent *> SceneRenderer::GetPostProcessComponentsFor(const EmptyObject *ownerObject) const {
+    std::vector<IPostProcessComponent *> result;
+    if (!ownerObject) return result;
+    for (auto *component : postProcessComponents_) {
+        if (component && component->GetOwnerObject() == ownerObject) {
+            result.push_back(component);
+        }
+    }
+    return result;
 }
 
 void SceneRenderer::RegisterSkinnedMeshRenderer(SkinnedMeshRenderer *renderer) {
@@ -369,7 +448,10 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             const bool active = std::visit([](auto *r) { return r && r->IsActive(); }, cached.source);
             if (!active) continue;
             SortableEntry ranked = cached.ranked;
-            ranked.entry.worldMatrix = std::visit([](auto *r) { return r->GetWorldMatrix(); }, cached.source);
+            ranked.entry.worldMatrix = std::visit([](auto *r) { return ApplyShakeRenderOffset(r, r->GetWorldMatrix()); }, cached.source);
+            // Instance Colorは実行中にスクリプト等から変更され得るため、ワールド行列と同様に毎フレーム反映する
+            ranked.entry.instanceColor = std::visit([](auto *r) { return GetInstanceColorFor(r); }, cached.source);
+            ranked.entry.instanceColorBlendMode = std::visit([](auto *r) { return GetInstanceColorBlendModeFor(r); }, cached.source);
             cachedLive.push_back(std::move(ranked));
         }
     }

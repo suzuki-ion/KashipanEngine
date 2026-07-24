@@ -491,6 +491,11 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Renderer\Renderer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererCompute.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererDraw.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererLighting.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererPostProcess.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererShadow.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\DepthStencilResource.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
@@ -527,8 +532,10 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Objects\Components\InputCommandApplier.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Shake.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ScenePreTransform.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneShakeApplier.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.cpp" />
@@ -964,6 +971,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h" />
     <ClInclude Include="KashipanEngine\Graphics\Renderer\EditorDebugDraw.h" />
     <ClInclude Include="KashipanEngine\Graphics\Renderer\Renderer.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Renderer\RendererInternal.h" />
     <ClInclude Include="KashipanEngine\Graphics\Renderer\ResourceContainer.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources.h" />
     <ClInclude Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.h" />
@@ -1059,6 +1067,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\PreTransform.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Rotation.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\SceneVariableApplier.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Shake.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="KashipanEngine\Objects\ParameterBinding.h" />
@@ -1090,6 +1099,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\SceneHeaders.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneObjectCollider.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ScenePreTransform.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\SceneShakeApplier.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\EditorToolManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.h" />

@@ -13,7 +13,7 @@ public:
         float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     };
 
-    OutlineEffect() : IPostProcessComponent("OutlineEffect") {
+    OutlineEffect() : IPostProcessComponent("OutlineEffect", GetComponentTypeID<OutlineEffect>()) {
         ADD_MEMBER_VARIABLE(params_.threshold);
         ADD_MEMBER_VARIABLE(params_.thickness);
         AddMemberVariable("params_.color[0]", &params_.color[0]);

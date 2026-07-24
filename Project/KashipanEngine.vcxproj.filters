@@ -384,6 +384,21 @@
     <ClCompile Include="KashipanEngine\Graphics\Renderer\Renderer.cpp">
       <Filter>KashipanEngine\Graphics\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererCompute.cpp">
+      <Filter>KashipanEngine\Graphics\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererDraw.cpp">
+      <Filter>KashipanEngine\Graphics\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererLighting.cpp">
+      <Filter>KashipanEngine\Graphics\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererPostProcess.cpp">
+      <Filter>KashipanEngine\Graphics\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererShadow.cpp">
+      <Filter>KashipanEngine\Graphics\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp">
       <Filter>KashipanEngine\Graphics\Resources</Filter>
     </ClCompile>
@@ -507,8 +522,14 @@
     <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\Shake.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneShakeApplier.cpp">
+      <Filter>KashipanEngine\Scene\Components</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp">
       <Filter>KashipanEngine\Scene\Components\Compute</Filter>
@@ -948,6 +969,9 @@
     <ClInclude Include="KashipanEngine\Graphics\Renderer\Renderer.h">
       <Filter>KashipanEngine\Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Renderer\RendererInternal.h">
+      <Filter>KashipanEngine\Graphics\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Renderer\ResourceContainer.h">
       <Filter>KashipanEngine\Graphics\Renderer</Filter>
     </ClInclude>
@@ -1239,6 +1263,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\SceneVariableApplier.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Shake.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -1330,6 +1357,9 @@
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\ScenePreTransform.h">
+      <Filter>KashipanEngine\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\SceneShakeApplier.h">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h">

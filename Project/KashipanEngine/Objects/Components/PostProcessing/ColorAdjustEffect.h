@@ -15,7 +15,7 @@ public:
         float colorBalance[3] = { 0.0f, 0.0f, 0.0f };
     };
 
-    ColorAdjustEffect() : IPostProcessComponent("ColorAdjustEffect") {
+    ColorAdjustEffect() : IPostProcessComponent("ColorAdjustEffect", GetComponentTypeID<ColorAdjustEffect>()) {
         ADD_MEMBER_VARIABLE(params_.brightness);
         ADD_MEMBER_VARIABLE(params_.contrast);
         ADD_MEMBER_VARIABLE(params_.saturation);

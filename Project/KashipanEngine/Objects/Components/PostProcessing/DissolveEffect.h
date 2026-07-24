@@ -17,7 +17,7 @@ public:
         float edgeColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     };
 
-    DissolveEffect() : IPostProcessComponent("DissolveEffect") {
+    DissolveEffect() : IPostProcessComponent("DissolveEffect", GetComponentTypeID<DissolveEffect>()) {
         ADD_MEMBER_VARIABLE(params_.maskThreshold);
         ADD_MEMBER_VARIABLE(params_.edgeThickness);
         AddMemberVariable("params_.baseTextureColor[0]", &params_.baseTextureColor[0]);

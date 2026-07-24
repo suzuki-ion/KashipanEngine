@@ -12,7 +12,7 @@ public:
         int halfSize[2] = { 2, 2 };
     };
 
-    BoxFilterEffect() : IPostProcessComponent("BoxFilterEffect") {
+    BoxFilterEffect() : IPostProcessComponent("BoxFilterEffect", GetComponentTypeID<BoxFilterEffect>()) {
         ADD_MEMBER_VARIABLE(params_.intensity);
         AddMemberVariable("params_.halfSize[0]", &params_.halfSize[0]);
         AddMemberVariable("params_.halfSize[1]", &params_.halfSize[1]);

@@ -34,6 +34,11 @@ class Enemy : ScriptComponentBehavior {
     // PreTransformとの差分で求めるため、地面がどのような方法で動いていても追従できる）
     Vector3 groundDelta = Vector3(0.0f, 0.0f, 0.0f);
     float velocityY = 0.0f;
+    // 動く床から離れた瞬間の床の速度（groundDelta / dt）。離れた後も他の床に接触するまで
+    // 慣性としてそのまま移動量に加算し続ける
+    Vector3 platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
+    // 直前フレームで接地していたか（Moveの中でhasGroundContactが非接地に変わった瞬間を検出するため）
+    bool hadGroundContactForInertia = false;
 
     // 進行方向側・逆方向側それぞれのエッジセンサー（足元の少し先・少し下を判定する専用コライダー）が
     // このフレームで地面に触れているか（生の値）。本体コライダーとは別に判定することで、
@@ -63,7 +68,11 @@ class Enemy : ScriptComponentBehavior {
         isCollidingWithPlayer = false;
 
         // プレイヤーと衝突しているかつ衝突の法線が上向きなら死亡状態にする
-        if (playerContact && playerHitNormal.y < playerCollisionThreshold) {
+        // （HitInfo.normalは「相手→自分」方向。プレイヤーが敵の真上から踏んだ場合、
+        // 敵(自分)から見て相手は上にいるため、押し出し方向である法線は下向き＝Yが負になる。
+        // 横からの接触は法線Yがほぼ0になるため、閾値は負の値と比較しないと横からの
+        // 接触まで踏み判定に含まれてしまう）
+        if (playerContact && playerHitNormal.y < -playerCollisionThreshold) {
             isAlive = false;
             Log(GetOwnerObject().GetName() + " defeated!");
             GetOwnerObject().SetActive(false);
@@ -120,10 +129,16 @@ class Enemy : ScriptComponentBehavior {
 
         if (hasGroundContact) {
             velocityY = 0.0f;
+            platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
         } else {
             velocityY -= gravity * dt * 60.0f;
             if (velocityY < -maxFallSpeed) velocityY = -maxFallSpeed;
+            // 動く床から離れた瞬間、床の移動量を速度へ変換して慣性として保持する
+            if (hadGroundContactForInertia && dt > 0.0f) {
+                platformInertiaVelocity = groundDelta / dt;
+            }
         }
+        hadGroundContactForInertia = hasGroundContact;
 
         Vector3 translate = tf.GetTranslate();
         translate.x += moveSpeed * Sign(moveDirection) * dt;
@@ -134,6 +149,9 @@ class Enemy : ScriptComponentBehavior {
             translate.y += -groundHitNormal.y * groundStickSpeed * dt;
             // 動く床への追従（既にdt分の実移動量なので、dtを掛けずにそのまま加算する）
             translate += groundDelta;
+        } else {
+            // 動く床から離れた後も、他の床に接触するまで慣性で移動し続ける
+            translate += platformInertiaVelocity * dt;
         }
         tf.SetTranslate(translate);
     }

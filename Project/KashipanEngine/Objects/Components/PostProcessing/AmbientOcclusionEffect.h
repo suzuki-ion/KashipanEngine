@@ -36,7 +36,7 @@ public:
         float depthThreshold = 0.5f; // ブラー時、これを超える線形深度差のサンプルは除外する
     };
 
-    AmbientOcclusionEffect() : IPostProcessComponent("AmbientOcclusionEffect") {
+    AmbientOcclusionEffect() : IPostProcessComponent("AmbientOcclusionEffect", GetComponentTypeID<AmbientOcclusionEffect>()) {
         ADD_MEMBER_VARIABLE(params_.radius);
         ADD_MEMBER_VARIABLE(params_.intensity);
         ADD_MEMBER_VARIABLE(params_.power);
@@ -58,6 +58,7 @@ public:
 
 protected:
     void Finalize() override {
+        IPostProcessComponent::Finalize();
         aoRaw_ = {};
         aoBlurred_ = {};
         aoConstantBuffer_.reset();

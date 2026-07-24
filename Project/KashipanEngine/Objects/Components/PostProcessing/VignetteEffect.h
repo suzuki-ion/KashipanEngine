@@ -16,7 +16,7 @@ public:
         float smoothness = 0.3f;
     };
 
-    VignetteEffect() : IPostProcessComponent("VignetteEffect") {
+    VignetteEffect() : IPostProcessComponent("VignetteEffect", GetComponentTypeID<VignetteEffect>()) {
         AddMemberVariable("params_.center[0]", &params_.center[0]);
         AddMemberVariable("params_.center[1]", &params_.center[1]);
         ADD_MEMBER_VARIABLE(params_.color);

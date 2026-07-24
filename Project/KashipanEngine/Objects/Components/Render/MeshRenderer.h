@@ -27,12 +27,21 @@ namespace KashipanEngine {
 ///          指定オブジェクトに付与された全ての描画先に対して描画が行われる。
 class MeshRenderer final : public IObjectComponent {
 public:
+    /// @brief インスタンスカラー（オブジェクト単位の色）をマテリアルの色へ適用する方法
+    enum class ColorBlendMode : int {
+        Override = 0, ///< マテリアルの色を無視してインスタンスカラーで置き換える
+        Multiply,      ///< マテリアルの色に乗算する（既定。白(1,1,1,1)なら見た目に影響しない）
+        Add,           ///< マテリアルの色に加算する
+        Subtract,      ///< マテリアルの色から減算する
+    };
+
     // pipelineName_の直接書き込み時は、セッターと同様に描画リストの再構築を促す
     // （マテリアルはスロット制のvector管理のため、要素アドレスが変わり得ずメンバ変数登録できない）
     OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 0xFF,
         SetUpdatePriority(900);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(pipelineName_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE(castShadows_);
+        ADD_MEMBER_VARIABLE(instanceColor_);
     )
     COMPONENT_CATEGORY("Render")
     ~MeshRenderer() override = default;
@@ -45,8 +54,21 @@ public:
         ptr->materialHandles_ = materialHandles_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->castShadows_ = castShadows_;
+        ptr->instanceColor_ = instanceColor_;
+        ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
         return ptr;
     }
+
+    //==================================================
+    // インスタンスカラー（オブジェクト単位の色）
+    //==================================================
+
+    /// @brief インスタンスカラーを設定する（マテリアルの色へ適用される色。既定は白(1,1,1,1)＋Multiplyで無効化と同義）
+    void SetInstanceColor(const Vector4 &color) noexcept { instanceColor_ = color; }
+    const Vector4 &GetInstanceColor() const noexcept { return instanceColor_; }
+    /// @brief インスタンスカラーをマテリアルの色へ適用する方法を設定する
+    void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
+    ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
 
     //==================================================
     // 描画先指定
@@ -187,6 +209,20 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる");
         }
+
+        ImGui::ColorEdit4("Instance Color", &instanceColor_.x);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("このオブジェクト単体の色。マテリアルは共有したまま、下のBlend Modeで指定した方法で\nマテリアルの色へ適用される（既定の白(1,1,1,1)＋Multiplyでは見た目に影響しない）");
+        }
+        static const char *kColorBlendModeLabels[] = { "Override", "Multiply", "Add", "Subtract" };
+        int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
+        if (ImGui::Combo("Instance Color Blend Mode", &blendModeIndex, kColorBlendModeLabels, IM_ARRAYSIZE(kColorBlendModeLabels))) {
+            instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Instance Colorをマテリアルの色へ適用する方法\nOverride: 置き換え / Multiply: 乗算 / Add: 加算 / Subtract: 減算");
+        }
+
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
         std::vector<std::string> materialNames;
         for (const auto &entry : materialEntries) {
@@ -238,6 +274,8 @@ protected:
             json["excludedRenderTargetNames"].push_back(name);
         }
         json["castShadows"] = castShadows_;
+        json["instanceColor"] = ToJSON(instanceColor_);
+        json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
         return json;
     }
 
@@ -260,6 +298,8 @@ protected:
             excludedRenderTargetNames_.insert(name);
         }
         castShadows_ = json.value("castShadows", true);
+        instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+        instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
         MarkDrawListDirty();
         return true;
@@ -295,6 +335,9 @@ private:
     std::unordered_set<std::string> excludedRenderTargetNames_;
     /// @brief シャドウマッピングのシャドウキャスターとして扱うか
     bool castShadows_ = true;
+    /// @brief オブジェクト単位の色（マテリアルは共有したまま、この色をinstanceColorBlendMode_で適用する）
+    Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
 };
 
 REGISTER_COMPONENT_OBJECT(MeshRenderer)

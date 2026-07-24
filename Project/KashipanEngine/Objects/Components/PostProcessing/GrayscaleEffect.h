@@ -11,7 +11,7 @@ public:
         float intensity = 1.0f;
     };
 
-    GrayscaleEffect() : IPostProcessComponent("GrayscaleEffect") {
+    GrayscaleEffect() : IPostProcessComponent("GrayscaleEffect", GetComponentTypeID<GrayscaleEffect>()) {
         ADD_MEMBER_VARIABLE(params_.intensity);
     }
     ~GrayscaleEffect() override = default;

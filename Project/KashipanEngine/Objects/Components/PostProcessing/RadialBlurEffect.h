@@ -15,7 +15,7 @@ public:
         float startRadius = 0.0f;
     };
 
-    RadialBlurEffect() : IPostProcessComponent("RadialBlurEffect") {
+    RadialBlurEffect() : IPostProcessComponent("RadialBlurEffect", GetComponentTypeID<RadialBlurEffect>()) {
         ADD_MEMBER_VARIABLE(params_.intensity);
         ADD_MEMBER_VARIABLE(params_.sampleCount);
         AddMemberVariable("params_.radialCenter[0]", &params_.radialCenter[0]);

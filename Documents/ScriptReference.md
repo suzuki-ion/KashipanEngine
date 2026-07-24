@@ -194,8 +194,18 @@ class CameraRig : ScriptComponentBehavior {
 
 - インスペクターにはコンボボックスが表示され、シーン内オブジェクトから選択できます。
 - ヒエラルキーウィンドウのオブジェクトをインスペクターの当該フィールドへドラッグ&ドロップして指定することもできます。
-- 内部的にはオブジェクトのUUIDとして保存されるため、シーンの保存/読込やスクリプトの`Reload`をまたいでも参照が維持されます（参照先オブジェクト自体が削除された場合は `null` になります）。
+- 内部的にはオブジェクトのUUIDとして保存されるため、シーンの保存/読込やスクリプトの`Reload`をまたいでも参照が維持されます（参照先オブジェクト自体が削除された場合、次回の読込時には `null` になります）。
 - `array<Object@>` として複数のオブジェクトをまとめて参照することもできます。
+
+**実行中に参照先が削除された場合の注意**: `Object` 型は参照カウントを持たないため、`[SerializeField]` で保持したハンドルの参照先オブジェクトが**実行中に** `DeleteObject` 等で削除されても、変数は自動では `null` にならず、削除済みオブジェクトを指したままになります（保存/読込をまたいだ場合のみ `null` に解決される）。実行中に参照先が消える可能性がある場合は、使用前に `IsValidObject()` で有効性を確認してください。
+
+```angelscript
+void Update() {
+    if (!IsValidObject(target)) return; // 削除済み、または未設定
+    Transform@ targetTf = target.GetTransform();
+    // ...
+}
+```
 
 ### 表示用の属性（Unity互換）
 
@@ -418,6 +428,7 @@ GetComponent(@tf);
 | `Transform@ GetTransform()` | オーナーオブジェクトのTransformを取得する（無い場合は `null`） |
 | `Scene@ GetScene()` | 現在のシーンを取得する |
 | `Object@ FindObject(const string &in name)` | シーン内から名前が一致する最初のオブジェクトを取得する（無い場合は `null`） |
+| `bool IsValidObject(Object@ obj)` | `obj` が現在シーン内に存在する有効なオブジェクトかどうかを判定する（[詳細](#object参照シーン内オブジェクトの指定)） |
 
 ## オブジェクト・シーン型
 

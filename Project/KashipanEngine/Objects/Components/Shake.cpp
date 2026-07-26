@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "Math/Quaternion.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/ObjectContext.h"
 #include "Scene/Components/SceneShakeApplier.h"
@@ -123,6 +125,33 @@ void Shake::ComputeOffsets(float dt) {
     const float ry = UpdateAxisRuntime(rotationRuntime_[1], playing && rotationEnableY_, rotationAmplitudeDeg_.y, rotationSpeed_.y, rotationEaseType_, dt);
     const float rz = UpdateAxisRuntime(rotationRuntime_[2], playing && rotationEnableZ_, rotationAmplitudeDeg_.z, rotationSpeed_.z, rotationEaseType_, dt);
     currentRotationOffset_ = Vector3(rx * kDegToRad, ry * kDegToRad, rz * kDegToRad);
+}
+
+Matrix4x4 Shake::ApplyRenderOnlyOffsets(const EmptyObject *owner, const Matrix4x4 &worldMatrix) {
+    if (!owner) return worldMatrix;
+
+    Matrix4x4 result = worldMatrix;
+    for (const Shake *shake : owner->GetComponents<Shake>()) {
+        if (!shake || !shake->IsActive() || !shake->IsPlaying()) continue;
+        if (shake->GetApplyTarget() != ApplyTarget::RenderOnly) continue;
+
+        const Vector3 &posOffset = shake->GetCurrentPositionOffset();
+        const Vector3 &rotOffset = shake->GetCurrentRotationOffset();
+        if (posOffset.LengthSquared() < 1e-8f && rotOffset.LengthSquared() < 1e-8f) continue;
+
+        // 行ベクトル行列の規約に合わせ、現在のワールドピボットへ一度戻してから
+        // 回転とワールド空間の平行移動を適用する
+        const Vector3 pivot(result.m[3][0], result.m[3][1], result.m[3][2]);
+        Matrix4x4 toOrigin;
+        toOrigin.MakeTranslate(Vector3(-pivot.x, -pivot.y, -pivot.z));
+        Matrix4x4 rotate = Quaternion::MakeRotateEuler(rotOffset).MakeRotateMatrix();
+        Matrix4x4 backToPivot;
+        backToPivot.MakeTranslate(pivot);
+        Matrix4x4 translateOffset;
+        translateOffset.MakeTranslate(posOffset);
+        result = result * toOrigin * rotate * backToPivot * translateOffset;
+    }
+    return result;
 }
 
 void Shake::ApplyToTransform() {

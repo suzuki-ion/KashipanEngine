@@ -135,13 +135,13 @@ PSOutput main(VSOutput input) {
 	// オブジェクト単位の色（MeshRendererのInstance Color）をマテリアルの色へ適用する。
 	// 0=Override(置き換え), 1=Multiply(乗算), 2=Add(加算), 3=Subtract(減算)。アルファには影響させない
 	if (mat.instanceColorBlendMode < 0.5f) {
-		baseColor.rgb = mat.instanceColor.rgb;
+		baseColor = mat.instanceColor;
 	} else if (mat.instanceColorBlendMode < 1.5f) {
-		baseColor.rgb *= mat.instanceColor.rgb;
+		baseColor *= mat.instanceColor;
 	} else if (mat.instanceColorBlendMode < 2.5f) {
-		baseColor.rgb += mat.instanceColor.rgb;
+		baseColor += mat.instanceColor;
 	} else {
-		baseColor.rgb -= mat.instanceColor.rgb;
+		baseColor -= mat.instanceColor;
 	}
 	float4 lightingColor = float4(0,0,0,0);
 	float4 envColor = float4(0,0,0,0);

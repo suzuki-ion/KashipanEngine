@@ -15,6 +15,15 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("最大速度")]
     Vector3 maxVelocity = Vector3(8.0f, 16.0f, 8.0f);
 
+    [Header("移動方向追従オブジェクト")]
+
+    [SerializeField, Tooltip("プレイヤーの移動方向の先へ配置するオブジェクト")]
+    Object@ movementTargetObject;
+    [SerializeField, Tooltip("追従オブジェクトの基準位置に加算するオフセット")]
+    Vector3 movementTargetOffset = Vector3(0.0f, 0.0f, 0.0f);
+    [SerializeField, Tooltip("プレイヤーの水平速度に掛ける距離倍率")]
+    float movementTargetDistanceMultiplier = 1.0f;
+
     [Header("接地・滑りの設定")]
 
     [SerializeField, Tooltip("地面との接触判定閾値")]
@@ -68,6 +77,9 @@ class Player : ScriptComponentBehavior {
     // 動く床から離れた瞬間の床の速度（groundDelta / dt）。離れた後も他の床に接触するまで
     // 慣性としてそのまま移動量に加算し続ける（急に静止した空中へ切り替わらないようにする）
     Vector3 platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
+    // 最後に実際に接触していた床の速度。ジャンプ処理でisGroundedが同フレーム中にfalseへ
+    // 変化しても床の速度を失わないよう、接触中に毎フレーム保存しておく
+    Vector3 lastGroundVelocity = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
     Vector3 groundSlideVelocity = Vector3(0.0f, 0.0f, 0.0f);
     bool isJumping = false;
@@ -81,19 +93,22 @@ class Player : ScriptComponentBehavior {
 
     void Update() {
         const float dt = GetDeltaTime() * GetGameSpeed();
+        const bool wasGroundedAtFrameStart = isGrounded;
 
         InputEvent();
         UpdateGroundedState(dt);
-        UpdatePlatformInertia(dt);
         Landing();
         LateralMovement();
         Sliding(dt);
         Jumping(dt);
+        // Jumping()は離陸時にisGroundedをfalseへ変更するため、その後で床の慣性を受け渡す
+        UpdatePlatformInertia(dt, wasGroundedAtFrameStart);
         UpdateDamageCooldown(dt);
         CheckEnemyDamage();
         ApplyVelocity(dt);
         UpdateDamageFlash(dt);
         CheckDeath();
+        UpdateMovementTarget();
 
         // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
         hasGroundContact = false;
@@ -137,6 +152,9 @@ class Player : ScriptComponentBehavior {
                 if (intoSurface < 0.0f) {
                     velocity = velocity - wallNormal * intoSurface;
                 }
+                // 床から引き継いだ慣性は、別の壁面へ衝突した時点で終了する
+                platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
+                lastGroundVelocity = Vector3(0.0f, 0.0f, 0.0f);
             }
 
             // 動く床への追従。地面のTransformとPreTransform（前フレームの値）との差分から
@@ -202,13 +220,20 @@ class Player : ScriptComponentBehavior {
         isGrounded = (airborneTime <= groundedGraceTime);
     }
 
-    // 動く床から離れた瞬間（wasGroundedがまだ更新される前＝Landing()より前に呼ぶ必要がある）に
-    // 床の移動量を速度へ変換して慣性として保持し、接地するまでそのまま移動し続けるようにする
-    void UpdatePlatformInertia(const float dt) {
+    // 実際に床へ接触している間に最後の床速度を保存し、接地状態から離れた瞬間に慣性へ受け渡す。
+    // groundDelta自体は離床フレームの末尾でリセットされるため、離床後にgroundDeltaから
+    // 速度を求めようとするとゼロになる。接触中から保存しておくことでジャンプ時にも維持できる
+    void UpdatePlatformInertia(const float dt, const bool wasGroundedAtFrameStart) {
+        if (hasGroundContact && dt > 0.0f) {
+            lastGroundVelocity = groundDelta / dt;
+        }
+
         if (isGrounded) {
+            // 同じ床に乗っている間はgroundDeltaで追従するため、慣性分は別途加算しない。
+            // 別の床へ着地した場合もここでそれまでの慣性が終了する
             platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
-        } else if (wasGrounded && dt > 0.0f) {
-            platformInertiaVelocity = groundDelta / dt;
+        } else if (wasGroundedAtFrameStart) {
+            platformInertiaVelocity = lastGroundVelocity;
         }
     }
 
@@ -377,6 +402,7 @@ class Player : ScriptComponentBehavior {
         velocity = Vector3(0.0f, 0.0f, 0.0f);
         groundSlideVelocity = Vector3(0.0f, 0.0f, 0.0f);
         platformInertiaVelocity = Vector3(0.0f, 0.0f, 0.0f);
+        lastGroundVelocity = Vector3(0.0f, 0.0f, 0.0f);
         currentHp = maxHp;
         damageCooldownTimer = damageCooldown; // リスポーン直後の無敵猶予として流用
         damageFlashTimer = 0.0f;
@@ -396,8 +422,30 @@ class Player : ScriptComponentBehavior {
             stick = groundHitNormal * (-groundStickSpeed);
             stick.z = 0.0f;
         }
-        // 地面の移動量は自分のvelocityとは別に、移動量にだけその場で加算する
-        // （groundDeltaは既にdt分の実移動量なので、dtを掛けずにそのまま加算する）
-        tf.SetTranslate(tf.GetTranslate() + velocity * dt + groundDelta + groundSlideVelocity * dt + stick * dt + platformInertiaVelocity * dt);
+        // 接地中は床の実移動量、離床後は最後に記録した床速度による慣性のどちらか一方だけを
+        // 適用する。離床フレームに両方を足すと床の移動が二重に加算されてしまう
+        Vector3 platformMovement = isGrounded ? groundDelta : platformInertiaVelocity * dt;
+        tf.SetTranslate(tf.GetTranslate() + velocity * dt + platformMovement + groundSlideVelocity * dt + stick * dt);
+    }
+
+    // 指定オブジェクトを、プレイヤーの現在位置を基準に水平移動速度の分だけ進行方向へ配置する。
+    // 速度が大きいほど movementTargetDistanceMultiplier に比例して距離が広がる
+    void UpdateMovementTarget() {
+        if (movementTargetObject is null) return;
+
+        Transform@ playerTransform = GetTransform();
+        Transform@ targetTransform;
+        if (playerTransform is null || !movementTargetObject.GetComponent(@targetTransform)) return;
+
+        Vector3 horizontalVelocity = velocity + groundSlideVelocity;
+        horizontalVelocity += isGrounded ? lastGroundVelocity : platformInertiaVelocity;
+        horizontalVelocity.y = 0.0f;
+
+        const Vector3 desiredWorldPosition =
+            playerTransform.GetWorldPosition()
+            + movementTargetOffset
+            + horizontalVelocity * movementTargetDistanceMultiplier;
+        const Vector3 targetWorldDelta = desiredWorldPosition - targetTransform.GetWorldPosition();
+        targetTransform.SetTranslate(targetTransform.GetTranslate() + targetWorldDelta);
     }
 }

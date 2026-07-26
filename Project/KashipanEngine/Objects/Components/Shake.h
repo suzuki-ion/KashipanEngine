@@ -3,6 +3,7 @@
 #include <array>
 
 #include "Objects/ObjectComponentHeader.h"
+#include "Math/Matrix4x4.h"
 #include "Math/Vector3.h"
 #include "Utilities/MathUtils/Easings.h"
 #include "Utilities/Passkeys.h"
@@ -101,6 +102,11 @@ public:
     const Vector3 &GetCurrentPositionOffset() const noexcept { return currentPositionOffset_; }
     /// @brief 現在フレームの回転オフセット（ラジアン、オブジェクト自身のピボット周り）
     const Vector3 &GetCurrentRotationOffset() const noexcept { return currentRotationOffset_; }
+
+    /// @brief 指定オブジェクトに付いた全てのRenderOnlyシェイクをワールド行列へ適用する
+    /// @details Transformは変更せず、描画コンポーネントが使用する一時的な行列だけを返す。
+    ///          対象が無い、または再生中のRenderOnlyシェイクが無い場合は入力行列をそのまま返す
+    static Matrix4x4 ApplyRenderOnlyOffsets(const EmptyObject *owner, const Matrix4x4 &worldMatrix);
 
     /// @brief SceneShakeApplierから呼ばれる、DeferredEnd+ToTransform時のTransform適用処理
     void ApplyToTransformInterface(Passkey<class SceneShakeApplier>) { ApplyToTransform(); }

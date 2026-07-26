@@ -7,6 +7,7 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
+#include "Objects/Components/Shake.h"
 #include "Objects/Components/Transform.h"
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
@@ -80,10 +81,7 @@ public:
 
     /// @brief カメラのワールド座標を取得（Transform が無い場合は原点）
     Vector3 GetWorldPosition() const {
-        auto *objectContext = GetOwnerObjectContext();
-        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-        if (!transform) return Vector3(0.0f, 0.0f, 0.0f);
-        const Matrix4x4 &world = transform->GetWorldMatrix();
+        const Matrix4x4 world = GetRenderWorldMatrix();
         return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
     }
 
@@ -201,13 +199,20 @@ private:
         return sceneRenderer;
     }
 
+    /// @brief Transformを変更せず、RenderOnlyシェイクを反映した描画用ワールド行列を取得する
+    Matrix4x4 GetRenderWorldMatrix() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+        return Shake::ApplyRenderOnlyOffsets(GetOwnerObject(), world);
+    }
+
     void UploadCameraConstant() {
         if (!constantBuffer_) return;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return;
 
-        auto *transform = objectContext->GetComponent<Transform>();
-        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+        const Matrix4x4 world = GetRenderWorldMatrix();
         const Matrix4x4 view = world.Inverse();
 
         void *mapped = constantBuffer_->Map();

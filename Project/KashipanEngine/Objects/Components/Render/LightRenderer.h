@@ -5,6 +5,7 @@
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Light.h"
+#include "Objects/Components/Shake.h"
 #include "Objects/Components/Transform.h"
 #include "Math/Vector3.h"
 #include "Graphics/IRenderTarget.h"
@@ -83,52 +84,37 @@ public:
 
     /// @brief ライトのワールド座標を取得（Transform が無い場合は原点）
     Vector3 GetWorldPosition() const {
-        auto *objectContext = GetOwnerObjectContext();
-        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-        if (!transform) return Vector3(0.0f, 0.0f, 0.0f);
-        const Matrix4x4 &world = transform->GetWorldMatrix();
+        const Matrix4x4 world = GetRenderWorldMatrix();
         return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
     }
 
     /// @brief ライトのワールド方向（Transform の +Z）を取得
     Vector3 GetWorldDirection() const {
-        auto *objectContext = GetOwnerObjectContext();
-        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         Vector3 direction(0.0f, -1.0f, 0.0f);
-        if (transform) {
-            const Matrix4x4 &world = transform->GetWorldMatrix();
-            Vector3 forward(world.m[2][0], world.m[2][1], world.m[2][2]);
-            const float length = forward.Length();
-            if (length > 0.0f) direction = forward * (1.0f / length);
-        }
+        const Matrix4x4 world = GetRenderWorldMatrix();
+        Vector3 forward(world.m[2][0], world.m[2][1], world.m[2][2]);
+        const float length = forward.Length();
+        if (length > 0.0f) direction = forward * (1.0f / length);
         return direction;
     }
 
     /// @brief ライトのワールド右方向（Transform の +X）を取得（Rect/Tubeの軸方向に使用）
     Vector3 GetWorldRight() const {
-        auto *objectContext = GetOwnerObjectContext();
-        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         Vector3 right(1.0f, 0.0f, 0.0f);
-        if (transform) {
-            const Matrix4x4 &world = transform->GetWorldMatrix();
-            Vector3 axis(world.m[0][0], world.m[0][1], world.m[0][2]);
-            const float length = axis.Length();
-            if (length > 0.0f) right = axis * (1.0f / length);
-        }
+        const Matrix4x4 world = GetRenderWorldMatrix();
+        Vector3 axis(world.m[0][0], world.m[0][1], world.m[0][2]);
+        const float length = axis.Length();
+        if (length > 0.0f) right = axis * (1.0f / length);
         return right;
     }
 
     /// @brief ライトのワールド上方向（Transform の +Y）を取得（Rectの高さ方向に使用）
     Vector3 GetWorldUp() const {
-        auto *objectContext = GetOwnerObjectContext();
-        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         Vector3 up(0.0f, 1.0f, 0.0f);
-        if (transform) {
-            const Matrix4x4 &world = transform->GetWorldMatrix();
-            Vector3 axis(world.m[1][0], world.m[1][1], world.m[1][2]);
-            const float length = axis.Length();
-            if (length > 0.0f) up = axis * (1.0f / length);
-        }
+        const Matrix4x4 world = GetRenderWorldMatrix();
+        Vector3 axis(world.m[1][0], world.m[1][1], world.m[1][2]);
+        const float length = axis.Length();
+        if (length > 0.0f) up = axis * (1.0f / length);
         return up;
     }
 
@@ -184,6 +170,14 @@ protected:
     }
 
 private:
+    /// @brief Transformを変更せず、RenderOnlyシェイクを反映した描画用ワールド行列を取得する
+    Matrix4x4 GetRenderWorldMatrix() const {
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+        return Shake::ApplyRenderOnlyOffsets(GetOwnerObject(), world);
+    }
+
     SceneRenderer *GetOrAddSceneRenderer() const {
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;

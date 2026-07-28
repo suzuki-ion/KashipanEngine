@@ -2247,7 +2247,4 @@
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
     <Manifest Include="Externals\Common\settings.manifest" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="push-test.txt" />
-  </ItemGroup>
 </Project>

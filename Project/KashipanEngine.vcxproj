@@ -1228,9 +1228,6 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="MyStd\UniversalIndex.h" />
     <ClInclude Include="MyStd\VectorMap.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="push-test.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

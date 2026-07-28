@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7. 入力を設定する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="T07_SetupInput">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>7. 入力を設定する</h1>
+<p class="page-lead">前の手順で使った <code>"MoveLeft"</code> / <code>"MoveRight"</code> という入力アクション名を、実際のキーに割り当てます。詳しいAPIは <a href="../08_Input.html">08_Input.html</a> を参照してください。</p>
+</div>
+
+<h2>InputCommandでアクションを登録する</h2>
+<p>
+KashipanEngineの入力は、キーやボタンを直接見るのではなく、<code>"MoveLeft"</code>のような<strong>アクション名</strong>を経由してマッピングする<code>InputCommand</code>の仕組みを使うのが基本です。<code>Application/AppInitialize.h</code>で登録できます。
+</p>
+<pre><code>#pragma once
+#include &lt;KashipanEngine.h&gt;
+
+namespace KashipanEngine {
+inline void AppInitialize(const GameEngine::Context &amp;context) {
+    context.inputCommand-&gt;RegisterCommand("MoveLeft",  Key::A,     InputState::Down);
+    context.inputCommand-&gt;RegisterCommand("MoveRight", Key::D,     InputState::Down);
+    context.inputCommand-&gt;RegisterCommand("MoveLeft",  Key::Left,  InputState::Down); // 同じアクションに複数キーを割り当ててもよい
+    context.inputCommand-&gt;RegisterCommand("MoveRight", Key::Right, InputState::Down);
+}
+}
+</code></pre>
+<p>
+<code>InputState</code>には<code>Down</code>(押している間)、<code>Trigger</code>(押した瞬間)、<code>Release</code>(離した瞬間)があります。移動のような継続入力には<code>Down</code>、ジャンプのような単発入力には<code>Trigger</code>を使うのが典型的です。
+</p>
+
+<h2>設定の保存・読み込み</h2>
+<p>
+登録した内容は既定で<code>Assets/KashipanEngine/InputCommand.json</code>に保存・復元できます(<code>InputCommand::SaveToJSON</code> / <code>LoadFromJSON</code>)。一度設定したコマンド定義はこのファイルとして永続化されるため、次回起動時に再登録しなくても復元されます。
+</p>
+
+<h2>スクリプトから参照する</h2>
+<p>
+前の手順の<code>SimpleMover.as</code>で書いた次のコードは、まさにこの<code>InputCommand</code>のアクションをAngelScript側から参照しています。
+</p>
+<pre><code>if (IsCommandTriggered("MoveLeft"))  moveDirection -= GetCommandValue("MoveLeft");
+if (IsCommandTriggered("MoveRight")) moveDirection += GetCommandValue("MoveRight");</code></pre>
+<p>
+<code>IsCommandTriggered</code>はそのフレームで条件を満たしたかどうか、<code>GetCommandValue</code>は入力の強さ(キーなら通常1.0、アナログスティックなら0.0〜1.0の値)を返します。
+</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

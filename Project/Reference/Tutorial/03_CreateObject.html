@@ -1,64 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <title>3. オブジェクトの作成</title>
-  <link rel="stylesheet" href="../reference.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3. オブジェクトを作成する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
-<body>
-<nav><a href="00_Index.html">目次へ</a></nav>
-<h1>3. オブジェクトの作成</h1>
-<p>KashipanEngine のゲームオブジェクトは、</p>
-<ul>
-<li>2D：<code>Object2DBase</code> 派生</li>
-<li>3D：<code>Object3DBase</code> 派生</li>
-</ul>
-<p>または、エンジン標準のプリミティブ/既定オブジェクト（<code>Sprite</code>, <code>Box</code>, <code>Model</code> など）を使って作成します。</p>
-<hr />
-<h2>3.1 例：2D の <code>Sprite</code> を作る</h2>
-<p><code>Sprite</code> は <code>Object2DBase</code> の派生クラスです。</p>
-<pre><code class="language-cpp">
-#include &lt;KashipanEngine.h&gt;
+<body data-page="T03_CreateObject">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>3. オブジェクトを作成する</h1>
+<p class="page-lead">シーンの中に、ゲームオブジェクトの入れ物である <code>EmptyObject</code> を1つ作成します。詳しいAPIは <a href="../03_GameObjects.html">03_GameObjects.html</a> を参照してください。</p>
+</div>
 
-<span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Sprite&gt;();
-obj-&gt;SetName(<span class="str">&quot;MySprite&quot;</span>);
-obj-&gt;SetAnchorPoint(<span class="num">0.5f</span>, <span class="num">0.5f</span>);
-</code></pre>
-<hr />
-<h2>3.2 例：3D の <code>Box</code> を作る</h2>
-<pre><code class="language-cpp">
-#include &lt;KashipanEngine.h&gt;
+<h2>シーンエディタでの作成</h2>
+<p>
+シーンエディタの Hierarchy(オブジェクト階層)ウィンドウ上で右クリックし「Create Empty Object」のような操作を行うと、名前のない空のオブジェクトがシーンへ追加されます。追加した後、名前を「Player」のようにわかりやすく変更しておきましょう。
+</p>
 
-<span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Box&gt;();
-obj-&gt;SetName(<span class="str">&quot;MyBox&quot;</span>);
+<h2>保存されるファイル</h2>
+<p>
+オブジェクトを1つ作成すると、シーンフォルダの下に <code>Objects/&lt;新しいUUID&gt;/object.json</code> が新しく作られます。中身はこの時点ではまだコンポーネントを何も持たない、最小限の状態です。
+</p>
+<pre><code>{
+    "object": {
+        "components": [],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "Player",
+        "objectID": "3f6c1a2e-....",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}</code></pre>
+<p>
+<code>objectID</code>は<code>UUID128</code>で自動採番され、以降このオブジェクトを一意に識別するために使われます(親子関係の指定など、他のコンポーネントから参照される際もこのIDが使われます)。<code>siblingIndex</code>はヒエラルキー内での並び順です。
+</p>
 
-<span class="kw">if</span> (<span class="kw">auto</span>* tr = obj-&gt;GetComponent3D&lt;KashipanEngine::Transform3D&gt;()) {
-    tr-&gt;SetTranslate(KashipanEngine::Vector3(<span class="num">0.0f</span>, <span class="num">0.0f</span>, <span class="num">0.0f</span>));
-    tr-&gt;SetScale(KashipanEngine::Vector3(<span class="num">1.0f</span>));
-}
-</code></pre>
-<hr />
-<h2>3.3 シーンに追加する</h2>
-<p><code>SceneBase</code> 派生クラスの中で <code>AddObject2D</code> / <code>AddObject3D</code> を使ってシーンに所有させます。</p>
-<pre><code class="language-cpp">
-<span class="type">void</span> MyScene::Initialize() {
-    <span class="kw">auto</span> obj = std::make_unique&lt;KashipanEngine::Sprite&gt;();
-    obj-&gt;SetName(<span class="str">&quot;HUD&quot;</span>);
+<h2>C++視点での対応API</h2>
+<p>これはエディタの内部的には次のAPI呼び出しに相当します(通常は直接呼ぶ必要はありません)。</p>
+<div class="api-card">
+<div class="api-sig">EmptyObject *CreateEmptyObject(const std::string &amp;name = "", const UUID128 &amp;objectID = UUID128(), size_t index = MAXSIZE_T);</div>
+</div>
 
-    AddObject2D(std::move(obj));
-}
-</code></pre>
-<hr />
-<h2>3.4 描画先に登録する（Window / ScreenBuffer）</h2>
-<p>オブジェクトは <code>AttachToRenderer(...)</code> で描画先に登録します。</p>
-<pre><code class="language-cpp">
-<span class="kw">auto</span>* window = KashipanEngine::Window::GetWindow(<span class="str">&quot;Main Window&quot;</span>);
-<span class="kw">if</span> (window) {
-    obj-&gt;AttachToRenderer(window, <span class="str">&quot;Object2D.DoubleSidedCulling.BlendNormal&quot;</span>);
-}
-</code></pre>
-<blockquote>
-<p><code>pipelineName</code> は Assets のパイプライン定義と一致している必要があります。</p>
-</blockquote>
+<div class="note">
+<strong>この時点ではまだ何も表示されない</strong><br>
+コンポーネントを1つも持たないオブジェクトは、画面には何も描画されません。次の <a href="04_AddComponents.html">4. コンポーネントを追加する</a> でTransformと描画コンポーネントを追加します。
+</div>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
 </body>
 </html>

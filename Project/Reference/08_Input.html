@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>入力 (Input / InputCommand) | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="08_Input">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>入力 (Input / InputCommand)</h1>
+<p class="page-lead">キーボード・マウス・コントローラーへの直接アクセスと、アクション名ベースで入力をマッピングする <code>InputCommand</code> システムを扱います。ゲームロジック（AngelScript）からは基本的に <code>InputCommand</code> 経由で入力を扱う設計です。</p>
+</div>
+
+<h2>2つの入力アクセス方法</h2>
+<p>
+KashipanEngine の入力機能は大きく2層に分かれています。
+</p>
+<ul>
+<li><strong>デバイス直接アクセス（<code>Keyboard</code> / <code>Mouse</code> / <code>Controller</code>）</strong> … 特定のキーやボタンを直接判定する低レベルAPI。</li>
+<li><strong>アクションマッピング（<code>InputCommand</code>）</strong> … 「ジャンプ」「左移動」のようなアクション名に対して、キー・マウス・コントローラーの入力を1つ以上紐付けて評価する高レベルAPI。デバイスの種類を意識せずに入力を扱えるほか、<a href="12_SceneEditor.html">シーンエディタ</a>や設定ファイルからの再割り当てにも対応しています。</li>
+</ul>
+<div class="tip">
+<strong>推奨</strong><br>
+ゲームロジック（AngelScriptスクリプトや <code>InputCommandApplier</code> コンポーネント）からは、キーやボタンを直接判定するのではなく <code>InputCommand</code> でアクション名を評価することを推奨します。キーコンフィグの変更やデバイスの追加に強くなります。
+</div>
+
+<h2>デバイスへの直接アクセス: <code>Input</code></h2>
+<p>
+<code>Input</code> はキーボード・マウス・コントローラーそれぞれの入力デバイスクラスをまとめて保持するクラスです。<code>GameEngine</code> が内部で1つだけ生成し、<a href="02_Scenes.html">SceneContext</a> の <code>GetInput()</code> 経由でC++コード側から取得できます。
+</p>
+<div class="api-card">
+<h4><code>Input</code></h4>
+<div class="api-sig">Keyboard &amp;GetKeyboard();
+Mouse &amp;GetMouse();
+Controller &amp;GetController();</div>
+<p>それぞれ const 版のオーバーロードもあります。C++側のコンポーネントやツールコードから使う場合は、<code>GetOwnerSceneContext()-&gt;GetInput()-&gt;GetKeyboard()</code> のように取得します。</p>
+</div>
+
+<h3><code>Keyboard</code></h3>
+<div class="api-card">
+<h4>キー押下判定</h4>
+<div class="api-sig">bool IsDown(Key key) const;     // 押されている
+bool IsTrigger(Key key) const;  // 押された瞬間
+bool IsRelease(Key key) const;  // 離された瞬間
+bool WasDown(Key key) const;    // 前フレームで押されていたか</div>
+<p><code>Key</code>（<code>Input/Key.h</code>）はアルファベット・数字・矢印キー・修飾キー（左右個別 / 総称の両方）・<code>Space</code> / <code>Enter</code> / <code>Escape</code> / <code>Tab</code> / <code>Backspace</code>・ファンクションキー（F1～F12）を持つ列挙型です。</p>
+</div>
+
+<h3><code>Mouse</code></h3>
+<div class="api-card">
+<h4>ボタン判定</h4>
+<div class="api-sig">bool IsButtonDown(int button) const;
+bool IsButtonTrigger(int button) const;
+bool IsButtonRelease(int button) const;
+bool WasButtonDown(int button) const;</div>
+<p>ボタン番号は <code>Input/MouseButton.h</code> の <code>MouseButton</code>（<code>Left</code> / <code>Right</code> / <code>Middle</code> / <code>Button4</code>～<code>Button8</code>）を <code>int</code> にキャストして渡します。</p>
+</div>
+<div class="api-card">
+<h4>移動量・ホイール</h4>
+<div class="api-sig">int GetDeltaX() const; int GetDeltaY() const;       // フレーム移動量
+int GetWheel() const;                                // ホイールのフレーム差分
+int GetWheelValue() const;                            // ホイールの累積値
+int GetPrevDeltaX() const; int GetPrevDeltaY() const;
+int GetPrevWheel() const; int GetPrevWheelValue() const;</div>
+</div>
+<div class="api-card">
+<h4>座標取得</h4>
+<div class="api-sig">POINT GetPos(HWND hwnd) const;
+POINT GetPos(const Window* window) const;
+int GetX(HWND hwnd) const; int GetY(HWND hwnd) const;
+int GetX(const Window* window) const; int GetY(const Window* window) const;
+// 各座標系にPrev版（前フレームの座標）も存在する</div>
+<p>ウィンドウのクライアント座標系で取得します。<code>HWND</code> または <a href="11_Window.html"><code>Window</code></a> ポインタのどちらでも指定できます。</p>
+</div>
+
+<h3><code>Controller</code></h3>
+<div class="api-card">
+<h4>接続状態とボタン</h4>
+<div class="api-sig">int GetPadCount() const noexcept;
+bool IsConnected(int index) const;
+bool WasConnected(int index) const;
+
+bool IsButtonDown(ControllerButton button, int index) const;
+bool IsButtonTrigger(ControllerButton button, int index) const;
+bool IsButtonRelease(ControllerButton button, int index) const;
+bool WasButtonDown(ControllerButton button, int index) const;</div>
+<p><code>ControllerButton</code>（<code>Input/ControllerButton.h</code>）は XInput 互換のビットマスク値で、十字キー・<code>Start</code> / <code>Back</code>・スティック押し込み・ショルダーボタン・<code>A</code>/<code>B</code>/<code>X</code>/<code>Y</code> を持ちます。<code>index</code> はコントローラー番号（0起点、複数台対応）です。</p>
+</div>
+<div class="api-card">
+<h4>アナログ入力（トリガー・スティック）</h4>
+<div class="api-sig">int GetLeftTrigger(int index) const;  int GetRightTrigger(int index) const;   // 0～255
+int GetLeftStickX(int index) const;   int GetLeftStickY(int index) const;     // -32767～32767
+int GetRightStickX(int index) const;  int GetRightStickY(int index) const;
+
+// 各値には Prev版（前フレーム）／Delta版（フレーム差分）も存在する</div>
+</div>
+<div class="api-card">
+<h4>振動</h4>
+<div class="api-sig">void SetVibration(int index, int leftMotor, int rightMotor); // 各モーター強さ 0～65535
+void StopVibration(int index);</div>
+</div>
+
+<h2>アクションマッピング: <code>InputCommand</code></h2>
+<p>
+<code>InputCommand</code> は「アクション名（<code>std::string</code>）」に対して1つ以上の入力バインディングを登録し、<code>Evaluate()</code> でまとめて評価するクラスです。<code>GameEngine</code> が内部で1つ生成し、<code>GameEngine::Context::inputCommand</code>（<a href="01_Overview.html">01_Overview.html</a> 参照）や <code>SceneContext::GetInputCommand()</code> から取得できます。
+</p>
+
+<h3>入力状態 <code>InputState</code></h3>
+<p>キー・マウスボタン・コントローラーボタンの登録では、判定タイミングを <code>InputState</code> で指定します。</p>
+<table>
+<tr><th>値</th><th>意味</th></tr>
+<tr><td><code>InputState::Down</code></td><td>押されている間、毎フレーム true</td></tr>
+<tr><td><code>InputState::Trigger</code></td><td>押された瞬間だけ true</td></tr>
+<tr><td><code>InputState::Release</code></td><td>離された瞬間だけ true</td></tr>
+</table>
+
+<h3><code>RegisterCommand</code> の各オーバーロード</h3>
+<div class="api-card">
+<h4>キーボード</h4>
+<div class="api-sig">void RegisterCommand(const std::string &amp;action, Key key, InputState state, bool invertValue = false);</div>
+</div>
+<div class="api-card">
+<h4>マウスボタン</h4>
+<div class="api-sig">void RegisterCommand(const std::string &amp;action, MouseButton button, InputState state, bool invertValue = false);</div>
+</div>
+<div class="api-card">
+<h4>マウス軸</h4>
+<div class="api-sig">void RegisterCommand(const std::string &amp;action, MouseAxis axis, void *hwnd = nullptr,
+    float threshold = 0.0f, bool invertValue = false);</div>
+<p><code>MouseAxis</code> は <code>X</code> / <code>Y</code> / <code>DeltaX</code> / <code>DeltaY</code> / <code>Wheel</code> / <code>DeltaWheel</code> を持ちます。<code>hwnd</code> を指定するとクライアント座標系（<code>MouseSpace::Client</code>）、<code>nullptr</code> のままだとスクリーン座標系（<code>MouseSpace::Screen</code>）として扱われます。<code>threshold</code> は軸の絶対値がこれを超えたときに <code>Triggered()</code> を true にする閾値です。</p>
+</div>
+<div class="api-card">
+<h4>コントローラーボタン</h4>
+<div class="api-sig">void RegisterCommand(const std::string &amp;action, ControllerButton button, InputState state,
+    int controllerIndex = 0, bool invertValue = false);</div>
+</div>
+<div class="api-card">
+<h4>コントローラーアナログ（絶対値・状態判定つき）</h4>
+<div class="api-sig">void RegisterCommand(const std::string &amp;action, ControllerAnalog analog, InputState state,
+    int controllerIndex = 0, float threshold = 0.0f, bool invertValue = false);</div>
+<p><code>ControllerAnalog</code> は <code>LeftTrigger</code> / <code>RightTrigger</code> / <code>LeftStickX</code> / <code>LeftStickY</code> / <code>RightStickX</code> / <code>RightStickY</code> を持ちます。トリガーは 0.0f～1.0f、スティックは -1.0f～1.0f に正規化された値で評価されます。</p>
+</div>
+<div class="api-card">
+<h4>コントローラーアナログ差分</h4>
+<div class="api-sig">void RegisterCommand(const std::string &amp;action, ControllerAnalog analog,
+    int controllerIndex = 0, float threshold = 0.0f, bool invertValue = false);</div>
+<p>current - previous の差分を評価するオーバーロードです（<code>InputState</code> を取らない点で上のオーバーロードと区別されます）。</p>
+</div>
+<p>すべてのオーバーロードに共通する <code>invertValue</code> は、評価結果の <code>Value()</code> の符号を反転させます（例: 左移動用に登録したキーの値を負数として扱いたい場合など）。</p>
+
+<h3>評価: <code>Evaluate</code> と <code>ReturnInfo</code></h3>
+<div class="api-card">
+<h4><code>InputCommand::Evaluate</code></h4>
+<div class="api-sig">ReturnInfo Evaluate(const std::string &amp;action) const;
+
+struct ReturnInfo {
+    bool Triggered() const noexcept;
+    float Value() const noexcept;
+};</div>
+<p><code>Triggered()</code> は登録したバインディングのいずれかが条件を満たしたか、<code>Value()</code> はその評価値（ボタン系は 0.0f/1.0f、軸系は連続値）です。同じアクション名に複数のバインディングを登録した場合はまとめて評価されます。</p>
+</div>
+
+<h3>登録の保存・読み込み</h3>
+<div class="api-card">
+<h4>JSON I/O</h4>
+<div class="api-sig">static constexpr const char* kDefaultSaveFilePath = "Assets/KashipanEngine/InputCommand.json";
+
+bool SaveToJSON(const std::string &amp;filepath) const;
+bool LoadFromJSON(const std::string &amp;filepath); // 読み込み前に既存コマンドはクリアされる
+void Clear();</div>
+<p>エンジンは起動時に <code>kDefaultSaveFilePath</code>（<code>Assets/KashipanEngine/InputCommand.json</code>）から自動的に <code>LoadFromJSON</code> を行い、終了時に <code>SaveToJSON</code> で保存します。<a href="12_SceneEditor.html">シーンエディタ</a>上でのキーコンフィグ編集もこのファイルを介して永続化されます。</p>
+</div>
+
+<h2>コード側からの登録例: <code>AppInitialize</code></h2>
+<p>
+ゲーム側で追加のコマンドをコードから登録したい場合は、唯一のC++エントリポイントである <code>Application/AppInitialize.h</code> の <code>AppInitialize()</code> で <code>context.inputCommand</code> を使います。
+</p>
+<pre><code>#pragma once
+#include &lt;KashipanEngine.h&gt;
+
+namespace KashipanEngine {
+inline void AppInitialize(const GameEngine::Context &amp;context) {
+    // トリガー判定でジャンプアクションを登録
+    context.inputCommand-&gt;RegisterCommand("PlayerJump", Key::Space, InputCommand::InputState::Trigger);
+
+    // 左右移動（Down判定、逆方向はinvertValueで符号反転）
+    context.inputCommand-&gt;RegisterCommand("PlayerMoveLeft", Key::A, InputCommand::InputState::Down, /*invertValue=*/true);
+    context.inputCommand-&gt;RegisterCommand("PlayerMoveRight", Key::D, InputCommand::InputState::Down);
+
+    // コントローラーの左スティックXでも同じアクションへ追加登録できる
+    context.inputCommand-&gt;RegisterCommand("PlayerMoveRight", InputCommand::ControllerAnalog::LeftStickX,
+        InputCommand::InputState::Down, /*controllerIndex=*/0, /*threshold=*/0.2f);
+}
+}
+</code></pre>
+<div class="note">
+<strong>ポイント</strong><br>
+実運用では <code>Assets/KashipanEngine/InputCommand.json</code> と<a href="12_SceneEditor.html">シーンエディタ</a>のキーコンフィグ画面で登録・編集するのが基本です。<code>AppInitialize()</code> でのコード登録は、デフォルト設定を保証したい場合や、JSONファイルが存在しない初回起動時のフォールバックとして使うと良いでしょう。
+</div>
+
+<h2>AngelScriptからの利用</h2>
+<p>
+AngelScriptスクリプト（<a href="07_Scripting.html">07_Scripting.html</a>）からは、登録済みのアクション名を文字列で指定してグローバル関数から評価します。
+</p>
+<pre><code>bool IsCommandTriggered(const string &amp;in action);
+float GetCommandValue(const string &amp;in action);</code></pre>
+<pre><code>void InputEvent() {
+    if (IsCommandTriggered("PlayerJump")) {
+        // ジャンプ処理
+    }
+    float moveDirection = 0.0f;
+    if (IsCommandTriggered("PlayerMoveLeft")) {
+        moveDirection = GetCommandValue("PlayerMoveLeft");
+    }
+}</code></pre>
+<p>内部的には <code>SceneContext::GetInputCommand()</code> で取得した <code>InputCommand</code> の <code>Evaluate()</code> をラップしているだけなので、C++側と同じバインディングをそのまま参照できます。詳しいスクリプトバインディングの一覧は <a href="07_Scripting.html">07_Scripting.html</a> を参照してください。</p>
+
+<h2>コンポーネントから入力値を適用する: <code>InputCommandApplier</code></h2>
+<p>
+スクリプトを書かずに、入力コマンドの評価結果を同じオブジェクトの他コンポーネントのパラメータへ直接反映させたい場合は <code>InputCommandApplier</code> コンポーネントが使えます（<a href="04_ObjectComponents.html">04_ObjectComponents.html</a> のコンポーネント基礎も参照）。
+</p>
+<div class="api-card">
+<h4><code>InputCommandApplier</code> <span class="badge final">final</span></h4>
+<div class="api-sig">void SetCommandName(const std::string &amp;name);
+void SetConditionType(ConditionType type); // CommandTrue/CommandFalse/ValueGreaterEqual/ValueLessEqual/ValueEqual
+void SetThreshold(float threshold);
+void SetValueSource(ValueSource source);   // CommandValue/FixedValue
+void SetFixedValue(float value);
+void SetValueScale(float scale);
+void SetValueOffset(float offset);
+bool WasApplied() const noexcept;
+float GetLastValue() const noexcept;</div>
+<p>毎フレーム指定した入力コマンドを評価し、条件を満たしたときだけ「値 × Scale + Offset」を <code>ParameterBinding</code>（<code>KeyframeAnimator</code>と共通の仕組み）で指定した適用先へ書き込みます。1オブジェクトに複数アタッチでき、コマンド・条件ごとに個別の適用が行えます。</p>
+</div>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>入力で読み書きするアセットの管理方法を知る → <a href="09_Assets.html">09_Assets.html</a></li>
+<li>AngelScriptからの入力利用の全体像 → <a href="07_Scripting.html">07_Scripting.html</a></li>
+<li>コンポーネントの基礎（<code>InputCommandApplier</code>を含む）→ <a href="04_ObjectComponents.html">04_ObjectComponents.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

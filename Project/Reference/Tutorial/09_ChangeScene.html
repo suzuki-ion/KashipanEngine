@@ -1,62 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <title>9. 次のシーンに遷移したいとき</title>
-  <link rel="stylesheet" href="../reference.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9. シーンを切り替える | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
-<body>
-<nav><a href="00_Index.html">目次へ</a></nav>
-<h1>9. 次のシーンに遷移したいとき</h1>
-<p>シーン遷移は、<code>SceneBase</code> が持つ</p>
-<ul>
-<li><code>SetNextSceneName(...)</code></li>
-<li><code>ChangeToNextScene()</code></li>
-</ul>
-<p>を使用して行います。</p>
-<ul>
-<li>ヘッダ：<code>KashipanEngine/Scene/SceneBase.h</code></li>
-</ul>
-<hr />
-<h2>9.1 基本：次のシーン名をセットして切り替える</h2>
-<p><code>SceneBase</code> 派生クラスの中から、条件を満たしたフレームで次を設定し、切り替えます。</p>
-<pre><code class="language-cpp">
-#include &lt;KashipanEngine.h&gt;
+<body data-page="T09_ChangeScene">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>9. シーンを切り替える</h1>
+<p class="page-lead">最後に、今作ったシーンから別のシーンへ切り替える方法を確認します。詳しいAPIは <a href="../02_Scenes.html">02_Scenes.html</a> を参照してください。</p>
+</div>
 
-<span class="type">void</span> MyScene::OnUpdate() {
-    <span class="kw">if</span> (GetInputCommand() &amp;&amp; GetInputCommand()-&gt;Evaluate(<span class="str">&quot;Submit&quot;</span>).Triggered()) {
-        <span class="kw">if</span> (GetNextSceneName().empty()) {
-            SetNextSceneName(<span class="str">&quot;GameScene&quot;</span>);
+<h2>方法1: Sceneから次のシーンを予約する</h2>
+<p>
+<code>Scene</code>クラスには「次のフレームで切り替えるシーン」を予約する仕組みがあります。スクリプトやゲームロジックの中から呼びやすい方法です。
+</p>
+<div class="api-card">
+<div class="api-sig">void SetNextSceneName(const std::string &amp;nextSceneName);
+bool ChangeToNextScene();</div>
+</div>
+<pre><code>// C++からの例
+scene-&gt;SetNextSceneName("ResultScene");
+scene-&gt;ChangeToNextScene();</code></pre>
+
+<h2>方法2: SceneManagerから直接切り替える</h2>
+<div class="api-card">
+<div class="api-sig">bool ChangeScene(const std::string &amp;sceneName);
+bool HasPendingSceneChange() const;</div>
+</div>
+<pre><code>context.sceneManager-&gt;ChangeScene("ResultScene");</code></pre>
+
+<div class="warn">
+<strong>切り替えは次フレーム反映</strong><br>
+<code>ChangeScene</code>を呼んだ瞬間にシーンが切り替わるわけではありません。呼び出した時点では「切り替え予約」がされるだけで、実際の切り替えは次のフレームの更新タイミングで行われます。同一フレーム内で切り替え後のシーンの状態を期待するコードは書けないので注意してください。<code>HasPendingSceneChange()</code>で予約状態を確認できます。
+</div>
+
+<h2>スクリプトから切り替える</h2>
+<p>
+AngelScript側では<code>GetScene()</code>で現在の<code>Scene@</code>を取得できるため、そこから同様にシーン変数の読み書きやシーン遷移の指示を行えます。例えば「プレイヤーがゴールに触れたらリザルトシーンへ」という処理は、ゴール判定用のオブジェクトに付けたスクリプトの<code>OnCollisionEnter</code>内で呼び出す形になります。
+</p>
+<pre><code>void OnCollisionEnter(const HitInfo &amp;in hit) {
+    if (hit.otherCollider.GetTag() == Tag("Player")) {
+        Scene@ scene = GetScene();
+        if (scene !is null) {
+            scene.SetNextSceneName("ResultScene");
+            scene.ChangeToNextScene();
         }
-        ChangeToNextScene();
     }
-}
-</code></pre>
-<hr />
-<h2>9.2 既存実装の例：演出完了後に遷移</h2>
-<p><code>TitleScene</code> の <code>OnUpdate()</code> では、</p>
-<ul>
-<li>入力 or アニメ終了で <code>SetNextSceneName(...)</code></li>
-<li><code>SceneChangeOut</code> などの演出コンポーネントが完了したら <code>ChangeToNextScene()</code></li>
-</ul>
-<p>という流れになっています。</p>
-<ul>
-<li>参照：<code>Application/Scenes/TitleScene.cpp</code></li>
-</ul>
-<p>この方式により、単純即時遷移ではなく</p>
-<ul>
-<li>フェード</li>
-<li>ワイプ</li>
-</ul>
-<p>などの演出を「シーンコンポーネント」として挟めます。</p>
-<hr />
-<h2>9.3 厳密な注意点</h2>
-<ul>
-<li><code>ChangeToNextScene()</code> は、<code>SetNextSceneName(...)</code> で次がセットされているときにのみ意味を持ちます。</li>
-<li>実際の切り替えタイミング（即時か、フレーム終端コミットか）は <code>SceneManager</code> 実装に従います。</li>
-<ul>
-<li><code>GameEngine</code> のメインループでは、フレーム末尾で <code>sceneManager_-&gt;CommitPendingSceneChange(...)</code> が呼ばれます。</li>
-</ul>
-</ul>
+}</code></pre>
+
+<h2>お疲れさまでした</h2>
+<p>
+これでシーンの作成からオブジェクト配置、当たり判定、スクリプトによる制御、入力設定、アセット読み込み、シーン遷移までの一連の流れを一通り体験しました。より詳しい内容は各トピックの<a href="../00_Index.html">リファレンス</a>を参照してください。
+</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
 </body>
 </html>

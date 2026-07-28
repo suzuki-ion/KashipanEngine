@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>描画コンポーネント | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="05_Rendering">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>描画コンポーネント</h1>
+<p class="page-lead"><code>KashipanEngine/Objects/Components/Render/</code> 配下の各種描画コンポーネントをまとめます。メッシュ・スプライト・テキスト・ライト・カメラといった「描画に関わる情報」はすべて <a href="03_GameObjects.html">EmptyObject</a> へアタッチするコンポーネントとして表現され、実際の描画処理自体は <code>Renderer</code>／<code>SceneRenderer</code> が毎フレーム収集して行います。</p>
+</div>
+
+<h2>ディレクトリ構成</h2>
+<pre><code>Objects/Components/Render/
+├── MeshRenderer.h            … 3Dメッシュ描画
+├── SkinnedMeshRenderer.h     … スキンメッシュ（ボーンアニメーション）描画
+├── SpriteRenderer.h          … 2Dスプライト描画
+├── TextRenderer.h            … SDFフォントによるテキスト描画
+├── Light.h                   … ライトのパラメータ保持
+├── LightRenderer.h           … Lightの情報をRendererへ渡す
+├── Camera3D.h / Camera2D.h   … カメラの射影パラメータ保持
+├── CameraRenderer.h          … Camera3D/2Dの情報をRendererへ渡す（ビュー射影行列の計算）
+├── CameraController.h        … カメラを追従対象へ滑らかに追従させる
+├── NormalWindowObject.h      … 通常ウィンドウを生成する描画先コンポーネント
+├── OverlayWindowObject.h     … オーバーレイウィンドウを生成する描画先コンポーネント
+├── IWindowObjectComponent.h  … 上記2つの共通基底（ウィンドウメッセージ通知の仕組み）
+├── ScreenBufferObject.h      … オフスクリーンバッファへの描画先
+├── ShadowMapObject.h         … シャドウマップの描画先
+├── TargetObjectSelector.h    … （エディタ専用）描画先オブジェクト選択UIのヘルパー
+└── CameraRenderer.h 等の関連クラスは Scene/Components/Render/SceneRenderer が集約する
+</code></pre>
+
+<div class="note">
+<strong>ポイント</strong><br>
+「メッシュ本体（<code>MeshFilter</code>）」と「どう描くか（<code>MeshRenderer</code> 等）」は別コンポーネントに分かれています。これは <a href="04_ObjectComponents.html">オブジェクトコンポーネント基礎</a> で説明したコンポジション方式の典型例で、同じメッシュを異なるマテリアル・パイプラインで描く、あるいは当たり判定用の <code>MeshCollider</code>（<a href="06_Collision.html">06_Collision.html</a> 参照）と描画を独立させる、といったことが容易になります。
+</div>
+
+<h2>描画先の指定（共通の仕組み）</h2>
+<p>
+<code>MeshRenderer</code>・<code>SpriteRenderer</code>・<code>TextRenderer</code>・<code>LightRenderer</code>・<code>CameraRenderer</code> はいずれも <code>SetTargetObject()</code> で「どのオブジェクトへ描画するか」を指定します。ここで指定するオブジェクトには <strong>描画先コンポーネント</strong>（<code>NormalWindowObject</code> / <code>OverlayWindowObject</code> / <code>ScreenBufferObject</code> / <code>ShadowMapObject</code>）のいずれかが付与されている必要があり、指定オブジェクトに付与された全ての描画先へ描画されます（<code>IsRenderTargetIncluded()</code> で個々の描画先を除外することも可能）。ウィンドウ系描画先コンポーネントの詳細は <a href="11_Window.html">11_Window.html</a> を参照してください。
+</p>
+
+<div class="api-card">
+<h4>描画先指定の共通API（MeshRenderer/SpriteRenderer/TextRenderer 等が共通して持つ）</h4>
+<div class="api-sig">void SetTargetObject(const EmptyObject *targetObject);
+void SetTargetObject(const UUID128 &amp;targetObjectID);
+const UUID128 &amp;GetTargetObjectID() const noexcept;
+EmptyObject *GetTargetObject() const;
+bool IsRenderTargetIncluded(const IRenderTarget *target) const;</div>
+<p>描画先オブジェクトが未指定の場合の挙動はコンポーネントごとに異なります（<code>LightRenderer</code>/<code>CameraRenderer</code> は「全描画先に適用」、<code>MeshRenderer</code> 等は「描画されない」）。</p>
+</div>
+
+<h2>MeshRenderer — 3Dメッシュ描画</h2>
+<p>
+<code>MeshRenderer</code> は最も基本的な描画コンポーネントです。描画するメッシュ自体は同一オブジェクトの <code>MeshFilter</code> コンポーネントから取得し、<code>MeshRenderer</code> 側はパイプライン・マテリアル・インスタンスカラーなど「どう描くか」の情報のみを保持します。
+</p>
+
+<div class="api-card">
+<h4><code>MeshRenderer::ColorBlendMode</code></h4>
+<div class="api-sig">enum class ColorBlendMode : int {
+    Override = 0, // マテリアルの色を無視してインスタンスカラーで置き換える
+    Multiply,      // マテリアルの色に乗算する（既定。白(1,1,1,1)なら見た目に影響しない）
+    Add,           // マテリアルの色に加算する
+    Subtract,      // マテリアルの色から減算する
+};</div>
+</div>
+
+<div class="api-card">
+<h4>インスタンスカラー</h4>
+<div class="api-sig">void SetInstanceColor(const Vector4 &amp;color) noexcept;
+const Vector4 &amp;GetInstanceColor() const noexcept;
+void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept;
+ColorBlendMode GetInstanceColorBlendMode() const noexcept;</div>
+<p>マテリアルを共有したまま、オブジェクト単位で色味だけを変えたい場合に使います。既定値は白 <code>(1,1,1,1)</code> ＋ <code>Multiply</code> なので、そのままでは見た目に影響しません。</p>
+</div>
+
+<div class="api-card">
+<h4>パイプライン・シャドウ設定</h4>
+<div class="api-sig">void SetPipelineName(const std::string &amp;pipelineName);
+const std::string &amp;GetPipelineName() const noexcept;
+void SetCastShadows(bool enabled) noexcept;
+bool GetCastShadows() const noexcept;</div>
+<p>既定のパイプライン名は <code>"Object3D.Solid.BlendNormal"</code> です。<code>SetCastShadows(false)</code> にすると、このメッシュはシャドウマッピングのシャドウキャスターとして扱われなくなります。</p>
+</div>
+
+<div class="api-card">
+<h4>マテリアルスロット（Unity同様、スロット<code>i</code> = サブメッシュ<code>i</code>）</h4>
+<div class="api-sig">void SetMaterialName(const std::string &amp;materialName);           // スロット0
+void SetMaterialHandle(MaterialManager::MaterialHandle handle);      // スロット0
+size_t GetMaterialSlotCount() const noexcept;
+void SetMaterialSlotCount(size_t count);
+void SetMaterialNameAt(size_t slot, const std::string &amp;materialName);
+const std::string &amp;GetMaterialNameAt(size_t slot) const noexcept;
+MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept;</div>
+<p>マテリアルスロット数はメッシュのサブメッシュ数に合わせて拡張できます。スロット数を超えるサブメッシュは最後のスロットのマテリアルで描画されます。</p>
+</div>
+
+<h3>基本的な使い方</h3>
+<pre><code>EmptyObject *obj = sceneContext-&gt;CreateObject("Cube");
+obj-&gt;AddComponent&lt;Transform&gt;();
+obj-&gt;AddComponent&lt;MeshFilter&gt;(ModelManager::GetModelHandleFromAssetPath("Model/Cube.gltf"));
+
+auto *renderer = obj-&gt;AddComponent&lt;MeshRenderer&gt;();
+renderer-&gt;SetTargetObject(windowObject);              // NormalWindowObject等が付与されたオブジェクト
+renderer-&gt;SetPipelineName("Object3D.Solid.BlendNormal");
+renderer-&gt;SetMaterialName("Default");
+renderer-&gt;SetCastShadows(true);</code></pre>
+
+<h2>SkinnedMeshRenderer — スキンメッシュ描画</h2>
+<p>
+ボーンアニメーションで変形するメッシュを描画するコンポーネントです。描画先・パイプライン・マテリアル指定は <code>MeshRenderer</code> と同じ API を持ちますが、加えて GPU スキニング（Computeシェーダー）とアニメーション再生の制御を行います。
+</p>
+
+<div class="api-card">
+<h4>アニメーション再生</h4>
+<div class="api-sig">void SetAnimationClipName(const std::string &amp;clipName);
+const std::string &amp;GetAnimationClipName() const noexcept;
+void SetPlayOnStart(bool playOnStart);
+void SetLoop(bool loop);
+void SetPlaybackSpeed(float speed);
+void Play();
+void Stop();
+bool IsPlaying() const noexcept;
+std::vector&lt;std::string&gt; GetAvailableAnimationClipNames() const;</div>
+<p>再生するクリップは <code>MeshFilter</code> のメッシュと同じアセットから読み込まれた <code>AnimationClip</code> の中から選択します。クリップ名が空文字の場合はバインドポーズのまま静止します。</p>
+</div>
+
+<div class="api-card">
+<h4>Root Bone / BlendShape / Quality</h4>
+<div class="api-sig">void SetRootBoneObject(const EmptyObject *rootBoneObject);
+EmptyObject *GetRootBoneObject() const;
+void SetQuality(SkinQuality quality);   // Auto / Bone1 / Bone2 / Bone4
+void SetBlendShapeWeight(const std::string &amp;name, float weight);
+float GetBlendShapeWeight(const std::string &amp;name) const;
+const std::vector&lt;BlendShapeWeight&gt; &amp;GetBlendShapes() const noexcept;</div>
+<p>Root Bone を設定すると、そのオブジェクトの Transform に沿ってメッシュ全体が動きます（Unityと同様）。未設定の場合は所有オブジェクト自身の Transform が使われます。BlendShape（モーフターゲット）の一覧はメッシュから自動同期され、ユーザーが編集できるのはウェイト（0～100）のみです。</p>
+</div>
+
+<div class="note">
+<strong>ポイント</strong><br>
+GPUスキニング用のバッファ取得系メソッド（<code>GetSourceVerticesBuffer()</code> 等）は <code>Passkey&lt;Renderer&gt;</code> で保護されており、ゲーム側から直接呼び出すことはありません（<a href="01_Overview.html">01_Overview.html</a> のPasskeyイディオムを参照）。
+</div>
+
+<h2>SpriteRenderer — 2Dスプライト描画</h2>
+<p>
+Object2D系のパイプラインを使う2D描画コンポーネントです。描画するメッシュ（通常は平面）は <code>MeshRenderer</code> と同様に <code>MeshFilter</code> から取得します。既定パイプラインは <code>"Object2D.DoubleSidedCulling.BlendNormal"</code> です。
+</p>
+
+<div class="api-card">
+<h4>アンカー・ピボット</h4>
+<div class="api-sig">void SetAnchor(const Vector2 &amp;anchor);   // 既定(0.5, 0.5)
+const Vector2 &amp;GetAnchor() const noexcept;
+void SetPivot(const Vector2 &amp;pivot);     // 既定(0.5, 0.5)
+const Vector2 &amp;GetPivot() const noexcept;</div>
+<p>メッシュはXY平面上の-0.5～0.5の単位クアッドを想定しており、アンカー・ピボットはその単位クアッド内の正規化座標 <code>(0,0)</code>=左下 ～ <code>(1,1)</code>=右上 で指定します。アンカーは「Transformの座標に一致させる点」、ピボットは「回転・拡縮の中心にする点」で、両者に異なる点を指定すると回転・拡縮の中心とTransform座標がずれた挙動になります。</p>
+</div>
+
+<h2>TextRenderer — テキスト描画</h2>
+<p>
+SDFフォント（<code>FontManager</code> 経由でTTF/OTFから読み込み・ベイク）を使ったテキスト描画コンポーネントです。Unity風のリッチテキストタグを解釈しながら、1文字ずつ独立した矩形インスタンスとして描画します。既定パイプラインは <code>"Text2D.BlendNormal"</code> です。
+</p>
+
+<div class="api-card">
+<h4>テキスト内容・見た目</h4>
+<div class="api-sig">void SetText(const std::string &amp;text);
+void SetFontName(const std::string &amp;fontName);
+void SetFontSize(float fontSize);
+void SetColor(const Vector4 &amp;color);
+void SetHorizontalAlign(HorizontalAlign align); // Left / Center / Right
+void SetVerticalAlign(VerticalAlign align);     // Top / Middle / Bottom</div>
+</div>
+
+<div class="api-card">
+<h4>対応リッチテキストタグ</h4>
+<div class="api-sig">&lt;i&gt; &lt;b&gt; &lt;color=#RRGGBB(AA)&gt; &lt;size=N|N%&gt; &lt;s&gt; &lt;u&gt; &lt;sub&gt; &lt;sup&gt;</div>
+<p>斜体・太字・色・サイズ（絶対値または <code>fontSize</code> に対する割合）・取り消し線・下線・下付き/上付き文字に対応しています。閉じタグ（<code>&lt;/color&gt;</code> 等）でスタイルスタックを1段階戻します。</p>
+</div>
+
+<div class="api-card">
+<h4>文字ごとの調整（ランタイム専用・非シリアライズ）</h4>
+<div class="api-sig">size_t GetCharacterCount() const;
+void SetCharacterOffset(size_t index, const Vector2 &amp;offset);
+void SetCharacterRotation(size_t index, float rotation); // ラジアン
+void SetCharacterScale(size_t index, const Vector2 &amp;scale);</div>
+<p>Transform的な調整を1文字単位で行えます。演出用の値なのでシーンJSONへは保存されません。</p>
+</div>
+
+<h2>Light / LightRenderer — ライト</h2>
+<p>
+<code>Light</code> はライトの種類とパラメータを保持するだけのコンポーネントで、実際にRendererへ情報を渡すのは同一オブジェクトに付与する <code>LightRenderer</code> です。ライトの位置・向きは同一オブジェクトの <a href="04_ObjectComponents.html">Transform</a> から取得されます。
+</p>
+
+<div class="api-card">
+<h4><code>Light::Type</code></h4>
+<div class="api-sig">enum class Type { Directional, Point, Spot, Rect, Sphere, Disc, Tube, Box };</div>
+<p><code>Rect</code>/<code>Sphere</code>/<code>Disc</code>/<code>Tube</code> は面光源（形状上の代表点法で近似）、<code>Box</code> は全方位発光の体積光源です。</p>
+</div>
+
+<div class="api-card">
+<h4>共通パラメータ</h4>
+<div class="api-sig">void SetType(Type type);
+void SetColor(const Vector4 &amp;color);
+void SetIntensity(float intensity);
+void SetRadius(float radius);      // Point/Sphere/Tubeの減衰範囲
+void SetDistance(float distance);  // Spot/Disc/Rectの減衰範囲
+void SetDecay(float decay);
+void SetInnerAngle(float innerAngle);  // Spot用
+void SetOuterAngle(float outerAngle);  // Spot用</div>
+</div>
+
+<div class="api-card">
+<h4>面光源のサイズ / シャドウ</h4>
+<div class="api-sig">void SetSourceRadius(float sourceRadius);   // Sphere/Disc/Tubeの半径
+void SetSourceWidth(float sourceWidth);     // Rect/Boxの幅
+void SetSourceHeight(float sourceHeight);   // Rect/Boxの高さ
+void SetSourceLength(float sourceLength);   // Tubeの長さ
+void SetSourceDepth(float sourceDepth);     // Boxの奥行き
+void SetCastShadows(bool castShadows);
+void SetShadowDistance(float shadowDistance);
+void SetShadowMapResolution(std::uint32_t resolution);
+void SetShadowBias(float bias);
+void SetShadowSoftness(float softness);     // Directional/Point/Spot用（PCSS半影ソフト化）</div>
+<p>影を有効にすると、種類に応じたシャドウマップが自動生成されます（Directional=カスケード、Spot/Disc/Rect=1面、Point/Sphere/Tube=キューブ6面）。</p>
+</div>
+
+<div class="api-card">
+<h4><code>LightRenderer</code></h4>
+<div class="api-sig">void SetPipelineName(const std::string &amp;pipelineName); // 空文字なら全パイプラインに適用
+Light *GetLight() const;
+Light::Type GetLightType() const;
+Vector3 GetWorldPosition() const;
+Vector3 GetWorldDirection() const;  // Transformの+Z
+Vector3 GetWorldRight() const;      // Rect/Tubeの軸方向に使用
+Vector3 GetWorldUp() const;         // Rectの高さ方向に使用</div>
+<p>描画先指定（<code>SetTargetObject</code> 等）は前述の共通APIと同じです。</p>
+</div>
+
+<h2>Camera3D / Camera2D / CameraRenderer / CameraController — カメラ</h2>
+<p>
+カメラも Light と同様に「パラメータ保持用コンポーネント（<code>Camera3D</code>/<code>Camera2D</code>）」と「Rendererへ情報を渡すコンポーネント（<code>CameraRenderer</code>）」に分かれています。位置・向きは同一オブジェクトの Transform から取得されます。
+</p>
+
+<div class="api-card">
+<h4><code>Camera3D</code></h4>
+<div class="api-sig">void SetFovY(float fovY);            // 既定 0.45（ラジアン）
+void SetNearClip(float nearClip);
+void SetFarClip(float farClip);
+void SetAspectRatio(float aspectRatio);
+void SetOrthographic(bool orthographic);
+void SetOrthoSize(float orthoSize);  // 平行投影時の縦半径</div>
+</div>
+
+<div class="api-card">
+<h4><code>Camera2D</code></h4>
+<div class="api-sig">void SetSize(float width, float height);
+void SetNearClip(float nearClip);
+void SetFarClip(float farClip);</div>
+</div>
+
+<div class="api-card">
+<h4><code>CameraRenderer</code></h4>
+<div class="api-sig">void SetPipelineName(const std::string &amp;pipelineName);
+void SetBindVariableNames(const std::vector&lt;std::string&gt; &amp;names); // 例: {"Vertex:gCamera3D", "Pixel:gCamera3D"}
+Vector3 GetWorldPosition() const;
+const Matrix4x4 &amp;GetViewProjectionMatrix() const noexcept;
+float GetNearClip() const noexcept;
+float GetFarClip() const noexcept;</div>
+<p>同一オブジェクトの <code>Camera2D</code> が見つかった場合は2D用の定数バッファレイアウトで、それ以外は <code>Camera3D</code>（無ければ既定値）で3D用の定数バッファとしてアップロードされます。バインド先変数名が未指定の場合、カメラの種類から <code>"Vertex:gCamera2D"/"Pixel:gCamera2D"</code> または <code>"Vertex:gCamera3D"/"Pixel:gCamera3D"</code> が既定で使われます。</p>
+</div>
+
+<div class="api-card">
+<h4><code>CameraController</code> — 複数ターゲットへの滑らかな追従</h4>
+<div class="api-sig">void AddFollowTarget(const UUID128 &amp;objectID);
+void RemoveFollowTarget(size_t index);
+std::vector&lt;FollowTarget&gt; &amp;GetFollowTargets() noexcept;
+void SetPositionOffset(const Vector3 &amp;offset);
+void SetRotationOffset(const Vector3 &amp;offset); // オイラー角、ラジアン
+void SetTargetFovY(float fovY);
+AxisStrength &amp;GetMoveStrength() noexcept;
+AxisStrength &amp;GetRotateStrength() noexcept;
+void SetFovLerpFactor(float factor);</div>
+<p>同一オブジェクトの <code>Camera3D</code> を、複数の追従先オブジェクトへ軸ごとに（移動X/Y/Z・回転X/Y/Z個別に）滑らかに追従させます。追従先が1つも指定されていない場合は自分自身の Transform を追従先として扱います。複数の追従先が同じ軸を指定した場合は平均を取ります。</p>
+</div>
+
+<h2>ウィンドウへの描画先コンポーネント（概要）</h2>
+<p>
+<code>MeshRenderer</code> 等の <code>SetTargetObject()</code> で指定する先には、描画結果の出力先となるコンポーネントを付与しておく必要があります。そのうち画面上のウィンドウとして表示する2種類が <code>NormalWindowObject</code>（通常ウィンドウ）と <code>OverlayWindowObject</code>（オーバーレイウィンドウ）で、共通基底 <code>IWindowObjectComponent</code> がウィンドウの生成・タイトル/サイズ設定・受信メッセージの通知（<code>SetOnWindowMessage</code>）を担います。詳細な使い方は <a href="11_Window.html">11_Window.html</a> で扱います。
+</p>
+<div class="tip">
+<strong>スクリプトからの利用</strong><br>
+AngelScript側では <code>ScriptComponentBehavior::OnWindowMessage(const WindowMessageInfo &amp;in)</code> として、同一オブジェクトのウィンドウ系コンポーネントが受信したメッセージを受け取れます。詳しくは <a href="07_Scripting.html">07_Scripting.html</a> を参照してください。
+</div>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>当たり判定を扱う → <a href="06_Collision.html">06_Collision.html</a></li>
+<li>コンポーネントの基礎（マクロ・シリアライズ）を確認する → <a href="04_ObjectComponents.html">04_ObjectComponents.html</a></li>
+<li>ウィンドウ／オフスクリーンバッファの詳細 → <a href="11_Window.html">11_Window.html</a></li>
+<li>ポストエフェクトを適用する → <a href="10_PostEffects.html">10_PostEffects.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

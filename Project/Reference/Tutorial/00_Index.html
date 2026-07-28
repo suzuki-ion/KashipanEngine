@@ -1,46 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <title>Tutorial Index</title>
-  <link rel="stylesheet" href="../reference.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>チュートリアル目次 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
-<body>
-<nav><a href="00_Index.html">目次へ</a></nav>
-<h1>Tutorial Index</h1>
-<p>このチュートリアルは、KashipanEngine で最低限ゲームを動かすための基本手順を、順番に説明します。</p>
-<blockquote>
-<p>記載しているコードは「概念例」ではなく、可能な限りエンジンの公開 API（ヘッダの関数）に合わせています。</p>
-</blockquote>
-<hr />
+<body data-page="T00_Index">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>チュートリアル: シーンを作ってキャラクターを動かすまで</h1>
+<p class="page-lead">このチュートリアルでは、空のシーンを作るところから、オブジェクトを配置し、当たり判定を付け、AngelScriptでキャラクターを動かし、シーンを切り替えるところまでを、実際の手順に沿って一通り体験します。</p>
+</div>
+
+<h2>前提知識</h2>
+<p>各手順では詳細を説明しすぎず、必要に応じて詳しいAPIリファレンスへリンクしています。まったくの初見でも進められますが、先に <a href="../01_Overview.html">01_Overview.html</a>(エンジン概要)に目を通しておくと理解が早くなります。</p>
+
+<div class="note">
+<strong>このエンジンの基本的な考え方</strong><br>
+KashipanEngineでは、シーンの内容(オブジェクト配置)は<strong>JSON</strong>として保存され、通常は<strong>シーンエディタ</strong>(ImGuiベース、<code>USE_IMGUI</code>マクロが有効な<code>Debug</code>/<code>Development</code>構成でのみ利用可)で編集します。ゲームロジックはC++ではなく<strong>AngelScript</strong>で書きます。このチュートリアルもその流れに沿って進めます。
+</div>
+
 <h2>目次</h2>
-<h3>シーン・オブジェクト</h3>
-<ul>
-<li><a href="01_CreateScene.html">`01_CreateScene.md`</a> - シーンの作成</li>
-<li><a href="02_RegisterScene.html">`02_RegisterScene.md`</a> - シーンの登録</li>
-<li><a href="03_CreateObject.html">`03_CreateObject.md`</a> - オブジェクトの作成</li>
-<li><a href="04_AddObjectComponent.html">`04_AddObjectComponent.md`</a> - オブジェクトにコンポーネントを付与</li>
-<li><a href="05_AddSceneComponent.html">`05_AddSceneComponent.md`</a> - シーンにコンポーネントを付与</li>
-</ul>
-<h3>アセット</h3>
-<ul>
-<li><a href="06_TextureHandle.html">`06_TextureHandle.md`</a> - テクスチャのハンドル取得とオブジェクトへの適用</li>
-<li><a href="07_AudioHandle.html">`07_AudioHandle.md`</a> - 音声のハンドル取得と再生/停止</li>
-<li><a href="08_ModelHandle.html">`08_ModelHandle.md`</a> - モデルのハンドル取得と <code>Model</code> オブジェクト生成</li>
-</ul>
-<h3>シーン遷移</h3>
-<ul>
-<li><a href="09_ChangeScene.html">`09_ChangeScene.md`</a> - 次のシーンに遷移</li>
-</ul>
-<hr />
-<h2>関連リファレンス</h2>
-<ul>
-<li><a href="../00_Index.html">`../00_Index.md`</a> - リファレンス一覧</li>
-<li><a href="../04_Scenes.html">`../04_Scenes.md`</a> - シーン（<code>SceneBase</code> / <code>SceneManager</code>）</li>
-<li><a href="../02_GameObjects.html">`../02_GameObjects.md`</a> - ゲームオブジェクト（<code>Object2DBase</code> / <code>Object3DBase</code>）</li>
-<li><a href="../03_ObjectComponents.html">`../03_ObjectComponents.md`</a> - ゲームオブジェクト用コンポーネント（<code>IObjectComponent2D</code> / <code>IObjectComponent3D</code>）</li>
-<li><a href="../05_SceneComponents.html">`../05_SceneComponents.md`</a> - シーン用コンポーネント（<code>ISceneComponent</code>）</li>
-<li><a href="../11_Assets.html">`../11_Assets.md`</a> - <code>Assets</code> フォルダと各種マネージャ</li>
-</ul>
+<table>
+<tr><th>#</th><th>タイトル</th><th>内容</th></tr>
+<tr><td>1</td><td><a href="01_CreateScene.html">シーンを作成する</a></td><td>新しいシーンを作り、その保存形式(scene.json / object.json)を理解する</td></tr>
+<tr><td>2</td><td><a href="02_RegisterScene.html">シーンを登録する</a></td><td><code>SceneList.json</code>への登録と、起動シーンの指定</td></tr>
+<tr><td>3</td><td><a href="03_CreateObject.html">オブジェクトを作成する</a></td><td>シーンにEmptyObjectを追加し、名前を付ける</td></tr>
+<tr><td>4</td><td><a href="04_AddComponents.html">コンポーネントを追加する</a></td><td>Transform・MeshFilter・MeshRendererを付けてオブジェクトを描画する</td></tr>
+<tr><td>5</td><td><a href="05_AddCollider.html">当たり判定を付ける</a></td><td>BoxColliderを追加し、タグと衝突判定の基礎を理解する</td></tr>
+<tr><td>6</td><td><a href="06_WriteScript.html">スクリプトを書く</a></td><td>AngelScriptファイルを作成し、ScriptComponentとしてアタッチする</td></tr>
+<tr><td>7</td><td><a href="07_SetupInput.html">入力を設定する</a></td><td>InputCommandでアクションを定義し、スクリプトから参照する</td></tr>
+<tr><td>8</td><td><a href="08_LoadAssets.html">アセットを読み込む</a></td><td>テクスチャ・モデル・オーディオをコンポーネントに設定する</td></tr>
+<tr><td>9</td><td><a href="09_ChangeScene.html">シーンを切り替える</a></td><td>スクリプトやC++からシーン遷移を行う</td></tr>
+</table>
+
+<p>準備ができたら、<a href="01_CreateScene.html">1. シーンを作成する</a> から始めましょう。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
 </body>
 </html>

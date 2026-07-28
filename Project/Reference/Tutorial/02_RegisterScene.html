@@ -1,91 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <title>2. シーンの登録</title>
-  <link rel="stylesheet" href="../reference.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2. シーンを登録する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
-<body>
-<nav><a href="00_Index.html">目次へ</a></nav>
-<h1>2. シーンの登録</h1>
-<p>作成した <code>SceneBase</code> 派生クラスは、<code>SceneManager</code> に登録してから使用します。</p>
-<p>このプロジェクトでは、エンジン初期化の最後に **アプリ側の** <code>AppInitialize(const GameEngine::Context&amp;)</code> が呼ばれ、 そこで</p>
-<ul>
-<li>ウィンドウ生成</li>
-<li>シーン登録</li>
-<li>初期シーンへの切り替え</li>
-</ul>
-<p>を行います。</p>
-<hr />
-<h2>2.1 実際の <code>AppInitialize</code> の場所</h2>
-<ul>
-<li><code>Application/AppInitialize.h</code></li>
-</ul>
-<p>このファイルが「アプリ側の初期化ポイント」です。 実装では <code>context.sceneManager</code> が有効な場合に <code>RegisterScene&lt;TScene&gt;(...)</code> を呼び、最後に <code>ChangeScene(&quot;...&quot;)</code> で初期シーンへ切り替えています。</p>
-<hr />
-<h2>2.2 <code>SceneManager::RegisterScene</code> の厳密な仕様（実装より）</h2>
-<ul>
-<li><code>KashipanEngine/Scene/SceneManager.h</code></li>
-</ul>
-<p><code>SceneManager</code> には以下のテンプレート関数が定義されています。</p>
-<ul>
-<li><code>template&lt;typename TScene, typename... Args&gt; void RegisterScene(const std::string &amp;sceneName, Args &amp;&amp;...args);</code></li>
-</ul>
-<p>この関数の実装上の仕様：</p>
-<ul>
-<li><code>TScene</code> は <code>SceneBase</code> 派生である必要があります（<code>static_assert(std::is_base_of_v&lt;SceneBase, TScene&gt;)</code>）。</li>
-<li><code>args...</code> は <code>std::tuple</code> として factories にキャプチャされ、シーン生成時に <code>std::apply</code> で <code>TScene</code> のコンストラクタへ転送されます。</li>
-<li>生成されたシーンには内部で必ず</li>
-<ul>
-<li><code>scene-&gt;SetSceneManager(Passkey&lt;SceneManager&gt;{}, sm);</code></li>
-</ul>
-</ul>
-<p>が呼ばれ、所有 <code>SceneManager</code> が設定されます。</p>
-<hr />
-<h2>2.3 <code>AppInitialize</code> に追加する「登録コード」の実例（このプロジェクトと同じ書き方）</h2>
-<p>以下は <code>Application/AppInitialize.h</code> と同じスタイルで、</p>
-<ul>
-<li><code>MyScene</code> を登録し</li>
-<li>初期シーンを <code>MyScene</code> にする</li>
-</ul>
-<p>実例です。</p>
-<pre><code class="language-cpp">
-#pragma once
+<body data-page="T02_RegisterScene">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>2. シーンを登録する</h1>
+<p class="page-lead">作成したシーンをエンジンに認識させ、起動時に読み込めるようにします。</p>
+</div>
+
+<h2>SceneList.json への登録</h2>
+<p>
+シーンの一覧は既定で <code>Assets/KashipanEngine/SceneList.json</code> に保存されています。シーンエディタの「Scene List」ウィンドウで新規シーンを作成すると自動的にここへ追記されますが、中身は次のような単純なJSONです。
+</p>
+<pre><code>{
+    "scenes": [
+        { "name": "GameScene", "filePath": "Assets/Scenes/GameScene.json" },
+        { "name": "TestScene", "filePath": "Assets/Scenes/TestScene.json" }
+    ],
+    "startupScene": "GameScene"
+}</code></pre>
+<p>
+<code>name</code>はシーンを参照するときに使う識別子、<code>filePath</code>は読み込み元のファイル(またはフォルダ形式の<code>*.scene</code>)、<code>startupScene</code>はゲーム起動時に最初に読み込まれるシーン名です。
+</p>
+
+<h2>コードから登録する</h2>
+<p>
+<code>Application/AppInitialize.h</code>の中で、<code>GameEngine::Context</code>経由で<code>SceneManager</code>にアクセスし、コードから登録することもできます。
+</p>
+<pre><code>#pragma once
 #include &lt;KashipanEngine.h&gt;
-#include <span class="str">&quot;Scenes/MyScene.h&quot;</span>
 
-<span class="kw">namespace</span> KashipanEngine {
+namespace KashipanEngine {
+inline void AppInitialize(const GameEngine::Context &amp;context) {
+    // 既存のシーンJSON/フォルダをシーン名に紐付けて登録する
+    context.sceneManager-&gt;RegisterSceneFile("GameScene", "Assets/Scenes/GameScene.scene");
 
-<span class="kw">inline</span> <span class="type">void</span> AppInitialize(<span class="kw">const</span> GameEngine::Context &amp;context) {
-    <span class="com">// 1) ウィンドウ生成（このプロジェクトでも AppInitialize 内で作っている）</span>
-    Window::CreateNormal(<span class="str">&quot;Main Window&quot;</span>, <span class="num">1280</span>, <span class="num">720</span>);
-
-    <span class="com">// 2) シーン登録と初期シーン設定</span>
-    <span class="kw">if</span> (context.sceneManager) {
-        <span class="kw">auto</span> *sm = context.sceneManager;
-
-        sm-&gt;RegisterScene&lt;MyScene&gt;(<span class="str">&quot;MyScene&quot;</span>);
-        sm-&gt;ChangeScene(<span class="str">&quot;MyScene&quot;</span>);
-    }
+    // ファイルを介さず、JSONデータを直接渡して登録することもできる
+    // context.sceneManager-&gt;RegisterScene("TitleScene", someFactoryDataJson);
 }
+}
+</code></pre>
 
-} <span class="com">// namespace KashipanEngine</span>
-</code></pre>
-<hr />
-<h2>2.4 コンストラクタ引数が必要なシーンの登録例（RegisterScene の <code>args...</code> を使う）</h2>
-<p><code>RegisterScene&lt;TScene&gt;(&quot;Name&quot;, args...)</code> の <code>args...</code> は、 シーン生成時に <code>std::make_unique&lt;TScene&gt;(args...)</code> の形で転送されます。</p>
-<p>例：<code>MyScene(int level, std::string stageName)</code> の場合</p>
-<pre><code class="language-cpp">
-sm-&gt;RegisterScene&lt;MyScene&gt;(<span class="str">&quot;MyScene&quot;</span>, <span class="num">3</span>, std::string(<span class="str">&quot;StageA&quot;</span>));
-</code></pre>
-<hr />
-<h2>2.5 既存コード（実例）の参照</h2>
-<p>このプロジェクトの <code>Application/AppInitialize.h</code> では、実際に以下のように登録しています。</p>
-<ul>
-<li><code>sm-&gt;RegisterScene&lt;EngineLogoScene&gt;(&quot;EngineLogoScene&quot;, &quot;&quot;);</code></li>
-<li><code>#if DEBUG_BUILD</code> で <code>TestScene</code> の登録</li>
-<li><code>context.sceneManager-&gt;ChangeScene(&quot;EngineLogoScene&quot;);</code></li>
-</ul>
-<p>これをベースに、追加したいシーンを同様に登録してください。</p>
+<div class="api-card">
+<h4>関連する主要API(<code>SceneManager</code>)</h4>
+<div class="api-sig">bool RegisterSceneFile(const std::string &amp;sceneName, const std::string &amp;filePath);
+bool RegisterScene(const std::string &amp;sceneName, const JSON &amp;factoryData = JSON());
+bool LoadSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath);
+bool SaveSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath) const;
+void SetStartupSceneName(const std::string &amp;sceneName);
+bool ChangeToStartupScene();</div>
+</div>
+
+<div class="tip">
+<strong>基本はエディタ管理でよい</strong><br>
+実際の開発では<code>SceneList.json</code>とシーンエディタの操作だけで完結することがほとんどです。<code>AppInitialize.h</code>からの登録は、動的に生成したシーンデータを使いたい場合などの特殊なケース向けです。
+</div>
+
+<p>詳細は <a href="../02_Scenes.html">02_Scenes.html</a> を参照してください。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
 </body>
 </html>

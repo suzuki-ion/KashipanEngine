@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4. コンポーネントを追加する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="T04_AddComponents">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>4. コンポーネントを追加する</h1>
+<p class="page-lead">作成したオブジェクトに、位置を持たせる<code>Transform</code>と、実際に画面へ表示するための描画コンポーネントを追加します。詳しいAPIは <a href="../04_ObjectComponents.html">04_ObjectComponents.html</a> と <a href="../05_Rendering.html">05_Rendering.html</a> を参照してください。</p>
+</div>
+
+<h2>Transformを追加する</h2>
+<p>
+Inspector(コンポーネントインスペクタ)ウィンドウの「Add Component」メニューから <code>Transform</code> を選びます。<code>REGISTER_COMPONENT_OBJECT</code> マクロで登録されているコンポーネントは、このメニューに自動的に列挙されます(詳細は<a href="../04_ObjectComponents.html">04_ObjectComponents.html</a>)。
+</p>
+<pre><code>{
+    "type": "Transform",
+    "data": {
+        "customData": {
+            "translate": { "x": 0.0, "y": 1.0, "z": 0.0 },
+            "rotate":    { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 },
+            "scale":     { "x": 1.0, "y": 1.0, "z": 1.0 }
+        },
+        "isActive": true,
+        "priority": 1,
+        "tag": ""
+    }
+}</code></pre>
+
+<h2>見た目を付ける: MeshFilter + MeshRenderer</h2>
+<p>
+3Dオブジェクトとして表示するには、どの形状を使うかを指定する <code>MeshFilter</code> と、実際に描画する <code>MeshRenderer</code> の組が必要です。<code>MeshFilter</code>には組み込みのプリミティブ形状(例: <code>PrimitiveMesh-Box</code>, <code>PrimitiveMesh-UVSphere</code>)か、読み込んだモデルのアセットパスを指定します。
+</p>
+<pre><code>{
+    "type": "MeshFilter",
+    "data": { "customData": { "meshAssetPath": "PrimitiveMesh-Box" }, "isActive": true, "priority": 1, "tag": "" }
+},
+{
+    "type": "MeshRenderer",
+    "data": {
+        "customData": {
+            "materialName": "White",
+            "pipelineName": "Object3D.Solid.BlendNormal",
+            "targetObjectID": ""
+        },
+        "isActive": true,
+        "priority": 900,
+        "tag": ""
+    }
+}</code></pre>
+<p>
+<code>pipelineName</code>には <code>Assets/KashipanEngine/</code> 配下で定義されているパイプライン名を指定します。<code>materialName</code>は <a href="../09_Assets.html">09_Assets.html</a> の<code>MaterialManager</code>で管理されているマテリアル名です。
+</p>
+
+<h2>C++視点での対応API</h2>
+<div class="api-card">
+<div class="api-sig">EmptyObject *player = scene-&gt;GetSceneObject("Player");
+Transform *transform = player-&gt;AddComponent&lt;Transform&gt;();
+transform-&gt;SetTranslate(Vector3(0.0f, 1.0f, 0.0f));
+
+MeshFilter *meshFilter = player-&gt;AddComponent&lt;MeshFilter&gt;();
+MeshRenderer *meshRenderer = player-&gt;AddComponent&lt;MeshRenderer&gt;();
+meshRenderer-&gt;SetMaterialName("White");
+meshRenderer-&gt;SetPipelineName("Object3D.Solid.BlendNormal");</div>
+</div>
+
+<div class="tip">
+<strong>2Dの場合</strong><br>
+2D表示をしたい場合は<code>MeshRenderer</code>の代わりに<code>SpriteRenderer</code>や<code>TextRenderer</code>を使います。詳細は<a href="../05_Rendering.html">05_Rendering.html</a>を参照してください。
+</div>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

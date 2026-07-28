@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ユーティリティ | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="13_Utilities">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ユーティリティ</h1>
+<p class="page-lead">ファイル入出力、数学ユーティリティ、時間管理、乱数、タグ、UUID、多言語対応など、エンジン全体で使う細々としたヘルパー群です。多くは <code>KashipanEngine/Utilities/</code> 配下にあります。</p>
+</div>
+
+<h2>ファイル入出力 (FileIO)</h2>
+<p><code>Utilities/FileIO.h</code> は以下のヘッダを束ねたインクルード用ヘッダで、種類別に読み書き関数がまとまっています。すべて構造体を返す/受け取るシンプルな関数群です。</p>
+
+<div class="api-card">
+<h4>JSON — <code>Utilities/FileIO/JSON.h</code></h4>
+<div class="api-sig">using JSON = nlohmann::json; // Json / json も同じ別名
+
+JSON LoadJSON(const std::string &amp;filepath);
+bool SaveJSON(const JSON &amp;jsonData, const std::string &amp;filepath, int indent = 4);
+
+template&lt;typename T&gt; std::optional&lt;T&gt; GetJSONValue(const JSON &amp;json, const std::string &amp;key);
+template&lt;typename T&gt; T GetJSONValueOrDefault(const JSON &amp;json, const std::string &amp;key, const T &amp;defaultValue);
+std::optional&lt;JSON&gt; GetNestedJSONValue(const JSON &amp;json, const std::string &amp;path); // 例: "object.array[0].value"
+
+bool ValidateJSONStructure(const JSON &amp;json, const std::vector&lt;std::string&gt; &amp;requiredKeys);
+bool IsJSONFileValid(const std::string &amp;filepath);
+JSON MergeJSON(const JSON &amp;base, const JSON &amp;overlay, bool deepMerge = true);
+
+bool AppendToJSONArray(JSON &amp;json, const std::string &amp;arrayKey, const JSON &amp;value);
+bool RemoveFromJSONArray(JSON &amp;json, const std::string &amp;arrayKey, size_t index);
+
+std::string JSONToFormattedString(const JSON &amp;json, int indent = 4);
+void PrintJSON(const JSON &amp;json, const std::string &amp;title = "JSON Data");</div>
+<p>
+<code>ToJSON(value)</code> / <code>FromJSON&lt;T&gt;(json)</code> のオーバーロード群も用意されており、<code>bool</code>/整数系/<code>float</code>/<code>double</code>/<code>std::string</code>/<code>Vector2〜4</code>/<code>Quaternion</code>/<code>Matrix3x3</code>/<code>Matrix4x4</code>/<code>UUID128</code>/<code>std::vector&lt;T&gt;</code>/<code>std::optional&lt;T&gt;</code>/<code>std::map</code>/<code>std::unordered_map</code> に対応しています。コンポーネントの <code>SaveToJson()</code>/<code>LoadFromJson()</code> はこの仕組みの上に成り立っています。
+</p>
+</div>
+
+<div class="api-card">
+<h4>CSV — <code>Utilities/FileIO/CSV.h</code></h4>
+<div class="api-sig">struct CSVData {
+    std::string filePath;
+    std::vector&lt;std::string&gt; headers;
+    std::vector&lt;std::vector&lt;std::string&gt;&gt; rows;
+};
+CSVData LoadCSV(const std::string &amp;filePath, bool hasHeader = true);
+void SaveCSV(const std::string &amp;filePath, const CSVData &amp;data);</div>
+</div>
+
+<div class="api-card">
+<h4>Directory — <code>Utilities/FileIO/Directory.h</code></h4>
+<div class="api-sig">struct DirectoryData {
+    std::string directoryName;
+    std::vector&lt;std::string&gt; files;
+    std::vector&lt;DirectoryData&gt; subdirectories;
+};
+bool IsDirectoryExist(const std::string &amp;directoryPath);
+bool CreateDirectories(const std::string &amp;directoryPath);
+bool EnsureParentDirectoryExists(const std::string &amp;filePath);
+DirectoryData GetDirectoryData(const std::string &amp;directoryPath, bool isRecursive = false, bool isFullPath = true);
+DirectoryData GetDirectoryDataByExtension(const DirectoryData &amp;directoryData, const std::vector&lt;std::string&gt; &amp;extensions);
+DirectoryData GetDirectoryDataByExtension(const std::string &amp;directoryPath, const std::vector&lt;std::string&gt; &amp;extensions, bool isRecursive = false, bool isFullPath = true);</div>
+</div>
+
+<div class="api-card">
+<h4>INI — <code>Utilities/FileIO/INI.h</code></h4>
+<div class="api-sig">struct INIData {
+    std::string filePath;
+    std::unordered_map&lt;std::string, std::unordered_map&lt;std::string, std::string&gt;&gt; sections;
+};
+INIData LoadINIFile(const std::string &amp;filePath);
+void SaveINIFile(const INIData &amp;iniData);</div>
+</div>
+
+<div class="api-card">
+<h4>TextFile / RawFile — <code>Utilities/FileIO/TextFile.h</code>, <code>RawFile.h</code></h4>
+<div class="api-sig">struct TextFileData { std::string filePath; std::vector&lt;std::string&gt; lines; };
+TextFileData LoadTextFile(const std::string &amp;filePath);
+void SaveTextFile(const TextFileData &amp;textFileData);
+
+enum class FileType { txt, json, xml, html, png, jpg, gif, bmp, ico, webp, tiff,
+                       wav, mp3, ogg, flac, mp4, avi, mkv, pdf, zip, rar, sevenz, gzip, bin, unknown };
+struct RawFileData { std::string filePath; std::vector&lt;uint8_t&gt; data; size_t size; FileType fileType; };
+bool IsFileExist(const std::string &amp;filePath);
+RawFileData LoadFile(const std::string &amp;filePath, size_t detectBytes = 64 * 1024);
+void SaveFile(const RawFileData &amp;fileData);
+FileType DetectFileTypeFromFile(const std::string &amp;filePath, size_t detectBytes = 64 * 1024);</div>
+<p><code>DetectFileTypeFromFile</code> は拡張子ではなくファイル先頭バイト列からシグネチャ判定を行います。</p>
+</div>
+
+<h2>数学ユーティリティ (MathUtils)</h2>
+<p>
+<code>Utilities/MathUtils.h</code> は <code>MathUtils/Easings.h</code>・<code>Vector2/3/4.h</code>・<code>Matrix3x3/4x4.h</code>・<code>PerlinNoise.h</code>・<code>FractalNoise.h</code>・<code>SphericalCoordinates.h</code> を束ねます。<code>Math/Vector2〜4</code>（本体の数学型）とは別に、<code>KashipanEngine::MathUtils</code> 名前空間にベクトル演算のフリー関数群が用意されています。
+</p>
+
+<div class="api-card">
+<h4>MathUtils名前空間の代表的な関数(Vector2版。Vector3/Vector4にも同様の関数群あり)</h4>
+<div class="api-sig">namespace KashipanEngine::MathUtils {
+    Vector2 Lerp(const Vector2 &amp;start, const Vector2 &amp;end, float t) noexcept;
+    Vector2 Slerp(const Vector2 &amp;start, const Vector2 &amp;end, float t) noexcept;
+    Vector2 Bezier(const Vector2 &amp;p0, const Vector2 &amp;p1, const Vector2 &amp;p2, float t) noexcept;
+    Vector2 CatmullRomInterpolation(const Vector2 &amp;p0, const Vector2 &amp;p1, const Vector2 &amp;p2, const Vector2 &amp;p3, float t) noexcept;
+    Vector2 CatmullRomPosition(const std::vector&lt;Vector2&gt; &amp;points, float t, bool isLoop = false);
+    float Dot(const Vector2 &amp;a, const Vector2 &amp;b) noexcept;
+    float Cross(const Vector2 &amp;a, const Vector2 &amp;b) noexcept;
+    float Length(const Vector2 &amp;v) noexcept;
+    float LengthSquared(const Vector2 &amp;v) noexcept;
+    Vector2 Normalize(const Vector2 &amp;v);
+    Vector2 Projection(const Vector2 &amp;v, const Vector2 &amp;onto) noexcept;
+    Vector2 Perpendicular(const Vector2 &amp;v) noexcept;
+    Vector2 Rejection(const Vector2 &amp;v, const Vector2 &amp;onto) noexcept;
+    Vector2 Reflection(const Vector2 &amp;v, const Vector2 &amp;normal) noexcept;
+    float Distance(const Vector2 &amp;a, const Vector2 &amp;b) noexcept;
+}</div>
+</div>
+
+<div class="api-card">
+<h4>イージング — <code>MathUtils/Easings.h</code></h4>
+<p><code>EaseType</code> 列挙型には Linear、Quad/Cubic/Quart/Quint/Sine/Expo/Circ/Back/Elastic/Bounce のそれぞれについて In/Out/InOut/OutIn の4種、計40種類以上のイージングが定義されています。</p>
+<div class="api-sig">enum class EaseType { Linear, EaseInQuad, EaseOutQuad, EaseInOutQuad, EaseOutInQuad, /* ...Cubic/Quart/Quint/Sine/Expo/Circ/Back/Elastic/Bounce も同様 */ };
+
+float Apply(float t, EaseType type);                 // t(0〜1)にイージングを適用
+const char *EaseTypeToString(EaseType type);          // JSON保存用
+EaseType StringToEaseType(const std::string &amp;str);
+
+float Lerp(const float &amp;start, const float &amp;end, const float &amp;t);
+Vector2/Vector3/Vector4 Lerp(...);                    // 各ベクトル型のオーバーロードあり
+
+template&lt;typename T&gt;
+T Eased(const T&amp; start, const T&amp; end, float t, EaseType type = EaseType::Linear);   // Apply + Lerp
+template&lt;typename T&gt;
+T EasedGAB(const T &amp;start, const T &amp;end, float t, EaseType goType, EaseType backType); // 行って帰ってくる補間
+
+// 個別イージング関数も直接呼べる（float版・Vector2版・Vector3版）
+float EaseInOutBack(float x1, float x2, float t);
+Vector3 EaseOutElastic(Vector3 x1, Vector3 x2, float t);</div>
+<p>AngelScriptからは <code>Easing::</code> 名前空間経由で一部が公開されています(<a href="07_Scripting.html">07_Scripting.html</a> 参照)。</p>
+</div>
+
+<div class="api-card">
+<h4>ノイズ — <code>MathUtils/PerlinNoise.h</code>, <code>FractalNoise.h</code></h4>
+<div class="api-sig">class PerlinNoise {
+public:
+    PerlinNoise(uint32_t seed = 0);
+    float GetValue(float x) const;               // 1次元
+    float GetValue(float x, float y) const;       // 2次元
+    float GetValue(float x, float y, float z) const; // 3次元（すべて -1.0〜1.0 を返す）
+};</div>
+<p><code>FractalNoise</code> はパーリンノイズを複数オクターブ重ね合わせるフラクタルノイズです（詳細は <code>MathUtils/FractalNoise.h</code> を参照）。</p>
+</div>
+
+<h2>汎用数学関数</h2>
+<div class="api-card">
+<div class="api-sig">template &lt;typename T&gt; constexpr T GetPI() noexcept;   // 任意型で円周率を取得
+template&lt;typename T&gt; T ToDegrees(T radians);
+template&lt;typename T&gt; T ToRadians(T degrees);
+
+float   Clamp(float value, float min, float max);
+Vector2 Clamp(const Vector2 &amp;value, const Vector2 &amp;min, const Vector2 &amp;max);
+Vector3 Clamp(const Vector3 &amp;value, const Vector3 &amp;min, const Vector3 &amp;max);
+Vector4 Clamp(const Vector4 &amp;value, const Vector4 &amp;min, const Vector4 &amp;max);</div>
+</div>
+
+<h2>時間管理 (GameTimer / TimeUtils)</h2>
+<div class="api-card">
+<h4>グローバル時間関数 — <code>Utilities/TimeUtils.h</code></h4>
+<div class="api-sig">void SetGameSpeed(float speed);
+float GetGameSpeed();
+float GetDeltaTime();                 // 前フレームからの経過時間（秒）
+
+int GetNowTimeYear() / GetNowTimeMonth() / GetNowTimeDay() / GetNowTimeHour() / GetNowTimeMinute();
+long long GetNowTimeSecond() / GetNowTimeMillisecond();
+TimeRecord GetNowTime();
+std::string GetNowTimeString(const std::string &amp;format = "%Y-%m-%d %H:%M:%S");
+
+// ゲーム実行開始からの経過時間版も同様に用意されている
+int GetGameRuntimeYear() ... TimeRecord GetGameRuntime();
+
+void StartTimeMeasurement(const std::string &amp;label);
+TimeRecord EndTimeMeasurement(const std::string &amp;label);</div>
+<p><code>GetDeltaTime()</code> と <code>GetGameSpeed()</code> はAngelScript側からも直接呼べる関数として登録されており、<code>Player.as</code> 等で <code>GetDeltaTime() * GetGameSpeed()</code> という形で使われています。</p>
+</div>
+
+<div class="api-card">
+<h4><code>GameTimer</code> クラス</h4>
+<div class="api-sig">GameTimer(float duration, bool loop = false);
+void Start(float duration, bool loop = false);
+void Update(/* TimeUtils.h内の名前空間版は引数なし。グローバル版 Utilities/GameTimer.h は Update(float deltaTime = 1.0f/60.0f) */);
+void Stop(); void Reset(); void Pause(); void Resume();
+
+bool IsActive() const;
+bool IsFinished() const;
+float GetProgress() const;         // 0.0(開始)〜1.0(完了)
+float GetReverseProgress() const;  // 1.0(開始)〜0.0(完了)
+float GetRemainingTime() const;
+float GetElapsedTime() const;
+float GetDuration() const;
+void SetDuration(float duration);
+void SetLoop(bool loop);</div>
+<p>汎用のカウントダウン/カウントアップタイマーです。演出のタイミング制御などに使います。</p>
+</div>
+
+<h2>乱数 (RandomValue)</h2>
+<div class="api-card">
+<div class="api-sig">template&lt;typename T&gt; T GetRandomValue(T min, T max); // 整数/浮動小数点どちらもOK
+int      GetRandomInt(int min, int max);
+float    GetRandomFloat(float min, float max);
+double   GetRandomDouble(double min, double max);
+int64_t  GetRandomInt64(int64_t min, int64_t max);
+bool     GetRandomBool(float trueProbability = 0.5f);</div>
+<p>AngelScript側には <code>Random::</code> 名前空間として一部が公開されています(<a href="07_Scripting.html">07_Scripting.html</a> 参照)。</p>
+</div>
+
+<h2>タグ (Tag)</h2>
+<div class="api-card">
+<h4><code>Utilities/Tag.h</code></h4>
+<p>文字列をFNV-1a(64bit)ハッシュへ変換して保持する軽量クラス。内部はハッシュ値のみで、比較(<code>==</code>/<code>!=</code>)は文字列比較よりも高速です。オブジェクトやコライダーの分類・判別に使われます(<a href="03_GameObjects.html">03_GameObjects.html</a>、<a href="06_Collision.html">06_Collision.html</a> 参照)。</p>
+<div class="api-sig">class Tag final {
+public:
+    static constexpr std::uint64_t ComputeHash(const char *str, size_t length) noexcept;
+    static std::uint64_t ComputeHash(const std::string &amp;name) noexcept;
+
+    constexpr Tag() noexcept = default;           // 空文字列のタグ
+    explicit Tag(const std::string &amp;name) noexcept;
+
+    constexpr std::uint64_t GetHash() const noexcept;
+    constexpr bool IsEmpty() const noexcept;
+    constexpr bool operator==(const Tag &amp;other) const noexcept;
+    constexpr bool operator!=(const Tag &amp;other) const noexcept;
+};</div>
+</div>
+
+<h2>UUID (UUID128)</h2>
+<div class="api-card">
+<h4><code>Utilities/UUID128.h</code></h4>
+<p>128bit(64+64)のUUID(v4形式)を扱うクラス。<code>EmptyObject</code>のオブジェクトIDなど、永続的な識別子として使われます。</p>
+<div class="api-sig">explicit UUID128();                              // 無効なUUID
+explicit UUID128(bool generateNew);              // trueなら新規生成
+explicit UUID128(const std::string &amp;uuidStr);    // 文字列から復元
+explicit UUID128(uint64_t high, uint64_t low);   // 上位/下位から復元
+
+void GenerateUUID();
+void ResetUUID();
+const std::string &amp;ToString() const;
+uint64_t GetHigh() const;
+uint64_t GetLow() const;
+bool IsValid() const;
+bool operator==(const UUID128 &amp;other) const;
+bool operator!=(const UUID128 &amp;other) const;</div>
+<p><code>std::hash&lt;KashipanEngine::UUID128&gt;</code> の特殊化も提供されており、<code>std::unordered_map</code>のキーとしてそのまま使えます。</p>
+</div>
+
+<h2>Passkeyイディオム (Passkeys)</h2>
+<div class="api-card">
+<h4><code>Utilities/Passkeys.h</code></h4>
+<p>
+「特定のクラスからしか呼び出せないpublicメソッド」を実現するテンプレート。<code>Passkey&lt;T&gt;</code>のコンストラクタはprivateで、<code>friend T;</code>により<code>T</code>だけがインスタンス化できます。詳しい設計思想は <a href="01_Overview.html">01_Overview.html</a> を参照してください。
+</p>
+<div class="api-sig">template &lt;typename T&gt;
+class Passkey final {
+    friend T;
+    Passkey() = default;
+};
+
+// エンジン起動処理専用の特別なPasskeyも用意されている
+class PasskeyForWinMain final { /* friend int ::WinMain(...); */ };
+class PasskeyForGameEngineMain final { /* friend int Execute(PasskeyForWinMain, const std::string&amp;); */ };
+class PasskeyForCrashHandler final { /* friend LONG WINAPI CrashHandler(EXCEPTION_POINTERS*); */ };</div>
+<p>例えば <code>EmptyObject::SaveToJson(Passkey&lt;Scene&gt;)</code> は、呼び出し側が <code>Passkey&lt;Scene&gt;</code>型の値を用意する必要がありますが、そのコンストラクタは<code>Scene</code>クラスの中でしか呼べないため、事実上「Sceneクラスの内部からしか呼べないメソッド」になります。</p>
+</div>
+
+<h2>多言語対応 (Translation)</h2>
+<div class="api-card">
+<h4><code>Utilities/Translation.h</code></h4>
+<div class="api-sig">bool LoadTranslationFile(const std::string &amp;filePath); // 翻訳定義(.json)を読み込む
+
+const std::string &amp;GetTranslationText(const std::string &amp;lang, const std::string &amp;key);
+const std::string &amp;GetTranslationText(const std::string &amp;key); // 現在の言語設定を使用
+// Translation(...) は GetTranslationText(...) の別名(inline)
+
+const std::string &amp;GetCurrentLanguage();
+void SetCurrentLanguage(const std::string &amp;lang);
+const std::string &amp;GetCurrentLanguageFontPath(); // 言語ごとのフォントパス</div>
+<p>キーに対応する翻訳が見つからない場合は、キー文字列自体がそのまま返るため、未翻訳箇所がUI上で分かりやすくなっています。翻訳ファイルの実体は <code>Assets/KashipanEngine/Locales/</code> 配下にあります。</p>
+</div>
+
+<h2>文字列テンプレート (TemplateLiteral)</h2>
+<div class="api-card">
+<h4><code>Utilities/TemplateLiteral.h</code></h4>
+<p>JavaScriptのテンプレートリテラルのように、<code>${name}</code> というプレースホルダーを含む文字列に値を差し込むためのクラスです。翻訳テキストへのパラメータ埋め込みなどに使われます。</p>
+<div class="api-sig">TemplateLiteral tpl("こんにちは、${name}さん！ 所持金: ${gold}G");
+tpl["name"] = "プレイヤー";
+tpl["gold"] = 1200;
+std::string text = tpl.Render(); // "こんにちは、プレイヤーさん！ 所持金: 1200G"</div>
+<p><code>Set(key, value)</code>は文字列化可能な型（<code>std::ostream</code>へ出力可能な型）や、<code>std::vector</code>等のコンテナ型（<code>", "</code>区切りで結合）に対応しています。<code>Placeholders()</code>でテンプレート内のプレースホルダー名一覧を、<code>HasPlaceholder(key)</code>で存在確認ができます。</p>
+</div>
+
+<h2>文字コード・色変換 (Conversion)</h2>
+<div class="api-card">
+<h4>文字列変換 — <code>Utilities/Conversion/ConvertString.h</code></h4>
+<div class="api-sig">std::wstring ConvertString(const std::string &amp;str);
+std::string  ConvertString(const std::wstring &amp;str);
+std::wstring ShiftJISToUTF16(const std::string &amp;sjis);
+std::string  UTF16ToUTF8(const std::wstring &amp;utf16);
+std::string  ShiftJISToUTF8(const std::string &amp;sjis);
+std::vector&lt;char32_t&gt; Utf8ToCodepoints(const std::string &amp;utf8);
+
+std::string PathToUtf8String(const std::filesystem::path &amp;path);
+std::filesystem::path Utf8StringToPath(const std::string &amp;utf8String);</div>
+<div class="warn">
+<strong>重要</strong><br>
+エンジン内では「narrow文字列は常にUTF-8」という規約になっています。<code>std::filesystem::path::string()</code>はWindows上で現在のANSIコードページ（Shift-JIS等）を使って変換するため、多言語のファイル名等が文字化けします。<code>path</code>との相互変換は必ず<code>PathToUtf8String</code>/<code>Utf8StringToPath</code>を使ってください。
+</div>
+</div>
+
+<div class="api-card">
+<h4>色変換 — <code>Utilities/Conversion/ConvertColor.h</code></h4>
+<div class="api-sig">Vector4 ConvertColor(unsigned int color); // 32bitカラーコード(0xRRGGBBAA等)→正規化RGBA
+Vector4 ConvertColor(const Vector4 &amp;color);</div>
+</div>
+
+<h2>ダイアログ (Dialogs)</h2>
+<div class="api-card">
+<h4><code>Utilities/Dialogs/MessageDialog.h</code></h4>
+<div class="api-sig">namespace KashipanEngine::Dialogs {
+    bool ShowMessageDialog(const char *title, const char *message, bool isError = false);
+}</div>
+<p>OSネイティブのメッセージダイアログを表示します。<code>ConfirmDialog.h</code>/<code>FileDialog.h</code>/<code>FolderDialog.h</code>/<code>DialogBase.h</code> も同フォルダに存在しますが、確認できた範囲では実装が最小限のスタブに留まっているため、利用前に各ヘッダの実装状況を確認してください。</p>
+</div>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>ビルド構成によるマクロの違い → <a href="14_BuildMacros.html">14_BuildMacros.html</a></li>
+<li>これらのユーティリティをAngelScriptから呼ぶ方法 → <a href="07_Scripting.html">07_Scripting.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

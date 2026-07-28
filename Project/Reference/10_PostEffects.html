@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ポストエフェクト | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="10_PostEffects">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ポストエフェクト</h1>
+<p class="page-lead"><code>KashipanEngine/Objects/Components/PostProcessing/</code> 配下の各種ポストエフェクトコンポーネントについて解説します。いずれも <code>ScreenBufferObject</code>（<a href="11_Window.html">11_Window.html</a> 参照）が付与されたオブジェクトへ追加コンポーネントとして付けることで、そのオフスクリーンバッファに対して効果を適用します。</p>
+</div>
+
+<h2>仕組み — IPostProcessComponent</h2>
+<p>
+全てのポストエフェクトは <code>IPostProcessComponent</code>（<code>Objects/Components/PostProcessing/IPostProcessComponent.h</code>）を基底クラスに持つ <code>IObjectComponent</code> です。<code>COMPONENT_CATEGORY("PostProcessing")</code> により全派生クラスが同じカテゴリへ分類されますが、各エフェクトはそれぞれ個別のコンポーネント型（<code>GetComponentTypeID&lt;派生型&gt;()</code>）として登録されるため、1つのオブジェクトへ複数のポストエフェクトを重ねて付与できます。
+</p>
+<div class="note">
+<strong>付与先の前提</strong><br>
+ポストエフェクトは同一オブジェクトの <code>ScreenBufferObject</code> コンポーネントが持つ <code>ScreenBuffer</code> に対して適用されます。<code>ScreenBufferObject</code> が無いオブジェクトへ付けても効果は発生しません。詳しくは <a href="11_Window.html">11_Window.html</a> を参照してください。
+</div>
+
+<h3>2つの実装方式</h3>
+<p>派生クラスは次のいずれかの方式でエフェクトの中身を実装します。</p>
+<ul>
+<li><strong>宣言的パス定義（<code>BuildPasses()</code>）</strong> — 1回のフルスクリーンパスで完結する単純なエフェクト向け。使用するパイプライン名と、定数バッファ・テクスチャ・サンプラーのバインド要求（<code>PassInfo</code>）を返すだけで、実際の描画コマンド発行は <code>Renderer</code> 側が行います。<code>BoxFilterEffect</code>、<code>ChromaticAberrationEffect</code>、<code>ColorAdjustEffect</code>、<code>DissolveEffect</code>、<code>DitherEffect</code>、<code>DotMatrixEffect</code>、<code>FXAAEffect</code>、<code>GaussianFilterEffect</code>、<code>GrayscaleEffect</code>、<code>OutlineEffect</code>、<code>RadialBlurEffect</code>、<code>VignetteEffect</code> がこの方式です。</li>
+<li><strong>カスタム描画（<code>RenderCustom()</code>）</strong> — 中間レンダーターゲットを使う多段パスが必要なエフェクト向け。<code>screenBuffer-&gt;NextPass()</code> で読み取り面を確定させてから内部レンダーターゲットへ複数回描画し、最後に <code>screenBuffer-&gt;RebindWriteTarget()</code> で書き込み面へ戻して合成します。<code>BloomEffect</code>、<code>AmbientOcclusionEffect</code>、<code>DepthOfFieldEffect</code>、<code>MotionBlurEffect</code> がこの方式です。</li>
+</ul>
+
+<h3>カメラ情報の自動注入</h3>
+<p>
+深度からワールド座標を再構成する（AO）、Near/Farで深度を線形化する（Outline/DoF/MotionBlur）といった処理には、実際にそのスクリーンバッファへ描画したカメラの情報が必要です。<code>Renderer</code> は毎フレーム、該当カメラを解決して <code>CameraInfo</code>（<code>viewProjection</code> / <code>worldPosition</code> / <code>nearClip</code> / <code>farClip</code>）を <code>SetCameraInfoInterface(Passkey&lt;Renderer&gt;, ...)</code> 経由で注入します。派生クラスは保護メンバの <code>GetCameraInfo()</code> でこれを参照でき、ユーザー側でNear/Far等を別途指定する必要はありません。カメラが解決できなかった場合は <code>CameraInfo::valid</code> が <code>false</code> になり、該当エフェクトはその項では描画をスキップします。
+</p>
+
+<h3>適用先の除外設定 <span class="badge imgui">USE_IMGUI</span></h3>
+<p>
+同一オブジェクトに <code>ScreenBufferObject</code> が2つ以上ある場合、各ポストエフェクトコンポーネントは <code>IsScreenBufferIncluded()</code> / 内部の <code>excludedScreenBufferNames_</code> によって、どの <code>ScreenBuffer</code> へ適用するかを個別に除外設定できます（エディター上では "Apply Target Filter" のチェックボックスとして表示されます）。
+</p>
+
+<h2>エフェクト一覧</h2>
+<table>
+<tr><th>クラス名</th><th>概要</th><th>主なパラメータ（<code>Params</code>）</th></tr>
+<tr><td><code>BloomEffect</code></td><td>しきい値を超える明部を抽出し、縮小ピラミッドでぼかして加算合成するブルーム</td><td><code>threshold</code>, <code>softKnee</code>, <code>intensity</code>, <code>blurRadius</code>, <code>iterations</code></td></tr>
+<tr><td><code>AmbientOcclusionEffect</code></td><td>深度バッファのみから再構成する簡易SSAO（法線バッファを持たないため鏡面成分にも多少影響する既知の妥協点あり）</td><td><code>radius</code>, <code>intensity</code>, <code>power</code>, <code>bias</code>, <code>sampleCount</code>, <code>blurRadius</code>, <code>depthThreshold</code></td></tr>
+<tr><td><code>DepthOfFieldEffect</code></td><td>フォーカス距離から近景/遠景それぞれのCoCを求めて別々にガザリングブラーする被写界深度</td><td><code>focusDistance</code>, <code>focusRange</code>, <code>nearBlurDistance</code>, <code>farBlurDistance</code>, <code>maxBlurRadiusPixels</code>, <code>sampleCount</code>, <code>dilateRadius</code></td></tr>
+<tr><td><code>MotionBlurEffect</code></td><td>前フレームView-Projectionへの再投影によるカメラ動作由来のモーションブラー（オブジェクト自身の動きには追従しない）</td><td><code>intensity</code>, <code>velocityScale</code>, <code>maxBlurPixels</code>, <code>samples</code></td></tr>
+<tr><td><code>OutlineEffect</code></td><td>深度の差分から輪郭線を検出して描画</td><td><code>threshold</code>, <code>thickness</code>, <code>color</code></td></tr>
+<tr><td><code>FXAAEffect</code></td><td>ポストプロセス型アンチエイリアス</td><td><code>threshold</code>, <code>thresholdMin</code>, <code>strength</code>, <code>subpixelBlend</code></td></tr>
+<tr><td><code>GaussianFilterEffect</code></td><td>ガウシアンぼかし</td><td><code>radius</code>, <code>sigma</code></td></tr>
+<tr><td><code>BoxFilterEffect</code></td><td>ボックスフィルタによるぼかし</td><td><code>intensity</code>, <code>halfSize</code></td></tr>
+<tr><td><code>RadialBlurEffect</code></td><td>中心点から放射状にかかるブラー</td><td><code>intensity</code>, <code>sampleCount</code>, <code>radialCenter</code>, <code>startRadius</code></td></tr>
+<tr><td><code>ChromaticAberrationEffect</code></td><td>色収差（RGBチャンネルのズレ）</td><td><code>directionX</code>/<code>directionY</code>, <code>strength</code></td></tr>
+<tr><td><code>ColorAdjustEffect</code></td><td>明度・コントラスト・彩度・色温度・カラーバランスの調整</td><td><code>brightness</code>, <code>contrast</code>, <code>saturation</code>, <code>temperature</code>, <code>colorBalance</code></td></tr>
+<tr><td><code>GrayscaleEffect</code></td><td>グレースケール化</td><td><code>intensity</code></td></tr>
+<tr><td><code>VignetteEffect</code></td><td>画面周辺減光</td><td><code>center</code>, <code>color</code>, <code>intensity</code>, <code>innerRadius</code>, <code>smoothness</code></td></tr>
+<tr><td><code>DitherEffect</code></td><td>ディザリング（バンディング低減/レトロ表現）</td><td><code>intensity</code>, <code>color</code></td></tr>
+<tr><td><code>DotMatrixEffect</code></td><td>ドットマトリクス（LED/新聞印刷風のドット化）</td><td><code>dotSpacing</code>, <code>dotRadius</code>, <code>threshold</code>, <code>intensity</code>, <code>monochrome</code></td></tr>
+<tr><td><code>DissolveEffect</code></td><td>マスクテクスチャによるディゾルブ（境界にエッジ色を乗せる）</td><td><code>maskThreshold</code>, <code>edgeThickness</code>, <code>baseTexture</code>, <code>maskTexture</code>, <code>baseTextureColor</code>, <code>edgeColor</code></td></tr>
+</table>
+
+<h2>詳細: BloomEffect</h2>
+<div class="api-card">
+<h4><code>BloomEffect</code> <span class="badge final">final</span></h4>
+<div class="api-sig">struct Params {
+    float threshold = 1.0f;
+    float softKnee = 0.5f;
+    float intensity = 0.8f;
+    float blurRadius = 1.0f;
+    std::uint32_t iterations = 4; // ダウンサンプル段数 (1..16)
+};
+
+void SetParams(const Params &amp;params);
+const Params &amp;GetParams() const noexcept;</div>
+<p>
+Prefilter → Blur → Downsample/Blur チェーン → Upsample累積 → Composite、という多段パスで実装されており、<code>iterations</code> で指定した段数分の縮小ピラミッド（<code>RenderTargetResource</code> + <code>ShaderResourceResource</code>）をオーナーの <code>ScreenBuffer</code> のサイズ・フォーマットに合わせて内部で確保します。<code>threshold</code>/<code>softKnee</code> で抽出する明部のしきい値を、<code>intensity</code>/<code>blurRadius</code> で最終的な強さとぼかし量を調整します。
+</p>
+</div>
+
+<h2>詳細: OutlineEffect</h2>
+<div class="api-card">
+<h4><code>OutlineEffect</code> <span class="badge final">final</span></h4>
+<div class="api-sig">struct Params {
+    float threshold = 0.1f;
+    float thickness = 1.0f;
+    float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+};
+
+void SetParams(const Params &amp;params);
+const Params &amp;GetParams() const noexcept;</div>
+<p>
+単一パスの宣言的エフェクトで、深度テクスチャ（<code>gDepthTexture</code>）とカメラの Near/Far（<code>GetCameraInfo()</code> から自動解決）をシェーダーへ渡し、深度差から輪郭を検出して <code>color</code> で塗ります。カメラが未解決の場合は深度の線形化が不正確になる可能性がある旨がエディター上に警告表示されます。
+</p>
+</div>
+
+<h2>使用例</h2>
+<p>
+実運用では <a href="12_SceneEditor.html">シーンエディタ</a> の Add Component メニューから付与するのが基本ですが、コードから直接組み立てる場合は次のようになります。
+</p>
+<pre><code>#include &lt;KashipanEngine.h&gt;
+using namespace KashipanEngine;
+
+// screenBufferObj は既に AddComponent&lt;ScreenBufferObject&gt;() 済みのオブジェクト
+auto *bloom = obj-&gt;AddComponent&lt;BloomEffect&gt;();
+BloomEffect::Params bloomParams;
+bloomParams.threshold = 1.2f;
+bloomParams.intensity = 1.0f;
+bloom-&gt;SetParams(bloomParams);
+
+auto *outline = obj-&gt;AddComponent&lt;OutlineEffect&gt;();
+OutlineEffect::Params outlineParams;
+outlineParams.thickness = 2.0f;
+outlineParams.color[0] = 0.0f; outlineParams.color[1] = 0.0f;
+outlineParams.color[2] = 0.0f; outlineParams.color[3] = 1.0f;
+outline-&gt;SetParams(outlineParams);</code></pre>
+<p>
+複数のポストエフェクトを同一オブジェクトへ追加した場合、コンポーネントの追加順（あるいはシーンエディタでの並び順）にパスが適用されます。
+</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="11_Window.html">11_Window.html</a> — <code>ScreenBufferObject</code> と <code>ScreenBuffer</code> の詳細</li>
+<li><a href="05_Rendering.html">05_Rendering.html</a> — <code>MeshRenderer</code> 等の描画先指定</li>
+<li><a href="04_ObjectComponents.html">04_ObjectComponents.html</a> — <code>IObjectComponent</code> / <code>AddComponent&lt;T&gt;()</code> の基礎</li>
+<li><a href="12_SceneEditor.html">12_SceneEditor.html</a> — エディターからのコンポーネント追加操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5. 当たり判定を付ける | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="T05_AddCollider">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>5. 当たり判定を付ける</h1>
+<p class="page-lead">オブジェクトに <code>BoxCollider</code> を追加し、地面との当たり判定の土台を作ります。詳しいAPIは <a href="../06_Collision.html">06_Collision.html</a> を参照してください。</p>
+</div>
+
+<h2>BoxColliderを追加する</h2>
+<p>
+「地面」役のオブジェクトに<code>BoxCollider</code>を追加し、後でスクリプトから判別できるように<strong>タグ</strong>を付けます。実際のプロジェクトの地面オブジェクトでは、次のような設定になっています。
+</p>
+<pre><code>{
+    "type": "BoxCollider",
+    "data": {
+        "customData": {
+            "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
+            "size":   { "x": 1.0, "y": 1.0, "z": 1.0 },
+            "isTrigger": false,
+            "continuousDetection": false,
+            "syncPosition": [true, true, true],
+            "syncRotation": [true, true, true],
+            "syncScale":    [true, true, true]
+        },
+        "isActive": true,
+        "priority": 1,
+        "tag": "GroundBox"
+    }
+}</code></pre>
+<p>
+<code>tag</code>にはコンポーネント全体の共通プロパティである<a href="../13_Utilities.html">Tag</a>を設定できます。ここでは <code>"GroundBox"</code> というタグを付けています。<code>isTrigger</code>を<code>true</code>にすると、押し戻し(物理的な反発)を行わず衝突の通知だけを受け取れるトリガー判定になります。
+</p>
+
+<h2>C++視点での対応API</h2>
+<div class="api-card">
+<div class="api-sig">EmptyObject *ground = scene-&gt;GetSceneObject("Ground");
+BoxCollider *collider = ground-&gt;AddComponent&lt;BoxCollider&gt;();
+collider-&gt;SetTag("GroundBox");
+// サイズ・トリガー設定など、詳細は 06_Collision.html を参照</div>
+</div>
+
+<h2>衝突の受け取り方の予告</h2>
+<p>
+コライダーの衝突結果は<code>HitInfo</code>構造体として通知されます。次の<a href="06_WriteScript.html">6. スクリプトを書く</a>で、このタグを使って「今触れているのはさっき作った地面かどうか」を判定するコードを実際に書きます。
+</p>
+<pre><code>// ScriptComponentBehavior 内(AngelScript)
+Tag groundColliderTag = Tag("GroundBox");
+
+void OnCollisionStay(const HitInfo &amp;in hit) {
+    if (hit.otherCollider.GetTag() == groundColliderTag) {
+        // 地面と接地している
+    }
+}</code></pre>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

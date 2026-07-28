@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>シーン (Scene / SceneManager) | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="02_Scenes">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>シーン (Scene / SceneManager)</h1>
+<p class="page-lead">ゲームの1画面・1ステージに相当する「シーン」を管理する仕組みです。<code>Scene</code>・<code>SceneManager</code>・<code>SceneContext</code>・<code>ISceneComponent</code>の役割と、シーンがJSON＋シーンエディタでデータとして作られる設計思想を解説します。</p>
+</div>
+
+<div class="warn">
+<strong>重要: シーンはC++で継承して作らない</strong><br>
+<code>Scene</code> クラスは <code>final</code> 指定されており、ゲーム側で <code>class TitleScene : public Scene</code> のような継承をすることはできません。シーンの内容（オブジェクト・シーンコンポーネント・シーン変数）は基本的に<strong>シーンエディタ上で編集し、シーンJSONファイルとして保存</strong>します。C++側で行うのは <code>SceneManager::RegisterScene</code> / <code>RegisterSceneFile</code> によるシーンの登録と、<code>ChangeScene</code> による切り替えだけです。振る舞いを追加したい場合は<a href="04_ObjectComponents.html">オブジェクトコンポーネント</a>を組み合わせるか、<a href="07_Scripting.html">AngelScriptスクリプト</a>を書きます。
+</div>
+
+<h2>Scene クラス <span class="badge final">final</span></h2>
+<p>
+<code>Scene/Scene.h</code> に定義されています。1つの <code>Scene</code> インスタンスが1つのシーン（オブジェクトの集合＋シーンコンポーネント＋シーン変数）を表します。コンストラクタはシーン名またはJSONデータを受け取りますが、通常は <code>SceneManager</code> が内部で生成するため、ゲーム側から直接 <code>new Scene(...)</code> することはありません。
+</p>
+
+<div class="api-card">
+<h4>シーン内オブジェクト管理</h4>
+<div class="api-sig">EmptyObject *CreateEmptyObject(const std::string &amp;name = "", const UUID128 &amp;objectID = UUID128(), size_t index = MAXSIZE_T);
+EmptyObject *CloneObject(EmptyObject *source, const std::string &amp;name = "");
+bool DeleteObject(EmptyObject *obj);
+bool ReleaseObject(EmptyObject *obj);
+bool MoveObject(EmptyObject *obj, size_t newIndex);
+
+const std::vector&lt;std::unique_ptr&lt;EmptyObject&gt;&gt; &amp;GetSceneObjects() const;
+std::vector&lt;EmptyObject *&gt; GetSceneObjects(const std::string &amp;objectName) const;
+EmptyObject *GetSceneObject(const std::string &amp;objectName) const;
+EmptyObject *GetSceneObject(EmptyObject *obj) const;
+EmptyObject *GetSceneObject(const UUID128 &amp;uuid) const;
+
+void ClearSceneObjects();
+void DeleteEditorOnlyObjects();</div>
+<p>
+<code>CreateEmptyObject</code> は空の <code>EmptyObject</code> を生成してシーンに追加します。<code>CloneObject</code> は複製元オブジェクト自身のコンポーネントのみを複製し、親子関係や子オブジェクトは複製しません（<code>EmptyObject::Clone()</code> の仕様に準じます）。<code>DeleteEditorOnlyObjects</code> は再生開始時（PlayStart）およびエディター無しビルドでのシーン読み込み時に、<code>EditorOnly</code> フラグの立ったオブジェクトを子孫ごと削除します。
+</p>
+</div>
+
+<div class="api-card">
+<h4>シーンコンポーネント管理</h4>
+<div class="api-sig">template&lt;typename T&gt; std::vector&lt;T *&gt; GetComponents() const;
+template&lt;typename T&gt; T *GetComponent() const;
+ISceneComponent *GetComponent(const ISceneComponent *component) const;
+template&lt;typename T&gt; size_t HasComponents() const;
+
+template&lt;typename T&gt; T *AddComponent(std::unique_ptr&lt;T&gt; comp);
+template&lt;typename T, typename... Args&gt; T *AddComponent(Args&amp;&amp;... args);
+
+bool RemoveComponent(const ISceneComponent *component);
+template&lt;typename T&gt; bool RemoveComponent();
+template&lt;typename T&gt; bool RemoveComponents();
+void ClearSceneComponents();</div>
+<p>
+<code>EmptyObject</code> のオブジェクトコンポーネントと同じ形の API を、シーン自身に付けるコンポーネント（<code>ISceneComponent</code> 派生）に対して提供します。<code>AddComponent&lt;T&gt;(args...)</code> は内部で <code>T</code> を <code>make_unique</code> し、失敗時（例外発生時）は <code>nullptr</code> を返します。
+</p>
+</div>
+
+<div class="api-card">
+<h4>シーン変数 / グローバルシーン変数</h4>
+<div class="api-sig">template&lt;typename T&gt; MyAny *AddSceneVariable(const std::string &amp;key, const T &amp;value = T());
+bool RemoveSceneVariable(const std::string &amp;key);
+MyAny *GetSceneVariable(const std::string &amp;key);
+const TypeInfo &amp;GetSceneVariableTypeInfo(const std::string &amp;key);
+const std::unordered_map&lt;std::string, MyAny&gt; &amp;GetSceneVariables() const;
+
+template&lt;typename T&gt; MyAny *AddGlobalSceneVariable(const std::string &amp;key, const T &amp;value = T());
+bool RemoveGlobalSceneVariable(const std::string &amp;key);
+MyAny *GetGlobalSceneVariable(const std::string &amp;key);</div>
+<p>
+シーン変数は <code>MyAny</code>（型消去された値）としてキーで管理され、そのシーン固有のスコープを持ちます。グローバルシーン変数は <code>SceneManager</code> 側に保持され、シーンをまたいで共有されます（内部的に <code>Scene</code> 側のメソッドは <code>SceneManager</code> へ委譲しています）。<code>SceneVariableApplier</code> コンポーネントを使うと、C++コードを書かずにシーン変数の値を他コンポーネントのパラメータへ適用できます。
+</p>
+</div>
+
+<div class="api-card">
+<h4>シーン切り替え</h4>
+<div class="api-sig">void SetNextSceneName(const std::string &amp;nextSceneName);
+bool ChangeToNextScene();
+void ClearNextSceneName();
+bool HasNextSceneName() const;</div>
+<p>
+シーン内部（コンポーネントやスクリプト）から次に遷移したいシーン名だけを予約しておき、都合のよいタイミングで <code>ChangeToNextScene()</code> を呼んで実際の切り替えをトリガーする、という2段階の使い方を想定しています。
+</p>
+</div>
+
+<div class="api-card">
+<h4>各種マネージャーへの静的アクセス</h4>
+<div class="api-sig">static AudioManager *GetAudioManager();
+static ModelManager *GetModelManager();
+static SkeletonManager *GetSkeletonManager();
+static SamplerManager *GetSamplerManager();
+static TextureManager *GetTextureManager();
+static AnimationManager *GetAnimationManager();
+static MaterialManager *GetMaterialManager();
+static Input *GetInput();
+static InputCommand *GetInputCommand();</div>
+<p>アセット管理系・入力系の各マネージャーへは、<code>Scene</code> の静的メソッド経由でどこからでもアクセスできます。詳細は <a href="09_Assets.html">09_Assets.html</a>・<a href="08_Input.html">08_Input.html</a> を参照してください。</p>
+</div>
+
+<h3>エディター再生制御 <span class="badge imgui">USE_IMGUI</span></h3>
+<p><code>USE_IMGUI</code> ビルドでは、Unity風のPlay/Pause/Stopに相当する再生制御メソッドが追加されます。</p>
+<div class="api-card">
+<div class="api-sig">bool IsPlaying() const;
+bool IsPaused() const;
+void PlayStart();  // 開始前のシーン状態を保存する
+void PlayStop();   // 開始前のシーン状態へ復元する
+void PlayPause();
+void PlayResume();
+void RequestStepFrame();  // 一時停止中のみ有効</div>
+<p>非エディタービルドではシーンは常に再生状態として更新され、これらのメソッドは存在しません。<code>Scene::UpdateInterface</code> はエディタービルドの場合、<code>isPlaying_</code> が false か、一時停止中かつステップ実行の要求が無い間は内部の更新処理をスキップします。</p>
+</div>
+
+<h2>SceneManager クラス</h2>
+<p>
+<code>Scene/SceneManager.h</code> に定義されています。<code>GameEngine::Context::sceneManager</code> として <code>AppInitialize()</code> に渡され、登録済みシーンの管理・現在のシーンの保持・シーン切り替えの仲介を行います。
+</p>
+
+<div class="api-card">
+<h4>シーンの登録・登録情報の編集</h4>
+<div class="api-sig">bool RegisterScene(const std::string &amp;sceneName, const JSON &amp;factoryData = JSON());
+bool RegisterSceneFile(const std::string &amp;sceneName, const std::string &amp;filePath);
+bool UnregisterScene(const std::string &amp;sceneName);
+bool RenameRegisteredScene(const std::string &amp;oldName, const std::string &amp;newName);
+bool SetRegisteredSceneFilePath(const std::string &amp;sceneName, const std::string &amp;filePath);
+bool UpdateRegisteredSceneData(const std::string &amp;sceneName, const JSON &amp;factoryData);
+
+const std::vector&lt;SceneEntry&gt; &amp;GetRegisteredScenes() const;
+bool IsSceneRegistered(const std::string &amp;sceneName) const;</div>
+<p>
+<code>RegisterScene</code> はJSONデータを直接渡す方式（<code>factoryData</code>）、<code>RegisterSceneFile</code> は切り替え時にファイルを読み込む方式です。通常は後者を使い、シーンエディタで保存したシーンJSON（またはシーンフォルダ）のパスを指定します。
+</p>
+</div>
+
+<div class="api-card">
+<h4>シーンリスト定義ファイル（SceneList.json）</h4>
+<div class="api-sig">static constexpr const char *kDefaultSceneListFilePath = "Assets/KashipanEngine/SceneList.json";
+
+bool LoadSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath);
+bool SaveSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath) const;
+
+const std::string &amp;GetStartupSceneName() const;
+void SetStartupSceneName(const std::string &amp;sceneName);
+bool ChangeToStartupScene();</div>
+<p>
+<code>Assets/KashipanEngine/SceneList.json</code> には登録されているシーンの一覧と起動時に切り替えるシーン名（<code>startupScene</code>）が記載されます。実例:
+</p>
+<pre><code>{
+    "scenes": [
+        { "filePath": "Assets/Scenes/GameScene.json", "name": "GameScene" },
+        { "filePath": "Assets/Scenes/TestScene.json", "name": "TestScene" }
+    ],
+    "startupScene": "GameScene"
+}</code></pre>
+<p>このファイルはシーンエディタから自動的に読み書きされるため、通常は手編集の必要はありません。</p>
+</div>
+
+<div class="api-card">
+<h4>シーン切り替え</h4>
+<div class="api-sig">bool ChangeScene(const std::string &amp;sceneName);
+bool HasPendingSceneChange() const;
+bool CommitPendingSceneChange(Passkey&lt;GameEngine&gt;);</div>
+<p><code>ChangeScene</code> を呼んだ時点ではシーンはまだ切り替わりません。<code>GameEngine</code> が管理するゲームループの中で次のフレームになった時に <code>CommitPendingSceneChange</code>（Passkeyにより <code>GameEngine</code> 専用）が実行され、そこで実際に現在のシーンが破棄・新しいシーンが生成されます。</p>
+<div class="note"><strong>ポイント</strong><br><code>ChangeScene</code> は「次のフレームで反映される」非同期の予約であることに注意してください。呼び出し直後に <code>GetCurrentScene()</code> を参照しても、まだ古いシーンが返ります。</div>
+</div>
+
+<div class="api-card">
+<h4>グローバルシーン変数</h4>
+<div class="api-sig">template &lt;typename T&gt; MyAny *AddGlobalSceneVariable(const std::string &amp;key, const T &amp;value = T());
+MyAny *AddGlobalSceneVariable(const std::string &amp;key, const MyAny &amp;value, const TypeInfo &amp;typeInfo);
+bool RemoveGlobalSceneVariable(const std::string &amp;key);
+MyAny *GetGlobalSceneVariable(const std::string &amp;key);
+const std::unordered_map&lt;std::string, MyAny&gt; &amp;GetGlobalSceneVariables() const;</div>
+<p><code>SceneManager</code> がシーンをまたいで保持する変数です。<code>Scene::AddGlobalSceneVariable</code> 等はこのメソッド群への委譲になっています。</p>
+</div>
+
+<h2>SceneContext クラス</h2>
+<p>
+<code>Scene/SceneContext.h</code> に定義される <code>final</code> クラスです。各シーンコンポーネント・オブジェクトコンポーネントの <code>Initialize()</code> 等から <code>GetOwnerSceneContext()</code> 経由で取得でき、<code>Scene</code> が持つオブジェクト管理・コンポーネント管理・シーン変数・シーン切り替え・マネージャーアクセスのAPIをほぼそのままミラーしています（内部で <code>owner_-&gt;Xxx(...)</code> に委譲するだけの薄いラッパーです）。コンポーネント側のコードは <code>Scene</code> の完全な型を知らなくても、<code>SceneContext</code> 経由でシーンを操作できます。
+</p>
+
+<h2>ISceneComponent 基底クラス</h2>
+<p><code>Scene/Components/ISceneComponent.h</code> に定義される、全シーンコンポーネントの基底です。<a href="04_ObjectComponents.html">オブジェクトコンポーネントの基底 <code>IObjectComponent</code></a> とほぼ対になる設計です。</p>
+<div class="api-card">
+<div class="api-sig">const std::string &amp;GetComponentType() const;
+size_t GetMaxComponentCountPerObject() const;
+size_t GetComponentTypeID() const;
+int GetUpdatePriority() const;
+bool IsActive() const;
+void SetActive(bool active);   // 有効化時にInitialize、無効化時にFinalizeが走る
+void SetTag(const std::string &amp;tagName);
+const Tag &amp;GetTag() const noexcept;
+const std::string &amp;GetTagName() const noexcept;
+
+virtual std::unique_ptr&lt;ISceneComponent&gt; Clone() const = 0;</div>
+<p>protected な仮想関数（派生クラスがオーバーライドする部分）:</p>
+<div class="api-sig">virtual void Initialize();
+virtual void Finalize();
+virtual void Update();
+virtual JSON SaveToJson() const;
+virtual bool LoadFromJson(const JSON &amp;json);
+#if defined(USE_IMGUI)
+virtual void ShowImGui();
+#endif</div>
+<p>
+派生クラスの定義には <code>SCENE_COMPONENT_CONSTRUCTOR(typeName, maxCount, initializeCode)</code> マクロを使い、<code>REGISTER_COMPONENT_SCENE</code> によってファクトリ関数がコンポーネントレジストリへ自動登録されます（このあたりのマクロの詳細はオブジェクトコンポーネント版と共通の仕組みなので <a href="04_ObjectComponents.html">04_ObjectComponents.html</a> を参照してください）。
+</p>
+</div>
+
+<h2>代表的なシーンコンポーネント</h2>
+<p><code>Scene/Components/</code> 配下には、シーン全体に関わる横断的な処理をまとめたシーンコンポーネントが実装されています。詳細な個々の仕様は別ページで扱うため、ここでは一覧のみ紹介します。</p>
+<table>
+<tr><th>クラス名</th><th>役割</th></tr>
+<tr><td><code>SceneRenderer</code></td><td>シーン内の描画用コンポーネントを収集して描画リストを構築する（<a href="05_Rendering.html">05_Rendering.html</a>）</td></tr>
+<tr><td><code>SceneObjectCollider</code></td><td>シーン内の <code>ICollider</code> 派生コンポーネントを収集し、当たり判定処理へ橋渡しする（<a href="06_Collision.html">06_Collision.html</a>）</td></tr>
+<tr><td><code>SceneComputeProcessor</code></td><td>シーン内のコンピュートシェーダー処理コンポーネントを収集・実行する</td></tr>
+<tr><td><code>SceneScriptEngine</code></td><td>シーン内でAngelScriptを実行するための共有スクリプトエンジンを管理する（<a href="07_Scripting.html">07_Scripting.html</a>）</td></tr>
+<tr><td><code>SceneAudioPlayer</code></td><td>シーン内の <code>AudioListener</code>/<code>AudioSource</code> を収集して音声再生を管理する</td></tr>
+<tr><td><code>ScenePreTransform</code></td><td>シーン内の <code>PreTransform</code> コンポーネントを収集し、毎フレーム最後に前フレーム値を更新する</td></tr>
+<tr><td><code>SceneShakeApplier</code></td><td><code>Shake</code>コンポーネント（処理タイミング=DeferredEnd）のTransformへの適用を、全オブジェクト更新後にまとめて行う</td></tr>
+<tr><td><code>KeyframeAnimator</code></td><td>キーフレームアニメーション（タイムライン）を再生するシーンコンポーネント</td></tr>
+</table>
+
+<h2>シーンJSONの実例</h2>
+<p>
+シーンは <code>Assets/Scenes/&lt;シーン名&gt;.scene/</code> フォルダとして保存されます（1シーン1フォルダ）。フォルダ直下の <code>scene.json</code> にシーン自体の情報（シーンコンポーネント・シーンID・シーン変数）が、<code>Objects/&lt;objectID&gt;/object.json</code> にオブジェクト1体ずつの情報が分割保存されます（1オブジェクト1フォルダ）。これは複数人で同じシーンを編集した際に、別々のオブジェクトを触っていればコンフリクトが起きないようにするための構成です。
+</p>
+<pre><code>Assets/Scenes/GameScene.scene/
+├── scene.json                          … シーンコンポーネント・シーン変数など
+└── Objects/
+    ├── c479e6eb-e0e5-4bab-.../object.json
+    ├── 93fa416e-4174-41b0-.../object.json
+    └── ...（オブジェクトごとに1フォルダ）
+</code></pre>
+<p><code>scene.json</code> の抜粋（シーンコンポーネントとシーン変数の並び）:</p>
+<pre><code>{
+    "sceneComponents": [
+        { "data": { "data": {}, "isActive": true, "priority": 1000, "tag": "" }, "type": "SceneRenderer" },
+        { "data": { "data": {}, "isActive": true, "priority": 1,    "tag": "" }, "type": "SceneObjectCollider" },
+        { "data": { "data": {}, "isActive": true, "priority": 1,    "tag": "" }, "type": "SceneScriptEngine" }
+    ],
+    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneName": "GameScene",
+    "sceneVariables": [
+        { "key": "testFloat", "type": "Float", "value": 0.0 },
+        { "key": "CheckpointPosition", "type": "Vector3", "value": { "x": 30.62, "y": 6.44, "z": 0.0 } }
+    ]
+}</code></pre>
+<p>従来の1ファイル完結型のシーンJSON（<code>Assets/Scenes/GameScene.json</code> のような形式）もバックアップ用として引き続き存在しますが、新規のシーン保存はフォルダ分割形式が既定です。</p>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>シーンに配置するオブジェクトそのものを知る → <a href="03_GameObjects.html">03_GameObjects.html</a></li>
+<li>オブジェクトへ機能を積むコンポーネントの基礎を知る → <a href="04_ObjectComponents.html">04_ObjectComponents.html</a></li>
+<li>チュートリアルで実際に手を動かす → <a href="Tutorial/01_CreateScene.html">Tutorial/01_CreateScene.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

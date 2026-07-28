@@ -1,0 +1,31 @@
+name: Discord Push Notification
+
+on:
+  push:
+    branches:
+      - JobHuntingProject
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          COMMIT_MESSAGE=$(echo '${{ github.event.head_commit.message }}' | head -n 1 | cut -c1-256)
+          curl -sfS -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg content "**[${{ github.repository }}]** \`${{ github.ref_name }}\` に新しいプッシュがありました" \
+              --arg author "${{ github.event.head_commit.author.name }}" \
+              --arg message "$COMMIT_MESSAGE" \
+              --arg url "${{ github.event.head_commit.url }}" \
+              '{
+                content: $content,
+                embeds: [{
+                  description: $message,
+                  url: $url,
+                  author: { name: $author }
+                }]
+              }')"

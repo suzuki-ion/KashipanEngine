@@ -1,60 +1,63 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <title>1. シーンの作成</title>
-  <link rel="stylesheet" href="../reference.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1. シーンを作成する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
-<body>
-<nav><a href="00_Index.html">目次へ</a></nav>
-<h1>1. シーンの作成</h1>
-<p>KashipanEngine のシーンは <code>SceneBase</code> を継承して作成します。</p>
-<ul>
-<li>ヘッダ：<code>KashipanEngine/Scene/SceneBase.h</code></li>
-<li>代表的なオーバーライド：</li>
-<ul>
-<li><code>Initialize()</code>：シーン開始時（SceneManager から呼ばれる）</li>
-<li><code>Finalize()</code>：シーン終了時（SceneManager から呼ばれる）</li>
-<li><code>OnUpdate()</code>：毎フレーム更新（<code>SceneBase::Update()</code> から呼ばれる）</li>
-</ul>
-</ul>
-<hr />
-<h2>最小構成の例</h2>
-<pre><code class="language-cpp">
-#include &lt;KashipanEngine.h&gt;
+<body data-page="T01_CreateScene">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>1. シーンを作成する</h1>
+<p class="page-lead">まずはゲームの舞台となる「シーン」を新規作成します。詳しいAPIは <a href="../02_Scenes.html">02_Scenes.html</a> を参照してください。</p>
+</div>
 
-<span class="kw">namespace</span> KashipanEngine {
+<h2>シーンエディタから作成する(推奨)</h2>
+<p>
+<code>USE_IMGUI</code>が有効なビルド(<code>Debug</code>/<code>Development</code>構成)でエンジンを起動すると、シーンエディタが利用できます。エディタの「Scene List」ウィンドウから新規シーンを作成すると、以下のファイルが自動生成されます。
+</p>
+<pre><code>Assets/Scenes/&lt;シーン名&gt;.scene/
+└── scene.json          … シーン自体の情報(シーンコンポーネント・シーン変数)
+    (Objects/ フォルダはオブジェクトを追加すると作られる)</code></pre>
 
-<span class="kw">class</span> MyScene <span class="kw">final</span> : <span class="kw">public</span> SceneBase {
-<span class="kw">public</span>:
-    MyScene() : SceneBase(<span class="str">&quot;MyScene&quot;</span>) {}
-    ~MyScene() <span class="kw">override</span> = default;
+<h2>シーンJSONの中身</h2>
+<p>
+1シーン1フォルダの形式で、シーン直下の情報は <code>scene.json</code> に、各オブジェクトは <code>Objects/&lt;オブジェクトのUUID&gt;/object.json</code> に個別保存されます。複数人でシーンを編集しても、別々のオブジェクトを触っている限りファイルがコンフリクトしにくいのが利点です。実際の <code>scene.json</code> は次のような形です。
+</p>
+<pre><code>{
+    "sceneComponents": [
+        { "type": "SceneRenderer",        "data": { "data": {}, "isActive": true, "priority": 1000, "tag": "" } },
+        { "type": "SceneObjectCollider",  "data": { "data": {}, "isActive": true, "priority": 1,    "tag": "" } },
+        { "type": "SceneScriptEngine",    "data": { "data": {}, "isActive": true, "priority": 1,    "tag": "" } },
+        { "type": "SceneAudioPlayer",     "data": { "data": {}, "isActive": true, "priority": 500,  "tag": "" } },
+        { "type": "ScenePreTransform",    "data": { "data": {}, "isActive": true, "priority": 1001, "tag": "" } }
+    ],
+    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneName": "GameScene",
+    "sceneVariables": []
+}</code></pre>
+<p>
+<code>sceneComponents</code>には、そのシーンで使う機能(描画・当たり判定・スクリプト実行・オーディオ再生など)がシーンコンポーネントとして登録されています。新規シーンを作成すると、多くの場合これらの標準コンポーネントが最初から入った状態になります(詳細は<a href="../02_Scenes.html">02_Scenes.html</a>のシーンコンポーネント一覧を参照)。<code>sceneVariables</code>は、後述するスクリプト間で共有できるシーン変数の初期値です。
+</p>
 
-    <span class="type">void</span> Initialize() <span class="kw">override</span> {
-        <span class="com">// シーン開始時の一度だけ行う処理</span>
-    }
+<div class="note">
+<strong>旧形式について</strong><br>
+過去のバージョンでは1シーン1ファイル(<code>Assets/Scenes/GameScene.json</code>のような単一JSON)で保存していました。現在はこのバックアップ形式としてのみ残っており、通常はフォルダ形式(<code>*.scene/</code>)を使います。
+</div>
 
-    <span class="type">void</span> Finalize() <span class="kw">override</span> {
-        <span class="com">// シーン終了時の後片付け</span>
-    }
+<h2>コードから登録する場合</h2>
+<p>
+シーンはC++クラスとして継承して作るものではありません(<code>Scene</code>クラスは<code>final</code>です)。既存のシーンJSONファイルをそのまま使う場合、あとで<a href="02_RegisterScene.html">シーンの登録</a>のときに<code>SceneManager::RegisterSceneFile</code>で紐付けます。
+</p>
 
-<span class="kw">private</span>:
-    <span class="type">void</span> OnUpdate() <span class="kw">override</span> {
-        <span class="com">// 毎フレーム処理</span>
-        <span class="com">// 例：入力を見るなら GetInputCommand() 等を利用</span>
-    }
-};
-
-} <span class="com">// namespace KashipanEngine</span>
-</code></pre>
-<hr />
-<h2>ポイント（厳密）</h2>
-<ul>
-<li><code>SceneBase</code> はデフォルトコンストラクタが削除されているため、必ず <code>SceneBase(&quot;SceneName&quot;)</code> で構築します。</li>
-<li><code>SceneBase</code> は <code>GetInput()</code> / <code>GetInputCommand()</code> / 各種 AssetManager へのアクセサを **protected static** に持ちます。</li>
-<ul>
-<li>シーン派生クラス内部では <code>GetInputCommand()</code> 等を直接呼べます。</li>
-</ul>
-</ul>
+<div class="page-footer" id="page-footer"></div>
+</main>
+</div>
 </body>
 </html>

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ゲームオブジェクト (EmptyObject) | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="03_GameObjects">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ゲームオブジェクト (EmptyObject)</h1>
+<p class="page-lead">KashipanEngine には「ゲームオブジェクト型」が1種類しかありません。<code>EmptyObject</code> というただの空の入れ物に、コンポーネントを組み合わせて機能を持たせていきます。ここでは <code>EmptyObject</code> 自体のAPIと、コンポジションという考え方を説明します。</p>
+</div>
+
+<h2>EmptyObject クラス <span class="badge final">final</span></h2>
+<p>
+<code>Objects/EmptyObject.h</code> に定義されています。<code>Scene</code> と同じく <code>final</code> 指定されており、継承して <code>class Enemy : public EmptyObject</code> のような独自オブジェクト型を作ることはできません。「敵らしさ」や「プレイヤーらしさ」は、後述の<a href="04_ObjectComponents.html">オブジェクトコンポーネント</a>の組み合わせによって表現します。
+</p>
+<p>コンストラクタは <code>Passkey&lt;Scene&gt;</code> を要求するため、ゲーム側から直接 <code>new EmptyObject(...)</code> することはできません。オブジェクトの生成は必ず <code>Scene::CreateEmptyObject()</code>（またはシーンコンポーネントからは <code>SceneContext::CreateEmptyObject()</code>）を経由します。</p>
+
+<div class="api-card">
+<h4>基本情報</h4>
+<div class="api-sig">std::unique_ptr&lt;EmptyObject&gt; Clone() const;
+
+void SetName(const std::string &amp;name);
+const std::string &amp;GetName() const;
+
+void SetTag(const std::string &amp;tagName);
+const Tag &amp;GetTag() const noexcept;
+const std::string &amp;GetTagName() const noexcept;
+
+void SetObjectID(const UUID128 &amp;id);
+const UUID128 &amp;GetObjectID() const;
+
+void SetSaveEnabled(bool enabled);
+bool IsSaveEnabled() const;
+
+void SetActive(bool active);
+bool IsActive() const;
+
+void SetEditorOnly(bool editorOnly);
+bool IsEditorOnly() const noexcept;
+bool IsEditorOnlyInHierarchy() const;</div>
+<p>
+<code>Clone()</code> は自身の全コンポーネントを複製した新しい <code>EmptyObject</code> を返しますが、返り値の所有権はまだシーンに追加されていない状態です（実際にシーンへ加えるには <code>Scene::CloneObject</code> を使います）。<code>SetActive(false)</code> は自身の全コンポーネントの <code>Finalize</code> を、再度 <code>true</code> にすると <code>Initialize</code> を走らせます。祖先が非アクティブな場合は自身の <code>isActive_</code> フラグが true でも実効的には非アクティブとして扱われ、この「実効アクティブ状態」が変化した子孫にも同様に Initialize/Finalize が波及します。
+</p>
+<p>
+<code>SetEditorOnly(true)</code> を付けたオブジェクトはシーンビュー専用の補助オブジェクト（デバッグ用の目印など）として扱われ、再生開始時・エディター無しビルドでのシーン読み込み時に子孫ごと削除されます。
+</p>
+</div>
+
+<div class="api-card">
+<h4>コンポーネント管理</h4>
+<div class="api-sig">template&lt;typename T&gt; std::vector&lt;T *&gt; GetComponents() const;
+template&lt;typename T&gt; T *GetComponent() const;
+IObjectComponent *GetComponent(const IObjectComponent *component) const;
+template&lt;typename T&gt; size_t HasComponents() const;
+size_t HasComponent(const IObjectComponent *component) const;
+const std::vector&lt;std::pair&lt;std::unique_ptr&lt;IObjectComponent&gt;, size_t&gt;&gt; &amp;GetAllComponents() const;
+
+IObjectComponent *AddComponent(std::unique_ptr&lt;IObjectComponent&gt; comp);
+template&lt;typename T&gt; T *AddComponent(std::unique_ptr&lt;T&gt; comp);
+template&lt;typename T, typename... Args&gt; T *AddComponent(Args&amp;&amp;... args);
+
+bool RemoveComponent(const IObjectComponent *component);
+template&lt;typename T&gt; bool RemoveComponent();
+template&lt;typename T&gt; bool RemoveComponents();
+void ClearComponents();</div>
+<p>
+これが「コンポジションによって機能を積む」ための中心的なAPIです。<code>AddComponent&lt;T&gt;(args...)</code> は <code>T</code> のインスタンスを生成してオブジェクトへ追加し、追加されたコンポーネントのポインタを返します（生成に失敗した場合は <code>nullptr</code>）。<code>GetComponents&lt;T&gt;()</code> は追加順にソートされた同型コンポーネントのリストを返します。
+</p>
+</div>
+
+<div class="api-card">
+<h4>JSON保存/読み込み（参考情報）</h4>
+<div class="api-sig">JSON SaveToJson(Passkey&lt;Scene&gt;);
+bool LoadFromJson(Passkey&lt;Scene&gt;, const JSON &amp;json);
+
+JSON SaveComponentToJson(const IObjectComponent *component) const;
+IObjectComponent *AddComponentFromJson(const JSON &amp;json);
+bool LoadComponentFromJson(IObjectComponent *component, const JSON &amp;json);</div>
+<p>
+<code>SaveToJson</code> / <code>LoadFromJson</code> は <code>Passkey&lt;Scene&gt;</code> を要求するため <code>Scene</code> クラスの内部（シーンの保存・読み込み処理）からしか呼び出せません。ゲーム側のコードから直接呼ぶことはありませんが、「オブジェクトの状態は丸ごとJSONへシリアライズできる」という設計を理解する上での参考として掲載しています。<code>SaveComponentToJson</code>/<code>AddComponentFromJson</code>/<code>LoadComponentFromJson</code> はコンポーネント単体のJSONスナップショットで、シーンエディタのUndo/Redoに使われます。
+</p>
+</div>
+
+<h2>Tag クラス</h2>
+<p>
+<code>Utilities/Tag.h</code> に定義される軽量なタグです。文字列から FNV-1a（64bit）ハッシュを計算して内部に保持するだけの値型で、比較（<code>==</code> / <code>!=</code>）は文字列比較ではなくハッシュ値同士の比較になるため高速です。<code>EmptyObject</code> だけでなく <code>IObjectComponent</code> / <code>ISceneComponent</code> にも同じ <code>SetTag</code> / <code>GetTag</code> / <code>GetTagName</code> のAPIがあり、オブジェクトやコンポーネントの分類・判別（例: 「Enemy」タグの付いたオブジェクトだけ処理する）に使います。</p>
+<div class="api-card">
+<div class="api-sig">explicit Tag(const std::string &amp;name) noexcept;
+constexpr std::uint64_t GetHash() const noexcept;
+constexpr bool IsEmpty() const noexcept;  // 空文字列のタグ（未設定）かどうか
+constexpr bool operator==(const Tag &amp;other) const noexcept;</div>
+<pre><code>if (obj->GetTag() == Tag("Enemy")) {
+    // ...
+}</code></pre>
+</div>
+
+<h2>UUID128 クラス</h2>
+<p>
+<code>Utilities/UUID128.h</code> に定義される、オブジェクトの識別子です。<code>EmptyObject::GetObjectID()</code> はこの型を返し、シーン内でオブジェクトを名前ではなく一意なIDで参照する際（<code>Scene::GetSceneObject(const UUID128 &amp;)</code>、<code>Transform::SetParentObject(const UUID128 &amp;)</code> など）に使われます。</p>
+<div class="api-card">
+<div class="api-sig">explicit UUID128();                              // 無効なUUID
+explicit UUID128(bool generateNew);              // trueで新規UUIDを生成
+explicit UUID128(const std::string &amp;uuidStr);    // 既存のUUID文字列から復元
+explicit UUID128(uint64_t high, uint64_t low);
+
+void GenerateUUID();
+void ResetUUID();
+const std::string &amp;ToString() const;
+uint64_t GetHigh() const;
+uint64_t GetLow() const;
+bool IsValid() const;</div>
+<p>
+<code>EmptyObject</code> はデフォルトで <code>objectID_ = UUID128(true)</code>、つまり生成時に自動で新しいUUIDが割り当てられます。JSONへは128bit値ではなく標準的なUUID文字列表現（<code>xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx</code>）として保存されます。<code>std::hash&lt;UUID128&gt;</code> の特殊化も提供されているため、<code>std::unordered_map&lt;UUID128, ...&gt;</code> のキーとしてそのまま使えます。
+</p>
+</div>
+
+<h2>コンポジションモデル: 「積んでいく」考え方</h2>
+<p>
+<code>EmptyObject</code> はそれ自体では何もしません。名前・タグ・アクティブ状態・コンポーネントのリストを持つだけの入れ物です。「座標を持つ」「メッシュを描画する」「当たり判定を持つ」「スクリプトで動く」といった具体的な振る舞いは、すべて <code>AddComponent&lt;T&gt;()</code> で追加する <a href="04_ObjectComponents.html"><code>IObjectComponent</code> 派生クラス</a>が担います。
+</p>
+<pre><code>// 例: シーンコンポーネントの Initialize 内などで SceneContext 経由で組み立てる場合
+EmptyObject *player = sceneContext-&gt;CreateEmptyObject("Player");
+
+// Transform を積む（座標・回転・スケールを持たせる）
+Transform *transform = player-&gt;AddComponent&lt;Transform&gt;();
+transform-&gt;SetTranslate({ 0.0f, 0.0f, 0.0f });
+
+// MeshFilter を積む（描画するメッシュを持たせる）
+player-&gt;AddComponent&lt;MeshFilter&gt;(playerMeshHandle);
+
+// Velocity を積む（速度・加速度でTransformを毎フレーム動かす）
+Velocity *velocity = player-&gt;AddComponent&lt;Velocity&gt;();
+velocity-&gt;SetVelocity({ 1.0f, 0.0f, 0.0f });</code></pre>
+<p>
+同じ型のコンポーネントを何個まで付けられるかはコンポーネント側が <code>GetMaxComponentCountPerObject()</code> として宣言しています（例えば <code>Transform</code> は1個まで、<code>Comment</code> のようなデバッグ用途のものは複数可、というように種類ごとに異なります。詳細は <a href="04_ObjectComponents.html">04_ObjectComponents.html</a> を参照）。
+</p>
+
+<div class="note">
+<strong>実際の使い方は主にシーンエディタ／AngelScript</strong><br>
+上記のようなC++コードは、エンジン内部のシステムコンポーネント（<code>SceneRenderer</code> や <code>SceneScriptEngine</code> 等）を実装する際には登場しますが、一般的なゲームコンテンツ制作では基本的にオブジェクトの生成とコンポーネントの付与は<strong>シーンエディタ</strong>上で行い、動的な生成（弾を撃つ、敵をスポーンさせる等）は<strong>AngelScriptスクリプト</strong>から行います。<code>01_Overview.html</code> で触れた通り、ゲーム側のC++コードは実質 <code>AppInitialize.h</code> 1ファイルのみに留めるのがこのエンジンの想定する使い方です。詳しくは <a href="07_Scripting.html">07_Scripting.html</a> を参照してください。
+</div>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>オブジェクトに積むコンポーネントの基底クラスと定義マクロを知る → <a href="04_ObjectComponents.html">04_ObjectComponents.html</a></li>
+<li>オブジェクトが所属するシーン側の仕組みを知る → <a href="02_Scenes.html">02_Scenes.html</a></li>
+<li>チュートリアルで実際に手を動かす → <a href="Tutorial/03_CreateObject.html">Tutorial/03_CreateObject.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

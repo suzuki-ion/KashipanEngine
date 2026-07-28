@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8. アセットを読み込む | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="T08_LoadAssets">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>8. アセットを読み込む</h1>
+<p class="page-lead">見た目や音を差し替えるために、モデル・テクスチャ・オーディオといったアセットを読み込んでコンポーネントに設定します。詳しいAPIは <a href="../09_Assets.html">09_Assets.html</a> を参照してください。</p>
+</div>
+
+<h2>共通パターン: パス → ハンドル → コンポーネント</h2>
+<p>
+KashipanEngineの各種アセットマネージャ(<code>TextureManager</code>, <code>ModelManager</code>, <code>AudioManager</code>など)は、いずれも「アセットのパスを渡してハンドル(軽量な識別子)を受け取り、そのハンドルをコンポーネントに設定する」という共通の使い方をします。
+</p>
+
+<h2>モデルを読み込んで表示する</h2>
+<p>
+<code>Assets/Application/Model/</code>配下に置いたモデルファイルを、<code>MeshFilter</code>の<code>meshAssetPath</code>に指定するだけで表示できます(<a href="04_AddComponents.html">4. コンポーネントを追加する</a>で使ったプリミティブ形状の代わりに、実際のモデルファイルパスを指定するイメージです)。
+</p>
+<pre><code>{
+    "type": "MeshFilter",
+    "data": { "customData": { "meshAssetPath": "Assets/Application/Model/Character/Character.gltf" }, "isActive": true, "priority": 1, "tag": "" }
+}</code></pre>
+
+<h2>オーディオを再生する</h2>
+<p>
+効果音やBGMは<code>AudioManager::Load</code>でハンドルを取得し、<code>AudioManager::Play</code>で再生します。オブジェクトに紐付いた音源として扱いたい場合は<code>AudioSource</code>コンポーネントを使います。
+</p>
+<pre><code>// C++側での一例(通常はAudioSourceコンポーネント経由で使うことが多い)
+SoundHandle jumpSe = AudioManager::Load("Assets/Application/Sound/Jump.wav");
+AudioManager::PlayParams params;
+params.handle = jumpSe;
+PlayHandle handle = AudioManager::Play(params);
+AudioManager::SetVolume(handle, 0.8f);</code></pre>
+<p>
+AngelScript側からもオーディオ再生APIが公開されているため、スクリプトのイベント(例えばジャンプした瞬間)に合わせて効果音を鳴らすといったことも可能です。詳細は<a href="../09_Assets.html">09_Assets.html</a>と<a href="../07_Scripting.html">07_Scripting.html</a>を参照してください。
+</p>
+
+<h2>テクスチャを使う</h2>
+<p>
+2Dの<code>SpriteRenderer</code>や、モデルのマテリアルに使うテクスチャは<code>TextureManager</code>で読み込みます。シーンエディタからマテリアルにテクスチャを割り当てる場合は、<code>MaterialManager</code>で管理されているマテリアル設定の中でテクスチャパスを指定します。
+</p>
+
+<div class="note">
+<strong>アセットの置き場所</strong><br>
+ゲーム側のアセットは<code>Assets/Application/</code>配下(Image, Model, Sound, Scripts等)に、エンジンの既定アセット(フォント・パイプライン定義など)は<code>Assets/KashipanEngine/</code>配下に置かれています。
+</div>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アセット管理 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="09_Assets">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>アセット管理</h1>
+<p class="page-lead">テクスチャ・モデル・マテリアル・サンプラー・スケルトン/アニメーション・フォント・音声を扱う各種 <code>*Manager</code> クラスをまとめます。すべて共通の設計パターンを踏襲しているため、まず共通パターンを押さえると各マネージャの理解が早くなります。</p>
+</div>
+
+<h2>共通パターン: パス → ハンドル → コンポーネントへ設定</h2>
+<p>
+<code>KashipanEngine/Assets/</code> 配下の各マネージャ（<code>TextureManager</code> / <code>ModelManager</code> / <code>MaterialManager</code> / <code>SkeletonManager</code> / <code>AnimationManager</code> / <code>FontManager</code> / <code>AudioManager</code>）は、いずれも次の設計に従います。
+</p>
+<ul>
+<li><strong>コンストラクタは <code>Passkey&lt;GameEngine&gt;</code> 限定</strong> … ゲーム側からインスタンスを直接生成することはできません。<code>GameEngine</code> が起動時に1つずつ生成し、<code>Assets/</code> フォルダ以下を走査して自動的に全アセットを読み込みます（<code>LoadAllFromAssetsFolder()</code>）。</li>
+<li><strong>読み込みは軽量な整数ハンドルを返す</strong> … <code>TextureManager::TextureHandle</code> のような <code>uint32_t</code> のエイリアス型で、無効値は <code>kInvalidHandle</code>（<code>0</code>）系の定数です。</li>
+<li><strong>取得は基本的に static メソッド</strong> … 実行中は各マネージャのインスタンスが常に1つだけ存在する前提で、ハンドル・ファイル名・Assetsルートからの相対パスのいずれからでもデータ/ハンドルを引けます（<code>GetXxxFromFileName</code> / <code>GetXxxFromAssetPath</code>)。</li>
+<li><strong>コンポーネントは「名前」を保存し、ハンドルは遅延解決する</strong> … <code>MeshFilter</code> や <code>MeshRenderer</code>、<code>AudioSource</code> のようなコンポーネントは、シリアライズ時にはハンドル値ではなくアセットパス（文字列）を保存し、実行時に初めて使われたタイミングで <code>GetXxxHandleFromAssetPath()</code> 等を呼んでハンドルへ解決します。ハンドル値は読み込み順やアセット数で変わり得るため、保存には向きません。</li>
+</ul>
+<pre><code>// MeshFilter::LoadFromJson の例（アセットパスの文字列からハンドルへ遅延解決する典型パターン）
+bool LoadFromJson(const JSON &amp;json) override {
+    const std::string assetPath = json.value("meshAssetPath", std::string());
+    meshHandle_ = assetPath.empty()
+        ? ModelManager::kInvalidHandle
+        : ModelManager::GetModelHandleFromAssetPath(assetPath);
+    return true;
+}</code></pre>
+<div class="note">
+<strong>ポイント</strong><br>
+自前でアセットを読み込みたい場合は、各マネージャの <code>LoadXxx(filePath)</code>（<code>TextureManager::LoadTexture</code> 等）を呼べば、Assetsフォルダ自動走査の対象外のファイルでも個別に読み込めます。ただし通常は <code>Assets/</code> 以下に置くだけでエンジン起動時に自動登録されるため、明示的な読み込み呼び出しは必須ではありません。
+</div>
+
+<h2>TextureManager</h2>
+<div class="api-card">
+<h4>読み込みとハンドル取得</h4>
+<div class="api-sig">using TextureHandle = uint32_t;
+
+TextureHandle LoadTexture(const std::string &amp;filePath);
+static TextureHandle GetTexture(TextureHandle handle);
+static TextureHandle GetTextureFromFileName(const std::string &amp;fileName);
+static TextureHandle GetTextureFromAssetPath(const std::string &amp;assetPath);
+static std::string GetTextureFileName(TextureHandle handle);
+static std::string GetTextureAssetPath(TextureHandle handle);</div>
+</div>
+<div class="api-card">
+<h4>メモリ上の画像・外部管理テクスチャ</h4>
+<div class="api-sig">DirectX::ScratchImage LoadTextureFromFile(const std::string &amp;filePath);
+DirectX::ScratchImage LoadTextureFromMemory(const void *data, size_t dataSize);
+TextureHandle RegisterTextureFromMemory(const std::string &amp;registerPath, const void *data, size_t dataSize);
+
+static TextureHandle RegisterExternalTexture(const std::string &amp;name, const IShaderTexture *texture);
+static bool UnregisterExternalTexture(TextureHandle handle);</div>
+<p><code>RegisterTextureFromMemory</code> は glTF埋め込みテクスチャのようにファイル実体を持たない画像データの登録に、<code>RegisterExternalTexture</code> は <a href="10_PostEffects.html">ScreenBuffer</a> のようにエンジン側が管理する動的テクスチャの登録に使います。</p>
+</div>
+<div class="api-card">
+<h4>シェーダーへのバインド</h4>
+<div class="api-sig">static TextureView GetTextureView(TextureHandle handle);
+static bool BindTexture(ShaderVariableBinder *shaderBinder, const std::string &amp;nameKey, TextureHandle handle);
+static bool BindTexture(ShaderVariableBinder *shaderBinder, const std::string &amp;nameKey, const IShaderTexture &amp;texture);</div>
+<p>D3D12の実ハンドルは外部に出さず、<code>BindTexture</code> 経由でのみシェーダーへ結び付ける設計です。詳細は <a href="05_Rendering.html">05_Rendering.html</a> を参照してください。</p>
+</div>
+
+<h2>ModelManager</h2>
+<div class="api-card">
+<h4>読み込みとハンドル取得</h4>
+<div class="api-sig">using ModelHandle = uint32_t;
+
+ModelHandle LoadModel(const std::string &amp;filePath);
+static ModelHandle GetModelHandleFromFileName(const std::string &amp;fileName);
+static ModelHandle GetModelHandleFromAssetPath(const std::string &amp;assetPath);
+static ModelHandle RegisterProceduralMesh(const std::string &amp;name,
+    std::vector&lt;ModelData::Vertex&gt; vertices, std::vector&lt;std::uint32_t&gt; indices);
+static std::string GetBaseAssetPath(const std::string &amp;assetPath);</div>
+<p>複数メッシュノードを持つモデルは、ノードごとに <code>"モデルパス:ノード名"</code> という形式のアセットパスでサブメッシュとして個別登録されます。<code>GetBaseAssetPath</code> はそこから元のモデルファイルパスへ戻すためのヘルパーです（スケルトン/アニメーションはモデルファイル単位で管理されるため）。</p>
+</div>
+<div class="api-card">
+<h4><code>ModelData</code></h4>
+<div class="api-sig">static const ModelData &amp;GetModelData(ModelHandle handle);
+
+uint32_t GetVertexCount() const noexcept;
+uint32_t GetIndexCount() const noexcept;
+const std::vector&lt;Vertex&gt; &amp;GetVertices() const noexcept;
+const std::vector&lt;uint32_t&gt; &amp;GetIndices() const noexcept;
+const std::vector&lt;SubMesh&gt; &amp;GetSubMeshes() const noexcept;
+const std::unordered_map&lt;std::string, JointWeightData&gt; &amp;GetSkinClusters() const noexcept;
+bool HasSkinning() const noexcept;
+const std::vector&lt;BlendShapeData&gt; &amp;GetBlendShapes() const noexcept;
+bool HasBlendShapes() const noexcept;</div>
+<p><code>SubMesh</code> はマテリアルごとのインデックス範囲（Unityのサブメッシュ相当）、<code>JointWeightData</code>/<code>BlendShapeData</code> はスキニング・モーフターゲット用のデータです。<code>MeshRenderer</code>/<code>SkinnedMeshRenderer</code> コンポーネントの詳細は <a href="05_Rendering.html">05_Rendering.html</a> を参照してください。</p>
+</div>
+
+<h2>MaterialManager</h2>
+<div class="api-card">
+<h4>読み込み・保存・取得</h4>
+<div class="api-sig">using MaterialHandle = std::uint32_t;
+
+MaterialHandle LoadMaterial(const std::string &amp;filePath);
+static bool SaveMaterial(MaterialHandle handle, const std::string &amp;filePath = "");
+static bool SaveAllMaterials(const std::string &amp;folderPath = "");
+
+static MaterialHandle GetMaterialHandleFromFileName(const std::string &amp;fileName);
+static MaterialHandle GetMaterialHandleFromName(const std::string &amp;name);
+static Material *GetMaterial(MaterialHandle handle);
+static Material *GetMaterial(const std::string &amp;name);
+
+static MaterialHandle RegisterMaterial(const std::string &amp;name, const Material &amp;material, const std::string &amp;filePath = "");
+static bool RemoveMaterial(const std::string &amp;name);</div>
+</div>
+<div class="api-card">
+<h4><code>MaterialManager::Material</code> 主要フィールド</h4>
+<div class="api-sig">std::string name = "Default";
+Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+Matrix4x4 uvTransform = Matrix4x4::Identity();
+TextureManager::TextureHandle textureHandle;
+TextureManager::TextureHandle environmentHandle;   // 環境マップ
+TextureManager::TextureHandle normalMapHandle;      // 法線マップ
+SamplerManager::SamplerHandle samplerHandle;
+float shininess = 32.0f;
+Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+float environmentCoefficient = 1.0f;
+bool enableLighting = true;
+bool enableShadowMapProjection = true;
+Vector4 rimColor{ 1.0f, 1.0f, 1.0f, 1.0f };  // リムライト色
+float rimPower = 2.0f;                        // リムの鋭さ
+float rimIntensity = 0.0f;                    // リムライト強さ（0で無効）
+
+void ResolveTextureHandles(); // テクスチャ名からハンドルを遅延解決</div>
+<p>テクスチャ/環境マップ/法線マップは、読み込み時に対象がまだ存在しない場合でも <code>textureFileName</code> 等のファイル名を保持しておき、<code>ResolveTextureHandles()</code> を呼ぶたびに解決を試みます。</p>
+</div>
+
+<h2>SamplerManager</h2>
+<div class="api-card">
+<h4>サンプラー管理</h4>
+<div class="api-sig">using SamplerHandle = uint32_t;
+
+static SamplerHandle CreateSampler(const D3D12_SAMPLER_DESC &amp;desc);
+static SamplerHandle GetSampler(DefaultSampler state);
+static bool BindSampler(ShaderVariableBinder *shaderBinder, const std::string &amp;nameKey, SamplerHandle handle);
+static bool BindSampler(ShaderVariableBinder *shaderBinder, const std::string &amp;nameKey, DefaultSampler defaultSampler);</div>
+<p><code>DefaultSampler</code> 列挙型はエンジンが起動時に用意する既定サンプラー（<code>PointClamp</code> / <code>PointWrap</code> / <code>LinearClamp</code> / <code>LinearWrap</code> / <code>AnisotropicClamp</code> / <code>AnisotropicWrap</code>）です。多くの場合、独自サンプラーを作らずこれらを <code>GetSampler()</code> で取得して使えば十分です。</p>
+</div>
+
+<h2>SkeletonManager / AnimationManager</h2>
+<p>
+スケルタルアニメーションは、モデル本体（<code>ModelManager</code>）・骨格構造（<code>SkeletonManager</code>）・アニメーションクリップ（<code>AnimationManager</code>）の3つのマネージャに分かれて管理されます。実際の再生・描画は <a href="05_Rendering.html">05_Rendering.html</a> の <code>SkinnedMeshRenderer</code> を参照してください。
+</p>
+<div class="api-card">
+<h4><code>SkeletonManager</code></h4>
+<div class="api-sig">using SkeletonHandle = uint32_t;
+
+SkeletonHandle LoadSkeleton(const std::string &amp;filePath);
+static SkeletonHandle GetSkeletonHandleFromFileName(const std::string &amp;fileName);
+static SkeletonHandle GetSkeletonHandleFromAssetPath(const std::string &amp;assetPath);
+static const SkeletonData &amp;GetSkeletonData(SkeletonHandle handle);
+
+static const bool UpdateSkeletonJointTransforms(SkeletonHandle handle);
+static void ResetAllSkeletonsToBindPose();
+static Skeleton CloneSkeleton(SkeletonHandle handle);</div>
+<p><code>SkeletonData</code> はノード階層（<code>GetRootNode()</code>）とジョイント一覧（<code>GetSkeleton()</code>）を持ちます。複数の <code>SkinnedMeshRenderer</code> が同じスケルトンアセットを共有していても再生状態が干渉しないよう、各インスタンスは <code>CloneSkeleton()</code> で複製した自分専用のジョイント階層を使います。</p>
+</div>
+<div class="api-card">
+<h4><code>AnimationManager</code></h4>
+<div class="api-sig">using AnimationHandle = uint32_t;
+
+AnimationHandle LoadAnimation(const std::string &amp;filePath);
+static AnimationHandle GetAnimationHandleFromFileName(const std::string &amp;fileName);
+static const std::vector&lt;AnimationHandle&gt; &amp;GetAnimationHandlesFromFileName(const std::string &amp;fileName);
+static AnimationHandle GetAnimationHandleFromAssetPath(const std::string &amp;assetPath);
+static const AnimationData &amp;GetAnimationData(AnimationHandle handle);</div>
+<p><code>AnimationData</code> は複数の <code>AnimationClip</code>（名前・長さ・タイムライン）を保持します。<code>AnimationClip::timelines</code> は <code>KeyframeAnimator</code> と共通の <code>KeyframeTimeline</code> 型です。</p>
+</div>
+
+<h2>FontManager</h2>
+<div class="api-card">
+<h4>読み込みとグリフ取得</h4>
+<div class="api-sig">using FontHandle = std::uint32_t;
+
+static FontHandle LoadFont(const std::string &amp;filePath);
+static FontHandle GetFontHandleFromFileName(const std::string &amp;fileName);
+static FontHandle GetFontHandleFromAssetPath(const std::string &amp;assetPath);
+static FontHandle GetFontHandleFromName(const std::string &amp;name);
+
+static const GlyphInfo *GetOrBakeGlyph(FontHandle handle, char32_t codepoint);
+static const GlyphInfo *GetSolidGlyph(FontHandle handle);
+static TextureManager::TextureHandle GetAtlasTextureHandle(FontHandle handle);
+
+static float GetScaleForPixelHeight(FontHandle handle, float pixelHeight);
+static float GetLineHeight(FontHandle handle, float pixelHeight);
+static float GetAscent(FontHandle handle, float pixelHeight);
+static float GetDescent(FontHandle handle, float pixelHeight);</div>
+<p>
+TTF/OTFフォントを読み込み、グリフをSDF（Signed Distance Field）としてフォントごとに1枚のアトラステクスチャへ遅延ベイクします（初めて要求されたコードポイントのみビットマップ化）。SDFは解像度非依存で拡大縮小できるため、表示サイズごとにアトラスを作り直す必要はありません。アトラスは <code>GetAtlasTextureHandle()</code> で通常のテクスチャとして取得できるため、<code>TextureManager</code> の仕組みにそのまま乗せてバインドできます。テキスト描画コンポーネントの詳細な使い方は各描画系ページに譲ります。
+</p>
+</div>
+
+<h2>AudioManager</h2>
+<p>
+音声の読み込みと再生を管理するクラスです。ハンドルは「読み込んだ音声を指す <code>SoundHandle</code>」と「実際に再生中のインスタンスを指す <code>PlayHandle</code>」の2種類に分かれます。同じ <code>SoundHandle</code> から複数の <code>PlayHandle</code>（多重再生）を作ることができます。
+</p>
+<div class="api-card">
+<h4>読み込み</h4>
+<div class="api-sig">using SoundHandle = uint32_t;
+
+SoundHandle Load(const std::string &amp;filePath);
+static SoundHandle GetSoundHandleFromFileName(const std::string &amp;fileName);
+static SoundHandle GetSoundHandleFromAssetPath(const std::string &amp;assetPath);
+static std::vector&lt;std::string&gt; GetLoadedSoundAssetPaths();</div>
+</div>
+<div class="api-card">
+<h4>再生・停止・一時停止</h4>
+<div class="api-sig">using PlayHandle = uint32_t;
+
+struct PlayParams {
+    SoundHandle sound = kInvalidSoundHandle;
+    float volume = 1.0f;
+    float pitch = 0.0f;      // 半音単位
+    bool loop = false;
+    double startTimeSec = 0.0;
+    double endTimeSec = 0.0; // 0以下は末尾まで
+};
+
+static PlayHandle Play(SoundHandle sound, float volume = 1.0f, float pitch = 0.0f,
+    bool loop = false, double startTimeSec = 0.0, double endTimeSec = 0.0);
+static PlayHandle Play(const PlayParams &amp;params);
+
+static bool Stop(PlayHandle play);
+static bool Pause(PlayHandle play);
+static bool Resume(PlayHandle play);
+static bool IsPlaying(PlayHandle play);
+static bool IsPaused(PlayHandle play);
+static bool GetPlayPositionSeconds(PlayHandle play, double &amp;outSeconds);</div>
+</div>
+<div class="api-card">
+<h4>再生パラメータの変更</h4>
+<div class="api-sig">static bool SetVolume(PlayHandle play, float volume);              // 0.0f～1.0f
+static bool SetPitch(PlayHandle play, float pitch);                 // 半音単位
+static bool SetPan(PlayHandle play, float pan);                     // -1.0f(左)～1.0f(右)</div>
+</div>
+<div class="api-card">
+<h4>エフェクト</h4>
+<div class="api-sig">enum class FilterType { LowPass, HighPass, BandPass, Notch };
+
+static bool SetFilter(PlayHandle play, FilterType type, float frequency, float oneOverQ = 1.0f);
+static bool SetReverbSend(PlayHandle play, float wetLevel);
+static bool SetEqEffect(PlayHandle play, bool enabled, const EqParams &amp;params);      // 4バンドイコライザー
+static bool SetEchoEffect(PlayHandle play, bool enabled, const EchoParams &amp;params);  // やまびこ
+static bool SetLimiterEffect(PlayHandle play, bool enabled, const LimiterParams &amp;params); // マスタリングリミッター</div>
+<p>
+フィルター（<code>SetFilter</code>）とリバーブ送り（<code>SetReverbSend</code>）は毎フレームでも呼びやすい軽量な設定変更用、イコライザー/エコー/リミッターはエフェクトチェーンの有効・無効を切り替える系のAPIです。<code>frequency</code> は正規化カットオフ周波数（0に近いほど強くかかり、1.0でフィルター無しと同等）、<code>oneOverQ</code> は共鳴の鋭さです。
+</p>
+</div>
+<div class="warn">
+<strong>注意</strong><br>
+<code>AudioManager</code> の再生系メソッドはすべて static です。しかし内部的には現在アクティブな唯一のインスタンス（<code>GameEngine</code>が生成したもの）を経由するため、ゲームループ実行中であればどこからでも安全に呼び出せます。
+</div>
+
+<h3>AudioPlayer / SoundBeat（補助クラス）</h3>
+<div class="api-card">
+<h4><code>AudioPlayer</code></h4>
+<div class="api-sig">void AddAudio(SoundHandle sound);
+void AddAudio(const AudioManager::PlayParams &amp;params);
+void AddAudios(const std::vector&lt;SoundHandle&gt; &amp;sounds);
+bool ChangeAudio(double crossFadeSec, size_t changeAudioIndex = kInvalidAudioIndex);
+size_t GetCurrentAudioIndex() const noexcept;
+PlayHandle GetCurrentPlayHandle() const noexcept;</div>
+<p>複数の音声候補を登録しておき、クロスフェード付きで切り替え再生するためのヘルパークラスです（BGMのシーン切り替え時のクロスフェードなどに使えます）。</p>
+</div>
+<div class="api-card">
+<h4><code>SoundBeat</code></h4>
+<div class="api-sig">SoundBeat(PlayHandle play, float bpm, double startOffsetSec);
+
+void SetBeat(PlayHandle play, float bpm, double startOffsetSec);
+void SetOnBeat(std::function&lt;void(PlayHandle, uint64_t, double)&gt; cb);
+float GetBeatProgress() const;
+uint64_t GetCurrentBeat() const noexcept;
+bool IsOnBeatTriggered() const noexcept;</div>
+<p>再生中の音声のBPM（<code>bpm</code>）とオフセット（<code>startOffsetSec</code>）からビート境界を検出し、コールバック（<code>SetOnBeat</code>）や <code>IsOnBeatTriggered()</code> でリズムに同期した処理を書けるようにするクラスです。リズムゲーム等での利用を想定しています。</p>
+</div>
+
+<h2>オブジェクトへの音声コンポーネント: AudioSource / AudioListener</h2>
+<p>
+シーン上のオブジェクトから音声を再生・受聴するには、<code>AudioManager</code> を直接呼ぶのではなく <code>Objects/Components/AudioSource.h</code> / <code>AudioListener.h</code> の2つのコンポーネントを使うのが基本です（<a href="04_ObjectComponents.html">04_ObjectComponents.html</a> 参照）。
+</p>
+<div class="api-card">
+<h4><code>AudioSource</code> <span class="badge final">final</span></h4>
+<div class="api-sig">void SetSoundName(const std::string &amp;soundName); // アセットパス or ファイル名
+void SetVolume(float volume);     // 0.0f～1.0f
+void SetPitch(float pitch);       // 半音単位
+void SetLoop(bool loop);
+void SetMinDistance(float minDistance);
+void SetMaxDistance(float maxDistance);
+void SetEnableSpatialAudio(bool enable); // AudioListenerとの位置関係で自動パン/籠り
+
+AudioManager::PlayHandle Play();
+void Stop(); bool Pause(); bool Resume();
+bool IsPlaying() const; bool IsPaused() const;
+
+void SetFilterEffect(const FilterEffect &amp;effect);
+void SetReverbEffect(const ReverbEffect &amp;effect);
+void SetEchoEffect(const EchoEffect &amp;effect);
+void SetEqEffect(const EqEffect &amp;effect);
+void SetLimiterEffect(const LimiterEffect &amp;effect);</div>
+<p>
+<code>AudioManager</code> の低レベルAPIをラップし、Min/Max Distanceに基づく減衰や、<code>enableSpatialAudio_</code> が有効な場合は使用中の <code>AudioListener</code> との位置関係から左右パンとローパスの籠り具合を毎フレーム自動更新します（同一シーンの <code>SceneAudioPlayer</code> が仲介します）。フィルター/リバーブ/エコー/イコライザー/リミッターの各エフェクトは個別に <code>enabled</code> を切り替えられ、複数同時に適用できます。
+</p>
+</div>
+<div class="api-card">
+<h4><code>AudioListener</code> <span class="badge final">final</span></h4>
+<div class="api-sig">void SetUsed(bool used); // trueにすると同一シーン内の他のAudioListenerは自動でオフになる
+bool GetUsed() const noexcept;</div>
+<p>音声の受聴位置となるコンポーネントです。シーン内で同時に「使用中」になれる <code>AudioListener</code> は常に高々1つで、<code>SetUsed(true)</code> を呼ぶと他のリスナーは自動的にオフになります。シーンに1つも使用中のリスナーが無い状態で <code>AudioListener</code> が追加されると、自動的にそのリスナーが使用中になります。</p>
+</div>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>ここで読み込んだテクスチャ・モデル・マテリアルを描画する → <a href="05_Rendering.html">05_Rendering.html</a></li>
+<li>入力に応じてアセット再生を切り替える → <a href="08_Input.html">08_Input.html</a></li>
+<li>コンポーネントの基礎（<code>AudioSource</code>/<code>AudioListener</code>を含む）→ <a href="04_ObjectComponents.html">04_ObjectComponents.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

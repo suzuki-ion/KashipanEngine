@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6. スクリプトを書く | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="T06_WriteScript">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>6. スクリプトを書く</h1>
+<p class="page-lead">ここからが本番です。AngelScriptファイルを作成し、<code>ScriptComponent</code>としてオブジェクトにアタッチして、実際に動くロジックを書きます。詳しいAPIは <a href="../07_Scripting.html">07_Scripting.html</a> を参照してください。</p>
+</div>
+
+<h2>1. スクリプトファイルを作成する</h2>
+<p>
+<code>Assets/Application/Scripts/</code> フォルダに、新しい <code>.as</code> ファイルを作成します。ここでは <code>SimpleMover.as</code> という名前にします。
+</p>
+<pre><code>// Assets/Application/Scripts/SimpleMover.as
+class SimpleMover : ScriptComponentBehavior {
+    [SerializeField, Tooltip("移動速度")]
+    float moveSpeed = 2.0f;
+
+    void Update() {
+        const float dt = GetDeltaTime() * GetGameSpeed();
+
+        float moveDirection = 0.0f;
+        if (IsCommandTriggered("MoveLeft"))  moveDirection -= GetCommandValue("MoveLeft");
+        if (IsCommandTriggered("MoveRight")) moveDirection += GetCommandValue("MoveRight");
+
+        Transform@ tf = GetTransform();
+        Vector3 pos = tf.GetTranslate();
+        pos.x += moveDirection * moveSpeed * dt;
+        tf.SetTranslate(pos);
+    }
+
+    void OnCollisionStay(const HitInfo &amp;in hit) {
+        if (hit.otherCollider.GetTag() == Tag("GroundBox")) {
+            // 地面に触れている間の処理
+        }
+    }
+}</code></pre>
+<p>
+1つの<code>.as</code>ファイルには、<code>ScriptComponentBehavior</code>を継承したクラスを1つ定義します。<code>Update()</code>や<code>OnCollisionStay()</code>のようなメソッドは、エンジン側から自動的に呼ばれるライフサイクル関数です(一覧は<a href="../07_Scripting.html">07_Scripting.html</a>)。
+</p>
+
+<h2>2. ScriptComponentをアタッチする</h2>
+<p>
+オブジェクトのInspectorから「Add Component」→<code>ScriptComponent</code>を選び、<code>Script Path</code>に作成したファイルを指定します。保存されるJSONは次のようになります。
+</p>
+<pre><code>{
+    "type": "ScriptComponent",
+    "data": {
+        "customData": {
+            "scriptPath": "Assets\\Application\\Scripts\\SimpleMover.as",
+            "fields": {
+                "moveSpeed": 2.0
+            }
+        },
+        "isActive": true,
+        "priority": 1,
+        "tag": ""
+    }
+}</code></pre>
+<p>
+<code>[SerializeField]</code>を付けたメンバ変数は<code>fields</code>としてシーンJSONに保存され、インスペクタから直接調整できます。<code>[Tooltip("...")]</code>などの属性はエディタでの見た目を補足するだけで、値の保存には影響しません。
+</p>
+
+<h2>3. 動作確認と再コンパイル</h2>
+<p>
+スクリプトを編集して保存した後は、<code>ScriptComponent::Reload()</code>(エディタ上では通常「Reload」ボタンなどに対応)で再コンパイルできます。<code>[SerializeField]</code>で保存済みの値は、変数名が一致していればリロード後も保持されます。構文エラーがある場合は<code>GetLastError()</code>でエラー内容を確認できます。
+</p>
+
+<div class="tip">
+<strong>実例を読む</strong><br>
+実際のプロジェクトにある <code>Assets/Application/Scripts/Player.as</code> は、移動・ジャンプ・坂道判定・被ダメージ・チェックポイント復帰まで実装した実例です。<a href="../07_Scripting.html">07_Scripting.html</a> で解説しています。
+</div>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

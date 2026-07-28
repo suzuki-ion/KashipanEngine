@@ -1,90 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <title>ビルド時マクロ</title>
-  <link rel="stylesheet" href="reference.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ビルドマクロ | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
 </head>
-<body>
-<nav><a href="00_Index.html">目次へ</a></nav>
-<h1>ビルド時マクロ</h1>
-<p>KashipanEngine では、ビルド構成（Configuration）に応じてプリプロセッサマクロが定義されます。 これらのマクロを使用して、ビルド構成ごとに処理を切り替えることができます。</p>
-<hr />
-<h2>ビルド構成マクロ</h2>
-<p>各ビルド構成で、以下のマクロが 1 つだけ定義されます。</p>
-<ul>
-<li><code>DEBUG_BUILD</code> — Debug ビルド時に定義される</li>
-<li><code>DEVELOPMENT_BUILD</code> — Development ビルド時に定義される</li>
-<li><code>RELEASE_BUILD</code> — Release ビルド時に定義される</li>
-</ul>
-<p>これらのマクロは排他的で、同時に複数が定義されることはありません。</p>
-<h3>例：ビルド構成による処理の切り替え</h3>
-<pre><code class="language-cpp">
-#<span class="kw">if</span> defined(DEBUG_BUILD)
-    <span class="com">// Debug ビルド専用の処理</span>
-    Log(<span class="str">&quot;デバッグモードです&quot;</span>, LogSeverity::Debug);
+<body data-page="14_BuildMacros">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ビルドマクロ</h1>
+<p class="page-lead">KashipanEngineのビルド構成(Configuration)ごとに定義されるプリプロセッサマクロと、それによってコードの挙動がどう切り替わるかをまとめます。</p>
+</div>
+
+<h2>ビルド構成とマクロの対応</h2>
+<p>
+<code>KashipanEngine.vcxproj</code> のビルド構成ごとに、以下のプリプロセッサマクロが自動的に定義されます(実際の <code>PreprocessorDefinitions</code> 設定から確認)。
+</p>
+<table>
+<tr><th>ビルド構成 (Configuration)</th><th>定義されるマクロ</th><th>備考</th></tr>
+<tr><td><code>Debug</code></td><td><code>DEBUG_BUILD</code>, <code>USE_IMGUI</code>, <code>_DEBUG</code></td><td>最適化なし、デバッグ情報あり</td></tr>
+<tr><td><code>Development</code></td><td><code>DEVELOPMENT_BUILD</code>, <code>USE_IMGUI</code></td><td><code>_ITERATOR_DEBUG_LEVEL=0</code>。エディタ機能ありで動作確認する構成</td></tr>
+<tr><td><code>Release</code></td><td><code>RELEASE_BUILD</code>, <code>NDEBUG</code></td><td><code>USE_IMGUI</code>は定義されない。エディタ機能なしの製品版構成</td></tr>
+</table>
+
+<div class="note">
+<strong>3つの構成の使い分け</strong><br>
+<code>DEBUG_BUILD</code>・<code>DEVELOPMENT_BUILD</code>・<code>RELEASE_BUILD</code> は互いに排他的で、必ずどれか1つだけが定義されます。<code>USE_IMGUI</code>は<code>Debug</code>と<code>Development</code>の両方で定義され、<code>Release</code>では定義されません。
+</div>
+
+<h2><code>USE_IMGUI</code> — エディタ機能の有効化</h2>
+<p>
+コードベース全体で最も多くの箇所に登場するマクロです。シーンエディタ(<a href="12_SceneEditor.html">12_SceneEditor.html</a>)、各コンポーネントのインスペクタ表示(<code>ShowImGui()</code>相当の処理)、デバッグログのImGuiウィンドウ表示など、開発中にしか使わないツール機能はすべて<code>#if defined(USE_IMGUI)</code>ブロックで囲まれています。
+</p>
+<pre><code>// 例: KashipanEngine/Core/GameEngine.h や GameEngine.cpp、Window.h、Input.h、
+// AudioManager.h/cpp、Debug/ImGuiManager.h/cpp など、非常に多くのファイルで使用されている
+#if defined(USE_IMGUI)
+    // シーンエディタのUI更新、ImGuiウィンドウの描画、
+    // デバッグ用のオブジェクト/コンポーネントインスペクタ表示 など
+#endif</code></pre>
+<div class="warn">
+<strong>Releaseビルドでの注意</strong><br>
+<code>USE_IMGUI</code>が定義されない<code>Release</code>構成では、シーンエディタやImGuiベースのデバッグ表示は一切コンパイルされません。エディタでシーンを編集する開発時は<code>Debug</code>または<code>Development</code>構成でビルドしてください。
+</div>
+
+<h2><code>DEBUG_BUILD</code> / <code>DEVELOPMENT_BUILD</code> / <code>RELEASE_BUILD</code></h2>
+<p>
+これらはログの出力形式や、デバッグ用の追加処理を切り替えるために使われます。例えば <code>Debug/Logger.cpp</code> ではビルド種別を表す文字列をログの先頭に付与しています。
+</p>
+<pre><code>// KashipanEngine/Debug/Logger.cpp
+const std::string kBuildTypeString =
+#ifdef DEBUG_BUILD
+    "[Debug]";
 #elif defined(DEVELOPMENT_BUILD)
-    <span class="com">// Development ビルド専用の処理</span>
-    Log(<span class="str">&quot;開発モードです&quot;</span>, LogSeverity::Info);
+    "[Develop]";
 #elif defined(RELEASE_BUILD)
-    <span class="com">// Release ビルド専用の処理</span>
-#endif
-</code></pre>
-<hr />
-<h2><code>USE_IMGUI</code> マクロ</h2>
-<p><code>USE_IMGUI</code> は **Debug ビルドおよび Development ビルドのときのみ** 定義されます。 Release ビルドでは定義されません。</p>
-<p>このマクロは、ImGui を使用したデバッグ UI を有効化するために使用します。</p>
+    "[Release]";
+#else
+    "[Unknown]";
+#endif</code></pre>
+<p>
+また <code>Core/Window.cpp</code> では <code>#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)</code> という形で、「エディタ用構成(DebugまたはDevelopment)でのみ有効にしたい処理」と「USE_IMGUIの有無で切り替えたい処理」を使い分けています。両者はほぼ同じ意味になることが多いですが、<code>USE_IMGUI</code>は「ImGui自体を使うかどうか」、<code>DEBUG_BUILD</code>/<code>DEVELOPMENT_BUILD</code>は「製品版でないビルドかどうか」という異なる軸のマクロなので、新しくコードを書く際はどちらの意図で分岐したいかを意識してください。
+</p>
+
+<h2>マクロ切り分けの目安</h2>
+<table>
+<tr><th>目的</th><th>使うべきマクロ</th></tr>
+<tr><td>ImGuiのAPIやシーンエディタ機能そのものを呼び出す/呼び出さない</td><td><code>USE_IMGUI</code></td></tr>
+<tr><td>製品版(Release)には含めたくないデバッグ専用処理全般</td><td><code>!defined(RELEASE_BUILD)</code> あるいは <code>defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)</code></td></tr>
+<tr><td>Debug構成だけで有効にしたい重い検証処理</td><td><code>DEBUG_BUILD</code></td></tr>
+<tr><td>ログの表示形式など、ビルド種別を人間向けに区別したいだけの場合</td><td><code>DEBUG_BUILD</code>/<code>DEVELOPMENT_BUILD</code>/<code>RELEASE_BUILD</code> の3分岐</td></tr>
+</table>
+
+<h2>次に読むページ</h2>
 <ul>
-<li><code>DEBUG_BUILD</code> — <code>USE_IMGUI</code> が定義される</li>
-<li><code>DEVELOPMENT_BUILD</code> — <code>USE_IMGUI</code> が定義される</li>
-<li><code>RELEASE_BUILD</code> — <code>USE_IMGUI</code> は **定義されない**</li>
+<li>エンジン全体の設計思想の復習 → <a href="01_Overview.html">01_Overview.html</a></li>
+<li><code>USE_IMGUI</code>下で動くシーンエディタの詳細 → <a href="12_SceneEditor.html">12_SceneEditor.html</a></li>
 </ul>
-<h3>例：ImGui によるデバッグ表示</h3>
-<pre><code class="language-cpp">
-#<span class="kw">if</span> defined(USE_IMGUI)
-#include &lt;imgui.h&gt;
-#endif
 
-<span class="type">void</span> MyComponent::Update() {
-    <span class="com">// 通常の更新処理</span>
-}
-
-#<span class="kw">if</span> defined(USE_IMGUI)
-<span class="type">void</span> MyComponent::ShowImGui() {
-    ImGui::Text(<span class="str">&quot;デバッグ情報を表示&quot;</span>);
-    ImGui::DragFloat(<span class="str">&quot;Speed&quot;</span>, &amp;speed_, <span class="num">0.1f</span>);
-}
-#endif
-</code></pre>
-<h3>例：Debug / Development ビルドでのみテストシーンを登録</h3>
-<pre><code class="language-cpp">
-#<span class="kw">if</span> defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
-#include <span class="str">&quot;Scenes/TestScene.h&quot;</span>
-#endif
-
-<span class="type">void</span> AppInitialize(<span class="kw">const</span> GameEngine::Context&amp; context) {
-    <span class="kw">auto</span>* sm = context.sceneManager;
-
-    sm-&gt;RegisterScene&lt;GameScene&gt;(<span class="str">&quot;GameScene&quot;</span>);
-
-#<span class="kw">if</span> defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
-    sm-&gt;RegisterScene&lt;TestScene&gt;(<span class="str">&quot;TestScene&quot;</span>);
-#endif
-}
-</code></pre>
-<hr />
-<h2>各ビルド構成の特徴まとめ</h2>
-<ul>
-<li>**Debug** — デバッグ機能がすべて有効。ImGui 利用可能。最適化なし。開発中の主要ビルド構成。</li>
-<li>**Development** — ImGui 利用可能。ある程度の最適化あり。テストや調整に適したビルド構成。</li>
-<li>**Release** — デバッグ機能なし。ImGui 利用不可。最大限の最適化。配布用ビルド構成。</li>
-</ul>
-<hr />
-<h2>注意事項</h2>
-<ul>
-<li><code>USE_IMGUI</code> が定義されていない環境で ImGui のヘッダやAPIを使用するとコンパイルエラーになります。必ず <code>#if defined(USE_IMGUI)</code> で囲んでください。</li>
-<li><code>ShowImGui()</code> などのデバッグ用メンバ関数は <code>#if defined(USE_IMGUI)</code> で宣言・定義を囲むのが慣例です。</li>
-<li>ビルド構成マクロはプロジェクト設定で自動的に定義されるため、手動で定義する必要はありません。</li>
-</ul>
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
 </body>
 </html>

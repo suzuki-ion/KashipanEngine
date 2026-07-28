@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>エンジン概要とアーキテクチャ | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="01_Overview">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>エンジン概要とアーキテクチャ</h1>
+<p class="page-lead">KashipanEngine 全体のディレクトリ構成、起動フロー、設計思想（コンポジション・final・Passkey）をまとめます。他のページを読む前に一度目を通しておくと理解が早くなります。</p>
+</div>
+
+<h2>ディレクトリ構成</h2>
+<pre><code>Project/
+├── KashipanEngine/          … エンジン本体（C++）
+│   ├── KashipanEngine.h/.cpp        … エンジンの唯一の公開エントリヘッダ
+│   ├── *Headers.h                   … モジュール別の一括includeヘッダ
+│   │                                   (AssetsHeaders.h, CoreHeaders.h, GraphicsHeaders.h,
+│   │                                    InputHeaders.h, MathHeaders.h, ObjectsHeaders.h,
+│   │                                    SceneHeaders.h, UtilitiesHeaders.h, FontHeaders.h)
+│   ├── Core/                        … Window, GameEngine, DirectX12ラッパー
+│   ├── Graphics/                    … Renderer, Pipeline(JSON駆動), Resources, ScreenBuffer
+│   ├── Objects/                     … EmptyObject, IObjectComponent, 各種コンポーネント
+│   ├── Scene/                       … Scene, SceneManager, SceneContext, Editor
+│   ├── Input/                       … Input, Keyboard, Mouse, Controller, InputCommand
+│   ├── Assets/                      … TextureManager, ModelManager, AudioManager 等
+│   ├── Math/ Utilities/             … Vector2/3/4, Matrix, FileIO, Passkeys 等
+│   └── ComponentSerialize/          … コンポーネントのJSONシリアライズ
+├── Application/
+│   └── AppInitialize.h              … アプリ側の唯一のC++エントリポイント
+├── Assets/
+│   ├── Application/                 … ゲーム側アセット (Image, Model, Sound, Scripts(.as) 等)
+│   ├── KashipanEngine/              … エンジン既定アセット (Fonts, Pipeline定義, SceneList.json)
+│   └── Scenes/                      … シーンJSON (*.scene)
+├── Reference/                       … このリファレンス
+└── Externals/                       … Assimp, DirectXTex, ReactPhysics3D, AngelScript, ImGui, nlohmann-json 等
+</code></pre>
+
+<div class="note">
+<strong>ポイント</strong><br>
+エンジン本体（<code>KashipanEngine/</code>）とゲーム側（<code>Application/</code>, <code>Assets/</code>）は明確に分離されています。ゲーム側のC++コードは実質 <code>AppInitialize.h</code> 1ファイルのみで、実際のゲームコンテンツは <strong>シーンJSON</strong> と <strong>AngelScriptファイル</strong> に置かれます。
+</div>
+
+<h2>唯一の公開ヘッダ</h2>
+<p>エンジンを利用する側は基本的に <code>KashipanEngine.h</code> をインクルードするだけで全モジュールにアクセスできます。</p>
+<pre><code>#include &lt;KashipanEngine.h&gt;
+
+using namespace KashipanEngine;</code></pre>
+
+<h2>起動フローと <code>GameEngine</code></h2>
+<p>
+エンジンの実行主体は <code>Core/GameEngine.h</code> の <code>GameEngine</code> クラスです。<code>main()</code> 相当の処理はエンジン内部に隠蔽されており、ゲーム側が直接生成することはできません（コンストラクタが専用の Passkey を要求します）。ゲーム側が触れるのは起動時に渡ってくる <code>GameEngine::Context</code> だけです。
+</p>
+<div class="api-card">
+<h4><code>GameEngine::Context</code></h4>
+<div class="api-sig">struct Context {
+    SceneManager *sceneManager = nullptr;
+    InputCommand *inputCommand = nullptr;
+    void SetGameLoopEndCondition(const std::function&lt;bool()&gt; &amp;func) const;
+};</div>
+<p><code>Context</code> は <code>AppInitialize()</code> の引数として渡され、シーンの登録や入力コマンドの登録、ゲームループの終了条件のカスタマイズに使います。</p>
+</div>
+
+<div class="api-card">
+<h4><code>GameEngine</code> 静的メソッド</h4>
+<div class="api-sig">static void GameEngine::RequestExitGameLoop() noexcept;
+static bool GameEngine::IsExitGameLoopRequested() noexcept;</div>
+<p>任意の場所からゲームループの終了をリクエストできます。</p>
+</div>
+
+<h2>アプリ側エントリポイント: <code>AppInitialize</code></h2>
+<p>ゲーム側で唯一実装するC++関数が <code>Application/AppInitialize.h</code> の <code>AppInitialize()</code> です。</p>
+<pre><code>#pragma once
+#include &lt;KashipanEngine.h&gt;
+
+namespace KashipanEngine {
+inline void AppInitialize(const GameEngine::Context &amp;context) {
+    // シーンの登録は Assets/KashipanEngine/SceneList.json とシーンエディタで行うのが基本。
+    // コードから追加登録したい場合は以下のようにする。
+    // context.sceneManager-&gt;RegisterSceneFile("Title", "Assets/Scenes/Title/Title.scene");
+
+    // 入力コマンドの登録もここで行える（詳細は 08_Input.html 参照）。
+    // context.inputCommand-&gt;RegisterCommand("PlayerJump", Key::Space, InputState::Trigger);
+}
+}
+</code></pre>
+<p>詳しくは <a href="02_Scenes.html">02_Scenes.html</a>・<a href="08_Input.html">08_Input.html</a> を参照してください。</p>
+
+<h2>設計思想</h2>
+
+<h3>継承よりコンポジション</h3>
+<p>
+<code>EmptyObject</code>、<code>Scene</code>、<code>MeshRenderer</code>、<code>Transform</code> など、エンジンの主要クラスのほとんどが <code>final</code> 指定されています。つまり、ゲーム側で独自のオブジェクト型やシーン型を作るために継承する、という設計にはなっていません。代わりに、既存のオブジェクトへ用途別のコンポーネントを <code>AddComponent&lt;T&gt;()</code> で組み合わせていく Unity 的な<strong>コンポジション方式</strong>を採用しています。
+</p>
+<div class="warn">
+<strong>注意</strong><br>
+「シーンやオブジェクトをC++で継承して独自クラスを作る」という発想はこのエンジンには通用しません。振る舞いを追加したい場合はコンポーネントを追加するか、<a href="07_Scripting.html">AngelScriptスクリプト</a>を書きます。
+</div>
+
+<h3>Passkeyイディオムによるアクセス制御</h3>
+<p>
+<code>Utilities/Passkeys.h</code> で定義される <code>Passkey&lt;T&gt;</code> は、「特定のクラス <code>T</code> からしか呼び出せない public メソッド」を型安全に実現するイディオムです。例えば <code>EmptyObject::SaveToJson(Passkey&lt;Scene&gt;)</code> は <code>Scene</code> クラスの内部からしか呼び出せません。ヘッダを読んでいて引数に見慣れない <code>Passkey&lt;...&gt;</code> 型が出てきたら、「このメソッドは特定の内部クラス専用で、ゲーム側からは通常呼ばない」という合図だと理解してください。
+</p>
+
+<h3>JSONによるデータ駆動</h3>
+<p>
+シーン・オブジェクト・コンポーネントはすべて <code>SaveToJson()</code> / <code>LoadFromJson()</code> の対で <code>nlohmann::json</code>（エンジン内では <code>JSON</code> 型エイリアス）へシリアライズできる一貫した設計です。シーンエディタでの編集内容はそのままこの仕組みでファイルに保存されます。パイプライン定義（<code>Assets/KashipanEngine/</code> 配下）などエンジンの各種設定もJSONで記述します。
+</p>
+
+<h3>ビルド構成とImGui</h3>
+<p>
+<code>DEBUG_BUILD</code> / <code>DEVELOPMENT_BUILD</code> / <code>RELEASE_BUILD</code> のビルドマクロと、シーンエディタ等のツール群を有効化する <code>USE_IMGUI</code> マクロがあります。多くのクラスに <code>#if defined(USE_IMGUI)</code> のブロックがあり、エディタ機能はこのマクロの有無で切り替わります。詳細は <a href="14_BuildMacros.html">14_BuildMacros.html</a> を参照してください。
+</p>
+
+<h2>命名規則</h2>
+<table>
+<tr><th>対象</th><th>規則</th><th>例</th></tr>
+<tr><td>名前空間</td><td>エンジン全体は <code>KashipanEngine</code></td><td><code>namespace KashipanEngine { ... }</code></td></tr>
+<tr><td>クラス</td><td>PascalCase。インターフェースは <code>I</code> 接頭辞</td><td><code>MeshRenderer</code>, <code>IObjectComponent</code>, <code>ICollider</code></td></tr>
+<tr><td>メソッド</td><td>PascalCase。取得/設定は <code>Get</code>/<code>Set</code></td><td><code>GetComponent()</code>, <code>SetTranslate()</code></td></tr>
+<tr><td>メンバ変数</td><td>末尾アンダースコア</td><td><code>translate_</code>, <code>isActive_</code></td></tr>
+<tr><td>定数</td><td><code>k</code> 接頭辞</td><td><code>kDefaultSceneListFilePath</code></td></tr>
+<tr><td>静的メンバ</td><td><code>s</code> 接頭辞</td><td><code>sActiveInstance_</code></td></tr>
+<tr><td>コメント</td><td>Doxygen形式（<code>@brief</code> / <code>@param</code> / <code>@return</code>）</td><td>各ヘッダで徹底</td></tr>
+</table>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>データの入れ物としてのオブジェクトを知る → <a href="03_GameObjects.html">03_GameObjects.html</a></li>
+<li>ゲームの舞台であるシーンを知る → <a href="02_Scenes.html">02_Scenes.html</a></li>
+<li>実際に手を動かして学ぶ → <a href="Tutorial/00_Index.html">チュートリアル</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>オブジェクトコンポーネント基礎 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/nav-data.js"></script>
+<script defer src="assets/nav.js"></script>
+</head>
+<body data-page="04_ObjectComponents">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>オブジェクトコンポーネント基礎</h1>
+<p class="page-lead"><code>EmptyObject</code> へ機能を積むための単位が「オブジェクトコンポーネント」です。全コンポーネントの基底クラス <code>IObjectComponent</code>、コンポーネント定義に使うマクロ群、そして最も基本的な <code>Transform</code> コンポーネントを解説します。</p>
+</div>
+
+<h2>IObjectComponent 基底クラス</h2>
+<p>
+<code>Objects/IObjectComponent.h</code> に定義されています。<code>Transform</code>・<code>MeshFilter</code>・<code>Velocity</code> など、<code>EmptyObject</code> に付けられる全てのコンポーネントはこのクラスを継承します（<a href="02_Scenes.html">シーンコンポーネント <code>ISceneComponent</code></a> とほぼ対になる設計です）。
+</p>
+
+<div class="api-card">
+<h4>公開メソッド</h4>
+<div class="api-sig">const std::string &amp;GetComponentType() const;
+size_t GetMaxComponentCountPerObject() const;
+size_t GetComponentTypeID() const;
+
+int GetUpdatePriority() const;
+void SetUpdatePriority(int priority);
+
+bool IsActive() const;
+void SetActive(bool active);   // 有効化時にInitialize、無効化時にFinalizeが走る
+
+void SetTag(const std::string &amp;tagName);
+const Tag &amp;GetTag() const noexcept;
+const std::string &amp;GetTagName() const noexcept;
+
+const EmptyObject *GetOwnerObject() const;   // 未所属の場合は nullptr
+
+virtual std::unique_ptr&lt;IObjectComponent&gt; Clone() const = 0;
+
+MemberVariable *GetMemberVariable(const std::string &amp;key);
+const std::unordered_map&lt;std::string, MemberVariable&gt; &amp;GetAllMemberVariables() const;</div>
+<p>
+<code>GetUpdatePriority()</code> は数値が小さいほど先に更新される優先度です。<code>GetOwnerObject()</code> で自身が付いている <code>EmptyObject</code> を辿れます。<code>GetMemberVariable</code> / <code>GetAllMemberVariables</code> は、あとで説明する <code>ADD_MEMBER_VARIABLE</code> で登録した「メンバ変数への汎用アクセス」（ImGuiエディタや<code>KeyFrameAnimator</code>のような外部システムが、具体的な型を知らずに値を読み書きするための仕組み）です。
+</p>
+</div>
+
+<div class="api-card">
+<h4>派生クラスが実装する protected 仮想関数</h4>
+<div class="api-sig">protected:
+    virtual void Initialize();      // 生成・有効化時
+    virtual void Finalize();        // 削除・無効化時
+    virtual void Update();          // 毎フレーム（IsActive()の場合のみ）
+
+    virtual JSON SaveToJson() const;              // JSONへの保存
+    virtual bool LoadFromJson(const JSON &amp;json);  // JSONからの読み込み
+
+#if defined(USE_IMGUI)
+    virtual void ShowImGui();               // インスペクタ表示
+    virtual void ShowPersistentImGui();     // ポーズ中も毎フレーム表示したい内容
+#endif</div>
+<p>いずれも既定実装は「何もしない」（<code>SaveToJson</code>は空オブジェクト、<code>LoadFromJson</code>はtrueを返す）ため、必要なものだけをオーバーライドします。<code>Initialize</code>/<code>Finalize</code>/<code>Update</code>を直接外から呼ぶことはなく、常に<code>InitializeInterface</code>/<code>FinalizeInterface</code>/<code>UpdateInterface</code>（<code>Passkey&lt;EmptyObject&gt;</code>経由）を介して<code>EmptyObject</code>側から呼ばれます。</p>
+</div>
+
+<h2>コンポーネント定義マクロ</h2>
+<p>実際のコンポーネント定義は <code>ComponentSerialize/ComponentRegistry.h</code> と <code>IObjectComponent.h</code> で定義されるいくつかのマクロを使って書きます。</p>
+
+<div class="api-card">
+<h4><code>OBJECT_COMPONENT_CONSTRUCTOR(typeName, maxCount, initializeCode)</code></h4>
+<div class="api-sig">#define OBJECT_COMPONENT_CONSTRUCTOR(typeName, maxCount, initializeCode) \
+    typeName() : IObjectComponent(#typeName, maxCount, GetComponentTypeID&lt;typeName&gt;()) { \
+        REGISTER_COMPONENT_OBJECT(typeName); initializeCode }</div>
+<p>デフォルトコンストラクタを1行で生成するマクロです。第1引数はコンポーネントのクラス名（<code>#typeName</code> で文字列化され、JSONの <code>"type"</code> やエディタ表示名になります）、第2引数は同じオブジェクトへ付けられる最大数、第3引数はコンストラクタ本体（多くの場合 <code>ADD_MEMBER_VARIABLE</code> の呼び出し列）です。</p>
+</div>
+
+<div class="api-card">
+<h4><code>REGISTER_COMPONENT_OBJECT(ComponentClass)</code> / <code>COMPONENT_CATEGORY(...)</code></h4>
+<div class="api-sig">#define REGISTER_COMPONENT_OBJECT(ComponentClass) \
+    static const bool is##ComponentClass##RegisteredInObject = RegisterComponentTypeObject( \
+        #ComponentClass, \
+        []() -&gt; std::unique_ptr&lt;IObjectComponent&gt; { return std::make_unique&lt;ComponentClass&gt;(); }, \
+        ComponentCategoryOf&lt;ComponentClass&gt;::Get() \
+    );
+
+#define COMPONENT_CATEGORY(...) \
+    static std::vector&lt;std::string&gt; GetComponentCategory() { return { __VA_ARGS__ }; }</div>
+<p>
+<code>REGISTER_COMPONENT_OBJECT</code> はコンポーネント型を「型名文字列 → 生成関数」のレジストリへ登録する静的初期化トリックです。<code>OBJECT_COMPONENT_CONSTRUCTOR</code> マクロの中でも自動的に呼ばれますが、名前空間スコープでクラス定義の直後にも <code>REGISTER_COMPONENT_OBJECT(Transform)</code> のように書かれます（重複登録は問題ありません）。これにより <code>AddComponentFromJson</code> のようにJSONの型名文字列だけからインスタンスを生成できます。<code>COMPONENT_CATEGORY("Physics")</code> のようにクラス定義内の public 部に書くと、シーンエディタの「Add Component」メニューでカテゴリ階層（例: <code>COMPONENT_CATEGORY("Collision", "Collider")</code>）としてツリー表示されます。
+</p>
+</div>
+
+<div class="api-card">
+<h4><code>ADD_MEMBER_VARIABLE</code> / <code>ADD_MEMBER_VARIABLE_WITH_CALLBACK</code></h4>
+<div class="api-sig">#define ADD_MEMBER_VARIABLE(var) AddMemberVariable(#var, &amp;var)
+#define ADD_MEMBER_VARIABLE_WITH_CALLBACK(var, ...) AddMemberVariable(#var, &amp;var, __VA_ARGS__)</div>
+<p>
+コンストラクタ内で自身のメンバ変数を「外部から汎用的に読み書きできる変数」として登録します。<code>ADD_MEMBER_VARIABLE_WITH_CALLBACK</code> は、外部（ImGuiやアニメーションシステムなど）がポインタ経由で値を直接書き換えた後に呼ばれるコールバックを追加で登録でき、セッターを迂回した書き込みに伴う副作用（例: <code>Transform</code>のワールド行列キャッシュの無効化）を処理するために使われます。
+</p>
+<p>実例（<code>Objects/Components/Rotation.h</code>）:</p>
+<pre><code>class Rotation final : public IObjectComponent {
+public:
+    OBJECT_COMPONENT_CONSTRUCTOR(Rotation, 1,
+        ADD_MEMBER_VARIABLE(angularVelocity_);
+        ADD_MEMBER_VARIABLE(angularAcceleration_);
+    )
+    COMPONENT_CATEGORY("Physics")
+    ~Rotation() override = default;
+    // ...
+private:
+    Vector3 angularVelocity_{ 0.0f, 0.0f, 0.0f };
+    Vector3 angularAcceleration_{ 0.0f, 0.0f, 0.0f };
+};
+
+REGISTER_COMPONENT_OBJECT(Rotation)</code></pre>
+</div>
+
+<h2>Transform コンポーネント</h2>
+<p>
+<code>Objects/Components/Transform.h</code> に定義される、位置・回転・スケールを持つ最も基本的なコンポーネントです。最大付与数は1（<code>OBJECT_COMPONENT_CONSTRUCTOR(Transform, 1, ...)</code>）。回転は内部的にクォータニオンで保持され、オイラー角はクォータニオンから都度変換される互換用のAPIです。
+</p>
+<div class="api-card">
+<h4>親子関係</h4>
+<div class="api-sig">bool SetParentObject(EmptyObject *parent);       // nullptr で親を解除
+bool SetParentObject(const UUID128 &amp;parentUUID);
+EmptyObject *GetParentObject() const;</div>
+<p><code>Transform</code> を持たないオブジェクトを親にすることはできません。また循環参照（自分自身や自分の子孫を親にする）になる設定は失敗（<code>false</code>）します。</p>
+</div>
+<div class="api-card">
+<h4>ローカル変換</h4>
+<div class="api-sig">void SetTranslate(const Vector3 &amp;translate);
+void SetTranslateY(const float &amp;translateY);
+void SetRotate(const Vector3 &amp;rotate);              // オイラー角（ラジアン）
+void SetRotateQuaternion(const Quaternion &amp;quat);
+void SetScale(const Vector3 &amp;scale);
+
+const Vector3 &amp;GetTranslate() const;
+const Vector3 &amp;GetRotate() const;                    // オイラー角（ラジアン）
+const Quaternion &amp;GetRotateQuaternion() const;
+const Vector3 &amp;GetScale() const;</div>
+</div>
+<div class="api-card">
+<h4>ワールド変換</h4>
+<div class="api-sig">Vector3 GetWorldPosition();
+Vector3 GetWorldScale();
+Quaternion GetWorldRotateQuaternion() const;
+Vector3 GetWorldRotate() const;                 // オイラー角（ラジアン）
+const Matrix4x4 &amp;GetWorldMatrix();</div>
+<p>
+親を持つ場合、ワールド行列は親のワールド行列を再帰的に合成して求められます。計算結果はバージョン管理付きでキャッシュされ（<code>worldMatrixVersion_</code> / <code>cachedParentVersion_</code>）、親子どちらも変更が無い限り再計算されません。<code>GetWorldRotateQuaternion</code> は親のローカル回転を再帰的に合成する近似値（スケールの歪みは無視）であることに注意してください。
+</p>
+</div>
+
+<h2>基本的なオブジェクトコンポーネント一覧</h2>
+<p><code>Objects/Components/</code> 配下にある代表的なコンポーネントです。描画専用・当たり判定専用のものは <a href="05_Rendering.html">05_Rendering.html</a>・<a href="06_Collision.html">06_Collision.html</a> で詳しく扱うため、ここでは名前と役割のみ紹介します。</p>
+<table>
+<tr><th>クラス名</th><th>最大付与数</th><th>カテゴリ</th><th>役割</th></tr>
+<tr><td><code>Transform</code></td><td>1</td><td>-</td><td>位置・回転・スケール、親子関係とワールド行列</td></tr>
+<tr><td><code>PreTransform</code></td><td>255</td><td>Physics</td><td>1フレーム前のTransform情報を保持（モーションブラー・補間用）</td></tr>
+<tr><td><code>Velocity</code></td><td>1</td><td>Physics</td><td>速度・加速度から毎フレーム Transform の位置を更新</td></tr>
+<tr><td><code>Rotation</code></td><td>1</td><td>Physics</td><td>角速度・角加速度から毎フレーム Transform の回転を更新</td></tr>
+<tr><td><code>Shake</code></td><td>255</td><td>Utility</td><td>位置・回転をランダムに揺らす（Transformへ直接適用/描画時のみ適用の2方式）</td></tr>
+<tr><td><code>TargetLookAt</code></td><td>-</td><td>-</td><td>指定オブジェクトの方向へ向き続ける（ビルボード的な動作）</td></tr>
+<tr><td><code>Comment</code></td><td>1</td><td>Debug</td><td>実行時の動作に影響しない、エディタ表示用のデバッグコメント</td></tr>
+<tr><td><code>Animator</code></td><td>1</td><td>Animation</td><td>スケルタルアニメーションの再生指定</td></tr>
+<tr><td><code>KeyFrameAnimator</code></td><td>-</td><td>-</td><td>キーフレームアニメーション(json)のfloat値を他コンポーネントへ適用</td></tr>
+<tr><td><code>InputCommandApplier</code></td><td>-</td><td>-</td><td>InputCommandの入力値を他コンポーネントのパラメータへ適用</td></tr>
+<tr><td><code>SceneVariableApplier</code></td><td>-</td><td>-</td><td>シーン変数の値を他コンポーネントのパラメータへ適用</td></tr>
+<tr><td><code>MeshFilter</code></td><td>1</td><td>Render</td><td>描画するメッシュのハンドルを保持</td></tr>
+<tr><td><code>AudioListener</code></td><td>-</td><td>-</td><td>音声の受聴位置（シーン内で同時に使用可能なのは1つ）</td></tr>
+<tr><td><code>AudioSource</code></td><td>-</td><td>-</td><td>音声の再生（ボリューム・ピッチ・空間音響・各種エフェクト）</td></tr>
+<tr><td><code>ParticleSystem2D</code> / <code>ParticleSystem3D</code></td><td>-</td><td>-</td><td>子オブジェクトとしてパーティクル用オブジェクトを一定間隔で生成</td></tr>
+<tr><td><code>ScriptComponent</code></td><td>-</td><td>-</td><td>AngelScriptのスクリプトファイルをコンパイルして実行する（<a href="07_Scripting.html">07_Scripting.html</a>）</td></tr>
+</table>
+
+<div class="tip">
+<strong>最大付与数（maxCount）について</strong><br>
+<code>OBJECT_COMPONENT_CONSTRUCTOR</code> の第2引数が、そのコンポーネントを同一オブジェクトへ何個まで付けられるかの上限です。<code>Transform</code> や <code>Velocity</code> のように「1個だけ意味がある」ものは <code>1</code>、<code>Comment</code> のように複数あっても構わないが用途上は基本1個のものも <code>1</code>、<code>PreTransform</code> や <code>Shake</code> のように内部的な制約が緩いものは <code>0xFF</code>（255）が指定されています。上限は <code>IObjectComponent::GetMaxComponentCountPerObject()</code> で取得できます。
+</div>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>描画に関わるコンポーネント（MeshRenderer, SpriteRenderer, Camera 等）→ <a href="05_Rendering.html">05_Rendering.html</a></li>
+<li>コライダーと物理演算 → <a href="06_Collision.html">06_Collision.html</a></li>
+<li>オブジェクトそのものの生成・管理に戻る → <a href="03_GameObjects.html">03_GameObjects.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

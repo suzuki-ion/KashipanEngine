@@ -289,6 +289,11 @@ void SceneEditor::ShowPlayControls() {
         if (ImGui::Button("Play")) {
             // 再生開始でオブジェクトのポインタ等が変わりうるため、UUIDで選択を控えて復元する
             const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
+            // PlayStart()はEditorOnlyオブジェクトを削除してしまうため、それより前の
+            // （EditorOnlyオブジェクトを含む）編集状態をバックアップしておく。
+            // 再生中のクラッシュ等で落ちた場合、このバックアップから再生直前の編集状態へ戻せる。
+            // 一定間隔の自動バックアップ（Stopped_/Playing_）とは区別できる専用プレフィックスを使う
+            TakeSceneBackup("PlayStart_");
             context_->PlayStart();
             objectHierarchy_->RestoreSelection(selectedIDs);
         }
@@ -378,7 +383,12 @@ void SceneEditor::HandleAutoSave() {
     if (autoSaveElapsedTime_ < intervalMinutes * 60.0f) return;
     autoSaveElapsedTime_ = 0.0f;
 
-    const std::string fileName = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
+    // 再生中かどうかでファイル名の先頭を変え、一覧で見分けやすくする
+    TakeSceneBackup(context_->IsPlaying() ? "Playing_" : "Stopped_");
+}
+
+void SceneEditor::TakeSceneBackup(const std::string &prefix) {
+    const std::string fileName = prefix + RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
     const std::string filePath = kSceneBackupDirectory + fileName;
     SaveJSON(context_->SaveSceneToJSON(), filePath);
 }

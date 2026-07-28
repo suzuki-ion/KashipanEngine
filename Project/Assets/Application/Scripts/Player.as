@@ -88,6 +88,7 @@ class Player : ScriptComponentBehavior {
 
     Tag groundColliderTag = Tag("GroundBox");
     Tag enemyColliderTag = Tag("EnemySphere");
+    Tag deathColliderTag = Tag("Death");
     Tag audioSourcePlayerLandingTag = Tag("PlayerLanding");
     Tag particleSystemPlayerLandingTag = Tag("PlayerLanding");
 
@@ -128,11 +129,16 @@ class Player : ScriptComponentBehavior {
                 isCollidingWithEnemy = true;
                 enemyHitNormal = hit.normal;
             }
+        } else if (hit.otherCollider.GetTag() == deathColliderTag) {
+            // 死亡判定のコライダーに触れたら即座にHPを0にする
+            currentHp = 0;
         }
     }
 
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
+        // トリガーのコライダーは接触の通知だけを受け取り、接地判定も押し戻しも行わない（すり抜ける）
+        if (hit.otherCollider !is null && hit.otherCollider.IsTrigger()) return;
         if (hit.otherCollider.GetTag() == groundColliderTag) {
             // 法線が上向きなら地面に接触しているとみなす
             bool grounded = hit.normal.y > groundedThreshold;

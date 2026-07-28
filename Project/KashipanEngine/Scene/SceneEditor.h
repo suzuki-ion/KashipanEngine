@@ -38,6 +38,9 @@ private:
     void HandleAutoSave();
     /// @brief 自動保存の間隔・保存名（TemplateLiteral）を設定するモーダル
     void ShowAutoSaveSettingsModal();
+    /// @brief シーンのバックアップを1回取る
+    /// @param prefix 保存ファイル名の先頭に付与する文字列（呼び出し元の種別を見分けるため）
+    void TakeSceneBackup(const std::string &prefix);
 
     SceneEditorContext *context_ = nullptr;
 

@@ -594,7 +594,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetRotationOffset(const Vector3 &in)", &TargetLookAt::SetRotationOffset)
         .method("const Vector3 &GetRotationOffset() const", &TargetLookAt::GetRotationOffset)
         .method("void SetRotationMode(TargetLookAtMode)", &TargetLookAt::SetRotationMode)
-        .method("TargetLookAtMode GetRotationMode() const", &TargetLookAt::GetRotationMode);
+        .method("TargetLookAtMode GetRotationMode() const", &TargetLookAt::GetRotationMode)
+        .method("void SetFollowStrength(float)", &TargetLookAt::SetFollowStrength)
+        .method("float GetFollowStrength() const", &TargetLookAt::GetFollowStrength);
 
     RegisterComponentType<AudioSource>(engine, "AudioSource")
         .method("uint Play()", &AudioSource::Play)

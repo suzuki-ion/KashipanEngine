@@ -80,11 +80,13 @@ public:
             } else {
                 selectedObjects_.insert(obj);
                 selectedObject_ = obj;
+                RequestScrollTo(obj);
             }
         } else {
             selectedObjects_.clear();
             selectedObjects_.insert(obj);
             selectedObject_ = obj;
+            RequestScrollTo(obj);
         }
         selectionAnchorObject_ = obj;
     }
@@ -117,6 +119,9 @@ private:
     void RebuildObjectItems();
     void RecursivelyBuildObjectItems(EmptyObject *obj, ObjectItem &item, size_t depth);
     void ShowObjectItem(const ObjectItem &item, size_t &index);
+    /// @brief シーンビュー等の外部からの選択時に、ヒエラルキー上で対象までスクロールし、
+    ///        その祖先ツリーを強制的に開くよう要求する（次にヒエラルキーが描画されるフレームで消費される）
+    void RequestScrollTo(EmptyObject *obj);
     void ShowObjectContextMenu(EmptyObject *obj);
     void ShowHierarchyContextMenu();
     /// @brief オブジェクト作成メニューの中身（グループ分けされたテンプレート一覧）を表示する
@@ -172,6 +177,11 @@ private:
     EmptyObject *pendingRangeTarget_ = nullptr;
     // このフレームで実際に表示された行の順序（Shift範囲選択の範囲計算に使う）
     std::vector<EmptyObject *> visibleOrderThisFrame_;
+
+    // シーンビュー等の外部選択でスクロール・強制展開する対象（次のヒエラルキー描画で1回だけ消費される）
+    EmptyObject *pendingScrollToObject_ = nullptr;
+    // pendingScrollToObject_ の祖先一覧（開閉状態を強制的に開く対象）
+    std::unordered_set<EmptyObject *> forceOpenAncestors_;
 
     DragDropPayload dragDropPayload_;
 

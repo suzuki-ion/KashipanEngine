@@ -43,6 +43,20 @@ std::vector<UUID128> SceneObjectHierarchy::GetSelectedObjectIDs() const {
     return ids;
 }
 
+void SceneObjectHierarchy::RequestScrollTo(EmptyObject *obj) {
+    pendingScrollToObject_ = obj;
+    forceOpenAncestors_.clear();
+    if (!obj) return;
+    // 祖先を辿ってツリー開閉の強制対象に登録する（IsDescendantOfAnyと同じ辿り方）
+    auto *transform = obj->GetComponent<Transform>();
+    EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
+    while (parent) {
+        forceOpenAncestors_.insert(parent);
+        auto *parentTransform = parent->GetComponent<Transform>();
+        parent = parentTransform ? parentTransform->GetParentObject() : nullptr;
+    }
+}
+
 void SceneObjectHierarchy::RestoreSelection(const std::vector<UUID128> &objectIDs) {
     ClearSelection();
     if (!editorContext_) return;
@@ -69,6 +83,11 @@ void SceneObjectHierarchy::ShowImGui() {
                 ShowObjectItem(objectItems_[i], index);
                 ++index;
             }
+
+            // シーンビュー等からのスクロール要求はこの描画で消費し終わったのでクリアする
+            // （ImGui自身が開閉状態をID単位で覚えているため、強制的に開いた祖先は以後も開いたまま残る）
+            pendingScrollToObject_ = nullptr;
+            forceOpenAncestors_.clear();
         }
 
         // Shift範囲選択はツリー全体の表示順（visibleOrderThisFrame_）が確定してからでないと
@@ -167,10 +186,18 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     // 開閉状態を保存・復元する（デフォルトは開いた状態）
     bool storedOpen = true;
     std::string settingsKey;
+    // シーンビュー等からの選択でスクロール対象の祖先にあたる場合、開閉状態（保存値）を書き換えず
+    // このフレームだけ強制的に開く（ImGuiが以後もそのID分の開閉状態を覚えているため、
+    // 一度開けば以後も自然に開いたままになる）
+    const bool forceOpen = forceOpenAncestors_.contains(item.object);
     if (!item.children.empty()) {
         settingsKey = "hierarchy.object." + item.object->GetObjectID().ToString();
         storedOpen = EditorSettings::GetBool(settingsKey, true);
-        ImGui::SetNextItemOpen(storedOpen, ImGuiCond_Once);
+        if (forceOpen) {
+            ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+        } else {
+            ImGui::SetNextItemOpen(storedOpen, ImGuiCond_Once);
+        }
     }
 
     // 非アクティブなオブジェクトは灰色、EditorOnlyオブジェクト（祖先を含む）は水色の文字で表示する
@@ -185,11 +212,16 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     if (isInactive || isEditorOnly) {
         ImGui::PopStyleColor();
     }
+    // シーンビュー等からの選択でスクロール対象そのものの場合、この行が画面中央に来るようスクロールする
+    if (pendingScrollToObject_ == item.object) {
+        ImGui::SetScrollHereY(0.5f);
+    }
     // Commentコンポーネントが付いている場合、カーソルを合わせた際にその内容をツールチップ表示する
     if (auto *comment = item.object->GetComponent<Comment>(); comment && !comment->GetComment().empty() && ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", comment->GetComment().c_str());
     }
-    if (!item.children.empty() && isOpen != storedOpen) {
+    // forceOpenは一時的な表示上の強制展開のため、ユーザーが手動で折り畳んでいた保存済み設定は書き換えない
+    if (!item.children.empty() && !forceOpen && isOpen != storedOpen) {
         EditorSettings::SetBool(settingsKey, isOpen);
     }
     DragAndDropObject(const_cast<ObjectItem *>(&item));
@@ -202,16 +234,26 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     // （BeginDragDropSource は一部ウィジェットでしきい値が変わることがあり、Ctrl/Shiftキーを
     // 同時に押しながらのクリックで手ブレ的な微小移動が起きた際に誤ってドラッグ扱いされ、
     // 選択処理そのものがスキップされてしまう不具合があったため）。
-    if (ImGui::IsItemDeactivated()) {
+    const bool shiftHeld = ImGui::IsKeyDown(ImGuiMod_Shift);
+    const bool ctrlHeld = ImGui::IsKeyDown(ImGuiMod_Ctrl);
+    // ImGuiのTreeNode/TreeNodeExは、Ctrl/Shiftキーを押しながらのクリックを開閉アイコン部分以外では
+    // 内部的に無視する仕様になっている（複数選択パターンを実装するアプリ向けに、矢印以外のクリックは
+    // 常にキー修飾を許可しない設計。arrow_hit_x1/x2の狭い範囲でしかIsItemDeactivated()が発火しない）。
+    // そのため、Ctrl/Shift押下時のみ行全体で反応するよう、IsItemHovered()（キー修飾に関係なく機能する）と
+    // マウスリリースの組み合わせで直接検知する
+    const bool clickedThisItem = (shiftHeld || ctrlHeld)
+        ? (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        : ImGui::IsItemDeactivated();
+    if (clickedThisItem) {
         const ImGuiIO &io = ImGui::GetIO();
         const float dragThreshold = io.MouseDragThreshold;
         const bool wasDragged = io.MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] > (dragThreshold * dragThreshold);
         if (!wasDragged) {
-            if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+            if (shiftHeld) {
                 // Shift+クリック: 範囲選択。対象の並び順はツリー全体を描画し終えないと確定しないため、
                 // ここでは要求のみ記録し、ApplyPendingRangeSelect() で確定させる。
                 pendingRangeTarget_ = item.object;
-            } else if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+            } else if (ctrlHeld) {
                 // Ctrl+クリック: 個別に選択/選択解除をトグルする
                 if (selectedObjects_.contains(item.object)) {
                     selectedObjects_.erase(item.object);

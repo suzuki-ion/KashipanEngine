@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cmath>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -6,6 +7,7 @@
 #include "Math/Quaternion.h"
 #include "Math/Vector3.h"
 #include "Utilities/MathUtils.h"
+#include "Utilities/TimeUtils.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
@@ -19,10 +21,13 @@ namespace KashipanEngine {
 ///            （カメラをターゲットにすると、常に画面と正対するビルボードになる）
 ///          - LookAt: 自身の+Z軸が常にターゲットの方向を向くよう回転する
 ///          どちらのモードでも回転オフセット（オイラー角）を追加で適用できる。
+///          追従の強さ（followStrength_）で、目標の回転へ到達するまでの速さを調整できる
+///          （CameraControllerの追従の強さと同じく、1フレーム(60fps換算)あたりの補間割合）。
 class TargetLookAt final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(TargetLookAt, 1,
         ADD_MEMBER_VARIABLE(rotationOffset_);
+        ADD_MEMBER_VARIABLE(followStrength_);
     )
     // カテゴリ名を"Transform"にすると、コンポーネント本体のTransform型（無カテゴリ、ルート直下に
     // 表示される）とAdd Componentメニュー上で同名の項目（サブメニューとリーフ項目）が重複し、
@@ -41,6 +46,7 @@ public:
         ptr->targetObjectID_ = targetObjectID_;
         ptr->rotationOffset_ = rotationOffset_;
         ptr->rotationMode_ = rotationMode_;
+        ptr->followStrength_ = followStrength_;
         return ptr;
     }
 
@@ -74,6 +80,12 @@ public:
     void SetRotationMode(RotationMode mode) noexcept { rotationMode_ = mode; }
     RotationMode GetRotationMode() const noexcept { return rotationMode_; }
 
+    /// @brief 追従の強さ（1フレーム(60fps換算)あたりに目標の回転へ近づく割合）を設定する
+    /// @details 1.0以上で毎フレーム即座に目標の回転になる（既定）。小さくするほど遅れて滑らかに追従する。
+    ///          CameraControllerの追従の強さと同じく、実フレームレートに依存しないよう dt*60 で補正される
+    void SetFollowStrength(float strength) noexcept { followStrength_ = strength; }
+    float GetFollowStrength() const noexcept { return followStrength_; }
+
 protected:
     void Update() override {
         auto *objectContext = GetOwnerObjectContext();
@@ -101,14 +113,25 @@ protected:
         }
         desiredWorld = desiredWorld * Quaternion::MakeRotateEuler(rotationOffset_);
 
-        // ワールド回転をローカル回転へ変換して適用する（world = parent * local）
+        // ワールド回転をローカル回転へ変換する（world = parent * local）
         auto *parentObject = transform->GetParentObject();
         auto *parentTransform = parentObject ? parentObject->GetComponent<Transform>() : nullptr;
+        Quaternion desiredLocal;
         if (parentTransform) {
             const Quaternion parentWorld = GetWorldRotationQuaternion(parentTransform);
-            transform->SetRotateQuaternion((parentWorld.Inverse() * desiredWorld).Normalize());
+            desiredLocal = (parentWorld.Inverse() * desiredWorld).Normalize();
         } else {
-            transform->SetRotateQuaternion(desiredWorld.Normalize());
+            desiredLocal = desiredWorld.Normalize();
+        }
+
+        // 追従の強さに応じて現在の回転から目標の回転へ補間する。
+        // 1.0以上は「毎フレーム即座に目標の回転になる」ものとして扱い、フレームレートに
+        // 依らず確実に即時追従させる（dt*60の補正だけだと高フレームレート時に届かなくなるため）
+        const float t = ComputeFollowLerpT();
+        if (t >= 1.0f) {
+            transform->SetRotateQuaternion(desiredLocal);
+        } else {
+            transform->SetRotateQuaternion(Quaternion::Slerp(transform->GetRotateQuaternion(), desiredLocal, t).Normalize());
         }
     }
 
@@ -132,6 +155,11 @@ protected:
         if (ImGui::DragFloat3("Rotation Offset", &rotationOffsetDeg.x, 0.1f)) {
             rotationOffset_ = Vector3(ToRadians(rotationOffsetDeg.x), ToRadians(rotationOffsetDeg.y), ToRadians(rotationOffsetDeg.z));
         }
+
+        ImGui::DragFloat("Follow Strength", &followStrength_, 0.01f, 0.0f, 1.0f);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", "目標の回転へ追従する速さ（1フレーム(60fps換算)あたりに近づく割合）\n1.0で即座に追従、小さくするほど遅れて滑らかに追従する");
+        }
     }
 #endif
 
@@ -140,6 +168,7 @@ protected:
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["rotationOffset"] = ToJSON(rotationOffset_);
         json["rotationMode"] = static_cast<int>(rotationMode_);
+        json["followStrength"] = followStrength_;
         return json;
     }
 
@@ -147,10 +176,19 @@ protected:
         if (json.contains("targetObjectID")) targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
         if (json.contains("rotationOffset")) rotationOffset_ = FromJSON<Vector3>(json["rotationOffset"]);
         rotationMode_ = static_cast<RotationMode>(json.value("rotationMode", 0));
+        // 既存シーン（このパラメータが無い頃に保存されたもの）は即時追従だったため、既定値は1.0
+        followStrength_ = json.value("followStrength", 1.0f);
         return true;
     }
 
 private:
+    /// @brief 追従の強さから、このフレームの補間係数（0〜1）を求める
+    float ComputeFollowLerpT() const {
+        if (followStrength_ >= 1.0f) return 1.0f;
+        const float dt = std::max(0.0f, GetDeltaTime() * GetGameSpeed());
+        return std::clamp(followStrength_ * dt * 60.0f, 0.0f, 1.0f);
+    }
+
     /// @brief Transformの親子関係をたどり、ワールド回転（クォータニオン）を合成する
     static Quaternion GetWorldRotationQuaternion(Transform *transform) {
         if (!transform) return Quaternion::Identity();
@@ -186,6 +224,8 @@ private:
     /// @brief 回転オフセット（オイラー角、ラジアン）
     Vector3 rotationOffset_{ 0.0f, 0.0f, 0.0f };
     RotationMode rotationMode_ = RotationMode::SyncRotation;
+    /// @brief 追従の強さ（1フレーム(60fps換算)あたりに目標の回転へ近づく割合。1.0以上で即時追従）
+    float followStrength_ = 1.0f;
 };
 
 REGISTER_COMPONENT_OBJECT(TargetLookAt)

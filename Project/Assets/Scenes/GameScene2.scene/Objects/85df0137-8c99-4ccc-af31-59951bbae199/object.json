@@ -1,0 +1,197 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 0,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 1080,
+                        "isShowViewer": false,
+                        "name": "ScreenBuffer_0",
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "width": 1920
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "excludedScreenBuffers": [],
+                        "strength": 1.0,
+                        "subpixelBlend": 1.0,
+                        "threshold": 0.009999999776482582,
+                        "thresholdMin": 0.0010000000474974513
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "FXAAEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "excludedScreenBuffers": [],
+                        "intensity": 1.0,
+                        "maxBlurPixels": 32.0,
+                        "samples": 16,
+                        "velocityScale": 1.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MotionBlurEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "dilateRadius": 4,
+                        "excludedScreenBuffers": [],
+                        "farBlurDistance": 10.0,
+                        "focusDistance": 16.0,
+                        "focusRange": 4.0,
+                        "maxBlurRadiusPixels": 16.0,
+                        "nearBlurDistance": 5.0,
+                        "sampleCount": 16
+                    },
+                    "isActive": true,
+                    "priority": 3,
+                    "tag": ""
+                },
+                "type": "DepthOfFieldEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bias": 0.15000000596046448,
+                        "blurRadius": 8,
+                        "depthThreshold": 32.0,
+                        "excludedScreenBuffers": [],
+                        "intensity": 3.0,
+                        "power": 3.0,
+                        "radius": 1.5,
+                        "sampleCount": 16
+                    },
+                    "isActive": true,
+                    "priority": 4,
+                    "tag": ""
+                },
+                "type": "AmbientOcclusionEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "brightness": 0.10000000149011612,
+                        "colorBalance": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "contrast": 1.0,
+                        "excludedScreenBuffers": [],
+                        "saturation": 1.0,
+                        "temperature": 0.0
+                    },
+                    "isActive": true,
+                    "priority": 5,
+                    "tag": ""
+                },
+                "type": "ColorAdjustEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "direction": [
+                            1.0,
+                            0.0
+                        ],
+                        "excludedScreenBuffers": [],
+                        "strength": 0.0010000000474974513
+                    },
+                    "isActive": true,
+                    "priority": 6,
+                    "tag": ""
+                },
+                "type": "ChromaticAberrationEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "blurRadius": 1.0,
+                        "excludedScreenBuffers": [],
+                        "intensity": 0.25,
+                        "iterations": 4,
+                        "softKnee": 1.0,
+                        "threshold": 0.699999988079071
+                    },
+                    "isActive": true,
+                    "priority": 7,
+                    "tag": ""
+                },
+                "type": "BloomEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": [
+                            0.5,
+                            0.5
+                        ],
+                        "color": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "excludedScreenBuffers": [],
+                        "innerRadius": 0.30000001192092896,
+                        "intensity": 0.5,
+                        "smoothness": 0.30000001192092896
+                    },
+                    "isActive": true,
+                    "priority": 8,
+                    "tag": ""
+                },
+                "type": "VignetteEffect"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "MainScreen",
+        "objectID": "85df0137-8c99-4ccc-af31-59951bbae199",
+        "tag": ""
+    },
+    "siblingIndex": 4
+}

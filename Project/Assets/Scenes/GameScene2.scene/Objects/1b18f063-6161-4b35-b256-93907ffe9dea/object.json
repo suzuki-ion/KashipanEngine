@@ -1,0 +1,74 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "1f5cc551-0280-49fb-bdeb-372b79e94236",
+                        "rotate": {
+                            "w": 0.7071067094802856,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.7071068286895752
+                        },
+                        "scale": {
+                            "x": 0.3999944031238556,
+                            "y": 0.09998659044504166,
+                            "z": 1.2000000476837158
+                        },
+                        "translate": {
+                            "x": 2.549999952316284,
+                            "y": 0.05000000074505806,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "White",
+                        "materialNames": [
+                            "White"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "Box",
+        "objectID": "1b18f063-6161-4b35-b256-93907ffe9dea",
+        "tag": ""
+    },
+    "siblingIndex": 3
+}

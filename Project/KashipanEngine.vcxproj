@@ -595,6 +595,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Scene\SceneEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Scene.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\SceneFileIO.cpp" />
     <ClCompile Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
@@ -1170,6 +1171,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Scene\SceneEditor.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneEditorContext.h" />
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\SceneFileIO.h" />
     <ClInclude Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.h" />
     <ClInclude Include="KashipanEngine\UtilitiesHeaders.h" />
     <ClInclude Include="KashipanEngine\Utilities\AssetDragDropPayload.h" />

@@ -1,0 +1,84 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "027971c3-5c56-4702-9cb4-553561677402",
+                        "rotate": {
+                            "w": 0.7071068286895752,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.7071068286895752
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 0.999597430229187,
+                            "z": 0.999597430229187
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -1.4048044931769255e-06
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "castShadows": true,
+                        "color": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "decay": 4.0,
+                        "distance": 16.0,
+                        "innerAngle": 0.27925267815589905,
+                        "intensity": 0.4000000059604645,
+                        "outerAngle": 0.8377580642700195,
+                        "radius": 16.0,
+                        "shadowBias": 1.0,
+                        "shadowDistance": 100.0,
+                        "shadowMapResolution": 512,
+                        "shadowSoftness": 0.0,
+                        "sourceDepth": 1.0,
+                        "sourceHeight": 1.0,
+                        "sourceLength": 4.5,
+                        "sourceRadius": 0.125,
+                        "sourceWidth": 1.0,
+                        "type": 6
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Light"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "LightRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "TubeLight",
+        "objectID": "c479e6eb-e0e5-4bab-a333-6f5c8fc163bb",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

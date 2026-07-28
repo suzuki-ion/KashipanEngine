@@ -43,12 +43,19 @@ class MoveGround : ScriptComponentBehavior {
     // 現在のオフセットが範囲の端に達していたら方向を反転する（往復移動用）。
     // min/max は大小関係を問わず正しく扱う（min > max という指定でも範囲として成立する）。
     // mn == mx の軸は「未設定」として扱い、常に方向は変えない（速度0なら動かない）
-    float NextDirection(float offset, float mn, float mx, float dir) {
+    //
+    // dir はあくまで「速度に掛ける符号（+1/-1）」であり、実際に今どちらへ動いているか（速度の符号）は
+    // speed の符号によって反転し得る（speedがマイナスなら、dirがプラスでも実際はマイナス方向に進む）。
+    // そのためhi/lo境界の到達判定は「dirとspeedを合わせた実際の移動方向」で行い、反転が必要な場合は
+    // 実際の移動方向を反転させる -dir を返す（speedの符号はそのまま維持されるので、speedがマイナスの
+    // 設定であれば以後もマイナス方向を基準にした往復を続ける）
+    float NextDirection(float offset, float mn, float mx, float dir, float speed) {
         if (mn == mx) return dir;
         float lo = mn < mx ? mn : mx;
         float hi = mn < mx ? mx : mn;
-        if (dir >= 0.0f && offset >= hi) return -1.0f;
-        if (dir <= 0.0f && offset <= lo) return 1.0f;
+        float actualDir = (speed < 0.0f) ? -dir : dir;
+        if (actualDir >= 0.0f && offset >= hi) return -dir;
+        if (actualDir <= 0.0f && offset <= lo) return -dir;
         return dir;
     }
 
@@ -77,9 +84,9 @@ class MoveGround : ScriptComponentBehavior {
         } else {
             Vector3 moveOffset = tf.GetTranslate() - initialPosition;
             Vector3 newMoveDirection(
-                NextDirection(moveOffset.x, moveRangeMin.x, moveRangeMax.x, moveDirection.x),
-                NextDirection(moveOffset.y, moveRangeMin.y, moveRangeMax.y, moveDirection.y),
-                NextDirection(moveOffset.z, moveRangeMin.z, moveRangeMax.z, moveDirection.z));
+                NextDirection(moveOffset.x, moveRangeMin.x, moveRangeMax.x, moveDirection.x, moveSpeed.x),
+                NextDirection(moveOffset.y, moveRangeMin.y, moveRangeMax.y, moveDirection.y, moveSpeed.y),
+                NextDirection(moveOffset.z, moveRangeMin.z, moveRangeMax.z, moveDirection.z, moveSpeed.z));
             bool moveHit = newMoveDirection.x != moveDirection.x
                 || newMoveDirection.y != moveDirection.y
                 || newMoveDirection.z != moveDirection.z;
@@ -115,9 +122,9 @@ class MoveGround : ScriptComponentBehavior {
 
             Vector3 rotateOffset = tf.GetRotate() - initialRotation;
             Vector3 newRotateDirection(
-                NextDirection(rotateOffset.x, rotateRangeMinRad.x, rotateRangeMaxRad.x, rotateDirection.x),
-                NextDirection(rotateOffset.y, rotateRangeMinRad.y, rotateRangeMaxRad.y, rotateDirection.y),
-                NextDirection(rotateOffset.z, rotateRangeMinRad.z, rotateRangeMaxRad.z, rotateDirection.z));
+                NextDirection(rotateOffset.x, rotateRangeMinRad.x, rotateRangeMaxRad.x, rotateDirection.x, rotateSpeed.x),
+                NextDirection(rotateOffset.y, rotateRangeMinRad.y, rotateRangeMaxRad.y, rotateDirection.y, rotateSpeed.y),
+                NextDirection(rotateOffset.z, rotateRangeMinRad.z, rotateRangeMaxRad.z, rotateDirection.z, rotateSpeed.z));
             bool rotateHit = newRotateDirection.x != rotateDirection.x
                 || newRotateDirection.y != rotateDirection.y
                 || newRotateDirection.z != rotateDirection.z;

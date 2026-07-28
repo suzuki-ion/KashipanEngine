@@ -1,0 +1,54 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "cameraObject": "7fd3ee27-87c3-4476-880d-074c733ccb22",
+                            "playerObject": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                            "screenObject": "85df0137-8c99-4ccc-af31-59951bbae199"
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\PostEffectController.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "PostEffectController",
+        "objectID": "e39e99a7-98aa-4477-853e-c370120983cd",
+        "tag": ""
+    },
+    "siblingIndex": 3
+}

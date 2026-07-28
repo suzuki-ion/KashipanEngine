@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <filesystem>
 #include "Scene/SceneBackupPath.h"
+#include "Scene/SceneFileIO.h"
 #include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
@@ -33,7 +34,7 @@ bool SceneLoader::ShowImGui() {
 
         if (ImGui::Button("Load", ImVec2(120, 0))) {
             if (!filePath_.empty() && std::filesystem::exists(filePath_)) {
-                JSON sceneJson = LoadJSON(filePath_);
+                JSON sceneJson = LoadSceneFromPath(filePath_);
                 if (!sceneJson.empty() && context_->LoadSceneFromJSON(sceneJson)) {
                     loaded = true;
                 }
@@ -59,8 +60,10 @@ void SceneLoader::RefreshFileList() {
         std::error_code ec;
         if (!std::filesystem::exists(folder, ec)) continue;
         for (const auto &entry : std::filesystem::directory_iterator(folder, ec)) {
-            if (!entry.is_regular_file()) continue;
-            if (entry.path().extension() != ".json") continue;
+            // 単一ファイル形式（.json）とフォルダ形式（.scene）の両方を一覧に含める
+            const bool isJsonFile = entry.is_regular_file() && entry.path().extension() == ".json";
+            const bool isSceneFolder = entry.is_directory() && entry.path().extension() == ".scene";
+            if (!isJsonFile && !isSceneFolder) continue;
             std::string path = entry.path().generic_string();
             sceneFiles_.push_back(std::move(path));
         }

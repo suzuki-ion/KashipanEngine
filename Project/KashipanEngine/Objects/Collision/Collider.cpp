@@ -1122,6 +1122,13 @@ bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
     entry.runtime.collider = entry.runtime.body->addCollider(entry.runtime.shape.shape, reactphysics3d::Transform::identity());
     if (entry.runtime.collider) {
         entry.runtime.collider->setUserData(reinterpret_cast<void *>(static_cast<std::uintptr_t>(entry.id)));
+        // トリガーは物理シミュレーション（押し戻し）の対象から外し、すり抜けるようにする。
+        // 一方でワールドクエリの対象からは外さないため、衝突検出に使っている
+        // PhysicsWorld::testCollision には引き続き現れ、OnCollisionEnter/Stay/Exitは通知される。
+        // （RP3Dのsetter名の通り「シミュレーション用の接触を生成するか」と
+        // 「ワールドクエリの結果に含めるか」は別のフラグとして管理されている）
+        entry.runtime.collider->setIsSimulationCollider(!entry.info.isTrigger);
+        entry.runtime.collider->setIsWorldQueryCollider(true);
     }
 
     return entry.runtime.collider != nullptr;

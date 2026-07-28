@@ -44,6 +44,7 @@ void SceneObjectCollider::SyncRegisteredColliders() {
                 continue;
             }
             info->enabled = collider->IsActive();
+            info->isTrigger = collider->IsTrigger();
             info->continuousDetection = collider->IsContinuousDetection();
             info->sourceCollider = collider;
             info->onCollisionEnter = collider->GetOnCollisionEnter2D();
@@ -66,6 +67,7 @@ void SceneObjectCollider::SyncRegisteredColliders() {
                 continue;
             }
             info->enabled = collider->IsActive();
+            info->isTrigger = collider->IsTrigger();
             info->continuousDetection = collider->IsContinuousDetection();
             info->sourceCollider = collider;
             info->onCollisionEnter = collider->GetOnCollisionEnter3D();

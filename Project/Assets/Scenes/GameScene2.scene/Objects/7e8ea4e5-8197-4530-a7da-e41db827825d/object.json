@@ -1,0 +1,94 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": -4.371138828673793e-08,
+                            "x": 1.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 0.9999942183494568,
+                            "z": 0.9999942183494568
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 2.841869592666626,
+                            "z": 1.0343568325042725
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "castShadows": false,
+                        "color": {
+                            "w": 1.0,
+                            "x": 0.7843137383460999,
+                            "y": 0.7843137383460999,
+                            "z": 1.0
+                        },
+                        "decay": 2.0,
+                        "distance": 10.0,
+                        "innerAngle": 0.3499999940395355,
+                        "intensity": 0.20000000298023224,
+                        "outerAngle": 0.6000000238418579,
+                        "radius": 10.0,
+                        "shadowBias": 0.0,
+                        "shadowDistance": 256.0,
+                        "shadowMapResolution": 512,
+                        "shadowSoftness": 0.0,
+                        "sourceDepth": 1.0,
+                        "sourceHeight": 1.0,
+                        "sourceLength": 1.0,
+                        "sourceRadius": 0.5,
+                        "sourceWidth": 1.0,
+                        "type": 0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Light"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "comment": "全体を照らすためだけの平行光源"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Comment"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "LightRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "SceneLight",
+        "objectID": "7e8ea4e5-8197-4530-a7da-e41db827825d",
+        "tag": ""
+    },
+    "siblingIndex": 2
+}

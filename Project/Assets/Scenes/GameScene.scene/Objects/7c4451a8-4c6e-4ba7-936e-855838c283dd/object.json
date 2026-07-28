@@ -1,0 +1,39 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 60.13059616088867,
+                            "y": 45.950992584228516,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "RotateGround",
+        "objectID": "7c4451a8-4c6e-4ba7-936e-855838c283dd",
+        "tag": ""
+    },
+    "siblingIndex": 76
+}

@@ -26,6 +26,16 @@ private:
     std::string newSceneName_;
     /// @brief 新規登録するシーンのファイルパスの入力バッファ
     std::string newSceneFilePath_;
+
+    /// @brief フォルダ形式への変換後、元の単一ファイルを削除するか確認するポップアップの状態
+    bool isConfirmDeleteOldFileRequested_ = false;
+    /// @brief 削除確認ポップアップで表示・削除対象になる元ファイルのパス
+    std::string pendingDeleteOldFilePath_;
+
+    /// @brief 登録済みシーンを単一ファイル形式（.json）からフォルダ形式（.scene）へ変換する
+    void ConvertSceneToFolderFormat(const std::string &sceneName, const std::string &oldFilePath);
+    /// @brief 変換後の削除確認ポップアップを表示する
+    void ShowConfirmDeleteOldFilePopup();
 };
 
 } // namespace KashipanEngine

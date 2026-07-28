@@ -118,13 +118,13 @@
                                 }
                             ],
                             "fovLerpFactor": 0.10000000149011612,
-                            "moveLerpAll": 0.05000000074505806,
+                            "moveLerpAll": 1.0,
                             "moveLerpPerAxis": {
                                 "x": 0.10000000149011612,
-                                "y": 0.10000000149011612,
-                                "z": 0.10000000149011612
+                                "y": 0.03999999910593033,
+                                "z": 1.0
                             },
-                            "moveLerpUsePerAxis": false,
+                            "moveLerpUsePerAxis": true,
                             "positionOffset": {
                                 "x": 0.0,
                                 "y": 2.0,
@@ -153,13 +153,14 @@
                 {
                     "data": {
                         "customData": {
+                            "followStrength": 0.009999999776482582,
                             "rotationMode": 1,
                             "rotationOffset": {
                                 "x": -0.13962633907794952,
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "targetObjectID": "1acacda4-8a0b-4b0d-9627-63a60150004d"
+                            "targetObjectID": "31c18c4e-9190-42f6-8356-7776f5da87e4"
                         },
                         "isActive": true,
                         "priority": 1,
@@ -269,6 +270,13 @@
                                     "z": -8.0
                                 },
                                 "moveSpeed": 0.5,
+                                "movementTargetDistanceMultiplier": 0.5,
+                                "movementTargetObject": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+                                "movementTargetOffset": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
                                 "slideAcceleration": 0.10000000149011612,
                                 "slideAngleAcceleration": 0.20000000298023224,
                                 "slideThreshold": 1.0
@@ -4234,7 +4242,7 @@
                     "data": {
                         "customData": {
                             "height": 1080,
-                            "isShowViewer": true,
+                            "isShowViewer": false,
                             "name": "ScreenBuffer_0",
                             "saveDirectory": "Screenshots",
                             "saveFileNamePrefix": "Screenshot",
@@ -4316,7 +4324,7 @@
                 {
                     "data": {
                         "customData": {
-                            "brightness": 0.0,
+                            "brightness": 0.10000000149011612,
                             "colorBalance": [
                                 0.0,
                                 0.0,
@@ -20005,7 +20013,7 @@
                                 },
                                 "moveSpeed": {
                                     "x": 0.0,
-                                    "y": 4.0,
+                                    "y": 16.0,
                                     "z": 0.0
                                 },
                                 "moveStopDuration": 2.0,
@@ -27732,6 +27740,42 @@
             "name": "Light Object",
             "objectID": "e105ce18-5e90-4a21-8354-88c1a9868aa3",
             "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "CameraTarget",
+            "objectID": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+            "tag": ""
         }
     ],
     "sceneVariables": [
@@ -27749,6 +27793,15 @@
             "key": "testInt",
             "type": "Int32",
             "value": 0
+        },
+        {
+            "key": "checkPoint",
+            "type": "Vector3",
+            "value": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
         },
         {
             "key": "CheckpointPriority",

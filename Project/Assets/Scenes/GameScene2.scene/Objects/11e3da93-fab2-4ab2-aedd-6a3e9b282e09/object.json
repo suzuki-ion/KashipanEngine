@@ -1,0 +1,76 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": -10.3652925491333,
+                            "y": 26.97087860107422,
+                            "z": 15.999992370605469
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.5,
+                            "z": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "GroundBox"
+                },
+                "type": "BoxCollider"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "LightObject",
+        "objectID": "11e3da93-fab2-4ab2-aedd-6a3e9b282e09",
+        "tag": ""
+    },
+    "siblingIndex": 1
+}

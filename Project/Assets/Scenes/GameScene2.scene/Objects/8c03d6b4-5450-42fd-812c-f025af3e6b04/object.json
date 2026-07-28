@@ -1,0 +1,69 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 1080,
+                        "interceptedMessages": [],
+                        "title": "Normal Window",
+                        "width": 1920
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "NormalWindowObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 1080,
+                        "isShowViewer": true,
+                        "name": "ScreenBuffer_1",
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "width": 1920
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "Window Object",
+        "objectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
+        "tag": ""
+    },
+    "siblingIndex": 6
+}

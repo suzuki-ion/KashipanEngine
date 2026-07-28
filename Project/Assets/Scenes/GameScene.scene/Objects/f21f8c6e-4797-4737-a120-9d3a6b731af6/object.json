@@ -1,0 +1,74 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "rotate": {
+                            "w": 0.7071067094802856,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.7071068286895752
+                        },
+                        "scale": {
+                            "x": 0.4999259412288666,
+                            "y": 47.993412017822266,
+                            "z": 0.49998876452445984
+                        },
+                        "translate": {
+                            "x": 32.10587692260742,
+                            "y": 14.87386703491211,
+                            "z": -2.999638795852661
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "White",
+                        "materialNames": [
+                            "White"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "Ground",
+        "objectID": "f21f8c6e-4797-4737-a120-9d3a6b731af6",
+        "tag": "Ground"
+    },
+    "siblingIndex": 94
+}

@@ -76,6 +76,8 @@ struct ColliderInfo2D final {
     std::function<void(const HitInfo2D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
+    /// @brief トリガー。物理的な押し戻し（衝突応答）を行わず、衝突コールバックの通知のみ行う
+    bool isTrigger = false;
     /// @brief 連続衝突判定（CCD）。高速移動時に移動経路を分割して判定し、すり抜けを検出する
     bool continuousDetection = false;
 };
@@ -141,6 +143,8 @@ struct ColliderInfo3D final {
     std::function<void(const HitInfo3D &hitInfo)> onCollisionExit;
 
     bool enabled = true;
+    /// @brief トリガー。物理的な押し戻し（衝突応答）を行わず、衝突コールバックの通知のみ行う
+    bool isTrigger = false;
     /// @brief 連続衝突判定（CCD）。高速移動時に移動経路を分割して判定し、すり抜けを検出する
     bool continuousDetection = false;
 };

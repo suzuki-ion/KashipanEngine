@@ -1,13 +1,14 @@
 #include "SceneSaver.h"
 #ifdef USE_IMGUI
 #include <imgui.h>
+#include "Scene/SceneFileIO.h"
 #include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
 
 void SceneSaver::Open() {
     isOpenRequested_ = true;
-    filePath_ = "Assets/Scenes/" + context_->GetName() + ".json";
+    filePath_ = "Assets/Scenes/" + context_->GetName() + ".scene";
 }
 
 void SceneSaver::ShowImGui() {
@@ -19,7 +20,7 @@ void SceneSaver::ShowImGui() {
         ImGui::InputText("Path", &filePath_);
         if (ImGui::Button("Save", ImVec2(120, 0))) {
             if (!filePath_.empty()) {
-                SaveJSON(context_->SaveSceneToJSON(), filePath_);
+                SaveSceneToPath(context_->SaveSceneToJSON(), filePath_);
                 ImGui::CloseCurrentPopup();
             }
         }

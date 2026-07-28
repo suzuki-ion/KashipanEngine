@@ -615,6 +615,8 @@ class TargetLookAt {
 	const Vector3& GetRotationOffset() const;
 	void SetRotationMode(TargetLookAtMode);
 	TargetLookAtMode GetRotationMode() const;
+	void SetFollowStrength(float);
+	float GetFollowStrength() const;
 }
 
 class AudioSource {

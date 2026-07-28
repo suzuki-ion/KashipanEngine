@@ -1,6 +1,7 @@
 #include "Scene/SceneManager.h"
 #include "Debug/Logger.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
+#include "Scene/SceneFileIO.h"
 #include "Utilities/FileIO/JSON.h"
 
 #include <algorithm>
@@ -146,7 +147,7 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     // 新しいシーンを作成する
     if (!entry->filePath.empty()) {
         // ファイルパス登録の場合は切り替えのたびに最新のファイル内容を読み込む
-        JSON sceneData = LoadJSON(entry->filePath);
+        JSON sceneData = LoadSceneFromPath(entry->filePath);
         if (!sceneData.empty()) {
             currentScene_ = std::make_unique<Scene>(sceneData);
         } else {

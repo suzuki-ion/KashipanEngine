@@ -555,6 +555,9 @@
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp">
       <Filter>KashipanEngine\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\SceneFileIO.cpp">
+      <Filter>KashipanEngine\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.cpp">
       <Filter>KashipanEngine\Scene</Filter>
     </ClCompile>
@@ -1411,6 +1414,9 @@
       <Filter>KashipanEngine\Scene</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\SceneManager.h">
+      <Filter>KashipanEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\SceneFileIO.h">
       <Filter>KashipanEngine\Scene</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.h">

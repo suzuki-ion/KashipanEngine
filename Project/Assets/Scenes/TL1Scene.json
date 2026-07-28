@@ -1,0 +1,244 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            },
+            "type": "SceneRenderer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneObjectCollider"
+        }
+    ],
+    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneName": "TL1Scene",
+    "sceneObjects": [
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 1.0,
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "scale": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "translate": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "meshAssetPath": "PrimitiveMesh-Box"
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "MeshFilter"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "center": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "continuousDetection": false,
+                            "isTrigger": false,
+                            "size": {
+                                "x": 2.5899999141693115,
+                                "y": 2.130000114440918,
+                                "z": 1.590000033378601
+                            },
+                            "syncPosition": [
+                                true,
+                                true,
+                                true
+                            ],
+                            "syncRotation": [
+                                true,
+                                true,
+                                true
+                            ],
+                            "syncScale": [
+                                false,
+                                false,
+                                false
+                            ]
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "BoxCollider"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": true,
+                            "instanceColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "instanceColorBlendMode": 1,
+                            "materialName": "Default",
+                            "materialNames": [
+                                "Default"
+                            ],
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 900,
+                        "tag": ""
+                    },
+                    "type": "MeshRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Mesh Object",
+            "objectID": "cbc20cc6-8789-46d0-bbec-986d1f919830",
+            "tag": ""
+        },
+        {
+            "components": [
+                {
+                    "data": {
+                        "customData": {
+                            "rotate": {
+                                "w": 0.82469642162323,
+                                "x": 0.37065762281417847,
+                                "y": -0.38964131474494934,
+                                "z": 0.17512409389019012
+                            },
+                            "scale": {
+                                "x": 0.9999977350234985,
+                                "y": 0.9999892711639404,
+                                "z": 0.9999979734420776
+                            },
+                            "translate": {
+                                "x": 1.3368831872940063,
+                                "y": 6.525645403598901e-06,
+                                "z": -1.2389843463897705
+                            }
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Transform"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "castShadows": false,
+                            "color": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "decay": 2.0,
+                            "distance": 10.0,
+                            "innerAngle": 0.3499999940395355,
+                            "intensity": 1.0,
+                            "outerAngle": 0.6000000238418579,
+                            "radius": 10.0,
+                            "shadowBias": 1.0,
+                            "shadowDistance": 100.0,
+                            "shadowMapResolution": 2048,
+                            "shadowSoftness": 0.0,
+                            "sourceDepth": 1.0,
+                            "sourceHeight": 1.0,
+                            "sourceLength": 1.0,
+                            "sourceRadius": 0.5,
+                            "sourceWidth": 1.0,
+                            "type": 0
+                        },
+                        "isActive": true,
+                        "priority": 1,
+                        "tag": ""
+                    },
+                    "type": "Light"
+                },
+                {
+                    "data": {
+                        "customData": {
+                            "pipelineName": "",
+                            "targetObjectID": ""
+                        },
+                        "isActive": true,
+                        "priority": 950,
+                        "tag": ""
+                    },
+                    "type": "LightRenderer"
+                }
+            ],
+            "editorOnly": false,
+            "isActive": true,
+            "name": "Light Object",
+            "objectID": "02ca1f4d-4017-4c4d-972c-34c8c9231f76",
+            "tag": ""
+        }
+    ],
+    "sceneVariables": [
+        {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
+        },
+        {
+            "key": "testInt",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "CheckpointPriority",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "CheckpointPosition",
+            "type": "Vector3",
+            "value": {
+                "x": 30.629053115844727,
+                "y": 6.440534591674805,
+                "z": 0.0
+            }
+        }
+    ]
+}

@@ -158,6 +158,9 @@ class Enemy : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
+        // トリガーのコライダーはすり抜ける（接地判定にも押し戻しにも使わない）。
+        // 自分側のエッジセンサーはトリガーだが、判定するのは相手側（床）のためここでは除外されない
+        if (hit.otherCollider !is null && hit.otherCollider.IsTrigger()) return;
         if (hit.otherCollider.GetTag() == groundColliderTag) {
             HandleGroundColliderHit(hit);
         } else if (hit.otherCollider.GetTag() == playerColliderTag) {
@@ -168,6 +171,8 @@ class Enemy : ScriptComponentBehavior {
 
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
+        // トリガーのコライダーはすり抜ける（接地判定にも押し戻しにも使わない）
+        if (hit.otherCollider !is null && hit.otherCollider.IsTrigger()) return;
         if (hit.otherCollider.GetTag() == groundColliderTag) {
             HandleGroundColliderHit(hit);
 

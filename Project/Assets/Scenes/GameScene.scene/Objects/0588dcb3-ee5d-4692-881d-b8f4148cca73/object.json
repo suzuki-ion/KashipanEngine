@@ -1,0 +1,90 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 43.90900421142578,
+                            "y": 41.58467102050781,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": -0.5,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 1.0,
+                            "y": 2.0,
+                            "z": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncScale": [
+                            false,
+                            false,
+                            false
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "CheckPoint"
+                },
+                "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "priority": 1
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\Checkpoint.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "isActive": true,
+        "name": "CheckPoint",
+        "objectID": "0588dcb3-ee5d-4692-881d-b8f4148cca73",
+        "tag": ""
+    },
+    "siblingIndex": 134
+}

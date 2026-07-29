@@ -21,6 +21,7 @@ public:
         ptr->title_ = title_;
         ptr->width_ = width_;
         ptr->height_ = height_;
+        ptr->syncWithTransform_ = syncWithTransform_;
         ptr->interceptedMessages_ = interceptedMessages_;
         return ptr;
     }
@@ -31,14 +32,13 @@ protected:
         window_ = Window::CreateOverlay(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_));
         // メッセージの横取り設定を生成したウィンドウへ適用する
         ApplyInterceptedMessages();
-        // 位置やサイズの適用のために一回Updateを呼ぶ
-        Update();
     }
     void Update() override {
         // ウィンドウが受信したメッセージをコールバック（スクリプト等）へ通知する
         DispatchWindowMessages();
 
         if (!window_ || !Window::IsExist(window_)) return;
+        if (!syncWithTransform_) return;
         auto *tr = GetOwnerObjectContext()->GetComponent<Transform>();
         if (!tr) return;
         // ワールド行列から位置とスケールを取得してウィンドウに反映
@@ -71,6 +71,7 @@ protected:
         int h = static_cast<int>(height_);
         if (ImGuiCustom::EditValue("Width", w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
         if (ImGuiCustom::EditValue("Height", h)) height_ = static_cast<std::uint32_t>(std::max(1, h));
+        ImGui::Checkbox("Sync With Transform", &syncWithTransform_);
         ShowInterceptedMessagesImGui();
     }
 #endif
@@ -80,6 +81,7 @@ protected:
         json["title"] = title_;
         json["width"] = width_;
         json["height"] = height_;
+        json["syncWithTransform"] = syncWithTransform_;
         json["interceptedMessages"] = SaveInterceptedMessagesJson();
         return json;
     }
@@ -88,6 +90,7 @@ protected:
         title_ = json.value("title", std::string{ "Overlay Window" });
         width_ = json.value("width", 1280u);
         height_ = json.value("height", 720u);
+        syncWithTransform_ = json.value("syncWithTransform", true);
         // 前のシーンから引き継がれたウィンドウがあればそちらを使う。
         // 無い場合はInitializeで生成済みの既定ウィンドウのタイトルを実際の設定値へ合わせる
         if (!TryClaimCarriedOverWindow(RenderTargetCarryOverRegistry::Kind::OverlayWindow)) {
@@ -96,6 +99,8 @@ protected:
             }
         }
         LoadInterceptedMessagesJson(json.value("interceptedMessages", JSON::array()));
+        // JSONから同期設定を読み込んだ後にのみ、初回の位置・サイズ同期を行う
+        if (syncWithTransform_) Update();
         return true;
     }
 };

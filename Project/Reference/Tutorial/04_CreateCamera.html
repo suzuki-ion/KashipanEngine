@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>11. カメラオブジェクトを作成する | KashipanEngine リファレンス</title>
+<title>4. カメラオブジェクトを作成する | KashipanEngine リファレンス</title>
 <link rel="stylesheet" href="../assets/style.css">
 <script defer src="../assets/nav-data.js"></script>
 <script defer src="../assets/nav.js"></script>
 </head>
-<body data-page="T11_CreateCamera">
+<body data-page="T04_CreateCamera">
 <div class="layout">
 <nav id="sidebar"></nav>
 <main>
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
-<h1>11. カメラオブジェクトを作成する</h1>
+<h1>4. カメラオブジェクトを作成する</h1>
 <p class="page-lead">3Dシーンをどの位置から、どの画角で、どの描画先へ映すかをCamera Objectで設定します。</p>
 </div>
 
@@ -32,7 +32,7 @@
 <div class="screenshot-placeholder-inner">
 <strong>スクリーンショット差し替え位置</strong>
 MainCameraを選択し、Scene ViewのカメラフラスタムとInspectorのCamera3D・CameraRendererを表示したエディター画面
-<br><code>11-camera-object.png</code>
+<br><code>04-camera-object.png</code>
 </div>
 </div>
 <figcaption><strong>カメラオブジェクトの設定例。</strong> Scene View上のカメラ位置・向きと、Inspectorの射影設定・Targetが一度に確認できる構図を想定しています。</figcaption>
@@ -62,18 +62,20 @@ MainCameraを選択し、Scene ViewのカメラフラスタムとInspectorのCam
 
 <div class="tip"><strong>Scene Viewでカメラを見つける</strong><br>Scene View上部の<code>Cameras</code>を有効にすると、カメラのアイコンと視錐台を確認できます。TransformのRotateを変更し、フラスタムが対象へ向くよう調整してください。</div>
 
-<h2>4. 描画結果を確認する</h2>
+<h2>4. この段階で確認すること</h2>
 <ol class="steps">
 <li>MainScreenのScreenBuffer Viewerを開きます。</li>
-<li>PlayerVisualやGroundのMeshRendererで、TargetがMainScreenになっていることを確認します。</li>
-<li>Scene Editorの<code>Play</code>を押し、Viewerにカメラから見たシーンが表示されることを確認します。</li>
+<li>CameraRendererのTargetがMainScreenになっていることを確認します。</li>
+<li>Scene Viewでカメラの位置、向き、視錐台を確認します。</li>
 </ol>
+
+<div class="note"><strong>Viewerへの映像表示は手順7で確認します</strong><br>この段階では描画対象のMesh Objectをまだ作っていないため、Viewerが空でも問題ありません。<a href="07_AddComponents.html">7. コンポーネントを追加する</a>で描画対象をMainScreenへ接続すると、カメラ映像を確認できます。</div>
 
 <ul class="checklist">
 <li>MainCameraにCamera3DとCameraRendererがある</li>
 <li>CameraRendererのTargetがMainScreenになっている</li>
-<li>カメラの前方に描画対象がある</li>
-<li>Viewerでカメラ映像を確認できる</li>
+<li>Scene Viewでカメラの位置と向きを確認できる</li>
+<li>ScreenBuffer Viewerを開ける</li>
 </ul>
 
 <p>2Dカメラ、追従カメラ、各APIの詳細は<a href="../05_Rendering.html">描画コンポーネントのリファレンス</a>を参照してください。</p>

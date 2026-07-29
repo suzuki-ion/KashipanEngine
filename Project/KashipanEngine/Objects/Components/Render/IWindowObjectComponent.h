@@ -42,6 +42,10 @@ public:
         width_ = width;
         height_ = height;
     }
+    /// @brief ウィンドウの位置・サイズを同一オブジェクトのTransformと同期するかを設定する
+    void SetSyncWithTransform(bool enabled) noexcept { syncWithTransform_ = enabled; }
+    /// @brief ウィンドウの位置・サイズを同一オブジェクトのTransformと同期するかを取得する
+    bool IsSyncWithTransformEnabled() const noexcept { return syncWithTransform_; }
 
     //==================================================
     // ウィンドウメッセージ通知コールバック
@@ -87,6 +91,7 @@ protected:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(title_, [this] { SetTitle(title_); });
         ADD_MEMBER_VARIABLE(width_);
         ADD_MEMBER_VARIABLE(height_);
+        ADD_MEMBER_VARIABLE(syncWithTransform_);
     }
 
     /// @brief 横取り設定を所有ウィンドウへ適用する（派生クラスのInitializeでウィンドウ生成後に呼ぶ）
@@ -217,6 +222,8 @@ protected:
     std::string title_;
     std::uint32_t width_ = 1280;
     std::uint32_t height_ = 720;
+    /// @brief 同一オブジェクトのTransformのワールド位置・スケールをウィンドウへ反映するか
+    bool syncWithTransform_ = true;
     /// @brief 横取り対象のメッセージ（ウィンドウ再生成時にも引き継ぐためコンポーネント側でも保持する）
     std::unordered_set<std::uint32_t> interceptedMessages_;
 

@@ -22,9 +22,14 @@ private:
     /// @brief Assets配下のフォントファイル一覧を再スキャンする（毎フレーム呼ばないこと。
     ///        再帰的なディレクトリ走査はコストが高く、フレーム毎に行うとFPSが大きく低下する）
     void RefreshFontFileList();
+    /// @brief 配色プリセット（EditorSettingsの"editorUI.presets"）が未登録の場合、
+    ///        Dark/Light/Classicの既定プリセットを1度だけ登録する
+    void EnsureDefaultPresets();
 
     std::vector<std::string> fontFiles_;
     bool hasScannedFontFiles_ = false;
+    bool hasEnsuredDefaultPresets_ = false;
+    std::string newPresetNameBuffer_;
 };
 
 } // namespace KashipanEngine

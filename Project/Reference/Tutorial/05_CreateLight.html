@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>12. ライトオブジェクトを作成する | KashipanEngine リファレンス</title>
+<title>5. ライトオブジェクトを作成する | KashipanEngine リファレンス</title>
 <link rel="stylesheet" href="../assets/style.css">
 <script defer src="../assets/nav-data.js"></script>
 <script defer src="../assets/nav.js"></script>
 </head>
-<body data-page="T12_CreateLight">
+<body data-page="T05_CreateLight">
 <div class="layout">
 <nav id="sidebar"></nav>
 <main>
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
-<h1>12. ライトオブジェクトを作成する</h1>
+<h1>5. ライトオブジェクトを作成する</h1>
 <p class="page-lead">Light Objectを追加し、光の種類・色・強さ・影と、ライトを適用する描画先を設定します。</p>
 </div>
 
@@ -32,7 +32,7 @@
 <div class="screenshot-placeholder-inner">
 <strong>スクリーンショット差し替え位置</strong>
 KeyLightを選択し、照明されたScene ViewとInspectorのLight・LightRenderer設定を表示したエディター画面
-<br><code>12-light-object.png</code>
+<br><code>05-light-object.png</code>
 </div>
 </div>
 <figcaption><strong>ライトオブジェクトの設定例。</strong> Scene Viewのライトアイコン・方向線・照明結果と、InspectorのType・Color・Intensity・Targetが確認できる構図を想定しています。</figcaption>
@@ -63,7 +63,7 @@ KeyLightを選択し、照明されたScene ViewとInspectorのLight・LightRend
 <li><code>LightRenderer</code>を展開します。</li>
 <li><code>Target</code>から<code>MainScreen</code>を選択します。</li>
 <li><code>Pipeline</code>は空欄のまま全パイプラインへ適用するか、照明対象と同じ<code>Object3D.Solid.BlendNormal</code>を選択します。</li>
-<li>MainScreen ViewerまたはPlayモードで、ライトのActiveを切り替えたときに明るさが変わることを確認します。</li>
+<li>設定後は<a href="07_AddComponents.html">7. コンポーネントを追加する</a>で描画対象を作成し、MainScreen Viewer上でライトのActiveを切り替えて明るさの変化を確認します。</li>
 </ol>
 
 <h2>4. 影を有効にする</h2>
@@ -80,8 +80,10 @@ KeyLightを選択し、照明されたScene ViewとInspectorのLight・LightRend
 <li>KeyLightにLightとLightRendererがある</li>
 <li>Type、Color、Intensityを設定できる</li>
 <li>LightRendererのTargetがMainScreenになっている</li>
-<li>ViewerまたはPlayモードで照明結果を確認できる</li>
+<li>Scene Viewでライトの位置または方向を確認できる</li>
 </ul>
+
+<div class="note"><strong>実際の照明結果は手順7で確認します</strong><br>この段階では照らすMesh Objectがまだ存在しません。ライト設定を保存して次へ進み、描画対象をMainScreenへ接続してから照明結果を確認します。</div>
 
 <p>各ライト型、面光源、シャドウAPIの詳細は<a href="../05_Rendering.html">描画コンポーネントのリファレンス</a>を参照してください。</p>
 

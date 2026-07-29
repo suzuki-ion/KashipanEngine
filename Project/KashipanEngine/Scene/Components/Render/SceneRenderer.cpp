@@ -109,6 +109,11 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
         const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
 
         for (auto *target : targets) {
+            if (target->GetRenderTargetKind() == RenderTargetKind::Window) {
+                // Window描画先は、描画先のウィンドウが存在しない場合は描画しない
+                Window *window = static_cast<Window *>(target);
+                if (!Window::IsExist(window)) continue;
+            }
             if (!target || !target->IsRenderTargetAvailable()) continue;
             if (editorOnly && target != editorTarget) continue;
             // エディター用描画先には除外設定に関わらず常に描画する

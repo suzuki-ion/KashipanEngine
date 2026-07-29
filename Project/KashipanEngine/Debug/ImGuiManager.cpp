@@ -12,6 +12,7 @@
 #include <algorithm>
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <ImGuizmo.h>
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx12.h>
@@ -22,8 +23,51 @@
 namespace KashipanEngine {
 
 namespace {
+
+// 既定配置を変更して既存環境にも一度だけ再適用したい場合は、末尾のバージョンを上げる。
+// DockSpaceノードはimgui.iniへ保存されるため、この名前のノードが無い時だけ初期配置を構築できる
+constexpr const char *kMainDockSpaceName = "KashipanEngineMainDockSpace.v2";
+
 DXGI_FORMAT ToDxgiFormat_WindowsSwapChain() {
     return DXGI_FORMAT_B8G8R8A8_UNORM;
+}
+
+/// @brief エディターの初期ドッキング配置を構築する
+/// @details DockBuilderは保存済みのユーザー配置を上書きするため、初回起動時（レイアウトバージョン未設定時）
+///          に限って呼び出すこと。ウィンドウがまだBeginされていなくても、名前で予約しておけば
+///          後から表示された時点で指定ノードへドッキングされる
+void BuildDefaultDockLayout(ImGuiID dockSpaceId, const ImVec2 &dockSpaceSize) {
+    // DockSpaceOverViewportで作成済みのルート自体は維持し、保存済みの子ノードと
+    // ドッキング参照だけを初期化する。これにより現在フレームのホストとの関連を壊さない
+    ImGui::DockBuilderRemoveNodeDockedWindows(dockSpaceId);
+    ImGui::DockBuilderRemoveNodeChildNodes(dockSpaceId);
+    ImGui::DockBuilderSetNodeSize(dockSpaceId, dockSpaceSize);
+
+    ImGuiID centerId = dockSpaceId;
+    ImGuiID leftId = 0;
+    ImGuiID rightId = 0;
+    ImGuiID bottomId = 0;
+
+    // 左=階層/履歴、中央=シーン編集、右=インスペクター、下=アセット/変数/ログ
+    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Left, 0.18f, &leftId, &centerId);
+    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Right, 0.27f, &rightId, &centerId);
+    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Down, 0.28f, &bottomId, &centerId);
+
+    ImGui::DockBuilderDockWindow("Scene Object Hierarchy", leftId);
+    ImGui::DockBuilderDockWindow("History", leftId);
+
+    ImGui::DockBuilderDockWindow("Scene List", centerId);
+    ImGui::DockBuilderDockWindow("Scene Editor", centerId);
+    ImGui::DockBuilderDockWindow("Scene View", centerId);
+
+    ImGui::DockBuilderDockWindow("Scene Object Inspector", rightId);
+    ImGui::DockBuilderDockWindow("Scene Component Inspector", rightId);
+
+    ImGui::DockBuilderDockWindow("Assets", bottomId);
+    ImGui::DockBuilderDockWindow("Scene Variables", bottomId);
+    ImGui::DockBuilderDockWindow("Logger", bottomId);
+
+    ImGui::DockBuilderFinish(dockSpaceId);
 }
 
 // ImGuiの内部テクスチャ（フォントアトラス等）用SRVディスクリプタの割り当て先ヒープ。
@@ -73,15 +117,15 @@ void ImGuiManager::InitializeInternal() {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    // 専用のImGui Windowをメインビューポートとして維持しながら、ドッキングを外した
+    // ImGuiウィンドウを独立したWindowsウィンドウとして表示できるようにする
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    if (!(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)) {
-        // マルチビューポートを使用しない場合はImGui用のウィンドウを作成
-        Window::CreateNormal(
-            "ImGui Window",
-            1280, 720
-        );
-    }
+    // マルチビューポート有効時も、従来どおりこのウィンドウをメインのドッキング先として使う
+    Window::CreateNormal(
+        "ImGui Window",
+        1280, 720
+    );
 
     // エディターUI設定（EditorSettings）を初期適用する（フォント・スケール・配色）
     // ImGuiManagerがEditorSettingsを直接読みに行く（SceneEditor側からの受け渡しはしない）
@@ -195,14 +239,9 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
 
     // バックエンド初期化はウィンドウ生成後に行う
     if (!isBackendInitialized_) {
-        ImGuiIO &io = ImGui::GetIO();
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            SetMainHwnd(Window::GetFirstWindowHwndForImGui({}));
-        } else {
-            Window *window = Window::GetWindow("ImGui Window");
-            if (!window) return;
-            SetMainHwnd(window->GetWindowHandle());
-        }
+        Window *window = Window::GetWindow("ImGui Window");
+        if (!window) return;
+        SetMainHwnd(window->GetWindowHandle());
         if (!mainHwnd_) return;
 
         if (!ImGui_ImplWin32_Init(mainHwnd_)) {
@@ -241,10 +280,21 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
 
-    ImGuiIO &io = ImGui::GetIO();
-    if (!(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)) {
-        // マルチビューポートを使用しない場合ImGui用ウィンドウ全体に対してドッキングを有効にする
-        ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+    // マルチビューポートの有無にかかわらず、専用のImGui Window全体をメインDockSpaceにする
+    ImGuiViewport *mainViewport = ImGui::GetMainViewport();
+    const ImGuiID dockSpaceId = ImHashStr(kMainDockSpaceName);
+    // NewFrameでimgui.iniは読み込み済み。このIDのノードが無い場合だけを初回起動として扱う
+    const bool shouldBuildDefaultDockLayout = ImGui::DockBuilderGetNode(dockSpaceId) == nullptr;
+    ImGui::DockSpaceOverViewport(
+        dockSpaceId,
+        mainViewport,
+        ImGuiDockNodeFlags_PassthruCentralNode);
+
+    if (shouldBuildDefaultDockLayout && mainViewport) {
+        const ImVec2 dockSpaceSize = mainViewport->WorkSize.x > 0.0f && mainViewport->WorkSize.y > 0.0f
+            ? mainViewport->WorkSize
+            : mainViewport->Size;
+        BuildDefaultDockLayout(dockSpaceId, dockSpaceSize);
     }
 }
 

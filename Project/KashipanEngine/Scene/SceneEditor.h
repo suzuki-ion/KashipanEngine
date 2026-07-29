@@ -63,7 +63,8 @@ private:
     bool isShowComponentInspector_ = true;
     bool isShowVariablesMenu_ = true;
     bool isShowAssets_ = true;
-    bool isShowSceneList_ = false;
+    bool isShowSceneList_ = true;
+    bool isShowHistory_ = true;
     bool isShowPreferences_ = false;
 
     // デバッグ用ウィンドウ表示フラグ（旧ImGuiManagerから移設）

@@ -137,6 +137,10 @@ void SceneEditor::ShowImGui() {
     // エディターツールスクリプトのウィンドウ表示・Update呼び出し
     EditorToolManager::GetInstance().UpdateTools();
 
+    // スクリプトや再生状態の復元によってUI描画前にオブジェクトが削除される場合がある。
+    // インスペクターやシーンビューへ選択ポインターを渡す前に、現在のシーンに存在するものだけへ絞る。
+    objectHierarchy_->ValidateCachedObjects();
+
     if (isShowHierarchy_) objectHierarchy_->ShowImGui();
     if (isShowObjectInspector_) objectInspector_->ShowImGui();
     if (isShowComponentInspector_) componentInspector_->ShowImGui();

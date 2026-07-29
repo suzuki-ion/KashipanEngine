@@ -109,11 +109,6 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
         const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
 
         for (auto *target : targets) {
-            if (target->GetRenderTargetKind() == RenderTargetKind::Window) {
-                // Window描画先は、描画先のウィンドウが存在しない場合は描画しない
-                Window *window = static_cast<Window *>(target);
-                if (!Window::IsExist(window)) continue;
-            }
             if (!target || !target->IsRenderTargetAvailable()) continue;
             if (editorOnly && target != editorTarget) continue;
             // エディター用描画先には除外設定に関わらず常に描画する
@@ -209,10 +204,13 @@ void SceneRenderer::CollectRenderTargets(EmptyObject *targetObject, std::vector<
         if (auto *buffer = component->GetScreenBuffer()) out.push_back(buffer);
     }
     for (auto *component : targetObject->GetComponents<NormalWindowObject>()) {
-        if (auto *window = component->GetWindow()) out.push_back(window);
+        // WindowObject は Window の所有者ではないため、フレーム末尾の CommitDestroy 後も
+        // 破棄済み Window のアドレスを保持している場合がある。仮想関数を呼ぶ前に、
+        // Window の管理マップにまだ登録されていることをポインター比較だけで確認する。
+        if (auto *window = component->GetWindow(); Window::IsExist(window)) out.push_back(window);
     }
     for (auto *component : targetObject->GetComponents<OverlayWindowObject>()) {
-        if (auto *window = component->GetWindow()) out.push_back(window);
+        if (auto *window = component->GetWindow(); Window::IsExist(window)) out.push_back(window);
     }
 }
 

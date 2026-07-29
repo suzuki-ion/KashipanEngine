@@ -35,12 +35,39 @@ bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *>
 std::vector<UUID128> SceneObjectHierarchy::GetSelectedObjectIDs() const {
     std::vector<UUID128> ids;
     ids.reserve(selectedObjects_.size());
+    const auto isAlive = [this](EmptyObject *obj) {
+        return obj && editorContext_ && editorContext_->GetSceneObject(obj) == obj;
+    };
     // 先頭にプライマリ（最後に操作したオブジェクト）を入れ、復元時にプライマリを維持する
-    if (selectedObject_) ids.push_back(selectedObject_->GetObjectID());
+    if (isAlive(selectedObject_)) ids.push_back(selectedObject_->GetObjectID());
     for (auto *obj : selectedObjects_) {
-        if (obj && obj != selectedObject_) ids.push_back(obj->GetObjectID());
+        if (isAlive(obj) && obj != selectedObject_) ids.push_back(obj->GetObjectID());
     }
     return ids;
+}
+
+void SceneObjectHierarchy::ValidateCachedObjects() {
+    const auto isAlive = [this](EmptyObject *obj) {
+        return obj && editorContext_ && editorContext_->GetSceneObject(obj) == obj;
+    };
+
+    std::erase_if(selectedObjects_, [&](EmptyObject *obj) { return !isAlive(obj); });
+    if (!isAlive(selectedObject_)) {
+        selectedObject_ = selectedObjects_.empty() ? nullptr : *selectedObjects_.begin();
+    } else {
+        selectedObjects_.insert(selectedObject_);
+    }
+    if (!isAlive(selectionAnchorObject_)) selectionAnchorObject_ = selectedObject_;
+    if (!isAlive(pendingRangeTarget_)) pendingRangeTarget_ = nullptr;
+    if (!isAlive(pendingScrollToObject_)) pendingScrollToObject_ = nullptr;
+    std::erase_if(forceOpenAncestors_, [&](EmptyObject *obj) { return !isAlive(obj); });
+
+    if (!isAlive(dragDropPayload_.objectSource) || !isAlive(dragDropPayload_.objectTarget)) {
+        dragDropPayload_ = {};
+    }
+    if (pendingPrefabDropParent_ && !isAlive(pendingPrefabDropParent_)) {
+        pendingPrefabDropParent_ = nullptr;
+    }
 }
 
 void SceneObjectHierarchy::RequestScrollTo(EmptyObject *obj) {
@@ -70,6 +97,7 @@ void SceneObjectHierarchy::RestoreSelection(const std::vector<UUID128> &objectID
 }
 
 void SceneObjectHierarchy::ShowImGui() {
+    ValidateCachedObjects();
     // このフレームの表示順はShowObjectItemの呼び出し毎に積み直す（Shift範囲選択の計算に使う）
     visibleOrderThisFrame_.clear();
     RebuildObjectItems();

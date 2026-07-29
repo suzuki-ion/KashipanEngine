@@ -1,3 +1,4 @@
+Project/Externals/Assimp/lib/**/*.lib filter=lfs diff=lfs merge=lfs -text
 **/ReactPhysics3D/** filter=lfs diff=lfs merge=lfs -text
 **/angelscript/lib/*.lib filter=lfs diff=lfs merge=lfs -text
 **/living_room.obj filter=lfs diff=lfs merge=lfs -text

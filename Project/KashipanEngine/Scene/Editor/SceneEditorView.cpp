@@ -463,9 +463,17 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
         const auto &vertices = model.GetVertices();
         const auto &indices = model.GetIndices();
         for (size_t i = 0; i + 2 < indices.size(); i += 3) {
-            const auto &a = vertices[indices[i]];
-            const auto &b = vertices[indices[i + 1]];
-            const auto &c = vertices[indices[i + 2]];
+            const size_t indexA = static_cast<size_t>(indices[i]);
+            const size_t indexB = static_cast<size_t>(indices[i + 1]);
+            const size_t indexC = static_cast<size_t>(indices[i + 2]);
+            // インポート失敗や編集中のアセット差し替えで壊れたインデックスが混ざっても、
+            // シーンビューのクリック操作から頂点配列を範囲外参照しない。
+            if (indexA >= vertices.size() || indexB >= vertices.size() || indexC >= vertices.size()) {
+                continue;
+            }
+            const auto &a = vertices[indexA];
+            const auto &b = vertices[indexB];
+            const auto &c = vertices[indexC];
             float t = 0.0f;
             if (SegmentIntersectsTriangle(localStart, localDir,
                     Vector3(a.px, a.py, a.pz), Vector3(b.px, b.py, b.pz), Vector3(c.px, c.py, c.pz), t)) {

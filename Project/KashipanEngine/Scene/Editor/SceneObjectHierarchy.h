@@ -23,6 +23,11 @@ public:
     
     void ShowImGui();
 
+    /// @brief シーン外で削除・再生成されたオブジェクトを選択状態や保留操作から除外する
+    /// @details スクリプト更新、再生停止、シーン再読込はエディターUIの描画前にオブジェクトを
+    ///          破棄できるため、生ポインターを参照する前に毎フレーム呼ぶ。
+    void ValidateCachedObjects();
+
     /// @brief 選択中オブジェクト（複数選択時は最後に操作したオブジェクト。インスペクター等の単一対象表示用）
     EmptyObject *GetSelectedObject() const { return selectedObject_; }
     /// @brief 選択中の全オブジェクト（Shift範囲選択・Ctrl個別選択の結果）
@@ -35,6 +40,9 @@ public:
         selectedObject_ = nullptr;
         selectedObjects_.clear();
         selectionAnchorObject_ = nullptr;
+        pendingRangeTarget_ = nullptr;
+        pendingScrollToObject_ = nullptr;
+        forceOpenAncestors_.clear();
     }
 
     /// @brief 選択中オブジェクトのUUID一覧を取得する（Undo/Redo後の選択復元用。先頭がプライマリ）

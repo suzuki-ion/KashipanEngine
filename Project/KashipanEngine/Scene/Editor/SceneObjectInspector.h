@@ -42,6 +42,8 @@ private:
     void FlushPendingComponentEdit();
     /// @brief 保留中の編集をUndo履歴へ確定する（一括編集対象があれば1つの複合コマンドにまとめる）
     void CommitPendingEdit();
+    /// @brief 保留中の編集キャッシュを破棄する
+    void ResetPendingEdit();
     /// @brief プライマリの編集差分（before→after）を一括編集対象の対応コンポーネントへ適用する
     static void ApplyEditToCounterparts(const JSON &before, const JSON &after, const ComponentCounterparts &counterparts);
     /// @brief オブジェクトから「同じ型のordinal番目」のコンポーネントを取得する（共通コンポーネントの対応付け用）

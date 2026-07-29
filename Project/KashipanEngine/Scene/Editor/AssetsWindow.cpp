@@ -58,6 +58,11 @@ bool IsModelExtension(const std::string &ext) {
     };
     return std::find_if(kExts.begin(), kExts.end(), [&ext](const char *s) { return ext == s; }) != kExts.end();
 }
+
+bool PathExistsNoThrow(const std::filesystem::path &path) {
+    std::error_code ec;
+    return std::filesystem::exists(path, ec) && !ec;
+}
 } // namespace
 
 AssetsWindow::AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext)
@@ -184,8 +189,12 @@ void AssetsWindow::RefreshFolderTree() {
 void AssetsWindow::BuildFolderNode(FolderNode &node) {
     std::error_code ec;
     const std::filesystem::path base = node.path.empty() ? std::filesystem::path(".") : Utf8StringToPath(node.path);
-    for (const auto &entry : std::filesystem::directory_iterator(base, ec)) {
-        if (!entry.is_directory()) continue;
+    for (const auto &entry : std::filesystem::directory_iterator(
+            base, std::filesystem::directory_options::skip_permission_denied, ec)) {
+        std::error_code statusError;
+        const auto status = entry.symlink_status(statusError);
+        // シンボリックリンク／ジャンクションを再帰すると循環ディレクトリで無限再帰し得るため除外する。
+        if (statusError || !std::filesystem::is_directory(status) || std::filesystem::is_symlink(status)) continue;
         const std::string name = PathToUtf8String(entry.path().filename());
         // 隠しフォルダは表示しない
         if (!name.empty() && name.front() == '.') continue;
@@ -203,16 +212,22 @@ void AssetsWindow::RefreshFileList() {
     files_.clear();
     std::error_code ec;
     const std::filesystem::path base = currentFolder_.empty() ? std::filesystem::path(".") : Utf8StringToPath(currentFolder_);
-    for (const auto &entry : std::filesystem::directory_iterator(base, ec)) {
+    for (const auto &entry : std::filesystem::directory_iterator(
+            base, std::filesystem::directory_options::skip_permission_denied, ec)) {
         FileEntry file;
         file.name = PathToUtf8String(entry.path().filename());
         if (!file.name.empty() && file.name.front() == '.') continue;
         file.path = NormalizePathSlashes(PathToUtf8String(entry.path().lexically_relative(".")));
-        if (entry.is_directory()) {
+        std::error_code statusError;
+        const auto status = entry.status(statusError);
+        if (statusError) continue;
+        if (std::filesystem::is_directory(status)) {
             file.isFolder = true;
-        } else {
+        } else if (std::filesystem::is_regular_file(status)) {
             file.extension = ToLowerExtension(entry.path());
             if (!IsSupportedExtension(file.extension)) continue;
+        } else {
+            continue;
         }
         files_.push_back(std::move(file));
     }
@@ -491,7 +506,7 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
     // 既存ファイルと重複しない名前を付ける（Unityの複製と同様に連番を付与する）
     const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
     std::string filePath = folder + baseName + PrefabUtility::kPrefabExtension;
-    for (int suffix = 1; std::filesystem::exists(Utf8StringToPath(filePath)); ++suffix) {
+    for (int suffix = 1; PathExistsNoThrow(Utf8StringToPath(filePath)); ++suffix) {
         filePath = folder + baseName + "_" + std::to_string(suffix) + PrefabUtility::kPrefabExtension;
     }
 
@@ -511,7 +526,7 @@ bool AssetsWindow::ShowCreateFileModal() {
         ImGui::InputText("File Name", &newFileName_);
         const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
         const std::string fullPath = folder + newFileName_ + createFileExtension_;
-        const bool alreadyExists = !newFileName_.empty() && std::filesystem::exists(Utf8StringToPath(fullPath));
+        const bool alreadyExists = !newFileName_.empty() && PathExistsNoThrow(Utf8StringToPath(fullPath));
         if (alreadyExists) {
             ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A file with this name already exists.");
         }
@@ -551,7 +566,7 @@ void AssetsWindow::ShowCreateFolderModal() {
         ImGui::InputText("Folder Name", &newFolderName_);
         const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
         const std::string fullPath = folder + newFolderName_;
-        const bool alreadyExists = !newFolderName_.empty() && std::filesystem::exists(Utf8StringToPath(fullPath));
+        const bool alreadyExists = !newFolderName_.empty() && PathExistsNoThrow(Utf8StringToPath(fullPath));
         if (alreadyExists) {
             ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A folder with this name already exists.");
         }

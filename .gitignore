@@ -4,7 +4,7 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # imgui.ini fille
-imgui.ini
+[Ii]mgui.ini
 
 # Tools folder
 Tools/

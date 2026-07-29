@@ -27,7 +27,6 @@ class DX12SwapChain;
 class GraphicsEngine;
 class PipelineManager;
 class Renderer;
-class ImGuiManager;
 
 /// @brief ウィンドウの種類
 enum class WindowType {
@@ -105,11 +104,6 @@ public:
     /// @param title ウィンドウタイトル
     /// @return 一致するウィンドウインスタンスへのポインタのリスト。存在しない場合は空のリスト
     static std::vector<Window *> GetWindows(const std::string &title);
-#if defined(USE_IMGUI)
-    /// @brief 存在するウィンドウのうち一番最初のHWNDを取得（ImGuiManager用）
-    static HWND GetFirstWindowHwndForImGui(Passkey<ImGuiManager>);
-#endif
-
     /// @brief 現在のウィンドウ数を取得
     static size_t GetWindowCount();
 

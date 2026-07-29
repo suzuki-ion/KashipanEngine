@@ -82,7 +82,8 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowComponentInspector_ = EditorSettings::GetBool("sceneEditor.showComponentInspector", true);
     isShowVariablesMenu_ = EditorSettings::GetBool("sceneEditor.showVariablesMenu", true);
     isShowAssets_ = EditorSettings::GetBool("sceneEditor.showAssets", true);
-    isShowSceneList_ = EditorSettings::GetBool("sceneEditor.showSceneList", false);
+    isShowSceneList_ = EditorSettings::GetBool("sceneEditor.showSceneList", true);
+    isShowHistory_ = EditorSettings::GetBool("sceneEditor.showHistory", true);
     isShowPreferences_ = EditorSettings::GetBool("sceneEditor.showPreferences", false);
 
     isShowLoadedTexturesWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedTextures", false);
@@ -223,6 +224,9 @@ void SceneEditor::ShowMainWindow() {
             if (ImGui::MenuItem("Scene List", nullptr, &isShowSceneList_)) {
                 EditorSettings::SetBool("sceneEditor.showSceneList", isShowSceneList_);
             }
+            if (ImGui::MenuItem("History", nullptr, &isShowHistory_)) {
+                EditorSettings::SetBool("sceneEditor.showHistory", isShowHistory_);
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Debug Windows")) {
@@ -291,9 +295,16 @@ void SceneEditor::ShowMainWindow() {
     ImGui::End();
 
     //--------- 操作履歴 ---------//
-    ImGui::Begin("History");
-    commands_->ShowHistoryImGui();
-    ImGui::End();
+    if (isShowHistory_) {
+        const bool wasOpen = isShowHistory_;
+        if (ImGui::Begin("History", &isShowHistory_)) {
+            commands_->ShowHistoryImGui();
+        }
+        ImGui::End();
+        if (wasOpen != isShowHistory_) {
+            EditorSettings::SetBool("sceneEditor.showHistory", isShowHistory_);
+        }
+    }
 }
 
 void SceneEditor::ShowPlayControls() {

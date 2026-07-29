@@ -1176,9 +1176,9 @@ string GetAbsolutePath(const string &file)
 
 string GetCurrentDir()
 {
-	char buffer[1024];
 #if defined(_MSC_VER) || defined(_WIN32)
 	#ifdef _WIN32_WCE
+	char buffer[1024];
 	static TCHAR apppath[MAX_PATH] = TEXT("");
 	if (!apppath[0])
 	{
@@ -1210,6 +1210,7 @@ string GetCurrentDir()
 	return buffer;
 	#elif defined(__S3E__)
 	// Marmalade uses its own portable C library
+	char buffer[1024];
 	return getcwd(buffer, (int)1024);
 	#elif _XBOX_VER >= 200
 	// XBox 360 doesn't support the getcwd function, just use the root folder
@@ -1218,9 +1219,34 @@ string GetCurrentDir()
 	// TODO: How to determine current working dir on Windows Phone?
 	return "";
 	#else
-	return _getcwd(buffer, (int)1024);
+	// The script builder treats narrow paths as UTF-8 (LoadScriptSection converts
+	// them with MultiByteToWideChar(CP_UTF8)). _getcwd returns a string in the
+	// current ANSI code page, so combining it with a UTF-8 relative script path
+	// corrupts the path when any parent directory contains non-ASCII characters.
+	// Read the native UTF-16 path and explicitly convert it to UTF-8 instead.
+	const DWORD wideLength = GetCurrentDirectoryW(0, nullptr);
+	if( wideLength == 0 )
+		return "";
+
+	vector<wchar_t> widePath(wideLength);
+	const DWORD copiedLength = GetCurrentDirectoryW(wideLength, widePath.data());
+	if( copiedLength == 0 || copiedLength >= wideLength )
+		return "";
+
+	const int utf8Length = WideCharToMultiByte(
+		CP_UTF8, 0, widePath.data(), static_cast<int>(copiedLength),
+		nullptr, 0, nullptr, nullptr);
+	if( utf8Length <= 0 )
+		return "";
+
+	string utf8Path(static_cast<size_t>(utf8Length), '\0');
+	WideCharToMultiByte(
+		CP_UTF8, 0, widePath.data(), static_cast<int>(copiedLength),
+		&utf8Path[0], utf8Length, nullptr, nullptr);
+	return utf8Path;
 	#endif // _MSC_VER
 #elif defined(__APPLE__) || defined(__linux__)
+	char buffer[1024];
 	return getcwd(buffer, 1024);
 #else
 	return "";

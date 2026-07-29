@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "Utilities/Passkeys.h"
@@ -49,6 +50,11 @@ private:
     void BuildFolderNode(FolderNode &node);
     /// @brief 選択中フォルダのファイル一覧を再取得する
     void RefreshFileList();
+    /// @brief 指定フォルダへ移動する（ファイル一覧の更新に加え、左のツリーの自動展開・
+    ///        スクロール同期も行う）
+    void NavigateToFolder(const std::string &path);
+    /// @brief 実行ディレクトリ相対パスの親フォルダのパスを返す（ルート直下なら空文字）
+    static std::string GetParentFolder(const std::string &path);
     void ShowFolderNode(FolderNode &node);
     void ShowFileGrid();
     void ShowFileContextMenu(const FileEntry &file);
@@ -62,9 +68,11 @@ private:
     void CloseEditorsForPath(const std::string &cwdRelativePath);
     /// @brief 新規ファイル作成モーダル（.json / .mat）を表示する
     bool ShowCreateFileModal();
-    /// @brief リネームモーダルを表示する
+    /// @brief 新規フォルダ作成モーダルを表示する
+    void ShowCreateFolderModal();
+    /// @brief リネームモーダルを表示する（ファイル・フォルダ共通）
     void ShowRenameModal();
-    /// @brief 削除確認モーダルを表示する
+    /// @brief 削除確認モーダルを表示する（ファイル・フォルダ共通）
     void ShowDeleteConfirmModal();
     /// @brief ヒエラルキーからD&Dされたオブジェクトを、現在開いているフォルダへ.prefabファイルとして保存する
     void CreatePrefabFromObject(EmptyObject *obj);
@@ -74,6 +82,10 @@ private:
     FolderNode rootFolder_;
     std::string currentFolder_;
     std::vector<FileEntry> files_;
+
+    // フォルダツリーとの同期用（現在開いているフォルダまでの経路を1フレームだけ強制展開しスクロールする）
+    std::unordered_set<std::string> forceOpenFolders_;
+    std::string pendingScrollToFolder_;
 
     std::vector<std::unique_ptr<JSONFileEditorWindow>> jsonEditors_;
     std::vector<std::unique_ptr<MaterialFileEditorWindow>> materialEditors_;
@@ -85,8 +97,13 @@ private:
     std::string createFileExtension_; // ".json" or ".mat"
     std::string newFileName_;
 
-    // ファイルアイコンの右クリックメニュー（リネーム/削除）
+    // 新規フォルダ作成（空白部の右クリックメニュー）
+    bool isCreateFolderRequested_ = false;
+    std::string newFolderName_;
+
+    // ファイル/フォルダアイコンの右クリックメニュー（リネーム/削除）
     std::string contextMenuTargetPath_;
+    bool contextMenuTargetIsFolder_ = false;
     bool isRenameRequested_ = false;
     std::string renameBuffer_;
     bool isDeleteRequested_ = false;

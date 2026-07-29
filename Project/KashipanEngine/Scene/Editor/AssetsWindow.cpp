@@ -72,9 +72,17 @@ void AssetsWindow::ShowImGui() {
     }
 
     //--------- ツールバー ---------//
+    ImGui::BeginDisabled(currentFolder_.empty());
+    if (ImGui::ArrowButton("##up", ImGuiDir_Up)) {
+        NavigateToFolder(GetParentFolder(currentFolder_));
+    }
+    ImGui::EndDisabled();
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Up One Level");
+    }
+    ImGui::SameLine();
     if (ImGui::Button("Refresh")) {
         RefreshFolderTree();
-        RefreshFileList();
     }
     ImGui::SameLine();
     ImGui::TextUnformatted(currentFolder_.empty() ? "(root)" : currentFolder_.c_str());
@@ -84,6 +92,9 @@ void AssetsWindow::ShowImGui() {
     ImGui::BeginChild("AssetsFolderTree", ImVec2(220.0f, 0.0f), true);
     ShowFolderNode(rootFolder_);
     ImGui::EndChild();
+    // 移動先までの強制展開・スクロールは1フレームだけ適用すればよいので、描画後にクリアする
+    forceOpenFolders_.clear();
+    pendingScrollToFolder_.clear();
 
     ImGui::SameLine();
 
@@ -106,6 +117,7 @@ void AssetsWindow::ShowImGui() {
 
     //--------- 新規作成・リネーム・削除確認モーダル ---------//
     ShowCreateFileModal();
+    ShowCreateFolderModal();
     ShowRenameModal();
     ShowDeleteConfirmModal();
 
@@ -211,16 +223,46 @@ void AssetsWindow::RefreshFileList() {
     });
 }
 
+void AssetsWindow::NavigateToFolder(const std::string &path) {
+    currentFolder_ = path;
+    RefreshFileList();
+
+    // 左のツリーを現在のフォルダに同期させる: 移動先までの経路（祖先すべて）を
+    // 強制的に開き、移動先の項目までスクロールする（ヒエラルキーの選択同期と同じ考え方）
+    forceOpenFolders_.clear();
+    size_t start = 0;
+    while (start < path.size()) {
+        const size_t slash = path.find('/', start);
+        const size_t end = (slash == std::string::npos) ? path.size() : slash;
+        forceOpenFolders_.insert(path.substr(0, end));
+        if (slash == std::string::npos) break;
+        start = slash + 1;
+    }
+    pendingScrollToFolder_ = path;
+}
+
+std::string AssetsWindow::GetParentFolder(const std::string &path) {
+    const size_t pos = path.find_last_of('/');
+    if (pos == std::string::npos) return "";
+    return path.substr(0, pos);
+}
+
 void AssetsWindow::ShowFolderNode(FolderNode &node) {
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
     if (node.children.empty()) flags |= ImGuiTreeNodeFlags_Leaf;
     if (node.path == currentFolder_) flags |= ImGuiTreeNodeFlags_Selected;
     if (node.path.empty()) flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
+    if (!node.path.empty() && forceOpenFolders_.contains(node.path)) {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+    }
+
     const bool isOpen = ImGui::TreeNodeEx(node.name.c_str(), flags);
+    if (!node.path.empty() && node.path == pendingScrollToFolder_) {
+        ImGui::SetScrollHereY(0.5f);
+    }
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-        currentFolder_ = node.path;
-        RefreshFileList();
+        NavigateToFolder(node.path);
     }
     if (isOpen) {
         for (auto &child : node.children) {
@@ -296,8 +338,7 @@ void AssetsWindow::ShowFileGrid() {
 
         // フォルダはダブルクリックで移動する（Unityと同じ操作）
         if (file.isFolder && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-            currentFolder_ = file.path;
-            RefreshFileList();
+            NavigateToFolder(file.path);
             ImGui::EndGroup();
             ImGui::PopID();
             break;
@@ -306,9 +347,7 @@ void AssetsWindow::ShowFileGrid() {
         if (!file.isFolder && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
             OpenFileEditor(file);
         }
-        if (!file.isFolder) {
-            ShowFileContextMenu(file);
-        }
+        ShowFileContextMenu(file);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", file.path.c_str());
         }
@@ -332,17 +371,21 @@ void AssetsWindow::ShowFileGrid() {
 
 void AssetsWindow::ShowFileContextMenu(const FileEntry &file) {
     if (ImGui::BeginPopupContextItem("FileContextMenu")) {
-        if (ImGui::MenuItem("Open")) {
-            OpenFileEditor(file);
+        if (!file.isFolder) {
+            if (ImGui::MenuItem("Open")) {
+                OpenFileEditor(file);
+            }
+            ImGui::Separator();
         }
-        ImGui::Separator();
         if (ImGui::MenuItem("Rename")) {
             contextMenuTargetPath_ = file.path;
+            contextMenuTargetIsFolder_ = file.isFolder;
             renameBuffer_ = file.name;
             isRenameRequested_ = true;
         }
         if (ImGui::MenuItem("Delete")) {
             contextMenuTargetPath_ = file.path;
+            contextMenuTargetIsFolder_ = file.isFolder;
             isDeleteRequested_ = true;
         }
         ImGui::EndPopup();
@@ -354,6 +397,11 @@ void AssetsWindow::ShowGridBackgroundContextMenu() {
     // この window レベルのメニューが同一フレームで開いてしまい、
     // ファイル自体の FileContextMenu を閉じてしまう（表示されないように見える）ため必須。
     if (ImGui::BeginPopupContextWindow("AssetsGridContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
+        if (ImGui::MenuItem("Create Folder")) {
+            newFolderName_ = "New Folder";
+            isCreateFolderRequested_ = true;
+        }
+        ImGui::Separator();
         if (ImGui::MenuItem("Create JSON File")) {
             createFileExtension_ = ".json";
             newFileName_ = "New File";
@@ -494,6 +542,36 @@ bool AssetsWindow::ShowCreateFileModal() {
     return created;
 }
 
+void AssetsWindow::ShowCreateFolderModal() {
+    if (isCreateFolderRequested_) {
+        ImGui::OpenPopup("Create Folder");
+        isCreateFolderRequested_ = false;
+    }
+    if (ImGui::BeginPopupModal("Create Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::InputText("Folder Name", &newFolderName_);
+        const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
+        const std::string fullPath = folder + newFolderName_;
+        const bool alreadyExists = !newFolderName_.empty() && std::filesystem::exists(Utf8StringToPath(fullPath));
+        if (alreadyExists) {
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A folder with this name already exists.");
+        }
+        ImGui::BeginDisabled(newFolderName_.empty() || alreadyExists);
+        if (ImGui::Button("Create", ImVec2(120, 0))) {
+            std::error_code ec;
+            if (std::filesystem::create_directory(Utf8StringToPath(fullPath), ec)) {
+                RefreshFolderTree();
+            }
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
 void AssetsWindow::ShowRenameModal() {
     if (isRenameRequested_) {
         ImGui::OpenPopup("Rename File");
@@ -509,23 +587,32 @@ void AssetsWindow::ShowRenameModal() {
             std::error_code ec;
             std::filesystem::rename(oldPath, newPath, ec);
             if (!ec) {
-                // 実ファイルのリネームに成功したら、対応するマネージャーの登録名/パスも追従させる
-                // （リネーム前に既に読み込まれていなかった場合は各RenameXxxは何もせずfalseを返すだけ）
-                const std::string oldAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(oldPath.lexically_relative("."))));
-                const std::string newAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative("."))));
-                const std::string ext = ToLowerExtension(newPath);
-                if (IsTextureExtension(ext)) {
-                    TextureManager::RenameTexture(oldAssetPath, newAssetPath);
-                } else if (ext == ".mat") {
-                    MaterialManager::RenameMaterialFile(oldAssetPath, newAssetPath);
-                } else if (IsAudioExtension(ext)) {
-                    AudioManager::RenameSound(oldAssetPath, newAssetPath);
-                } else if (IsModelExtension(ext)) {
-                    ModelManager::RenameModel(oldAssetPath, newAssetPath);
+                if (contextMenuTargetIsFolder_) {
+                    // フォルダの場合は中身のファイルパスをアセットマネージャーへ個別に
+                    // 追従させる仕組みがないため、ツリー自体を再構築するだけに留める
+                    if (currentFolder_ == contextMenuTargetPath_) {
+                        currentFolder_ = NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative(".")));
+                    }
+                    RefreshFolderTree();
+                } else {
+                    // 実ファイルのリネームに成功したら、対応するマネージャーの登録名/パスも追従させる
+                    // （リネーム前に既に読み込まれていなかった場合は各RenameXxxは何もせずfalseを返すだけ）
+                    const std::string oldAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(oldPath.lexically_relative("."))));
+                    const std::string newAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative("."))));
+                    const std::string ext = ToLowerExtension(newPath);
+                    if (IsTextureExtension(ext)) {
+                        TextureManager::RenameTexture(oldAssetPath, newAssetPath);
+                    } else if (ext == ".mat") {
+                        MaterialManager::RenameMaterialFile(oldAssetPath, newAssetPath);
+                    } else if (IsAudioExtension(ext)) {
+                        AudioManager::RenameSound(oldAssetPath, newAssetPath);
+                    } else if (IsModelExtension(ext)) {
+                        ModelManager::RenameModel(oldAssetPath, newAssetPath);
+                    }
+                    // 古いパスを指している開いている編集/プレビューウィンドウは無効になるため閉じる
+                    CloseEditorsForPath(contextMenuTargetPath_);
+                    RefreshFileList();
                 }
-                // 古いパスを指している開いている編集/プレビューウィンドウは無効になるため閉じる
-                CloseEditorsForPath(contextMenuTargetPath_);
-                RefreshFileList();
             }
             ImGui::CloseCurrentPopup();
         }
@@ -544,13 +631,19 @@ void AssetsWindow::ShowDeleteConfirmModal() {
         isDeleteRequested_ = false;
     }
     if (ImGui::BeginPopupModal("Delete File", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f), "This will permanently delete the actual file on disk:");
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f),
+            contextMenuTargetIsFolder_ ? "This will permanently delete the folder and everything inside it:" : "This will permanently delete the actual file on disk:");
         ImGui::TextUnformatted(contextMenuTargetPath_.c_str());
         ImGui::TextUnformatted("This action cannot be undone.");
         if (ImGui::Button("Delete", ImVec2(120, 0))) {
             std::error_code ec;
-            std::filesystem::remove(Utf8StringToPath(contextMenuTargetPath_), ec);
-            RefreshFileList();
+            if (contextMenuTargetIsFolder_) {
+                std::filesystem::remove_all(Utf8StringToPath(contextMenuTargetPath_), ec);
+                RefreshFolderTree();
+            } else {
+                std::filesystem::remove(Utf8StringToPath(contextMenuTargetPath_), ec);
+                RefreshFileList();
+            }
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();

@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>10. 描画先オブジェクトを作成する | KashipanEngine リファレンス</title>
+<title>3. 描画先オブジェクトを作成する | KashipanEngine リファレンス</title>
 <link rel="stylesheet" href="../assets/style.css">
 <script defer src="../assets/nav-data.js"></script>
 <script defer src="../assets/nav.js"></script>
 </head>
-<body data-page="T10_CreateRenderTarget">
+<body data-page="T03_CreateRenderTarget">
 <div class="layout">
 <nav id="sidebar"></nav>
 <main>
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
-<h1>10. 描画先オブジェクトを作成する</h1>
+<h1>3. 描画先オブジェクトを作成する</h1>
 <p class="page-lead">カメラ、ライト、メッシュが共有して使用する描画結果の出力先を、Screen Buffer Objectとしてシーンへ追加します。</p>
 </div>
 
@@ -32,7 +32,7 @@
 <div class="screenshot-placeholder-inner">
 <strong>スクリーンショット差し替え位置</strong>
 MainScreenを選択し、ScreenBufferObjectの設定とScreenBuffer Viewerを同時に表示したエディター画面
-<br><code>10-render-target-object.png</code>
+<br><code>03-render-target-object.png</code>
 </div>
 </div>
 <figcaption><strong>描画先オブジェクトの設定例。</strong> HierarchyのMainScreen、InspectorのScreenBufferObject、中央のViewerが一度に確認できる構図を想定しています。</figcaption>
@@ -52,13 +52,9 @@ MainScreenを選択し、ScreenBufferObjectの設定とScreenBuffer Viewerを同
 
 <div class="note"><strong>Viewerが空でも作成失敗ではありません</strong><br>この時点ではカメラや描画オブジェクトのTargetが未設定のため、Viewerに何も映らない場合があります。次のページでカメラを関連付けます。</div>
 
-<h2>3. 描画するオブジェクトから参照する</h2>
-<ol class="steps">
-<li>Hierarchyで<code>PlayerVisual</code>または<code>Ground</code>を選択します。</li>
-<li>Inspectorの<code>MeshRenderer</code>を展開します。</li>
-<li><code>Target</code>から<code>MainScreen</code>を選択します。HierarchyからTarget欄へのドラッグ＆ドロップでも指定できます。</li>
-<li>複数の描画先コンポーネントを持つオブジェクトでは、Targetの下に表示されるチェックボックスで出力先を個別に選択します。</li>
-</ol>
+<h2>3. 後続ページで描画対象を接続する</h2>
+<p>ここでは出力先だけを先に用意します。<a href="07_AddComponents.html">7. コンポーネントを追加する</a>でMesh Objectを作成した後、<code>MeshRenderer</code>の<code>Target</code>へ<code>MainScreen</code>を指定します。HierarchyからTarget欄へのドラッグ＆ドロップでも設定できます。</p>
+<p>描画先オブジェクトが複数の描画先コンポーネントを持つ場合は、Targetの下に表示されるチェックボックスで出力先を個別に選択できます。</p>
 
 <h2>Window Objectとの使い分け</h2>
 <table>
@@ -73,8 +69,8 @@ MainScreenを選択し、ScreenBufferObjectの設定とScreenBuffer Viewerを同
 <ul class="checklist">
 <li>HierarchyにMainScreenが存在する</li>
 <li>ScreenBufferObjectのNameとサイズが設定されている</li>
-<li>MeshRendererのTargetにMainScreenを指定できる</li>
 <li>Open ViewerでViewerウィンドウを開ける</li>
+<li>MainScreenが後続ページのTarget候補として表示される</li>
 </ul>
 
 <p>描画先の種類、画像保存、シーン間の引き継ぎは<a href="../11_Window.html">ウィンドウ／オフスクリーンのリファレンス</a>を参照してください。</p>

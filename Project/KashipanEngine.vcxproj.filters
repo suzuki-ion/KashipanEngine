@@ -689,6 +689,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabUtility.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneListEditor.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\EditorPreferences.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
@@ -1820,6 +1821,7 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabUtility.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorPreferences.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />
@@ -2206,6 +2208,7 @@
     </None>
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugGrid.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugLines.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugLinesOverlay.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Skinning.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugGrid.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Preset\Shader\DebugLines.json" />

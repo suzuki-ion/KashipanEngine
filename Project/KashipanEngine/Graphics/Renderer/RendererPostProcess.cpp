@@ -81,23 +81,30 @@ void Renderer::RenderEditorDebugOverlay(ScreenBuffer *screenBuffer,
         }
     }
 
-    if (settings.showColliderGizmos && !settings.lines.empty() && pipelineManager_->HasPipeline("DebugLines")) {
-        const size_t vertexCount = settings.lines.size();
+    auto drawLines = [&](const std::vector<DebugLineVertex> &lines,
+        const char *pipelineName,
+        const char *vertexBufferName) {
+        if (lines.empty() || !pipelineManager_->HasPipeline(pipelineName)) return;
+
+        const size_t vertexCount = lines.size();
         const size_t byteSize = sizeof(DebugLineVertex) * vertexCount;
-        auto *vertexBuffer = resourceContainer_->GetOrCreateVertexBuffer("EditorDebugLines", byteSize);
+        auto *vertexBuffer = resourceContainer_->GetOrCreateVertexBuffer(vertexBufferName, byteSize);
         if (vertexBuffer) {
             if (auto *mapped = vertexBuffer->Map()) {
-                std::memcpy(mapped, settings.lines.data(), byteSize);
+                std::memcpy(mapped, lines.data(), byteSize);
             }
 
-            pipelineBinder.UsePipeline("DebugLines");
-            auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "DebugLines");
+            pipelineBinder.UsePipeline(pipelineName);
+            auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
             shaderBinder.SetCommandList(commandList);
             shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
             pipelineBinder.SetVertexBuffer(vertexBuffer, sizeof(DebugLineVertex));
             commandList->DrawInstanced(static_cast<UINT>(vertexCount), 1, 0, 0);
         }
-    }
+    };
+
+    drawLines(settings.lines, "DebugLines", "EditorDebugLines");
+    drawLines(settings.overlayLines, "DebugLinesOverlay", "EditorDebugLinesOverlay");
 }
 
 void Renderer::RenderEditorBackground(ScreenBuffer *screenBuffer,

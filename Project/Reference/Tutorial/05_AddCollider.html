@@ -15,54 +15,49 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>5. 当たり判定を付ける</h1>
-<p class="page-lead">オブジェクトに <code>BoxCollider</code> を追加し、地面との当たり判定の土台を作ります。詳しいAPIは <a href="../06_Collision.html">06_Collision.html</a> を参照してください。</p>
+<p class="page-lead">PlayerVisualへBoxColliderを追加し、Scene Viewのワイヤーフレームで範囲を確認します。</p>
 </div>
+
+<div class="tutorial-meta"><span>操作: Add Component</span><span>追加: BoxCollider</span><span>目安: 4分</span></div>
 
 <h2>BoxColliderを追加する</h2>
-<p>
-「地面」役のオブジェクトに<code>BoxCollider</code>を追加し、後でスクリプトから判別できるように<strong>タグ</strong>を付けます。実際のプロジェクトの地面オブジェクトでは、次のような設定になっています。
-</p>
-<pre><code>{
-    "type": "BoxCollider",
-    "data": {
-        "customData": {
-            "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
-            "size":   { "x": 1.0, "y": 1.0, "z": 1.0 },
-            "isTrigger": false,
-            "continuousDetection": false,
-            "syncPosition": [true, true, true],
-            "syncRotation": [true, true, true],
-            "syncScale":    [true, true, true]
-        },
-        "isActive": true,
-        "priority": 1,
-        "tag": "GroundBox"
-    }
-}</code></pre>
-<p>
-<code>tag</code>にはコンポーネント全体の共通プロパティである<a href="../13_Utilities.html">Tag</a>を設定できます。ここでは <code>"GroundBox"</code> というタグを付けています。<code>isTrigger</code>を<code>true</code>にすると、押し戻し(物理的な反発)を行わず衝突の通知だけを受け取れるトリガー判定になります。
-</p>
+<ol class="steps">
+<li><strong>対象を選択する</strong>Hierarchyで<code>PlayerVisual</code>を選択します。</li>
+<li><strong>Add Componentを開く</strong>Scene Object Inspectorの最下部にある<code>Add Component</code>を押します。</li>
+<li><strong>BoxColliderを追加する</strong>コンポーネントメニューから<code>BoxCollider</code>を選択します。</li>
+<li><strong>タグを付ける</strong>BoxCollider内の共通プロパティ<code>Tag</code>へ<code>PlayerBox</code>を入力します。</li>
+<li><strong>形状を確認する</strong>Centerを<code>(0, 0, 0)</code>、Sizeを<code>(1, 1, 1)</code>にし、Scene Viewに表示されるコライダー線を確認します。</li>
+</ol>
 
-<h2>C++視点での対応API</h2>
-<div class="api-card">
-<div class="api-sig">EmptyObject *ground = scene-&gt;GetSceneObject("Ground");
-BoxCollider *collider = ground-&gt;AddComponent&lt;BoxCollider&gt;();
-collider-&gt;SetTag("GroundBox");
-// サイズ・トリガー設定など、詳細は 06_Collision.html を参照</div>
+<figure class="editor-shot">
+<img src="../assets/tutorial/05-collider.png" alt="BoxColliderの設定とScene Viewのコライダー表示">
+<figcaption><strong>BoxColliderの設定。</strong> 選択したオブジェクトのTransformに追従し、Scene Viewでは当たり判定の範囲をワイヤーフレームで確認できます。</figcaption>
+</figure>
+
+<h2>地面も作る</h2>
+<ol class="steps">
+<li><span class="ui-path"><span>Create Object</span><i>›</i><span>3D</span><i>›</i><span>Mesh Object</span></span>でオブジェクトを作り、<code>Ground</code>と名付けます。</li>
+<li>TransformのTranslateを<code>(0, -0.5, 0)</code>、Scaleを<code>(8, 1, 8)</code>にします。</li>
+<li>Add Componentで<code>BoxCollider</code>を追加し、Tagを<code>GroundBox</code>にします。</li>
+<li><code>Ctrl+S</code>で保存します。</li>
+</ol>
+
+<h2>主な設定</h2>
+<table>
+<tr><th>設定</th><th>意味</th></tr>
+<tr><td>Center / Size</td><td>Transformを基準にした判定中心と基本サイズ</td></tr>
+<tr><td>Is Trigger</td><td>有効にすると押し戻さず、接触イベントだけを通知する</td></tr>
+<tr><td>Continuous Detection</td><td>高速移動時のすり抜けを抑えるため連続判定を行う</td></tr>
+<tr><td>Sync Position / Rotation / Scale</td><td>Transformの各軸をコライダーへ反映するか指定する</td></tr>
+<tr><td>Tag</td><td>スクリプトからPlayerやGroundを判別する文字列</td></tr>
+</table>
+
+<div class="tip">
+<strong>線が表示されない場合</strong><br>
+Scene Viewの表示オプションでCollider Gizmosを有効にし、Hierarchyで対象オブジェクトを選択してください。ゲーム画面にはデバッグ用の線は描画されません。
 </div>
 
-<h2>衝突の受け取り方の予告</h2>
-<p>
-コライダーの衝突結果は<code>HitInfo</code>構造体として通知されます。次の<a href="06_WriteScript.html">6. スクリプトを書く</a>で、このタグを使って「今触れているのはさっき作った地面かどうか」を判定するコードを実際に書きます。
-</p>
-<pre><code>// ScriptComponentBehavior 内(AngelScript)
-Tag groundColliderTag = Tag("GroundBox");
-
-void OnCollisionStay(const HitInfo &amp;in hit) {
-    if (hit.otherCollider.GetTag() == groundColliderTag) {
-        // 地面と接地している
-    }
-}</code></pre>
+<p>衝突イベント、RigidBody、各コライダーの詳細は<a href="../06_Collision.html">衝突判定のリファレンス</a>を参照してください。</p>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

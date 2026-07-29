@@ -272,7 +272,6 @@ void SceneEditorView::UpdateEditorDebugDraw() {
 
     EditorDebugDrawSettings settings;
     settings.showGrid = showGrid_;
-    settings.showColliderGizmos = showColliderGizmos_;
     // カメラのズーム量に応じてグリッドの表示範囲を追従させる（Blenderのように「無限」に感じられる範囲を保つ）
     settings.gridFadeDistance = std::clamp(distance_ * 4.0f, 20.0f, 2000.0f);
 
@@ -293,7 +292,8 @@ void SceneEditorView::UpdateEditorDebugDraw() {
         AppendLightDirectionLines(settings.lines);
     }
     if (showBoneGizmos_) {
-        AppendSkeletonBoneLines(settings.lines);
+        // ボーンはモデル内部にあっても姿勢を確認できるよう、深度テストを行わない線として描画する。
+        AppendSkeletonBoneLines(settings.overlayLines);
     }
 
     sceneRenderer->SetEditorDebugDraw(std::move(settings));

@@ -1,0 +1,8 @@
+{
+	"BaseName": "TextSDF3D",
+	"Pixel": {
+		"Path": "Text/TextSDF3DPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

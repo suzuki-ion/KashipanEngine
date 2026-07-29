@@ -15,68 +15,55 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>4. コンポーネントを追加する</h1>
-<p class="page-lead">作成したオブジェクトに、位置を持たせる<code>Transform</code>と、実際に画面へ表示するための描画コンポーネントを追加します。詳しいAPIは <a href="../04_ObjectComponents.html">04_ObjectComponents.html</a> と <a href="../05_Rendering.html">05_Rendering.html</a> を参照してください。</p>
+<p class="page-lead">Playerへ位置と見た目を追加し、Scene Viewに3Dオブジェクトを表示します。</p>
 </div>
 
-<h2>Transformを追加する</h2>
-<p>
-Inspector(コンポーネントインスペクタ)ウィンドウの「Add Component」メニューから <code>Transform</code> を選びます。<code>REGISTER_COMPONENT_OBJECT</code> マクロで登録されているコンポーネントは、このメニューに自動的に列挙されます(詳細は<a href="../04_ObjectComponents.html">04_ObjectComponents.html</a>)。
-</p>
-<pre><code>{
-    "type": "Transform",
-    "data": {
-        "customData": {
-            "translate": { "x": 0.0, "y": 1.0, "z": 0.0 },
-            "rotate":    { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 },
-            "scale":     { "x": 1.0, "y": 1.0, "z": 1.0 }
-        },
-        "isActive": true,
-        "priority": 1,
-        "tag": ""
-    }
-}</code></pre>
+<div class="tutorial-meta"><span>操作: Inspector / Scene View</span><span>追加: Transform・MeshFilter・MeshRenderer</span><span>目安: 5分</span></div>
 
-<h2>見た目を付ける: MeshFilter + MeshRenderer</h2>
-<p>
-3Dオブジェクトとして表示するには、どの形状を使うかを指定する <code>MeshFilter</code> と、実際に描画する <code>MeshRenderer</code> の組が必要です。<code>MeshFilter</code>には組み込みのプリミティブ形状(例: <code>PrimitiveMesh-Box</code>, <code>PrimitiveMesh-UVSphere</code>)か、読み込んだモデルのアセットパスを指定します。
-</p>
-<pre><code>{
-    "type": "MeshFilter",
-    "data": { "customData": { "meshAssetPath": "PrimitiveMesh-Box" }, "isActive": true, "priority": 1, "tag": "" }
-},
-{
-    "type": "MeshRenderer",
-    "data": {
-        "customData": {
-            "materialName": "White",
-            "pipelineName": "Object3D.Solid.BlendNormal",
-            "targetObjectID": ""
-        },
-        "isActive": true,
-        "priority": 900,
-        "tag": ""
-    }
-}</code></pre>
-<p>
-<code>pipelineName</code>には <code>Assets/KashipanEngine/</code> 配下で定義されているパイプライン名を指定します。<code>materialName</code>は <a href="../09_Assets.html">09_Assets.html</a> の<code>MaterialManager</code>で管理されているマテリアル名です。
-</p>
+<h2>すぐ表示できる3Dオブジェクトを作る</h2>
+<p>最初は必要なコンポーネントがまとまったテンプレートを使うのが簡単です。前ページの空Playerを残して確認したい場合は、ここで作るオブジェクトを<code>PlayerVisual</code>としてください。</p>
+<ol class="steps">
+<li><strong>3Dテンプレートを作る</strong>Hierarchyの空白を右クリックし、<span class="ui-path"><span>Create Object</span><i>›</i><span>3D</span><i>›</i><span>Mesh Object</span></span> を選びます。</li>
+<li><strong>名前をPlayerVisualへ変更する</strong>作成された項目を選び、Inspector上部のNameを<code>PlayerVisual</code>へ変更します。</li>
+<li><strong>Transformを調整する</strong>TransformのTranslateを<code>(0, 1, 0)</code>、Scaleを<code>(1, 1, 1)</code>にします。</li>
+<li><strong>Scene Viewで確認する</strong>選択中オブジェクトへギズモが表示されます。上部のTranslate / Rotate / Scaleで操作を切り替えられます。</li>
+</ol>
 
-<h2>C++視点での対応API</h2>
-<div class="api-card">
-<div class="api-sig">EmptyObject *player = scene-&gt;GetSceneObject("Player");
-Transform *transform = player-&gt;AddComponent&lt;Transform&gt;();
-transform-&gt;SetTranslate(Vector3(0.0f, 1.0f, 0.0f));
+<figure class="editor-shot">
+<img src="../assets/tutorial/04-components.png" alt="Mesh ObjectのコンポーネントをScene Object Inspectorで編集している画面">
+<figcaption><strong>3DオブジェクトのInspector。</strong> Transform、MeshFilter、MeshRendererの組で位置、形状、描画方法を決めます。</figcaption>
+</figure>
 
-MeshFilter *meshFilter = player-&gt;AddComponent&lt;MeshFilter&gt;();
-MeshRenderer *meshRenderer = player-&gt;AddComponent&lt;MeshRenderer&gt;();
-meshRenderer-&gt;SetMaterialName("White");
-meshRenderer-&gt;SetPipelineName("Object3D.Solid.BlendNormal");</div>
-</div>
+<h2>各コンポーネントの役割</h2>
+<table>
+<tr><th>コンポーネント</th><th>役割</th><th>このページの設定</th></tr>
+<tr><td><code>Transform</code></td><td>位置・回転・大きさ</td><td>Translate Yを<code>1</code></td></tr>
+<tr><td><code>MeshFilter</code></td><td>描画するメッシュ形状</td><td><code>PrimitiveMesh-Box</code>など</td></tr>
+<tr><td><code>MeshRenderer</code></td><td>マテリアルとパイプラインを使って描画</td><td>既定値のまま開始</td></tr>
+</table>
+
+<h2>空のPlayerへ個別に追加する場合</h2>
+<ol class="steps">
+<li>Hierarchyで<code>Player</code>を選択します。</li>
+<li>Inspector下部の<code>Add Component</code>を押します。</li>
+<li>メニューから<code>Transform</code>、<code>MeshFilter</code>、<code>MeshRenderer</code>を1つずつ追加します。</li>
+<li>MeshFilterのMesh Asset PathとMeshRendererの設定を、テンプレートで作ったPlayerVisualを参考に揃えます。</li>
+</ol>
 
 <div class="tip">
-<strong>2Dの場合</strong><br>
-2D表示をしたい場合は<code>MeshRenderer</code>の代わりに<code>SpriteRenderer</code>や<code>TextRenderer</code>を使います。詳細は<a href="../05_Rendering.html">05_Rendering.html</a>を参照してください。
+<strong>まずテンプレート、あとで個別追加</strong><br>
+Mesh Objectは表示に必要な構成をまとめて作れます。個別のAdd Componentは、既存オブジェクトへ機能を足すときや構成を学ぶときに便利です。
 </div>
+
+<h2>うまく表示されないとき</h2>
+<ul class="checklist">
+<li>Scene View上部でグリッドが見える位置までカメラを移動する</li>
+<li>MeshFilterにメッシュが設定されていることを確認する</li>
+<li>MeshRendererとTransformのActiveが有効になっていることを確認する</li>
+<li>シーンに<code>SceneRenderer</code>が登録されていることを確認する</li>
+</ul>
+
+<p>各パラメーターと描画の詳細は<a href="../04_ObjectComponents.html">オブジェクトコンポーネント</a>と<a href="../05_Rendering.html">描画のリファレンス</a>を参照してください。</p>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

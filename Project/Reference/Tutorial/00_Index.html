@@ -14,33 +14,62 @@
 <main>
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
-<h1>チュートリアル: シーンを作ってキャラクターを動かすまで</h1>
-<p class="page-lead">このチュートリアルでは、空のシーンを作るところから、オブジェクトを配置し、当たり判定を付け、AngelScriptでキャラクターを動かし、シーンを切り替えるところまでを、実際の手順に沿って一通り体験します。</p>
+<h1>チュートリアル: エディターでシーンを作って動かす</h1>
+<p class="page-lead">実際のエディター画面を操作しながら、シーン作成、オブジェクト配置、当たり判定、AngelScript、入力、アセット、シーン遷移、描画先・カメラ・ライトの設定までを一通り体験します。</p>
 </div>
 
-<h2>前提知識</h2>
-<p>各手順では詳細を説明しすぎず、必要に応じて詳しいAPIリファレンスへリンクしています。まったくの初見でも進められますが、先に <a href="../01_Overview.html">01_Overview.html</a>(エンジン概要)に目を通しておくと理解が早くなります。</p>
-
-<div class="note">
-<strong>このエンジンの基本的な考え方</strong><br>
-KashipanEngineでは、シーンの内容(オブジェクト配置)は<strong>JSON</strong>として保存され、通常は<strong>シーンエディタ</strong>(ImGuiベース、<code>USE_IMGUI</code>マクロが有効な<code>Debug</code>/<code>Development</code>構成でのみ利用可)で編集します。ゲームロジックはC++ではなく<strong>AngelScript</strong>で書きます。このチュートリアルもその流れに沿って進めます。
+<div class="tutorial-meta">
+<span>対象: 初めてエディターを使う方</span>
+<span>構成: Development / Debug</span>
+<span>完成物: 操作できる3Dシーン</span>
 </div>
 
-<h2>目次</h2>
+<h2>最初に確認すること</h2>
+<ol class="steps">
+<li><strong>DevelopmentまたはDebugで起動する</strong><code>USE_IMGUI</code>が有効な構成でのみエディターが表示されます。Releaseでは編集用UIは組み込まれません。</li>
+<li><strong>エディターの主要ウィンドウを表示する</strong>見当たらないウィンドウは上部メニューの <span class="ui-path"><span>Window</span><i>›</i><span>ウィンドウ名</span></span> から再表示できます。</li>
+<li><strong>各ページの操作後に保存する</strong><span class="ui-path"><span>File</span><i>›</i><span>Save Scene...</span></span> または <code>Ctrl+S</code> を使います。</li>
+</ol>
+
+<figure class="editor-shot">
+<img src="../assets/tutorial/00-editor-overview.png" alt="KashipanEngineのシーンエディター全体画面">
+<figcaption><strong>エディター全体。</strong> Scene Viewで見た目を確認し、Scene Object Hierarchyで対象を選択し、Scene Object Inspectorで値を編集します。</figcaption>
+</figure>
+
+<h2>画面の見方</h2>
 <table>
-<tr><th>#</th><th>タイトル</th><th>内容</th></tr>
-<tr><td>1</td><td><a href="01_CreateScene.html">シーンを作成する</a></td><td>新しいシーンを作り、その保存形式(scene.json / object.json)を理解する</td></tr>
-<tr><td>2</td><td><a href="02_RegisterScene.html">シーンを登録する</a></td><td><code>SceneList.json</code>への登録と、起動シーンの指定</td></tr>
-<tr><td>3</td><td><a href="03_CreateObject.html">オブジェクトを作成する</a></td><td>シーンにEmptyObjectを追加し、名前を付ける</td></tr>
-<tr><td>4</td><td><a href="04_AddComponents.html">コンポーネントを追加する</a></td><td>Transform・MeshFilter・MeshRendererを付けてオブジェクトを描画する</td></tr>
-<tr><td>5</td><td><a href="05_AddCollider.html">当たり判定を付ける</a></td><td>BoxColliderを追加し、タグと衝突判定の基礎を理解する</td></tr>
-<tr><td>6</td><td><a href="06_WriteScript.html">スクリプトを書く</a></td><td>AngelScriptファイルを作成し、ScriptComponentとしてアタッチする</td></tr>
-<tr><td>7</td><td><a href="07_SetupInput.html">入力を設定する</a></td><td>InputCommandでアクションを定義し、スクリプトから参照する</td></tr>
-<tr><td>8</td><td><a href="08_LoadAssets.html">アセットを読み込む</a></td><td>テクスチャ・モデル・オーディオをコンポーネントに設定する</td></tr>
-<tr><td>9</td><td><a href="09_ChangeScene.html">シーンを切り替える</a></td><td>スクリプトやC++からシーン遷移を行う</td></tr>
+<tr><th>ウィンドウ</th><th>このチュートリアルでの役割</th></tr>
+<tr><td>Scene View</td><td>編集中の3Dシーン、グリッド、ギズモ、コライダーを確認する</td></tr>
+<tr><td>Scene Object Hierarchy</td><td>オブジェクトの作成、選択、親子関係、複製、削除を行う</td></tr>
+<tr><td>Scene Object Inspector</td><td>名前、タグ、コンポーネント、各パラメーターを編集する</td></tr>
+<tr><td>Assets</td><td><code>Assets/</code>以下のモデル、画像、音声、スクリプトを探す</td></tr>
+<tr><td>Scene List</td><td>シーンの登録、起動シーンの指定、シーン切り替えを行う</td></tr>
+<tr><td>Scene Editor</td><td>シーン名とPlay / Pause / Stop操作をまとめる</td></tr>
 </table>
 
-<p>準備ができたら、<a href="01_CreateScene.html">1. シーンを作成する</a> から始めましょう。</p>
+<div class="note">
+<strong>JSONやAPIは「操作の結果」として扱います</strong><br>
+通常の制作はエディターで完結します。各ページではまず画面上の操作を説明し、その後に保存先JSONや対応APIを補足します。内部構造を詳しく調べたい場合は各ページからリンクしているリファレンスを参照してください。
+</div>
+
+<h2>学習ルート</h2>
+<table>
+<tr><th>#</th><th>ページ</th><th>エディターで行うこと</th></tr>
+<tr><td>1</td><td><a href="01_CreateScene.html">シーンを作成する</a></td><td>Fileメニューから新しいシーンを作成する</td></tr>
+<tr><td>2</td><td><a href="02_RegisterScene.html">シーンを登録する</a></td><td>Scene Listで登録内容と起動シーンを確認する</td></tr>
+<tr><td>3</td><td><a href="03_CreateObject.html">オブジェクトを作成する</a></td><td>HierarchyからPlayerを作成して名前を変更する</td></tr>
+<tr><td>4</td><td><a href="04_AddComponents.html">コンポーネントを追加する</a></td><td>3Dオブジェクトを作り、Transformと描画設定を調整する</td></tr>
+<tr><td>5</td><td><a href="05_AddCollider.html">当たり判定を付ける</a></td><td>BoxColliderを追加し、Scene Viewで形状を確認する</td></tr>
+<tr><td>6</td><td><a href="06_WriteScript.html">スクリプトを書く</a></td><td>ScriptComponentへAngelScriptを割り当てる</td></tr>
+<tr><td>7</td><td><a href="07_SetupInput.html">入力を設定する</a></td><td>Input Command Editorで移動キーを割り当てる</td></tr>
+<tr><td>8</td><td><a href="08_LoadAssets.html">アセットを使う</a></td><td>Assetsから既存アセットを確認してオブジェクトへ設定する</td></tr>
+<tr><td>9</td><td><a href="09_ChangeScene.html">再生とシーン切り替え</a></td><td>Playで実行結果を確認し、Scene Listから別シーンへ切り替える</td></tr>
+<tr><td>10</td><td><a href="10_CreateRenderTarget.html">描画先オブジェクトを作成する</a></td><td>Screen Buffer Objectを作り、描画結果の出力先を用意する</td></tr>
+<tr><td>11</td><td><a href="11_CreateCamera.html">カメラオブジェクトを作成する</a></td><td>Camera Objectを作り、描画先と射影設定を関連付ける</td></tr>
+<tr><td>12</td><td><a href="12_CreateLight.html">ライトオブジェクトを作成する</a></td><td>Light Objectを作り、種類・色・影・描画先を設定する</td></tr>
+</table>
+
+<p>準備ができたら、<a href="01_CreateScene.html">1. シーンを作成する</a>へ進みます。</p>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

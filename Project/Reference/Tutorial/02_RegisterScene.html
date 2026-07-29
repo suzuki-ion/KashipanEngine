@@ -15,58 +15,53 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>2. シーンを登録する</h1>
-<p class="page-lead">作成したシーンをエンジンに認識させ、起動時に読み込めるようにします。</p>
+<p class="page-lead">Scene ListウィンドウでTutorialSceneを登録し、起動時に読み込むシーンを指定します。</p>
 </div>
 
-<h2>SceneList.json への登録</h2>
-<p>
-シーンの一覧は既定で <code>Assets/KashipanEngine/SceneList.json</code> に保存されています。シーンエディタの「Scene List」ウィンドウで新規シーンを作成すると自動的にここへ追記されますが、中身は次のような単純なJSONです。
-</p>
-<pre><code>{
-    "scenes": [
-        { "name": "GameScene", "filePath": "Assets/Scenes/GameScene.json" },
-        { "name": "TestScene", "filePath": "Assets/Scenes/TestScene.json" }
-    ],
-    "startupScene": "GameScene"
-}</code></pre>
-<p>
-<code>name</code>はシーンを参照するときに使う識別子、<code>filePath</code>は読み込み元のファイル(またはフォルダ形式の<code>*.scene</code>)、<code>startupScene</code>はゲーム起動時に最初に読み込まれるシーン名です。
-</p>
+<div class="tutorial-meta"><span>操作: Scene List</span><span>保存先: SceneList.json</span><span>目安: 3分</span></div>
 
-<h2>コードから登録する</h2>
-<p>
-<code>Application/AppInitialize.h</code>の中で、<code>GameEngine::Context</code>経由で<code>SceneManager</code>にアクセスし、コードから登録することもできます。
-</p>
-<pre><code>#pragma once
-#include &lt;KashipanEngine.h&gt;
+<h2>Scene Listを表示する</h2>
+<ol class="steps">
+<li><strong>ウィンドウを開く</strong><span class="ui-path"><span>Window</span><i>›</i><span>Scene List</span></span> を有効にします。すでに表示されている場合はそのまま進みます。</li>
+<li><strong>登録名を入力する</strong><code>Register New Scene</code>の<code>Name</code>へ<code>TutorialScene</code>を入力します。</li>
+<li><strong>保存先を指定する</strong><code>File Path</code>へ<code>Assets/Scenes/TutorialScene.scene</code>を入力し、<code>Register</code>を押します。</li>
+<li><strong>起動シーンを選ぶ</strong>上部の<code>Startup Scene</code>一覧から<code>TutorialScene</code>を選択します。</li>
+</ol>
 
-namespace KashipanEngine {
-inline void AppInitialize(const GameEngine::Context &amp;context) {
-    // 既存のシーンJSON/フォルダをシーン名に紐付けて登録する
-    context.sceneManager-&gt;RegisterSceneFile("GameScene", "Assets/Scenes/GameScene.scene");
-
-    // ファイルを介さず、JSONデータを直接渡して登録することもできる
-    // context.sceneManager-&gt;RegisterScene("TitleScene", someFactoryDataJson);
-}
-}
-</code></pre>
-
-<div class="api-card">
-<h4>関連する主要API(<code>SceneManager</code>)</h4>
-<div class="api-sig">bool RegisterSceneFile(const std::string &amp;sceneName, const std::string &amp;filePath);
-bool RegisterScene(const std::string &amp;sceneName, const JSON &amp;factoryData = JSON());
-bool LoadSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath);
-bool SaveSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath) const;
-void SetStartupSceneName(const std::string &amp;sceneName);
-bool ChangeToStartupScene();</div>
-</div>
+<figure class="editor-shot">
+<img src="../assets/tutorial/02-scene-list.png" alt="Scene Listウィンドウに登録済みシーンと起動シーンが表示された画面">
+<figcaption><strong>Scene List。</strong> 各行で登録名、ファイルパス、Switch、Deleteを操作し、上部でStartup Sceneを指定します。</figcaption>
+</figure>
 
 <div class="tip">
-<strong>基本はエディタ管理でよい</strong><br>
-実際の開発では<code>SceneList.json</code>とシーンエディタの操作だけで完結することがほとんどです。<code>AppInitialize.h</code>からの登録は、動的に生成したシーンデータを使いたい場合などの特殊なケース向けです。
+<strong>今すぐ開く場合はSwitch</strong><br>
+登録行の<code>Switch</code>を押すと、そのシーンへの切り替えが予約され、次のフレームで編集対象が変わります。Startup Sceneは「次回起動時の最初のシーン」です。
 </div>
 
-<p>詳細は <a href="../02_Scenes.html">02_Scenes.html</a> を参照してください。</p>
+<h2>登録結果を確認する</h2>
+<p>Scene Listで変更した内容は、既定では<code>Assets/KashipanEngine/SceneList.json</code>へ保存されます。通常は直接編集する必要はありません。</p>
+<pre><code>{
+  "scenes": [
+    {
+      "name": "TutorialScene",
+      "filePath": "Assets/Scenes/TutorialScene.scene"
+    }
+  ],
+  "startupScene": "TutorialScene"
+}</code></pre>
+
+<h2>問題が起きたとき</h2>
+<table>
+<tr><th>状態</th><th>確認すること</th></tr>
+<tr><td>Registerを押しても追加されない</td><td>同じ名前が登録済みでないか、NameとFile Pathが空でないか確認する</td></tr>
+<tr><td>Switch後に読み込めない</td><td><code>*.scene</code>フォルダー内に<code>scene.json</code>があるか確認する</td></tr>
+<tr><td>次回起動時に別シーンになる</td><td>Startup SceneがTutorialSceneになっているか確認する</td></tr>
+</table>
+
+<div class="note">
+<strong>コードから登録する特殊なケース</strong><br>
+動的な登録が必要な場合は<code>SceneManager::RegisterSceneFile</code>を使用できます。通常の制作ではScene Listだけで完結します。詳しくは<a href="../02_Scenes.html">シーンのリファレンス</a>を参照してください。
+</div>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

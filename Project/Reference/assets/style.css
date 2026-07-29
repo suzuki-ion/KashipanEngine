@@ -222,6 +222,143 @@ tr:nth-child(even) td { background: var(--bg-alt); }
 .warn { border-color: var(--warn-border); background: var(--warn-bg); }
 .note strong, .warn strong, .tip strong { display: inline-block; margin-bottom: 2px; }
 
+.tutorial-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+.tutorial-meta span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--text-dim);
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+.steps {
+  counter-reset: tutorial-step;
+  list-style: none;
+  padding-left: 0;
+}
+.steps > li {
+  counter-increment: tutorial-step;
+  position: relative;
+  margin: 0 0 18px;
+  padding-left: 42px;
+}
+.steps > li::before {
+  content: counter(tutorial-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+.steps > li > strong:first-child {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.editor-shot {
+  margin: 20px 0 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-alt);
+  box-shadow: var(--shadow);
+}
+.editor-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #101216;
+}
+.editor-shot figcaption {
+  padding: 10px 14px;
+  color: var(--text-dim);
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+}
+.editor-shot figcaption strong {
+  color: var(--text);
+}
+
+.screenshot-placeholder {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  padding: 36px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, transparent 49.5%, var(--border) 50%, transparent 50.5%),
+    linear-gradient(45deg, transparent 49.5%, var(--border) 50%, transparent 50.5%),
+    var(--bg-alt);
+  background-size: 42px 42px;
+}
+.screenshot-placeholder-inner {
+  max-width: 620px;
+  padding: 20px 24px;
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-dim);
+}
+.screenshot-placeholder-inner strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 15px;
+}
+.screenshot-placeholder-inner code {
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.ui-path {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 12.5px;
+}
+.ui-path span {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 7px;
+  background: var(--bg-alt);
+  color: var(--text);
+}
+.ui-path i {
+  color: var(--text-dim);
+  font-style: normal;
+}
+
+.checklist {
+  list-style: none;
+  padding-left: 0;
+}
+.checklist li {
+  position: relative;
+  padding-left: 25px;
+}
+.checklist li::before {
+  content: "✓";
+  position: absolute;
+  left: 2px;
+  color: #2c8a5c;
+  font-weight: 700;
+}
+
 .badge {
   display: inline-block;
   font-size: 11px;

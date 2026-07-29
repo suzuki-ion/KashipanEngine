@@ -215,6 +215,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Compute.Test.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugGrid.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugLines.json" />
+    <None Include="Assets\KashipanEngine\Pipeline\Pipelines\DebugLinesOverlay.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\example.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\Object2D.DoubleSidedCulling.BlendNormal.json" />
     <None Include="Assets\KashipanEngine\Pipeline\Pipelines\PostEffect.BoxFilter.json" />
@@ -575,6 +576,9 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneListEditor.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\EditorPreferences.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp">
@@ -1142,6 +1146,9 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorPreferences.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h">

@@ -15,46 +15,49 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>1. シーンを作成する</h1>
-<p class="page-lead">まずはゲームの舞台となる「シーン」を新規作成します。詳しいAPIは <a href="../02_Scenes.html">02_Scenes.html</a> を参照してください。</p>
+<p class="page-lead">上部のFileメニューから、チュートリアル用の空シーンを作成します。</p>
 </div>
 
-<h2>シーンエディタから作成する(推奨)</h2>
-<p>
-<code>USE_IMGUI</code>が有効なビルド(<code>Debug</code>/<code>Development</code>構成)でエンジンを起動すると、シーンエディタが利用できます。エディタの「Scene List」ウィンドウから新規シーンを作成すると、以下のファイルが自動生成されます。
-</p>
-<pre><code>Assets/Scenes/&lt;シーン名&gt;.scene/
-└── scene.json          … シーン自体の情報(シーンコンポーネント・シーン変数)
-    (Objects/ フォルダはオブジェクトを追加すると作られる)</code></pre>
+<div class="tutorial-meta"><span>操作: Fileメニュー</span><span>作成名: TutorialScene</span><span>目安: 3分</span></div>
 
-<h2>シーンJSONの中身</h2>
-<p>
-1シーン1フォルダの形式で、シーン直下の情報は <code>scene.json</code> に、各オブジェクトは <code>Objects/&lt;オブジェクトのUUID&gt;/object.json</code> に個別保存されます。複数人でシーンを編集しても、別々のオブジェクトを触っている限りファイルがコンフリクトしにくいのが利点です。実際の <code>scene.json</code> は次のような形です。
-</p>
-<pre><code>{
-    "sceneComponents": [
-        { "type": "SceneRenderer",        "data": { "data": {}, "isActive": true, "priority": 1000, "tag": "" } },
-        { "type": "SceneObjectCollider",  "data": { "data": {}, "isActive": true, "priority": 1,    "tag": "" } },
-        { "type": "SceneScriptEngine",    "data": { "data": {}, "isActive": true, "priority": 1,    "tag": "" } },
-        { "type": "SceneAudioPlayer",     "data": { "data": {}, "isActive": true, "priority": 500,  "tag": "" } },
-        { "type": "ScenePreTransform",    "data": { "data": {}, "isActive": true, "priority": 1001, "tag": "" } }
-    ],
-    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
-    "sceneName": "GameScene",
-    "sceneVariables": []
-}</code></pre>
-<p>
-<code>sceneComponents</code>には、そのシーンで使う機能(描画・当たり判定・スクリプト実行・オーディオ再生など)がシーンコンポーネントとして登録されています。新規シーンを作成すると、多くの場合これらの標準コンポーネントが最初から入った状態になります(詳細は<a href="../02_Scenes.html">02_Scenes.html</a>のシーンコンポーネント一覧を参照)。<code>sceneVariables</code>は、後述するスクリプト間で共有できるシーン変数の初期値です。
-</p>
+<h2>新しいシーンを作る</h2>
+<ol class="steps">
+<li><strong>New Sceneを開く</strong>上部メニューバーから <span class="ui-path"><span>File</span><i>›</i><span>New Scene...</span></span> を選択します。</li>
+<li><strong>シーン名を入力する</strong>表示されたNew Sceneダイアログの <code>Scene Name</code> に <code>TutorialScene</code> と入力します。</li>
+<li><strong>Createを押す</strong>現在の編集内容を破棄してよいか確認してから <code>Create</code> を押します。Scene EditorのScene Nameが変われば作成成功です。</li>
+</ol>
+
+<figure class="editor-shot">
+<img src="../assets/tutorial/01-new-scene.png" alt="FileメニューからNew Sceneダイアログを開いた画面">
+<figcaption><strong>新規シーン作成。</strong> File &gt; New Scene...を選び、ダイアログへシーン名を入力します。</figcaption>
+</figure>
+
+<div class="warn">
+<strong>編集中のシーンに未保存の変更がある場合</strong><br>
+新しいシーンを作る前に <span class="ui-path"><span>File</span><i>›</i><span>Save Scene...</span></span> で保存してください。New Sceneは現在の編集対象を新しい空シーンへ置き換えます。
+</div>
+
+<h2>最初の保存</h2>
+<p><span class="ui-path"><span>File</span><i>›</i><span>Save Scene...</span></span> を開き、<code>Assets/Scenes/TutorialScene.scene</code> を指定して保存します。今後は <code>Ctrl+S</code> で同じ場所へ保存できます。</p>
+<ul class="checklist">
+<li>Scene EditorのScene Nameが<code>TutorialScene</code>になっている</li>
+<li>Scene Viewに空のグリッドが表示されている</li>
+<li>Scene Object Hierarchyにゲーム用オブジェクトがまだない</li>
+</ul>
+
+<h2>保存されるデータ</h2>
+<pre><code>Assets/Scenes/TutorialScene.scene/
+├── scene.json
+└── Objects/                 ← オブジェクトを追加すると作られる
+    └── &lt;UUID&gt;/object.json</code></pre>
+<p><code>scene.json</code>にはシーン名、シーンID、シーンコンポーネント、シーン変数が保存されます。オブジェクトはUUIDごとに別ファイルとなるため、複数人で編集するときも変更が衝突しにくい構成です。</p>
 
 <div class="note">
-<strong>旧形式について</strong><br>
-過去のバージョンでは1シーン1ファイル(<code>Assets/Scenes/GameScene.json</code>のような単一JSON)で保存していました。現在はこのバックアップ形式としてのみ残っており、通常はフォルダ形式(<code>*.scene/</code>)を使います。
+<strong>旧単一JSON形式</strong><br>
+<code>Assets/Scenes/GameScene.json</code>のような旧形式も読み込めますが、新規制作ではフォルダー形式の<code>*.scene</code>を使います。既存JSONはScene Listの<code>Convert to Folder Format</code>で変換できます。
 </div>
 
-<h2>コードから登録する場合</h2>
-<p>
-シーンはC++クラスとして継承して作るものではありません(<code>Scene</code>クラスは<code>final</code>です)。既存のシーンJSONファイルをそのまま使う場合、あとで<a href="02_RegisterScene.html">シーンの登録</a>のときに<code>SceneManager::RegisterSceneFile</code>で紐付けます。
-</p>
+<p>シーンの内部構造と対応APIは<a href="../02_Scenes.html">シーンのリファレンス</a>を参照してください。</p>
 
 <div class="page-footer" id="page-footer"></div>
 </main>

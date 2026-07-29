@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <unordered_map>
@@ -153,11 +154,19 @@ void JSONFileEditorWindow::ShowNode(const std::string &label, JSON &node) {
         }
         break;
     }
-    case JSON::value_t::number_integer:
-    case JSON::value_t::number_unsigned: {
-        int value = node.get<int>();
+    case JSON::value_t::number_integer: {
+        std::int64_t value = node.get<std::int64_t>();
         ImGui::SetNextItemWidth(-1.0f);
-        if (ImGui::DragInt(label.c_str(), &value)) {
+        if (ImGui::InputScalar(label.c_str(), ImGuiDataType_S64, &value)) {
+            node = value;
+            isDirty_ = true;
+        }
+        break;
+    }
+    case JSON::value_t::number_unsigned: {
+        std::uint64_t value = node.get<std::uint64_t>();
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::InputScalar(label.c_str(), ImGuiDataType_U64, &value)) {
             node = value;
             isDirty_ = true;
         }

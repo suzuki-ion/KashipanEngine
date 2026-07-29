@@ -120,6 +120,9 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
     ApplyComponentDragAndDrop(obj);
 
     if (componentToRemove) {
+        // 編集中のコンポーネントを先に削除すると保留キャッシュがダングリングするため、
+        // 削除コマンドより前のUndo履歴として確定させる。
+        CommitPendingEdit();
         if (commands_) {
             commands_->Execute(std::make_unique<RemoveComponentCommand>(obj, componentToRemove));
         } else {
@@ -263,6 +266,7 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
 
     //--------- コンポーネント削除（全選択オブジェクトの対応コンポーネントをまとめて削除する） ---------//
     if (!pendingRemoves.empty()) {
+        CommitPendingEdit();
         if (commands_) {
             auto composite = std::make_unique<CompositeCommand>(
                 "Remove Component: " + removeTypeName + " (" + std::to_string(pendingRemoves.size()) + " Objects)");
@@ -382,24 +386,39 @@ void SceneObjectInspector::TrackComponentEdit(EmptyObject *obj, IObjectComponent
 void SceneObjectInspector::CommitPendingEdit() {
     if (!hasPendingEdit_) return;
 
+    // スクリプト、Undo/Redo、再生停止によるシーン復元で、編集開始時のポインターが
+    // UIフレームの途中に無効化される場合がある。所有コンテナとの照合前には参照解除しない。
+    EmptyObject *editObject = context_ ? context_->GetSceneObject(editObject_) : nullptr;
+    IObjectComponent *editComponent = editObject ? editObject->GetComponent(editComponent_) : nullptr;
+    if (!editObject || !editComponent) {
+        ResetPendingEdit();
+        return;
+    }
+
     if (commands_ && editBefore_ != editAfter_) {
         if (editLinkedTargets_.empty()) {
-            commands_->PushExecuted(std::make_unique<ComponentEditCommand>(editObject_, editComponent_, editBefore_, editAfter_));
+            commands_->PushExecuted(std::make_unique<ComponentEditCommand>(editObject, editComponent, editBefore_, editAfter_));
         } else {
             // 複数選択の一括編集は、全対象の変更をまとめて1つのUndo操作にする
             auto composite = std::make_unique<CompositeCommand>(
-                "Edit Component: " + editComponent_->GetComponentType() + " (" + std::to_string(editLinkedTargets_.size() + 1) + " Objects)");
-            composite->AddCommand(std::make_unique<ComponentEditCommand>(editObject_, editComponent_, editBefore_, editAfter_));
+                "Edit Component: " + editComponent->GetComponentType() + " (" + std::to_string(editLinkedTargets_.size() + 1) + " Objects)");
+            composite->AddCommand(std::make_unique<ComponentEditCommand>(editObject, editComponent, editBefore_, editAfter_));
             for (const auto &target : editLinkedTargets_) {
-                if (!target.object || !target.component) continue;
-                JSON after = target.object->SaveComponentToJson(target.component);
+                EmptyObject *linkedObject = context_->GetSceneObject(target.object);
+                IObjectComponent *linkedComponent = linkedObject ? linkedObject->GetComponent(target.component) : nullptr;
+                if (!linkedObject || !linkedComponent) continue;
+                JSON after = linkedObject->SaveComponentToJson(linkedComponent);
                 if (after != target.before) {
-                    composite->AddCommand(std::make_unique<ComponentEditCommand>(target.object, target.component, target.before, after));
+                    composite->AddCommand(std::make_unique<ComponentEditCommand>(linkedObject, linkedComponent, target.before, after));
                 }
             }
-            commands_->PushExecuted(std::move(composite));
+            if (!composite->IsEmpty()) commands_->PushExecuted(std::move(composite));
         }
     }
+    ResetPendingEdit();
+}
+
+void SceneObjectInspector::ResetPendingEdit() {
     hasPendingEdit_ = false;
     editObject_ = nullptr;
     editComponent_ = nullptr;

@@ -4,6 +4,7 @@
 #include <filesystem>
 #include "Scene/SceneBackupPath.h"
 #include "Scene/SceneFileIO.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
@@ -33,7 +34,8 @@ bool SceneLoader::ShowImGui() {
         ImGui::InputText("Path", &filePath_);
 
         if (ImGui::Button("Load", ImVec2(120, 0))) {
-            if (!filePath_.empty() && std::filesystem::exists(filePath_)) {
+            std::error_code ec;
+            if (!filePath_.empty() && std::filesystem::exists(Utf8StringToPath(filePath_), ec) && !ec) {
                 JSON sceneJson = LoadSceneFromPath(filePath_);
                 if (!sceneJson.empty() && context_->LoadSceneFromJSON(sceneJson)) {
                     loaded = true;
@@ -59,10 +61,14 @@ void SceneLoader::RefreshFileList() {
     for (const auto *folder : kSearchFolders) {
         std::error_code ec;
         if (!std::filesystem::exists(folder, ec)) continue;
-        for (const auto &entry : std::filesystem::directory_iterator(folder, ec)) {
+        for (const auto &entry : std::filesystem::directory_iterator(
+                folder, std::filesystem::directory_options::skip_permission_denied, ec)) {
             // 単一ファイル形式（.json）とフォルダ形式（.scene）の両方を一覧に含める
-            const bool isJsonFile = entry.is_regular_file() && entry.path().extension() == ".json";
-            const bool isSceneFolder = entry.is_directory() && entry.path().extension() == ".scene";
+            std::error_code statusError;
+            const auto status = entry.status(statusError);
+            if (statusError) continue;
+            const bool isJsonFile = std::filesystem::is_regular_file(status) && entry.path().extension() == ".json";
+            const bool isSceneFolder = std::filesystem::is_directory(status) && entry.path().extension() == ".scene";
             if (!isJsonFile && !isSceneFolder) continue;
             std::string path = entry.path().generic_string();
             sceneFiles_.push_back(std::move(path));

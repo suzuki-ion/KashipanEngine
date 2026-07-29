@@ -12,6 +12,7 @@
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Scene/Editor/AssetsWindow.h"
+#include "Scene/Editor/EditorPreferences.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/SceneComponentInspector.h"
 #include "Scene/Editor/SceneEditorCommands.h"
@@ -22,6 +23,7 @@
 #include "Scene/Editor/SceneObjectInspector.h"
 #include "Scene/Editor/SceneSaver.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
+#include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/Script/EditorToolManager.h"
 #include "Scene/SceneBackupPath.h"
 #include "Utilities/FileIO.h"
@@ -68,6 +70,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     saver_ = std::make_unique<SceneSaver>(Passkey<SceneEditor>{}, context_);
     loader_ = std::make_unique<SceneLoader>(Passkey<SceneEditor>{}, context_);
     sceneListEditor_ = std::make_unique<SceneListEditor>(Passkey<SceneEditor>{}, context_);
+    preferences_ = std::make_unique<EditorPreferences>(Passkey<SceneEditor>{});
 
     objectHierarchy_->SetCommands(commands_.get());
     objectInspector_->SetCommands(commands_.get());
@@ -80,6 +83,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowVariablesMenu_ = EditorSettings::GetBool("sceneEditor.showVariablesMenu", true);
     isShowAssets_ = EditorSettings::GetBool("sceneEditor.showAssets", true);
     isShowSceneList_ = EditorSettings::GetBool("sceneEditor.showSceneList", false);
+    isShowPreferences_ = EditorSettings::GetBool("sceneEditor.showPreferences", false);
 
     isShowLoadedTexturesWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedTextures", false);
     isShowLoadedModelsWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedModels", false);
@@ -140,6 +144,7 @@ void SceneEditor::ShowImGui() {
     if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObjects(), commands_.get(), objectHierarchy_.get());
     if (isShowAssets_) assetsWindow_->ShowImGui();
     if (isShowSceneList_) sceneListEditor_->ShowImGui();
+    if (isShowPreferences_) preferences_->ShowImGui();
 
     //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
     if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
@@ -185,6 +190,10 @@ void SceneEditor::ShowMainWindow() {
             }
             if (ImGui::MenuItem(redoLabel.c_str(), "Ctrl+Y", false, commands_->CanRedo())) {
                 PerformRedo();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Preferences...", nullptr, &isShowPreferences_)) {
+                EditorSettings::SetBool("sceneEditor.showPreferences", isShowPreferences_);
             }
             ImGui::EndMenu();
         }
@@ -335,6 +344,9 @@ bool SceneEditor::ShowNewSceneModal() {
         if (ImGui::Button("Create", ImVec2(120, 0))) {
             context_->ClearSceneObjects();
             context_->ClearSceneComponents();
+            // 空のシーンでもシーンビューの背景とグリッドを毎フレーム描画できるよう、
+            // 描画を担当する標準コンポーネントは作り直す。
+            context_->AddComponent<SceneRenderer>();
             context_->SetName(newSceneName_.empty() ? "New Scene" : newSceneName_);
             created = true;
             ImGui::CloseCurrentPopup();

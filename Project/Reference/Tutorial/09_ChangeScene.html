@@ -15,37 +15,35 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>9. シーンを切り替える</h1>
-<p class="page-lead">最後に、今作ったシーンから別のシーンへ切り替える方法を確認します。詳しいAPIは <a href="../02_Scenes.html">02_Scenes.html</a> を参照してください。</p>
+<p class="page-lead">Play モードで完成した操作を確認し、Scene List とスクリプトを使ったシーン遷移まで仕上げます。</p>
 </div>
 
-<h2>方法1: Sceneから次のシーンを予約する</h2>
-<p>
-<code>Scene</code>クラスには「次のフレームで切り替えるシーン」を予約する仕組みがあります。スクリプトやゲームロジックの中から呼びやすい方法です。
-</p>
-<div class="api-card">
-<div class="api-sig">void SetNextSceneName(const std::string &amp;nextSceneName);
-bool ChangeToNextScene();</div>
-</div>
-<pre><code>// C++からの例
-scene-&gt;SetNextSceneName("ResultScene");
-scene-&gt;ChangeToNextScene();</code></pre>
+<div class="tutorial-meta"><span>操作の起点: Scene Editor / Scene List</span><span>完成条件: Play とシーン遷移を確認</span></div>
 
-<h2>方法2: SceneManagerから直接切り替える</h2>
-<div class="api-card">
-<div class="api-sig">bool ChangeScene(const std::string &amp;sceneName);
-bool HasPendingSceneChange() const;</div>
-</div>
-<pre><code>context.sceneManager-&gt;ChangeScene("ResultScene");</code></pre>
+<figure class="editor-shot">
+<img src="../assets/tutorial/09-play.png" alt="Play モードでゲーム画面を表示しているエディター">
+<figcaption>Play モードの実行画面。Scene Editor の Stop / Pause / Step Frame で再生状態を操作しながら確認できます。</figcaption>
+</figure>
 
-<div class="warn">
-<strong>切り替えは次フレーム反映</strong><br>
-<code>ChangeScene</code>を呼んだ瞬間にシーンが切り替わるわけではありません。呼び出した時点では「切り替え予約」がされるだけで、実際の切り替えは次のフレームの更新タイミングで行われます。同一フレーム内で切り替え後のシーンの状態を期待するコードは書けないので注意してください。<code>HasPendingSceneChange()</code>で予約状態を確認できます。
-</div>
+<h2>1. Play モードで完成状態を確認する</h2>
+<ol class="steps">
+<li>Scene Editor の <code>Play</code> を押します。</li>
+<li>A / D キーによる Player の移動、Collider、描画を確認します。</li>
+<li>必要に応じて <code>Pause</code> と <code>Step Frame</code> で 1 フレームずつ挙動を追います。</li>
+<li>確認後は <code>Stop</code> を押して編集状態へ戻ります。</li>
+</ol>
 
-<h2>スクリプトから切り替える</h2>
-<p>
-AngelScript側では<code>GetScene()</code>で現在の<code>Scene@</code>を取得できるため、そこから同様にシーン変数の読み書きやシーン遷移の指示を行えます。例えば「プレイヤーがゴールに触れたらリザルトシーンへ」という処理は、ゴール判定用のオブジェクトに付けたスクリプトの<code>OnCollisionEnter</code>内で呼び出す形になります。
-</p>
+<div class="note">Play 中の変更は検証用です。Stop すると Play 開始前の編集状態へ戻るため、恒久的な調整は停止後に行ってシーンを保存してください。</div>
+
+<h2>2. 切り替え先を Scene List で確認する</h2>
+<ol class="steps">
+<li><span class="ui-path">Window → Scene List</span> を開きます。</li>
+<li>遷移先のシーンが登録済みであることを確認します。未登録なら <a href="02_RegisterScene.html">2. シーンを登録する</a> の手順で追加します。</li>
+<li>一覧の <code>Switch</code> で手動切り替えを試し、対象シーンが正しく開くことを確認します。</li>
+</ol>
+
+<h2>3. スクリプトから切り替える</h2>
+<p>ゴール用オブジェクトの ScriptComponent で、衝突時に次のシーンを予約します。<code>ResultScene</code> は Scene List に登録した実際のシーン名へ置き換えてください。</p>
 <pre><code>void OnCollisionEnter(const HitInfo &amp;in hit) {
     if (hit.otherCollider.GetTag() == Tag("Player")) {
         Scene@ scene = GetScene();
@@ -56,10 +54,17 @@ AngelScript側では<code>GetScene()</code>で現在の<code>Scene@</code>を取
     }
 }</code></pre>
 
-<h2>お疲れさまでした</h2>
-<p>
-これでシーンの作成からオブジェクト配置、当たり判定、スクリプトによる制御、入力設定、アセット読み込み、シーン遷移までの一連の流れを一通り体験しました。より詳しい内容は各トピックの<a href="../00_Index.html">リファレンス</a>を参照してください。
-</p>
+<div class="warn"><strong>シーン遷移は次フレームで反映されます。</strong><br><code>ChangeToNextScene()</code> を呼んだ同じフレーム内で、切り替え後のシーンへアクセスしないでください。</div>
+
+<h2>完成チェック</h2>
+<ul class="checklist">
+<li>シーンを作成し、Scene List に登録できた</li>
+<li>オブジェクト、描画コンポーネント、Collider をエディターで設定できた</li>
+<li>ScriptComponent と Input Command Editor で操作を追加できた</li>
+<li>Assets を割り当て、Play モードで実行結果を確認できた</li>
+<li>別シーンへの切り替えを実装できた</li>
+</ul>
+<p>各機能の型、引数、保存形式は <a href="../00_Index.html">API リファレンス</a> から確認できます。</p>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

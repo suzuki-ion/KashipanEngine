@@ -15,43 +15,41 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>7. 入力を設定する</h1>
-<p class="page-lead">前の手順で使った <code>"MoveLeft"</code> / <code>"MoveRight"</code> という入力アクション名を、実際のキーに割り当てます。詳しいAPIは <a href="../08_Input.html">08_Input.html</a> を参照してください。</p>
+<p class="page-lead">Input Command Editor を使い、スクリプトのコマンド名とキーボード入力を画面上で結び付けます。</p>
 </div>
 
-<h2>InputCommandでアクションを登録する</h2>
-<p>
-KashipanEngineの入力は、キーやボタンを直接見るのではなく、<code>"MoveLeft"</code>のような<strong>アクション名</strong>を経由してマッピングする<code>InputCommand</code>の仕組みを使うのが基本です。<code>Application/AppInitialize.h</code>で登録できます。
-</p>
-<pre><code>#pragma once
-#include &lt;KashipanEngine.h&gt;
+<div class="tutorial-meta"><span>操作の起点: Debug Windows</span><span>保存先: Assets/KashipanEngine/InputCommand.json</span></div>
 
-namespace KashipanEngine {
-inline void AppInitialize(const GameEngine::Context &amp;context) {
-    context.inputCommand-&gt;RegisterCommand("MoveLeft",  Key::A,     InputState::Down);
-    context.inputCommand-&gt;RegisterCommand("MoveRight", Key::D,     InputState::Down);
-    context.inputCommand-&gt;RegisterCommand("MoveLeft",  Key::Left,  InputState::Down); // 同じアクションに複数キーを割り当ててもよい
-    context.inputCommand-&gt;RegisterCommand("MoveRight", Key::Right, InputState::Down);
-}
-}
-</code></pre>
-<p>
-<code>InputState</code>には<code>Down</code>(押している間)、<code>Trigger</code>(押した瞬間)、<code>Release</code>(離した瞬間)があります。移動のような継続入力には<code>Down</code>、ジャンプのような単発入力には<code>Trigger</code>を使うのが典型的です。
-</p>
+<figure class="editor-shot">
+<img src="../assets/tutorial/07-input-command.png" alt="Input Command Editor の New Binding と登録済みコマンド一覧">
+<figcaption>Input Command Editor。上部の New Binding で追加し、下部で登録済みコマンドの内容を確認・編集します。</figcaption>
+</figure>
 
-<h2>設定の保存・読み込み</h2>
-<p>
-登録した内容は既定で<code>Assets/KashipanEngine/InputCommand.json</code>に保存・復元できます(<code>InputCommand::SaveToJSON</code> / <code>LoadFromJSON</code>)。一度設定したコマンド定義はこのファイルとして永続化されるため、次回起動時に再登録しなくても復元されます。
-</p>
+<h2>1. Input Command Editor を開く</h2>
+<ol class="steps">
+<li>メニューバーから <span class="ui-path">Debug Windows → Input Command Editor</span> を選択します。</li>
+<li><strong>New Binding を展開する</strong>折りたたまれていれば見出しをクリックします。</li>
+</ol>
 
-<h2>スクリプトから参照する</h2>
-<p>
-前の手順の<code>SimpleMover.as</code>で書いた次のコードは、まさにこの<code>InputCommand</code>のアクションをAngelScript側から参照しています。
-</p>
-<pre><code>if (IsCommandTriggered("MoveLeft"))  moveDirection -= GetCommandValue("MoveLeft");
-if (IsCommandTriggered("MoveRight")) moveDirection += GetCommandValue("MoveRight");</code></pre>
-<p>
-<code>IsCommandTriggered</code>はそのフレームで条件を満たしたかどうか、<code>GetCommandValue</code>は入力の強さ(キーなら通常1.0、アナログスティックなら0.0〜1.0の値)を返します。
-</p>
+<h2>2. 左右移動を登録する</h2>
+<p>次の値を設定して <strong>Add Binding</strong> を押します。同じコマンドに複数のキーを追加する場合は、<strong>Existing Command</strong> から既存名を選ぶと入力ミスを防げます。</p>
+<table>
+<thead><tr><th>Action Name</th><th>Device</th><th>Key</th><th>State</th><th>Invert Value</th></tr></thead>
+<tbody>
+<tr><td><code>PlayerMoveLeft</code></td><td>Keyboard</td><td>A</td><td>Down</td><td>オン</td></tr>
+<tr><td><code>PlayerMoveRight</code></td><td>Keyboard</td><td>D</td><td>Down</td><td>オフ</td></tr>
+</tbody>
+</table>
+
+<p><strong>Down</strong> は押している間、<strong>Trigger</strong> は押した瞬間、<strong>Release</strong> は離した瞬間に成立します。継続移動には Down、ジャンプのような単発操作には Trigger が適します。</p>
+
+<h2>3. Play して入力を確認する</h2>
+<ol class="steps">
+<li>Scene Editor の <code>Play</code> を押します。</li>
+<li>A / D キーで Player が左右に動くことを確認します。</li>
+<li><strong>編集状態へ戻る</strong><code>Stop</code> を押します。</li>
+</ol>
+<p>登録内容はエンジン終了時に <code>Assets/KashipanEngine/InputCommand.json</code> へ保存され、次回起動時に読み込まれます。API から登録する方法は <a href="../08_Input.html">入力のリファレンス</a> を参照してください。</p>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

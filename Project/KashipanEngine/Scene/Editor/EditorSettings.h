@@ -27,6 +27,12 @@ public:
     /// @brief string値の設定（変更があった場合のみ保存する）
     static void SetString(const std::string &key, const std::string &value);
 
+    /// @brief JSON値の取得（配列・オブジェクトなど任意の形状の値を保存したい場合に使う）
+    static JSON GetJSON(const std::string &key, const JSON &defaultValue);
+
+    /// @brief JSON値の設定（変更があった場合のみ保存する）
+    static void SetJSON(const std::string &key, const JSON &value);
+
     /// @brief 開閉状態を保存するツリーノード（デフォルトは開いた状態）
     /// @details 開閉状態は key で保存され、再起動後も維持される。
     static bool PersistentTreeNode(const char *label, const std::string &key, bool defaultOpen = true);

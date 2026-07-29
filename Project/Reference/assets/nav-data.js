@@ -33,4 +33,7 @@ const KE_PAGES = [
   { id: "T07_SetupInput", title: "7. 入力を設定する", group: "チュートリアル", href: "Tutorial/07_SetupInput.html" },
   { id: "T08_LoadAssets", title: "8. アセットを読み込む", group: "チュートリアル", href: "Tutorial/08_LoadAssets.html" },
   { id: "T09_ChangeScene", title: "9. シーンを切り替える", group: "チュートリアル", href: "Tutorial/09_ChangeScene.html" },
+  { id: "T10_CreateRenderTarget", title: "10. 描画先オブジェクトを作成する", group: "チュートリアル", href: "Tutorial/10_CreateRenderTarget.html" },
+  { id: "T11_CreateCamera", title: "11. カメラオブジェクトを作成する", group: "チュートリアル", href: "Tutorial/11_CreateCamera.html" },
+  { id: "T12_CreateLight", title: "12. ライトオブジェクトを作成する", group: "チュートリアル", href: "Tutorial/12_CreateLight.html" },
 ];

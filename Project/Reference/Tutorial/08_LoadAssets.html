@@ -15,46 +15,42 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>8. アセットを読み込む</h1>
-<p class="page-lead">見た目や音を差し替えるために、モデル・テクスチャ・オーディオといったアセットを読み込んでコンポーネントに設定します。詳しいAPIは <a href="../09_Assets.html">09_Assets.html</a> を参照してください。</p>
+<p class="page-lead">Assets ウィンドウを使い、プロジェクトに含まれる画像・マテリアル・スクリプト・プレハブを探して利用します。</p>
 </div>
 
-<h2>共通パターン: パス → ハンドル → コンポーネント</h2>
-<p>
-KashipanEngineの各種アセットマネージャ(<code>TextureManager</code>, <code>ModelManager</code>, <code>AudioManager</code>など)は、いずれも「アセットのパスを渡してハンドル(軽量な識別子)を受け取り、そのハンドルをコンポーネントに設定する」という共通の使い方をします。
-</p>
+<div class="tutorial-meta"><span>操作の起点: Window → Assets</span><span>ゲーム用ルート: Assets/Application</span></div>
 
-<h2>モデルを読み込んで表示する</h2>
-<p>
-<code>Assets/Application/Model/</code>配下に置いたモデルファイルを、<code>MeshFilter</code>の<code>meshAssetPath</code>に指定するだけで表示できます(<a href="04_AddComponents.html">4. コンポーネントを追加する</a>で使ったプリミティブ形状の代わりに、実際のモデルファイルパスを指定するイメージです)。
-</p>
-<pre><code>{
-    "type": "MeshFilter",
-    "data": { "customData": { "meshAssetPath": "Assets/Application/Model/Character/Character.gltf" }, "isActive": true, "priority": 1, "tag": "" }
-}</code></pre>
+<figure class="editor-shot">
+<img src="../assets/tutorial/08-assets.png" alt="エディター下部に表示された Assets ウィンドウ">
+<figcaption>エディター下部の Assets ウィンドウ。左のフォルダーツリーと右のサムネイル一覧でプロジェクト内を移動できます。</figcaption>
+</figure>
 
-<h2>オーディオを再生する</h2>
-<p>
-効果音やBGMは<code>AudioManager::Load</code>でハンドルを取得し、<code>AudioManager::Play</code>で再生します。オブジェクトに紐付いた音源として扱いたい場合は<code>AudioSource</code>コンポーネントを使います。
-</p>
-<pre><code>// C++側での一例(通常はAudioSourceコンポーネント経由で使うことが多い)
-SoundHandle jumpSe = AudioManager::Load("Assets/Application/Sound/Jump.wav");
-AudioManager::PlayParams params;
-params.handle = jumpSe;
-PlayHandle handle = AudioManager::Play(params);
-AudioManager::SetVolume(handle, 0.8f);</code></pre>
-<p>
-AngelScript側からもオーディオ再生APIが公開されているため、スクリプトのイベント(例えばジャンプした瞬間)に合わせて効果音を鳴らすといったことも可能です。詳細は<a href="../09_Assets.html">09_Assets.html</a>と<a href="../07_Scripting.html">07_Scripting.html</a>を参照してください。
-</p>
+<h2>1. Assets ウィンドウを開く</h2>
+<ol class="steps">
+<li>メニューバーから <span class="ui-path">Window → Assets</span> を選択します。</li>
+<li>左のツリーで <code>Assets/Application</code> を選択します。</li>
+<li>右側のフォルダーをダブルクリックして目的のアセットへ移動します。</li>
+</ol>
 
-<h2>テクスチャを使う</h2>
-<p>
-2Dの<code>SpriteRenderer</code>や、モデルのマテリアルに使うテクスチャは<code>TextureManager</code>で読み込みます。シーンエディタからマテリアルにテクスチャを割り当てる場合は、<code>MaterialManager</code>で管理されているマテリアル設定の中でテクスチャパスを指定します。
-</p>
+<h2>2. アセットを確認・割り当てる</h2>
+<p>ファイルをダブルクリックすると、対応する編集またはプレビュー画面が開きます。用途に応じて次の操作を使います。</p>
+<ul class="checklist">
+<li><strong>スクリプト（.as）</strong>: ScriptComponent の Script Path へドラッグ＆ドロップ</li>
+<li><strong>テクスチャ</strong>: 対応するテクスチャ欄へドラッグ＆ドロップ</li>
+<li><strong>マテリアル（.mat）</strong>: Renderer のマテリアル欄へドラッグ＆ドロップ</li>
+<li><strong>プレハブ（.prefab）</strong>: Scene View または Hierarchy へドラッグ＆ドロップして配置</li>
+</ul>
 
-<div class="note">
-<strong>アセットの置き場所</strong><br>
-ゲーム側のアセットは<code>Assets/Application/</code>配下(Image, Model, Sound, Scripts等)に、エンジンの既定アセット(フォント・パイプライン定義など)は<code>Assets/KashipanEngine/</code>配下に置かれています。
-</div>
+<h2>3. フォルダーの役割を把握する</h2>
+<table>
+<thead><tr><th>場所</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>Assets/Application/</code></td><td>ゲーム固有の Image、Model、Sound、Scripts など</td></tr>
+<tr><td><code>Assets/KashipanEngine/</code></td><td>エンジンの既定画像、入力設定、パイプライン設定など</td></tr>
+</tbody>
+</table>
+
+<div class="note">エンジン API から直接ロードする場合は、パスから各マネージャーのハンドルを取得してコンポーネントへ設定します。対応形式と API は <a href="../09_Assets.html">アセットのリファレンス</a> を参照してください。</div>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

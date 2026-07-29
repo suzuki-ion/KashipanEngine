@@ -6,7 +6,10 @@
 #include "Core/DirectXCommon.h"
 #include "Core/Window.h"
 #include "EngineSettings.h"
+#include "Scene/Editor/EditorSettings.h"
 #include "Utilities/Conversion/ConvertString.h"
+
+#include <algorithm>
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -72,13 +75,7 @@ void ImGuiManager::InitializeInternal() {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    ImGui::StyleColorsDark();
-
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    } else {
+    if (!(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)) {
         // マルチビューポートを使用しない場合はImGui用のウィンドウを作成
         Window::CreateNormal(
             "ImGui Window",
@@ -86,21 +83,88 @@ void ImGuiManager::InitializeInternal() {
         );
     }
 
-    // 現在の言語環境に合わせてフォントを設定
-    {
-        // フォントの大きさをDPIに基づいて設定
-        auto dpi = GetDpiForSystem();
-        float fontSizeDefault = 16.0f;
-        float fontSize = fontSizeDefault * (static_cast<float>(dpi) / 96.0f);
-        std::string fontPath = GetCurrentLanguageFontPath();
-        if (!fontPath.empty()) {
-            io.Fonts->AddFontFromFileTTF(fontPath.c_str(), fontSize, nullptr, io.Fonts->GetGlyphRangesJapanese());
-        } else {
-            io.Fonts->AddFontDefault();
-        }
-    }
+    // エディターUI設定（EditorSettings）を初期適用する（フォント・スケール・配色）
+    // ImGuiManagerがEditorSettingsを直接読みに行く（SceneEditor側からの受け渡しはしない）
+    appliedFontPath_ = EditorSettings::GetString("editorUI.fontPath", "");
+    RebuildFontAtlas(appliedFontPath_);
+    appliedUIScale_ = EditorSettings::GetFloat("editorUI.uiScale", 1.0f);
+    appliedColors_ = EditorSettings::GetJSON("editorUI.colors", JSON());
+    ReapplyStyle(appliedUIScale_, appliedColors_);
+    io.FontGlobalScale = std::max(0.1f, EditorSettings::GetFloat("editorUI.fontScale", 1.0f));
 
     isInitialized_ = true;
+}
+
+void ImGuiManager::RebuildFontAtlas(const std::string &fontPath) {
+    ImGuiIO &io = ImGui::GetIO();
+    io.Fonts->Clear();
+    io.FontDefault = nullptr;
+
+    // フォントの大きさをDPIに基づいて設定
+    auto dpi = GetDpiForSystem();
+    const float fontSizeDefault = 16.0f;
+    const float fontSize = fontSizeDefault * (static_cast<float>(dpi) / 96.0f);
+
+    // 空文字の場合は現在の言語のデフォルトフォントを使う
+    const std::string resolvedPath = fontPath.empty() ? GetCurrentLanguageFontPath() : fontPath;
+    ImFont *font = nullptr;
+    if (!resolvedPath.empty()) {
+        font = io.Fonts->AddFontFromFileTTF(resolvedPath.c_str(), fontSize, nullptr, io.Fonts->GetGlyphRangesJapanese());
+    }
+    if (!font) {
+        // 指定フォントの読み込みに失敗した場合はImGui組み込みのデフォルトフォントにフォールバックする
+        font = io.Fonts->AddFontDefault();
+    }
+    io.FontDefault = font;
+}
+
+void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson) {
+    ImGuiStyle &style = ImGui::GetStyle();
+    // サイズ・配色を素の状態（スケール1.0相当）へ戻してから組み立て直す。
+    // ScaleAllSizesは呼ぶたびに現在値へ倍率をかける累積処理のため、都度リセットしないと
+    // スケールを変更するたびに値がどんどん膨れ上がってしまう
+    style = ImGuiStyle();
+
+    if (colorsJson.is_array() && colorsJson.size() == ImGuiCol_COUNT) {
+        for (int i = 0; i < ImGuiCol_COUNT; ++i) {
+            const auto &c = colorsJson[i];
+            if (c.is_array() && c.size() == 4) {
+                style.Colors[i] = ImVec4(c[0].get<float>(), c[1].get<float>(), c[2].get<float>(), c[3].get<float>());
+            }
+        }
+    } else {
+        ImGui::StyleColorsDark(&style);
+    }
+
+    const ImGuiIO &io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+    style.ScaleAllSizes(std::max(0.1f, uiScale));
+}
+
+void ImGuiManager::ApplyEditorPreferencesIfChanged() {
+    // 文字サイズ（FontGlobalScale）はアトラスの作り直しが不要なため、変更検知なしで毎フレーム同期する
+    ImGuiIO &io = ImGui::GetIO();
+    io.FontGlobalScale = std::max(0.1f, EditorSettings::GetFloat("editorUI.fontScale", 1.0f));
+
+    // フォント差し替えはアトラスの作り直しが必要なため、パスが変わった場合のみ行う
+    const std::string fontPath = EditorSettings::GetString("editorUI.fontPath", "");
+    if (fontPath != appliedFontPath_) {
+        RebuildFontAtlas(fontPath);
+        appliedFontPath_ = fontPath;
+    }
+
+    // 全体スケール・配色は変化した場合のみスタイルを再構築する
+    const float uiScale = EditorSettings::GetFloat("editorUI.uiScale", 1.0f);
+    const JSON colors = EditorSettings::GetJSON("editorUI.colors", JSON());
+    if (uiScale != appliedUIScale_ || colors != appliedColors_) {
+        ReapplyStyle(uiScale, colors);
+        appliedUIScale_ = uiScale;
+        appliedColors_ = colors;
+    }
 }
 
 void ImGuiManager::ShutdownInternal() {
@@ -124,6 +188,10 @@ void ImGuiManager::ShutdownInternal() {
 
 void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
     if (!isInitialized_) return;
+
+    // エディターUI設定の変更を毎フレーム確認して反映する（フォントアトラスの作り直しを伴いうるため、
+    // NewFrame()より前に行う）
+    ApplyEditorPreferencesIfChanged();
 
     // バックエンド初期化はウィンドウ生成後に行う
     if (!isBackendInitialized_) {

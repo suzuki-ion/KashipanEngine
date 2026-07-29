@@ -50,6 +50,21 @@ void EditorSettings::SetString(const std::string &key, const std::string &value)
     SaveJSON(sData_, kFilePath);
 }
 
+JSON EditorSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end()) return defaultValue;
+    return *it;
+}
+
+void EditorSettings::SetJSON(const std::string &key, const JSON &value) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it != sData_.end() && *it == value) return;
+    sData_[key] = value;
+    SaveJSON(sData_, kFilePath);
+}
+
 bool EditorSettings::PersistentTreeNode(const char *label, const std::string &key, bool defaultOpen) {
     const bool stored = GetBool(key, defaultOpen);
     ImGui::SetNextItemOpen(stored, ImGuiCond_Once);

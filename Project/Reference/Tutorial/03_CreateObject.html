@@ -15,43 +15,54 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>3. オブジェクトを作成する</h1>
-<p class="page-lead">シーンの中に、ゲームオブジェクトの入れ物である <code>EmptyObject</code> を1つ作成します。詳しいAPIは <a href="../03_GameObjects.html">03_GameObjects.html</a> を参照してください。</p>
+<p class="page-lead">Scene Object Hierarchyから空のオブジェクトを作り、Playerという名前を付けます。</p>
 </div>
 
-<h2>シーンエディタでの作成</h2>
-<p>
-シーンエディタの Hierarchy(オブジェクト階層)ウィンドウ上で右クリックし「Create Empty Object」のような操作を行うと、名前のない空のオブジェクトがシーンへ追加されます。追加した後、名前を「Player」のようにわかりやすく変更しておきましょう。
-</p>
+<div class="tutorial-meta"><span>操作: Scene Object Hierarchy</span><span>作成名: Player</span><span>目安: 2分</span></div>
 
-<h2>保存されるファイル</h2>
-<p>
-オブジェクトを1つ作成すると、シーンフォルダの下に <code>Objects/&lt;新しいUUID&gt;/object.json</code> が新しく作られます。中身はこの時点ではまだコンポーネントを何も持たない、最小限の状態です。
-</p>
-<pre><code>{
-    "object": {
-        "components": [],
-        "editorOnly": false,
-        "isActive": true,
-        "name": "Player",
-        "objectID": "3f6c1a2e-....",
-        "tag": ""
-    },
-    "siblingIndex": 0
-}</code></pre>
-<p>
-<code>objectID</code>は<code>UUID128</code>で自動採番され、以降このオブジェクトを一意に識別するために使われます(親子関係の指定など、他のコンポーネントから参照される際もこのIDが使われます)。<code>siblingIndex</code>はヒエラルキー内での並び順です。
-</p>
+<h2>Playerを作る</h2>
+<ol class="steps">
+<li><strong>Hierarchyの空白を右クリックする</strong><code>Scene Object Hierarchy</code>内で、既存オブジェクトに重ならない空白部分を右クリックします。</li>
+<li><strong>Empty Objectを選ぶ</strong><span class="ui-path"><span>Create Object</span><i>›</i><span>Empty Object</span></span> を選択します。</li>
+<li><strong>作成したオブジェクトを選択する</strong>Hierarchyに追加された項目をクリックします。選択するとScene Object Inspectorにプロパティが表示されます。</li>
+<li><strong>名前をPlayerへ変更する</strong>Inspector上部の<code>Name</code>へ<code>Player</code>と入力し、Enterで確定します。</li>
+</ol>
 
-<h2>C++視点での対応API</h2>
-<p>これはエディタの内部的には次のAPI呼び出しに相当します(通常は直接呼ぶ必要はありません)。</p>
-<div class="api-card">
-<div class="api-sig">EmptyObject *CreateEmptyObject(const std::string &amp;name = "", const UUID128 &amp;objectID = UUID128(), size_t index = MAXSIZE_T);</div>
-</div>
+<figure class="editor-shot">
+<img src="../assets/tutorial/03-create-object.png" alt="Scene Object HierarchyのCreate ObjectメニューからEmpty Objectを選択する画面">
+<figcaption><strong>オブジェクト作成メニュー。</strong> 空白の右クリックはルートへ作成し、既存項目の右クリックでは兄弟または子オブジェクトも作成できます。</figcaption>
+</figure>
+
+<h2>選択と階層操作</h2>
+<table>
+<tr><th>操作</th><th>結果</th></tr>
+<tr><td>クリック</td><td>1つのオブジェクトを選択する</td></tr>
+<tr><td>Ctrl + クリック</td><td>複数選択へ追加／選択解除する</td></tr>
+<tr><td>Shift + クリック</td><td>範囲選択する</td></tr>
+<tr><td>ドラッグ&amp;ドロップ</td><td>並び替え、または親子関係を変更する</td></tr>
+<tr><td>Ctrl + D</td><td>選択したオブジェクトを複製する</td></tr>
+</table>
 
 <div class="note">
-<strong>この時点ではまだ何も表示されない</strong><br>
-コンポーネントを1つも持たないオブジェクトは、画面には何も描画されません。次の <a href="04_AddComponents.html">4. コンポーネントを追加する</a> でTransformと描画コンポーネントを追加します。
+<strong>まだScene Viewには何も表示されません</strong><br>
+Empty Objectはコンポーネントを持たない入れ物です。HierarchyへPlayerが表示されていれば、この手順は成功です。次のページで位置と見た目を追加します。
 </div>
+
+<h2>保存結果</h2>
+<p><code>Ctrl+S</code>で保存すると、<code>TutorialScene.scene/Objects/&lt;UUID&gt;/object.json</code>が作成されます。UUIDは自動採番されるため手入力しません。</p>
+<pre><code>{
+  "object": {
+    "components": [],
+    "editorOnly": false,
+    "isActive": true,
+    "name": "Player",
+    "objectID": "&lt;自動生成されたUUID&gt;",
+    "tag": ""
+  },
+  "siblingIndex": 0
+}</code></pre>
+
+<p>作成、複製、親子関係の詳細は<a href="../03_GameObjects.html">ゲームオブジェクトのリファレンス</a>を参照してください。</p>
 
 <div id="page-footer" class="page-footer"></div>
 </main>

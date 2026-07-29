@@ -25,6 +25,9 @@ Logs/
 VSTools/
 SceneBackups/
 
+# エディターの個人設定（表示倍率・フォント・配色など）。開発者ごとのローカル設定のため共有しない
+Project/Assets/KashipanEngine/EditorSettings.json
+
 # User-specific files
 *.rsuser
 *.suo

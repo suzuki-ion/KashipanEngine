@@ -44,34 +44,21 @@ Vector3 ICollider::GetSyncedOwnerPosition() const {
 }
 
 Vector3 ICollider::GetSyncedOwnerRotationEuler() const {
-    Vector3 rot{ 0.0f, 0.0f, 0.0f };
-    auto *objectContext = GetOwnerObjectContext();
-    auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-    if (transform) {
-        Quaternion worldRotate = transform->GetWorldRotateQuaternion();
-        rot = worldRotate.MakeEuler();
-    }
-    if (!syncRotation_[0]) rot.x = 0.0f;
-    if (!syncRotation_[1]) rot.y = 0.0f;
-    if (!syncRotation_[2]) rot.z = 0.0f;
-    return rot;
+    // 2D系コライダーがZ角度のみを取り出すために使う。回転は全軸同期/非同期の二択のため、
+    // 非同期時は分解すら行わずゼロを返す。
+    if (!syncRotation_) return Vector3{ 0.0f, 0.0f, 0.0f };
+    return GetSyncedOwnerRotation().MakeEuler();
 }
 
 Quaternion ICollider::GetSyncedOwnerRotation() const {
-    // 全軸同期の場合はTransformのワールド回転クォータニオンをそのまま使う。
-    // オイラー角を経由すると、分解(Quaternion::MakeEuler)と再構成(Quaternion::MakeRotateEuler)の
-    // 回転順が一致しないため、ImGuizmoのようにクォータニオンで直接回転を設定した場合に
-    // 軸ごと反転したような結果になってしまう（インスペクターのオイラー角入力経由だと、
-    // 元々MakeRotateEulerで生成された値を再度MakeRotateEulerに通すだけなので問題が起きない）。
-    if (syncRotation_[0] && syncRotation_[1] && syncRotation_[2]) {
-        auto *objectContext = GetOwnerObjectContext();
-        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-        return transform ? transform->GetWorldRotateQuaternion() : Quaternion::Identity();
-    }
-    if (!syncRotation_[0] && !syncRotation_[1] && !syncRotation_[2]) {
-        return Quaternion::Identity();
-    }
-    return Quaternion::MakeRotateEuler(GetSyncedOwnerRotationEuler());
+    // 回転の部分同期（軸ごとにオイラー角を分解して一部をゼロにする）は、分解順序への依存と
+    // ジンバルロックにより反対向きの回転や不連続なジャンプを引き起こすためサポートしない。
+    // 全軸同期時はTransformのワールド回転クォータニオンをそのまま使うため、
+    // オイラー角の往復（分解→再構成）が発生せずこの問題は起きない。
+    if (!syncRotation_) return Quaternion::Identity();
+    auto *objectContext = GetOwnerObjectContext();
+    auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+    return transform ? transform->GetWorldRotateQuaternion() : Quaternion::Identity();
 }
 
 Vector3 ICollider::GetSyncedOwnerScale() const {

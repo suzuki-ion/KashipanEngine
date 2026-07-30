@@ -94,6 +94,22 @@
                             "tag": ""
                         },
                         "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
                     }
                 ],
                 "editorOnly": false,

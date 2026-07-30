@@ -469,19 +469,14 @@
                     {
                         "data": {
                             "customData": {
-                                "animationClipName": "Gimmick",
                                 "blendShapes": [],
                                 "castShadows": true,
-                                "loop": true,
                                 "materialName": "floor_gimmick_Material0",
                                 "materialNames": [
                                     "floor_gimmick_Material0"
                                 ],
                                 "pipelineName": "Object3D.Solid.BlendNormal",
-                                "playOnStart": true,
-                                "playbackSpeed": 0.10000000149011612,
                                 "quality": 0,
-                                "rootBoneObjectID": "",
                                 "targetObjectID": ""
                             },
                             "isActive": true,
@@ -489,6 +484,22 @@
                             "tag": ""
                         },
                         "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "Gimmick",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 0.10000000149011612,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
                     }
                 ],
                 "editorOnly": false,

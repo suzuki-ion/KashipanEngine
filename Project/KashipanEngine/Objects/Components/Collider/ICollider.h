@@ -50,9 +50,9 @@ public:
     void CopySyncSettingsFrom(const ICollider &other) {
         for (int i = 0; i < 3; ++i) {
             syncPosition_[i] = other.syncPosition_[i];
-            syncRotation_[i] = other.syncRotation_[i];
             syncScale_[i] = other.syncScale_[i];
         }
+        syncRotation_ = other.syncRotation_;
         continuousDetection_ = other.continuousDetection_;
     }
 
@@ -94,11 +94,14 @@ public:
     //==================================================
     // Transform同期設定
     //==================================================
-    // 位置・回転・スケールそれぞれXYZ軸ごとに、同オブジェクトのTransformへ追従させるかを個別に選択できる。
-    // 無効にした軸は各コライダーの形状計算において「値なし」（位置・回転は0、スケールは1）として扱われる。
+    // 位置・スケールはXYZ軸ごとに、同オブジェクトのTransformへ追従させるかを個別に選択できる。
+    // 無効にした軸は各コライダーの形状計算において「値なし」（位置は0、スケールは1）として扱われる。
+    // 回転は軸ごとの部分同期を行うと、オイラー角分解の順序依存とジンバルロックにより
+    // 反対向きの回転や不連続なジャンプが発生してしまうため、「全軸同期」か「非同期（Identity）」の
+    // 二択のみとしている（部分同期はサポートしない）。
 
     bool IsSyncPositionEnabled(int axis) const noexcept { return syncPosition_[axis]; }
-    bool IsSyncRotationEnabled(int axis) const noexcept { return syncRotation_[axis]; }
+    bool IsSyncRotationEnabled() const noexcept { return syncRotation_; }
     bool IsSyncScaleEnabled(int axis) const noexcept { return syncScale_[axis]; }
 
     /// @brief 同期設定を考慮したオーナーのワールド座標を取得する（無効な軸は0として扱う）
@@ -144,16 +147,17 @@ protected:
         if (is2D_) {
             ImGui::Checkbox("Pos X", &syncPosition_[0]); ImGui::SameLine();
             ImGui::Checkbox("Pos Y", &syncPosition_[1]);
-            ImGui::Checkbox("Rot Z", &syncRotation_[2]);
+            ImGui::Checkbox("Rotation", &syncRotation_);
             ImGui::Checkbox("Scale X", &syncScale_[0]); ImGui::SameLine();
             ImGui::Checkbox("Scale Y", &syncScale_[1]);
         } else {
             ImGui::Checkbox("Pos X", &syncPosition_[0]); ImGui::SameLine();
             ImGui::Checkbox("Pos Y", &syncPosition_[1]); ImGui::SameLine();
             ImGui::Checkbox("Pos Z", &syncPosition_[2]);
-            ImGui::Checkbox("Rot X", &syncRotation_[0]); ImGui::SameLine();
-            ImGui::Checkbox("Rot Y", &syncRotation_[1]); ImGui::SameLine();
-            ImGui::Checkbox("Rot Z", &syncRotation_[2]);
+            ImGui::Checkbox("Rotation", &syncRotation_);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", "回転は軸ごとの部分同期をサポートしない（数学的に反転・不連続が避けられないため）");
+            }
             ImGui::Checkbox("Scale X", &syncScale_[0]); ImGui::SameLine();
             ImGui::Checkbox("Scale Y", &syncScale_[1]); ImGui::SameLine();
             ImGui::Checkbox("Scale Z", &syncScale_[2]);
@@ -166,7 +170,7 @@ protected:
         json["isTrigger"] = isTrigger_;
         json["continuousDetection"] = continuousDetection_;
         json["syncPosition"] = { syncPosition_[0], syncPosition_[1], syncPosition_[2] };
-        json["syncRotation"] = { syncRotation_[0], syncRotation_[1], syncRotation_[2] };
+        json["syncRotation"] = syncRotation_;
         json["syncScale"] = { syncScale_[0], syncScale_[1], syncScale_[2] };
         return json;
     }
@@ -177,8 +181,14 @@ protected:
         if (json.contains("syncPosition") && json["syncPosition"].is_array() && json["syncPosition"].size() == 3) {
             for (int i = 0; i < 3; ++i) syncPosition_[i] = json["syncPosition"][i].get<bool>();
         }
-        if (json.contains("syncRotation") && json["syncRotation"].is_array() && json["syncRotation"].size() == 3) {
-            for (int i = 0; i < 3; ++i) syncRotation_[i] = json["syncRotation"][i].get<bool>();
+        if (json.contains("syncRotation")) {
+            const auto &syncRotationJson = json["syncRotation"];
+            if (syncRotationJson.is_array() && syncRotationJson.size() == 3) {
+                // 旧形式（軸ごとの部分同期）からの読み込み: 全軸有効だった場合のみ同期扱いとする
+                syncRotation_ = syncRotationJson[0].get<bool>() && syncRotationJson[1].get<bool>() && syncRotationJson[2].get<bool>();
+            } else if (syncRotationJson.is_boolean()) {
+                syncRotation_ = syncRotationJson.get<bool>();
+            }
         }
         if (json.contains("syncScale") && json["syncScale"].is_array() && json["syncScale"].size() == 3) {
             for (int i = 0; i < 3; ++i) syncScale_[i] = json["syncScale"][i].get<bool>();
@@ -195,7 +205,8 @@ private:
 
     // Transform同期設定（位置・回転はデフォルトで追従、スケールは既存挙動を変えないためデフォルト非追従）
     bool syncPosition_[3] = { true, true, true };
-    bool syncRotation_[3] = { true, true, true };
+    /// @brief 回転の同期。軸ごとの部分同期はサポートせず、全軸同期(true)か非同期(false)の二択
+    bool syncRotation_ = true;
     bool syncScale_[3] = { false, false, false };
 
     std::function<void(const HitInfo3D &)> onCollisionEnter3D_;

@@ -522,6 +522,9 @@
     <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\Animator.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>

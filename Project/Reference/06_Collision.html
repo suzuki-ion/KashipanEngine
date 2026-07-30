@@ -106,12 +106,12 @@ void SetOnCollisionExit2D(std::function&lt;void(const HitInfo2D &amp;)&gt; callb
 <div class="api-card">
 <h4>Transform同期設定</h4>
 <div class="api-sig">bool IsSyncPositionEnabled(int axis) const noexcept;
-bool IsSyncRotationEnabled(int axis) const noexcept;
+bool IsSyncRotationEnabled() const noexcept;
 bool IsSyncScaleEnabled(int axis) const noexcept;
 Vector3 GetSyncedOwnerPosition() const;
 Vector3 GetSyncedOwnerRotationEuler() const;
 Vector3 GetSyncedOwnerScale() const;</div>
-<p>位置・回転・スケールをそれぞれXYZ軸ごとに、同オブジェクトの <code>Transform</code> へ追従させるかを個別に選択できます。無効にした軸は形状計算上「値なし」（位置・回転は0、スケールは1）として扱われます。位置・回転は既定で全軸追従、スケールは既存挙動を変えないため既定で非追従です。</p>
+<p>位置・スケールはそれぞれXYZ軸ごとに、同オブジェクトの <code>Transform</code> へ追従させるかを個別に選択できます。無効にした軸は形状計算上「値なし」（位置は0、スケールは1）として扱われます。位置は既定で全軸追従、スケールは既存挙動を変えないため既定で非追従です。回転は軸ごとの部分同期を行うとオイラー角分解の順序依存とジンバルロックにより反対向きの回転や不連続なジャンプが発生するため、部分同期はサポートせず「全軸同期」か「非同期（Identity）」の二択のみです（既定は全軸同期）。</p>
 </div>
 
 <h2>3Dコライダー</h2>

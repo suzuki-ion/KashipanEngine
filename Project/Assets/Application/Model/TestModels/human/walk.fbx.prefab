@@ -164,19 +164,14 @@
                     {
                         "data": {
                             "customData": {
-                                "animationClipName": "",
                                 "blendShapes": [],
                                 "castShadows": true,
-                                "loop": true,
                                 "materialName": "walk_None",
                                 "materialNames": [
                                     "walk_None"
                                 ],
                                 "pipelineName": "Object3D.Solid.BlendNormal",
-                                "playOnStart": true,
-                                "playbackSpeed": 1.0,
                                 "quality": 0,
-                                "rootBoneObjectID": "",
                                 "targetObjectID": ""
                             },
                             "isActive": true,
@@ -184,6 +179,22 @@
                             "tag": ""
                         },
                         "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
                     }
                 ],
                 "editorOnly": false,

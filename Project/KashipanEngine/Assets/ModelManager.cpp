@@ -742,6 +742,20 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
             }
             object["components"].push_back(makeComponentJson(
                 it->second.skinned ? "SkinnedMeshRenderer" : "MeshRenderer", 900, std::move(rendererData)));
+
+            // スキニングメッシュの場合、アニメーション再生を担うAnimatorも併せて付与する
+            // （SkinnedMeshRendererはAnimatorが解決したスケルトン姿勢を読み取るだけで、
+            //   アニメーションクリップの選択・再生状態そのものは持たない）
+            if (it->second.skinned) {
+                JSON animatorData = JSON::object();
+                animatorData["rootBoneObjectID"] = "";
+                animatorData["clipName"] = "";
+                animatorData["animationSourceAssetPath"] = "";
+                animatorData["playOnStart"] = true;
+                animatorData["loop"] = true;
+                animatorData["playbackSpeed"] = 1.0;
+                object["components"].push_back(makeComponentJson("Animator", 500, std::move(animatorData)));
+            }
         }
 
         JSON entryJson;

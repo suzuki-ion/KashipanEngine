@@ -9,14 +9,13 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
-#include "Assets/SkeletonManager.h"
-#include "Assets/AnimationManager.h"
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/Resources/RWStructuredBufferResource.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
 #include "Math/Matrix4x4.h"
+#include "Objects/Components/Animator.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -51,21 +50,20 @@ struct BlendShapeWeight final {
 
 /// @brief スキンメッシュ（ボーンアニメーションで変形するメッシュ）描画用コンポーネント
 /// @details 基本的な描画先・パイプライン・マテリアル指定はMeshRendererと同じだが、
-///          MeshFilterのメッシュに紐づくスケルトン・アニメーションを使ってGPUスキニングを行い、
+///          MeshFilterのメッシュに紐づくスケルトンを使ってGPUスキニングを行い、
 ///          その結果（スキニング済み頂点バッファ）を描画に使用する。
 ///          GPUスキニング自体はSkinningパイプライン（Computeシェーダー）で行われ、
 ///          毎フレームRendererから駆動される。
+///          アニメーションの再生（クリップ選択・再生状態・スケルトン姿勢の更新）は
+///          このコンポーネントの責務ではなく、同じオブジェクトのAnimatorコンポーネントが
+///          担う（Unityの Animator / SkinnedMeshRenderer の役割分担と同様）。Animatorが
+///          存在しない場合はバインドポーズのまま描画される。
 class SkinnedMeshRenderer final : public IObjectComponent {
 public:
-    // animationClipName_の直接書き込み時は、セッターと同様に再生位置を先頭へ戻す
     OBJECT_COMPONENT_CONSTRUCTOR(SkinnedMeshRenderer, 0xFF,
         SetUpdatePriority(900);
         ADD_MEMBER_VARIABLE(pipelineName_);
         ADD_MEMBER_VARIABLE(castShadows_);
-        ADD_MEMBER_VARIABLE_WITH_CALLBACK(animationClipName_, [this] { elapsedTime_ = 0.0f; });
-        ADD_MEMBER_VARIABLE(playOnStart_);
-        ADD_MEMBER_VARIABLE(loop_);
-        ADD_MEMBER_VARIABLE(playbackSpeed_);
     )
     COMPONENT_CATEGORY("Render")
     ~SkinnedMeshRenderer() override = default;
@@ -73,17 +71,12 @@ public:
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<SkinnedMeshRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
-        ptr->rootBoneObjectID_ = rootBoneObjectID_;
         ptr->pipelineName_ = pipelineName_;
         ptr->materialNames_ = materialNames_;
         ptr->materialHandles_ = materialHandles_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->quality_ = quality_;
         ptr->blendShapes_ = blendShapes_;
-        ptr->animationClipName_ = animationClipName_;
-        ptr->playOnStart_ = playOnStart_;
-        ptr->loop_ = loop_;
-        ptr->playbackSpeed_ = playbackSpeed_;
         ptr->castShadows_ = castShadows_;
         return ptr;
     }
@@ -163,51 +156,23 @@ public:
     void SetQuality(SkinQuality quality) { quality_ = quality; }
     SkinQuality GetQuality() const noexcept { return quality_; }
 
-    /// @brief Root Boneオブジェクトを設定する（Unityと同様）
-    /// @details 設定するとメッシュの描画位置がこのオブジェクトのTransformに沿って動く。
-    ///          未設定（無効なUUID）の場合は所有オブジェクト自身のTransformを使う
-    void SetRootBoneObject(const EmptyObject *rootBoneObject) {
-        rootBoneObjectID_ = rootBoneObject ? rootBoneObject->GetObjectID() : UUID128();
-    }
-    void SetRootBoneObject(const UUID128 &rootBoneObjectID) { rootBoneObjectID_ = rootBoneObjectID; }
-    const UUID128 &GetRootBoneObjectID() const noexcept { return rootBoneObjectID_; }
-    EmptyObject *GetRootBoneObject() const {
-        auto *sceneContext = GetOwnerSceneContext();
-        if (!sceneContext || !rootBoneObjectID_.IsValid()) return nullptr;
-        return sceneContext->GetSceneObject(rootBoneObjectID_);
-    }
-
     const std::vector<BlendShapeWeight> &GetBlendShapes() const noexcept { return blendShapes_; }
     void SetBlendShapeWeight(const std::string &name, float weight);
     float GetBlendShapeWeight(const std::string &name) const;
 
-    /// @brief 再生するアニメーションクリップ名を設定（MeshFilterのメッシュと同じアセットから読み込まれた
-    ///        AnimationClipの中から選択する。空文字の場合はバインドポーズのまま静止する）
-    void SetAnimationClipName(const std::string &clipName) { animationClipName_ = clipName; elapsedTime_ = 0.0f; }
-    const std::string &GetAnimationClipName() const noexcept { return animationClipName_; }
-    void SetPlayOnStart(bool playOnStart) { playOnStart_ = playOnStart; }
-    bool GetPlayOnStart() const noexcept { return playOnStart_; }
-    void SetLoop(bool loop) { loop_ = loop; }
-    bool GetLoop() const noexcept { return loop_; }
-    void SetPlaybackSpeed(float speed) { playbackSpeed_ = speed; }
-    float GetPlaybackSpeed() const noexcept { return playbackSpeed_; }
-
-    void Play() { isPlaying_ = true; }
-    void Stop() { isPlaying_ = false; }
-    bool IsPlaying() const noexcept { return isPlaying_; }
-
-    /// @brief このコンポーネント専用のスケルトンインスタンスの姿勢をバインドポーズへ戻し、
-    ///        アニメーション経過時間もリセットする（ゲームループ停止時にSceneRenderer経由で呼ばれる）
-    void ResetAnimationToBindPose() {
-        for (auto &joint : skeletonInstance_.joints) {
-            if (auto *t = joint.transform.get()) t->ResetToBindPose();
-            if (auto *t = joint.skeletonSpaceTransform.get()) t->ResetToBindPose();
-        }
-        elapsedTime_ = 0.0f;
+    /// @brief このオブジェクトのAnimatorコンポーネントを取得する（存在しない場合は nullptr）
+    /// @details アニメーションの再生・スケルトン姿勢の更新はAnimatorの責務。
+    ///          Animatorが無い場合、このコンポーネントはバインドポーズのまま描画する
+    Animator *GetAnimator() const {
+        auto *objectContext = GetOwnerObjectContext();
+        return objectContext ? objectContext->GetComponent<Animator>() : nullptr;
     }
 
-    /// @brief 選択中メッシュのアセットに紐づくアニメーションクリップ名の一覧を取得
-    std::vector<std::string> GetAvailableAnimationClipNames() const;
+    /// @brief このコンポーネント（が参照するAnimator）専用のスケルトンインスタンスの姿勢を
+    ///        バインドポーズへ戻す（ゲームループ停止時にSceneRenderer経由で呼ばれる）
+    void ResetAnimationToBindPose() {
+        if (auto *animator = GetAnimator()) animator->ResetToBindPose();
+    }
 
     //==================================================
     // 描画情報取得
@@ -222,10 +187,13 @@ public:
     }
 
     Matrix4x4 GetWorldMatrix() const {
-        // Root Boneが設定されている場合は、そのオブジェクトのTransformに沿って動く（Unityと同様）
-        if (auto *rootBone = GetRootBoneObject()) {
-            if (auto *rootBoneTransform = rootBone->GetComponent<Transform>()) {
-                return rootBoneTransform->GetWorldMatrix();
+        // Root Boneが設定されている場合は、そのオブジェクトのTransformに沿って動く（Unityと同様。
+        // Root Boneの設定自体はAnimatorが保持する）
+        if (auto *animator = GetAnimator()) {
+            if (auto *rootBone = animator->GetRootBoneObject()) {
+                if (auto *rootBoneTransform = rootBone->GetComponent<Transform>()) {
+                    return rootBoneTransform->GetWorldMatrix();
+                }
             }
         }
         auto *objectContext = GetOwnerObjectContext();
@@ -271,16 +239,16 @@ public:
         Vector3 position{ 0.0f, 0.0f, 0.0f };
         int32_t parentIndex = -1;
     };
-    /// @brief デバッグ描画用に、このコンポーネントのスケルトンインスタンスの
+    /// @brief デバッグ描画用に、参照先Animatorのスケルトンインスタンスの
     ///        全ジョイントの現在のワールド座標を取得する（ボーンの線・球表示用）
     std::vector<DebugJointInfo> GetDebugJointInfos();
 #endif
 
     /// @brief GPUスキニング用リソースを最新の状態へ更新する（メッシュ解決・静的バッファ構築・
-    ///        現在のスケルトン姿勢からのボーン行列パレット/BlendShapeウェイトのアップロード）
+    ///        Animatorが持つ現在のスケルトン姿勢からのボーン行列パレット/BlendShapeウェイトの
+    ///        アップロード）
     /// @details ゲームループが停止/一時停止中でも描画自体は継続されるため、Update()ではなく
     ///          Rendererから毎フレーム直接呼ばれる（CameraRenderer::RefreshConstantBufferと同じ考え方）。
-    ///          アニメーションの時間経過（AdvanceAnimation）はUpdate()側でのみ行われる。
     void RefreshSkinningResources(Passkey<Renderer>) {
         RebuildSkinningResourcesIfNeeded();
         UpdateSkinningBuffers();
@@ -289,7 +257,6 @@ public:
 protected:
     void Initialize() override;
     void Finalize() override;
-    void Update() override;
 
 #if defined(USE_IMGUI)
     void ShowImGui() override;
@@ -312,20 +279,10 @@ private:
     /// @brief 現在のメッシュハンドルに応じてスキニング用の静的リソース（元頂点・ボーンウェイト・
     ///        スキニング結果出力バッファ）を（再）構築する。メッシュが変わっていない場合は何もしない
     void RebuildSkinningResourcesIfNeeded();
-    /// @brief シーン上のアーマチュア用オブジェクトへ現在のジョイント姿勢を同期する
-    /// @details Root Boneオブジェクト（未設定の場合は所有オブジェクトの最上位の祖先）の子孫から
-    ///          ジョイントと同名のオブジェクトを探し、そのTransformへジョイントのローカルTRSを
-    ///          書き込む。モデルのプレハブが生成したアーマチュア階層がアニメーションに追従し、
-    ///          ボーンへのオブジェクトのアタッチ等が行えるようになる
-    void SyncArmatureObjects();
-    /// @brief 選択中アニメーションを進行させ、スケルトンのジョイントへ反映する
-    void AdvanceAnimation(float deltaTime);
-    /// @brief 現在のスケルトンのジョイント姿勢からボーン行列パレット・定数バッファを更新する
+    /// @brief Animatorが持つ現在のスケルトンのジョイント姿勢からボーン行列パレット・定数バッファを更新する
     void UpdateSkinningBuffers();
 
     UUID128 targetObjectID_{};
-    /// @brief Root Boneオブジェクト（設定時はこのオブジェクトのTransformに沿ってメッシュが動く）
-    UUID128 rootBoneObjectID_{};
     std::string pipelineName_ = "Object3D.Solid.BlendNormal";
     /// @brief マテリアルスロット（サブメッシュごとのマテリアル名。常に1要素以上）
     std::vector<std::string> materialNames_{ "Default" };
@@ -337,29 +294,14 @@ private:
 
     SkinQuality quality_ = SkinQuality::Auto;
     std::vector<BlendShapeWeight> blendShapes_;
-    std::string animationClipName_;
-    bool playOnStart_ = true;
-    bool loop_ = true;
-    float playbackSpeed_ = 1.0f;
 
-    // 再生状態（非シリアライズ）
-    bool isPlaying_ = false;
-    float elapsedTime_ = 0.0f;
-
-    // メッシュ・スケルトン・アニメーションの解決結果（非シリアライズ、キャッシュ用）
+    // メッシュの解決結果（非シリアライズ、キャッシュ用）
     ModelManager::ModelHandle lastMeshHandle_ = ModelManager::kInvalidHandle;
-    SkeletonManager::SkeletonHandle skeletonHandle_ = SkeletonManager::kInvalidHandle;
-    AnimationManager::AnimationHandle animationHandle_ = AnimationManager::kInvalidHandle;
     std::uint32_t vertexCount_ = 0;
     /// @brief GPUのボーン行列パレットと対応するジョイント名の並び順
     std::vector<std::string> jointNames_;
     /// @brief jointNames_と対応するバインドポーズ逆行列
     std::vector<Matrix4x4> inverseBindPoses_;
-    /// @brief このコンポーネント専用のスケルトンインスタンス（SkeletonManagerが保持する
-    ///        アセット本体とは独立した複製）。同じスケルトンアセットを参照する複数の
-    ///        SkinnedMeshRendererが互いのアニメーション再生状態（ジョイント姿勢）に
-    ///        干渉しないよう、メッシュ解決時にSkeletonManager::CloneSkeletonで複製して保持する
-    Skeleton skeletonInstance_;
 
     // GPUリソース（コンポーネント自身が所有・管理する）
     std::unique_ptr<StructuredBufferResource> sourceVerticesBuffer_;

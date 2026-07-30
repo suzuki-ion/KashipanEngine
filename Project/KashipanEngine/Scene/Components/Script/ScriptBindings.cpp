@@ -662,10 +662,19 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool HasMesh() const", &MeshFilter::HasMesh);
 
     RegisterComponentType<Animator>(engine, "Animator")
-        .method("void SetAnimationName(const string &in)", &Animator::SetAnimationName)
-        .method("const string &GetAnimationName() const", &Animator::GetAnimationName)
+        .method("void SetClipName(const string &in)", &Animator::SetClipName)
+        .method("const string &GetClipName() const", &Animator::GetClipName)
+        .method("void SetAnimationSourceAssetPath(const string &in)", &Animator::SetAnimationSourceAssetPath)
+        .method("const string &GetAnimationSourceAssetPath() const", &Animator::GetAnimationSourceAssetPath)
         .method("void SetPlayOnStart(bool)", &Animator::SetPlayOnStart)
-        .method("bool GetPlayOnStart() const", &Animator::GetPlayOnStart);
+        .method("bool GetPlayOnStart() const", &Animator::GetPlayOnStart)
+        .method("void SetLoop(bool)", &Animator::SetLoop)
+        .method("bool GetLoop() const", &Animator::GetLoop)
+        .method("void SetPlaybackSpeed(float)", &Animator::SetPlaybackSpeed)
+        .method("float GetPlaybackSpeed() const", &Animator::GetPlaybackSpeed)
+        .method("void Play()", &Animator::Play)
+        .method("void Stop()", &Animator::Stop)
+        .method("bool IsPlaying() const", &Animator::IsPlaying);
 
     RegisterComponentType<KeyFrameAnimator>(engine, "KeyFrameAnimator")
         .method("bool Play(const string &in name)", &KeyFrameAnimator::Play)
@@ -819,17 +828,6 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetPipelineName() const", &SkinnedMeshRenderer::GetPipelineName)
         .method("void SetMaterialName(const string &in)", &SkinnedMeshRenderer::SetMaterialName)
         .method("const string &GetMaterialName() const", &SkinnedMeshRenderer::GetMaterialName)
-        .method("void SetAnimationClipName(const string &in)", &SkinnedMeshRenderer::SetAnimationClipName)
-        .method("const string &GetAnimationClipName() const", &SkinnedMeshRenderer::GetAnimationClipName)
-        .method("void SetPlayOnStart(bool)", &SkinnedMeshRenderer::SetPlayOnStart)
-        .method("bool GetPlayOnStart() const", &SkinnedMeshRenderer::GetPlayOnStart)
-        .method("void SetLoop(bool)", &SkinnedMeshRenderer::SetLoop)
-        .method("bool GetLoop() const", &SkinnedMeshRenderer::GetLoop)
-        .method("void SetPlaybackSpeed(float)", &SkinnedMeshRenderer::SetPlaybackSpeed)
-        .method("float GetPlaybackSpeed() const", &SkinnedMeshRenderer::GetPlaybackSpeed)
-        .method("void Play()", &SkinnedMeshRenderer::Play)
-        .method("void Stop()", &SkinnedMeshRenderer::Stop)
-        .method("bool IsPlaying() const", &SkinnedMeshRenderer::IsPlaying)
         .method("void SetBlendShapeWeight(const string &in, float)", &SkinnedMeshRenderer::SetBlendShapeWeight)
         .method("float GetBlendShapeWeight(const string &in) const", &SkinnedMeshRenderer::GetBlendShapeWeight);
 

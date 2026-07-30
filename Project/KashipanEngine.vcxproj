@@ -532,6 +532,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Objects\Components\PreTransform.cpp" />
     <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
     <ClCompile Include="KashipanEngine\Objects\ParameterBinding.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Animator.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\InputCommandApplier.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp" />

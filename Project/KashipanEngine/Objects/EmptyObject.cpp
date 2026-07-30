@@ -185,6 +185,7 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
     json["isActive"] = isActive_;
     json["editorOnly"] = isEditorOnly_;
     json["objectID"] = objectID_.ToString();
+    if (prefabNodeID_.IsValid()) json["prefabNodeID"] = prefabNodeID_.ToString();
 
     // updateComponents_ はUpdateループ用のリストで、オブジェクトが非アクティブだと空になるため
     // 保存には使えない（非アクティブなオブジェクトのコンポーネントが消えてしまう）。
@@ -217,6 +218,7 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     isActive_ = json.value("isActive", true);
     isEditorOnly_ = json.value("editorOnly", false);
     objectID_ = UUID128(json.value("objectID", ""));
+    prefabNodeID_ = UUID128(json.value("prefabNodeID", ""));
     const auto &componentsJson = json.value("components", JSON::array());
     std::vector<std::pair<IObjectComponent *, JSON>> loadedComponents;
     // 先にコンポーネントを全て登録してからロードする

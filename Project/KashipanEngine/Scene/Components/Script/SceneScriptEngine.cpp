@@ -7,6 +7,7 @@
 #include <add_on/scripthelper/scripthelper.h>
 
 #include "Debug/Logger.h"
+#include "Scene/Components/Script/AngelScriptDebugServer.h"
 #include "Scene/Components/Script/ScriptBindings.h"
 
 namespace KashipanEngine {
@@ -34,6 +35,14 @@ void MessageCallback(const asSMessageInfo *msg, void *param) {
     }
 }
 
+#if !defined(RELEASE_BUILD)
+/// @brief シーン切り替え中に複数のSceneScriptEngineが重なっても接続を維持できるプロセス共通サーバー
+AngelScriptDebugServer &GetProcessDebugServer() {
+    static AngelScriptDebugServer server;
+    return server;
+}
+#endif
+
 } // namespace
 
 SceneScriptEngine::~SceneScriptEngine() = default;
@@ -54,11 +63,24 @@ void SceneScriptEngine::Initialize() {
     RegisterExceptionRoutines(engine_);
     RegisterEngineScriptBindings(engine_);
 
+#if !defined(RELEASE_BUILD)
+    auto &debugServer = GetProcessDebugServer();
+    if (debugServer.Start()) {
+        debugServer_ = &debugServer;
+    }
+#endif
+
     // VSCodeのAngelScript Language Server用の型定義ファイルを生成する
     if (GenerateScriptPredefinedFile(engine_, "as.predefined")) {
         Log("AngelScript: as.predefined を生成しました");
     } else {
         Log("AngelScript: as.predefined の生成に失敗しました", LogSeverity::Warning);
+    }
+}
+
+void SceneScriptEngine::AttachDebugger(asIScriptContext *context) const {
+    if (debugServer_) {
+        debugServer_->AttachContext(context);
     }
 }
 
@@ -76,6 +98,7 @@ void SceneScriptEngine::Finalize() {
     if (gActiveMessageCapture == &messageCaptureBuffer_) {
         gActiveMessageCapture = nullptr;
     }
+    debugServer_ = nullptr;
     if (engine_) {
         engine_->ShutDownAndRelease();
         engine_ = nullptr;

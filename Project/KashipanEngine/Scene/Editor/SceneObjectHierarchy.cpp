@@ -4,11 +4,14 @@
 #include <filesystem>
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/PrefabAssetManager.h"
+#include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Components/Script/EditorToolManager.h"
 #include "Objects/Components/Comment.h"
+#include "Objects/Components/PrefabInstanceComponent.h"
 #include "Objects/Components/Transform.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/FileIO/JSON.h"
@@ -148,6 +151,8 @@ void SceneObjectHierarchy::ShowImGui() {
         pendingPrefabDropPath_.clear();
         pendingPrefabDropParent_ = nullptr;
     }
+
+    ShowRevertPrefabConfirmModal();
 }
 
 void SceneObjectHierarchy::RebuildObjectItems() {
@@ -228,16 +233,29 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
         }
     }
 
-    // 非アクティブなオブジェクトは灰色、EditorOnlyオブジェクト（祖先を含む）は水色の文字で表示する
+    // 非アクティブなオブジェクトは灰色、EditorOnlyオブジェクト（祖先を含む）は水色、
+    // Prefabインスタンスは青（Overrideがあればamber＋末尾に" *"）の文字で表示する
     const bool isInactive = !item.object->IsActive();
     const bool isEditorOnly = !isInactive && item.object->IsEditorOnlyInHierarchy();
+    bool isPrefabMember = false;
+    bool hasPrefabOverride = false;
+    if (!isInactive && !isEditorOnly && PrefabSyncUtility::FindEnclosingPrefabInstanceRoot(item.object)) {
+        isPrefabMember = true;
+        hasPrefabOverride = PrefabSyncUtility::HasComponentOverride(editorContext_, item.object);
+    }
     if (isInactive) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
     } else if (isEditorOnly) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.8f, 1.0f, 1.0f));
+    } else if (hasPrefabOverride) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.70f, 0.25f, 1.0f));
+    } else if (isPrefabMember) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.60f, 0.75f, 1.0f, 1.0f));
     }
-    const bool isOpen = ImGui::TreeNodeEx(item.name.c_str(), flags);
-    if (isInactive || isEditorOnly) {
+    // 色だけに頼らず判別できるよう、Overrideがある場合はラベル末尾に" *"を付与する
+    const std::string label = hasPrefabOverride ? (item.name + " *") : item.name;
+    const bool isOpen = ImGui::TreeNodeEx(label.c_str(), flags);
+    if (isInactive || isEditorOnly || hasPrefabOverride || isPrefabMember) {
         ImGui::PopStyleColor();
     }
     // シーンビュー等からの選択でスクロール対象そのものの場合、この行が画面中央に来るようスクロールする
@@ -353,6 +371,44 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
         const std::string deleteLabel = (targets.size() > 1) ? ("Delete " + std::to_string(targets.size()) + " Objects") : "Delete Object";
         if (ImGui::MenuItem(deleteLabel.c_str())) {
             DeleteObjects(targets);
+        }
+
+        // Prefabインスタンスのルート自身に対してのみ、Apply All/Revert Allを出す（Unity同様、途中階層には出さない）
+        if (PrefabSyncUtility::FindEnclosingPrefabInstanceRoot(obj) == obj) {
+            ImGui::Separator();
+            if (ImGui::MenuItem("Apply All")) {
+                PrefabSyncUtility::ApplyAll(editorContext_, obj);
+            }
+            if (ImGui::MenuItem("Revert All")) {
+                pendingRevertPrefabTarget_ = obj;
+                isRevertPrefabConfirmRequested_ = true;
+            }
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void SceneObjectHierarchy::ShowRevertPrefabConfirmModal() {
+    if (isRevertPrefabConfirmRequested_) {
+        ImGui::OpenPopup("Revert Prefab Instance?");
+        isRevertPrefabConfirmRequested_ = false;
+    }
+    if (ImGui::BeginPopupModal("Revert Prefab Instance?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f),
+            "This will discard all local changes (including locally added child objects)");
+        ImGui::TextUnformatted("and revert this instance to match the current Prefab source.");
+        ImGui::TextUnformatted("This action cannot be undone in a single step.");
+        if (ImGui::Button("Revert", ImVec2(120, 0))) {
+            if (pendingRevertPrefabTarget_) {
+                PrefabSyncUtility::RevertAll(editorContext_, commands_, pendingRevertPrefabTarget_);
+            }
+            pendingRevertPrefabTarget_ = nullptr;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            pendingRevertPrefabTarget_ = nullptr;
+            ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
     }
@@ -601,6 +657,23 @@ bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, Em
     const std::string prefabName = prefabJson.value("name",
         std::filesystem::path(filePath).stem().string());
     InstantiateNodes(nodes, prefabName, attachParent);
+
+    // 配置直後のルート（ExecutePasteCommandが選択状態にする）へPrefabInstanceComponentを付与し、
+    // 元Prefabとのリンクを持たせる（Prefabファイル自体にはリンク情報を含めない設計のため、
+    // 配置時にここで明示的に付与しないと同期対象にならない）
+    const UUID128 prefabID = PrefabAssetManager::GetPrefabIDFromPath(filePath);
+    if (prefabID.IsValid()) {
+        for (auto *root : selectedObjects_) {
+            if (commands_) {
+                commands_->Execute(std::make_unique<AddComponentCommand>(root, "PrefabInstanceComponent"));
+            } else {
+                root->AddComponent(CreateObjectComponentByType("PrefabInstanceComponent"));
+            }
+            if (auto *comp = root->GetComponent<PrefabInstanceComponent>()) {
+                comp->SetPrefabID(prefabID);
+            }
+        }
+    }
     return true;
 }
 

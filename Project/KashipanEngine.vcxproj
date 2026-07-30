@@ -534,10 +534,12 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Shake.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\PrefabInstanceComponent.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ScenePreTransform.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneShakeApplier.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\AngelScriptDebugServer.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp" />
@@ -573,6 +575,12 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabUtility.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\PrefabAssetManager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneListEditor.cpp">
@@ -1073,6 +1081,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Objects\Components\Rotation.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\SceneVariableApplier.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Shake.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PrefabInstanceComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="KashipanEngine\Objects\ParameterBinding.h" />
@@ -1106,6 +1115,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Scene\Components\ScenePreTransform.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneShakeApplier.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\AngelScriptDebugServer.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\EditorToolManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h" />
@@ -1143,6 +1153,12 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabUtility.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\PrefabAssetManager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h">

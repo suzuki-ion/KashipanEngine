@@ -14,6 +14,8 @@
 #include "Scene/Editor/AssetsWindow.h"
 #include "Scene/Editor/EditorPreferences.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/PrefabAssetManager.h"
+#include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneComponentInspector.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneEditorView.h"
@@ -74,6 +76,15 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
 
     objectHierarchy_->SetCommands(commands_.get());
     objectInspector_->SetCommands(commands_.get());
+    assetsWindow_->SetCommands(commands_.get());
+
+    // 元Prefabがエンジン内操作で書き換わった際、シーン上の他インスタンスへ非破壊マージを伝播する
+    // （シーン切り替えのたびにSceneEditorが再構築されるため、リスナーは常に最新のものだけが有効になるよう
+    // PrefabAssetManager側で単一スロット置き換え方式にしている）
+    PrefabAssetManager::SetChangeListener(
+        [this](const UUID128 &prefabID, const JSON &oldJson, const JSON &newJson) {
+            PrefabSyncUtility::SyncOtherInstances(context_, commands_.get(), prefabID, oldJson, newJson);
+        });
 
     // ウィンドウの表示状態を復元する（再起動後も維持される）
     isShowSceneView_ = EditorSettings::GetBool("sceneEditor.showSceneView", true);

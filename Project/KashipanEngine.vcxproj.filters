@@ -498,6 +498,9 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp">
       <Filter>KashipanEngine\Scene\Components\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\AngelScriptDebugServer.cpp">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClCompile>
@@ -523,6 +526,9 @@
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\Shake.cpp">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\PrefabInstanceComponent.cpp">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp">
@@ -688,6 +694,8 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabUtility.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\PrefabAssetManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneListEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\EditorPreferences.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp" />
@@ -1270,6 +1278,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Shake.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PrefabInstanceComponent.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -1368,6 +1379,9 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.h">
       <Filter>KashipanEngine\Scene\Components\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\AngelScriptDebugServer.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Script\EditorToolManager.h">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
@@ -1820,6 +1834,8 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorCommands.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabUtility.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\PrefabAssetManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\EditorPreferences.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />

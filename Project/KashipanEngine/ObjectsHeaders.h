@@ -7,6 +7,7 @@
 #include "Objects/Components/KeyFrameAnimator.h"
 #include "Objects/Components/InputCommandApplier.h"
 #include "Objects/Components/Comment.h"
+#include "Objects/Components/PrefabInstanceComponent.h"
 #include "Objects/Components/AudioListener.h"
 #include "Objects/Components/AudioSource.h"
 #include "Objects/Components/Collider/Box2DCollider.h"

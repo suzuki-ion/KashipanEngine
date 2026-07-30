@@ -379,6 +379,7 @@ bool ScriptComponent::Reload() {
     objectTypeId_ = engine->GetTypeIdByDecl("Object");
 
     context_ = engine->CreateContext();
+    scriptEngine->AttachDebugger(context_);
 
     if (!CreateBehaviorInstance(engine, builder)) {
         ReleaseScript();

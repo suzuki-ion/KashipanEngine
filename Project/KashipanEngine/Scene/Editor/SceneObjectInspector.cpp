@@ -2,8 +2,10 @@
 #include <algorithm>
 #include <unordered_map>
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Objects/Components/PrefabInstanceComponent.h"
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 
 namespace KashipanEngine {
@@ -34,6 +36,7 @@ void SceneObjectInspector::ShowImGui() {
     ImGui::End();
 
     FlushPendingComponentEdit();
+    ShowRevertPrefabConfirmModal();
 }
 
 void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
@@ -76,6 +79,8 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
     if (ImGui::InputText("Tag", &tagName)) {
         obj->SetTag(tagName);
     }
+
+    ShowPrefabSection(obj);
 
     //--------- コンポーネント一覧（処理優先順位＝更新優先度の順に並べる） ---------//
     IObjectComponent *componentToRemove = nullptr;
@@ -149,6 +154,69 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
                     obj->AddComponent(std::move(newComp));
                 }
             }
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
+    auto *prefabComp = obj->GetComponent<PrefabInstanceComponent>();
+    if (!prefabComp || !prefabComp->GetPrefabID().IsValid()) return;
+
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Prefab", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::TextUnformatted(prefabComp->GetPrefabPath().c_str());
+
+        if (ImGui::Button("Apply All")) {
+            PrefabSyncUtility::ApplyAll(context_, obj);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Revert All")) {
+            pendingRevertPrefabTarget_ = obj;
+            isRevertPrefabConfirmRequested_ = true;
+        }
+
+        const auto report = PrefabSyncUtility::Diff(context_, obj);
+        if (!report.overrides.empty()) {
+            ImGui::TextUnformatted("Overrides:");
+            for (const auto &ov : report.overrides) {
+                ImGui::PushID(&ov);
+                ImGui::BulletText("%s", ov.componentType.c_str());
+                ImGui::SameLine();
+                if (ImGui::SmallButton("Apply")) {
+                    PrefabSyncUtility::ApplyComponentOverride(context_, ov);
+                }
+                ImGui::SameLine();
+                if (ImGui::SmallButton("Revert")) {
+                    PrefabSyncUtility::RevertComponentOverride(context_, commands_, ov);
+                }
+                ImGui::PopID();
+            }
+        }
+    }
+}
+
+void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
+    if (isRevertPrefabConfirmRequested_) {
+        ImGui::OpenPopup("Revert Prefab Instance?");
+        isRevertPrefabConfirmRequested_ = false;
+    }
+    if (ImGui::BeginPopupModal("Revert Prefab Instance?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f),
+            "This will discard all local changes (including locally added child objects)");
+        ImGui::TextUnformatted("and revert this instance to match the current Prefab source.");
+        ImGui::TextUnformatted("This action cannot be undone in a single step.");
+        if (ImGui::Button("Revert", ImVec2(120, 0))) {
+            if (pendingRevertPrefabTarget_) {
+                PrefabSyncUtility::RevertAll(context_, commands_, pendingRevertPrefabTarget_);
+            }
+            pendingRevertPrefabTarget_ = nullptr;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            pendingRevertPrefabTarget_ = nullptr;
+            ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
     }

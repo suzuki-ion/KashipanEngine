@@ -5,10 +5,12 @@
 #include <unordered_set>
 
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Debug/Logger.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/Editor/PrefabAssetManager.h"
+#include "Scene/Editor/PrefabSceneSync.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/SceneEditorContext.h"
@@ -373,88 +375,200 @@ bool RevertComponentOverride(SceneEditorContext *context, SceneEditorCommands *c
     return target.object->LoadComponentFromJson(target.component, *matched);
 }
 
-void SyncOtherInstances(SceneEditorContext *context, SceneEditorCommands *commands,
-    const UUID128 &prefabID, const JSON &oldPrefabJson, const JSON &newPrefabJson) {
-    if (!context || !prefabID.IsValid()) return;
+namespace {
 
-    const auto oldByID = IndexPrefabObjectsByNodeID(oldPrefabJson);
-    const auto newByID = IndexPrefabObjectsByNodeID(newPrefabJson);
+std::string GetObjectParentID(const JSON &objectJson) {
+    const JSON &components = GetComponentsArray(objectJson);
+    for (const auto &component : components) {
+        if (component.value("type", std::string{}) != "Transform" || !component.contains("data")) continue;
+        const JSON &data = component["data"];
+        if (!data.contains("customData") || !data["customData"].is_object()) return {};
+        return data["customData"].value("parent", std::string{});
+    }
+    return {};
+}
 
-    std::vector<EmptyObject *> roots;
-    for (const auto &objPtr : context->GetSceneObjects()) {
-        EmptyObject *obj = objPtr.get();
-        auto *comp = obj ? obj->GetComponent<PrefabInstanceComponent>() : nullptr;
-        if (comp && comp->GetPrefabID() == prefabID) roots.push_back(obj);
+using JsonObjectByID = std::unordered_map<std::string, const JSON *>;
+
+JsonObjectByID IndexSceneObjectsByID(const JSON &sceneJson) {
+    JsonObjectByID result;
+    if (!sceneJson.contains("sceneObjects") || !sceneJson["sceneObjects"].is_array()) return result;
+    for (const auto &object : sceneJson["sceneObjects"]) {
+        const std::string objectID = object.value("objectID", std::string{});
+        if (!objectID.empty()) result[objectID] = &object;
+    }
+    return result;
+}
+
+using ComponentJsonByKey = std::unordered_map<std::string, const JSON *>;
+
+ComponentJsonByKey IndexComponentJsonByKey(const JSON &components) {
+    ComponentJsonByKey result;
+    std::unordered_map<std::string, size_t> ordinals;
+    if (!components.is_array()) return result;
+    for (const auto &component : components) {
+        const std::string type = component.value("type", std::string{});
+        const size_t ordinal = ordinals[type]++;
+        result[type + "\x1f" + std::to_string(ordinal)] = &component;
+    }
+    return result;
+}
+
+using LiveComponentByKey = std::unordered_map<std::string, IObjectComponent *>;
+
+LiveComponentByKey IndexLiveComponentsByKey(EmptyObject *object) {
+    LiveComponentByKey result;
+    std::unordered_map<std::string, size_t> ordinals;
+    for (IObjectComponent *component : GetOrderedComponents(object)) {
+        const std::string type = component->GetComponentType();
+        const size_t ordinal = ordinals[type]++;
+        result[type + "\x1f" + std::to_string(ordinal)] = component;
+    }
+    return result;
+}
+
+bool HasObjectPropertyDifference(const JSON &before, const JSON &after) {
+    static constexpr const char *kKeys[] = { "name", "tag", "isActive", "editorOnly" };
+    for (const char *key : kKeys) {
+        if (before.value(key, JSON()) != after.value(key, JSON())) return true;
+    }
+    return false;
+}
+
+void AddExistingObjectDiffCommands(
+    CompositeCommand &composite,
+    EmptyObject *liveObject,
+    const JSON &beforeObject,
+    const JSON &afterObject) {
+    if (!liveObject) return;
+    if (HasObjectPropertyDifference(beforeObject, afterObject)) {
+        composite.AddCommand(std::make_unique<ObjectStateCommand>(liveObject, beforeObject, afterObject));
     }
 
-    for (EmptyObject *root : roots) {
-        auto composite = std::make_unique<CompositeCommand>("Apply Prefab: " + root->GetName());
-        for (EmptyObject *obj : CollectSubtreeObjects(context, root)) {
-            if (!obj->GetPrefabNodeID().IsValid()) continue;
-            const std::string nodeIDStr = obj->GetPrefabNodeID().ToString();
-            auto oldIt = oldByID.find(nodeIDStr);
-            auto newIt = newByID.find(nodeIDStr);
-            // 対応ノード自体が旧/新どちらかに無い＝オブジェクトの追加/削除という構造変化は
-            // 自動伝播しない（対応するインスタンスのApply All/Revert Allで個別に対応する）。
-            // コンポーネント単位の追加/削除はこの下で扱う
-            if (oldIt == oldByID.end() || newIt == newByID.end()) continue;
+    const auto beforeComponents = IndexComponentJsonByKey(GetComponentsArray(beforeObject));
+    const auto afterComponents = IndexComponentJsonByKey(GetComponentsArray(afterObject));
+    const auto liveComponents = IndexLiveComponentsByKey(liveObject);
+    std::unordered_set<std::string> allKeys;
+    for (const auto &[key, value] : beforeComponents) allKeys.insert(key);
+    for (const auto &[key, value] : afterComponents) allKeys.insert(key);
 
-            const JSON &oldComponents = GetComponentsArray(*oldIt->second);
-            const JSON &newComponents = GetComponentsArray(*newIt->second);
+    for (const auto &key : allKeys) {
+        const auto beforeIt = beforeComponents.find(key);
+        const auto afterIt = afterComponents.find(key);
+        const auto liveIt = liveComponents.find(key);
+        const JSON *before = beforeIt != beforeComponents.end() ? beforeIt->second : nullptr;
+        const JSON *after = afterIt != afterComponents.end() ? afterIt->second : nullptr;
+        IObjectComponent *live = liveIt != liveComponents.end() ? liveIt->second : nullptr;
+        const size_t separator = key.rfind('\x1f');
+        const std::string type = separator == std::string::npos ? key : key.substr(0, separator);
 
-            // 型ごとの旧/新/ライブの出現数を数え、型+ordinalの全組み合わせ（追加・削除された分も含む）を走査する
-            std::unordered_map<std::string, size_t> oldTypeCount, newTypeCount;
-            for (const auto &c : oldComponents) oldTypeCount[c.value("type", "")]++;
-            for (const auto &c : newComponents) newTypeCount[c.value("type", "")]++;
-
-            std::unordered_map<std::string, std::vector<IObjectComponent *>> liveByType;
-            for (IObjectComponent *liveComp : GetOrderedComponents(obj)) {
-                liveByType[liveComp->GetComponentType()].push_back(liveComp);
+        if (before && after) {
+            if (*before != *after && live) {
+                composite.AddCommand(std::make_unique<ComponentEditCommand>(
+                    liveObject, live, *before, *after));
             }
-
-            std::unordered_set<std::string> allTypes;
-            for (const auto &[type, count] : oldTypeCount) allTypes.insert(type);
-            for (const auto &[type, count] : newTypeCount) allTypes.insert(type);
-            for (const auto &[type, comps] : liveByType) allTypes.insert(type);
-
-            for (const auto &type : allTypes) {
-                const size_t oldCount = oldTypeCount.contains(type) ? oldTypeCount[type] : 0;
-                const size_t newCount = newTypeCount.contains(type) ? newTypeCount[type] : 0;
-                const auto liveIt = liveByType.find(type);
-                const size_t liveCount = (liveIt != liveByType.end()) ? liveIt->second.size() : 0;
-                const size_t maxOrdinal = std::max({ oldCount, newCount, liveCount });
-
-                for (size_t ordinal = 0; ordinal < maxOrdinal; ++ordinal) {
-                    const JSON *oldEntry = FindComponentJsonByTypeOrdinal(oldComponents, type, ordinal);
-                    const JSON *newEntry = FindComponentJsonByTypeOrdinal(newComponents, type, ordinal);
-                    IObjectComponent *liveComp = (liveIt != liveByType.end() && ordinal < liveIt->second.size())
-                        ? liveIt->second[ordinal] : nullptr;
-
-                    if (oldEntry && newEntry) {
-                        // 値の変更（既存の型+ordinal）
-                        if (*oldEntry == *newEntry) continue; // 値の変更なし
-                        if (!liveComp) continue; // ローカルで既に削除済み＝触らない
-                        const JSON currentJson = obj->SaveComponentToJson(liveComp);
-                        if (currentJson != *oldEntry) continue; // ローカルでOverride済み＝尊重して何もしない
-                        composite->AddCommand(std::make_unique<ComponentEditCommand>(obj, liveComp, currentJson, *newEntry));
-                    } else if (!oldEntry && newEntry) {
-                        // Prefab側で新規追加されたコンポーネント
-                        if (liveComp) continue; // 同じ型+ordinalがローカルに既にある（ローカル追加）＝触らない
-                        composite->AddCommand(std::make_unique<AddComponentCommand>(obj, type, *newEntry));
-                    } else if (oldEntry && !newEntry) {
-                        // Prefab側で削除されたコンポーネント
-                        if (!liveComp) continue; // 既にローカルで削除済み
-                        const JSON currentJson = obj->SaveComponentToJson(liveComp);
-                        if (currentJson != *oldEntry) continue; // ローカルで変更済み＝尊重して残す
-                        composite->AddCommand(std::make_unique<RemoveComponentCommand>(obj, liveComp));
-                    }
-                    // oldEntry・newEntryどちらも無い＝Prefabと無関係のローカル追加コンポーネントのため対象外
-                }
-            }
+        } else if (!before && after) {
+            composite.AddCommand(std::make_unique<AddComponentCommand>(liveObject, type, *after));
+        } else if (before && !after && live) {
+            composite.AddCommand(std::make_unique<RemoveComponentCommand>(liveObject, live));
         }
-        if (!composite->IsEmpty() && commands) {
-            commands->Execute(std::move(composite));
+    }
+}
+
+void AddNewObjectCommands(
+    CompositeCommand &composite,
+    const JSON &beforeScene,
+    const JSON &afterScene) {
+    const auto beforeByID = IndexSceneObjectsByID(beforeScene);
+    if (!afterScene.contains("sceneObjects") || !afterScene["sceneObjects"].is_array()) return;
+
+    std::vector<PasteObjectCommand::Node> nodes;
+    std::unordered_map<std::string, int> nodeIndexByObjectID;
+    for (const auto &object : afterScene["sceneObjects"]) {
+        const std::string objectID = object.value("objectID", std::string{});
+        if (objectID.empty() || beforeByID.contains(objectID)) continue;
+        int parentIndex = -1;
+        const std::string parentID = GetObjectParentID(object);
+        auto parentIt = nodeIndexByObjectID.find(parentID);
+        if (parentIt != nodeIndexByObjectID.end()) parentIndex = parentIt->second;
+        nodeIndexByObjectID[objectID] = static_cast<int>(nodes.size());
+        nodes.push_back({ object, parentIndex });
+    }
+    if (nodes.empty()) return;
+    composite.AddCommand(std::make_unique<PasteObjectCommand>(
+        std::move(nodes), nullptr, MAXSIZE_T, "Prefab Nodes", "Sync Prefab Nodes",
+        /*preserveOriginalRootParent=*/true));
+}
+
+void AddRemovedObjectCommands(
+    CompositeCommand &composite,
+    SceneEditorContext *context,
+    const JSON &beforeScene,
+    const JSON &afterScene) {
+    const auto afterByID = IndexSceneObjectsByID(afterScene);
+    if (!beforeScene.contains("sceneObjects") || !beforeScene["sceneObjects"].is_array()) return;
+
+    std::unordered_set<std::string> removedIDs;
+    for (const auto &object : beforeScene["sceneObjects"]) {
+        const std::string objectID = object.value("objectID", std::string{});
+        if (!objectID.empty() && !afterByID.contains(objectID)) removedIDs.insert(objectID);
+    }
+    for (const auto &object : beforeScene["sceneObjects"]) {
+        const std::string objectID = object.value("objectID", std::string{});
+        if (!removedIDs.contains(objectID)) continue;
+        // 親も削除対象なら親のDeleteObjectCommandがサブツリーごと削除する。
+        if (removedIDs.contains(GetObjectParentID(object))) continue;
+        if (EmptyObject *liveObject = context->GetSceneObject(UUID128(objectID))) {
+            composite.AddCommand(std::make_unique<DeleteObjectCommand>(liveObject));
         }
+    }
+}
+
+} // namespace
+
+void SyncOtherInstances(SceneEditorContext *context, SceneEditorCommands *commands,
+    const UUID128 &prefabID, const JSON &oldPrefabJson, const JSON &newPrefabJson) {
+    if (!context || !commands || !prefabID.IsValid()) return;
+
+    const JSON beforeScene = context->SaveSceneToJSON();
+    JSON afterScene = beforeScene;
+    const PrefabSceneSync::SceneSyncResult syncResult =
+        PrefabSceneSync::SyncSceneJson(afterScene, prefabID, oldPrefabJson, newPrefabJson);
+    if (!syncResult.IsChanged()) return;
+
+    auto composite = std::make_unique<CompositeCommand>("Sync Prefab Across Current Scene");
+
+    // 新規ノードを先に生成する。既存ノードのTransformがその新規ノードへ親変更される場合、
+    // 後続のComponentEditCommand実行時に親objectIDを解決できるようにするため。
+    AddNewObjectCommands(*composite, beforeScene, afterScene);
+
+    const auto beforeByID = IndexSceneObjectsByID(beforeScene);
+    const auto afterByID = IndexSceneObjectsByID(afterScene);
+    for (const auto &[objectID, beforeObject] : beforeByID) {
+        auto afterIt = afterByID.find(objectID);
+        if (afterIt == afterByID.end()) continue;
+        EmptyObject *liveObject = context->GetSceneObject(UUID128(objectID));
+        AddExistingObjectDiffCommands(*composite, liveObject, *beforeObject, *afterIt->second);
+    }
+
+    // 親変更で削除対象ノードの外へ移動する既存ノードがあるため、削除は最後に実行する。
+    AddRemovedObjectCommands(*composite, context, beforeScene, afterScene);
+    if (!composite->IsEmpty()) commands->Execute(std::move(composite));
+}
+
+void SyncAllScenes(SceneEditorContext *context, SceneEditorCommands *commands,
+    const UUID128 &prefabID, const JSON &oldPrefabJson, const JSON &newPrefabJson) {
+    SyncOtherInstances(context, commands, prefabID, oldPrefabJson, newPrefabJson);
+    const PrefabSceneSync::RegisteredScenesSyncResult result =
+        PrefabSceneSync::SyncRegisteredScenes(context, prefabID, oldPrefabJson, newPrefabJson);
+
+    LogScope scope;
+    Log("Prefab sync: scanned " + std::to_string(result.scenesScanned) +
+        " registered scene(s), updated " + std::to_string(result.scenesChanged) +
+        ", matched " + std::to_string(result.instancesMatched) + " instance(s).",
+        result.failedScenes.empty() ? LogSeverity::Info : LogSeverity::Warning);
+    for (const auto &failedScene : result.failedScenes) {
+        Log("Prefab sync: failed to load or save scene " + failedScene, LogSeverity::Warning);
     }
 }
 

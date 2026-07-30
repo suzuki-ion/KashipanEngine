@@ -35,14 +35,6 @@ void MessageCallback(const asSMessageInfo *msg, void *param) {
     }
 }
 
-#if !defined(RELEASE_BUILD)
-/// @brief シーン切り替え中に複数のSceneScriptEngineが重なっても接続を維持できるプロセス共通サーバー
-AngelScriptDebugServer &GetProcessDebugServer() {
-    static AngelScriptDebugServer server;
-    return server;
-}
-#endif
-
 } // namespace
 
 SceneScriptEngine::~SceneScriptEngine() = default;
@@ -64,7 +56,7 @@ void SceneScriptEngine::Initialize() {
     RegisterEngineScriptBindings(engine_);
 
 #if !defined(RELEASE_BUILD)
-    auto &debugServer = GetProcessDebugServer();
+    auto &debugServer = GetProcessAngelScriptDebugServer();
     if (debugServer.Start()) {
         debugServer_ = &debugServer;
     }

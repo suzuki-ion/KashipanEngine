@@ -78,6 +78,7 @@
         "isActive": false,
         "name": "SphereLight",
         "objectID": "d66f1aa6-012b-46f1-9a57-19b05240dc45",
+        "prefabNodeID": "8fabdf67-feff-4eb2-8180-8ce0d2cce55a",
         "tag": ""
     },
     "siblingIndex": 0

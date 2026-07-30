@@ -19,9 +19,9 @@
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 108.39784240722656,
-                                    "y": 63.45305252075195,
-                                    "z": 0.0
+                                    "x": 0.0,
+                                    "y": 1.0,
+                                    "z": -2.4532531561760607e-09
                                 }
                             },
                             "isActive": true,
@@ -45,13 +45,29 @@
                         "data": {
                             "customData": {
                                 "fields": {
+                                    "currentHp": 3,
+                                    "damageAmount": 1,
+                                    "damageCooldown": 1.5,
+                                    "damageFlashColor": {
+                                        "w": 1.0,
+                                        "x": 1.0,
+                                        "y": 0.20000000298023224,
+                                        "z": 0.20000000298023224
+                                    },
+                                    "damageFlashInterval": 0.10000000149011612,
                                     "enemyCollisionThreshold": 0.4000000059604645,
                                     "gravity": 0.800000011920929,
                                     "groundStickSpeed": -1.0,
                                     "groundedGraceTime": 0.10000000149011612,
                                     "groundedThreshold": 0.4000000059604645,
                                     "jumpPower": 20.0,
+                                    "knockbackPower": {
+                                        "x": 4.0,
+                                        "y": 6.0,
+                                        "z": 0.0
+                                    },
                                     "lateralDeceleration": 0.10000000149011612,
+                                    "maxHp": 3,
                                     "maxSlideSpeed": 32.0,
                                     "maxVelocity": {
                                         "x": 8.0,
@@ -64,6 +80,13 @@
                                         "z": -8.0
                                     },
                                     "moveSpeed": 0.5,
+                                    "movementTargetDistanceMultiplier": 0.5,
+                                    "movementTargetObject": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+                                    "movementTargetOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
                                     "slideAcceleration": 0.10000000149011612,
                                     "slideAngleAcceleration": 0.20000000298023224,
                                     "slideThreshold": 1.0
@@ -112,15 +135,55 @@
                     {
                         "data": {
                             "customData": {
-                                "effectFrequency": 1.0,
-                                "effectQ": 1.0,
-                                "effectType": 5,
+                                "effects": {
+                                    "echo": {
+                                        "delayMs": 500.0,
+                                        "enabled": true,
+                                        "feedback": 0.5,
+                                        "wetDryMix": 0.5
+                                    },
+                                    "eq": {
+                                        "bandwidth": [
+                                            1.0,
+                                            1.0,
+                                            1.0,
+                                            1.0
+                                        ],
+                                        "enabled": false,
+                                        "frequencyCenter": [
+                                            100.0,
+                                            800.0,
+                                            2000.0,
+                                            10000.0
+                                        ],
+                                        "gain": [
+                                            1.0,
+                                            1.0,
+                                            1.0,
+                                            1.0
+                                        ]
+                                    },
+                                    "filter": {
+                                        "enabled": false,
+                                        "frequency": 1.0,
+                                        "kind": 0,
+                                        "q": 1.0
+                                    },
+                                    "limiter": {
+                                        "enabled": false,
+                                        "loudness": 1000,
+                                        "release": 6
+                                    },
+                                    "reverb": {
+                                        "enabled": true,
+                                        "mix": 1.0
+                                    }
+                                },
                                 "enableSpatialAudio": false,
                                 "loop": false,
                                 "maxDistance": 25.0,
                                 "minDistance": 1.0,
                                 "pitch": 0.0,
-                                "reverbMix": 1.0,
                                 "soundName": "Application/Sound/seSoftLanding.mp3",
                                 "volume": 1.0
                             },
@@ -185,6 +248,7 @@
                                 "billboard": false,
                                 "billboardRotationMode": 0,
                                 "billboardTargetObjectID": "",
+                                "castShadows": false,
                                 "emissionRate": 64.0,
                                 "endScale": {
                                     "max": {
@@ -248,12 +312,12 @@
                                 },
                                 "initialVelocity": {
                                     "max": {
-                                        "x": 4.0,
+                                        "x": 8.0,
                                         "y": 4.0,
                                         "z": 1.0
                                     },
                                     "min": {
-                                        "x": -4.0,
+                                        "x": -8.0,
                                         "y": 2.0,
                                         "z": -1.0
                                     },
@@ -271,7 +335,7 @@
                                     "value": 0.4000000059604645
                                 },
                                 "loop": false,
-                                "materialName": "White",
+                                "materialName": "EntityMaterial",
                                 "maxParticles": 16,
                                 "meshAssetPath": "PrimitiveMesh-Tetrahedron",
                                 "pipelineName": "Object3D.Solid.BlendNormal",
@@ -310,7 +374,7 @@
                                 "spawnCapsuleRadiusMin": 0.49000000953674316,
                                 "spawnCenter": {
                                     "x": 0.0,
-                                    "y": 0.0,
+                                    "y": -0.5,
                                     "z": 0.0
                                 },
                                 "spawnCount": {
@@ -319,10 +383,10 @@
                                     "randomize": true,
                                     "value": 1
                                 },
-                                "spawnOrigin": 1,
+                                "spawnOrigin": 2,
                                 "spawnParentObjectID": "450287e5-7742-4091-9abf-809076327207",
-                                "spawnShape": 0,
-                                "spawnSphereRadiusMax": 1.0,
+                                "spawnShape": 2,
+                                "spawnSphereRadiusMax": 0.10000000149011612,
                                 "spawnSphereRadiusMin": 0.0,
                                 "startScale": {
                                     "max": {
@@ -337,9 +401,9 @@
                                     },
                                     "randomize": false,
                                     "value": {
-                                        "x": 0.25,
-                                        "y": 0.25,
-                                        "z": 0.25
+                                        "x": 0.5,
+                                        "y": 0.5,
+                                        "z": 0.5
                                     }
                                 },
                                 "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
@@ -354,9 +418,17 @@
                     {
                         "data": {
                             "customData": {
-                                "materialName": "White",
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "materialName": "EntityMaterial",
                                 "materialNames": [
-                                    "White"
+                                    "EntityMaterial"
                                 ],
                                 "pipelineName": "Object3D.Solid.BlendNormal",
                                 "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -372,9 +444,135 @@
                 "isActive": true,
                 "name": "Player",
                 "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                "prefabNodeID": "9c037041-c5ee-4cc4-b429-f1db4a7784a4",
                 "tag": ""
             },
             "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                                "rotate": {
+                                    "w": -4.371138828673793e-08,
+                                    "x": -4.371138828673793e-08,
+                                    "y": -1.910685465164705e-15,
+                                    "z": -1.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "castShadows": true,
+                                "color": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "decay": 4.0,
+                                "distance": 10.0,
+                                "innerAngle": 0.3499999940395355,
+                                "intensity": 2.0,
+                                "outerAngle": 0.6000000238418579,
+                                "radius": 2.0,
+                                "shadowBias": 1.0,
+                                "shadowDistance": 100.0,
+                                "shadowMapResolution": 512,
+                                "shadowSoftness": 0.0,
+                                "sourceDepth": 1.0,
+                                "sourceHeight": 1.0,
+                                "sourceLength": 1.0,
+                                "sourceRadius": 0.5,
+                                "sourceWidth": 1.0,
+                                "type": 4
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Light"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                            },
+                            "isActive": true,
+                            "priority": 950,
+                            "tag": ""
+                        },
+                        "type": "LightRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": false,
+                "name": "SphereLight",
+                "objectID": "d66f1aa6-012b-46f1-9a57-19b05240dc45",
+                "prefabNodeID": "8fabdf67-feff-4eb2-8180-8ce0d2cce55a",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.5,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "LandingParticlePos",
+                "objectID": "450287e5-7742-4091-9abf-809076327207",
+                "prefabNodeID": "321d0596-59ff-486d-adbb-672b0b32862f",
+                "tag": ""
+            },
+            "parentIndex": 0
         },
         {
             "object": {
@@ -419,12 +617,18 @@
                                 "decay": 3.0,
                                 "distance": 10.0,
                                 "innerAngle": 0.3499999940395355,
-                                "intensity": 1.0,
+                                "intensity": 0.5,
                                 "outerAngle": 0.6000000238418579,
                                 "radius": 12.0,
                                 "shadowBias": 1.0,
                                 "shadowDistance": 100.0,
                                 "shadowMapResolution": 2048,
+                                "shadowSoftness": 0.0,
+                                "sourceDepth": 1.0,
+                                "sourceHeight": 1.0,
+                                "sourceLength": 1.0,
+                                "sourceRadius": 0.5,
+                                "sourceWidth": 1.0,
                                 "type": 1
                             },
                             "isActive": true,
@@ -448,8 +652,9 @@
                 ],
                 "editorOnly": false,
                 "isActive": true,
-                "name": "PointLight",
-                "objectID": "d66f1aa6-012b-46f1-9a57-19b05240dc45",
+                "name": "Light Object",
+                "objectID": "e105ce18-5e90-4a21-8354-88c1a9868aa3",
+                "prefabNodeID": "b0df68f7-43a4-490f-b82f-c03a797a99b4",
                 "tag": ""
             },
             "parentIndex": 0
@@ -474,7 +679,7 @@
                                 },
                                 "translate": {
                                     "x": 0.0,
-                                    "y": -0.5,
+                                    "y": 0.0,
                                     "z": 0.0
                                 }
                             },
@@ -487,12 +692,14 @@
                 ],
                 "editorOnly": false,
                 "isActive": true,
-                "name": "LandingParticlePos",
-                "objectID": "450287e5-7742-4091-9abf-809076327207",
+                "name": "CameraTarget",
+                "objectID": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+                "prefabNodeID": "941401ff-fca7-45ea-9ed3-7b34f17b5c8a",
                 "tag": ""
             },
             "parentIndex": 0
         }
     ],
-    "prefab": true
+    "prefab": true,
+    "prefabID": "1d16cf84-bc2b-43d1-85d6-92b6ae9a2c96"
 }

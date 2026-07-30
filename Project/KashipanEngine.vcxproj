@@ -120,6 +120,7 @@
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
+robocopy "$(ProjectDir)EditorTools" "$(OutDir)EditorTools" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
 if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     </PostBuildEvent>
     <Manifest>
@@ -198,6 +199,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
+robocopy "$(ProjectDir)EditorTools" "$(OutDir)EditorTools" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
 if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     </PostBuildEvent>
     <Manifest>
@@ -581,6 +583,12 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSceneSync.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\PrefabRegisteredSceneSync.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneListEditor.cpp">
@@ -1159,6 +1167,9 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSceneSync.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h">

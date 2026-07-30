@@ -88,13 +88,16 @@ bool ApplyComponentOverride(SceneEditorContext *context, const ComponentOverride
 /// @brief 個別コンポーネントのRevert（Prefab側の値をこのインスタンスへ反映するのみ。ファイル書き込みなし）
 bool RevertComponentOverride(SceneEditorContext *context, SceneEditorCommands *commands, const ComponentOverride &target);
 
-/// @brief PrefabAssetManagerの変更リスナーとして登録される、他インスタンスへの伝播本体
-/// @details oldPrefabJson/newPrefabJsonの対応ノード同士でコンポーネントを型+出現順（ordinal）で
-///          突き合わせ、「変更前のPrefab値と一致する（＝ローカル未編集）」コンポーネントの値・
-///          追加・削除を反映する。ローカルで既に上書き・追加・削除されているコンポーネントは
-///          尊重してスキップする。ノード（オブジェクト）自体の追加・削除という構造変化は
-///          伝播しない（各インスタンス側のApply All/Revert Allで個別に対応する）
+/// @brief 開いているシーン内の全インスタンスへPrefab変更をUndo可能な形で伝播する
+/// @details JSON三者マージによりローカルOverrideを維持しつつ、コンポーネント、オブジェクト
+///          プロパティ、ノード追加・削除、親変更を同期する。
 void SyncOtherInstances(SceneEditorContext *context, SceneEditorCommands *commands,
+    const UUID128 &prefabID, const JSON &oldPrefabJson, const JSON &newPrefabJson);
+
+/// @brief 開いているシーンとSceneManagerへ登録済みの全シーンへPrefab変更を伝播する
+/// @details 開いているシーンはUndoコマンドで更新し、登録シーンはSceneFileIO経由でファイルを
+///          読み書きする。PrefabAssetManagerの変更リスナーから呼び出す統合エントリーポイント。
+void SyncAllScenes(SceneEditorContext *context, SceneEditorCommands *commands,
     const UUID128 &prefabID, const JSON &oldPrefabJson, const JSON &newPrefabJson);
 
 } // namespace PrefabSyncUtility

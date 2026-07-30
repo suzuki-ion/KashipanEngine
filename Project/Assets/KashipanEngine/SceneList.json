@@ -1,12 +1,16 @@
 {
     "scenes": [
         {
-            "filePath": "Assets/Scenes/GameScene.json",
+            "filePath": "Assets/Scenes/GameScene.scene",
             "name": "GameScene"
         },
         {
             "filePath": "Assets/Scenes/TestScene.json",
             "name": "TestScene"
+        },
+        {
+            "filePath": "Assets/Scenes/GameScene2.scene",
+            "name": "GameScene2"
         }
     ],
     "startupScene": "GameScene"

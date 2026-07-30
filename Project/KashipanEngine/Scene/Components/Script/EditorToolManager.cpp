@@ -13,6 +13,7 @@
 #include <imgui.h>
 
 #include "Debug/Logger.h"
+#include "Scene/Components/Script/AngelScriptDebugServer.h"
 #include "Scene/Components/Script/ImGuiScriptBindings.h"
 #include "Scene/Components/Script/ScriptBindings.h"
 #include "Utilities/FileIO/Directory.h"
@@ -229,6 +230,12 @@ void EditorToolManager::LoadTools() {
         Log("EditorTool: コンテキストの生成に失敗しました", LogSeverity::Error);
         return;
     }
+#if !defined(RELEASE_BUILD)
+    auto &debugServer = GetProcessAngelScriptDebugServer();
+    if (debugServer.Start()) {
+        debugServer.AttachContext(context_);
+    }
+#endif
 
     // EditorToolsフォルダ以下の.asを再帰的に列挙する
     std::vector<std::string> scriptPaths;

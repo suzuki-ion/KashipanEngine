@@ -30,6 +30,14 @@ private:
     using ComponentCounterparts = std::vector<std::pair<EmptyObject *, IObjectComponent *>>;
 
     void ShowObjectInspector(EmptyObject *obj);
+    /// @brief 選択オブジェクトがPrefabインスタンスの場合、ソースパス・Apply All/Revert All・
+    ///        Override一覧＋個別Apply/Revertを表示する（対象でなければ何も表示しない）
+    void ShowPrefabSection(EmptyObject *obj);
+    /// @brief Prefabインスタンスの「Revert All」確認モーダル
+    /// @details RevertAllはobj自体を削除・再生成するため、ShowObjectInspector実行中に
+    ///          即座に呼ぶとobjがダングリングポインタになる。そのためShowImGui側で
+    ///          ShowObjectInspector呼び出しが完全に終わった後に処理する
+    void ShowRevertPrefabConfirmModal();
     /// @brief 複数選択時のインスペクター（全選択オブジェクトに共通するコンポーネントを表示し、編集を全てへ適用する）
     /// @param primary 値の表示元になるオブジェクト（最後に操作したオブジェクト）
     /// @param selectedObjects 選択中の全オブジェクト
@@ -83,6 +91,10 @@ private:
     IObjectComponent *componentDragSource_ = nullptr;
     IObjectComponent *componentDragTarget_ = nullptr;
     ComponentDropPosition componentDragPosition_ = ComponentDropPosition::Above;
+
+    // Prefabインスタンスの「Revert All」確認モーダル用
+    bool isRevertPrefabConfirmRequested_ = false;
+    EmptyObject *pendingRevertPrefabTarget_ = nullptr;
 };
 
 } // namespace KashipanEngine

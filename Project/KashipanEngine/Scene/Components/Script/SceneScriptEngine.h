@@ -5,8 +5,11 @@
 #include "Scene/Components/SceneComponentHeader.h"
 
 class asIScriptEngine;
+class asIScriptContext;
 
 namespace KashipanEngine {
+
+class AngelScriptDebugServer;
 
 /// @brief シーン内でAngelScriptを実行するための共有スクリプトエンジンを管理するシーンコンポーネント
 /// @details ScriptComponent はこのコンポーネントを介して asIScriptEngine を取得する。
@@ -25,6 +28,10 @@ public:
     /// @brief 共有スクリプトエンジンを取得（未初期化の場合は nullptr）
     asIScriptEngine *GetEngine() const noexcept { return engine_; }
 
+    /// @brief コンテキストをVS Code用DAPデバッガーへ接続する
+    /// @details Releaseビルドまたはデバッグサーバーを開始できなかった場合は何もしない
+    void AttachDebugger(asIScriptContext *context) const;
+
     /// @brief スクリプトビルド時のコンパイルメッセージの収集を開始する
     /// @details 収集中もログへの出力は行われる。ScriptComponentがビルドエラーの詳細表示に使用する
     void BeginMessageCapture();
@@ -41,6 +48,8 @@ protected:
 
 private:
     asIScriptEngine *engine_ = nullptr;
+    /// @brief プロセス共通DAPサーバーへの非所有ポインター
+    AngelScriptDebugServer *debugServer_ = nullptr;
     /// @brief メッセージ収集用バッファ（BeginMessageCapture～EndMessageCaptureの間だけ使用）
     std::vector<std::string> messageCaptureBuffer_;
 };

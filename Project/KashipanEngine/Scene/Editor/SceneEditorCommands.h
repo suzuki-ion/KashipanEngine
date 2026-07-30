@@ -213,6 +213,10 @@ public:
     ///        先行するオブジェクト生成コマンドが割り当て済みのobjectIDを直接指定する）
     AddComponentCommand(const UUID128 &objectID, const std::string &componentType)
         : objectID_(objectID), componentType_(componentType) {}
+    /// @brief 追加と同時に特定の値へ初期化したい場合に使う（Prefab同期での「追加」伝播など）。
+    ///        Execute時にこのJSONがロードされる（Redo時の復元と同じ既存の仕組みをそのまま利用する）
+    AddComponentCommand(EmptyObject *obj, const std::string &componentType, JSON initialState)
+        : objectID_(obj ? obj->GetObjectID() : UUID128()), componentType_(componentType), state_(std::move(initialState)) {}
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;

@@ -185,6 +185,14 @@ public:
     void SetObjectID(const UUID128 &id) { objectID_ = id; }
     /// @brief オブジェクトIDの取得
     const UUID128 &GetObjectID() const { return objectID_; }
+
+    /// @brief Prefab内の対応ノードを識別する安定IDの設定
+    /// @details Prefabに関連しないオブジェクトでは無効なまま（Clone()でも複製されない）。
+    ///          objectID_と異なり、配置・複製の際に新規発行されず、Prefabファイル内の対応ノードとの
+    ///          突き合わせにのみ使われる
+    void SetPrefabNodeID(const UUID128 &id) { prefabNodeID_ = id; }
+    /// @brief Prefab内の対応ノードを識別する安定IDの取得
+    const UUID128 &GetPrefabNodeID() const { return prefabNodeID_; }
     /// @brief オブジェクトの保存の可否設定
     void SetSaveEnabled(bool enabled) { isSaveEnabled_ = enabled; }
     /// @brief オブジェクトの保存の可否取得
@@ -300,6 +308,8 @@ private:
     SceneContext *ownerSceneContext_ = nullptr;
     std::unique_ptr<ObjectContext> objectContext_;
     UUID128 objectID_ = UUID128(true);
+    /// @brief Prefab内の対応ノードを識別する安定ID（Prefabに関連しないオブジェクトでは無効なまま）
+    UUID128 prefabNodeID_;
     bool isSaveEnabled_ = true;
 
     bool isActive_ = true;

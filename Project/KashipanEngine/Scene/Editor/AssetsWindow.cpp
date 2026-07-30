@@ -11,8 +11,12 @@
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
+#include "ComponentSerialize/ComponentRegistry.h"
+#include "Objects/Components/PrefabInstanceComponent.h"
 #include "Objects/EmptyObject.h"
+#include "Scene/Editor/PrefabAssetManager.h"
 #include "Scene/Editor/PrefabUtility.h"
+#include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/SceneEditorContext.h"
 #include "Utilities/AssetDragDropPayload.h"
@@ -492,7 +496,10 @@ void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
 void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
     if (!obj || !editorContext_) return;
 
-    const JSON prefabJson = PrefabUtility::BuildPrefabJson(editorContext_, obj);
+    // このPrefab資産の固有ID。対象が既に別Prefabのインスタンスだったとしても、
+    // 新しく作るPrefabは元のリンクと無関係な独立した資産になる（BuildPrefabJson側でリンク情報を除去する）
+    const UUID128 prefabID(true);
+    const JSON prefabJson = PrefabUtility::BuildPrefabJson(editorContext_, obj, prefabID);
     if (prefabJson.empty()) return;
 
     // ファイル名に使えない文字をオブジェクト名から取り除く
@@ -510,9 +517,19 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
         filePath = folder + baseName + "_" + std::to_string(suffix) + PrefabUtility::kPrefabExtension;
     }
 
-    if (SaveJSON(prefabJson, filePath)) {
-        RefreshFileList();
+    if (!PrefabAssetManager::CreatePrefabFile(prefabID, prefabJson, filePath)) return;
+
+    // 対象オブジェクトを、今作成したPrefabのインスタンスとしてリンクする
+    if (commands_) {
+        commands_->Execute(std::make_unique<AddComponentCommand>(obj, "PrefabInstanceComponent"));
+    } else {
+        obj->AddComponent(CreateObjectComponentByType("PrefabInstanceComponent"));
     }
+    if (auto *comp = obj->GetComponent<PrefabInstanceComponent>()) {
+        comp->SetPrefabID(prefabID);
+    }
+
+    RefreshFileList();
 }
 
 bool AssetsWindow::ShowCreateFileModal() {
@@ -612,8 +629,10 @@ void AssetsWindow::ShowRenameModal() {
                 } else {
                     // 実ファイルのリネームに成功したら、対応するマネージャーの登録名/パスも追従させる
                     // （リネーム前に既に読み込まれていなかった場合は各RenameXxxは何もせずfalseを返すだけ）
-                    const std::string oldAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(oldPath.lexically_relative("."))));
-                    const std::string newAssetPath = ToAssetsRelativePath(NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative("."))));
+                    const std::string oldCwdPath = NormalizePathSlashes(PathToUtf8String(oldPath.lexically_relative(".")));
+                    const std::string newCwdPath = NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative(".")));
+                    const std::string oldAssetPath = ToAssetsRelativePath(oldCwdPath);
+                    const std::string newAssetPath = ToAssetsRelativePath(newCwdPath);
                     const std::string ext = ToLowerExtension(newPath);
                     if (IsTextureExtension(ext)) {
                         TextureManager::RenameTexture(oldAssetPath, newAssetPath);
@@ -623,6 +642,8 @@ void AssetsWindow::ShowRenameModal() {
                         AudioManager::RenameSound(oldAssetPath, newAssetPath);
                     } else if (IsModelExtension(ext)) {
                         ModelManager::RenameModel(oldAssetPath, newAssetPath);
+                    } else if (ext == PrefabUtility::kPrefabExtension) {
+                        PrefabAssetManager::RenamePrefabFile(oldCwdPath, newCwdPath);
                     }
                     // 古いパスを指している開いている編集/プレビューウィンドウは無効になるため閉じる
                     CloseEditorsForPath(contextMenuTargetPath_);

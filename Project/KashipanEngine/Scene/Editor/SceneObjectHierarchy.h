@@ -132,6 +132,8 @@ private:
     void RequestScrollTo(EmptyObject *obj);
     void ShowObjectContextMenu(EmptyObject *obj);
     void ShowHierarchyContextMenu();
+    /// @brief Prefabインスタンスの「Revert All」確認モーダル（破壊的操作のため確認を挟む）
+    void ShowRevertPrefabConfirmModal();
     /// @brief オブジェクト作成メニューの中身（グループ分けされたテンプレート一覧）を表示する
     /// @param referenceObject 基準オブジェクト（asChild=falseの場合は兄弟として作成。nullptrならルート直下）
     /// @param asChild trueの場合、referenceObjectの子として作成する（referenceObjectは非nullである必要がある）
@@ -201,6 +203,10 @@ private:
     bool hasPendingPrefabDrop_ = false;
     std::string pendingPrefabDropPath_;
     EmptyObject *pendingPrefabDropParent_ = nullptr;
+
+    // Prefabインスタンスの「Revert All」確認モーダル用
+    bool isRevertPrefabConfirmRequested_ = false;
+    EmptyObject *pendingRevertPrefabTarget_ = nullptr;
 };
 
 } // namespace KashipanEngine

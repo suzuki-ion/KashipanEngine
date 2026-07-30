@@ -14,6 +14,7 @@ namespace KashipanEngine {
 class EmptyObject;
 class SceneEditor;
 class SceneEditorContext;
+class SceneEditorCommands;
 
 /// @brief Unity の Assets ウィンドウ風のファイルブラウザ
 /// @details 実行中のディレクトリ以下から、エンジンが対応している形式のファイルを表示する。
@@ -22,6 +23,9 @@ class AssetsWindow final {
 public:
     AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext);
     ~AssetsWindow() = default;
+
+    /// @brief Undo/Redo用のコマンド管理を設定する（Prefab付与などをUndo対応させるため）
+    void SetCommands(SceneEditorCommands *commands) { commands_ = commands; }
 
     void ShowImGui();
 
@@ -78,6 +82,7 @@ private:
     void CreatePrefabFromObject(EmptyObject *obj);
 
     SceneEditorContext *editorContext_ = nullptr;
+    SceneEditorCommands *commands_ = nullptr;
 
     FolderNode rootFolder_;
     std::string currentFolder_;

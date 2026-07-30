@@ -11,6 +11,8 @@
 #include "Assets/MaterialManager.h"
 #include "Assets/TextureManager.h"
 #include "Graphics/IShaderTexture.h"
+#include "Scene/Editor/PrefabAssetManager.h"
+#include "Scene/Editor/PrefabUtility.h"
 
 namespace KashipanEngine {
 
@@ -68,7 +70,12 @@ bool JSONFileEditorWindow::ShowImGui() {
     ImGui::SameLine();
     ImGui::BeginDisabled(!isDirty_);
     if (ImGui::Button("Save")) {
-        if (SaveJSON(data_, filePath_)) {
+        // .prefabファイルの場合はPrefabAssetManager経由で保存し、他インスタンスへの伝播をトリガーする
+        const bool isPrefab = std::filesystem::path(filePath_).extension() == PrefabUtility::kPrefabExtension;
+        const bool saved = isPrefab
+            ? PrefabAssetManager::SavePrefabJsonByPath(filePath_, data_)
+            : SaveJSON(data_, filePath_);
+        if (saved) {
             isDirty_ = false;
         }
     }

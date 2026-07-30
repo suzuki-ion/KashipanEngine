@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
 
@@ -25,8 +26,13 @@ void CollectSubtreeNodes(SceneEditorContext *context, EmptyObject *obj, int pare
     std::vector<PasteObjectCommand::Node> &out);
 
 /// @brief 指定オブジェクト（とその子孫）からプレハブJSONを構築する
-/// @details 根オブジェクトのTransformの親参照はシーン固有のIDのため取り除かれる
-JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject);
+/// @details 根オブジェクトのTransformの親参照はシーン固有のIDのため取り除かれる。
+///          サブツリー内の各ライブオブジェクトについて、prefabNodeIDが未採番なら新規発行して
+///          ライブオブジェクト側にも書き戻す（Prefabとの対応付けに使う安定ID。objectIDとは別）。
+///          rootObjectが既にPrefabInstanceComponentを持っていても、そのコンポーネントは
+///          出力JSONから取り除かれる（新しく作るPrefabは元のリンクと無関係な独立した資産にするため）
+/// @param prefabID このPrefab資産の固有ID。省略時は新規に発行される
+JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject, const UUID128 &prefabID = UUID128(true));
 
 /// @brief プレハブJSONからPasteObjectCommand用のノード列を復元する
 /// @details プレハブ形式（"objects"配列）のほか、オブジェクト保存形式そのままの

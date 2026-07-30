@@ -19,6 +19,21 @@ void EraseTransformParent(JSON &objectJson) {
         data["customData"].erase("parent");
     }
 }
+
+/// @brief オブジェクトJSON内のPrefabInstanceComponentを消去する
+/// @details Prefab化する対象が既に別のPrefabインスタンスの根だった場合、新しく作るPrefabへ
+///          古いリンク情報が紛れ込まないようにするため
+void EraseRootPrefabInstanceComponent(JSON &objectJson) {
+    if (!objectJson.contains("components")) return;
+    auto &components = objectJson["components"];
+    for (auto it = components.begin(); it != components.end();) {
+        if (it->value("type", "") == "PrefabInstanceComponent") {
+            it = components.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
 } // namespace
 
 void CollectSubtreeNodes(SceneEditorContext *context, EmptyObject *obj, int parentIndex,
@@ -38,7 +53,7 @@ void CollectSubtreeNodes(SceneEditorContext *context, EmptyObject *obj, int pare
     }
 }
 
-JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject) {
+JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject, const UUID128 &prefabID) {
     JSON json = JSON::object();
     if (!context || !rootObject) return json;
 
@@ -47,12 +62,23 @@ JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject) {
     if (nodes.empty()) return json;
 
     json["prefab"] = true;
+    json["prefabID"] = prefabID.ToString();
     json["name"] = rootObject->GetName();
     json["objects"] = JSON::array();
     for (auto &node : nodes) {
+        // このノードに対応するライブオブジェクトのprefabNodeIDが未採番なら新規発行し、
+        // JSON・ライブオブジェクトの双方へ書き戻す（Prefabとの対応付けに使う安定ID）
+        if (EmptyObject *liveObj = context->GetSceneObject(UUID128(node.json.value("objectID", std::string{})))) {
+            if (!liveObj->GetPrefabNodeID().IsValid()) {
+                const UUID128 newNodeID(true);
+                liveObj->SetPrefabNodeID(newNodeID);
+                node.json["prefabNodeID"] = newNodeID.ToString();
+            }
+        }
         // 根オブジェクトの親参照はシーン固有のIDのため、プレハブには残さない
         if (node.parentIndexInSubtree < 0) {
             EraseTransformParent(node.json);
+            EraseRootPrefabInstanceComponent(node.json);
         }
         JSON entry;
         entry["parentIndex"] = node.parentIndexInSubtree;

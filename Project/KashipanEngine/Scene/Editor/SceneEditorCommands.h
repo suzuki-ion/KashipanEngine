@@ -200,6 +200,26 @@ private:
     bool newActive_ = true;
 };
 
+/// @brief Prefab同期用のオブジェクト基本プロパティ一括変更コマンド
+/// @details name/tag/isActive/editorOnlyをJSONスナップショットから適用し、Undo可能にする。
+class ObjectStateCommand final : public IEditorCommand {
+public:
+    ObjectStateCommand(EmptyObject *obj, JSON before, JSON after)
+        : objectID_(obj ? obj->GetObjectID() : UUID128()),
+          before_(std::move(before)), after_(std::move(after)) {}
+
+    bool Execute(SceneEditorContext *context) override;
+    bool Undo(SceneEditorContext *context) override;
+    std::string GetName() const override { return "Sync Object Properties"; }
+
+private:
+    static bool Apply(SceneEditorContext *context, const UUID128 &objectID, const JSON &state);
+
+    UUID128 objectID_;
+    JSON before_;
+    JSON after_;
+};
+
 //==================================================
 // コンポーネント操作コマンド
 //==================================================

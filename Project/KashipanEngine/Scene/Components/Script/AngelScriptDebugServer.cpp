@@ -6,8 +6,10 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
 #include <limits>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -20,6 +22,7 @@
 #include <ws2tcpip.h>
 
 #include <angelscript.h>
+#include <add_on/scriptarray/scriptarray.h>
 
 #include "Debug/Logger.h"
 #include "Utilities/FileIO/JSON.h"
@@ -46,12 +49,17 @@ std::string NormalizeSlashesAndCase(std::string path) {
 /// @brief 実行側の相対パスとVS Code側の絶対パスを同じキーへ変換する
 std::string MakeSourceKey(const std::string &path) {
     std::string normalized = NormalizeSlashesAndCase(path);
-    constexpr std::string_view assetsMarker = "/assets/";
-    const auto markerPos = normalized.find(assetsMarker);
-    if (markerPos != std::string::npos) {
-        return normalized.substr(markerPos + 1);
+    constexpr std::string_view sourceRoots[] = {
+        "/assets/",
+        "/editortools/",
+    };
+    for (const auto marker : sourceRoots) {
+        const auto markerPos = normalized.find(marker);
+        if (markerPos != std::string::npos) {
+            return normalized.substr(markerPos + 1);
+        }
     }
-    if (normalized.starts_with("assets/")) {
+    if (normalized.starts_with("assets/") || normalized.starts_with("editortools/")) {
         return normalized;
     }
     return normalized;
@@ -79,6 +87,22 @@ struct AngelScriptDebugServer::Impl final {
         Into,
         Over,
         Out,
+    };
+
+    enum class VariableReferenceKind {
+        Locals,
+        Globals,
+        ValueChildren,
+    };
+
+    struct VariableReference final {
+        VariableReferenceKind kind = VariableReferenceKind::Locals;
+        asIScriptContext *context = nullptr;
+        asIScriptModule *module = nullptr;
+        asUINT stackLevel = 0;
+        void *address = nullptr;
+        int typeId = asTYPEID_VOID;
+        bool directObject = false;
     };
 
     ~Impl() {
@@ -334,9 +358,9 @@ private:
         } else if (command == "stackTrace") {
             HandleStackTrace(message);
         } else if (command == "scopes") {
-            SendResponse(message, {{"scopes", JSON::array()}});
+            HandleScopes(message);
         } else if (command == "variables") {
-            SendResponse(message, {{"variables", JSON::array()}});
+            HandleVariables(message);
         } else if (command == "continue") {
             SendResponse(message, {{"allThreadsContinued", true}});
             ResumeExecution();
@@ -438,6 +462,377 @@ private:
         });
     }
 
+    void HandleScopes(const JSON &request) {
+        JSON scopes = JSON::array();
+        const JSON &arguments = request.value("arguments", JSON::object());
+        const int frameId = arguments.value("frameId", 0);
+
+        {
+            std::scoped_lock lock(stateMutex_);
+            if (stoppedContext_ && frameId > 0) {
+                const asUINT stackLevel = static_cast<asUINT>(frameId - 1);
+                if (stackLevel < stoppedContext_->GetCallstackSize()) {
+                    const int localsReference = AddVariableReferenceLocked({
+                        .kind = VariableReferenceKind::Locals,
+                        .context = stoppedContext_,
+                        .stackLevel = stackLevel,
+                    });
+                    scopes.push_back({
+                        {"name", "ローカル"},
+                        {"presentationHint", "locals"},
+                        {"variablesReference", localsReference},
+                        {"expensive", false},
+                    });
+
+                    const int thisTypeId = stoppedContext_->GetThisTypeId(stackLevel);
+                    void *thisPointer = stoppedContext_->GetThisPointer(stackLevel);
+                    if (thisTypeId != asTYPEID_VOID && thisPointer) {
+                        const int thisReference = AddVariableReferenceLocked({
+                            .kind = VariableReferenceKind::ValueChildren,
+                            .context = stoppedContext_,
+                            .stackLevel = stackLevel,
+                            .address = thisPointer,
+                            .typeId = thisTypeId,
+                            .directObject = true,
+                        });
+                        scopes.push_back({
+                            {"name", "this"},
+                            {"presentationHint", "locals"},
+                            {"variablesReference", thisReference},
+                            {"expensive", false},
+                        });
+                    }
+
+                    asIScriptFunction *function = stoppedContext_->GetFunction(stackLevel);
+                    asIScriptModule *module = function ? function->GetModule() : nullptr;
+                    if (module && module->GetGlobalVarCount() > 0) {
+                        const int globalsReference = AddVariableReferenceLocked({
+                            .kind = VariableReferenceKind::Globals,
+                            .context = stoppedContext_,
+                            .module = module,
+                            .stackLevel = stackLevel,
+                        });
+                        scopes.push_back({
+                            {"name", "グローバル"},
+                            {"presentationHint", "globals"},
+                            {"variablesReference", globalsReference},
+                            {"expensive", false},
+                        });
+                    }
+                }
+            }
+        }
+
+        SendResponse(request, {{"scopes", std::move(scopes)}});
+    }
+
+    void HandleVariables(const JSON &request) {
+        JSON variables = JSON::array();
+        const JSON &arguments = request.value("arguments", JSON::object());
+        const int referenceId = arguments.value("variablesReference", 0);
+
+        {
+            std::scoped_lock lock(stateMutex_);
+            const auto found = variableReferences_.find(referenceId);
+            if (found != variableReferences_.end() && stoppedContext_ &&
+                found->second.context == stoppedContext_) {
+                const VariableReference reference = found->second;
+                if (reference.kind == VariableReferenceKind::Locals) {
+                    AppendLocalVariablesLocked(reference, variables);
+                } else if (reference.kind == VariableReferenceKind::Globals) {
+                    AppendGlobalVariablesLocked(reference, variables);
+                } else {
+                    AppendValueChildrenLocked(reference, variables);
+                }
+            }
+        }
+
+        SendResponse(request, {{"variables", std::move(variables)}});
+    }
+
+    int AddVariableReferenceLocked(VariableReference reference) {
+        const int referenceId = nextVariableReference_++;
+        variableReferences_.emplace(referenceId, std::move(reference));
+        return referenceId;
+    }
+
+    static void *ResolveObjectPointer(void *address, const int typeId, const bool directObject) {
+        if (!address) {
+            return nullptr;
+        }
+        if (directObject) {
+            return address;
+        }
+        if ((typeId & asTYPEID_OBJHANDLE) != 0) {
+            return *static_cast<void **>(address);
+        }
+        return address;
+    }
+
+    static std::string GetTypeName(asIScriptEngine *engine, const int typeId) {
+        if (!engine) {
+            return {};
+        }
+        const char *declaration = engine->GetTypeDeclaration(typeId, true);
+        return declaration ? declaration : "";
+    }
+
+    static bool IsArrayType(asITypeInfo *typeInfo) {
+        return typeInfo && std::string_view(typeInfo->GetName()) == "array" &&
+            (typeInfo->GetFlags() & asOBJ_TEMPLATE) != 0;
+    }
+
+    static bool IsStringType(asITypeInfo *typeInfo) {
+        return typeInfo && std::string_view(typeInfo->GetName()) == "string";
+    }
+
+    static std::string FormatInteger(const std::int64_t value) {
+        return std::to_string(value);
+    }
+
+    std::string FormatValueLocked(
+        asIScriptEngine *engine,
+        void *address,
+        const int typeId,
+        const bool directObject = false) const {
+        if (!address) {
+            return "<利用不可>";
+        }
+
+        switch (typeId) {
+        case asTYPEID_BOOL:
+            return *static_cast<const bool *>(address) ? "true" : "false";
+        case asTYPEID_INT8:
+            return FormatInteger(*static_cast<const std::int8_t *>(address));
+        case asTYPEID_INT16:
+            return FormatInteger(*static_cast<const std::int16_t *>(address));
+        case asTYPEID_INT32:
+            return FormatInteger(*static_cast<const std::int32_t *>(address));
+        case asTYPEID_INT64:
+            return FormatInteger(*static_cast<const std::int64_t *>(address));
+        case asTYPEID_UINT8:
+            return std::to_string(*static_cast<const std::uint8_t *>(address));
+        case asTYPEID_UINT16:
+            return std::to_string(*static_cast<const std::uint16_t *>(address));
+        case asTYPEID_UINT32:
+            return std::to_string(*static_cast<const std::uint32_t *>(address));
+        case asTYPEID_UINT64:
+            return std::to_string(*static_cast<const std::uint64_t *>(address));
+        case asTYPEID_FLOAT: {
+            std::ostringstream stream;
+            stream << std::setprecision(7) << *static_cast<const float *>(address);
+            return stream.str();
+        }
+        case asTYPEID_DOUBLE: {
+            std::ostringstream stream;
+            stream << std::setprecision(15) << *static_cast<const double *>(address);
+            return stream.str();
+        }
+        default:
+            break;
+        }
+
+        asITypeInfo *typeInfo = engine ? engine->GetTypeInfoById(typeId) : nullptr;
+        if (typeInfo && typeInfo->GetEnumValueCount() > 0) {
+            const int value = *static_cast<const int *>(address);
+            for (asUINT index = 0; index < typeInfo->GetEnumValueCount(); ++index) {
+                int enumValue = 0;
+                const char *enumName = typeInfo->GetEnumValueByIndex(index, &enumValue);
+                if (enumValue == value && enumName) {
+                    return std::string(enumName) + " (" + std::to_string(value) + ")";
+                }
+            }
+            return std::to_string(value);
+        }
+
+        void *objectPointer = ResolveObjectPointer(address, typeId, directObject);
+        if (!objectPointer) {
+            return "null";
+        }
+        if (IsStringType(typeInfo)) {
+            return "\"" + *static_cast<const std::string *>(objectPointer) + "\"";
+        }
+        if (IsArrayType(typeInfo)) {
+            const auto *array = static_cast<const CScriptArray *>(objectPointer);
+            return "array[" + std::to_string(array->GetSize()) + "]";
+        }
+
+        const std::string typeName = GetTypeName(engine, typeId);
+        return typeName.empty() ? "{object}" : "{" + typeName + "}";
+    }
+
+    bool CanExpandValueLocked(
+        asIScriptEngine *engine,
+        void *address,
+        const int typeId,
+        const bool directObject = false) const {
+        void *objectPointer = ResolveObjectPointer(address, typeId, directObject);
+        if (!objectPointer || !engine) {
+            return false;
+        }
+        asITypeInfo *typeInfo = engine->GetTypeInfoById(typeId);
+        if (!typeInfo || IsStringType(typeInfo)) {
+            return false;
+        }
+        return IsArrayType(typeInfo) ||
+            (typeInfo->GetFlags() & asOBJ_SCRIPT_OBJECT) != 0 ||
+            typeInfo->GetPropertyCount() > 0;
+    }
+
+    void AppendVariableLocked(
+        JSON &variables,
+        const std::string &name,
+        asIScriptContext *context,
+        void *address,
+        const int typeId,
+        const bool directObject = false) {
+        asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
+        int childReference = 0;
+        if (CanExpandValueLocked(engine, address, typeId, directObject)) {
+            childReference = AddVariableReferenceLocked({
+                .kind = VariableReferenceKind::ValueChildren,
+                .context = context,
+                .address = address,
+                .typeId = typeId,
+                .directObject = directObject,
+            });
+        }
+
+        JSON variable = {
+            {"name", name},
+            {"value", FormatValueLocked(engine, address, typeId, directObject)},
+            {"type", GetTypeName(engine, typeId)},
+            {"variablesReference", childReference},
+        };
+        if (childReference != 0) {
+            asITypeInfo *typeInfo = engine->GetTypeInfoById(typeId);
+            if (IsArrayType(typeInfo)) {
+                auto *array = static_cast<CScriptArray *>(
+                    ResolveObjectPointer(address, typeId, directObject));
+                variable["indexedVariables"] = static_cast<int>(array->GetSize());
+            } else if (typeInfo) {
+                variable["namedVariables"] = static_cast<int>(typeInfo->GetPropertyCount());
+            }
+        }
+        variables.push_back(std::move(variable));
+    }
+
+    void AppendLocalVariablesLocked(const VariableReference &reference, JSON &variables) {
+        asIScriptContext *context = reference.context;
+        const int variableCount = context->GetVarCount(reference.stackLevel);
+        for (int index = 0; index < variableCount; ++index) {
+            if (!context->IsVarInScope(static_cast<asUINT>(index), reference.stackLevel)) {
+                continue;
+            }
+            const char *name = nullptr;
+            int typeId = asTYPEID_VOID;
+            if (context->GetVar(
+                    static_cast<asUINT>(index), reference.stackLevel, &name, &typeId) < 0 ||
+                !name || name[0] == '\0') {
+                continue;
+            }
+            void *address = context->GetAddressOfVar(
+                static_cast<asUINT>(index), reference.stackLevel, false, true);
+            AppendVariableLocked(variables, name, context, address, typeId);
+        }
+    }
+
+    void AppendGlobalVariablesLocked(const VariableReference &reference, JSON &variables) {
+        if (!reference.module) {
+            return;
+        }
+        const asUINT variableCount = reference.module->GetGlobalVarCount();
+        for (asUINT index = 0; index < variableCount; ++index) {
+            const char *name = nullptr;
+            int typeId = asTYPEID_VOID;
+            if (reference.module->GetGlobalVar(index, &name, nullptr, &typeId) < 0 ||
+                !name || name[0] == '\0') {
+                continue;
+            }
+            AppendVariableLocked(
+                variables,
+                name,
+                reference.context,
+                reference.module->GetAddressOfGlobalVar(index),
+                typeId);
+        }
+    }
+
+    void AppendValueChildrenLocked(const VariableReference &reference, JSON &variables) {
+        asIScriptContext *context = reference.context;
+        asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
+        if (!engine) {
+            return;
+        }
+        asITypeInfo *typeInfo = engine->GetTypeInfoById(reference.typeId);
+        void *objectPointer = ResolveObjectPointer(
+            reference.address, reference.typeId, reference.directObject);
+        if (!typeInfo || !objectPointer) {
+            return;
+        }
+
+        if (IsArrayType(typeInfo)) {
+            auto *array = static_cast<CScriptArray *>(objectPointer);
+            const int elementTypeId = array->GetElementTypeId();
+            for (asUINT index = 0; index < array->GetSize(); ++index) {
+                AppendVariableLocked(
+                    variables,
+                    "[" + std::to_string(index) + "]",
+                    context,
+                    array->At(index),
+                    elementTypeId);
+            }
+            return;
+        }
+
+        if ((typeInfo->GetFlags() & asOBJ_SCRIPT_OBJECT) != 0) {
+            auto *scriptObject = static_cast<asIScriptObject *>(objectPointer);
+            for (asUINT index = 0; index < scriptObject->GetPropertyCount(); ++index) {
+                const char *name = scriptObject->GetPropertyName(index);
+                AppendVariableLocked(
+                    variables,
+                    name ? name : ("[" + std::to_string(index) + "]"),
+                    context,
+                    scriptObject->GetAddressOfProperty(index),
+                    scriptObject->GetPropertyTypeId(index));
+            }
+            return;
+        }
+
+        auto *objectBytes = static_cast<std::byte *>(objectPointer);
+        for (asUINT index = 0; index < typeInfo->GetPropertyCount(); ++index) {
+            const char *name = nullptr;
+            int propertyTypeId = asTYPEID_VOID;
+            int offset = 0;
+            bool isReference = false;
+            int compositeOffset = 0;
+            bool compositeIndirect = false;
+            if (typeInfo->GetProperty(
+                    index, &name, &propertyTypeId, nullptr, nullptr, &offset, &isReference,
+                    nullptr, &compositeOffset, &compositeIndirect) < 0) {
+                continue;
+            }
+
+            void *propertyAddress = objectBytes + compositeOffset;
+            if (compositeIndirect) {
+                propertyAddress = *static_cast<void **>(propertyAddress);
+            }
+            if (!propertyAddress) {
+                continue;
+            }
+            propertyAddress = static_cast<std::byte *>(propertyAddress) + offset;
+            if (isReference) {
+                propertyAddress = *static_cast<void **>(propertyAddress);
+            }
+            AppendVariableLocked(
+                variables,
+                name ? name : ("[" + std::to_string(index) + "]"),
+                context,
+                propertyAddress,
+                propertyTypeId);
+        }
+    }
+
     void BeginStep(const StepMode mode) {
         std::scoped_lock lock(stateMutex_);
         stepMode_ = mode;
@@ -455,6 +850,8 @@ private:
         {
             std::scoped_lock lock(stateMutex_);
             resumeRequested_ = true;
+            variableReferences_.clear();
+            nextVariableReference_ = 1;
         }
         resumeCondition_.notify_all();
     }
@@ -500,6 +897,8 @@ private:
             stepMode_ = StepMode::None;
             stoppedContext_ = context;
             resumeRequested_ = false;
+            variableReferences_.clear();
+            nextVariableReference_ = 1;
         }
 
         SendEvent("stopped", {
@@ -536,6 +935,8 @@ private:
         stepDepth_ = 0;
         stepSource_.clear();
         stepLine_ = 0;
+        variableReferences_.clear();
+        nextVariableReference_ = 1;
     }
 
     void SendResponse(const JSON &request, JSON body = JSON::object()) {
@@ -619,6 +1020,8 @@ private:
     std::condition_variable resumeCondition_;
     std::unordered_map<std::string, std::unordered_set<int>> breakpoints_;
     std::unordered_map<std::string, std::string> clientSourcePaths_;
+    std::unordered_map<int, VariableReference> variableReferences_;
+    int nextVariableReference_ = 1;
     asIScriptContext *stoppedContext_ = nullptr;
     bool resumeRequested_ = false;
     StepMode stepMode_ = StepMode::None;
@@ -643,6 +1046,11 @@ void AngelScriptDebugServer::Stop() {
 
 void AngelScriptDebugServer::AttachContext(asIScriptContext *context) const {
     impl_->AttachContext(context);
+}
+
+AngelScriptDebugServer &GetProcessAngelScriptDebugServer() {
+    static AngelScriptDebugServer server;
+    return server;
 }
 
 } // namespace KashipanEngine

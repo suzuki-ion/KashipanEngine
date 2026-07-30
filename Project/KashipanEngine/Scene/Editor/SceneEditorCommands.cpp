@@ -156,6 +156,24 @@ bool ObjectPropertyCommand::Undo(SceneEditorContext *context) {
     return true;
 }
 
+bool ObjectStateCommand::Apply(SceneEditorContext *context, const UUID128 &objectID, const JSON &state) {
+    auto *obj = context ? context->GetSceneObject(objectID) : nullptr;
+    if (!obj) return false;
+    obj->SetName(state.value("name", obj->GetName()));
+    obj->SetTag(state.value("tag", obj->GetTagName()));
+    obj->SetActive(state.value("isActive", obj->IsActive()));
+    obj->SetEditorOnly(state.value("editorOnly", obj->IsEditorOnly()));
+    return true;
+}
+
+bool ObjectStateCommand::Execute(SceneEditorContext *context) {
+    return Apply(context, objectID_, after_);
+}
+
+bool ObjectStateCommand::Undo(SceneEditorContext *context) {
+    return Apply(context, objectID_, before_);
+}
+
 //==================================================
 // コンポーネント操作コマンド
 //==================================================

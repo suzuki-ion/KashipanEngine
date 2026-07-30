@@ -9,7 +9,7 @@ namespace KashipanEngine {
 
 /// @brief VS Code等のDAPクライアントからAngelScriptをデバッグするための最小デバッグサーバー
 /// @details 技術検証版として、アタッチ、行ブレークポイント、Pause/Continue、基本的な
-///          ステップ実行、コールスタック表示をサポートする。localhostからのみ接続を受け付ける。
+///          ステップ実行、コールスタックと変数の表示をサポートする。localhostからのみ接続を受け付ける。
 class AngelScriptDebugServer final {
 public:
     AngelScriptDebugServer();
@@ -34,5 +34,8 @@ private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+/// @brief Debug/Developmentビルド内でゲームスクリプトとEditorToolが共有するDAPサーバーを取得する
+AngelScriptDebugServer &GetProcessAngelScriptDebugServer();
 
 } // namespace KashipanEngine

@@ -83,7 +83,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     // PrefabAssetManager側で単一スロット置き換え方式にしている）
     PrefabAssetManager::SetChangeListener(
         [this](const UUID128 &prefabID, const JSON &oldJson, const JSON &newJson) {
-            PrefabSyncUtility::SyncOtherInstances(context_, commands_.get(), prefabID, oldJson, newJson);
+            PrefabSyncUtility::SyncAllScenes(context_, commands_.get(), prefabID, oldJson, newJson);
         });
 
     // ウィンドウの表示状態を復元する（再起動後も維持される）

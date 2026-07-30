@@ -416,6 +416,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "1d16cf84-bc2b-43d1-85d6-92b6ae9a2c96"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -442,6 +453,7 @@
         "isActive": true,
         "name": "Player",
         "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+        "prefabNodeID": "9c037041-c5ee-4cc4-b429-f1db4a7784a4",
         "tag": ""
     },
     "siblingIndex": 1

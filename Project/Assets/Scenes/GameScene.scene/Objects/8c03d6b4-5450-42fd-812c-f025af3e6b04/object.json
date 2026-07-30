@@ -32,6 +32,7 @@
                     "customData": {
                         "height": 1080,
                         "interceptedMessages": [],
+                        "syncWithTransform": true,
                         "title": "Normal Window",
                         "width": 1920
                     },

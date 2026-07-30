@@ -1,6 +1,6 @@
 {
 	"PipelineType": "Compute",
-	"Name": "ParticleUpdate",
+	"Name": "ParticleFreeListInit",
 	"RootSignature": {
 		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_NONE",
 		"RootParameter": {
@@ -19,24 +19,14 @@
 					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
 					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
 					"Descriptor": { "ShaderRegister": 1, "RegisterSpace": 0 }
-				},
-				{
-					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
-					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
-					"Descriptor": { "ShaderRegister": 2, "RegisterSpace": 0 }
-				},
-				{
-					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
-					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
-					"Descriptor": { "ShaderRegister": 3, "RegisterSpace": 0 }
 				}
 			]
 		}
 	},
 	"Shader": {
-		"BaseName": "ParticleUpdate",
+		"BaseName": "ParticleFreeListInit",
 		"Compute": {
-			"UsePreset": "ParticleUpdate.CS"
+			"UsePreset": "ParticleFreeListInit.CS"
 		}
 	},
 	"PipelineState": {

@@ -1,0 +1,9 @@
+{
+	"BaseName": "ParticleFreeListInit",
+	"Compute": {
+		"Name": "CS",
+		"Path": "Particle/ParticleFreeListInitCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}
